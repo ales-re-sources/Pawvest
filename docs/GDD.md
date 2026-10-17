@@ -36,7 +36,9 @@ pets level up while you play; the pet garden (§7.6) raises pets and produces Co
 
 **Unlocks.** Every stage after Stage 1 opens either by **meeting the bar** (required medal on the previous stage)
 or by a **one-time Coin price**. Prices are set so that buying an unlock costs roughly a full talent level or two —
-skipping is possible but slows talent progress. Unlocks are permanent.
+skipping is possible but slows talent progress. Unlocks are permanent. Each stage can be bought on its own (Stage 3
+does not require Stage 2 to be open). Times or medals already recorded on a locked stage do not open it (no grandfathering
+of pre-M3 progress), and admins follow the same rules.
 
 **Hub portals** show: stage name, locked/unlocked, requirement + price when locked, best medal earned,
 and challenge coins found `x/y`.

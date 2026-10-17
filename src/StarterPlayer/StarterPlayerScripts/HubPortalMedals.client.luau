@@ -1,5 +1,6 @@
--- Shows the local player's best medal on each hub portal (docs/GDD.md §3 "Hub portals").
--- Medals come from player attributes set by StageResults; every player sees only their own medals.
+-- Shows the local player's best medal on each hub portal and, while the stage is locked, its requirement and price
+-- (docs/GDD.md §3 "Hub portals"). Medals and lock state come from player attributes set by StageResults and StageUnlocks;
+-- every player sees only their own.
 -- The stars are a SurfaceGui on the same face as the portal's "Stage N access" label, so they are part of the gate.
 
 local Players = game:GetService("Players")
@@ -44,6 +45,35 @@ local function addPortalMedal(stage)
 	end
 	LocalPlayer:GetAttributeChangedSignal(attribute):Connect(refresh)
 	refresh()
+
+	-- lock lines below the stars while the stage is locked (M3); hidden until the server publishes the state
+	local bar = MedalText.UnlockBar(stage)
+	if bar then
+		local lockLines = {
+			"🔒 " .. bar,
+			if stage.unlockPrice then "or " .. stage.unlockPrice .. " Coins" else nil,
+		}
+		local locks = {}
+		for index, text in lockLines do
+			local lock = label:Clone()
+			lock.Name = "Lock" .. index
+			lock.Position = UDim2.fromScale(0.5, 0.72 + (index - 1) * 0.1)
+			lock.Size = UDim2.fromScale(0.9, 0.09)
+			lock.Text = text
+			lock.Visible = false
+			lock.Parent = surface
+			table.insert(locks, lock)
+		end
+		local unlockedAttribute = StageConfig.UnlockedAttribute(stage)
+		local function refreshLock()
+			local locked = LocalPlayer:GetAttribute(unlockedAttribute) == false
+			for _, lock in locks do
+				lock.Visible = locked
+			end
+		end
+		LocalPlayer:GetAttributeChangedSignal(unlockedAttribute):Connect(refreshLock)
+		refreshLock()
+	end
 
 	surface.Parent = playerGui
 end

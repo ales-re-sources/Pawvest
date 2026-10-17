@@ -15,6 +15,12 @@ StageConfig.Medals = {
 	{ name = "Gold", basePayout = 80, runMultiplier = 2 },
 }
 
+-- Medal index by tier name ("Silver" → 2).
+StageConfig.MedalIndex = {}
+for index, medal in StageConfig.Medals do
+	StageConfig.MedalIndex[medal.name] = index
+end
+
 -- Repeat reward (GDD §5): max(1, round(RunRewardBase × factor × medal multiplier × RunRewardDecay^n))
 StageConfig.RunRewardBase = 5
 StageConfig.RunRewardDecay = 0.8
@@ -144,6 +150,20 @@ end
 -- Player attribute that replicates the player's medal on `stage` to clients.
 function StageConfig.MedalAttribute(stage): string
 	return "Medal_" .. stage.folder
+end
+
+-- True when `medals` ([stageKey] = medal index) meet the stage's unlock bar, or the stage has no unlock rule (GDD §3).
+function StageConfig.MeetsUnlockBar(stage, medals): boolean
+	local rule = stage.unlock
+	if not rule then
+		return true
+	end
+	return (medals[rule.stage] or 0) >= StageConfig.MedalIndex[rule.medal]
+end
+
+-- Player attribute that replicates whether the player may enter `stage` (bar met or bought).
+function StageConfig.UnlockedAttribute(stage): string
+	return "Unlocked_" .. stage.folder
 end
 
 return StageConfig

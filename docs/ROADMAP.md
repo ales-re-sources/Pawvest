@@ -35,7 +35,7 @@ Rules:
 | M2 | Talents shop | ✔ | ✔ | – |
 | R1 | Repeat rewards + shared payout | ✔ | ✔ | – |
 | P1 | Pets core | – | – | – |
-| M3 | Stage unlocks | – | – | – |
+| M3 | Stage unlocks | ✔ | ✔ | – |
 | M4 | Challenge coins | – | – | – |
 | M5 | Leaderboards | – | – | – |
 | P2a | Pet garden: plots, pens, offline income | – | – | – |
@@ -261,10 +261,61 @@ their own order: P2a/P2b need P1, P3 needs P1 and profile session locking. M6 ne
   - a second client (multi-client) sees the first player's pets following; server and client consoles clean.
 
 ### M3 — Stage unlocks
-- **Outputs:** portal checks bar *or* paid unlock; locked-portal UI (requirement + price); buy-unlock remote;
-  Tutorial portal on the hub.
-- **Acceptance checks:** locked portal does not teleport; meeting the bar unlocks without charging;
-  buying deducts the price exactly once; unlock persists after rejoin.
+- **Inputs:** `StageConfig.unlock` / `unlockPrice` (GDD §3: Stage 2 = Silver on Stage 1 or 150 Coins, Stage 3 = Silver on
+  Stage 2 or 300 Coins), `PlayerProfile.Medals` / `UnlockedStages` / `AddCoins`, hub portal scripts, `Medal_<folder>` attributes.
+- **Outputs:**
+  - `StageConfig.MedalIndex`, pure `StageConfig.MeetsUnlockBar(stage, medals)`, `StageConfig.UnlockedAttribute(stage)`.
+  - `ServerScriptService.StageUnlocks` (module): `IsUnlocked(player, stage)`, `ShowLocked(player, stage)`; mirrors every
+    stage's state to `Unlocked_<folder>` player attributes; owns the remotes in `ReplicatedStorage.UnlockRemotes`
+    (created by code): `Buy` client → server `(stageKey)`, `Result` server → client `(stageKey, ok, reason?)`,
+    `Locked` server → client `(stageKey)` when a locked portal is touched.
+  - Hub portal scripts (4 identical copies) teleport only when `IsUnlocked`; otherwise they open the unlock popup.
+  - Hub portal face (`HubPortalMedals.client.luau`): lock line "🔒 ★★ Silver on Stage 1 / or 150 Coins" while locked.
+  - `StageUnlockPopup.client.luau` (code-built GUI): requirement, price, Coins, "Unlock for N Coins" button, Close.
+  - ~~Tutorial portal on the hub~~ — done in the M5 Tutorial pass 2 (`TeleportToTutorial`).
+- **Boundary:** no challenge-coin `x/y` on portals (M4); stages stay physically reachable by other means (checkpoint respawn
+  inside a stage during the same session, walking) — only the hub portal is gated.
+- **Design notes (design check 2026-10-17, user decisions):**
+  - Open = no unlock rule, **or** the bar (required medal on the previous stage, derived from `Medals` every time, never
+    stored — medals only go down through the admin reset, which also clears purchases), **or** `UnlockedStages[key] == true`
+    (bought). Unlocks are permanent.
+  - **No grandfathering:** times or medals already recorded on the locked stage itself do not open it (the admin profile has
+    Stage 2 Gold but only Stage 1 Bronze → Stage 2 locked, Stage 3 open via Stage 2 Gold).
+  - **Admins follow the same rules** (no bypass), so locks can be tested solo.
+  - **No ordering:** every stage can be bought on its own (Stage 3 without Stage 2 open).
+  - `Buy(stageKey)`: the price is never sent; server takes `unlockPrice` from `StageConfig`. Non-string / unknown / ruleless
+    keys ignored silently; 0.25 s cooldown per player; already open (bought or bar met) → `"owned"`, no charge; too few Coins
+    → `"coins"`. Success → `AddCoins(-price)` (purchases bypass `CoinRewards`), `UnlockedStages[key] = true`, attributes, save
+    at once. A repeated request finds the stage open → charged exactly once.
+  - Attributes are re-published on join, on `ProfileReset` and whenever the prerequisite stage's `Medal_<folder>` changes.
+  - A locked touch uses the portal's 2 s per-player cooldown, so standing in the portal does not spam the popup.
+- **Studio-only changes:** none (remotes and GUIs are created by code; portal parts unchanged).
+- **Acceptance checks:**
+  - a locked portal does not teleport (character stays at the hub, score panel still "Central Island") and opens the popup;
+  - meeting the bar unlocks without charging: earning Silver on Stage 1 flips `Unlocked_Stage2` to true, Coins unchanged,
+    the portal teleports; a `Buy` for that stage then answers `"owned"` with Coins unchanged;
+  - buying deducts the price exactly once: with ≥ 150 Coins, `Buy("Stage 2")` fired twice (and with forged extra price args)
+    charges exactly 150; with < price Coins it is rejected (`"coins"`, Coins and lock unchanged);
+  - forged requests (unknown key, number, table, nil, `"Stage 1"`) change nothing;
+  - a bought unlock persists after rejoin (`UnlockedStages[key] = true` stored, attribute true, portal teleports).
+- **Validation log (2026-10-17, solo playtest, API access on, uid 9892673032; stored profile was fresh with 1 Coin, preset
+  to 400 Coins):** join → `Unlocked_Stage1/Tutorial = true`, `Unlocked_Stage2/3 = false`. Stage 2 portal: character stayed
+  at the hub (1006 studs from the Stage 2 destination), panel "Central Island", popup "Stage 2 is locked / Earn ★★ Silver
+  on Stage 1 / or unlock it now: / Unlock for 150 Coins / You have 400 Coins"; real click on Close hid it. Forged `Buy`
+  (123, table, `"Stage 1"`, `"Stage 4"`, `"nope"`, `true`, nil, `(nil, "Stage 2")`) → no reply, 400 Coins, both locked.
+  Stage 3 portal → popup; real click on "Unlock for 300 Coins" → 100 Coins, `Unlocked_Stage3 = true`, popup "Stage 3
+  unlocked! / Step into the portal to enter"; `Buy("Stage 3", 0, -1000)` and `Buy("Stage 3")` → `owned`, still 100;
+  `Buy("Stage 2")` with 100 Coins → `coins`, still locked. Stage 3 portal then teleported (2.8 studs from the destination,
+  panel "Stage 3"). Bar: Stage 1 run in 1.6 s → Gold, Coins 100 → 250 (= payout 140 + run reward 10, nothing charged),
+  `Unlocked_Stage2 = true`, portal lock lines hidden; `Buy("Stage 2")` → `owned`, 250; Stage 2 portal teleported.
+  Stored after leaving: `UnlockedStages = {"Stage 3": true}`, Coins 250, Stage 1 Gold. Rejoin (Stage 1 medal removed from
+  the stored profile so only the purchase can open anything): Stage 3 open and teleports; Stage 2 locked again, portal face
+  lock lines `🔒 ★★ Silver on Stage 1` / `or 150 Coins` visible (Stage 3's hidden, none on Stage 1 / Tutorial), touch → no
+  teleport + popup. Admin Reset Score → Coins 0, `Unlocked_Stage3 = false`, Stage 3 lock lines shown again.
+  Consoles: only Roblox's own UIBlox "FoundationProvider" warnings (plus one error from the test harness's own listener).
+  Not covered: multi-client; a portal-face screenshot (3D viewport renders blank in captures, lock lines checked via
+  `Visible`/`Text`). Live DataStores restored to the pre-test snapshot (profile 1 Coin, boards unchanged, Stage 3 board key
+  absent).
 
 ### M4 — Challenge coins
 - **Outputs:** stable coin id attribute; server-validated pickup; per-player visibility; `found x/y` on portals;

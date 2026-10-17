@@ -41,6 +41,17 @@ function MedalText.Limits(stage, bestMedal: number): string
 	return table.concat(parts, "   ")
 end
 
+-- Unlock bar of a stage (GDD §3): "★★ Silver on Stage 1" with gold stars; nil for a stage without an unlock rule.
+function MedalText.UnlockBar(stage): string?
+	local rule = stage.unlock
+	if not rule then
+		return nil
+	end
+	local previous = StageConfig.ByKey[rule.stage]
+	local stars = string.rep("★", StageConfig.MedalIndex[rule.medal])
+	return font(MedalText.Gold, stars) .. " " .. rule.medal .. " on " .. previous.displayName
+end
+
 -- Best medal still reachable after `elapsed` seconds, with its limit: "★★★ 0:56", or "no medal".
 function MedalText.Target(stage, elapsed: number): string
 	local medal = StageConfig.EvaluateMedal(stage, elapsed)

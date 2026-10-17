@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local StageConfig = require(game:GetService("ReplicatedStorage").StageConfig)
+local StageUnlocks = require(game:GetService("ServerScriptService").StageUnlocks)
 
 local stage = StageConfig.ByHubPortal[script.Parent.Name]
 local TeleportPart1 = script.Parent.Portal
@@ -25,6 +26,15 @@ local function onTouched(hit)
 			end
 			-- Set cooldown timestamp
 			playerCooldowns[player] = now
+
+			-- Locked stage (GDD §3): no teleport, the client shows the requirement and price instead
+			local unlocked = StageUnlocks.IsUnlocked(player, stage)
+			if not unlocked then
+				if unlocked == false then
+					StageUnlocks.ShowLocked(player, stage)
+				end
+				return
+			end
 
 			-- Teleport player
 			humanoidRootPart.CFrame = TeleportPart2.CFrame + Vector3.new(0, 5, 0)

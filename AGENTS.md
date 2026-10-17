@@ -40,7 +40,7 @@ Roblox Studio MCP is available for inspecting/editing the live place (`search_ga
 ```
 src/
   ReplicatedStorage/
-    StageConfig.luau                  stage list (key, folder, hub portal, T_base, tiers, unlock, reward factor) + medal and run-reward math
+    StageConfig.luau                  stage list (key, folder, hub portal, T_base, tiers, unlock, reward factor) + medal, run-reward and unlock-bar math
     TimeFormat.luau                   tenths rounding, "mm:ss.t" and short "m:ss" formatting
     MedalText.luau                    rich text for stars, medal limits and the timer's medal target
     AdminConfig.luau                  admin UserIds + IsAdmin (client UI gating and server checks)
@@ -49,6 +49,7 @@ src/
     PlayerProfile.luau                per-player profile DataStore (load/migrate/save), AddCoins, CoinsChanged
     CoinRewards.luau                  Grant(player, base, source): the only gameplay Coin payout (multiplier, rounding)
     StageResults.luau                 finish → personal best, medal, one-time payout + daily repeat reward; Medal_<folder> attributes
+    StageUnlocks.luau                 hub portal gate: bar (previous stage's medal) or bought unlock; UnlockRemotes, Unlocked_<folder> attributes
     HomeService.server.luau           GoHome remote: Home button → hub spawn, cancels the running timer
     TalentService.server.luau         talent purchases (Buy remote, server-priced), levels → profile + Talent_<id> attributes, WalkSpeed/jump on spawn
     CoinSystem.server.luau            leaderstats (Stage, Coins) mirrored from profile, coin pickup, CoinUpdateEvent
@@ -57,7 +58,8 @@ src/
     StageTimerClientUpdater.client.luau  StageTimer label: counts locally between start/stop from StageTimerUpdate
     TalentDoubleJump.client.luau      Double Jump talent: extra air jumps from the Talent_DoubleJump attribute
     StageResultsPopup.client.luau     results popup after a finish (GUI built in code)
-    HubPortalMedals.client.luau       own best-medal stars on each hub portal face (local SurfaceGuis)
+    HubPortalMedals.client.luau       own best-medal stars + lock requirement/price on each hub portal face (local SurfaceGuis)
+    StageUnlockPopup.client.luau      unlock popup after touching a locked hub portal (requirement, price, unlock button; GUI built in code)
   StarterGui/
     CoinGui/CoinDisplayScript.client.luau        top-right coin counter
     ScreenGui/TopLeftIcons/ButtonHandler.client.luau  Home (🏠 go to hub) / Skills (⚡) / Settings / Admin buttons, slide-in panels (AdminConfig)
@@ -103,7 +105,7 @@ Most of the 103 scripts are identical copies. Edit them consistently (grep by co
 | 4 | `TimerStart` | `Workspace/Stage*/LandingPad/TimerStart/…` |
 | 4 | `TeleportToSpawn` | `Workspace/Stage*/LandingPad/TeleportToSpawn/…` |
 | 4+4 | finish portal / teleport back to stage start (Stage1 teleport copy differs slightly) | `Workspace/Stage*/TeleportBackToStageStart/…` |
-| 4 | hub portal `TeleportToStageN` / `TeleportToTutorial` | `Workspace/StartLocation/Teleport*/…` |
+| 4 | hub portal `TeleportToStageN` / `TeleportToTutorial` (teleports only if `StageUnlocks.IsUnlocked`) | `Workspace/StartLocation/Teleport*/…` |
 | 2 | Top10Leaderboard | `Workspace/Stage1/LandingPad/Top10Leaderboard/Script…` |
 | 3 | ChoiceStage random safe `Step` | `Workspace/Stage1/ChoiceStage_*/Script…` |
 | 3 | bounce brick (Heartbeat velocity) | `Workspace/Stage2/12/Level 12/Bounce Brick_*` |
@@ -120,6 +122,7 @@ RemoteEvents (in `ReplicatedStorage`; first three exist only in Studio, not in f
 | `CoinUpdateEvent` | server → client | created at runtime by `CoinSystem` |
 | `GoHome` | client → server, no arguments | Home button; created at runtime by `HomeService`, 3 s cooldown, server teleports + cancels the timer |
 | `TalentRemotes.Buy` / `.Result` | client → server `(talentId, expectedLevel)` / server → client `(talentId, ok, level or reason)` | created at runtime by `TalentService`; the price is never sent |
+| `UnlockRemotes.Buy` / `.Result` / `.Locked` | client → server `(stageKey)` / server → client `(stageKey, ok, reason?)` / server → client `(stageKey)` | created at runtime by `StageUnlocks`; price from `StageConfig.unlockPrice`; `Locked` opens the unlock popup |
 
 DataStores:
 
@@ -135,7 +138,8 @@ Gameplay Coins (medals, repeat rewards, pickups, future sources) go through `Coi
 deductions call `PlayerProfile.AddCoins` directly. `RunsToday = { Day = <UTC day>, [stageKey] = finishes }` drives
 the diminishing repeat reward (`StageConfig.RunReward`).
 
-Player attributes `Medal_<stage folder>` (0–3) mirror `PlayerProfile.Medals` for client displays.
+Player attributes `Medal_<stage folder>` (0–3) mirror `PlayerProfile.Medals` for client displays; `Unlocked_<stage folder>`
+(bool) mirror `StageUnlocks` (bar met or `UnlockedStages[key]` bought; the bar is derived from medals, never stored).
 
 Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (ObjectValue, runtime only).
 
