@@ -130,8 +130,12 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
   per ChoiceStage must keep that exact (duplicate) name. They are not synced (no code inside).
 - `PlayerProfile` is saved on leave, every 60 s and in `BindToClose`; a failed load blocks saving for that session.
   Don't `require` it from the MCP command context during a playtest: that creates a second copy that also saves.
-- If new files show up **twice** in Studio (both copies receive edits), the Argon plugin has two connections:
-  disconnect/reconnect it once, then delete the extra copies.
+- Only **one** Argon plugin may be enabled in Studio (the CLI installs `%LOCALAPPDATA%\Roblox\Plugins\Argon.rbxm`;
+  a Creator Store copy must stay disabled). Two plugins each create every new file → duplicate scripts.
+- Two-way sync is on: deleting/renaming a synced script **in Studio deletes/renames the file**. Do such changes on disk.
+  Clean up Studio-side duplicates only while Argon is disconnected.
+- Initial sync priority is **Client** (Studio overwrites files on connect): commit before connecting and check
+  `git status` right after; files edited while disconnected are overwritten by Studio's copy.
 - Studio playtests with API access read/write the **live** DataStores — snapshot and restore anything a test changes.
 - `CheckpointTouchHandler` plays `script.Sound` — the `Sound`/`Orig` children exist only in Studio.
 - `Workspace/Stage3/level.2` is a Model literally named `level.2` (dot in the name).
