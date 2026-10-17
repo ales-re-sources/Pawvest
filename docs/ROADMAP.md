@@ -33,7 +33,7 @@ Rules:
 | M1 | Medals & rewards | ✔ | ✔ | – |
 | M1.1 | Medal limits visibility | ✔ | ✔ | – |
 | M2 | Talents shop | ✔ | ✔ | – |
-| R1 | Repeat rewards + shared payout | – | – | – |
+| R1 | Repeat rewards + shared payout | ✔ | ✔ | – |
 | P1 | Pets core | – | – | – |
 | M3 | Stage unlocks | – | – | – |
 | M4 | Challenge coins | – | – | – |
@@ -199,10 +199,32 @@ their own order: P2a/P2b need P1, P3 needs P1 and profile session locking. M6 ne
     results popup shows the repeat reward on its own line.
   - Coin pickup in `CoinSystem` goes through `CoinRewards.Grant`.
 - **Boundary:** no pets, multiplier is a constant 1.
+- **Design notes:**
+  - `Grant` returns the Coins paid, 0 for a non-positive base (no `CoinsChanged`), nil while the profile is not loaded
+    (the pickup coin then stays). `source` (`"medal"`, `"run"`, `"coin"`) is unused until stats/pets need it.
+  - Medal payout and run reward are two `Grant` calls (each multiplied and rounded on its own); the result's `coins` is
+    the medal payout as paid, `runCoins` the run reward, `runsToday` this stage's finish count today incl. this one.
+  - Every finish counts towards `n` (GDD: "earlier finishes"), including finishes without a medal.
+  - UTC day = `floor(os.time() / 86400)`; `RunsToday` is replaced by `{ Day = today }` on the first finish of a new day.
+    Run counts are saved by the autosave / on leave; a new medal still saves at once (after both grants).
+  - `RunReward` rounds once (half up, with a 1e-9 guard against float error in `0.8^n`), so values match the GDD §5 table.
 - **Studio-only changes:** none.
-- **Acceptance checks:** the same stage finished 3× with Silver in one day pays run rewards exactly `r`, `round(0.8 r)`,
-  `round(0.64 r)` (medal payout only on the first); a finish without a medal pays 0; a run reward never drops below 1;
-  setting `RunsToday.Day` to yesterday resets the count (next run pays `r`); counts persist after rejoin the same day.
+- **Acceptance checks:** the same stage finished 3× with Silver in one day pays run rewards exactly
+  `max(1, round(R × 0.8^n))` for n = 0, 1, 2 (R = unrounded first-run reward; Tutorial Silver: 4, 3, 2), with the medal
+  payout only on the first; a finish without a medal pays 0; a run reward never drops below 1; setting `RunsToday.Day`
+  to yesterday resets the count (next run pays `r`); counts persist after rejoin the same day.
+  (Design check: the earlier wording `round(0.8 r)`, `round(0.64 r)` rounds twice and disagrees with the GDD formula for
+  the Tutorial: round(0.64 × 4) = 3, the formula gives round(3.75 × 0.64) = 2.)
+- **Validation log (2026-10-17, solo playtest, API access on, uid 9892673032, Tutorial medal removed from the stored
+  profile beforehand):** `RunReward` for all stages × medals × n = 0…9 matches the GDD §5 table (first runs, Gold sums
+  23 / 44 / 68 / 89); no medal → 0; n = 50 → 1. Playtest 1: Silver 26.5 s → +34 (medal 30 + run 4), popup
+  "+30 Coins" and "Run reward +4 (run 1 today)"; Silver 26.x s → +3; Silver 26.4 s → +2, medal line hidden, "Run reward +2
+  (run 3 today)"; coin pickup → +1 (coin hidden); 50.4 s (no medal) → +0, run line hidden. Stored after leaving:
+  `RunsToday = { Day = 20743, ["Stage 4"] = 4 }`, Coins 51. Playtest 2 (rejoin): Silver → +2 (run 5 today, n = 4).
+  Playtest 3 (count set to 30): Silver → +1. Playtest 4 (`Day` set to 20742, count 31): Silver → +4, "run 1 today";
+  stored `RunsToday = { Day = 20743, ["Stage 4"] = 1 }`. Talent purchases still call `AddCoins` (unchanged).
+  Consoles: only Roblox's own UIBlox "FoundationProvider" warnings. Live profile restored to the pre-test snapshot
+  (11 Coins, Tutorial Gold, no `RunsToday`; `reconcile` adds it on the next load); boards unchanged (no new bests).
 
 ### P1 — Pets core
 - **Inputs:** `CoinRewards` (R1), `StageResults`, `CoinSystem`, `PlayerTimerHandler` (running timer), GDD §7.1–7.5.

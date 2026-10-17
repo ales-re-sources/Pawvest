@@ -40,14 +40,15 @@ Roblox Studio MCP is available for inspecting/editing the live place (`search_ga
 ```
 src/
   ReplicatedStorage/
-    StageConfig.luau                  stage list (key, folder, hub portal, T_base, tiers, unlock, reward factor) + medal math
+    StageConfig.luau                  stage list (key, folder, hub portal, T_base, tiers, unlock, reward factor) + medal and run-reward math
     TimeFormat.luau                   tenths rounding, "mm:ss.t" and short "m:ss" formatting
     MedalText.luau                    rich text for stars, medal limits and the timer's medal target
     AdminConfig.luau                  admin UserIds + IsAdmin (client UI gating and server checks)
     TalentConfig.luau                 talents (Run Speed, Double Jump, Jump Height): costs, effect helpers, Talent_<id> attribute names
   ServerScriptService/
     PlayerProfile.luau                per-player profile DataStore (load/migrate/save), AddCoins, CoinsChanged
-    StageResults.luau                 finish → personal best, medal, one-time Coin payout; Medal_<folder> player attributes
+    CoinRewards.luau                  Grant(player, base, source): the only gameplay Coin payout (multiplier, rounding)
+    StageResults.luau                 finish → personal best, medal, one-time payout + daily repeat reward; Medal_<folder> attributes
     HomeService.server.luau           GoHome remote: Home button → hub spawn, cancels the running timer
     TalentService.server.luau         talent purchases (Buy remote, server-priced), levels → profile + Talent_<id> attributes, WalkSpeed/jump on spawn
     CoinSystem.server.luau            leaderstats (Stage, Coins) mirrored from profile, coin pickup, CoinUpdateEvent
@@ -124,11 +125,15 @@ DataStores:
 
 | Store | Key | Value |
 |---|---|---|
-| `PlayerProfiles` | `user_<UserId>` | `{ Version, Coins, BestTimes[stageKey], Medals, UnlockedStages, CollectedCoins, Talents }` |
+| `PlayerProfiles` | `user_<UserId>` | `{ Version, Coins, BestTimes[stageKey], Medals, UnlockedStages, CollectedCoins, Talents, RunsToday }` |
 | `PlayerCoins` | `UserId` | legacy integer coins — read once for migration |
 | `PlayerScoresStore` | `player_<UserId>` | legacy `{ {StageName, Elapsed}, … }` — read once for migration |
 | `GlobalLeaderboardsStore` | `leaderboard_<StageName>` | Top-10 `{ {PlayerName, Elapsed}, … }` |
 | ordered `"a"` | — | legacy time-played board; `TopTimeScript` is **Disabled** |
+
+Gameplay Coins (medals, repeat rewards, pickups, future sources) go through `CoinRewards.Grant`; purchases and
+deductions call `PlayerProfile.AddCoins` directly. `RunsToday = { Day = <UTC day>, [stageKey] = finishes }` drives
+the diminishing repeat reward (`StageConfig.RunReward`).
 
 Player attributes `Medal_<stage folder>` (0–3) mirror `PlayerProfile.Medals` for client displays.
 

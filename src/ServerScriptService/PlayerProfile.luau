@@ -39,6 +39,7 @@ local function newProfile()
 		UnlockedStages = {}, -- [stageKey] = true (M3)
 		CollectedCoins = {}, -- [coinId] = true (M4)
 		Talents = {}, -- [talentId] = level (M2)
+		RunsToday = {}, -- { Day = UTC day number, [stageKey] = finishes that day } (R1)
 	}
 end
 

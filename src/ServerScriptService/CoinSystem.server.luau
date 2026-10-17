@@ -4,6 +4,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 
 -- Coins are stored in the player's profile (loaded / saved by PlayerProfile)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
+local CoinRewards = require(ServerScriptService.CoinRewards)
 
 -- Create RemoteEvent for coin updates
 local coinUpdateEvent = Instance.new("RemoteEvent")
@@ -65,8 +66,8 @@ local function makeTouchHandler(coinPart)
 		local player = Players:GetPlayerFromCharacter(character)
 		if not player then return end
 
-		-- Add 1 coin (fails while the profile is still loading; the coin stays then)
-		if not PlayerProfile.AddCoins(player, 1) then return end
+		-- Pay 1 coin (fails while the profile is still loading; the coin stays then)
+		if not CoinRewards.Grant(player, 1, "coin") then return end
 
 		collected = true
 		coinPart.Transparency = 1
