@@ -257,7 +257,15 @@ their own order: P2a/P2b need P1, P3 needs P1 and profile session locking. M6 ne
   byte-identical (stage resolved via `StageConfig.ForInstance`), the disabled legacy `TopTimeScript` was left out. All other
   Stage 2 / Stage 3 pad parts already matched (sizes, colours, portal, timer start, destination). Studio-only: the board
   model. Validated: empty board shows `...` rows; a Stage 3 record (test name, 99.9 s) appeared on the board after the
-  poll (`01:39.9`); the test entry was removed again. Tutorial still has no board (same gap, not part of this change).
+  poll (`01:39.9`); the test entry was removed again.
+- **Tutorial pass (2026-10-17, user request):** Tutorial is unfinished (no hub portal, not in the milestone plan), but its pad now matches
+  Stage 2/3 (Top-10 board added the same way; key `Stage 4`). The finish gate was ~170 studs past checkpoint 24 with nothing
+  to stand on: added a `Workspace/Tutorial/Course` folder of 14 plain parts (no scripts): 4 wide jump platforms (5-stud gaps),
+  3 narrow beams (3 wide, 4-stud gaps), a rest pad with new checkpoint `25`, a 5-platform zigzag and two steps up (+2 each)
+  to a landing in front of the gate (portal bottom y 82.45, last step top 82.1). Checkpoint 25 = copy of 24 (script file under
+  `Tutorial/25/C`). Studio-only: board model, `Course` parts, checkpoint 25 parts. Validated with a scripted no-talent bot
+  (WalkSpeed 16, JumpPower 50, jumps at edges): pad → gate in 17.5 s without a fall, the portal finished the run. Test finish
+  (Bronze, +10 Coins, Tutorial best 42 s + board entry) was reverted in the live DataStores. Consoles clean.
 - **Done early (fix, 2026-10-17, user report):** a new record showed on the board only after a server restart (the board
   polled every 60 s). `PlayerTimerHandler.LeaderboardChanged` now fires after a Top-10 write and boards redraw at once
   (Stage 2 board updated 0.7 s after the finish); empty rows are cleared; the 60 s poll stays for other servers.

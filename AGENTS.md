@@ -78,8 +78,8 @@ Every stage folder follows the same pattern:
 | `LandingPad/TeleportDestination` | arrival point from the hub portal |
 | `LandingPad/TimerStart` | starts the timer unless one already runs on this stage + acts as checkpoint |
 | `LandingPad/TeleportToSpawn/Portal` | back to hub; cancels timer, score panel → hub |
-| `LandingPad/Top10Leaderboard` | SurfaceGui board from `LoadGlobalLeaderboard(stage.key)` (Stage1, Stage2, Stage3) |
-| `<number>/C` | checkpoint part (`1`–`9` Stage1, `10`–`14` Stage2, `20`–`22` Stage3, `23`–`24` Tutorial) |
+| `LandingPad/Top10Leaderboard` | SurfaceGui board from `LoadGlobalLeaderboard(stage.key)` (Stage1, Stage2, Stage3, Tutorial) |
+| `<number>/C` | checkpoint part (`1`–`9` Stage1, `10`–`14` Stage2, `20`–`22` Stage3, `23`–`25` Tutorial) |
 | `TeleportBackToStageStart/Portal` | finish line: `StopTimer` → save best time; sibling script teleports to stage start |
 | obstacle models | kill parts, spinners, lava, bounce bricks, choice stage |
 
@@ -154,7 +154,7 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
 - Collected coins are hidden server-wide and never respawn.
 - Admins are listed once in `ReplicatedStorage.AdminConfig`; every admin remote must check `AdminConfig.IsAdmin`
   on the server (the client check only hides the panel). The RunSpeed/DoubleJump toggles are client-side debug tools.
-- Tutorial has no hub portal and no leaderboard. Stage2 and Stage3 landing pads are geometrically identical (Stage3 = Stage2 shifted by x −52.2, z +0.2);
+- Tutorial has no hub portal (unfinished). Stage2, Stage3 and Tutorial landing pads are geometrically identical (offsets from Stage2: Stage3 x −52.2, z +0.2; Tutorial x −121.6);
   Stage1's pad sits at hub height with its board at a different offset.
 - Legacy APIs are common (`wait`, `spawn`, `:connect`, `findFirstChild`); prefer `task.*` and
   `Players:GetPlayerFromCharacter` in new code, but don't mass-rewrite without asking.
