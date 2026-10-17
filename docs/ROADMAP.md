@@ -413,6 +413,23 @@ P1a comes first; P1b, P1c and P1d each need only P1a and can follow in any order
   Stage 1 portal still teleported; after buying Stage 2 its barrier was removed (Stage 3's stayed) and walking into the
   portal teleported (2.9 studs from the destination). Console clean (UIBlox warnings only). Live profile restored to the
   1-Coin snapshot. Not covered: a player standing inside the portal at the moment it becomes locked (admin reset).
+- **Follow-up (2026-10-17, user request): Stage 1 is unlockable too.** Design check: GDD said "always open"; the user
+  chose **Bronze on Tutorial or 50 Coins**, no grandfathering (existing Stage 1 progress does not open it). Reasons kept in
+  mind: a new player has 0 Coins, so the Tutorial is the real way in and must stay completable (Bronze ≈ 48 s, validated
+  bot run 17.5 s); the Tutorial income (70 Coins) already sits in the GDD §6 economy table, the 50-Coin price is an optional
+  sink (all three unlocks now 500, GDD §6 updated). Change: `StageConfig` Stage 1 `unlock = { stage = "Stage 4", medal =
+  "Bronze" }`, `unlockPrice = 50`; GDD §3 table and text. No other code changed (portal gate, popup, face lock lines and
+  `PortalBarriers` are all driven by `StageConfig`). Studio-only changes: none.
+  Validated (solo playtest, 400 Coins): `Unlocked_Tutorial = true`, `Unlocked_Stage1 = false`; barrier only on Stage 1,
+  2, 3; Stage 1 face lock lines `🔒 ★ Bronze on Tutorial` / `or 50 Coins`; walking into the portal stopped 0.87 studs from
+  its centre (1150 studs from the destination), popup "Stage 1 is locked / Earn ★ Bronze on Tutorial / Unlock for 50
+  Coins"; the Tutorial portal still teleported. Real click on the button → 350 Coins, `Unlocked_Stage1 = true`, barrier
+  gone; `Buy("Stage 1", 0, -100)` and `Buy("Stage 1")` → `owned` (350), `Buy("Stage 4")` / `Buy(12)` ignored; walking in
+  teleported (2.0 studs). After an admin reset (Coins 0, Stage 1 locked again, barrier back) a Tutorial Gold finish paid
+  75 (medal 70 + run 5, nothing charged), flipped `Unlocked_Stage1` to true and removed the barrier; `Buy("Stage 1")` →
+  `owned` (75 → 75); walking in teleported. Console: UIBlox warnings plus one DataStore queue notice from the reset's
+  burst of saves. Live profile (v2, migrated by the P1a session; free eggs 1, 1 Coin) and boards restored exactly to
+  the snapshot taken before the test.
 
 ### M4 — Challenge coins
 - **Outputs:** stable coin id attribute; server-validated pickup; per-player visibility; `found x/y` on portals;

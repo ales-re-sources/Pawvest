@@ -49,8 +49,8 @@ StageConfig.Stages = {
 		order = 1,
 		tBase = 70,
 		tiers = StageConfig.DefaultTiers,
-		unlock = nil,
-		unlockPrice = nil,
+		unlock = { stage = "Stage 4", medal = "Bronze" }, -- Tutorial
+		unlockPrice = 50,
 		rewardFactor = 1.0,
 	},
 	{

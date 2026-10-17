@@ -28,17 +28,19 @@ pets level up while you play; the pet garden (§7.6) raises pets and produces Co
 | Order | Stage | Internal key | Checkpoints | Difficulty | Theme / obstacles | Unlock |
 |---|---|---|---|---|---|---|
 | 0 | Tutorial | `"Stage 4"` ¹ | 23–24 | ★ | basics: jumps, first kill part | always open |
-| 1 | Stage 1 | `"Stage 1"` | 1–9 | ★★ | laser strips, spinners, lava floor, choice stage, jump pads | always open |
+| 1 | Stage 1 | `"Stage 1"` | 1–9 | ★★ | laser strips, spinners, lava floor, choice stage, jump pads | Bronze on Tutorial **or** 50 Coins |
 | 2 | Stage 2 | `"Stage 2"` | 10–14 | ★★★ | kill-part corridors, bounce bricks | Silver on Stage 1 **or** 150 Coins |
 | 3 | Stage 3 | `"Stage 3"` | 20–22 | ★★★★ | dense kill-part layouts | Silver on Stage 2 **or** 300 Coins |
 
 ¹ Existing DataStore key; keep it (or migrate) so recorded times are not lost.
 
-**Unlocks.** Every stage after Stage 1 opens either by **meeting the bar** (required medal on the previous stage)
+**Unlocks.** Every stage after the Tutorial opens either by **meeting the bar** (required medal on the previous stage)
 or by a **one-time Coin price**. Prices are set so that buying an unlock costs roughly a full talent level or two —
 skipping is possible but slows talent progress. Unlocks are permanent. Each stage can be bought on its own (Stage 3
 does not require Stage 2 to be open). Times or medals already recorded on a locked stage do not open it (no grandfathering
-of pre-M3 progress), and admins follow the same rules.
+of pre-M3 progress), and admins follow the same rules. Stage 1's bar is deliberately low (Bronze, ≈ 48 s on the Tutorial)
+and its price is a small convenience: a new player has 0 Coins, so the Tutorial is the real way in, and the Tutorial
+must always stay completable.
 
 **Hub portals** show: stage name, locked/unlocked, requirement + price when locked, best medal earned,
 and challenge coins found `x/y`.
@@ -166,10 +168,10 @@ Repeat rewards and pets only add to this, so the table is a lower bound.
 | Pet garden (§7.6) | target 30–100 | depends on pets in pens; offline production capped at 8 h |
 | Pet bonus | × 1.0–1.5 | on all of the above |
 
-Sinks: talents (680), stage unlocks (450), eggs (§7.2), pet slots (700), garden upgrades and feeding (§7.6).
+Sinks: talents (680), stage unlocks (500), eggs (§7.2), pet slots (700), garden upgrades and feeding (§7.6).
 
 Notes:
-- Bought stage unlocks are a sink outside the talent budget: a player who buys both unlocks (450) is ~450 Coins behind
+- Bought stage unlocks are a sink outside the talent budget: a player who buys all three unlocks (500) is ~500 Coins behind
   and must earn it back — intended cost of skipping.
 - Eggs and slots compete with talents for the same Coins; a player can choose pets first and talents later.
 - Gold at 0.8 × T_base with only Run Speed 2 (+12 %) on Stage 1 needs a near-perfect route — verify in M6.
