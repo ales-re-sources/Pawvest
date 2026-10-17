@@ -1,0 +1,45 @@
+{
+  "name": "Oby sandbox",
+  "placeIds": [83181838162651],
+  "tree": {
+    "$className": "DataModel",
+    "Workspace": {
+      "$path": "src/Workspace",
+      "$keepUnknowns": true
+    },
+    "ReplicatedFirst": {
+      "$path": "src/ReplicatedFirst",
+      "$keepUnknowns": true
+    },
+    "ReplicatedStorage": {
+      "$path": "src/ReplicatedStorage",
+      "$keepUnknowns": true
+    },
+    "ServerScriptService": {
+      "$path": "src/ServerScriptService",
+      "$keepUnknowns": true
+    },
+    "ServerStorage": {
+      "$path": "src/ServerStorage",
+      "$keepUnknowns": true
+    },
+    "StarterGui": {
+      "$path": "src/StarterGui",
+      "$keepUnknowns": true
+    },
+    "StarterPack": {
+      "$path": "src/StarterPack",
+      "$keepUnknowns": true
+    },
+    "StarterPlayer": {
+      "StarterCharacterScripts": {
+        "$path": "src/StarterPlayer/StarterCharacterScripts",
+        "$keepUnknowns": true
+      },
+      "StarterPlayerScripts": {
+        "$path": "src/StarterPlayer/StarterPlayerScripts",
+        "$keepUnknowns": true
+      }
+    }
+  }
+}
