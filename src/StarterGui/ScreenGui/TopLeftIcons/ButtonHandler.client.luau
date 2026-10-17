@@ -63,7 +63,8 @@ createHoverEffect(settingsButton)
 
 -- Panel state tracking
 local isPanelOpen = false
-local lastOpenPanel = nil
+-- The skills panel is visible from the start, so it counts as the open panel (opening another one closes it)
+local lastOpenPanel = homePanel.Visible and homePanel or nil
 
 local function closePanel(panel)
 	if not lastOpenPanel then return end
@@ -73,7 +74,9 @@ local function closePanel(panel)
 	})
 	slideOut:Play()
 	slideOut.Completed:Connect(function()
-		panel.Visible = false
+		if lastOpenPanel ~= panel then -- not reopened in the meantime
+			panel.Visible = false
+		end
 	end)
 	lastOpenPanel = nil
 end

@@ -2,10 +2,19 @@ local toggle = script.Parent
 local frame = toggle.Parent
 local button = toggle -- Keep reference for compatibility
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
+
+local TalentConfig = require(ReplicatedStorage:WaitForChild("TalentConfig"))
 
 local DEFAULT_SPEED = 16
 local FAST_SPEED = 64
+
+-- "Off" means the player's normal speed, including the Run Speed talent (server-owned attribute)
+local function normalSpeed()
+    local level = TalentConfig.ClampLevel("RunSpeed", LocalPlayer:GetAttribute(TalentConfig.AttributeName("RunSpeed")))
+    return DEFAULT_SPEED * TalentConfig.WalkSpeedFactor(level)
+end
 
 local isFast = false
 
@@ -32,7 +41,7 @@ toggle.Activated:Connect(function()
     if isFast then
         setRunSpeed(FAST_SPEED)
     else
-        setRunSpeed(DEFAULT_SPEED)
+        setRunSpeed(normalSpeed())
     end
     updateToggleVisual()
 end)
@@ -51,8 +60,15 @@ LocalPlayer.CharacterAdded:Connect(function(character)
     else
         local humanoid = character:FindFirstChildOfClass("Humanoid")
 		if humanoid then
-            humanoid.WalkSpeed = DEFAULT_SPEED
+            humanoid.WalkSpeed = normalSpeed()
         end
+    end
+end)
+
+-- A talent purchase makes the server set WalkSpeed; keep the debug boost while it is on
+LocalPlayer:GetAttributeChangedSignal(TalentConfig.AttributeName("RunSpeed")):Connect(function()
+    if isFast then
+        task.defer(setRunSpeed, FAST_SPEED)
     end
 end)
 

@@ -179,6 +179,13 @@ their own order: P2a/P2b need P1, P3 needs P1 and profile session locking. M6 ne
   purchase through the panel button (no spare Coins; the server path is identical to the remote) and a multi-client run.
   Live DataStores restored: profile back to the 320-Coin snapshot; the reset had removed the admin's own Top-10 entries,
   which were re-added (Stage 1 104 s, Stage 2 58.5 s).
+  Follow-up (user report, 2026-10-17): (1) the admin Run Speed toggle's "off" restored a hard-coded 16, discarding the
+  talent speed — it now restores 16 × the talent factor and keeps the 64 boost if a purchase re-applies the server
+  speed; (2) the skills panel is visible from the start but was not tracked as the open panel, so Settings / Admin
+  opened behind it — it now counts as open and is closed first. Verified (Run Speed level 4): Settings click → Home
+  hidden; Admin click → Settings/Home hidden; Home click → Admin hidden; toggle ON → client WalkSpeed 64, OFF → 19.84.
+  The profile had real progress from the user's own play (Run Speed 2, Jump Height 2, Stage 1 Bronze); the two test
+  purchases were reverted exactly (Run Speed 2, 191 Coins).
 
 ### R1 — Repeat rewards + shared payout
 - **Inputs:** `StageResults.RecordFinish`, `CoinSystem` pickup, `PlayerProfile.AddCoins`, GDD §5 repeat reward.
