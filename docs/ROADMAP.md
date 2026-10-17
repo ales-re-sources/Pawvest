@@ -34,7 +34,7 @@ Rules:
 | M1.1 | Medal limits visibility | ✔ | ✔ | – |
 | M2 | Talents shop | ✔ | ✔ | – |
 | R1 | Repeat rewards + shared payout | ✔ | ✔ | – |
-| P1a | Pet data + economy | – | – | – |
+| P1a | Pet data + economy | ✔ | ✔ | – |
 | P1b | Egg stand + Pets panel | – | – | – |
 | P1c | Pet models + following | – | – | – |
 | P1d | Pet XP + levels | – | – | – |
@@ -248,6 +248,33 @@ P1a comes first; P1b, P1c and P1d each need only P1a and can follow in any order
   - First Gold on a stage grants a free Basic egg.
   - Player attribute `EquippedPets` (`"kind:level,…"`) for rendering (P1c).
 - **Boundary:** no GUI, models or XP; tested by firing the remotes from the client in `execute_luau`.
+- **Design notes (design check 2026-10-17):**
+  - Pet uids are **strings** (`tostring(NextPetUid)`): `Pets` is a dictionary keyed by uid, so a DataStore never sees a
+    sparse numeric array. Remotes take the uid as a string only (anything else is ignored). The rarity is derived from
+    the kind (`PetConfig.Kinds`), never stored.
+  - Bonuses are kept in **permille** (Common 20 … Legendary 150, +5 per level above 1) so sums are exact;
+    `Multiplier(pets) = 1 + min(500, Σ) / 1000`. `CoinRewards.Grant` rounds half up with the same 1e-9 float guard as
+    `RunReward` (e.g. 30 × 1.15 is 34.4999… in floating point but pays 35).
+  - Egg weights are integers per 1000 (Basic 600 / 250 / 110 / 35 / 5); `Roll(eggId, rng)` picks the rarity by weight,
+    then a kind of that rarity uniformly. The Golden egg is in `PetConfig` for P2b but not sold at the stand
+    (`stand = false`): `BuyEgg("Golden")` is ignored like an unknown id.
+  - Remotes (`ReplicatedStorage.PetRemotes`): `BuyEgg(eggId)`, `Equip(uid)`, `Unequip(uid)`, `BuySlot(expectedSlot)`,
+    `SellPet(uid)`; server → client `PetsChanged(state)` (`{ pets, equipped, slots, freeEggs, multiplier }`, sent after load
+    and after every change) and `Result(action, ok, detailOrReason)` so P1b can show a hatch reveal or why a request failed.
+    Malformed requests (wrong types, unknown egg / uid) are ignored silently; well-formed but refused ones answer a reason
+    (`"coins"`, `"full"`, `"slots"`, `"equipped"`, `"stale"`, `"maxed"`, `"loading"`). One 0.2 s cooldown per player covers all
+    pet remotes.
+  - `BuySlot(expectedSlot)` follows the talent pattern: accepted only when `expectedSlot == PetSlots + 1` (a double click
+    cannot buy slots 2 and 3 at once); the price comes from `PetConfig.SlotPrices`.
+  - `BuyEgg` opens a waiting free egg of that kind first (no charge). Inventory cap 50 (`"full"`, also for free eggs, which
+    then stay waiting). A sale pays the sell value through `AddCoins` (not multiplied, not a gameplay reward).
+  - Purchases, egg opening and sales save at once; equip / unequip are saved by the autosave and on leave.
+  - The launch egg: profile flag `LaunchEgg` (false in new and reconciled records) — `PetService` adds one Basic free egg
+    and sets it on join, so new and existing players get exactly one. The admin reset returns a fresh profile, so the
+    launch egg is granted again after it (consistent with a fresh player).
+  - First Gold: `StageResults` calls `PetService.GrantFreeEgg(player, "Basic")` when a finish raises the medal to Gold;
+    medals are never revoked, so this happens once per stage. The result carries `freeEgg = "Basic"` for a later popup line.
+  - `reconcile` also sets `Version = 2` on old records.
 - **Studio-only changes:** none.
 - **Acceptance checks:**
   - buying an egg with too few Coins is rejected server-side: Coins and pet count unchanged;
@@ -259,6 +286,31 @@ P1a comes first; P1b, P1c and P1d each need only P1a and can follow in any order
   - the first Gold on a stage adds exactly one free Basic egg, a second Gold on that stage adds none; the launch free
     egg is granted once (not again after rejoin);
   - after rejoin: identical pets, levels, XP, slots, equipped set and free eggs.
+- **Validation log (2026-10-17, solo playtests, API access on, uid 9892673032):** `PetConfig` in Edit mode: 10 000 Basic
+  rolls → Common 58.99 / Uncommon 25.71 / Rare 11.11 / Epic 3.66 / Legendary 0.53 % (max deviation 1.01 pp), every kind
+  matched its rarity; Golden rolls, an unknown egg returns nil; `XpToNext` 10 / 112 / 316 / 828 for L1 / 5 / 10 / 19, nil at
+  20, 6 714 XP from 1 to 20; Epic L1 = 100 ‰, Legendary L20 = 245 ‰, three L20 Legendaries → ×1.5.
+  Playtest A (stored v1 profile, 1 Coin): join → `FreeEggs = {Basic = 1}`; `BuyEgg("Basic")` → free Cat, uid "1", Coins 1;
+  again → `coins`, and with forged price args → `coins` (Coins 1, 1 pet); `BuyEgg` Golden / "Nope" / 1 / table / nil → no
+  reply, nothing changed; `BuySlot(2)` → `coins`, `BuySlot(3)` → `stale`, `BuySlot("2")` ignored; `Equip("999")` and
+  `Equip(1)` ignored; `Equip("1")` → attribute `Cat:1`, again → `equipped`; `SellPet("1")` while equipped → `equipped`;
+  after `Unequip` → +10 exactly (1 → 11), pet gone, second sale ignored. Stored: `Version = 2`, `LaunchEgg = true`,
+  `NextPetUid = 2`. Playtest B (rejoin): no launch egg again (`freeEggs` empty, 11 Coins).
+  Playtest C (stored preset: 1000 Coins, Dragon L1, Cat, 3 × Phoenix L20, Dog L3 / 5 XP, uids 1–5 + 7, `NextPetUid = 8`,
+  Tutorial Silver, Stage 1 Bronze): `BuySlot(3)` → `stale`; `BuySlot(2, 0, -999)` → exactly −200; `BuySlot(2)` again →
+  `stale`; `BuySlot(3)` → −300; `BuySlot(4)` → `maxed`; `BuyEgg("Basic", 0, -1000)` → exactly −50 (Fox, uid "8"); `Equip("6")`
+  ignored. Dragon equipped (×1.1): Tutorial Gold 2.1 s → medal payout 40 paid **44**, run reward 5 paid 6, `freeEgg = "Basic"`,
+  `FreeEggs = {Basic = 1}`. No pet: Stage 1 Silver 62 s → medal 40 paid **40**, run reward 8. Three Phoenix L20 (uncapped
+  +73.5 %): multiplier 1.5, 4th `Equip("1")` → `slots` (equipped unchanged), `SellPet("3")` (equipped) → `equipped`,
+  `SellPet("2")` (Cat) → +10 exactly; Tutorial Gold again → medal 0, run reward 4 paid 6 (uncapped would be 7), no second
+  free egg. Stored after leaving = state before (Coins 364, 6 pets, slots 3, equipped `3, 4, 5`, `FreeEggs = {Basic = 1}`,
+  `NextPetUid = 9`); playtest D (rejoin): identical `PetsChanged` state, attribute `Phoenix:20,Phoenix:20,Phoenix:20`, 364
+  Coins. Then `BuyEgg("Basic")` opened the waiting free egg for 0 Coins (Dog, uid "9"); admin Reset Score → 0 Coins, no pets,
+  slots 1, attribute empty, `FreeEggs = {Basic = 1}` (fresh launch egg). Consoles: only Roblox's own UIBlox
+  "FoundationProvider" warnings and one "DataStore request was added to queue" (egg save and reset save on the same key
+  within a second). Not covered: inventory cap 50, multi-client. Live DataStores restored to the pre-test snapshot
+  (profile v1 with 1 Coin, boards Stage 1 / 2 unchanged, Stage 4 empty, Stage 3 key absent); the next real join grants the
+  launch egg.
 
 ### P1b — Egg stand + Pets panel
 - **Inputs:** P1a remotes and `PetsChanged`, `PetConfig`, GDD §7.2, §7.5.

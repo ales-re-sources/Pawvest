@@ -45,10 +45,12 @@ src/
     MedalText.luau                    rich text for stars, medal limits and the timer's medal target
     AdminConfig.luau                  admin UserIds + IsAdmin (client UI gating and server checks)
     TalentConfig.luau                 talents (Run Speed, Double Jump, Jump Height): costs, effect helpers, Talent_<id> attribute names
+    PetConfig.luau                    pet kinds, rarities (bonus ‰, sell value), eggs + weights, slot prices, level curve; Roll, PetBonus, Multiplier, XpToNext
   ServerScriptService/
     PlayerProfile.luau                per-player profile DataStore (load/migrate/save), AddCoins, CoinsChanged
-    CoinRewards.luau                  Grant(player, base, source): the only gameplay Coin payout (multiplier, rounding)
-    StageResults.luau                 finish → personal best, medal, one-time payout + daily repeat reward; Medal_<folder> attributes
+    CoinRewards.luau                  Grant(player, base, source): the only gameplay Coin payout (pet multiplier, rounding)
+    PetService.luau                   pets: eggs (paid / free), equip slots, sell; PetRemotes, EquippedPets attribute, Multiplier, GrantFreeEgg
+    StageResults.luau                 finish → personal best, medal, one-time payout + daily repeat reward, free egg on first Gold; Medal_<folder> attributes
     StageUnlocks.luau                 hub portal gate: bar (previous stage's medal) or bought unlock; UnlockRemotes, Unlocked_<folder> attributes
     HomeService.server.luau           GoHome remote: Home button → hub spawn, cancels the running timer
     TalentService.server.luau         talent purchases (Buy remote, server-priced), levels → profile + Talent_<id> attributes, WalkSpeed/jump on spawn
@@ -124,23 +126,27 @@ RemoteEvents (in `ReplicatedStorage`; first three exist only in Studio, not in f
 | `GoHome` | client → server, no arguments | Home button; created at runtime by `HomeService`, 3 s cooldown, server teleports + cancels the timer |
 | `TalentRemotes.Buy` / `.Result` | client → server `(talentId, expectedLevel)` / server → client `(talentId, ok, level or reason)` | created at runtime by `TalentService`; the price is never sent |
 | `UnlockRemotes.Buy` / `.Result` / `.Locked` | client → server `(stageKey)` / server → client `(stageKey, ok, reason?)` / server → client `(stageKey)` | created at runtime by `StageUnlocks`; price from `StageConfig.unlockPrice`; `Locked` opens the unlock popup |
+| `PetRemotes.BuyEgg` / `.Equip` / `.Unequip` / `.BuySlot` / `.SellPet` | client → server `(eggId)` / `(uid)` / `(uid)` / `(expectedSlot)` / `(uid)` | created at runtime by `PetService`; uids are strings; prices, rolls and sell values are server-side; a waiting free egg is opened first |
+| `PetRemotes.PetsChanged` / `.Result` | server → client `({ pets, equipped, slots, freeEggs, multiplier })` / `(action, ok, detail or reason)` | state after load and every change; per-request answer (hatch result, sale value, reject reason) |
 
 DataStores:
 
 | Store | Key | Value |
 |---|---|---|
-| `PlayerProfiles` | `user_<UserId>` | `{ Version, Coins, BestTimes[stageKey], Medals, UnlockedStages, CollectedCoins, Talents, RunsToday }` |
+| `PlayerProfiles` | `user_<UserId>` | `{ Version = 2, Coins, BestTimes[stageKey], Medals, UnlockedStages, CollectedCoins, Talents, RunsToday, Pets[uid] = { Kind, Level, XP }, EquippedPets, PetSlots, NextPetUid, FreeEggs[eggId], LaunchEgg }` |
 | `PlayerCoins` | `UserId` | legacy integer coins — read once for migration |
 | `PlayerScoresStore` | `player_<UserId>` | legacy `{ {StageName, Elapsed}, … }` — read once for migration |
 | `GlobalLeaderboardsStore` | `leaderboard_<StageName>` | Top-10 `{ {PlayerName, Elapsed}, … }` |
 | ordered `"a"` | — | legacy time-played board; `TopTimeScript` is **Disabled** |
 
 Gameplay Coins (medals, repeat rewards, pickups, future sources) go through `CoinRewards.Grant`; purchases and
-deductions call `PlayerProfile.AddCoins` directly. `RunsToday = { Day = <UTC day>, [stageKey] = finishes }` drives
+deductions (and pet sales) call `PlayerProfile.AddCoins` directly. The multiplier is `PetService.Multiplier`
+(1 + equipped pets' bonus, capped at +50 %). `RunsToday = { Day = <UTC day>, [stageKey] = finishes }` drives
 the diminishing repeat reward (`StageConfig.RunReward`).
 
 Player attributes `Medal_<stage folder>` (0–3) mirror `PlayerProfile.Medals` for client displays; `Unlocked_<stage folder>`
 (bool) mirror `StageUnlocks` (bar met or `UnlockedStages[key]` bought; the bar is derived from medals, never stored).
+`EquippedPets` (`"Kind:Level,…"`, empty when none) mirrors the equipped pets for pet rendering (P1c).
 
 Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (ObjectValue, runtime only).
 

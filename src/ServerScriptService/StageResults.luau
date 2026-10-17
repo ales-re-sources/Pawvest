@@ -1,5 +1,5 @@
 -- StageResults: what a finished run earns — personal best, medal, one-time Coin payouts and the daily diminishing
--- repeat reward (docs/GDD.md §4–5). Coins are paid through CoinRewards.
+-- repeat reward (docs/GDD.md §4–5), plus a free egg for the first Gold (§7.2). Coins are paid through CoinRewards.
 -- Server-only. Medals are mirrored to player attributes (StageConfig.MedalAttribute) for client displays.
 
 local Players = game:GetService("Players")
@@ -9,6 +9,10 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local StageConfig = require(ReplicatedStorage.StageConfig)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local CoinRewards = require(ServerScriptService.CoinRewards)
+local PetService = require(ServerScriptService.PetService)
+
+local GOLD = StageConfig.MedalIndex.Gold
+local GOLD_EGG = "Basic" -- free egg for the first Gold on each stage (GDD §7.2)
 
 local StageResults = {}
 
@@ -35,7 +39,8 @@ end
 
 -- Records a finished run and returns the result for the results popup, or nil if the profile is not loaded:
 -- { stageKey, displayName, time, best, newBest, medal (this run), bestMedal, coins (medal payout),
---   runCoins (repeat reward), runsToday (finishes of this stage today, this one included), nextMedal?, nextThreshold? }
+--   runCoins (repeat reward), runsToday (finishes of this stage today, this one included), freeEgg? (egg id granted
+--   for the first Gold), nextMedal?, nextThreshold? }
 function StageResults.RecordFinish(player: Player, stageKey: string, elapsed: number)
 	local profile = PlayerProfile.Get(player)
 	local stage = StageConfig.ByKey[stageKey]
@@ -58,6 +63,11 @@ function StageResults.RecordFinish(player: Player, stageKey: string, elapsed: nu
 		player:SetAttribute(StageConfig.MedalAttribute(stage), medal)
 		coins = CoinRewards.Grant(player, StageConfig.Payout(stage, previousMedal, medal), "medal") or 0
 	end
+	-- medals are never revoked (except by the admin reset), so the first Gold happens once per stage
+	local freeEgg = nil
+	if medal == GOLD and previousMedal < GOLD and PetService.GrantFreeEgg(player, GOLD_EGG) then
+		freeEgg = GOLD_EGG
+	end
 
 	-- every finish counts towards the daily decay; only finishes with a medal pay
 	local runs = runsToday(profile)
@@ -65,7 +75,7 @@ function StageResults.RecordFinish(player: Player, stageKey: string, elapsed: nu
 	runs[stageKey] = earlierFinishes + 1
 	local runCoins = CoinRewards.Grant(player, StageConfig.RunReward(stage, medal, earlierFinishes), "run") or 0
 	if medal > previousMedal then
-		task.spawn(PlayerProfile.Save, player) -- a new medal is saved at once; run counts follow with the autosave
+		task.spawn(PlayerProfile.Save, player) -- a new medal (and its free egg) is saved at once; run counts follow later
 	end
 
 	local bestMedal = math.max(previousMedal, medal)
@@ -81,6 +91,7 @@ function StageResults.RecordFinish(player: Player, stageKey: string, elapsed: nu
 		coins = coins,
 		runCoins = runCoins,
 		runsToday = earlierFinishes + 1,
+		freeEgg = freeEgg,
 		nextMedal = nextMedal,
 		nextThreshold = nextMedal and StageConfig.Threshold(stage, nextMedal),
 	}

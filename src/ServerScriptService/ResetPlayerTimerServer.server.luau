@@ -1,5 +1,5 @@
 -- Admin panel "Reset Score": full progress reset of the admin who clicked it (debug tool).
--- Coins, best times, medals, unlocks, collected coins and talents go back to a fresh profile, and the admin's
+-- Coins, best times, medals, unlocks, collected coins, talents and pets go back to a fresh profile, and the admin's
 -- entries are removed from the Top-10 boards. Other players are never touched; non-admin requests are ignored.
 
 local Players = game:GetService("Players")

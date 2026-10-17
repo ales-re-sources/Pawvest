@@ -6,7 +6,7 @@
 local Players = game:GetService("Players")
 local DataStoreService = game:GetService("DataStoreService")
 
-local PROFILE_VERSION = 1
+local PROFILE_VERSION = 2 -- 2: pets (P1a)
 local AUTOSAVE_INTERVAL = 60
 local MAX_ATTEMPTS = 3
 local SHUTDOWN_TIMEOUT = 25
@@ -40,6 +40,12 @@ local function newProfile()
 		CollectedCoins = {}, -- [coinId] = true (M4)
 		Talents = {}, -- [talentId] = level (M2)
 		RunsToday = {}, -- { Day = UTC day number, [stageKey] = finishes that day } (R1)
+		Pets = {}, -- [uid string] = { Kind, Level, XP } (P1a)
+		EquippedPets = {}, -- { uid, … } in equip order, at most PetSlots (P1a)
+		PetSlots = 1, -- equip slots owned (P1a)
+		NextPetUid = 1, -- next uid to hand out, never reused (P1a)
+		FreeEggs = {}, -- [eggId] = free eggs waiting to be opened (P1a)
+		LaunchEgg = false, -- true once the pets-launch free egg was granted (P1a)
 	}
 end
 
@@ -50,6 +56,7 @@ local function reconcile(data)
 			data[field] = default
 		end
 	end
+	data.Version = PROFILE_VERSION
 	return data
 end
 
