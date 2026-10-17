@@ -140,3 +140,8 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
 ## Testing
 No automated tests. Verify in Studio: playtest (MCP `start_stop_play`), read `get_console_output`,
 and check DataStore behaviour only with Studio API access enabled.
+
+Multi-client: the user starts Test → Start Test Session → **Server and Clients** (F7), then Test → **Add Clients**.
+`list_roblox_studios` then shows one extra instance per client and one for the server (unnamed);
+`get_studio_state` tells them apart by the focused DataModel. Test users have UserIds −1, −2… and create
+`PlayerProfiles` records `user_-1`, `user_-2` — remove them afterwards.

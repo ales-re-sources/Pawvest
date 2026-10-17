@@ -29,7 +29,7 @@ Rules:
 | # | Milestone | Implemented | Studio-validated | Live-validated |
 |---|---|---|---|---|
 | D | Design docs (GDD + roadmap) | ✔ | n/a | n/a |
-| M0 | Foundations | ✔ | 3/4 — multi-client check pending | – |
+| M0 | Foundations | ✔ | ✔ | – |
 | M1 | Medals & rewards | – | – | – |
 | M2 | Talents shop | – | – | – |
 | M3 | Stage unlocks | – | – | – |
@@ -71,7 +71,11 @@ M4 adds a Coin source. M5 is mostly independent (can move earlier). M6 needs the
   final `17.9`, panel updated, label faded; death mid-run kept the timer; `TeleportToSpawn` cancelled it.
   Migration: legacy 108 Coins / Stage 1 104 s / Stage 2 163 s → identical profile. Profile on leave
   (118 Coins, Stage 1 17.9) identical after rejoin. Found + fixed: one coin paid +10 (queued body-part touches).
-  Test writes to live DataStores were restored afterwards. Multi-client check not run yet (needs Test → Clients and Servers).
+  Test writes to live DataStores were restored afterwards.
+  Multi-client (Test → Start Test Session → Server and Clients, + Add Clients): Player1 started at `00:01.8`,
+  Player2 then touched the same `TimerStart` and counted `00:00.5 → 00:02.9`; Player1 kept counting
+  (`00:19.7` ≈ 1.8 + 17.9 s) and received no extra timer events. Server console clean.
+  Test profiles `user_-1` / `user_-2` removed afterwards.
 
 ### M1 — Medals & rewards
 - **Outputs:** tier evaluation at the finish portal; one-time payouts per GDD §5; results popup; medal shown on hub portal.
