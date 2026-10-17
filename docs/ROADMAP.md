@@ -136,7 +136,10 @@ their own order: P2a/P2b need P1, P3 needs P1 and profile session locking. M6 ne
   own Top-10 entries removed, 5 s cooldown); the button needs a confirming second click.
   Validated (solo, admin): one click → "Click again to confirm", nothing reset, reverts after 3 s; two clicks →
   Coins 0, all `Medal_*` 0, portal stars dim, panel "0 / 12", stored profile fresh, own entries gone from both boards
-  (other entries kept); console clean; live data restored. Non-admin request ignored: pending multi-client check.
+  (other entries kept); console clean; live data restored. Non-admin (multi-client, Player1 uid −1, Admin button
+  hidden): `ResetPlayerTimer:FireServer()` from the client left 70 Coins and Tutorial Gold unchanged (also in the
+  profile saved on leave); server logged "ignored request from non-admin Player1 (-1)". Test profiles and the
+  Tutorial board entry removed afterwards.
 - **Outputs:** skills panel lists talents, levels, costs; purchase RemoteEvent; server applies WalkSpeed / jump height /
   double-jump flag on every spawn. Admin toggles stay as debug-only.
 - **Acceptance checks:** purchase with insufficient Coins is rejected server-side (Coins unchanged);
