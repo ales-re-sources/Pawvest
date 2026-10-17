@@ -44,18 +44,22 @@ src/
     TimeFormat.luau                   tenths rounding, "mm:ss.t" and short "m:ss" formatting
     MedalText.luau                    rich text for stars, medal limits and the timer's medal target
     AdminConfig.luau                  admin UserIds + IsAdmin (client UI gating and server checks)
+    TalentConfig.luau                 talents (Run Speed, Double Jump, Jump Height): costs, effect helpers, Talent_<id> attribute names
   ServerScriptService/
     PlayerProfile.luau                per-player profile DataStore (load/migrate/save), AddCoins, CoinsChanged
     StageResults.luau                 finish → personal best, medal, one-time Coin payout; Medal_<folder> player attributes
+    TalentService.server.luau         talent purchases (Buy remote, server-priced), levels → profile + Talent_<id> attributes, WalkSpeed/jump on spawn
     CoinSystem.server.luau            leaderstats (Stage, Coins) mirrored from profile, coin pickup, CoinUpdateEvent
     ResetPlayerTimerServer.server.luau  ResetPlayerTimer remote → admin-only full reset of the caller's own progress
   StarterPlayer/StarterPlayerScripts/
     StageTimerClientUpdater.client.luau  StageTimer label: counts locally between start/stop from StageTimerUpdate
+    TalentDoubleJump.client.luau      Double Jump talent: extra air jumps from the Talent_DoubleJump attribute
     StageResultsPopup.client.luau     results popup after a finish (GUI built in code)
     HubPortalMedals.client.luau       own best-medal stars on each hub portal face (local SurfaceGuis)
   StarterGui/
     CoinGui/CoinDisplayScript.client.luau        top-right coin counter
     ScreenGui/TopLeftIcons/ButtonHandler.client.luau  Home/Settings/Admin buttons, slide-in panels (AdminConfig)
+    ScreenGui/HomePanel/SkillsPanel.client.luau   "Your skills" panel (🏠 button): talent rows built in code
     ScreenGui/AdminPanel/...                      RunSpeed (16↔64), DoubleJump (up to 5 air jumps), ScoreReset
   Workspace/
     Handlers/                         ModuleScripts shared by all stage scripts (required via workspace.Handlers.*)
@@ -112,6 +116,7 @@ RemoteEvents (in `ReplicatedStorage`; first three exist only in Studio, not in f
 | `StageTimerStopped` | — | unused since M0 (was the stop ack); can be deleted in Studio |
 | `ResetPlayerTimer` | client → server | admin panel "Reset Score": full reset of the caller's own progress; server checks `AdminConfig` |
 | `CoinUpdateEvent` | server → client | created at runtime by `CoinSystem` |
+| `TalentRemotes.Buy` / `.Result` | client → server `(talentId, expectedLevel)` / server → client `(talentId, ok, level or reason)` | created at runtime by `TalentService`; the price is never sent |
 
 DataStores:
 
@@ -140,6 +145,8 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
   `git status` right after; files edited while disconnected are overwritten by Studio's copy.
 - Studio playtests with API access read/write the **live** DataStores — snapshot and restore anything a test changes.
 - `CheckpointTouchHandler` plays `script.Sound` — the `Sound`/`Orig` children exist only in Studio.
+- Argon does not turn an existing plain Studio instance into a synced folder when a script file is added under it
+  (it made a second empty `HomePanel`). After adding scripts to a Studio-only container, check for duplicate siblings.
 - `Workspace/Stage3/level.2` is a Model literally named `level.2` (dot in the name).
 - Debounces in timer, portal and checkpoint code are per player. Kill scripts keep a script-global `h` keyed by the
   touching part (effectively per player).

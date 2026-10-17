@@ -129,10 +129,10 @@ local userInputService = game:GetService("UserInputService")
 userInputService.InputBegan:Connect(function(input, gameProcessed)
 	if gameProcessed then return end
 	
-	if input.UserInputType == Enum.UserInputType.MouseButton1 and isPanelOpen then
-		local mousePos = userInputService:GetMouseLocation()
-		local panelPos = adminPanel.AbsolutePosition
-		local panelSize = adminPanel.AbsoluteSize
+	if input.UserInputType == Enum.UserInputType.MouseButton1 and lastOpenPanel then
+		local mousePos = userInputService:GetMouseLocation() - game:GetService("GuiService"):GetGuiInset()
+		local panelPos = lastOpenPanel.AbsolutePosition
+		local panelSize = lastOpenPanel.AbsoluteSize
 		
 		-- Check if click is outside the panel
 		if mousePos.X < panelPos.X or mousePos.X > panelPos.X + panelSize.X or

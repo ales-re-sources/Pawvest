@@ -32,7 +32,7 @@ Rules:
 | M0 | Foundations | ✔ | ✔ | – |
 | M1 | Medals & rewards | ✔ | ✔ | – |
 | M1.1 | Medal limits visibility | ✔ | ✔ | – |
-| M2 | Talents shop | – | – | – |
+| M2 | Talents shop | ✔ | ✔ | – |
 | R1 | Repeat rewards + shared payout | – | – | – |
 | P1 | Pets core | – | – | – |
 | M3 | Stage unlocks | – | – | – |
@@ -142,8 +142,43 @@ their own order: P2a/P2b need P1, P3 needs P1 and profile session locking. M6 ne
   Tutorial board entry removed afterwards.
 - **Outputs:** skills panel lists talents, levels, costs; purchase RemoteEvent; server applies WalkSpeed / jump height /
   double-jump flag on every spawn. Admin toggles stay as debug-only.
+- **Design notes:**
+  - `ReplicatedStorage.TalentConfig` (shared, pure): talents, per-level costs and effect helpers (GDD §6 numbers).
+    `ServerScriptService.TalentService` owns purchases; remotes are created by code in `ReplicatedStorage.TalentRemotes`
+    (`Buy` client → server, `Result` server → client).
+  - `Buy(talentId, expectedLevel)`: the price is never sent. The server charges `costs[current + 1]` and only accepts
+    `expectedLevel == current + 1` (a stale panel, double click or forged level is rejected as "stale"), 0.25 s cooldown
+    per player, non-string / unknown ids ignored silently. Success → `AddCoins(-cost)`, `Talents[id]`, save at once.
+  - Levels are mirrored to `Talent_<id>` player attributes; the server applies WalkSpeed (base × 1 + 0.06·L) and jump
+    (JumpPower × √(1 + 0.08·L), height ∝ power²) on every spawn and immediately after a purchase, always from the
+    humanoid's values at spawn (idempotent). `PlayerProfile.ProfileReset` re-publishes talents after the admin reset.
+  - Double Jump is client-driven (Roblox jumping is client-side): `TalentDoubleJump.client.luau` allows
+    `AirJumps(level)` extra jumps from the attribute. The admin DoubleJump / RunSpeed toggles are untouched.
+  - The panel is the existing "Your skills" `HomePanel` (🏠 button): `HomePanel/SkillsPanel.client.luau` builds the rows
+    in code (level, next effect, Buy button, red hint on rejection).
+  - Also fixed: `ButtonHandler` "click outside closes the panel" tested the AdminPanel's bounds (so any click on a
+    panel's background closed it); it now uses the open panel and the GUI inset.
+- **Studio-only changes:** `StarterGui.ScreenGui.HomePanel`: mock-up `RunSpeed` row deleted (rows are generated);
+  panel height is set by the script. `HomePanel` is now a synced folder (`init.meta.json`) because it holds the script.
+  Argon did not map the existing instance and created a second, empty `HomePanel` Frame from disk; the styled children
+  were moved into it and the old one deleted — no duplicates remain. No other GUI/part changes.
 - **Acceptance checks:** purchase with insufficient Coins is rejected server-side (Coins unchanged);
   bought level applies after respawn and after rejoin; firing the remote with a forged cost/level has no effect.
+- **Validation log (2026-10-17, solo playtest, API access on, uid 9892673032 with 320 Coins):**
+  forged requests (levels 5 / 99 / −1 / 0 / 2 / NaN / ∞ for Run Speed, 2 for Double Jump, 4 for Jump Height; unknown id,
+  numeric / table / nil id, string level) changed nothing (Coins 320, all levels 0; valid-looking ones answered "stale").
+  `Buy("RunSpeed", 1, 0, -1000, 0)` (forged cost args) charged exactly 20 (→ 300). Double-fired level 2 → one purchase
+  (→ 260). Run Speed 3 (→ 200), Double Jump (→ 50); Run Speed 4 with 50 Coins rejected ("coins", still 50 / level 3);
+  Jump Height 1 (→ 20), Jump Height 2 with 20 Coins rejected. Humanoid: WalkSpeed 16 → 18.88 (= 16 × 1.18),
+  JumpPower 50 → 51.96 (= 50 × √1.08), identical after a respawn. Stored profile after leaving: Talents
+  `{RunSpeed 3, DoubleJump 1, JumpHeight 1}`, Coins 20; after rejoin the same attributes, WalkSpeed and JumpPower, panel
+  shows `Run Speed 3/5 · Buy 90`, `Double Jump 1/1 · MAX`, `Jump Height 1/3 · Buy 60`. Real mouse click on "Buy 60" with
+  20 Coins → "Not enough Coins" hint, nothing bought. Double jump: three space presses in the air-time sequence produced
+  the ground jump plus exactly one air jump. Admin Reset Score: talents 0, WalkSpeed 16, JumpPower 50, panel back to
+  `Buy 20` / `Buy 150`. Consoles: only Roblox's own UIBlox "FoundationProvider" warnings. Not covered: a successful
+  purchase through the panel button (no spare Coins; the server path is identical to the remote) and a multi-client run.
+  Live DataStores restored: profile back to the 320-Coin snapshot; the reset had removed the admin's own Top-10 entries,
+  which were re-added (Stage 1 104 s, Stage 2 58.5 s).
 
 ### R1 — Repeat rewards + shared payout
 - **Inputs:** `StageResults.RecordFinish`, `CoinSystem` pickup, `PlayerProfile.AddCoins`, GDD §5 repeat reward.

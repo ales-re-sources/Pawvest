@@ -20,11 +20,15 @@ local saveBlocked = {} -- [Player] = true when the load failed
 local activeSaves = 0
 
 local coinsChanged = Instance.new("BindableEvent")
+local profileReset = Instance.new("BindableEvent")
 
 local PlayerProfile = {}
 
 -- Fires (player, coins) whenever Coins change through AddCoins.
 PlayerProfile.CoinsChanged = coinsChanged.Event
+
+-- Fires (player) after Reset replaced the profile, so systems mirroring it (talents) can refresh.
+PlayerProfile.ProfileReset = profileReset.Event
 
 local function newProfile()
 	return {
@@ -175,6 +179,7 @@ function PlayerProfile.Reset(player: Player): boolean
 	end
 	profiles[player] = newProfile()
 	coinsChanged:Fire(player, 0)
+	profileReset:Fire(player)
 	task.spawn(save, player)
 	return true
 end
