@@ -41,7 +41,8 @@ Roblox Studio MCP is available for inspecting/editing the live place (`search_ga
 src/
   ReplicatedStorage/
     StageConfig.luau                  stage list (key, folder, hub portal, T_base, tiers, unlock, reward factor) + medal math
-    TimeFormat.luau                   tenths rounding + "mm:ss.t" formatting
+    TimeFormat.luau                   tenths rounding, "mm:ss.t" and short "m:ss" formatting
+    MedalText.luau                    rich text for stars, medal limits and the timer's medal target
   ServerScriptService/
     PlayerProfile.luau                per-player profile DataStore (load/migrate/save), AddCoins, CoinsChanged
     StageResults.luau                 finish → personal best, medal, one-time Coin payout; Medal_<folder> player attributes
@@ -50,7 +51,7 @@ src/
   StarterPlayer/StarterPlayerScripts/
     StageTimerClientUpdater.client.luau  StageTimer label: counts locally between start/stop from StageTimerUpdate
     StageResultsPopup.client.luau     results popup after a finish (GUI built in code)
-    HubPortalMedals.client.luau       own best-medal stars above each hub portal (local BillboardGuis)
+    HubPortalMedals.client.luau       own best-medal stars on each hub portal face (local SurfaceGuis)
   StarterGui/
     CoinGui/CoinDisplayScript.client.luau        top-right coin counter
     ScreenGui/TopLeftIcons/ButtonHandler.client.luau  Home/Settings/Admin buttons, slide-in panels, ADMIN_USERS
@@ -84,7 +85,7 @@ and must never change. Hub label is `StageConfig.HubName` (`"Central Island"`).
 
 ## Reusable script variants (copy-pasted, not modules)
 
-Most of the 101 scripts are identical copies. Edit them consistently (grep by content or md5):
+Most of the 102 scripts are identical copies. Edit them consistently (grep by content or md5):
 
 | Count | Variant | Example |
 |---|---|---|
@@ -106,7 +107,7 @@ RemoteEvents (in `ReplicatedStorage`; first three exist only in Studio, not in f
 
 | Remote | Direction | Purpose |
 |---|---|---|
-| `StageTimerUpdate` | server → client | `(elapsed ≥ 0)` run active; `(-1, final, result)` finished; `(-1)` cancelled |
+| `StageTimerUpdate` | server → client | `(elapsed ≥ 0, stageKey)` run active; `(-1, final, result)` finished; `(-1)` cancelled |
 | `StageTimerStopped` | — | unused since M0 (was the stop ack); can be deleted in Studio |
 | `ResetPlayerTimer` | client → server | admin panel "reset score" (no server-side admin check) |
 | `CoinUpdateEvent` | server → client | created at runtime by `CoinSystem` |

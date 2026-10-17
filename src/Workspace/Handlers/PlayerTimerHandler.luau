@@ -1,6 +1,6 @@
 -- PlayerTimerHandler: per-player stage timers, personal bests (PlayerProfile) and global Top-10 (DataStore).
 -- StageTimerUpdate protocol (server → client):
---   (elapsed >= 0)  run is active, `elapsed` seconds as of now; the client counts on locally
+--   (elapsed >= 0, stageKey)  run is active, `elapsed` seconds as of now; the client counts on locally
 --   (-1, final, result)  run finished in `final` seconds; `result` from StageResults.RecordFinish (nil if no profile)
 --   (-1)                 run cancelled
 
@@ -11,6 +11,7 @@ local DataStoreService = game:GetService("DataStoreService")
 
 local StageConfig = require(ReplicatedStorage.StageConfig)
 local TimeFormat = require(ReplicatedStorage.TimeFormat)
+local MedalText = require(ReplicatedStorage.MedalText)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local StageResults = require(ServerScriptService.StageResults)
 
@@ -110,27 +111,60 @@ local function updateScorePanel(player, stageKey)
 	local scorePanel = screenGui:FindFirstChild("ScorePanel")
 	if not scorePanel then return end
 
+	-- third row with medal limits (Studio-only label, M1.1); the panel still works without it
+	local medalsLabel = scorePanel:FindFirstChild("StageMedals")
+	local profile = PlayerProfile.Get(player)
+	local medals = if profile then profile.Medals else {}
+
 	local stage = StageConfig.ByKey[stageKey]
 	if not stage then
 		scorePanel.StageName.Text = StageConfig.HubName
 		scorePanel.StageRecord.Text = "Enter portal!"
+		if medalsLabel then
+			local stars = 0
+			for _, medal in medals do
+				stars += medal
+			end
+			medalsLabel.Text = string.format("Stars earned: %d / %d", stars, #StageConfig.Stages * #StageConfig.Medals)
+		end
 		return
 	end
 
 	scorePanel.StageName.Text = stage.displayName
-	local profile = PlayerProfile.Get(player)
 	local best = profile and profile.BestTimes[stage.key]
 	if best then
 		scorePanel.StageRecord.Text = "Your record: " .. TimeFormat.Format(best)
 	else
 		scorePanel.StageRecord.Text = "First try!"
 	end
+	if medalsLabel then
+		medalsLabel.Text = MedalText.Limits(stage, medals[stage.key] or 0)
+	end
+end
+
+-- The ScreenGui is re-created on every respawn (ResetOnSpawn); redraw the panel each time it appears,
+-- and once more when the profile has loaded.
+local function watchScorePanel(player)
+	local playerGui = player:WaitForChild("PlayerGui")
+	playerGui.ChildAdded:Connect(function(child)
+		if child.Name == "ScreenGui" then
+			updateScorePanel(player, nil)
+		end
+	end)
+	if PlayerProfile.WaitFor(player) then
+		updateScorePanel(player, nil)
+	end
+end
+
+Players.PlayerAdded:Connect(watchScorePanel)
+for _, player in Players:GetPlayers() do
+	task.spawn(watchScorePanel, player)
 end
 
 
 local function startTimer(player, stageKey)
 	timers[player] = { StageKey = stageKey, StartClock = os.clock() }
-	StageTimerUpdate:FireClient(player, 0)
+	StageTimerUpdate:FireClient(player, 0, stageKey)
 end
 
 -- returns nil in case timer is not active for given player, otherwise the elapsed time and the stage key
@@ -166,8 +200,8 @@ local function stopTimer(player)
 	local result = StageResults.RecordFinish(player, timer.StageKey, elapsed)
 	StageTimerUpdate:FireClient(player, -1, elapsed, result)
 
+	updateScorePanel(player, nil) -- record and earned medals may have changed
 	if result and result.newBest then
-		updateScorePanel(player, nil)
 		updateGlobalLeaderboard(timer.StageKey, player.Name, elapsed)
 	end
 	return elapsed

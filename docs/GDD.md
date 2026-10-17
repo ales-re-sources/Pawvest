@@ -70,6 +70,13 @@ Medal rules:
 - After every finish a results popup shows: time, personal best (or "New record!"), the medal of this run,
   Coins paid (medal payout and repeat reward), and the threshold of the next medal not yet earned.
 
+Limits are visible before and during a run:
+- **Score panel** (on arriving at a stage): all three limits, e.g. `★ 1:52  ★★ 1:17  ★★★ 0:56`; tiers already
+  earned are gold. On the hub it shows the total stars earned.
+- **Stage timer** (while running): next to the time, the best medal still reachable and its limit
+  (`00:41.3  ★★★ 0:56`); when a limit passes it drops to the next tier, after Bronze to "no medal".
+- **Hub portals**: earned stars are drawn on the portal face itself (part of the gate, not camera-facing).
+
 ## 5. Rewards
 All Coins earned by playing (medal payouts, repeat rewards, challenge coins, garden production, future minigames)
 are paid through one server function and multiplied by the player's pet bonus (§7.3). Purchases are not.

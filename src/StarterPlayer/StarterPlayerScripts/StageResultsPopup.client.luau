@@ -6,9 +6,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StageTimerUpdate = ReplicatedStorage:WaitForChild("StageTimerUpdate")
 local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
+local MedalText = require(ReplicatedStorage:WaitForChild("MedalText"))
 
 local SHOW_SECONDS = 7
-local GOLD = "#FFD54A"
 local DIM = "#5A5A5A"
 
 local screenGui = Instance.new("ScreenGui")
@@ -67,12 +67,6 @@ local nextLabel = addLine("Next", 7, 16)
 coinsLabel.TextColor3 = Color3.fromRGB(120, 230, 120)
 nextLabel.TextColor3 = Color3.fromRGB(190, 190, 190)
 
-local function stars(medal)
-	local total = #StageConfig.Medals
-	return string.format('<font color="%s">%s</font><font color="%s">%s</font>',
-		GOLD, string.rep("★", medal), DIM, string.rep("★", total - medal))
-end
-
 local showGeneration = 0
 
 local function hide()
@@ -84,9 +78,9 @@ local function show(result)
 	titleLabel.Text = result.displayName .. " finished"
 	timeLabel.Text = TimeFormat.Format(result.time)
 	recordLabel.Text = if result.newBest
-		then string.format('<font color="%s">New record!</font>', GOLD)
+		then string.format('<font color="%s">New record!</font>', MedalText.Gold)
 		else "Record: " .. TimeFormat.Format(result.best)
-	starsLabel.Text = stars(result.medal)
+	starsLabel.Text = MedalText.Stars(result.medal, DIM)
 	medalLabel.Text = if result.medal > 0 then StageConfig.Medals[result.medal].name .. " medal" else "No medal"
 	coinsLabel.Visible = result.coins > 0
 	coinsLabel.Text = string.format("+%d Coins", result.coins)

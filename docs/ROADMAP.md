@@ -31,6 +31,7 @@ Rules:
 | D | Design docs (GDD + roadmap) | ✔ | n/a | n/a |
 | M0 | Foundations | ✔ | ✔ | – |
 | M1 | Medals & rewards | ✔ | ✔ | – |
+| M1.1 | Medal limits visibility | ✔ | ✔ | – |
 | M2 | Talents shop | – | – | – |
 | R1 | Repeat rewards + shared payout | – | – | – |
 | P1 | Pets core | – | – | – |
@@ -106,6 +107,28 @@ their own order: P2a/P2b need P1, P3 needs P1 and profile session locking. M6 ne
   Follow-up (user report): Stage 1 stars sat above the portal frame, hidden behind the top-right coin HUD from
   spawn; moved onto the portal face below the label, sized in studs, unearned stars lighter. Screenshot from spawn:
   all three portals show their stars.
+
+### M1.1 — Medal limits visibility (follow-up, user feedback)
+- **Outputs:** score panel limits row (hub: total stars); timer shows best reachable medal + limit; portal stars
+  as a SurfaceGui on the gate face; score panel survives respawn (was reset to "Central Island").
+- **Boundary:** display only — no change to medal evaluation or payouts.
+- **Design notes:** timer start message becomes `StageTimerUpdate(elapsed, stageKey)`; the client derives limits
+  from `StageConfig` and medals from `Medal_*` attributes. Short time format `m:ss` (`m:ss.t` if not whole).
+  Score panel refreshed server-side whenever the `ScreenGui` is re-created in `PlayerGui` (respawn).
+- **Studio-only changes:** `StarterGui.ScreenGui.ScorePanel` height 120 → 150, new TextLabel `StageMedals`
+  (RichText, TextScaled) below `StageRecord`.
+- **Acceptance checks:**
+  - Arriving at Stage 1 with no medal shows `★ 1:52  ★★ 1:17  ★★★ 0:56`; after earning Silver, ★ and ★★ are gold.
+  - Timer target reads ★★★ 0:56 at start, ★★ 1:17 after 56 s, ★ 1:52 after 77 s, "no medal" after 112 s.
+  - Dying mid-stage keeps stage name, record and limits on the score panel.
+  - Portal stars stay fixed on the gate face when viewed from the side.
+- **Validation log (2026-10-17, solo playtest):** hub panel "Stars earned: 0 / 12"; Stage 1 panel
+  `★ 1:52   ★★ 1:17   ★★★ 0:56`; timer target `00:55.1 ★★★ 0:56 → 00:56.7 ★★ 1:17`, `01:16.1 ★★ 1:17 → 01:17.7 ★ 1:52`,
+  `01:51.2 ★ 1:52 → 01:52.7 no medal`; death at 20 s kept the panel (Stage 1, record, limits) and the run.
+  Silver in 61.9 s: panel ★ and ★★ gold, ★★★ white; hub "Stars earned: 2 / 12"; popup +60.
+  Portal stars are SurfaceGuis on the portal's label face (Back), adornee = portal; side-view screenshot not possible
+  (3D viewport rendered blank in captures) — a SurfaceGui cannot face the camera, so the check holds by construction.
+  Consoles clean; live DataStores restored to the pre-test snapshot.
 
 ### M2 — Talents shop
 - **Outputs:** skills panel lists talents, levels, costs; purchase RemoteEvent; server applies WalkSpeed / jump height /

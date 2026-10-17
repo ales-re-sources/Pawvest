@@ -1,17 +1,23 @@
 -- Shows the stage timer label. The server sends start / finish / cancel on StageTimerUpdate
--- (see PlayerTimerHandler); while a run is active the label counts locally every frame.
+-- (see PlayerTimerHandler); while a run is active the label counts locally every frame and shows the best medal
+-- still reachable with its limit (docs/GDD.md §4).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local StageTimerUpdate = ReplicatedStorage:WaitForChild("StageTimerUpdate")
 local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
+local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
+local MedalText = require(ReplicatedStorage:WaitForChild("MedalText"))
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
 local stageTimerLabel = nil
 local labelDefaults = nil -- look of a fresh label, restored after a fade
 
+local TARGET_TEXT_SIZE = 22
+
 local runStartClock = nil -- os.clock() at which the active run started; nil when no run is active
+local runStage = nil -- StageConfig entry of the active run
 local fadeGeneration = 0 -- bumped by every server message so a running fade knows it is stale
 
 -- The label lives in a ResetOnSpawn ScreenGui, so it is replaced on every respawn
@@ -20,6 +26,7 @@ local function updateStageTimerLabelReference()
 	local screenGui = gui and gui:FindFirstChild("ScreenGui")
 	stageTimerLabel = screenGui and screenGui:FindFirstChild("StageTimer")
 	if stageTimerLabel then
+		stageTimerLabel.RichText = true
 		labelDefaults = {
 			TextColor3 = stageTimerLabel.TextColor3,
 			TextTransparency = stageTimerLabel.TextTransparency,
@@ -80,12 +87,17 @@ RunService.RenderStepped:Connect(function()
 		updateStageTimerLabelReference()
 	end
 	if stageTimerLabel then
-		stageTimerLabel.Text = TimeFormat.Format(os.clock() - runStartClock)
+		local elapsed = os.clock() - runStartClock
+		local text = TimeFormat.Format(elapsed)
+		if runStage then
+			text ..= string.format('  <font size="%d">%s</font>', TARGET_TEXT_SIZE, MedalText.Target(runStage, elapsed))
+		end
+		stageTimerLabel.Text = text
 		stageTimerLabel.Visible = true
 	end
 end)
 
-StageTimerUpdate.OnClientEvent:Connect(function(elapsed, finalElapsed)
+StageTimerUpdate.OnClientEvent:Connect(function(elapsed, extra)
 	fadeGeneration += 1
 	if not (stageTimerLabel and stageTimerLabel.Parent) then
 		updateStageTimerLabelReference()
@@ -93,13 +105,16 @@ StageTimerUpdate.OnClientEvent:Connect(function(elapsed, finalElapsed)
 
 	if elapsed >= 0 then
 		runStartClock = os.clock() - elapsed
+		runStage = StageConfig.ByKey[extra] -- start message carries the stage key
 		if stageTimerLabel then
 			restoreLabel(stageTimerLabel)
 		end
 		return
 	end
 
+	local finalElapsed = extra -- finish message carries the final time; cancel carries nothing
 	runStartClock = nil
+	runStage = nil
 	if not stageTimerLabel then
 		return
 	end

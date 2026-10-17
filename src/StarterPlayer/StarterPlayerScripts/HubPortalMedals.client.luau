@@ -1,52 +1,51 @@
 -- Shows the local player's best medal on each hub portal (docs/GDD.md §3 "Hub portals").
 -- Medals come from player attributes set by StageResults; every player sees only their own medals.
+-- The stars are a SurfaceGui on the same face as the portal's "Stage N access" label, so they are part of the gate.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
+local MedalText = require(ReplicatedStorage:WaitForChild("MedalText"))
 
 local LocalPlayer = Players.LocalPlayer
 local playerGui = LocalPlayer:WaitForChild("PlayerGui")
 
-local GOLD = "#FFD54A"
-local UNEARNED = "#D8D8D8" -- light and semi-transparent: readable on the blue portal and against the night sky
-
-local function stars(medal)
-	local total = #StageConfig.Medals
-	return string.format('<font color="%s">%s</font><font color="%s" transparency="0.45">%s</font>',
-		GOLD, string.rep("★", medal), UNEARNED, string.rep("★", total - medal))
-end
+local UNEARNED = "#D8D8D8" -- light and semi-transparent: readable on the blue portal face
+local UNEARNED_TRANSPARENCY = 0.45
 
 local function addPortalMedal(stage)
 	local portal = workspace:WaitForChild("StartLocation"):WaitForChild(stage.hubPortal):WaitForChild("Portal")
+	local portalLabel = portal:FindFirstChildOfClass("SurfaceGui")
 
-	local billboard = Instance.new("BillboardGui")
-	billboard.Name = "PortalMedal_" .. stage.folder
-	billboard.ResetOnSpawn = false
-	billboard.Adornee = portal
-	billboard.Size = UDim2.fromScale(5, 1.6) -- studs, so it scales with the portal like its label
-	-- on the portal face below the "Stage N access" label; above the frame it hid behind the top-right HUD
-	billboard.StudsOffset = Vector3.new(0, -2.2, 0)
-	billboard.MaxDistance = 120
-	billboard.LightInfluence = 0
+	local surface = Instance.new("SurfaceGui")
+	surface.Name = "PortalMedal_" .. stage.folder
+	surface.ResetOnSpawn = false
+	surface.Adornee = portal
+	surface.Face = if portalLabel then portalLabel.Face else Enum.NormalId.Back
+	surface.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	surface.PixelsPerStud = 50
+	surface.LightInfluence = 0
 
+	-- below the "Stage N access" label, which sits a bit above the middle of the face
 	local label = Instance.new("TextLabel")
-	label.Size = UDim2.fromScale(1, 1)
+	label.AnchorPoint = Vector2.new(0.5, 0)
+	label.Position = UDim2.fromScale(0.5, 0.56)
+	label.Size = UDim2.fromScale(0.8, 0.13)
 	label.BackgroundTransparency = 1
 	label.Font = Enum.Font.GothamBold
 	label.TextScaled = true
 	label.RichText = true
 	label.TextStrokeTransparency = 0.4
-	label.Parent = billboard
+	label.Parent = surface
 
 	local attribute = StageConfig.MedalAttribute(stage)
 	local function refresh()
-		label.Text = stars(LocalPlayer:GetAttribute(attribute) or 0)
+		label.Text = MedalText.Stars(LocalPlayer:GetAttribute(attribute) or 0, UNEARNED, UNEARNED_TRANSPARENCY)
 	end
 	LocalPlayer:GetAttributeChangedSignal(attribute):Connect(refresh)
 	refresh()
 
-	billboard.Parent = playerGui
+	surface.Parent = playerGui
 end
 
 for _, stage in StageConfig.Stages do
