@@ -30,7 +30,7 @@ Rules:
 |---|---|---|---|---|
 | D | Design docs (GDD + roadmap) | ✔ | n/a | n/a |
 | M0 | Foundations | ✔ | ✔ | – |
-| M1 | Medals & rewards | – | – | – |
+| M1 | Medals & rewards | ✔ | ✔ | – |
 | M2 | Talents shop | – | – | – |
 | M3 | Stage unlocks | – | – | – |
 | M4 | Challenge coins | – | – | – |
@@ -78,9 +78,25 @@ M4 adds a Coin source. M5 is mostly independent (can move earlier). M6 needs the
   Test profiles `user_-1` / `user_-2` removed afterwards.
 
 ### M1 — Medals & rewards
+- **Inputs:** `StageConfig` (tBase, tiers, rewardFactor), `PlayerProfile.Medals`, finish in `PlayerTimerHandler.StopTimer`.
 - **Outputs:** tier evaluation at the finish portal; one-time payouts per GDD §5; results popup; medal shown on hub portal.
+- **Boundary:** no talents, unlocks or locked-portal UI (M2/M3); portal shows the medal only.
+- **Design notes:**
+  - Provisional `T_base` in `StageConfig` (GDD §4); medal logic in `StageConfig` (pure: evaluate, payout) +
+    `ServerScriptService.StageResults` (best time, medal, Coins, save after a payout).
+  - Finish message becomes `StageTimerUpdate(-1, final, result)`; `result` = stage, time, best, newBest,
+    medal of the run, best medal, Coins paid, next threshold. Results popup is a code-built LocalScript GUI.
+  - Medals replicate as player attributes `Medal_<stage folder>` (0–3); hub portal stars are a client-side
+    BillboardGui per portal (each player sees their own).
+- **Studio-only changes:** none.
 - **Acceptance checks:** first Silver finish pays Bronze + Silver exactly once; repeating Silver pays 0;
   later Gold pays only Gold; medal persists after rejoin.
+- **Validation log (2026-10-17, solo playtest, Tutorial T_base 30 / factor 0.5):** 26.0 s → Silver, +30 (109 → 139),
+  popup "New record! ★★☆ Silver medal +30 Coins, Next: Gold under 00:24.0"; 26.9 s → Silver, +0, popup without Coins
+  line; 7.9 s → Gold, +40 only, "All medals earned!". Stage 1 in 5.0 s → Gold directly, +140 (all tiers).
+  Rejoin: `Medal_Tutorial = 3`, `Medal_Stage1 = 3`, 319 Coins, hub portal Stage 1 ★★★, others ☆☆☆.
+  Server + client consoles clean. Live DataStores restored to the pre-test snapshot.
+  Not checked by MCP (screenshots fail during play): visual look of the popup and portal stars.
 
 ### M2 — Talents shop
 - **Outputs:** skills panel lists talents, levels, costs; purchase RemoteEvent; server applies WalkSpeed / jump height /

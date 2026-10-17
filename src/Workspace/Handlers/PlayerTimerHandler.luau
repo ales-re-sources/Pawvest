@@ -1,8 +1,8 @@
 -- PlayerTimerHandler: per-player stage timers, personal bests (PlayerProfile) and global Top-10 (DataStore).
 -- StageTimerUpdate protocol (server → client):
 --   (elapsed >= 0)  run is active, `elapsed` seconds as of now; the client counts on locally
---   (-1, final)     run finished in `final` seconds
---   (-1)            run cancelled
+--   (-1, final, result)  run finished in `final` seconds; `result` from StageResults.RecordFinish (nil if no profile)
+--   (-1)                 run cancelled
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -12,6 +12,7 @@ local DataStoreService = game:GetService("DataStoreService")
 local StageConfig = require(ReplicatedStorage.StageConfig)
 local TimeFormat = require(ReplicatedStorage.TimeFormat)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
+local StageResults = require(ServerScriptService.StageResults)
 
 local StageTimerUpdate = ReplicatedStorage:WaitForChild("StageTimerUpdate")
 local GlobalLeaderboardsStore = DataStoreService:GetDataStore("GlobalLeaderboardsStore")
@@ -162,16 +163,12 @@ local function stopTimer(player)
 	timers[player] = nil
 
 	local elapsed = TimeFormat.Tenths(os.clock() - timer.StartClock)
-	StageTimerUpdate:FireClient(player, -1, elapsed)
+	local result = StageResults.RecordFinish(player, timer.StageKey, elapsed)
+	StageTimerUpdate:FireClient(player, -1, elapsed, result)
 
-	local profile = PlayerProfile.Get(player)
-	if profile then
-		local best = profile.BestTimes[timer.StageKey]
-		if not best or elapsed < best then
-			profile.BestTimes[timer.StageKey] = elapsed
-			updateScorePanel(player, nil)
-			updateGlobalLeaderboard(timer.StageKey, player.Name, elapsed)
-		end
+	if result and result.newBest then
+		updateScorePanel(player, nil)
+		updateGlobalLeaderboard(timer.StageKey, player.Name, elapsed)
 	end
 	return elapsed
 end

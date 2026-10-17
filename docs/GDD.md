@@ -45,13 +45,23 @@ Each stage has `T_base` = time of a clean, no-talent run by the developer. Defau
 
 | Stage | T_base (s) | Bronze | Silver | Gold |
 |---|---|---|---|---|
-| Tutorial | TBD | | | |
-| Stage 1 | TBD | | | |
-| Stage 2 | TBD | | | |
-| Stage 3 | TBD | | | |
+| Tutorial | 30 (prov.) | ≤ 48 s | ≤ 33 s | ≤ 24 s |
+| Stage 1 | 70 (prov.) | ≤ 112 s | ≤ 77 s | ≤ 56 s |
+| Stage 2 | 100 (prov.) | ≤ 160 s | ≤ 110 s | ≤ 80 s |
+| Stage 3 | 120 (prov.) | ≤ 192 s | ≤ 132 s | ≤ 96 s |
+
+Provisional `T_base` values (set in M1 so tiers can be evaluated) are rough guesses — Stage 1 is consistent with
+the existing board (best 50 s → Gold, 104 s → Bronze). They are replaced by measured values in M6.
 
 Timer precision: tenths of a second (server-measured). A run starts at `TimerStart`, ends at the finish portal,
 and is cancelled by leaving through `TeleportToSpawn`.
+
+Medal rules:
+- A finish slower than the Bronze threshold earns no medal and no Coins (the time still counts as a personal best).
+- A player's medal on a stage is the highest tier ever reached; it is never revoked, also not when thresholds are retuned.
+- Best times recorded before medals existed (pre-M1) do not grant medals retroactively; the next finish does.
+- After every finish a results popup shows: time, personal best (or "New record!"), the medal of this run,
+  Coins paid, and the threshold of the next medal not yet earned.
 
 ## 5. Rewards
 
