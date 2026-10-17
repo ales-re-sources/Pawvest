@@ -32,14 +32,21 @@ Rules:
 | M0 | Foundations | ✔ | ✔ | – |
 | M1 | Medals & rewards | ✔ | ✔ | – |
 | M2 | Talents shop | – | – | – |
+| R1 | Repeat rewards + shared payout | – | – | – |
+| P1 | Pets core | – | – | – |
 | M3 | Stage unlocks | – | – | – |
 | M4 | Challenge coins | – | – | – |
 | M5 | Leaderboards | – | – | – |
+| P2a | Pet garden: plots, pens, offline income | – | – | – |
+| P2b | Pet garden: incubators, feeding | – | – | – |
+| P3 | Trading | – | – | – |
 | M6 | Balancing pass | – | – | – |
 | M7 | Monetization | deferred | | |
 
-Order rationale: M0 unblocks everything. M1 creates Coin income, M2 spends it. M3 needs medals and Coins.
-M4 adds a Coin source. M5 is mostly independent (can move earlier). M6 needs the full loop.
+Order rationale: M0 unblocks everything. M1 creates Coin income, M2 spends it. R1 opens the economy (repeat rewards)
+and adds the single payout point that pets multiply; P1 needs it. M3 needs medals and Coins. M4 adds a Coin source.
+M5 is mostly independent (can move earlier). P-milestones may move ahead of M3–M5 if pets take priority, but keep
+their own order: P2a/P2b need P1, P3 needs P1 and profile session locking. M6 needs the full loop including the garden.
 
 ## Milestones
 
@@ -106,6 +113,57 @@ M4 adds a Coin source. M5 is mostly independent (can move earlier). M6 needs the
 - **Acceptance checks:** purchase with insufficient Coins is rejected server-side (Coins unchanged);
   bought level applies after respawn and after rejoin; firing the remote with a forged cost/level has no effect.
 
+### R1 — Repeat rewards + shared payout
+- **Inputs:** `StageResults.RecordFinish`, `CoinSystem` pickup, `PlayerProfile.AddCoins`, GDD §5 repeat reward.
+- **Outputs:**
+  - `ServerScriptService.CoinRewards`: `Grant(player, baseCoins, source) → paid`. The only place where gameplay pays
+    Coins: applies the multiplier (1 until P1), rounds, calls `PlayerProfile.AddCoins`. Future minigames call only this.
+    `PlayerProfile.AddCoins` stays for purchases and deductions (no multiplier).
+  - `StageConfig.RunReward(stage, medal, finishesToday)` (pure).
+  - Profile field `RunsToday = { Day = <UTC day number>, [stageKey] = count }`, reset when the day changes.
+  - `RecordFinish` pays medal payout + run reward through `CoinRewards.Grant`; result gets `runCoins`;
+    results popup shows the repeat reward on its own line.
+  - Coin pickup in `CoinSystem` goes through `CoinRewards.Grant`.
+- **Boundary:** no pets, multiplier is a constant 1.
+- **Studio-only changes:** none.
+- **Acceptance checks:** the same stage finished 3× with Silver in one day pays run rewards exactly `r`, `round(0.8 r)`,
+  `round(0.64 r)` (medal payout only on the first); a finish without a medal pays 0; a run reward never drops below 1;
+  setting `RunsToday.Day` to yesterday resets the count (next run pays `r`); counts persist after rejoin the same day.
+
+### P1 — Pets core
+- **Inputs:** `CoinRewards` (R1), `StageResults`, `CoinSystem`, `PlayerTimerHandler` (running timer), GDD §7.1–7.5.
+- **Outputs:**
+  - `ReplicatedStorage.PetConfig`: kinds, rarities, eggs + weights, slot prices, sell values, level curve; pure
+    `Roll(egg, rng)`, `PetBonus(pet)`, `Multiplier(pets)`, `XpToNext(level)`.
+  - Profile `Version = 2` with `Pets = { [uid] = { Kind, Level, XP } }`, `EquippedPets = { uid… }`, `PetSlots = 1`,
+    `NextPetUid = 1`, `FreeEggs = { [eggId] = count }` (existing `reconcile` fills old records; the launch free egg is
+    granted once via a flag).
+  - `ServerScriptService.PetService` + `PetRemotes.server.luau`: remotes created by code in `ReplicatedStorage.PetRemotes`
+    (`BuyEgg`, `Equip`, `Unequip`, `BuySlot`, `SellPet`; server → client `PetsChanged`). Server validates every argument,
+    takes prices from `PetConfig`, rolls itself, saves after purchases and sales.
+  - `CoinRewards.Grant` uses `PetService.Multiplier(player)`.
+  - `PetService.AddXP(player, amount)`: full XP to every equipped pet, level-ups. Called by `StageResults` (run medal),
+    `CoinSystem` (coin) and a server-side movement counter (only while a stage timer runs, capped per run, teleports ignored).
+  - First Gold on a stage grants a free Basic egg.
+  - Player attribute `EquippedPets` (`"kind:level,…"`) for rendering.
+  - Client: `PetFollow.client.luau` (all players' pets follow, local lerp), `PetsPanel.client.luau` (code-built GUI:
+    inventory, equip, slots, sell, bonus, XP bars; "Pets" button in `ButtonHandler`), `EggStand.client.luau`
+    (ProximityPrompt → odds + confirm → hatch result).
+- **Boundary:** no garden, no trading, no Robux. Pets never touch WalkSpeed / JumpPower.
+- **Studio-only changes:** `EggStand` model on the hub (`StartLocation`) with a ProximityPrompt; `ReplicatedStorage.PetModels`
+  with one model per kind (PrimaryPart, Anchored, CanCollide off, CanTouch off).
+- **Acceptance checks:**
+  - buying an egg with too few Coins is rejected server-side: Coins and pet count unchanged;
+  - remote calls with a forged price, a foreign or non-existent uid, an unknown egg id or a 4th equip with 3 slots
+    change nothing;
+  - 10 000 `PetConfig.Roll` calls in `execute_luau` match the Basic egg weights within ±1.5 percentage points;
+  - with one +10 % pet equipped a 40-Coin payout pays exactly 44; with no pet exactly 40; the total never exceeds +50 %;
+  - a Silver finish gives each equipped pet exactly 10 XP + movement XP ≤ 30; walking with no running timer gives 0 XP;
+    a pet crossing `XpToNext` levels up and keeps the remainder;
+  - selling a pet removes it and pays exactly its sell value; an equipped pet cannot be sold;
+  - after rejoin: identical pets, levels, XP, slots and equipped set; launch free egg is not granted twice;
+  - a second client (multi-client) sees the first player's pets following; server and client consoles clean.
+
 ### M3 — Stage unlocks
 - **Outputs:** portal checks bar *or* paid unlock; locked-portal UI (requirement + price); buy-unlock remote;
   Tutorial portal on the hub.
@@ -122,6 +180,31 @@ M4 adds a Coin source. M5 is mostly independent (can move earlier). M6 needs the
 - **Outputs:** Top-10 board on every stage (add Stage 3, Tutorial); hub "most stars" board.
 - **Acceptance checks:** every board renders 10 rows from the DataStore (or fewer with real data, never blank errors);
   a new personal best appears within one refresh interval.
+
+### P2a — Pet garden: plots, pens, offline income
+Scoped in detail after P1 (GDD §7.6).
+- **Outputs (draft):** garden area + portal from the hub; one plot per server slot, assigned on join, built from a
+  Studio template by code; pens (unlock for Coins) hold pets that are not equipped; production paid through
+  `CoinRewards.Grant`; offline production on join capped at 8 h with a "while you were away" popup;
+  profile `Garden = { Pens, LastSeen }`.
+- **Acceptance checks (draft):** a pet cannot be equipped and penned at once; production after N minutes matches the
+  configured rate exactly; offline payout for 20 h equals the 8 h cap; changing the system clock on the client has no effect
+  (server `os.time()` only); plot contents identical after rejoin on another server.
+
+### P2b — Pet garden: incubators, feeding
+- **Outputs (draft):** incubators (unlock for Coins) hatch Golden eggs in real time, also offline; food bought for Coins
+  gives XP.
+- **Acceptance checks (draft):** an egg cannot be collected before its hatch time; an egg started before leaving is
+  ready after rejoin once the time passed; feeding deducts Coins exactly once and adds exactly the configured XP.
+
+### P3 — Trading
+- **Prerequisite:** profile session locking in `PlayerProfile` (`UpdateAsync` with a `{ JobId, Time }` lock instead of
+  `SetAsync`; a profile locked by another live server is not loaded until released or stale).
+- **Outputs (draft):** trade request → both players add pets/Coins → both confirm the final offer → server swaps
+  atomically, saves both profiles immediately, writes a trade log; pets in an open trade are locked; cooldown.
+- **Acceptance checks (draft):** changing the offer after a confirmation resets both confirmations; a player leaving
+  mid-trade cancels it with no item moved; the same pet cannot end up in both inventories (also across a server
+  crash right after the trade); a profile open on server A cannot be loaded for writing on server B.
 
 ### M6 — Balancing pass
 - **Outputs:** measured `T_base` per stage; finish-time telemetry; tuned numbers in GDD + stage config.

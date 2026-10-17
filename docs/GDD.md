@@ -5,16 +5,23 @@ Status: **draft**. All numbers are placeholders until `T_base` is measured in th
 
 ## 1. Pillars
 1. **Short, readable stages** — each stage is a 1–3 minute run with a clear finish.
-2. **Mastery beats grind** — currency comes from beating times and finding hard coins, not from repetition.
-3. **Fair leaderboards** — nothing that affects a leaderboard time can be bought with Robux (provisional, see §8).
+2. **Mastery pays most** — medals and fast times pay the most Coins. Repeating a stage still pays, but less with every
+   run; slow or idle sources (pet garden) are a steady trickle, never the fastest route.
+3. **Fair leaderboards** — nothing that affects a leaderboard time can be bought with Robux. Pets never change
+   movement or stage times; talents do, but are earned with Coins only (provisional, see §9).
+4. **One hall, many games** — the central island hosts several minigames (obby first, pet garden next, more later).
+   They share one currency (Coins) and one pet collection, so progress in any game helps in the others.
 
 ## 2. Core loop
 ```
-run a stage → medal by time → Coins (one-time per medal tier)
+run a stage → medal by time → Coins (one-time per medal tier + diminishing repeat reward)
      ↑                                   ↓
 faster runs / harder stages  ←  talents + stage unlocks
+
+Coins (from any minigame) → eggs, pet slots → pets → Coin bonus + pet levels → more Coins
 ```
-Secondary loop: talents (e.g. double jump) open new routes → challenge coins on already-cleared stages.
+Secondary loops: talents (e.g. double jump) open new routes → challenge coins on already-cleared stages;
+pets level up while you play; the pet garden (§7.6) raises pets and produces Coins over time, also offline.
 
 ## 3. Stages
 
@@ -61,9 +68,11 @@ Medal rules:
 - A player's medal on a stage is the highest tier ever reached; it is never revoked, also not when thresholds are retuned.
 - Best times recorded before medals existed (pre-M1) do not grant medals retroactively; the next finish does.
 - After every finish a results popup shows: time, personal best (or "New record!"), the medal of this run,
-  Coins paid, and the threshold of the next medal not yet earned.
+  Coins paid (medal payout and repeat reward), and the threshold of the next medal not yet earned.
 
 ## 5. Rewards
+All Coins earned by playing (medal payouts, repeat rewards, challenge coins, garden production, future minigames)
+are paid through one server function and multiplied by the player's pet bonus (§7.3). Purchases are not.
 
 ### Medal payouts (one-time per tier, per player)
 Base payout Bronze 20 / Silver 40 / Gold 80, × stage factor. Reaching a higher tier directly also pays the lower
@@ -77,6 +86,27 @@ tiers not yet earned (a first-try Silver pays Bronze + Silver).
 | Stage 3 | 2.0 | 40 | 80 | 160 | 280 |
 | **All** | | | | | **700** |
 
+### Repeat reward (every finish, diminishing)
+Every finish with a medal also pays
+
+```
+run reward = max(1, round(5 × stage factor × medal multiplier × 0.8^n))
+```
+
+where the medal multiplier is that **run's** medal (Bronze ×1, Silver ×1.5, Gold ×2) and `n` is the number of earlier
+finishes of that stage by the player **today** (UTC day; resets at midnight UTC). A finish without a medal pays 0.
+It is paid on top of any medal payout, also on the first finish.
+
+| Stage | First run Bronze | Silver | Gold | Gold, sum of the first 10 runs of a day |
+|---|---|---|---|---|
+| Tutorial | 3 | 4 | 5 | 23 |
+| Stage 1 | 5 | 8 | 10 | 44 |
+| Stage 2 | 8 | 11 | 15 | 68 |
+| Stage 3 | 10 | 15 | 20 | 89 |
+
+After ~10 runs a stage pays 1 Coin per run until the next day. Faster medals pay more, grinding runs out quickly,
+and switching stages is better than repeating one (pillar 2). All values provisional.
+
 ### Challenge coins
 Placed off the main path, behind risky jumps, or reachable only with talents. Each coin is collected
 **once per player**, saved, and hidden only for that player. Values: easy 2 / risky 5 / talent-gated 10.
@@ -89,7 +119,8 @@ Placed off the main path, behind risky jumps, or reachable only with talents. Ea
 | Stage 3 | 50 | |
 | **All** | **130** | |
 
-**Total earnable: 700 (medals) + 130 (coins) = 830 Coins.**
+**One-time total: 700 (medals) + 130 (coins) = 830 Coins**, plus repeat rewards, garden production and the pet bonus,
+which have no fixed cap.
 
 ## 6. Talents
 Bought in the skills panel (top-left). Permanent, server-owned, applied on every spawn.
@@ -103,8 +134,11 @@ The current admin toggles (run speed 16↔64, 5 air jumps) remain debug tools on
 | **Full tree** | | | | **680** |
 
 ### Economy constraints (must hold after every rebalance)
-Gold on each stage is designed around a talent set; that set must be affordable from what is earnable *before*
+The economy is open (repeat rewards, garden, pet bonus), so "earnable" is no longer a cap. The constraint is about
+the **no-grind path**: a player who only plays each stage until its medals are earned, with no pets.
+Gold on each stage is designed around a talent set; that set must be affordable from one-time income earned *before*
 that Gold (all medals on earlier stages + Bronze/Silver on this stage + challenge coins up to this stage).
+Repeat rewards and pets only add to this, so the table is a lower bound.
 
 | Gold on | Designed talent set | Cost | Earnable before | OK |
 |---|---|---|---|---|
@@ -113,23 +147,124 @@ that Gold (all medals on earlier stages + Bronze/Silver on this stage + challeng
 | Stage 3 | Run Speed 5 + Double Jump + Jump Height 2 | 580 | 70 + 140 + 210 + 120 + 130 = 670 | ✔ |
 | Full tree | everything | 680 | 830 total | ✔ |
 
+### Coins per hour (open income, provisional)
+| Source | Estimate | Notes |
+|---|---|---|
+| Obby, first hour of a day (Gold runs, all stages) | ~225 | first 10 Gold runs of each of the four stages (~40 runs), then the 1-Coin floor |
+| Obby, later the same day | ~50 | 1 Coin per run at ~70 s per run |
+| Pet garden (§7.6) | target 30–100 | depends on pets in pens; offline production capped at 8 h |
+| Pet bonus | × 1.0–1.5 | on all of the above |
+
+Sinks: talents (680), stage unlocks (450), eggs (§7.2), pet slots (700), garden upgrades and feeding (§7.6).
+
 Notes:
-- Bought stage unlocks are a sink outside this budget: a player who buys both unlocks (450) is ~450 Coins behind
-  and must earn it back via medals — intended cost of skipping.
+- Bought stage unlocks are a sink outside the talent budget: a player who buys both unlocks (450) is ~450 Coins behind
+  and must earn it back — intended cost of skipping.
+- Eggs and slots compete with talents for the same Coins; a player can choose pets first and talents later.
 - Gold at 0.8 × T_base with only Run Speed 2 (+12 %) on Stage 1 needs a near-perfect route — verify in M6.
 
-## 7. Leaderboards
+## 7. Pets
+Pets follow the player, multiply Coin income and level up. They never affect movement, jumping or stage times.
+
+### 7.1 Rarities and kinds
+| Rarity | Base bonus | Sell value | Example kinds (prov.) |
+|---|---|---|---|
+| Common | +2 % | 10 | Cat, Dog |
+| Uncommon | +4 % | 20 | Bunny, Fox |
+| Rare | +7 % | 50 | Owl, Panda |
+| Epic | +10 % | 150 | Dragon |
+| Legendary | +15 % | 500 | Phoenix |
+
+Every pet is an individual (own level and XP), identified by a unique id per player. Inventory holds up to **50** pets.
+A pet can be **sold** back for its sell value (irreversible).
+
+### 7.2 Eggs
+Eggs are opened at an **egg stand** on the central island and hatch instantly with a random pet.
+The odds are always shown before buying.
+
+| Egg | Price | Common | Uncommon | Rare | Epic | Legendary | Where |
+|---|---|---|---|---|---|---|---|
+| Basic egg | 50 | 60 % | 25 % | 11 % | 3.5 % | 0.5 % | egg stand (hub), instant |
+| Golden egg | 400 | – | 45 % | 35 % | 15 % | 5 % | pet garden incubator, hatches in real time (§7.6) |
+
+Free eggs:
+- one Basic egg on the first join after pets launch (also for existing players),
+- one Basic egg for the **first Gold on each stage** (4 in total).
+
+Free eggs wait in the profile until claimed at the egg stand.
+
+### 7.3 Slots and Coin bonus
+Up to 3 pets can be **equipped** (follow the player, count for the bonus).
+
+| Slot | Price |
+|---|---|
+| 1 | free |
+| 2 | 200 |
+| 3 | 500 |
+
+```
+pet bonus  = base bonus (rarity) + 0.5 % × (level − 1)
+multiplier = 1 + min(50 %, sum of the bonuses of equipped pets)
+paid       = round(base Coins × multiplier)
+```
+A level-20 Legendary gives +24.5 %; three strong pets hit the +50 % cap.
+
+### 7.4 Levels and XP
+Max level **20**. XP to go from level L to L+1: `round(10 × L^1.5)` (L1→2: 10, L5→6: 112, L10→11: 316,
+L19→20: 828; ~6 700 XP from 1 to 20). Every **equipped** pet receives the full XP of each event:
+
+| Source | XP |
+|---|---|
+| Finish with Bronze / Silver / Gold (the run's medal) | 5 / 10 / 20 |
+| Finish without a medal | 0 |
+| Challenge coin collected | +1 |
+| Movement while a stage timer runs | 1 XP per 20 studs, max 30 per run |
+| Feeding in the pet garden (§7.6) | per food item |
+
+Movement is measured on the server (horizontal distance of the character); jumps faster than walking speed allows
+(teleports, respawns) do not count, and nothing is earned outside a running timer, so AFK walking earns nothing.
+Levels are permanent. A pet at level 20 stops gaining XP.
+
+### 7.5 Display
+Equipped pets float behind their owner and are visible to all players, with rarity colour and level on a small label.
+The pets panel (top-left button) lists the inventory, equipped pets, slots, total bonus and XP bars.
+
+### 7.6 Pet garden (minigame, P2)
+A free area reached by a portal from the central island, where pets are raised. Aimed at players who prefer
+collecting and caring over obby runs.
+- **Personal plot.** Each player on the server gets a plot (one per server slot). The plot's contents are saved in the
+  profile and restored on any server.
+- **Pens.** A pet is either equipped or placed in a pen, never both. Pets in pens produce Coins over time by rarity
+  and level (rates in M6; target in §6). Pens unlock for Coins.
+- **Incubators.** Garden eggs (Golden egg and better) hatch in real time (minutes to hours) and keep hatching offline.
+  More incubators unlock for Coins.
+- **Feeding.** Food bought for Coins gives a pet XP: an alternative to leveling by playing the obby, and a Coin sink.
+- **Offline income.** On join, production since the last visit is paid, capped at 8 hours, and shown in a
+  "while you were away" popup.
+
+### 7.7 Trading (P3)
+Players on the same server can trade pets and Coins. Both players confirm the final offer; the server swaps
+everything at once, saves both profiles immediately and logs the trade. Pets in an open trade are locked, and a short
+cooldown applies after each trade. Trading requires profile session locking (a profile is open on at most one server),
+otherwise items could be duplicated across servers.
+
+## 8. Leaderboards
 - **Per stage:** Top-10 fastest times (exists for Stage 1 and 2; add Stage 3 and Tutorial).
 - **Hub:** global "most stars" Top-10 (max 12★ with four stages).
 - Open question: show the talents used next to a time, or keep a separate "no-talent" board?
+- Possible later: "rarest pets" / "highest pet level" board.
 
-## 8. Monetization (deferred)
-Not designed yet; decide after M6. Candidates: cosmetics (trails, skins, portal effects), convenience passes
-(2× Coins, skip stage), Coin packs. Rule for any candidate: everything purchasable must also be earnable through play
-and capped, so money only speeds progress up. Leaderboard fairness (§1.3) is re-evaluated at that point.
+## 9. Monetization (deferred)
+Not designed yet; decide after M6. Candidates: cosmetics (trails, skins, portal effects, pet accessories), convenience
+passes (2× Coins, extra pet slot, faster incubators, skip stage), Coin packs. Rule for any candidate: everything
+purchasable must also be earnable through play and capped, so money only speeds progress up.
+Eggs are Coins-only for now. Selling random items (eggs) for Robux, or for anything bought with Robux, requires
+disclosing the odds under Roblox rules — the egg UI already shows them. Leaderboard fairness (§1.3) is re-evaluated
+at that point.
 
-## 9. Balancing & telemetry
+## 10. Balancing & telemetry
 - **Measuring `T_base`:** developer runs each stage clean, no talents, 3 attempts, take the median.
-- **Telemetry:** log every finish (stage, time, talent levels) to a DataStore / AnalyticsService funnel.
+- **Telemetry:** log every finish (stage, time, talent levels, pet multiplier) and every egg purchase (egg, rarity)
+  to a DataStore / AnalyticsService funnel.
 - **Re-tune when:** Gold rate < 10 % among players with the designed talent set, or > 60 % of finishers stop at Bronze,
-  or a stage's unlock is bought more often than earned.
+  or a stage's unlock is bought more often than earned, or garden income exceeds the obby first-hour income (pillar 2).
