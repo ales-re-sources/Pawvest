@@ -252,6 +252,12 @@ their own order: P2a/P2b need P1, P3 needs P1 and profile session locking. M6 ne
 
 ### M5 — Leaderboards
 - **Outputs:** Top-10 board on every stage (add Stage 3, Tutorial); hub "most stars" board.
+- **Done early (2026-10-17, user request):** Stage 3's landing pad lacked the `Top10Leaderboard` that Stage 1/2 have. The Stage 2
+  board model was cloned into `Stage3/LandingPad` at the same relative spot (pad offset −52.2, 0, +0.2); its script is
+  byte-identical (stage resolved via `StageConfig.ForInstance`), the disabled legacy `TopTimeScript` was left out. All other
+  Stage 2 / Stage 3 pad parts already matched (sizes, colours, portal, timer start, destination). Studio-only: the board
+  model. Validated: empty board shows `...` rows; a Stage 3 record (test name, 99.9 s) appeared on the board after the
+  poll (`01:39.9`); the test entry was removed again. Tutorial still has no board (same gap, not part of this change).
 - **Done early (fix, 2026-10-17, user report):** a new record showed on the board only after a server restart (the board
   polled every 60 s). `PlayerTimerHandler.LeaderboardChanged` now fires after a Top-10 write and boards redraw at once
   (Stage 2 board updated 0.7 s after the finish); empty rows are cleared; the 60 s poll stays for other servers.
