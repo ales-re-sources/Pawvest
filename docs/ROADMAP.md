@@ -34,7 +34,10 @@ Rules:
 | M1.1 | Medal limits visibility | ✔ | ✔ | – |
 | M2 | Talents shop | ✔ | ✔ | – |
 | R1 | Repeat rewards + shared payout | ✔ | ✔ | – |
-| P1 | Pets core | – | – | – |
+| P1a | Pet data + economy | – | – | – |
+| P1b | Egg stand + Pets panel | – | – | – |
+| P1c | Pet models + following | – | – | – |
+| P1d | Pet XP + levels | – | – | – |
 | M3 | Stage unlocks | ✔ | ✔ | – |
 | M4 | Challenge coins | – | – | – |
 | M5 | Leaderboards | – | – | – |
@@ -45,9 +48,9 @@ Rules:
 | M7 | Monetization | deferred | | |
 
 Order rationale: M0 unblocks everything. M1 creates Coin income, M2 spends it. R1 opens the economy (repeat rewards)
-and adds the single payout point that pets multiply; P1 needs it. M3 needs medals and Coins. M4 adds a Coin source.
+and adds the single payout point that pets multiply; P1a needs it, and P1b–P1d need P1a (any order among them). M3 needs medals and Coins. M4 adds a Coin source.
 M5 is mostly independent (can move earlier). P-milestones may move ahead of M3–M5 if pets take priority, but keep
-their own order: P2a/P2b need P1, P3 needs P1 and profile session locking. M6 needs the full loop including the garden.
+their own order: P2a needs P1a–P1c (P1d recommended), P2b needs P2a, P3 needs P1 and profile session locking. M6 needs the full loop including the garden.
 
 ## Milestones
 
@@ -226,39 +229,69 @@ their own order: P2a/P2b need P1, P3 needs P1 and profile session locking. M6 ne
   Consoles: only Roblox's own UIBlox "FoundationProvider" warnings. Live profile restored to the pre-test snapshot
   (11 Coins, Tutorial Gold, no `RunsToday`; `reconcile` adds it on the next load); boards unchanged (no new bests).
 
-### P1 — Pets core
-- **Inputs:** `CoinRewards` (R1), `StageResults`, `CoinSystem`, `PlayerTimerHandler` (running timer), GDD §7.1–7.5.
+### P1 — Pets (split into P1a–P1d, design check 2026-10-17)
+P1a comes first; P1b, P1c and P1d each need only P1a and can follow in any order. Pets never touch WalkSpeed / JumpPower.
+
+### P1a — Pet data + economy
+- **Inputs:** `CoinRewards` (R1), `StageResults` (first Gold), `PlayerProfile`, GDD §7.1–7.3.
 - **Outputs:**
   - `ReplicatedStorage.PetConfig`: kinds, rarities, eggs + weights, slot prices, sell values, level curve; pure
     `Roll(egg, rng)`, `PetBonus(pet)`, `Multiplier(pets)`, `XpToNext(level)`.
   - Profile `Version = 2` with `Pets = { [uid] = { Kind, Level, XP } }`, `EquippedPets = { uid… }`, `PetSlots = 1`,
     `NextPetUid = 1`, `FreeEggs = { [eggId] = count }` (existing `reconcile` fills old records; the launch free egg is
     granted once via a flag).
-  - `ServerScriptService.PetService` + `PetRemotes.server.luau`: remotes created by code in `ReplicatedStorage.PetRemotes`
-    (`BuyEgg`, `Equip`, `Unequip`, `BuySlot`, `SellPet`; server → client `PetsChanged`). Server validates every argument,
-    takes prices from `PetConfig`, rolls itself, saves after purchases and sales.
+  - `ServerScriptService.PetService` + remotes created by code in `ReplicatedStorage.PetRemotes` (`BuyEgg` — also opens
+    a free egg when one is waiting —, `Equip`, `Unequip`, `BuySlot`, `SellPet`; server → client `PetsChanged`).
+    The server validates every argument, takes prices from `PetConfig`, rolls itself, deducts with `AddCoins`, and saves
+    after purchases and sales.
   - `CoinRewards.Grant` uses `PetService.Multiplier(player)`.
-  - `PetService.AddXP(player, amount)`: full XP to every equipped pet, level-ups. Called by `StageResults` (run medal),
-    `CoinSystem` (coin) and a server-side movement counter (only while a stage timer runs, capped per run, teleports ignored).
   - First Gold on a stage grants a free Basic egg.
-  - Player attribute `EquippedPets` (`"kind:level,…"`) for rendering.
-  - Client: `PetFollow.client.luau` (all players' pets follow, local lerp), `PetsPanel.client.luau` (code-built GUI:
-    inventory, equip, slots, sell, bonus, XP bars; "Pets" button in `ButtonHandler`), `EggStand.client.luau`
-    (ProximityPrompt → odds + confirm → hatch result).
-- **Boundary:** no garden, no trading, no Robux. Pets never touch WalkSpeed / JumpPower.
-- **Studio-only changes:** `EggStand` model on the hub (`StartLocation`) with a ProximityPrompt; `ReplicatedStorage.PetModels`
-  with one model per kind (PrimaryPart, Anchored, CanCollide off, CanTouch off).
+  - Player attribute `EquippedPets` (`"kind:level,…"`) for rendering (P1c).
+- **Boundary:** no GUI, models or XP; tested by firing the remotes from the client in `execute_luau`.
+- **Studio-only changes:** none.
 - **Acceptance checks:**
   - buying an egg with too few Coins is rejected server-side: Coins and pet count unchanged;
   - remote calls with a forged price, a foreign or non-existent uid, an unknown egg id or a 4th equip with 3 slots
     change nothing;
   - 10 000 `PetConfig.Roll` calls in `execute_luau` match the Basic egg weights within ±1.5 percentage points;
   - with one +10 % pet equipped a 40-Coin payout pays exactly 44; with no pet exactly 40; the total never exceeds +50 %;
-  - a Silver finish gives each equipped pet exactly 10 XP + movement XP ≤ 30; walking with no running timer gives 0 XP;
-    a pet crossing `XpToNext` levels up and keeps the remainder;
   - selling a pet removes it and pays exactly its sell value; an equipped pet cannot be sold;
-  - after rejoin: identical pets, levels, XP, slots and equipped set; launch free egg is not granted twice;
-  - a second client (multi-client) sees the first player's pets following; server and client consoles clean.
+  - the first Gold on a stage adds exactly one free Basic egg, a second Gold on that stage adds none; the launch free
+    egg is granted once (not again after rejoin);
+  - after rejoin: identical pets, levels, XP, slots, equipped set and free eggs.
+
+### P1b — Egg stand + Pets panel
+- **Inputs:** P1a remotes and `PetsChanged`, `PetConfig`, GDD §7.2, §7.5.
+- **Outputs:** `EggStand.client.luau` (ProximityPrompt → odds from `PetConfig` + price + confirm → hatch reveal;
+  "open free egg" when one is waiting); `PetsPanel.client.luau` (code-built: inventory, equip / unequip, buy slot,
+  sell with confirmation, total bonus); **🐾 Pets** button in the top-left icons.
+- **Studio-only changes:** `EggStand` model on the hub (`StartLocation`) with a ProximityPrompt, built via MCP from parts;
+  the 🐾 button if it is not created by code.
+- **Acceptance checks:** the odds shown equal `PetConfig` exactly; buying through the stand with enough Coins deducts
+  exactly the price and the new pet appears in the open panel without reopening it; with too few Coins nothing is
+  deducted and the stand says why; selling needs a second confirmation and pays exactly the sell value; a free egg is
+  opened for 0 Coins.
+
+### P1c — Pet models + following
+- **Inputs:** `EquippedPets` attribute (P1a), GDD §7.5 (art: blocky placeholders).
+- **Outputs:** `ReplicatedStorage.PetModels` — one blocky part-built model per kind (Cat, Dog, Bunny, Fox, Owl, Panda,
+  Dragon, Phoenix): PrimaryPart, Anchored, CanCollide / CanTouch / CanQuery off; `PetFollow.client.luau` renders every
+  player's equipped pets behind their owner (local lerp, no server physics) with a rarity-coloured label "Kind Lv N";
+  glow for Epic and Legendary.
+- **Studio-only changes:** `ReplicatedStorage.PetModels` (built via MCP).
+- **Acceptance checks:** equipping shows the pet within 1 s and unequipping removes it; three equipped pets do not overlap;
+  a second client (multi-client) sees the first player's pets following; pets never trigger touch parts (kill parts,
+  coins, portals); the owner's WalkSpeed and jump are unchanged with pets equipped.
+
+### P1d — Pet XP + levels
+- **Inputs:** `PetService` (P1a), `StageResults`, `CoinSystem`, `PlayerTimerHandler` (running timer), GDD §7.4.
+- **Outputs:** `PetService.AddXP(player, amount)` — full XP to every equipped pet, level-ups, `EquippedPets` refreshed;
+  called by `StageResults` (the run's medal: 5 / 10 / 20), `CoinSystem` (+1 per coin) and a server-side movement counter
+  (only while a stage timer runs, 1 XP per 20 studs, max 30 per run, teleports and respawns ignored).
+- **Studio-only changes:** none.
+- **Acceptance checks:** a Silver finish gives each equipped pet exactly 10 XP + movement XP ≤ 30; walking with no running
+  timer gives 0 XP; a teleport adds no movement XP; a pet crossing `XpToNext` levels up and keeps the remainder; a level-20
+  pet gains nothing; XP and levels identical after rejoin.
 
 ### M3 — Stage unlocks
 - **Inputs:** `StageConfig.unlock` / `unlockPrice` (GDD §3: Stage 2 = Silver on Stage 1 or 150 Coins, Stage 3 = Silver on
@@ -374,12 +407,16 @@ their own order: P2a/P2b need P1, P3 needs P1 and profile session locking. M6 ne
   a new personal best appears within one refresh interval.
 
 ### P2a — Pet garden: plots, pens, offline income
-Scoped in detail after P1 (GDD §7.6).
-- **Outputs (draft):** garden area + portal from the hub; one plot per server slot, assigned on join, built from a
-  Studio template by code; pens (unlock for Coins) hold pets that are not equipped; production paid through
+Scoped in detail after P1 (GDD §7.6). Decided 2026-10-17: island in the same place, 12 plots, 12-player servers.
+- **Outputs (draft):** garden island with a central plaza + garden portal on the hub and a return portal; a ring of
+  12 plots (~40 × 40 studs, owner sign), each borrowed on join and released on leave, built from a Studio template by
+  code; everyone can see all plots, only the owner can use theirs; pens (unlock for Coins) hold pets that are not equipped; production paid through
   `CoinRewards.Grant`; offline production on join capped at 8 h with a "while you were away" popup;
   profile `Garden = { Pens, LastSeen }`.
-- **Acceptance checks (draft):** a pet cannot be equipped and penned at once; production after N minutes matches the
+- **Studio-only changes (draft):** garden island, plaza, plot template and portals (built via MCP from parts);
+  **Max Players = 12** in Game Settings (user).
+- **Acceptance checks (draft):** a pet cannot be equipped and penned at once; with 12 players every player gets their
+  own plot and a leaving player's plot is free for the next one; production after N minutes matches the
   configured rate exactly; offline payout for 20 h equals the 8 h cap; changing the system clock on the client has no effect
   (server `os.time()` only); plot contents identical after rejoin on another server.
 

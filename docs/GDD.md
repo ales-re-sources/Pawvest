@@ -238,13 +238,24 @@ Levels are permanent. A pet at level 20 stops gaining XP.
 
 ### 7.5 Display
 Equipped pets float behind their owner and are visible to all players, with rarity colour and level on a small label.
-The pets panel (top-left button) lists the inventory, equipped pets, slots, total bonus and XP bars.
+The pets panel (top-left **🐾 Pets** button) lists the inventory, equipped pets, slots, total bonus and XP bars.
+
+**Art (first version):** simple, cute blocky models built from parts, one per kind, in one consistent style; rarity
+shows as label colour and a glow (Epic, Legendary). Models live in `ReplicatedStorage.PetModels`, so real art can
+replace them later without code changes.
 
 ### 7.6 Pet garden (minigame, P2)
 A free area reached by a portal from the central island, where pets are raised. Aimed at players who prefer
 collecting and caring over obby runs.
-- **Personal plot.** Each player on the server gets a plot (one per server slot). The plot's contents are saved in the
-  profile and restored on any server.
+- **Where.** A separate island in the same place (not a separate place): a garden portal on the central island and a
+  return portal on the garden.
+- **Layout.** A central plaza (food shop; later a twin of the egg stand) surrounded by a ring of **12 plots**, about
+  40 × 40 studs each, with an owner name sign, pens and incubators. Servers hold **12 players** (one plot per slot).
+- **Personal plot.** A player borrows a free plot while online: it is assigned on join, built from the profile, and
+  released on leave. The plot's contents are saved in the profile and restored on any server. Production runs on server
+  time, so it does not need the plot to exist while the player is offline.
+- **Other players.** Everyone can walk through the garden and look at all plots and pets; only the owner can use their
+  own plot (no stealing, no shared pens).
 - **Pens.** A pet is either equipped or placed in a pen, never both. Pets in pens produce Coins over time by rarity
   and level (rates in M6; target in §6). Pens unlock for Coins.
 - **Incubators.** Garden eggs (Golden egg and better) hatch in real time (minutes to hours) and keep hatching offline.
