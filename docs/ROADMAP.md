@@ -272,6 +272,7 @@ their own order: P2a/P2b need P1, P3 needs P1 and profile session locking. M6 ne
   - Hub portal scripts (4 identical copies) teleport only when `IsUnlocked`; otherwise they open the unlock popup.
   - Hub portal face (`HubPortalMedals.client.luau`): lock line "🔒 ★★ Silver on Stage 1 / or 150 Coins" while locked.
   - `StageUnlockPopup.client.luau` (code-built GUI): requirement, price, Coins, "Unlock for N Coins" button, Close.
+  - `PortalBarriers.client.luau`: locked portals are walls (user request, see the follow-up below).
   - ~~Tutorial portal on the hub~~ — done in the M5 Tutorial pass 2 (`TeleportToTutorial`).
 - **Boundary:** no challenge-coin `x/y` on portals (M4); stages stay physically reachable by other means (checkpoint respawn
   inside a stage during the same session, walking) — only the hub portal is gated.
@@ -316,6 +317,17 @@ their own order: P2a/P2b need P1, P3 needs P1 and profile session locking. M6 ne
   Not covered: multi-client; a portal-face screenshot (3D viewport renders blank in captures, lock lines checked via
   `Visible`/`Text`). Live DataStores restored to the pre-test snapshot (profile 1 Coin, boards unchanged, Stage 3 board key
   absent).
+- **Follow-up (2026-10-17, user request): locked portals are walls.** A locked portal used to be a non-colliding opening
+  that only refused the teleport. `PortalBarriers.client.luau` now creates, per locked stage, an invisible local part
+  (portal width × height, 0.5 deep, centred in the 1.5-deep portal) that collides only for the local player and is removed
+  when `Unlocked_<folder>` turns true (treated as locked until the server publishes it). It is thinner than the portal on
+  purpose: a player pressed against the wall still overlaps the portal volume, so the touch fires and the unlock popup
+  opens. Client-side only; the server check in the portal script stays the authority. Studio-only changes: none.
+  Validated (solo playtest, 400 Coins): barriers exist for Stage 2 and 3 only; a character walking into the locked Stage 2
+  portal stopped 0.74 studs from its centre, the popup opened, no teleport (1006 studs from the destination); the open
+  Stage 1 portal still teleported; after buying Stage 2 its barrier was removed (Stage 3's stayed) and walking into the
+  portal teleported (2.9 studs from the destination). Console clean (UIBlox warnings only). Live profile restored to the
+  1-Coin snapshot. Not covered: a player standing inside the portal at the moment it becomes locked (admin reset).
 
 ### M4 — Challenge coins
 - **Outputs:** stable coin id attribute; server-validated pickup; per-player visibility; `found x/y` on portals;

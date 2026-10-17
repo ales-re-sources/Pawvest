@@ -59,6 +59,7 @@ src/
     TalentDoubleJump.client.luau      Double Jump talent: extra air jumps from the Talent_DoubleJump attribute
     StageResultsPopup.client.luau     results popup after a finish (GUI built in code)
     HubPortalMedals.client.luau       own best-medal stars + lock requirement/price on each hub portal face (local SurfaceGuis)
+    PortalBarriers.client.luau        invisible local wall in each locked hub portal (removed when Unlocked_<folder> turns true)
     StageUnlockPopup.client.luau      unlock popup after touching a locked hub portal (requirement, price, unlock button; GUI built in code)
   StarterGui/
     CoinGui/CoinDisplayScript.client.luau        top-right coin counter
