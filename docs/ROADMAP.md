@@ -276,6 +276,12 @@ their own order: P2a/P2b need P1, P3 needs P1 and profile session locking. M6 ne
   everyone). Validated: touching the hub portal lands on the Tutorial `TeleportDestination`, score panel "Tutorial / First try!";
   a no-talent bot ran pad → last step in 17.5 s without a fall, `leaderstats.Stage` = `25`. The bot's last jump also touched the
   finish gate (Gold 16.1 s, +70 Coins, board entry); reverted in the live DataStores (profile back to 191 Coins, no `Stage 4`).
+- **Top-left buttons (2026-10-17, user request):** the 🏠 button no longer opens the skills panel. Now: 🏠 **Home** = new, sends the
+  player to the hub (`GoHome` remote, `HomeService`: cooldown 3 s, same effect as a stage `TeleportToSpawn` portal: timer cancelled,
+  score panel "Central Island"); ⚡ **Skills** opens the panel (`HomePanel` → `SkillsPanel`, script `TalentRows.client.luau`).
+  Order Home, Skills, Settings, Admin. Studio-only: renamed/new buttons, panel renamed (its styled children were rebuilt from
+  `SettingsPanel` after Argon replaced the renamed instance). Validated with real clicks: Home from the Tutorial pad → hub spawn,
+  panel "Central Island"; Settings hides the open Skills panel; Skills reopens it with the three talent rows.
 - **Done early (fix, 2026-10-17, user report):** a new record showed on the board only after a server restart (the board
   polled every 60 s). `PlayerTimerHandler.LeaderboardChanged` now fires after a Top-10 write and boards redraw at once
   (Stage 2 board updated 0.7 s after the finish); empty rows are cleared; the 60 s poll stays for other servers.

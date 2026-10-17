@@ -22,10 +22,11 @@ if not screenGui then
 end
 
 local homeButton = screenGui:WaitForChild("HomeButton")
+local skillsButton = screenGui:WaitForChild("SkillsButton")
 local settingsButton = screenGui:WaitForChild("SettingsButton")
 local adminButton = screenGui:WaitForChild("AdminButton")
 local adminPanel = screenGui.Parent:WaitForChild("AdminPanel")
-local homePanel = screenGui.Parent:WaitForChild("HomePanel")
+local skillsPanel = screenGui.Parent:WaitForChild("SkillsPanel")
 local settingsPanel = screenGui.Parent:WaitForChild("SettingsPanel")
 
 local function isAdminUser(userId)
@@ -58,13 +59,14 @@ end
 
 -- Apply hover effects to other buttons
 createHoverEffect(homeButton)
+createHoverEffect(skillsButton)
 createHoverEffect(settingsButton)
 
 
 -- Panel state tracking
 local isPanelOpen = false
 -- The skills panel is visible from the start, so it counts as the open panel (opening another one closes it)
-local lastOpenPanel = homePanel.Visible and homePanel or nil
+local lastOpenPanel = skillsPanel.Visible and skillsPanel or nil
 
 local function closePanel(panel)
 	if not lastOpenPanel then return end
@@ -101,11 +103,17 @@ end
 
 
 -- Button click handlers
+-- Home: back to the hub (the server validates, cancels a running timer and teleports)
+local goHomeEvent = ReplicatedStorage:WaitForChild("GoHome")
 homeButton.MouseButton1Click:Connect(function()
-	if (lastOpenPanel == homePanel) then
-		closePanel(homePanel)
+	goHomeEvent:FireServer()
+end)
+
+skillsButton.MouseButton1Click:Connect(function()
+	if (lastOpenPanel == skillsPanel) then
+		closePanel(skillsPanel)
 	else
-		openPanel(homePanel)
+		openPanel(skillsPanel)
 	end
 end)
 
