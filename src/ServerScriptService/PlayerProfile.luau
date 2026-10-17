@@ -6,7 +6,8 @@
 local Players = game:GetService("Players")
 local DataStoreService = game:GetService("DataStoreService")
 
-local PROFILE_VERSION = 2 -- 2: pets (P1a)
+local PROFILE_VERSION = 3 -- 2: pets (P1a); 3: Coin scale ×10 (R2)
+local COIN_SCALE = 10 -- R2: Coins stored before version 3 (and legacy PlayerCoins) are multiplied once
 local AUTOSAVE_INTERVAL = 60
 local MAX_ATTEMPTS = 3
 local SHUTDOWN_TIMEOUT = 25
@@ -49,8 +50,13 @@ local function newProfile()
 	}
 end
 
--- Fills fields added after the record was written.
+-- Fills fields added after the record was written and upgrades older versions (each step runs once:
+-- the record is stamped with PROFILE_VERSION afterwards).
 local function reconcile(data)
+	local version = type(data.Version) == "number" and data.Version or 1
+	if version < 3 and type(data.Coins) == "number" then
+		data.Coins *= COIN_SCALE
+	end
 	for field, default in newProfile() do
 		if data[field] == nil then
 			data[field] = default
@@ -95,7 +101,7 @@ local function migrateLegacy(userId)
 
 	local profile = newProfile()
 	if type(coins) == "number" then
-		profile.Coins = math.max(0, math.floor(coins))
+		profile.Coins = math.max(0, math.floor(coins)) * COIN_SCALE
 	end
 	if type(scores) == "table" then
 		for _, entry in scores do

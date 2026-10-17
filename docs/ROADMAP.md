@@ -35,6 +35,7 @@ Rules:
 | M2 | Talents shop | ✔ | ✔ | – |
 | R1 | Repeat rewards + shared payout | ✔ | ✔ | – |
 | P1a | Pet data + economy | ✔ | ✔ | – |
+| R2 | Coin scale ×10 | ✔ | ✔ | – |
 | P1b | Egg stand + Pets panel | – | – | – |
 | P1c | Pet models + following | – | – | – |
 | P1d | Pet XP + levels | – | – | – |
@@ -228,6 +229,48 @@ their own order: P2a needs P1a–P1c (P1d recommended), P2b needs P2a, P3 needs 
   stored `RunsToday = { Day = 20743, ["Stage 4"] = 1 }`. Talent purchases still call `AddCoins` (unchanged).
   Consoles: only Roblox's own UIBlox "FoundationProvider" warnings. Live profile restored to the pre-test snapshot
   (11 Coins, Tutorial Gold, no `RunsToday`; `reconcile` adds it on the next load); boards unchanged (no new bests).
+
+### R2 — Coin scale ×10 (user decision 2026-10-17, after the economy review)
+- **Inputs:** economy review: per-payout rounding swallows small pet bonuses (+2–4 % of a 1–10 Coin payout pays nothing
+  extra); user decision: inflate every Coin amount by 10, no fraction carry; floor, pet values and slot prices stay for M6.
+- **Outputs:**
+  - Every Coin amount × 10 (GDD updated): medal base payouts 200 / 400 / 800; run reward
+    `max(10, round(50 × factor × medal mult × 0.8^n))` (`StageConfig.RunRewardBase = 50`, new `RunRewardFloor = 10`);
+    unlock prices 500 / 1 500 / 3 000; talent costs 200 / 400 / 600 / 900 / 1 300, 1 500, 300 / 600 / 1 000; Basic egg 500,
+    Golden 4 000; slots 0 / 2 000 / 5 000; sell values 100 / 200 / 500 / 1 500 / 5 000; legacy pickup coin 10.
+  - Profile `Version = 3`: a stored record below version 3 gets `Coins × 10` once on load; a record migrated from the
+    legacy `PlayerCoins` store gets 10 × the legacy coins.
+- **Boundary:** percentages, odds, times, the +50 % cap and the 0.8 decay are unchanged; no fraction carry; the floor
+  (Tutorial loop ~1 400 / h) and pet value are left for M6. Pets, medals and boards need no migration.
+- **Design notes:** the client UI reads every price from the configs (skills panel, unlock popup, portal lock lines,
+  results popup), so no GUI script changes. The migration runs in `PlayerProfile.load` before `reconcile` stamps the
+  version, so it happens exactly once per record; a failed load never saves, so it cannot double-apply.
+- **Studio-only changes:** none expected (coin counter checked for 5-digit values).
+- **Acceptance checks:**
+  - every Coin amount in `StageConfig`, `TalentConfig`, `PetConfig` is exactly 10 × its previous value (scripted compare);
+  - `RunReward` for all stages × medals × n = 0…9 matches the GDD §5 table (Gold sums 227 / 446 / 668 / 893), never < 10;
+  - a stored version-2 record with N Coins loads with 10 N and `Version = 3`, and after rejoin still has 10 N (not 100 N);
+    a version-1 record is scaled too and still gets the launch egg;
+  - a missing profile migrated from `PlayerCoins` gets exactly 10 × the legacy coins;
+  - purchases charge the new prices exactly: Run Speed 1 = 200, Basic egg = 500, slot 2 = 2 000, Stage 2 unlock = 1 500;
+  - a Tutorial Gold over a Silver pays medal 400 + run 50; with a +10 % pet 440 + 55;
+  - the UI shows the new prices (skills panel `Buy 200`, unlock popup `Unlock for 1500 Coins`) and the coin counter shows a
+    5-digit balance unclipped.
+- **Validation log (2026-10-17, solo playtests, API access on, uid 9892673032; the user's own running playtest was stopped
+  first, with their OK):** Edit mode: all 28 Coin amounts in `StageConfig` / `TalentConfig` / `PetConfig` are exactly
+  10 × the old values (Stage 1 unlock 50 → 500 from the M3 follow-up included); `RunReward` first runs 25 / 38 / 50,
+  50 / 75 / 100, 75 / 113 / 150, 100 / 150 / 200 and Gold sums 227 / 446 / 668 / 893; minimum over n = 0…60 is 10; no medal 0.
+  Playtest 1 (stored version-2 record, 1 Coin): counter 10, portal lock lines `or 500 / 1500 / 3000 Coins`, skills panel
+  `Buy 200` / `Buy 1500` / `Buy 300`; stored `Version = 3`, Coins 10. Playtest 2 (rejoin): 10 (not 100).
+  Playtest 3 (preset version-1 record: 1 200 Coins, Tutorial and Stage 1 Silver, a Dragon, no pet fields): counter `12000`
+  unclipped, launch egg waiting; Stage 3 portal popup `Unlock for 3000 Coins` / `You have 12000 Coins` (screenshot);
+  Run Speed 1 −200, launch egg 0, Basic egg −500, Stage 3 unlock −3 000, slot 2 −2 000, a Cat sold +100; with the Dragon
+  (×1.1) Stage 1 Gold paid medal 880 + run 110 (+ free Basic egg); without a pet Tutorial Gold paid 400 + 50 (+ egg).
+  Stored: Coins 7 840, `Version = 3`. Playtest 4 (profile record removed, legacy `PlayerCoins` = 108): Coins 1 080,
+  best times 104 / 163 s from `PlayerScoresStore`. Consoles: only Roblox's UIBlox warnings and one "DataStore request was
+  added to queue" on the migration join (migration save and launch-egg save on the same key at once — harmless, every new
+  player triggers it). Live DataStores restored to the pre-test snapshot (version-2 profile, 1 Coin, launch egg waiting;
+  boards unchanged, Stage 3 key absent); the next real join scales it to 10 Coins.
 
 ### P1 — Pets (split into P1a–P1d, design check 2026-10-17)
 P1a comes first; P1b, P1c and P1d each need only P1a and can follow in any order. Pets never touch WalkSpeed / JumpPower.

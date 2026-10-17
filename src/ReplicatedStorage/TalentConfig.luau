@@ -13,9 +13,9 @@ export type Talent = {
 }
 
 TalentConfig.List = {
-	{ id = "RunSpeed", name = "Run Speed", costs = { 20, 40, 60, 90, 130 }, perLevel = 0.06, effect = "+6% run speed" },
-	{ id = "DoubleJump", name = "Double Jump", costs = { 150 }, perLevel = 1, effect = "1 extra jump in the air" },
-	{ id = "JumpHeight", name = "Jump Height", costs = { 30, 60, 100 }, perLevel = 0.08, effect = "+8% jump height" },
+	{ id = "RunSpeed", name = "Run Speed", costs = { 200, 400, 600, 900, 1300 }, perLevel = 0.06, effect = "+6% run speed" },
+	{ id = "DoubleJump", name = "Double Jump", costs = { 1500 }, perLevel = 1, effect = "1 extra jump in the air" },
+	{ id = "JumpHeight", name = "Jump Height", costs = { 300, 600, 1000 }, perLevel = 0.08, effect = "+8% jump height" },
 } :: { Talent }
 
 TalentConfig.ById = {} :: { [string]: Talent }

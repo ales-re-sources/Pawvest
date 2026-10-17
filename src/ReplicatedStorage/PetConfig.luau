@@ -22,11 +22,11 @@ export type Egg = {
 }
 
 PetConfig.Rarities = {
-	{ id = "Common", order = 1, bonus = 20, sellValue = 10, color = Color3.fromRGB(200, 200, 200) },
-	{ id = "Uncommon", order = 2, bonus = 40, sellValue = 20, color = Color3.fromRGB(90, 200, 90) },
-	{ id = "Rare", order = 3, bonus = 70, sellValue = 50, color = Color3.fromRGB(70, 140, 255) },
-	{ id = "Epic", order = 4, bonus = 100, sellValue = 150, color = Color3.fromRGB(180, 80, 255) },
-	{ id = "Legendary", order = 5, bonus = 150, sellValue = 500, color = Color3.fromRGB(255, 170, 0) },
+	{ id = "Common", order = 1, bonus = 20, sellValue = 100, color = Color3.fromRGB(200, 200, 200) },
+	{ id = "Uncommon", order = 2, bonus = 40, sellValue = 200, color = Color3.fromRGB(90, 200, 90) },
+	{ id = "Rare", order = 3, bonus = 70, sellValue = 500, color = Color3.fromRGB(70, 140, 255) },
+	{ id = "Epic", order = 4, bonus = 100, sellValue = 1500, color = Color3.fromRGB(180, 80, 255) },
+	{ id = "Legendary", order = 5, bonus = 150, sellValue = 5000, color = Color3.fromRGB(255, 170, 0) },
 } :: { Rarity }
 
 PetConfig.RarityById = {} :: { [string]: Rarity }
@@ -62,20 +62,20 @@ PetConfig.Eggs = {
 	Basic = {
 		id = "Basic",
 		name = "Basic egg",
-		price = 50,
+		price = 500,
 		stand = true,
 		weights = { Common = 600, Uncommon = 250, Rare = 110, Epic = 35, Legendary = 5 },
 	},
 	Golden = {
 		id = "Golden",
 		name = "Golden egg",
-		price = 400,
+		price = 4000,
 		stand = false,
 		weights = { Uncommon = 450, Rare = 350, Epic = 150, Legendary = 50 },
 	},
 } :: { [string]: Egg }
 
-PetConfig.SlotPrices = { 0, 200, 500 } -- SlotPrices[n] = price of the n-th equip slot; #SlotPrices = max slots
+PetConfig.SlotPrices = { 0, 2000, 5000 } -- SlotPrices[n] = price of the n-th equip slot; #SlotPrices = max slots
 PetConfig.MaxPets = 50 -- inventory cap
 PetConfig.MaxLevel = 20
 PetConfig.LevelBonus = 5 -- permille per level above 1

@@ -3,6 +3,10 @@
 Status: **draft**. All numbers are placeholders until `T_base` is measured in the M6 balancing pass
 (see [ROADMAP.md](ROADMAP.md)). This document says *what* the game is; the roadmap says *how and when* it is built.
 
+**Coin scale (2026-10-17, R2):** every Coin amount (rewards, prices, sell values) is 10× the first draft, so small
+percentage bonuses show up in single payouts and numbers feel like a Roblox pet game. Balances stored before the change
+were multiplied by 10 once. Percentages, odds and times are unchanged.
+
 ## 1. Pillars
 1. **Short, readable stages** — each stage is a 1–3 minute run with a clear finish.
 2. **Mastery pays most** — medals and fast times pay the most Coins. Repeating a stage still pays, but less with every
@@ -28,9 +32,9 @@ pets level up while you play; the pet garden (§7.6) raises pets and produces Co
 | Order | Stage | Internal key | Checkpoints | Difficulty | Theme / obstacles | Unlock |
 |---|---|---|---|---|---|---|
 | 0 | Tutorial | `"Stage 4"` ¹ | 23–24 | ★ | basics: jumps, first kill part | always open |
-| 1 | Stage 1 | `"Stage 1"` | 1–9 | ★★ | laser strips, spinners, lava floor, choice stage, jump pads | Bronze on Tutorial **or** 50 Coins |
-| 2 | Stage 2 | `"Stage 2"` | 10–14 | ★★★ | kill-part corridors, bounce bricks | Silver on Stage 1 **or** 150 Coins |
-| 3 | Stage 3 | `"Stage 3"` | 20–22 | ★★★★ | dense kill-part layouts | Silver on Stage 2 **or** 300 Coins |
+| 1 | Stage 1 | `"Stage 1"` | 1–9 | ★★ | laser strips, spinners, lava floor, choice stage, jump pads | Bronze on Tutorial **or** 500 Coins |
+| 2 | Stage 2 | `"Stage 2"` | 10–14 | ★★★ | kill-part corridors, bounce bricks | Silver on Stage 1 **or** 1 500 Coins |
+| 3 | Stage 3 | `"Stage 3"` | 20–22 | ★★★★ | dense kill-part layouts | Silver on Stage 2 **or** 3 000 Coins |
 
 ¹ Existing DataStore key; keep it (or migrate) so recorded times are not lost.
 
@@ -86,22 +90,22 @@ All Coins earned by playing (medal payouts, repeat rewards, challenge coins, gar
 are paid through one server function and multiplied by the player's pet bonus (§7.3). Purchases are not.
 
 ### Medal payouts (one-time per tier, per player)
-Base payout Bronze 20 / Silver 40 / Gold 80, × stage factor. Reaching a higher tier directly also pays the lower
+Base payout Bronze 200 / Silver 400 / Gold 800, × stage factor. Reaching a higher tier directly also pays the lower
 tiers not yet earned (a first-try Silver pays Bronze + Silver).
 
 | Stage | Factor | Bronze | Silver | Gold | Stage total |
 |---|---|---|---|---|---|
-| Tutorial | 0.5 | 10 | 20 | 40 | 70 |
-| Stage 1 | 1.0 | 20 | 40 | 80 | 140 |
-| Stage 2 | 1.5 | 30 | 60 | 120 | 210 |
-| Stage 3 | 2.0 | 40 | 80 | 160 | 280 |
-| **All** | | | | | **700** |
+| Tutorial | 0.5 | 100 | 200 | 400 | 700 |
+| Stage 1 | 1.0 | 200 | 400 | 800 | 1 400 |
+| Stage 2 | 1.5 | 300 | 600 | 1 200 | 2 100 |
+| Stage 3 | 2.0 | 400 | 800 | 1 600 | 2 800 |
+| **All** | | | | | **7 000** |
 
 ### Repeat reward (every finish, diminishing)
 Every finish with a medal also pays
 
 ```
-run reward = max(1, round(5 × stage factor × medal multiplier × 0.8^n))
+run reward = max(10, round(50 × stage factor × medal multiplier × 0.8^n))
 ```
 
 where the medal multiplier is that **run's** medal (Bronze ×1, Silver ×1.5, Gold ×2) and `n` is the number of earlier
@@ -110,27 +114,28 @@ It is paid on top of any medal payout, also on the first finish.
 
 | Stage | First run Bronze | Silver | Gold | Gold, sum of the first 10 runs of a day |
 |---|---|---|---|---|
-| Tutorial | 3 | 4 | 5 | 23 |
-| Stage 1 | 5 | 8 | 10 | 44 |
-| Stage 2 | 8 | 11 | 15 | 68 |
-| Stage 3 | 10 | 15 | 20 | 89 |
+| Tutorial | 25 | 38 | 50 | 227 |
+| Stage 1 | 50 | 75 | 100 | 446 |
+| Stage 2 | 75 | 113 | 150 | 668 |
+| Stage 3 | 100 | 150 | 200 | 893 |
 
-After ~10 runs a stage pays 1 Coin per run until the next day. Faster medals pay more, grinding runs out quickly,
+After 8–15 runs (Gold: Tutorial from run 8, Stage 3 from run 15) a stage pays the floor of 10 Coins per run until the
+next day. Faster medals pay more, grinding runs out quickly,
 and switching stages is better than repeating one (pillar 2). All values provisional.
 
 ### Challenge coins
 Placed off the main path, behind risky jumps, or reachable only with talents. Each coin is collected
-**once per player**, saved, and hidden only for that player. Values: easy 2 / risky 5 / talent-gated 10.
+**once per player**, saved, and hidden only for that player. Values: easy 20 / risky 50 / talent-gated 100.
 
 | Stage | Coin budget (Coins) | Example mix |
 |---|---|---|
-| Tutorial | 10 | 1×5, 1×5 |
-| Stage 1 | 30 | 3×2, 2×5, 1×10 + … |
-| Stage 2 | 40 | |
-| Stage 3 | 50 | |
-| **All** | **130** | |
+| Tutorial | 100 | 1×50, 1×50 |
+| Stage 1 | 300 | 3×20, 2×50, 1×100 + … |
+| Stage 2 | 400 | |
+| Stage 3 | 500 | |
+| **All** | **1 300** | |
 
-**One-time total: 700 (medals) + 130 (coins) = 830 Coins**, plus repeat rewards, garden production and the pet bonus,
+**One-time total: 7 000 (medals) + 1 300 (coins) = 8 300 Coins**, plus repeat rewards, garden production and the pet bonus,
 which have no fixed cap.
 
 ## 6. Talents
@@ -141,10 +146,10 @@ entries), confirmed by a second click; it never affects other players and the se
 
 | Talent | Levels | Effect per level | Cost per level | Total |
 |---|---|---|---|---|
-| Run Speed | 5 | +6 % WalkSpeed (16 → 20.8 at max) | 20 / 40 / 60 / 90 / 130 | 340 |
-| Double Jump | 1 | one extra jump in the air | 150 | 150 |
-| Jump Height | 3 | +8 % jump height | 30 / 60 / 100 | 190 |
-| **Full tree** | | | | **680** |
+| Run Speed | 5 | +6 % WalkSpeed (16 → 20.8 at max) | 200 / 400 / 600 / 900 / 1 300 | 3 400 |
+| Double Jump | 1 | one extra jump in the air | 1 500 | 1 500 |
+| Jump Height | 3 | +8 % jump height | 300 / 600 / 1 000 | 1 900 |
+| **Full tree** | | | | **6 800** |
 
 ### Economy constraints (must hold after every rebalance)
 The economy is open (repeat rewards, garden, pet bonus), so "earnable" is no longer a cap. The constraint is about
@@ -155,23 +160,23 @@ Repeat rewards and pets only add to this, so the table is a lower bound.
 
 | Gold on | Designed talent set | Cost | Earnable before | OK |
 |---|---|---|---|---|
-| Stage 1 | Run Speed 2 | 60 | 70 + 60 + 40 = 170 | ✔ |
-| Stage 2 | Run Speed 3 + Double Jump | 270 | 70 + 140 + 90 + 80 = 380 | ✔ |
-| Stage 3 | Run Speed 5 + Double Jump + Jump Height 2 | 580 | 70 + 140 + 210 + 120 + 130 = 670 | ✔ |
-| Full tree | everything | 680 | 830 total | ✔ |
+| Stage 1 | Run Speed 2 | 600 | 700 + 600 + 400 = 1 700 | ✔ |
+| Stage 2 | Run Speed 3 + Double Jump | 2 700 | 700 + 1 400 + 900 + 800 = 3 800 | ✔ |
+| Stage 3 | Run Speed 5 + Double Jump + Jump Height 2 | 5 800 | 700 + 1 400 + 2 100 + 1 200 + 1 300 = 6 700 | ✔ |
+| Full tree | everything | 6 800 | 8 300 total | ✔ |
 
 ### Coins per hour (open income, provisional)
 | Source | Estimate | Notes |
 |---|---|---|
-| Obby, first hour of a day (Gold runs, all stages) | ~225 | first 10 Gold runs of each of the four stages (~40 runs), then the 1-Coin floor |
-| Obby, later the same day | ~50 | 1 Coin per run at ~70 s per run |
-| Pet garden (§7.6) | target 30–100 | depends on pets in pens; offline production capped at 8 h |
+| Obby, first hour of a day (Gold runs, all stages) | ~2 230 | first 10 Gold runs of each of the four stages (~40 runs), then the 10-Coin floor |
+| Obby, later the same day | ~500 | 10 Coins per run at ~70 s per run (a ~25 s Tutorial loop pays ~1 400 / h; open, see M6) |
+| Pet garden (§7.6) | target 300–1 000 | depends on pets in pens; offline production capped at 8 h |
 | Pet bonus | × 1.0–1.5 | on all of the above |
 
-Sinks: talents (680), stage unlocks (500), eggs (§7.2), pet slots (700), garden upgrades and feeding (§7.6).
+Sinks: talents (6 800), stage unlocks (5 000), eggs (§7.2), pet slots (7 000), garden upgrades and feeding (§7.6).
 
 Notes:
-- Bought stage unlocks are a sink outside the talent budget: a player who buys all three unlocks (500) is ~500 Coins behind
+- Bought stage unlocks are a sink outside the talent budget: a player who buys all three unlocks (5 000) is ~5 000 Coins behind
   and must earn it back — intended cost of skipping.
 - Eggs and slots compete with talents for the same Coins; a player can choose pets first and talents later.
 - Gold at 0.8 × T_base with only Run Speed 2 (+12 %) on Stage 1 needs a near-perfect route — verify in M6.
@@ -182,11 +187,11 @@ Pets follow the player, multiply Coin income and level up. They never affect mov
 ### 7.1 Rarities and kinds
 | Rarity | Base bonus | Sell value | Example kinds (prov.) |
 |---|---|---|---|
-| Common | +2 % | 10 | Cat, Dog |
-| Uncommon | +4 % | 20 | Bunny, Fox |
-| Rare | +7 % | 50 | Owl, Panda |
-| Epic | +10 % | 150 | Dragon |
-| Legendary | +15 % | 500 | Phoenix |
+| Common | +2 % | 100 | Cat, Dog |
+| Uncommon | +4 % | 200 | Bunny, Fox |
+| Rare | +7 % | 500 | Owl, Panda |
+| Epic | +10 % | 1 500 | Dragon |
+| Legendary | +15 % | 5 000 | Phoenix |
 
 Every pet is an individual (own level and XP), identified by a unique id per player. Inventory holds up to **50** pets.
 A pet can be **sold** back for its sell value (irreversible).
@@ -197,8 +202,8 @@ The odds are always shown before buying.
 
 | Egg | Price | Common | Uncommon | Rare | Epic | Legendary | Where |
 |---|---|---|---|---|---|---|---|
-| Basic egg | 50 | 60 % | 25 % | 11 % | 3.5 % | 0.5 % | egg stand (hub), instant |
-| Golden egg | 400 | – | 45 % | 35 % | 15 % | 5 % | pet garden incubator, hatches in real time (§7.6) |
+| Basic egg | 500 | 60 % | 25 % | 11 % | 3.5 % | 0.5 % | egg stand (hub), instant |
+| Golden egg | 4 000 | – | 45 % | 35 % | 15 % | 5 % | pet garden incubator, hatches in real time (§7.6) |
 
 Free eggs:
 - one Basic egg on the first join after pets launch (also for existing players),
@@ -212,8 +217,8 @@ Up to 3 pets can be **equipped** (follow the player, count for the bonus).
 | Slot | Price |
 |---|---|
 | 1 | free |
-| 2 | 200 |
-| 3 | 500 |
+| 2 | 2 000 |
+| 3 | 5 000 |
 
 ```
 pet bonus  = base bonus (rarity) + 0.5 % × (level − 1)

@@ -10,9 +10,9 @@ StageConfig.HubName = "Central Island"
 -- Medal tiers in ascending order (GDD §4–5). A medal is stored as its index here; 0 = no medal.
 -- runMultiplier scales the repeat reward of a run with that medal.
 StageConfig.Medals = {
-	{ name = "Bronze", basePayout = 20, runMultiplier = 1 },
-	{ name = "Silver", basePayout = 40, runMultiplier = 1.5 },
-	{ name = "Gold", basePayout = 80, runMultiplier = 2 },
+	{ name = "Bronze", basePayout = 200, runMultiplier = 1 },
+	{ name = "Silver", basePayout = 400, runMultiplier = 1.5 },
+	{ name = "Gold", basePayout = 800, runMultiplier = 2 },
 }
 
 -- Medal index by tier name ("Silver" → 2).
@@ -21,9 +21,10 @@ for index, medal in StageConfig.Medals do
 	StageConfig.MedalIndex[medal.name] = index
 end
 
--- Repeat reward (GDD §5): max(1, round(RunRewardBase × factor × medal multiplier × RunRewardDecay^n))
-StageConfig.RunRewardBase = 5
+-- Repeat reward (GDD §5): max(RunRewardFloor, round(RunRewardBase × factor × medal multiplier × RunRewardDecay^n))
+StageConfig.RunRewardBase = 50
 StageConfig.RunRewardDecay = 0.8
+StageConfig.RunRewardFloor = 10
 
 -- Medal thresholds as multiples of tBase (GDD §4); a stage may point `tiers` at its own table.
 StageConfig.DefaultTiers = { Bronze = 1.6, Silver = 1.1, Gold = 0.8 }
@@ -50,7 +51,7 @@ StageConfig.Stages = {
 		tBase = 70,
 		tiers = StageConfig.DefaultTiers,
 		unlock = { stage = "Stage 4", medal = "Bronze" }, -- Tutorial
-		unlockPrice = 50,
+		unlockPrice = 500,
 		rewardFactor = 1.0,
 	},
 	{
@@ -62,7 +63,7 @@ StageConfig.Stages = {
 		tBase = 100,
 		tiers = StageConfig.DefaultTiers,
 		unlock = { stage = "Stage 1", medal = "Silver" },
-		unlockPrice = 150,
+		unlockPrice = 1500,
 		rewardFactor = 1.5,
 	},
 	{
@@ -74,7 +75,7 @@ StageConfig.Stages = {
 		tBase = 120,
 		tiers = StageConfig.DefaultTiers,
 		unlock = { stage = "Stage 2", medal = "Silver" },
-		unlockPrice = 300,
+		unlockPrice = 3000,
 		rewardFactor = 2.0,
 	},
 }
@@ -143,8 +144,8 @@ function StageConfig.RunReward(stage, medal: number, finishesToday: number): num
 	end
 	local raw = StageConfig.RunRewardBase * stage.rewardFactor * StageConfig.Medals[medal].runMultiplier
 		* StageConfig.RunRewardDecay ^ finishesToday
-	-- the epsilon keeps exact halves (2.5, 7.5) rounding up despite float error in 0.8^n
-	return math.max(1, math.floor(raw + 0.5 + 1e-9))
+	-- the epsilon keeps exact halves (37.5, 112.5) rounding up despite float error in 0.8^n
+	return math.max(StageConfig.RunRewardFloor, math.floor(raw + 0.5 + 1e-9))
 end
 
 -- Player attribute that replicates the player's medal on `stage` to clients.

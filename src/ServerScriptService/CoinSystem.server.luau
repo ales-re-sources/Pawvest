@@ -6,6 +6,8 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local CoinRewards = require(ServerScriptService.CoinRewards)
 
+local COIN_VALUE = 10 -- legacy pickup coin (Coin scale ×10, R2)
+
 -- Create RemoteEvent for coin updates
 local coinUpdateEvent = Instance.new("RemoteEvent")
 coinUpdateEvent.Name = "CoinUpdateEvent"
@@ -66,8 +68,8 @@ local function makeTouchHandler(coinPart)
 		local player = Players:GetPlayerFromCharacter(character)
 		if not player then return end
 
-		-- Pay 1 coin (fails while the profile is still loading; the coin stays then)
-		if not CoinRewards.Grant(player, 1, "coin") then return end
+		-- Pay COIN_VALUE (fails while the profile is still loading; the coin stays then)
+		if not CoinRewards.Grant(player, COIN_VALUE, "coin") then return end
 
 		collected = true
 		coinPart.Transparency = 1
