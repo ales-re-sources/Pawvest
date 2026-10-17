@@ -201,6 +201,9 @@ their own order: P2a/P2b need P1, P3 needs P1 and profile session locking. M6 ne
 
 ### M5 — Leaderboards
 - **Outputs:** Top-10 board on every stage (add Stage 3, Tutorial); hub "most stars" board.
+- **Done early (fix, 2026-10-17, user report):** a new record showed on the board only after a server restart (the board
+  polled every 60 s). `PlayerTimerHandler.LeaderboardChanged` now fires after a Top-10 write and boards redraw at once
+  (Stage 2 board updated 0.7 s after the finish); empty rows are cleared; the 60 s poll stays for other servers.
 - **Acceptance checks:** every board renders 10 rows from the DataStore (or fewer with real data, never blank errors);
   a new personal best appears within one refresh interval.
 

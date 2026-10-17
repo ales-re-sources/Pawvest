@@ -18,6 +18,9 @@ local StageResults = require(ServerScriptService.StageResults)
 local StageTimerUpdate = ReplicatedStorage:WaitForChild("StageTimerUpdate")
 local GlobalLeaderboardsStore = DataStoreService:GetDataStore("GlobalLeaderboardsStore")
 
+-- fires (stageKey, leaderboard) after this server wrote a stage's Top-10, so boards redraw at once
+local leaderboardChanged = Instance.new("BindableEvent")
+
 
 local timers = {} -- [Player] = { StageKey = string, StartClock = number }
 local panelStages = {} -- [Player] = stage key shown on the score panel, or StageConfig.HubName
@@ -83,6 +86,7 @@ local function updateGlobalLeaderboard(stageName, playerName, elapsed)
 
 	-- Save the updated leaderboard
 	saveGlobalLeaderboard(stageName, leaderboard)
+	leaderboardChanged:Fire(stageName, leaderboard)
 
 	return leaderboard
 end
@@ -217,4 +221,5 @@ return {
 	UpdateScorePanel = updateScorePanel,
 	LoadGlobalLeaderboard = loadGlobalLeaderboard,
 	UpdateGlobalLeaderboard = updateGlobalLeaderboard,
+	LeaderboardChanged = leaderboardChanged.Event,
 }
