@@ -1,9 +1,9 @@
 local Players = game:GetService("Players")
-local DataStoreService = game:GetService("DataStoreService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
 
--- Create DataStore for coins
-local coinDataStore = DataStoreService:GetDataStore("PlayerCoins")
+-- Coins are stored in the player's profile (loaded / saved by PlayerProfile)
+local PlayerProfile = require(ServerScriptService.PlayerProfile)
 
 -- Create RemoteEvent for coin updates
 local coinUpdateEvent = Instance.new("RemoteEvent")
@@ -17,94 +17,60 @@ function createLeaderstats(player)
 	local stage = Instance.new("StringValue")
 	stage.Name = "Stage"
 	stage.Parent = leaderstats
-	
+
 	-- Add coins to leaderstats
 	local coins = Instance.new("IntValue")
 	coins.Name = "Coins"
 	coins.Parent = leaderstats
 end
 
--- Load player's coin data
-function loadPlayerData(player)
-	local success, data = pcall(function()
-		return coinDataStore:GetAsync(player.UserId)
-	end)
-	
-	if success and data then
-		local leaderstats = player:FindFirstChild("leaderstats")
-		if leaderstats then
-			local coins = leaderstats:FindFirstChild("Coins")
-			if coins then
-				coins.Value = data
-				-- Notify client of loaded coins
-				coinUpdateEvent:FireClient(player, data)
-			end
-		end
-	else
-		-- If no data exists, start with 0 coins
-		local leaderstats = player:FindFirstChild("leaderstats")
-		if leaderstats then
-			local coins = leaderstats:FindFirstChild("Coins")
-			if coins then
-				coinUpdateEvent:FireClient(player, 0)
-			end
-		end
+-- Mirror profile Coins into leaderstats and the client counter
+local function showCoins(player, amount)
+	local leaderstats = player:FindFirstChild("leaderstats")
+	local coins = leaderstats and leaderstats:FindFirstChild("Coins")
+	if coins then
+		coins.Value = amount
+	end
+	coinUpdateEvent:FireClient(player, amount)
+end
+
+-- Show coins once the profile is loaded
+local function loadPlayerData(player)
+	local profile = PlayerProfile.WaitFor(player)
+	if profile then
+		showCoins(player, profile.Coins)
 	end
 end
 
--- Save player's coin data
-function savePlayerData(player)
-	local leaderstats = player:FindFirstChild("leaderstats")
-	if leaderstats then
-		local coins = leaderstats:FindFirstChild("Coins")
-		if coins then
-			local success, errorMessage = pcall(function()
-				coinDataStore:SetAsync(player.UserId, coins.Value)
-			end)
-			
-			if not success then
-				warn("Failed to save coin data for " .. player.Name .. ": " .. errorMessage)
-			end
-		end
-	end
-end
+PlayerProfile.CoinsChanged:Connect(showCoins)
 
 -- Handle coin collection
 local function makeTouchHandler(coinPart)
 	local lastHitPart = nil
+	-- Touched events of several body parts are already queued when CanTouch goes false
+	local collected = false
 
 	return function (otherPart)
-		if otherPart == lastHitPart then
+		if collected or otherPart == lastHitPart then
 			return
 		end
 		lastHitPart = otherPart
-		
+
 		local character = otherPart.Parent
 		if not character then return end
-		
+
 		local humanoid = character:FindFirstChildOfClass("Humanoid")
 		if not humanoid then return end
-		
+
 		local player = Players:GetPlayerFromCharacter(character)
 		if not player then return end
-		
-		local leaderstats = player:FindFirstChild("leaderstats")
-		if not leaderstats then return end
-		
-		local coins = leaderstats:FindFirstChild("Coins")
-		if not coins then return end
 
+		-- Add 1 coin (fails while the profile is still loading; the coin stays then)
+		if not PlayerProfile.AddCoins(player, 1) then return end
+
+		collected = true
 		coinPart.Transparency = 1
 		coinPart.CanTouch = false
-
-		-- Add 1 coin
-		coins.Value = coins.Value + 1
-		
-		-- Notify client of coin update
-		coinUpdateEvent:FireClient(player, coins.Value)
-		
-		-- Save data immediately
-		savePlayerData(player)
 	end
 end
 
@@ -129,18 +95,5 @@ for _, player in Players:GetPlayers() do
 	if not player:FindFirstChild("leaderstats") then
 		createLeaderstats(player)
 	end
-	loadPlayerData(player)
+	task.spawn(loadPlayerData, player)
 end
-
--- Save data when player leaves
-Players.PlayerRemoving:Connect(savePlayerData)
-
--- Auto-save every 60 seconds
-coroutine.wrap(function()
-	while true do
-		task.wait(60)
-		for _, player in Players:GetPlayers() do
-			savePlayerData(player)
-		end
-	end
-end)()

@@ -1,24 +1,27 @@
 local module = {}
 
-lastHitPart = nil
 local Players = game:GetService("Players")
 local ServerStorage = game:GetService("ServerStorage")
-local TimerHandler = require(workspace.Handlers.PlayerTimerHandler)
+
+local lastCheckpoints = {} -- [Player] = last checkpoint part touched (per-player debounce)
+
+Players.PlayerRemoving:Connect(function(player)
+	lastCheckpoints[player] = nil
+end)
 
 
 function module.OnTouched(part, hit)
+	local player = Players:GetPlayerFromCharacter(hit.Parent)
 
-	if part ~= lastHitPart and game.Players:FindFirstChild(hit.Parent.Name) then
-		lastHitPart = part
+	if player and lastCheckpoints[player] ~= part then
+		lastCheckpoints[player] = part
 		script.Sound:Play()
 
-		local player = game.Players:FindFirstChild(hit.Parent.Name)
-        if player and player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Stage") then
+        if player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Stage") then
             player.leaderstats.Stage.Value = part.Parent.Name
 		end
 		
 		-- checkpoint...
-		--local player = Players:GetPlayerFromCharacter(hit.Parent)
 		local checkpointData = ServerStorage:FindFirstChild("CheckpointData")
 		if not checkpointData then
 			checkpointData = Instance.new("Folder")

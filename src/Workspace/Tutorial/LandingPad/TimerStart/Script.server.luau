@@ -1,22 +1,19 @@
+local Players = game:GetService("Players")
+local StageConfig = require(game:GetService("ReplicatedStorage").StageConfig)
 local TimerHandler = require(workspace.Handlers.PlayerTimerHandler)
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local StageTimerStopped = ReplicatedStorage:WaitForChild("StageTimerStopped")
 local TouchHandler = require(workspace.Handlers.CheckpointTouchHandler)
 
-lastHitPart = nil
+local stage = StageConfig.ForInstance(script)
 
 script.Parent.Touched:Connect(function(hit)
-	local player = game.Players:GetPlayerFromCharacter(hit.Parent)
+	local player = Players:GetPlayerFromCharacter(hit.Parent)
+	if not player then return end
 
-	if script.Parent ~= lastHitPart and game.Players:FindFirstChild(hit.Parent.Name) then
-		lastHitPart = script.Parent
-		TimerHandler.StartTimer(player, "Stage 4")
+	-- per-player debounce: a run already going on this stage is not restarted
+	-- (this pad is also a checkpoint, so respawning here keeps the run going)
+	local _, runningStage = TimerHandler.GetTimer(player)
+	if runningStage ~= stage.key then
+		TimerHandler.StartTimer(player, stage.key)
 	end
-	
 	TouchHandler.OnTouched(script.Parent, hit)
-end)
-
--- timer stop or timer reset (user left through portal) - make it possible to touch it again
-StageTimerStopped.OnServerEvent:Connect(function(player)
-	lastHitPart = nil
 end)

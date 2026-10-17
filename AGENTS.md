@@ -39,11 +39,15 @@ Roblox Studio MCP is available for inspecting/editing the live place (`search_ga
 
 ```
 src/
+  ReplicatedStorage/
+    StageConfig.luau                  stage list (key, display name, folder, hub portal, T_base, tiers, unlock, reward factor)
+    TimeFormat.luau                   tenths rounding + "mm:ss.t" formatting
   ServerScriptService/
-    CoinSystem.server.luau            leaderstats (Stage, Coins), coin pickup, PlayerCoins DataStore, CoinUpdateEvent
+    PlayerProfile.luau                per-player profile DataStore (load/migrate/save), AddCoins, CoinsChanged
+    CoinSystem.server.luau            leaderstats (Stage, Coins) mirrored from profile, coin pickup, CoinUpdateEvent
     ResetPlayerTimerServer.server.luau  handles ResetPlayerTimer remote → wipe player's best times
   StarterPlayer/StarterPlayerScripts/
-    StageTimerClientUpdater.client.luau  shows StageTimer label from StageTimerUpdate; fires StageTimerStopped
+    StageTimerClientUpdater.client.luau  StageTimer label: counts locally between start/stop from StageTimerUpdate
   StarterGui/
     CoinGui/CoinDisplayScript.client.luau        top-right coin counter
     ScreenGui/TopLeftIcons/ButtonHandler.client.luau  Home/Settings/Admin buttons, slide-in panels, ADMIN_USERS
@@ -51,7 +55,7 @@ src/
   Workspace/
     Handlers/                         ModuleScripts shared by all stage scripts (required via workspace.Handlers.*)
       CheckpointTouchHandler.luau     checkpoint touch → leaderstats.Stage, respawn point, sound
-      PlayerTimerHandler.luau         stage timers, personal bests, global Top-10 (DataStores)
+      PlayerTimerHandler.luau         stage timers (os.clock), personal bests (profile), global Top-10, score panel
     StartLocation/                    hub: SpawnLocation + TeleportToStage1..3 portals
     Stage1/ Stage2/ Stage3/ Tutorial/ stages (see below)
     DebugBaseplate/                   kill brick under the map
@@ -63,20 +67,21 @@ Every stage folder follows the same pattern:
 | Child | Script behaviour |
 |---|---|
 | `LandingPad/TeleportDestination` | arrival point from the hub portal |
-| `LandingPad/TimerStart` | starts timer `StartTimer(player, "Stage N")` + acts as checkpoint |
-| `LandingPad/TeleportToSpawn/Portal` | back to hub; resets timer, score panel → "Central Island" |
-| `LandingPad/Top10Leaderboard` | SurfaceGui board from `LoadGlobalLeaderboard("Stage N")` (Stage1, Stage2 only) |
+| `LandingPad/TimerStart` | starts the timer unless one already runs on this stage + acts as checkpoint |
+| `LandingPad/TeleportToSpawn/Portal` | back to hub; cancels timer, score panel → hub |
+| `LandingPad/Top10Leaderboard` | SurfaceGui board from `LoadGlobalLeaderboard(stage.key)` (Stage1, Stage2 only) |
 | `<number>/C` | checkpoint part (`1`–`9` Stage1, `10`–`14` Stage2, `20`–`22` Stage3, `23`–`24` Tutorial) |
 | `TeleportBackToStageStart/Portal` | finish line: `StopTimer` → save best time; sibling script teleports to stage start |
 | obstacle models | kill parts, spinners, lava, bounce bricks, choice stage |
 
-Stage name strings are the DataStore keys and must match across `TimerStart`, `TeleportToStageN`
-and `Top10Leaderboard`: `"Stage 1"`, `"Stage 2"`, `"Stage 3"`; Tutorial uses `"Stage 4"`.
-Hub label is `"Central Island"`.
+Stage scripts never hard-code a stage: they call `StageConfig.ForInstance(script)` (stage = the Workspace folder they
+live in) or `StageConfig.ByHubPortal[...]`, so all copies of TimerStart, finish portal, TeleportToSpawn, hub portal and
+Top10Leaderboard are byte-identical. Stage keys (`"Stage 1"`…`"Stage 3"`, Tutorial `"Stage 4"`) are DataStore keys
+and must never change. Hub label is `StageConfig.HubName` (`"Central Island"`).
 
 ## Reusable script variants (copy-pasted, not modules)
 
-Most of the 95 scripts are identical copies. Edit them consistently (grep by content or md5):
+Most of the 98 scripts are identical copies. Edit them consistently (grep by content or md5):
 
 | Count | Variant | Example |
 |---|---|---|
@@ -84,8 +89,11 @@ Most of the 95 scripts are identical copies. Edit them consistently (grep by con
 | 16 | kill on touch (`Humanoid.Health = 0`) | `Workspace/Stage3/Part_01/Script.server.luau` |
 | 10 | kill player on touch (debounced by `hit`) | `Workspace/Stage1/LaserStripStage/Part_01/…` |
 | 8 | spinner (`CFrame * Angles` in `while wait()`) | `Workspace/Stage1/SpinnerStage_1/Part_2/Script_1…` |
+| 4 | `TimerStart` | `Workspace/Stage*/LandingPad/TimerStart/…` |
 | 4 | `TeleportToSpawn` | `Workspace/Stage*/LandingPad/TeleportToSpawn/…` |
-| 4+4 | finish portal / teleport back to stage start (Stage1 copies differ slightly) | `Workspace/Stage*/TeleportBackToStageStart/…` |
+| 4+4 | finish portal / teleport back to stage start (Stage1 teleport copy differs slightly) | `Workspace/Stage*/TeleportBackToStageStart/…` |
+| 3 | hub portal `TeleportToStageN` | `Workspace/StartLocation/TeleportToStage*/…` |
+| 2 | Top10Leaderboard | `Workspace/Stage1/LandingPad/Top10Leaderboard/Script…` |
 | 3 | ChoiceStage random safe `Step` | `Workspace/Stage1/ChoiceStage_*/Script…` |
 | 3 | bounce brick (Heartbeat velocity) | `Workspace/Stage2/12/Level 12/Bounce Brick_*` |
 
@@ -95,8 +103,8 @@ RemoteEvents (in `ReplicatedStorage`; first three exist only in Studio, not in f
 
 | Remote | Direction | Purpose |
 |---|---|---|
-| `StageTimerUpdate` | server → client | elapsed seconds every 1 s; `-1` = timer stopped |
-| `StageTimerStopped` | client → server | client ack after stop; re-arms TimerStart/finish portal debounce |
+| `StageTimerUpdate` | server → client | `(elapsed ≥ 0)` run active; `(-1, final)` finished; `(-1)` cancelled |
+| `StageTimerStopped` | — | unused since M0 (was the stop ack); can be deleted in Studio |
 | `ResetPlayerTimer` | client → server | admin panel "reset score" (no server-side admin check) |
 | `CoinUpdateEvent` | server → client | created at runtime by `CoinSystem` |
 
@@ -104,8 +112,9 @@ DataStores:
 
 | Store | Key | Value |
 |---|---|---|
-| `PlayerCoins` | `UserId` | integer coins |
-| `PlayerScoresStore` | `player_<UserId>` | `{ {StageName, Elapsed}, … }` personal bests |
+| `PlayerProfiles` | `user_<UserId>` | `{ Version, Coins, BestTimes[stageKey], Medals, UnlockedStages, CollectedCoins, Talents }` |
+| `PlayerCoins` | `UserId` | legacy integer coins — read once for migration |
+| `PlayerScoresStore` | `player_<UserId>` | legacy `{ {StageName, Elapsed}, … }` — read once for migration |
 | `GlobalLeaderboardsStore` | `leaderboard_<StageName>` | Top-10 `{ {PlayerName, Elapsed}, … }` |
 | ordered `"a"` | — | legacy time-played board; `TopTimeScript` is **Disabled** |
 
@@ -114,10 +123,14 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
 ## Gotchas
 - **ChoiceStage** scripts pick a random child and require `p.Name == "Step"`; the three `Step` parts
   per ChoiceStage must keep that exact (duplicate) name. They are not synced (no code inside).
+- `PlayerProfile` is saved on leave, every 60 s and in `BindToClose`; a failed load blocks saving for that session.
+  Don't `require` it from the MCP command context during a playtest: that creates a second copy that also saves.
+- Studio playtests with API access read/write the **live** DataStores — snapshot and restore anything a test changes.
 - `CheckpointTouchHandler` plays `script.Sound` — the `Sound`/`Orig` children exist only in Studio.
 - `Workspace/Stage3/level.2` is a Model literally named `level.2` (dot in the name).
-- Debounce variables (`lastHitPart`, `h`) are script-global, i.e. shared by **all players**.
-- Timer uses `os.time()` → 1-second resolution.
+- Debounces in timer, portal and checkpoint code are per player. Kill scripts keep a script-global `h` keyed by the
+  touching part (effectively per player).
+- Timer uses `os.clock()`; times are floored to tenths (`TimeFormat.Tenths`) before storing.
 - Collected coins are hidden server-wide and never respawn.
 - Admin check (`ADMIN_USERS` in `ButtonHandler`) is client-only UI gating.
 - Tutorial has no hub portal and no leaderboard; Stage3 has no leaderboard.

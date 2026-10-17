@@ -29,7 +29,7 @@ Rules:
 | # | Milestone | Implemented | Studio-validated | Live-validated |
 |---|---|---|---|---|
 | D | Design docs (GDD + roadmap) | ✔ | n/a | n/a |
-| M0 | Foundations | – | – | – |
+| M0 | Foundations | ✔ | 3/4 — multi-client check pending | – |
 | M1 | Medals & rewards | – | – | – |
 | M2 | Talents shop | – | – | – |
 | M3 | Stage unlocks | – | – | – |
@@ -53,11 +53,25 @@ M4 adds a Coin source. M5 is mostly independent (can move earlier). M6 needs the
     migrating existing `PlayerCoins` and `PlayerScoresStore` data on first load.
   - Per-player debounces replacing the script-global `lastHitPart` / `h` in timer, portal and checkpoint scripts.
 - **Boundary:** no new gameplay (no medals, talents, unlocks yet).
+- **Design notes:**
+  - `ReplicatedStorage.StageConfig` / `TimeFormat` (shared), `ServerScriptService.PlayerProfile` (server-only).
+    Stage scripts resolve their stage from the stage folder they live in, so per-stage copies are identical.
+  - Profile store `PlayerProfiles`, key `user_<UserId>`. A failed load blocks saving for that session (never
+    overwrite stored data with defaults); missing record → migrate legacy stores (they stay untouched, read-only).
+  - Timer protocol on `StageTimerUpdate`: `(elapsed ≥ 0)` = running, client counts locally per frame;
+    `(-1, final)` = finished; `(-1)` = cancelled. `StageTimerStopped` ack is retired (remote unused).
+  - `h` in kill scripts is keyed by the touching part (already per player) → out of scope.
+- **Studio-only changes:** none required (`StageTimerStopped` may be deleted later).
 - **Acceptance checks:**
   - Timer label shows tenths and advances (not stuck at `00:00.0`).
   - Profile written on leave and identical after rejoin (Studio API access on).
   - A player with existing `PlayerCoins` / `PlayerScoresStore` data sees the same Coins and best times after migration.
   - Two test players (Studio multi-client) touching the same `TimerStart` both get a running timer.
+- **Validation log (2026-10-17, solo playtest, API access on):** label advanced `00:00.1 → 00:01.7`; finish sent
+  final `17.9`, panel updated, label faded; death mid-run kept the timer; `TeleportToSpawn` cancelled it.
+  Migration: legacy 108 Coins / Stage 1 104 s / Stage 2 163 s → identical profile. Profile on leave
+  (118 Coins, Stage 1 17.9) identical after rejoin. Found + fixed: one coin paid +10 (queued body-part touches).
+  Test writes to live DataStores were restored afterwards. Multi-client check not run yet (needs Test → Clients and Servers).
 
 ### M1 — Medals & rewards
 - **Outputs:** tier evaluation at the finish portal; one-time payouts per GDD §5; results popup; medal shown on hub portal.

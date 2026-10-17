@@ -1,18 +1,16 @@
+local Players = game:GetService("Players")
+local StageConfig = require(game:GetService("ReplicatedStorage").StageConfig)
 local TimerHandler = require(workspace.Handlers.PlayerTimerHandler)
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local StageTimerStopped = ReplicatedStorage:WaitForChild("StageTimerStopped")
 
-lastHitPart = nil
+local stage = StageConfig.ForInstance(script)
 
+-- StopTimer is a no-op without a running timer, so repeated touches need no debounce
 script.Parent.Touched:Connect(function(hit)
-	if script.Parent ~= lastHitPart and game.Players:FindFirstChild(hit.Parent.Name) then
-		lastHitPart = script.Parent
-		local player = game.Players:GetPlayerFromCharacter(hit.Parent)
-		local elapsed = TimerHandler.StopTimer(player)
-	end
-end)
+	local player = Players:GetPlayerFromCharacter(hit.Parent)
+	if not player then return end
 
--- timer stop or timer reset (user left through portal) - make it possible to touch it again
-StageTimerStopped.OnServerEvent:Connect(function(player)
-	lastHitPart = nil
+	local _, runningStage = TimerHandler.GetTimer(player)
+	if runningStage == stage.key then
+		TimerHandler.StopTimer(player)
+	end
 end)
