@@ -96,7 +96,9 @@ M4 adds a Coin source. M5 is mostly independent (can move earlier). M6 needs the
   line; 7.9 s → Gold, +40 only, "All medals earned!". Stage 1 in 5.0 s → Gold directly, +140 (all tiers).
   Rejoin: `Medal_Tutorial = 3`, `Medal_Stage1 = 3`, 319 Coins, hub portal Stage 1 ★★★, others ☆☆☆.
   Server + client consoles clean. Live DataStores restored to the pre-test snapshot.
-  Not checked by MCP (screenshots fail during play): visual look of the popup and portal stars.
+  Follow-up (user report): Stage 1 stars sat above the portal frame, hidden behind the top-right coin HUD from
+  spawn; moved onto the portal face below the label, sized in studs, unearned stars lighter. Screenshot from spawn:
+  all three portals show their stars.
 
 ### M2 — Talents shop
 - **Outputs:** skills panel lists talents, levels, costs; purchase RemoteEvent; server applies WalkSpeed / jump height /
