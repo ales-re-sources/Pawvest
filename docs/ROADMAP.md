@@ -266,6 +266,8 @@ their own order: P2a/P2b need P1, P3 needs P1 and profile session locking. M6 ne
   `Tutorial/25/C`). Studio-only: board model, `Course` parts, checkpoint 25 parts. Validated with a scripted no-talent bot
   (WalkSpeed 16, JumpPower 50, jumps at edges): pad → gate in 17.5 s without a fall, the portal finished the run. Test finish
   (Bronze, +10 Coins, Tutorial best 42 s + board entry) was reverted in the live DataStores. Consoles clean.
+  Follow-up (user report): cloned boards still read "Stage 2 - top 10!". The Top10Leaderboard script now sets the
+  `DataLabel` title from `StageConfig` (`<displayName> - top 10!`), identical in all four scripts; verified on all four boards.
 - **Done early (fix, 2026-10-17, user report):** a new record showed on the board only after a server restart (the board
   polled every 60 s). `PlayerTimerHandler.LeaderboardChanged` now fires after a Top-10 write and boards redraw at once
   (Stage 2 board updated 0.7 s after the finish); empty rows are cleared; the 60 s poll stays for other servers.

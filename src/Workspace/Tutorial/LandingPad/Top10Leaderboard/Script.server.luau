@@ -8,6 +8,9 @@ local ROWS = 10
 local stage = StageConfig.ForInstance(script)
 local scoreBlock = script.Parent.Model.ScoreBlock
 
+-- the title comes from the stage, so a copied board can never show another stage's name
+scoreBlock.SurfaceGui.DataLabel.Text = stage.displayName .. " - top 10!"
+
 
 -- Draws all rows; rows without an entry are cleared, so a shorter list leaves no stale names
 local function render(leaderboard)
