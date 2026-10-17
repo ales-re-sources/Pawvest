@@ -268,6 +268,14 @@ their own order: P2a/P2b need P1, P3 needs P1 and profile session locking. M6 ne
   (Bronze, +10 Coins, Tutorial best 42 s + board entry) was reverted in the live DataStores. Consoles clean.
   Follow-up (user report): cloned boards still read "Stage 2 - top 10!". The Top10Leaderboard script now sets the
   `DataLabel` title from `StageConfig` (`<displayName> - top 10!`), identical in all four scripts; verified on all four boards.
+- **Tutorial pass 2 (2026-10-17, user report):** Studio was reopened from a saved place that lacked the unsaved
+  `Tutorial/Course` parts (Studio-only objects are lost unless the place is saved: Ctrl+S after scene changes). Course rebuilt
+  with the same 14 parts. Added the hub portal `StartLocation/TeleportToTutorial` (clone of the Stage 2 portal, 18 studs right
+  of Stage 1, label "Tutorial access", script file = copy of the other hub portals) and set `StageConfig` Tutorial
+  `hubPortal = "TeleportToTutorial"` (M3's "Tutorial portal on the hub" is thereby done; the unlock rule is still open to
+  everyone). Validated: touching the hub portal lands on the Tutorial `TeleportDestination`, score panel "Tutorial / First try!";
+  a no-talent bot ran pad → last step in 17.5 s without a fall, `leaderstats.Stage` = `25`. The bot's last jump also touched the
+  finish gate (Gold 16.1 s, +70 Coins, board entry); reverted in the live DataStores (profile back to 191 Coins, no `Stage 4`).
 - **Done early (fix, 2026-10-17, user report):** a new record showed on the board only after a server restart (the board
   polled every 60 s). `PlayerTimerHandler.LeaderboardChanged` now fires after a Top-10 write and boards redraw at once
   (Stage 2 board updated 0.7 s after the finish); empty rows are cleared; the 60 s poll stays for other servers.

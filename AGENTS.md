@@ -101,7 +101,7 @@ Most of the 103 scripts are identical copies. Edit them consistently (grep by co
 | 4 | `TimerStart` | `Workspace/Stage*/LandingPad/TimerStart/…` |
 | 4 | `TeleportToSpawn` | `Workspace/Stage*/LandingPad/TeleportToSpawn/…` |
 | 4+4 | finish portal / teleport back to stage start (Stage1 teleport copy differs slightly) | `Workspace/Stage*/TeleportBackToStageStart/…` |
-| 3 | hub portal `TeleportToStageN` | `Workspace/StartLocation/TeleportToStage*/…` |
+| 4 | hub portal `TeleportToStageN` / `TeleportToTutorial` | `Workspace/StartLocation/Teleport*/…` |
 | 2 | Top10Leaderboard | `Workspace/Stage1/LandingPad/Top10Leaderboard/Script…` |
 | 3 | ChoiceStage random safe `Step` | `Workspace/Stage1/ChoiceStage_*/Script…` |
 | 3 | bounce brick (Heartbeat velocity) | `Workspace/Stage2/12/Level 12/Bounce Brick_*` |
@@ -154,7 +154,7 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
 - Collected coins are hidden server-wide and never respawn.
 - Admins are listed once in `ReplicatedStorage.AdminConfig`; every admin remote must check `AdminConfig.IsAdmin`
   on the server (the client check only hides the panel). The RunSpeed/DoubleJump toggles are client-side debug tools.
-- Tutorial has no hub portal (unfinished). Stage2, Stage3 and Tutorial landing pads are geometrically identical (offsets from Stage2: Stage3 x −52.2, z +0.2; Tutorial x −121.6);
+- Tutorial is unfinished but has a hub portal (`TeleportToTutorial`). Stage2, Stage3 and Tutorial landing pads are geometrically identical (offsets from Stage2: Stage3 x −52.2, z +0.2; Tutorial x −121.6);
   Stage1's pad sits at hub height with its board at a different offset.
 - Legacy APIs are common (`wait`, `spawn`, `:connect`, `findFirstChild`); prefer `task.*` and
   `Players:GetPlayerFromCharacter` in new code, but don't mass-rewrite without asking.
