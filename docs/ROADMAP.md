@@ -131,6 +131,12 @@ their own order: P2a/P2b need P1, P3 needs P1 and profile session locking. M6 ne
   Consoles clean; live DataStores restored to the pre-test snapshot.
 
 ### M2 — Talents shop
+- **Done early (admin tooling, 2026-10-17):** `ReplicatedStorage.AdminConfig` is the single admin list (client UI and
+  server); `ResetPlayerTimer` is checked server-side and is now a full self-reset (fresh profile, medal attributes,
+  own Top-10 entries removed, 5 s cooldown); the button needs a confirming second click.
+  Validated (solo, admin): one click → "Click again to confirm", nothing reset, reverts after 3 s; two clicks →
+  Coins 0, all `Medal_*` 0, portal stars dim, panel "0 / 12", stored profile fresh, own entries gone from both boards
+  (other entries kept); console clean; live data restored. Non-admin request ignored: pending multi-client check.
 - **Outputs:** skills panel lists talents, levels, costs; purchase RemoteEvent; server applies WalkSpeed / jump height /
   double-jump flag on every spawn. Admin toggles stay as debug-only.
 - **Acceptance checks:** purchase with insufficient Coins is rejected server-side (Coins unchanged);

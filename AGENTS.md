@@ -43,18 +43,19 @@ src/
     StageConfig.luau                  stage list (key, folder, hub portal, T_base, tiers, unlock, reward factor) + medal math
     TimeFormat.luau                   tenths rounding, "mm:ss.t" and short "m:ss" formatting
     MedalText.luau                    rich text for stars, medal limits and the timer's medal target
+    AdminConfig.luau                  admin UserIds + IsAdmin (client UI gating and server checks)
   ServerScriptService/
     PlayerProfile.luau                per-player profile DataStore (load/migrate/save), AddCoins, CoinsChanged
     StageResults.luau                 finish → personal best, medal, one-time Coin payout; Medal_<folder> player attributes
     CoinSystem.server.luau            leaderstats (Stage, Coins) mirrored from profile, coin pickup, CoinUpdateEvent
-    ResetPlayerTimerServer.server.luau  handles ResetPlayerTimer remote → wipe player's best times
+    ResetPlayerTimerServer.server.luau  ResetPlayerTimer remote → admin-only full reset of the caller's own progress
   StarterPlayer/StarterPlayerScripts/
     StageTimerClientUpdater.client.luau  StageTimer label: counts locally between start/stop from StageTimerUpdate
     StageResultsPopup.client.luau     results popup after a finish (GUI built in code)
     HubPortalMedals.client.luau       own best-medal stars on each hub portal face (local SurfaceGuis)
   StarterGui/
     CoinGui/CoinDisplayScript.client.luau        top-right coin counter
-    ScreenGui/TopLeftIcons/ButtonHandler.client.luau  Home/Settings/Admin buttons, slide-in panels, ADMIN_USERS
+    ScreenGui/TopLeftIcons/ButtonHandler.client.luau  Home/Settings/Admin buttons, slide-in panels (AdminConfig)
     ScreenGui/AdminPanel/...                      RunSpeed (16↔64), DoubleJump (up to 5 air jumps), ScoreReset
   Workspace/
     Handlers/                         ModuleScripts shared by all stage scripts (required via workspace.Handlers.*)
@@ -85,7 +86,7 @@ and must never change. Hub label is `StageConfig.HubName` (`"Central Island"`).
 
 ## Reusable script variants (copy-pasted, not modules)
 
-Most of the 102 scripts are identical copies. Edit them consistently (grep by content or md5):
+Most of the 103 scripts are identical copies. Edit them consistently (grep by content or md5):
 
 | Count | Variant | Example |
 |---|---|---|
@@ -109,7 +110,7 @@ RemoteEvents (in `ReplicatedStorage`; first three exist only in Studio, not in f
 |---|---|---|
 | `StageTimerUpdate` | server → client | `(elapsed ≥ 0, stageKey)` run active; `(-1, final, result)` finished; `(-1)` cancelled |
 | `StageTimerStopped` | — | unused since M0 (was the stop ack); can be deleted in Studio |
-| `ResetPlayerTimer` | client → server | admin panel "reset score" (no server-side admin check) |
+| `ResetPlayerTimer` | client → server | admin panel "Reset Score": full reset of the caller's own progress; server checks `AdminConfig` |
 | `CoinUpdateEvent` | server → client | created at runtime by `CoinSystem` |
 
 DataStores:
@@ -144,7 +145,8 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
   touching part (effectively per player).
 - Timer uses `os.clock()`; times are floored to tenths (`TimeFormat.Tenths`) before storing.
 - Collected coins are hidden server-wide and never respawn.
-- Admin check (`ADMIN_USERS` in `ButtonHandler`) is client-only UI gating.
+- Admins are listed once in `ReplicatedStorage.AdminConfig`; every admin remote must check `AdminConfig.IsAdmin`
+  on the server (the client check only hides the panel). The RunSpeed/DoubleJump toggles are client-side debug tools.
 - Tutorial has no hub portal and no leaderboard; Stage3 has no leaderboard.
 - Legacy APIs are common (`wait`, `spawn`, `:connect`, `findFirstChild`); prefer `task.*` and
   `Players:GetPlayerFromCharacter` in new code, but don't mass-rewrite without asking.

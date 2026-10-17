@@ -1,8 +1,8 @@
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
--- Lekzdrh and SVAL
-local ADMIN_USERS = { 9892673032, 769364524 }
+local AdminConfig = require(ReplicatedStorage:WaitForChild("AdminConfig"))
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -29,7 +29,7 @@ local homePanel = screenGui.Parent:WaitForChild("HomePanel")
 local settingsPanel = screenGui.Parent:WaitForChild("SettingsPanel")
 
 local function isAdminUser(userId)
-	return table.find(ADMIN_USERS, userId) ~= nil
+	return AdminConfig.IsAdmin(userId)
 end
 
 -- Hover effect function

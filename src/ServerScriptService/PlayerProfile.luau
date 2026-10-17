@@ -168,6 +168,17 @@ function PlayerProfile.AddCoins(player: Player, amount: number)
 	return profile.Coins
 end
 
+-- Replaces the player's progress with a fresh profile and saves it (admin self-reset). False if not loaded.
+function PlayerProfile.Reset(player: Player): boolean
+	if not profiles[player] then
+		return false
+	end
+	profiles[player] = newProfile()
+	coinsChanged:Fire(player, 0)
+	task.spawn(save, player)
+	return true
+end
+
 PlayerProfile.Save = save
 
 Players.PlayerAdded:Connect(load)

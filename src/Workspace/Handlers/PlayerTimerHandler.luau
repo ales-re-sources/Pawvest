@@ -92,10 +92,20 @@ local function updateGlobalLeaderboard(stageName, playerName, elapsed)
 end
 
 
-local function resetHighScore(player)
-	local profile = PlayerProfile.Get(player)
-	if profile then
-		profile.BestTimes = {}
+-- Removes a player's entries from every stage's Top-10 (admin self-reset); boards redraw via LeaderboardChanged
+local function removeFromGlobalLeaderboards(playerName)
+	for _, stage in StageConfig.Stages do
+		local leaderboard = loadGlobalLeaderboard(stage.key)
+		local kept = {}
+		for _, entry in leaderboard do
+			if entry.PlayerName ~= playerName then
+				table.insert(kept, entry)
+			end
+		end
+		if #kept < #leaderboard then
+			saveGlobalLeaderboard(stage.key, kept)
+			leaderboardChanged:Fire(stage.key, kept)
+		end
 	end
 end
 
@@ -217,9 +227,9 @@ return {
 	StopTimer = stopTimer,
 	GetTimer = getTimer,
 	ResetTimer = resetTimer,
-	ResetHighScore = resetHighScore,
 	UpdateScorePanel = updateScorePanel,
 	LoadGlobalLeaderboard = loadGlobalLeaderboard,
 	UpdateGlobalLeaderboard = updateGlobalLeaderboard,
 	LeaderboardChanged = leaderboardChanged.Event,
+	RemoveFromGlobalLeaderboards = removeFromGlobalLeaderboards,
 }

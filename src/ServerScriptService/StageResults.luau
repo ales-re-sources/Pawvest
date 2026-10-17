@@ -63,6 +63,9 @@ function StageResults.RecordFinish(player: Player, stageKey: string, elapsed: nu
 	}
 end
 
+-- Re-sends the medal attributes, e.g. after the profile was reset
+StageResults.PublishMedals = publishMedals
+
 Players.PlayerAdded:Connect(publishMedals)
 for _, player in Players:GetPlayers() do
 	task.spawn(publishMedals, player)

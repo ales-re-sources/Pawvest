@@ -131,7 +131,9 @@ which have no fixed cap.
 
 ## 6. Talents
 Bought in the skills panel (top-left). Permanent, server-owned, applied on every spawn.
-The current admin toggles (run speed 16↔64, 5 air jumps) remain debug tools only.
+The current admin toggles (run speed 16↔64, 5 air jumps) remain debug tools only. The admin panel's **Reset Score**
+is a debug full reset of the admin's **own** progress (Coins, times, medals, unlocks, coins found, talents, own Top-10
+entries), confirmed by a second click; it never affects other players and the server ignores it from non-admins.
 
 | Talent | Levels | Effect per level | Cost per level | Total |
 |---|---|---|---|---|
