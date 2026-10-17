@@ -7,6 +7,13 @@ per-stage Top-10 leaderboards, collectible coins and a small admin panel.
 - Code is synced to this repo with **Argon** (Rojo-compatible); the **scene lives only in the place file**.
 - Language: Luau, legacy run context (`.server.luau` = Script, `.client.luau` = LocalScript, `.luau` = ModuleScript).
 
+## Project docs & workflow
+- [docs/GDD.md](docs/GDD.md) — game design: loop, stages, time tiers, rewards, talents, economy numbers.
+- [docs/ROADMAP.md](docs/ROADMAP.md) — milestones, acceptance checks, status. Answer "what next?" from here.
+
+Work milestone by milestone per ROADMAP (design check → implement → Studio validation → status update → commit);
+update the status levels (Implemented / Studio-validated / Live-validated) only after validation.
+
 ## How code gets here (read before editing)
 
 Argon runs in **Only Code Mode**: `src/` contains every script **plus the instances that contain scripts**
