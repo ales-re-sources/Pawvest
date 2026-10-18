@@ -43,7 +43,8 @@ Rules:
 | M4 | Challenge coins | ✔ | ✔ | – |
 | M4.1 | Challenge coins, Stage 2 / 3 | ✔ | ✔ | – |
 | M5 | Leaderboards | ✔ | ✔ | – |
-| P2a | Pet garden: plots, pens, offline income | – | – | – |
+| P2a1 | Garden island, portals, plot assignment | ✔ | ✔ | – |
+| P2a2 | Garden pens, production, offline income | – | – | – |
 | P2b | Pet garden: incubators, feeding | – | – | – |
 | P3 | Trading | – | – | – |
 | M6 | Balancing pass | – | – | – |
@@ -824,18 +825,87 @@ P1a comes first; P1b, P1c and P1d each need only P1a and can follow in any order
 
 
 ### P2a — Pet garden: plots, pens, offline income
-Scoped in detail after P1 (GDD §7.6). Decided 2026-10-17: island in the same place, 12 plots, 12-player servers.
-- **Outputs (draft):** garden island with a central plaza + garden portal on the hub and a return portal; a ring of
-  12 plots (~40 × 40 studs, owner sign), each borrowed on join and released on leave, built from a Studio template by
-  code; everyone can see all plots, only the owner can use theirs; pens (unlock for Coins) hold pets that are not equipped; production paid through
-  `CoinRewards.Grant`; offline production on join capped at 8 h with a "while you were away" popup;
-  profile `Garden = { Pens, LastSeen }`.
-- **Studio-only changes (draft):** garden island, plaza, plot template and portals (built via MCP from parts);
-  **Max Players = 12** in Game Settings (user).
-- **Acceptance checks (draft):** a pet cannot be equipped and penned at once; with 12 players every player gets their
-  own plot and a leaving player's plot is free for the next one; production after N minutes matches the
-  configured rate exactly; offline payout for 20 h equals the 8 h cap; changing the system clock on the client has no effect
-  (server `os.time()` only); plot contents identical after rejoin on another server.
+Scoped 2026-10-18 (GDD §7.6, numbers settled with the user), split in two so the island can be validated before the economy.
+Decided 2026-10-17: island in the same place, 12 plots, 12-player servers. Settled 2026-10-18: production 10 / 20 / 40 / 70 / 120
+Coins/h per rarity at Lv 1, +4 % per level; 6 pens at 0 / 1 000 / 2 500 / 5 000 / 9 000 / 15 000; plots 40 × 40 studs; penned
+pets are shown as models (reused `ReplicatedStorage.PetModels`) with a label.
+
+#### P2a1 — Garden island, portals, plot assignment
+- **Inputs:** hub portals (Studio-only models), `HomeService`, `PlayerTimerHandler.ResetTimer`.
+- **Outputs:**
+  - `ReplicatedStorage.GardenConfig`: plot count / size, `NewAssigner(count)` (pure plot assigner: `Claim(key)` → lowest free
+    index or nil, `Release(key)`, `IndexOf(key)`), plot attribute names.
+  - `ServerScriptService.GardenPlots` (module, required by `Garden.server.luau`): every player borrows the lowest free plot on
+    join (also while still on the hub) and releases it on leave; player attribute `GardenPlot` = plot index (absent when none);
+    plot model attributes `OwnerUserId` / `OwnerName`; the plot sign reads the owner's name, or "Free plot".
+  - `ServerScriptService.Garden.server.luau` (boot script: starts `GardenPlots`, later `GardenService`): hub portal `TeleportToGarden` → `Garden.Arrival`; garden `ReturnPortal` → hub
+    spawn, cancels a running timer (like `HomeService`); touch debounce per player, no script inside any Studio part.
+- **Studio-only changes:** `Workspace.Garden` (island at x −1200, z −750, y 16; plaza; invisible barrier ring so nobody can fall
+  off, because a death respawns at the last stage checkpoint; `Arrival`; `ReturnPortal`; `Plots/Plot_01..12` on a ring of
+  radius ~90, each a Model with `Floor` 40 × 40, border, `Sign` with SurfaceGui text, facing the plaza); hub
+  `StartLocation.TeleportToGarden` (a stripped clone of a hub portal: no script; label "Pet garden"); **Max Players = 12**
+  in Game Settings (user, Game Settings → Places).
+- **Acceptance checks:**
+  1. the assigner hands out indices 1–12 to 12 distinct keys exactly once each, the 13th key gets `nil`; releasing key 5 and
+     claiming a new key returns 5; claiming twice for one key returns the same index; releasing an unknown key changes nothing;
+  2. real server with ≥ 2 clients: each player has a different `GardenPlot`, `OwnerName` on the plot and the sign text equal
+     the player's name, all other plots read "Free plot"; after one client leaves its plot reads "Free plot" and the next
+     joiner gets that index;
+  3. hub portal → the character stands on the plaza (within 10 studs of `Arrival`); the return portal and the Home button →
+     hub spawn (within 20 studs of `SpawnLocation`); a stage timer started before is cancelled by the return portal;
+  4. all 12 plots exist, are 40 × 40 and are visible to every client (no per-player hiding); the barrier encloses the island
+     (a raycast from the plaza centre outwards hits a barrier part in 8 directions);
+  5. consoles clean (no new warnings besides the known UIBlox / DataStore notices).
+
+- **Validation log (2026-10-18, solo playtest + Server and Clients with 3–4 test clients):** (1) assigner unit tests in Edit mode:
+  12 keys → 1..12 once each, 13th nil, same key → same index, release 5 → new key gets 5, lowest free first, unknown release
+  no-op — all pass. (2) Solo (uid 9892673032): `GardenPlot` = 1, `OwnerName`/sign "Lekzdrh", plots 2–12 "Free plot". Multi-client:
+  Player1/2/3 got plots 1/2/3 with matching attributes and signs; Player1's client saw all 12 signs; after Player2 was kicked plot 2
+  read "Free plot" on the server and on Player1's client; the next joiner (Player4) got plot 2. (3) Hub portal → 3.4 studs from
+  `Arrival`; return portal and the Home button → 3.6 studs from the hub `SpawnLocation`; a running Stage 1 timer (5.4 s) was
+  cancelled by the return portal (label hidden, stayed at 11.3 s). (4) 12 plots, floors 40 × 40, no floor overlaps
+  (`GetPartBoundsInBox`); raycasts from the plaza in 8 directions hit `Barrier_n` at 142.7 studs (hedges below them). (5) Consoles:
+  only the usual UIBlox warnings and the DataStore queue notice. Not covered: 12 real players at once (the assigner is unit-tested to 12),
+  a visual check (viewport captures are blank). **Max Players is still 60**: set it to 12 in Game Settings → Places (user). Studio-only:
+  `Workspace.Garden`, `StartLocation.TeleportToGarden` — **save the place (Ctrl+S)**. Test profiles `user_-1`..`user_-4` created by
+  the clients are removed in the P2a2 cleanup.
+
+#### P2a2 — Garden pens, production, offline income
+- **Inputs:** P2a1, `PetService`, `CoinRewards`, `PlayerProfile`.
+- **Outputs:**
+  - `GardenConfig`: rates per rarity, `LevelRate` (+40 ‰ per level), `PenPrices`, `OfflineCapSeconds` = 28 800, `PayoutSeconds` = 300;
+    pure helpers `Units(pet)` (rate × (1000 + 40 × (level − 1)), integer), `Settle(pets, carry, seconds)` →
+    `(whole base Coins, new carry)` using integer math (Coins = floor((carry + Σunits × seconds) / 3 600 000)).
+  - profile field `Garden = { Pens = { ["1"] = uid, … }, PenCount = 1, LastSeen = os.time() | nil, Carry = 0 }` (additive, filled
+    by `reconcile`; `PROFILE_VERSION` stays 3). `GardenConfig.IsPenned(profile, uid)`.
+  - `ServerScriptService.GardenService` (module, required by `Garden.server.luau`) with `GardenRemotes`: `Place(penIndex, uid)`, `Remove(penIndex)`, `BuyPen(expectedPen)`, `RequestState()`
+    (client → server); `State(state)`, `Result(action, ok, detail)`, `Away(info)` (server → client). Settles before every
+    change, on join (elapsed since `LastSeen`, capped at 8 h) and every 5 minutes online; pays with `CoinRewards.Grant(player, base, "garden")`;
+    `LastSeen` is only ever set from the server's `os.time()`; no remote carries a time.
+  - `PetService`: `Equip` rejects a penned pet (`"penned"`), `SellPet` rejects it, `Place` rejects an equipped pet (`"equipped"`);
+    the Pets panel marks penned pets ("In pen") and disables Equip / Sell for them; `PetsChanged.penned` lists the uids.
+  - Garden rendering by the server from the profile: per plot six pens (locked / empty / occupied), pet models cloned from
+    `PetModels` with a label (`Kind Lv N · X/h`, rarity colour; Epic / Legendary glow as `PetFollow`), updated on every change.
+  - Client: `GardenClient.client.luau` — pen prompts enabled only on the player's own plot, pen panel (buy / place from the
+    unequipped, unpenned pets / remove), "while you were away" popup after the join payout, a small "+N Coins" toast on a payout.
+- **Studio-only changes:** six pen pads per plot (`Pen_1..6` with a `Spot` part for the model, a `Prompt` ProximityPrompt and a
+  sign), `Away`/panel GUI is built in code (no Studio GUI).
+- **Acceptance checks:**
+  1. a pet cannot be equipped and penned at once: `Place` of an equipped uid → rejected, `Equip` of a penned uid → rejected,
+     `SellPet` of a penned uid → rejected, state unchanged each time; remove then equip works;
+  2. production is exact: `Settle` over any split of 2 h (one call, 120 × 1 min, 24 × 5 min, uneven pieces) gives the same Coins
+     and the same carry; the value equals floor(rate × (1 + 0.04 × (level − 1)) × hours) for a pen set with each rarity;
+  3. offline payout on join equals `Settle(elapsed)` for the real elapsed time (checked against the popup's reported seconds and
+     base Coins; paid = rounded base × the pet multiplier); a profile with `LastSeen` 20 h ago pays exactly the 8 h cap
+     (reported seconds = 28 800) and the popup says "capped"; a profile with `LastSeen = nil` or in the future pays 0;
+  4. production accrues only while a pet is penned: place a pet, wait, remove, wait → no payout for the empty time (settle
+     before every change); buying a pen does not pay for the past;
+  5. the client clock has no effect: no remote takes or returns a time (grep), `LastSeen` is written only from `os.time()` on the server;
+  6. plot contents identical after rejoin: pens, models, labels and the sign match the profile before and after leaving
+     and rejoining (also compared by plot attributes), and the pen count / prices follow `GardenConfig.PenPrices` exactly once;
+  7. only the owner can use their plot: a `Place` / `Remove` / `BuyPen` from a player on another plot or with a bad index,
+     uid or type changes nothing (the server derives the plot from the caller);
+  8. consoles clean; live profile, Coins and boards restored exactly from the snapshot.
 
 ### P2b — Pet garden: incubators, feeding
 - **Outputs (draft):** incubators (unlock for Coins) hatch Golden eggs in real time, also offline; food bought for Coins

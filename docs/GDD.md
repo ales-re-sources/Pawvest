@@ -173,7 +173,7 @@ Repeat rewards and pets only add to this, so the table is a lower bound.
 |---|---|---|
 | Obby, first hour of a day (Gold runs, all stages) | ~2 230 | first 10 Gold runs of each of the four stages (~40 runs), then the 10-Coin floor |
 | Obby, later the same day | ~500 | 10 Coins per run at ~70 s per run (a ~25 s Tutorial loop pays ~1 400 / h; open, see M6) |
-| Pet garden (§7.6) | target 300–1 000 | depends on pets in pens; offline production capped at 8 h |
+| Pet garden (§7.6) | target 200–1 000 | 6 mixed pets at Lv 5 ≈ 200 / h, a strong set ≈ 630 / h (≈ 940 with the pet bonus); offline production capped at 8 h (a strong set: ≈ 5 000 per 8 h) |
 | Pet bonus | × 1.0–1.5 | on all of the above |
 
 Sinks: talents (6 800), stage unlocks (5 000), eggs (§7.2), pet slots (7 000), garden upgrades and feeding (§7.6).
@@ -269,7 +269,22 @@ collecting and caring over obby runs.
 - **Other players.** Everyone can walk through the garden and look at all plots and pets; only the owner can use their
   own plot (no stealing, no shared pens).
 - **Pens.** A pet is either equipped or placed in a pen, never both. Pets in pens produce Coins over time by rarity
-  and level (rates in M6; target in §6). Pens unlock for Coins.
+  and level. Pens unlock for Coins, in order. A penned pet gains no XP and does not count for the pet bonus (only
+  equipped pets do); it cannot be sold while penned.
+
+  | Rarity | Common | Uncommon | Rare | Epic | Legendary |
+  |---|---|---|---|---|---|
+  | Coins / hour at Lv 1 | 10 | 20 | 40 | 70 | 120 |
+
+  Production per pet = rate × (1 + 0.04 × (level − 1)) per hour (Lv 20 = ×1.76). Pens: 6, prices
+  0 / 1 000 / 2 500 / 5 000 / 9 000 / 15 000 (pen 1 free; 32 500 in total). Example sets (before the pet bonus):
+  3 pens of Common/Common/Uncommon Lv 1 = 40 / h; 6 mixed pets (2 Common, 2 Uncommon, Rare, Epic) at Lv 5 ≈ 197 / h;
+  2 Legendary + 2 Epic + 2 Rare at Lv 10 ≈ 626 / h (≈ 939 / h with the +50 % pet bonus); the theoretical maximum
+  (6 Legendary Lv 20) is ≈ 1 267 / h.
+- **Payout.** Production is paid through `CoinRewards.Grant` (the pet bonus applies) on server time only: every
+  5 minutes while the owner is online, whenever the pens change (placing, removing, buying a pen settles first, so a
+  pen never earns for time it was empty) and on join. Fractions of a Coin carry over, so the total over any split of
+  time equals the exact production. The bonus is rounded per payout, which is why payouts are batched.
 - **Incubators.** Garden eggs (Golden egg and better) hatch in real time (minutes to hours) and keep hatching offline.
   More incubators unlock for Coins.
 - **Feeding.** Food bought for Coins gives a pet XP: an alternative to leveling by playing the obby, and a Coin sink.
