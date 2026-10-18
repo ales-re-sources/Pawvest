@@ -183,9 +183,8 @@ local function makePenPet(pet, uid: string, pad: BasePart): Model?
 	local level = PetConfig.ClampLevel(pet.Level)
 	local metrics = PetLook.Apply(model, pet.Kind, level, uid, {
 		text = string.format(
-			"%s Lv %d\n<font color='#a8e6a0'>%s Coins/h</font>",
-			pet.Kind,
-			level,
+			"%s\n<font color='#a8e6a0'>%s Coins/h</font>",
+			PetLook.LabelText(pet.Kind, level),
 			string.format("%g", GardenConfig.RatePerHour(pet))
 		),
 		richText = true,
@@ -197,6 +196,7 @@ local function makePenPet(pet, uid: string, pad: BasePart): Model?
 		model:Destroy()
 		return nil
 	end
+	model:SetAttribute("Level", level) -- lets the client match the new model of a levelled pet (PetPenLevelUp)
 	model:PivotTo(pad.CFrame * CFrame.new(0, pad.Size.Y / 2 + 1, 0))
 	-- stand the model on the pad: move it so the lowest point of its bounding box touches the pad top
 	local boxCFrame, boxSize = model:GetBoundingBox()

@@ -40,7 +40,7 @@ Rules:
 | P1c | Pet models + following | ✔ | ✔ | – |
 | P1d | Pet XP + levels | ✔ | ✔ | – |
 | P1e1 | Pet look foundation + size growth | ✔ | ✔ | – |
-| P1e2 | Pet level-up moment | – | – | – |
+| P1e2 | Pet level-up moment | ✔ | ✔ | – |
 | P1e3 | Pet tier effects + accent tint | – | – | – |
 | P1e4 | Pet individuality | – | – | – |
 | P1f | Pet accessory kit | – | – | – |
@@ -574,6 +574,44 @@ later option. We cannot see 3D captures, so every step ends with a visual check 
   garden pens match, view clear during runs with run mode. Not covered: multi-client, a real stage run, touch-part
   controls (flags verified structurally; the pets are client-only parts, as validated in P1c). Live profile restored exactly to
   the snapshot (Coins back to 83; the garden join payout had raised them during the test).
+
+#### P1e2 — Pet level-up moment
+- **Outputs:** `PetLook.LevelUp(model, kind, level, ghost?, ghostFade?)` (client only) returns a *moment* whose `Pose(base)` the
+  owner of the pet's position calls every frame (`PetFollow`; `PetPenLevelUp` for pens). Staged ~2 s show (constants at the top
+  of the block in `PetLook`): the **old look** spins faster and faster (4 turns accelerating + 1 braking, ends facing forward)
+  and rises 3 studs with swirling sparks that get denser; a **bright neon ball with a light** (the flash, ~1.1 s, peak ~1.3 s)
+  surrounds the pet; under it the old model (the *ghost*) **cross-fades** into the new look (0.9-1.3 s), the label switches to
+  the new level at 1.1 s; at 1.2 s a burst of sparks, an expanding ring on the ground and a floating "Level N!" (optional
+  Studio-only `ReplicatedStorage.PetLevelUpSound`: Creator Store "UI - Level Up" by SodaBreadle, asset `112485797063762`,
+  1.54 s, volume 0.5, positional, started with the moment (`SOUND_AT = 0`) so it ends around the flash); then the pet
+  drops back. Everything extra lives in one `LevelUpFx` folder in the workspace (removed by `Debris` after 3.4 s, by `Cancel()`
+  or when the model is destroyed). `PetLook.LabelText(kind, level)` = `"Cat Lv 12 ★★"` (one ★ per look tier, none below Lv 5) for
+  follower and pen labels.
+- **Design notes:** only "same uid, higher level than in the previous list" counts, so join, first sight, equip, re-equip, respawn
+  (attribute unchanged), unequip and a level going down never trigger. A jump over several levels plays once with the final
+  level. Other players' pets play it too (every client renders every follower). `PetFollow.refresh` keeps the previous list's
+  records; the rebuilt model gets `levelUpUntil` (1 s window, so a hidden pet does not replay it late) and takes the old record
+  as `pet.ghost`; the Heartbeat starts the moment once the model is in the world, then pivots the model to the moment's pose and
+  feeds its fade (1 -> 0) into the existing `LocalTransparencyModifier` maximum (camera fade, run mode). A second level-up during
+  a moment cancels the first. **Pens (decision):** feeding a penned pet shows the same moment, because the food stand is where
+  most level-ups happen. The server redraws the pen (new model, same pen instance with attributes `Uid` / `Level`; `makePenPet`
+  stamps the model attribute `Level`); `PetPenLevelUp` watches the pen attributes (one deferred check per batch), waits for the
+  new model and runs the moment on it. The old pen model is already gone, so pens have **no cross-fade** (the model spins in its
+  new look; the flash and effects are the same). Placing / removing / a different pet never triggers.
+- **Validation log (2026-10-18, solo playtests, API access on):**
+  *First version (burst + ring + text only):* real feeds at the food stand (equipped Fox 2 -> 3, penned Cat 3 -> 4) and a real
+  Tutorial finish through the finish portal (Fox 4 -> 5, attribute change to effect 27 ms) each created exactly one effect on the
+  levelled pet only; unequip, re-equip, new uids, same level and lower level created none; respawn created none.
+  *Staged version (user feedback: the first one was hard to see on the green start pad):* follower sampled every frame after a
+  local `EquippedPets` change `Bunny:3:1 -> 4:1`: rise 0 -> 3.07 studs (peak 1.3-1.5 s), yaw sweeping through several turns and
+  back to 0, ghost present until 1.3 s with its modifier 0 -> 1, new model modifier 1 -> 0 over 0.9-1.3 s (0.02 at 1.29 s), new
+  label disabled until 1.1 s, ghost label until then, flash transparency 1 -> 0.15 (1.2-1.4 s) -> 1 with size 3.7 -> 8.4 studs,
+  back at rest by ~2.0 s; afterwards 1 model, modifier 0, label on, 0 `LevelUpFx` / `LevelUpAttachment` left. Real pen feed
+  (Cat 3 -> 4): moment started within 0.09 s of the new model, flash minimum 0.15, label "Cat Lv 4", 0 leftovers; pen model driven
+  by `Pose` rises exactly 3.0 studs, ends 3.6 s later at its base (0 studs off), 0 leftovers. Consoles: only UIBlox
+  "FoundationProvider" warnings. Not covered: multi-client, how it looks (user visual check; screenshots of the 3D view are
+  blank), how the sound feels (timing is the `SOUND_AT` constant), many simultaneous moments. The live profile was restored field by field (Coins refund,
+  Cat 14 back to Lv 3 / 49 XP) because the user kept playing between tests; no `user_-1` / `user_-2` records.
 
 ### M3 — Stage unlocks
 - **Inputs:** `StageConfig.unlock` / `unlockPrice` (GDD §3: Stage 2 = Silver on Stage 1 or 150 Coins, Stage 3 = Silver on
@@ -1194,3 +1232,12 @@ go through the incubators too; free eggs (launch egg, first Gold) start in an in
 
 ### M7 — Monetization
 Deferred; scoped after M6 (GDD §8).
+
+## Ideas (unscheduled)
+- **UI sounds.** The creator **SodaBreadle** on the Creator Store has many short free UI sounds (the level-up jingle
+  `UI - Level Up`, asset `112485797063762`, is already `ReplicatedStorage.PetLevelUpSound`). Use more of them for menu feedback:
+  button hover / click / select, panel open / close, buy success / fail (Pets, Skills, Settings, unlock popup, food stand,
+  incubators, results popup). Find them through the creator's Creator Store page (a keyword search by creator name does not
+  list them); check licence/free status and the length of each sound before using it, and keep volumes consistent. Use a
+  shared client module with one Studio-only `Sound` per cue (like `ChallengeCoinSound` / `PetLevelUpSound`) so the code works
+  when a sound is missing.

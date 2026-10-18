@@ -262,7 +262,10 @@ replace them later without code changes.
 **Growth (P1e1):** a pet's size follows its level, 1.0× at Lv 1 up to 1.6× at Lv 20 (linear), for followers and garden
 pens alike. The follower formation widens with the pets so they never overlap, and while the owner's stage timer runs
 their pets drop 4 studs further back and turn ghostly so the course stays visible; pets close to the camera fade out.
-More growth visuals (level-up burst, tier effects, individuality, accessories) are planned in
+**Level-up moment (P1e2):** when a pet gains a level it spins faster and faster and rises, a bright flash covers the change from
+the old look to the new one, then a burst of sparks, an expanding ring and a floating "Level N!" play and the pet drops back
+(about 2 seconds), for everyone nearby (followers and, after feeding, garden pens); the label shows one ★ per look tier
+(Lv 5 / 10 / 15 / 20). More growth visuals (tier effects, individuality, accessories) are planned in
 [PET_GROWTH.md](PET_GROWTH.md).
 
 ### 7.6 Pet garden (minigame, P2)
