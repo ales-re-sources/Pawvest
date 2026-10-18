@@ -617,7 +617,7 @@ P1a comes first; P1b, P1c and P1d each need only P1a and can follow in any order
   - `CoinSystem` keeps leaderstats and the coin counter; its legacy pickup code is removed.
 - **Boundary:** first batch only (user decision): Tutorial and Stage 1 coins (10 coins, 400 Coins); Stage 2 / 3 coins
   (900 Coins) are a later pass (done in M4.1), so until then the GDD §6 "earnable before" column is 900 lower for Stage 3 / full tree.
-  No pickup sound or popup (the coin counter shows the payout).
+  No popup (the coin counter shows the payout); a pickup sound was added later (follow-up below).
 - **Design notes (design check 2026-10-18, user decisions):**
   - **Per player** (confirmed with the user: "disappear once collected" means for the collecting player): the server
     never hides a coin; each client hides the coins in its own `CollectedCoins` attribute (Transparency 1, CanTouch /
@@ -755,6 +755,19 @@ P1a comes first; P1b, P1c and P1d each need only P1a and can follow in any order
   (positions raycast onto their floors; same code path as M4); a visual capture (Studio viewport captures came back
   blank after the playtest); multi-client (unchanged code). Live profile restored exactly (deep-equal) to the pre-test
   snapshot (`m4b-snapshot.json`) after each playtest; the four boards were never changed; no test profiles created.
+
+### M4.2 — Challenge coin pickup sound (follow-up, user request 2026-10-18)
+- **Outputs:** `ChallengeCoinsClient` plays a sound when the local player's `CollectedCoins` attribute gains an id after
+  its first publish (so never on join, never for a reset that removes ids); one local clone of the template under
+  `SoundService`, `:Play()` restarted per pickup, heard only by the collecting player.
+- **Studio-only changes:** `ReplicatedStorage.ChallengeCoinSound` (Sound, free Creator Store asset 93529351909119
+  "retro coin pickup sound effect powerup" by Greengem353, credits LilMati on freesound; 0.48 s, Volume 0.6). Without it
+  the pickup is silent (no error). To swap the sound, change its `SoundId` in Studio.
+- **Validation log (2026-10-18, solo playtest, live profile with `Tutorial_1`, `Tutorial_2` already collected):** template
+  loaded on the client (`IsLoaded`); after join with two collected ids no clone existed (nothing played); walking into
+  `Stage1_1` → clone created under `SoundService`, `IsPlaying` true; walking into `Stage1_5` → `Played` fired again, still one
+  clone. Consoles: UIBlox warnings only. Not covered: how it sounds (listen in Studio). Live profile restored exactly to
+  the pre-test snapshot (`m4-sound-snapshot.json`).
 
 ### M5 — Leaderboards
 - **Outputs:** Top-10 board on every stage (add Stage 3, Tutorial); hub "most stars" board.

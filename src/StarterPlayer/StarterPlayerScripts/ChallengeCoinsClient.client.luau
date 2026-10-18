@@ -1,11 +1,13 @@
 -- Challenge coins on this client (docs/GDD.md §5): hides the coins the local player has collected (the server-owned
 -- CollectedCoins attribute) and spins the others. Everything here is local, so other players keep seeing a coin until
 -- they collect it themselves. A hidden coin also stops touching locally, so it sends the server no more touches.
+-- A newly collected coin plays ReplicatedStorage.ChallengeCoinSound (Studio-only Sound) for this player only.
 
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
 
 local ChallengeCoinConfig = require(ReplicatedStorage:WaitForChild("ChallengeCoinConfig"))
 
@@ -15,6 +17,20 @@ local LocalPlayer = Players.LocalPlayer
 
 local coins = {} -- [part] = { base = CFrame, transparency = number, hidden = boolean }
 local collected = nil -- set [id] = true; nil until the server publishes it (all coins hidden until then)
+local pickupSound: Sound? = nil -- local copy under SoundService (plays non-positionally)
+
+local function playPickup()
+	if not pickupSound then
+		local template = ReplicatedStorage:FindFirstChild("ChallengeCoinSound")
+		if not (template and template:IsA("Sound")) then
+			return
+		end
+		pickupSound = template:Clone()
+		pickupSound.Parent = SoundService
+	end
+	pickupSound.TimePosition = 0
+	pickupSound:Play()
+end
 
 local function setEffects(part: BasePart, enabled: boolean)
 	for _, effect in part:GetDescendants() do
@@ -47,7 +63,17 @@ end
 
 local function refreshAll()
 	local text = LocalPlayer:GetAttribute(ChallengeCoinConfig.CollectedAttribute)
+	local previous = collected
 	collected = if text ~= nil then ChallengeCoinConfig.Decode(text) else nil
+	-- sound only for an id added after the first publish (not on join, not for a reset)
+	if previous and collected then
+		for id in collected do
+			if not previous[id] then
+				playPickup()
+				break
+			end
+		end
+	end
 	for part in coins do
 		refreshCoin(part)
 	end
