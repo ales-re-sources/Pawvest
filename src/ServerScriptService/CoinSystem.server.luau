@@ -2,13 +2,8 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
--- Coins are stored in the player's profile (loaded / saved by PlayerProfile)
+-- Coins are stored in the player's profile (loaded / saved by PlayerProfile); pickups live in ChallengeCoins
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
-local CoinRewards = require(ServerScriptService.CoinRewards)
-local PetService = require(ServerScriptService.PetService)
-local PetConfig = require(ReplicatedStorage.PetConfig)
-
-local COIN_VALUE = 10 -- legacy pickup coin (Coin scale ×10, R2)
 
 -- Create RemoteEvent for coin updates
 local coinUpdateEvent = Instance.new("RemoteEvent")
@@ -48,48 +43,6 @@ local function loadPlayerData(player)
 end
 
 PlayerProfile.CoinsChanged:Connect(showCoins)
-
--- Handle coin collection
-local function makeTouchHandler(coinPart)
-	local lastHitPart = nil
-	-- Touched events of several body parts are already queued when CanTouch goes false
-	local collected = false
-
-	return function (otherPart)
-		if collected or otherPart == lastHitPart then
-			return
-		end
-		lastHitPart = otherPart
-
-		local character = otherPart.Parent
-		if not character then return end
-
-		local humanoid = character:FindFirstChildOfClass("Humanoid")
-		if not humanoid then return end
-
-		local player = Players:GetPlayerFromCharacter(character)
-		if not player then return end
-
-		-- Pay COIN_VALUE (fails while the profile is still loading; the coin stays then)
-		if not CoinRewards.Grant(player, COIN_VALUE, "coin") then return end
-		PetService.AddXP(player, PetConfig.CoinXp)
-
-		collected = true
-		coinPart.Transparency = 1
-		coinPart.CanTouch = false
-	end
-end
-
-
--- Setup coin touch event for all coins in a folder
-local coinFolder = workspace:FindFirstChild("CoinsFolder")
-if coinFolder then
-	for _, coin in ipairs(coinFolder:GetChildren()) do
-		if coin:IsA("BasePart") then
-			coin.Touched:Connect(makeTouchHandler(coin))
-		end
-	end
-end
 
 -- Handle existing and new players
 Players.PlayerAdded:Connect(function(player)

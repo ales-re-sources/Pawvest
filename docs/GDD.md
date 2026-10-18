@@ -135,6 +135,10 @@ Placed off the main path, behind risky jumps, or reachable only with talents. Ea
 | Stage 3 | 500 | |
 | **All** | **1 300** | |
 
+Talent-gated coins need Double Jump (placed out of reach of a Jump Height 3 jump). Placed so far (M4, first batch):
+Tutorial 2×50, Stage 1 5×20 + 2×50 + 1×100; Stage 2 and 3 coins follow in a later pass, until then the table in §6
+over-counts "earnable before" by 900 for Stage 3 and the full tree.
+
 **One-time total: 7 000 (medals) + 1 300 (coins) = 8 300 Coins**, plus repeat rewards, garden production and the pet bonus,
 which have no fixed cap.
 

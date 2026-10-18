@@ -40,7 +40,7 @@ Rules:
 | P1c | Pet models + following | ✔ | ✔ | – |
 | P1d | Pet XP + levels | ✔ | ✔ | – |
 | M3 | Stage unlocks | ✔ | ✔ | – |
-| M4 | Challenge coins | – | – | – |
+| M4 | Challenge coins | ✔ | ✔ | – |
 | M5 | Leaderboards | – | – | – |
 | P2a | Pet garden: plots, pens, offline income | – | – | – |
 | P2b | Pet garden: incubators, feeding | – | – | – |
@@ -600,10 +600,104 @@ P1a comes first; P1b, P1c and P1d each need only P1a and can follow in any order
   the snapshot taken before the test.
 
 ### M4 — Challenge coins
-- **Outputs:** stable coin id attribute; server-validated pickup; per-player visibility; `found x/y` on portals;
-  first challenge coins placed in Studio per GDD §5 budget.
-- **Acceptance checks:** coin collected by player A stays visible for player B; does not reappear for A after rejoin;
-  `x/y` matches collected ids; a coin cannot pay twice.
+- **Inputs:** GDD §5 "Challenge coins" (once per player, saved, hidden only for that player; easy 20 / risky 50 /
+  talent-gated 100; budget Tutorial 100, Stage 1 300, Stage 2 400, Stage 3 500), `CoinRewards.Grant`,
+  `PetService.AddXP(PetConfig.CoinXp)`, `PlayerProfile.CollectedCoins` (in the profile since M0, still empty),
+  the legacy `workspace.CoinsFolder.Coin` pickup in `CoinSystem`, `HubPortalMedals`.
+- **Outputs:**
+  - `ReplicatedStorage.ChallengeCoinConfig`: tier values, the coin list (`id`, `stage` key, `tier`), `ById`,
+    `Found(stage, collected) → x, y`, attribute / tag names, `Encode` / `Decode` of the collected-id string.
+  - `ServerScriptService.ChallengeCoins.server.luau`: pickup of every part tagged `ChallengeCoin`; mirrors the collected
+    ids to the player attribute `CollectedCoins` (sorted, comma-separated).
+  - `StarterPlayerScripts/ChallengeCoinsClient.client.luau`: hides collected coins for the local player only, spins
+    the visible ones.
+  - Hub portal face: a `💰 found x/y` line per stage with coins.
+  - `CoinSystem` keeps leaderstats and the coin counter; its legacy pickup code is removed.
+- **Boundary:** first batch only (user decision): Tutorial and Stage 1 coins (10 coins, 400 Coins); Stage 2 / 3 coins
+  (900 Coins) are a later pass, so until then the GDD §6 "earnable before" column is 900 lower for Stage 3 / full tree.
+  No pickup sound or popup (the coin counter shows the payout).
+- **Design notes (design check 2026-10-18, user decisions):**
+  - **Per player** (confirmed with the user: "disappear once collected" means for the collecting player): the server
+    never hides a coin; each client hides the coins in its own `CollectedCoins` attribute (Transparency 1, CanTouch /
+    CanQuery off, effects disabled, all local), so other players keep seeing it. A local `CanTouch = false` also stops
+    that client's touches from reaching the server.
+  - **Legacy coin converted:** its gold mesh (SurfaceAppearance + Highlight) is the look of every challenge coin; the
+    part itself moves off the main path and becomes `Stage1_1`. `workspace.CoinsFolder` and `COIN_VALUE` are removed;
+    the old server-wide hiding was never saved, so no profile migration.
+  - **Ids** are `<stage folder>_<n>` (`Tutorial_1`, `Stage1_3`), stored as `CollectedCoins[id] = true`; never rename or
+    reuse one. The part carries the id as attribute `CoinId` and the CollectionService tag `ChallengeCoin`; its value
+    comes from the config tier, never from the part. A tagged part with an unknown id, an id whose config stage differs
+    from the stage folder it is in, or a duplicate id is ignored with a warning. Stored ids no longer in the config stay
+    stored but count for nothing.
+  - **Pickup validation** (server `Touched`): a player character with a live Humanoid; profile loaded; id not yet in
+    `CollectedCoins`; the character's root within `MAX_REACH` (15 studs) of the server-side coin (rejects touches of a
+    coin moved or enlarged on the client). The check-and-mark has no yield, so queued touches of several body parts pay
+    once. Then `CoinRewards.Grant(value, "challenge")` (pet multiplier), `PetService.AddXP(CoinXp)`, attribute refresh.
+    Saved by the regular autosave / leave / shutdown (Coins and the id are in the same record, so they persist together).
+  - `ProfileReset` (admin Reset Score) republishes the empty attribute, so all coins reappear for that admin.
+  - **Talent-gated = Double Jump.** Measured in the playtest (JumpPower 50 / 55.7 with Jump Height 3, avatar 5.4 studs
+    without accessories): a single Jump Height 3 jump lifts the body ~9 studs, so its top reaches ~15.2 above the floor
+    (25.2 at checkpoint 5, standing on the checkpoint plate); a ground jump plus an air jump near the apex reaches ~22.5
+    (32.5). The 100 coin sits 18.15 above the checkpoint 5 floor (bottom edge at 26.98): ~1.8 studs out of reach of the best
+    plain jump, ~5.5 studs inside a Double Jump. Accessories never collect (their handle's parent is not the character).
+    The first placement (15.8 above the floor, from the 6.4-stud textbook jump height) was reachable with Jump Height 3 and
+    was raised. Risky coins sit beside the path over the void / lava at roughly chest-to-head height of a jump, so the
+    player has to jump out and steer back.
+  - Hub portal face: `💰 found x/y` under the stars when the stage is open; while locked the lock lines take that place and
+    the coin line moves below them. Hidden for a stage without coins (Stage 2 / 3 until the next pass).
+- **Studio-only changes (place file, not in git):**
+  - `Workspace.CoinsFolder` deleted (its coin moved, see `Stage1_1`).
+  - `Workspace.Tutorial.ChallengeCoins` and `Workspace.Stage1.ChallengeCoins` (Folders), each holding `Coin_<n>` MeshParts
+    (clones of the legacy coin: anchored, CanCollide off, CanTouch on, attribute `CoinId`, tag `ChallengeCoin`):
+
+    | Id | Tier | Position | Spot |
+    |---|---|---|---|
+    | `Tutorial_1` | risky 50 | (−441.0, 80.6, 44.7) | over the void beside the gap between Beam_01 and Beam_02 |
+    | `Tutorial_2` | risky 50 | (−456.3, 80.6, −33.5) | over the void beyond the outer edge of Zigzag_04 |
+    | `Stage1_1` | easy 20 | (−19.8, 11.6, −3.4) | landing pad, behind the Top-10 board (the legacy coin) |
+    | `Stage1_2` | easy 20 | (−5.5, 11.7, −207.6) | JumpPadsStage, far left end of the first pad |
+    | `Stage1_3` | easy 20 | (−7.0, 16.1, −167.9) | HarderJumpPadsStage, far left end of Part_4 |
+    | `Stage1_4` | easy 20 | (−7.0, 11.8, −114.0) | SpinnerStage_1, exit corner outside the bars' sweep |
+    | `Stage1_5` | easy 20 | (7.0, 12.6, −427.0) | RedDivider_1, right corner |
+    | `Stage1_6` | risky 50 | (10.8, 13.2, −46.8) | over the void beside the LaserStripStage, between two lasers |
+    | `Stage1_7` | risky 50 | (4.5, 16.4, −277.2) | over the lava, off the jump from Union_5 to Union_2 |
+    | `Stage1_8` | talent 100 | (0.0, 28.2, −246.0) | 18.15 above checkpoint 5 (Double Jump) |
+- **Acceptance checks:**
+  - a coin collected by player A stays visible (and collectable) for player B (multi-client, Server and Clients);
+  - it pays exactly once: base × pet multiplier and +1 pet XP on the first touch; walking through it again, touching it
+    after re-enabling it locally on A's client, or touching a copy enlarged on the client while A stands far from the
+    server-side coin pays 0 and changes nothing;
+  - it does not reappear for A after rejoin (`CollectedCoins` stored, attribute restored, coin hidden on join);
+  - each hub portal's `x/y` equals the number of the stage's config ids in `CollectedCoins` / the stage's coin count
+    (Tutorial `0/2` → `1/2`, Stage 1 `n/8`; no line on Stage 2 / 3);
+  - admin Reset Score empties `CollectedCoins` and shows every coin again;
+  - the talent coin is not touched by a plain jump from the checkpoint 5 pad and is collected with Double Jump.
+- **Validation log (2026-10-18, API access on, uid 9892673032; live profile: Run Speed 5, Double Jump, Jump Height 3,
+  equipped Cat L3 → multiplier 1.03, 469 Coins, no coins collected):** join → server attribute `CollectedCoins = ""`, all
+  10 tagged coins visible / CanTouch on the client, portal lines `💰 found 0/2` (Tutorial), `0/8` (Stage 1), none on
+  Stage 2 / 3. Walking into `Stage1_1` behind the board: Coins 469 → **490** (20 × 1.03), attribute `Stage1_1`, coin
+  Transparency 1 / CanTouch / CanQuery / Highlight off on the client only, portal `1/8`. Walking back through it: 0.
+  **Forged:** coin re-enabled locally (Transparency 0, CanTouch on) and walked through → 12 client-side touches, Coins
+  490, no `PetsChanged`; `Stage1_5` enlarged on the client to 80 studs while standing 31.6 studs away → 56 client-side
+  touches, Coins 490, attribute unchanged. Then walking into `Stage1_5` normally → 511, Cat XP 50 → **51** (+1 per coin).
+  Talent coin at the first height (25.9) was collected by a plain Jump Height 3 jump (body top 25.0) → raised to 28.2
+  (see design notes). `Tutorial_1` (character dropped through it from the beam side, then fell and respawned) → +52
+  (50 × 1.03 rounded), portal `1/2`. Stored after leaving: `CollectedCoins = {Stage1_1, Stage1_5, Stage1_8, Tutorial_1}`,
+  Coins 666, Cat L4/1; `Stage1_8` then removed from the stored record for the retest. **Rejoin:** attribute
+  `Stage1_1,Stage1_5,Tutorial_1`, exactly those three coins hidden from the start, portals `1/2` and `2/8`. Raised talent
+  coin: `Talent_DoubleJump` attribute set to 0 on the server, single jumps, a double tap and a held Space from the
+  checkpoint plate → best top 25.85 incl. hair (coin bottom 26.98), not collected; attribute back to 1, jump + air jump →
+  top 33.1, collected, +104 (the Cat had levelled to L4, × 1.04), portal `3/8`. Admin Reset Score → attribute `""`, all
+  coins visible again, portals `0/2` / `0/8`; Stage 1 now locked: lock lines at 0.72 / 0.82, coin line moved to 0.91, all
+  `TextFits`. **Multi-client** (Server and Clients, Player1 = −1, Player2 = −2, no pets): Player1 walked into `Stage1_1` →
+  +20, hidden on Player1's client only; on Player2's client the coin stayed visible (Transparency 0, CanTouch, Highlight
+  on), server coin unchanged; Player2 then walked into it → +20 for Player2, Player1 still 20. Consoles: only Roblox's
+  UIBlox "FoundationProvider" warnings, the usual DataStore queue notice when a new test profile is created, and errors
+  from the test harness's own Heartbeat listener after a respawn. Not covered: a screenshot of the portal face (captures
+  timed out; texts and layout checked through properties), the remaining coins walked one by one (positions checked in
+  the Edit-mode captures, pickups share one code path), touch devices. Live profile and all four boards restored exactly
+  to the pre-test snapshot (`m4-snapshot.json`; the Reset Score had also removed the admin's board entries). The
+  test profiles `user_-1` / `user_-2` were stored with `CollectedCoins = {Stage1_1}` and 20 Coins each, then deleted.
 
 ### M5 — Leaderboards
 - **Outputs:** Top-10 board on every stage (add Stage 3, Tutorial); hub "most stars" board.
