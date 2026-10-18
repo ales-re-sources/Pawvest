@@ -44,7 +44,7 @@ Rules:
 | M4.1 | Challenge coins, Stage 2 / 3 | ✔ | ✔ | – |
 | M5 | Leaderboards | ✔ | ✔ | – |
 | P2a1 | Garden island, portals, plot assignment | ✔ | ✔ | – |
-| P2a2 | Garden pens, production, offline income | – | – | – |
+| P2a2 | Garden pens, production, offline income | ✔ | ✔ | – |
 | P2b | Pet garden: incubators, feeding | – | – | – |
 | P3 | Trading | – | – | – |
 | M6 | Balancing pass | – | – | – |
@@ -906,6 +906,33 @@ pets are shown as models (reused `ReplicatedStorage.PetModels`) with a label.
   7. only the owner can use their plot: a `Place` / `Remove` / `BuyPen` from a player on another plot or with a bad index,
      uid or type changes nothing (the server derives the plot from the caller);
   8. consoles clean; live profile, Coins and boards restored exactly from the snapshot.
+- **Implementation notes:** `Place` / `Remove` / `BuyPen` require the caller to stand within 45 studs of their plot (reject `"far"`);
+  the plot is derived from the caller, so no request can name another plot. A hand-edited profile is cleaned on join (missing
+  or duplicate pets, pens beyond `PenCount`, `PenCount` clamped to 1..6, bad `Carry` / `LastSeen`); a pet that is both equipped and
+  penned stays penned and is dropped from the equipped list. Join payouts reach the client through `Payout` (shown once per
+  `id`, re-sent on `RequestState`). `GardenClient` also opens a pen when the `OpenPen` attribute of its ScreenGui is set (test hook).
+- **Validation log (2026-10-18, uid 9892673032, live profile snapshot `p2a-snapshot.json`; Server and Clients with test users):**
+  (1) exclusivity — `Place` of an equipped uid → `equipped`, of a penned uid → `penned`; `Equip` / `SellPet` of a penned uid →
+  `penned`; locked pen → `locked`, occupied → `occupied`; unknown uid and wrong argument types change nothing; remove then equip
+  works (after taking a pet out of its pen it equips; an equipped pet cannot be penned; unequipping then penning works). (2) production — Edit-mode unit tests of `GardenConfig`: each rarity at Lv 1 yields
+  exactly 10 / 20 / 40 / 70 / 120 Coins in 1 h; Phoenix Lv 20 = 211 Coins + 0.2 carry; a mixed 6-pen set (392 Coins/h) gives 784
+  in 2 h as one call, 120 × 1 min, 24 × 5 min and an uneven split, same carry each time; 20 h capped = the 8 h production (3 136).
+  Live: Phoenix Lv 1 (120 Coins/h) penned for 97 s of server time after 95 s of an empty pen paid exactly 3 Coins (carry-exact
+  expectation 3.70–3.83; the empty 95 s paid nothing); the online tick fired at the first 30 s check after 300 s (+10 for
+  ~305 s). (3) offline — LastSeen 20 h ago with Fox + Bunny + Dog: popup "8 h 0 min … capped", base 400, paid 412 (× 1.03 from the
+  equipped Cat Lv 3), Coins 469 → 881; LastSeen 2 h ago with a Phoenix Lv 1: base 240, paid 247 (469 → 716); a 62 min absence of
+  two test pets: base 31, paid 32; a future `LastSeen` paid 0 with no popup. (4) pens — buying: 4th pen costs exactly 5 000 once
+  (881 + 10 000 admin Coins → 5 882 incl. 1 Coin of production), repeat → `stale`, too little Coins → `coins`; placing into an empty
+  pen paid nothing for the past, removing paid the production up to then. (5) no remote takes a time; `LastSeen` is only set
+  from the server's `os.time()` (grep). (6) rejoin — pens, pad colours, info text, model names, labels and positions were
+  identical after leaving and rejoining (Bunny + Phoenix), and a garbage profile (missing pet, duplicate pet, out-of-range pens,
+  `PenCount` 99, string `LastSeen`, negative `Carry`) loaded with only valid pens, no errors. (7) ownership — with two clients each
+  client had only its own 6 prompts enabled (72 exist), saw the other plot's sign and pet models; a `Remove` from the hub → `far`
+  and unchanged; forged uids of another player's pets were ignored. (8) UI — pen panel states (empty pen with 26 free pets,
+  locked pen with price, pen behind a locked one, occupied pen with Take-out button), Pets panel "In pen 2", pet models stand on the
+  pad (bottom 16.80 = pad top), Epic/Legendary glow present. Consoles clean (UIBlox warnings only). Not covered: the prompt key press
+  itself (opened through the `OpenPen` hook), a real second server, a 12-player garden, visual screenshots. Cleanup: the live
+  profile equals `p2a-snapshot.json` again (compared field by field) and `user_-1`..`user_-4` are removed. **Save the place (Ctrl+S)**: the pens are Studio-only.
 
 ### P2b — Pet garden: incubators, feeding
 - **Outputs (draft):** incubators (unlock for Coins) hatch Golden eggs in real time, also offline; food bought for Coins

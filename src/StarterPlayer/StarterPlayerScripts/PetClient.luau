@@ -30,6 +30,7 @@ export type OwnedPet = {
 	xpNext: number?, -- XP needed for the next level; nil at the max level
 	rarity: PetConfig.Rarity,
 	equipped: boolean,
+	penned: number?, -- garden pen index (P2a2), nil when not in a pen
 	bonus: number, -- permille
 	sellValue: number,
 }
@@ -52,6 +53,7 @@ function PetClient.Inventory(): { OwnedPet }
 				xpNext = PetConfig.XpToNext(PetConfig.ClampLevel(pet.Level)),
 				rarity = rarity,
 				equipped = table.find(state.equipped, uid) ~= nil,
+				penned = state.penned and state.penned[uid] or nil,
 				bonus = PetConfig.PetBonus(pet),
 				sellValue = PetConfig.SellValue(pet.Kind),
 			})
@@ -60,6 +62,9 @@ function PetClient.Inventory(): { OwnedPet }
 	table.sort(list, function(a, b)
 		if a.equipped ~= b.equipped then
 			return a.equipped
+		end
+		if (a.penned ~= nil) ~= (b.penned ~= nil) then
+			return a.penned ~= nil
 		end
 		if a.rarity.order ~= b.rarity.order then
 			return a.rarity.order > b.rarity.order

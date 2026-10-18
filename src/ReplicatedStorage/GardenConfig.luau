@@ -16,6 +16,56 @@ function GardenConfig.PlotName(index: number): string
 	return string.format("Plot_%02d", index)
 end
 
+-- Pens and production (docs/GDD.md §7.6). Rates are Coins per hour at level 1; each level above 1 adds LevelRate permille.
+-- All production maths is integer: a pet's "units" are rate × (1000 + LevelRate × (level − 1)), i.e. thousandths of a
+-- Coin per hour, so production over `seconds` is units × seconds / UNITS_PER_COIN_SECOND whole Coins and the remainder
+-- (the carry) is kept, which makes the total identical however the time is split into payouts.
+GardenConfig.MaxPens = 6
+GardenConfig.PenPrices = { 0, 1000, 2500, 5000, 9000, 15000 } -- PenPrices[n] = price of the n-th pen (pen 1 is free)
+GardenConfig.BaseRates = { Common = 10, Uncommon = 20, Rare = 40, Epic = 70, Legendary = 120 } -- by rarity id
+GardenConfig.LevelRate = 40 -- permille of the base rate per level above 1 (Lv 20 = ×1.76)
+GardenConfig.OfflineCapSeconds = 8 * 3600 -- production counted at most this long since LastSeen
+GardenConfig.PayoutSeconds = 300 -- online payout interval
+GardenConfig.MinAwaySeconds = 60 -- shorter absences do not open the "while you were away" popup
+GardenConfig.PenNamePrefix = "Pen_" -- Workspace.Garden.Plots.Plot_NN.Pen_1..6 (Studio-only models)
+
+local UNITS_PER_COIN_SECOND = 3600 * 1000
+
+local PetConfig = require(script.Parent:WaitForChild("PetConfig"))
+
+-- Units of one pet (0 for an unknown kind or rarity).
+function GardenConfig.Units(pet): number
+	local rarity = PetConfig.RarityOf(pet.Kind)
+	local rate = rarity and GardenConfig.BaseRates[rarity.id] or 0
+	return rate * (1000 + GardenConfig.LevelRate * (PetConfig.ClampLevel(pet.Level) - 1))
+end
+
+-- Coins per hour of one pet, for display (before the pet bonus).
+function GardenConfig.RatePerHour(pet): number
+	return GardenConfig.Units(pet) / 1000
+end
+
+-- Whole Coins produced by `units` over `seconds` on top of `carry`, and the new carry (units × seconds left over).
+function GardenConfig.Settle(units: number, carry: number, seconds: number): (number, number)
+	local total = carry + units * seconds
+	local coins = total // UNITS_PER_COIN_SECOND
+	return coins, total - coins * UNITS_PER_COIN_SECOND
+end
+
+-- Pen index (1..MaxPens) that holds pet `uid` in `profile.Garden`, or nil.
+function GardenConfig.IsPenned(profile, uid: string): number?
+	local garden = profile.Garden
+	if type(garden) ~= "table" or type(garden.Pens) ~= "table" then
+		return nil
+	end
+	for key, penned in garden.Pens do
+		if penned == uid then
+			return tonumber(key)
+		end
+	end
+	return nil
+end
+
 export type Assigner = {
 	Claim: (key: any) -> number?,
 	Release: (key: any) -> number?,

@@ -6,12 +6,15 @@
 -- BuySlot(expectedSlot), SellPet(uid), RequestState() (client → server); PetsChanged(state) and
 -- Result(action, ok, detailOrReason) (server → client). The equipped pets are mirrored to the EquippedPets player
 -- attribute ("Kind:Level,…"). AddXP levels the equipped pets (stage finishes, coins, movement during a run).
+-- A pet is either equipped or in a garden pen (P2a2), never both: Equip and SellPet reject a penned pet, and the garden
+-- (GardenService) rejects an equipped one; PetsChanged.penned maps each penned uid to its pen index.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local PetConfig = require(ReplicatedStorage.PetConfig)
+local GardenConfig = require(ReplicatedStorage.GardenConfig)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 
 local COOLDOWN = 0.2 -- seconds between pet requests per player
@@ -75,6 +78,15 @@ local function publish(player: Player)
 	if not profile then
 		return
 	end
+	local penned = {} -- [uid] = pen index
+	local pens = profile.Garden and profile.Garden.Pens
+	if type(pens) == "table" then
+		for key, uid in pens do
+			if type(uid) == "string" and tonumber(key) then
+				penned[uid] = tonumber(key)
+			end
+		end
+	end
 	local parts = {}
 	for _, pet in equippedPets(profile) do
 		table.insert(parts, pet.Kind .. ":" .. PetConfig.ClampLevel(pet.Level))
@@ -86,8 +98,12 @@ local function publish(player: Player)
 		slots = profile.PetSlots,
 		freeEggs = profile.FreeEggs,
 		multiplier = PetConfig.Multiplier(equippedPets(profile)),
+		penned = penned,
 	})
 end
+
+-- Re-sends the state after another system (the garden) changed which pets are penned.
+PetService.Publish = publish
 
 -- Adds a free egg waiting to be opened at the egg stand (first Gold, launch egg). False if the profile is not loaded.
 function PetService.GrantFreeEgg(player: Player, eggId: string): boolean
@@ -125,7 +141,13 @@ end
 local function sanitize(profile)
 	local kept = {}
 	for _, uid in profile.EquippedPets do
-		if type(uid) == "string" and profile.Pets[uid] and not table.find(kept, uid) and #kept < profile.PetSlots then
+		if
+			type(uid) == "string"
+			and profile.Pets[uid]
+			and not table.find(kept, uid)
+			and not GardenConfig.IsPenned(profile, uid) -- equipped and penned never both (hand-edited records)
+			and #kept < profile.PetSlots
+		then
 			table.insert(kept, uid)
 		end
 	end
@@ -223,6 +245,9 @@ equipEvent.OnServerEvent:Connect(function(player, uid)
 	if isEquipped(profile, uid) then
 		return reject(player, "Equip", "equipped")
 	end
+	if GardenConfig.IsPenned(profile, uid) then
+		return reject(player, "Equip", "penned")
+	end
 	if #profile.EquippedPets >= profile.PetSlots then
 		return reject(player, "Equip", "slots")
 	end
@@ -279,6 +304,9 @@ sellEvent.OnServerEvent:Connect(function(player, uid)
 	end
 	if isEquipped(profile, uid) then
 		return reject(player, "SellPet", "equipped")
+	end
+	if GardenConfig.IsPenned(profile, uid) then
+		return reject(player, "SellPet", "penned")
 	end
 
 	local value = PetConfig.SellValue(pet.Kind)

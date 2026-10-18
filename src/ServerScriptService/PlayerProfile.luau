@@ -47,6 +47,9 @@ local function newProfile()
 		NextPetUid = 1, -- next uid to hand out, never reused (P1a)
 		FreeEggs = {}, -- [eggId] = free eggs waiting to be opened (P1a)
 		LaunchEgg = false, -- true once the pets-launch free egg was granted (P1a)
+		-- Pet garden (P2a2): Pens["1".."6"] = uid of the penned pet, PenCount = pens owned, LastSeen = server os.time()
+		-- up to which production was paid (absent until the first settle), Carry = production left over from the last payout
+		Garden = { Pens = {}, PenCount = 1, Carry = 0 },
 	}
 end
 

@@ -35,6 +35,7 @@ local REJECT_TEXT = {
 	full = "Pet inventory is full",
 	slots = "All slots in use: unequip a pet first",
 	equipped = "Unequip it before selling",
+	penned = "In a garden pen: remove it there first",
 	stale = "Out of date, try again",
 	maxed = "All slots unlocked",
 	loading = "Still loading...",
@@ -203,19 +204,19 @@ local function buildRow(index: number, pet)
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.new(1, -6, 0, 5),
 		Size = UDim2.fromOffset(84, 22),
-		BackgroundColor3 = if pet.equipped then COLOR_LOCKED else COLOR_EQUIP,
+		BackgroundColor3 = if pet.equipped or pet.penned then COLOR_LOCKED else COLOR_EQUIP,
 		TextSize = 13,
-		Text = if pet.equipped then "Unequip" else "Equip",
+		Text = if pet.penned then "In pen " .. pet.penned elseif pet.equipped then "Unequip" else "Equip",
 	})
 	local sellButton = button("Sell", {
 		AnchorPoint = Vector2.new(1, 1),
 		Position = UDim2.new(1, -6, 1, -5),
 		Size = UDim2.fromOffset(84, 22),
-		BackgroundColor3 = if pet.equipped then COLOR_LOCKED elseif confirming then COLOR_SELL else COLOR_ROW,
+		BackgroundColor3 = if pet.equipped or pet.penned then COLOR_LOCKED elseif confirming then COLOR_SELL else COLOR_ROW,
 		TextSize = 13,
 		Text = (if confirming then "Sure? +" else "Sell ") .. PetClient.Number(pet.sellValue),
 	})
-	if not pet.equipped and not confirming then
+	if not pet.equipped and not pet.penned and not confirming then
 		sellButton.BackgroundColor3 = Color3.fromRGB(85, 85, 85)
 	end
 
@@ -261,13 +262,19 @@ local function buildRow(index: number, pet)
 
 	equipButton.Activated:Connect(function()
 		clearPendingSell()
-		if pet.equipped then
+		if pet.penned then
+			flash(REJECT_TEXT.penned, COLOR_ERROR)
+		elseif pet.equipped then
 			remotes.Unequip:FireServer(pet.uid)
 		else
 			remotes.Equip:FireServer(pet.uid)
 		end
 	end)
 	sellButton.Activated:Connect(function()
+		if pet.penned then
+			flash(REJECT_TEXT.penned, COLOR_ERROR)
+			return
+		end
 		if pet.equipped then
 			flash(REJECT_TEXT.equipped, COLOR_ERROR)
 			return
