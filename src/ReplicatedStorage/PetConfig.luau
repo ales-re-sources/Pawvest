@@ -18,6 +18,7 @@ export type Egg = {
 	name: string,
 	price: number,
 	hatchSeconds: number, -- real (server) time from start to ready in a garden incubator (every egg hatches there)
+	look: { color: Color3, material: Enum.Material, glow: boolean }, -- the egg ball in an incubator (GardenIncubators)
 	weights: { [string]: number }, -- rarity id → weight per 1000
 }
 
@@ -64,6 +65,7 @@ PetConfig.Eggs = {
 		name = "Basic egg",
 		price = 500,
 		hatchSeconds = 300,
+		look = { color = Color3.fromRGB(236, 228, 208), material = Enum.Material.SmoothPlastic, glow = false }, -- plain cream
 		weights = { Common = 600, Uncommon = 250, Rare = 110, Epic = 35, Legendary = 5 },
 	},
 	Golden = {
@@ -71,6 +73,7 @@ PetConfig.Eggs = {
 		name = "Golden egg",
 		price = 4000,
 		hatchSeconds = 3600,
+		look = { color = Color3.fromRGB(255, 200, 40), material = Enum.Material.SmoothPlastic, glow = true }, -- shiny gold
 		weights = { Uncommon = 450, Rare = 350, Epic = 150, Legendary = 50 },
 	},
 } :: { [string]: Egg }

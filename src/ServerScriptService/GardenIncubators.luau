@@ -98,9 +98,16 @@ GardenService.AddRenderer(function(_index, plot, profile)
 		local egg = model:FindFirstChild("Egg")
 		if egg and egg:IsA("BasePart") then
 			egg.Transparency = if entry then 0 else 1
+			local look = entry and PetConfig.Eggs[entry.Egg].look
+			if look then
+				egg.Color, egg.Material = look.color, look.material
+			end
 			local light = egg:FindFirstChildOfClass("PointLight")
 			if light then
-				light.Enabled = entry ~= nil
+				light.Enabled = look ~= nil and look.glow
+				if look then
+					light.Color = look.color
+				end
 			end
 		end
 		local base = model:FindFirstChild("Base")

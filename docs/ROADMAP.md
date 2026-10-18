@@ -1090,6 +1090,10 @@ go through the incubators too; free eggs (launch egg, first Gold) start in an in
     "Golden egg: 4,000"); "🎁 N free eggs will start in the next empty incubator" while some wait.
   - Pets panel "🎁 N free eggs waiting for an empty incubator"; results popup "🎁 Free Basic egg → your incubator" on a
     first Gold; garden / food texts no longer mention the stand. `EggStand.client.luau` deleted.
+- **Follow-up (user request): eggs look different.** The incubator egg ball was always gold. `PetConfig.Eggs[id].look`
+  (`color`, `material`, `glow`) is applied by the `GardenIncubators` renderer: Basic = plain cream, no glow; Golden = shiny
+  gold with a gold glow. Checked on the server in a playtest (Basic `236,228,208` / light off, Golden `255,200,40` / light
+  on, empty incubator hidden and dark); not checked visually (3D captures come out blank). No Studio changes.
 - **Studio-only changes:** `Workspace.StartLocation.EggStand` model deleted — **save the place (Ctrl+S)**.
 - **Acceptance checks:** no egg can be bought on the hub (no stand, no `BuyEgg` remote); a free egg starts in an empty
   incubator at once and waits while all are busy; a hatch lets a waiting free egg start; paid Basic / Golden eggs cost
