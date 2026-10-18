@@ -10,6 +10,7 @@ per-stage Top-10 leaderboards, collectible coins and a small admin panel.
 ## Project docs & workflow
 - [docs/GDD.md](docs/GDD.md) — game design: loop, stages, time tiers, rewards, talents, economy numbers.
 - [docs/ROADMAP.md](docs/ROADMAP.md) — milestones, acceptance checks, status. Answer "what next?" from here.
+- [docs/PET_GROWTH.md](docs/PET_GROWTH.md) — design and plan for the pet growth visuals (P1e1–P1f).
 
 Work milestone by milestone per ROADMAP (design check → implement → Studio validation → status update → commit);
 update the status levels (Implemented / Studio-validated / Live-validated) only after validation.

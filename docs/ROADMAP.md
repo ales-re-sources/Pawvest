@@ -39,6 +39,11 @@ Rules:
 | P1b | Egg stand + Pets panel | ✔ | ✔ | – |
 | P1c | Pet models + following | ✔ | ✔ | – |
 | P1d | Pet XP + levels | ✔ | ✔ | – |
+| P1e1 | Pet look foundation + size growth | – | – | – |
+| P1e2 | Pet level-up moment | – | – | – |
+| P1e3 | Pet tier effects + accent tint | – | – | – |
+| P1e4 | Pet individuality | – | – | – |
+| P1f | Pet accessory kit | – | – | – |
 | M3 | Stage unlocks | ✔ | ✔ | – |
 | M4 | Challenge coins | ✔ | ✔ | – |
 | M4.1 | Challenge coins, Stage 2 / 3 | ✔ | ✔ | – |
@@ -56,6 +61,7 @@ Order rationale: M0 unblocks everything. M1 creates Coin income, M2 spends it. R
 and adds the single payout point that pets multiply; P1a needs it, and P1b–P1d need P1a (any order among them). M3 needs medals and Coins. M4 adds a Coin source.
 M5 is mostly independent (can move earlier). P-milestones may move ahead of M3–M5 if pets take priority, but keep
 their own order: P2a needs P1a–P1c (P1d recommended), P2b needs P2a, P3 needs P1 and profile session locking. M6 needs the full loop including the garden.
+P1e1–P1f (pet growth visuals) need P1c + P1d, run in their own order (each needs the ones before it) and can be done at any time alongside the other milestones.
 
 ## Milestones
 
@@ -516,6 +522,21 @@ P1a comes first; P1b, P1c and P1d each need only P1a and can follow in any order
   Consoles: only Roblox's UIBlox "FoundationProvider" warnings. Not covered: multi-client, bounce bricks / spinners during
   a run (dropped or counted as their speed allows), touch layout. Live profile and all four boards restored exactly to the
   pre-test snapshot (`p1d-snapshot.json`); no `user_-1` / `user_-2` records.
+
+### P1e1–P1f — Pet growth visuals
+Pet levels become visible without storing model variants: the look is a pure function of `(kind, level, uid)` layered on
+the existing blocky models (size, level-up burst, tier effects, tint, individuality, accessories). Full design, findings,
+file list and verification: **[docs/PET_GROWTH.md](PET_GROWTH.md)**. Decisions (user, 2026-10-18): the accessory kit is in;
+same kind and level look slightly different (seeded by the pet id); Lv 20 is 1.6× the size of Lv 1. Evolution forms stay a
+later option. We cannot see 3D captures, so every step ends with a visual check by the user in Studio.
+
+| Step | Output | Acceptance (details in the plan) |
+|---|---|---|
+| **P1e1** | `ReplicatedStorage.PetLook` (`Scale`, `Tier`, `Apply`) shared by `PetFollow` and the garden pens; size 1.0 → 1.6 by level; spacing from the scaled width; camera fade; attribute `Kind:Level:uid` (old form still parsed) | Lv 1 = 1.0×, Lv 20 = 1.6×; three Lv 20 pets do not overlap; pens match followers; pets still trigger no touch parts; WalkSpeed unchanged |
+| **P1e2** | level-up detection per uid; burst, ring, floating "Level N!" (also for other players); tier badge on the label; optional `PetLevelUpSound` | one real level-up (Tutorial finish near a threshold) plays the effect once, only on that pet |
+| **P1e3** | tier effects at Lv 5 / 10 / 15 / 20 (trail, aura, motes, halo), accent parts (`Accent = true`, Studio) tinted to the rarity colour, Neon at Lv 20, distance LOD | all 8 kinds × 5 levels render; emitter / light / part counts for 12 players × 3 pets acceptable; far pets drop effects |
+| **P1e4** | `Seed(uid)` jitter (hue / value) so same kind and level differ | deterministic per uid, different uids differ, rarity identity kept |
+| **P1f** | accessory kit (halo, crown, scarf, small wings, horns, flame tail) built from `Head` / `Body` / `Tail`; 1 piece at Lv 10, 2 at Lv 20, picked by seed; skip rules per kind | no duplicate pieces (e.g. wings on Dragon), all pieces non-colliding and non-touchable, higher tiers keep earlier pieces |
 
 ### M3 — Stage unlocks
 - **Inputs:** `StageConfig.unlock` / `unlockPrice` (GDD §3: Stage 2 = Silver on Stage 1 or 150 Coins, Stage 3 = Silver on
