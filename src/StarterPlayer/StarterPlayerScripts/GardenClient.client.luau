@@ -13,6 +13,11 @@ local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
+-- looked up by name: `remotes.Remove` would be the built-in Instance:Remove() method, not the RemoteEvent
+local placeEvent = remotes:WaitForChild("Place")
+local removeEvent = remotes:WaitForChild("Remove")
+local buyPenEvent = remotes:WaitForChild("BuyPen")
+local requestStateEvent = remotes:WaitForChild("RequestState")
 local player = Players.LocalPlayer
 
 local WIDTH = 360
@@ -297,7 +302,7 @@ local function petRow(index: number, pet)
 	})
 	placeButton.Activated:Connect(function()
 		if openPen then
-			remotes.Place:FireServer(openPen, pet.uid)
+			placeEvent:FireServer(openPen, pet.uid)
 		end
 	end)
 	return row
@@ -400,10 +405,10 @@ actionButton.Activated:Connect(function()
 	end
 	if pen > state.penCount then
 		if pen == state.penCount + 1 then
-			remotes.BuyPen:FireServer(pen)
+			buyPenEvent:FireServer(pen)
 		end
 	elseif state.pens[tostring(pen)] then
-		remotes.Remove:FireServer(pen)
+		removeEvent:FireServer(pen)
 	end
 end)
 
@@ -542,5 +547,5 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 end)
 
-remotes.RequestState:FireServer()
+requestStateEvent:FireServer()
 screenGui.Parent = player:WaitForChild("PlayerGui")

@@ -933,6 +933,11 @@ pets are shown as models (reused `ReplicatedStorage.PetModels`) with a label.
   pad (bottom 16.80 = pad top), Epic/Legendary glow present. Consoles clean (UIBlox warnings only). Not covered: the prompt key press
   itself (opened through the `OpenPen` hook), a real second server, a 12-player garden, visual screenshots. Cleanup: the live
   profile equals `p2a-snapshot.json` again (compared field by field) and `user_-1`..`user_-4` are removed. **Save the place (Ctrl+S)**: the pens are Studio-only.
+- **Bug fix (2026-10-18, user report):** the pen panel's "Take out" button threw `attempt to index function with 'FireServer'`:
+  `remotes.Remove` is the built-in `Instance:Remove()`, not the RemoteEvent. `GardenClient` now looks every garden remote up by
+  name once (`WaitForChild`). My own tests had fired the remotes by name and never clicked that button, so the gap was in the
+  validation, not in the server. Rule: never index a remote named like an `Instance` member (`Remove`, `Clone`, `Destroy`, `Parent`)
+  with a dot; always `:WaitForChild("Name")`. Re-test of the real button click: pending (the user's playtest was running).
 
 ### P2b — Pet garden: incubators, feeding
 - **Outputs (draft):** incubators (unlock for Coins) hatch Golden eggs in real time, also offline; food bought for Coins
