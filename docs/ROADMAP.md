@@ -42,7 +42,7 @@ Rules:
 | M3 | Stage unlocks | ✔ | ✔ | – |
 | M4 | Challenge coins | ✔ | ✔ | – |
 | M4.1 | Challenge coins, Stage 2 / 3 | ✔ | ✔ | – |
-| M5 | Leaderboards | – | – | – |
+| M5 | Leaderboards | ✔ | ✔ | – |
 | P2a | Pet garden: plots, pens, offline income | – | – | – |
 | P2b | Pet garden: incubators, feeding | – | – | – |
 | P3 | Trading | – | – | – |
@@ -757,6 +757,21 @@ P1a comes first; P1b, P1c and P1d each need only P1a and can follow in any order
 
 ### M5 — Leaderboards
 - **Outputs:** Top-10 board on every stage (add Stage 3, Tutorial); hub "most stars" board.
+- **Scope of the hub board (design check 2026-10-18, matches GDD §8):** global "most stars" Top-10 on the hub; max
+  3 × number of stages (12 with four stages).
+  - **Inputs:** `PlayerProfile.Medals`; stage count from `StageConfig` (`TotalStars`, `MaxStars`).
+  - **Design notes:** `ServerScriptService.StarBoard` keeps an OrderedDataStore `MostStars` (key = UserId, value = total stars;
+    no entry = 0 stars). The profile is the source of truth, the store is only a ranking. Writes happen only when the
+    total changes: `StageResults` calls `StarBoard.Sync` after a new medal, the profile reset (`PlayerProfile.ProfileReset`)
+    removes the entry, and on join the stored value is read once and corrected if it differs from the profile (this also
+    back-fills existing players). A failed profile load (`PlayerProfile.CanSave` false) never writes. Reads: one
+    `GetSortedAsync` per minute per server (rate-limited to one per 10 s), names via `GetNameFromUserIdAsync` (cached,
+    pcall, fallback "Player <id>"). A write by this server is layered over the read for 2 minutes and redraws the board at
+    once through `StarBoard.Changed`; other servers show it at the next refresh. The hub score panel uses the same
+    `StageConfig.TotalStars`.
+  - **Studio-only changes:** `Workspace/StartLocation/StarsLeaderboard` (clone of a stage `Top10Leaderboard` model without
+    scripts, placed north-west of the hub spawn, facing it). Its script is `StartLocation/StarsBoard.server.luau`, beside the
+    model, because Argon does not turn a Studio-only model into a synced container.
 - **Done early (2026-10-17, user request):** Stage 3's landing pad lacked the `Top10Leaderboard` that Stage 1/2 have. The Stage 2
   board model was cloned into `Stage3/LandingPad` at the same relative spot (pad offset −52.2, 0, +0.2); its script is
   byte-identical (stage resolved via `StageConfig.ForInstance`), the disabled legacy `TopTimeScript` was left out. All other
@@ -791,7 +806,11 @@ P1a comes first; P1b, P1c and P1d each need only P1a and can follow in any order
   polled every 60 s). `PlayerTimerHandler.LeaderboardChanged` now fires after a Top-10 write and boards redraw at once
   (Stage 2 board updated 0.7 s after the finish); empty rows are cleared; the 60 s poll stays for other servers.
 - **Acceptance checks:** every board renders 10 rows from the DataStore (or fewer with real data, never blank errors);
-  a new personal best appears within one refresh interval.
+  a new personal best appears within one refresh interval. Hub board: renders up to 10 rows from `MostStars`
+  (empty rows `...`, never blank errors); a player's first new medal moves their total on the board within one refresh
+  interval (at once on the same server); the totals equal the profile medals (`StageConfig.TotalStars`); the admin reset
+  removes the admin's entry (0 stars).
+- **Validation log (2026-10-18, solo playtests, API access on, uid 9892673032, live profile with 4 × Gold = 12★):** 11 test entries (ids 1–11, 1–11★) seeded in `MostStars`. On join the missing entry was back-filled: store 12, board row 1 "12 / 12", then rows 11 … 3★ (10 rows, the 11th and 12th entries cut; unresolvable names show "Player <id>"). Admin Reset Score: entry removed (store nil), board redrew within the 4 s check, and the forced re-read refilled row 10 (a second playtest). First new medal after the reset: Stage 1 Gold → store 3, board "3 / 12" at rank 10 at once; Stage 2 Gold → store 6, rank 6 (ties sorted by name); `Medal_<folder>` attributes and `StageConfig.TotalStars` agree with the stored values. An entry written to the store from "another server" (id 2 → 12★) showed on the board 9 s later (poll). Consoles: only the usual UIBlox warnings and the DataStore queue notice. Not covered: a screenshot of the board (viewport captures came back blank), two real servers, touch devices. Live profile, the four stage boards and `MostStars` (was empty; test keys removed) restored exactly to the pre-test snapshot (`m5-snapshot.json`). **The place must be saved** (Ctrl+S): the board model is Studio-only.
 
 ### P2a — Pet garden: plots, pens, offline income
 Scoped in detail after P1 (GDD §7.6). Decided 2026-10-17: island in the same place, 12 plots, 12-player servers.

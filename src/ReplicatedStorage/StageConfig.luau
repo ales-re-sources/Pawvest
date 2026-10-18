@@ -162,6 +162,21 @@ function StageConfig.MeetsUnlockBar(stage, medals): boolean
 	return (medals[rule.stage] or 0) >= StageConfig.MedalIndex[rule.medal]
 end
 
+-- Stars (medal indices) summed over all stages for `medals` ([stageKey] = medal index); the hub score panel and the
+-- hub "most stars" board both use it.
+function StageConfig.TotalStars(medals): number
+	local stars = 0
+	for _, stage in StageConfig.Stages do
+		stars += math.clamp(medals[stage.key] or 0, 0, #StageConfig.Medals)
+	end
+	return stars
+end
+
+-- Most stars a player can have (3 per stage).
+function StageConfig.MaxStars(): number
+	return #StageConfig.Stages * #StageConfig.Medals
+end
+
 -- Player attribute that replicates whether the player may enter `stage` (bar met or bought).
 function StageConfig.UnlockedAttribute(stage): string
 	return "Unlocked_" .. stage.folder

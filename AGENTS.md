@@ -52,6 +52,7 @@ src/
     PlayerProfile.luau                per-player profile DataStore (load/migrate/save), AddCoins, CoinsChanged
     CoinRewards.luau                  Grant(player, base, source): the only gameplay Coin payout (pet multiplier, rounding)
     PetService.luau                   pets: eggs (paid / free; a hatched pet takes a free slot), equip slots, sell; PetRemotes, EquippedPets attribute, Multiplier, GrantFreeEgg, AddXP (equipped pets, level-ups)
+    StarBoard.luau                    hub "most stars" ranking: OrderedDataStore MostStars (UserId → total stars); Sync(player) writes only when the total changes (new medal, admin reset, join back-fill), Refresh / Top / Changed feed the hub board
     StageResults.luau                 finish → personal best, medal, one-time payout + daily repeat reward, free egg on first Gold, pet XP (medal + movement); Medal_<folder> attributes
     RunDistance.luau                  server-measured horizontal studs during a run (Start / Stop from PlayerTimerHandler); steps faster than WalkSpeed allows (teleports, respawns) are dropped
     StageUnlocks.luau                 hub portal gate: bar (previous stage's medal) or bought unlock; UnlockRemotes, Unlocked_<folder> attributes
@@ -82,7 +83,7 @@ src/
     Handlers/                         ModuleScripts shared by all stage scripts (required via workspace.Handlers.*)
       CheckpointTouchHandler.luau     checkpoint touch → leaderstats.Stage, respawn point, sound
       PlayerTimerHandler.luau         stage timers (os.clock), personal bests (profile), global Top-10, score panel
-    StartLocation/                    hub: SpawnLocation + TeleportToStage1..3 portals + EggStand model (Studio-only: Egg part with ProximityPrompt "Prompt")
+    StartLocation/                    hub: SpawnLocation + TeleportToStage1..3 portals + EggStand model (Studio-only: Egg part with ProximityPrompt "Prompt") + StarsLeaderboard (Studio-only board model, no scripts; drawn by StarsBoard.server.luau beside it)
     Stage1/ Stage2/ Stage3/ Tutorial/ stages (see below)
     <Stage>/ChallengeCoins            Studio-only Folder (every stage): Coin_<n> MeshParts tagged ChallengeCoin with attribute CoinId (ids listed in ROADMAP M4 / M4.1)
     DebugBaseplate/                   kill brick under the map
@@ -149,6 +150,7 @@ DataStores:
 | `PlayerCoins` | `UserId` | legacy integer coins — read once for migration |
 | `PlayerScoresStore` | `player_<UserId>` | legacy `{ {StageName, Elapsed}, … }` — read once for migration |
 | `GlobalLeaderboardsStore` | `leaderboard_<StageName>` | Top-10 `{ {PlayerName, Elapsed}, … }` |
+| ordered `MostStars` | `<UserId>` | total stars (sum of the profile's medals, `StageConfig.TotalStars`); no entry = 0; hub board |
 | ordered `"a"` | — | legacy time-played board; `TopTimeScript` is **Disabled** |
 
 Gameplay Coins (medals, repeat rewards, pickups, future sources) go through `CoinRewards.Grant`; purchases and

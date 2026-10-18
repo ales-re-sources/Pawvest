@@ -136,11 +136,7 @@ local function updateScorePanel(player, stageKey)
 		scorePanel.StageName.Text = StageConfig.HubName
 		scorePanel.StageRecord.Text = "Enter portal!"
 		if medalsLabel then
-			local stars = 0
-			for _, medal in medals do
-				stars += medal
-			end
-			medalsLabel.Text = string.format("Stars earned: %d / %d", stars, #StageConfig.Stages * #StageConfig.Medals)
+			medalsLabel.Text = string.format("Stars earned: %d / %d", StageConfig.TotalStars(medals), StageConfig.MaxStars())
 		end
 		return
 	end

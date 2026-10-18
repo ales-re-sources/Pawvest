@@ -11,6 +11,7 @@ local StageConfig = require(ReplicatedStorage.StageConfig)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local CoinRewards = require(ServerScriptService.CoinRewards)
 local PetService = require(ServerScriptService.PetService)
+local StarBoard = require(ServerScriptService.StarBoard)
 local PetConfig = require(ReplicatedStorage.PetConfig)
 
 local GOLD = StageConfig.MedalIndex.Gold
@@ -85,6 +86,7 @@ function StageResults.RecordFinish(player: Player, stageKey: string, elapsed: nu
 
 	if medal > previousMedal then
 		task.spawn(PlayerProfile.Save, player) -- a new medal (and its free egg) is saved at once; run counts follow later
+		task.spawn(StarBoard.Sync, player) -- the hub "most stars" ranking follows the medals
 	end
 
 	local bestMedal = math.max(previousMedal, medal)

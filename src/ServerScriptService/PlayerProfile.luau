@@ -167,6 +167,12 @@ function PlayerProfile.Get(player: Player)
 	return profiles[player]
 end
 
+-- True when the profile is loaded from the store and will be saved (false while loading or after a failed load).
+-- Systems that mirror profile data into other stores must check it, so a default profile never overwrites real data.
+function PlayerProfile.CanSave(player: Player): boolean
+	return profiles[player] ~= nil and not saveBlocked[player]
+end
+
 -- Yields until the profile is loaded; returns nil if the player left first.
 function PlayerProfile.WaitFor(player: Player)
 	while not profiles[player] and player.Parent do
