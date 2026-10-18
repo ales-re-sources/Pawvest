@@ -212,7 +212,8 @@ Free eggs:
 Free eggs wait in the profile until claimed at the egg stand.
 
 ### 7.3 Slots and Coin bonus
-Up to 3 pets can be **equipped** (follow the player, count for the bonus).
+Up to 3 pets can be **equipped** (follow the player, count for the bonus). A newly hatched pet is equipped
+automatically when a slot is free.
 
 | Slot | Price |
 |---|---|

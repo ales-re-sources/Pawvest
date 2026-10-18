@@ -50,7 +50,7 @@ src/
   ServerScriptService/
     PlayerProfile.luau                per-player profile DataStore (load/migrate/save), AddCoins, CoinsChanged
     CoinRewards.luau                  Grant(player, base, source): the only gameplay Coin payout (pet multiplier, rounding)
-    PetService.luau                   pets: eggs (paid / free), equip slots, sell; PetRemotes, EquippedPets attribute, Multiplier, GrantFreeEgg
+    PetService.luau                   pets: eggs (paid / free; a hatched pet takes a free slot), equip slots, sell; PetRemotes, EquippedPets attribute, Multiplier, GrantFreeEgg
     StageResults.luau                 finish → personal best, medal, one-time payout + daily repeat reward, free egg on first Gold; Medal_<folder> attributes
     StageUnlocks.luau                 hub portal gate: bar (previous stage's medal) or bought unlock; UnlockRemotes, Unlocked_<folder> attributes
     HomeService.server.luau           GoHome remote: Home button → hub spawn, cancels the running timer

@@ -453,6 +453,16 @@ P1a comes first; P1b, P1c and P1d each need only P1a and can follow in any order
   `p1c-snapshot.json`); `user_-1` / `user_-2` (stale v1 records from an earlier session, `user_-1` reused as the seed)
   deleted. Not covered: StreamingEnabled far-away owners, many players at once (performance), screenshots (3D view
   captures come out blank, so looks were not checked visually — only structurally).
+- **Follow-up (2026-10-18, user request): auto-equip on hatch.** GDD §7.3: a newly hatched pet is equipped automatically
+  when a slot is free. `PetService` BuyEgg (paid and free eggs) appends the new uid to `EquippedPets` if
+  `#EquippedPets < PetSlots` and adds `equipped` to the `Result` detail; the egg stand says "Equipped: it follows you now"
+  or "All slots full: swap it in via the Pets panel (🐶 button)". The pet appears behind the player at once, during the
+  ≥ 0.9 s egg wobble (before the reveal). Studio-only changes: none.
+  Validated (solo playtest, real stand clicks; preset 2 000 Coins, 2 slots, Dog equipped, 1 free egg): free egg → Fox,
+  Coins 2 000, `EquippedPets` `Dog:1,Fox:1`, Fox following, "Equipped" message; paid egg with both slots full → Cat,
+  Coins 1 500, attribute unchanged, "All slots full" message (fits its line); after unequipping the Dog a paid egg → Dog
+  equipped (`Fox:1,Dog:1`), Coins 1 000. Stored after leaving: 4 pets, `EquippedPets = { "2", "4" }`. Console: UIBlox
+  warnings only. Live profile restored exactly to the pre-test snapshot (`p1c-autoequip-snapshot.json`).
 
 ### P1d — Pet XP + levels
 - **Inputs:** `PetService` (P1a), `StageResults`, `CoinSystem`, `PlayerTimerHandler` (running timer), GDD §7.4.

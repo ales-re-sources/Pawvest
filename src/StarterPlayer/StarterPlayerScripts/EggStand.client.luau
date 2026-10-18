@@ -294,7 +294,11 @@ local function reveal(detail)
 		revealStroke.Color = rarity.color
 		revealStroke.Thickness = if rarity.order >= 4 then 4 else 2 -- Epic and Legendary glow
 	end
-	setInfo("Added to your pets: equip it in the Pets panel (🐶 button)", COLOR_OK)
+	if detail.equipped then
+		setInfo("Equipped: it follows you now", COLOR_OK)
+	else
+		setInfo("All slots full: swap it in via the Pets panel (🐶 button)", COLOR_OK)
+	end
 	endHatch()
 end
 

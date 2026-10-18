@@ -177,7 +177,11 @@ buyEggEvent.OnServerEvent:Connect(function(player, eggId)
 	local uid = tostring(profile.NextPetUid)
 	profile.NextPetUid += 1
 	profile.Pets[uid] = { Kind = kind, Level = 1, XP = 0 }
-	succeed(player, "BuyEgg", { uid = uid, kind = kind, free = free })
+	local equipped = #profile.EquippedPets < profile.PetSlots -- a new pet takes a free slot at once (GDD §7.3)
+	if equipped then
+		table.insert(profile.EquippedPets, uid)
+	end
+	succeed(player, "BuyEgg", { uid = uid, kind = kind, free = free, equipped = equipped })
 	task.spawn(PlayerProfile.Save, player) -- spent Coins (or the free egg) and the pet are saved together
 end)
 
