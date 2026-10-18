@@ -46,6 +46,7 @@ src/
     AdminConfig.luau                  admin UserIds + IsAdmin (client UI gating and server checks)
     TalentConfig.luau                 talents (Run Speed, Double Jump, Jump Height): costs, effect helpers, Talent_<id> attribute names
     PetConfig.luau                    pet kinds, rarities (bonus ‰, sell value), eggs + weights, slot prices, level curve; Roll, PetBonus, Multiplier, XpToNext
+    PetModels (Studio-only Folder)    one part-built Model per PetConfig kind; invisible PrimaryPart "Root" (front = −Z), all parts Anchored, CanCollide/CanTouch/CanQuery off
   ServerScriptService/
     PlayerProfile.luau                per-player profile DataStore (load/migrate/save), AddCoins, CoinsChanged
     CoinRewards.luau                  Grant(player, base, source): the only gameplay Coin payout (pet multiplier, rounding)
@@ -67,6 +68,7 @@ src/
     PetClient.luau                    ModuleScript: client mirror of PetRemotes.PetsChanged + Coins (Inventory, Changed / Result signals); asks RequestState on load
     EggStand.client.luau              egg stand popup (odds from PetConfig, price, open / free egg, hatch reveal); prompt on workspace.StartLocation.EggStand.Egg
     PetsPanel.client.luau             Pets panel (own ScreenGui "PetsGui": inventory, equip, buy slot, sell with 2nd click, total bonus); opened by the 🐶 button
+    PetFollow.client.luau             renders every player's equipped pets (EquippedPets attribute) from PetModels: local folder workspace.PetFollowers, one smoothed anchor per owner, "Kind Lv N" label, Epic/Legendary glow
   StarterGui/
     CoinGui/CoinDisplayScript.client.luau        top-right coin counter
     ScreenGui/TopLeftIcons/ButtonHandler.client.luau  icons Home (🏠 go to hub) / Skills (⚡) / Pets (🐶, cloned in code) / Settings / Admin, positioned in code in this order; slide-in panels (AdminConfig)
@@ -152,7 +154,7 @@ the diminishing repeat reward (`StageConfig.RunReward`).
 
 Player attributes `Medal_<stage folder>` (0–3) mirror `PlayerProfile.Medals` for client displays; `Unlocked_<stage folder>`
 (bool) mirror `StageUnlocks` (bar met or `UnlockedStages[key]` bought; the bar is derived from medals, never stored).
-`EquippedPets` (`"Kind:Level,…"`, empty when none) mirrors the equipped pets for pet rendering (P1c).
+`EquippedPets` (`"Kind:Level,…"`, empty when none) mirrors the equipped pets; `PetFollow` renders them on every client.
 
 Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (ObjectValue, runtime only).
 

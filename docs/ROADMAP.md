@@ -37,7 +37,7 @@ Rules:
 | P1a | Pet data + economy | ✔ | ✔ | – |
 | R2 | Coin scale ×10 | ✔ | ✔ | – |
 | P1b | Egg stand + Pets panel | ✔ | ✔ | – |
-| P1c | Pet models + following | – | – | – |
+| P1c | Pet models + following | ✔ | ✔ | – |
 | P1d | Pet XP + levels | – | – | – |
 | M3 | Stage unlocks | ✔ | ✔ | – |
 | M4 | Challenge coins | – | – | – |
@@ -407,10 +407,52 @@ P1a comes first; P1b, P1c and P1d each need only P1a and can follow in any order
   Dragon, Phoenix): PrimaryPart, Anchored, CanCollide / CanTouch / CanQuery off; `PetFollow.client.luau` renders every
   player's equipped pets behind their owner (local lerp, no server physics) with a rarity-coloured label "Kind Lv N";
   glow for Epic and Legendary.
-- **Studio-only changes:** `ReplicatedStorage.PetModels` (built via MCP).
+- **Studio-only changes:** `ReplicatedStorage.PetModels` (Folder, built via MCP): Models `Cat`, `Dog`, `Bunny`, `Fox`, `Owl`,
+  `Panda`, `Dragon`, `Phoenix` (15–23 SmoothPlastic parts each, Phoenix crest / wing tips / tail in Neon). Shared chibi
+  style: invisible 1-stud `Root` = PrimaryPart at the model origin, front = −Z, body 1.3 × 1.0 × 1.5, head 1.5 × 1.3 × 1.3,
+  black eyes with a white shine, 1.5–2.4 studs wide, 2.5–3.5 tall. All parts Anchored, Massless, CanCollide / CanTouch /
+  CanQuery off. **Save the place (Ctrl+S) — the models exist only in the place file.**
 - **Acceptance checks:** equipping shows the pet within 1 s and unequipping removes it; three equipped pets do not overlap;
   a second client (multi-client) sees the first player's pets following; pets never trigger touch parts (kill parts,
   coins, portals); the owner's WalkSpeed and jump are unchanged with pets equipped.
+- **Design notes (2026-10-18):** design check against GDD §7.5 passed unchanged.
+  - `PetFollow.client.luau` (StarterPlayerScripts) tracks every player (PlayerAdded / PlayerRemoving + existing players)
+    and their `EquippedPets` attribute; an attribute change rebuilds the list, reusing models whose `Kind:Level` stays.
+    Entries with an unknown kind or a malformed level are skipped; levels are clamped (`PetConfig.ClampLevel`); at most 3.
+  - Pets are clones in a client-local folder `workspace.PetFollowers` (never on the server). The flags are enforced again
+    on clone, so a replacement model cannot affect gameplay.
+  - Formation: one smoothed anchor per owner (yaw-only CFrame at HumanoidRootPart − 0.5 Y, `Lerp` with 1 − e^(−8·dt),
+    jumps when > 40 studs away: teleports, respawns); pets sit at fixed offsets on it (1: right-behind; 2: ±1.8; 3: ±3.2
+    and centre 1 stud further back) plus a small per-pet bob. A rigid formation cannot overlap during turns (lerping each
+    pet separately would pull side pets together on a 180° turn).
+  - No character / HumanoidRootPart (respawning, streamed out) → pets unparented, the anchor jumps on the next spawn.
+  - Label: BillboardGui "Kind Lv N" in `PetConfig` rarity colour, 0.5 stud above the model top, MaxDistance 80. Glow:
+    PointLight + a small ParticleEmitter in the rarity colour on Epic and Legendary (brighter for Legendary).
+
+- **Validation log (2026-10-18, API access on).** Solo playtest, live profile preset (Dragon, Phoenix, Cat, Owl, 3 slots):
+  Equip Dragon → model after **0.07 s**, 2 / 0 / 3.5 studs right-behind the root, label "Dragon Lv 1" in Epic purple, PointLight.
+  Three equipped → slots −3.2 / 0 / +3.2 (centre 1 stud further back); smallest gap between parts of different pets
+  0.18 studs at rest and **0.17** during 180° / 90° walking turns (bounding-sphere test, so the true gap is larger).
+  Unequip each → removed after **0.05 s**. Touch parts, walking with `Humanoid:MoveTo` so the Dragon (left slot) passes
+  through the target while the owner stays 3.2 studs beside it, each with a positive control (owner walks through):
+  coin — Dragon parts inside the coin for 63 frames, coin still visible, Coins 0; control: collected, +13 (10 × 1.27).
+  Kill part (laser strip `Stage1.LaserStripStage.Part_01` moved onto the Stage 1 pad for that playtest only) — Dragon
+  inside for 25 frames, health 100 on client and server; control: owner died, respawned, pets back in their slots.
+  Hub Tutorial portal — Dragon inside for 62 frames, no teleport (890 studs from the destination); control: owner
+  teleported (2.9 studs), pets snapped along. (A first attempt that held the character in place with CFrame writes never
+  fires Touched, not even for the owner, so it proves nothing and was replaced by the walking test.) Movement: WalkSpeed
+  16 / JumpPower 50 / JumpHeight 7.2 with 0 and 3 pets; measured walking speed 16.00 vs 15.95–16.00; real Space jumps
+  7.27 studs ×3 with 3 pets and ×3 with none. Every kind renders (local attribute override `Cat:1,Dog:2,Bunny:3`,
+  `Fox:4,Owl:20,Panda:7`, `Dragon:5,Phoenix:99`): labels and rarity colours correct, Lv 99 shown as 20, glow only on
+  Dragon and Phoenix; `Zebra:1,Cat:x,Dog:2,,Owl:3,Fox:1` → Dog, Owl, Fox.
+  Multi-client (Server + 2 clients, user_-1 seeded with Dragon, Phoenix, Bunny equipped): Player2 saw
+  `Player1_Dragon / _Phoenix / _Bunny`, 3 pets every frame during Player1's 49-stud square walk (max 8.2 studs from the
+  owner, back to −3.2 / 0 / +3.2 at rest, correct labels); Player1's unequip / equip reached Player2's view **0.03 s** after
+  the request; after Player1 left (kick) Player2 showed no pets. Consoles: only Roblox's UIBlox "FoundationProvider"
+  warnings (server log empty). Live profile restored exactly to the pre-test snapshot (v3, 0 Coins, free egg + launch flag;
+  `p1c-snapshot.json`); `user_-1` / `user_-2` (stale v1 records from an earlier session, `user_-1` reused as the seed)
+  deleted. Not covered: StreamingEnabled far-away owners, many players at once (performance), screenshots (3D view
+  captures come out blank, so looks were not checked visually — only structurally).
 
 ### P1d — Pet XP + levels
 - **Inputs:** `PetService` (P1a), `StageResults`, `CoinSystem`, `PlayerTimerHandler` (running timer), GDD §7.4.
