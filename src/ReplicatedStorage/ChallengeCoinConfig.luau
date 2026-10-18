@@ -16,7 +16,7 @@ ChallengeCoinConfig.Tiers = {
 	Talent = 100, -- reachable only with a talent (Double Jump)
 }
 
--- `stage` is the StageConfig key. First batch (M4): Tutorial + Stage 1; Stage 2 / 3 coins come later.
+-- `stage` is the StageConfig key.
 ChallengeCoinConfig.Coins = {
 	{ id = "Tutorial_1", stage = "Stage 4", tier = "Risky" },
 	{ id = "Tutorial_2", stage = "Stage 4", tier = "Risky" },
@@ -28,6 +28,25 @@ ChallengeCoinConfig.Coins = {
 	{ id = "Stage1_6", stage = "Stage 1", tier = "Risky" },
 	{ id = "Stage1_7", stage = "Stage 1", tier = "Risky" },
 	{ id = "Stage1_8", stage = "Stage 1", tier = "Talent" },
+	{ id = "Stage2_1", stage = "Stage 2", tier = "Easy" },
+	{ id = "Stage2_2", stage = "Stage 2", tier = "Easy" },
+	{ id = "Stage2_3", stage = "Stage 2", tier = "Easy" },
+	{ id = "Stage2_4", stage = "Stage 2", tier = "Easy" },
+	{ id = "Stage2_5", stage = "Stage 2", tier = "Easy" },
+	{ id = "Stage2_6", stage = "Stage 2", tier = "Risky" },
+	{ id = "Stage2_7", stage = "Stage 2", tier = "Risky" },
+	{ id = "Stage2_8", stage = "Stage 2", tier = "Talent" },
+	{ id = "Stage2_9", stage = "Stage 2", tier = "Talent" },
+	{ id = "Stage3_1", stage = "Stage 3", tier = "Easy" },
+	{ id = "Stage3_2", stage = "Stage 3", tier = "Easy" },
+	{ id = "Stage3_3", stage = "Stage 3", tier = "Easy" },
+	{ id = "Stage3_4", stage = "Stage 3", tier = "Easy" },
+	{ id = "Stage3_5", stage = "Stage 3", tier = "Easy" },
+	{ id = "Stage3_6", stage = "Stage 3", tier = "Risky" },
+	{ id = "Stage3_7", stage = "Stage 3", tier = "Risky" },
+	{ id = "Stage3_8", stage = "Stage 3", tier = "Talent" },
+	{ id = "Stage3_9", stage = "Stage 3", tier = "Talent" },
+	{ id = "Stage3_10", stage = "Stage 3", tier = "Talent" },
 }
 
 ChallengeCoinConfig.ById = {}

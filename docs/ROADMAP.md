@@ -41,6 +41,7 @@ Rules:
 | P1d | Pet XP + levels | ✔ | ✔ | – |
 | M3 | Stage unlocks | ✔ | ✔ | – |
 | M4 | Challenge coins | ✔ | ✔ | – |
+| M4.1 | Challenge coins, Stage 2 / 3 | ✔ | ✔ | – |
 | M5 | Leaderboards | – | – | – |
 | P2a | Pet garden: plots, pens, offline income | – | – | – |
 | P2b | Pet garden: incubators, feeding | – | – | – |
@@ -614,7 +615,7 @@ P1a comes first; P1b, P1c and P1d each need only P1a and can follow in any order
   - Hub portal face: a `💰 found x/y` line per stage with coins.
   - `CoinSystem` keeps leaderstats and the coin counter; its legacy pickup code is removed.
 - **Boundary:** first batch only (user decision): Tutorial and Stage 1 coins (10 coins, 400 Coins); Stage 2 / 3 coins
-  (900 Coins) are a later pass, so until then the GDD §6 "earnable before" column is 900 lower for Stage 3 / full tree.
+  (900 Coins) are a later pass (done in M4.1), so until then the GDD §6 "earnable before" column is 900 lower for Stage 3 / full tree.
   No pickup sound or popup (the coin counter shows the payout).
 - **Design notes (design check 2026-10-18, user decisions):**
   - **Per player** (confirmed with the user: "disappear once collected" means for the collecting player): the server
@@ -698,6 +699,61 @@ P1a comes first; P1b, P1c and P1d each need only P1a and can follow in any order
   the Edit-mode captures, pickups share one code path), touch devices. Live profile and all four boards restored exactly
   to the pre-test snapshot (`m4-snapshot.json`; the Reset Score had also removed the admin's board entries). The
   test profiles `user_-1` / `user_-2` were stored with `CollectedCoins = {Stage1_1}` and 20 Coins each, then deleted.
+
+### M4.1 — Challenge coins, Stage 2 / 3 (follow-up)
+- **Inputs:** GDD §5 budgets Stage 2 400 / Stage 3 500, the M4 code (generic: config entries + Studio parts only), the
+  M4 jump measurements (plain Jump Height 3 jump lifts the body ~9–10 studs, Double Jump ~16; talent coin 18.15 above
+  its floor).
+- **Outputs:** 19 ids in `ChallengeCoinConfig` (`Stage2_1`–`Stage2_9`, `Stage3_1`–`Stage3_10`); Studio parts; hub
+  portals `found x/9` and `x/10`. No code change.
+- **Design notes (user decisions 2026-10-18):** mix Stage 2 5×20 + 2×50 + 2×100, Stage 3 5×20 + 2×50 + 3×100.
+  **Highlight dropped from all 29 coins** (Roblox renders at most 31 Highlights at once); coins keep the gold
+  SurfaceAppearance and the spin. `ChallengeCoinsClient` toggles effects generically, so nothing else changes.
+  Talent coins sit 18.15 above a flat floor and at least ~15 studs (horizontally) from any higher ground a plain jump
+  could start from. Easy coins sit 1.7 above their floor.
+- **Studio-only changes (place file, not in git):** Highlight removed from the 10 M4 coins (and the template);
+  `Workspace.Stage2.ChallengeCoins` and `Workspace.Stage3.ChallengeCoins` (Folders) with `Coin_<n>` clones of
+  `Stage1.ChallengeCoins.Coin_1` (attribute `CoinId`, tag `ChallengeCoin`):
+
+  | Id | Tier | Position | Spot |
+  |---|---|---|---|
+  | `Stage2_1` | easy 20 | (−343.3, 79.7, 206.1) | landing pad, behind the Top-10 board |
+  | `Stage2_2` | easy 20 | (−337.0, 109.3, 122.5) | checkpoint 11 plate, west corner (top of the level 10 tower) |
+  | `Stage2_3` | easy 20 | (−333.5, 108.8, 88.0) | level 11 maze, dead-end pocket west of the path |
+  | `Stage2_4` | easy 20 | (−347.5, 130.6, −112.0) | far west edge of the 45° ramp, near its top |
+  | `Stage2_5` | easy 20 | (−324.0, 131.4, −276.5) | checkpoint 14 plate, east corner |
+  | `Stage2_6` | risky 50 | (−325.3, 104.5, 139.0) | over the void east of the level 10 tower (jump from the 99 to the 108 plate) |
+  | `Stage2_7` | risky 50 | (−326.2, 128.5, −284.3) | over the void east of the small plate `Part_01` before the finish |
+  | `Stage2_8` | talent 100 | (−334.5, 125.2, 78.9) | 18.15 above the maze floor before checkpoint 12 |
+  | `Stage2_9` | talent 100 | (−327.0, 153.25, −219.0) | 18.15 above the flat ribbon plate `Part_09` |
+  | `Stage3_1` | easy 20 | (−395.5, 79.7, 206.3) | landing pad, behind the Top-10 board |
+  | `Stage3_2` | easy 20 | (−381.8, 80.9, 161.0) | level.1 first plate, far corner |
+  | `Stage3_3` | easy 20 | (−381.5, 96.9, 65.8) | top of the middle level.2 block, west corner |
+  | `Stage3_4` | easy 20 | (−382.0, 84.9, 41.0) | checkpoint 21 plate, west corner |
+  | `Stage3_5` | easy 20 | (−382.0, 84.6, −58.0) | checkpoint 22 plate, west corner |
+  | `Stage3_6` | risky 50 | (−393.3, 87.25, −10.5) | over the void 4.5 west of the tightrope `Part_17` |
+  | `Stage3_7` | risky 50 | (−356.3, 87.25, −24.5) | over the void 4.5 east of the tightrope `Part_19` |
+  | `Stage3_8` | talent 100 | (−375.0, 98.35, 144.4) | 18.15 above level.1 plate 2 |
+  | `Stage3_9` | talent 100 | (−374.9, 100.9, 20.0) | 18.15 above the straight tightrope `Part_12` |
+  | `Stage3_10` | talent 100 | (−360.8, 100.9, −14.2) | 18.15 above the tightrope corner `Part_04` / `Part_19` |
+- **Acceptance checks:** portals show `0/9` (Stage 2) and `0/10` (Stage 3) on a fresh profile and count up on pickup;
+  every talent coin is missed by a plain Jump Height 3 jump (single, double tap, held Space with `Talent_DoubleJump` = 0)
+  from the floor below it and collected with Double Jump; no Highlight left on any tagged coin; no new console errors.
+- **Validation log (2026-10-18, API access on, uid 9892673032; live profile: Run Speed 5, Double Jump, Jump Height 3,
+  equipped Cat L3, 469 Coins, no coins collected):** 29 tagged coins, 0 Highlights. Join → portals `💰 found 0/2`,
+  `0/8`, `0/9`, `0/10`. Talent coins, plain jumps (server attribute `Talent_DoubleJump` = 0; best body top incl. hair vs
+  coin bottom): `Stage2_8` 122.44 / 124.00, `Stage2_9` 150.42 / 152.05, `Stage3_8` 95.47 / 97.15, `Stage3_9` 97.90 /
+  99.70, `Stage3_10` 98.01 / 99.70 — none collected. A running plain jump from the high edge of the rolled plate `Part_06`
+  towards `Stage2_9` (the nearest higher ground) also missed. With the attribute back to 1, jump + air jump from the same
+  spot collected each one (tops 129.5 / 158.6 / 103.6 / 103.6 / 106.1; +103 each, +104 after the Cat reached L4), and
+  the character landed back on the tightrope. Portals then `2/9` and `3/10`. Walking up the ramp into `Stage2_4` → +21.
+  The first `Stage3_3` spot (floor of the 2.7-stud slot between two blocks) was too narrow for a character (stuck after
+  1 stud) → moved onto the middle block's top; second playtest: walking into it → +21. Stored after leaving:
+  `CollectedCoins` = the collected ids, Coins 1007 (first test), then restored. Consoles: only Roblox's UIBlox
+  "FoundationProvider" warnings. Not covered: the easy / risky coins other than `Stage2_4` / `Stage3_3` were not walked
+  (positions raycast onto their floors; same code path as M4); a visual capture (Studio viewport captures came back
+  blank after the playtest); multi-client (unchanged code). Live profile restored exactly (deep-equal) to the pre-test
+  snapshot (`m4b-snapshot.json`) after each playtest; the four boards were never changed; no test profiles created.
 
 ### M5 — Leaderboards
 - **Outputs:** Top-10 board on every stage (add Stage 3, Tutorial); hub "most stars" board.

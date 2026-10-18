@@ -84,7 +84,7 @@ src/
       PlayerTimerHandler.luau         stage timers (os.clock), personal bests (profile), global Top-10, score panel
     StartLocation/                    hub: SpawnLocation + TeleportToStage1..3 portals + EggStand model (Studio-only: Egg part with ProximityPrompt "Prompt")
     Stage1/ Stage2/ Stage3/ Tutorial/ stages (see below)
-    <Stage>/ChallengeCoins            Studio-only Folder (Tutorial, Stage1 so far): Coin_<n> MeshParts tagged ChallengeCoin with attribute CoinId (ids listed in ROADMAP M4)
+    <Stage>/ChallengeCoins            Studio-only Folder (every stage): Coin_<n> MeshParts tagged ChallengeCoin with attribute CoinId (ids listed in ROADMAP M4 / M4.1)
     DebugBaseplate/                   kill brick under the map
 ```
 
@@ -187,7 +187,7 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
 - Timer uses `os.clock()`; times are floored to tenths (`TimeFormat.Tenths`) before storing.
 - Challenge coins pay once per player and are hidden only on that player's client. Coin ids (`<stage folder>_<n>`) are
   stored in profiles: never rename or reuse one; a new coin needs a new id in `ChallengeCoinConfig` **and** the Studio
-  part (tag + `CoinId`) inside its stage folder. Each coin has a Highlight; Roblox renders at most 31 at once.
+  part (tag + `CoinId`) inside its stage folder. Coins have no Highlight (removed in M4.1: Roblox renders at most 31 at once and 29 coins would use nearly all).
 - Admins are listed once in `ReplicatedStorage.AdminConfig`; every admin remote must check `AdminConfig.IsAdmin`
   on the server (the client check only hides the panel). The RunSpeed/DoubleJump toggles are client-side debug tools.
 - Tutorial is unfinished but has a hub portal (`TeleportToTutorial`). Stage2, Stage3 and Tutorial landing pads are geometrically identical (offsets from Stage2: Stage3 x −52.2, z +0.2; Tutorial x −121.6);

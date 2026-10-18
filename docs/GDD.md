@@ -127,17 +127,16 @@ and switching stages is better than repeating one (pillar 2). All values provisi
 Placed off the main path, behind risky jumps, or reachable only with talents. Each coin is collected
 **once per player**, saved, and hidden only for that player. Values: easy 20 / risky 50 / talent-gated 100.
 
-| Stage | Coin budget (Coins) | Example mix |
+| Stage | Coin budget (Coins) | Placed mix |
 |---|---|---|
-| Tutorial | 100 | 1×50, 1×50 |
-| Stage 1 | 300 | 3×20, 2×50, 1×100 + … |
-| Stage 2 | 400 | |
-| Stage 3 | 500 | |
-| **All** | **1 300** | |
+| Tutorial | 100 | 2×50 |
+| Stage 1 | 300 | 5×20, 2×50, 1×100 |
+| Stage 2 | 400 | 5×20, 2×50, 2×100 |
+| Stage 3 | 500 | 5×20, 2×50, 3×100 |
+| **All** | **1 300** | 29 coins |
 
-Talent-gated coins need Double Jump (placed out of reach of a Jump Height 3 jump). Placed so far (M4, first batch):
-Tutorial 2×50, Stage 1 5×20 + 2×50 + 1×100; Stage 2 and 3 coins follow in a later pass, until then the table in §6
-over-counts "earnable before" by 900 for Stage 3 and the full tree.
+Talent-gated coins need Double Jump (placed out of reach of a Jump Height 3 jump). All four stages have their coins
+(M4 first batch: Tutorial + Stage 1; M4.1: Stage 2 + Stage 3).
 
 **One-time total: 7 000 (medals) + 1 300 (coins) = 8 300 Coins**, plus repeat rewards, garden production and the pet bonus,
 which have no fixed cap.
