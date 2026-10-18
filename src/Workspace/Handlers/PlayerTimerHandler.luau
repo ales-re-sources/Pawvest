@@ -52,7 +52,8 @@ local function saveGlobalLeaderboard(stageName, leaderboard)
 end
 
 -- Helper to update global Top-10 leaderboard
-local function updateGlobalLeaderboard(stageName, playerName, elapsed)
+-- userId is stored with the entry so boards can show the avatar (older entries get it on their next record)
+local function updateGlobalLeaderboard(stageName, playerName, elapsed, userId)
 	local leaderboard = loadGlobalLeaderboard(stageName)
 
 	-- Check if player already has a time on this leaderboard
@@ -69,8 +70,9 @@ local function updateGlobalLeaderboard(stageName, playerName, elapsed)
 		if elapsed < existingEntry.Elapsed then
 			existingEntry.Elapsed = elapsed
 		end
+		existingEntry.UserId = userId or existingEntry.UserId
 	else
-		table.insert(leaderboard, {PlayerName = playerName, Elapsed = elapsed})
+		table.insert(leaderboard, {PlayerName = playerName, Elapsed = elapsed, UserId = userId})
 	end
 
 	-- Sort by elapsed time (ascending)
@@ -215,7 +217,7 @@ local function stopTimer(player)
 
 	updateScorePanel(player, nil) -- record and earned medals may have changed
 	if result and result.newBest then
-		updateGlobalLeaderboard(timer.StageKey, player.Name, elapsed)
+		updateGlobalLeaderboard(timer.StageKey, player.Name, elapsed, player.UserId)
 	end
 	return elapsed
 end

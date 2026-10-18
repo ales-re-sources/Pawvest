@@ -1,6 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StageConfig = require(ReplicatedStorage.StageConfig)
 local TimeFormat = require(ReplicatedStorage.TimeFormat)
+local AvatarThumbs = require(game:GetService("ServerScriptService").AvatarThumbs)
 local handler = require(workspace.Handlers.PlayerTimerHandler)
 
 local LEADERBOARD_UPDATE= 1 -- minutes; picks up records set on other servers
@@ -19,6 +20,8 @@ local function render(leaderboard)
 		local entry = leaderboard[i]
 		sufgui.Names["Name"..i].Text = if entry then entry.PlayerName else ""
 		sufgui.Score["Score"..i].Text = if entry then TimeFormat.Format(entry.Elapsed) else "..."
+		-- avatar head shot; entries written before UserIds were stored are resolved by name
+		AvatarThumbs.Show(sufgui.Photos["Photo"..i], entry and entry.UserId, entry and entry.PlayerName)
 	end
 end
 

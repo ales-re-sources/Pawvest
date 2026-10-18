@@ -811,6 +811,17 @@ P1a comes first; P1b, P1c and P1d each need only P1a and can follow in any order
   interval (at once on the same server); the totals equal the profile medals (`StageConfig.TotalStars`); the admin reset
   removes the admin's entry (0 stars).
 - **Validation log (2026-10-18, solo playtests, API access on, uid 9892673032, live profile with 4 × Gold = 12★):** 11 test entries (ids 1–11, 1–11★) seeded in `MostStars`. On join the missing entry was back-filled: store 12, board row 1 "12 / 12", then rows 11 … 3★ (10 rows, the 11th and 12th entries cut; unresolvable names show "Player <id>"). Admin Reset Score: entry removed (store nil), board redrew within the 4 s check, and the forced re-read refilled row 10 (a second playtest). First new medal after the reset: Stage 1 Gold → store 3, board "3 / 12" at rank 10 at once; Stage 2 Gold → store 6, rank 6 (ties sorted by name); `Medal_<folder>` attributes and `StageConfig.TotalStars` agree with the stored values. An entry written to the store from "another server" (id 2 → 12★) showed on the board 9 s later (poll). Consoles: only the usual UIBlox warnings and the DataStore queue notice. Not covered: a screenshot of the board (viewport captures came back blank), two real servers, touch devices. Live profile, the four stage boards and `MostStars` (was empty; test keys removed) restored exactly to the pre-test snapshot (`m5-snapshot.json`). **The place must be saved** (Ctrl+S): the board model is Studio-only.
+- **Avatars on the boards (2026-10-18, user request):** every board row shows the player's head shot in the existing
+  `Photos.Photo1..10` ImageLabels. `ServerScriptService.AvatarThumbs` fetches it on the server (`GetUserThumbnailAsync`, HeadShot
+  100×100), caches it in memory for 30 min and keeps the placeholder image when the lookup fails or the thumbnail is not ready;
+  nothing is stored in a DataStore (the image id changes with the avatar). Stage Top-10 entries now also store `UserId`
+  (`{ PlayerName, Elapsed, UserId }`); entries written before that resolve the UserId by name (`GetUserIdFromNameAsync`, cached)
+  and gain `UserId` on that player's next record. Empty rows hide their photo. The four stage board scripts stay byte-identical.
+  Validated in a playtest: hub board rows 1–10 got `rbxthumb://type=AvatarHeadShot&id=…` for existing accounts and kept the
+  placeholder for deleted ones; legacy Stage 2 entries (no UserId) resolved by name; a new finish stored `UserId` in the board
+  entry and showed the avatar at once; empty rows hidden. Data restored to the M5 snapshot. Not covered: a visual check
+  (viewport captures were blank).
+
 
 ### P2a — Pet garden: plots, pens, offline income
 Scoped in detail after P1 (GDD §7.6). Decided 2026-10-17: island in the same place, 12 plots, 12-player servers.

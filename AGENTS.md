@@ -52,6 +52,7 @@ src/
     PlayerProfile.luau                per-player profile DataStore (load/migrate/save), AddCoins, CoinsChanged
     CoinRewards.luau                  Grant(player, base, source): the only gameplay Coin payout (pet multiplier, rounding)
     PetService.luau                   pets: eggs (paid / free; a hatched pet takes a free slot), equip slots, sell; PetRemotes, EquippedPets attribute, Multiplier, GrantFreeEgg, AddXP (equipped pets, level-ups)
+    AvatarThumbs.luau                 leaderboard avatars: Show(PhotoN ImageLabel, userId or name) fetches the head shot (GetUserThumbnailAsync, in-memory cache 30 min; legacy entries without UserId resolved by name)
     StarBoard.luau                    hub "most stars" ranking: OrderedDataStore MostStars (UserId → total stars); Sync(player) writes only when the total changes (new medal, admin reset, join back-fill), Refresh / Top / Changed feed the hub board
     StageResults.luau                 finish → personal best, medal, one-time payout + daily repeat reward, free egg on first Gold, pet XP (medal + movement); Medal_<folder> attributes
     RunDistance.luau                  server-measured horizontal studs during a run (Start / Stop from PlayerTimerHandler); steps faster than WalkSpeed allows (teleports, respawns) are dropped
@@ -149,7 +150,7 @@ DataStores:
 | `PlayerProfiles` | `user_<UserId>` | `{ Version = 3, Coins, BestTimes[stageKey], Medals, UnlockedStages, CollectedCoins, Talents, RunsToday, Pets[uid] = { Kind, Level, XP }, EquippedPets, PetSlots, NextPetUid, FreeEggs[eggId], LaunchEgg }` |
 | `PlayerCoins` | `UserId` | legacy integer coins — read once for migration |
 | `PlayerScoresStore` | `player_<UserId>` | legacy `{ {StageName, Elapsed}, … }` — read once for migration |
-| `GlobalLeaderboardsStore` | `leaderboard_<StageName>` | Top-10 `{ {PlayerName, Elapsed}, … }` |
+| `GlobalLeaderboardsStore` | `leaderboard_<StageName>` | Top-10 `{ {PlayerName, Elapsed, UserId?}, … }` (UserId missing on entries from before the avatar boards) |
 | ordered `MostStars` | `<UserId>` | total stars (sum of the profile's medals, `StageConfig.TotalStars`); no entry = 0; hub board |
 | ordered `"a"` | — | legacy time-played board; `TopTimeScript` is **Disabled** |
 
