@@ -56,6 +56,7 @@ src/
     TalentService.server.luau         talent purchases (Buy remote, server-priced), levels → profile + Talent_<id> attributes, WalkSpeed/jump on spawn
     CoinSystem.server.luau            leaderstats (Stage, Coins) mirrored from profile, coin pickup, CoinUpdateEvent
     ResetPlayerTimerServer.server.luau  ResetPlayerTimer remote → admin-only full reset of the caller's own progress
+    AdminCoinsServer.server.luau      AdminAddCoins remote → admin-only +AdminConfig.AddCoinsAmount Coins for the caller (debug; created at runtime)
   StarterPlayer/StarterPlayerScripts/
     StageTimerClientUpdater.client.luau  StageTimer label: counts locally between start/stop from StageTimerUpdate
     TalentDoubleJump.client.luau      Double Jump talent: extra air jumps from the Talent_DoubleJump attribute
@@ -70,7 +71,7 @@ src/
     CoinGui/CoinDisplayScript.client.luau        top-right coin counter
     ScreenGui/TopLeftIcons/ButtonHandler.client.luau  Home (🏠 go to hub) / Skills (⚡) / Settings / Admin buttons, slide-in panels (AdminConfig)
     ScreenGui/SkillsPanel/TalentRows.client.luau  "Your skills" panel (⚡ button): talent rows built in code
-    ScreenGui/AdminPanel/...                      RunSpeed (16↔64), DoubleJump (up to 5 air jumps), ScoreReset
+    ScreenGui/AdminPanel/...                      RunSpeed (16↔64), DoubleJump (up to 5 air jumps), ScoreReset, AdminAddCoins.client.luau (+Coins button, built in code)
   Workspace/
     Handlers/                         ModuleScripts shared by all stage scripts (required via workspace.Handlers.*)
       CheckpointTouchHandler.luau     checkpoint touch → leaderstats.Stage, respawn point, sound
@@ -125,6 +126,7 @@ RemoteEvents (in `ReplicatedStorage`; first three exist only in Studio, not in f
 | `StageTimerUpdate` | server → client | `(elapsed ≥ 0, stageKey)` run active; `(-1, final, result)` finished; `(-1)` cancelled |
 | `StageTimerStopped` | — | unused since M0 (was the stop ack); can be deleted in Studio |
 | `ResetPlayerTimer` | client → server | admin panel "Reset Score": full reset of the caller's own progress; server checks `AdminConfig` |
+| `AdminAddCoins` | client → server, no arguments | admin panel "+Coins": server checks `AdminConfig`, credits `AdminConfig.AddCoinsAmount` to the caller; created at runtime by `AdminCoinsServer` |
 | `CoinUpdateEvent` | server → client | created at runtime by `CoinSystem` |
 | `GoHome` | client → server, no arguments | Home button; created at runtime by `HomeService`, 3 s cooldown, server teleports + cancels the timer |
 | `TalentRemotes.Buy` / `.Result` | client → server `(talentId, expectedLevel)` / server → client `(talentId, ok, level or reason)` | created at runtime by `TalentService`; the price is never sent |

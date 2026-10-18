@@ -6,6 +6,8 @@ local AdminConfig = {}
 -- Lekzdrh and SVAL
 AdminConfig.Users = { 9892673032, 769364524 }
 
+AdminConfig.AddCoinsAmount = 10000 -- Coins one click on the admin panel's "Add Coins" button credits (server-side value)
+
 function AdminConfig.IsAdmin(userId: number): boolean
 	return table.find(AdminConfig.Users, userId) ~= nil
 end
