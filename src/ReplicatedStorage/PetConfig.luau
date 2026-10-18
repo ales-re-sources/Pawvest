@@ -18,6 +18,7 @@ export type Egg = {
 	name: string,
 	price: number,
 	stand: boolean, -- sold at the hub egg stand (BuyEgg); otherwise hatched elsewhere (Golden: garden incubator, P2b)
+	hatchSeconds: number?, -- garden eggs: real (server) time from start to ready in an incubator (P2b1)
 	weights: { [string]: number }, -- rarity id → weight per 1000
 }
 
@@ -71,6 +72,7 @@ PetConfig.Eggs = {
 		name = "Golden egg",
 		price = 4000,
 		stand = false,
+		hatchSeconds = 3600,
 		weights = { Uncommon = 450, Rare = 350, Epic = 150, Legendary = 50 },
 	},
 } :: { [string]: Egg }

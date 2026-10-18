@@ -45,7 +45,8 @@ Rules:
 | M5 | Leaderboards | ✔ | ✔ | – |
 | P2a1 | Garden island, portals, plot assignment | ✔ | ✔ | – |
 | P2a2 | Garden pens, production, offline income | ✔ | ✔ | – |
-| P2b | Pet garden: incubators, feeding | – | – | – |
+| P2b1 | Garden incubators, Golden egg | ✔ | ✔ | – |
+| P2b2 | Garden feeding | ✔ | ✔ | – |
 | P3 | Trading | – | – | – |
 | M6 | Balancing pass | – | – | – |
 | M7 | Monetization | deferred | | |
@@ -953,10 +954,125 @@ pets are shown as models (reused `ReplicatedStorage.PetModels`) with a label.
   with a dot; always `:WaitForChild("Name")`. Re-tested by the user with the real button click: works.
 
 ### P2b — Pet garden: incubators, feeding
-- **Outputs (draft):** incubators (unlock for Coins) hatch Golden eggs in real time, also offline; food bought for Coins
-  gives XP.
-- **Acceptance checks (draft):** an egg cannot be collected before its hatch time; an egg started before leaving is
-  ready after rejoin once the time passed; feeding deducts Coins exactly once and adds exactly the configured XP.
+Scoped 2026-10-18 (GDD §7.2, §7.4, §7.6), numbers settled with the user: Golden egg 4 000 Coins, hatch time 1 h; 3 incubators
+per plot at 0 / 5 000 / 12 000; foods Berry 50 → 25 XP, Cake 400 → 250 XP, Feast 1 500 → 1 000 XP; the Golden egg is bought
+at an empty incubator in the player's own plot, food at a food stand on the plaza; a ready egg is hatched by hand (Hatch
+button), not automatically. Split in two so each part is testable on its own; both extend P2a2's `GardenService`.
+
+Shared design notes:
+- `GardenService` gains small hooks for sibling modules: `Remote(name)` (a RemoteEvent in `GardenRemotes`), `Allow`,
+  `Reject`, `Succeed`, `Usable(player, action)` (loaded, owns a plot, within 45 studs of it), `SettleAndNotify`,
+  `PublishState`, `AddStateField(name, fn(profile))` (extra fields of `GardenRemotes.State`) and
+  `AddRenderer(fn(index, plot, profile?))` (extra drawing of a plot). The sibling modules are required by `Garden.server.luau`.
+- Every time is the server's `os.time()`; no remote takes a time. Clients count down from `ReadyAt` with
+  `workspace:GetServerTimeNow()` (synced to the server, not the client's own clock) for display only; the server decides.
+- Purchases deduct with `PlayerProfile.AddCoins(-price)` (never `CoinRewards`) and save at once (`PlayerProfile.Save`).
+- Remotes are looked up by name on the client (`:WaitForChild("Name")`), never with a dot (P2a2 lesson).
+
+#### P2b1 — Incubators, Golden egg
+- **Inputs:** P2a2 (`GardenService`, `GardenPlots`, plots), `PetService`, `PetConfig.Eggs.Golden` (price 4 000, weights).
+- **Outputs:**
+  - `PetConfig.Eggs.Golden.hatchSeconds = 3600`.
+  - `GardenConfig`: `MaxIncubators = 3`, `IncubatorPrices = { 0, 5000, 12000 }`, `IncubatorNamePrefix = "Incubator_"`, pure
+    helpers `EggReady(entry, now)` and `IncubatingCount(garden)`.
+  - profile field `Garden.IncubatorCount = 1`, `Garden.Incubators = { ["1".."3"] = { Egg = "Golden", StartedAt, ReadyAt } }`
+    (both server `os.time()`; additive, `PROFILE_VERSION` stays 3; an old `Garden` table without them is filled on join).
+  - `PetService.AddPet(player, kind)` → `uid, equipped` (the shared "new pet" step of `BuyEgg`: next uid, auto-equip into a free
+    slot, inventory cap); `PetService.PetCount(profile)`.
+  - `ServerScriptService.GardenIncubators` (module) with remotes in `GardenRemotes`: `StartEgg(incubator)`, `Hatch(incubator)`,
+    `BuyIncubator(expectedIncubator)` (client → server); answers through `GardenRemotes.Result`. `StartEgg` rejects `locked`,
+    `occupied`, `full` (pets + incubating eggs ≥ 50), `coins`; `Hatch` rejects `empty`, `notready` (server `os.time()` < `ReadyAt`),
+    `full` (pets ≥ 50; the egg stays); `BuyIncubator` rejects `maxed`, `stale`, `coins`; all reject `far` / `noplot` / `loading`.
+    The pet is rolled at `Hatch` (`PetConfig.Roll("Golden")`). `GardenRemotes.State.incubators = { count, eggs = { ["n"] =
+    { egg, readyAt } } }`.
+  - Drawing per plot: `Incubator_1..3` models get attributes `State` (`free` / `locked` / `empty` / `egg`), `Egg`, `ReadyAt`;
+    the egg part is shown only while an egg incubates; the `Info` billboard reads "🔒 Incubator n" / "Incubator n · empty" /
+    the egg's countdown (drawn by every client from `ReadyAt`, "Ready!" once due).
+  - Client `IncubatorClient.client.luau`: incubator prompts enabled only on the own plot; incubator panel (unlock / start a Golden
+    egg with the odds and the hatch time / countdown / Hatch with the pet reveal); countdown texts on every plot; test hook:
+    ScreenGui attribute `OpenIncubator`.
+- **Studio-only changes:** per plot `Incubator_1..3` (Model: `Base` part with a `Prompt` ProximityPrompt and an `Info`
+  BillboardGui, an `Egg` ball part) in the front half of each plot between the sign and the pens (36 models in total).
+- **Acceptance checks:**
+  1. an egg cannot be hatched before its time: `Hatch` right after `StartEgg` → `notready`, pet count and incubator unchanged;
+     with `ReadyAt` moved to 5 s ahead (store edit between sessions) `Hatch` is `notready` before and succeeds after it;
+  2. offline hatching: an egg started, the session ended, its `StartedAt` / `ReadyAt` moved one hour into the past in the store →
+     after rejoin the incubator shows "Ready!" and `Hatch` adds exactly one Uncommon-or-better pet (never Common), clears the
+     incubator, and a second `Hatch` → `empty`;
+  3. Coins: `StartEgg` costs exactly 4 000 once (a repeated or double `StartEgg` → `occupied`, no second charge); too few Coins →
+     `coins`, nothing changes; `BuyIncubator` charges 5 000 then 12 000 exactly once each, repeat → `stale`, past 3 → `maxed`;
+     locked incubator → `locked`;
+  4. inventory cap: at 49 pets + 1 incubating egg `StartEgg` → `full`; at 50 pets a ready egg's `Hatch` → `full` and the egg stays;
+  5. forged calls change nothing: wrong types, indices 0 / 4 / 1.5, a call from the hub (`far`) and a call naming another
+     player's incubator (the plot is derived from the caller) leave both profiles unchanged;
+  6. the client clock has no effect: no remote takes a time (grep), `StartedAt` / `ReadyAt` are written only from server
+     `os.time()`;
+  7. rejoin: incubator states, egg models and `ReadyAt` attributes are identical before and after leaving and rejoining;
+     a hand-edited profile (unknown egg id, string `ReadyAt`, entries beyond `IncubatorCount`, `IncubatorCount` 99) loads with
+     only the valid eggs, no errors;
+  8. consoles clean; live profile restored exactly from the snapshot.
+- **Validation log (2026-10-18, uid 9892673032, live profile snapshot `p2b-snapshot.json`, four solo playtests with store edits
+  between them):** Edit-mode unit tests of `GardenConfig` / `PetConfig`: `EggReady` false 1 s before and true at `ReadyAt`, false for a
+  string or missing entry; `IncubatingCount`; prices 0 / 5 000 / 12 000; Golden 4 000 / 3 600 s, no Common weight, 5 000 rolls gave no
+  Common — all pass. (1) `Hatch` right after `StartEgg` → `notready`; with `ReadyAt` set ~60 s ahead in the store: `Hatch` 1.9 s before →
+  `notready`, 1.2 s after → hatched a Bunny (Uncommon). (2) egg 1 moved an hour back in the store between sessions → after rejoin the
+  label read "Golden egg · ✨ Ready!", the panel "Ready to hatch!"; the real Hatch button click added exactly one pet (uid 27 Bunny,
+  Uncommon; pets 26 → 27; a later hatch gave a Dragon, Epic), cleared the incubator (egg hidden, "Incubator 1 · empty"); a second
+  `Hatch` → `empty`. (3) `StartEgg` −4 000 exactly once (the real Start click on incubator 2 after the real E key on its prompt also
+  −4 000), repeat → `occupied`; `BuyIncubator` 2 = −5 000, 3 = −12 000 (Coins 50 008 → 21 008 after three eggs and two incubators, matching
+  the store), a double click within the cooldown charged once, repeat → `stale`, 4 → `maxed`; incubator 2 before buying → `locked`.
+  (4) 49 pets + 1 ready egg: `StartEgg` → `full` (×2, Coins unchanged), the hatch made 50, `StartEgg` → `full`; at 50 pets a ready egg's
+  `Hatch` → `full` and the egg stayed (`State` egg, still in `State.incubators`). (5) `StartEgg("1")` / `1.5` → ignored, `0` / `4` → `locked`;
+  from the hub → `far` for all three remotes (the panel closed itself); standing on plot 2 → `far`, plot 2's incubators unchanged and
+  their prompts disabled on this client. (6) no garden remote takes a time (grep of the handlers and `FireServer` calls); `StartedAt` /
+  `ReadyAt` are only written from server `os.time()` (one place). (7) rejoin: egg 3's `ReadyAt` 1792343843 was identical in the
+  attribute before leaving, in the store and in the attribute after rejoining; a hand-edited profile (`IncubatorCount` 99, unknown egg
+  `Bogus`, string `ReadyAt`, keys `4` and `x`) loaded as count 3 with only the valid egg, no errors. UI: panel states locked (price),
+  empty (odds in rarity colours, "hatches in 1 hour"), counting ("Hatches in 59:47", button "Hatching..."), ready, the hatch reveal
+  ("You got a Bunny (Uncommon)! It is in your Pets panel."); the countdown above the egg comes from `GetServerTimeNow`. (8) consoles: only
+  the usual UIBlox warnings and the DataStore queue notice. Cleanup: the live profile equals `p2b-snapshot.json` again (deep compare),
+  no `user_-1` / `user_-2`. Not covered: a real one-hour wait (times were moved in the store), several clients at once, visual screenshots
+  (viewport captures are blank). Studio-only: 36 `Incubator_n` models — **save the place (Ctrl+S)**.
+
+#### P2b2 — Feeding
+- **Inputs:** P2b1, `PetConfig.GainXp`, `GardenService` settle (penned pets).
+- **Outputs:**
+  - `GardenConfig.Foods = { { id = "Berry", price = 50, xp = 25 }, { id = "Cake", price = 400, xp = 250 },
+    { id = "Feast", price = 1500, xp = 1000 } }`, `FoodById`, `FoodStandDistance = 20`; pure helper `XpToMax(pet)`.
+  - `ServerScriptService.GardenFood` (module) with remote `GardenRemotes.Feed(uid, foodId)`: caller within 20 studs of
+    `Workspace.Garden.FoodStand`'s PrimaryPart (else `far`), any owned pet (equipped, penned or resting), level 20 → `maxed`,
+    too few Coins → `coins`; a penned pet's production is settled first; Coins − price, the pet alone gets the XP through
+    `PetConfig.GainXp`; publishes the pet state (levels feed the bonus and the `EquippedPets` labels) and redraws the plot
+    (pen label and rate) when the pet is penned. Result detail `{ uid, food, xp, level, levels }`.
+  - Client `FoodShopClient.client.luau`: prompt on the food stand opens the food panel (three foods with price and XP, a pet
+    list with level, XP bar and "needs N XP to Lv 20", feed buttons; maxed pets marked and disabled); test hook: ScreenGui
+    attribute `Open`.
+- **Studio-only changes:** `Workspace.Garden.FoodStand` (Model on the plaza: counter, sign "🍓 PET FOOD", a `Prompt` on the
+  PrimaryPart `Counter`).
+- **Acceptance checks:**
+  1. feeding deducts Coins exactly once and adds exactly the configured XP: a Berry to a Lv 1 pet with 0 XP → Coins − 50, XP
+     25 → Lv 2 with 15 XP (10 needed for Lv 2); a Feast to a Lv 1 pet → the exact level / remainder from `XpToNext`; equipped,
+     penned and resting pets all work; other pets' XP unchanged;
+  2. a level-20 pet → `maxed`, Coins unchanged; too few Coins → `coins`, nothing changes;
+  3. forged / repeated calls: unknown food id, another player's pet uid, wrong types, from the hub (`far`) change nothing;
+     two quick calls within the cooldown charge once;
+  4. a penned pet fed: production up to the feeding is paid at the old level (settled first), the pen label and the garden rate
+     show the new level;
+  5. a fed equipped pet updates the Coin multiplier and its `EquippedPets` label;
+  6. consoles clean; live profile restored exactly from the snapshot.
+- **Validation log (2026-10-18, same snapshot, fourth playtest: 2 000 Coins, 50 pets incl. a Dog Lv 20 and a Phoenix Lv 1 in pen 1):**
+  Edit-mode: `XpToMax` Lv 1 = 6 714, Lv 20 = 0; Berry on Lv 1 → Lv 2 / 15 XP, Feast on Lv 1 → Lv 9 / 160 XP, Feast on Lv 19 / 800 → Lv 20 / 0.
+  (1) the real E key opened the food panel (50 rows, "XP 10/28 · 6,694 XP to Lv 20 · equipped", maxed Dog "Max level", greyed buttons);
+  a real click on the equipped Fox's Berry: Coins 2 000 → 1 950, Fox Lv 2 / 10 → Lv 3 / 7, no other pet changed; Berry on a resting Dog Lv 1 →
+  Lv 2 / 15 (−50); Feast on the penned Phoenix → Lv 9 / 160 (−1 500). (2) Feast on the Lv 20 Dog → `maxed`, Coins unchanged; Feast with 352
+  Coins → `coins`, nothing changed. (3) unknown food `Candy`, unknown uid, wrong types and no arguments → ignored, nothing changed; two
+  Berries within the cooldown → one result, −50 once; from the plot (~100 studs away) → `far`. (4) feeding the penned Phoenix first settled
+  66 s at the old rate (base 2 = floor(66 × 120 / 3 600), carry 0.2), the pen label then read "Phoenix Lv 9 · 158.4 Coins/h" and the State
+  rate 158.4; the next settle (taking it out 70 s later) paid 3 = floor((0.2 + 70 × 158.4 / 3 600)) — the old rate would have paid 2.
+  (5) the Fox's Berry raised the multiplier 1.045 → 1.05 and `EquippedPets` "Fox:2" → "Fox:3". All XP and Coins were in the store after
+  the session (Coins 355 = 2 000 − 50 − 50 − 1 500 − 50 + 2 + 3). (6) consoles: UIBlox warnings, the DataStore queue notice and one error
+  from my own test script only. Cleanup as in P2b1. Not covered: several clients at once, visual screenshots. Studio-only:
+  `Workspace.Garden.FoodStand` — **save the place (Ctrl+S)**.
 
 ### P3 — Trading
 - **Prerequisite:** profile session locking in `PlayerProfile` (`UpdateAsync` with a `{ JobId, Time }` lock instead of

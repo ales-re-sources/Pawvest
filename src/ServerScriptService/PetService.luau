@@ -5,7 +5,8 @@
 -- Remotes are created here in ReplicatedStorage.PetRemotes: BuyEgg(eggId), Equip(uid), Unequip(uid),
 -- BuySlot(expectedSlot), SellPet(uid), RequestState() (client → server); PetsChanged(state) and
 -- Result(action, ok, detailOrReason) (server → client). The equipped pets are mirrored to the EquippedPets player
--- attribute ("Kind:Level,…"). AddXP levels the equipped pets (stage finishes, coins, movement during a run).
+-- attribute ("Kind:Level,…"). AddXP levels the equipped pets (stage finishes, coins, movement during a run). AddPet is the
+-- shared "new pet" step of every egg (stand eggs here, garden incubators in GardenIncubators).
 -- A pet is either equipped or in a garden pen (P2a2), never both: Equip and SellPet reject a penned pet, and the garden
 -- (GardenService) rejects an equipped one; PetsChanged.penned maps each penned uid to its pen index.
 
@@ -62,6 +63,7 @@ local function petCount(profile): number
 	end
 	return count
 end
+PetService.PetCount = petCount
 
 -- Coin multiplier from the player's equipped pets (1 while the profile is not loaded).
 function PetService.Multiplier(player: Player): number
@@ -114,6 +116,23 @@ function PetService.GrantFreeEgg(player: Player, eggId: string): boolean
 	profile.FreeEggs[eggId] = (profile.FreeEggs[eggId] or 0) + 1
 	publish(player)
 	return true
+end
+
+-- Adds a new level-1 pet of `kind` to the inventory and equips it when a slot is free (GDD §7.3). The caller checks the
+-- inventory cap first, publishes and saves. Returns uid, equipped; nil while the profile is not loaded or for a bad kind.
+function PetService.AddPet(player: Player, kind: string): (string?, boolean?)
+	local profile = PlayerProfile.Get(player)
+	if not (profile and PetConfig.Kinds[kind]) then
+		return nil, nil
+	end
+	local uid = tostring(profile.NextPetUid)
+	profile.NextPetUid += 1
+	profile.Pets[uid] = { Kind = kind, Level = 1, XP = 0 }
+	local equipped = #profile.EquippedPets < profile.PetSlots
+	if equipped then
+		table.insert(profile.EquippedPets, uid)
+	end
+	return uid, equipped
 end
 
 -- Gives `amount` XP to every equipped pet (GDD §7.4: each gets the full amount; level-ups keep the remainder, a
@@ -217,13 +236,7 @@ buyEggEvent.OnServerEvent:Connect(function(player, eggId)
 	else
 		PlayerProfile.AddCoins(player, -egg.price)
 	end
-	local uid = tostring(profile.NextPetUid)
-	profile.NextPetUid += 1
-	profile.Pets[uid] = { Kind = kind, Level = 1, XP = 0 }
-	local equipped = #profile.EquippedPets < profile.PetSlots -- a new pet takes a free slot at once (GDD §7.3)
-	if equipped then
-		table.insert(profile.EquippedPets, uid)
-	end
+	local uid, equipped = PetService.AddPet(player, kind) -- a new pet takes a free slot at once (GDD §7.3)
 	succeed(player, "BuyEgg", { uid = uid, kind = kind, free = free, equipped = equipped })
 	task.spawn(PlayerProfile.Save, player) -- spent Coins (or the free egg) and the pet are saved together
 end)

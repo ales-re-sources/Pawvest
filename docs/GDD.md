@@ -176,7 +176,8 @@ Repeat rewards and pets only add to this, so the table is a lower bound.
 | Pet garden (§7.6) | target 200–1 000 | 6 mixed pets at Lv 5 ≈ 200 / h, a strong set ≈ 630 / h (≈ 940 with the pet bonus); offline production capped at 8 h (a strong set: ≈ 5 000 per 8 h) |
 | Pet bonus | × 1.0–1.5 | on all of the above |
 
-Sinks: talents (6 800), stage unlocks (5 000), eggs (§7.2), pet slots (7 000), garden upgrades and feeding (§7.6).
+Sinks: talents (6 800), stage unlocks (5 000), eggs (§7.2), pet slots (7 000), garden pens (32 500), incubators (17 000)
+and feeding (§7.6).
 
 Notes:
 - Bought stage unlocks are a sink outside the talent budget: a player who buys all three unlocks (5 000) is ~5 000 Coins behind
@@ -206,7 +207,7 @@ The odds are always shown before buying.
 | Egg | Price | Common | Uncommon | Rare | Epic | Legendary | Where |
 |---|---|---|---|---|---|---|---|
 | Basic egg | 500 | 60 % | 25 % | 11 % | 3.5 % | 0.5 % | egg stand (hub), instant |
-| Golden egg | 4 000 | – | 45 % | 35 % | 15 % | 5 % | pet garden incubator, hatches in real time (§7.6) |
+| Golden egg | 4 000 | – | 45 % | 35 % | 15 % | 5 % | pet garden incubator, hatches in 1 hour of real time (§7.6) |
 
 Free eggs:
 - one Basic egg on the first join after pets launch (also for existing players),
@@ -285,9 +286,26 @@ collecting and caring over obby runs.
   5 minutes while the owner is online, whenever the pens change (placing, removing, buying a pen settles first, so a
   pen never earns for time it was empty) and on join. Fractions of a Coin carry over, so the total over any split of
   time equals the exact production. The bonus is rounded per payout, which is why payouts are batched.
-- **Incubators.** Garden eggs (Golden egg and better) hatch in real time (minutes to hours) and keep hatching offline.
-  More incubators unlock for Coins.
+- **Incubators.** Garden eggs (Golden egg and better) hatch in real time and keep hatching offline. Each plot has
+  **3 incubators**, unlocked in order for 0 / 5 000 / 12 000 Coins (incubator 1 free; 17 000 in total). A Golden egg is
+  bought at an empty incubator of the player's own plot (4 000 Coins) and is ready **1 hour** of server time later. A ready
+  egg waits until the owner taps **Hatch** (a reveal like the egg stand); the pet is rolled then and equipped automatically
+  when a slot is free (§7.3). An egg can only be started while the pets plus the eggs already incubating stay below the
+  inventory cap (50), and a ready egg does not hatch into a full inventory (it waits). Other players see the eggs and their
+  countdown but cannot use them.
 - **Feeding.** Food bought for Coins gives a pet XP: an alternative to leveling by playing the obby, and a Coin sink.
+  Food is sold at the **food stand** on the plaza and fed at once to one chosen pet (equipped, penned or resting in the
+  inventory); there is no food inventory. Only the fed pet gains the XP. A level-20 pet cannot be fed (no Coins taken);
+  XP beyond level 20 is lost, so the panel shows how much a pet still needs. Feeding a penned pet settles its production
+  first, so the new level only counts from then on.
+
+  | Food | Price | XP | Coins per XP |
+  |---|---|---|---|
+  | Berry | 50 | 25 | 2.0 |
+  | Cake | 400 | 250 | 1.6 |
+  | Feast | 1 500 | 1 000 | 1.5 |
+
+  Level 1 → 20 (~6 700 XP) costs about 10 000 Coins in Feasts.
 - **Offline income.** On join, production since the last visit is paid, capped at 8 hours, and shown in a
   "while you were away" popup.
 

@@ -1,5 +1,5 @@
--- Garden: boot script of the pet garden (docs/GDD.md §7.6). Starts the plot assignment and the pens / production
--- (GardenService) and wires the two portals:
+-- Garden: boot script of the pet garden (docs/GDD.md §7.6). Starts the plot assignment, the pens / production
+-- (GardenService), the incubators (GardenIncubators) and the food stand (GardenFood), and wires the two portals:
 -- the hub portal Workspace.StartLocation.TeleportToGarden → Workspace.Garden.Arrival, and the garden's
 -- Workspace.Garden.ReturnPortal → the hub spawn (a running stage timer is cancelled, like the Home button).
 -- The portals are plain Studio-only models (a part named Portal each), so no script lives inside the scene.
@@ -12,6 +12,8 @@ local StageConfig = require(ReplicatedStorage.StageConfig)
 local TimerHandler = require(workspace.Handlers.PlayerTimerHandler)
 require(ServerScriptService.GardenPlots)
 require(ServerScriptService.GardenService)
+require(ServerScriptService.GardenIncubators)
+require(ServerScriptService.GardenFood)
 
 local COOLDOWN = 2 -- seconds per player and portal
 local ARRIVAL_SPREAD = 4 -- studs; players arriving together do not stack

@@ -423,6 +423,9 @@ PetClient.Changed:Connect(function()
 end)
 
 remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail)
+	if action ~= "Place" and action ~= "Remove" and action ~= "BuyPen" then
+		return -- incubators and the food stand answer on the same remote (IncubatorClient, FoodShopClient)
+	end
 	if ok then
 		if action == "BuyPen" then
 			flash(string.format("Pen %d unlocked", detail), COLOR_OK)

@@ -66,6 +66,53 @@ function GardenConfig.IsPenned(profile, uid: string): number?
 	return nil
 end
 
+-- Incubators (P2b1, docs/GDD.md §7.6): garden eggs (PetConfig.Eggs with hatchSeconds) bought at an empty incubator hatch
+-- in real server time, also offline. Stored as profile.Garden.Incubators["1".."3"] = { Egg, StartedAt, ReadyAt } (server
+-- os.time()) and Garden.IncubatorCount (owned incubators, unlocked in order).
+GardenConfig.MaxIncubators = 3
+GardenConfig.IncubatorPrices = { 0, 5000, 12000 } -- IncubatorPrices[n] = price of the n-th incubator (incubator 1 is free)
+GardenConfig.IncubatorNamePrefix = "Incubator_" -- Workspace.Garden.Plots.Plot_NN.Incubator_1..3 (Studio-only models)
+
+-- True when the incubator entry's egg may hatch at server time `now`.
+function GardenConfig.EggReady(entry, now: number): boolean
+	return type(entry) == "table" and type(entry.ReadyAt) == "number" and now >= entry.ReadyAt
+end
+
+-- Number of eggs incubating in `garden` (they count towards the inventory cap when a new egg is started).
+function GardenConfig.IncubatingCount(garden): number
+	local count = 0
+	if type(garden) == "table" and type(garden.Incubators) == "table" then
+		for _ in garden.Incubators do
+			count += 1
+		end
+	end
+	return count
+end
+
+-- Feeding (P2b2, docs/GDD.md §7.6): food is bought at the plaza's food stand and fed at once to one pet (no food inventory).
+GardenConfig.Foods = {
+	{ id = "Berry", name = "Berry", icon = "🍓", price = 50, xp = 25 },
+	{ id = "Cake", name = "Cake", icon = "🍰", price = 400, xp = 250 },
+	{ id = "Feast", name = "Feast", icon = "🍖", price = 1500, xp = 1000 },
+}
+GardenConfig.FoodById = {}
+for _, food in GardenConfig.Foods do
+	GardenConfig.FoodById[food.id] = food
+end
+GardenConfig.FoodStandName = "FoodStand" -- Workspace.Garden.FoodStand (Studio-only model, PrimaryPart "Counter")
+GardenConfig.FoodStandDistance = 20 -- studs from the stand's PrimaryPart within which Feed is accepted
+
+-- XP a pet still needs to reach the max level (0 at the max level).
+function GardenConfig.XpToMax(pet): number
+	local level = PetConfig.ClampLevel(pet.Level)
+	local xp = if type(pet.XP) == "number" and pet.XP == pet.XP then math.max(0, math.floor(pet.XP)) else 0
+	local need = 0
+	for current = level, PetConfig.MaxLevel - 1 do
+		need += PetConfig.XpToNext(current)
+	end
+	return math.max(0, need - xp)
+end
+
 export type Assigner = {
 	Claim: (key: any) -> number?,
 	Release: (key: any) -> number?,

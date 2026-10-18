@@ -9,6 +9,7 @@
 -- Remotes (ReplicatedStorage.GardenRemotes): Place(penIndex, uid), Remove(penIndex), BuyPen(expectedPen), RequestState()
 -- (client → server); State(state), Result(action, ok, detailOrReason), Payout(info) (server → client).
 -- The plots are drawn here from the profile: pad colour, "Info" text and the pet models of Workspace.Garden.Plots.Plot_NN.Pen_n.
+-- Sibling modules (GardenIncubators, GardenFood) add remotes, State fields and plot drawing through the hooks below.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -51,8 +52,24 @@ remotes.Parent = ReplicatedStorage
 local lastRequest = {} -- [Player] = os.clock() of the last accepted request
 local pendingPayout = {} -- [Player] = join payout waiting for the client popup
 local payoutId = 0
+local stateFields = {} -- { { name, fn(profile) } }: extra fields of the State payload (sibling modules)
+local renderers = {} -- { fn(index, plot, profile?) }: extra drawing of a plot (sibling modules)
 
 local GardenService = {}
+
+-- Hooks for the sibling garden modules (GardenIncubators, GardenFood): they add their remotes to GardenRemotes, share the
+-- request rate limit and the plot checks, and extend the State payload and the plot drawing.
+GardenService.Remote = remote
+
+-- Adds field `name` = fn(profile) to every GardenRemotes.State payload.
+function GardenService.AddStateField(name: string, fn: (any) -> any)
+	table.insert(stateFields, { name = name, fn = fn })
+end
+
+-- Calls fn(index, plot, profile or nil) whenever plot `index` is drawn.
+function GardenService.AddRenderer(fn: (number, Model, any) -> ())
+	table.insert(renderers, fn)
+end
 
 -- Cleans whatever is stored: pen count, carry, LastSeen, and pens that name a missing, duplicate or out-of-range pet.
 local function sanitize(profile)
@@ -136,12 +153,17 @@ local function publishState(player: Player)
 	if not profile then
 		return
 	end
-	stateEvent:FireClient(player, {
+	local state = {
 		pens = profile.Garden.Pens,
 		penCount = profile.Garden.PenCount,
 		rate = totalUnits(profile) / 1000,
-	})
+	}
+	for _, field in stateFields do
+		state[field.name] = field.fn(profile)
+	end
+	stateEvent:FireClient(player, state)
 end
+GardenService.PublishState = publishState
 
 -- Pet model for a pen: a clone of ReplicatedStorage.PetModels (anchored, no collision / touch / query), a two-line label
 -- in the rarity colour and the Epic / Legendary glow, as PetFollow draws it.
@@ -269,6 +291,10 @@ local function renderPlot(index: number)
 			text.Text = if state == "locked" then "🔒 Pen " .. number elseif state == "empty" then "Pen " .. number .. "\nempty" else ""
 		end
 	end
+
+	for _, render in renderers do
+		render(index, plot, profile)
+	end
 end
 GardenService.RenderPlot = renderPlot
 
@@ -323,13 +349,25 @@ local function wholeNumber(value: any): boolean
 	return type(value) == "number" and value == math.floor(value) and math.abs(value) < 1e6
 end
 
--- Settles, tells the client about a payout that came out of it (a small toast) and returns whether it paid.
+-- Settles and tells the client about a payout that came out of it (a small toast).
 local function settleAndNotify(player: Player)
 	local info = settle(player)
 	if info and info.paid > 0 then
 		sendPayout(player, info, false)
 	end
 end
+
+local function succeed(player: Player, action: string, detail: any)
+	resultEvent:FireClient(player, action, true, detail)
+end
+
+GardenService.Allow = allow
+GardenService.Reject = reject
+GardenService.Succeed = succeed
+GardenService.Usable = usable
+GardenService.WholeNumber = wholeNumber
+GardenService.SettleAndNotify = settleAndNotify
+GardenService.PublishAll = publishAll
 
 placeEvent.OnServerEvent:Connect(function(player, penIndex, uid)
 	if not wholeNumber(penIndex) or type(uid) ~= "string" or not allow(player) then
