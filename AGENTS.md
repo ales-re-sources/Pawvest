@@ -69,7 +69,7 @@ src/
     PetsPanel.client.luau             Pets panel (own ScreenGui "PetsGui": inventory, equip, buy slot, sell with 2nd click, total bonus); opened by the 🐶 button
   StarterGui/
     CoinGui/CoinDisplayScript.client.luau        top-right coin counter
-    ScreenGui/TopLeftIcons/ButtonHandler.client.luau  Home (🏠 go to hub) / Skills (⚡) / Settings / Admin buttons, slide-in panels (AdminConfig)
+    ScreenGui/TopLeftIcons/ButtonHandler.client.luau  icons Home (🏠 go to hub) / Skills (⚡) / Pets (🐶, cloned in code) / Settings / Admin, positioned in code in this order; slide-in panels (AdminConfig)
     ScreenGui/SkillsPanel/TalentRows.client.luau  "Your skills" panel (⚡ button): talent rows built in code
     ScreenGui/AdminPanel/...                      RunSpeed (16↔64), DoubleJump (up to 5 air jumps), ScoreReset, AdminAddCoins.client.luau (+Coins button, built in code)
   Workspace/

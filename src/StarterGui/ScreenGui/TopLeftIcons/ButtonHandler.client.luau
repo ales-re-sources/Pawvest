@@ -34,10 +34,15 @@ local settingsPanel = screenGui.Parent:WaitForChild("SettingsPanel")
 local petsButton = skillsButton:Clone()
 petsButton.Name = "PetsButton"
 petsButton.Text = "🐶"
-petsButton.Position = UDim2.new(0, if AdminConfig.IsAdmin(player.UserId) then 250 else 190, 0, 20)
 petsButton.Parent = screenGui
 local petsGui = playerGui:WaitForChild("PetsGui", 10)
 local petsSetOpen = petsGui and petsGui:WaitForChild("SetOpen", 10)
+
+-- Icon order, left to right: Home, Skills, Pets, Settings, Admin (last, only visible to admins).
+-- Positions are set here, so adding an icon never needs Studio edits.
+for index, icon in { homeButton, skillsButton, petsButton, settingsButton, adminButton } do
+	icon.Position = UDim2.new(0, 10 + (index - 1) * 60, 0, 20)
+end
 
 local function isAdminUser(userId)
 	return AdminConfig.IsAdmin(userId)
