@@ -41,7 +41,7 @@ Rules:
 | P1d | Pet XP + levels | ✔ | ✔ | – |
 | P1e1 | Pet look foundation + size growth | ✔ | ✔ | – |
 | P1e2 | Pet level-up moment | ✔ | ✔ | – |
-| P1e3 | Pet tier effects + accent tint | – | – | – |
+| P1e3 | Pet tier effects + accent tint | ✔ | ✔ | – |
 | P1e4 | Pet individuality | – | – | – |
 | P1f | Pet accessory kit | – | – | – |
 | M3 | Stage unlocks | ✔ | ✔ | – |
@@ -612,6 +612,45 @@ later option. We cannot see 3D captures, so every step ends with a visual check 
   "FoundationProvider" warnings. Not covered: multi-client, how it looks (user visual check; screenshots of the 3D view are
   blank), how the sound feels (timing is the `SOUND_AT` constant), many simultaneous moments. The live profile was restored field by field (Coins refund,
   Cat 14 back to Lv 3 / 49 XP) because the user kept playing between tests; no `user_-1` / `user_-2` records.
+
+#### P1e3 — Pet tier effects + accent tint
+- **Outputs:** `PetLook` (all shared, so followers and pens match): `Apply` now tints the accent parts and builds the tier effects;
+  new `AccentBlend(level)`, `Bob(level)`, `CollectFx(model)`, `UpdateFx(fx, now, far, faded)`, `LodDistance = 60`. New client script
+  `PetPenFx.client.luau` (orbit animation + LOD for the garden pens, whose models the server dresses). `PetFollow` collects the
+  effects per pet and calls `UpdateFx` every frame; bob height / speed come from `PetLook.Bob`. Studio-only: attribute
+  `Accent = true` on 4–8 accent parts of each of the 8 `PetModels` (one `execute_luau` script; **place must be saved, Ctrl+S**):
+  Cat Stripe1-3, TailTip, EarInner1-2; Dog Collar, Tag; Bunny EarInner1-2, Cheek1-2; Fox EarTip1-2, TailTip, Chest; Owl EyeRing1-2,
+  Belly, Tuft1-2; Panda Patch1-2, Shoulders; Dragon Horn1-2, Spike1-2, TailTip, Belly; Phoenix Crest1-3, WingTipL/R, Tail1-3.
+- **Design notes:** accent colour = own colour lerped toward the rarity colour, blend 0 at Lv 1 to 0.85 at Lv 19, 1.0 and Neon at Lv 20.
+  Effects are cumulative and in the rarity colour: **T1 (Lv 5)** sparkle trail (world-space emitter behind the body, 6/s);
+  **T2 (Lv 10)** soft aura (emitter on the body centre, 3/s) + updraft (small sparks rising from under the pet; first draft was a
+  faint glow disc under the pet, dropped after the user's visual check - it looked like a platform); **T3 (Lv 15)** 3 neon motes
+  orbiting the body (parts in the model's `Fx` folder, moved by `UpdateFx`); **T4 (Lv 20)** hexagonal halo (6 neon bars) over the
+  head, aura 7/s and updraft 8/s, label lifted 0.7 studs to clear the halo. No new lights: the Epic / Legendary light stays the only one.
+  Bob: height 0.20 → 0.36, speed 2.5 → 3.9 rad/s from Lv 1 to Lv 20. Slots / metrics ignore the effects (computed before they exist).
+  **LOD:** emitters, lights and orbiting stop beyond 60 studs from the camera (hysteresis 5 studs). Emitters and lights are also off while
+  the pet is at least 50 % transparent (camera close, run mode, level-up moment), so particles never float in front of the camera
+  around an almost invisible pet. Pens: effects are built on the server, `PetPenFx` animates them on each client; `Apply` stamps the
+  model attribute `FxCount` so a client that sees a model before all its children arrived collects again. Level-up: the ghost's
+  emitters are disabled, its parts fade with the cross-fade, the new model's effects come back as it fades in.
+- **Validation log (2026-10-18/19, solo playtests, API access on):** live profile `user_9892673032` snapshot `p1e3-snapshot.json`
+  (restored exactly afterwards: Coins, Garden.LastSeen / Carry reset after the join payout; no `user_-1` / `user_-2`); effects tested with
+  local `EquippedPets` overrides and a server-built pen test models (removed). Edit mode: `AccentBlend(1/2/10/19/20)` = 0 / 0.047 / 0.425 /
+  0.85 / 1 + Neon; `Bob(1/5/10/15/20)` 0.20/2.50 … 0.36/3.90. All 8 kinds × Lv 1/5/10/15/20 (40 models): accent colours ramp and are
+  Neon only at Lv 20 (Phoenix accents are Neon already), emitters 0/1/2/2/2 (Epic / Legendary +1 sparkles), lights only Dragon / Phoenix,
+  effect parts 0/0/0/3/9 (motes, halo), `CollectFx` count = `FxCount`, 0 parts with Anchored off / CanCollide / CanTouch / CanQuery on or
+  Massless off. Followers (client): labels "Dragon Lv 20 ★★★★" etc., tier effect counts as above. LOD: camera 63 studs → emitters 0, 57
+  (coming from far) 0, 53 → on, 57 (coming from near) on; lights follow; motes frozen while far; close-up at 3 studs switches the nearest
+  pet's emitters off. Level-up with effects (Fox 14 → 15 via local attribute): ghost emitters off, new model's tier emitters on again
+  once its transparency < 0.5, 1 model afterwards. Pens: four server-built test pens (Dragon 20, Cat 12, Phoenix 16, Owl 5) replicate with
+  `FxCount`, motes move 2.0 studs in 0.3 s near the camera and 0.00 at 80 studs with all emitters / lights off, box bottom - pad top = 0.
+  **Cost, 12 players × 3 Lv 20 pets (36 pets, local simulation, players 10-142 studs from the camera):** typical mix of the 8 kinds
+  1 021 parts (324 of them effects, 9 per pet), 117 emitters, 9 lights → with LOD 48 emitters, 3 lights (15 of 36 pets in range);
+  worst case all Dragon / Phoenix 1 116 parts, 144 emitters, 36 lights → with LOD 60 / 15; `UpdateFx` for 36 pets ≈ 0.10 ms per frame.
+  WalkSpeed 20.80 / JumpHeight 7.20 identical with no pets and with three Lv 20 pets; `GetPartsInPart` on every pet part found nothing.
+  Consoles: only UIBlox "FoundationProvider" warnings. **User visual check (preview grid of 8 kinds × 5 levels): OK; the glow disc was
+  replaced by the updraft.** Not covered: multi-client (the second client seeing the first player's effects), a real level-up with tier
+  change from a stage finish, GPU cost of many particles in a full server.
 
 ### M3 — Stage unlocks
 - **Inputs:** `StageConfig.unlock` / `unlockPrice` (GDD §3: Stage 2 = Silver on Stage 1 or 150 Coins, Stage 3 = Silver on

@@ -12,6 +12,9 @@
 -- A level-up (same uid, higher level than in the previous list) plays PetLook.LevelUp on that pet, for every viewer: the old
 -- model spins up and rises, a flash covers the cross-fade to the new model (this script calls moment:Pose every frame and
 -- applies the returned pose and fade); the label shows the tier badge (PetLook.LabelText).
+-- Tier effects (trail / aura / orbiting motes / halo, accent tint) are built by PetLook.Apply; here every frame PetLook.UpdateFx
+-- moves the motes and switches emitters and lights off for pets farther than PetLook.LodDistance from the camera or too faded
+-- to see (camera close, run mode, level-up moment). The float animation gets livelier with the tier (PetLook.Bob).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -27,8 +30,8 @@ local StageTimerUpdate = ReplicatedStorage:WaitForChild("StageTimerUpdate")
 local FOLLOW_SPEED = 8 -- anchor smoothing rate (1/s); higher follows tighter
 local SNAP_DISTANCE = 40 -- studs; farther than this (teleport, respawn) the anchor jumps instead of gliding
 local HEIGHT = -0.5 -- pet centre relative to the HumanoidRootPart
-local BOB_HEIGHT = 0.2
-local BOB_SPEED = 2.5
+local LOD_HYSTERESIS = 5 -- studs: a far pet's effects come back this much inside PetLook.LodDistance
+local FX_FADE_LIMIT = 0.5 -- emitters and lights are off while the pet is at least this transparent (close camera, run mode)
 local LABEL_MAX_DISTANCE = 80
 local MAX_PETS = 3
 local FADE_FAR = 7 -- studs from the camera to the pet's surface where fading starts
@@ -78,6 +81,7 @@ local function makePet(entry): any?
 			table.insert(parts, part)
 		end
 	end
+	local bobHeight, bobSpeed = PetLook.Bob(entry.level)
 	return {
 		key = entry.key,
 		kind = entry.kind,
@@ -86,6 +90,10 @@ local function makePet(entry): any?
 		model = model,
 		metrics = metrics,
 		parts = parts,
+		fx = PetLook.CollectFx(model), -- emitters, lights and orbiting motes of the tier effects (nil without a PrimaryPart)
+		far = false,
+		bobHeight = bobHeight,
+		bobSpeed = bobSpeed,
 		fade = 0,
 		phase = math.random() * math.pi * 2,
 	}
@@ -222,7 +230,7 @@ RunService.Heartbeat:Connect(function(dt)
 		state.anchor = anchor
 		local blend = if player == LocalPlayer then runBlend else 0
 		for _, pet in state.pets do
-			local bob = math.sin(now * BOB_SPEED + pet.phase) * BOB_HEIGHT
+			local bob = math.sin(now * pet.bobSpeed + pet.phase) * pet.bobHeight
 			local base = anchor * CFrame.new(pet.offset + Vector3.new(0, bob, RUN_BACK * blend))
 			if pet.model.Parent ~= folder then
 				pet.model.Parent = folder
@@ -249,12 +257,18 @@ RunService.Heartbeat:Connect(function(dt)
 			pet.model:PivotTo(cframe)
 
 			-- camera fade: the closer the camera is to the pet's surface, the more transparent (client only)
-			local fade = 0
+			local fade, far = 0, false
 			if cameraPosition then
-				local distance = (cameraPosition - cframe:PointToWorldSpace(pet.metrics.center)).Magnitude - pet.metrics.size.X / 2
-				fade = FADE_MAX * math.clamp((FADE_FAR - distance) / (FADE_FAR - FADE_NEAR), 0, 1)
+				local centerDistance = (cameraPosition - cframe:PointToWorldSpace(pet.metrics.center)).Magnitude
+				fade = FADE_MAX * math.clamp((FADE_FAR - (centerDistance - pet.metrics.size.X / 2)) / (FADE_FAR - FADE_NEAR), 0, 1)
+				-- distance LOD with a little hysteresis so a pet at the border does not flicker
+				far = centerDistance > PetLook.LodDistance - (if pet.far then LOD_HYSTERESIS else 0)
 			end
 			fade = math.max(fade, RUN_FADE * blend, momentFade)
+			pet.far = far
+			if pet.fx then
+				PetLook.UpdateFx(pet.fx, now, far, fade >= FX_FADE_LIMIT)
+			end
 			if math.abs(fade - pet.fade) > 0.01 or (fade == 0 and pet.fade ~= 0) then
 				pet.fade = fade
 				for _, part in pet.parts do

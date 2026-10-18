@@ -3,6 +3,8 @@
 -- the same code and always match. Nothing is stored or replicated: every viewer derives the look from the same numbers.
 -- P1e1: size by level, label, Epic / Legendary glow, formation slots. `uid` is reserved for the individuality seed (P1e4).
 -- P1e2: label text with tier badge (LabelText), level-up moment (LevelUp, client only).
+-- P1e3: accent tint (AccentBlend), tier effects trail / aura / motes / halo built by Apply, livelier bob (Bob), effect gathering
+-- and per-frame update with the distance LOD (CollectFx, UpdateFx).
 -- Every part is forced Anchored / CanCollide / CanTouch / CanQuery off / Massless here, so a replaced model can never
 -- push the owner, fire touch parts or block raycasts and the camera.
 
@@ -40,6 +42,25 @@ end
 -- Look tier of a level (0 below Lv 5, then 1 / 2 / 3 / 4 at Lv 5 / 10 / 15 / 20).
 function PetLook.Tier(level: number): number
 	return PetConfig.TierOf(level)
+end
+
+-- A part for effects made in code: neon, no shadow, tiny and invisible until its owner sizes it. Obeys the Apply invariants.
+local function fxPart(name: string, shape: Enum.PartType, color: Color3, parent: Instance): Part
+	local part = Instance.new("Part")
+	part.Name = name
+	part.Shape = shape
+	part.Material = Enum.Material.Neon
+	part.Color = color
+	part.Transparency = 1
+	part.CastShadow = false
+	part.Anchored = true
+	part.CanCollide = false
+	part.CanTouch = false
+	part.CanQuery = false
+	part.Massless = true
+	part.Size = Vector3.one * 0.1
+	part.Parent = parent
+	return part
 end
 
 local function addGlow(root: BasePart, rarity: PetConfig.Rarity)
@@ -92,9 +113,236 @@ function PetLook.LabelText(kind: string, level: number): string
 	return kind .. " Lv " .. level .. if tier > 0 then " " .. string.rep("★", tier) else ""
 end
 
--- Dresses a fresh, unparented clone of PetModels[kind] for `level`: forces the safety flags, scales it by level around
--- its root, adds the label (if given) above the scaled model and the Epic / Legendary glow. Call once per clone.
--- Returns the metrics the formation needs, or nil if the model has no PrimaryPart.
+-- Accent tint (P1e3): parts of the model with the Studio attribute Accent = true (stripes, ear insides, tail tip, belly...)
+-- ramp from their own colour toward the rarity colour with the level (0 at Lv 1 up to ACCENT_LAST below the max level) and
+-- turn Neon at the max level. Returns the blend and whether the accents are Neon.
+local ACCENT_LAST = 0.85 -- blend at MaxLevel - 1; MaxLevel itself is the full rarity colour
+function PetLook.AccentBlend(level: number): (number, boolean)
+	level = PetConfig.ClampLevel(level)
+	if level >= PetConfig.MaxLevel then
+		return 1, true
+	end
+	return ACCENT_LAST * (level - 1) / (PetConfig.MaxLevel - 2), false
+end
+
+local function tintAccents(model: Model, rarity: PetConfig.Rarity, level: number)
+	local blend, neon = PetLook.AccentBlend(level)
+	if blend <= 0 then
+		return
+	end
+	for _, part in model:GetDescendants() do
+		if part:IsA("BasePart") and part:GetAttribute("Accent") == true then
+			part.Color = part.Color:Lerp(rarity.color, blend)
+			if neon then
+				part.Material = Enum.Material.Neon
+			end
+		end
+	end
+end
+
+-- Livelier bob with the tier: height (studs) and speed (rad/s) of the float animation PetFollow plays.
+function PetLook.Bob(level: number): (number, number)
+	local tier = PetLook.Tier(level)
+	return 0.2 + 0.04 * tier, 2.5 + 0.35 * tier
+end
+
+-- Tier effects (P1e3), cumulative, all in the rarity colour, built in code (no lights besides the Epic / Legendary one):
+--   T1 (Lv 5)  sparkle trail behind the pet (world-space particles)
+--   T2 (Lv 10) soft aura (low-rate puffs around the body) + an updraft of small sparks rising from under the pet
+--   T3 (Lv 15) three tiny neon motes orbiting the body (moved by UpdateFx)
+--   T4 (Lv 20) hexagonal neon halo above the head, stronger aura (label moves up by HALO_LIFT to clear it)
+-- Everything lives in a Folder "Fx" in the model (parts) or on Root attachments (emitters), so it is cloned, moved and destroyed
+-- with the model. The server builds it for the garden pens too; only the orbit animation and the distance LOD need a client
+-- (PetFollow for followers, PetPenFx for pens).
+local HALO_LIFT = 0.7 -- studs the label rises at tier 4
+local MOTE_COUNT = 3
+local MOTE_SPEED = 1.8 -- rad/s
+local LOD_DISTANCE = 60 -- studs from the camera beyond which emitters, lights and orbiters are off
+PetLook.LodDistance = LOD_DISTANCE
+
+local function addEmitter(attachment: Attachment, name: string, color: Color3): ParticleEmitter
+	local emitter = Instance.new("ParticleEmitter")
+	emitter.Name = name
+	emitter.Color = ColorSequence.new(color)
+	emitter.LightEmission = 1
+	emitter.Rotation = NumberRange.new(0, 360)
+	emitter.RotSpeed = NumberRange.new(-60, 60)
+	emitter.Parent = attachment
+	return emitter
+end
+
+local function addTierFx(model: Model, root: BasePart, rarity: PetConfig.Rarity, tier: number, scale: number, center: Vector3, size: Vector3)
+	local color = rarity.color
+	local fx = Instance.new("Folder")
+	fx.Name = "Fx"
+	fx.Parent = model
+	local bottom, top = center.Y - size.Y / 2, center.Y + size.Y / 2
+
+	-- T1: trail, spawned at the back of the body and left behind in world space
+	local back = Instance.new("Attachment")
+	back.Name = "FxTrail"
+	back.Position = Vector3.new(center.X, center.Y - size.Y * 0.15, center.Z + size.Z / 2)
+	back.Parent = root
+	local trail = addEmitter(back, "Trail", color)
+	trail.Rate = 6
+	trail.Lifetime = NumberRange.new(0.6, 0.9)
+	trail.Speed = NumberRange.new(0, 0.5)
+	trail.SpreadAngle = Vector2.new(180, 180)
+	trail.Size = NumberSequence.new(0.35 * scale, 0)
+	trail.Transparency = NumberSequence.new(0.15, 1)
+
+	if tier >= 2 then
+		local body = Instance.new("Attachment")
+		body.Name = "FxAura"
+		body.Position = center
+		body.Parent = root
+		local aura = addEmitter(body, "Aura", color)
+		aura.Rate = if tier >= 4 then 7 else 3
+		aura.Lifetime = NumberRange.new(1.2, 1.8)
+		aura.Speed = NumberRange.new(0.3, 0.8)
+		aura.SpreadAngle = Vector2.new(180, 180)
+		aura.Size = NumberSequence.new((if tier >= 4 then 2.4 else 1.8) * scale)
+		aura.Transparency = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 1),
+			NumberSequenceKeypoint.new(0.25, 0.65),
+			NumberSequenceKeypoint.new(1, 1),
+		})
+
+		-- updraft: small sparks rise from under the pet along its body (no part, no platform under the pet)
+		local under = Instance.new("Attachment")
+		under.Name = "FxUpdraft"
+		under.Position = Vector3.new(center.X, bottom + 0.1, center.Z)
+		under.Parent = root
+		local updraft = addEmitter(under, "Updraft", color)
+		updraft.Rate = if tier >= 4 then 8 else 4
+		updraft.Lifetime = NumberRange.new(0.7, 1.1)
+		updraft.Speed = NumberRange.new(1.5, 2.5)
+		updraft.SpreadAngle = Vector2.new(20, 20)
+		updraft.Size = NumberSequence.new(0.22 * scale, 0)
+		updraft.Transparency = NumberSequence.new(0.1, 1)
+	end
+
+	if tier >= 3 then
+		fx:SetAttribute("Center", center)
+		for index = 1, MOTE_COUNT do
+			local mote = fxPart("Mote" .. index, Enum.PartType.Ball, color, fx)
+			mote.Transparency = 0.1
+			mote.Size = Vector3.one * 0.24 * scale
+			mote:SetAttribute("Radius", math.max(size.X, size.Z) / 2 + 0.45 * scale)
+			mote:SetAttribute("Height", bottom + size.Y * (0.15 + 0.35 * (index - 1))) -- 15 %, 50 %, 85 % of the body height
+			mote:SetAttribute("Phase", (index - 1) * 2 * math.pi / MOTE_COUNT)
+			mote:SetAttribute("Speed", MOTE_SPEED)
+			local angle = mote:GetAttribute("Phase")
+			mote.CFrame = root.CFrame * CFrame.new(center.X + math.cos(angle) * mote:GetAttribute("Radius"), mote:GetAttribute("Height"), center.Z + math.sin(angle) * mote:GetAttribute("Radius"))
+		end
+	end
+
+	if tier >= 4 then
+		-- hexagon of six neon bars floating above the top of the model, centred over the head
+		local head = model:FindFirstChild("Head")
+		local headPosition = if head and head:IsA("BasePart") then root.CFrame:PointToObjectSpace(head.Position) else center
+		local radius = (if head and head:IsA("BasePart") then head.Size.X / 2 else size.X / 2) + 0.1 * scale
+		local y = top + 0.3 * scale
+		for index = 1, 6 do
+			local angle = (index - 1) * math.pi / 3
+			local bar = fxPart("Halo" .. index, Enum.PartType.Block, color, fx)
+			bar.Transparency = 0.05
+			bar.Size = Vector3.new(radius * 1.05, 0.1 * scale, 0.14 * scale)
+			bar.CFrame = root.CFrame
+				* CFrame.new(headPosition.X + math.cos(angle) * radius * 0.866, y, headPosition.Z + math.sin(angle) * radius * 0.866)
+				* CFrame.Angles(0, -(angle + math.pi / 2), 0)
+		end
+	end
+end
+
+-- Number of effect instances of a model (emitters, lights, parts of the Fx folder): Apply stamps it as the model attribute
+-- FxCount so a client that sees a model before all its children arrived knows to collect again.
+local function countFx(model: Model): number
+	local count = 0
+	for _, descendant in model:GetDescendants() do
+		if descendant:IsA("ParticleEmitter") or descendant:IsA("Light") then
+			count += 1
+		end
+	end
+	local fx = model:FindFirstChild("Fx")
+	return count + if fx then #fx:GetChildren() else 0
+end
+
+export type Mote = { part: BasePart, radius: number, height: number, phase: number, speed: number }
+export type Fx = {
+	root: BasePart,
+	emitters: { ParticleEmitter },
+	lights: { Light },
+	motes: { Mote },
+	center: Vector3,
+	count: number,
+	on: boolean, -- emitters and lights are currently enabled
+}
+
+-- Gathers the effects of a dressed model (follower or pen, any side) for UpdateFx. Call once per model, again if
+-- `fx.count ~= model:GetAttribute("FxCount")` (children still arriving).
+function PetLook.CollectFx(model: Model): Fx?
+	local root = model.PrimaryPart
+	if not root then
+		return nil
+	end
+	local fx: Fx = { root = root, emitters = {}, lights = {}, motes = {}, center = Vector3.zero, count = countFx(model), on = true }
+	for _, descendant in model:GetDescendants() do
+		if descendant:IsA("ParticleEmitter") then
+			table.insert(fx.emitters, descendant)
+		elseif descendant:IsA("Light") then
+			table.insert(fx.lights, descendant)
+		end
+	end
+	local folder = model:FindFirstChild("Fx")
+	if folder then
+		fx.center = folder:GetAttribute("Center") or Vector3.zero
+		for _, part in folder:GetChildren() do
+			local radius = part:GetAttribute("Radius")
+			if part:IsA("BasePart") and radius then
+				table.insert(fx.motes, {
+					part = part,
+					radius = radius,
+					height = part:GetAttribute("Height") or 0,
+					phase = part:GetAttribute("Phase") or 0,
+					speed = part:GetAttribute("Speed") or MOTE_SPEED,
+				})
+			end
+		end
+	end
+	return fx
+end
+
+-- Per-frame effect update after the model was pivoted: `far` (beyond LOD_DISTANCE from the camera) and `faded` (the pet is
+-- transparent because the camera is close or run mode / a level-up moment hides it) switch emitters and lights off - particles
+-- would otherwise float visibly around an almost invisible pet, or right in front of the camera; far pets also stop moving
+-- their orbiting motes. Particles already in the air finish their lifetime.
+function PetLook.UpdateFx(fx: Fx, now: number, far: boolean, faded: boolean)
+	local on = not (far or faded)
+	if on ~= fx.on then
+		fx.on = on
+		for _, emitter in fx.emitters do
+			emitter.Enabled = on
+		end
+		for _, light in fx.lights do
+			light.Enabled = on
+		end
+	end
+	if far then
+		return
+	end
+	local rootCFrame = fx.root.CFrame
+	local center = fx.center
+	for _, mote in fx.motes do
+		local angle = mote.phase + now * mote.speed
+		mote.part.CFrame = rootCFrame * CFrame.new(center.X + math.cos(angle) * mote.radius, mote.height, center.Z + math.sin(angle) * mote.radius)
+	end
+end
+
+-- Dresses a fresh, unparented clone of PetModels[kind] for `level`: forces the safety flags, tints the accent parts, scales
+-- it by level around its root, adds the label (if given) above the scaled model, the Epic / Legendary glow and the tier
+-- effects. Call once per clone. Returns the metrics the formation needs (of the model without effects), or nil if the model
+-- has no PrimaryPart.
 function PetLook.Apply(model: Model, kind: string, level: number, uid: string?, label: Label?): Metrics?
 	local root = model.PrimaryPart
 	local rarity = PetConfig.RarityOf(kind)
@@ -111,17 +359,23 @@ function PetLook.Apply(model: Model, kind: string, level: number, uid: string?, 
 			part.Massless = true
 		end
 	end
+	tintAccents(model, rarity, level)
 
 	local scale = PetLook.Scale(level)
 	model:ScaleTo(scale)
 	local boxCFrame, boxSize = model:GetBoundingBox()
 	local center = root.CFrame:PointToObjectSpace(boxCFrame.Position)
 	local underside = boxSize.Y / 2 - center.Y -- reach below the root
+	local tier = PetLook.Tier(level)
 
 	if label then
-		addLabel(model, root, rarity, center.Y + boxSize.Y / 2, label)
+		addLabel(model, root, rarity, center.Y + boxSize.Y / 2 + if tier >= 4 then HALO_LIFT else 0, label)
 	end
 	addGlow(root, rarity)
+	if tier > 0 then
+		addTierFx(model, root, rarity, tier, scale, center, boxSize)
+	end
+	model:SetAttribute("FxCount", countFx(model))
 	return { scale = scale, size = boxSize, center = center, lift = underside * (1 - 1 / scale) }
 end
 
@@ -179,24 +433,6 @@ local function spinAndRise(t: number): (number, number)
 	return full * (SPIN_TURNS + SETTLE_TURNS), RISE * (1 - smooth((s - SETTLE_TIME) / DROP_TIME))
 end
 
-local function fxPart(name: string, shape: Enum.PartType, color: Color3, parent: Instance): Part
-	local part = Instance.new("Part")
-	part.Name = name
-	part.Shape = shape
-	part.Material = Enum.Material.Neon
-	part.Color = color
-	part.Transparency = 1
-	part.CastShadow = false
-	part.Anchored = true
-	part.CanCollide = false
-	part.CanTouch = false
-	part.CanQuery = false
-	part.Massless = true
-	part.Size = Vector3.one * 0.1
-	part.Parent = parent
-	return part
-end
-
 -- Starts the moment for `model` (the dressed, parented model of the new level). `ghost` = the model of the old level (taken
 -- over and destroyed by the moment) with its current LocalTransparencyModifier `ghostFade`; nil for pens (no old model).
 -- Returns the moment, or nil if the model cannot play it (no PrimaryPart / not in the workspace; the ghost is destroyed then).
@@ -236,6 +472,8 @@ function PetLook.LevelUp(model: Model, kind: string, level: number, ghost: Model
 		for _, part in ghost:GetDescendants() do
 			if part:IsA("BasePart") then
 				table.insert(ghostParts, part)
+			elseif part:IsA("ParticleEmitter") then
+				part.Enabled = false -- the old tier effects stop; the new model brings its own
 			end
 		end
 	end

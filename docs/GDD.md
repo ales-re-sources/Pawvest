@@ -265,7 +265,11 @@ their pets drop 4 studs further back and turn ghostly so the course stays visibl
 **Level-up moment (P1e2):** when a pet gains a level it spins faster and faster and rises, a bright flash covers the change from
 the old look to the new one, then a burst of sparks, an expanding ring and a floating "Level N!" play and the pet drops back
 (about 2 seconds), for everyone nearby (followers and, after feeding, garden pens); the label shows one ★ per look tier
-(Lv 5 / 10 / 15 / 20). More growth visuals (tier effects, individuality, accessories) are planned in
+(Lv 5 / 10 / 15 / 20).
+**Tier effects (P1e3):** in the rarity colour, cumulative: Lv 5 sparkle trail, Lv 10 soft aura and rising sparks, Lv 15 three
+orbiting motes, Lv 20 a hexagonal halo and a stronger aura; accent parts of the model (stripes, tail tip, belly...) drift toward the
+rarity colour with the level and turn Neon at Lv 20; the float animation gets livelier with the tier. Effects switch off beyond
+60 studs from the camera. More growth visuals (individuality, accessories) are planned in
 [PET_GROWTH.md](PET_GROWTH.md).
 
 ### 7.6 Pet garden (minigame, P2)

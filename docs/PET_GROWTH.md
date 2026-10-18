@@ -93,7 +93,7 @@ and each is one commit that can be reverted alone. Order = dependency and value;
    steps need the pet id. Studio: none. User check: pets visibly grow, three Lv 20 pets don't overlap, nothing blocks the view.
 2. **P1e2 - Level-up moment (done, details in ROADMAP P1e2; pens show it too via `PetPenLevelUp`).** Level-up detection per uid in `PetFollow`; burst, ring, floating "Level N!" (visible to
    all nearby players); label tier badge; optional `PetLevelUpSound`. User check: finish a run with a pet near a threshold.
-3. **P1e3 - Tier effects + accent tint.** Trail / aura / orbiting motes / halo at Lv 5 / 10 / 15 / 20 in the rarity colour,
+3. **P1e3 - Tier effects + accent tint (done, details in ROADMAP P1e3; deviations: the T2 glow disc under the pet became an updraft of rising sparks after the visual check, effects also switch off while the pet is >= 50 % transparent, pens animate via `PetPenFx`).** Trail / aura / orbiting motes / halo at Lv 5 / 10 / 15 / 20 in the rarity colour,
    accent parts ramp to the rarity colour (Neon at Lv 20), livelier bob, distance LOD, cost check for 12 players.
    Studio: `Accent = true` on accent parts of the 8 models (one script). User check: how each tier looks.
 4. **P1e4 - Individuality.** `Seed(uid)` jitter (small hue / value shifts) so same kind and level differ; unit-checked
