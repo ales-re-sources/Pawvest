@@ -866,7 +866,7 @@ pets are shown as models (reused `ReplicatedStorage.PetModels`) with a label.
   cancelled by the return portal (label hidden, stayed at 11.3 s). (4) 12 plots, floors 40 × 40, no floor overlaps
   (`GetPartBoundsInBox`); raycasts from the plaza in 8 directions hit `Barrier_n` at 142.7 studs (hedges below them). (5) Consoles:
   only the usual UIBlox warnings and the DataStore queue notice. Not covered: 12 real players at once (the assigner is unit-tested to 12),
-  a visual check (viewport captures are blank). **Max Players is still 60**: set it to 12 in Game Settings → Places (user). Studio-only:
+  a visual check (viewport captures are blank). **Max Players** (Creator Hub "Maximum Visitors Count") was set to 12 by the user on 2026-10-18 (Studio had reported 60 before; the Hub said 50). Studio-only:
   `Workspace.Garden`, `StartLocation.TeleportToGarden` — **save the place (Ctrl+S)**. Test profiles `user_-1`..`user_-4` created by
   the clients are removed in the P2a2 cleanup.
 
