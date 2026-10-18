@@ -45,29 +45,30 @@ src/
     MedalText.luau                    rich text for stars, medal limits and the timer's medal target
     AdminConfig.luau                  admin UserIds + IsAdmin (client UI gating and server checks)
     TalentConfig.luau                 talents (Run Speed, Double Jump, Jump Height): costs, effect helpers, Talent_<id> attribute names
-    PetConfig.luau                    pet kinds, rarities (bonus ‰, sell value), eggs + weights, slot prices, level curve; Roll, PetBonus, Multiplier, XpToNext
+    PetConfig.luau                    pet kinds, rarities (bonus ‰, sell value), eggs + weights, slot prices, level curve, XP sources; Roll, PetBonus, Multiplier, XpToNext, GainXp, MoveXp
     PetModels (Studio-only Folder)    one part-built Model per PetConfig kind; invisible PrimaryPart "Root" (front = −Z), all parts Anchored, CanCollide/CanTouch/CanQuery off
   ServerScriptService/
     PlayerProfile.luau                per-player profile DataStore (load/migrate/save), AddCoins, CoinsChanged
     CoinRewards.luau                  Grant(player, base, source): the only gameplay Coin payout (pet multiplier, rounding)
-    PetService.luau                   pets: eggs (paid / free; a hatched pet takes a free slot), equip slots, sell; PetRemotes, EquippedPets attribute, Multiplier, GrantFreeEgg
-    StageResults.luau                 finish → personal best, medal, one-time payout + daily repeat reward, free egg on first Gold; Medal_<folder> attributes
+    PetService.luau                   pets: eggs (paid / free; a hatched pet takes a free slot), equip slots, sell; PetRemotes, EquippedPets attribute, Multiplier, GrantFreeEgg, AddXP (equipped pets, level-ups)
+    StageResults.luau                 finish → personal best, medal, one-time payout + daily repeat reward, free egg on first Gold, pet XP (medal + movement); Medal_<folder> attributes
+    RunDistance.luau                  server-measured horizontal studs during a run (Start / Stop from PlayerTimerHandler); steps faster than WalkSpeed allows (teleports, respawns) are dropped
     StageUnlocks.luau                 hub portal gate: bar (previous stage's medal) or bought unlock; UnlockRemotes, Unlocked_<folder> attributes
     HomeService.server.luau           GoHome remote: Home button → hub spawn, cancels the running timer
     TalentService.server.luau         talent purchases (Buy remote, server-priced), levels → profile + Talent_<id> attributes, WalkSpeed/jump on spawn
-    CoinSystem.server.luau            leaderstats (Stage, Coins) mirrored from profile, coin pickup, CoinUpdateEvent
+    CoinSystem.server.luau            leaderstats (Stage, Coins) mirrored from profile, coin pickup (+ pet XP), CoinUpdateEvent
     ResetPlayerTimerServer.server.luau  ResetPlayerTimer remote → admin-only full reset of the caller's own progress
     AdminCoinsServer.server.luau      AdminAddCoins remote → admin-only +AdminConfig.AddCoinsAmount Coins for the caller (debug; created at runtime)
   StarterPlayer/StarterPlayerScripts/
     StageTimerClientUpdater.client.luau  StageTimer label: counts locally between start/stop from StageTimerUpdate
     TalentDoubleJump.client.luau      Double Jump talent: extra air jumps from the Talent_DoubleJump attribute
-    StageResultsPopup.client.luau     results popup after a finish (GUI built in code)
+    StageResultsPopup.client.luau     results popup after a finish incl. pet XP line (GUI built in code)
     HubPortalMedals.client.luau       own best-medal stars + lock requirement/price on each hub portal face (local SurfaceGuis)
     PortalBarriers.client.luau        invisible local wall in each locked hub portal (removed when Unlocked_<folder> turns true)
     StageUnlockPopup.client.luau      unlock popup after touching a locked hub portal (requirement, price, unlock button; GUI built in code)
     PetClient.luau                    ModuleScript: client mirror of PetRemotes.PetsChanged + Coins (Inventory, Changed / Result signals); asks RequestState on load
     EggStand.client.luau              egg stand popup (odds from PetConfig, price, open / free egg, hatch reveal); prompt on workspace.StartLocation.EggStand.Egg
-    PetsPanel.client.luau             Pets panel (own ScreenGui "PetsGui": inventory, equip, buy slot, sell with 2nd click, total bonus); opened by the 🐶 button
+    PetsPanel.client.luau             Pets panel (own ScreenGui "PetsGui": inventory with level + XP, equip, buy slot, sell with 2nd click, total bonus); opened by the 🐶 button
     PetFollow.client.luau             renders every player's equipped pets (EquippedPets attribute) from PetModels: local folder workspace.PetFollowers, one smoothed anchor per owner, "Kind Lv N" label, Epic/Legendary glow
   StarterGui/
     CoinGui/CoinDisplayScript.client.luau        top-right coin counter

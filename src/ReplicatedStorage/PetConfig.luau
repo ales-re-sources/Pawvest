@@ -1,4 +1,4 @@
--- PetConfig: pets, rarities, eggs, slots and the level curve (docs/GDD.md §7.1–7.4). Shared: the server prices,
+-- PetConfig: pets, rarities, eggs, slots, the level curve and XP sources (docs/GDD.md §7.1–7.4). Shared: the server prices,
 -- rolls and validates from this table only (clients never send a price or a result), the pet UI renders it.
 -- Pure data + helpers, no side effects. Kind, rarity and egg ids are stored in PlayerProfile: never rename them.
 -- Bonuses are in permille (1 ‰ = 0.1 %) so sums stay exact.
@@ -141,6 +141,38 @@ function PetConfig.XpToNext(level: number): number?
 		return nil
 	end
 	return math.floor(10 * level ^ 1.5 + 0.5)
+end
+
+-- XP sources (GDD §7.4); every equipped pet receives the full amount of each event
+PetConfig.MedalXp = { 5, 10, 20 } -- MedalXp[medal] for the run's medal (Bronze / Silver / Gold); no medal: 0
+PetConfig.CoinXp = 1 -- per collected coin
+PetConfig.StudsPerXp = 20 -- movement while a stage timer runs (horizontal studs, measured on the server)
+PetConfig.MaxMoveXp = 30 -- per run
+
+-- Movement XP of a run that covered `studs` horizontal studs.
+function PetConfig.MoveXp(studs: number): number
+	return math.min(PetConfig.MaxMoveXp, math.floor(studs / PetConfig.StudsPerXp))
+end
+
+-- Adds `amount` XP to `pet` (mutates it): levels up while the XP reaches XpToNext, keeping the remainder; a pet at
+-- the max level gains nothing (its XP stays 0). Returns the levels gained, or nil if the pet was already maxed.
+function PetConfig.GainXp(pet, amount: number): number?
+	local level = PetConfig.ClampLevel(pet.Level)
+	if level >= PetConfig.MaxLevel then
+		pet.Level, pet.XP = PetConfig.MaxLevel, 0
+		return nil
+	end
+	local xp = (if type(pet.XP) == "number" and pet.XP == pet.XP then math.max(0, math.floor(pet.XP)) else 0) + amount
+	local gained = 0
+	local need = PetConfig.XpToNext(level)
+	while need and xp >= need do
+		xp -= need
+		level += 1
+		gained += 1
+		need = PetConfig.XpToNext(level)
+	end
+	pet.Level, pet.XP = level, if need then xp else 0
+	return gained
 end
 
 -- Sell value of a pet of `kind` (0 for an unknown kind).

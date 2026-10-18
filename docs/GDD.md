@@ -242,6 +242,7 @@ L19→20: 828; ~6 700 XP from 1 to 20). Every **equipped** pet receives the full
 
 Movement is measured on the server (horizontal distance of the character); jumps faster than walking speed allows
 (teleports, respawns) do not count, and nothing is earned outside a running timer, so AFK walking earns nothing.
+Movement XP is paid at the finish, together with the medal XP; a run that is cancelled (back to the hub) earns none.
 Levels are permanent. A pet at level 20 stops gaining XP.
 
 ### 7.5 Display

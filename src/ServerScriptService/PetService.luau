@@ -5,7 +5,7 @@
 -- Remotes are created here in ReplicatedStorage.PetRemotes: BuyEgg(eggId), Equip(uid), Unequip(uid),
 -- BuySlot(expectedSlot), SellPet(uid), RequestState() (client → server); PetsChanged(state) and
 -- Result(action, ok, detailOrReason) (server → client). The equipped pets are mirrored to the EquippedPets player
--- attribute ("Kind:Level,…").
+-- attribute ("Kind:Level,…"). AddXP levels the equipped pets (stage finishes, coins, movement during a run).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -98,6 +98,27 @@ function PetService.GrantFreeEgg(player: Player, eggId: string): boolean
 	profile.FreeEggs[eggId] = (profile.FreeEggs[eggId] or 0) + 1
 	publish(player)
 	return true
+end
+
+-- Gives `amount` XP to every equipped pet (GDD §7.4: each gets the full amount; level-ups keep the remainder, a
+-- level-20 pet gains nothing). Saved by the autosave and on leave. Returns how many pets gained XP (0 while the
+-- profile is not loaded or nothing is equipped).
+function PetService.AddXP(player: Player, amount: number): number
+	local profile = PlayerProfile.Get(player)
+	if not profile or type(amount) ~= "number" or amount < 1 then
+		return 0
+	end
+	amount = math.floor(amount)
+	local gaining = 0
+	for _, pet in equippedPets(profile) do
+		if PetConfig.GainXp(pet, amount) then
+			gaining += 1
+		end
+	end
+	if gaining > 0 then
+		publish(player) -- levels feed the Coin bonus, the EquippedPets labels and the Pets panel
+	end
+	return gaining
 end
 
 -- Drops equipped uids that no longer exist or exceed the slots (corrupt or hand-edited records).

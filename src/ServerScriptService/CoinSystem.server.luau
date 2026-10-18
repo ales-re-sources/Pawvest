@@ -5,6 +5,8 @@ local ServerScriptService = game:GetService("ServerScriptService")
 -- Coins are stored in the player's profile (loaded / saved by PlayerProfile)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local CoinRewards = require(ServerScriptService.CoinRewards)
+local PetService = require(ServerScriptService.PetService)
+local PetConfig = require(ReplicatedStorage.PetConfig)
 
 local COIN_VALUE = 10 -- legacy pickup coin (Coin scale ×10, R2)
 
@@ -70,6 +72,7 @@ local function makeTouchHandler(coinPart)
 
 		-- Pay COIN_VALUE (fails while the profile is still loading; the coin stays then)
 		if not CoinRewards.Grant(player, COIN_VALUE, "coin") then return end
+		PetService.AddXP(player, PetConfig.CoinXp)
 
 		collected = true
 		coinPart.Transparency = 1

@@ -1,5 +1,5 @@
 -- Results popup after a finished run (docs/GDD.md §4–5): time, record, medal of the run, medal payout, repeat reward,
--- next goal.
+-- pet XP (§7.4), next goal.
 -- Driven by the finish message StageTimerUpdate(-1, final, result); the GUI is built here, not in Studio.
 
 local Players = game:GetService("Players")
@@ -65,9 +65,11 @@ local starsLabel = addLine("Stars", 4, 36)
 local medalLabel = addLine("Medal", 5, 18)
 local coinsLabel = addLine("Coins", 6, 22)
 local runLabel = addLine("RunReward", 7, 18)
-local nextLabel = addLine("Next", 8, 16)
+local petLabel = addLine("PetXp", 8, 16)
+local nextLabel = addLine("Next", 9, 16)
 coinsLabel.TextColor3 = Color3.fromRGB(120, 230, 120)
 runLabel.TextColor3 = Color3.fromRGB(120, 230, 120)
+petLabel.TextColor3 = Color3.fromRGB(180, 150, 255)
 nextLabel.TextColor3 = Color3.fromRGB(190, 190, 190)
 
 local showGeneration = 0
@@ -90,6 +92,9 @@ local function show(result)
 	local runCoins = result.runCoins or 0
 	runLabel.Visible = runCoins > 0
 	runLabel.Text = string.format("Run reward +%d (run %d today)", runCoins, result.runsToday or 1)
+	local petXp = result.petXp or 0
+	petLabel.Visible = petXp > 0 and (result.petsLeveled or 0) > 0
+	petLabel.Text = string.format("Pets +%d XP (%d from moving)", petXp, result.moveXp or 0)
 	if result.nextMedal and result.nextThreshold then
 		nextLabel.Text = string.format("Next: %s under %s",
 			StageConfig.Medals[result.nextMedal].name, TimeFormat.Format(result.nextThreshold))

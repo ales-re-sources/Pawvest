@@ -213,7 +213,7 @@ local function buildRow(index: number, pet)
 		Size = UDim2.fromOffset(84, 22),
 		BackgroundColor3 = if pet.equipped then COLOR_LOCKED elseif confirming then COLOR_SELL else COLOR_ROW,
 		TextSize = 13,
-		Text = if confirming then ("Sure? +" .. PetClient.Number(pet.sellValue)) else "Sell",
+		Text = (if confirming then "Sure? +" else "Sell ") .. PetClient.Number(pet.sellValue),
 	})
 	if not pet.equipped and not confirming then
 		sellButton.BackgroundColor3 = Color3.fromRGB(85, 85, 85)
@@ -249,10 +249,10 @@ local function buildRow(index: number, pet)
 			TextColor3 = COLOR_INFO,
 			TextTruncate = Enum.TextTruncate.AtEnd,
 			Text = string.format(
-				"%s · +%s%% · sells %s",
+				"%s · +%s%% · %s",
 				pet.rarity.id,
 				PetClient.Percent(pet.bonus),
-				PetClient.Number(pet.sellValue)
+				if pet.xpNext then string.format("%d/%d XP", pet.xp, pet.xpNext) else "max level"
 			),
 		}),
 		equipButton,

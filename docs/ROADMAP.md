@@ -38,7 +38,7 @@ Rules:
 | R2 | Coin scale ×10 | ✔ | ✔ | – |
 | P1b | Egg stand + Pets panel | ✔ | ✔ | – |
 | P1c | Pet models + following | ✔ | ✔ | – |
-| P1d | Pet XP + levels | – | – | – |
+| P1d | Pet XP + levels | ✔ | ✔ | – |
 | M3 | Stage unlocks | ✔ | ✔ | – |
 | M4 | Challenge coins | – | – | – |
 | M5 | Leaderboards | – | – | – |
@@ -473,6 +473,45 @@ P1a comes first; P1b, P1c and P1d each need only P1a and can follow in any order
 - **Acceptance checks:** a Silver finish gives each equipped pet exactly 10 XP + movement XP ≤ 30; walking with no running
   timer gives 0 XP; a teleport adds no movement XP; a pet crossing `XpToNext` levels up and keeps the remainder; a level-20
   pet gains nothing; XP and levels identical after rejoin.
+- **Design notes (design check 2026-10-18):** GDD §7.4 matches the scope; one clarification added there (movement XP is paid
+  at the finish).
+  - `PetConfig`: `MedalXp = { 5, 10, 20 }`, `CoinXp = 1`, `StudsPerXp = 20`, `MaxMoveXp = 30`; pure `MoveXp(studs)` and
+    `GainXp(pet, amount)` (levels up while XP ≥ `XpToNext`, keeps the remainder; at level 20 XP stays 0 and nothing is gained;
+    a remainder past level 20 is dropped).
+  - `PetService.AddXP(player, amount)` gives every equipped pet the full amount and publishes once (`EquippedPets`
+    attribute, `PetsChanged`), so the Coin bonus, follower labels and the Pets panel update live. Returns how many pets
+    gained. Not saved at once: XP is small and frequent, so the autosave / leave / shutdown saves cover it.
+  - `ServerScriptService.RunDistance` (new module): `Start(player)` / `Stop(player) → studs`, called by `PlayerTimerHandler`
+    (start, cancel, finish; a restart on another stage starts from 0). One loop samples each running player's root part
+    every 0.25 s; a horizontal step longer than `WalkSpeed × dt × 1.5 + 1` stud (teleports, respawns, flings, bounce
+    pads) is dropped entirely; a dead or missing character breaks the segment. The server's WalkSpeed includes the Run
+    Speed talent; the admin client-side 64 speed toggle is not replicated, so its steps are dropped too.
+  - **Paid at the finish, not continuously:** one XP event per run (one publish, no XP for a cancelled run, a single
+    number on the results popup). `StageResults.RecordFinish(player, stageKey, elapsed, studs)` adds medal XP of the run's
+    medal (not only a new one) + `MoveXp`; the result carries `petXp`, `moveXp`, `petsLeveled`. A finish without a medal
+    still pays movement XP.
+  - `CoinSystem`: +1 XP after a successful coin pickup (after the Coin payout, so its multiplier uses the old levels).
+  - Client: the Pets panel detail line reads "Rarity · +bonus % · xp/next XP" ("max level" at 20); the sell value moved
+    onto the Sell button ("Sell 200", confirm "Sure? +200") because the longer line was truncated. Results popup line
+    "Pets +N XP (M from moving)", shown when a pet gained XP.
+- **Validation log (2026-10-18, solo playtests, API access on, uid 9892673032, preset from the live profile: 3 slots,
+  equipped Dog L1/0, Fox L4/75, Cat L20/0, Run Speed 5 → WalkSpeed 20.8):** Edit mode: `GainXp` L1/0 +10 → L2/0, L4/75
+  +10 → L5/5, L1/0 +100 → L4/10, L20 +50 → nil (unchanged), L19/820 +50 → L20/0, +100 000 → L20/0, missing XP treated as 0;
+  `MoveXp` 0/19/20/599/600/5000 → 0/0/1/29/30/30. Playtest A: walked 114 studs in the hub with no timer → no `PetsChanged`,
+  attribute unchanged (0 XP). Tutorial Gold by teleports → petXp 20, moveXp 0: Dog L1/0 → **L2/10**, Fox L4/75 → **L5/15**
+  (crossed `XpToNext` 80, remainder kept), Cat L20/0 unchanged, `petsLeveled` 2, attribute `Dog:2,Fox:5,Cat:20`. Teleport run
+  (timer confirmed running, then 8 teleports of 30–40 studs, the character ended up respawned at the pad, finish by
+  teleport): 23.4 s Gold, **moveXp 0**, Dog → L3/2. A run cancelled by the pad's TeleportToSpawn portal paid nothing.
+  **Silver** 26.9 s walking a rectangle on the pad (client-measured 529.8 studs ≈ 26 XP): petXp **35 = 10 + 25** (server
+  counted ≥ 500 studs, slightly under the client, never over), Dog L3/2 → L3/37, Fox L5/35 → L5/70. Bronze 40.4 s, 804
+  studs walked: petXp 35 = 5 + **30 (cap)**, Dog → L4/20. Coin pickup: Coins +12 (10 × 1.19) and **+1 XP** (Dog L4/21,
+  Fox L5/106). Stored after leaving: Dog L4/21, Fox L5/106, Cat L20/0, equipped `5, 4, 8`. Playtest B (rejoin): identical
+  `PetsChanged` state, attribute `Dog:4,Fox:5,Cat:20`, multiplier 1.21 (= 35 + 60 + 115 ‰, was 1.19). With the Pets panel
+  open, a Tutorial Gold → Fox row "Lv 6 · +6.5 % · 14/147 XP" and follower label "Fox Lv 6" without reopening; popup line
+  "Pets +20 XP (0 from moving)". Detail texts fit (worst case "Legendary · +24% · 827/828 XP" measured 157 of 200 px).
+  Consoles: only Roblox's UIBlox "FoundationProvider" warnings. Not covered: multi-client, bounce bricks / spinners during
+  a run (dropped or counted as their speed allows), touch layout. Live profile and all four boards restored exactly to the
+  pre-test snapshot (`p1d-snapshot.json`); no `user_-1` / `user_-2` records.
 
 ### M3 — Stage unlocks
 - **Inputs:** `StageConfig.unlock` / `unlockPrice` (GDD §3: Stage 2 = Silver on Stage 1 or 150 Coins, Stage 3 = Silver on

@@ -14,6 +14,7 @@ local TimeFormat = require(ReplicatedStorage.TimeFormat)
 local MedalText = require(ReplicatedStorage.MedalText)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local StageResults = require(ServerScriptService.StageResults)
+local RunDistance = require(ServerScriptService.RunDistance)
 
 local StageTimerUpdate = ReplicatedStorage:WaitForChild("StageTimerUpdate")
 local GlobalLeaderboardsStore = DataStoreService:GetDataStore("GlobalLeaderboardsStore")
@@ -178,6 +179,7 @@ end
 
 local function startTimer(player, stageKey)
 	timers[player] = { StageKey = stageKey, StartClock = os.clock() }
+	RunDistance.Start(player) -- movement pet XP counts only during a run
 	StageTimerUpdate:FireClient(player, 0, stageKey)
 end
 
@@ -197,6 +199,7 @@ local function resetTimer(player)
 		return nil
 	end
 	timers[player] = nil
+	RunDistance.Stop(player) -- a cancelled run earns no movement XP
 	StageTimerUpdate:FireClient(player, -1)
 	return TimeFormat.Tenths(os.clock() - timer.StartClock)
 end
@@ -211,7 +214,7 @@ local function stopTimer(player)
 	timers[player] = nil
 
 	local elapsed = TimeFormat.Tenths(os.clock() - timer.StartClock)
-	local result = StageResults.RecordFinish(player, timer.StageKey, elapsed)
+	local result = StageResults.RecordFinish(player, timer.StageKey, elapsed, RunDistance.Stop(player))
 	StageTimerUpdate:FireClient(player, -1, elapsed, result)
 
 	updateScorePanel(player, nil) -- record and earned medals may have changed

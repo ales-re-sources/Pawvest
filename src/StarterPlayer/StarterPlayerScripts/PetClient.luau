@@ -26,6 +26,8 @@ export type OwnedPet = {
 	uid: string,
 	kind: string,
 	level: number,
+	xp: number, -- towards the next level (0 at the max level)
+	xpNext: number?, -- XP needed for the next level; nil at the max level
 	rarity: PetConfig.Rarity,
 	equipped: boolean,
 	bonus: number, -- permille
@@ -46,6 +48,8 @@ function PetClient.Inventory(): { OwnedPet }
 				uid = uid,
 				kind = pet.Kind,
 				level = PetConfig.ClampLevel(pet.Level),
+				xp = if type(pet.XP) == "number" then pet.XP else 0,
+				xpNext = PetConfig.XpToNext(PetConfig.ClampLevel(pet.Level)),
 				rarity = rarity,
 				equipped = table.find(state.equipped, uid) ~= nil,
 				bonus = PetConfig.PetBonus(pet),
