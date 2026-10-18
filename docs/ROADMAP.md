@@ -937,7 +937,7 @@ pets are shown as models (reused `ReplicatedStorage.PetModels`) with a label.
   `remotes.Remove` is the built-in `Instance:Remove()`, not the RemoteEvent. `GardenClient` now looks every garden remote up by
   name once (`WaitForChild`). My own tests had fired the remotes by name and never clicked that button, so the gap was in the
   validation, not in the server. Rule: never index a remote named like an `Instance` member (`Remove`, `Clone`, `Destroy`, `Parent`)
-  with a dot; always `:WaitForChild("Name")`. Re-test of the real button click: pending (the user's playtest was running).
+  with a dot; always `:WaitForChild("Name")`. Re-tested by the user with the real button click: works.
 
 ### P2b — Pet garden: incubators, feeding
 - **Outputs (draft):** incubators (unlock for Coins) hatch Golden eggs in real time, also offline; food bought for Coins
