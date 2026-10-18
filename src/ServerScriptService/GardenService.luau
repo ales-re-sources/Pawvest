@@ -17,6 +17,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 
 local GardenConfig = require(ReplicatedStorage.GardenConfig)
 local PetConfig = require(ReplicatedStorage.PetConfig)
+local PetLook = require(ReplicatedStorage.PetLook)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local CoinRewards = require(ServerScriptService.CoinRewards)
 local PetService = require(ServerScriptService.PetService)
@@ -171,73 +172,36 @@ local function publishState(player: Player)
 end
 GardenService.PublishState = publishState
 
--- Pet model for a pen: a clone of ReplicatedStorage.PetModels (anchored, no collision / touch / query), a two-line label
--- in the rarity colour and the Epic / Legendary glow, as PetFollow draws it.
-local function makePenPet(pet, pad: BasePart): Model?
+-- Pet model for a pen: a clone of ReplicatedStorage.PetModels dressed by PetLook exactly like the follower (size by level,
+-- anchored, no collision / touch / query, Epic / Legendary glow), with a two-line label in the rarity colour.
+local function makePenPet(pet, uid: string, pad: BasePart): Model?
 	local template = ReplicatedStorage:FindFirstChild("PetModels") and ReplicatedStorage.PetModels:FindFirstChild(pet.Kind)
 	if not (template and template:IsA("Model") and template.PrimaryPart) then
 		return nil
 	end
 	local model = template:Clone()
-	for _, part in model:GetDescendants() do
-		if part:IsA("BasePart") then
-			part.Anchored = true
-			part.CanCollide = false
-			part.CanTouch = false
-			part.CanQuery = false
-		end
+	local level = PetConfig.ClampLevel(pet.Level)
+	local metrics = PetLook.Apply(model, pet.Kind, level, uid, {
+		text = string.format(
+			"%s Lv %d\n<font color='#a8e6a0'>%s Coins/h</font>",
+			pet.Kind,
+			level,
+			string.format("%g", GardenConfig.RatePerHour(pet))
+		),
+		richText = true,
+		size = UDim2.new(6, 0, 1.4, 0),
+		maxDistance = 90,
+		gap = 1,
+	})
+	if not metrics then
+		model:Destroy()
+		return nil
 	end
-	local rarity = PetConfig.RarityOf(pet.Kind)
-	local root = model.PrimaryPart
 	model:PivotTo(pad.CFrame * CFrame.new(0, pad.Size.Y / 2 + 1, 0))
 	-- stand the model on the pad: move it so the lowest point of its bounding box touches the pad top
 	local boxCFrame, boxSize = model:GetBoundingBox()
 	local bottom = boxCFrame.Position.Y - boxSize.Y / 2
 	model:PivotTo(model:GetPivot() + Vector3.new(0, pad.Position.Y + pad.Size.Y / 2 - bottom, 0))
-	boxCFrame, boxSize = model:GetBoundingBox()
-
-	local label = Instance.new("BillboardGui")
-	label.Name = "Label"
-	label.Adornee = root
-	label.Size = UDim2.new(6, 0, 1.4, 0)
-	label.StudsOffset = Vector3.new(0, boxCFrame.Position.Y + boxSize.Y / 2 - root.Position.Y + 1, 0)
-	label.MaxDistance = 90
-	label.LightInfluence = 0
-	label.Parent = model
-	local text = Instance.new("TextLabel")
-	text.Size = UDim2.fromScale(1, 1)
-	text.BackgroundTransparency = 1
-	text.Font = Enum.Font.GothamBold
-	text.TextScaled = true
-	text.RichText = true
-	text.Text = string.format(
-		"%s Lv %d\n<font color='#a8e6a0'>%s Coins/h</font>",
-		pet.Kind,
-		PetConfig.ClampLevel(pet.Level),
-		string.format("%g", GardenConfig.RatePerHour(pet))
-	)
-	text.TextColor3 = rarity.color
-	text.TextStrokeTransparency = 0.3
-	text.Parent = label
-
-	if rarity.order >= PetConfig.RarityById.Epic.order then
-		local legendary = rarity.order >= PetConfig.RarityById.Legendary.order
-		local light = Instance.new("PointLight")
-		light.Color = rarity.color
-		light.Brightness = if legendary then 2.5 else 1.5
-		light.Range = if legendary then 10 else 8
-		light.Parent = root
-		local sparkles = Instance.new("ParticleEmitter")
-		sparkles.Color = ColorSequence.new(rarity.color)
-		sparkles.LightEmission = 1
-		sparkles.Size = NumberSequence.new(0.25, 0)
-		sparkles.Transparency = NumberSequence.new(0.2, 1)
-		sparkles.Lifetime = NumberRange.new(0.6, 1)
-		sparkles.Rate = if legendary then 10 else 5
-		sparkles.Speed = NumberRange.new(0.5, 1.5)
-		sparkles.SpreadAngle = Vector2.new(180, 180)
-		sparkles.Parent = root
-	end
 	return model
 end
 
@@ -283,7 +247,7 @@ local function renderPlot(index: number)
 		if pet then
 			local rarity = PetConfig.RarityOf(pet.Kind)
 			color = PAD_COLORS.empty:Lerp(rarity.color, 0.45)
-			model = makePenPet(pet, pad)
+			model = makePenPet(pet, uid, pad)
 			if model then
 				model.Name = GardenConfig.PenNamePrefix .. number .. "_" .. pet.Kind
 				model.Parent = pets

@@ -6,7 +6,7 @@
 -- Remotes are created here in ReplicatedStorage.PetRemotes: Equip(uid), Unequip(uid),
 -- BuySlot(expectedSlot), SellPet(uid), RequestState() (client → server); PetsChanged(state) and
 -- Result(action, ok, detailOrReason) (server → client). The equipped pets are mirrored to the EquippedPets player
--- attribute ("Kind:Level,…"). AddXP levels the equipped pets (stage finishes, coins, movement during a run). AddPet is the
+-- attribute ("Kind:Level:uid,…"). AddXP levels the equipped pets (stage finishes, coins, movement during a run). AddPet is the
 -- "new pet" step of every hatched egg; free eggs wait in FreeEggs until GardenIncubators places them (FreeEggsChanged).
 -- A pet is either equipped or in a garden pen (P2a2), never both: Equip and SellPet reject a penned pet, and the garden
 -- (GardenService) rejects an equipped one; PetsChanged.penned maps each penned uid to its pen index.
@@ -88,11 +88,12 @@ local function publish(player: Player)
 			end
 		end
 	end
-	local parts = {}
-	for _, pet in equippedPets(profile) do
-		table.insert(parts, pet.Kind .. ":" .. PetConfig.ClampLevel(pet.Level))
+	local equipped = {}
+	for _, uid in profile.EquippedPets do
+		local pet = profile.Pets[uid]
+		table.insert(equipped, { Kind = pet.Kind, Level = pet.Level, uid = uid })
 	end
-	player:SetAttribute(PetConfig.AttributeName, table.concat(parts, ","))
+	player:SetAttribute(PetConfig.AttributeName, PetConfig.EncodeEquipped(equipped))
 	changedEvent:FireClient(player, {
 		pets = profile.Pets,
 		equipped = profile.EquippedPets,

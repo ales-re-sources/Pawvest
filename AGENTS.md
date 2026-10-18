@@ -47,7 +47,8 @@ src/
     AdminConfig.luau                  admin UserIds + IsAdmin (client UI gating and server checks)
     ChallengeCoinConfig.luau          challenge coins: tier values (20 / 50 / 100), coin list (id, stage, tier), Found x/y, Encode/Decode of the CollectedCoins attribute
     TalentConfig.luau                 talents (Run Speed, Double Jump, Jump Height): costs, effect helpers, Talent_<id> attribute names
-    PetConfig.luau                    pet kinds, rarities (bonus ‰, sell value), eggs + weights, slot prices, level curve, XP sources; Roll, PetBonus, Multiplier, XpToNext, GainXp, MoveXp
+    PetConfig.luau                    pet kinds, rarities (bonus ‰, sell value), eggs + weights, slot prices, level curve, XP sources; Roll, PetBonus, Multiplier, XpToNext, GainXp, MoveXp; MaxScale, Tiers, ScaleOf, TierOf, Encode/DecodeEquipped (EquippedPets attribute)
+    PetLook.luau                      pet look as a pure function of (kind, level, uid): Scale (1.0 → 1.6 by level), Tier, Apply (flags, scale, label, Epic/Legendary glow; used by PetFollow and the garden pens), Slots (formation from scaled sizes)
     PetModels (Studio-only Folder)    one part-built Model per PetConfig kind; invisible PrimaryPart "Root" (front = −Z), all parts Anchored, CanCollide/CanTouch/CanQuery off
     ChallengeCoinSound (Studio-only)  Sound played on a challenge coin pickup (cloned locally by ChallengeCoinsClient)
     GardenConfig.luau                 pet garden: plot count / size, NewAssigner (pure plot assigner), pen prices, production rates (BaseRates, LevelRate), integer Units / Settle maths, IsPenned; incubator prices, EggReady, IncubatingCount (P2b1); Foods, FoodById, XpToMax (P2b2)
@@ -81,7 +82,7 @@ src/
     StageUnlockPopup.client.luau      unlock popup after touching a locked hub portal (requirement, price, unlock button; GUI built in code)
     PetClient.luau                    ModuleScript: client mirror of PetRemotes.PetsChanged + Coins (Inventory, Changed / Result signals); asks RequestState on load
     PetsPanel.client.luau             Pets panel (own ScreenGui "PetsGui": inventory with level + XP, equip, buy slot, sell with 2nd click, total bonus); opened by the 🐶 button
-    PetFollow.client.luau             renders every player's equipped pets (EquippedPets attribute) from PetModels: local folder workspace.PetFollowers, one smoothed anchor per owner, "Kind Lv N" label, Epic/Legendary glow
+    PetFollow.client.luau             renders every player's equipped pets (EquippedPets attribute "Kind:Level:uid,…") via PetLook: local folder workspace.PetFollowers, one smoothed anchor per owner, camera fade, run mode (pets further back + ghostly while the owner's stage timer runs)
     GardenClient.client.luau          garden: pen prompts (own plot only), pen panel (unlock / place / remove), "while you were away" popup, payout toast; GUI built in code; test hook: ScreenGui attribute OpenPen
     IncubatorClient.client.luau       incubator prompts (own plot only), incubator panel (unlock / start a Basic or Golden egg / free eggs waiting / countdown / Hatch + reveal), countdown labels on every plot from ReadyAt + GetServerTimeNow; test hook: IncubatorGui attribute OpenIncubator
     FoodShopClient.client.luau        food stand panel (every pet with level, XP, XP to Lv 20; one feed button per food); test hook: FoodShopGui attribute Open
@@ -176,7 +177,7 @@ the diminishing repeat reward (`StageConfig.RunReward`).
 
 Player attributes `Medal_<stage folder>` (0–3) mirror `PlayerProfile.Medals` for client displays; `Unlocked_<stage folder>`
 (bool) mirror `StageUnlocks` (bar met or `UnlockedStages[key]` bought; the bar is derived from medals, never stored).
-`EquippedPets` (`"Kind:Level,…"`, empty when none) mirrors the equipped pets; `PetFollow` renders them on every client.
+`EquippedPets` (`"Kind:Level:uid,…"`, empty when none; `PetConfig.DecodeEquipped` also reads the old `Kind:Level` form) mirrors the equipped pets; `PetFollow` renders them on every client.
 `Garden.LastSeen` is the server time up to which pen production was paid (never from a client); production since then is capped at 8 h.
 A pet is either equipped or penned: `PetService` rejects Equip / SellPet of a penned pet, `GardenService` rejects Place of an equipped one.
 Player attribute `GardenPlot` = index of the borrowed plot; pen models carry attributes `State` / `Uid` / `Kind` / `Level` (tests, client);

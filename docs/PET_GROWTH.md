@@ -85,7 +85,9 @@ Two steps is doable but not advisable: we cannot see the 3D result (screenshots 
 check. Five small milestones let the user look in Studio after each one and steer the next (sizes, colours, which effects),
 and each is one commit that can be reverted alone. Order = dependency and value; each needs only the ones before it.
 
-1. **P1e1 - PetLook foundation + size growth.** New `PetLook` module with `Scale` / `Tier` / `Apply`; `PetFollow` and
+1. **P1e1 - PetLook foundation + size growth (done).** Deviations from this plan: slot gap 0.6 (not 0.5); `PetLook.Slots` also
+   scales the distance behind the owner and lifts large pets; a run mode (4 studs back, >= 0.6 transparency while the owner's
+   stage timer runs) was added after the first visual check. Details: ROADMAP P1e1. New `PetLook` module with `Scale` / `Tier` / `Apply`; `PetFollow` and
    `makePenPet` both use it (removes the duplicated model/label/glow code); size 1.0 -> 1.6 by level; formation spacing from
    the scaled width; camera fade. Attribute becomes `Kind:Level:uid` (parser also accepts the old form) because the next two
    steps need the pet id. Studio: none. User check: pets visibly grow, three Lv 20 pets don't overlap, nothing blocks the view.

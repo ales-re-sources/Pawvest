@@ -39,7 +39,7 @@ Rules:
 | P1b | Egg stand + Pets panel | ✔ | ✔ | – |
 | P1c | Pet models + following | ✔ | ✔ | – |
 | P1d | Pet XP + levels | ✔ | ✔ | – |
-| P1e1 | Pet look foundation + size growth | – | – | – |
+| P1e1 | Pet look foundation + size growth | ✔ | ✔ | – |
 | P1e2 | Pet level-up moment | – | – | – |
 | P1e3 | Pet tier effects + accent tint | – | – | – |
 | P1e4 | Pet individuality | – | – | – |
@@ -537,6 +537,43 @@ later option. We cannot see 3D captures, so every step ends with a visual check 
 | **P1e3** | tier effects at Lv 5 / 10 / 15 / 20 (trail, aura, motes, halo), accent parts (`Accent = true`, Studio) tinted to the rarity colour, Neon at Lv 20, distance LOD | all 8 kinds × 5 levels render; emitter / light / part counts for 12 players × 3 pets acceptable; far pets drop effects |
 | **P1e4** | `Seed(uid)` jitter (hue / value) so same kind and level differ | deterministic per uid, different uids differ, rarity identity kept |
 | **P1f** | accessory kit (halo, crown, scarf, small wings, horns, flame tail) built from `Head` / `Body` / `Tail`; 1 piece at Lv 10, 2 at Lv 20, picked by seed; skip rules per kind | no duplicate pieces (e.g. wings on Dragon), all pieces non-colliding and non-touchable, higher tiers keep earlier pieces |
+
+#### P1e1 — Pet look foundation + size growth
+- **Outputs:** `ReplicatedStorage.PetLook` (`Scale`, `Tier`, `Apply`, `Slots`) used by `PetFollow` (client) and `GardenService.makePenPet`
+  (server), so followers and pens are drawn by the same code (the duplicated clone / flag / label / glow code is gone).
+  `PetConfig`: `MaxScale = 1.6`, `Tiers = {5, 10, 15, 20}`, `ScaleOf`, `TierOf`, `EncodeEquipped`, `DecodeEquipped`.
+  The `EquippedPets` attribute is now `Kind:Level:uid,…` (`PetService.publish`); `DecodeEquipped` still reads the old
+  `Kind:Level` form (uid = nil). Studio-only changes: none.
+- **Design notes:** `Apply(model, kind, level, uid, label?)` forces Anchored / no collide / touch / query / Massless, scales by
+  level around the root (`ScaleTo`), adds the label 0.5 (follower) or 1 (pen) studs above the scaled model and the Epic /
+  Legendary glow; returns metrics (scale, bounding box in root space, `lift`). `uid` is reserved for P1e4. `Slots(metrics)`:
+  spacing = widest scaled width + 0.6, distance behind grows with the models' length (≥ 1.5 studs between owner and the
+  front of the nearest pet), `lift` keeps every pet's underside at its Lv 1 height (models grow around their root).
+  Camera fade (`PetFollow`): per pet, `LocalTransparencyModifier` rises from 0 at 7 studs to 0.85 at 2 studs from the camera
+  (client only, parts updated only when the value changes).
+  **Run mode (user request after the first visual check):** pets were too close and impaired the view during stages. While the
+  local player's stage timer runs (`StageTimerUpdate`: `elapsed ≥ 0` = running, `-1` = finished / cancelled), their pets sit
+  `RUN_BACK = 4` studs further back and have at least `RUN_FADE = 0.6` transparency; blended over ~0.5 s. Only the local
+  player's pets change (other players' timers are unknown to this client). Moving back alone would not help (the camera
+  is behind the owner, so pets move closer to it), hence the ghosting.
+- **Validation log (2026-10-18, solo playtests, API access on):** live profile `user_9892673032` preset with three Lv 20 pets
+  (Fox, Cat, Dragon), a Dragon Lv 20 / Cat Lv 3 / Dragon Lv 1 in pens 1–3; snapshot `p1e1-snapshot.json`. `Scale(1/20/10/0/99)` =
+  1.0 / 1.6 / 1.2842 / 1.0 / 1.6, `Tier(1,4,5,9,10,14,15,19,20)` = 0,0,1,1,2,2,3,3,4. `DecodeEquipped`: new and old forms,
+  unknown kind / bad level / bad uid skipped, level 99 → 20, nil and "" → empty; `EncodeEquipped` round trip. All 8 kinds × Lv
+  1/5/10/15/20 (40 models): measured bounding box = base × scale (Lv 1 = 1.000, Lv 20 = 1.600, worst deviation 0.006),
+  0 parts with Anchored off / CanCollide / CanTouch / CanQuery on / Massless off, lights + emitters only on Dragon / Phoenix
+  (1 + 1), label 0.5 above the scaled top. Followers in the owner's frame (AABB over all parts): Fox + Cat + Dragon Lv 20
+  min separation **1.31**; three Dragons Lv 20 (widest) **0.60**; Phoenix + Fox + Dragon 1.26; mixed levels 0.74; old
+  attribute form `Cat:1,Dog:3` works; owner-to-pet front clearance ≥ 1.5 studs everywhere; undersides −1.98…−2.00 at every
+  level (lift works). Pens (server): Dragon Lv 20 pen model 3.90 × 4.66 × 5.84 = the follower's, Cat Lv 3 1.063 ×, Dragon Lv 1
+  1.000 ×, all standing on the pad (underside − pad top = 0), 0 flag violations, glow present, labels unchanged. WalkSpeed
+  20.80 / JumpHeight 7.20 identical with no pets and with three Lv 20 Dragons. Camera fade: modifier 0 at 20 and 9 studs,
+  0.49 at 6, 0.82 at 4, 0.85 at 3, 0 again at 30; the invisible Root stays at transparency 1. Run mode: fired
+  `StageTimerUpdate(5, …)` → pets at z 7.8 / 8.8 (was 3.8 / 4.8) with modifier 0.59–0.68; `(-1)` → back to normal in 2 s.
+  Consoles: only UIBlox "FoundationProvider" warnings. User visual check: pets visibly bigger with level, no overlap,
+  garden pens match, view clear during runs with run mode. Not covered: multi-client, a real stage run, touch-part
+  controls (flags verified structurally; the pets are client-only parts, as validated in P1c). Live profile restored exactly to
+  the snapshot (Coins back to 83; the garden join payout had raised them during the test).
 
 ### M3 — Stage unlocks
 - **Inputs:** `StageConfig.unlock` / `unlockPrice` (GDD §3: Stage 2 = Silver on Stage 1 or 150 Coins, Stage 3 = Silver on

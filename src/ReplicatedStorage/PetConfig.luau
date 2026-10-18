@@ -84,7 +84,9 @@ PetConfig.MaxPets = 50 -- inventory cap
 PetConfig.MaxLevel = 20
 PetConfig.LevelBonus = 5 -- permille per level above 1
 PetConfig.MaxBonus = 500 -- cap on the summed bonus of equipped pets (+50 %)
-PetConfig.AttributeName = "EquippedPets" -- player attribute "Kind:Level,…" of the equipped pets (P1c)
+PetConfig.AttributeName = "EquippedPets" -- player attribute "Kind:Level:uid,…" of the equipped pets (P1c, uid since P1e1)
+PetConfig.MaxScale = 1.6 -- model size at MaxLevel relative to Lv 1 (PetLook.Scale, P1e1)
+PetConfig.Tiers = { 5, 10, 15, 20 } -- first level of look tiers 1..4 (PetLook.Tier)
 
 function PetConfig.RarityOf(kind: string): Rarity?
 	local rarityId = PetConfig.Kinds[kind]
@@ -97,6 +99,53 @@ function PetConfig.ClampLevel(level: any): number
 		return 1
 	end
 	return math.clamp(math.floor(level), 1, PetConfig.MaxLevel)
+end
+
+-- Look tier of a level: 0 below Tiers[1], then one more per reached threshold (Lv 5 / 10 / 15 / 20 → 1 / 2 / 3 / 4).
+function PetConfig.TierOf(level: number): number
+	local tier = 0
+	for _, first in PetConfig.Tiers do
+		if PetConfig.ClampLevel(level) >= first then
+			tier += 1
+		end
+	end
+	return tier
+end
+
+-- Size factor of a level: 1 at Lv 1, MaxScale at MaxLevel, linear in between.
+function PetConfig.ScaleOf(level: number): number
+	return 1 + (PetConfig.MaxScale - 1) * (PetConfig.ClampLevel(level) - 1) / (PetConfig.MaxLevel - 1)
+end
+
+export type EquippedEntry = { kind: string, level: number, uid: string?, key: string }
+
+-- Text of the EquippedPets attribute for a list of { Kind, Level, uid } records: "Cat:1:3,Dog:20:7".
+function PetConfig.EncodeEquipped(pets: { { Kind: string, Level: number, uid: string } }): string
+	local parts = {}
+	for _, pet in pets do
+		table.insert(parts, pet.Kind .. ":" .. PetConfig.ClampLevel(pet.Level) .. ":" .. pet.uid)
+	end
+	return table.concat(parts, ",")
+end
+
+-- Parses the EquippedPets attribute: "Kind:Level:uid" and the pre-P1e1 form "Kind:Level" (uid = nil). Unknown kinds and
+-- malformed entries are skipped, levels are clamped. `key` identifies an entry (same key = same look).
+function PetConfig.DecodeEquipped(value: any): { EquippedEntry }
+	local list = {}
+	if type(value) ~= "string" then
+		return list
+	end
+	for entry in string.gmatch(value, "[^,]+") do
+		local kind, level, uid = string.match(entry, "^(%w+):(%d+):([%w_%-]+)$")
+		if not kind then
+			kind, level = string.match(entry, "^(%w+):(%d+)$")
+		end
+		if kind and PetConfig.RarityOf(kind) then
+			local clamped = PetConfig.ClampLevel(tonumber(level))
+			table.insert(list, { kind = kind, level = clamped, uid = uid, key = kind .. ":" .. clamped .. ":" .. (uid or "") })
+		end
+	end
+	return list
 end
 
 -- Picks a pet from `eggId` using `rng` (a Random): rarity by weight, then a kind of that rarity uniformly.

@@ -259,6 +259,12 @@ The pets panel (top-left **🐶 Pets** button) lists the inventory, equipped pet
 shows as label colour and a glow (Epic, Legendary). Models live in `ReplicatedStorage.PetModels`, so real art can
 replace them later without code changes.
 
+**Growth (P1e1):** a pet's size follows its level, 1.0× at Lv 1 up to 1.6× at Lv 20 (linear), for followers and garden
+pens alike. The follower formation widens with the pets so they never overlap, and while the owner's stage timer runs
+their pets drop 4 studs further back and turn ghostly so the course stays visible; pets close to the camera fade out.
+More growth visuals (level-up burst, tier effects, individuality, accessories) are planned in
+[PET_GROWTH.md](PET_GROWTH.md).
+
 ### 7.6 Pet garden (minigame, P2)
 A free area reached by a portal from the central island, where pets are raised. Aimed at players who prefer
 collecting and caring over obby runs.
