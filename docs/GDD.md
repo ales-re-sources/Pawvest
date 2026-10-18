@@ -245,7 +245,7 @@ Levels are permanent. A pet at level 20 stops gaining XP.
 
 ### 7.5 Display
 Equipped pets float behind their owner and are visible to all players, with rarity colour and level on a small label.
-The pets panel (top-left **🐾 Pets** button) lists the inventory, equipped pets, slots, total bonus and XP bars.
+The pets panel (top-left **🐶 Pets** button) lists the inventory, equipped pets, slots, total bonus and XP bars.
 
 **Art (first version):** simple, cute blocky models built from parts, one per kind, in one consistent style; rarity
 shows as label colour and a glow (Epic, Legendary). Models live in `ReplicatedStorage.PetModels`, so real art can

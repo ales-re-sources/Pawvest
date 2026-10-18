@@ -36,7 +36,7 @@ Rules:
 | R1 | Repeat rewards + shared payout | ✔ | ✔ | – |
 | P1a | Pet data + economy | ✔ | ✔ | – |
 | R2 | Coin scale ×10 | ✔ | ✔ | – |
-| P1b | Egg stand + Pets panel | – | – | – |
+| P1b | Egg stand + Pets panel | ✔ | ✔ | – |
 | P1c | Pet models + following | – | – | – |
 | P1d | Pet XP + levels | – | – | – |
 | M3 | Stage unlocks | ✔ | ✔ | – |
@@ -359,13 +359,47 @@ P1a comes first; P1b, P1c and P1d each need only P1a and can follow in any order
 - **Inputs:** P1a remotes and `PetsChanged`, `PetConfig`, GDD §7.2, §7.5.
 - **Outputs:** `EggStand.client.luau` (ProximityPrompt → odds from `PetConfig` + price + confirm → hatch reveal;
   "open free egg" when one is waiting); `PetsPanel.client.luau` (code-built: inventory, equip / unequip, buy slot,
-  sell with confirmation, total bonus); **🐾 Pets** button in the top-left icons.
-- **Studio-only changes:** `EggStand` model on the hub (`StartLocation`) with a ProximityPrompt, built via MCP from parts;
-  the 🐾 button if it is not created by code.
+  sell with confirmation, total bonus); **🐶 Pets** button in the top-left icons (🐾 renders as a dark glyph on the dark
+  button, so the button uses 🐶).
+- **Studio-only changes:** `EggStand` model on the hub (`StartLocation`: Base / Step / Pedestal cylinders, `Egg` ball with
+  PointLight and the ProximityPrompt `Prompt` (E, hold 0, range 14), spots, sign) built via MCP at (−1047, 11.8, −452);
+  nothing else (the 🐶 button is cloned from the Skills button in code by `ButtonHandler`).
 - **Acceptance checks:** the odds shown equal `PetConfig` exactly; buying through the stand with enough Coins deducts
   exactly the price and the new pet appears in the open panel without reopening it; with too few Coins nothing is
   deducted and the stand says why; selling needs a second confirmation and pays exactly the sell value; a free egg is
   opened for 0 Coins.
+- **Design notes (2026-10-18):**
+  - One small server addition: `PetRemotes.RequestState` (no arguments, 0.2 s pet cooldown) only re-sends `PetsChanged`.
+    The server publishes the state once on join, which a client still loading (slow connection) would miss; the new
+    `PetClient` module requests it as soon as it listens. Nothing price-bearing was added.
+  - `PetClient.luau` (ModuleScript in StarterPlayerScripts) holds the shared client state (PetsChanged, leaderstats Coins,
+    sorted inventory); `EggStand` and `PetsPanel` only render it. The Pets panel is its own persistent ScreenGui
+    `PetsGui` (ResetOnSpawn off) with a `SetOpen` BindableEvent and an `Open` attribute; `ButtonHandler` (re-created
+    per respawn) clones the Skills button for 🐶 and keeps the panels exclusive (opening Pets closes the open slide-in
+    panel and vice versa). No outside-click closing for Pets (✕ or the 🐶 button), so the egg stand stays usable.
+  - Egg popup: odds rows are generated from `PetConfig.Eggs.Basic.weights` (`%g` of weight / total × 100) with the kinds of
+    each rarity; the price line switches to "free egg waiting: 0 Coins" while `freeEggs.Basic > 0`; the button sends only
+    `BuyEgg("Basic")`. The egg wobbles ≥ 0.9 s, then the result (kind in rarity colour, bonus, Epic / Legendary glow) is
+    shown; refusals are shown with the real numbers ("you need 500, you have 100"; full inventory). It closes itself
+    when the player walks 8 studs beyond the prompt range.
+  - Sell: first click turns the button into "Sure? +value" for 3 s, the second click sends `SellPet`; an equipped pet's
+    Sell shows "Unequip it before selling" without a request (the server refuses it too).
+
+- **Validation log (2026-10-18, solo playtest, API access on, uid 9892673032, stored v3 preset: 2 600 Coins, Dragon + Cat,
+  Dragon equipped, 1 slot, 1 free Basic egg; GUI driven with `user_mouse_input` instance paths, the stand with E):**
+  🐶 button at x = 250 (admin) opens the panel (Coin bonus +10 %, Equipped 1/1, Pets 2/50, "1 free egg waiting");
+  E near the stand opens the popup. Odds labels vs `PetConfig.Eggs.Basic.weights`: 60 / 25 / 11 / 3.5 / 0.5 % — all equal
+  (checked in code: `%g` of weight / 10 matches each label). Free egg → Cat, Coins stayed **2 600**, the Cat appeared in the
+  open panel without reopening (Pets 3/50) and the button switched to "Open egg: 500 Coins". Paid egg → Coins **2 100**
+  (exactly −500), new Cat (uid 4) in the panel at once. Buy slot (panel) → 100 Coins (−2 000), "Slot 2 unlocked", Equipped
+  1/2. Egg with 100 Coins → popup "Not enough Coins: you need 500, you have 100", Coins and pets unchanged. Sell: first
+  click → "Sure? +100", Coins unchanged; second click → Coins **200** (+100 exactly), pet gone, "Sold for 100 Coins". Equipped
+  Dragon's Sell → "Unequip it before selling" (no request). Equip Cat → attribute `Dragon:1,Cat:1`, bonus +12 %. Skills
+  button closes Pets and opens Skills. Walking away from the stand closes the popup. Stored after leaving: Coins 200,
+  3 pets, slots 2, equipped `2, 1`, `NextPetUid = 5`. Consoles: only Roblox's UIBlox "FoundationProvider" warnings (one
+  `execute_luau` typo of mine). Not covered: slow-client `RequestState` race (code path exercised on every join only),
+  multi-client, inventory cap, touch / mobile layout; the 🐾 → 🐶 and ✕ → X cosmetic edits came after the playtest.
+  Live profile restored exactly to the pre-test snapshot (v2, 1 Coin, free egg + launch flag; `p1b-snapshot.json`).
 
 ### P1c — Pet models + following
 - **Inputs:** `EquippedPets` attribute (P1a), GDD §7.5 (art: blocky placeholders).

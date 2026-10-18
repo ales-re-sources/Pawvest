@@ -63,6 +63,9 @@ src/
     HubPortalMedals.client.luau       own best-medal stars + lock requirement/price on each hub portal face (local SurfaceGuis)
     PortalBarriers.client.luau        invisible local wall in each locked hub portal (removed when Unlocked_<folder> turns true)
     StageUnlockPopup.client.luau      unlock popup after touching a locked hub portal (requirement, price, unlock button; GUI built in code)
+    PetClient.luau                    ModuleScript: client mirror of PetRemotes.PetsChanged + Coins (Inventory, Changed / Result signals); asks RequestState on load
+    EggStand.client.luau              egg stand popup (odds from PetConfig, price, open / free egg, hatch reveal); prompt on workspace.StartLocation.EggStand.Egg
+    PetsPanel.client.luau             Pets panel (own ScreenGui "PetsGui": inventory, equip, buy slot, sell with 2nd click, total bonus); opened by the 🐶 button
   StarterGui/
     CoinGui/CoinDisplayScript.client.luau        top-right coin counter
     ScreenGui/TopLeftIcons/ButtonHandler.client.luau  Home (🏠 go to hub) / Skills (⚡) / Settings / Admin buttons, slide-in panels (AdminConfig)
@@ -72,7 +75,7 @@ src/
     Handlers/                         ModuleScripts shared by all stage scripts (required via workspace.Handlers.*)
       CheckpointTouchHandler.luau     checkpoint touch → leaderstats.Stage, respawn point, sound
       PlayerTimerHandler.luau         stage timers (os.clock), personal bests (profile), global Top-10, score panel
-    StartLocation/                    hub: SpawnLocation + TeleportToStage1..3 portals
+    StartLocation/                    hub: SpawnLocation + TeleportToStage1..3 portals + EggStand model (Studio-only: Egg part with ProximityPrompt "Prompt")
     Stage1/ Stage2/ Stage3/ Tutorial/ stages (see below)
     DebugBaseplate/                   kill brick under the map
 ```
@@ -126,7 +129,7 @@ RemoteEvents (in `ReplicatedStorage`; first three exist only in Studio, not in f
 | `GoHome` | client → server, no arguments | Home button; created at runtime by `HomeService`, 3 s cooldown, server teleports + cancels the timer |
 | `TalentRemotes.Buy` / `.Result` | client → server `(talentId, expectedLevel)` / server → client `(talentId, ok, level or reason)` | created at runtime by `TalentService`; the price is never sent |
 | `UnlockRemotes.Buy` / `.Result` / `.Locked` | client → server `(stageKey)` / server → client `(stageKey, ok, reason?)` / server → client `(stageKey)` | created at runtime by `StageUnlocks`; price from `StageConfig.unlockPrice`; `Locked` opens the unlock popup |
-| `PetRemotes.BuyEgg` / `.Equip` / `.Unequip` / `.BuySlot` / `.SellPet` | client → server `(eggId)` / `(uid)` / `(uid)` / `(expectedSlot)` / `(uid)` | created at runtime by `PetService`; uids are strings; prices, rolls and sell values are server-side; a waiting free egg is opened first |
+| `PetRemotes.BuyEgg` / `.Equip` / `.Unequip` / `.BuySlot` / `.SellPet` / `.RequestState` | client → server `(eggId)` / `(uid)` / `(uid)` / `(expectedSlot)` / `(uid)` / no arguments | created at runtime by `PetService`; `RequestState` only re-sends `PetsChanged` (a client that was still loading misses the join publish); uids are strings; prices, rolls and sell values are server-side; a waiting free egg is opened first |
 | `PetRemotes.PetsChanged` / `.Result` | server → client `({ pets, equipped, slots, freeEggs, multiplier })` / `(action, ok, detail or reason)` | state after load and every change; per-request answer (hatch result, sale value, reject reason) |
 
 DataStores:

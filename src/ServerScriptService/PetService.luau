@@ -3,8 +3,9 @@
 -- PetConfig, so a forged request can never change what is charged, hatched or paid. State lives in PlayerProfile
 -- (Pets, EquippedPets, PetSlots, NextPetUid, FreeEggs, LaunchEgg).
 -- Remotes are created here in ReplicatedStorage.PetRemotes: BuyEgg(eggId), Equip(uid), Unequip(uid),
--- BuySlot(expectedSlot), SellPet(uid) (client → server); PetsChanged(state) and Result(action, ok, detailOrReason)
--- (server → client). The equipped pets are mirrored to the EquippedPets player attribute ("Kind:Level,…").
+-- BuySlot(expectedSlot), SellPet(uid), RequestState() (client → server); PetsChanged(state) and
+-- Result(action, ok, detailOrReason) (server → client). The equipped pets are mirrored to the EquippedPets player
+-- attribute ("Kind:Level,…").
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -29,6 +30,7 @@ local equipEvent = remote("Equip") -- client → server: (uid: string)
 local unequipEvent = remote("Unequip") -- client → server: (uid: string)
 local buySlotEvent = remote("BuySlot") -- client → server: (expectedSlot: number)
 local sellEvent = remote("SellPet") -- client → server: (uid: string)
+local requestStateEvent = remote("RequestState") -- client → server, no arguments: resend the state (join publish may be missed)
 local changedEvent = remote("PetsChanged") -- server → client: (state)
 local resultEvent = remote("Result") -- server → client: (action, ok: boolean, detailOrReason)
 remotes.Parent = ReplicatedStorage
@@ -177,6 +179,12 @@ buyEggEvent.OnServerEvent:Connect(function(player, eggId)
 	profile.Pets[uid] = { Kind = kind, Level = 1, XP = 0 }
 	succeed(player, "BuyEgg", { uid = uid, kind = kind, free = free })
 	task.spawn(PlayerProfile.Save, player) -- spent Coins (or the free egg) and the pet are saved together
+end)
+
+requestStateEvent.OnServerEvent:Connect(function(player)
+	if allow(player) then
+		publish(player) -- does nothing while the profile is loading: setup publishes once it is
+	end
 end)
 
 equipEvent.OnServerEvent:Connect(function(player, uid)

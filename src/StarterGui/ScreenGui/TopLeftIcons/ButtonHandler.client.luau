@@ -29,6 +29,16 @@ local adminPanel = screenGui.Parent:WaitForChild("AdminPanel")
 local skillsPanel = screenGui.Parent:WaitForChild("SkillsPanel")
 local settingsPanel = screenGui.Parent:WaitForChild("SettingsPanel")
 
+-- 🐶 Pets button: created here (a copy of the Skills button, so no Studio edit). The panel itself is built by
+-- PetsPanel.client.luau in its own ScreenGui "PetsGui" and opened through its SetOpen event / Open attribute.
+local petsButton = skillsButton:Clone()
+petsButton.Name = "PetsButton"
+petsButton.Text = "🐶"
+petsButton.Position = UDim2.new(0, if AdminConfig.IsAdmin(player.UserId) then 250 else 190, 0, 20)
+petsButton.Parent = screenGui
+local petsGui = playerGui:WaitForChild("PetsGui", 10)
+local petsSetOpen = petsGui and petsGui:WaitForChild("SetOpen", 10)
+
 local function isAdminUser(userId)
 	return AdminConfig.IsAdmin(userId)
 end
@@ -61,12 +71,23 @@ end
 createHoverEffect(homeButton)
 createHoverEffect(skillsButton)
 createHoverEffect(settingsButton)
+createHoverEffect(petsButton)
 
 
 -- Panel state tracking
 local isPanelOpen = false
 -- The skills panel is visible from the start, so it counts as the open panel (opening another one closes it)
 local lastOpenPanel = skillsPanel.Visible and skillsPanel or nil
+
+local function petsOpen()
+	return petsGui ~= nil and petsGui:GetAttribute("Open") == true
+end
+
+local function closePets()
+	if petsSetOpen and petsOpen() then
+		petsSetOpen:Fire(false)
+	end
+end
 
 local function closePanel(panel)
 	if not lastOpenPanel then return end
@@ -90,6 +111,7 @@ local function openPanel(panel)
 		closePanel(lastOpenPanel)
 	end
 	
+	closePets()
 	lastOpenPanel = panel
 
 	panel.Visible = true
@@ -107,6 +129,20 @@ end
 local goHomeEvent = ReplicatedStorage:WaitForChild("GoHome")
 homeButton.MouseButton1Click:Connect(function()
 	goHomeEvent:FireServer()
+end)
+
+petsButton.MouseButton1Click:Connect(function()
+	if not petsSetOpen then
+		return
+	end
+	if petsOpen() then
+		petsSetOpen:Fire(false)
+	else
+		if lastOpenPanel then
+			closePanel(lastOpenPanel)
+		end
+		petsSetOpen:Fire(true)
+	end
 end)
 
 skillsButton.MouseButton1Click:Connect(function()
