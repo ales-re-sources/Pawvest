@@ -201,19 +201,21 @@ Every pet is an individual (own level and XP), identified by a unique id per pla
 A pet can be **sold** back for its sell value (irreversible).
 
 ### 7.2 Eggs
-Eggs are opened at an **egg stand** on the central island and hatch instantly with a random pet.
-The odds are always shown before buying.
+Every egg hatches in an **incubator** of the player's garden plot (§7.6) in real time, also while the player is offline.
+There is no egg stand on the central island (removed 2026-10-18). The odds are always shown before buying.
 
 | Egg | Price | Common | Uncommon | Rare | Epic | Legendary | Where |
 |---|---|---|---|---|---|---|---|
-| Basic egg | 500 | 60 % | 25 % | 11 % | 3.5 % | 0.5 % | egg stand (hub), instant |
-| Golden egg | 4 000 | – | 45 % | 35 % | 15 % | 5 % | pet garden incubator, hatches in 1 hour of real time (§7.6) |
+| Basic egg | 500 | 60 % | 25 % | 11 % | 3.5 % | 0.5 % | garden incubator, hatches in 5 minutes |
+| Golden egg | 4 000 | – | 45 % | 35 % | 15 % | 5 % | garden incubator, hatches in 1 hour |
 
 Free eggs:
 - one Basic egg on the first join after pets launch (also for existing players),
 - one Basic egg for the **first Gold on each stage** (4 in total).
 
-Free eggs wait in the profile until claimed at the egg stand.
+A free egg starts by itself (no Coins) in the lowest empty incubator as soon as one is empty: on join, when the egg is
+earned, after a hatch and after an incubator is bought. While every incubator is busy (or the inventory cap is reached) it
+waits in the profile; the Pets panel and the incubator panel show how many wait.
 
 ### 7.3 Slots and Coin bonus
 Up to 3 pets can be **equipped** (follow the player, count for the bonus). A newly hatched pet is equipped
@@ -262,7 +264,7 @@ A free area reached by a portal from the central island, where pets are raised. 
 collecting and caring over obby runs.
 - **Where.** A separate island in the same place (not a separate place): a garden portal on the central island and a
   return portal on the garden.
-- **Layout.** A central plaza (food shop; later a twin of the egg stand) surrounded by a ring of **12 plots**, about
+- **Layout.** A central plaza (food shop) surrounded by a ring of **12 plots**, about
   40 × 40 studs each, with an owner name sign, pens and incubators. Servers hold **12 players** (one plot per slot).
 - **Personal plot.** A player borrows a free plot while online: it is assigned on join, built from the profile, and
   released on leave. The plot's contents are saved in the profile and restored on any server. Production runs on server
@@ -286,10 +288,11 @@ collecting and caring over obby runs.
   5 minutes while the owner is online, whenever the pens change (placing, removing, buying a pen settles first, so a
   pen never earns for time it was empty) and on join. Fractions of a Coin carry over, so the total over any split of
   time equals the exact production. The bonus is rounded per payout, which is why payouts are batched.
-- **Incubators.** Garden eggs (Golden egg and better) hatch in real time and keep hatching offline. Each plot has
-  **3 incubators**, unlocked in order for 0 / 5 000 / 12 000 Coins (incubator 1 free; 17 000 in total). A Golden egg is
-  bought at an empty incubator of the player's own plot (4 000 Coins) and is ready **1 hour** of server time later. A ready
-  egg waits until the owner taps **Hatch** (a reveal like the egg stand); the pet is rolled then and equipped automatically
+- **Incubators.** Every egg hatches here, in real time, and keeps hatching offline. Each plot has
+  **3 incubators**, unlocked in order for 0 / 5 000 / 12 000 Coins (incubator 1 free; 17 000 in total). An egg is
+  bought at an empty incubator of the player's own plot (Basic 500 Coins, ready **5 minutes** later; Golden 4 000 Coins,
+  ready **1 hour** later, server time); free eggs start there by themselves (§7.2). A ready
+  egg waits until the owner taps **Hatch** (with a reveal); the pet is rolled then and equipped automatically
   when a slot is free (§7.3). An egg can only be started while the pets plus the eggs already incubating stay below the
   inventory cap (50), and a ready egg does not hatch into a full inventory (it waits). Other players see the eggs and their
   countdown but cannot use them.

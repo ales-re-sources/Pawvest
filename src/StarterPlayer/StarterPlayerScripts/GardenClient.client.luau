@@ -139,7 +139,7 @@ local emptyLabel = label("Empty", {
 	TextSize = 15,
 	TextColor3 = COLOR_INFO,
 	TextWrapped = true,
-	Text = "No free pets. Hatch one at the egg stand, or unequip one in the Pets panel.",
+	Text = "No free pets. Hatch one in an incubator, or unequip one in the Pets panel.",
 	Visible = false,
 })
 local footerLabel = label("Footer", {

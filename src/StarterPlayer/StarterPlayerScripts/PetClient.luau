@@ -1,4 +1,4 @@
--- PetClient: shared client-side pet state for the egg stand popup and the Pets panel (P1b).
+-- PetClient: shared client-side pet state for the Pets panel and the garden panels (P1b).
 -- Display only: it mirrors PetRemotes.PetsChanged and the leaderstats Coins; every action is a request the server
 -- validates and prices (PetService). The server publishes the state once on join, which a client that is still
 -- loading would miss, so this module asks for it with PetRemotes.RequestState as soon as it is listening.

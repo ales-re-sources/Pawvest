@@ -63,7 +63,7 @@ src/
     Garden.server.luau                garden boot: requires GardenPlots + GardenService + GardenIncubators + GardenFood, hub portal TeleportToGarden -> Garden.Arrival, Garden.ReturnPortal -> hub (cancels the timer)
     GardenPlots.luau                  borrows one of 12 plots per player on join / releases on leave: player attribute GardenPlot, plot attributes OwnerUserId / OwnerName, sign text; PlotChanged
     GardenService.luau                pens + production: profile Garden, GardenRemotes (Place / Remove / BuyPen / RequestState; State / Result / Payout), settle on join (8 h cap) / every 5 min / before every pen change, draws pens + pet models into the plots; hooks for sibling modules (Remote, Allow, Reject, Succeed, Usable, SettleAndNotify, PublishAll, AddStateField, AddRenderer)
-    GardenIncubators.luau             incubators (P2b1): StartEgg / Hatch / BuyIncubator remotes, Golden eggs hatch at server os.time() ReadyAt (also offline), roll at Hatch, inventory cap counts incubating eggs; draws Incubator_n attributes State / Egg / ReadyAt
+    GardenIncubators.luau             incubators (P2b1, P2b3): the only place eggs hatch; StartEgg(incubator, eggId) / Hatch / BuyIncubator remotes, Basic / Golden eggs hatch at server os.time() ReadyAt (also offline), roll at Hatch, inventory cap counts incubating eggs; starts waiting FreeEggs in empty incubators; draws Incubator_n attributes State / Egg / ReadyAt
     GardenFood.luau                   food stand (P2b2): Feed(uid, foodId) remote near Garden.FoodStand, price + XP from GardenConfig.Foods, only the fed pet levels, Lv 20 rejected, penned pets settled first
     TalentService.server.luau         talent purchases (Buy remote, server-priced), levels → profile + Talent_<id> attributes, WalkSpeed/jump on spawn
     CoinSystem.server.luau            leaderstats (Stage, Coins) mirrored from profile, CoinUpdateEvent
@@ -79,11 +79,10 @@ src/
     PortalBarriers.client.luau        invisible local wall in each locked hub portal (removed when Unlocked_<folder> turns true)
     StageUnlockPopup.client.luau      unlock popup after touching a locked hub portal (requirement, price, unlock button; GUI built in code)
     PetClient.luau                    ModuleScript: client mirror of PetRemotes.PetsChanged + Coins (Inventory, Changed / Result signals); asks RequestState on load
-    EggStand.client.luau              egg stand popup (odds from PetConfig, price, open / free egg, hatch reveal); prompt on workspace.StartLocation.EggStand.Egg
     PetsPanel.client.luau             Pets panel (own ScreenGui "PetsGui": inventory with level + XP, equip, buy slot, sell with 2nd click, total bonus); opened by the 🐶 button
     PetFollow.client.luau             renders every player's equipped pets (EquippedPets attribute) from PetModels: local folder workspace.PetFollowers, one smoothed anchor per owner, "Kind Lv N" label, Epic/Legendary glow
     GardenClient.client.luau          garden: pen prompts (own plot only), pen panel (unlock / place / remove), "while you were away" popup, payout toast; GUI built in code; test hook: ScreenGui attribute OpenPen
-    IncubatorClient.client.luau       incubator prompts (own plot only), incubator panel (unlock / start a Golden egg / countdown / Hatch + reveal), countdown labels on every plot from ReadyAt + GetServerTimeNow; test hook: IncubatorGui attribute OpenIncubator
+    IncubatorClient.client.luau       incubator prompts (own plot only), incubator panel (unlock / start a Basic or Golden egg / free eggs waiting / countdown / Hatch + reveal), countdown labels on every plot from ReadyAt + GetServerTimeNow; test hook: IncubatorGui attribute OpenIncubator
     FoodShopClient.client.luau        food stand panel (every pet with level, XP, XP to Lv 20; one feed button per food); test hook: FoodShopGui attribute Open
   StarterGui/
     CoinGui/CoinDisplayScript.client.luau        top-right coin counter
@@ -94,7 +93,7 @@ src/
     Handlers/                         ModuleScripts shared by all stage scripts (required via workspace.Handlers.*)
       CheckpointTouchHandler.luau     checkpoint touch → leaderstats.Stage, respawn point, sound
       PlayerTimerHandler.luau         stage timers (os.clock), personal bests (profile), global Top-10, score panel
-    StartLocation/                    hub: SpawnLocation + TeleportToStage1..3 portals + EggStand model (Studio-only: Egg part with ProximityPrompt "Prompt") + StarsLeaderboard (Studio-only board model, no scripts; drawn by StarsBoard.server.luau beside it)
+    StartLocation/                    hub: SpawnLocation + TeleportToStage1..3 portals + StarsLeaderboard (Studio-only board model, no scripts; drawn by StarsBoard.server.luau beside it)
     Stage1/ Stage2/ Stage3/ Tutorial/ stages (see below)
     <Stage>/ChallengeCoins            Studio-only Folder (every stage): Coin_<n> MeshParts tagged ChallengeCoin with attribute CoinId (ids listed in ROADMAP M4 / M4.1)
     DebugBaseplate/                   kill brick under the map
@@ -151,10 +150,10 @@ RemoteEvents (in `ReplicatedStorage`; first three exist only in Studio, not in f
 | `GoHome` | client → server, no arguments | Home button; created at runtime by `HomeService`, 3 s cooldown, server teleports + cancels the timer |
 | `TalentRemotes.Buy` / `.Result` | client → server `(talentId, expectedLevel)` / server → client `(talentId, ok, level or reason)` | created at runtime by `TalentService`; the price is never sent |
 | `UnlockRemotes.Buy` / `.Result` / `.Locked` | client → server `(stageKey)` / server → client `(stageKey, ok, reason?)` / server → client `(stageKey)` | created at runtime by `StageUnlocks`; price from `StageConfig.unlockPrice`; `Locked` opens the unlock popup |
-| `PetRemotes.BuyEgg` / `.Equip` / `.Unequip` / `.BuySlot` / `.SellPet` / `.RequestState` | client → server `(eggId)` / `(uid)` / `(uid)` / `(expectedSlot)` / `(uid)` / no arguments | created at runtime by `PetService`; `RequestState` only re-sends `PetsChanged` (a client that was still loading misses the join publish); uids are strings; prices, rolls and sell values are server-side; a waiting free egg is opened first |
+| `PetRemotes.Equip` / `.Unequip` / `.BuySlot` / `.SellPet` / `.RequestState` | client → server `(uid)` / `(uid)` / `(expectedSlot)` / `(uid)` / no arguments | created at runtime by `PetService`; `RequestState` only re-sends `PetsChanged` (a client that was still loading misses the join publish); uids are strings; prices and sell values are server-side. No egg remote here: eggs hatch only in the garden (`GardenRemotes.StartEgg`) |
 | `PetRemotes.PetsChanged` / `.Result` | server → client `({ pets, equipped, slots, freeEggs, multiplier })` / `(action, ok, detail or reason)` | state after load and every change; per-request answer (hatch result, sale value, reject reason) |
 | `GardenRemotes.Place` / `.Remove` / `.BuyPen` / `.RequestState` | client → server `(penIndex, uid)` / `(penIndex)` / `(expectedPen)` / no arguments | created at runtime by `GardenService`; the plot is derived from the caller (must stand within 45 studs of it); prices from `GardenConfig.PenPrices`; no remote carries a time |
-| `GardenRemotes.StartEgg` / `.Hatch` / `.BuyIncubator` / `.Feed` | client → server `(incubator)` / `(incubator)` / `(expectedIncubator)` / `(uid, foodId)` | created at runtime by `GardenIncubators` / `GardenFood`; prices from `PetConfig.Eggs.Golden` / `GardenConfig.IncubatorPrices` / `GardenConfig.Foods`; hatch time checked against server `os.time()`; answers on `GardenRemotes.Result` |
+| `GardenRemotes.StartEgg` / `.Hatch` / `.BuyIncubator` / `.Feed` | client → server `(incubator, eggId)` / `(incubator)` / `(expectedIncubator)` / `(uid, foodId)` | created at runtime by `GardenIncubators` / `GardenFood`; prices from `PetConfig.Eggs` / `GardenConfig.IncubatorPrices` / `GardenConfig.Foods`; hatch time checked against server `os.time()`; answers on `GardenRemotes.Result` |
 | `GardenRemotes.State` / `.Result` / `.Payout` | server → client `({ pens, penCount, rate, incubators = { count, eggs = { ["n"] = { egg, readyAt } } } })` / `(action, ok, detail or reason)` / `({ id, seconds, base, paid, capped, away })` | `away = true` is the join payout (popup, re-sent on `RequestState`, shown once per `id`), otherwise a toast |
 
 DataStores:

@@ -1,5 +1,5 @@
 -- Results popup after a finished run (docs/GDD.md §4–5): time, record, medal of the run, medal payout, repeat reward,
--- pet XP (§7.4), next goal.
+-- pet XP (§7.4), free egg of the first Gold (§7.2), next goal.
 -- Driven by the finish message StageTimerUpdate(-1, final, result); the GUI is built here, not in Studio.
 
 local Players = game:GetService("Players")
@@ -8,6 +8,7 @@ local StageTimerUpdate = ReplicatedStorage:WaitForChild("StageTimerUpdate")
 local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
 local MedalText = require(ReplicatedStorage:WaitForChild("MedalText"))
+local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 
 local SHOW_SECONDS = 7
 local DIM = "#5A5A5A"
@@ -66,10 +67,12 @@ local medalLabel = addLine("Medal", 5, 18)
 local coinsLabel = addLine("Coins", 6, 22)
 local runLabel = addLine("RunReward", 7, 18)
 local petLabel = addLine("PetXp", 8, 16)
-local nextLabel = addLine("Next", 9, 16)
+local eggLabel = addLine("FreeEgg", 9, 16)
+local nextLabel = addLine("Next", 10, 16)
 coinsLabel.TextColor3 = Color3.fromRGB(120, 230, 120)
 runLabel.TextColor3 = Color3.fromRGB(120, 230, 120)
 petLabel.TextColor3 = Color3.fromRGB(180, 150, 255)
+eggLabel.TextColor3 = Color3.fromRGB(255, 215, 90)
 nextLabel.TextColor3 = Color3.fromRGB(190, 190, 190)
 
 local showGeneration = 0
@@ -95,6 +98,9 @@ local function show(result)
 	local petXp = result.petXp or 0
 	petLabel.Visible = petXp > 0 and (result.petsLeveled or 0) > 0
 	petLabel.Text = string.format("Pets +%d XP (%d from moving)", petXp, result.moveXp or 0)
+	local freeEgg = PetConfig.Eggs[result.freeEgg or ""]
+	eggLabel.Visible = freeEgg ~= nil
+	eggLabel.Text = if freeEgg then "🎁 Free " .. freeEgg.name .. " → your incubator" else ""
 	if result.nextMedal and result.nextThreshold then
 		nextLabel.Text = string.format("Next: %s under %s",
 			StageConfig.Medals[result.nextMedal].name, TimeFormat.Format(result.nextThreshold))

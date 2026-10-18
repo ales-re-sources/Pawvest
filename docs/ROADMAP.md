@@ -47,6 +47,7 @@ Rules:
 | P2a2 | Garden pens, production, offline income | ✔ | ✔ | – |
 | P2b1 | Garden incubators, Golden egg | ✔ | ✔ | – |
 | P2b2 | Garden feeding | ✔ | ✔ | – |
+| P2b3 | Eggs only in the garden (hub stand removed) | ✔ | ✔ | – |
 | P3 | Trading | – | – | – |
 | M6 | Balancing pass | – | – | – |
 | M7 | Monetization | deferred | | |
@@ -1073,6 +1074,43 @@ Shared design notes:
   the session (Coins 355 = 2 000 − 50 − 50 − 1 500 − 50 + 2 + 3). (6) consoles: UIBlox warnings, the DataStore queue notice and one error
   from my own test script only. Cleanup as in P2b1. Not covered: several clients at once, visual screenshots. Studio-only:
   `Workspace.Garden.FoodStand` — **save the place (Ctrl+S)**.
+
+#### P2b3 — Eggs only in the garden
+User request 2026-10-18: the hub egg stand is obsolete; every egg hatches in a garden incubator. Decisions (user): Basic eggs
+go through the incubators too; free eggs (launch egg, first Gold) start in an incubator by themselves. Basic hatch time
+**5 minutes** (my pick, `PetConfig.Eggs.Basic.hatchSeconds = 300`; easy to tune in M6).
+- **Outputs:**
+  - `PetConfig`: `stand` removed, every egg has `hatchSeconds`; `EggOrder = { "Basic", "Golden" }` (panel order).
+  - `PetService`: `BuyEgg` remote and handler removed; `FreeEggsChanged` signal (fired by `GrantFreeEgg` and the launch egg).
+  - `GardenService.AddSetupHook(fn)`: called after the join setup and after an admin reset.
+  - `GardenIncubators`: `StartEgg(incubator, eggId)` (any egg with `hatchSeconds`; malformed ids ignored); `startFreeEggs` puts
+    waiting `FreeEggs` into the lowest empty incubators while the inventory cap allows — from the setup hook, on
+    `FreeEggsChanged`, after a hatch and after an incubator is bought. A free egg is a normal incubator entry (no flag).
+  - `IncubatorClient`: an empty incubator lists both eggs (time + odds) with one button each ("Basic egg: 500",
+    "Golden egg: 4,000"); "🎁 N free eggs will start in the next empty incubator" while some wait.
+  - Pets panel "🎁 N free eggs waiting for an empty incubator"; results popup "🎁 Free Basic egg → your incubator" on a
+    first Gold; garden / food texts no longer mention the stand. `EggStand.client.luau` deleted.
+- **Studio-only changes:** `Workspace.StartLocation.EggStand` model deleted — **save the place (Ctrl+S)**.
+- **Acceptance checks:** no egg can be bought on the hub (no stand, no `BuyEgg` remote); a free egg starts in an empty
+  incubator at once and waits while all are busy; a hatch lets a waiting free egg start; paid Basic / Golden eggs cost
+  exactly their price; forged `StartEgg` requests change nothing; rejoin identical, no second launch egg.
+- **Validation log (2026-10-18, solo playtests, API access on, uid 9892673032, snapshot `p2b3-snapshot.json`):**
+  Playtest 1 (preset: 20 000 Coins, `LaunchEgg = false`, `FreeEggs = {Basic = 3}`, 3 incubators with a ready Golden egg
+  in 2, Tutorial at Silver): join → incubators 1 and 3 Basic (ready in 300 s), `FreeEggs = {Basic = 2}`;
+  `PetRemotes.BuyEgg` absent, hub `EggStand` absent. Tutorial Gold (0.6 s) → `freeEgg = "Basic"`, all busy → 3 waiting;
+  Pets panel "🎁 3 free eggs waiting for an empty incubator". Incubator 2 panel: Golden odds, "Ready to hatch!"; a real
+  click on Hatch → Epic Dragon (uid 28), and a waiting free egg started in incubator 2 at once (2 waiting). Stored after
+  leaving: as seen by the client (20 432 Coins, 3 Basic eggs, `FreeEggs = {Basic = 2}`). Playtest 2 (preset: no free
+  eggs, incubator 1 empty, a ready Basic egg in 3): empty panel lists "Basic egg · 5 min" (60 / 25 / 11 / 3.5 / 0.5 %) and
+  "Golden egg · 1 hour" (45 / 35 / 15 / 5 %) = `PetConfig` weights; `StartEgg(1)`, `(1, "Nope")`, `(1, 5)`, `(1, {…})`,
+  `("1", "Basic")` → no reply, nothing changed; real click "Basic egg: 500" → exactly −500, Basic in 1; Hatch in 3 →
+  reveal "You got a Dog (Common)!"; real click "Golden egg: 4,000" → exactly −4 000, Golden in 3 (ready in 3 600 s).
+  Admin Reset Score → fresh profile, the re-granted launch egg started in incubator 1 by itself (setup hook).
+  Playtest 3 (rejoin): same incubator egg and `ReadyAt`, no pets, no free eggs, no second launch egg. Consoles: UIBlox
+  warnings and two "DataStore request was added to queue" notices (several saves on the key within seconds: egg starts,
+  hatch, reset). Found + fixed: the popup's free-egg line was too wide (386 of 296 px), shortened after the playtest (measured 247 px). Not covered: inventory
+  cap with waiting free eggs, several clients at once, visual screenshots. Live profile, all four boards and MostStars
+  (12) restored exactly.
 
 ### P3 — Trading
 - **Prerequisite:** profile session locking in `PlayerProfile` (`UpdateAsync` with a `{ JobId, Time }` lock instead of

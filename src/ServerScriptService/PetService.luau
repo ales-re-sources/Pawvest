@@ -1,12 +1,13 @@
--- PetService: pet inventory, eggs, equip slots and the pet Coin multiplier (docs/GDD.md §7.1–7.3). Server-only.
--- The client only names what it wants (egg id, pet uid, expected slot); prices, rolls and sell values come from
--- PetConfig, so a forged request can never change what is charged, hatched or paid. State lives in PlayerProfile
+-- PetService: pet inventory, free eggs, equip slots and the pet Coin multiplier (docs/GDD.md §7.1–7.3). Server-only.
+-- Eggs are hatched only in the garden incubators (GardenIncubators). The client only names what it wants (pet uid,
+-- expected slot); prices and sell values come from PetConfig, so a forged request can never change what is charged or
+-- paid. State lives in PlayerProfile
 -- (Pets, EquippedPets, PetSlots, NextPetUid, FreeEggs, LaunchEgg).
--- Remotes are created here in ReplicatedStorage.PetRemotes: BuyEgg(eggId), Equip(uid), Unequip(uid),
+-- Remotes are created here in ReplicatedStorage.PetRemotes: Equip(uid), Unequip(uid),
 -- BuySlot(expectedSlot), SellPet(uid), RequestState() (client → server); PetsChanged(state) and
 -- Result(action, ok, detailOrReason) (server → client). The equipped pets are mirrored to the EquippedPets player
 -- attribute ("Kind:Level,…"). AddXP levels the equipped pets (stage finishes, coins, movement during a run). AddPet is the
--- shared "new pet" step of every egg (stand eggs here, garden incubators in GardenIncubators).
+-- "new pet" step of every hatched egg; free eggs wait in FreeEggs until GardenIncubators places them (FreeEggsChanged).
 -- A pet is either equipped or in a garden pen (P2a2), never both: Equip and SellPet reject a penned pet, and the garden
 -- (GardenService) rejects an equipped one; PetsChanged.penned maps each penned uid to its pen index.
 
@@ -29,7 +30,6 @@ local function remote(name: string): RemoteEvent
 	event.Parent = remotes
 	return event
 end
-local buyEggEvent = remote("BuyEgg") -- client → server: (eggId: string)
 local equipEvent = remote("Equip") -- client → server: (uid: string)
 local unequipEvent = remote("Unequip") -- client → server: (uid: string)
 local buySlotEvent = remote("BuySlot") -- client → server: (expectedSlot: number)
@@ -39,7 +39,6 @@ local changedEvent = remote("PetsChanged") -- server → client: (state)
 local resultEvent = remote("Result") -- server → client: (action, ok: boolean, detailOrReason)
 remotes.Parent = ReplicatedStorage
 
-local rng = Random.new()
 local lastRequest = {} -- [Player] = os.clock() of the last accepted request
 
 local PetService = {}
@@ -107,7 +106,12 @@ end
 -- Re-sends the state after another system (the garden) changed which pets are penned.
 PetService.Publish = publish
 
--- Adds a free egg waiting to be opened at the egg stand (first Gold, launch egg). False if the profile is not loaded.
+-- Fires (player) when a free egg was added to FreeEggs; GardenIncubators moves waiting free eggs into empty incubators.
+local freeEggsChanged = Instance.new("BindableEvent")
+PetService.FreeEggsChanged = freeEggsChanged.Event
+
+-- Adds a free egg (first Gold, launch egg); it waits in FreeEggs until an incubator is empty (GardenIncubators places
+-- it). False if the profile is not loaded.
 function PetService.GrantFreeEgg(player: Player, eggId: string): boolean
 	local profile = PlayerProfile.Get(player)
 	if not (profile and PetConfig.Eggs[eggId]) then
@@ -115,6 +119,7 @@ function PetService.GrantFreeEgg(player: Player, eggId: string): boolean
 	end
 	profile.FreeEggs[eggId] = (profile.FreeEggs[eggId] or 0) + 1
 	publish(player)
+	freeEggsChanged:Fire(player)
 	return true
 end
 
@@ -186,6 +191,7 @@ local function setup(player: Player)
 		task.spawn(PlayerProfile.Save, player)
 	end
 	publish(player)
+	freeEggsChanged:Fire(player)
 end
 
 -- Per-player rate limit shared by all pet remotes; true if the request may proceed.
@@ -206,40 +212,6 @@ local function succeed(player: Player, action: string, detail: any)
 	publish(player)
 	resultEvent:FireClient(player, action, true, detail)
 end
-
-buyEggEvent.OnServerEvent:Connect(function(player, eggId)
-	if type(eggId) ~= "string" then
-		return
-	end
-	local egg = PetConfig.Eggs[eggId]
-	if not (egg and egg.stand) or not allow(player) then
-		return
-	end
-	local profile = PlayerProfile.Get(player)
-	if not profile then
-		return reject(player, "BuyEgg", "loading")
-	end
-	if petCount(profile) >= PetConfig.MaxPets then
-		return reject(player, "BuyEgg", "full")
-	end
-	local free = (profile.FreeEggs[eggId] or 0) > 0
-	if not free and profile.Coins < egg.price then
-		return reject(player, "BuyEgg", "coins")
-	end
-
-	local kind = PetConfig.Roll(eggId, rng)
-	if free then
-		profile.FreeEggs[eggId] -= 1
-		if profile.FreeEggs[eggId] == 0 then
-			profile.FreeEggs[eggId] = nil
-		end
-	else
-		PlayerProfile.AddCoins(player, -egg.price)
-	end
-	local uid, equipped = PetService.AddPet(player, kind) -- a new pet takes a free slot at once (GDD §7.3)
-	succeed(player, "BuyEgg", { uid = uid, kind = kind, free = free, equipped = equipped })
-	task.spawn(PlayerProfile.Save, player) -- spent Coins (or the free egg) and the pet are saved together
-end)
 
 requestStateEvent.OnServerEvent:Connect(function(player)
 	if allow(player) then

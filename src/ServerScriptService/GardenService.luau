@@ -71,6 +71,12 @@ function GardenService.AddRenderer(fn: (number, Model, any) -> ())
 	table.insert(renderers, fn)
 end
 
+-- Calls fn(player) once the garden of a joining player (or a reset profile) is cleaned and published.
+local setupHooks = {}
+function GardenService.AddSetupHook(fn: (Player) -> ())
+	table.insert(setupHooks, fn)
+end
+
 -- Cleans whatever is stored: pen count, carry, LastSeen, and pens that name a missing, duplicate or out-of-range pet.
 local function sanitize(profile)
 	local garden = profile.Garden
@@ -472,6 +478,9 @@ local function setup(player: Player)
 	end
 	publishState(player)
 	renderPlayer(player)
+	for _, fn in setupHooks do
+		fn(player)
+	end
 end
 
 -- Admin reset replaced the profile: start the garden over from now.
@@ -482,6 +491,9 @@ PlayerProfile.ProfileReset:Connect(function(player)
 		profile.Garden.LastSeen = os.time()
 		pendingPayout[player] = nil
 		publishAll(player)
+		for _, fn in setupHooks do
+			fn(player)
+		end
 	end
 end)
 

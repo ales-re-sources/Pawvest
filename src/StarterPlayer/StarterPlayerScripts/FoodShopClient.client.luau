@@ -124,7 +124,7 @@ local emptyLabel = label("Empty", {
 	TextSize = 15,
 	TextColor3 = COLOR_INFO,
 	TextWrapped = true,
-	Text = "You have no pets yet. Hatch one at the egg stand.",
+	Text = "You have no pets yet. Hatch one in your incubator.",
 	Visible = false,
 })
 

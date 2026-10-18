@@ -1,10 +1,14 @@
--- GardenIncubators: garden eggs (Golden egg) hatching in each player's plot (docs/GDD.md §7.2, §7.6; P2b1). Server-only.
+-- GardenIncubators: every egg (Basic, Golden) hatches in an incubator of the player's plot (docs/GDD.md §7.2, §7.6;
+-- P2b1, P2b3). Server-only.
 -- State lives in PlayerProfile.Garden: Incubators["1".."3"] = { Egg, StartedAt, ReadyAt } and IncubatorCount (owned
 -- incubators, unlocked in order). StartedAt / ReadyAt are the server's os.time() when the egg was started / is due. The
 -- client only names an incubator (or the next one to buy), so no request carries a time or a price. Nothing runs while an
 -- egg incubates: Hatch compares ReadyAt with os.time(), so the egg also hatches while the owner is offline. The pet is
 -- rolled at Hatch and joins the inventory through PetService.AddPet (auto-equip into a free slot).
--- Remotes (in GardenRemotes): StartEgg(incubator), Hatch(incubator), BuyIncubator(expectedIncubator) (client → server);
+-- Free eggs (launch egg, first Gold) wait in profile.FreeEggs and are started for free in the lowest empty incubator as
+-- soon as one is empty: on join / admin reset (garden setup hook), when one is granted, after a hatch and after an
+-- incubator is bought. They respect the inventory cap like bought eggs.
+-- Remotes (in GardenRemotes): StartEgg(incubator, eggId), Hatch(incubator), BuyIncubator(expectedIncubator) (client → server);
 -- answers through GardenRemotes.Result; GardenRemotes.State.incubators = { count, eggs = { ["n"] = { egg, readyAt } } }.
 -- Drawing: Workspace.Garden.Plots.Plot_NN.Incubator_n (Studio-only: Base with Prompt + Info, Egg) gets attributes State
 -- ("free" / "locked" / "empty" / "egg"), Egg and ReadyAt; every client draws the countdown from ReadyAt.
@@ -17,8 +21,6 @@ local PetConfig = require(ReplicatedStorage.PetConfig)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local PetService = require(ServerScriptService.PetService)
 local GardenService = require(ServerScriptService.GardenService)
-
-local EGG_ID = "Golden" -- the only garden egg so far
 
 local startEggEvent = GardenService.Remote("StartEgg") -- client → server: (incubator: number)
 local hatchEvent = GardenService.Remote("Hatch") -- client → server: (incubator: number)
@@ -117,6 +119,48 @@ GardenService.AddRenderer(function(_index, plot, profile)
 	end
 end)
 
+-- Starts waiting free eggs (PetConfig.EggOrder) in the lowest empty incubators while the inventory cap allows; the caller
+-- publishes and saves. Returns how many were started.
+local function startFreeEggs(profile, garden): number
+	local started = 0
+	local now = os.time()
+	for _, eggId in PetConfig.EggOrder do
+		local egg = PetConfig.Eggs[eggId]
+		while (profile.FreeEggs[eggId] or 0) > 0 do
+			local free = nil
+			for index = 1, garden.IncubatorCount do
+				if not garden.Incubators[tostring(index)] then
+					free = index
+					break
+				end
+			end
+			if not free or PetService.PetCount(profile) + GardenConfig.IncubatingCount(garden) >= PetConfig.MaxPets then
+				return started
+			end
+			garden.Incubators[tostring(free)] = { Egg = eggId, StartedAt = now, ReadyAt = now + egg.hatchSeconds }
+			profile.FreeEggs[eggId] -= 1
+			if profile.FreeEggs[eggId] == 0 then
+				profile.FreeEggs[eggId] = nil
+			end
+			started += 1
+		end
+	end
+	return started
+end
+
+-- Starts the player's waiting free eggs (if any fit), publishes and saves.
+local function placeFreeEggs(player: Player)
+	local profile = PlayerProfile.Get(player)
+	local garden = profile and gardenOf(profile)
+	if garden and startFreeEggs(profile, garden) > 0 then
+		GardenService.PublishAll(player)
+		task.spawn(PlayerProfile.Save, player)
+	end
+end
+
+PetService.FreeEggsChanged:Connect(placeFreeEggs) -- before the garden is set up on join this finds no garden: the hook does it
+GardenService.AddSetupHook(placeFreeEggs)
+
 -- The caller's profile and garden if they may use their plot now; otherwise rejects and returns nil.
 local function usableGarden(player: Player, action: string)
 	local profile = GardenService.Usable(player, action)
@@ -127,8 +171,9 @@ local function usableGarden(player: Player, action: string)
 	return profile, garden
 end
 
-startEggEvent.OnServerEvent:Connect(function(player, index)
-	if not GardenService.WholeNumber(index) or not GardenService.Allow(player) then
+startEggEvent.OnServerEvent:Connect(function(player, index, eggId)
+	local egg = type(eggId) == "string" and PetConfig.Eggs[eggId]
+	if not (GardenService.WholeNumber(index) and egg) or not GardenService.Allow(player) then
 		return
 	end
 	local profile, garden = usableGarden(player, "StartEgg")
@@ -141,7 +186,6 @@ startEggEvent.OnServerEvent:Connect(function(player, index)
 	if garden.Incubators[tostring(index)] then
 		return reject(player, "StartEgg", "occupied")
 	end
-	local egg = PetConfig.Eggs[EGG_ID]
 	if PetService.PetCount(profile) + GardenConfig.IncubatingCount(garden) >= PetConfig.MaxPets then
 		return reject(player, "StartEgg", "full") -- every egg needs a free inventory place when it hatches
 	end
@@ -151,9 +195,9 @@ startEggEvent.OnServerEvent:Connect(function(player, index)
 
 	PlayerProfile.AddCoins(player, -egg.price)
 	local now = os.time()
-	garden.Incubators[tostring(index)] = { Egg = EGG_ID, StartedAt = now, ReadyAt = now + egg.hatchSeconds }
+	garden.Incubators[tostring(index)] = { Egg = eggId, StartedAt = now, ReadyAt = now + egg.hatchSeconds }
 	GardenService.PublishAll(player)
-	GardenService.Succeed(player, "StartEgg", { incubator = index, egg = EGG_ID })
+	GardenService.Succeed(player, "StartEgg", { incubator = index, egg = eggId })
 	task.spawn(PlayerProfile.Save, player) -- spent Coins and the egg are saved together
 end)
 
@@ -180,6 +224,7 @@ hatchEvent.OnServerEvent:Connect(function(player, index)
 	local kind, rarityId = PetConfig.Roll(entry.Egg, rng)
 	garden.Incubators[key] = nil
 	local uid, equipped = PetService.AddPet(player, kind)
+	startFreeEggs(profile, garden) -- a waiting free egg takes the incubator at once
 	GardenService.PublishAll(player)
 	GardenService.Succeed(player, "Hatch", { incubator = index, uid = uid, kind = kind, rarity = rarityId, equipped = equipped })
 	task.spawn(PlayerProfile.Save, player)
@@ -206,6 +251,7 @@ buyIncubatorEvent.OnServerEvent:Connect(function(player, expected)
 
 	PlayerProfile.AddCoins(player, -price)
 	garden.IncubatorCount = expected
+	startFreeEggs(profile, garden)
 	GardenService.PublishAll(player)
 	GardenService.Succeed(player, "BuyIncubator", expected)
 	task.spawn(PlayerProfile.Save, player)

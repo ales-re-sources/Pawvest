@@ -1,5 +1,6 @@
--- Incubator client (docs/GDD.md §7.6, P2b1): incubator prompts on the player's own plot, the incubator panel (unlock an
--- incubator, start a Golden egg, countdown, Hatch with the pet reveal) and the countdown text above every plot's eggs.
+-- Incubator client (docs/GDD.md §7.2, §7.6, P2b1, P2b3): incubator prompts on the player's own plot, the incubator panel
+-- (unlock an incubator, start a Basic or Golden egg, countdown, Hatch with the pet reveal) and the countdown text above
+-- every plot's eggs. Free eggs are started by the server on their own; the panel only says how many still wait.
 -- Display only: a click just names an incubator; GardenIncubators validates ownership, price, the inventory cap and the
 -- hatch time against the server's os.time(). The countdown uses workspace:GetServerTimeNow() (synced to the server, not
 -- the device clock), so a wrong device clock only changes what is shown. The GUI is built here (no Studio GUI).
@@ -19,9 +20,8 @@ local hatchEvent = remotes:WaitForChild("Hatch")
 local buyIncubatorEvent = remotes:WaitForChild("BuyIncubator")
 local player = Players.LocalPlayer
 
-local EGG_ID = "Golden"
-local WIDTH = 360
-local HEIGHT = 300
+local WIDTH = 380
+local HEIGHT = 330
 local CLOSE_DISTANCE = 32 -- studs from the incubator; walking further away closes the panel
 
 local COLOR_PANEL = Color3.fromRGB(40, 40, 40)
@@ -128,7 +128,7 @@ local closeButton = button("Close", {
 })
 local bodyLabel = label("Body", {
 	Position = UDim2.new(0, 12, 0, 40),
-	Size = UDim2.new(1, -24, 0, 120),
+	Size = UDim2.new(1, -24, 0, 150),
 	Font = Enum.Font.Gotham,
 	TextSize = 15,
 	TextColor3 = COLOR_INFO,
@@ -137,7 +137,7 @@ local bodyLabel = label("Body", {
 	RichText = true,
 })
 local statusLabel = label("Status", {
-	Position = UDim2.new(0, 12, 0, 166),
+	Position = UDim2.new(0, 12, 0, 196),
 	Size = UDim2.new(1, -24, 0, 50),
 	TextSize = 16,
 	TextWrapped = true,
@@ -150,6 +150,21 @@ local actionButton = button("Action", {
 	Size = UDim2.new(1, -20, 0, 40),
 	TextSize = 17,
 })
+-- empty incubator: one button per egg (PetConfig.EggOrder), side by side in place of the action button
+local eggButtons = {} -- { { id, button } }
+for position, eggId in PetConfig.EggOrder do
+	local count = #PetConfig.EggOrder
+	table.insert(eggButtons, {
+		id = eggId,
+		button = button("Egg_" .. eggId, {
+			AnchorPoint = Vector2.new(0, 1),
+			Position = UDim2.new((position - 1) / count, if position == 1 then 10 else 5, 1, -12),
+			Size = UDim2.new(1 / count, -15, 0, 40),
+			TextSize = 15,
+			Visible = false,
+		}),
+	})
+end
 
 local panel = create("Frame", {
 	Name = "Panel",
@@ -167,6 +182,9 @@ local panel = create("Frame", {
 	statusLabel,
 	actionButton,
 })
+for _, entry in eggButtons do
+	entry.button.Parent = panel
+end
 
 local screenGui = create("ScreenGui", {
 	Name = "IncubatorGui",
@@ -202,6 +220,20 @@ local function setAction(text: string, color: Color3, visible: boolean?)
 	actionButton.Text = text
 	actionButton.BackgroundColor3 = color
 	actionButton.Visible = visible ~= false
+	for _, entry in eggButtons do
+		entry.button.Visible = false
+	end
+end
+
+-- Free eggs still waiting for an empty incubator (the server starts them on its own).
+local function waitingFreeEggs(): number
+	local waiting = 0
+	if PetClient.State and type(PetClient.State.freeEggs) == "table" then
+		for _, count in PetClient.State.freeEggs do
+			waiting += count
+		end
+	end
+	return waiting
 end
 
 -- Redraws the open panel (also every second while it is open, for the countdown).
@@ -212,13 +244,12 @@ refresh = function()
 		return
 	end
 	titleLabel.Text = "🥚 Incubator " .. index
-	local egg = PetConfig.Eggs[EGG_ID]
 	local entry = state.eggs[tostring(index)]
 	local status, statusColor = "", COLOR_INFO
 
 	if index > state.count then
 		local nextIndex = state.count + 1
-		bodyLabel.Text = "Incubators hatch Golden eggs in real time, even while you are away."
+		bodyLabel.Text = "Incubators hatch eggs in real time, even while you are away."
 		if index == nextIndex then
 			local price = GardenConfig.IncubatorPrices[nextIndex]
 			setAction(
@@ -241,16 +272,23 @@ refresh = function()
 			setAction("Hatch", COLOR_HATCH)
 		end
 	else
-		bodyLabel.Text = string.format(
-			"%s: hatches in %s, also while you are away.\n%s\nNo Common pets.",
-			egg.name,
-			hatchTime(egg.hatchSeconds),
-			odds(EGG_ID)
-		)
-		setAction(
-			string.format("Start a %s: %s Coins", egg.name, PetClient.Number(egg.price)),
-			if PetClient.Coins >= egg.price then COLOR_BUY else COLOR_LOCKED
-		)
+		local lines = { "Hatches in real time, also while you are away." }
+		for _, eggId in PetConfig.EggOrder do
+			local egg = PetConfig.Eggs[eggId]
+			table.insert(lines, string.format("<b>%s</b> · %s\n%s", egg.name, hatchTime(egg.hatchSeconds), odds(eggId)))
+		end
+		bodyLabel.Text = table.concat(lines, "\n")
+		setAction("", COLOR_LOCKED, false)
+		for _, button in eggButtons do
+			local egg = PetConfig.Eggs[button.id]
+			button.button.Text = string.format("%s: %s", egg.name, PetClient.Number(egg.price))
+			button.button.BackgroundColor3 = if PetClient.Coins >= egg.price then COLOR_BUY else COLOR_LOCKED
+			button.button.Visible = true
+		end
+	end
+	local waiting = waitingFreeEggs()
+	if waiting > 0 and status == "" then
+		status = string.format("🎁 %d free egg%s will start in the next empty incubator", waiting, if waiting == 1 then "" else "s")
 	end
 	if not flashing then
 		statusLabel.Text = status
@@ -287,10 +325,17 @@ actionButton.Activated:Connect(function()
 		if entry.readyAt - workspace:GetServerTimeNow() <= 0 then
 			hatchEvent:FireServer(index) -- the server checks the time itself
 		end
-	else
-		startEggEvent:FireServer(index)
 	end
 end)
+for _, button in eggButtons do
+	button.button.Activated:Connect(function()
+		local state = incubators
+		local index = openIndex
+		if state and index and index <= state.count and not state.eggs[tostring(index)] then
+			startEggEvent:FireServer(index, button.id)
+		end
+	end)
+end
 
 remotes:WaitForChild("State").OnClientEvent:Connect(function(state)
 	if type(state) == "table" and type(state.incubators) == "table" then

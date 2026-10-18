@@ -121,7 +121,7 @@ local emptyLabel = label("Empty", {
 	TextSize = 15,
 	TextColor3 = COLOR_INFO,
 	TextWrapped = true,
-	Text = "No pets yet. Hatch one at the egg stand on the hub island!",
+	Text = "No pets yet. Hatch one in an incubator in the pet garden!",
 	Visible = false,
 })
 
@@ -172,7 +172,7 @@ local function defaultInfo()
 		end
 	end
 	if waiting > 0 then
-		showInfo(string.format("🎁 %d free egg%s waiting at the egg stand", waiting, if waiting == 1 then "" else "s"), COLOR_OK)
+		showInfo(string.format("🎁 %d free egg%s waiting for an empty incubator", waiting, if waiting == 1 then "" else "s"), COLOR_OK)
 	else
 		showInfo("Equipped pets raise every Coin reward", COLOR_INFO)
 	end
@@ -358,9 +358,6 @@ slotButton.Activated:Connect(function()
 end)
 
 PetClient.Result:Connect(function(action, ok, detail)
-	if action == "BuyEgg" then
-		return -- the egg stand shows the hatch
-	end
 	if ok then
 		if action == "SellPet" then
 			flash(string.format("Sold for %s Coins", PetClient.Number(detail.coins)), COLOR_OK)

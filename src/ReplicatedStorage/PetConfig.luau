@@ -17,8 +17,7 @@ export type Egg = {
 	id: string,
 	name: string,
 	price: number,
-	stand: boolean, -- sold at the hub egg stand (BuyEgg); otherwise hatched elsewhere (Golden: garden incubator, P2b)
-	hatchSeconds: number?, -- garden eggs: real (server) time from start to ready in an incubator (P2b1)
+	hatchSeconds: number, -- real (server) time from start to ready in a garden incubator (every egg hatches there)
 	weights: { [string]: number }, -- rarity id → weight per 1000
 }
 
@@ -64,18 +63,18 @@ PetConfig.Eggs = {
 		id = "Basic",
 		name = "Basic egg",
 		price = 500,
-		stand = true,
+		hatchSeconds = 300,
 		weights = { Common = 600, Uncommon = 250, Rare = 110, Epic = 35, Legendary = 5 },
 	},
 	Golden = {
 		id = "Golden",
 		name = "Golden egg",
 		price = 4000,
-		stand = false,
 		hatchSeconds = 3600,
 		weights = { Uncommon = 450, Rare = 350, Epic = 150, Legendary = 50 },
 	},
 } :: { [string]: Egg }
+PetConfig.EggOrder = { "Basic", "Golden" } -- incubator panel order (cheapest first)
 
 PetConfig.SlotPrices = { 0, 2000, 5000 } -- SlotPrices[n] = price of the n-th equip slot; #SlotPrices = max slots
 PetConfig.MaxPets = 50 -- inventory cap
