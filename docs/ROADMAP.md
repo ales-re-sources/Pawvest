@@ -1094,6 +1094,11 @@ go through the incubators too; free eggs (launch egg, first Gold) start in an in
   (`color`, `material`, `glow`) is applied by the `GardenIncubators` renderer: Basic = plain cream, no glow; Golden = shiny
   gold with a gold glow. Checked on the server in a playtest (Basic `236,228,208` / light off, Golden `255,200,40` / light
   on, empty incubator hidden and dark); not checked visually (3D captures come out blank). No Studio changes.
+- **Follow-up (user request): countdown above the egg.** The countdown text already existed, but every incubator's
+  `Base.Info` BillboardGui had `Adornee = Plot_NN.Pen_1.Pad` (cloned from the pen), so the label floated over the pen, not the
+  egg. Fixed in Studio on all 36 incubators: `Adornee = Egg`, `StudsOffset (0, 3, 0)`, `Size {6,0},{2.2,0}`. Playtest:
+  "Golden egg / 58:07" then "58:05", label bottom 22.3 vs egg top 21.8, on screen, fits; empty incubator "Incubator 2 / empty".
+  **Save the place (Ctrl+S).**
 - **Studio-only changes:** `Workspace.StartLocation.EggStand` model deleted — **save the place (Ctrl+S)**.
 - **Acceptance checks:** no egg can be bought on the hub (no stand, no `BuyEgg` remote); a free egg starts in an empty
   incubator at once and waits while all are busy; a hatch lets a waiting free egg start; paid Basic / Golden eggs cost

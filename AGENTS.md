@@ -97,7 +97,7 @@ src/
     Stage1/ Stage2/ Stage3/ Tutorial/ stages (see below)
     <Stage>/ChallengeCoins            Studio-only Folder (every stage): Coin_<n> MeshParts tagged ChallengeCoin with attribute CoinId (ids listed in ROADMAP M4 / M4.1)
     DebugBaseplate/                   kill brick under the map
-    Garden/                           Studio-only pet garden island at x -1200, z -750: Island, Plaza, Hedge + invisible Barrier ring, Arrival, ReturnPortal, Plots/Plot_01..12 (Floor 40x40, Edge_*, Sign with SurfaceGui "Gui" > "Label", Pen_1..6 with Pad + Prompt + Info billboard, Incubator_1..3 with Base (PrimaryPart) + Prompt + Info billboard, Nest, Egg ball + PointLight), FoodStand (Model on the plaza, PrimaryPart Counter with Prompt); GardenService adds PenPets folders
+    Garden/                           Studio-only pet garden island at x -1200, z -750: Island, Plaza, Hedge + invisible Barrier ring, Arrival, ReturnPortal, Plots/Plot_01..12 (Floor 40x40, Edge_*, Sign with SurfaceGui "Gui" > "Label", Pen_1..6 with Pad + Prompt + Info billboard, Incubator_1..3 with Base (PrimaryPart) + Prompt + Info billboard (Adornee = Egg, label above the egg), Nest, Egg ball + PointLight), FoodStand (Model on the plaza, PrimaryPart Counter with Prompt); GardenService adds PenPets folders
 ```
 
 ### Stage anatomy
