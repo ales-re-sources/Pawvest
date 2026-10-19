@@ -1,7 +1,7 @@
 -- Shows the local player's best medal on each hub portal, the challenge coins found on the stage (`x/y`) and, while
 -- the stage is locked, its requirement and price (docs/GDD.md §3 "Hub portals"). Medals, coins and lock state come from
 -- player attributes set by StageResults, ChallengeCoins and StageUnlocks; every player sees only their own.
--- The stars are a SurfaceGui on the same face as the portal's "Stage N access" label, so they are part of the gate.
+-- The stars are a SurfaceGui on the same face as the portal's stage-name label ("Stage N"), so they are part of the gate.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -34,7 +34,7 @@ local function addPortalMedal(stage)
 	surface.PixelsPerStud = 50
 	surface.LightInfluence = 0
 
-	-- below the "Stage N access" label in the upper part of the face
+	-- below the stage-name label in the upper part of the face
 	local label = Instance.new("TextLabel")
 	label.AnchorPoint = Vector2.new(0.5, 0)
 	label.Position = UDim2.fromScale(0.5, 0.45)
