@@ -2,7 +2,8 @@
 -- (docs/PET_GROWTH.md). Shared, so the followers (PetFollow, client) and the garden pens (GardenService, server) are drawn by
 -- the same code and always match. Nothing is stored or replicated: every viewer derives the look from the same numbers.
 -- P1e1: size by level, label, Epic / Legendary glow, formation slots.
--- P1e4: individuality - Seed(uid) variant (hue / value shift of the body parts, accessory pick seed reserved for P1f).
+-- P1e4: individuality - Seed(uid) variant (hue / value shift of the body parts, accessory pick seed).
+-- P1f: accessory kit (crown, scarf, wings, horns, flame tail) picked by the seed: AccessoryCount, AccessoriesOf, built by Apply.
 -- P1e2: label text with tier badge (LabelText), level-up moment (LevelUp, client only).
 -- P1e3: accent tint (AccentBlend), tier effects trail / aura / motes / halo built by Apply, livelier bob (Bob), effect gathering
 -- and per-frame update with the distance LOD (CollectFx, UpdateFx).
@@ -149,7 +150,9 @@ end
 --   tintHue / tintAmount       near-white and grey parts have no hue to shift, so they are tinted toward this hue instead
 --   material / order           optional "texture" (a Roblox Material, no asset ids): nil for TEXTURE_NONE of the pets; otherwise
 --                              it appears on more body parts as the level rises (see Textured); `order` fixes which parts first
---   accessory                  unsigned 32-bit integer reserved for P1f (the order accessories are picked in)
+--   accessory                  unsigned 32-bit integer: the order accessories are picked in (AccessoriesOf, P1f)
+--   coat                       brightness (COAT_DARK .. COAT_LIGHT) the big white parts of COAT_KINDS take instead of the pastel tint, nil = stay white
+--                              (drawn after the fx fields, so older fields are unchanged)
 --   fxHue / fxSaturation / fxValue  shift of the effect colour (accents, glow, tier effects, level-up) around the rarity colour,
 --                              see FxColor; drawn last, so adding it did not change the fields above
 -- uid nil or "" -> nil (old attribute form: no jitter). The record never depends on the level, so a level-up keeps the colours.
@@ -161,6 +164,10 @@ local FX_SAT_JITTER = 0.15
 local FX_VALUE_JITTER = 0.10
 local FX_GREY_SATURATION = 0.25 -- grey rarity colour (Common): pale tint in the pet's own tint hue instead of a hue shift
 local TINT_MIN, TINT_MAX = 0.10, 0.22 -- how far a near-white / grey part is lerped toward the tint colour
+local COAT_WHITE = 0.4 -- share of pets of a coat kind that stay white (the rest are grey ... near-black)
+local COAT_LIGHT, COAT_DARK = 0.78, 0.22 -- brightness of the lightest grey and of the darkest coat
+local COAT_SATURATION = 0.08 -- a trace of the pet's tint hue so the greys are not dead neutral
+local COAT_KINDS = { Bunny = true } -- kinds whose big white parts can take a grey / black coat (user request: Bunny)
 local TEXTURE_NONE = 0.5 -- share of pets without any texture
 local TEXTURE_MAX_SHARE = 0.45 -- share of the body parts that carry the texture at the max level (< 50 %)
 local TEXTURE_MIN_SIZE = 0.38 -- parts whose longest side is shorter (eyes, nose, eye shine) never get it; legs and ears do
@@ -188,6 +195,7 @@ export type Variant = {
 	fxHue: number,
 	fxSaturation: number,
 	fxValue: number,
+	coat: number?,
 }
 
 -- a * b modulo 2^32 without leaving the 53 bits a double holds exactly (a, b < 2^32)
@@ -232,6 +240,8 @@ function PetLook.Seed(uid: string?): Variant?
 	local fxHue = (nextUnit() * 2 - 1) * FX_HUE_JITTER
 	local fxSaturation = (nextUnit() * 2 - 1) * FX_SAT_JITTER
 	local fxValue = (nextUnit() * 2 - 1) * FX_VALUE_JITTER
+	local coatRoll = nextUnit()
+	local coatTone = nextUnit()
 	return {
 		hue = hue,
 		saturation = saturation,
@@ -244,6 +254,7 @@ function PetLook.Seed(uid: string?): Variant?
 		fxHue = fxHue,
 		fxSaturation = fxSaturation,
 		fxValue = fxValue,
+		coat = if coatRoll >= COAT_WHITE then COAT_LIGHT - coatTone * (COAT_LIGHT - COAT_DARK) else nil,
 	}
 end
 
@@ -274,14 +285,18 @@ end
 
 -- Body parts (not the invisible Root, not the accents, which follow the tint ramp) get the variant's colour shift; a textured
 -- pet also gets its material on the first TexturedCount parts in the variant's part order (Neon parts and tiny ones are left).
-local function jitterBody(model: Model, variant: Variant, level: number)
+local function jitterBody(model: Model, variant: Variant, level: number, kind: string)
 	local eligible = {}
 	for _, part in model:GetDescendants() do
 		if part:IsA("BasePart") and part ~= model.PrimaryPart and part:GetAttribute("Accent") ~= true then
 			local h, s, v = part.Color:ToHSV()
 			if s < 0.2 and v > 0.4 then
-				-- white / grey: no hue to shift, so tint it
-				part.Color = part.Color:Lerp(Color3.fromHSV(variant.tintHue, 0.85, 1), variant.tintAmount)
+				-- white / grey: no hue to shift, so tint it; the big ones of a coat kind take the grey / black coat instead
+				if variant.coat and COAT_KINDS[kind] and math.max(part.Size.X, part.Size.Y, part.Size.Z) >= TEXTURE_MIN_SIZE then
+					part.Color = Color3.fromHSV(variant.tintHue, COAT_SATURATION, variant.coat)
+				else
+					part.Color = part.Color:Lerp(Color3.fromHSV(variant.tintHue, 0.85, 1), variant.tintAmount)
+				end
 				h, s, v = part.Color:ToHSV()
 			else
 				h = (h + variant.hue) % 1
@@ -309,6 +324,249 @@ local function jitterBody(model: Model, variant: Variant, level: number)
 	end
 end
 
+local function addEmitter(attachment: Attachment, name: string, color: Color3): ParticleEmitter
+	local emitter = Instance.new("ParticleEmitter")
+	emitter.Name = name
+	emitter.Color = ColorSequence.new(color)
+	emitter.LightEmission = 1
+	emitter.Rotation = NumberRange.new(0, 360)
+	emitter.RotSpeed = NumberRange.new(-60, 60)
+	emitter.Parent = attachment
+	return emitter
+end
+
+-- Accessory kit (P1f): small pieces built in code from the model's own Head / Body / Tail* parts (positions and sizes are read from
+-- them, scaled with the pet; a missing part falls back to the bounding box), so no Studio assets are needed and real art with the
+-- same part names keeps working. Which pieces a pet wears is a pure function of (kind, level, uid):
+--   how many   0 below Lv 10 (tier 2), 1 at Lv 10-19, 2 at Lv 20 (tier 4)           AccessoryCount
+--   which      the allowed pieces of the kind (skip rules) in the order of the variant's accessory seed, greedy, never two forbidden
+--              pieces together: the first pick of Lv 10 stays at Lv 20 and the second is added (growth, not reshuffle)   AccessoriesOf
+-- No uid (old attribute form) -> no accessories. The tier halo of P1e3 (Lv 20) is the only halo: the kit has no halo piece of its own.
+-- Pieces are plain Parts / WedgeParts in a Folder "Accessories" of the model (Apply invariants: anchored, no collide / touch /
+-- query, massless), coloured from the pet's FxColor, scaled by `u`; the flame tail adds one emitter, which CollectFx / UpdateFx
+-- treat like the tier effects (distance LOD, off while the pet is faded).
+local ACCESSORY_COUNT_TIER2, ACCESSORY_COUNT_TIER4 = 1, 2
+
+type Box = { position: Vector3, size: Vector3 } -- a model part in the root's space
+type Dress = { model: Model, root: BasePart, folder: Folder, u: number, color: Color3, head: Box, body: Box, rear: { x: number, z: number, top: number } }
+
+local function accessoryPart(dress: Dress, class: string, name: string, size: Vector3, cframe: CFrame, color: Color3, material: Enum.Material): BasePart
+	local part = Instance.new(class) :: BasePart
+	part.Name = name
+	part.Material = material
+	part.Color = color
+	part.CastShadow = false
+	part.Anchored = true
+	part.CanCollide = false
+	part.CanTouch = false
+	part.CanQuery = false
+	part.Massless = true
+	part.Size = size
+	part.CFrame = dress.root.CFrame * cframe
+	part.Parent = dress.folder
+	return part
+end
+
+-- Crown: gold band with four points and a neon jewel in front, on top of the head between the ears.
+local function buildCrown(dress: Dress)
+	local u, head = dress.u, dress.head
+	local gold = Color3.fromRGB(255, 205, 70):Lerp(dress.color, 0.15)
+	local top = head.position.Y + head.size.Y / 2
+	local width, baseHeight, pointHeight, point = 0.46 * u, 0.14 * u, 0.2 * u, 0.12 * u
+	local x, z = head.position.X, head.position.Z
+	accessoryPart(dress, "Part", "Crown_Base", Vector3.new(width, baseHeight, width), CFrame.new(x, top + baseHeight / 2 - 0.01 * u, z), gold, Enum.Material.SmoothPlastic)
+	local corner = width / 2 - point / 2
+	local index = 0
+	for _, dx in { -corner, corner } do
+		for _, dz in { -corner, corner } do
+			index += 1
+			accessoryPart(dress, "Part", "Crown_Point" .. index, Vector3.new(point, pointHeight, point), CFrame.new(x + dx, top + baseHeight + pointHeight / 2 - 0.02 * u, z + dz), gold, Enum.Material.SmoothPlastic)
+		end
+	end
+	local jewel = accessoryPart(dress, "Part", "Crown_Jewel", Vector3.one * 0.1 * u, CFrame.new(x, top + baseHeight / 2, z - width / 2), dress.color, Enum.Material.Neon)
+	;(jewel :: Part).Shape = Enum.PartType.Ball
+end
+
+-- Horns: two curved horns (two segments each) on the forehead, in front of the ears, in a dark shade of the pet's colour.
+local function buildHorns(dress: Dress)
+	local u, head = dress.u, dress.head
+	local colour = dress.color:Lerp(Color3.new(0, 0, 0), 0.5)
+	local top = head.position.Y + head.size.Y / 2
+	for _, side in { -1, 1 } do
+		local base = CFrame.new(head.position.X + side * 0.3 * u, top - 0.02 * u, head.position.Z - 0.4 * u) * CFrame.Angles(-0.25, 0, -side * 0.2)
+		accessoryPart(dress, "Part", "Horns_Low" .. side, Vector3.new(0.17 * u, 0.26 * u, 0.17 * u), base * CFrame.new(0, 0.13 * u, 0), colour, Enum.Material.SmoothPlastic)
+		local upper = base * CFrame.new(0, 0.24 * u, 0) * CFrame.Angles(-0.3, 0, -side * 0.35)
+		accessoryPart(dress, "Part", "Horns_High" .. side, Vector3.new(0.11 * u, 0.24 * u, 0.11 * u), upper * CFrame.new(0, 0.12 * u, 0), colour:Lerp(dress.color, 0.3), Enum.Material.SmoothPlastic)
+	end
+end
+
+-- Scarf: a band under the head around the neck and a short end hanging over the chest.
+local function buildScarf(dress: Dress)
+	local u, head, body = dress.u, dress.head, dress.body
+	local colour = dress.color
+	local depth = 0.77 * u
+	local frontZ = body.position.Z - body.size.Z / 2 - 0.07 * u
+	local neckY = head.position.Y - head.size.Y / 2 - 0.12 * u
+	accessoryPart(dress, "Part", "Scarf_Band", Vector3.new(body.size.X + 0.14 * u, 0.26 * u, depth), CFrame.new(body.position.X, neckY, frontZ + depth / 2), colour, Enum.Material.Fabric)
+	local hang = 0.6 * u
+	accessoryPart(dress, "Part", "Scarf_Tail", Vector3.new(0.26 * u, hang, 0.1 * u), CFrame.new(body.position.X + 0.3 * u, neckY - 0.13 * u - hang / 2, body.position.Z - body.size.Z / 2 - 0.04 * u), colour:Lerp(Color3.new(0, 0, 0), 0.15), Enum.Material.Fabric)
+end
+
+-- Small wings: a swept-back wedge and a smaller one behind it on each side of the upper back, tilted outward, light shade of the colour.
+local function buildWings(dress: Dress)
+	local u, body = dress.u, dress.body
+	local colour = dress.color:Lerp(Color3.new(1, 1, 1), 0.55)
+	local topY = body.position.Y + body.size.Y / 2
+	local function wing(side: number, name: string, thick: number, height: number, length: number, x: number, y: number, z: number, tilt: number)
+		local pivot = CFrame.new(body.position.X + side * x, y, z) * CFrame.Angles(0, 0, -side * tilt)
+		accessoryPart(dress, "WedgePart", name .. side, Vector3.new(thick, height, length), pivot * CFrame.new(side * thick / 2, height / 2, 0), colour, Enum.Material.SmoothPlastic)
+	end
+	for _, side in { -1, 1 } do
+		wing(side, "Wings_Main", 0.1 * u, 0.7 * u, 0.9 * u, body.size.X / 2 - 0.03 * u, topY - 0.05 * u, body.position.Z + 0.15 * u, 0.45)
+		wing(side, "Wings_Small", 0.08 * u, 0.45 * u, 0.6 * u, body.size.X / 2 - 0.01 * u, topY - 0.3 * u, body.position.Z + 0.5 * u, 0.7)
+	end
+end
+
+-- Flame tail: three neon wedges standing on the end of the tail and a rising emitter above them.
+local function buildFlameTail(dress: Dress)
+	local u, rear = dress.u, dress.rear
+	local z = rear.z - 0.15 * u
+	local core = accessoryPart(dress, "WedgePart", "FlameTail_Core", Vector3.new(0.2 * u, 0.55 * u, 0.3 * u), CFrame.new(rear.x, rear.top + 0.275 * u - 0.02 * u, z), dress.color:Lerp(Color3.new(1, 1, 1), 0.25), Enum.Material.Neon)
+	for _, side in { -1, 1 } do
+		accessoryPart(dress, "WedgePart", "FlameTail_Side" .. side, Vector3.new(0.14 * u, 0.34 * u, 0.22 * u), CFrame.new(rear.x + side * 0.13 * u, rear.top + 0.17 * u - 0.02 * u, z - 0.02 * u), dress.color, Enum.Material.Neon)
+	end
+	local attachment = Instance.new("Attachment")
+	attachment.Name = "FlameAttachment"
+	attachment.Position = Vector3.new(0, 0.275 * u, 0.05 * u)
+	attachment.Parent = core
+	local flames = addEmitter(attachment, "Flame", dress.color:Lerp(Color3.new(1, 1, 1), 0.2))
+	flames.Rate = 9
+	flames.Lifetime = NumberRange.new(0.4, 0.7)
+	flames.Speed = NumberRange.new(1.5 * u, 2.5 * u)
+	flames.SpreadAngle = Vector2.new(15, 15)
+	flames.Acceleration = Vector3.new(0, 2 * u, 0)
+	flames.Size = NumberSequence.new(0.32 * u, 0)
+	flames.Transparency = NumberSequence.new(0.15, 1)
+end
+
+-- skip: kinds that must not wear the piece (they have it already, or a part is in the way). Kit order = tie-break of equal ranks.
+-- Crown skips Bunny / Fox (tall / close ears leave no room between them) and Phoenix (crest); Horns skip Dragon (has horns),
+-- Owl (tufts) and Phoenix (crest); Wings skip Dragon / Phoenix / Owl (have wings); Scarf skips Dog (has a collar); FlameTail skips
+-- Owl / Panda (no tail).
+local ACCESSORIES: { [string]: { skip: { [string]: boolean }, build: (Dress) -> () } } = {
+	Crown = { skip = { Bunny = true, Fox = true, Phoenix = true }, build = buildCrown },
+	Scarf = { skip = { Dog = true }, build = buildScarf },
+	Wings = { skip = { Dragon = true, Phoenix = true, Owl = true }, build = buildWings },
+	Horns = { skip = { Dragon = true, Owl = true, Phoenix = true }, build = buildHorns },
+	FlameTail = { skip = { Owl = true, Panda = true }, build = buildFlameTail },
+}
+local ACCESSORY_ORDER = { "Crown", "Scarf", "Wings", "Horns", "FlameTail" }
+local ACCESSORY_FORBIDDEN = { { "Crown", "Horns" } } -- both sit on top of the head
+PetLook.AccessoryIds = ACCESSORY_ORDER
+
+function PetLook.AccessoryAllowed(kind: string, id: string): boolean
+	local def = ACCESSORIES[id]
+	return def ~= nil and not def.skip[kind]
+end
+
+-- Number of accessories at `level`: 0 below tier 2, 1 at tier 2-3, 2 at tier 4.
+function PetLook.AccessoryCount(level: number): number
+	local tier = PetLook.Tier(level)
+	return if tier >= 4 then ACCESSORY_COUNT_TIER4 elseif tier >= 2 then ACCESSORY_COUNT_TIER2 else 0
+end
+
+local function accessoryForbidden(a: string, b: string): boolean
+	for _, pair in ACCESSORY_FORBIDDEN do
+		if (pair[1] == a and pair[2] == b) or (pair[1] == b and pair[2] == a) then
+			return true
+		end
+	end
+	return false
+end
+
+-- Accessory ids a pet wears, in pick order (the first one is worn from Lv 10, the second added at Lv 20). nil variant -> none.
+function PetLook.AccessoriesOf(kind: string, level: number, variant: Variant?): { string }
+	local picked = {}
+	local count = PetLook.AccessoryCount(level)
+	if count == 0 or not variant then
+		return picked
+	end
+	local ranked = {}
+	for index, id in ACCESSORY_ORDER do
+		if PetLook.AccessoryAllowed(kind, id) then
+			table.insert(ranked, { id = id, index = index, rank = mix(bit32.bxor(variant.accessory, hashString(id))) })
+		end
+	end
+	table.sort(ranked, function(a, b)
+		if a.rank ~= b.rank then
+			return a.rank < b.rank
+		end
+		return a.index < b.index
+	end)
+	for _, candidate in ranked do
+		if #picked >= count then
+			break
+		end
+		local fits = true
+		for _, id in picked do
+			if accessoryForbidden(candidate.id, id) then
+				fits = false
+				break
+			end
+		end
+		if fits then
+			table.insert(picked, candidate.id)
+		end
+	end
+	return picked
+end
+
+local function partBox(model: Model, root: BasePart, name: string): Box?
+	local part = model:FindFirstChild(name)
+	if part and part:IsA("BasePart") then
+		return { position = root.CFrame:PointToObjectSpace(part.Position), size = part.Size }
+	end
+	return nil
+end
+
+-- Builds `ids` on the scaled model (so before the bounding box is taken: the metrics, label and halo include the pieces).
+local function buildAccessories(model: Model, root: BasePart, ids: { string }, u: number, color: Color3)
+	local boxCFrame, boxSize = model:GetBoundingBox()
+	local center = root.CFrame:PointToObjectSpace(boxCFrame.Position)
+	-- missing Head / Body / Tail parts fall back to the usual proportions inside the bounding box
+	local head = partBox(model, root, "Head")
+		or { position = Vector3.new(center.X, center.Y + boxSize.Y / 2 - 0.65 * u, center.Z - boxSize.Z / 2 + 0.65 * u), size = Vector3.new(1.5, 1.3, 1.3) * u }
+	local body = partBox(model, root, "Body")
+		or { position = Vector3.new(center.X, head.position.Y - 0.95 * u, head.position.Z + 0.75 * u), size = Vector3.new(1.3, 1, 1.5) * u }
+	-- tail: the parts named Tail* (Tail, TailTip, Tail1-3...); the flame stands on the highest of those that reach the rearmost point
+	local rearZ = -math.huge
+	local tails = {}
+	for _, child in model:GetChildren() do
+		if child:IsA("BasePart") and string.sub(child.Name, 1, 4) == "Tail" then
+			local box = partBox(model, root, child.Name) :: Box
+			table.insert(tails, box)
+			rearZ = math.max(rearZ, box.position.Z + box.size.Z / 2)
+		end
+	end
+	local rear = { x = center.X, z = center.Z + boxSize.Z / 2, top = body.position.Y }
+	if #tails > 0 then
+		rear = { x = tails[1].position.X, z = rearZ, top = -math.huge }
+		for _, box in tails do
+			if box.position.Z + box.size.Z / 2 >= rearZ - 0.4 * u and box.position.Y + box.size.Y / 2 > rear.top then
+				rear.top = box.position.Y + box.size.Y / 2
+				rear.x = box.position.X
+			end
+		end
+	end
+	local folder = Instance.new("Folder")
+	folder.Name = "Accessories"
+	folder.Parent = model
+	local dress: Dress = { model = model, root = root, folder = folder, u = u, color = color, head = head, body = body, rear = rear }
+	for _, id in ids do
+		ACCESSORIES[id].build(dress)
+	end
+end
+
 -- Livelier bob with the tier: height (studs) and speed (rad/s) of the float animation PetFollow plays.
 function PetLook.Bob(level: number): (number, number)
 	local tier = PetLook.Tier(level)
@@ -328,17 +586,6 @@ local MOTE_COUNT = 3
 local MOTE_SPEED = 1.8 -- rad/s
 local LOD_DISTANCE = 60 -- studs from the camera beyond which emitters, lights and orbiters are off
 PetLook.LodDistance = LOD_DISTANCE
-
-local function addEmitter(attachment: Attachment, name: string, color: Color3): ParticleEmitter
-	local emitter = Instance.new("ParticleEmitter")
-	emitter.Name = name
-	emitter.Color = ColorSequence.new(color)
-	emitter.LightEmission = 1
-	emitter.Rotation = NumberRange.new(0, 360)
-	emitter.RotSpeed = NumberRange.new(-60, 60)
-	emitter.Parent = attachment
-	return emitter
-end
 
 local function addTierFx(model: Model, root: BasePart, rarity: PetConfig.Rarity, tier: number, scale: number, center: Vector3, size: Vector3)
 	local color = rarity.color
@@ -531,7 +778,7 @@ function PetLook.Apply(model: Model, kind: string, level: number, uid: string?, 
 	end
 	local variant = PetLook.Seed(uid)
 	if variant then
-		jitterBody(model, variant, level)
+		jitterBody(model, variant, level, kind)
 	end
 	-- accents, glow, tier effects and level-up use the pet's own effect colour; the label keeps the rarity colour
 	local look = table.clone(rarity)
@@ -541,6 +788,12 @@ function PetLook.Apply(model: Model, kind: string, level: number, uid: string?, 
 
 	local scale = PetLook.Scale(level)
 	model:ScaleTo(scale)
+	-- accessories are built on the scaled model and before the bounding box, so metrics, label and halo include them
+	local accessories = PetLook.AccessoriesOf(kind, level, variant)
+	if #accessories > 0 then
+		buildAccessories(model, root, accessories, scale, look.color)
+	end
+	model:SetAttribute("Accessories", table.concat(accessories, ","))
 	local boxCFrame, boxSize = model:GetBoundingBox()
 	local center = root.CFrame:PointToObjectSpace(boxCFrame.Position)
 	local underside = boxSize.Y / 2 - center.Y -- reach below the root

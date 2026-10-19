@@ -271,10 +271,12 @@ orbiting motes, Lv 20 a hexagonal halo and a stronger aura; accent parts of the 
 rarity colour with the level and turn Neon at Lv 20; the float animation gets livelier with the tier. Effects switch off beyond
 60 studs from the camera.
 **Individuality (P1e4):** every pet id gets its own small colour variation (hue, saturation and brightness of the body, a pastel
-tint for white / grey parts), so two Cats of the same level differ. About half of the pets also have a material "texture" (Fabric,
+tint for white / grey parts), so two Cats of the same level differ; 60 % of the Bunnies get a grey to near-black coat instead of white. About half of the pets also have a material "texture" (Fabric,
 Marble, Granite, Slate, Pebble or Ice) that spreads over more body parts as the level rises (at most 45 % of the parts at Lv 20)
-and never goes away. Accent parts, glow and tier effects use the pet's own shade of its rarity colour (a slightly different green for every Uncommon pet); the label keeps the exact rarity colour. Accessories are planned in
-[PET_GROWTH.md](PET_GROWTH.md).
+and never goes away. Accent parts, glow and tier effects use the pet's own shade of its rarity colour (a slightly different green for every Uncommon pet); the label keeps the exact rarity colour. 
+**Accessories (P1f):** from Lv 10 a pet wears one small accessory, at Lv 20 two (crown, scarf, small wings, horns, flame tail; the Lv 20 halo is the tier
+effect, not an accessory). Which pieces comes from the pet id and the kind (no wings on pets that have wings, no horns on pets that have horns or tufts, no crown on Bunny / Fox / Phoenix,
+no flame tail on Owl / Panda, no crown together with horns); the Lv 10 piece stays and the second one is added at Lv 20. Details: [PET_GROWTH.md](PET_GROWTH.md).
 
 ### 7.6 Pet garden (minigame, P2)
 A free area reached by a portal from the central island, where pets are raised. Aimed at players who prefer

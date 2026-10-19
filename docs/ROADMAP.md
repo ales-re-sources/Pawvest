@@ -43,7 +43,7 @@ Rules:
 | P1e2 | Pet level-up moment | ✔ | ✔ | – |
 | P1e3 | Pet tier effects + accent tint | ✔ | ✔ | – |
 | P1e4 | Pet individuality | ✔ | ✔ | – |
-| P1f | Pet accessory kit | – | – | – |
+| P1f | Pet accessory kit | ✔ | ✔ | – |
 | M3 | Stage unlocks | ✔ | ✔ | – |
 | M4 | Challenge coins | ✔ | ✔ | – |
 | M4.1 | Challenge coins, Stage 2 / 3 | ✔ | ✔ | – |
@@ -536,7 +536,7 @@ later option. We cannot see 3D captures, so every step ends with a visual check 
 | **P1e2** | level-up detection per uid; burst, ring, floating "Level N!" (also for other players); tier badge on the label; optional `PetLevelUpSound` | one real level-up (Tutorial finish near a threshold) plays the effect once, only on that pet |
 | **P1e3** | tier effects at Lv 5 / 10 / 15 / 20 (trail, aura, motes, halo), accent parts (`Accent = true`, Studio) tinted to the rarity colour, Neon at Lv 20, distance LOD | all 8 kinds × 5 levels render; emitter / light / part counts for 12 players × 3 pets acceptable; far pets drop effects |
 | **P1e4** | `Seed(uid)` jitter (hue / saturation / value, tint for white parts, optional material texture that spreads with the level) so same kind and level differ | deterministic per uid (server = client), different uids differ, shifts within bounds, nil uid = none, rarity identity kept, level-up keeps the look |
-| **P1f** | accessory kit (halo, crown, scarf, small wings, horns, flame tail) built from `Head` / `Body` / `Tail`; 1 piece at Lv 10, 2 at Lv 20, picked by seed; skip rules per kind | no duplicate pieces (e.g. wings on Dragon), all pieces non-colliding and non-touchable, higher tiers keep earlier pieces |
+| **P1f** | accessory kit (crown, scarf, small wings, horns, flame tail; no halo piece, the P1e3 tier halo covers it) built from `Head` / `Body` / `Tail*`; 1 piece at Lv 10, 2 at Lv 20, picked by seed; skip rules per kind | no duplicate pieces (e.g. wings on Dragon), all pieces non-colliding and non-touchable, higher tiers keep earlier pieces |
 
 #### P1e1 — Pet look foundation + size growth
 - **Outputs:** `ReplicatedStorage.PetLook` (`Scale`, `Tier`, `Apply`, `Slots`) used by `PetFollow` (client) and `GardenService.makePenPet`
@@ -696,6 +696,41 @@ later option. We cannot see 3D captures, so every step ends with a visual check 
   uids 1-8 at Lv 5 / 12 / 20; effect colours at Lv 10 / 20 afterwards: OK): bigger differences wanted and white Bunny invisible -> fixed (larger jitter, tint); textures approved.** The grid
   was rebuilt after raising the texture size limit so legs and ears can carry it (0.5 -> 0.38); it was not looked at again. Not covered:
   multi-client, how it looks in a real garden, near-black parts (eyes, Panda patches) only get the colour shifts, which are hardly visible there.
+
+#### P1f — Pet accessory kit
+- **Outputs:** `PetLook.AccessoryCount(level)`, `PetLook.AccessoriesOf(kind, level, variant)`, `PetLook.AccessoryAllowed(kind, id)`, `PetLook.AccessoryIds`; `Apply` builds the picked
+  pieces (new local `buildAccessories` + one builder per piece) in a Folder `Accessories` of the model and stamps the model attribute `Accessories` (`"Crown,Scarf"`). Nothing else
+  changed: `PetFollow` and `GardenService.makePenPet` already call `Apply(model, kind, level, uid, label)`, and `PetFollow` collects its parts / emitters after `Apply`, so the camera
+  fade, run mode, distance LOD and the level-up cross-fade (the new look has the new piece, the ghost the old look) cover the pieces without changes. Studio-only changes: none
+  (the `P1fPreview` folder in the workspace is a throw-away preview grid, delete it after the visual check; nothing needs saving otherwise).
+- **Design notes:** see PET_GROWTH.md "Decisions made in P1f". Summary: kit = Crown (gold band, four points, FxColor jewel; on the head between the ears), Scarf (band under the head +
+  end hanging over the chest), Wings (two swept-back wedges per side on the upper back, tilted outward), Horns (two curved two-segment horns on the forehead, in front of the ears),
+  FlameTail (three neon wedges standing on the highest rear tail part + a rising emitter). Positions come from the model's `Head` / `Body` / `Tail*` parts (scaled), missing parts
+  fall back to the bounding box. **Halo dropped** (P1e3 tier halo at Lv 20; it floats above the tallest accessory because the bounding box includes the pieces). Skip rules:
+  Crown skips Bunny / Fox / Phoenix, Scarf Dog, Wings Dragon / Phoenix / Owl, Horns Dragon / Owl / Phoenix, FlameTail Owl / Panda; forbidden pair Crown + Horns. Count 0 / 1 / 2 at
+  tier < 2 / 2-3 / 4; the first pick (candidates sorted by `mix(variant.accessory xor hash(id))`) is worn from Lv 10 and stays, the second is added at Lv 20. `uid` nil -> none.
+  Pieces are included in the metrics, so wings widen the pet (Cat / Fox / Panda with wings: 3.25 studs wide at Lv 20) and the formation spacing follows.
+- **Bunny coat (user request after the first look at the preview: "Rabbit - all white, add black / greyish variants"):** `Seed` has a new last field `coat` (drawn after the fx fields, so all older
+  fields keep their values): 40 % of the uids stay white, 60 % get a brightness between 0.78 (light grey) and 0.22 (dark charcoal). `jitterBody(model, variant, level, kind)` gives the big white
+  parts (longest side >= 0.38, not accents: body, head, legs, ears, tail; eye shine stays white) of the kinds in `COAT_KINDS = { Bunny }` that colour (+ a trace of the tint hue) instead of the pastel tint;
+  extend `COAT_KINDS` for other kinds (e.g. Panda) if wanted. Check over uids 1-2000: 1 206 coated / 794 white, range 0.22-0.78; Bunny Lv 1 uids 1-14: bodies from `ffd3e9` / `deceb5` (white, tinted)
+  to `4f554e` / `75797f` (dark), ears / tail the same, eye shine and pink ear insides unchanged; Panda unaffected; materials of uids 14 / 1 unchanged (Slate / Granite).
+- **Validation log (2026-10-19, solo playtest + Edit-mode checks, API access on):** live profile `user_9892673032` snapshot `p1f-snapshot.json`; restored afterwards (Coins 17057 -> 17042,
+  Garden.LastSeen / Carry reset after the join payout; nothing else changed; no `user_-1` / `user_-2`).
+  Edit mode: uids 1-2000 x 8 kinds: count 0 / 1 / 1 / 2 at Lv 9 / 10 / 19 / 20, Lv 10 and Lv 19 pick = Lv 20 first pick, no duplicate pair, no forbidden pair, every pick allowed for the kind,
+  repeat calls equal, nil variant -> none (0 problems). Distribution of the Lv 20 picks per kind is even among the allowed pieces (e.g. Cat 686-887 of 2000 each, Owl Crown + Scarf always,
+  Phoenix Scarf + FlameTail always). Dressing 8 kinds x uids 1-60 x Lv 1 / 9 / 10 / 15 / 20: accessory count and folder match `AccessoryCount`, 0 parts with Anchored off / CanCollide /
+  CanTouch / CanQuery on / Massless off (also 3 levels x 60 uids x 8 kinds in the playtest client), every kind / piece pair that is allowed was built at least once. AABB overlaps of the
+  pieces with the pet's own parts (excluding Head / Body): only intended contact (FlameTail on the tail parts, Scarf over Belly / Chest / Shoulders, Wings near the Dog's Collar).
+  Cost at Lv 20 (8 kinds x 60 uids): average 8, maximum 11 accessory instances per pet, maximum 41 parts and 5 emitters per pet (tier effects + glow + flame) -> 36 pets (12 players x 3)
+  at most ~1 500 parts and 180 emitters before LOD. Server (pen code path, `Apply` on the server) vs client: checksum over accessory ids, part names, positions and colours of 8 kinds x
+  uids 1-40 x Lv 10 / 20 identical (1683426138); server-built Dragon / Phoenix / Fox test models replicate with `FxCount` = `CollectFx` count (15 / 15 / 13) and all accessory children.
+  Followers (local `EquippedPets` override): Cat + Fox + Panda Lv 20 with wings (uids 3 / 3 / 1): AABB gaps 0.60 / 0.60 between neighbours, labels 0.8-1.2 studs above the top (label offset
+  3.56-4.03), 0 flag violations, WalkSpeed 20.80 / JumpHeight 7.20 unchanged. Camera: at 3 studs the accessory parts and the body have `LocalTransparencyModifier` 0.85 and the flame emitter is
+  off; at 20 and 40 studs 0 and on; at 90 studs the flame emitter is off (LOD). Level-up Fox 9 -> 10 (uid 3): the ghost has no accessories, the new model has `FlameTail` fading in 1.0 -> 0.12
+  -> 0 during the cross-fade, 1 model and no `LevelUpFx` afterwards; Fox 10 -> 20 keeps `FlameTail` and adds `Wings`. Consoles: only UIBlox "FoundationProvider" warnings.
+  Not covered: multi-client, how it looks (screenshots of the 3D view are blank; **user visual check pending**: preview grid `workspace.P1fPreview`, 8 kinds x uids 1-6 at Lv 20 (left) and Lv 10
+  (right), plus an extra row of Bunnies uids 1-12 at Lv 20 for the new coats - variety, ugly combinations; a forbidden-pairs list can be extended after the review), a real pen with an accessory pet (same code path as the follower, checked by the server/client checksum).
 
 ### M3 — Stage unlocks
 - **Inputs:** `StageConfig.unlock` / `unlockPrice` (GDD §3: Stage 2 = Silver on Stage 1 or 150 Coins, Stage 3 = Silver on

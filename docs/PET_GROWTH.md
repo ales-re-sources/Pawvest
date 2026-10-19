@@ -65,6 +65,13 @@ needed): Halo (neon ring), Crown (block + wedge points), Scarf (neck band + tail
 Horns, Flame tail (neon wedge + emitter). `Accessories[...].skip = { kinds }` avoids duplicates (no wings on
 Dragon/Phoenix/Owl, no horns on Dragon). Rule: T2 (Lv 10-14) gets 1 accessory, T4 (Lv 20) 2; which ones comes from
 `Seed(uid)` among the allowed candidates, so higher tiers keep earlier pieces (growth, not reshuffle).
+**Decisions made in P1f:**
+- *Halo dropped from the kit.* P1e3 already gives every Lv 20 pet a neon hexagonal halo (tier 4); a second halo piece at Lv 10 would be doubled at Lv 20 and cannot "keep the earlier piece". The tier halo floats above the tallest accessory (it is placed from the bounding box that includes them).
+- *Kit = Crown, Scarf, Wings, Horns, FlameTail.* Skip rules (`PetLook` table `ACCESSORIES[id].skip`): Crown skips Bunny / Fox (ears leave no room) and Phoenix (crest); Scarf skips Dog (has a collar); Wings skip Dragon / Phoenix / Owl; Horns skip Dragon / Owl (tufts) / Phoenix; FlameTail skips Owl / Panda (no tail; Phoenix and Dragon keep it). Forbidden pair (both sit on top of the head): Crown + Horns. Every kind has at least two candidates; Owl (Crown, Scarf) and Phoenix (Scarf, FlameTail) have exactly two, so they always wear both at Lv 20 and differ only in which one comes first at Lv 10.
+- *Pick rule:* candidates of the kind sorted by `mix(variant.accessory xor hash(id))`, greedy, skipping forbidden pairs; `AccessoryCount` = 0 / 1 / 2 for tier < 2 / 2-3 / 4. The Lv 10 piece is the first pick, so it stays at Lv 20. `uid` nil -> none (old attribute form).
+- *Built on the scaled model before the bounding box is taken,* so slot spacing (wings widen the pet), the label height and the tier halo include the pieces. Parts sit in a Folder `Accessories` in the model (model attribute `Accessories` = "Crown,Scarf"), coloured from the pet's `FxColor` (gold crown with a FxColor jewel; scarf, wings, horns and flame in shades of it).
+- *Cost:* at most 11 extra instances per pet (avg 8 at Lv 20) and one emitter (flame tail), which the existing `CollectFx` / `UpdateFx` LOD handles; the camera fade covers the parts because `PetFollow` collects its parts after `Apply`.
+
 Because pieces use only part names (`Head`, `Body`, `Tail`, `Root`) and the bounding box, replacing the blocky models with
 real art later keeps working; missing parts fall back to bounding-box positions.
 
@@ -98,7 +105,7 @@ and each is one commit that can be reverted alone. Order = dependency and value;
    Studio: `Accent = true` on accent parts of the 8 models (one script). User check: how each tier looks.
 4. **P1e4 - Individuality (done, details in ROADMAP P1e4; deviations after the user's visual check: larger jitter than first planned, white / grey parts get a seeded pastel tint, and a material texture that spreads with the level was added).** `Seed(uid)` jitter so same kind and level differ; unit-checked
    determinism. The attribute format and the model reuse key already carried the uid since P1e1.
-5. **P1f - Accessory kit.** Halo, crown, scarf, small wings, horns, flame tail built in code from `Head` / `Body` / `Tail`;
+5. **P1f - Accessory kit (done, details in ROADMAP P1f; deviations: no halo piece because of the P1e3 tier halo, flame tail also on Phoenix, pieces are included in the bounding box / metrics).** Crown, scarf, small wings, horns, flame tail built in code from `Head` / `Body` / `Tail*`;
    skip rules per kind; 1 piece at Lv 10, 2 at Lv 20, picked by seed. User check: variety and no ugly combinations
    (a short list of forbidden pairs can be added after review).
 
