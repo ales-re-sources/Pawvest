@@ -279,10 +279,11 @@ effect, not an accessory). Which pieces comes from the pet id and the kind (no w
 no flame tail on Owl / Panda, no crown together with horns); the Lv 10 piece stays and the second one is added at Lv 20. Details: [PET_GROWTH.md](PET_GROWTH.md).
 
 ### 7.6 Pet garden (minigame, P2)
-A free area reached by a portal from the central island, where pets are raised. Aimed at players who prefer
+A free area reached on foot from the central island, where pets are raised. Aimed at players who prefer
 collecting and caring over obby runs.
-- **Where.** A separate island in the same place (not a separate place): a garden portal on the central island and a
-  return portal on the garden.
+- **Where.** A separate island in the same place (not a separate place), joined to the central island by a wooden
+  bridge (no portals since H1). Both islands share one look (part-built grass islands on a rock base, cobblestone
+  plazas, hedge rings, blocky trees and flowers) and stand in one sea that is also the world's kill floor.
 - **Layout.** A central plaza (food shop) surrounded by a ring of **12 plots**, about
   40 × 40 studs each, with an owner name sign, pens and incubators. Servers hold **12 players** (one plot per slot).
 - **Personal plot.** A player borrows a free plot while online: it is assigned on join, built from the profile, and

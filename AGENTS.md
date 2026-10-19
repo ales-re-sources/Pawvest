@@ -62,7 +62,7 @@ src/
     RunDistance.luau                  server-measured horizontal studs during a run (Start / Stop from PlayerTimerHandler); steps faster than WalkSpeed allows (teleports, respawns) are dropped
     StageUnlocks.luau                 hub portal gate: bar (previous stage's medal) or bought unlock; UnlockRemotes, Unlocked_<folder> attributes
     HomeService.server.luau           GoHome remote: Home button → hub spawn, cancels the running timer
-    Garden.server.luau                garden boot: requires GardenPlots + GardenService + GardenIncubators + GardenFood, hub portal TeleportToGarden -> Garden.Arrival, Garden.ReturnPortal -> hub (cancels the timer)
+    Garden.server.luau                garden boot: requires GardenPlots + GardenService + GardenIncubators + GardenFood (no portals since H1: the garden is reached over Workspace.GardenBridge)
     GardenPlots.luau                  borrows one of 12 plots per player on join / releases on leave: player attribute GardenPlot, plot attributes OwnerUserId / OwnerName, sign text; PlotChanged
     GardenService.luau                pens + production: profile Garden, GardenRemotes (Place / Remove / BuyPen / RequestState; State / Result / Payout), settle on join (8 h cap) / every 5 min / before every pen change, draws pens + pet models into the plots; hooks for sibling modules (Remote, Allow, Reject, Succeed, Usable, SettleAndNotify, PublishAll, AddStateField, AddRenderer)
     GardenIncubators.luau             incubators (P2b1, P2b3): the only place eggs hatch; StartEgg(incubator, eggId) / Hatch / BuyIncubator remotes, Basic / Golden eggs hatch at server os.time() ReadyAt (also offline), roll at Hatch, inventory cap counts incubating eggs; starts waiting FreeEggs in empty incubators; draws Incubator_n attributes State / Egg / ReadyAt
@@ -97,11 +97,13 @@ src/
     Handlers/                         ModuleScripts shared by all stage scripts (required via workspace.Handlers.*)
       CheckpointTouchHandler.luau     checkpoint touch → leaderstats.Stage, respawn point, sound
       PlayerTimerHandler.luau         stage timers (os.clock), personal bests (profile), global Top-10, score panel
-    StartLocation/                    hub: SpawnLocation + TeleportToStage1..3 portals + StarsLeaderboard (Studio-only board model, no scripts; drawn by StarsBoard.server.luau beside it)
+    StartLocation/                    hub (central island, part-built since H1, centre (-1126, 16, -475), r 80): SpawnLocation on the plaza + TeleportToTutorial / TeleportToStage1..3 portals in an arc facing it + StarsLeaderboard (Studio-only board model in the wooden stud style, no scripts; StarsBoard.server.luau beside it draws into Model.ScoreBlock.SurfaceGui: DataLabel, Names.NameN, Score.ScoreN, Photos.PhotoN); Studio-only Island folder (Island, IslandRock, Plaza, PlazaRing, Hedge + invisible Barrier ring with an opening toward the garden, BridgePath, GardenSign, Decor). Scripts find the hub by name, never by coordinates
     Stage1/ Stage2/ Stage3/ Tutorial/ stages (see below)
     <Stage>/ChallengeCoins            Studio-only Folder (every stage): Coin_<n> MeshParts tagged ChallengeCoin with attribute CoinId (ids listed in ROADMAP M4 / M4.1)
-    DebugBaseplate/                   kill brick under the map
-    Garden/                           Studio-only pet garden island at x -1200, z -750: Island, Plaza, Hedge + invisible Barrier ring, Arrival, ReturnPortal, Plots/Plot_01..12 (Floor 40x40, Edge_*, Sign with SurfaceGui "Gui" > "Label", Pen_1..6 with Pad + Prompt + Info billboard, Incubator_1..3 with Base (PrimaryPart) + Prompt + Info billboard (Adornee = Egg, label above the egg), Nest, Egg ball + PointLight), FoodStand (Model on the plaza, PrimaryPart Counter with Prompt); GardenService adds PenPets folders
+    DebugBaseplate/                   kill brick under the map = the sea (H1: centre (-350, -8, -100), top y 0, covers every stage, the hub and the garden; sea blue Glacier + Texture)
+    Sea (Studio-only Folder)          Tile_1..8: cosmetic sea around DebugBaseplate out to the horizon (no scripts, CanCollide / CanTouch / CanQuery off)
+    GardenBridge (Studio-only Folder) wooden bridge hub <-> garden at 75° from the garden centre: Deck, Rails, Supports, invisible Barrier walls (top y 16 like both islands)
+    Garden/                           Studio-only pet garden island at x -1200, z -750: Island, Plaza, Hedge + invisible Barrier ring (opening at 75° for the bridge: *_GateL / *_GateR), BridgePath, HubSign, Decor, Plots/Plot_01..12 (Floor 40x40, Edge_*, Sign with SurfaceGui "Gui" > "Label", Pen_1..6 with Pad + Prompt + Info billboard, Incubator_1..3 with Base (PrimaryPart) + Prompt + Info billboard (Adornee = Egg, label above the egg), Nest, Egg ball + PointLight), FoodStand (Model on the plaza, PrimaryPart Counter with Prompt); GardenService adds PenPets folders
 ```
 
 ### Stage anatomy
@@ -208,6 +210,10 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
   (it made a second empty `HomePanel`). Renaming such a folder on disk replaces the Studio instance with a bare Frame (styled
   children lost, rebuilt by hand). After adding/renaming script containers, check Studio for duplicates / lost children.
 - `Workspace/Stage3/level.2` is a Model literally named `level.2` (dot in the name).
+- Decorations (H1) are clones from the Studio-only library `ServerStorage.DecorKit` (the "Stud pack V1" models: Tree1,
+  Tree2, Flowers, Grass1/2, Rock, Bush, Wall, Shop, Leaderboard frame used for signs). Their stud textures are
+  MaterialVariants in `MaterialService.StudPack` (`Studs`, `Inlets`, `Universal`…), looked up by name: keep that folder.
+  Placed decor is Anchored with CanTouch / CanQuery off (flowers / grass also CanCollide off).
 - Debounces in timer, portal and checkpoint code are per player. Kill scripts keep a script-global `h` keyed by the
   touching part (effectively per player).
 - Timer uses `os.clock()`; times are floored to tenths (`TimeFormat.Tenths`) before storing.
@@ -224,6 +230,8 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
 ## Testing
 No automated tests. Verify in Studio: playtest (MCP `start_stop_play`), read `get_console_output`,
 and check DataStore behaviour only with Studio API access enabled.
+MCP `screen_capture` with a camera position leaves the Edit camera on `Scriptable`: when done, set it back with
+`workspace.CurrentCamera.CameraType = Enum.CameraType.Fixed` (Edit) so the user can move the viewport again.
 
 Multi-client: the user starts Test → Start Test Session → **Server and Clients** (F7), then Test → **Add Clients**.
 `list_roblox_studios` then shows one extra instance per client and one for the server (unnamed);

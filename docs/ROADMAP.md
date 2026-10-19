@@ -53,6 +53,7 @@ Rules:
 | P2b1 | Garden incubators, Golden egg | ✔ | ✔ | – |
 | P2b2 | Garden feeding | ✔ | ✔ | – |
 | P2b3 | Eggs only in the garden (hub stand removed) | ✔ | ✔ | – |
+| H1 | Hub island redesign (bridge to the garden, sea) | ✔ | ✔ | – |
 | P3 | Trading | – | – | – |
 | M6 | Balancing pass | – | – | – |
 | M7 | Monetization | deferred | | |
@@ -62,6 +63,7 @@ and adds the single payout point that pets multiply; P1a needs it, and P1b–P1d
 M5 is mostly independent (can move earlier). P-milestones may move ahead of M3–M5 if pets take priority, but keep
 their own order: P2a needs P1a–P1c (P1d recommended), P2b needs P2a, P3 needs P1 and profile session locking. M6 needs the full loop including the garden.
 P1e1–P1f (pet growth visuals) need P1c + P1d, run in their own order (each needs the ones before it) and can be done at any time alongside the other milestones.
+H1 (hub redesign) needs P2a (the garden it connects to) and is otherwise independent.
 
 ## Milestones
 
@@ -1335,6 +1337,69 @@ go through the incubators too; free eggs (launch egg, first Gold) start in an in
   hatch, reset). Found + fixed: the popup's free-egg line was too wide (386 of 296 px), shortened after the playtest (measured 247 px). Not covered: inventory
   cap with waiting free eggs, several clients at once, visual screenshots. Live profile, all four boards and MostStars
   (12) restored exactly.
+
+### H1 — Hub island redesign (user request 2026-10-19)
+The central island was a rocky terrain bowl that did not match the part-built garden (P2a), and the garden was reached
+only by portals. Scoped 2026-10-19 with the user: wipe the terrain, rebuild the hub in the garden's style, connect it to
+the garden by a walkable bridge (no portals), decorate with trees / flowers from the "Stud pack V1" kit, and give the
+whole world one sea as its floor (user's choice: an endless part sea, not terrain water). Mostly Studio-only scene work.
+- **Inputs:** `StartLocation` (SpawnLocation, 4 stage portals, StarsLeaderboard, TeleportToGarden), `Garden` (island
+  r 145 at (−1200, 16, −750), 12 plots every 30°, 32 hedge / barrier segments, ReturnPortal, Arrival), `DebugBaseplate`,
+  terrain (only around the hub), the "Stud pack V1" folder. Every script finds the hub by name
+  (`StartLocation.SpawnLocation`, `StartLocation.<hubPortal>.Portal`), so moving the models needs no code change.
+- **Layout:** bridge axis at 75° from the garden centre (between Plot_03 and Plot_04); new hub centre (−1126, 16, −475),
+  island r 80, top y 16 like the garden; spawn on a cobblestone plaza in the middle, the 4 stage portals in an arc on the
+  far side (Tutorial → Stage 3, facing the spawn), StarsLeaderboard at the side, "Pet Garden" sign at the bridge head.
+- **Outputs:**
+  - Studio-only: terrain cleared (backup `ServerStorage.H1_TerrainBackup`, a TerrainRegion, deleted after the user's check);
+    "Stud pack V1" → `ServerStorage.DecorKit` (Tree1, Tree2, Flowers, Grass1/2, Rock, Bush, Wall, Shop, Leaderboard;
+    thumbnail sign + camera removed) and its MaterialVariants → `MaterialService.StudPack` (`Inlet` renamed `Inlets`, the
+    name the kit's parts use).
+  - Studio-only sea: `DebugBaseplate` (kill floor, script unchanged) moved to centre (−350, −8, −100) so it covers the stages,
+    the hub and the garden, recoloured to a softer sea blue (70, 160, 215), stray edge strip removed; `Workspace.Sea`
+    Tile_1..8 (same look, no scripts, CanCollide / CanTouch / CanQuery off) around it to the horizon; Atmosphere tuned so the
+    edge melts into the sky.
+  - Studio-only hub: `StartLocation.Island` (Island, IslandRock, Plaza, PlazaRing, Hedge + Barrier with an opening toward
+    the garden); portals (upright), StarsLeaderboard and SpawnLocation moved, names unchanged; `TeleportToGarden` deleted.
+  - Studio-only StarsLeaderboard restyle (added after the user's review): the grey concrete stand of the copied stage board
+    replaced by a wooden stud-style frame (posts, gold caps, Inlets beams, the kit's blue corner brackets); `Model.ScoreBlock`
+    kept with its SurfaceGui (the names StarsBoard.server.luau draws into are unchanged), dark wood, sheet in pixels per
+    stud (45, no stretching), text scaled with gold / silver / bronze for the top 3 and cream for the rest.
+  - Studio-only bridge: `Workspace.GardenBridge` (deck 10 wide at y 16, rails, posts, supports, invisible side walls); garden
+    hedge / barrier opening at 75° with a short cobblestone path; `Garden.ReturnPortal` and `Garden.Arrival` deleted.
+  - Studio-only decorations cloned from `DecorKit` on the hub, the bridge heads and the garden rim: Anchored, CanTouch /
+    CanQuery off, flowers / grass CanCollide off; ≥ 8 studs clear around the spawn, portals, board and bridge path.
+  - Code: `Garden.server.luau` loses the portal wiring (it only boots the garden modules).
+  - Docs: GDD §7.6 "Where" (a bridge, not a portal), AGENTS.md layout (StartLocation, Garden, GardenBridge, Sea, DecorKit).
+- **Acceptance checks:**
+  - no terrain voxels left; a raycast grid over every stage, the hub, the bridge and the garden hits `DebugBaseplate`;
+  - a player walks spawn → bridge → garden plot ring with y > 10 the whole way (no fall, no snag at the openings);
+  - `GardenPlot` is set and the own pen / incubator prompts work; pets follow over the bridge;
+  - the Tutorial portal teleports; a locked portal shows the unlock popup and barrier; portal faces show stars and
+    "found x/y"; StarsBoard draws;
+  - the Home button and every stage's TeleportToSpawn land on the new spawn;
+  - stepping off the bridge kills (sea) and respawns on the hub; a fall from a stage still kills;
+  - no decor part with CanTouch on; each `TeleportTo*` model still holds its one Script; no duplicate siblings;
+  - console: no errors and no "Garden: scene is incomplete" warning; the user's visual check (hub, bridge, horizon).
+- **Validation log (2026-10-19):** Edit mode: terrain backed up (`ServerStorage.H1_TerrainBackup`, 66×31×76 cells) and
+  cleared after checking no voxels exist outside the hub region; raycast grid over all four stages, the hub, the bridge and
+  the garden hits `DebugBaseplate`; 0 decor / sign parts with CanTouch on or unanchored; no duplicate script siblings; the 4
+  `TeleportTo*` models still hold one Script each and stand upright; raycast at the spawn hits the SpawnLocation at y 17.3.
+  The Atmosphere was left as it was (density 0.30, offset 0.25): the sea's far edge already melts into the haze, also seen
+  from the stages. Playtest (live profile snapshotted first): spawn on the new hub (−1125, 20.4, −474); `Humanoid:MoveTo`
+  spawn → hub path → bridge → garden in 8.2 s, lowest root y 19.1 (no fall, no snag); `GardenPlot` = 1, own plot 9/9
+  prompts enabled at the plot; 2 pet models followed within 25 studs; GoHome → exactly on the spawn; walking into
+  TeleportToTutorial → 2.9 studs from the Tutorial destination; its TeleportToSpawn → 0.1 studs from the new spawn;
+  local `Unlocked_Stage3 = false` → `PortalBarrier_Stage3` in the moved portal, removed again on `true`; all 4 portal
+  faces carry their `PortalMedal_*` SurfaceGui; StarsBoard draws ("Most stars - top 10!", Lekzdrh 12 / 12); a
+  character put beside the bridge died on the sea after 0.6 s and respawned on the hub. Server log: 0 errors / warnings
+  (client: only the known UIBlox warnings). Live profile restored and compared field by field: identical. Fixed during the
+  work: the "Pet Garden" sign stood edge-on behind a bush (turned, bush and two grass tufts on the path removed); sign
+  text split into title + subtitle labels. User review: subtitle sat on the frame's bottom rail → both sign texts moved
+  inside the frame; StarsLeaderboard restyled (above), playtest 2: board drew "Most stars - top 10!", Lekzdrh 12 / 12 with
+  avatar, empty rows "..."; live profile restored again, identical. The user's visual check passed (2026-10-19); the
+  terrain backup was deleted afterwards. Not covered: several clients at once, a locked portal's unlock popup (the test
+  profile has every stage unlocked; only the barrier was simulated).
 
 ### P3 — Trading
 - **Prerequisite:** profile session locking in `PlayerProfile` (`UpdateAsync` with a `{ JobId, Time }` lock instead of

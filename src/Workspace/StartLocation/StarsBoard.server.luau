@@ -1,5 +1,5 @@
 -- Hub "most stars" board (GDD §8): draws StarBoard's global Top-10 on StartLocation.StarsLeaderboard
--- (a Studio-only clone of a stage Top10Leaderboard model; this script lives beside it so the model needs no script).
+-- (a Studio-only board model, wooden stud style since H1; this script lives beside it so the model needs no script).
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
