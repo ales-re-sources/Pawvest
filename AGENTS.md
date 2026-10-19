@@ -76,7 +76,7 @@ src/
     StageTimerClientUpdater.client.luau  StageTimer label: counts locally between start/stop from StageTimerUpdate
     TalentDoubleJump.client.luau      Double Jump talent: extra air jumps from the Talent_DoubleJump attribute
     StageResultsPopup.client.luau     results popup after a finish incl. pet XP line (GUI built in code)
-    HubPortalMedals.client.luau       own best-medal stars, challenge coins "found x/y" + lock requirement/price on each hub portal face (local SurfaceGuis)
+    HubPortalMedals.client.luau       own best-medal stars, challenge coins "found x/y" + lock requirement/price on each hub portal face (local SurfaceGuis; layout kept inside the arch's opening)
     ChallengeCoinsClient.client.luau  hides the local player's collected challenge coins (local Transparency/CanTouch), spins the others, plays the pickup sound
     PortalBarriers.client.luau        invisible local wall in each locked hub portal (removed when Unlocked_<folder> turns true)
     StageUnlockPopup.client.luau      unlock popup after touching a locked hub portal (requirement, price, unlock button; GUI built in code)
@@ -97,7 +97,7 @@ src/
     Handlers/                         ModuleScripts shared by all stage scripts (required via workspace.Handlers.*)
       CheckpointTouchHandler.luau     checkpoint touch → leaderstats.Stage, respawn point, sound
       PlayerTimerHandler.luau         stage timers (os.clock), personal bests (profile), global Top-10, score panel
-    StartLocation/                    hub (central island, part-built since H1, centre (-1126, 16, -475), r 80): SpawnLocation on the plaza + TeleportToTutorial / TeleportToStage1..3 portals in an arc facing it + StarsLeaderboard (Studio-only board model in the wooden stud style, no scripts; StarsBoard.server.luau beside it draws into Model.ScoreBlock.SurfaceGui: DataLabel, Names.NameN, Score.ScoreN, Photos.PhotoN); Studio-only Island folder (Island, IslandRock, Plaza, PlazaRing, Hedge + invisible Barrier ring with an opening toward the garden, BridgePath, GardenSign, Decor). Scripts find the hub by name, never by coordinates
+    StartLocation/                    hub (central island, part-built since H1, centre (-1126, 16, -475), r 80): SpawnLocation on the plaza + TeleportToTutorial / TeleportToStage1..3 portals in an arc facing it (each: Script, `Portal` = touch trigger + face with the stage-name SurfaceGui, Studio-only `Arch` Model of stud-stone blocks cloned from `ServerStorage.DecorKit.StudPortal`, H1.1) + StarsLeaderboard (Studio-only board model in the wooden stud style, no scripts; StarsBoard.server.luau beside it draws into Model.ScoreBlock.SurfaceGui: DataLabel, Names.NameN, Score.ScoreN, Photos.PhotoN); Studio-only Island folder (Island, IslandRock, Plaza, PlazaRing, Hedge + invisible Barrier ring with an opening toward the garden, BridgePath, GardenSign, Decor). Scripts find the hub by name, never by coordinates
     Stage1/ Stage2/ Stage3/ Tutorial/ stages (see below)
     <Stage>/ChallengeCoins            Studio-only Folder (every stage): Coin_<n> MeshParts tagged ChallengeCoin with attribute CoinId (ids listed in ROADMAP M4 / M4.1)
     DebugBaseplate/                   kill brick under the map = the sea (H1: centre (-350, -8, -100), top y 0, covers every stage, the hub and the garden; sea blue Glacier + Texture)
@@ -211,7 +211,7 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
   children lost, rebuilt by hand). After adding/renaming script containers, check Studio for duplicates / lost children.
 - `Workspace/Stage3/level.2` is a Model literally named `level.2` (dot in the name).
 - Decorations (H1) are clones from the Studio-only library `ServerStorage.DecorKit` (the "Stud pack V1" models: Tree1,
-  Tree2, Flowers, Grass1/2, Rock, Bush, Wall, Shop, Leaderboard frame used for signs). Their stud textures are
+  Tree2, Flowers, Grass1/2, Rock, Bush, Wall, Shop, Leaderboard frame used for signs, StudPortal = template of the hub portal arches). Their stud textures are
   MaterialVariants in `MaterialService.StudPack` (`Studs`, `Inlets`, `Universal`…), looked up by name: keep that folder.
   Placed decor is Anchored with CanTouch / CanQuery off (flowers / grass also CanCollide off).
 - Debounces in timer, portal and checkpoint code are per player. Kill scripts keep a script-global `h` keyed by the

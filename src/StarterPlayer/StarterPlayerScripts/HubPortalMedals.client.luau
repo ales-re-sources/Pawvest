@@ -15,6 +15,12 @@ local playerGui = LocalPlayer:WaitForChild("PlayerGui")
 local UNEARNED = "#D8D8D8" -- light and semi-transparent: readable on the blue portal face
 local UNEARNED_TRANSPARENCY = 0.45
 
+-- Layout inside the stud-stone arch (H1.1): the visible opening is narrower than the Portal part (the arch steps in
+-- at the feet and around the middle), so the lines stay narrow and above the feet.
+local LINE_TOP = 0.58 -- first line under the stars
+local LINE_STEP = 0.1
+local LINE_SIZE = UDim2.fromScale(0.78, 0.09)
+
 local function addPortalMedal(stage)
 	local portal = workspace:WaitForChild("StartLocation"):WaitForChild(stage.hubPortal):WaitForChild("Portal")
 	local portalLabel = portal:FindFirstChildOfClass("SurfaceGui")
@@ -28,11 +34,11 @@ local function addPortalMedal(stage)
 	surface.PixelsPerStud = 50
 	surface.LightInfluence = 0
 
-	-- below the "Stage N access" label, which sits a bit above the middle of the face
+	-- below the "Stage N access" label in the upper part of the face
 	local label = Instance.new("TextLabel")
 	label.AnchorPoint = Vector2.new(0.5, 0)
-	label.Position = UDim2.fromScale(0.5, 0.56)
-	label.Size = UDim2.fromScale(0.8, 0.13)
+	label.Position = UDim2.fromScale(0.5, 0.45)
+	label.Size = UDim2.fromScale(0.7, 0.1)
 	label.BackgroundTransparency = 1
 	label.Font = Enum.Font.GothamBold
 	label.TextScaled = true
@@ -53,8 +59,8 @@ local function addPortalMedal(stage)
 	if coinCount > 0 then
 		coinLine = label:Clone()
 		coinLine.Name = "Coins"
-		coinLine.Position = UDim2.fromScale(0.5, 0.72)
-		coinLine.Size = UDim2.fromScale(0.9, 0.09)
+		coinLine.Position = UDim2.fromScale(0.5, LINE_TOP)
+		coinLine.Size = LINE_SIZE
 		coinLine.Parent = surface
 		local collectedAttribute = ChallengeCoinConfig.CollectedAttribute
 		local function refreshCoins()
@@ -77,8 +83,8 @@ local function addPortalMedal(stage)
 		for index, text in lockLines do
 			local lock = label:Clone()
 			lock.Name = "Lock" .. index
-			lock.Position = UDim2.fromScale(0.5, 0.72 + (index - 1) * 0.1)
-			lock.Size = UDim2.fromScale(0.9, 0.09)
+			lock.Position = UDim2.fromScale(0.5, LINE_TOP + (index - 1) * LINE_STEP)
+			lock.Size = LINE_SIZE
 			lock.Text = text
 			lock.Visible = false
 			lock.Parent = surface
@@ -91,7 +97,7 @@ local function addPortalMedal(stage)
 				lock.Visible = locked
 			end
 			if coinLine then
-				coinLine.Position = UDim2.fromScale(0.5, if locked then 0.71 + #locks * 0.1 else 0.72)
+				coinLine.Position = UDim2.fromScale(0.5, if locked then LINE_TOP + #locks * LINE_STEP else LINE_TOP)
 			end
 		end
 		LocalPlayer:GetAttributeChangedSignal(unlockedAttribute):Connect(refreshLock)

@@ -54,6 +54,7 @@ Rules:
 | P2b2 | Garden feeding | ✔ | ✔ | – |
 | P2b3 | Eggs only in the garden (hub stand removed) | ✔ | ✔ | – |
 | H1 | Hub island redesign (bridge to the garden, sea) | ✔ | ✔ | – |
+| H1.1 | Hub portals in stud style | ✔ | ✔ | – |
 | P3 | Trading | – | – | – |
 | M6 | Balancing pass | – | – | – |
 | M7 | Monetization | deferred | | |
@@ -1400,6 +1401,39 @@ whole world one sea as its floor (user's choice: an endless part sea, not terrai
   avatar, empty rows "..."; live profile restored again, identical. The user's visual check passed (2026-10-19); the
   terrain backup was deleted afterwards. Not covered: several clients at once, a locked portal's unlock popup (the test
   profile has every stage unlocked; only the barrier was simulated).
+
+### H1.1 — Hub portals in stud style (follow-up of H1, 2026-10-19)
+After H1 the 4 stage portals were the last hub element in the old style (dark metal frame, translucent blue face). The
+user imported the "StudPortal" model (36 parts: 35 grey stud-stone blocks with the `Studs` MaterialVariant forming a
+stepped arch, plus a white Neon slab `PORTAL`; 15.3 wide, 11.8 high, 5.4 deep, gate plane facing ±Z).
+- **Inputs:** `StartLocation.TeleportToTutorial / TeleportToStage1..3` (Script, `Portal` 8 × 10 × 1.5 with the stage-name
+  SurfaceGui on its Back face, frame Part_1..5), `Workspace.StudPortal`, `HubPortalMedals` (stars / lock / coin lines on
+  the portal face), `PortalBarriers` (local wall of the `Portal` size while locked).
+- **Outputs:**
+  - Studio-only: in each portal model the frame Part_1..5 are replaced by a Model `Arch` (Stone_01..35, clones of the
+    StudPortal blocks at scale 1 so the studs stay true, Anchored, CanTouch off), placed by the old `Portal` frame: same
+    spot and facing, feet on the plaza (y 16.3). `Portal` keeps its name, SurfaceGui, PointLight and role (touch trigger +
+    face): 7.14 × 9.99 × 1.5 (the template slab's width, the opening's height + 0.3 into the arch), bottom on the plaza,
+    sky blue (70, 175, 235) Plastic at transparency 0.25, no shadow; the white Neon slab is not used (text on it would be
+    unreadable). Stage-name label restyled: white GothamBlack with a dark blue stroke, TextScaled, upper part of the face
+    (0.14–0.35), SurfaceGui LightInfluence 0; texts unchanged ("Stage N access", "Tutorial access").
+  - Studio-only: `Workspace.StudPortal` → `ServerStorage.DecorKit.StudPortal` (template).
+  - Code: `HubPortalMedals` layout moved inside the arch's visible opening (narrower than the `Portal` part: ~5.1 studs at
+    the feet and in one middle row, ~6.6 elsewhere, measured by raycasts): stars at 0.45 (0.7 wide), lock / coin lines from
+    0.58 every 0.1 (0.78 wide). The 4 portal Scripts are unchanged (still byte-identical).
+- **Acceptance checks:** each `TeleportTo*` model holds exactly Script, Portal, Arch (one Script, no duplicate siblings,
+  unique stone names); walking into the Tutorial portal teleports; all 4 faces show their `PortalMedal_*` SurfaceGui
+  readable inside the arch, also the locked layout (2 lock lines + coins); a locked portal's barrier fills the new opening
+  and disappears on unlock; no console errors; the user's visual check.
+- **Validation log (2026-10-19):** Edit: 4 models hold Script / Portal / Arch, 35 stones each, 0 duplicate names,
+  0 stones with CanTouch; bounding box 15.3 × 11.2 × 5.4 each; Argon synced the HubPortalMedals change (1 copy). Locked
+  layout previewed on Stage 3 (temporary SurfaceGui, removed): the old layout hid the 🔒 behind the arch and crowded the
+  feet → layout above. Playtest (live profile snapshotted first): all 4 `PortalMedal_*` on the Back face of their
+  `Portal` (★★★, "found 2/2", "3/8", "0/9", "4/10"); local `Unlocked_Stage3 = false` → lock lines shown, coin line moved
+  down, `PortalBarrier_Stage3` 7.14 × 9.99 × 0.5 at the portal centre, removed with the lock lines on `true`; walking into
+  TeleportToTutorial → 4.5 studs from the Tutorial destination after 0.6 s. Server log: 0 errors / warnings (client: only
+  the known UIBlox warnings). Live profile restored (the test's join payout had changed Coins / Garden.LastSeen / Carry)
+  and compared field by field: identical. Not covered: a locked portal's unlock popup (same as H1).
 
 ### P3 — Trading
 - **Prerequisite:** profile session locking in `PlayerProfile` (`UpdateAsync` with a `{ JobId, Time }` lock instead of
