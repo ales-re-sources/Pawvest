@@ -1,7 +1,8 @@
 -- PetLook: how a pet looks, as a pure function of (kind, level, uid) applied to a clone of ReplicatedStorage.PetModels
 -- (docs/PET_GROWTH.md). Shared, so the followers (PetFollow, client) and the garden pens (GardenService, server) are drawn by
 -- the same code and always match. Nothing is stored or replicated: every viewer derives the look from the same numbers.
--- P1e1: size by level, label, Epic / Legendary glow, formation slots. `uid` is reserved for the individuality seed (P1e4).
+-- P1e1: size by level, label, Epic / Legendary glow, formation slots.
+-- P1e4: individuality - Seed(uid) variant (hue / value shift of the body parts, accessory pick seed reserved for P1f).
 -- P1e2: label text with tier badge (LabelText), level-up moment (LevelUp, client only).
 -- P1e3: accent tint (AccentBlend), tier effects trail / aura / motes / halo built by Apply, livelier bob (Bob), effect gathering
 -- and per-frame update with the distance LOD (CollectFx, UpdateFx).
@@ -136,6 +137,140 @@ local function tintAccents(model: Model, rarity: PetConfig.Rarity, level: number
 			if neon then
 				part.Material = Enum.Material.Neon
 			end
+		end
+	end
+end
+
+-- Individuality (P1e4): a deterministic variant record per pet id, so two pets of the same kind and level differ but keep their
+-- rarity identity. Pure: the uid string is hashed (FNV-1a, then an avalanche mix so neighbouring ids "7" / "8" do not look alike),
+-- no math.random state, so the server (pens) and every client (followers) derive the same record.
+--   hue / saturation / value   colour shifts of the body parts: hue as a fraction of the circle in +-HUE_JITTER, saturation and
+--                              value as factors (1 + shift) with shifts in +-SAT_JITTER / +-VALUE_JITTER
+--   tintHue / tintAmount       near-white and grey parts have no hue to shift, so they are tinted toward this hue instead
+--   material / order           optional "texture" (a Roblox Material, no asset ids): nil for TEXTURE_NONE of the pets; otherwise
+--                              it appears on more body parts as the level rises (see Textured); `order` fixes which parts first
+--   accessory                  unsigned 32-bit integer reserved for P1f (the order accessories are picked in)
+-- uid nil or "" -> nil (old attribute form: no jitter). The record never depends on the level, so a level-up keeps the colours.
+local HUE_JITTER = 0.06
+local SAT_JITTER = 0.15
+local VALUE_JITTER = 0.10
+local TINT_MIN, TINT_MAX = 0.10, 0.22 -- how far a near-white / grey part is lerped toward the tint colour
+local TEXTURE_NONE = 0.5 -- share of pets without any texture
+local TEXTURE_MAX_SHARE = 0.45 -- share of the body parts that carry the texture at the max level (< 50 %)
+local TEXTURE_MIN_SIZE = 0.38 -- parts whose longest side is shorter (eyes, nose, eye shine) never get it; legs and ears do
+local TEXTURE_MATERIALS = {
+	Enum.Material.Fabric,
+	Enum.Material.Marble,
+	Enum.Material.Granite,
+	Enum.Material.Slate,
+	Enum.Material.Pebble,
+	Enum.Material.Ice,
+}
+PetLook.HueJitter = HUE_JITTER
+PetLook.SatJitter = SAT_JITTER
+PetLook.ValueJitter = VALUE_JITTER
+
+export type Variant = {
+	hue: number,
+	saturation: number,
+	value: number,
+	tintHue: number,
+	tintAmount: number,
+	material: Enum.Material?,
+	order: number,
+	accessory: number,
+}
+
+-- a * b modulo 2^32 without leaving the 53 bits a double holds exactly (a, b < 2^32)
+local function mul32(a: number, b: number): number
+	local high = math.floor(a / 65536)
+	local low = a % 65536
+	return ((high * b % 65536) * 65536 + low * b) % 4294967296
+end
+
+local function mix(h: number): number
+	h = mul32(bit32.bxor(h, bit32.rshift(h, 16)), 2246822507)
+	h = mul32(bit32.bxor(h, bit32.rshift(h, 13)), 3266489909)
+	return bit32.bxor(h, bit32.rshift(h, 16))
+end
+
+local function hashString(text: string): number
+	local h = 2166136261
+	for index = 1, #text do
+		h = mul32(bit32.bxor(h, string.byte(text, index)), 16777619)
+	end
+	return h
+end
+
+function PetLook.Seed(uid: string?): Variant?
+	if type(uid) ~= "string" or uid == "" then
+		return nil
+	end
+	local state = mix(hashString(uid))
+	local function nextUnit(): number -- uniform in [0, 1], one avalanche step per call
+		state = mix(bit32.bxor(state, 0x9E3779B9))
+		return state / 4294967295
+	end
+	local hue = (nextUnit() * 2 - 1) * HUE_JITTER
+	local saturation = (nextUnit() * 2 - 1) * SAT_JITTER
+	local value = (nextUnit() * 2 - 1) * VALUE_JITTER
+	local tintHue = nextUnit()
+	local tintAmount = TINT_MIN + nextUnit() * (TINT_MAX - TINT_MIN)
+	local textured = nextUnit() >= TEXTURE_NONE
+	local pick = nextUnit()
+	local order = mix(bit32.bxor(state, 0x85EBCA6B))
+	return {
+		hue = hue,
+		saturation = saturation,
+		value = value,
+		tintHue = tintHue,
+		tintAmount = tintAmount,
+		material = if textured then TEXTURE_MATERIALS[math.min(#TEXTURE_MATERIALS, math.floor(pick * #TEXTURE_MATERIALS) + 1)] else nil,
+		order = order,
+		accessory = mix(bit32.bxor(order, 0xC2B2AE35)),
+	}
+end
+
+-- Number of body parts that carry the texture at `level` (0 below Lv 2, growing to TEXTURE_MAX_SHARE of the parts at the max
+-- level). Never decreases with the level, so a pet that has a texture keeps it and gets it on more parts.
+function PetLook.TexturedCount(partCount: number, level: number): number
+	level = PetConfig.ClampLevel(level)
+	return math.floor(partCount * TEXTURE_MAX_SHARE * (level - 1) / (PetConfig.MaxLevel - 1) + 0.5)
+end
+
+-- Body parts (not the invisible Root, not the accents, which follow the tint ramp) get the variant's colour shift; a textured
+-- pet also gets its material on the first TexturedCount parts in the variant's part order (Neon parts and tiny ones are left).
+local function jitterBody(model: Model, variant: Variant, level: number)
+	local eligible = {}
+	for _, part in model:GetDescendants() do
+		if part:IsA("BasePart") and part ~= model.PrimaryPart and part:GetAttribute("Accent") ~= true then
+			local h, s, v = part.Color:ToHSV()
+			if s < 0.2 and v > 0.4 then
+				-- white / grey: no hue to shift, so tint it
+				part.Color = part.Color:Lerp(Color3.fromHSV(variant.tintHue, 0.85, 1), variant.tintAmount)
+				h, s, v = part.Color:ToHSV()
+			else
+				h = (h + variant.hue) % 1
+			end
+			part.Color = Color3.fromHSV(h, math.clamp(s * (1 + variant.saturation), 0, 1), math.clamp(v * (1 + variant.value), 0, 1))
+			if
+				variant.material
+				and part.Material ~= Enum.Material.Neon
+				and math.max(part.Size.X, part.Size.Y, part.Size.Z) >= TEXTURE_MIN_SIZE
+			then
+				table.insert(eligible, { part = part, rank = mix(bit32.bxor(hashString(part.Name), variant.order)) })
+			end
+		end
+	end
+	if variant.material then
+		table.sort(eligible, function(a, b)
+			if a.rank ~= b.rank then
+				return a.rank < b.rank
+			end
+			return a.part.Name < b.part.Name
+		end)
+		for index = 1, math.min(#eligible, PetLook.TexturedCount(#eligible, level)) do
+			eligible[index].part.Material = variant.material
 		end
 	end
 end
@@ -339,7 +474,8 @@ function PetLook.UpdateFx(fx: Fx, now: number, far: boolean, faded: boolean)
 	end
 end
 
--- Dresses a fresh, unparented clone of PetModels[kind] for `level`: forces the safety flags, tints the accent parts, scales
+-- Dresses a fresh, unparented clone of PetModels[kind] for `level`: forces the safety flags, shifts the body colours by the
+-- uid's Seed (nil uid: none), tints the accent parts, scales
 -- it by level around its root, adds the label (if given) above the scaled model, the Epic / Legendary glow and the tier
 -- effects. Call once per clone. Returns the metrics the formation needs (of the model without effects), or nil if the model
 -- has no PrimaryPart.
@@ -358,6 +494,10 @@ function PetLook.Apply(model: Model, kind: string, level: number, uid: string?, 
 			part.CanQuery = false
 			part.Massless = true
 		end
+	end
+	local variant = PetLook.Seed(uid)
+	if variant then
+		jitterBody(model, variant, level)
 	end
 	tintAccents(model, rarity, level)
 

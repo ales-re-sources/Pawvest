@@ -31,8 +31,8 @@ followers and pens always match.
 - `Scale(level)` = `1 + (MaxScale - 1) * (level - 1) / 19`, `MaxScale = 1.6` (config in `PetConfig`), applied with
   `model:ScaleTo` (label offset recomputed from the bounding box afterwards).
 - `Tier(level)`: 0 for Lv 1-4, 1 for 5-9, 2 for 10-14, 3 for 15-19, 4 at Lv 20 (`PetConfig.Tiers = {5, 10, 15, 20}`).
-- `Seed(uid)` -> small deterministic variant record (e.g. hue shift +-4 %, value +-6 % on body parts, accessory pick order)
-  so two Cats differ slightly but keep their rarity identity.
+- `Seed(uid)` -> deterministic variant record (P1e4, see below: hue +-6 %, saturation +-15 %, value +-10 % on body parts, tint for
+  white / grey parts, optional material texture, accessory pick seed) so two Cats differ but keep their rarity identity.
 - Tint: parts with attribute `Accent = true` (stripes, ear insides, tail tip, belly...) ramp toward the rarity colour
   with level; at Lv 20 accents become Neon. Body parts only get the seed jitter.
 - Tier effects, built in code (no lights below Epic; reuse the existing Epic/Legendary light):
@@ -96,8 +96,8 @@ and each is one commit that can be reverted alone. Order = dependency and value;
 3. **P1e3 - Tier effects + accent tint (done, details in ROADMAP P1e3; deviations: the T2 glow disc under the pet became an updraft of rising sparks after the visual check, effects also switch off while the pet is >= 50 % transparent, pens animate via `PetPenFx`).** Trail / aura / orbiting motes / halo at Lv 5 / 10 / 15 / 20 in the rarity colour,
    accent parts ramp to the rarity colour (Neon at Lv 20), livelier bob, distance LOD, cost check for 12 players.
    Studio: `Accent = true` on accent parts of the 8 models (one script). User check: how each tier looks.
-4. **P1e4 - Individuality.** `Seed(uid)` jitter (small hue / value shifts) so same kind and level differ; unit-checked
-   determinism. Small step; may be merged into P1f if P1e3 review shows nothing to adjust.
+4. **P1e4 - Individuality (done, details in ROADMAP P1e4; deviations after the user's visual check: larger jitter than first planned, white / grey parts get a seeded pastel tint, and a material texture that spreads with the level was added).** `Seed(uid)` jitter so same kind and level differ; unit-checked
+   determinism. The attribute format and the model reuse key already carried the uid since P1e1.
 5. **P1f - Accessory kit.** Halo, crown, scarf, small wings, horns, flame tail built in code from `Head` / `Body` / `Tail`;
    skip rules per kind; 1 piece at Lv 10, 2 at Lv 20, picked by seed. User check: variety and no ugly combinations
    (a short list of forbidden pairs can be added after review).

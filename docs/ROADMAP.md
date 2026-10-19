@@ -42,7 +42,7 @@ Rules:
 | P1e1 | Pet look foundation + size growth | ✔ | ✔ | – |
 | P1e2 | Pet level-up moment | ✔ | ✔ | – |
 | P1e3 | Pet tier effects + accent tint | ✔ | ✔ | – |
-| P1e4 | Pet individuality | – | – | – |
+| P1e4 | Pet individuality | ✔ | ✔ | – |
 | P1f | Pet accessory kit | – | – | – |
 | M3 | Stage unlocks | ✔ | ✔ | – |
 | M4 | Challenge coins | ✔ | ✔ | – |
@@ -535,7 +535,7 @@ later option. We cannot see 3D captures, so every step ends with a visual check 
 | **P1e1** | `ReplicatedStorage.PetLook` (`Scale`, `Tier`, `Apply`) shared by `PetFollow` and the garden pens; size 1.0 → 1.6 by level; spacing from the scaled width; camera fade; attribute `Kind:Level:uid` (old form still parsed) | Lv 1 = 1.0×, Lv 20 = 1.6×; three Lv 20 pets do not overlap; pens match followers; pets still trigger no touch parts; WalkSpeed unchanged |
 | **P1e2** | level-up detection per uid; burst, ring, floating "Level N!" (also for other players); tier badge on the label; optional `PetLevelUpSound` | one real level-up (Tutorial finish near a threshold) plays the effect once, only on that pet |
 | **P1e3** | tier effects at Lv 5 / 10 / 15 / 20 (trail, aura, motes, halo), accent parts (`Accent = true`, Studio) tinted to the rarity colour, Neon at Lv 20, distance LOD | all 8 kinds × 5 levels render; emitter / light / part counts for 12 players × 3 pets acceptable; far pets drop effects |
-| **P1e4** | `Seed(uid)` jitter (hue / value) so same kind and level differ | deterministic per uid, different uids differ, rarity identity kept |
+| **P1e4** | `Seed(uid)` jitter (hue / saturation / value, tint for white parts, optional material texture that spreads with the level) so same kind and level differ | deterministic per uid (server = client), different uids differ, shifts within bounds, nil uid = none, rarity identity kept, level-up keeps the look |
 | **P1f** | accessory kit (halo, crown, scarf, small wings, horns, flame tail) built from `Head` / `Body` / `Tail`; 1 piece at Lv 10, 2 at Lv 20, picked by seed; skip rules per kind | no duplicate pieces (e.g. wings on Dragon), all pieces non-colliding and non-touchable, higher tiers keep earlier pieces |
 
 #### P1e1 — Pet look foundation + size growth
@@ -651,6 +651,39 @@ later option. We cannot see 3D captures, so every step ends with a visual check 
   Consoles: only UIBlox "FoundationProvider" warnings. **User visual check (preview grid of 8 kinds × 5 levels): OK; the glow disc was
   replaced by the updraft.** Not covered: multi-client (the second client seeing the first player's effects), a real level-up with tier
   change from a stage finish, GPU cost of many particles in a full server.
+
+#### P1e4 — Pet individuality
+- **Outputs:** `PetLook.Seed(uid)` returns a deterministic variant record `{ hue, saturation, value, tintHue, tintAmount, material?, order, accessory }`
+  (nil for a nil / empty uid = the old attribute form, no jitter); `PetLook.TexturedCount(partCount, level)`; `Apply` shifts the body colours by
+  the record before the accent tint. No other file changed: `EquippedPets` already carried the uid (P1e1), `PetFollow` reuses a model only for
+  the same kind / level / uid, and `GardenService.makePenPet` already passed the pen's uid, so followers and pens match by construction.
+  Studio-only changes: none.
+- **Design notes:** the uid string is hashed with FNV-1a and run through an avalanche mix per field (`mul32` keeps the products exact in
+  doubles), no `math.random`. **Colour (user: "larger differences"):** hue +-6 % of the circle, saturation +-15 %, value +-10 % on every body part
+  of the pet by the same amounts (so it stays coherent); the invisible Root and `Accent = true` parts are skipped (accents keep the P1e3 tint
+  ramp, effects keep the rarity colour). **White / grey parts** (S < 0.2, V > 0.4: Bunny, Panda, eye shine...) have no hue to shift, so they are
+  lerped 10-22 % toward a seeded tint hue first (user: the white Bunny showed no differences). **Texture (user idea):** about half of the pets
+  (seeded) get one Roblox `Material` (Fabric, Marble, Granite, Slate, Pebble or Ice - no asset ids needed); it is applied to the first
+  `TexturedCount` body parts in a seeded part order, `TexturedCount` = round(parts x 0.45 x (Lv - 1) / 19), so it appears around Lv 4,
+  spreads to at most 45 % of the body parts at Lv 20 (3-5 parts per kind), never leaves a part once it has it (the order does not depend on the
+  level) and skips Neon parts and tiny ones (longest side < 0.38 studs: eyes, nose). Colours do not depend on the level, so the level-up
+  cross-fade shows only the size / tier / texture change. `accessory` is an independent 32-bit integer reserved for P1f (pick order); P1f must
+  accept a nil `Seed` result.
+- **Validation log (2026-10-19, solo playtests, API access on):** live profile `user_9892673032` snapshot `p1e4-snapshot.json`; restored
+  afterwards (Coins 10064 -> 10062 and Garden.LastSeen / Carry reset after the join payout; nothing else changed; no `user_-1` / `user_-2`).
+  Edit mode: `Seed` repeat calls equal; nil / "" -> nil; uids 1-2000: hue / value within the bounds, no duplicate (hue, value) pair, no duplicate
+  accessory seeds, hue spread even over 8 buckets (232-290 each), neighbours ("1"/"2", "7"/"8") differ; 3000 uids: 50.7 % textured, the six
+  materials 8-9 % each. Server vs client: checksum over the full record of uids 1-300 identical (3821624518). Pen (Cat Lv 3, uid 14) and
+  follower (Cat Lv 3, uid 23) in the playtest equal a locally dressed pet of the same uid on all 21 parts (colour + material), and differ from
+  the other uid on 13 parts. Local `EquippedPets` overrides: Cat/Dragon/Fox/Bunny pairs of the same level and different uids show different
+  body colours and textures (e.g. Cat Lv 20 uid 1 Granite on 5 parts, uid 2 Pebble on 5, uid 3 none; Panda tinted). Level-up Cat uid 14 Lv 3 -> 4
+  keeps the body colour (`f89759`) through the cross-fade, gains Slate on one part, the moment ran and left no `LevelUpFx` behind. Sweep of 8
+  kinds x 40 uids x Lv 1-20 (6 400 dressings, 132 480 parts): 0 flag violations (Anchored, CanCollide / CanTouch / CanQuery off, Massless),
+  textured parts never decrease with the level, never reach 50 % of the body parts, no unexpected material change (accents Neon at Lv 20 aside).
+  WalkSpeed 20.80 / JumpHeight 7.20 unchanged. Consoles: only UIBlox "FoundationProvider" warnings. **User visual check (preview grid 8 kinds x
+  uids 1-8 at Lv 5 / 12 / 20): bigger differences wanted and white Bunny invisible -> fixed (larger jitter, tint); textures approved.** The grid
+  was rebuilt after raising the texture size limit so legs and ears can carry it (0.5 -> 0.38); it was not looked at again. Not covered:
+  multi-client, how it looks in a real garden, near-black parts (eyes, Panda patches) only get the colour shifts, which are hardly visible there.
 
 ### M3 — Stage unlocks
 - **Inputs:** `StageConfig.unlock` / `unlockPrice` (GDD §3: Stage 2 = Silver on Stage 1 or 150 Coins, Stage 3 = Silver on

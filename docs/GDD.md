@@ -269,7 +269,11 @@ the old look to the new one, then a burst of sparks, an expanding ring and a flo
 **Tier effects (P1e3):** in the rarity colour, cumulative: Lv 5 sparkle trail, Lv 10 soft aura and rising sparks, Lv 15 three
 orbiting motes, Lv 20 a hexagonal halo and a stronger aura; accent parts of the model (stripes, tail tip, belly...) drift toward the
 rarity colour with the level and turn Neon at Lv 20; the float animation gets livelier with the tier. Effects switch off beyond
-60 studs from the camera. More growth visuals (individuality, accessories) are planned in
+60 studs from the camera.
+**Individuality (P1e4):** every pet id gets its own small colour variation (hue, saturation and brightness of the body, a pastel
+tint for white / grey parts), so two Cats of the same level differ. About half of the pets also have a material "texture" (Fabric,
+Marble, Granite, Slate, Pebble or Ice) that spreads over more body parts as the level rises (at most 45 % of the parts at Lv 20)
+and never goes away. The accent parts keep following the rarity colour. Accessories are planned in
 [PET_GROWTH.md](PET_GROWTH.md).
 
 ### 7.6 Pet garden (minigame, P2)
