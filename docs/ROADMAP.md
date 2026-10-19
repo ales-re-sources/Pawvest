@@ -729,7 +729,7 @@ later option. We cannot see 3D captures, so every step ends with a visual check 
   3.56-4.03), 0 flag violations, WalkSpeed 20.80 / JumpHeight 7.20 unchanged. Camera: at 3 studs the accessory parts and the body have `LocalTransparencyModifier` 0.85 and the flame emitter is
   off; at 20 and 40 studs 0 and on; at 90 studs the flame emitter is off (LOD). Level-up Fox 9 -> 10 (uid 3): the ghost has no accessories, the new model has `FlameTail` fading in 1.0 -> 0.12
   -> 0 during the cross-fade, 1 model and no `LevelUpFx` afterwards; Fox 10 -> 20 keeps `FlameTail` and adds `Wings`. Consoles: only UIBlox "FoundationProvider" warnings.
-  Not covered: multi-client, how it looks (screenshots of the 3D view are blank; **user visual check pending**: preview grid `workspace.P1fPreview`, 8 kinds x uids 1-6 at Lv 20 (left) and Lv 10
+  Not covered: multi-client, how it looks (screenshots of the 3D view are blank; **user visual check done 2026-10-19: OK, incl. the Bunny coats** (preview grid `workspace.P1fPreview`, removed afterwards), 8 kinds x uids 1-6 at Lv 20 (left) and Lv 10
   (right), plus an extra row of Bunnies uids 1-12 at Lv 20 for the new coats - variety, ugly combinations; a forbidden-pairs list can be extended after the review), a real pen with an accessory pet (same code path as the follower, checked by the server/client checksum).
 
 ### M3 — Stage unlocks
