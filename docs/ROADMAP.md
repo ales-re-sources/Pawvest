@@ -1415,8 +1415,9 @@ stepped arch, plus a white Neon slab `PORTAL`; 15.3 wide, 11.8 high, 5.4 deep, g
     spot and facing, feet on the plaza (y 16.3). `Portal` keeps its name, SurfaceGui, PointLight and role (touch trigger +
     face): 7.14 × 9.99 × 1.5 (the template slab's width, the opening's height + 0.3 into the arch), bottom on the plaza,
     sky blue (70, 175, 235) Plastic at transparency 0.25, no shadow; the white Neon slab is not used (text on it would be
-    unreadable). Stage-name label restyled: white GothamBlack with a dark blue stroke, TextScaled, upper part of the face
-    (0.14–0.35), SurfaceGui LightInfluence 0; texts unchanged ("Stage N access", "Tutorial access").
+    unreadable). Stage-name label restyled: white GothamBlack 60 px with a dark blue stroke, wrapped on two lines, the same
+    size on all 4 (no TextScaled, AutomaticSize None), box 0.84 × 0.25 at 0.16 from the top = the wide part of the opening
+    (y 5.9–8.4 above the plaza), SurfaceGui LightInfluence 0; texts unchanged ("Stage N access", "Tutorial access").
   - Studio-only: `Workspace.StudPortal` → `ServerStorage.DecorKit.StudPortal` (template).
   - Code: `HubPortalMedals` layout moved inside the arch's visible opening (narrower than the `Portal` part: ~5.1 studs at
     the feet and in one middle row, ~6.6 elsewhere, measured by raycasts): stars at 0.45 (0.7 wide), lock / coin lines from
@@ -1434,6 +1435,9 @@ stepped arch, plus a white Neon slab `PORTAL`; 15.3 wide, 11.8 high, 5.4 deep, g
   TeleportToTutorial → 4.5 studs from the Tutorial destination after 0.6 s. Server log: 0 errors / warnings (client: only
   the known UIBlox warnings). Live profile restored (the test's join payout had changed Coins / Garden.LastSeen / Carry)
   and compared field by field: identical. Not covered: a locked portal's unlock popup (same as H1).
+  User review: "Tutorial access" was not fully visible (the old labels kept AutomaticSize XY, so the auto-sized box put
+  "Tutorial" into the narrow top of the arch) → fixed-size label as above; Edit captures: "Tutorial access" fully inside
+  the opening head-on, all 4 labels readable from the spawn.
 
 ### P3 — Trading
 - **Prerequisite:** profile session locking in `PlayerProfile` (`UpdateAsync` with a `{ JobId, Time }` lock instead of
