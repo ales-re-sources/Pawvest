@@ -37,7 +37,7 @@ followers and pens always match.
   with level; at Lv 20 accents become Neon. Body parts only get the seed jitter.
 - Tier effects, built in code (no lights below Epic; reuse the existing Epic/Legendary light):
   T1 sparkle trail, T2 soft aura (low-rate emitter + faint neon underglow disc), T3 orbiting motes (a few tiny
-  neon parts moved by the existing Heartbeat), T4 halo + stronger aura. Colour = rarity colour.
+  neon parts moved by the existing Heartbeat), T4 halo + stronger aura. Colour = rarity colour (from P1e4: shifted per pet by the seed, `PetLook.FxColor`; the label keeps the exact rarity colour).
 - Life: bob amplitude/speed grow slightly with tier; label gets a tier badge ("Lv 12 *" -> stars per tier) in rarity colour.
 - Distance LOD: emitters/orbiters disabled beyond ~60 studs from the camera (checked in the existing refresh loop).
 - All created parts: Anchored, CanCollide/CanTouch/CanQuery off, Massless (same invariants as today; re-enforced in Apply).

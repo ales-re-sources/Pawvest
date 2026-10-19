@@ -273,7 +273,7 @@ rarity colour with the level and turn Neon at Lv 20; the float animation gets li
 **Individuality (P1e4):** every pet id gets its own small colour variation (hue, saturation and brightness of the body, a pastel
 tint for white / grey parts), so two Cats of the same level differ. About half of the pets also have a material "texture" (Fabric,
 Marble, Granite, Slate, Pebble or Ice) that spreads over more body parts as the level rises (at most 45 % of the parts at Lv 20)
-and never goes away. The accent parts keep following the rarity colour. Accessories are planned in
+and never goes away. Accent parts, glow and tier effects use the pet's own shade of its rarity colour (a slightly different green for every Uncommon pet); the label keeps the exact rarity colour. Accessories are planned in
 [PET_GROWTH.md](PET_GROWTH.md).
 
 ### 7.6 Pet garden (minigame, P2)

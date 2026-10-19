@@ -150,10 +150,16 @@ end
 --   material / order           optional "texture" (a Roblox Material, no asset ids): nil for TEXTURE_NONE of the pets; otherwise
 --                              it appears on more body parts as the level rises (see Textured); `order` fixes which parts first
 --   accessory                  unsigned 32-bit integer reserved for P1f (the order accessories are picked in)
+--   fxHue / fxSaturation / fxValue  shift of the effect colour (accents, glow, tier effects, level-up) around the rarity colour,
+--                              see FxColor; drawn last, so adding it did not change the fields above
 -- uid nil or "" -> nil (old attribute form: no jitter). The record never depends on the level, so a level-up keeps the colours.
 local HUE_JITTER = 0.06
 local SAT_JITTER = 0.15
 local VALUE_JITTER = 0.10
+local FX_HUE_JITTER = 0.07 -- effect colour: hue shift (fraction of the circle) around the rarity colour, so green stays green-ish
+local FX_SAT_JITTER = 0.15
+local FX_VALUE_JITTER = 0.10
+local FX_GREY_SATURATION = 0.25 -- grey rarity colour (Common): pale tint in the pet's own tint hue instead of a hue shift
 local TINT_MIN, TINT_MAX = 0.10, 0.22 -- how far a near-white / grey part is lerped toward the tint colour
 local TEXTURE_NONE = 0.5 -- share of pets without any texture
 local TEXTURE_MAX_SHARE = 0.45 -- share of the body parts that carry the texture at the max level (< 50 %)
@@ -179,6 +185,9 @@ export type Variant = {
 	material: Enum.Material?,
 	order: number,
 	accessory: number,
+	fxHue: number,
+	fxSaturation: number,
+	fxValue: number,
 }
 
 -- a * b modulo 2^32 without leaving the 53 bits a double holds exactly (a, b < 2^32)
@@ -219,6 +228,10 @@ function PetLook.Seed(uid: string?): Variant?
 	local textured = nextUnit() >= TEXTURE_NONE
 	local pick = nextUnit()
 	local order = mix(bit32.bxor(state, 0x85EBCA6B))
+	local accessory = mix(bit32.bxor(order, 0xC2B2AE35))
+	local fxHue = (nextUnit() * 2 - 1) * FX_HUE_JITTER
+	local fxSaturation = (nextUnit() * 2 - 1) * FX_SAT_JITTER
+	local fxValue = (nextUnit() * 2 - 1) * FX_VALUE_JITTER
 	return {
 		hue = hue,
 		saturation = saturation,
@@ -227,8 +240,29 @@ function PetLook.Seed(uid: string?): Variant?
 		tintAmount = tintAmount,
 		material = if textured then TEXTURE_MATERIALS[math.min(#TEXTURE_MATERIALS, math.floor(pick * #TEXTURE_MATERIALS) + 1)] else nil,
 		order = order,
-		accessory = mix(bit32.bxor(order, 0xC2B2AE35)),
+		accessory = accessory,
+		fxHue = fxHue,
+		fxSaturation = fxSaturation,
+		fxValue = fxValue,
 	}
+end
+
+-- Effect colour of a pet: its rarity colour shifted by the variant (hue +-FX_HUE_JITTER, saturation +-15 %, value +-10 %), so
+-- two Uncommon pets glow in different greens but still read as "green". A grey rarity colour (Common) has no hue to shift and
+-- becomes a pale tint in the pet's tint hue. variant nil -> the rarity colour itself. The label keeps the exact rarity colour.
+function PetLook.FxColor(base: Color3, variant: Variant?): Color3
+	if not variant then
+		return base
+	end
+	local h, s, v = base:ToHSV()
+	if s < 0.15 then
+		h = variant.tintHue
+		s = FX_GREY_SATURATION + variant.fxSaturation
+	else
+		h = (h + variant.fxHue) % 1
+		s = s * (1 + variant.fxSaturation)
+	end
+	return Color3.fromHSV(h, math.clamp(s, 0, 1), math.clamp(v * (1 + variant.fxValue), 0, 1))
 end
 
 -- Number of body parts that carry the texture at `level` (0 below Lv 2, growing to TEXTURE_MAX_SHARE of the parts at the max
@@ -281,7 +315,7 @@ function PetLook.Bob(level: number): (number, number)
 	return 0.2 + 0.04 * tier, 2.5 + 0.35 * tier
 end
 
--- Tier effects (P1e3), cumulative, all in the rarity colour, built in code (no lights besides the Epic / Legendary one):
+-- Tier effects (P1e3), cumulative, all in the pet's effect colour (FxColor: rarity colour shifted by the seed), built in code (no lights besides the Epic / Legendary one):
 --   T1 (Lv 5)  sparkle trail behind the pet (world-space particles)
 --   T2 (Lv 10) soft aura (low-rate puffs around the body) + an updraft of small sparks rising from under the pet
 --   T3 (Lv 15) three tiny neon motes orbiting the body (moved by UpdateFx)
@@ -499,7 +533,11 @@ function PetLook.Apply(model: Model, kind: string, level: number, uid: string?, 
 	if variant then
 		jitterBody(model, variant, level)
 	end
-	tintAccents(model, rarity, level)
+	-- accents, glow, tier effects and level-up use the pet's own effect colour; the label keeps the rarity colour
+	local look = table.clone(rarity)
+	look.color = PetLook.FxColor(rarity.color, variant)
+	model:SetAttribute("FxColor", look.color)
+	tintAccents(model, look, level)
 
 	local scale = PetLook.Scale(level)
 	model:ScaleTo(scale)
@@ -511,9 +549,9 @@ function PetLook.Apply(model: Model, kind: string, level: number, uid: string?, 
 	if label then
 		addLabel(model, root, rarity, center.Y + boxSize.Y / 2 + if tier >= 4 then HALO_LIFT else 0, label)
 	end
-	addGlow(root, rarity)
+	addGlow(root, look)
 	if tier > 0 then
-		addTierFx(model, root, rarity, tier, scale, center, boxSize)
+		addTierFx(model, root, look, tier, scale, center, boxSize)
 	end
 	model:SetAttribute("FxCount", countFx(model))
 	return { scale = scale, size = boxSize, center = center, lift = underside * (1 - 1 / scale) }
@@ -589,8 +627,12 @@ function PetLook.LevelUp(model: Model, kind: string, level: number, ghost: Model
 	local boxCFrame, boxSize = model:GetBoundingBox()
 	local center = root.CFrame:PointToObjectSpace(boxCFrame.Position)
 	local top = center.Y + boxSize.Y / 2
-	local color = rarity.color:Lerp(Color3.new(1, 1, 1), 0.35)
-	local flashColor = rarity.color:Lerp(Color3.new(1, 1, 1), 0.6)
+	local fxColor = model:GetAttribute("FxColor") -- the pet's effect colour, stamped by Apply
+	if typeof(fxColor) ~= "Color3" then
+		fxColor = rarity.color
+	end
+	local color = fxColor:Lerp(Color3.new(1, 1, 1), 0.35)
+	local flashColor = fxColor:Lerp(Color3.new(1, 1, 1), 0.6)
 
 	local folder = Instance.new("Folder")
 	folder.Name = "LevelUpFx"
@@ -666,7 +708,7 @@ function PetLook.LevelUp(model: Model, kind: string, level: number, ghost: Model
 		burst:Emit(BURST_COUNT)
 		-- ring on the ground under the pet's place (a flat neon cylinder, axis up)
 		local reach = math.max(boxSize.X, boxSize.Z)
-		local ring = fxPart("LevelUpRing", Enum.PartType.Cylinder, rarity.color, folder)
+		local ring = fxPart("LevelUpRing", Enum.PartType.Cylinder, fxColor, folder)
 		ring.Transparency = 0.2
 		ring.Size = Vector3.new(0.15, reach * 0.6, reach * 0.6)
 		ring.CFrame = base * CFrame.new(0, center.Y - boxSize.Y / 2 + 0.1, 0) * CFrame.Angles(0, 0, math.pi / 2)

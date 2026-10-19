@@ -654,8 +654,8 @@ later option. We cannot see 3D captures, so every step ends with a visual check 
 
 #### P1e4 — Pet individuality
 - **Outputs:** `PetLook.Seed(uid)` returns a deterministic variant record `{ hue, saturation, value, tintHue, tintAmount, material?, order, accessory }`
-  (nil for a nil / empty uid = the old attribute form, no jitter); `PetLook.TexturedCount(partCount, level)`; `Apply` shifts the body colours by
-  the record before the accent tint. No other file changed: `EquippedPets` already carried the uid (P1e1), `PetFollow` reuses a model only for
+  (nil for a nil / empty uid = the old attribute form, no jitter); `PetLook.TexturedCount(partCount, level)`; `PetLook.FxColor(rarityColor, variant)`; `Apply` shifts the body colours by
+  the record before the accent tint and stamps the model attribute `FxColor`. No other file changed: `EquippedPets` already carried the uid (P1e1), `PetFollow` reuses a model only for
   the same kind / level / uid, and `GardenService.makePenPet` already passed the pen's uid, so followers and pens match by construction.
   Studio-only changes: none.
 - **Design notes:** the uid string is hashed with FNV-1a and run through an avalanche mix per field (`mul32` keeps the products exact in
@@ -669,6 +669,12 @@ later option. We cannot see 3D captures, so every step ends with a visual check 
   level) and skips Neon parts and tiny ones (longest side < 0.38 studs: eyes, nose). Colours do not depend on the level, so the level-up
   cross-fade shows only the size / tier / texture change. `accessory` is an independent 32-bit integer reserved for P1f (pick order); P1f must
   accept a nil `Seed` result.
+  **Effect colour (user request after the first review: all Lv 20 pets glowed the same green):** accents, the Epic / Legendary glow, the tier
+  effects (trail, aura, updraft, motes, halo) and the level-up burst / ring use `FxColor(rarity colour, Seed)`: hue +-7 % of the circle,
+  saturation +-15 %, value +-10 % around the rarity colour (green stays green-ish, Uncommon pets differ between yellow-green and teal); the grey
+  Common colour has no hue, so it becomes a pale tint (saturation 0.10-0.40) in the pet's tint hue. The label keeps the exact rarity colour,
+  so the rarity stays readable. `Apply` stamps the colour as the model attribute `FxColor` (`LevelUp` reads it; a missing attribute falls
+  back to the rarity colour). The new fields are drawn after the older ones, so uids keep their earlier colours / textures / accessory seed.
 - **Validation log (2026-10-19, solo playtests, API access on):** live profile `user_9892673032` snapshot `p1e4-snapshot.json`; restored
   afterwards (Coins 10064 -> 10062 and Garden.LastSeen / Carry reset after the join payout; nothing else changed; no `user_-1` / `user_-2`).
   Edit mode: `Seed` repeat calls equal; nil / "" -> nil; uids 1-2000: hue / value within the bounds, no duplicate (hue, value) pair, no duplicate
@@ -680,8 +686,14 @@ later option. We cannot see 3D captures, so every step ends with a visual check 
   keeps the body colour (`f89759`) through the cross-fade, gains Slate on one part, the moment ran and left no `LevelUpFx` behind. Sweep of 8
   kinds x 40 uids x Lv 1-20 (6 400 dressings, 132 480 parts): 0 flag violations (Anchored, CanCollide / CanTouch / CanQuery off, Massless),
   textured parts never decrease with the level, never reach 50 % of the body parts, no unexpected material change (accents Neon at Lv 20 aside).
-  WalkSpeed 20.80 / JumpHeight 7.20 unchanged. Consoles: only UIBlox "FoundationProvider" warnings. **User visual check (preview grid 8 kinds x
-  uids 1-8 at Lv 5 / 12 / 20): bigger differences wanted and white Bunny invisible -> fixed (larger jitter, tint); textures approved.** The grid
+  WalkSpeed 20.80 / JumpHeight 7.20 unchanged. Consoles: only UIBlox "FoundationProvider" warnings.
+  *Effect colour check (second playtest, snapshot `p1e4b-snapshot.json`):* over uids 1-2000 and all five rarity colours the hue shift stays <= 0.070,
+  saturation factor <= 0.150, value factor <= 0.100, grey Common saturation 0.10-0.40; nil variant returns the rarity colour; the older
+  fields are unchanged (uid 14 Slate, uid 1 Granite, accessory seed identical). Followers Bunny Lv 20 uid 2 / uid 1: `5bca7c` / `63bf75`, all
+  emitters (Trail, Aura, Updraft) and halo in the pet's colour; two Lv 20 Foxes `6dc852` / `52da56`, Cat `8197c1`; garden pen (Cat uid 14) equals a
+  locally dressed pet (`FxColor` `cb90ad`, 0 differing parts); level-up Fox 14 -> 15: ring colour = the pet's `FxColor`, 3 motes, no `LevelUpFx`
+  left afterwards; 0 flag violations. Live profile restored (Coins, Garden.LastSeen / Carry after the join payout). **User visual check (preview grid 8 kinds x
+  uids 1-8 at Lv 5 / 12 / 20; effect colours at Lv 10 / 20 afterwards: OK): bigger differences wanted and white Bunny invisible -> fixed (larger jitter, tint); textures approved.** The grid
   was rebuilt after raising the texture size limit so legs and ears can carry it (0.5 -> 0.38); it was not looked at again. Not covered:
   multi-client, how it looks in a real garden, near-black parts (eyes, Panda patches) only get the colour shifts, which are hardly visible there.
 
