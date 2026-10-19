@@ -1440,7 +1440,7 @@ stepped arch, plus a white Neon slab `PORTAL`; 15.3 wide, 11.8 high, 5.4 deep, g
   "Tutorial" into the narrow top of the arch) → fixed-size label as above; Edit captures: "Tutorial access" fully inside
   the opening head-on, all 4 labels readable from the spawn. User review 2: title a bit lower, "access" dropped → one line
   72 px above the stars (above); Edit capture with a temporary stars + coin-line preview (removed): title, stars and coin
-  line read as one column inside the arch; all 4 readable from the spawn.
+  line read as one column inside the arch; all 4 readable from the spawn. The user's visual check passed (2026-10-19).
 
 ### P3 — Trading
 - **Prerequisite:** profile session locking in `PlayerProfile` (`UpdateAsync` with a `{ JobId, Time }` lock instead of
