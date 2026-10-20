@@ -1,6 +1,6 @@
 # Pet growth visuals (P1e1-P1f)
 
-> Design and plan for making pet levels visible (size, effects, level-up moment, individuality, accessories). Milestones and status: [ROADMAP.md](ROADMAP.md) (P1e1-P1f). Related: [GDD.md](GDD.md) §7.4-7.5. Correct this file when the design changes while a milestone is implemented.
+> Design and plan for making pet levels visible (size, effects, level-up moment, individuality, accessories). Milestones and status: [ROADMAP.md](ROADMAP.md) (P1e). Related: [GDD.md](GDD.md) §7.4-7.5. Correct this file when the design changes while a milestone is implemented.
 
 ## Context
 Pet XP and levels exist since P1d, but a level-up is invisible: a Lv 20 Cat looks like a Lv 1 Cat. We want pets to
@@ -94,18 +94,18 @@ and each is one commit that can be reverted alone. Order = dependency and value;
 
 1. **P1e1 - PetLook foundation + size growth (done).** Deviations from this plan: slot gap 0.6 (not 0.5); `PetLook.Slots` also
    scales the distance behind the owner and lifts large pets; a run mode (4 studs back, >= 0.6 transparency while the owner's
-   stage timer runs) was added after the first visual check. Details: ROADMAP P1e1. New `PetLook` module with `Scale` / `Tier` / `Apply`; `PetFollow` and
+   stage timer runs) was added after the first visual check. Details: ROADMAP P1e1 at f27c0b7. New `PetLook` module with `Scale` / `Tier` / `Apply`; `PetFollow` and
    `makePenPet` both use it (removes the duplicated model/label/glow code); size 1.0 -> 1.6 by level; formation spacing from
    the scaled width; camera fade. Attribute becomes `Kind:Level:uid` (parser also accepts the old form) because the next two
    steps need the pet id. Studio: none. User check: pets visibly grow, three Lv 20 pets don't overlap, nothing blocks the view.
-2. **P1e2 - Level-up moment (done, details in ROADMAP P1e2; pens show it too via `PetPenLevelUp`).** Level-up detection per uid in `PetFollow`; burst, ring, floating "Level N!" (visible to
+2. **P1e2 - Level-up moment (done, details in ROADMAP P1e2 at f27c0b7; pens show it too via `PetPenLevelUp`).** Level-up detection per uid in `PetFollow`; burst, ring, floating "Level N!" (visible to
    all nearby players); label tier badge; optional `PetLevelUpSound`. User check: finish a run with a pet near a threshold.
-3. **P1e3 - Tier effects + accent tint (done, details in ROADMAP P1e3; deviations: the T2 glow disc under the pet became an updraft of rising sparks after the visual check, effects also switch off while the pet is >= 50 % transparent, pens animate via `PetPenFx`).** Trail / aura / orbiting motes / halo at Lv 5 / 10 / 15 / 20 in the rarity colour,
+3. **P1e3 - Tier effects + accent tint (done, details in ROADMAP P1e3 at f27c0b7; deviations: the T2 glow disc under the pet became an updraft of rising sparks after the visual check, effects also switch off while the pet is >= 50 % transparent, pens animate via `PetPenFx`).** Trail / aura / orbiting motes / halo at Lv 5 / 10 / 15 / 20 in the rarity colour,
    accent parts ramp to the rarity colour (Neon at Lv 20), livelier bob, distance LOD, cost check for 12 players.
    Studio: `Accent = true` on accent parts of the 8 models (one script). User check: how each tier looks.
-4. **P1e4 - Individuality (done, details in ROADMAP P1e4; deviations after the user's visual check: larger jitter than first planned, white / grey parts get a seeded pastel tint, and a material texture that spreads with the level was added).** `Seed(uid)` jitter so same kind and level differ; unit-checked
+4. **P1e4 - Individuality (done, details in ROADMAP P1e4 at f27c0b7; deviations after the user's visual check: larger jitter than first planned, white / grey parts get a seeded pastel tint, and a material texture that spreads with the level was added).** `Seed(uid)` jitter so same kind and level differ; unit-checked
    determinism. The attribute format and the model reuse key already carried the uid since P1e1.
-5. **P1f - Accessory kit (done, details in ROADMAP P1f; deviations: no halo piece because of the P1e3 tier halo, flame tail also on Phoenix, pieces are included in the bounding box / metrics).** Crown, scarf, small wings, horns, flame tail built in code from `Head` / `Body` / `Tail*`;
+5. **P1f - Accessory kit (done, details in ROADMAP P1f at f27c0b7; deviations: no halo piece because of the P1e3 tier halo, flame tail also on Phoenix, pieces are included in the bounding box / metrics).** Crown, scarf, small wings, horns, flame tail built in code from `Head` / `Body` / `Tail*`;
    skip rules per kind; 1 piece at Lv 10, 2 at Lv 20, picked by seed. User check: variety and no ugly combinations
    (a short list of forbidden pairs can be added after review).
 
