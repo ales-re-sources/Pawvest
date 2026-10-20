@@ -116,8 +116,7 @@ Never covered in Studio, so check them on a real server:
 - a real 1-hour Golden egg and the inventory cap with free eggs waiting;
 - touch / mobile layout of every panel and popup.
 
-Housekeeping (Studio): `ReplicatedStorage.StageTimerStopped` is unused and can be deleted; `ServerStorage.H1_2_Backup` (the
-old landing-pad boards and portal frames) can be deleted once the landing pads are accepted.
+Housekeeping (Studio): `ReplicatedStorage.StageTimerStopped` is unused and can be deleted.
 
 ## Next milestones
 
