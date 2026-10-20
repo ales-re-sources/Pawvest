@@ -14,6 +14,7 @@ script.Parent.Touched:Connect(function(hit)
 	local _, runningStage = TimerHandler.GetTimer(player)
 	if runningStage ~= stage.key then
 		TimerHandler.StartTimer(player, stage.key)
+		TouchHandler.NewRun(player) -- checkpoint sounds play again in the new run
 	end
 	TouchHandler.OnTouched(script.Parent, hit)
 end)

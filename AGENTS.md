@@ -95,7 +95,7 @@ src/
     ScreenGui/AdminPanel/...                      RunSpeed (16↔64), DoubleJump (up to 5 air jumps), ScoreReset, AdminAddCoins.client.luau (+Coins button, built in code)
   Workspace/
     Handlers/                         ModuleScripts shared by all stage scripts (required via workspace.Handlers.*)
-      CheckpointTouchHandler.luau     checkpoint touch → leaderstats.Stage, respawn point, sound
+      CheckpointTouchHandler.luau     checkpoint touch → leaderstats.Stage, respawn point, sound once per checkpoint per run (NewRun from TimerStart); dead characters ignored
       PlayerTimerHandler.luau         stage timers (os.clock), personal bests (profile), global Top-10, score panel
     StartLocation/                    hub (central island, part-built since H1, centre (-1126, 16, -475), r 80): SpawnLocation on the plaza + TeleportToTutorial / TeleportToStage1..3 portals in an arc facing it (each: Script, `Portal` = touch trigger + face with the stage-name SurfaceGui, Studio-only `Arch` Model of stud-stone blocks cloned from `ServerStorage.DecorKit.StudPortal`, H1.1) + StarsLeaderboard (Studio-only board model in the wooden stud style, no scripts; StarsBoard.server.luau beside it draws into Model.ScoreBlock.SurfaceGui: DataLabel, Names.NameN, Score.ScoreN, Photos.PhotoN); Studio-only Island folder (Island, IslandRock, Plaza, PlazaRing, Hedge + invisible Barrier ring with an opening toward the garden, BridgePath, GardenSign, Decor). Scripts find the hub by name, never by coordinates
     Stage1/ Stage2/ Stage3/ Tutorial/ stages (see below)
