@@ -4,22 +4,56 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
--- server -> client, no arguments: the player reached a checkpoint; CheckpointSound plays script.Sound for that player only
+-- server -> client (part, first): the player's checkpoint (respawn point) is now that part; CheckpointClient lights its pad
+-- (and turns the previous one off) for that player only and plays script.Sound when `first` (first time in the run)
 local reachedEvent = Instance.new("RemoteEvent")
 reachedEvent.Name = "CheckpointReached"
 reachedEvent.Parent = ReplicatedStorage
 
+-- server -> client, no arguments: a new run started; CheckpointClient turns every pad back to "not reached"
+local resetEvent = Instance.new("RemoteEvent")
+resetEvent.Name = "CheckpointsReset"
+resetEvent.Parent = ReplicatedStorage
+
 local lastCheckpoints = {} -- [Player] = last checkpoint part touched (respawn point; skips the work on repeated touches)
 local reached = {} -- [Player] = { [checkpoint part] = true } reached in the current run: the sound plays once per run
+local firstOfStage = {} -- [stage folder] = C part of its lowest-numbered checkpoint (cache)
 
 Players.PlayerRemoving:Connect(function(player)
 	lastCheckpoints[player] = nil
 	reached[player] = nil
 end)
 
--- A new run starts (TimerStart): every checkpoint plays its sound again when reached
+-- A new run starts (TimerStart): every checkpoint plays its sound and its pad animation again when reached
 function module.NewRun(player)
 	reached[player] = nil
+	lastCheckpoints[player] = nil -- so the first checkpoint lights again even if it was the last one before
+	resetEvent:FireClient(player)
+end
+
+-- The stage's start gate (TimerStart) stands just before the first checkpoint: touching it counts as reaching that
+-- checkpoint, so walking gate -> plate plays one sound and the respawn point is the plate, not the gate
+local function resolve(part)
+	if tonumber(part.Parent.Name) then
+		return part
+	end
+	local stage = part
+	while stage.Parent and stage.Parent ~= workspace do
+		stage = stage.Parent
+	end
+	local first = firstOfStage[stage]
+	if not (first and first.Parent) then
+		first = nil
+		local best = math.huge
+		for _, d in stage:GetDescendants() do
+			local number = d.Name == "C" and d:IsA("BasePart") and tonumber(d.Parent.Name)
+			if number and number < best then
+				best, first = number, d
+			end
+		end
+		firstOfStage[stage] = first
+	end
+	return first or part
 end
 
 function module.OnTouched(part, hit)
@@ -30,22 +64,21 @@ function module.OnTouched(part, hit)
 	local humanoid = hit.Parent:FindFirstChildOfClass("Humanoid")
 	if not humanoid or humanoid.Health <= 0 then return end
 
+	part = resolve(part)
 	if lastCheckpoints[player] ~= part then
 		lastCheckpoints[player] = part
 
-		-- the start gate (TimerStart) stands next to the first checkpoint: walking between them only plays the sound
-		-- the first time each one is reached in this run
+		-- the pad follows the respawn point (also back to an earlier checkpoint); the sound only on the first reach in this run
 		local seen = reached[player]
 		if not seen then
 			seen = {}
 			reached[player] = seen
 		end
-		if not seen[part] then
-			seen[part] = true
-			reachedEvent:FireClient(player)
-		end
+		local first = not seen[part]
+		seen[part] = true
+		reachedEvent:FireClient(player, part, first)
 
-		-- numbered checkpoints only (the TimerStart's parent is "LandingPad")
+		-- numbered checkpoints only (a stage without checkpoints leaves its TimerStart here)
 		if tonumber(part.Parent.Name) and player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Stage") then
 			player.leaderstats.Stage.Value = part.Parent.Name
 		end

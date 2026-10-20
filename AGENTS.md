@@ -78,7 +78,8 @@ src/
     StageResultsPopup.client.luau     results popup after a finish incl. pet XP line (GUI built in code)
     HubPortalMedals.client.luau       own best-medal stars, challenge coins "found x/y" + lock requirement/price on each hub portal face (local SurfaceGuis; layout kept inside the arch's opening)
     CameraFacing.client.luau          camera turns to the character's facing after a teleport (> 30 studs in a frame at > 500 studs/s) and on the first spawn; the targets set the facing: `SpawnLocation` looks at the Tutorial / Stage 1 portals, `TeleportDestination` along the course
-    CheckpointSound.client.luau       plays workspace.Handlers.CheckpointTouchHandler.Sound locally (SoundService copy) on CheckpointReached
+    CheckpointClient.client.luau      checkpoints for the local player (H2): CheckpointReached(part, first) lights that pad (Core 3 → 7 Neon, PointLight, Beam rises; 1 s) and turns the previous one back, so only the current checkpoint glows; `first` also plays workspace.Handlers.CheckpointTouchHandler.Sound (SoundService copy); CheckpointsReset turns the lit pad back; values in the LOOK table
+    BounceBricks.client.luau          bounce bricks (tag BounceBrick, attribute LaunchSpeed set by each brick's script): on touch sets the local character's velocity along the brick's LookVector to exactly LaunchSpeed (deterministic; the client owns its character)
     ChallengeCoinsClient.client.luau  hides the local player's collected challenge coins (local Transparency/CanTouch), spins the others, plays the pickup sound
     PortalBarriers.client.luau        invisible local wall in each locked hub portal (removed when Unlocked_<folder> turns true)
     StageUnlockPopup.client.luau      unlock popup after touching a locked hub portal (requirement, price, unlock button; GUI built in code)
@@ -97,7 +98,7 @@ src/
     ScreenGui/AdminPanel/...                      RunSpeed (16↔64), DoubleJump (up to 5 air jumps), ScoreReset, AdminAddCoins.client.luau (+Coins button, built in code)
   Workspace/
     Handlers/                         ModuleScripts shared by all stage scripts (required via workspace.Handlers.*)
-      CheckpointTouchHandler.luau     checkpoint touch → leaderstats.Stage, respawn point, sound once per checkpoint per run (NewRun from TimerStart; CheckpointReached remote → CheckpointSound plays it for that player only); dead characters ignored
+      CheckpointTouchHandler.luau     checkpoint touch → leaderstats.Stage, respawn point, fires CheckpointReached(part, first) to that player whenever the respawn point changes (`first` = first reach in the run → sound); a TimerStart touch counts as the stage's lowest-numbered checkpoint; NewRun from TimerStart fires CheckpointsReset; dead characters ignored
       PlayerTimerHandler.luau         stage timers (os.clock), personal bests (profile), global Top-10, score panel
     StartLocation/                    hub (central island, part-built since H1, centre (-1126, 16, -475), r 80): SpawnLocation on the plaza + TeleportToTutorial / TeleportToStage1..3 portals in an arc facing it (each: Script, `Portal` = touch trigger + face with the stage-name SurfaceGui, Studio-only `Arch` Model of stud-stone blocks cloned from `ServerStorage.DecorKit.StudPortal`, H1.1) + StarsLeaderboard (Studio-only board model in the wooden stud style, no scripts; StarsBoard.server.luau beside it draws into Model.ScoreBlock.SurfaceGui: DataLabel, Names.NameN, Score.ScoreN, Photos.PhotoN); Studio-only Island folder (Island, IslandRock, Plaza, PlazaRing, Hedge + invisible Barrier ring with an opening toward the garden, BridgePath, GardenSign, Decor). Scripts find the hub by name, never by coordinates
     Stage1/ Stage2/ Stage3/ Tutorial/ stages (see below)
@@ -114,18 +115,18 @@ Every stage folder follows the same pattern:
 | Child | Script behaviour |
 |---|---|
 | `LandingPad/TeleportDestination` | arrival point from the hub portal (invisible; 12 studs north of the return portal, so the arrival camera stays clear of the arch) |
-| `LandingPad/TimerStart` | starts the timer unless one already runs on this stage + acts as checkpoint; an invisible 48 × 30 × 4 trigger across the whole pad edge (its position is also the respawn point, `CheckpointTouchHandler`: keep the centre where it is when resizing) |
+| `LandingPad/TimerStart` | starts the timer unless one already runs on this stage + acts as checkpoint; an invisible 48 × 30 × 4 trigger across the whole pad edge; touching it counts as reaching the stage's first checkpoint (`CheckpointTouchHandler`, H2), so the respawn point is that plate |
 | `LandingPad/TeleportToSpawn/Portal` | back to hub; cancels timer, score panel → hub (Studio-only `Arch` Model beside it: stud-stone blocks cloned from `ServerStorage.DecorKit.StudPortal`, H1.2) |
 | `LandingPad/Decor` | Studio-only Model (H1.2): cobblestone inlay, hedges, kit trees / bushes / flowers; `LandingPadTop` / `LandingPadBottom` are the grass pad and its rock |
 | `LandingPad/StartGate` | Studio-only Model (H1.2): two 17-stud stud-stone pillars, wooden beams and the sign (`Sign.Gui.Title` / `Start`) over `TimerStart` |
 | `LandingPad/GateSign` | script: writes the `StageConfig` display name on `StartGate.Sign.Gui.Title` |
 | `LandingPad/Top10Leaderboard` | SurfaceGui board from `LoadGlobalLeaderboard(stage.key)` (Stage1, Stage2, Stage3, Tutorial); its Studio-only `Model` is a clone of `StartLocation.StarsLeaderboard.Model` (wooden frame, same `ScoreBlock.SurfaceGui` names) |
-| `<number>/C` | checkpoint part (`1`–`9` Stage1, `10`–`14` Stage2, `20`–`22` Stage3, `23`–`25` Tutorial) |
+| `<number>/C` | checkpoint (`1`–`9` Stage1, `10`–`14` Stage2, `20`–`22` Stage3, `23`–`25` Tutorial): `C` is the whole 16 × 1 × 12 cream stud plate (touch trigger + Script, respawn point); Studio-only `Core` (3 × 3 green stud tile set into the plate, `PointLight` off) and `Beam` (Neon cylinder 18 high, invisible) are animated per player by `CheckpointClient` (H2). The plate's upstream edge touches the previous obstacle |
 | `TeleportBackToStageStart/Portal` | finish line: `StopTimer` → save best time; sibling script teleports to stage start |
 | obstacle models | kill parts, spinners, lava, bounce bricks, choice stage |
 
 **Adding a stage:** clone `ServerStorage.StageKit.LandingPad` (Studio-only template: floor, decor, start gate, return portal, Top-10 board and the four scripts, all stage-neutral) into the new stage folder as `LandingPad`,
-`PivotTo` the pad centre (the template's pivot is the centre of the pad's top; the first checkpoint platform of the course must be centred on it, its edge 21 studs north: the gate, trigger, arrival point and return portal all sit on the pad's centre line), add the `StageConfig` entry and the hub portal. Scripts resolve the stage from the folder, so nothing else needs editing;
+`PivotTo` the pad centre (the template's pivot is the centre of the pad's top; the first checkpoint platform of the course must be centred on it, its edge 21 studs north: the gate, trigger, arrival point and return portal all sit on the pad's centre line), add the `StageConfig` entry and the hub portal. Checkpoints: clone `ServerStorage.StageKit.Checkpoint` (plate + `Core` + `Beam` + the C Script; pivot = centre of the plate's top), rename it to the next free number and put its upstream edge against the previous obstacle. Scripts resolve the stage from the folder, so nothing else needs editing;
 Argon writes the clone's script files on its own. The template's scripts are copies: when a stage script changes, change the template's copy too.
 
 Stage scripts never hard-code a stage: they call `StageConfig.ForInstance(script)` (stage = the Workspace folder they
@@ -150,7 +151,7 @@ Most of the 103 scripts are identical copies. Edit them consistently (grep by co
 | 2 | Top10Leaderboard | `Workspace/Stage1/LandingPad/Top10Leaderboard/Script…` |
 | 4 | `GateSign` | `Workspace/Stage*/LandingPad/GateSign.server.luau` |
 | 3 | ChoiceStage random safe `Step` | `Workspace/Stage1/ChoiceStage_*/Script…` |
-| 3 | bounce brick (Heartbeat velocity) | `Workspace/Stage2/12/Level 12/Bounce Brick_*` |
+| 3 | bounce brick: declares `LAUNCH_SPEED` (attribute `LaunchSpeed` + tag `BounceBrick`; the launch is done by `BounceBricks.client`) — speeds differ per brick (360 / 365 / 500) | `Workspace/Stage2/12/Level 12/Bounce Brick_*` |
 
 ## Networking & persistence
 
@@ -163,7 +164,8 @@ RemoteEvents (in `ReplicatedStorage`; first three exist only in Studio, not in f
 | `ResetPlayerTimer` | client → server | admin panel "Reset Score": full reset of the caller's own progress; server checks `AdminConfig` |
 | `AdminAddCoins` | client → server, no arguments | admin panel "+Coins": server checks `AdminConfig`, credits `AdminConfig.AddCoinsAmount` to the caller; created at runtime by `AdminCoinsServer` |
 | `CoinUpdateEvent` | server → client | created at runtime by `CoinSystem` |
-| `CheckpointReached` | server → client, no arguments | created at runtime by `CheckpointTouchHandler`; first touch of a checkpoint in the run → `CheckpointSound` plays the sound for that player only |
+| `CheckpointReached` | server → client `(part, first)` | created at runtime by `CheckpointTouchHandler`; the player's respawn point moved to that checkpoint (the stage's `TimerStart` counts as its first checkpoint) → `CheckpointClient` lights that pad and turns the previous one back, for that player only; `first` (first reach in the run) also plays the sound |
+| `CheckpointsReset` | server → client, no arguments | created at runtime by `CheckpointTouchHandler`; a new run started (`NewRun`) → `CheckpointClient` turns every pad back |
 | `GoHome` | client → server, no arguments | Home button; created at runtime by `HomeService`, 3 s cooldown, server teleports + cancels the timer |
 | `TalentRemotes.Buy` / `.Result` | client → server `(talentId, expectedLevel)` / server → client `(talentId, ok, level or reason)` | created at runtime by `TalentService`; the price is never sent |
 | `UnlockRemotes.Buy` / `.Result` / `.Locked` | client → server `(stageKey)` / server → client `(stageKey, ok, reason?)` / server → client `(stageKey)` | created at runtime by `StageUnlocks`; price from `StageConfig.unlockPrice`; `Locked` opens the unlock popup |
@@ -216,7 +218,9 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
 - Initial sync priority is **Client** (Studio overwrites files on connect): commit before connecting and check
   `git status` right after; files edited while disconnected are overwritten by Studio's copy.
 - Studio playtests with API access read/write the **live** DataStores — snapshot and restore anything a test changes.
-- `CheckpointTouchHandler`'s `Sound`/`Orig` children exist only in Studio (`CheckpointSound` clones `Sound` on the client).
+- `CheckpointTouchHandler`'s `Sound`/`Orig` children exist only in Studio (`CheckpointClient` clones `Sound` on the client).
+- Checkpoint `Core` / `Beam` are authored in the "not reached" look; `CheckpointClient` reads that look once per pad and tweens to and
+  from it, so restyle them in Studio in that state.
 - Argon does not turn an existing plain Studio instance into a synced folder when a script file is added under it
   (it made a second empty `HomePanel`). Renaming such a folder on disk replaces the Studio instance with a bare Frame (styled
   children lost, rebuilt by hand). After adding/renaming script containers, check Studio for duplicates / lost children.

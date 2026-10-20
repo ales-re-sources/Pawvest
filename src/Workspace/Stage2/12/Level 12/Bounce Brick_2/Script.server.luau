@@ -1,19 +1,9 @@
-local RunService = game:GetService("RunService")
+-- Bounce brick: marks this part as a bounce brick with a fixed launch speed. The launch itself is done by the
+-- BounceBricks client script on the player's own character (the client owns its character's physics), so every
+-- bounce reaches the same height. Tuned so the flight lasts long enough to steer onto Brick_1.
+local CollectionService = game:GetService("CollectionService")
 
-local part = script.Parent
+local LAUNCH_SPEED = 360 -- studs/s along the brick's LookVector (up)
 
-local function updateVelocity()
-    part.Velocity = part.CFrame.LookVector * 900
-end
-
-local heartbeatConnection
-heartbeatConnection = RunService.Heartbeat:Connect(function()
-    updateVelocity()
-end)
-
--- Optionally, disconnect when the part is destroyed
-part.AncestryChanged:Connect(function(_, parent)
-    if not parent and heartbeatConnection then
-        heartbeatConnection:Disconnect()
-    end
-end)
+script.Parent:SetAttribute("LaunchSpeed", LAUNCH_SPEED)
+CollectionService:AddTag(script.Parent, "BounceBrick")

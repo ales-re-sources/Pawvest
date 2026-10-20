@@ -44,11 +44,12 @@ Rules:
 | P1e | Pet growth visuals | ✔ | ✔ | – |
 | P2 | Pet garden: plots, pens, incubators, food | ✔ | ✔ | – |
 | H1 | Hub island redesign + stud portals + stud landing pads | ✔ | ✔ | – |
+| H2 | Stud checkpoints (square plate, growing core + light) | ✔ | ✔ | – |
 | P3 | Trading | – | – | – |
 | M6 | Balancing pass | – | – | – |
 | M7 | Monetization | deferred | | |
 
-Order rationale: P3 needs profile session locking (its first step). M6 needs the full loop, garden included, and is best
+Order rationale: H2 (checkpoint redesign, user request) comes first. P3 needs profile session locking (its first step). M6 needs the full loop, garden included, and is best
 done after a first live test (real finish times). M7 is scoped after M6. Nothing is live-validated yet: the open checks
 below belong to the first live test.
 
@@ -111,6 +112,7 @@ the Tutorial / Stage 1 portals, each stage's arrival point looks along the cours
 ## Open checks for the first live test
 Never covered in Studio, so check them on a real server:
 - several real players at once: shared plots, pens, incubators, pet effects and coins seen by others; a full 12-player garden;
+  checkpoint pads and their sound only for the player who reached them (H2);
 - two servers at once (boards and `MostStars` updating across servers);
 - a locked portal's unlock popup on the redesigned hub (only the barrier was tested there);
 - a real 1-hour Golden egg and the inventory cap with free eggs waiting;
@@ -119,6 +121,57 @@ Never covered in Studio, so check them on a real server:
 Housekeeping (Studio): `ReplicatedStorage.StageTimerStopped` is unused and can be deleted.
 
 ## Next milestones
+
+### H2 — Stud checkpoints (user request 2026-10-20)
+- **Inputs:** concept D picked from the Studio mock-ups; the user chose a real, almost-square plate and moving the
+  courses to make room. Every stage runs along −Z, 16 studs wide; each checkpoint (`<number>`: `C` + Script, red 16 × 6
+  `Part`, `T`, `CC`, `arrow`) sits directly between two obstacles.
+- **Outputs (Studio-only):**
+  - `C` is the whole plate, 16 × 1 × 12, cream stud plastic (`Studs` variant), top at the old platform top; it keeps the
+    upstream edge and grows 5.84 studs downstream. `Part`, `T`, `CC`, `arrow` deleted.
+  - `Core` (3 × 3 green stud tile set into the plate; no collide / touch / query) with a `PointLight` (off) and `Beam`
+    (Neon cylinder, invisible; no collide / touch / query / shadow).
+  - Course move per stage: every part downstream of a checkpoint moves −Z by 5.84 per checkpoint passed (obstacles,
+    coins, dividers, finish portal, course models nested in checkpoint models). Stage1 +52.6, Stage2 +29.2,
+    Stage3 +23.4, Tutorial +17.5 studs.
+  - Template `ServerStorage.StageKit.Checkpoint`; `Workspace._CheckpointConcepts` deleted.
+- **Outputs (code):** `CheckpointReached(part, first)` fired whenever the respawn point changes (`first` = first reach in
+  the run → sound), the new runtime remote `CheckpointsReset` (fired by `NewRun`, which also forgets the last checkpoint);
+  a `TimerStart` touch counts as the stage's lowest-numbered checkpoint (one sound for gate + first plate, respawn on the
+  plate). `CheckpointClient` (renamed from `CheckpointSound`): only the current checkpoint glows — in 1 s the core grows
+  3 → 7 and turns Neon, the light fades in, the beam rises (~18 studs); the previous one goes back to small in 0.4 s.
+- **Boundary:** `StageConfig.tBase` and recorded times stay (the courses are 1–3 s longer; M6 measures `tBase`).
+- **Acceptance checks:**
+  - 21 checkpoint models, each exactly `C` (16 × 1 × 12, Script) + `Core` + `Beam`; no `Part` / `T` / `CC` / `arrow` left;
+  - every plate's gaps to its neighbours equal the old ones; no part overlaps a plate; every coin moved with its obstacle;
+  - walking the Tutorial (real `MoveTo`) activates 23, 24, 25 once each with one sound each; a second pass in the same
+    run animates nothing; dying respawns on the last plate; a new run turns every pad small again;
+  - Stage1 checkpoints 1 → 9 all activate in order and the finish portal still ends the run;
+  - another player's reached pads do not change on this client; no new console errors.
+- **Validation (2026-10-20):** edit mode — 21 models each `C` 16 × 1 × 12 + Script + `Core` + `Beam`, no old parts left,
+  nothing overlaps a plate, every plate's gaps equal the survey (0.5 / 4.0 / 4.5 / 5.0 / 5.5 / 8.5 / 11.0 / 12.0 studs),
+  the 8 off-course coins kept their place next to their obstacles; template `ServerStorage.StageKit.Checkpoint`.
+  Playtest — Tutorial: walked (`MoveTo`, jumps) onto 23, 24, 25: one event each, core 3 → 7 Neon, light 0 → 2, beam
+  0 → 18 in 1 s; a second pass and a death fired nothing; respawn on plate 25. Stage1: the new run reset 23–25 to small,
+  1 → 9 activated in order, the finish portal ended the run (results popup). Console: no errors. The test's live writes
+  were undone: profile restored identical (deep compare), its Stage 1 Top-10 entry removed, `MostStars` back to 0.
+  Not covered: a second client (another player's pads), left for the first multi-client test.
+- **User review (2026-10-20):** look approved; three changes asked for and done: only the current checkpoint glows,
+  the start gate no longer plays its own sound (it counts as the first checkpoint), and confirmed per-player only.
+  Retest — events: gate → 23 one event (first); stepping on 23 nothing; 24 first; back to 23 / 24 silent (`first=false`);
+  death nothing, respawn on 24; Stage1 gate: reset + 1 (first); Home from checkpoint 1 and back through the gate: reset +
+  1 (first) again. The pad tweens could not be watched in this run (Studio rendered 0 frames in the background, so
+  tweens stood still); the tween code is the one validated above, the switch-off of the previous pad is for the user's
+  visual check. Profile restored identical; boards untouched.
+- **Bounce bricks (Stage2 Level 12, found in the user's test):** the move kept them rigid (same 17.52-stud shift as
+  their level, checkpoint 12 and the ramp), but their old server-side conveyor `Velocity` (900 / 600 / 1 300) launched
+  anywhere from ~35 to ~1 000 studs depending on the landing. Now each brick's script only declares `LAUNCH_SPEED`
+  (Brick_2 360, Brick_1 365, Brick_3 500; ~3.6 s / ~5 s of flight) and `BounceBricks.client` sets the local character's
+  velocity on touch. Playtest (client `MoveTo` steering): peaks +334 / +339 / +639 every time; at WalkSpeed 16 plate 12 →
+  Brick_2 → Brick_1 → Brick_3 → ramp → plate 13, at 26 straight onto plate 13. Profile restored identical.
+- The user's check of the checkpoints and Stage 2 passed; place saved (2026-10-20).
+- `src/ServerStorage/StageKit/…`: Argon wrote the template's script copies on the Studio reconnect (identical to the
+  stage scripts); committed with H2.
 
 ### P3 — Trading
 - **Prerequisite:** profile session locking in `PlayerProfile` (`UpdateAsync` with a `{ JobId, Time }` lock instead of
@@ -130,7 +183,7 @@ Housekeeping (Studio): `ReplicatedStorage.StageTimerStopped` is unused and can b
   crash right after the trade); a profile open on server A cannot be loaded for writing on server B.
 
 ### M6 — Balancing pass
-- **Outputs:** measured `T_base` per stage; finish-time telemetry; tuned numbers in GDD + `StageConfig` / `PetConfig` /
+- **Outputs:** measured `T_base` per stage (H2 made every course 17–53 studs longer); finish-time telemetry; tuned numbers in GDD + `StageConfig` / `PetConfig` /
   `GardenConfig`.
 - **Known items:** the repeat-reward floor (Tutorial loop ~1 400 Coins / h), pet bonus values, slot prices, the Basic egg's
   5-minute hatch time, garden production vs stage income.

@@ -31,12 +31,18 @@ pets level up while you play; the pet garden (§7.6) raises pets and produces Co
 
 | Order | Stage | Internal key | Checkpoints | Difficulty | Theme / obstacles | Unlock |
 |---|---|---|---|---|---|---|
-| 0 | Tutorial | `"Stage 4"` ¹ | 23–24 | ★ | basics: jumps, first kill part | always open |
+| 0 | Tutorial | `"Stage 4"` ¹ | 23–25 | ★ | basics: jumps, first kill part | always open |
 | 1 | Stage 1 | `"Stage 1"` | 1–9 | ★★ | laser strips, spinners, lava floor, choice stage, jump pads | Bronze on Tutorial **or** 500 Coins |
 | 2 | Stage 2 | `"Stage 2"` | 10–14 | ★★★ | kill-part corridors, bounce bricks | Silver on Stage 1 **or** 1 500 Coins |
 | 3 | Stage 3 | `"Stage 3"` | 20–22 | ★★★★ | dense kill-part layouts | Silver on Stage 2 **or** 3 000 Coins |
 
 ¹ Existing DataStore key; keep it (or migrate) so recorded times are not lost.
+
+**Checkpoints** (H2) are square stud plates (16 × 12) across the course with a small green tile in the middle. Only the
+player's current checkpoint (the respawn point) glows, and only for that player: its tile grows into a larger glowing
+square with a column of light rising from it (about 1 s) and the previous one turns back. The first reach in a run also
+plays a sound; walking back to an earlier checkpoint moves the respawn point there silently. Passing the stage's start
+gate counts as reaching its first checkpoint; a new run turns the lit pad back.
 
 **Unlocks.** Every stage after the Tutorial opens either by **meeting the bar** (required medal on the previous stage)
 or by a **one-time Coin price**. Prices are set so that buying an unlock costs roughly a full talent level or two —
