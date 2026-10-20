@@ -2,7 +2,8 @@
 -- heading when the server moves the character, so a player would arrive looking at the wrong thing. The facing itself is
 -- set by the teleport targets: the hub SpawnLocation looks at the Tutorial / Stage 1 portals (spawn, Home button and the
 -- stage "TeleportToSpawn" portals use its CFrame), each stage's TeleportDestination looks along the course.
--- Respawns after a death are left to the default camera.
+-- A respawn on a checkpoint counts as a teleport too: the server moves the new character from the hub spawn onto the
+-- plate, facing along the course (CheckpointTouchHandler).
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")

@@ -112,7 +112,7 @@ the Tutorial / Stage 1 portals, each stage's arrival point looks along the cours
 **H2 — Stud checkpoints.** Every checkpoint is a 16 × 12 cream stud plate (the courses moved 5.84 studs per checkpoint
 to make room) with a small green tile; only the player's current checkpoint glows for that player (the tile grows, a light
 column rises, 1 s), the first reach in a run plays the sound, and the start gate counts as the stage's first checkpoint.
-`ServerStorage.StageKit.Checkpoint` is the template. The Stage 2 bounce bricks launch at a fixed speed per brick
+A respawn faces along the course (the plate's front). `ServerStorage.StageKit.Checkpoint` is the template. The Stage 2 bounce bricks launch at a fixed speed per brick
 (client-side), so the chain to checkpoint 13 works at walking speed. The user's check passed (2026-10-20).
 
 ## Open checks for the first live test

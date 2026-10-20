@@ -98,10 +98,20 @@ function module.OnTouched(part, hit)
 			checkpointValue.Name = userIdString
 			checkpointValue.Parent = checkpointData
 
-			player.CharacterAdded:connect(function(character)
-				wait()
+			-- respawn on the stored plate, facing along the course: a plate's front (LookVector, -Z) points downstream
+			-- (CameraFacing then turns the camera the same way, the move from the hub spawn counts as a teleport)
+			player.CharacterAdded:Connect(function(character)
+				task.wait()
 				local storedCheckpoint = ServerStorage.CheckpointData[userIdString].Value
-				character:MoveTo(storedCheckpoint.Position + Vector3.new(math.random(-2, 2), 2, math.random(-2, 2)))
+				local look = storedCheckpoint.CFrame.LookVector
+				local forward = Vector3.new(look.X, 0, look.Z)
+				local top = storedCheckpoint.Position.Y + storedCheckpoint.Size.Y / 2
+				local position = Vector3.new(storedCheckpoint.Position.X + math.random(-2, 2), top + 4, storedCheckpoint.Position.Z + math.random(-2, 2))
+				if forward.Magnitude < 0.1 then
+					character:MoveTo(position)
+				else
+					character:PivotTo(CFrame.lookAt(position, position + forward))
+				end
 			end)
 		end
 
