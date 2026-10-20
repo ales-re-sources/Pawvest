@@ -1,7 +1,13 @@
 local module = {}
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
+
+-- server -> client, no arguments: the player reached a checkpoint; CheckpointSound plays script.Sound for that player only
+local reachedEvent = Instance.new("RemoteEvent")
+reachedEvent.Name = "CheckpointReached"
+reachedEvent.Parent = ReplicatedStorage
 
 local lastCheckpoints = {} -- [Player] = last checkpoint part touched (respawn point; skips the work on repeated touches)
 local reached = {} -- [Player] = { [checkpoint part] = true } reached in the current run: the sound plays once per run
@@ -36,7 +42,7 @@ function module.OnTouched(part, hit)
 		end
 		if not seen[part] then
 			seen[part] = true
-			script.Sound:Play()
+			reachedEvent:FireClient(player)
 		end
 
 		-- numbered checkpoints only (the TimerStart's parent is "LandingPad")

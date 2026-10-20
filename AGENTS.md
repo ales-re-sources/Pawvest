@@ -77,6 +77,7 @@ src/
     TalentDoubleJump.client.luau      Double Jump talent: extra air jumps from the Talent_DoubleJump attribute
     StageResultsPopup.client.luau     results popup after a finish incl. pet XP line (GUI built in code)
     HubPortalMedals.client.luau       own best-medal stars, challenge coins "found x/y" + lock requirement/price on each hub portal face (local SurfaceGuis; layout kept inside the arch's opening)
+    CheckpointSound.client.luau       plays workspace.Handlers.CheckpointTouchHandler.Sound locally (SoundService copy) on CheckpointReached
     ChallengeCoinsClient.client.luau  hides the local player's collected challenge coins (local Transparency/CanTouch), spins the others, plays the pickup sound
     PortalBarriers.client.luau        invisible local wall in each locked hub portal (removed when Unlocked_<folder> turns true)
     StageUnlockPopup.client.luau      unlock popup after touching a locked hub portal (requirement, price, unlock button; GUI built in code)
@@ -95,7 +96,7 @@ src/
     ScreenGui/AdminPanel/...                      RunSpeed (16↔64), DoubleJump (up to 5 air jumps), ScoreReset, AdminAddCoins.client.luau (+Coins button, built in code)
   Workspace/
     Handlers/                         ModuleScripts shared by all stage scripts (required via workspace.Handlers.*)
-      CheckpointTouchHandler.luau     checkpoint touch → leaderstats.Stage, respawn point, sound once per checkpoint per run (NewRun from TimerStart); dead characters ignored
+      CheckpointTouchHandler.luau     checkpoint touch → leaderstats.Stage, respawn point, sound once per checkpoint per run (NewRun from TimerStart; CheckpointReached remote → CheckpointSound plays it for that player only); dead characters ignored
       PlayerTimerHandler.luau         stage timers (os.clock), personal bests (profile), global Top-10, score panel
     StartLocation/                    hub (central island, part-built since H1, centre (-1126, 16, -475), r 80): SpawnLocation on the plaza + TeleportToTutorial / TeleportToStage1..3 portals in an arc facing it (each: Script, `Portal` = touch trigger + face with the stage-name SurfaceGui, Studio-only `Arch` Model of stud-stone blocks cloned from `ServerStorage.DecorKit.StudPortal`, H1.1) + StarsLeaderboard (Studio-only board model in the wooden stud style, no scripts; StarsBoard.server.luau beside it draws into Model.ScoreBlock.SurfaceGui: DataLabel, Names.NameN, Score.ScoreN, Photos.PhotoN); Studio-only Island folder (Island, IslandRock, Plaza, PlazaRing, Hedge + invisible Barrier ring with an opening toward the garden, BridgePath, GardenSign, Decor). Scripts find the hub by name, never by coordinates
     Stage1/ Stage2/ Stage3/ Tutorial/ stages (see below)
@@ -153,6 +154,7 @@ RemoteEvents (in `ReplicatedStorage`; first three exist only in Studio, not in f
 | `ResetPlayerTimer` | client → server | admin panel "Reset Score": full reset of the caller's own progress; server checks `AdminConfig` |
 | `AdminAddCoins` | client → server, no arguments | admin panel "+Coins": server checks `AdminConfig`, credits `AdminConfig.AddCoinsAmount` to the caller; created at runtime by `AdminCoinsServer` |
 | `CoinUpdateEvent` | server → client | created at runtime by `CoinSystem` |
+| `CheckpointReached` | server → client, no arguments | created at runtime by `CheckpointTouchHandler`; first touch of a checkpoint in the run → `CheckpointSound` plays the sound for that player only |
 | `GoHome` | client → server, no arguments | Home button; created at runtime by `HomeService`, 3 s cooldown, server teleports + cancels the timer |
 | `TalentRemotes.Buy` / `.Result` | client → server `(talentId, expectedLevel)` / server → client `(talentId, ok, level or reason)` | created at runtime by `TalentService`; the price is never sent |
 | `UnlockRemotes.Buy` / `.Result` / `.Locked` | client → server `(stageKey)` / server → client `(stageKey, ok, reason?)` / server → client `(stageKey)` | created at runtime by `StageUnlocks`; price from `StageConfig.unlockPrice`; `Locked` opens the unlock popup |
@@ -205,7 +207,7 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
 - Initial sync priority is **Client** (Studio overwrites files on connect): commit before connecting and check
   `git status` right after; files edited while disconnected are overwritten by Studio's copy.
 - Studio playtests with API access read/write the **live** DataStores — snapshot and restore anything a test changes.
-- `CheckpointTouchHandler` plays `script.Sound` — the `Sound`/`Orig` children exist only in Studio.
+- `CheckpointTouchHandler`'s `Sound`/`Orig` children exist only in Studio (`CheckpointSound` clones `Sound` on the client).
 - Argon does not turn an existing plain Studio instance into a synced folder when a script file is added under it
   (it made a second empty `HomePanel`). Renaming such a folder on disk replaces the Studio instance with a bare Frame (styled
   children lost, rebuilt by hand). After adding/renaming script containers, check Studio for duplicates / lost children.
