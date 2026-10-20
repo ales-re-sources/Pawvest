@@ -102,7 +102,8 @@ portals use the stud style (`ServerStorage.DecorKit`).
 The 4 stage landing pads (H1.2) match: a cobblestone inlay on the grass pad, hedges on three sides, trees / bushes / flowers
 cloned from the kit, a stud-stone start gate with the stage name over `TimerStart`, the return portal as a stud arch (warm
 orange face, label "Hub") and the hub board's wooden frame on every Top-10 board. The `TimerStart` trigger spans the whole
-pad (48 × 30 × 4), so the timer cannot be skipped by jumping around the gate. `ServerStorage.StageKit.LandingPad` is the
+pad (48 × 30 × 4), so the timer cannot be skipped by jumping around the gate; the pads and gates are centred on the first
+checkpoint platform of their track (the start gate is a `StartGate` Model of 17-stud pillars). `ServerStorage.StageKit.LandingPad` is the
 reusable template (AGENTS.md → Adding a stage); `GateSign` writes the stage name on the gate. A client script
 (`CameraFacing`) turns the camera the way the character faces after a teleport and on the first spawn: the hub spawn looks at
 the Tutorial / Stage 1 portals, each stage's arrival point looks along the course. The user's visual check of the pads passed (2026-10-20).

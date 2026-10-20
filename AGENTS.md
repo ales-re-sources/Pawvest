@@ -116,15 +116,16 @@ Every stage folder follows the same pattern:
 | `LandingPad/TeleportDestination` | arrival point from the hub portal (invisible; 12 studs north of the return portal, so the arrival camera stays clear of the arch) |
 | `LandingPad/TimerStart` | starts the timer unless one already runs on this stage + acts as checkpoint; an invisible 48 × 30 × 4 trigger across the whole pad edge (its position is also the respawn point, `CheckpointTouchHandler`: keep the centre where it is when resizing) |
 | `LandingPad/TeleportToSpawn/Portal` | back to hub; cancels timer, score panel → hub (Studio-only `Arch` Model beside it: stud-stone blocks cloned from `ServerStorage.DecorKit.StudPortal`, H1.2) |
-| `LandingPad/Decor` | Studio-only Model (H1.2): cobblestone inlay, hedges, kit trees / bushes / flowers, start gate (two stud-stone pillars + wooden sign) over `TimerStart`; `LandingPadTop` / `LandingPadBottom` are the grass pad and its rock |
-| `LandingPad/GateSign` | script: writes `StageConfig` display name on `Decor.GateSign.Gui.Title` |
+| `LandingPad/Decor` | Studio-only Model (H1.2): cobblestone inlay, hedges, kit trees / bushes / flowers; `LandingPadTop` / `LandingPadBottom` are the grass pad and its rock |
+| `LandingPad/StartGate` | Studio-only Model (H1.2): two 17-stud stud-stone pillars, wooden beams and the sign (`Sign.Gui.Title` / `Start`) over `TimerStart` |
+| `LandingPad/GateSign` | script: writes the `StageConfig` display name on `StartGate.Sign.Gui.Title` |
 | `LandingPad/Top10Leaderboard` | SurfaceGui board from `LoadGlobalLeaderboard(stage.key)` (Stage1, Stage2, Stage3, Tutorial); its Studio-only `Model` is a clone of `StartLocation.StarsLeaderboard.Model` (wooden frame, same `ScoreBlock.SurfaceGui` names) |
 | `<number>/C` | checkpoint part (`1`–`9` Stage1, `10`–`14` Stage2, `20`–`22` Stage3, `23`–`25` Tutorial) |
 | `TeleportBackToStageStart/Portal` | finish line: `StopTimer` → save best time; sibling script teleports to stage start |
 | obstacle models | kill parts, spinners, lava, bounce bricks, choice stage |
 
 **Adding a stage:** clone `ServerStorage.StageKit.LandingPad` (Studio-only template: floor, decor, start gate, return portal, Top-10 board and the four scripts, all stage-neutral) into the new stage folder as `LandingPad`,
-`PivotTo` the pad centre (the template's pivot is the centre of the pad's top; the course starts 1.8 studs east of it, 21 north), add the `StageConfig` entry and the hub portal. Scripts resolve the stage from the folder, so nothing else needs editing;
+`PivotTo` the pad centre (the template's pivot is the centre of the pad's top; the first checkpoint platform of the course must be centred on it, its edge 21 studs north: the gate, trigger, arrival point and return portal all sit on the pad's centre line), add the `StageConfig` entry and the hub portal. Scripts resolve the stage from the folder, so nothing else needs editing;
 Argon writes the clone's script files on its own. The template's scripts are copies: when a stage script changes, change the template's copy too.
 
 Stage scripts never hard-code a stage: they call `StageConfig.ForInstance(script)` (stage = the Workspace folder they
