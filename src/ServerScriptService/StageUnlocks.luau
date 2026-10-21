@@ -68,10 +68,13 @@ local function setupPlayer(player: Player)
 	for _, stage in StageConfig.Stages do
 		local rule = stage.unlock
 		if rule then
-			local attribute = StageConfig.MedalAttribute(StageConfig.ByKey[rule.stage])
-			player:GetAttributeChangedSignal(attribute):Connect(function()
-				publish(player)
-			end)
+			for _, watched in StageConfig.Stages do
+				if watched.key == rule.stage or watched.world == rule.world then
+					player:GetAttributeChangedSignal(StageConfig.MedalAttribute(watched)):Connect(function()
+						publish(player)
+					end)
+				end
+			end
 		end
 	end
 	if PlayerProfile.WaitFor(player) then

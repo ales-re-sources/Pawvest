@@ -47,6 +47,10 @@ function MedalText.UnlockBar(stage): string?
 	if not rule then
 		return nil
 	end
+	if rule.world then
+		return font(MedalText.Gold, "★") .. " " .. rule.stars .. " of " .. StageConfig.MaxWorldStars(rule.world)
+			.. " in World " .. rule.world
+	end
 	local previous = StageConfig.ByKey[rule.stage]
 	local stars = string.rep("★", StageConfig.MedalIndex[rule.medal])
 	return font(MedalText.Gold, stars) .. " " .. rule.medal .. " on " .. previous.displayName

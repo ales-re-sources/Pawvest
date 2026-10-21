@@ -29,6 +29,10 @@ StageConfig.RunRewardFloor = 10
 -- Medal thresholds as multiples of tBase (GDD §4); a stage may point `tiers` at its own table.
 StageConfig.DefaultTiers = { Bronze = 1.6, Silver = 1.1, Gold = 0.8 }
 
+-- Per stage: `world` (1–4, GDD §3) and `requires` = { { id = <talent id>, level = <n> }, … } (talents the course needs;
+-- shown as a hint and warning, never enforced). `order` is the position in the game; display numbers leave gaps for the
+-- World 1 stages built in S4 (Island Hop = 1, Blink = 3). `unlock` is { stage = <key>, medal = <tier> } or
+-- { world = <n>, stars = <n> } (stars summed over that world's stages, GDD §3).
 StageConfig.Stages = {
 	{
 		key = "Stage 4", -- legacy key of the Tutorial, kept so recorded times are not lost
@@ -36,6 +40,8 @@ StageConfig.Stages = {
 		folder = "Tutorial", -- stage folder in Workspace
 		hubPortal = "TeleportToTutorial",
 		order = 0,
+		world = 1,
+		requires = {},
 		tBase = 30, -- seconds; provisional until measured in M6
 		tiers = StageConfig.DefaultTiers,
 		unlock = nil, -- nil = always open; otherwise { stage = <key>, medal = <tier> }
@@ -47,7 +53,9 @@ StageConfig.Stages = {
 		displayName = "Stage 1",
 		folder = "Stage1",
 		hubPortal = "TeleportToStage1",
-		order = 1,
+		order = 2,
+		world = 1,
+		requires = {},
 		tBase = 70,
 		tiers = StageConfig.DefaultTiers,
 		unlock = { stage = "Stage 4", medal = "Bronze" }, -- Tutorial
@@ -59,7 +67,9 @@ StageConfig.Stages = {
 		displayName = "Stage 2",
 		folder = "Stage2",
 		hubPortal = "TeleportToStage2",
-		order = 2,
+		order = 4,
+		world = 1,
+		requires = {},
 		tBase = 100,
 		tiers = StageConfig.DefaultTiers,
 		unlock = { stage = "Stage 1", medal = "Silver" },
@@ -71,12 +81,14 @@ StageConfig.Stages = {
 		displayName = "Stage 3",
 		folder = "Stage3",
 		hubPortal = "TeleportToStage3",
-		order = 3,
+		order = 5,
+		world = 1,
+		requires = {},
 		tBase = 120,
 		tiers = StageConfig.DefaultTiers,
 		unlock = { stage = "Stage 2", medal = "Silver" },
 		unlockPrice = 3000,
-		rewardFactor = 2.0,
+		rewardFactor = 1.75, -- curve 0.5 + 0.25 × order (GDD §5)
 	},
 }
 
@@ -159,7 +171,32 @@ function StageConfig.MeetsUnlockBar(stage, medals): boolean
 	if not rule then
 		return true
 	end
+	if rule.world then
+		return StageConfig.WorldStars(medals, rule.world) >= rule.stars
+	end
 	return (medals[rule.stage] or 0) >= StageConfig.MedalIndex[rule.medal]
+end
+
+-- Stars (medal indices) summed over the stages of `world` for `medals` ([stageKey] = medal index).
+function StageConfig.WorldStars(medals, world: number): number
+	local stars = 0
+	for _, stage in StageConfig.Stages do
+		if stage.world == world then
+			stars += math.clamp(medals[stage.key] or 0, 0, #StageConfig.Medals)
+		end
+	end
+	return stars
+end
+
+-- Most stars a world can give (3 per stage).
+function StageConfig.MaxWorldStars(world: number): number
+	local count = 0
+	for _, stage in StageConfig.Stages do
+		if stage.world == world then
+			count += 1
+		end
+	end
+	return count * #StageConfig.Medals
 end
 
 -- Stars (medal indices) summed over all stages for `medals` ([stageKey] = medal index); the hub score panel and the
