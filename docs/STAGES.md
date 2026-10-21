@@ -148,6 +148,10 @@ component can *require* (hard) or only *reward* (soft: faster medal, shortcut).
   on later (20 stages are many parts).
 - **Cost**: animate only parts within about 300 studs of the camera; the server animates nothing.
 - Templates live in `ServerStorage.StageKit.Obstacles` (Studio-only), next to `LandingPad` and `Checkpoint`.
+- **S3.1 spike result (2026-10-21):** carry by frame delta is exact (no drift) and needs a short air-carry (0.5 s) after
+  jumping off; tilt plates need an explicit slide-off (freefall + downhill velocity) because `MaxSlopeAngle` is 89; the client
+  kill reaches the server in one message; 100 movers cost 0.34 ms per frame. Other players see riders ~0.2 s behind a moving
+  platform (replication delay). Details in [ROADMAP.md](ROADMAP.md) S3.
 - For the special stages the kit also holds `StageCamera`, run-seeded schedules and ghost drawing of other players (§5.1).
 
 ## 3. Combination patterns

@@ -47,7 +47,7 @@ Rules:
 | H2 | Stud checkpoints (square plate, growing core + light) | ✔ | ✔ | – |
 | S1 | Stage framework (config, gating UI, Stars) — design check done, S1.1 Studio-validated (2026-10-21), S1.2 done (user's visual check of the portal faces 2026-10-21) | ✔ | ✔ | – |
 | S2 | Quick Respawn talent (Studio-checked: 3 / 1 / 0 s delays, fall reset, Home, Skills row) | ✔ | ✔ | – |
-| S3 | Obstacle kit + jump lab | – | – | – |
+| S3 | Obstacle kit + jump lab — S3.1 spike done (all GO tests passed, GO recommended; awaits the user's decision), S3.2 / S3.3 not started | S3.1 ✔ | S3.1 ✔ | – |
 | S4 | World 1 complete (Island Hop, Blink) | – | – | – |
 | M6a | First live test + World 1 balancing | – | – | – |
 | S5 | Worlds hub (world gates, World 2 island) | – | – | – |
@@ -211,6 +211,26 @@ fall reset to the current checkpoint. A server script does all respawns (`Charac
   respawns, timer rules unchanged) within 0.2 s of the overlap; (4) cost: 100 animated parts cost < 1 ms of script time per
   frame. The multi-client check (F7 Server and Clients) is run by the user when asked.
 - **Ends with** a written recommendation and a wait for the user's decision; S3.2 does not start before it.
+
+**S3.1 result (2026-10-21, Studio, single client + F7 with 2 clients): all four GO tests passed; recommendation GO.**
+Code: `ObstacleKit.client.luau` (the spike is already the kit core); lab: `Workspace.KitLab` (Studio-only, stays for S3.3).
+- *Carry:* standing on the sliding platform (15.7 studs/s peak) for 30 s: 0.000 studs drift; on the turntable (45°/s, 5.4
+  studs from the centre): 0.053 studs. Jumping off keeps the player above the platform for the jump (max 0.8 studs) with
+  `AirCarry` 0.5 s; without it the Humanoid's air friction stops the handed velocity in 0.2 s and the platform swings 7 studs away.
+- *Tilt plate:* first visible tilt after 0.05 s, 12° at 0.26 s, settles at about 23° for an offset of 3 studs (Sens 8°/stud);
+  holds the player below `SlideAngle` 25° (balancing feel) and pushes off past it (left the plate 0.45 s after standing at the
+  edge). A steep plate alone does not slide a character (`MaxSlopeAngle` 89, a standing Humanoid holds any slope): the kit
+  puts the Humanoid into freefall with a downhill velocity (`SlideSpeed` 14).
+- *Client kill:* the client's `Humanoid.Health = 0` reached the server 0.03 s later (Studio, no network), `Died` fired,
+  `RespawnService` respawned; a second client saw the death 0.06 s after the overlap and the respawn after 3.4 s.
+- *Cost:* 100 movers + 10 beams: 0.34 ms of script time per frame (limit 1 ms). The two-client run measured the same
+  mover and beam phase on both clients within the 10 ms sampling error.
+- *Findings for S3.2 (not blockers):* (1) other players see a rider about 0.2 s behind the platform (normal character
+  replication delay; 3 studs at the fastest mover, more on a real network), so riders look slightly off a fast platform: keep
+  movers at ≤ 10 studs/s where players are watched, or accept it; (2) another player's tilt plate is at rest, so a player
+  tilting on it appears to sink about 1 stud into it, as designed in STAGES §2.2; (3) the kit's slide-off and carry only run
+  on the local character, so a player who leaves the game mid-slide needs no cleanup; (4) falling or dying with the plate
+  tilted just lets it spring back (it resets with no player on it).
 
 S3.1 spike: tilt plate, carrying the player on moving parts, client-side kill (go / no-go for the approach); S3.2 timed
 components (blinking beams, movers, rotators, pistons, pendulums, disappearing plates) and `StageCamera`; S3.3 kit-local
