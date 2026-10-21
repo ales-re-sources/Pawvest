@@ -48,6 +48,12 @@ local function addPortalMedal(stage)
 	label.TextScaled = true
 	label.RichText = true
 	label.TextStrokeTransparency = 0.4
+	if not portalLabel then
+		-- on a dark wooden door the default black text is unreadable: white text with a dark outline
+		label.TextColor3 = Color3.new(1, 1, 1)
+		label.TextStrokeColor3 = Color3.new(0, 0, 0)
+		label.TextStrokeTransparency = 0.2
+	end
 	label.Parent = surface
 
 	local attribute = StageConfig.MedalAttribute(stage)
