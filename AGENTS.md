@@ -153,7 +153,7 @@ Most of the 103 scripts are identical copies. Edit them consistently (grep by co
 | 2 | Top10Leaderboard | `Workspace/Stage1/LandingPad/Top10Leaderboard/Script…` |
 | 4 | `GateSign` | `Workspace/Stage*/LandingPad/GateSign.server.luau` |
 | 3 | ChoiceStage random safe `Step` | `Workspace/Stage1/ChoiceStage_*/Script…` |
-| 3 | bounce brick: declares `LAUNCH_SPEED` (attribute `LaunchSpeed` + tag `BounceBrick`; the launch is done by `BounceBricks.client`) — all 300 since the user's tuning (2026-10-21); `Bounce Brick_2` is a child of `Bounce Brick_1` | `Workspace/Stage2/12/Level 12/Bounce Brick_*` |
+| 3 | bounce brick: declares `LAUNCH_SPEED` (attribute `LaunchSpeed` + tag `BounceBrick`; the launch is done by `BounceBricks.client`) — all 300 since the user's tuning (2026-10-21); `Bounce Brick_1`–`_3` are siblings | `Workspace/Stage2/12/Level 12/Bounce Brick_*` |
 
 ## Networking & persistence
 
