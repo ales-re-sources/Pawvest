@@ -269,6 +269,20 @@ Code: `ObstacleKit.client.luau` (the spike is already the kit core); lab: `Works
 - Not in S3.2: crushers / rolling balls / sweeping laser variants beyond the above (they are `Piston` / `Spin` / `Swing`
   presets), kit-local crumbling plates, colour switches, zones and the jump lab (S3.3), moving the old spinners (S3.3).
 
+**S3.3 scope (agreed 2026-10-21; three steps, each ends with a Studio check, the user's visual check and a commit):**
+- **S3.3a, kit-local components, zones, run-seeded schedules** (KitLab row 4): crumbling plates (`KitCrumble`: shake on landing,
+  fall after `Delay`, back after `Return`; only for the local player), colour switches (`KitSwitch` pads that set a `Group`'s
+  colour, `KitColorPlate` plates solid only while their colour is set; per player), zones in a new `KitZones.client.luau`
+  (`Wind` with optional gusts, `LowGravity`, `Updraft`; forces are capped, they stop at death and on leaving the box). All
+  kit-local state resets on death / respawn. **Run-seeded:** a kit part with attribute `RunSeeded` runs on time since that
+  player's timer started (`StageTimerUpdate`), so every run sees the same sequence; outside a run it follows server time.
+- **S3.3b, ghosts, templates, jump lab:** other players drawn translucent where each player sees their own state (a kit part
+  attribute `GhostOthers`), the Studio-only templates in `ServerStorage.StageKit.Obstacles` (one per component, attributes
+  preset), and the jump lab: a script run in a playtest measures jump height and flat reach for each talent set (Run Speed 0-5,
+  Jump Height 0-3, Double Jump) into a reach table in STAGES.md, plus labelled gap and height ladders in KitLab.
+- **S3.3c, old spinners to the kit:** the 8 server `while wait()` spinner scripts on Stage 1 become `KitMover` Spin parts
+  with the same speed and kill behaviour, verified before / after; their server scripts are removed on disk.
+
 S3.1 spike: tilt plate, carrying the player on moving parts, client-side kill (go / no-go for the approach); S3.2 timed
 components (blinking beams, movers, rotators, pistons, pendulums, disappearing plates) and `StageCamera`; S3.3 kit-local
 components (crumbling plates, colour switches, tilt plates) and zones (wind, low gravity), run-seeded schedules, ghost drawing,
