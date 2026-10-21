@@ -243,6 +243,18 @@ Code: `ObstacleKit.client.luau` (the spike is already the kit core); lab: `Works
   camera zones (parts tagged `CameraZone`, attribute `Mode` + `Distance` / `Fov` / `Yaw` / `Pitch` / `Lead`) or a stage folder
   attribute `CameraMode`; back to `Default` on death, Home, the return portal and the finish; zoom and shift-lock off in the
   modes. Tested in the KitLab.
+**S3.2a result (2026-10-21, Studio single client, awaits the user's visual check):** `KitLab` row 2 has one station per component.
+- *Lift:* rests 1.5 s at each end, eased, rider carried with 0.000 studs drift over two cycles. *Spinner bar* (70°/s, `Kill`):
+  kills on touch, 8 studs from the hub it passes every 2.6 s. *Turntable:* 101° turned in 10.2 s (45°/s), rider drift 0.001
+  studs. *Piston* (`Push` 55, `PushLift` 28): tints orange 0.5 s before it strikes (0.3 s strike, 0.8 s retract), knocked the
+  player back 18.7 studs without a kill; the crusher variant (`Kill`) killed after 0.7–1.5 s. *Pendulum* (±55°, 3 s): killed
+  after 0.8–1.1 s. *Disappearing plates:* 1.8 s solid, 0.6 s flicker, 1.6 s gone per 4 s cycle, four plates staggered.
+- `KitMath` unit checks (cycle wrap, lift rest/continuity, window shares, plate shares, piston continuity, precision at
+  server-time magnitudes) all pass; 22 kit parts cost 0.12 ms per frame.
+- Two bugs found and fixed on the way: (1) a respawned character was read before its Humanoid / root part had replicated, so
+  hazards stopped working after the first death (`WaitForChild` now); (2) `CFrame.Angles` keeps float32, so a spin angle of
+  `Speed × server time` (~1.2e11°) froze the part: the angle is reduced modulo 360 in double precision first. The S3.1
+  turntable numbers above were measured while that part was not turning; re-measured now (0.001 studs while turning).
 - Not in S3.2: crushers / rolling balls / sweeping laser variants beyond the above (they are `Piston` / `Spin` / `Swing`
   presets), kit-local crumbling plates, colour switches, zones and the jump lab (S3.3), moving the old spinners (S3.3).
 

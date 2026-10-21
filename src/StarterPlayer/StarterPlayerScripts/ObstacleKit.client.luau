@@ -1,29 +1,45 @@
--- ObstacleKit (S3.1 spike, docs/STAGES.md §2.4): client-driven obstacles for the stage kit, configured by attributes on
--- Studio parts and found through CollectionService tags. The server animates nothing; every client derives the same
--- phase from workspace:GetServerTimeNow().
---   KitMover  Kind = "Slide" (Axis Vector3, Amplitude studs, Period s, Phase 0..1) or "Spin" (Speed deg/s, Phase deg):
---             moves its part locally; the character standing on it is carried with the part's per-frame delta.
+-- ObstacleKit (docs/STAGES.md §2.4): client-driven obstacles for the stage kit, configured by attributes on Studio parts
+-- and found through CollectionService tags. The server animates nothing; every client derives the same phase from
+-- workspace:GetServerTimeNow() (KitMath). Standing on a mover carries the character; kill hazards set the character's own
+-- Humanoid.Health = 0 (client kill).
+--   KitMover  Kind (default "Slide"), all carry the character standing on them:
+--               Slide  sine ping-pong: Axis Vector3, Amplitude studs, Period s, Phase 0..1
+--               Lift   elevator: Axis, Distance studs, Period s (full cycle), Pause s at each end, Phase
+--               Spin   turntable / sweeper bar around the part's Y axis: Speed deg/s, Phase deg
+--               Piston strikes out and pulls back: Axis, Stroke studs, Period, Duty (extended share), Out s (strike time),
+--                      Back s (retract time), Telegraph s (the part tints to WarnColor before it strikes), Phase
+--               Swing  pendulum: Hinge "Z" (default) or "X", Angle deg, Period, Phase; hangs from the part's top (Pivot
+--                      Vector3 offset from the part centre overrides)
+--             Optional on any mover: Kill (touching it kills), Push studs/s (touching it knocks the character back along
+--             the part's motion, PushLift studs/s upward, default 25), AirCarry s (how long a jump off keeps following it).
+--   KitBeam   blinking kill beam: Period s, Duty (on share 0..1), Phase, Telegraph s before "on"; Kill defaults to true.
+--   KitPlate  disappearing plate: Period, Duty (solid share), Phase, Telegraph s (flickers before it vanishes).
 --   KitTilt   hinge plate (local X axis): the plate tips toward the side the player stands on, a spring pulls it back;
 --             Sens deg per stud of offset, Spring, Damping, MaxAngle deg, SlideAngle deg (the tilt past which the character
 --             is pushed off), SlideSpeed studs/s. Kit-local: other players see the plate at rest.
---   KitBeam   blinking kill beam: Period s, Duty (on share 0..1), Phase 0..1, Telegraph s before "on"; while on, touching
---             the local character sets its own Humanoid.Health = 0 (client kill).
--- Spike diagnostics are mirrored to attributes on the local player: KitStandingOn, KitDrift, KitStandTime, KitFrameMs,
--- KitTiltAngle, KitKillAt (server time of the last client kill).
+-- Diagnostics are mirrored to attributes on the local player: KitStandingOn, KitDrift, KitStandTime, KitFrameMs,
+-- KitTiltAngle, KitKillAt (server time of the last client kill), KitKilledBy (name of the part that killed).
 
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+
+local KitMath = require(ReplicatedStorage:WaitForChild("KitMath"))
 
 local player = Players.LocalPlayer
 
 local RAY_DEPTH = 5 -- studs below the root part searched for the floor
 local CARRY_GRACE = 0.2 -- seconds after leaving a mover that its velocity is still handed to the character
 local AIR_CARRY = 0.5 -- seconds a jump off a mover keeps following it (attribute AirCarry on the part overrides)
+local OVERLAP_MARGIN = 8 -- studs beyond a part's own radius within which the overlap tests run
+local WARN_COLOR = Color3.fromRGB(255, 170, 60)
+local BEAM_TRANSPARENCY = { off = 1, warning = 0.8, on = 0.15 }
 
-local movers = {} -- [part] = { base, cframe, delta }
+local movers = {} -- [part] = { base, cframe, delta, color, state }
 local tilts = {} -- [part] = { base, angle, speed }
 local beams = {} -- [part] = { state }
+local plates = {} -- [part] = { state, transparency }
 
 local character, humanoid, root = nil, nil, nil
 local floorParams = RaycastParams.new()
@@ -41,7 +57,13 @@ end
 
 local function addMover(part: Instance)
 	if part:IsA("BasePart") then
-		movers[part] = { base = part.CFrame, cframe = part.CFrame, delta = CFrame.identity }
+		movers[part] = {
+			base = part.CFrame,
+			cframe = part.CFrame,
+			delta = CFrame.identity,
+			color = part.Color,
+			state = "on",
+		}
 	end
 end
 
@@ -54,6 +76,12 @@ end
 local function addBeam(part: Instance)
 	if part:IsA("BasePart") then
 		beams[part] = { state = "off" }
+	end
+end
+
+local function addPlate(part: Instance)
+	if part:IsA("BasePart") then
+		plates[part] = { state = "solid", transparency = part.Transparency }
 	end
 end
 
@@ -70,6 +98,7 @@ end
 track("KitMover", addMover, movers)
 track("KitTilt", addTilt, tilts)
 track("KitBeam", addBeam, beams)
+track("KitPlate", addPlate, plates)
 
 local function setCharacter(newCharacter: Model?)
 	character = newCharacter
@@ -80,39 +109,51 @@ local function setCharacter(newCharacter: Model?)
 		bodyParams.FilterDescendantsInstances = { newCharacter }
 	end
 end
-player.CharacterAdded:Connect(function(newCharacter)
-	task.defer(setCharacter, newCharacter)
-end)
-setCharacter(player.Character)
+-- a respawned character arrives part by part: wait for the Humanoid and the root part before using it
+local function onCharacter(newCharacter: Model)
+	newCharacter:WaitForChild("Humanoid")
+	newCharacter:WaitForChild("HumanoidRootPart")
+	setCharacter(newCharacter)
+end
+player.CharacterAdded:Connect(onCharacter)
+if player.Character then
+	task.spawn(onCharacter, player.Character)
+end
 
--- Position of a mover part at server time `now`.
-local function moverFrame(part: BasePart, data, now: number): CFrame
+-- Frame of a mover part at server time `now`, and its hazard state: "on" while it moves / is dangerous, "warning" while a
+-- piston telegraphs, "off" while a piston rests.
+local function moverFrame(part: BasePart, data, now: number): (CFrame, string)
+	local kind = attr(part, "Kind", "Slide")
 	local period = attr(part, "Period", 6)
-	if attr(part, "Kind", "Slide") == "Spin" then
-		local degrees = attr(part, "Speed", 60) * now + attr(part, "Phase", 0)
-		return data.base * CFrame.Angles(0, math.rad(degrees), 0)
+	local phase = attr(part, "Phase", 0)
+	if kind == "Spin" then
+		-- reduce the angle in double precision first: server time is ~1.8e9 s, and CFrame.Angles keeps only float32
+		local degrees = (attr(part, "Speed", 60) * now + phase) % 360
+		return data.base * CFrame.Angles(0, math.rad(degrees), 0), "on"
 	end
 	local axis: Vector3 = attr(part, "Axis", Vector3.new(0, 0, 1))
-	local swing = math.sin(2 * math.pi * (now / period + attr(part, "Phase", 0)))
-	return data.base + axis.Unit * attr(part, "Amplitude", 10) * swing
-end
-
--- "off" / "warning" (telegraph before on) / "on" for a beam at server time `now`.
-local function beamState(part: BasePart, now: number): string
-	local period = attr(part, "Period", 4)
-	local duty = attr(part, "Duty", 0.5)
-	local cycle = (now / period + attr(part, "Phase", 0)) % 1
-	local onStart = 1 - duty -- the on window is the end of the cycle
-	if cycle >= onStart then
-		return "on"
+	if kind == "Lift" then
+		local position = KitMath.Lift(now, period, attr(part, "Pause", 1), phase)
+		return data.base + axis.Unit * attr(part, "Distance", 10) * position, "on"
+	elseif kind == "Piston" then
+		local extension, state = KitMath.Piston(
+			now,
+			period,
+			attr(part, "Duty", 0.5),
+			phase,
+			attr(part, "Telegraph", 0.4),
+			attr(part, "Out", 0.15),
+			attr(part, "Back", 0.5)
+		)
+		return data.base + axis.Unit * attr(part, "Stroke", 10) * extension, if extension > 0.05 then "on" else state
+	elseif kind == "Swing" then
+		local pivot: Vector3 = attr(part, "Pivot", Vector3.new(0, part.Size.Y / 2, 0))
+		local angle = math.rad(KitMath.Swing(now, period, phase, attr(part, "Angle", 45)))
+		local rotation = if attr(part, "Hinge", "Z") == "X" then CFrame.Angles(angle, 0, 0) else CFrame.Angles(0, 0, angle)
+		return data.base * CFrame.new(pivot) * rotation * CFrame.new(-pivot), "on"
 	end
-	if (onStart - cycle) * period <= attr(part, "Telegraph", 0.4) then
-		return "warning"
-	end
-	return "off"
+	return data.base + axis.Unit * attr(part, "Amplitude", 10) * KitMath.Sine(now, period, phase), "on"
 end
-
-local STATE_TRANSPARENCY = { off = 1, warning = 0.8, on = 0.15 }
 
 -- carry bookkeeping
 local carriedVelocity = Vector3.zero
@@ -122,6 +163,8 @@ local carriedPart = nil -- the mover the character was last carried by
 local airMover = nil -- mover data the character just jumped off, followed in the air until airUntil
 local airUntil = 0
 local standSample = nil -- { part, local position, since }
+local pushedUntil = 0 -- os.clock() before which no further knock-back is applied
+local PUSH_COOLDOWN = 0.6
 
 local frameMs = 0
 local lastPublish = 0
@@ -132,22 +175,69 @@ local function publish(name: string, value: any)
 	end
 end
 
+-- True when `part` is close enough to the character for an overlap test.
+local function near(part: BasePart): boolean
+	return (part.Position - root.Position).Magnitude < part.Size.Magnitude / 2 + OVERLAP_MARGIN
+end
+
+local function touchesCharacter(part: BasePart): boolean
+	return near(part) and #workspace:GetPartsInPart(part, bodyParams) > 0
+end
+
+local function kill(part: Instance)
+	humanoid.Health = 0
+	player:SetAttribute("KitKillAt", workspace:GetServerTimeNow())
+	player:SetAttribute("KitKilledBy", part.Name)
+end
+
 RunService.PreSimulation:Connect(function(dt: number)
 	local started = os.clock()
 	local now = workspace:GetServerTimeNow()
 
 	for part, data in movers do
-		local frame = moverFrame(part, data, now)
+		local frame, state = moverFrame(part, data, now)
 		data.delta = frame * data.cframe:Inverse()
 		data.cframe = frame
 		part.CFrame = frame
+		if state ~= data.state then
+			data.state = state
+			if attr(part, "Kind", "Slide") == "Piston" then
+				part.Color = if state == "warning" then attr(part, "WarnColor", WARN_COLOR) else data.color
+			end
+		end
 	end
 
 	for part, data in beams do
-		local state = beamState(part, now)
+		local state = KitMath.Window(
+			now,
+			attr(part, "Period", 4),
+			attr(part, "Duty", 0.5),
+			attr(part, "Phase", 0),
+			attr(part, "Telegraph", 0.4)
+		)
 		if state ~= data.state then
 			data.state = state
-			part.Transparency = STATE_TRANSPARENCY[state]
+			part.Transparency = BEAM_TRANSPARENCY[state]
+		end
+	end
+
+	-- disappearing plates: solid, flickering before they vanish, gone (no collision) otherwise
+	for part, data in plates do
+		local state = KitMath.Plate(
+			now,
+			attr(part, "Period", 4),
+			attr(part, "Duty", 0.6),
+			attr(part, "Phase", 0),
+			attr(part, "Telegraph", 0.6)
+		)
+		if state == "warning" then
+			part.Transparency = if math.floor(now * 8) % 2 == 0 then data.transparency else 0.6
+		elseif state ~= data.state then
+			part.Transparency = if state == "solid" then data.transparency else 1
+		end
+		if state ~= data.state then
+			part.CanCollide = state ~= "gone"
+			data.state = state
 		end
 	end
 
@@ -244,16 +334,38 @@ RunService.PreSimulation:Connect(function(dt: number)
 	end
 	publish("KitStandingOn", if standing then standing.Name else "")
 
-	-- client kill: an "on" beam overlapping the character sets its own Health to 0
+	-- hazards: an "on" beam, or a mover with Kill that is moving / extended, overlapping the character kills it;
+	-- Push shoves it along the mover's motion
 	if alive then
+		local killer: Instance? = nil
 		for part, data in beams do
-			if data.state == "on" then
-				if #workspace:GetPartsInPart(part, bodyParams) > 0 then
-					humanoid.Health = 0
-					player:SetAttribute("KitKillAt", workspace:GetServerTimeNow())
-					break
+			if data.state == "on" and attr(part, "Kill", true) and touchesCharacter(part) then
+				killer = part
+				break
+			end
+		end
+		if not killer then
+			for part, data in movers do
+				if data.state == "on" then
+					local push = attr(part, "Push", 0)
+					local step = data.delta.Position
+					if push > 0 and step.Magnitude > 1e-3 and os.clock() > pushedUntil and touchesCharacter(part) then
+						-- knock-back: launch the character along the mover's motion (a standing Humanoid would cancel a
+						-- plain velocity, so it goes into freefall); one launch per PUSH_COOLDOWN
+						pushedUntil = os.clock() + PUSH_COOLDOWN
+						player:SetAttribute("KitPushedBy", part.Name)
+						root.AssemblyLinearVelocity = step.Unit * push + Vector3.new(0, attr(part, "PushLift", 25), 0)
+						humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
+					end
+					if attr(part, "Kill", false) and touchesCharacter(part) then
+						killer = part
+						break
+					end
 				end
 			end
+		end
+		if killer then
+			kill(killer)
 		end
 	end
 
