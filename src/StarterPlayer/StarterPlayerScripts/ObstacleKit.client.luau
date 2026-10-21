@@ -30,6 +30,7 @@ local KitMath = require(ReplicatedStorage:WaitForChild("KitMath"))
 local player = Players.LocalPlayer
 
 local RAY_DEPTH = 5 -- studs below the root part searched for the floor
+local FLOOR_RADIUS = 1.5 -- radius of that search (the character's feet reach about this far past the root)
 local CARRY_GRACE = 0.2 -- seconds after leaving a mover that its velocity is still handed to the character
 local AIR_CARRY = 0.5 -- seconds a jump off a mover keeps following it (attribute AirCarry on the part overrides)
 local OVERLAP_MARGIN = 8 -- studs beyond a part's own radius within which the overlap tests run
@@ -246,7 +247,9 @@ RunService.PreSimulation:Connect(function(dt: number)
 	local grounded = false
 	if alive then
 		grounded = humanoid.FloorMaterial ~= Enum.Material.Air
-		local hit = workspace:Raycast(root.Position, Vector3.new(0, -RAY_DEPTH, 0), floorParams)
+		-- a sphere, not a ray: a Humanoid can stand on a ledge with its root part past the edge, and a thin ray would
+		-- lose the plate there (the tilt would spring back and the player could balance on the lip forever)
+		local hit = workspace:Spherecast(root.Position, FLOOR_RADIUS, Vector3.new(0, -RAY_DEPTH, 0), floorParams)
 		if hit and (movers[hit.Instance] or tilts[hit.Instance]) then
 			standing = hit.Instance
 		end
