@@ -47,7 +47,7 @@ Rules:
 | H2 | Stud checkpoints (square plate, growing core + light) | ✔ | ✔ | – |
 | S1 | Stage framework (config, gating UI, Stars) — design check done, S1.1 Studio-validated (2026-10-21), S1.2 done (user's visual check of the portal faces 2026-10-21) | ✔ | ✔ | – |
 | S2 | Quick Respawn talent (Studio-checked: 3 / 1 / 0 s delays, fall reset, Home, Skills row) | ✔ | ✔ | – |
-| S3 | Obstacle kit + jump lab — S3.1 spike (GO decided 2026-10-21) and S3.2a / S3.2b (hazards, StageCamera; user's visual check done) done; S3.3a / b / c implemented and Studio-checked (kit-local plates, zones, ghosts, templates, reach table, Stage 1 spinners on the kit), the user's visual check of S3.3 and of Stage 1 is open | S3.1 / S3.2 / S3.3 ✔ | S3.1 / S3.2 / S3.3 ✔ | – |
+| S3 | Obstacle kit + jump lab — S3.1 spike (GO decided 2026-10-21) and S3.2a / S3.2b (hazards, StageCamera; user's visual check done) done; S3.3a / b / c done (kit-local plates, zones, ghosts, templates, reach table, Stage 1 spinners on the kit; user's visual check of Stage 1 done 2026-10-21) | ✔ | ✔ | – |
 | S4 | World 1 complete (Island Hop, Blink) | – | – | – |
 | M6a | First live test + World 1 balancing | – | – | – |
 | S5 | Worlds hub (world gates, World 2 island) | – | – | – |
