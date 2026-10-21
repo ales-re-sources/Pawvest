@@ -13,7 +13,7 @@ local LocalPlayer = Players.LocalPlayer
 local BARRIER_DEPTH = 0.5 -- studs; the portal is 1.5 deep, so ~0.5 of it stays reachable from each side
 
 local function addBarrier(stage)
-	local portal = workspace:WaitForChild(StageConfig.PortalFolder(stage)):WaitForChild(stage.hubPortal):WaitForChild("Portal")
+	local portal = StageConfig.FaceTarget(stage)
 
 	local barrier = Instance.new("Part")
 	barrier.Name = "PortalBarrier_" .. stage.folder
@@ -34,7 +34,7 @@ local function addBarrier(stage)
 end
 
 for _, stage in StageConfig.Stages do
-	if stage.unlock and stage.hubPortal then
+	if stage.unlock and stage.hubPortal and not StageConfig.Worlds[stage.world] then -- world stages have door gates (GateDoors)
 		task.spawn(addBarrier, stage)
 	end
 end

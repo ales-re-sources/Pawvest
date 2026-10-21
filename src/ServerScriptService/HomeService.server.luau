@@ -1,6 +1,6 @@
--- HomeService: the Home button (top-left) sends the player one step back, like the stage "TeleportToSpawn" portals: from a
--- stage of a world to that world's island, from anywhere else (hub, island, Tutorial, garden) to the hub spawn. A running
--- stage timer is cancelled and the score panel shows the new place. The remote carries no data; the server decides.
+-- HomeService: the Home button (top-left) sends the player one step back: from a stage of a world to the plaza in front of
+-- that stage's gate, from anywhere else (hub, the world's courtyard, Tutorial, garden) to the hub spawn. A running stage
+-- timer is cancelled and the score panel shows the new place. The remote carries no data; the server decides.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -16,6 +16,18 @@ goHomeEvent.Parent = ReplicatedStorage
 
 local lastUse = {} -- [Player] = os.clock() of the last accepted request
 
+-- True when `position` lies on the plaza of the stage's world (the courtyard: finishing a stage also lands there).
+local function onPlaza(stage, position: Vector3): boolean
+	local world = StageConfig.Worlds[stage.world]
+	local plaza = world and workspace:FindFirstChild(world.folder) and workspace[world.folder]:FindFirstChild("Plaza")
+	if not plaza then
+		return false
+	end
+	local local_ = plaza.CFrame:PointToObjectSpace(position)
+	local half = plaza.Size / 2
+	return math.abs(local_.X) <= half.X and math.abs(local_.Z) <= half.Z and math.abs(local_.Y) <= 30
+end
+
 goHomeEvent.OnServerEvent:Connect(function(player)
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
@@ -30,6 +42,9 @@ goHomeEvent.OnServerEvent:Connect(function(player)
 	lastUse[player] = now
 
 	local stage = StageConfig.ByKey[TimerHandler.GetPanelKey(player)]
+	if stage and onPlaza(stage, root.Position) then
+		stage = nil -- already on the courtyard (e.g. after a finish): Home goes on to the hub
+	end
 	local destination = if stage and StageConfig.Worlds[stage.world]
 		then StageConfig.ReturnSpawn(stage)
 		else workspace.StartLocation.SpawnLocation

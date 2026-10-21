@@ -347,6 +347,18 @@ S4.0 World 1 courtyard and the World 1 gate in the hub (stars x / 15 and coins f
   starts; unlocked: walking through starts the timer and the stage runs as before; walking back out cancels it; finish and
   Home land in front of the stage's gate, Home in the courtyard and the return portal go to the hub, the hub gate lands on the
   `Spawn` facing the gates; Stage 1 plays like before after the move; no script errors; `git status` clean after the Argon sync.
+**S4.0 result (2026-10-21, Studio single client, awaits the user's visual check):** built as the courtyard of five pads (STAGES
+§7.1). The Stage 1 course moved by (-213, +68, +202) to slot 2 (pad, gate, first plate and finish line line up with the others;
+checkpoint respawn works there). `Workspace.World1` has the plaza, rock, low wall (10 segments), spawn pad, return portal in the
+south wall, two closed "Coming soon" gates (slots 1 and 3) and 26 decor clones; each pad's `StartGate` has a wooden `Door`
+and a `GateExit` trigger; the pad return portals, the hub stage portals and the first island north of the hub are gone.
+Checked in a playtest: hub gate lands on the spawn pad facing the gates; locked Stage 3: door solid (walking stops at z 189.2
+in front of z 188.2), popup "Stage 3 is locked", teleporting straight into its `TimerStart` starts nothing (server check);
+unlocked Stage 2 / Stage 1: door ghost, walking through starts the timer and the panel shows the stage; walking back out cancels
+the timer (panel "World 1"); finish and Home from a stage land on the plaza in front of the stage's gate; Home on the plaza,
+also right after a finish, and the courtyard return portal go to the hub; death restarts at the checkpoint; no script errors.
+Not yet: Top-10 boards were not looked at (they stay beside the gates as before), and the `World 1` gate faces on the doors
+are drawn by `HubPortalMedals` (needs the user's eye).
 S4.1 Island Hop (stage 1); S4.2 Blink, the rhythm special (stage 3, with its music); the new display
 names and unlock chain switched on; challenge coins and a measured `T_base` for both.
 

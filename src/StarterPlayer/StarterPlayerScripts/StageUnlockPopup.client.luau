@@ -162,6 +162,18 @@ buyButton.Activated:Connect(function()
 end)
 closeButton.Activated:Connect(hide)
 
+-- GateDoors (a locked door gate was touched) asks for the popup through this player attribute (a stage key)
+player:GetAttributeChangedSignal("OpenUnlockPopup"):Connect(function()
+	local stageKey = player:GetAttribute("OpenUnlockPopup")
+	if type(stageKey) == "string" then
+		player:SetAttribute("OpenUnlockPopup", nil)
+		local stage = StageConfig.ByKey[stageKey]
+		if stage and stage.unlock then
+			show(stage)
+		end
+	end
+end)
+
 lockedEvent.OnClientEvent:Connect(function(stageKey)
 	local stage = StageConfig.ByKey[stageKey]
 	if stage then

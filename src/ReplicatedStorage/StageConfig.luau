@@ -52,7 +52,6 @@ StageConfig.Stages = {
 		key = "Stage 1",
 		displayName = "Stage 1",
 		folder = "Stage1",
-		hubPortal = "TeleportToStage1",
 		order = 2,
 		world = 1,
 		requires = {},
@@ -66,7 +65,6 @@ StageConfig.Stages = {
 		key = "Stage 2",
 		displayName = "Stage 2",
 		folder = "Stage2",
-		hubPortal = "TeleportToStage2",
 		order = 4,
 		world = 1,
 		requires = {},
@@ -80,7 +78,6 @@ StageConfig.Stages = {
 		key = "Stage 3",
 		displayName = "Stage 3",
 		folder = "Stage3",
-		hubPortal = "TeleportToStage3",
 		order = 5,
 		world = 1,
 		requires = {},
@@ -92,8 +89,9 @@ StageConfig.Stages = {
 	},
 }
 
--- Worlds (docs/STAGES.md §7.1): `stage.world` 1..n; a world has an island in Workspace.<folder> with a `spawn` part where its
--- stage portals stand, and a gate model <gate> in Workspace.StartLocation (the hub). The Tutorial is world 0 (the hub).
+-- Worlds (docs/STAGES.md §7.1): `stage.world` 1..n; a world is a courtyard in Workspace.<folder> (plaza, wall, return portal)
+-- with a `spawn` part, the stage pads stand on it, and a gate model <gate> in Workspace.StartLocation (the hub) leads there.
+-- The Tutorial is world 0 (the hub).
 StageConfig.Worlds = {
 	[1] = { name = "World 1", gate = "GateWorld1", folder = "World1", spawn = "Spawn" },
 }
@@ -133,10 +131,13 @@ function StageConfig.ForInstance(instance: Instance)
 	return stage
 end
 
--- Name of the Workspace folder that holds the stage's hub portal: the hub (StartLocation) or its world's island.
-function StageConfig.PortalFolder(stage): string
-	local world = StageConfig.Worlds[stage.world]
-	return if world then world.folder else "StartLocation"
+-- The part whose face shows a stage's stars, coins and lock lines: the Door of its start gate for a world stage (S4.0: the
+-- stage lies physically behind the gate), the hub portal for a hub stage (the Tutorial). Waits for the scene to load.
+function StageConfig.FaceTarget(stage): BasePart
+	if StageConfig.Worlds[stage.world] then
+		return workspace:WaitForChild(stage.folder):WaitForChild("LandingPad"):WaitForChild("StartGate"):WaitForChild("Door")
+	end
+	return workspace:WaitForChild("StartLocation"):WaitForChild(stage.hubPortal):WaitForChild("Portal")
 end
 
 -- Score-panel key of the place a stage returns to: its world's name, or StageConfig.HubName for a hub stage.
@@ -145,12 +146,11 @@ function StageConfig.LocationKey(stage): string
 	return if world then world.name else StageConfig.HubName
 end
 
--- The part a player is teleported to when leaving `stage` (portal "Hub", Home button): the world island's spawn pad, or
--- the hub's SpawnLocation for a hub stage. Waits for the scene to load.
+-- The part a player is teleported to when leaving `stage` (finish, Home button): the plaza in front of the stage's own gate
+-- (its LandingPad.TeleportDestination) for a world stage, the hub's SpawnLocation for a hub stage. Waits for the scene.
 function StageConfig.ReturnSpawn(stage): BasePart
-	local world = StageConfig.Worlds[stage.world]
-	if world then
-		return workspace:WaitForChild(world.folder):WaitForChild(world.spawn)
+	if StageConfig.Worlds[stage.world] then
+		return workspace:WaitForChild(stage.folder):WaitForChild("LandingPad"):WaitForChild("TeleportDestination")
 	end
 	return workspace:WaitForChild("StartLocation"):WaitForChild("SpawnLocation")
 end

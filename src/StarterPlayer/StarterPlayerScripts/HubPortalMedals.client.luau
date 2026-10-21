@@ -18,13 +18,16 @@ local UNEARNED_TRANSPARENCY = 0.45
 
 -- Layout inside the stud-stone arch (H1.1): the visible opening is narrower than the Portal part (the arch steps in
 -- at the feet and around the middle), so the lines stay narrow and above the feet.
+local DOOR_SHIFT = -0.34 -- how far up the stack moves on a door face
 local LINE_TOP = 0.51 -- first line under the stars
 local LINE_STEP = 0.085
 local LINE_SIZE = UDim2.fromScale(0.74, 0.08)
 
 local function addPortalMedal(stage)
-	local portal = workspace:WaitForChild(StageConfig.PortalFolder(stage)):WaitForChild(stage.hubPortal):WaitForChild("Portal")
+	local portal = StageConfig.FaceTarget(stage)
 	local portalLabel = portal:FindFirstChildOfClass("SurfaceGui")
+	-- a door has no stage-name label (the gate's sign carries it), so its lines start higher than on a portal face
+	local shift = if portalLabel then 0 else DOOR_SHIFT
 
 	local surface = Instance.new("SurfaceGui")
 	surface.Name = "PortalMedal_" .. stage.folder
@@ -38,7 +41,7 @@ local function addPortalMedal(stage)
 	-- below the stage-name label in the upper part of the face
 	local label = Instance.new("TextLabel")
 	label.AnchorPoint = Vector2.new(0.5, 0)
-	label.Position = UDim2.fromScale(0.5, 0.4)
+	label.Position = UDim2.fromScale(0.5, 0.4 + shift)
 	label.Size = UDim2.fromScale(0.7, 0.1)
 	label.BackgroundTransparency = 1
 	label.Font = Enum.Font.GothamBold
@@ -60,7 +63,7 @@ local function addPortalMedal(stage)
 	if coinCount > 0 then
 		coinLine = label:Clone()
 		coinLine.Name = "Coins"
-		coinLine.Position = UDim2.fromScale(0.5, LINE_TOP)
+		coinLine.Position = UDim2.fromScale(0.5, LINE_TOP + shift)
 		coinLine.Size = LINE_SIZE
 		coinLine.Parent = surface
 		local collectedAttribute = ChallengeCoinConfig.CollectedAttribute
@@ -108,11 +111,11 @@ local function addPortalMedal(stage)
 		local row = 0
 		for _, lock in locks do
 			lock.Visible = locked
-			lock.Position = UDim2.fromScale(0.5, LINE_TOP + row * LINE_STEP)
+			lock.Position = UDim2.fromScale(0.5, LINE_TOP + shift + row * LINE_STEP)
 			row += 1
 		end
 		for _, line in { coinLine, needsLine } do
-			line.Position = UDim2.fromScale(0.5, LINE_TOP + row * LINE_STEP)
+			line.Position = UDim2.fromScale(0.5, LINE_TOP + shift + row * LINE_STEP)
 			row += 1
 		end
 	end
@@ -134,7 +137,7 @@ local function addPortalMedal(stage)
 end
 
 for _, stage in StageConfig.Stages do
-	if stage.hubPortal then
+	if stage.hubPortal or StageConfig.Worlds[stage.world] then
 		task.spawn(addPortalMedal, stage)
 	end
 end
