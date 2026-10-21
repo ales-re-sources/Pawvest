@@ -316,8 +316,8 @@ and a missed jump over the sea falls for several seconds before the kill floor i
   (26 copied kill scripts, the sea, kit client kills) ends in `Died`, so one place handles them all. Needs
   `Players.CharacterAutoLoads = false` with all respawns done by one server script (calling `LoadCharacter` while auto-load
   is on can respawn twice); the join spawn and the Home button must keep working through it.
-- **Fall reset** (client, level 2): the client already knows its current checkpoint (`CheckpointReached`); when the character
-  is falling and more than `fallResetDepth` studs (per stage, default 30) below that checkpoint plate, it moves itself onto
+- **Fall reset** (client, level 2; built in S2 as `QuickRespawnClient`): the client already knows its current checkpoint (`CheckpointReached`); when the character
+  is falling and more than `fallResetDepth` studs (the stage folder's attribute `FallResetDepth`, default 30, 0 = off; never lower than 5 studs above the sea / `DebugBaseplate`, so plates near the sea still reset before the fall kills; plates more than 300 studs away are ignored, e.g. after Home) below that checkpoint plate, it moves itself onto
   the plate facing its front (same placement as a respawn). The stage's kit-local obstacles (crumbling plates, tilt plates,
   colour switches) reset as on a respawn. Off on the dropper (stage 17), where falling is the course; deep sections set
   their own depth.

@@ -10,12 +10,21 @@ export type Talent = {
 	costs: { number }, -- costs[n] = price of level n; #costs = max level
 	perLevel: number, -- effect per level as a fraction
 	effect: string, -- panel text for one level
+	effects: { string }?, -- panel text per level when the levels differ (effects[n] = what buying level n gives)
 }
 
 TalentConfig.List = {
 	{ id = "RunSpeed", name = "Run Speed", costs = { 200, 400, 600, 900, 1300 }, perLevel = 0.06, effect = "+6% run speed" },
 	{ id = "DoubleJump", name = "Double Jump", costs = { 1500 }, perLevel = 1, effect = "1 extra jump in the air" },
 	{ id = "JumpHeight", name = "Jump Height", costs = { 300, 600, 1000 }, perLevel = 0.08, effect = "+8% jump height" },
+	{
+		id = "QuickRespawn",
+		name = "Quick Respawn",
+		costs = { 1000, 3000 },
+		perLevel = 1,
+		effect = "faster respawn",
+		effects = { "Respawn after 1 s", "Instant respawn + fall reset" },
+	},
 } :: { Talent }
 
 TalentConfig.ById = {} :: { [string]: Talent }
@@ -53,6 +62,22 @@ end
 -- Multiplier on jump height. JumpPower scales with the square root of it.
 function TalentConfig.JumpHeightFactor(level: number): number
 	return 1 + TalentConfig.ById.JumpHeight.perLevel * level
+end
+
+-- Seconds to wait after a death before the character is loaded again (STAGES §6.2.1): `defaultDelay` (the place's
+-- Players.RespawnTime) without the talent, 1 s at level 1, none at level 2.
+function TalentConfig.RespawnDelay(level: number, defaultDelay: number): number
+	if level >= 2 then
+		return 0
+	elseif level == 1 then
+		return math.min(1, defaultDelay)
+	end
+	return defaultDelay
+end
+
+-- True when the talent resets a lost (falling) character to its checkpoint (level 2).
+function TalentConfig.HasFallReset(level: number): boolean
+	return level >= 2
 end
 
 -- Extra jumps allowed in the air.

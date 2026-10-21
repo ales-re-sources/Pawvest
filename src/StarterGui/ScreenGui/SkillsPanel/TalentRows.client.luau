@@ -55,7 +55,7 @@ local function refreshRow(row)
 	row.title.Text = talent.name .. "  " .. level .. "/" .. max
 	if row.flash == 0 then
 		row.info.TextColor3 = COLOR_INFO
-		row.info.Text = cost and talent.effect or "Maxed out"
+		row.info.Text = cost and (talent.effects and talent.effects[level + 1] or talent.effect) or "Maxed out"
 	end
 	if cost then
 		row.button.Text = "Buy " .. cost

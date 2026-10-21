@@ -46,7 +46,7 @@ Rules:
 | H1 | Hub island redesign + stud portals + stud landing pads | ✔ | ✔ | – |
 | H2 | Stud checkpoints (square plate, growing core + light) | ✔ | ✔ | – |
 | S1 | Stage framework (config, gating UI, Stars) — design check done, S1.1 Studio-validated (2026-10-21), S1.2 done (user's visual check of the portal faces 2026-10-21) | ✔ | ✔ | – |
-| S2 | Quick Respawn talent | – | – | – |
+| S2 | Quick Respawn talent (Studio-checked: 3 / 1 / 0 s delays, fall reset, Home, Skills row) | ✔ | ✔ | – |
 | S3 | Obstacle kit + jump lab | – | – | – |
 | S4 | World 1 complete (Island Hop, Blink) | – | – | – |
 | M6a | First live test + World 1 balancing | – | – | – |
