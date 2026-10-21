@@ -3,7 +3,7 @@
 -- bounce reaches the same height. Tuned so the flight lasts long enough to steer onto the ramp up to checkpoint 13.
 local CollectionService = game:GetService("CollectionService")
 
-local LAUNCH_SPEED = 500 -- studs/s along the brick's LookVector (up)
+local LAUNCH_SPEED = 300 -- studs/s along the brick's LookVector (up)
 
 script.Parent:SetAttribute("LaunchSpeed", LAUNCH_SPEED)
 CollectionService:AddTag(script.Parent, "BounceBrick")
