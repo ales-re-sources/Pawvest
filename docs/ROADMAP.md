@@ -201,14 +201,15 @@ templates in `ServerStorage.StageKit.Obstacles`, a Studio-only jump lab that mea
 spinners moved to the kit. Design: STAGES §2.4, §5.1.
 
 ### S4 — World 1 complete
-S4.1 Island Hop (stage 1); S4.2 Blink, the rhythm special (stage 3, with its music); two more hub arches; the new display
+S4.0 World 1 island ("crossroad", the 3 existing stage portals move onto it, return gate) and the World 1 gate in the hub
+(stars x / 15 and coins found x / y on its face); S4.1 Island Hop (stage 1); S4.2 Blink, the rhythm special (stage 3, with its music); the new display
 names and unlock chain switched on; challenge coins and a measured `T_base` for both.
 
 ### M6a — First live test + World 1 balancing
 The first live test (open checks below) with 6 stages, then M6 for World 1 (scope in "M6 — Balancing pass" below).
 
 ### S5–S11 (outline)
-S5 worlds hub (world gates, World 2 island, return / Home to the world) · S6 World 2 (S6.1 Double Up + Seesaw, S6.2
+S5 worlds hub (gates for Worlds 2–4 in the hub, World 2 island, return / Home to the world) · S6 World 2 (S6.1 Double Up + Seesaw, S6.2
 Turntable + Labyrinth, S6.3 Clocktower) · S7 Triple Jump + Dash (+ World 3 island) · S8 World 3 (S8.1 Triple Peaks + Ice Rink,
 S8.2 Dash Bridge + Laser Lab, S8.3 Rising Tide) · S9 Wall Jump + Glide (+ World 4 island) · S10 World 4 (S10.1 Wall Climb +
 Glide Canyon, S10.2 Moon Base + Clockwork, S10.3 Summit) · M6b final balancing · S11 bonus stages (S11.1 Darkness + Memory

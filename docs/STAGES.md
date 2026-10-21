@@ -355,11 +355,16 @@ levels later if Gold on Worlds 3–4 needs them (M6).
 ## 7. Practical side
 
 ### 7.1 Hub and worlds (decided: worlds of 5)
-- **Central Island** keeps the Tutorial and **World 1** (stages 1–5): today's arc of 4 stud portals grows to 6 (two more
-  arches cloned from `ServerStorage.DecorKit.StudPortal`).
-- **Worlds 2–4** each get a small island of their own with 5 stud portals in an arc, 2 bonus-stage portals (§5.3), a
-  world sign, the world's stars board and a return gate. The hub gets **one world gate per world** (a larger stud portal showing the world's stars x / 15 and
-  its lock). A bridge like the garden's is optional decoration; the gate is the fast way.
+- **Central Island** keeps the Tutorial portal and gets **one world gate per world** (4 larger stud portals cloned from
+  `ServerStorage.DecorKit.StudPortal`). The stage portals no longer stand in the hub (changed 2026-10-21, user idea: every
+  world including World 1 is a crossroad island; the hub itself has no stage portals except the Tutorial).
+- **Each world (1–4) has a small island of its own** (a "crossroad"): 5 stud portals in an arc, one per stage, 2 bonus-stage
+  portals from World 2 on (§5.3), a world sign, the world's stars board and a return gate to the hub. World 1's island is
+  built in S4 (today's three stage portals move onto it); Worlds 2–4 follow with their milestones. A bridge like the
+  garden's is optional decoration; the gate is the fast way.
+- **The world gate shows progress** (face, like the stage portals): the world's **stars x / 15** (medals earned), the
+  **challenge coins found x / y** across the world's stages, and its lock (requirement + price, §7.2). World 1's gate is
+  always open; Worlds 2–4 use the world-stars rule of §7.2.
 - The stage return portal ("Hub") and the Home button lead to the stage's **world island** (`StageConfig.world` → world
   spawn), the Home button on a world island to the hub.
 - Islands and courses sit in the same sea; `DebugBaseplate` (the kill floor) must cover every new course, or be extended.
@@ -412,9 +417,9 @@ Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio 
 | A — World 1 + first live test | S1 | Stage framework | S1.1 GDD + `StageConfig` (order, keys, factors, prices, `world` / `requires`; rename the duplicate `21`) · S1.2 "Needs:" line on portal and popup, arrival warning, leaderstats Stars |
 | | S2 | Quick Respawn talent | §6.2.1 |
 | | S3 | Obstacle kit | S3.1 spike: tilt plate, carry, client kill (go / no-go) · S3.2 timed components + `StageCamera` · S3.3 kit-local + zones + jump lab (reach table), old spinners to the kit |
-| | S4 | World 1 | S4.1 Island Hop · S4.2 Blink (rhythm) · two more hub arches |
+| | S4 | World 1 | S4.0 World 1 island + hub gate · S4.1 Island Hop · S4.2 Blink (rhythm) |
 | | M6a | first live test + World 1 balancing | real times, `T_base`, prices |
-| B — World 2 | S5 | Worlds hub | world gates, World 2 island, return / Home to the world |
+| B — World 2 | S5 | Worlds hub | gates for Worlds 2–4, World 2 island, return / Home to the world |
 | | S6 | World 2 | S6.1 Double Up + Seesaw · S6.2 Turntable + Labyrinth · S6.3 Clocktower |
 | C — World 3 | S7 | Triple Jump + Dash | talents, mobile button, reach table; World 3 island |
 | | S8 | World 3 | S8.1 Triple Peaks + Ice Rink · S8.2 Dash Bridge + Laser Lab · S8.3 Rising Tide |
