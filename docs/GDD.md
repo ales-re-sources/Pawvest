@@ -202,15 +202,15 @@ every stage** (decided 2026-10-21: no scaling with the stage factor). Planned st
 | Stage | Coin budget (Coins) | Placed mix |
 |---|---|---|
 | Tutorial | 120 | 2×50, 1×20 (behind the score board) |
-| Stage 1 | 300 | 5×20, 2×50, 1×100 |
+| Stage 1 | 280 | 4×20, 2×50, 1×100 |
 | Stage 2 | 380 | 4×20, 2×50, 2×100 |
-| Stage 3 | 500 | 5×20, 2×50, 3×100 |
-| **All** | **1 300** | 29 coins |
+| Stage 3 | 480 | 4×20, 2×50, 3×100 |
+| **All** | **1 260** | 27 coins |
 
 Talent-gated coins need Double Jump (placed out of reach of a Jump Height 3 jump). All four stages have their coins
 (M4 first batch: Tutorial + Stage 1; M4.1: Stage 2 + Stage 3).
 
-**One-time total of today's four stages: 6 700 (medals) + 1 300 (coins) = 8 000 Coins** (all 21 planned stages:
+**One-time total of today's four stages: 6 700 (medals) + 1 260 (coins) = 7 960 Coins** (all 21 planned stages:
 88 200 medals + roughly 8 000 coins at about 400 per stage), plus repeat rewards, garden production and the pet bonus,
 which have no fixed cap.
 

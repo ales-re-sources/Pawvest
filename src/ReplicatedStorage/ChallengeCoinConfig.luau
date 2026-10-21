@@ -20,8 +20,7 @@ ChallengeCoinConfig.Tiers = {
 ChallengeCoinConfig.Coins = {
 	{ id = "Tutorial_1", stage = "Stage 4", tier = "Risky" },
 	{ id = "Tutorial_2", stage = "Stage 4", tier = "Risky" },
-	{ id = "Tutorial_3", stage = "Stage 4", tier = "Easy" }, -- the coin behind the score board; moved here from Stage 2 (its old id Stage2_1 is retired, never reuse it)
-	{ id = "Stage1_1", stage = "Stage 1", tier = "Easy" },
+	{ id = "Tutorial_3", stage = "Stage 4", tier = "Easy" }, -- the only coin behind a score board; moved here from Stage 2. Retired ids, never reuse: Stage1_1, Stage2_1, Stage3_1 (the other boards' coins were removed)
 	{ id = "Stage1_2", stage = "Stage 1", tier = "Easy" },
 	{ id = "Stage1_3", stage = "Stage 1", tier = "Easy" },
 	{ id = "Stage1_4", stage = "Stage 1", tier = "Easy" },
@@ -37,7 +36,6 @@ ChallengeCoinConfig.Coins = {
 	{ id = "Stage2_7", stage = "Stage 2", tier = "Risky" },
 	{ id = "Stage2_8", stage = "Stage 2", tier = "Talent" },
 	{ id = "Stage2_9", stage = "Stage 2", tier = "Talent" },
-	{ id = "Stage3_1", stage = "Stage 3", tier = "Easy" },
 	{ id = "Stage3_2", stage = "Stage 3", tier = "Easy" },
 	{ id = "Stage3_3", stage = "Stage 3", tier = "Easy" },
 	{ id = "Stage3_4", stage = "Stage 3", tier = "Easy" },
