@@ -201,9 +201,9 @@ every stage** (decided 2026-10-21: no scaling with the stage factor). Planned st
 
 | Stage | Coin budget (Coins) | Placed mix |
 |---|---|---|
-| Tutorial | 100 | 2×50 |
+| Tutorial | 120 | 2×50, 1×20 (behind the score board) |
 | Stage 1 | 300 | 5×20, 2×50, 1×100 |
-| Stage 2 | 400 | 5×20, 2×50, 2×100 |
+| Stage 2 | 380 | 4×20, 2×50, 2×100 |
 | Stage 3 | 500 | 5×20, 2×50, 3×100 |
 | **All** | **1 300** | 29 coins |
 
