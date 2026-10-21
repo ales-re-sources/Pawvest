@@ -45,13 +45,28 @@ Rules:
 | P2 | Pet garden: plots, pens, incubators, food | ✔ | ✔ | – |
 | H1 | Hub island redesign + stud portals + stud landing pads | ✔ | ✔ | – |
 | H2 | Stud checkpoints (square plate, growing core + light) | ✔ | ✔ | – |
+| S1 | Stage framework (config, gating UI, Stars) | – | – | – |
+| S2 | Quick Respawn talent | – | – | – |
+| S3 | Obstacle kit + jump lab | – | – | – |
+| S4 | World 1 complete (Island Hop, Blink) | – | – | – |
+| M6a | First live test + World 1 balancing | – | – | – |
+| S5 | Worlds hub (world gates, World 2 island) | – | – | – |
+| S6 | World 2 (stages 6–10) | – | – | – |
+| S7 | Talents: Triple Jump + Dash | – | – | – |
+| S8 | World 3 (stages 11–15) | – | – | – |
+| S9 | Talents: Wall Jump + Glide | – | – | – |
+| S10 | World 4 (stages 16–20) | – | – | – |
+| M6b | Final balancing (all stages) | – | – | – |
+| S11 | Bonus stages | – | – | – |
 | P3 | Trading | – | – | – |
-| M6 | Balancing pass | – | – | – |
 | M7 | Monetization | deferred | | |
 
-Order rationale: P3 needs profile session locking (its first step). M6 needs the full loop, garden included, and is best
-done after a first live test (real finish times). M7 is scoped after M6. Nothing is live-validated yet: the open checks
-below belong to the first live test.
+Order rationale (2026-10-21): the stage expansion ([STAGES.md](STAGES.md)) comes first. S1–S4 finish World 1, so the
+stage re-order and the new unlock chain land **before the first live test** (no grandfather rule needed); M6a then tunes
+World 1 from real finish times. S5–S10 follow in order (each world needs its world island and, from World 3, its talents);
+S11 (bonus stages) can slot in after any world island exists (S5 or later). P3 (trading) comes after all 20 stages (user
+decision); it needs profile session locking (its first step). M7 is scoped after M6b. Nothing is live-validated yet: the
+open checks below belong to the first live test.
 
 ## Done
 
@@ -128,6 +143,69 @@ Housekeeping (Studio): `ReplicatedStorage.StageTimerStopped` is unused and can b
 
 ## Next milestones
 
+Stage expansion plan and design: [STAGES.md](STAGES.md) (catalogue, curve, worlds, talents, §8 milestone breakdown). Stage
+milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.
+Only S1 is scoped in full; the others get their scope when they start (workflow step 2).
+
+### S1 — Stage framework
+- **Design check (first):** GDD §3–6 updated from STAGES.md: the 21-stage table with worlds, keys and unlock rules (planned
+  stages marked as planned); §4 `T_base` and Bronze intent with required talents (STAGES §4.1); §5 reward factors
+  (`0.5 + 0.25 × n`) and the medal table; §6 the new talents (planned) and Quick Respawn, the economy constraint table
+  (STAGES §6.4). The STAGES §9 open questions are answered with the user at this point.
+- **S1.1 — Config and data.**
+  - `StageConfig`: new fields `world` (1–4) and `requires` (`{ { id, level } }`, empty on World 1), and the reward factors
+    of the curve (today's Stage 3: 2.0 → 1.75 if confirmed). Today's four stages keep their keys and folders; their `order`
+    gets room for the new World 1 stages (Tutorial 0, Stage 1 → 2, Stage 2 → 4, Stage 3 → 5). Display names and unlock bars
+    that depend on stages not built yet (Island Hop, Blink) switch in S4, so players never see a gap in the numbering.
+  - Unlock prices of today's stages from the STAGES §7.2 table (Stage 1 → 1 000, Stage 2 → 2 000, Stage 3 → 2 000) with
+    their new positions, applied in S4 together with the bars.
+  - Challenge-coin value = tier × the stage's reward factor, rounded to 5 (if confirmed); `ChallengeCoinConfig` computes it.
+  - Stage 3's duplicate checkpoint: `Stage3.21` gets a free number (20 stays the lowest); rename in Studio while Argon is
+    connected (two-way sync renames the folder), then check `git status` and Studio for duplicates.
+- **S1.2 — Gating UI and HUD.**
+  - Hub portal face (`HubPortalMedals`): a "Needs: <talent>" line for stages with `requires`, green when every required
+    level is owned, red when not; no line on stages without requirements. Must fit beside the lock lines.
+  - Unlock popup (`StageUnlockPopup`): lists the requirement under the medal bar and price.
+  - Arrival warning (new client script): arriving on a stage without a required talent shows a short popup with a button
+    that opens the Skills panel; entry is never blocked.
+  - leaderstats: "Stage" (checkpoint number) is replaced by "Stars" (`StageConfig.TotalStars`), updated on every new medal.
+- **Acceptance checks:**
+  - A profile with medals and best times on all four stages loads after S1.1 with the same medals, best times, Top-10
+    entries and stars (keys unchanged); `StageConfig.Stages` is sorted by `order` and every stage has `world` and `requires`.
+  - Stage 3 has no two checkpoints with the same number, and its respawns still land on the right plate.
+  - With a temporary Studio-only test requirement (`requires` Double Jump on one stage, not committed): its portal shows
+    "Needs: Double Jump" in red without the talent and green after buying it; the unlock popup lists it; arriving without
+    the talent shows the warning and its button opens the Skills panel; arriving with it shows no warning. Portals of
+    stages without requirements show no "Needs:" line.
+  - leaderstats show "Stars" equal to `StageConfig.TotalStars` of the profile, and it rises by the right amount right after
+    a new medal; no "Stage" column remains.
+  - If coin scaling is confirmed: a new Stage 2 Easy coin pays 30 base Coins (20 × 1.5) before the pet bonus.
+
+### S2 — Quick Respawn talent
+Talent `QuickRespawn`, level 1 (1 000): respawn after 1 s instead of 3 s; level 2 (3 000): instant respawn and a client-side
+fall reset to the current checkpoint. A server script does all respawns (`CharacterAutoLoads` off). Design: STAGES §6.2.1.
+
+### S3 — Obstacle kit + jump lab
+S3.1 spike: tilt plate, carrying the player on moving parts, client-side kill (go / no-go for the approach); S3.2 timed
+components (blinking beams, movers, rotators, pistons, pendulums, disappearing plates) and `StageCamera`; S3.3 kit-local
+components (crumbling plates, colour switches, tilt plates) and zones (wind, low gravity), run-seeded schedules, ghost drawing,
+templates in `ServerStorage.StageKit.Obstacles`, a Studio-only jump lab that measures the reach table per talent set, today's
+spinners moved to the kit. Design: STAGES §2.4, §5.1.
+
+### S4 — World 1 complete
+S4.1 Island Hop (stage 1); S4.2 Blink, the rhythm special (stage 3, with its music); two more hub arches; the new display
+names and unlock chain switched on; challenge coins and a measured `T_base` for both.
+
+### M6a — First live test + World 1 balancing
+The first live test (open checks below) with 6 stages, then M6 for World 1 (scope in "M6 — Balancing pass" below).
+
+### S5–S11 (outline)
+S5 worlds hub (world gates, World 2 island, return / Home to the world) · S6 World 2 (S6.1 Double Up + Seesaw, S6.2
+Turntable + Labyrinth, S6.3 Clocktower) · S7 Triple Jump + Dash (+ World 3 island) · S8 World 3 (S8.1 Triple Peaks + Ice Rink,
+S8.2 Dash Bridge + Laser Lab, S8.3 Rising Tide) · S9 Wall Jump + Glide (+ World 4 island) · S10 World 4 (S10.1 Wall Climb +
+Glide Canyon, S10.2 Moon Base + Clockwork, S10.3 Summit) · M6b final balancing · S11 bonus stages (S11.1 Darkness + Memory
+path, S11.2 Stealth + Chase, S11.3 Giant room + Minecart).
+
 ### P3 — Trading
 - **Prerequisite:** profile session locking in `PlayerProfile` (`UpdateAsync` with a `{ JobId, Time }` lock instead of
   `SetAsync`; a profile locked by another live server is not loaded until released or stale).
@@ -137,7 +215,7 @@ Housekeeping (Studio): `ReplicatedStorage.StageTimerStopped` is unused and can b
   mid-trade cancels it with no item moved; the same pet cannot end up in both inventories (also across a server
   crash right after the trade); a profile open on server A cannot be loaded for writing on server B.
 
-### M6 — Balancing pass
+### M6 — Balancing pass (run as M6a for World 1, M6b for all stages)
 - **Outputs:** measured `T_base` per stage (H2 made every course 17–53 studs longer); finish-time telemetry; tuned numbers in GDD + `StageConfig` / `PetConfig` /
   `GardenConfig`.
 - **Known items:** the repeat-reward floor (Tutorial loop ~1 400 Coins / h), pet bonus values, slot prices, the Basic egg's

@@ -1,35 +1,51 @@
 # Oby sandbox — Stage expansion plan (≈ 20 stages)
 
-Status: **draft for review** (2026-10-21). Nothing here is built yet. Decided with the user so far: today's Stage 3 becomes
-the finale of World 1 (slot 5); stages are grouped in **worlds of 5**; four **new talents** (Triple Jump, Dash, Glide,
-Wall Jump); a talent requirement is shown as a **hint + warning, entry stays open**; **one special stage per world**
-(rhythm, isometric shifting maze, 2D side-scroller, dropper) plus **bonus stages** outside the unlock chain (§5). Numbers (prices, factors, `T_base`) are
-provisional, like everything in [GDD.md](GDD.md), until M6. Once approved, GDD §3–6 and the ROADMAP are updated from this file
-(design first: GDD → ROADMAP → code).
+Status: **agreed plan** (2026-10-21); nothing is built yet. Decided with the user: today's Stage 3 becomes the finale of
+World 1 (slot 5); stages are grouped in **worlds of 5**; four **new talents** (Triple Jump, Dash, Glide, Wall Jump) plus the
+utility talent Quick Respawn (§6.2.1); a talent requirement is shown as a **hint + warning, entry stays open**; **one special
+stage per world** (rhythm, isometric shifting maze, 2D side-scroller, dropper) plus **bonus stages** outside the unlock chain
+(§5); milestones S1–S11 (§8) are in the [ROADMAP](ROADMAP.md), trading (P3) after all 20 stages. Numbers (prices, factors,
+`T_base`) are provisional, like everything in [GDD.md](GDD.md), until M6. GDD §3–6 is updated from this file in S1 (design
+first: GDD → ROADMAP → code); the open questions in §9 are answered then.
 
 ## 1. What exists today
 
-| Stage (key) | Checkpoints | `T_base` | Obstacles | Skill |
-|---|---|---|---|---|
-| Tutorial (`"Stage 4"`) | 3 (23–25) | 30 | basic jumps, first kill part | none |
-| Stage 1 (`"Stage 1"`) | 9 (1–9) | 70 | laser strips (7 kill parts), 2 spinner groups (8 sweepers), lava floor, lava block, 3 choice stages (random safe `Step`), jump pads | none |
-| Stage 2 (`"Stage 2"`) | 5 (10–14) | 100 | kill-part corridors (`level 11`: 6 kill parts), bounce-brick chain (`Level 12`: 3 bricks, 360 / 365 / 500 studs/s) | none (DJ coins) |
-| Stage 3 (`"Stage 3"`) | 3 (20–22) | 120 | dense kill-part layouts (10 scripted kill parts, `level.2`) | none, but very hard |
+| Stage (key) | Course | Checkpoints | `T_base` | Obstacles | Skill |
+|---|---|---|---|---|---|
+| Tutorial (`"Stage 4"`) | 284 studs, flat | 3 (23–25), 80–100 studs apart | 30 | gaps up to about 6 studs (one 16-stud step at the start), 10 small tops; no kill parts | none |
+| Stage 1 (`"Stage 1"`) | 605 studs, flat | 9 (1–9), about 57 studs apart | 70 | laser strips + lava floor + lava block (9 kill parts), 2 spinner groups (8 sweepers), 3 choice stages, side jumps (15-stud gaps), jump pads (45-stud launches) | none |
+| Stage 2 (`"Stage 2"`) | 535 studs, climbs 114 | 5 (10–14), 50–200 studs apart | 100 | kill-part corridors (6 kill parts), gaps of 9.5–11 studs, a bounce-brick chain (3 bricks, 33–54-stud launches) | none (DJ coins) |
+| Stage 3 (`"Stage 3"`) | **293 studs**, flat | 4 plates (20, 21, **21**, 22), about 100 studs apart | 120 | see below | none, but very hard |
 
-**Why Stage 3 is hard** (from the files; to be confirmed by the Studio survey, §1.1): it has the longest course with the
-fewest checkpoints (3 for a 120 s `T_base`, about 40 s of replay per death, against about 8 s on Stage 1), and its kill parts
-are packed tightly along the route, so every jump is a precision jump with no rest strip. It has no timing obstacle at all:
-the difficulty is pure precision and nerve, which is why it stays doable without talents.
+**Why Stage 3 is hard** (Studio survey, 2026-10-21): it is the *shortest* course but the slowest, because every metre is
+precision. It has three sections and no timing obstacle at all:
+1. **Max-distance jumps** (20 → 21): four 16 × 7 plates with **12-stud gaps**, each plate 1 stud higher than the last, at the
+   limit of a single jump.
+2. **Wrap-around** (`level.2`): three 12-stud-high walls fill the whole 16-stud width of a 40-stud floor; you get past each
+   one by jumping out around its side over the void.
+3. **Tightrope** (21 → 22): a zig-zag of **0.1-stud wires** (10 segments, 14–40 studs long, right-angle turns) with ten tiny
+   kill nubs (1 × 0.2 studs) on the wire to hop over.
 
-Movement reach (default humanoid, from M4): a single jump rises about **6.4 studs** (JumpPower 50) and stays about 0.51 s in
-the air (about 8 studs of flat distance at WalkSpeed 16, 10.6 with Run Speed 5); Jump Height 3 computes to 7.9 studs (a
-measured jump in M4 reached about 9); Double Jump reaches about **12.7 studs**. Only Double Jump separates "can" from
-"cannot" with a clear margin. The other two talents differ by 1–2 studs or 5 % of speed per level, too little for a fair hard
-gate (§6.1). The component kit (S2) measures a full reach table in a jump lab.
+The difficulty is pure precision and nerve, which is why it stays doable without talents (Double Jump would trivialise
+sections 1 and 2 and help on the wire). A death costs about 30 s of replay (about 8 s on Stage 1).
 
-### 1.1 Studio survey (pending)
-The place was not open in Studio during planning, so the read-only scene survey (obstacle part counts per stage, gap widths
-and heights on Stage 3, part totals for performance) is still to do. It only refines §1; no decision below depends on it.
+Movement reach (place settings: `CharacterUseJumpPower`, JumpPower 50, WalkSpeed 16, gravity 196.2, MaxSlopeAngle 89): a
+single jump rises about **6.4 studs** and stays about 0.51 s in the air (about 8 studs of flat air distance at WalkSpeed 16,
+10.6 with Run Speed 5; with the character's own length the longest gap is about 11–12 studs, as Stage 3 shows); Jump Height 3
+computes to 7.9 studs (a measured jump in M4 reached about 9); Double Jump reaches about **12.7 studs**. Only Double Jump
+separates "can" from "cannot" with a clear margin. The other two talents differ by 1–2 studs or 5 % of speed per level, too
+little for a fair hard gate (§6.1). The component kit (S3) measures a full reach table in a jump lab.
+
+### 1.1 Studio survey findings (2026-10-21, read-only)
+- Place settings: `Players.RespawnTime` **3 s**, `CharacterAutoLoads` on, `StreamingEnabled` **off**; 2 441 parts in
+  `Workspace` (each stage 250–320 parts including its decorated landing pad). 20 more stages add about
+  6 000–8 000 parts: still fine without streaming, but the kit stays streaming-ready (§2.4).
+- **Stage 3 has two checkpoints named `21`** (`Stage3.21` and `Stage3.level.2.21`, about 52 studs apart). Both work (they are
+  not siblings), but the leaderstats show 21 twice and it breaks the "one number per checkpoint" rule (§7.4). Fix when
+  Stage 3 is touched next (rename one; the higher block of numbers for re-ordered stages makes room).
+- Stage 1's spinners are 8 server scripts (`while wait()`), 2 of them on parts with a second, kill script; Stage 1 and 2
+  kill parts are 1-stud-thin strips, Stage 3's are tiny nubs.
+- No solid invisible parts on any course (no hidden helpers or walls).
 
 ## 2. Component catalogue
 
@@ -120,7 +136,7 @@ component can *require* (hard) or only *reward* (soft: faster medal, shortcut).
 - Moving parts never push a player into a kill part without a chance to react (≥ 0.5 s).
 - Timers on one stage share a **base period** (multiples of 1 s), so waits are short and learnable.
 
-### 2.4 Kit architecture (for S2)
+### 2.4 Kit architecture (for S3)
 - One client module (`ObstacleKit`) drives every tagged part through `CollectionService` (`BlinkBeam`, `Mover`, `Rotator`,
   `TiltPlate`, `Crumble`, `ColourSwitch`, `Piston`, `Pendulum`, `WindZone`, …), configured by attributes on the Studio
   parts, like `BounceBricks.client` today. No script copies per part.
@@ -140,7 +156,7 @@ component can *require* (hard) or only *reward* (soft: faster medal, shortcut).
 - **Teach → test → twist → finale.** First a safe version (no kill, or a floor under it), then with a hazard, then
   combined with an earlier component, and the last section before the finish fast and combined.
 - **Rest and stress.** A short, safe rest strip after every hard section; a checkpoint every 10–15 s of play in World 1,
-  15–20 s in World 2, 20–30 s in Worlds 3–4, never more than 40 s (Stage 3 is the upper limit on purpose).
+  15–20 s in World 2, 20–30 s in Worlds 3–4, never more than 40 s (Stage 3, about 30 s, is close to the upper limit on purpose).
 - **Sawtooth curve.** Each world's first stage is easier in precision than the previous finale, but teaches the world's new
   talent; each world finale mixes every signature of its world.
 - **Gold route.** Every stage from World 1 on has 1–2 optional risky shortcuts worth 3–8 s, so Gold is about route and
@@ -194,7 +210,7 @@ pillar 1 (1–3 minutes). Bonus stages (§5.3) come on top and are not numbered.
 Decided: **one special stage per world** (marked ★ in §4), a stage that plays differently from a normal obby, plus
 **bonus stages** outside the unlock chain, just for fun.
 
-### 5.1 Shared pieces (part of the kit, S2)
+### 5.1 Shared pieces (part of the kit, S3)
 - **`StageCamera`** (client): camera modes `Default`, `Iso`, `Side`, `Down`, `Front`, switched by a zone or a stage
   attribute `CameraMode`; back to `Default` on death, Home, the return portal and the finish. Roblox has no orthographic
   camera: a far camera (about 150 studs) with a narrow field of view (about 20°) looks almost isometric. A fixed camera yaw
@@ -258,7 +274,7 @@ Rules (proposal):
 ### 5.4 Idea: personal-best ghost
 Not a stage: a translucent replay of your own best run on any stage, to race against. The client records the character's
 position about 10 times a second during a run; the best run's track is stored in its own DataStore (about 10–30 KB per
-stage and player). Unscheduled; a good replay hook after S9.
+stage and player). Unscheduled; a good replay hook after S10.
 
 ## 6. Skill requirements
 
@@ -285,6 +301,31 @@ All movement talents are client-driven (like `TalentDoubleJump.client` today); t
 attributes). The skills panel gets 3 new rows. Dash needs an on-screen mobile button; Wall Jump needs the most tuning (wall
 detection, camera, mobile), which is why it comes last.
 
+### 6.2.1 Quick Respawn (utility talent, user idea)
+Not a movement talent and never a requirement: it saves the waiting after a mistake. Today every death waits for the
+place's respawn time (`Players.RespawnTime` = 3 s, set in Studio; no script sets it) plus the death animation,
+and a missed jump over the sea falls for several seconds before the kill floor is reached.
+
+| Level | Effect | Cost (prov.) |
+|---|---|---|
+| 1 | after a death, respawn at the checkpoint after **1 s** instead of the default | 1 000 |
+| 2 | **instant**: a death respawns at once (short fade, no break-apart animation), and a **fall reset** moves you back to the checkpoint the moment you are clearly lost, without dying | 3 000 |
+
+- Id `QuickRespawn` (attribute `Talent_QuickRespawn`; never renamed). Shown in the skills panel as "Quick Respawn".
+- **Death → respawn** (server): on `Humanoid.Died` the server calls `LoadCharacter` after the player's delay. Every kill source
+  (26 copied kill scripts, the sea, kit client kills) ends in `Died`, so one place handles them all. Needs
+  `Players.CharacterAutoLoads = false` with all respawns done by one server script (calling `LoadCharacter` while auto-load
+  is on can respawn twice); the join spawn and the Home button must keep working through it.
+- **Fall reset** (client, level 2): the client already knows its current checkpoint (`CheckpointReached`); when the character
+  is falling and more than `fallResetDepth` studs (per stage, default 30) below that checkpoint plate, it moves itself onto
+  the plate facing its front (same placement as a respawn). The stage's kit-local obstacles (crumbling plates, tilt plates,
+  colour switches) reset as on a respawn. Off on the dropper (stage 17), where falling is the course; deep sections set
+  their own depth.
+- The stage timer keeps running in both cases: the talent only removes the waiting.
+- **Fair for the boards:** a clean Gold or Top-10 run has no deaths, so the talent barely changes the best times; it mostly
+  helps players who still die, on long hard stages like today's Stage 3. Gold is never designed around it.
+- Useful from the first stages, so it is cheap and available from the start (no world gate).
+
 ### 6.3 How a requirement is shown (decided: hint + warning, entry open)
 - `StageConfig` gets `requires = { { id = "DoubleJump", level = 1 }, … }`.
 - **Portal face** (`HubPortalMedals`): a line "Needs: Double Jump", green when owned, red when not.
@@ -307,7 +348,7 @@ The no-grind constraint (GDD §6) for required talents, against all medals on th
 | 16 | + Wall Jump | 24 500 | 53 200 | 46 % | ✔ |
 | 17 | + Glide | 36 500 | 59 500 | 61 % | ✔ |
 
-With Run Speed and Jump Height (5 300) the whole tree costs **41 800**. Talents stay a real investment that competes with
+With Run Speed and Jump Height (5 300) and Quick Respawn (4 000) the whole tree costs **45 800**. Talents stay a real investment that competes with
 pets, pens and incubators (≈ 56 500 together), without blocking the no-grind path. Run Speed / Jump Height could get more
 levels later if Gold on Worlds 3–4 needs them (M6).
 
@@ -362,22 +403,26 @@ decor, measured `T_base`), one per world island, about three for the kit, one pe
 Labyrinth's layout cycle and the dropper's height the most), bonus stages 1–2× (§5.3). Adding a stage stays as in
 AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, key, prices).
 
-## 8. Proposed milestones (for the ROADMAP, pending approval)
-| # | Milestone | Scope |
-|---|---|---|
-| S1 | Stage framework | GDD §3–6 updated from this file; `StageConfig` gets `world` and `requires`, new display order and names, unlock bars and prices from §7.2; reward factors from §6.4; portal "Needs:" line, unlock popup line, arrival warning; leaderstats Stars |
-| S2 | Obstacle kit + jump lab | `ObstacleKit` client module (timed, local, zone components, carry, client kill), `StageCamera` modes, run-seeded schedules, ghost drawing (§5.1), templates in `ServerStorage.StageKit.Obstacles`, a Studio-only jump lab that measures the reach table per talent set. First a spike on tilt plates and carry, the riskiest parts |
-| S3 | World 1 complete | new stages Island Hop and Blink (rhythm special, with its music), two more hub arches, coins, measured `T_base` |
-| S4 | Worlds hub | world gates on the hub, the World 2 island (5 portals, board, return), return / Home to the world |
-| S5 | World 2 (stages 6–10) | five stages incl. the Labyrinth, Double Jump gated |
-| S6 | Talents: Triple Jump + Dash | panel rows, mobile button, reach-table update; World 3 island |
-| S7 | World 3 (stages 11–15) | five stages incl. the side-scroller |
-| S8 | Talents: Wall Jump + Glide | as S6; World 4 island |
-| S9 | World 4 (stages 16–20) | five stages incl. the dropper, finale |
-| S10 | Bonus stages | the six of §5.3 in batches (Darkness + Memory path first), 2 portals per world island |
+## 8. Milestones (agreed 2026-10-21; status and full scopes in [ROADMAP.md](ROADMAP.md))
+Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.
 
-Order: S1 → S2 → S3 first (World 1 done, the re-order landed before the first live test); S4–S9 in order; bonus stages (S10) can slot in
-after any world island exists. P3 (trading) is independent. M6 (balancing) is best after S3 for World 1 and again after S9.
+| Phase | # | Milestone | Parts |
+|---|---|---|---|
+| A — World 1 + first live test | S1 | Stage framework | S1.1 GDD + `StageConfig` (order, keys, factors, prices, `world` / `requires`; rename the duplicate `21`) · S1.2 "Needs:" line on portal and popup, arrival warning, leaderstats Stars |
+| | S2 | Quick Respawn talent | §6.2.1 |
+| | S3 | Obstacle kit | S3.1 spike: tilt plate, carry, client kill (go / no-go) · S3.2 timed components + `StageCamera` · S3.3 kit-local + zones + jump lab (reach table), old spinners to the kit |
+| | S4 | World 1 | S4.1 Island Hop · S4.2 Blink (rhythm) · two more hub arches |
+| | M6a | first live test + World 1 balancing | real times, `T_base`, prices |
+| B — World 2 | S5 | Worlds hub | world gates, World 2 island, return / Home to the world |
+| | S6 | World 2 | S6.1 Double Up + Seesaw · S6.2 Turntable + Labyrinth · S6.3 Clocktower |
+| C — World 3 | S7 | Triple Jump + Dash | talents, mobile button, reach table; World 3 island |
+| | S8 | World 3 | S8.1 Triple Peaks + Ice Rink · S8.2 Dash Bridge + Laser Lab · S8.3 Rising Tide |
+| D — World 4 | S9 | Wall Jump + Glide | talents, reach table; World 4 island |
+| | S10 | World 4 | S10.1 Wall Climb + Glide Canyon · S10.2 Moon Base + Clockwork · S10.3 Summit |
+| | M6b | final balancing | all 21 stages |
+| Any time after S5 | S11 | Bonus stages | S11.1 Darkness + Memory path · S11.2 Stealth + Chase · S11.3 Giant room + Minecart |
+
+Then P3 (trading), after all 20 stages (user decision).
 
 ## 9. Open questions
 | Question | Recommendation |
@@ -387,9 +432,10 @@ after any world island exists. P3 (trading) is independent. M6 (balancing) is be
 | Scale challenge-coin values with the stage factor? | yes |
 | Semantic keys for new stages (`Blink`) instead of `"Stage N"`? | yes |
 | Re-tune today's Stage 3 factor from 2.0 to 1.75 (curve) or keep 2.0? | 1.75 (already-paid Coins are unaffected) |
-| Move today's spinners to the kit (smoother, no server loop)? | yes, in S2, optional |
+| Move today's spinners to the kit (smoother, no server loop)? | yes, in S3.3, optional |
 | Should a world island also have a garden-style bridge? | gate first, bridges later as decor |
 | Bonus stages: open with their world, no bar and no price? | yes |
 | Bonus stars count toward the hub "most stars" total? | yes (they are real stages with medals) |
-| Rhythm stage music: which track (licence, loop length, BPM)? | a free Creator Store track at 100–120 BPM; pick in S3 |
-| Personal-best ghost (§5.4) as a later milestone? | yes, after S9 |
+| Rhythm stage music: which track (licence, loop length, BPM)? | a free Creator Store track at 100–120 BPM; pick in S4.2 |
+| Personal-best ghost (§5.4) as a later milestone? | yes, after S10 |
+| Default respawn delay for players without Quick Respawn? | keep today's 3 s (`Players.RespawnTime`); level 1 = 1 s, level 2 = instant |
