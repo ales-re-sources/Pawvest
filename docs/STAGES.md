@@ -403,6 +403,11 @@ levels later if Gold on Worlds 3–4 needs them (M6).
   - *Rectangle:* World 1: x -430..-320 (110 wide), z 187..357 (170 long), top y 78, low wall (6 high). The entrance (return
     portal to the hub; the hub gate lands on the `Spawn` pad) is in the south **short** side; the finale gate (Stage 3, its
     course runs north) is in the north short side; two gates on each **long** side, near (z 302) and far (z 242).
+  - *Names (user decision 2026-10-21):* the signs read the **position**: "Stage 1" and "Stage 2" on the west side (near, far),
+    "Stage 3" and "Stage 4" on the east side, "Stage 5" at the far end; `StageConfig.displayName` is "Stage 2" for key
+    `"Stage 1"`, "Stage 4" for key `"Stage 2"`, "Stage 5" for key `"Stage 3"` (keys never change); Island Hop and Blink are
+    working titles of the two new stages (positions 1 and 3), which stand closed as "Stage 1" / "Stage 3 - coming soon".
+    Until S4 switches the unlock chain, bars still name the old stage's new display name (e.g. "Silver on Stage 2").
   - *Order:* west side near to far = Island Hop (1), Stage 1 (2); east side near to far = Blink (3), Stage 2 (4); far end =
     Stage 3 (5). Side courses run outward (west courses west, east courses east): the existing Stage 1 and Stage 2 were
     rotated 90 degrees about their gates (whole stage folders, every part's CFrame); Stage 3 stayed, the Tutorial pad was

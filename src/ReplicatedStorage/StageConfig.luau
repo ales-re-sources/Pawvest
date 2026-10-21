@@ -50,7 +50,7 @@ StageConfig.Stages = {
 	},
 	{
 		key = "Stage 1",
-		displayName = "Stage 1",
+		displayName = "Stage 2", -- shown name = position in World 1 (1 Island Hop, 2 = key "Stage 1", 3 Blink, 4 = key "Stage 2", 5 = key "Stage 3"); the key never changes
 		folder = "Stage1",
 		order = 2,
 		world = 1,
@@ -63,7 +63,7 @@ StageConfig.Stages = {
 	},
 	{
 		key = "Stage 2",
-		displayName = "Stage 2",
+		displayName = "Stage 4", -- shown name = position in World 1 (1 Island Hop, 2 = key "Stage 1", 3 Blink, 4 = key "Stage 2", 5 = key "Stage 3"); the key never changes
 		folder = "Stage2",
 		order = 4,
 		world = 1,
@@ -76,7 +76,7 @@ StageConfig.Stages = {
 	},
 	{
 		key = "Stage 3",
-		displayName = "Stage 3",
+		displayName = "Stage 5", -- shown name = position in World 1 (1 Island Hop, 2 = key "Stage 1", 3 Blink, 4 = key "Stage 2", 5 = key "Stage 3"); the key never changes
 		folder = "Stage3",
 		order = 5,
 		world = 1,
