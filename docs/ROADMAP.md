@@ -232,6 +232,20 @@ Code: `ObstacleKit.client.luau` (the spike is already the kit core); lab: `Works
   on the local character, so a player who leaves the game mid-slide needs no cleanup; (4) falling or dying with the plate
   tilted just lets it spring back (it resets with no player on it).
 
+**S3.2 scope (agreed 2026-10-21, after GO on S3.1; cut in two, each ends with a Studio check, the user's visual check and a commit):**
+- **S3.2a, timed hazards and movers** in `ObstacleKit.client.luau` + a pure `KitMath` module: blinking beams (promoted from the
+  spike, `Kill` attribute), elevator (`Lift`: pause at the ends, eased), spinner / sweeper bar (`Spin` + `Kill`), piston
+  (`Piston`: telegraph tint, fast strike, slow retract; `Kill` or `Push`), pendulum (`Swing`), disappearing plates (`KitPlate`:
+  flicker before they vanish). One unified kill rule: any kit part with `Kill` (beams default on) kills the local character
+  while it is dangerous. Test stations in `Workspace.KitLab` (a second slab row). Fairness rules of STAGES §2.3 checked per
+  component (telegraph, safe spot, ≥ 0.5 s reaction).
+- **S3.2b, `StageCamera`** (client): modes `Default`, `Iso`, `Side`, `Down`, `Front` (all four non-default modes), switched by
+  camera zones (parts tagged `CameraZone`, attribute `Mode` + `Distance` / `Fov` / `Yaw` / `Pitch` / `Lead`) or a stage folder
+  attribute `CameraMode`; back to `Default` on death, Home, the return portal and the finish; zoom and shift-lock off in the
+  modes. Tested in the KitLab.
+- Not in S3.2: crushers / rolling balls / sweeping laser variants beyond the above (they are `Piston` / `Spin` / `Swing`
+  presets), kit-local crumbling plates, colour switches, zones and the jump lab (S3.3), moving the old spinners (S3.3).
+
 S3.1 spike: tilt plate, carrying the player on moving parts, client-side kill (go / no-go for the approach); S3.2 timed
 components (blinking beams, movers, rotators, pistons, pendulums, disappearing plates) and `StageCamera`; S3.3 kit-local
 components (crumbling plates, colour switches, tilt plates) and zones (wind, low gravity), run-seeded schedules, ghost drawing,
