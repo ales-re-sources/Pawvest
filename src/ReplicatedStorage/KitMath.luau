@@ -38,6 +38,25 @@ function KitMath.Plate(now: number, period: number, duty: number, phase: number,
 	return "solid"
 end
 
+-- The time a part runs on: server time, or, for a run-seeded part while that player's timer runs, the seconds since the
+-- run started (`runStart` = server time of the start), so every run sees the same sequence.
+function KitMath.TimeBase(now: number, runStart: number?, seeded: boolean): number
+	if seeded and runStart then
+		return now - runStart
+	end
+	return now
+end
+
+-- Gust strength 0..1 for a wind that blows in the last `duty` share of each cycle, rising and falling smoothly.
+function KitMath.Gust(now: number, period: number, duty: number, phase: number): number
+	local cycle = KitMath.Cycle(now, period, phase)
+	local onStart = 1 - duty
+	if cycle < onStart then
+		return 0
+	end
+	return math.sin(math.pi * (cycle - onStart) / duty)
+end
+
 -- Smooth sine swing −1..1 (sliding platforms, pendulums).
 function KitMath.Sine(now: number, period: number, phase: number): number
 	return math.sin(TAU * KitMath.Cycle(now, period, phase))

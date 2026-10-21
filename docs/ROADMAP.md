@@ -283,6 +283,21 @@ Code: `ObstacleKit.client.luau` (the spike is already the kit core); lab: `Works
 - **S3.3c, old spinners to the kit:** the 8 server `while wait()` spinner scripts on Stage 1 become `KitMover` Spin parts
   with the same speed and kill behaviour, verified before / after; their server scripts are removed on disk.
 
+**S3.3a result (2026-10-21, Studio single client, awaits the user's visual check):** `ObstacleKit` gained `KitCrumble`,
+`KitSwitch` / `KitColorPlate` and `RunSeeded`; new `KitZones.client.luau`; `KitMath` gained `TimeBase` and `Gust`; KitLab row 4
+(z≈630) has a station for each.
+- *Crumble:* shakes on landing (0.17 studs), gone after 0.82 s (Delay 0.8), back 3.0 s later (Return 3); neighbours unaffected.
+- *Colour switches:* Red / Blue / Toggle pads set the group's colour, plates flip solid / ghost (0.85 transparency, no
+  collision); standing on a Toggle flips once per step-on; death resets the group to Red and crumbled plates to solid.
+- *Zones:* steady wind carries a standing character 8.4 studs/s (Push 14 × GroundFactor 0.6), gust wind swings 0 to 12 studs/s
+  with the cycle; low gravity (scale 0.3) raises a jump from 9.0 to 26.2 studs; the updraft carries a character to the top of
+  its box at 42-43 studs/s and a character leaving sideways falls normally (the lift needs `Accel` > gravity, default 400).
+- *Run-seeded:* with a run active a `RunSeeded` mover is exactly on its run-time phase (offset 9.19 at t = 0.83 s as
+  computed), beams follow run time (warning 1.6 s, on 2.0-4.0 s); when the run ends they are back on server time. Carry
+  skips the one-frame jump when the time base changes.
+- Not yet checked: the user's visual feel of each station; multi-client behaviour of kit-local state (by design other players
+  see crumbles and colour plates at rest).
+
 S3.1 spike: tilt plate, carrying the player on moving parts, client-side kill (go / no-go for the approach); S3.2 timed
 components (blinking beams, movers, rotators, pistons, pendulums, disappearing plates) and `StageCamera`; S3.3 kit-local
 components (crumbling plates, colour switches, tilt plates) and zones (wind, low gravity), run-seeded schedules, ghost drawing,

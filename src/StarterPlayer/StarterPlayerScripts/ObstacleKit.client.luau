@@ -14,11 +14,20 @@
 --             the part's motion, PushLift studs/s upward, default 25), AirCarry s (how long a jump off keeps following it).
 --   KitBeam   blinking kill beam: Period s, Duty (on share 0..1), Phase, Telegraph s before "on"; Kill defaults to true.
 --   KitPlate  disappearing plate: Period, Duty (solid share), Phase, Telegraph s (flickers before it vanishes).
+--   KitCrumble crumbling plate (kit-local): shakes when the player stands on it, vanishes after Delay s (default 0.8), is back
+--             after Return s (default 3). Other players see it at rest.
+--   KitSwitch / KitColorPlate  colour puzzle (kit-local): stepping on a KitSwitch (attributes Group, Color; Color "Toggle"
+--             flips Red / Blue) sets that Group's colour; a KitColorPlate (Group, Color "Red" / "Blue") is solid only while its
+--             Group shows its colour, a ghost otherwise. Groups start Red.
+--   RunSeeded  attribute on any timed part (mover, beam, plate): it runs on time since that player's stage timer started
+--             (StageTimerUpdate) instead of server time, so every run sees the same sequence; set Phase so that t = 0 is safe.
 --   KitTilt   hinge plate (local X axis): the plate tips toward the side the player stands on, a spring pulls it back;
 --             Sens deg per stud of offset, Spring, Damping, MaxAngle deg, SlideAngle deg (the tilt past which the character
 --             is pushed off), SlideSpeed studs/s. Kit-local: other players see the plate at rest.
 -- Diagnostics are mirrored to attributes on the local player: KitStandingOn, KitDrift, KitStandTime, KitFrameMs,
--- KitTiltAngle, KitKillAt (server time of the last client kill), KitKilledBy (name of the part that killed).
+-- KitTiltAngle, KitKillAt (server time of the last client kill), KitKilledBy (name of the part that killed), KitColors
+-- (e.g. "A=Blue,B=Red") and KitRunStart (server time the current run started, 0 when none).
+-- All kit-local state (crumbled plates, colour groups) resets when the character dies or respawns.
 
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
@@ -41,6 +50,12 @@ local movers = {} -- [part] = { base, cframe, delta, color, state }
 local tilts = {} -- [part] = { base, angle, speed }
 local beams = {} -- [part] = { state }
 local plates = {} -- [part] = { state, transparency }
+local crumbles = {} -- [part] = { state, base, transparency, since }
+local switches = {} -- [part] = true
+local colorPlates = {} -- [part] = { transparency, solid }
+local colorState = {} -- [group] = "Red" / "Blue"
+local runStart: number? = nil -- server time the player's current run started (StageTimerUpdate)
+local timeBaseChanged = false -- a run started or ended: run-seeded movers jump to their new time, nobody is carried by it
 
 local character, humanoid, root = nil, nil, nil
 local floorParams = RaycastParams.new()
@@ -86,6 +101,24 @@ local function addPlate(part: Instance)
 	end
 end
 
+local function addCrumble(part: Instance)
+	if part:IsA("BasePart") then
+		crumbles[part] = { state = "solid", base = part.CFrame, transparency = part.Transparency, since = 0 }
+	end
+end
+
+local function addSwitch(part: Instance)
+	if part:IsA("BasePart") then
+		switches[part] = true
+	end
+end
+
+local function addColorPlate(part: Instance)
+	if part:IsA("BasePart") then
+		colorPlates[part] = { transparency = part.Transparency, solid = true }
+	end
+end
+
 local function track(tag: string, add: (Instance) -> (), registry: { [Instance]: any })
 	for _, part in CollectionService:GetTagged(tag) do
 		add(part)
@@ -100,6 +133,19 @@ track("KitMover", addMover, movers)
 track("KitTilt", addTilt, tilts)
 track("KitBeam", addBeam, beams)
 track("KitPlate", addPlate, plates)
+track("KitCrumble", addCrumble, crumbles)
+track("KitSwitch", addSwitch, switches)
+track("KitColorPlate", addColorPlate, colorPlates)
+
+-- the player's run: StageTimerUpdate (elapsed >= 0, stageKey) while it runs, (-1, ...) when it ends
+ReplicatedStorage:WaitForChild("StageTimerUpdate").OnClientEvent:Connect(function(elapsed: number)
+	local newStart = if type(elapsed) == "number" and elapsed >= 0 then workspace:GetServerTimeNow() - elapsed else nil
+	if (newStart == nil) ~= (runStart == nil) or (newStart and runStart and math.abs(newStart - runStart) > 0.5) then
+		timeBaseChanged = true
+	end
+	runStart = newStart
+	player:SetAttribute("KitRunStart", runStart or 0)
+end)
 
 local function setCharacter(newCharacter: Model?)
 	character = newCharacter
@@ -164,6 +210,7 @@ local carriedPart = nil -- the mover the character was last carried by
 local airMover = nil -- mover data the character just jumped off, followed in the air until airUntil
 local airUntil = 0
 local standSample = nil -- { part, local position, since }
+local lastSwitch = nil -- the colour switch the character stood on last frame (a switch fires once per step-on)
 local pushedUntil = 0 -- os.clock() before which no further knock-back is applied
 local PUSH_COOLDOWN = 0.6
 
@@ -196,8 +243,8 @@ RunService.PreSimulation:Connect(function(dt: number)
 	local now = workspace:GetServerTimeNow()
 
 	for part, data in movers do
-		local frame, state = moverFrame(part, data, now)
-		data.delta = frame * data.cframe:Inverse()
+		local frame, state = moverFrame(part, data, KitMath.TimeBase(now, runStart, attr(part, "RunSeeded", false)))
+		data.delta = if timeBaseChanged then CFrame.identity else frame * data.cframe:Inverse()
 		data.cframe = frame
 		part.CFrame = frame
 		if state ~= data.state then
@@ -210,7 +257,7 @@ RunService.PreSimulation:Connect(function(dt: number)
 
 	for part, data in beams do
 		local state = KitMath.Window(
-			now,
+			KitMath.TimeBase(now, runStart, attr(part, "RunSeeded", false)),
 			attr(part, "Period", 4),
 			attr(part, "Duty", 0.5),
 			attr(part, "Phase", 0),
@@ -225,7 +272,7 @@ RunService.PreSimulation:Connect(function(dt: number)
 	-- disappearing plates: solid, flickering before they vanish, gone (no collision) otherwise
 	for part, data in plates do
 		local state = KitMath.Plate(
-			now,
+			KitMath.TimeBase(now, runStart, attr(part, "RunSeeded", false)),
 			attr(part, "Period", 4),
 			attr(part, "Duty", 0.6),
 			attr(part, "Phase", 0),
@@ -250,8 +297,71 @@ RunService.PreSimulation:Connect(function(dt: number)
 		-- a sphere, not a ray: a Humanoid can stand on a ledge with its root part past the edge, and a thin ray would
 		-- lose the plate there (the tilt would spring back and the player could balance on the lip forever)
 		local hit = workspace:Spherecast(root.Position, FLOOR_RADIUS, Vector3.new(0, -RAY_DEPTH, 0), floorParams)
-		if hit and (movers[hit.Instance] or tilts[hit.Instance]) then
-			standing = hit.Instance
+		local instance = hit and hit.Instance
+		if instance and (movers[instance] or tilts[instance] or crumbles[instance] or switches[instance]) then
+			standing = instance
+		end
+	end
+
+	-- kit-local state resets when the character dies or respawns (crumbled plates are back, colour groups start Red)
+	if not alive then
+		if next(colorState) ~= nil then
+			table.clear(colorState)
+		end
+		for part, data in crumbles do
+			if data.state ~= "solid" then
+				data.state = "solid"
+				part.CFrame = data.base
+				part.Transparency = data.transparency
+				part.CanCollide = true
+			end
+		end
+	end
+
+	-- crumbling plates: shake while the player stands on one, vanish after Delay, come back after Return
+	for part, data in crumbles do
+		local clock = os.clock()
+		if data.state == "solid" then
+			if standing == part and grounded then
+				data.state = "shaking"
+				data.since = clock
+			end
+		elseif data.state == "shaking" then
+			local fell = clock - data.since
+			local shake = attr(part, "Shake", 0.12)
+			part.CFrame = data.base + Vector3.new(math.sin(fell * 90) * shake, math.sin(fell * 70 + 1) * shake * 0.5, math.cos(fell * 80) * shake)
+			if fell >= attr(part, "Delay", 0.8) then
+				data.state = "gone"
+				data.since = clock
+				part.CFrame = data.base
+				part.Transparency = 1
+				part.CanCollide = false
+			end
+		elseif clock - data.since >= attr(part, "Return", 3) then
+			data.state = "solid"
+			part.Transparency = data.transparency
+			part.CanCollide = true
+		end
+	end
+
+	-- colour switches: stepping onto a pad sets (or toggles) its group's colour
+	if standing and switches[standing] and standing ~= lastSwitch then
+		local group = attr(standing, "Group", "A")
+		local color = attr(standing, "Color", "Toggle")
+		if color == "Toggle" then
+			color = if (colorState[group] or "Red") == "Red" then "Blue" else "Red"
+		end
+		colorState[group] = color
+	end
+	lastSwitch = if standing and switches[standing] then standing else nil
+
+	-- colour plates: solid while their group shows their colour, a ghost otherwise
+	for part, data in colorPlates do
+		local solid = (colorState[attr(part, "Group", "A")] or "Red") == attr(part, "Color", "Red")
+		if solid ~= data.solid then
+			data.solid = solid
+			part.Transparency = if solid then data.transparency else 0.85
+			part.CanCollide = solid
 		end
 	end
 
@@ -374,6 +484,14 @@ RunService.PreSimulation:Connect(function(dt: number)
 			kill(killer)
 		end
 	end
+
+	timeBaseChanged = false
+	local parts = {}
+	for group, color in colorState do
+		table.insert(parts, group .. "=" .. color)
+	end
+	table.sort(parts)
+	publish("KitColors", table.concat(parts, ","))
 
 	frameMs = frameMs * 0.9 + (os.clock() - started) * 1000 * 0.1
 	if started - lastPublish > 0.5 then
