@@ -38,11 +38,11 @@ equal to their folder, e.g. `IslandHop`; checkpoint blocks of 100 per new stage,
 | # | World | Stage | Internal key | Built | Required talents | Unlock |
 |---|---|---|---|---|---|---|
 | T | – (hub) | Tutorial | `"Stage 4"` ¹ | yes | – | always open |
-| 1 | 1 | Island Hop | `IslandHop` | P (S4.1) | – | Bronze on Tutorial **or** 500 |
-| 2 | 1 | Stage 1 (today) | `"Stage 1"` | yes | – | Bronze on Island Hop **or** 1 000 |
-| 3 | 1 | Blink ★ rhythm | `Blink` | P (S4.2) | – | Bronze on Stage 1 **or** 1 500 |
-| 4 | 1 | Stage 2 (today) | `"Stage 2"` | yes | – | Bronze on Blink **or** 2 000 |
-| 5 | 1 | Stage 3 (today), finale | `"Stage 3"` | yes | – | Bronze on Stage 2 **or** 2 000 |
+| 1 | 1 | Stage 1 (Island Hop) | `IslandHop` | P (S4.1) | – | Bronze on Tutorial **or** 500 |
+| 2 | 1 | Stage 2 (today's first stage) | `"Stage 1"` | yes | – | Bronze on Stage 1 **or** 1 000 |
+| 3 | 1 | Stage 3 (Blink ★ rhythm) | `Blink` | P (S4.2) | – | Bronze on Stage 2 **or** 1 500 |
+| 4 | 1 | Stage 4 (today's second stage) | `"Stage 2"` | yes | – | Bronze on Stage 3 **or** 2 000 |
+| 5 | 1 | Stage 5 (today's third stage), finale | `"Stage 3"` | yes | – | Bronze on Stage 4 **or** 2 000 |
 | 6 | 2 | Double Up | `DoubleUp` | P (S6) | Double Jump | World gate ² **or** 2 500 |
 | 7 | 2 | Seesaw | `Seesaw` | P (S6) | Double Jump | Bronze on 6 **or** 3 000 |
 | 8 | 2 | Turntable | `Turntable` | P (S6) | Double Jump | Bronze on 7 **or** 3 000 |
@@ -64,6 +64,8 @@ equal to their folder, e.g. `IslandHop`; checkpoint blocks of 100 per new stage,
 ² **World opener** (stages 6, 11, 16): **10 of the 15 stars of the previous world** (decided 2026-10-21; 10 = Silver on
 every stage of the world, provisional) **or** the price. This needs a new unlock rule type (stars in a world) next to
 the medal-on-previous-stage rule, built in S1.1. The previous rule (Silver on the finale) is not used.
+
+**Shown names are positions** (decided 2026-10-21): the signs, boards, popups and panels read "Stage 1" … "Stage 5" for World 1 (`StageConfig.displayName`; the internal key never changes); names like Island Hop / Blink are working titles of the new stages and may become subtitles later.
 
 The Tutorial belongs to no world (decided 2026-10-21): it stays a hub stage, its stars count in the total and on the hub
 board but not toward a world, so World 1 is exactly 5 stages = 15 stars and the opener rule "10 of 15" stays exact.
