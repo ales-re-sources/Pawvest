@@ -17,6 +17,11 @@ local MIN_PITCH, MAX_PITCH = -0.5, 0.15 -- look vector Y: the player's own tilt 
 local SPAWN_DELAY = 0.3 -- seconds for the default camera to settle behind a new character
 
 local function faceForward(root)
+	-- a StageCamera mode owns the camera (and puts it behind the character itself when the mode ends)
+	local mode = LocalPlayer:GetAttribute("CameraMode")
+	if mode ~= nil and mode ~= "Default" then
+		return
+	end
 	local camera = workspace.CurrentCamera
 	local look = root.CFrame.LookVector
 	local flat = Vector3.new(look.X, 0, look.Z)

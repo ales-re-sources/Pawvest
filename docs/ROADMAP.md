@@ -255,6 +255,17 @@ Code: `ObstacleKit.client.luau` (the spike is already the kit core); lab: `Works
   hazards stopped working after the first death (`WaitForChild` now); (2) `CFrame.Angles` keeps float32, so a spin angle of
   `Speed × server time` (~1.2e11°) froze the part: the angle is reduced modulo 360 in double precision first. The S3.1
   turntable numbers above were measured while that part was not turning; re-measured now (0.001 studs while turning).
+**S3.2b result (2026-10-21, Studio single client, awaits the user's visual check):** `StageCamera.client.luau` + KitLab row 3
+(four camera zones, `Zone_Iso` / `Side` / `Down` / `Front`, each with pillars and a floor stripe).
+- Modes measured in a playtest: Iso fov 20, distance 151, pitch 35°, heading (-0.58, -0.58); Side fov 55, 41, 3°, looking
+  -Z; Down fov 60, 35, 80°; Front fov 65, 23, 12°, looking -X. Leaving a zone blends back to the normal camera (distance
+  13, fov 70, CameraType Custom). A stage folder attribute `CameraMode` (+ attribute overrides such as `Distance`) works while
+  that stage's timer runs and ends with the run (cancel / Home / finish).
+- Resets: dying inside a mode, and Home from a mode, hand the camera back behind the character at once (no glide across a
+  teleport); `CameraFacing` skips its own teleport turn while a mode owns the camera.
+- Zoom and shift lock: the camera is Scriptable in a mode, so wheel zoom and the shift-lock camera do nothing (a script cannot
+  switch the shift-lock option off: `DevEnableMouseLock` is Studio-only). Movement keys stay relative to the camera, so
+  "W = up the screen"; checked by design, not with a keyboard in this run.
 - Not in S3.2: crushers / rolling balls / sweeping laser variants beyond the above (they are `Piston` / `Spin` / `Swing`
   presets), kit-local crumbling plates, colour switches, zones and the jump lab (S3.3), moving the old spinners (S3.3).
 
