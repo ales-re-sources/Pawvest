@@ -18,9 +18,9 @@ local UNEARNED_TRANSPARENCY = 0.45
 
 -- Layout inside the stud-stone arch (H1.1): the visible opening is narrower than the Portal part (the arch steps in
 -- at the feet and around the middle), so the lines stay narrow and above the feet.
-local LINE_TOP = 0.58 -- first line under the stars
-local LINE_STEP = 0.1
-local LINE_SIZE = UDim2.fromScale(0.78, 0.09)
+local LINE_TOP = 0.51 -- first line under the stars
+local LINE_STEP = 0.085
+local LINE_SIZE = UDim2.fromScale(0.74, 0.08)
 
 local function addPortalMedal(stage)
 	local portal = workspace:WaitForChild("StartLocation"):WaitForChild(stage.hubPortal):WaitForChild("Portal")
@@ -38,7 +38,7 @@ local function addPortalMedal(stage)
 	-- below the stage-name label in the upper part of the face
 	local label = Instance.new("TextLabel")
 	label.AnchorPoint = Vector2.new(0.5, 0)
-	label.Position = UDim2.fromScale(0.5, 0.45)
+	label.Position = UDim2.fromScale(0.5, 0.4)
 	label.Size = UDim2.fromScale(0.7, 0.1)
 	label.BackgroundTransparency = 1
 	label.Font = Enum.Font.GothamBold
