@@ -48,7 +48,7 @@ Rules:
 | S1 | Stage framework (config, gating UI, Stars) — design check done, S1.1 Studio-validated (2026-10-21), S1.2 done (user's visual check of the portal faces 2026-10-21) | ✔ | ✔ | – |
 | S2 | Quick Respawn talent (Studio-checked: 3 / 1 / 0 s delays, fall reset, Home, Skills row) | ✔ | ✔ | – |
 | S3 | Obstacle kit + jump lab — S3.1 spike (GO decided 2026-10-21) and S3.2a / S3.2b (hazards, StageCamera; user's visual check done) done; S3.3a / b / c done (kit-local plates, zones, ghosts, templates, reach table, Stage 1 spinners on the kit; user's visual check of Stage 1 done 2026-10-21) | ✔ | ✔ | – |
-| S4 | World 1 complete (Island Hop, Blink) | – | – | – |
+| S4 | World 1 complete (Island Hop, Blink) — S4.0 courtyard + hub gate done (Studio-validated, user's visual check 2026-10-21); S4.1 / S4.2 open | ✔ (S4.0) | ✔ (S4.0) | – |
 | M6a | First live test + World 1 balancing | – | – | – |
 | S5 | Worlds hub (world gates, World 2 island) | – | – | – |
 | S6 | World 2 (stages 6–10) | – | – | – |
@@ -329,7 +329,7 @@ spinners moved to the kit. Design: STAGES §2.4, §5.1.
 
 ### S4 — World 1 complete
 S4.0 World 1 courtyard and the World 1 gate in the hub (stars x / 15 and coins found x / y on its face). **Third design
-(2026-10-21), built and Studio-checked, awaits the user's visual check:** a compact rectangle (x -430..-320, z 187..357) with the
+(2026-10-21), done: built, Studio-checked and visually approved by the user (score boards placed by the user, stage names shown by position: Stage 2 / 4 / 5 for today's three stages):** a compact rectangle (x -430..-320, z 187..357) with the
 entrance in the south short side, the finale gate (Stage 3) in the north short side and two door gates on each long side
 (west: Island Hop [closed], Stage 1; east: Blink [closed], Stage 2); the stages lie physically behind the gates (STAGES 7.1).
 The `LandingPad` object is broken down for world stages into `Gate` (door gate: TimerStart, GateExit, GateSign, Door),
