@@ -345,7 +345,17 @@ S4.0 World 1 island ("crossroad", the 3 existing stage portals move onto it, ret
   and coins found x / y on the gate.
 - *Acceptance:* the three stages still unlock, teleport, time and pay as before (same bars / prices until S4); gate and island
   teleports, Home and return portals all land in the right place with the camera facing the arc; stars and coins on the gate
-  follow medals and pickups; no script errors; `git status` clean after Argon sync with no duplicate instances. S4.1 Island Hop (stage 1); S4.2 Blink, the rhythm special (stage 3, with its music); the new display
+  follow medals and pickups; no script errors; `git status` clean after Argon sync with no duplicate instances. **S4.0 result (2026-10-21, Studio single client, awaits the user's visual check):** `Workspace.World1` island built (radius 65, centre
+(-1126, 16, -250), grass / rock / plaza disks cloned from the hub, 19 hedge + 19 barrier segments, 34 decor clones, `Spawn` pad
+facing the arc), five arches in order (SoonSlot1, TeleportToStage1, SoonSlot3, TeleportToStage2, TeleportToStage3; orientation
+verified equal to the hub's), `ReturnGate`, hub `GateWorld1` (1.25x arch on Stage 2's old slot). Flows checked in a playtest: hub
+gate to island spawn (camera looks +Z toward the arc), stage portal to its stage, stage return portal to the island, Home on
+the island to the hub, Home from Stage 2 to the island, island return gate to the hub, Tutorial and its Home to the hub, locked
+Stage 3 portal shows the unlock popup and keeps the player on the island. Gate face: "★ 3 / 9" (9 = the three stages that exist
+until S4.1 / S4.2) and "found 7/27"; score panel: "World 1 - Stars earned 3 / 9"; no script errors. Tutorial is world 0.
+A `git mv` of the three portal folders recreated their Studio instances and dropped `Arch` / `Portal`: rebuilt from the Tutorial
+portal (AGENTS.md gotcha). Remaining: the user's visual check (portal Label texts are set in Studio: "World 1" on the gate, "Hub" on the return gate, "Coming soon" on the closed arches).
+S4.1 Island Hop (stage 1); S4.2 Blink, the rhythm special (stage 3, with its music); the new display
 names and unlock chain switched on; challenge coins and a measured `T_base` for both.
 
 ### M6a — First live test + World 1 balancing

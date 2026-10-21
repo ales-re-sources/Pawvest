@@ -150,6 +150,17 @@ local function updateScorePanel(player, stageKey)
 	local profile = PlayerProfile.Get(player)
 	local medals = if profile then profile.Medals else {}
 
+	-- a world island: the world's name and the stars earned in it
+	local world = StageConfig.WorldByName[stageKey]
+	if world then
+		scorePanel.StageName.Text = world.name
+		scorePanel.StageRecord.Text = "Choose a stage!"
+		if medalsLabel then
+			medalsLabel.Text = string.format("Stars earned: %d / %d", StageConfig.WorldStars(medals, world.index), StageConfig.MaxWorldStars(world.index))
+		end
+		return
+	end
+
 	local stage = StageConfig.ByKey[stageKey]
 	if not stage then
 		scorePanel.StageName.Text = StageConfig.HubName
@@ -246,6 +257,9 @@ return {
 	GetTimer = getTimer,
 	ResetTimer = resetTimer,
 	UpdateScorePanel = updateScorePanel,
+	GetPanelKey = function(player) -- the place the score panel shows: a stage key, a world name or StageConfig.HubName
+		return panelStages[player] or StageConfig.HubName
+	end,
 	LoadGlobalLeaderboard = loadGlobalLeaderboard,
 	UpdateGlobalLeaderboard = updateGlobalLeaderboard,
 	LeaderboardChanged = leaderboardChanged.Event,

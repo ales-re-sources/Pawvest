@@ -23,7 +23,7 @@ local LINE_STEP = 0.085
 local LINE_SIZE = UDim2.fromScale(0.74, 0.08)
 
 local function addPortalMedal(stage)
-	local portal = workspace:WaitForChild("StartLocation"):WaitForChild(stage.hubPortal):WaitForChild("Portal")
+	local portal = workspace:WaitForChild(StageConfig.PortalFolder(stage)):WaitForChild(stage.hubPortal):WaitForChild("Portal")
 	local portalLabel = portal:FindFirstChildOfClass("SurfaceGui")
 
 	local surface = Instance.new("SurfaceGui")

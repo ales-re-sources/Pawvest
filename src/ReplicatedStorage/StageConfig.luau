@@ -40,7 +40,7 @@ StageConfig.Stages = {
 		folder = "Tutorial", -- stage folder in Workspace
 		hubPortal = "TeleportToTutorial",
 		order = 0,
-		world = 1,
+		world = 0, -- a hub stage: the Tutorial belongs to no world
 		requires = {},
 		tBase = 30, -- seconds; provisional until measured in M6
 		tiers = StageConfig.DefaultTiers,
@@ -92,6 +92,19 @@ StageConfig.Stages = {
 	},
 }
 
+-- Worlds (docs/STAGES.md §7.1): `stage.world` 1..n; a world has an island in Workspace.<folder> with a `spawn` part where its
+-- stage portals stand, and a gate model <gate> in Workspace.StartLocation (the hub). The Tutorial is world 0 (the hub).
+StageConfig.Worlds = {
+	[1] = { name = "World 1", gate = "GateWorld1", folder = "World1", spawn = "Spawn" },
+}
+StageConfig.WorldByGate = {}
+StageConfig.WorldByName = {}
+for index, world in StageConfig.Worlds do
+	world.index = index
+	StageConfig.WorldByGate[world.gate] = world
+	StageConfig.WorldByName[world.name] = world
+end
+
 table.sort(StageConfig.Stages, function(a, b)
 	return a.order < b.order
 end)
@@ -118,6 +131,28 @@ function StageConfig.ForInstance(instance: Instance)
 		error("StageConfig: no stage folder above " .. instance:GetFullName())
 	end
 	return stage
+end
+
+-- Name of the Workspace folder that holds the stage's hub portal: the hub (StartLocation) or its world's island.
+function StageConfig.PortalFolder(stage): string
+	local world = StageConfig.Worlds[stage.world]
+	return if world then world.folder else "StartLocation"
+end
+
+-- Score-panel key of the place a stage returns to: its world's name, or StageConfig.HubName for a hub stage.
+function StageConfig.LocationKey(stage): string
+	local world = StageConfig.Worlds[stage.world]
+	return if world then world.name else StageConfig.HubName
+end
+
+-- The part a player is teleported to when leaving `stage` (portal "Hub", Home button): the world island's spawn pad, or
+-- the hub's SpawnLocation for a hub stage. Waits for the scene to load.
+function StageConfig.ReturnSpawn(stage): BasePart
+	local world = StageConfig.Worlds[stage.world]
+	if world then
+		return workspace:WaitForChild(world.folder):WaitForChild(world.spawn)
+	end
+	return workspace:WaitForChild("StartLocation"):WaitForChild("SpawnLocation")
 end
 
 -- Time limit (seconds, tenths) for medal index `medal` on `stage`, or nil while the stage has no tBase.

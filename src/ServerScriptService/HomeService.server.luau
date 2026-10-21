@@ -1,5 +1,6 @@
--- HomeService: the Home button (top-left) sends the player back to the hub spawn, like the stage "TeleportToSpawn" portals:
--- a running stage timer is cancelled and the score panel shows the hub. The remote carries no data; the server decides.
+-- HomeService: the Home button (top-left) sends the player one step back, like the stage "TeleportToSpawn" portals: from a
+-- stage of a world to that world's island, from anywhere else (hub, island, Tutorial, garden) to the hub spawn. A running
+-- stage timer is cancelled and the score panel shows the new place. The remote carries no data; the server decides.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -28,9 +29,13 @@ goHomeEvent.OnServerEvent:Connect(function(player)
 	end
 	lastUse[player] = now
 
-	character:PivotTo(workspace.StartLocation.SpawnLocation.CFrame + Vector3.new(0, 5, 0))
+	local stage = StageConfig.ByKey[TimerHandler.GetPanelKey(player)]
+	local destination = if stage and StageConfig.Worlds[stage.world]
+		then StageConfig.ReturnSpawn(stage)
+		else workspace.StartLocation.SpawnLocation
+	character:PivotTo(destination.CFrame + Vector3.new(0, 5, 0))
 	TimerHandler.ResetTimer(player) -- leaving the stage cancels a running timer
-	TimerHandler.UpdateScorePanel(player, StageConfig.HubName)
+	TimerHandler.UpdateScorePanel(player, if stage then StageConfig.LocationKey(stage) else StageConfig.HubName)
 end)
 
 Players.PlayerRemoving:Connect(function(player)

@@ -3,7 +3,8 @@ local StageConfig = require(game:GetService("ReplicatedStorage").StageConfig)
 local TimerHandler = require(workspace.Handlers.PlayerTimerHandler)
 
 local TeleportPart1 = script.Parent.Portal
-local TeleportPart2 = workspace.StartLocation.SpawnLocation
+local stage = StageConfig.ForInstance(script)
+local TeleportPart2 = StageConfig.ReturnSpawn(stage)
 
 TeleportPart1.Touched:Connect(function(hit)
 	local w = hit.Parent:FindFirstChild("HumanoidRootPart")
@@ -13,7 +14,7 @@ TeleportPart1.Touched:Connect(function(hit)
 
 		-- leaving the stage cancels a running timer
 		TimerHandler.ResetTimer(player)
-		TimerHandler.UpdateScorePanel(player, StageConfig.HubName)
+		TimerHandler.UpdateScorePanel(player, StageConfig.LocationKey(stage))
 
 		TeleportPart2.CanTouch = false
 		task.wait(1)

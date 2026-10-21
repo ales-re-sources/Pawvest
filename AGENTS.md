@@ -43,7 +43,7 @@ Roblox Studio MCP is available for inspecting/editing the live place (`search_ga
 ```
 src/
   ReplicatedStorage/
-    StageConfig.luau                  stage list (key, folder, hub portal, T_base, tiers, unlock, reward factor) + medal, run-reward and unlock-bar math
+    StageConfig.luau                  stage list (key, folder, world, requires, hub portal, T_base, tiers, unlock, reward factor) + Worlds (name, gate model, island folder, spawn part; the Tutorial is world 0 = hub) with PortalFolder / LocationKey / ReturnSpawn + medal, run-reward, world-stars and unlock-bar math
     KitMath.luau                      obstacle kit timing maths (pure): Cycle, Window (beam on / warning / off), Plate, Lift, Piston, Sine, Swing, Gust, TimeBase (server time or run time); every client derives the same phase from workspace:GetServerTimeNow()
     TimeFormat.luau                   tenths rounding, "mm:ss.t" and short "m:ss" formatting
     MedalText.luau                    rich text for stars, medal limits and the timer's medal target
@@ -64,7 +64,7 @@ src/
     StageResults.luau                 finish → personal best, medal, one-time payout + daily repeat reward, free egg on first Gold, pet XP (medal + movement); Medal_<folder> attributes
     RunDistance.luau                  server-measured horizontal studs during a run (Start / Stop from PlayerTimerHandler); steps faster than WalkSpeed allows (teleports, respawns) are dropped
     StageUnlocks.luau                 hub portal gate: bar (previous stage's medal) or bought unlock; UnlockRemotes, Unlocked_<folder> attributes
-    HomeService.server.luau           GoHome remote: Home button → hub spawn, cancels the running timer
+    HomeService.server.luau           GoHome remote: Home button → from a stage of a world to that world's island spawn, from anywhere else to the hub spawn; cancels the running timer
     Garden.server.luau                garden boot: requires GardenPlots + GardenService + GardenIncubators + GardenFood (no portals since H1: the garden is reached over Workspace.GardenBridge)
     GardenPlots.luau                  borrows one of 12 plots per player on join / releases on leave: player attribute GardenPlot, plot attributes OwnerUserId / OwnerName, sign text; PlotChanged
     GardenService.luau                pens + production: profile Garden, GardenRemotes (Place / Remove / BuyPen / RequestState; State / Result / Payout), settle on join (8 h cap) / every 5 min / before every pen change, draws pens + pet models into the plots; hooks for sibling modules (Remote, Allow, Reject, Succeed, Usable, SettleAndNotify, PublishAll, AddStateField, AddRenderer)
@@ -80,6 +80,7 @@ src/
     StageTimerClientUpdater.client.luau  StageTimer label: counts locally between start/stop from StageTimerUpdate
     TalentDoubleJump.client.luau      Double Jump talent: extra air jumps from the Talent_DoubleJump attribute
     StageResultsPopup.client.luau     results popup after a finish incl. pet XP line (GUI built in code)
+    HubGateFaces.client.luau          world gate faces in the hub (S4.0): stars earned x / max and challenge coins found x/y of the world on its gate's Portal face
     HubPortalMedals.client.luau       own best-medal stars, challenge coins "found x/y" + lock requirement/price on each hub portal face (local SurfaceGuis; layout kept inside the arch's opening)
     CameraFacing.client.luau          (skips while a StageCamera mode is active) camera turns to the character's facing after a teleport (> 30 studs in a frame at > 500 studs/s) and on the first spawn; the targets set the facing: `SpawnLocation` looks at the Tutorial / Stage 1 portals, `TeleportDestination` along the course
     CheckpointClient.client.luau      checkpoints for the local player (H2): CheckpointReached(part, first) lights that pad (Core 3 → 7 Neon, PointLight, Beam rises; 1 s) and turns the previous one back, so only the current checkpoint glows; `first` also plays workspace.Handlers.CheckpointTouchHandler.Sound (SoundService copy); CheckpointsReset turns the lit pad back; values in the LOOK table
@@ -110,7 +111,8 @@ src/
     Handlers/                         ModuleScripts shared by all stage scripts (required via workspace.Handlers.*)
       CheckpointTouchHandler.luau     checkpoint touch → respawn point, fires CheckpointReached(part, first) to that player whenever the respawn point changes (`first` = first reach in the run → sound); a TimerStart touch counts as the stage's lowest-numbered checkpoint; NewRun from TimerStart fires CheckpointsReset; dead characters ignored; a respawn is placed on the stored plate facing its LookVector (the course direction)
       PlayerTimerHandler.luau         stage timers (os.clock), personal bests (profile), global Top-10, score panel
-    StartLocation/                    hub (central island, part-built since H1, centre (-1126, 16, -475), r 80): SpawnLocation on the plaza + TeleportToTutorial / TeleportToStage1..3 portals in an arc facing it (each: Script, `Portal` = touch trigger + face with the stage-name SurfaceGui, Studio-only `Arch` Model of stud-stone blocks cloned from `ServerStorage.DecorKit.StudPortal`, H1.1) + StarsLeaderboard (Studio-only board model in the wooden stud style, no scripts; StarsBoard.server.luau beside it draws into Model.ScoreBlock.SurfaceGui: DataLabel, Names.NameN, Score.ScoreN, Photos.PhotoN); Studio-only Island folder (Island, IslandRock, Plaza, PlazaRing, Hedge + invisible Barrier ring with an opening toward the garden, BridgePath, GardenSign, Decor). Scripts find the hub by name, never by coordinates
+    StartLocation/                    hub (central island, part-built since H1, centre (-1126, 16, -475), r 80): SpawnLocation on the plaza + TeleportToTutorial and GateWorld1 (S4.0: Script + 1.25x arch + Portal; teleports to the World 1 island) in an arc facing it (the stage portals moved to Workspace.World1) (each: Script, `Portal` = touch trigger + face with the stage-name SurfaceGui, Studio-only `Arch` Model of stud-stone blocks cloned from `ServerStorage.DecorKit.StudPortal`, H1.1) + StarsLeaderboard (Studio-only board model in the wooden stud style, no scripts; StarsBoard.server.luau beside it draws into Model.ScoreBlock.SurfaceGui: DataLabel, Names.NameN, Score.ScoreN, Photos.PhotoN); Studio-only Island folder (Island, IslandRock, Plaza, PlazaRing, Hedge + invisible Barrier ring with an opening toward the garden, BridgePath, GardenSign, Decor). Scripts find the hub by name, never by coordinates
+    World1/                           World 1 island (S4.0, Studio-only part-built stud island, centre (-1126, 16, -250), r 65, north of the hub, reached through the hub gate only): `Spawn` pad (stage return portals and Home land here), five arches in an arc in final order: SoonSlot1 (Island Hop, "Coming soon"), TeleportToStage1, SoonSlot3 (Blink, "Coming soon"), TeleportToStage2, TeleportToStage3 (each Script + `Portal` + Studio-only `Arch`), ReturnGate (Script + Portal + Arch: back to the hub), Studio-only Island folder (Island, IslandRock, Plaza, PlazaRing, Hedge, Barrier, Decor)
     Stage1/ Stage2/ Stage3/ Tutorial/ stages (see below)
     <Stage>/ChallengeCoins            Studio-only Folder (every stage): Coin_<n> MeshParts tagged ChallengeCoin with attribute CoinId (ids listed in `ChallengeCoinConfig`)
     DebugBaseplate/                   kill brick under the map = the sea (H1: centre (-350, -8, -100), top y 0, covers every stage, the hub and the garden; sea blue Glacier + Texture)
@@ -236,6 +238,9 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
 - Argon does not turn an existing plain Studio instance into a synced folder when a script file is added under it
   (it made a second empty `HomePanel`). Renaming such a folder on disk replaces the Studio instance with a bare Frame (styled
   children lost, rebuilt by hand). After adding/renaming script containers, check Studio for duplicates / lost children.
+- **Moving a script container on disk recreates its Studio instance and drops its Studio-only children** (S4.0: `git mv` of
+  `TeleportToStage1..3` into `World1/` deleted their `Arch` / `Portal`; rebuilt from the Tutorial portal). Reparent in Studio,
+  keep a copy of the Studio-only children, and rebuild after the disk move.
 - `Workspace/Stage3/level.2` is a Model literally named `level.2` (dot in the name).
 - Decorations (H1) are clones from the Studio-only library `ServerStorage.DecorKit` (the "Stud pack V1" models: Tree1,
   Tree2, Flowers, Grass1/2, Rock, Bush, Wall, Shop, Leaderboard frame used for signs, StudPortal = template of the hub portal arches). Their stud textures are

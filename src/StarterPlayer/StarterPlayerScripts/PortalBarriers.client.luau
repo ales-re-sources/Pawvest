@@ -13,7 +13,7 @@ local LocalPlayer = Players.LocalPlayer
 local BARRIER_DEPTH = 0.5 -- studs; the portal is 1.5 deep, so ~0.5 of it stays reachable from each side
 
 local function addBarrier(stage)
-	local portal = workspace:WaitForChild("StartLocation"):WaitForChild(stage.hubPortal):WaitForChild("Portal")
+	local portal = workspace:WaitForChild(StageConfig.PortalFolder(stage)):WaitForChild(stage.hubPortal):WaitForChild("Portal")
 
 	local barrier = Instance.new("Part")
 	barrier.Name = "PortalBarrier_" .. stage.folder
