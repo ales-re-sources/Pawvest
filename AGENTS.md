@@ -132,7 +132,7 @@ Every stage folder follows the same pattern:
 | `LandingPad/TeleportToSpawn/Portal` | **Tutorial only** (the world stages have none since S4.0): back to hub; cancels timer, score panel → hub (Studio-only `Arch` Model beside it) |
 | `LandingPad/StartGate/Door` | world stages (S4.0): Studio-only wooden door between the gate's pillars; `GateDoors.client` makes it solid + opens the unlock popup while the stage is locked for the local player, a faint ghost once unlocked; `HubPortalMedals` draws stars / coins / lock lines on its Back face |
 | `LandingPad/GateExit` | world stages (S4.0): invisible trigger just outside the door; walking back out cancels the running timer (panel → world) |
-| `LandingPad/Decor` | Studio-only Model (H1.2): cobblestone inlay, hedges, kit trees / bushes / flowers; `LandingPadTop` / `LandingPadBottom` are the grass pad and its rock |
+| `LandingPad/Decor` | Studio-only Model (H1.2): cobblestone inlay, hedges (the pads of the World 1 courtyard and the StageKit template have none: S4.0 removed `Hedge_S/W/E` so the plaza flows onto the pads), kit trees / bushes / flowers; `LandingPadTop` / `LandingPadBottom` are the grass pad and its rock |
 | `LandingPad/StartGate` | Studio-only Model (H1.2): two 17-stud stud-stone pillars, wooden beams and the sign (`Sign.Gui.Title` / `Start`) over `TimerStart` |
 | `LandingPad/GateSign` | script: writes the `StageConfig` display name on `StartGate.Sign.Gui.Title` |
 | `LandingPad/Top10Leaderboard` | SurfaceGui board from `LoadGlobalLeaderboard(stage.key)` (Stage1, Stage2, Stage3, Tutorial); its Studio-only `Model` is a clone of `StartLocation.StarsLeaderboard.Model` (wooden frame, same `ScoreBlock.SurfaceGui` names) |
