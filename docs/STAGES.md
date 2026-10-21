@@ -397,12 +397,28 @@ levels later if Gold on Worlds 3–4 needs them (M6).
   always open; Worlds 2–4 use the world-stars rule of §7.2.
 - The stage return portal ("Hub") and the Home button lead to the stage's **world island** (`StageConfig.world` → world
   spawn), the Home button on a world island to the hub. The Tutorial (world 0) returns to the hub.
-- **S4.0 decisions (2026-10-21):** the Tutorial counts in no world (World 1 = 15 stars); the World 1 island sits **north of the
-  hub** (centre (-1126, 16, -250), radius 65, a gap of sea to the hub's rim) and is reached **by the gate only, no bridge**;
-  all **five arches stand from the start** in final order (1 Island Hop, 2 Stage 1, 3 Blink, 4 Stage 2, 5 Stage 3), the two
-  future ones closed with a "Coming soon" sign until their stage exists; the **world stars board waits for World 2 (S5)**;
-  the hub gate for World 1 is a 1.25× stud arch on the hub's central slot (the Tutorial keeps its place, the two free slots
-  are for the gates of Worlds 2 and 3). The island's return gate stands opposite the arc and leads to the hub.
+- **S4.0 design (redesigned 2026-10-21, user idea; replaces the first plan of a separate island with arch portals):** a world is
+  a **courtyard on which its stage pads stand side by side**; the stage courses start **physically behind the gates**, nobody is
+  teleported into a stage.
+  - *The Tutorial* counts in no world (World 1 = 15 stars) and keeps its own pad and hub portal.
+  - *Layout (World 1):* the pads of Stage 2 / Stage 3 / Tutorial already stand in a row at y 77 (x -321 / -375 / -446, pad 42 wide,
+    centre z 206, all courses run north). The five World 1 pads continue that row every 54 studs, east to west in stage
+    order: Island Hop (-159), Stage 1 (-213, the Stage 1 course is moved here, translation only: its pad, gate and first plate
+    are laid out like the others), Blink (-267), Stage 2 (-321), Stage 3 (-375). A plaza fills the gaps between the pads and
+    extends south (to about z 300) with a **low wall** (about 6 studs) around it and between the gates; the **Spawn** pad stands
+    in the middle of the plaza facing north; a **return portal to the hub** on the south wall.
+  - *Door gates:* each pad's `StartGate` (two stud pillars, beams, sign; `TimerStart` in the doorway) gets a **door** that stays
+    shut for a player while the stage is locked (solid wooden door with the lock lines and stars / coins on its face, like the
+    old portal faces; touching it opens the unlock popup). Once the bar is met or the stage bought, the door is a faint ghost
+    and the doorway is free. **Walking through starts the stage and the timer at once** (`TimerStart` as before; the server
+    checks the unlock). The Top-10 board stays beside the gate. Walking back out through the door before the finish cancels
+    the run (`GateExit` trigger just outside the door).
+  - *Flows:* the hub gate teleports to the courtyard `Spawn`; finishing a stage teleports to the stage's `TeleportDestination`
+    (the plaza in front of its gate, as today); Home from a stage lands there too, Home in the courtyard goes to the hub, the
+    courtyard's return portal goes to the hub; the pad return portals are gone. The two future pads are built when their
+    stages are (S4.1 / S4.2) and show closed doors until then.
+  - *Not in S4.0:* the world stars board (with World 2, S5); a bridge.
+  - The hub keeps the Tutorial portal and the World 1 gate (1.25x stud arch on the central slot; two slots free for Worlds 2, 3).
 - Islands and courses sit in the same sea; `DebugBaseplate` (the kill floor) must cover every new course, or be extended.
 
 ### 7.2 Unlock chain and prices

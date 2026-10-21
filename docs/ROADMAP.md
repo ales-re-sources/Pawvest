@@ -328,33 +328,25 @@ templates in `ServerStorage.StageKit.Obstacles`, a Studio-only jump lab that mea
 spinners moved to the kit. Design: STAGES §2.4, §5.1.
 
 ### S4 — World 1 complete
-S4.0 World 1 island ("crossroad", the 3 existing stage portals move onto it, return gate) and the World 1 gate in the hub
-(stars x / 15 and coins found x / y on its face). **S4.0 scope (agreed 2026-10-21):**
-- *Config:* `StageConfig.Tutorial.world = 0`; `StageConfig.Worlds[1] = { name = "World 1", gate = "GateWorld1", folder = "World1" }`
-  and helpers (`PortalFolder(stage)`, `ReturnSpawn(stage)`, `LocationKey(stage)`); the score panel and `Home` know three kinds
-  of place: hub, world island, stage.
-- *Scene (Studio-only, `Workspace.World1`):* part-built stud island (radius 65, centre (-1126, 16, -250), same look as the hub:
-  grass disk, rock, cobblestone plaza and ring, hedge ring, invisible barrier ring, decor), a `Spawn` pad, five arches in an
-  arc (the three existing portals `TeleportToStage1..3` moved here to slots 2, 4, 5; slots 1 and 3 closed with "Coming soon"),
-  and a return gate to the hub opposite the arc.
-- *Hub:* `Workspace.StartLocation.GateWorld1` (1.25× arch, gate script) in place of Stage 2's old arch slot; the other old
-  stage arches are removed from the hub.
-- *Flows:* hub gate → island `Spawn`; stage return portals and Home from a stage → island; Home on the island and the island's
-  return gate → hub; Tutorial and garden unchanged. `HubPortalMedals` / `PortalBarriers` find portals through
-  `StageConfig.PortalFolder`; a new `HubGateFaces` client script draws stars x / 15 (existing stages only until S4.1 / S4.2)
-  and coins found x / y on the gate.
-- *Acceptance:* the three stages still unlock, teleport, time and pay as before (same bars / prices until S4); gate and island
-  teleports, Home and return portals all land in the right place with the camera facing the arc; stars and coins on the gate
-  follow medals and pickups; no script errors; `git status` clean after Argon sync with no duplicate instances. **S4.0 result (2026-10-21, Studio single client, awaits the user's visual check):** `Workspace.World1` island built (radius 65, centre
-(-1126, 16, -250), grass / rock / plaza disks cloned from the hub, 19 hedge + 19 barrier segments, 34 decor clones, `Spawn` pad
-facing the arc), five arches in order (SoonSlot1, TeleportToStage1, SoonSlot3, TeleportToStage2, TeleportToStage3; orientation
-verified equal to the hub's), `ReturnGate`, hub `GateWorld1` (1.25x arch on Stage 2's old slot). Flows checked in a playtest: hub
-gate to island spawn (camera looks +Z toward the arc), stage portal to its stage, stage return portal to the island, Home on
-the island to the hub, Home from Stage 2 to the island, island return gate to the hub, Tutorial and its Home to the hub, locked
-Stage 3 portal shows the unlock popup and keeps the player on the island. Gate face: "★ 3 / 9" (9 = the three stages that exist
-until S4.1 / S4.2) and "found 7/27"; score panel: "World 1 - Stars earned 3 / 9"; no script errors. Tutorial is world 0.
-A `git mv` of the three portal folders recreated their Studio instances and dropped `Arch` / `Portal`: rebuilt from the Tutorial
-portal (AGENTS.md gotcha). Remaining: the user's visual check (portal Label texts are set in Studio: "World 1" on the gate, "Hub" on the return gate, "Coming soon" on the closed arches).
+S4.0 World 1 courtyard and the World 1 gate in the hub (stars x / 15 and coins found x / y on its face). **S4.0 scope
+(redesigned 2026-10-21 after the user's idea; the first island + arch portals version was built and is replaced):**
+- *Concept:* the courtyard is the row of the five stage pads joined by a plaza and a low wall; each pad's `StartGate` becomes a
+  **door gate** (closed until the stage is unlocked); the stage and its timer start when you walk through; nothing is teleported
+  into a stage. Details and coordinates: STAGES §7.1.
+- *Config:* `StageConfig.Tutorial.world = 0`; `Worlds[1] = { name, gate, folder = "World1", spawn }`; `ReturnSpawn(stage)` is the
+  stage's own `TeleportDestination` for world stages; `LocationKey` / `PortalFolder` stay for the hub portal of hub stages.
+- *Scene:* move the Stage 1 course next to the others (translate (-213, +68, +202)); `Workspace.World1` holds the plaza, rock
+  underside, low wall, decor, `Spawn` and the return portal; each pad's `StartGate` gets a `Door` and its pad a `GateExit`
+  trigger; the pad return portals (`TeleportToSpawn`) go; the island north of the hub, its arches and the hub stage portals
+  `TeleportToStage1..3` go; the hub gate `GateWorld1` stays.
+- *Scripts:* `TimerStart` (server) refuses a run on a locked stage and shows the stage on the score panel (this also fires the
+  arrival warning); new `GateExit` (cancels a running timer when the player walks back out, panel = world); new client
+  `GateDoors` (door blocks the local player while locked, ghost when open, touch opens the unlock popup); `HubPortalMedals`
+  draws the stage faces on the doors; `PortalBarriers` only for hub stages; `HubGateFaces` / `HomeService` / world panel as built.
+- *Acceptance:* a locked stage's door is solid, its face shows the lock lines, touching it opens the popup and the timer never
+  starts; unlocked: walking through starts the timer and the stage runs as before; walking back out cancels it; finish and
+  Home land in front of the stage's gate, Home in the courtyard and the return portal go to the hub, the hub gate lands on the
+  `Spawn` facing the gates; Stage 1 plays like before after the move; no script errors; `git status` clean after the Argon sync.
 S4.1 Island Hop (stage 1); S4.2 Blink, the rhythm special (stage 3, with its music); the new display
 names and unlock chain switched on; challenge coins and a measured `T_base` for both.
 
