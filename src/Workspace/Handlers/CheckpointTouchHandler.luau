@@ -78,11 +78,6 @@ function module.OnTouched(part, hit)
 		seen[part] = true
 		reachedEvent:FireClient(player, part, first)
 
-		-- numbered checkpoints only (a stage without checkpoints leaves its TimerStart here)
-		if tonumber(part.Parent.Name) and player:FindFirstChild("leaderstats") and player.leaderstats:FindFirstChild("Stage") then
-			player.leaderstats.Stage.Value = part.Parent.Name
-		end
-
 		-- checkpoint...
 		local checkpointData = ServerStorage:FindFirstChild("CheckpointData")
 		if not checkpointData then

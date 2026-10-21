@@ -3,6 +3,7 @@
 
 local StageConfig = require(script.Parent.StageConfig)
 local TimeFormat = require(script.Parent.TimeFormat)
+local TalentConfig = require(script.Parent.TalentConfig)
 
 local MedalText = {}
 
@@ -54,6 +55,29 @@ function MedalText.UnlockBar(stage): string?
 	local previous = StageConfig.ByKey[rule.stage]
 	local stars = string.rep("★", StageConfig.MedalIndex[rule.medal])
 	return font(MedalText.Gold, stars) .. " " .. rule.medal .. " on " .. previous.displayName
+end
+
+-- Display name of a required talent ("Double Jump", or "Double Jump 2" above level 1 on a multi-level talent).
+function MedalText.TalentName(need): string
+	local talent = TalentConfig.ById[need.id]
+	local name = if talent then talent.name else need.id
+	if talent and #talent.costs > 1 and need.level > 1 then
+		return name .. " " .. need.level
+	end
+	return name
+end
+
+-- "Needs: Double Jump, Dash" with every talent green when `levelOf(talentId)` meets it and red when not; nil for a
+-- stage without requirements (S1.2).
+function MedalText.Needs(stage, levelOf: (string) -> number): string?
+	if #stage.requires == 0 then
+		return nil
+	end
+	local parts = {}
+	for _, need in stage.requires do
+		table.insert(parts, font(if levelOf(need.id) >= need.level then "#7CE07C" else "#F06A5E", MedalText.TalentName(need)))
+	end
+	return "Needs: " .. table.concat(parts, ", ")
 end
 
 -- Best medal still reachable after `elapsed` seconds, with its limit: "★★★ 0:56", or "no medal".

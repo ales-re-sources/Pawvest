@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local MedalText = require(ReplicatedStorage:WaitForChild("MedalText"))
 local ChallengeCoinConfig = require(ReplicatedStorage:WaitForChild("ChallengeCoinConfig"))
+local TalentConfig = require(ReplicatedStorage:WaitForChild("TalentConfig"))
 
 local LocalPlayer = Players.LocalPlayer
 local playerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -73,36 +74,61 @@ local function addPortalMedal(stage)
 	end
 
 	-- lock lines below the stars while the stage is locked (M3); hidden until the server publishes the state
+	local locks = {}
 	local bar = MedalText.UnlockBar(stage)
 	if bar then
 		local lockLines = {
 			"🔒 " .. bar,
 			if stage.unlockPrice then "or " .. stage.unlockPrice .. " Coins" else nil,
 		}
-		local locks = {}
 		for index, text in lockLines do
 			local lock = label:Clone()
 			lock.Name = "Lock" .. index
-			lock.Position = UDim2.fromScale(0.5, LINE_TOP + (index - 1) * LINE_STEP)
 			lock.Size = LINE_SIZE
 			lock.Text = text
 			lock.Visible = false
 			lock.Parent = surface
 			table.insert(locks, lock)
 		end
-		local unlockedAttribute = StageConfig.UnlockedAttribute(stage)
-		local function refreshLock()
-			local locked = LocalPlayer:GetAttribute(unlockedAttribute) == false
-			for _, lock in locks do
-				lock.Visible = locked
-			end
-			if coinLine then
-				coinLine.Position = UDim2.fromScale(0.5, if locked then LINE_TOP + #locks * LINE_STEP else LINE_TOP)
-			end
-		end
-		LocalPlayer:GetAttributeChangedSignal(unlockedAttribute):Connect(refreshLock)
-		refreshLock()
 	end
+
+	-- required talents (S1.2): "Needs: Double Jump", green when owned and red when not; no line without requirements
+	local needsLine = nil
+	if #stage.requires > 0 then
+		needsLine = label:Clone()
+		needsLine.Name = "Needs"
+		needsLine.Size = LINE_SIZE
+		needsLine.Parent = surface
+	end
+
+	-- the lines stack under the stars: lock lines (only while locked), coins found, needs
+	local unlockedAttribute = StageConfig.UnlockedAttribute(stage)
+	local function layout()
+		local locked = LocalPlayer:GetAttribute(unlockedAttribute) == false
+		local row = 0
+		for _, lock in locks do
+			lock.Visible = locked
+			lock.Position = UDim2.fromScale(0.5, LINE_TOP + row * LINE_STEP)
+			row += 1
+		end
+		for _, line in { coinLine, needsLine } do
+			line.Position = UDim2.fromScale(0.5, LINE_TOP + row * LINE_STEP)
+			row += 1
+		end
+	end
+	local function refreshNeeds()
+		if needsLine then
+			needsLine.Text = MedalText.Needs(stage, function(id)
+				return LocalPlayer:GetAttribute(TalentConfig.AttributeName(id)) or 0
+			end) or ""
+		end
+	end
+	LocalPlayer:GetAttributeChangedSignal(unlockedAttribute):Connect(layout)
+	for _, need in stage.requires do
+		LocalPlayer:GetAttributeChangedSignal(TalentConfig.AttributeName(need.id)):Connect(refreshNeeds)
+	end
+	layout()
+	refreshNeeds()
 
 	surface.Parent = playerGui
 end

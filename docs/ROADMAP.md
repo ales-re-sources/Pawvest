@@ -45,7 +45,7 @@ Rules:
 | P2 | Pet garden: plots, pens, incubators, food | ✔ | ✔ | – |
 | H1 | Hub island redesign + stud portals + stud landing pads | ✔ | ✔ | – |
 | H2 | Stud checkpoints (square plate, growing core + light) | ✔ | ✔ | – |
-| S1 | Stage framework (config, gating UI, Stars) — design check done, S1.1 Studio-validated (2026-10-21), S1.2 next | – | – | – |
+| S1 | Stage framework (config, gating UI, Stars) — design check done, S1.1 Studio-validated (2026-10-21), S1.2 implemented (Studio-checked with a temporary test requirement; awaits the user's visual check of the portal faces) | ✔ | – | – |
 | S2 | Quick Respawn talent | – | – | – |
 | S3 | Obstacle kit + jump lab | – | – | – |
 | S4 | World 1 complete (Island Hop, Blink) | – | – | – |

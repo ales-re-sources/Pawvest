@@ -177,6 +177,17 @@ function StageConfig.MeetsUnlockBar(stage, medals): boolean
 	return (medals[rule.stage] or 0) >= StageConfig.MedalIndex[rule.medal]
 end
 
+-- The `requires` entries of `stage` that the player does not meet; `levelOf(talentId)` is the player's talent level.
+function StageConfig.MissingTalents(stage, levelOf: (string) -> number)
+	local missing = {}
+	for _, need in stage.requires do
+		if levelOf(need.id) < need.level then
+			table.insert(missing, need)
+		end
+	end
+	return missing
+end
+
 -- Stars (medal indices) summed over the stages of `world` for `medals` ([stageKey] = medal index).
 function StageConfig.WorldStars(medals, world: number): number
 	local stars = 0

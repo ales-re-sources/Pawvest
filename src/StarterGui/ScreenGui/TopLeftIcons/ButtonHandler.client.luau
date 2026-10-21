@@ -158,6 +158,14 @@ skillsButton.MouseButton1Click:Connect(function()
 	end
 end)
 
+-- Open request from another script (StageArrivalWarning's "Open Skills"): a ScreenGui attribute, reset right away
+screenGui.Parent:GetAttributeChangedSignal("OpenSkills"):Connect(function()
+	if screenGui.Parent:GetAttribute("OpenSkills") then
+		screenGui.Parent:SetAttribute("OpenSkills", nil)
+		openPanel(skillsPanel)
+	end
+end)
+
 settingsButton.MouseButton1Click:Connect(function()
 	if (lastOpenPanel == settingsPanel) then
 		closePanel(settingsPanel)

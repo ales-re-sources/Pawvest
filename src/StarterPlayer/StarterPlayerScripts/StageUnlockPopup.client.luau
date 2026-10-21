@@ -7,6 +7,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local MedalText = require(ReplicatedStorage:WaitForChild("MedalText"))
+local TalentConfig = require(ReplicatedStorage:WaitForChild("TalentConfig"))
 local remotes = ReplicatedStorage:WaitForChild("UnlockRemotes")
 local buyEvent = remotes:WaitForChild("Buy")
 local resultEvent = remotes:WaitForChild("Result")
@@ -68,10 +69,11 @@ end
 
 local titleLabel = line("Title", 1, 22, Color3.new(1, 1, 1))
 local barLabel = line("Bar", 2, 18, Color3.new(1, 1, 1))
-local orLabel = line("Or", 3, 16, COLOR_INFO)
-local buyButton = button("Unlock", 4, COLOR_BUY)
-local infoLabel = line("Info", 5, 14, COLOR_INFO)
-local closeButton = button("Close", 6, COLOR_LOCKED)
+local needsLabel = line("Needs", 3, 16, Color3.new(1, 1, 1))
+local orLabel = line("Or", 4, 16, COLOR_INFO)
+local buyButton = button("Unlock", 5, COLOR_BUY)
+local infoLabel = line("Info", 6, 14, COLOR_INFO)
+local closeButton = button("Close", 7, COLOR_LOCKED)
 closeButton.Text = "Close"
 
 local panel = create("Frame", {
@@ -92,6 +94,7 @@ local panel = create("Frame", {
 	}),
 	titleLabel,
 	barLabel,
+	needsLabel,
 	orLabel,
 	buyButton,
 	infoLabel,
@@ -129,6 +132,12 @@ local function refresh()
 	titleLabel.Text = current.displayName .. (if unlocked then " unlocked!" else " is locked")
 	barLabel.Text = "Earn " .. (MedalText.UnlockBar(current) or "")
 	barLabel.Visible = not unlocked
+	-- required talents of the stage (S1.2): shown with or without the lock, entry never depends on them
+	local needs = MedalText.Needs(current, function(id)
+		return player:GetAttribute(TalentConfig.AttributeName(id)) or 0
+	end)
+	needsLabel.Text = needs or ""
+	needsLabel.Visible = needs ~= nil
 	orLabel.Visible = not unlocked and price ~= nil
 	orLabel.Text = "or unlock it now:"
 	buyButton.Visible = not unlocked and price ~= nil
