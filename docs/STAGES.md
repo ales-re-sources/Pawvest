@@ -170,6 +170,10 @@ component can *require* (hard) or only *reward* (soft: faster medal, shortcut).
   on later (20 stages are many parts).
 - **Cost**: animate only parts within about 300 studs of the camera; the server animates nothing.
 - Templates live in `ServerStorage.StageKit.Obstacles` (Studio-only), next to `LandingPad` and `Checkpoint`.
+- **Visuals are deferred (user decision 2026-10-21):** every kit component is deliberately plain (grey / coloured boxes); wind
+  and updraft particles, plate looks, beam glow etc. come in a later visual pass together with the world style decision
+  ([STYLE_PREVIEW.md](STYLE_PREVIEW.md)), as presets on the `StageKit.Obstacles` templates. Only the functionality (attributes
+  and behaviour in the script headers) is fixed.
 - **S3.1 spike result (2026-10-21):** carry by frame delta is exact (no drift) and needs a short air-carry (0.5 s) after
   jumping off; tilt plates need an explicit slide-off (freefall + downhill velocity) because `MaxSlopeAngle` is 89; the client
   kill reaches the server in one message; 100 movers cost 0.34 ms per frame. Other players see riders ~0.2 s behind a moving
