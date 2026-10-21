@@ -493,38 +493,35 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   unlock Bronze on the Tutorial or 500 Coins; Stage 2 (key `"Stage 1"`) now needs Bronze on Island Hop or 1 000 Coins; Stage 4 and 5 keep
   their bars until S4.2. World 1 has four stages until Blink exists: the hub gate and the world panel read x / 12 stars.
 
-### 7.7 S4.2 Blink (design check, 2026-10-21; decisions: metronome now / track later, per-run beat)
-- **Place:** the east **near** gate (`World1.SoonGate3`, z 302, x -320) becomes the gate of the stage folder `Blink` (key and folder
-  `Blink`, shown "Stage 3"; the closed gate is deleted). The course runs **east** along z 272..335, mirror of Island Hop; the lane
-  is free up to x 200 (Stage 4's course lies south of it, z 203..266). `Gate`, `Top10Leaderboard`, `Arrival` and the finish portal
-  are clones of the east far gate (Stage 4) moved +60 in z; the script files are copied by hand (AGENTS "Adding a world stage").
-- **Beat:** `BPM` 120 (beat 0.5 s, bar 2 s, two bars 4 s); every period is a multiple of a beat, so waits stay short and learnable
-  (§2.3). A track at another BPM only changes the attribute and the periods the builder derives from it.
-- **Course** (about 480 studs, `T_base` 80 s, a checkpoint every 12-14 s: `201` start plate .. `206`):
-  1. *Count-in* (plates `Plate_Disappearing`, 8 x 8, period 4 s, 75 % solid, telegraph 0.5 s, staggered so one plate is always
-     ready): teaches "the floor has a beat" with the sea as the only hazard.
-  2. *Beam rows*: a solid 16-wide platform crossed by four `Hazard_BlinkBeam` rows 8 studs apart (period 2 s, 50 % on, telegraph
-     0.4 s), phases stepped so a runner at full speed meets all rows in the same state; slower players wait on the safe floor between
-     rows; every row has a safe spot in front of it.
-  3. *Piston bridge*: a 6-wide bridge with `Hazard_PistonPush` blocks from the sides every two bars (telegraph 0.5 s, pushes towards the
-     sea = a respawn, never into a kill part), alcoves opposite each piston.
-  4. *Drop the beat* (the finale): disappearing plates with beams crossing the gaps and one last piston, then the finish island and
-     portal.
-  All timed parts are `RunSeeded`; phases make t = 0 safe.
-- **Music** (new `StageMusic.client.luau`): while a run of a stage with a `Music` Sound in its folder is active, the client plays the sound
-  looped with `TimePosition` = (run time) mod `TimeLength` (re-synced when it drifts by more than 0.15 s) and stops it when the run
-  ends or is cancelled. **Placeholder:** a metronome (a short tick sound on every beat, scheduled from run time, a louder one on
-  bar starts) so the beat is audible without a track; the real track (Creator Store, 100-120 BPM, licence checked) replaces it later.
-  **Mute:** `MusicSettings.client.luau` adds a "Music: On / Off" row to the Settings panel (player attribute `MusicMuted`, kept for
-  the session; saving it in the profile is a later option).
-- **Fairness checks** (before the user's visual check): an offline timing check in Luau that a constant-speed runner (WalkSpeed 16,
-  also 20.8) can get through every beam row and piston from a safe spot within one bar of waiting, a bot playtest of the sequence, and the
-  usual flow checks. Visuals stay plain (deferred decision).
-- **Coins** `Blink_1`..`_8`: 5 easy (20), 2 risky (50, inside a beam's off window or beside a piston), 1 talent (100, a perch 11.5 studs
-  above its platform) = 300 Coins; none behind a score board.
-- **StageConfig:** key `Blink`, displayName "Stage 3", order 3, world 1, `tBase` 80, reward factor 1.25, unlock Bronze on Stage 2 (key
-  `"Stage 1"`) or 1 500. **Unlock chain completed:** Stage 4 (key `"Stage 2"`) Bronze on Blink or 2 000 (was Silver on Stage 2 / 1 500),
-  Stage 5 (key `"Stage 3"`) Bronze on Stage 4 or 2 000 (was Silver / 3 000). The hub gate and world panel then read x / 15 stars.
+### 7.7 S4.2 Blink (design check and as built, 2026-10-22; decisions: metronome now / track later, per-run beat)
+- **Place:** the east **near** gate (z 302, x -320; the closed `SoonGate3` was deleted) is the gate of the stage folder `Blink` (key and folder
+  `Blink`, shown "Stage 3"). The course runs **east** along z 272..335, a straight 517-stud lane from x -312 to the finish island at x 185
+  (Stage 4's course lies south of it, z 203..266). `Gate`, `Top10Leaderboard`, `Arrival` and the finish portal are clones of the east far gate
+  moved +60 in z (the decor at the board's spot was removed); script files were copied by hand (AGENTS "Adding a world stage").
+- **Beat:** `BPM` 120 (beat 0.5 s, bar 2 s, two bars 4 s); beams use a 2 s period, plates and pistons 4 s. All timed parts are `RunSeeded`.
+- **Course** (checkpoints `201`..`206` at x -312, -236, -168, -48, 47, 106; every plate faces east):
+  1. *Count-in* (x -306..-246): five 8 x 8 `Plate_Disappearing` (period 4 s, 75 % solid, telegraph 0.5 s), phases stepped -0.25 so they
+     vanish one after the other; the sea is the only hazard.
+  2. *Beam rows* (floor 202 -> 203, 16 wide): four `Hazard_BlinkBeam` curtains 8 studs apart (1 x 18 x 18, period 2 s, 50 % on,
+     telegraph 0.4 s, phases stepped -0.25 so a full-speed runner meets all four in the same state; the floor between them is safe).
+  3. *Piston bridge* (106 x 6, x -162..-54): four `Hazard_PistonPush` blocks (8 x 6 x 2, stroke 8, push 55, every two bars, telegraph 0.5 s)
+     from alternating sides at x -140 / -116 / -92 / -68, phases 0 / 0.5 / 0 / 0.5; a push throws you into the sea (a respawn).
+  4. *Drop the beat*: (a) six 8 x 8 plates (the third is a static rest pillar) with a beam curtain over every gap (duty 40 %, plates 80 %
+     solid); (b) a floor with six beams 6.4 studs apart, phases 0 / 0.5 alternating (dash, wait, dash); (c) five 8 x 8 plates (third a
+     static rest pillar) to the 16 x 16 finish island and its portal.
+- **Fairness check (offline, KitMath):** a runner at 16 studs/s (also 14 and 19.8) can get through every section by departing from a static
+  spot; leg windows of 0.8-2.5 s per 4 s cycle (with 2 studs of body margin on beams and 5.5 on pistons), a perfect run about 40 s; a plan
+  that departs 0.2 s after a window opens, run by a bot in a playtest, finished in 51.6 s without a death. A run that departs at the very edge of a
+  window dies (the kill box reaches about 1.9 studs from a beam's centre).
+- **Music:** `StageMusic.client.luau` (a `Music` Sound in the stage folder: attributes `BPM`, `Metronome`, `BaseVolume`; plays while that stage's run
+  is active, ticks on every beat from run time with a higher tick on bar starts; a looped track would use `TimePosition` = run time mod length);
+  the placeholder tick is the Creator Store sound `ui_click_2` (asset 110948579458469, by Doimens). `MusicSettings.client.luau` adds a
+  "Music: On / Off" row to the Settings panel (player attribute `MusicMuted`, session only).
+- **Coins** `Blink_1`..`_8` (5 easy 20, 2 risky 50, 1 talent 100 = 300): side pads off the course, a 2 x 2 pad opposite a piston, a coin hanging in a
+  beam curtain's plane over a gap (collect it mid-jump while the beam is off) and a tower 11.5 studs above the last floor (Double Jump).
+- **StageConfig:** key `Blink`, displayName "Stage 3", order 3, world 1, `tBase` **60** (provisional; the perfect run takes about 40 s, so 80 was too
+  generous; M6a measures), reward factor 1.25, unlock Bronze on Stage 2 (key `"Stage 1"`) or 1 500. Unlock chain completed: Stage 4 (key `"Stage 2"`)
+  Bronze on Blink or 2 000, Stage 5 (key `"Stage 3"`) Bronze on Stage 4 or 2 000. The hub gate and the world panel read x / 15 stars.
 
 ## 8. Milestones (agreed 2026-10-21; status and full scopes in [ROADMAP.md](ROADMAP.md))
 Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.

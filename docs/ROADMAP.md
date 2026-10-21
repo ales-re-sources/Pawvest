@@ -48,7 +48,7 @@ Rules:
 | S1 | Stage framework (config, gating UI, Stars) — design check done, S1.1 Studio-validated (2026-10-21), S1.2 done (user's visual check of the portal faces 2026-10-21) | ✔ | ✔ | – |
 | S2 | Quick Respawn talent (Studio-checked: 3 / 1 / 0 s delays, fall reset, Home, Skills row) | ✔ | ✔ | – |
 | S3 | Obstacle kit + jump lab — S3.1 spike (GO decided 2026-10-21) and S3.2a / S3.2b (hazards, StageCamera; user's visual check done) done; S3.3a / b / c done (kit-local plates, zones, ghosts, templates, reach table, Stage 1 spinners on the kit; user's visual check of Stage 1 done 2026-10-21) | ✔ | ✔ | – |
-| S4 | World 1 complete (Island Hop, Blink) — S4.0 courtyard + hub gate done (user's visual check 2026-10-21); S4.1 Island Hop done (user's visual check 2026-10-21); S4.2 Blink open | ✔ (S4.0, S4.1) | ✔ (S4.0, S4.1) | – |
+| S4 | World 1 complete (Island Hop, Blink) — S4.0 courtyard + hub gate done (user's visual check 2026-10-21); S4.1 Island Hop done (user's visual check 2026-10-21); S4.2 Blink Studio-validated (user's visual check pending) | ✔ (S4.0-S4.2) | ✔ (S4.0-S4.2) | – |
 | M6a | First live test + World 1 balancing | – | – | – |
 | S5 | Worlds hub (world gates, World 2 island) | – | – | – |
 | S6 | World 2 (stages 6–10) | – | – | – |
@@ -357,12 +357,18 @@ bar switched to Bronze on Island Hop / 1 000. New: `KitConveyors.server.luau` (t
 - *Not checked:* real `T_base` (52 s provisional) and the difficulty of the 3 x 3 pillar legs (M6a).
 - *Follow-up from the user's check:* Stage 2 folder (`Stage2`, key `"Stage 2"`, shown Stage 4): the Quick Respawn fall reset (30 studs below the plate) sent players back before they reached the bounce bricks of Level 12 (tops 46-61, the plates 107 high); the folder attribute `FallResetDepth = 70` (Studio-only) puts the reset below the lowest brick (limit 37).
 - *Lesson:* Argon does not sync instances / scripts created through the MCP to disk (AGENTS.md "Adding a world stage").
-S4.2 Blink, the rhythm special (stage 3, shown "Stage 3"): **design check done 2026-10-21, scope in STAGES 7.7** (decided: metronome
-placeholder now and a Creator Store track later; the beat is per run, music follows the player's run time). East near gate, a 480-stud
-east lane at 120 BPM: count-in plates, beam rows, piston bridge, "drop the beat" finale; every timed part run-seeded; checkpoints
-201-206, 8 coins (300), key `Blink`, tBase 80, factor 1.25, Bronze on Stage 2 / 1 500; the unlock chain is completed (Stage 4: Bronze on
-Blink / 2 000, Stage 5: Bronze on Stage 4 / 2 000). New: `StageMusic.client.luau` (run-time music / metronome), a "Music" row in
-Settings (`MusicSettings.client.luau`), a timing check for the fairness rules. A measured `T_base` for both new stages comes in M6a.
+S4.2 Blink, the rhythm special (stage 3, shown "Stage 3"): **built and Studio-checked (2026-10-22), awaits the user's visual check.** Design and as-built values
+in STAGES 7.7 (metronome placeholder now and a Creator Store track later; the beat is per run, music follows the player's run time): a straight
+east lane at 120 BPM (count-in plates, beam rows, piston bridge, "drop the beat" finale), every timed part run-seeded, checkpoints 201-206, 8 coins (300),
+key `Blink`, `tBase` 60, factor 1.25, Bronze on Stage 2 / 1 500; the unlock chain is complete (Stage 4: Bronze on Blink / 2 000, Stage 5: Bronze on
+Stage 4 / 2 000). New: `StageMusic.client.luau`, a "Music" row in Settings (`MusicSettings.client.luau`).
+- *Checked in a playtest:* unlock flow (Bronze on Stage 2 opens Blink; a medal on Blink opens Stage 4, Stage 5 stays locked), the gate starts the run and the
+  panel shows "Stage 3", the finish portal lands on `Arrival` (Gold on a 3 s test run), metronome ticks every 0.50 s from run start, mute silences it, Home
+  stops it, the Settings row toggles; an offline KitMath planner proves every section passable at 14 / 16 / 19.8 studs/s, and a bot following that plan
+  crossed the whole course at baseline in 51.6 s (the first try died at the window edge, which fixed the margin used); all 8 coins pay once. The profile,
+  leaderboard and MostStars entries the test changed were restored.
+- *Not checked:* how the course looks, sounds and feels to a human; real `T_base` (60 s provisional) and the real music track (M6a / later).
+A measured `T_base` for both new stages comes in M6a.
 
 ### M6a — First live test + World 1 balancing
 The first live test (open checks below) with 6 stages, then M6 for World 1 (scope in "M6 — Balancing pass" below).

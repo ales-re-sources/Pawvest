@@ -75,6 +75,19 @@ StageConfig.Stages = {
 		rewardFactor = 1.0,
 	},
 	{
+		key = "Blink", -- rhythm special (docs/STAGES.md §5.2, §7.7)
+		displayName = "Stage 3", -- shown name = position in World 1; the key never changes
+		folder = "Blink",
+		order = 3,
+		world = 1,
+		requires = {},
+		tBase = 60, -- seconds; provisional until measured in M6a (a perfect run takes about 40 s)
+		tiers = StageConfig.DefaultTiers,
+		unlock = { stage = "Stage 1", medal = "Bronze" }, -- Stage 2
+		unlockPrice = 1500,
+		rewardFactor = 1.25, -- curve 0.5 + 0.25 × order (GDD §5)
+	},
+	{
 		key = "Stage 2",
 		displayName = "Stage 4", -- shown name = position in World 1 (1 Island Hop, 2 = key "Stage 1", 3 Blink, 4 = key "Stage 2", 5 = key "Stage 3"); the key never changes
 		folder = "Stage2",
@@ -83,8 +96,8 @@ StageConfig.Stages = {
 		requires = {},
 		tBase = 100,
 		tiers = StageConfig.DefaultTiers,
-		unlock = { stage = "Stage 1", medal = "Silver" },
-		unlockPrice = 1500,
+		unlock = { stage = "Blink", medal = "Bronze" },
+		unlockPrice = 2000,
 		rewardFactor = 1.5,
 	},
 	{
@@ -96,8 +109,8 @@ StageConfig.Stages = {
 		requires = {},
 		tBase = 120,
 		tiers = StageConfig.DefaultTiers,
-		unlock = { stage = "Stage 2", medal = "Silver" },
-		unlockPrice = 3000,
+		unlock = { stage = "Stage 2", medal = "Bronze" }, -- Stage 4
+		unlockPrice = 2000,
 		rewardFactor = 1.75, -- curve 0.5 + 0.25 × order (GDD §5)
 	},
 }
