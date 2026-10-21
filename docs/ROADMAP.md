@@ -194,6 +194,24 @@ Talent `QuickRespawn`, level 1 (1 000): respawn after 1 s instead of 3 s; level 
 fall reset to the current checkpoint. A server script does all respawns (`CharacterAutoLoads` off). Design: STAGES §6.2.1.
 
 ### S3 — Obstacle kit + jump lab
+**S3.1 scope (agreed 2026-10-21):** a throw-away-or-keep spike that decides GO / NO-GO for the client-driven kit (STAGES §2.4).
+- **Lab:** Studio-only `Workspace.KitLab` at (-700, 16, 450) (free area, sea below as kill floor; no hub portal, reached by
+  teleport in tests; grows into the S3.3 jump lab). Three stations on one grass slab with a spawn pad.
+- **Code:** one client script `ObstacleKit.client.luau` (tags `KitMover`, `KitTilt`, `KitBeam`; behaviour from attributes), no
+  server scripts besides what `RespawnService` already does.
+- **Station A, carry:** a ping-pong platform and a Y turntable driven by `workspace:GetServerTimeNow()`; the client applies the
+  platform's frame delta to the character standing on it.
+- **Station B, tilt plate:** hinge plate, torque from the player's offset, spring back, max angle; per-player (kit-local); the
+  slide-off mechanism is part of the spike (place setting `MaxSlopeAngle` is 89, so a steep plate alone does not slide you).
+- **Station C, client kill:** a blinking beam (server-time phase, 0.4 s telegraph) that kills by the client setting its own
+  `Humanoid.Health = 0`.
+- **GO needs all four:** (1) carry: after 30 s on a mover the character's offset from its spot on the platform drifts < 0.5
+  studs and shows no visible jitter; jumping on / off keeps plausible momentum; (2) tilt: responds < 0.1 s, can slide the
+  player off, and a second client sees the plate at rest; (3) client kill: reaches the server (`Died` fires, `RespawnService`
+  respawns, timer rules unchanged) within 0.2 s of the overlap; (4) cost: 100 animated parts cost < 1 ms of script time per
+  frame. The multi-client check (F7 Server and Clients) is run by the user when asked.
+- **Ends with** a written recommendation and a wait for the user's decision; S3.2 does not start before it.
+
 S3.1 spike: tilt plate, carrying the player on moving parts, client-side kill (go / no-go for the approach); S3.2 timed
 components (blinking beams, movers, rotators, pistons, pendulums, disappearing plates) and `StageCamera`; S3.3 kit-local
 components (crumbling plates, colour switches, tilt plates) and zones (wind, low gravity), run-seeded schedules, ghost drawing,
