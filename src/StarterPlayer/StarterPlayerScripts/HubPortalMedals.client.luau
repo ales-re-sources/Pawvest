@@ -48,17 +48,14 @@ local function addPortalMedal(stage)
 	label.TextScaled = true
 	label.RichText = true
 	label.TextStrokeTransparency = 0.4
-	if not portalLabel then
-		-- on a dark wooden door the default black text is unreadable: white text with a dark outline
-		label.TextColor3 = Color3.new(1, 1, 1)
-		label.TextStrokeColor3 = Color3.new(0, 0, 0)
-		label.TextStrokeTransparency = 0.2
-	end
 	label.Parent = surface
 
 	local attribute = StageConfig.MedalAttribute(stage)
+	local unlockedAttribute = StageConfig.UnlockedAttribute(stage)
 	local function refresh()
-		label.Text = MedalText.Stars(LocalPlayer:GetAttribute(attribute) or 0, UNEARNED, UNEARNED_TRANSPARENCY)
+		-- unearned stars: light on a portal / closed door, dark on the open door (black text there)
+		local light = portalLabel ~= nil or LocalPlayer:GetAttribute(unlockedAttribute) ~= true
+		label.Text = MedalText.Stars(LocalPlayer:GetAttribute(attribute) or 0, if light then UNEARNED else "#4A4A4A", if light then UNEARNED_TRANSPARENCY else 0)
 	end
 	LocalPlayer:GetAttributeChangedSignal(attribute):Connect(refresh)
 	refresh()
@@ -111,7 +108,6 @@ local function addPortalMedal(stage)
 	end
 
 	-- the lines stack under the stars: lock lines (only while locked), coins found, needs
-	local unlockedAttribute = StageConfig.UnlockedAttribute(stage)
 	local function layout()
 		local locked = LocalPlayer:GetAttribute(unlockedAttribute) == false
 		local row = 0
@@ -123,6 +119,19 @@ local function addPortalMedal(stage)
 		for _, line in { coinLine, needsLine } do
 			line.Position = UDim2.fromScale(0.5, LINE_TOP + shift + row * LINE_STEP)
 			row += 1
+		end
+		if not portalLabel then
+			-- a door: white text on the solid dark door while the gate is closed, black text (light outline) on the
+			-- faint ghost of the open door
+			local closed = LocalPlayer:GetAttribute(unlockedAttribute) ~= true
+			refresh() -- the unearned stars change colour with the door
+			for _, child in surface:GetChildren() do
+				if child:IsA("TextLabel") then
+					child.TextColor3 = if closed then Color3.new(1, 1, 1) else Color3.new(0, 0, 0)
+					child.TextStrokeColor3 = if closed then Color3.new(0, 0, 0) else Color3.new(1, 1, 1)
+					child.TextStrokeTransparency = if closed then 0.2 else 0.5
+				end
+			end
 		end
 	end
 	local function refreshNeeds()
