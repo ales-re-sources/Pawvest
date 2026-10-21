@@ -48,7 +48,7 @@ Rules:
 | S1 | Stage framework (config, gating UI, Stars) — design check done, S1.1 Studio-validated (2026-10-21), S1.2 done (user's visual check of the portal faces 2026-10-21) | ✔ | ✔ | – |
 | S2 | Quick Respawn talent (Studio-checked: 3 / 1 / 0 s delays, fall reset, Home, Skills row) | ✔ | ✔ | – |
 | S3 | Obstacle kit + jump lab — S3.1 spike (GO decided 2026-10-21) and S3.2a / S3.2b (hazards, StageCamera; user's visual check done) done; S3.3a / b / c done (kit-local plates, zones, ghosts, templates, reach table, Stage 1 spinners on the kit; user's visual check of Stage 1 done 2026-10-21) | ✔ | ✔ | – |
-| S4 | World 1 complete (Island Hop, Blink) — S4.0 courtyard + hub gate done (user's visual check 2026-10-21); S4.1 Island Hop Studio-validated (user's visual check pending); S4.2 Blink open | ✔ (S4.0, S4.1) | ✔ (S4.0, S4.1) | – |
+| S4 | World 1 complete (Island Hop, Blink) — S4.0 courtyard + hub gate done (user's visual check 2026-10-21); S4.1 Island Hop done (user's visual check 2026-10-21); S4.2 Blink open | ✔ (S4.0, S4.1) | ✔ (S4.0, S4.1) | – |
 | M6a | First live test + World 1 balancing | – | – | – |
 | S5 | Worlds hub (world gates, World 2 island) | – | – | – |
 | S6 | World 2 (stages 6–10) | – | – | – |
@@ -345,7 +345,7 @@ of `LandingPad`; the Tutorial keeps its old pad (moved 70 studs north to clear t
   Tutorial portal arrives on its moved pad; no script errors.
 - *Lesson:* moving script containers on disk deletes the Studio parts inside them, including scripted parts stashed elsewhere
   (the `TimerStart` / `GateExit` stashes were deleted and rebuilt from known numbers; AGENTS.md gotcha).
-S4.1 Island Hop (stage 1, shown "Stage 1"): **built and Studio-checked (2026-10-21), awaits the user's visual check.** Design and as-built values in
+S4.1 Island Hop (stage 1, shown "Stage 1"): **built, Studio-checked and visually approved by the user (2026-10-21).** Design and as-built values in
 STAGES 7.6: west near gate, a gentle S-curve of stud pillars over the sea (warm-up, staggered field, two conveyors, one run-seeded
 slide mover, a rising climb to the finish island), checkpoints 101-105, 7 coins (280), key `IslandHop`, Bronze on Tutorial / 500; Stage 2's
 bar switched to Bronze on Island Hop / 1 000. New: `KitConveyors.server.luau` (tag KitConveyor + `Speed`).
@@ -354,8 +354,8 @@ bar switched to Bronze on Island Hop / 1 000. New: `KitConveyors.server.luau` (t
   the medals) and lands on `Arrival`, a death at plate 103 respawns facing along the course, all 7 coins pay once (walked onto), conveyor
   velocities set, no script errors. A baseline bot (no talents) crossed every leg; the mover crossing was checked by walking (a
   `MoveTo` bot cannot walk on a kit mover, input `Move` can). The profile, leaderboard and MostStars entries the test changed were restored.
-- *Not checked:* how the course looks and feels to a human (the Studio viewport did not render for screenshots during this session);
-  real `T_base` (52 s provisional) and the difficulty of the 3 x 3 pillar legs (M6a).
+- *Not checked:* real `T_base` (52 s provisional) and the difficulty of the 3 x 3 pillar legs (M6a).
+- *Follow-up from the user's check:* Stage 2 folder (`Stage2`, key `"Stage 2"`, shown Stage 4): the Quick Respawn fall reset (30 studs below the plate) sent players back before they reached the bounce bricks of Level 12 (tops 46-61, the plates 107 high); the folder attribute `FallResetDepth = 70` (Studio-only) puts the reset below the lowest brick (limit 37).
 - *Lesson:* Argon does not sync instances / scripts created through the MCP to disk (AGENTS.md "Adding a world stage").
 S4.2 Blink, the rhythm special (stage 3, with its music); the new display
 names and unlock chain switched on; challenge coins and a measured `T_base` for both.
