@@ -282,7 +282,10 @@ RunService.PreSimulation:Connect(function(dt: number)
 	if alive and standing and tilts[standing] then
 		local normal = standing.CFrame.UpVector
 		local slope = math.deg(math.acos(math.clamp(normal.Y, -1, 1)))
-		if slope >= attr(standing, "SlideAngle", 25) then
+		-- a character whose root hangs past the plate's edge (it stands on the lip) slides off too, on any noticeable tilt
+		local local_ = standing.CFrame:PointToObjectSpace(root.Position)
+		local onLip = slope > 5 and (math.abs(local_.X) > standing.Size.X / 2 or math.abs(local_.Z) > standing.Size.Z / 2)
+		if slope >= attr(standing, "SlideAngle", 25) or onLip then
 			local downhill = Vector3.new(normal.X, 0, normal.Z) -- the normal leans toward the lowered edge
 			if downhill.Magnitude > 1e-3 then
 				local velocity = root.AssemblyLinearVelocity
