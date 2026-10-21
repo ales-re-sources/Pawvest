@@ -45,7 +45,7 @@ Rules:
 | P2 | Pet garden: plots, pens, incubators, food | ✔ | ✔ | – |
 | H1 | Hub island redesign + stud portals + stud landing pads | ✔ | ✔ | – |
 | H2 | Stud checkpoints (square plate, growing core + light) | ✔ | ✔ | – |
-| S1 | Stage framework (config, gating UI, Stars) | – | – | – |
+| S1 | Stage framework (config, gating UI, Stars) — design check done, S1.1 next | – | – | – |
 | S2 | Quick Respawn talent | – | – | – |
 | S3 | Obstacle kit + jump lab | – | – | – |
 | S4 | World 1 complete (Island Hop, Blink) | – | – | – |
@@ -148,7 +148,11 @@ milestones hold 2–3 stages each; every sub-milestone ends with a Studio check,
 Only S1 is scoped in full; the others get their scope when they start (workflow step 2).
 
 ### S1 — Stage framework
-- **Design check (first):** GDD §3–6 updated from STAGES.md: the 21-stage table with worlds, keys and unlock rules (planned
+- **Design check (first) — DONE 2026-10-21** (docs only; answers recorded in STAGES §9, GDD §3–6 updated). Decided with
+  the user: Stage 3 factor **1.75**; challenge-coin values **stay flat** (no scaling, the S1.1 bullet below is void);
+  world openers (6, 11, 16) need **10 of the 15 stars of the previous world** or the price, which needs a **new unlock rule
+  type** (`unlock = { world, stars }`) in S1.1 / `StageUnlocks`; all other §9 recommendations adopted. Scope as written:
+  GDD §3–6 updated from STAGES.md: the 21-stage table with worlds, keys and unlock rules (planned
   stages marked as planned); §4 `T_base` and Bronze intent with required talents (STAGES §4.1); §5 reward factors
   (`0.5 + 0.25 × n`) and the medal table; §6 the new talents (planned) and Quick Respawn, the economy constraint table
   (STAGES §6.4). The STAGES §9 open questions are answered with the user at this point.
@@ -159,7 +163,10 @@ Only S1 is scoped in full; the others get their scope when they start (workflow 
     that depend on stages not built yet (Island Hop, Blink) switch in S4, so players never see a gap in the numbering.
   - Unlock prices of today's stages from the STAGES §7.2 table (Stage 1 → 1 000, Stage 2 → 2 000, Stage 3 → 2 000) with
     their new positions, applied in S4 together with the bars.
-  - Challenge-coin value = tier × the stage's reward factor, rounded to 5 (if confirmed); `ChallengeCoinConfig` computes it.
+  - ~~Challenge-coin value scaling~~ — rejected in the design check; coin values stay 20 / 50 / 100.
+  - New unlock rule `{ world, stars }` (stars summed over a world's stages, from medals) in `StageConfig` + `StageUnlocks`
+    (bar check, Unlocked_<folder> attributes, popup/portal text "10 of 15 ★ in World 1"). No world-2+ stage exists yet, so
+    it is exercised with a temporary Studio-only test entry.
   - Stage 3's duplicate checkpoint: `Stage3.21` gets a free number (20 stays the lowest); rename in Studio while Argon is
     connected (two-way sync renames the folder), then check `git status` and Studio for duplicates.
 - **S1.2 — Gating UI and HUD.**
@@ -179,7 +186,8 @@ Only S1 is scoped in full; the others get their scope when they start (workflow 
     stages without requirements show no "Needs:" line.
   - leaderstats show "Stars" equal to `StageConfig.TotalStars` of the profile, and it rises by the right amount right after
     a new medal; no "Stage" column remains.
-  - If coin scaling is confirmed: a new Stage 2 Easy coin pays 30 base Coins (20 × 1.5) before the pet bonus.
+  - A test entry with `unlock = { world = 1, stars = 10 }` stays locked below 10 stars in World 1 and opens at 10 (and by price).
+  - Stage 3's reward factor is 1.75 (a first-run Gold pays 1 400 + repeat 175 base Coins).
 
 ### S2 — Quick Respawn talent
 Talent `QuickRespawn`, level 1 (1 000): respawn after 1 s instead of 3 s; level 2 (3 000): instant respawn and a client-side

@@ -366,8 +366,9 @@ levels later if Gold on Worlds 3–4 needs them (M6).
 
 ### 7.2 Unlock chain and prices
 - **Inside a world:** Bronze on the previous stage, or the price.
-- **World openers** (6, 11, 16): Silver on the previous world's finale, or the price. Both use the existing
-  `unlock = { stage, medal }` rule, no new code.
+- **World openers** (6, 11, 16): **10 of the 15 stars of the previous world**, or the price (decided 2026-10-21, replaces
+  "Silver on the finale"; 10 = Silver on every stage, provisional). Needs a new unlock rule type next to
+  `unlock = { stage, medal }` (e.g. `unlock = { world, stars }`), built in S1.1.
 - **Price** of stage `n` ≈ the previous stage's medal total, rounded to 500:
 
   | n | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 |
@@ -381,8 +382,8 @@ levels later if Gold on Worlds 3–4 needs them (M6).
 ### 7.3 Challenge coins, boards, HUD
 - **Coins per stage:** about 8 (5 easy, 2 risky, 1–3 talent). From World 1 on, talent coins need a talent the stage does
   **not** require (a later world's), so they pull players back. About 160 coins in total.
-- **Coin value scales with the stage** (proposal): value = tier (20 / 50 / 100) × the stage's reward factor, rounded to 5,
-  so late-stage coins still matter (a World 4 coin set would otherwise be 400 Coins next to 7 000 in medals).
+- **Coin values stay flat** (decided 2026-10-21): 20 / 50 / 100 on every stage; the scaling proposal (tier × stage
+  factor) was rejected. Late-stage coins matter less next to the medals; they remain a revisit hook.
 - **Boards:** every stage pad has its Top-10 board (in the `LandingPad` template). The hub "most stars" board grows to
   63 stars (+3 per bonus stage); each world island gets a world board (stars in that world). The GDD §8 question "show talents next to a time"
   becomes moot for gated stages.
@@ -425,11 +426,14 @@ Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio 
 Then P3 (trading), after all 20 stages (user decision).
 
 ## 9. Open questions
-| Question | Recommendation |
+Answered with the user on 2026-10-21 (S1 design check): the **Decision** column is final (numbers stay provisional until
+M6); two answers differ from the recommendation (marked ≠).
+
+| Question | Decision |
 |---|---|
 | World themes and names (sky, factory, storm, summit…)? | pick with the style decision ([STYLE_PREVIEW.md](STYLE_PREVIEW.md)); stud style for now |
-| World gate bar: Silver on the previous finale, or "N stars in the previous world" (needs code)? | Silver on the finale (no code) |
-| Scale challenge-coin values with the stage factor? | yes |
+| World gate bar: Silver on the previous finale, or "N stars in the previous world" (needs code)? | **≠ N stars in the previous world: 10 of 15** (Silver everywhere; N provisional); new unlock rule type in S1.1 |
+| Scale challenge-coin values with the stage factor? | **≠ no, flat 20 / 50 / 100** |
 | Semantic keys for new stages (`Blink`) instead of `"Stage N"`? | yes |
 | Re-tune today's Stage 3 factor from 2.0 to 1.75 (curve) or keep 2.0? | 1.75 (already-paid Coins are unaffected) |
 | Move today's spinners to the kit (smoother, no server loop)? | yes, in S3.3, optional |
