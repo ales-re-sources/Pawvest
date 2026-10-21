@@ -1,5 +1,5 @@
 local TeleportPart1 = script.Parent.Portal
-local TeleportPart2 = script.Parent.Parent.LandingPad.TeleportDestination
+local TeleportPart2 = script.Parent.Parent.Arrival
 
 local handler = require(workspace.Handlers.PlayerTimerHandler)
 

@@ -113,7 +113,7 @@ src/
       CheckpointTouchHandler.luau     checkpoint touch → respawn point, fires CheckpointReached(part, first) to that player whenever the respawn point changes (`first` = first reach in the run → sound); a TimerStart touch counts as the stage's lowest-numbered checkpoint; NewRun from TimerStart fires CheckpointsReset; dead characters ignored; a respawn is placed on the stored plate facing its LookVector (the course direction)
       PlayerTimerHandler.luau         stage timers (os.clock), personal bests (profile), global Top-10, score panel
     StartLocation/                    hub (central island, part-built since H1, centre (-1126, 16, -475), r 80): SpawnLocation on the plaza + TeleportToTutorial and GateWorld1 (S4.0: Script + 1.25x arch + Portal; teleports to the World 1 island) in an arc facing it (the stage portals moved to Workspace.World1) (each: Script, `Portal` = touch trigger + face with the stage-name SurfaceGui, Studio-only `Arch` Model of stud-stone blocks cloned from `ServerStorage.DecorKit.StudPortal`, H1.1) + StarsLeaderboard (Studio-only board model in the wooden stud style, no scripts; StarsBoard.server.luau beside it draws into Model.ScoreBlock.SurfaceGui: DataLabel, Names.NameN, Score.ScoreN, Photos.PhotoN); Studio-only Island folder (Island, IslandRock, Plaza, PlazaRing, Hedge + invisible Barrier ring with an opening toward the garden, BridgePath, GardenSign, Decor). Scripts find the hub by name, never by coordinates
-    World1/                           World 1 courtyard (S4.0, Studio-only): the pads of Island Hop (slot 1, x -159, not built yet), Stage 1 (-213), Blink (-267, not built yet), Stage 2 (-321), Stage 3 (-375) stand side by side at y 77 (pad centre z 206, every course runs north) joined by `Plaza` (x -420..-114, z 185..305, top y 78) with a `Rock` underside, a low `Wall` (6 high) around it and between the gates, `Spawn` pad (hub gate lands here, facing north), `ReturnGate` (Script + Portal + Arch in the south wall: back to the hub), `SoonGate1` / `SoonGate3` (closed "Coming soon" copies of a StartGate for the two future stages), Decor. The stages lie physically behind the gates
+    World1/                           World 1 courtyard (S4.0, Studio-only, rectangle x -430..-320, z 187..357, y 77; see "Courtyard layout" below): `Plaza`, `Rock` underside, low `Wall` (6 high, 3 thick) with the gate openings, `Spawn` pad (hub gate lands here, facing north), `ReturnGate` (Script + Portal + Arch in the south wall: back to the hub), `SoonGate1` / `SoonGate3` (closed "Coming soon" gates for Island Hop and Blink, no scripts), Decor. The stages lie physically behind the gates
     Stage1/ Stage2/ Stage3/ Tutorial/ stages (see below)
     <Stage>/ChallengeCoins            Studio-only Folder (every stage): Coin_<n> MeshParts tagged ChallengeCoin with attribute CoinId (ids listed in `ChallengeCoinConfig`)
     DebugBaseplate/                   kill brick under the map = the sea (H1: centre (-350, -8, -100), top y 0, covers every stage, the hub and the garden; sea blue Glacier + Texture)
@@ -123,28 +123,29 @@ src/
 ```
 
 ### Stage anatomy
-Every stage folder follows the same pattern:
+**World stages** (Stage1, Stage2, Stage3; since S4.0 the `LandingPad` object is gone) follow this pattern:
 
 | Child | Script behaviour |
 |---|---|
-| `LandingPad/TeleportDestination` | arrival point after a finish or Home (invisible, on the plaza in front of the stage's gate, facing it); for the Tutorial also the arrival from the hub portal |
-| `LandingPad/TimerStart` | starts the timer unless one already runs on this stage (refused unless `StageUnlocks.IsUnlocked`, shows the stage on the score panel) + acts as checkpoint; an invisible 48 × 30 × 4 trigger across the whole pad edge; touching it counts as reaching the stage's first checkpoint (`CheckpointTouchHandler`, H2), so the respawn point is that plate |
-| `LandingPad/TeleportToSpawn/Portal` | **Tutorial only** (the world stages have none since S4.0): back to hub; cancels timer, score panel → hub (Studio-only `Arch` Model beside it) |
-| `LandingPad/StartGate/Door` | world stages (S4.0): Studio-only wooden door between the gate's pillars; `GateDoors.client` makes it solid + opens the unlock popup while the stage is locked for the local player, a faint ghost once unlocked; `HubPortalMedals` draws stars / coins / lock lines on its Back face |
-| `LandingPad/GateExit` | world stages (S4.0): invisible trigger just outside the door; walking back out cancels the running timer (panel → world) |
-| `LandingPad/Decor` | Studio-only Model (H1.2): cobblestone inlay, hedges (the pads of the World 1 courtyard and the StageKit template have none: S4.0 removed `Hedge_S/W/E` so the plaza flows onto the pads), kit trees / bushes / flowers; `LandingPadTop` / `LandingPadBottom` are the grass pad and its rock |
-| `LandingPad/StartGate` | Studio-only Model (H1.2): two 17-stud stud-stone pillars, wooden beams and the sign (`Sign.Gui.Title` / `Start`) over `TimerStart` |
-| `LandingPad/GateSign` | script: writes the `StageConfig` display name on `StartGate.Sign.Gui.Title` |
-| `LandingPad/Top10Leaderboard` | SurfaceGui board from `LoadGlobalLeaderboard(stage.key)` (Stage1, Stage2, Stage3, Tutorial); its Studio-only `Model` is a clone of `StartLocation.StarsLeaderboard.Model` (wooden frame, same `ScoreBlock.SurfaceGui` names) |
-| `<number>/C` | checkpoint (`1`–`9` Stage1, `10`–`14` Stage2, `20`–`22` Stage3, `23`–`25` Tutorial): `C` is the whole 16 × 1 × 12 cream stud plate (touch trigger + Script, respawn point); Studio-only `Core` (3 × 3 green stud tile set into the plate, `PointLight` off) and `Beam` (Neon cylinder 18 high, invisible) are animated per player by `CheckpointClient` (H2). The plate's upstream edge touches the previous obstacle |
-| `TeleportBackToStageStart/Portal` | finish line: `StopTimer` → save best time; sibling script teleports to stage start |
-| obstacle models | kill parts, spinners, lava, bounce bricks, choice stage |
+| `Gate` (Model) | the door gate in the courtyard wall: Studio-only pillars, beams, `Sign` (`Sign.Gui.Title`), `Door`, plus the scripted children below; the course starts directly behind it (no teleport into a stage) |
+| `Gate/TimerStart` | starts the timer unless one already runs on this stage (refused unless `StageUnlocks.IsUnlocked`, shows the stage on the score panel) + acts as checkpoint; an invisible 48 x 30 x 4 trigger across the gate line; touching it counts as reaching the stage's first checkpoint (`CheckpointTouchHandler`, H2), so the respawn point is that plate |
+| `Gate/Door` | Studio-only wooden door between the pillars; `GateDoors.client` makes it solid + opens the unlock popup while the stage is locked for the local player, a faint ghost once unlocked; `HubPortalMedals` draws stars / coins / lock lines on its Back face (white text closed, black open) |
+| `Gate/GateExit` | invisible trigger just outside the door on the courtyard side; walking back out cancels the running timer (panel -> world) |
+| `Gate/GateSign` | script: writes the `StageConfig` display name on `Gate.Sign.Gui.Title` |
+| `Top10Leaderboard` | Model standing in the courtyard beside the gate: SurfaceGui board from `LoadGlobalLeaderboard(stage.key)`; its Studio-only `Model` is a clone of `StartLocation.StarsLeaderboard.Model` (wooden frame, same `ScoreBlock.SurfaceGui` names) |
+| `Arrival` | Studio-only Part on the courtyard in front of the gate, facing it: where finish and Home land (`StageConfig.ReturnSpawn`) |
+| `<number>/C` | checkpoint (`1`-`9` Stage1, `10`-`14` Stage2, `20`-`22` Stage3, `23`-`25` Tutorial): `C` is the whole 16 x 1 x 12 cream stud plate (touch trigger + Script, respawn point); Studio-only `Core` / `Beam` animated per player by `CheckpointClient`. The plate's upstream edge touches the previous obstacle |
+| `TeleportBackToStageStart/Portal` | finish line: `StopTimer` -> save best time; sibling script teleports to the stage's `Arrival` |
+| obstacle models | kill parts, spinners (kit), lava, bounce bricks, choice stage |
+
+**The Tutorial** (hub stage, world 0) keeps its old-style `LandingPad` (floor, decor, `StartGate`, `TimerStart`, `TeleportToSpawn` portal back to the hub, `TeleportDestination` = arrival from the hub portal and after a finish, `GateSign`, `Top10Leaderboard`) until it is redone.
+
+**Courtyard layout** (World 1, `Workspace.World1`): a rectangle x -430..-320 (110 wide), z 187..357 (170 long) at y 77. The entrance (return portal to the hub, hub gate lands on `Spawn`) is in the south short wall; the far (north) short wall holds the gate of the finale (Stage 3, course runs north); two gates on each long side, near (z 302) and far (z 242): west wall = slots 1 and 2 (Island Hop "Coming soon", Stage 1; courses run west), east wall = slots 3 and 4 (Blink "Coming soon", Stage 2; courses run east). A course is placed by rotating / translating its whole stage folder (`CFrame` of every part) about its gate.
 
 **Kit obstacles:** `ServerStorage.StageKit.Obstacles` (Studio-only, S3.3b) holds one preconfigured template per kit component (movers, hazards, plates, switches, zones, camera zones, ghost zone, run-seeded samples; `Hazard_PendulumRig` is a model with its frame): clone, `PivotTo` the spot, adjust attributes (listed in the header of `ObstacleKit.client.luau` / `KitZones` / `StageCamera`). The tags and attributes come with the clone.
 
-**Adding a stage:** clone `ServerStorage.StageKit.LandingPad` (Studio-only template: floor, decor, start gate with door, gate-exit trigger, Top-10 board and the scripts, all stage-neutral) into the new stage folder as `LandingPad`,
-`PivotTo` the pad centre (the template's pivot is the centre of the pad's top; the first checkpoint platform of the course must be centred on it, its edge 21 studs north: the gate, trigger, arrival point and return portal all sit on the pad's centre line), add the `StageConfig` entry and the hub portal. Checkpoints: clone `ServerStorage.StageKit.Checkpoint` (plate + `Core` + `Beam` + the C Script; pivot = centre of the plate's top), rename it to the next free number and put its upstream edge against the previous obstacle, its front (LookVector, −Z) pointing along the course (the respawn faces that way). Scripts resolve the stage from the folder, so nothing else needs editing;
-Argon writes the clone's script files on its own. The template's scripts are copies: when a stage script changes, change the template's copy too.
+**Adding a world stage:** clone the Studio-only templates `ServerStorage.StageKit.Gate` (door gate with its scripts), `StageKit.Top10Leaderboard` and `StageKit.Arrival` into the new stage folder, `PivotTo` / rotate them as a group onto a free gate position of the courtyard wall (the templates are laid out for a course running north from the gate line at z 187; the first checkpoint plate sits 7 studs behind the gate line), then add the `StageConfig` entry. Checkpoints: clone `ServerStorage.StageKit.Checkpoint` (plate + `Core` + `Beam` + the C Script; pivot = centre of the plate's top), rename it to the next free number and put its upstream edge against the previous obstacle, its front (LookVector, -Z) pointing along the course (the respawn faces that way). Scripts resolve the stage from the folder, so nothing else needs editing;
+Argon writes the clone's script files on its own. The templates' scripts are copies: when a stage script changes, change the template's copy too.
 
 Stage scripts never hard-code a stage: they call `StageConfig.ForInstance(script)` (stage = the Workspace folder they
 live in) or `StageConfig.ByHubPortal[...]`, so all copies of TimerStart, finish portal, TeleportToSpawn, hub portal and
@@ -161,13 +162,13 @@ Most of the 93 scripts are identical copies. Edit them consistently (grep by con
 | 16 | kill on touch (`Humanoid.Health = 0`) | `Workspace/Stage3/Part_01/Script.server.luau` |
 | 8 | kill player on touch (debounced by `hit`) | `Workspace/Stage1/LaserStripStage/Part_01/…` |
 | 0 | ~~spinner~~: since S3.3c the Stage 1 spinners (`Workspace/Stage1/SpinnerStage_1` / `_2`) are kit parts: attributes `Kind = Spin`, `Speed = 60` (the old 2° per `wait()`), `Kill` on the two sweeper bars, `Carry = false` on the two spinning plates, tag `KitMover`, no scripts (the folders only hold `init.meta.json`; the hub pillars `Part_4/5`, `_2: Part_2/6` no longer rotate, their rotation was invisible) | – |
-| 4 | `TimerStart` | `Workspace/Stage*/LandingPad/TimerStart/…` |
+| 5 | `TimerStart` (3 world stages, the Tutorial, the kit template) | `Workspace/Stage*/Gate/TimerStart/…`, `Workspace/Tutorial/LandingPad/TimerStart/…` |
 | 1 | `TeleportToSpawn` (Tutorial only since S4.0) | `Workspace/Tutorial/LandingPad/TeleportToSpawn/…` |
-| 4 | `GateExit` (3 stages + the kit template) | `Workspace/Stage*/LandingPad/GateExit/…` |
+| 4 | `GateExit` (3 stages + the kit template) | `Workspace/Stage*/Gate/GateExit/…` |
 | 4+4 | finish portal / teleport back to stage start (Stage1 teleport copy differs slightly) | `Workspace/Stage*/TeleportBackToStageStart/…` |
 | 1 | hub portal `TeleportToTutorial` (the stage portals are gone since S4.0: the stages open through door gates) | `Workspace/StartLocation/TeleportToTutorial/…` |
-| 2 | Top10Leaderboard | `Workspace/Stage1/LandingPad/Top10Leaderboard/Script…` |
-| 4 | `GateSign` | `Workspace/Stage*/LandingPad/GateSign.server.luau` |
+| 2 | Top10Leaderboard | `Workspace/Stage1/Top10Leaderboard/Script…` |
+| 4 | `GateSign` | `Workspace/Stage*/Gate/GateSign.server.luau` |
 | 3 | ChoiceStage random safe `Step` | `Workspace/Stage1/ChoiceStage_*/Script…` |
 | 3 | bounce brick: declares `LAUNCH_SPEED` (attribute `LaunchSpeed` + tag `BounceBrick`; the launch is done by `BounceBricks.client`) — all 300 since the user's tuning (2026-10-21); `Bounce Brick_1`–`_3` are siblings | `Workspace/Stage2/12/Level 12/Bounce Brick_*` |
 
@@ -242,6 +243,7 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
 - Argon does not turn an existing plain Studio instance into a synced folder when a script file is added under it
   (it made a second empty `HomePanel`). Renaming such a folder on disk replaces the Studio instance with a bare Frame (styled
   children lost, rebuilt by hand). After adding/renaming script containers, check Studio for duplicates / lost children.
+- **Moving a script container on disk recreates its Studio instance, drops its Studio-only children and also deletes a copy of the scripted part that was stashed elsewhere in Studio** (Argon tracks the instance, not the path): stash only Studio-only parts (they survive) and note the scripted parts' properties first.
 - **Moving a script container on disk recreates its Studio instance and drops its Studio-only children** (S4.0: `git mv` of
   `TeleportToStage1..3` into `World1/` deleted their `Arch` / `Portal`; rebuilt from the Tutorial portal). Reparent in Studio,
   keep a copy of the Studio-only children, and rebuild after the disk move.

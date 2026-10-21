@@ -135,7 +135,7 @@ end
 -- stage lies physically behind the gate), the hub portal for a hub stage (the Tutorial). Waits for the scene to load.
 function StageConfig.FaceTarget(stage): BasePart
 	if StageConfig.Worlds[stage.world] then
-		return workspace:WaitForChild(stage.folder):WaitForChild("LandingPad"):WaitForChild("StartGate"):WaitForChild("Door")
+		return workspace:WaitForChild(stage.folder):WaitForChild("Gate"):WaitForChild("Door")
 	end
 	return workspace:WaitForChild("StartLocation"):WaitForChild(stage.hubPortal):WaitForChild("Portal")
 end
@@ -147,10 +147,10 @@ function StageConfig.LocationKey(stage): string
 end
 
 -- The part a player is teleported to when leaving `stage` (finish, Home button): the plaza in front of the stage's own gate
--- (its LandingPad.TeleportDestination) for a world stage, the hub's SpawnLocation for a hub stage. Waits for the scene.
+-- (its Arrival marker) for a world stage, the hub's SpawnLocation for a hub stage. Waits for the scene.
 function StageConfig.ReturnSpawn(stage): BasePart
 	if StageConfig.Worlds[stage.world] then
-		return workspace:WaitForChild(stage.folder):WaitForChild("LandingPad"):WaitForChild("TeleportDestination")
+		return workspace:WaitForChild(stage.folder):WaitForChild("Arrival")
 	end
 	return workspace:WaitForChild("StartLocation"):WaitForChild("SpawnLocation")
 end

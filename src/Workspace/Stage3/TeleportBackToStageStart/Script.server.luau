@@ -1,5 +1,5 @@
 local TeleportPart1 = script.Parent.Portal
-local TeleportPart2 = script.Parent.Parent.LandingPad.TeleportDestination
+local TeleportPart2 = script.Parent.Parent.Arrival
 
 TeleportPart1.Touched:Connect(function(hit)
 	local w = hit.Parent:FindFirstChild("HumanoidRootPart")

@@ -1,4 +1,4 @@
--- GateDoors (S4.0, docs/STAGES.md §7.1): the door in each world stage's start gate (LandingPad.StartGate.Door). While the stage
+-- GateDoors (S4.0, docs/STAGES.md §7.1): the door in each world stage's start gate (Workspace.<Stage>.Gate.Door). While the stage
 -- is locked for the local player the door is solid for them and touching it opens the unlock popup; once the bar is met or the
 -- stage is bought it becomes a faint ghost and the doorway is free, so walking through starts the stage and its timer (the
 -- server's TimerStart checks the unlock again). All of it is local: the door part itself stays as authored for everyone else.
