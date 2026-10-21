@@ -306,6 +306,21 @@ height ladder (+1 to +16 studs); the reach table is measured and recorded in STA
 run (2026-10-21): a player inside the ghost zone is seen at transparency 0.65 by the other client (0.00 for the player
 themselves and for anyone outside), in both directions; leaving the zone and respawning both reset it to 0.00.
 
+**S3.3c result (2026-10-21, Studio single client, awaits the user's visual check of Stage 1):** the 8 spinner rotation scripts and
+the 2 kill-on-touch scripts of `Stage1/SpinnerStage_1` / `_2` are gone; the parts are `KitMover` Spin parts (Speed 60,
+measured before: 59.5-62 deg/s, after: 59.9-60.0). The two sweeper bars (`SpinnerStage_1.Part_2` / `Part_6`) have `Kill`; the
+two spinning plates (`SpinnerStage_2.Part_1` / `Part_3`) have `Carry = false`, so a rider is still not carried (before and
+after the rider falls off within 3 s); the four hub pillars no longer rotate (invisible before). Before / after: each bar
+kills a character standing 6 studs from its hub (8 of 8 tries), and a jump timed 10-22 deg (0.17-0.37 s) before the bar
+arrives clears it (6 deg is too late), as the bar's contact window is about +-10 deg.
+- Three kit bugs found by this check and fixed in `ObstacleKit`: (1) the sphere floor probe counted a low bar beside the
+  character as floor and carried it around with the bar (now only surfaces 2.0-3.8 studs under the root count as floor);
+  (2) the Humanoid still reports a floor for 1-2 frames after take-off, so a jump from beside a bar counted as standing on it:
+  covered by the same depth band, and kill hazards are never floors; (3) the touch test is a box 0.1 studs larger than the
+  part (`GetPartBoundsInBox`), like a physical contact, instead of an exact overlap. `KitKilledBy` now records `Model.Part`.
+- Regression after the fixes: slide mover carry 0.000 studs drift, jump-off 0.9 studs, tilt plate lip slides off after 0.4 s,
+  turntable carry 0.002 studs.
+
 S3.1 spike: tilt plate, carrying the player on moving parts, client-side kill (go / no-go for the approach); S3.2 timed
 components (blinking beams, movers, rotators, pistons, pendulums, disappearing plates) and `StageCamera`; S3.3 kit-local
 components (crumbling plates, colour switches, tilt plates) and zones (wind, low gravity), run-seeded schedules, ghost drawing,

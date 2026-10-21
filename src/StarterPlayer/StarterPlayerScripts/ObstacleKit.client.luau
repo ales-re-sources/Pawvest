@@ -11,7 +11,8 @@
 --               Swing  pendulum: Hinge "Z" (default) or "X", Angle deg, Period, Phase; hangs from the part's top (Pivot
 --                      Vector3 offset from the part centre overrides)
 --             Optional on any mover: Kill (touching it kills), Push studs/s (touching it knocks the character back along
---             the part's motion, PushLift studs/s upward, default 25), AirCarry s (how long a jump off keeps following it).
+--             the part's motion, PushLift studs/s upward, default 25), AirCarry s (how long a jump off keeps following it), Carry = false (the
+--             character standing on it is not carried, e.g. a spinning plate you have to stay on by running against it).
 --   KitBeam   blinking kill beam: Period s, Duty (on share 0..1), Phase, Telegraph s before "on"; Kill defaults to true.
 --   KitPlate  disappearing plate: Period, Duty (solid share), Phase, Telegraph s (flickers before it vanishes).
 --   KitCrumble crumbling plate (kit-local): shakes when the player stands on it, vanishes after Delay s (default 0.8), is back
@@ -39,10 +40,13 @@ local KitMath = require(ReplicatedStorage:WaitForChild("KitMath"))
 local player = Players.LocalPlayer
 
 local RAY_DEPTH = 5 -- studs below the root part searched for the floor
+local MIN_FLOOR_DEPTH = 2.0 -- a surface must be this far below the root part to count as floor (the feet are about 3 below) ...
+local MAX_FLOOR_DEPTH = 3.8 -- ... and no farther than this
 local FLOOR_RADIUS = 1.5 -- radius of that search (the character's feet reach about this far past the root)
 local CARRY_GRACE = 0.2 -- seconds after leaving a mover that its velocity is still handed to the character
 local AIR_CARRY = 0.5 -- seconds a jump off a mover keeps following it (attribute AirCarry on the part overrides)
 local OVERLAP_MARGIN = 8 -- studs beyond a part's own radius within which the overlap tests run
+local TOUCH_PAD = 0.1 -- studs added to a hazard's size for the touch test (about what a physical contact adds; all kit hazards are tested as boxes)
 local WARN_COLOR = Color3.fromRGB(255, 170, 60)
 local BEAM_TRANSPARENCY = { off = 1, warning = 0.8, on = 0.15 }
 
@@ -228,14 +232,16 @@ local function near(part: BasePart): boolean
 	return (part.Position - root.Position).Magnitude < part.Size.Magnitude / 2 + OVERLAP_MARGIN
 end
 
+-- Touch, like the Touched event it replaces: a box slightly larger than the part, because a solid hazard pushes the
+-- character out of any real overlap within one physics step and a bar only grazing a leg would never test positive.
 local function touchesCharacter(part: BasePart): boolean
-	return near(part) and #workspace:GetPartsInPart(part, bodyParams) > 0
+	return near(part) and #workspace:GetPartBoundsInBox(part.CFrame, part.Size + Vector3.one * TOUCH_PAD, bodyParams) > 0
 end
 
 local function kill(part: Instance)
 	humanoid.Health = 0
 	player:SetAttribute("KitKillAt", workspace:GetServerTimeNow())
-	player:SetAttribute("KitKilledBy", part.Name)
+	player:SetAttribute("KitKilledBy", part.Parent.Name .. "." .. part.Name)
 end
 
 RunService.PreSimulation:Connect(function(dt: number)
@@ -297,8 +303,13 @@ RunService.PreSimulation:Connect(function(dt: number)
 		-- a sphere, not a ray: a Humanoid can stand on a ledge with its root part past the edge, and a thin ray would
 		-- lose the plate there (the tilt would spring back and the player could balance on the lip forever)
 		local hit = workspace:Spherecast(root.Position, FLOOR_RADIUS, Vector3.new(0, -RAY_DEPTH, 0), floorParams)
-		local instance = hit and hit.Instance
-		if instance and (movers[instance] or tilts[instance] or crumbles[instance] or switches[instance]) then
+		-- only a surface under the feet counts as floor: a low bar beside the character (the sphere reaches 1.5 studs
+		-- sideways) is no floor, and neither is a surface far below a character that has just left the ground (the
+		-- Humanoid still reports a floor for a frame or two after take-off); both must neither carry nor tilt it
+		local depth = if hit then root.Position.Y - hit.Position.Y else 0
+		local instance = hit and depth >= MIN_FLOOR_DEPTH and depth <= MAX_FLOOR_DEPTH and hit.Instance
+		-- a kill hazard is never a floor (a sweeper bar at shin height would otherwise carry the character along with it)
+		if instance and not attr(instance, "Kill", false) and (movers[instance] or tilts[instance] or crumbles[instance] or switches[instance]) then
 			standing = instance
 		end
 	end
@@ -406,7 +417,7 @@ RunService.PreSimulation:Connect(function(dt: number)
 	end
 
 	-- carry: grounded on a mover → apply its frame delta; remember the point velocity for the jump off
-	local carriedBy = if standing and grounded then movers[standing] else nil
+	local carriedBy = if standing and grounded and attr(standing, "Carry", true) then movers[standing] else nil
 	if carriedBy then
 		local before = root.Position
 		root.CFrame = carriedBy.delta * root.CFrame

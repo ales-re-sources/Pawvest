@@ -148,14 +148,14 @@ and must never change. Hub label is `StageConfig.HubName` (`"Central Island"`).
 
 ## Reusable script variants (copy-pasted, not modules)
 
-Most of the 103 scripts are identical copies. Edit them consistently (grep by content or md5):
+Most of the 93 scripts are identical copies. Edit them consistently (grep by content or md5):
 
 | Count | Variant | Example |
 |---|---|---|
 | 20 | checkpoint → `CheckpointTouchHandler.OnTouched` | `Workspace/Stage1/1/C/Script.server.luau` |
 | 16 | kill on touch (`Humanoid.Health = 0`) | `Workspace/Stage3/Part_01/Script.server.luau` |
-| 10 | kill player on touch (debounced by `hit`) | `Workspace/Stage1/LaserStripStage/Part_01/…` |
-| 8 | spinner (`CFrame * Angles` in `while wait()`) | `Workspace/Stage1/SpinnerStage_1/Part_2/Script_1…` |
+| 8 | kill player on touch (debounced by `hit`) | `Workspace/Stage1/LaserStripStage/Part_01/…` |
+| 0 | ~~spinner~~: since S3.3c the Stage 1 spinners (`Workspace/Stage1/SpinnerStage_1` / `_2`) are kit parts: attributes `Kind = Spin`, `Speed = 60` (the old 2° per `wait()`), `Kill` on the two sweeper bars, `Carry = false` on the two spinning plates, tag `KitMover`, no scripts (the folders only hold `init.meta.json`; the hub pillars `Part_4/5`, `_2: Part_2/6` no longer rotate, their rotation was invisible) | – |
 | 4 | `TimerStart` | `Workspace/Stage*/LandingPad/TimerStart/…` |
 | 4 | `TeleportToSpawn` | `Workspace/Stage*/LandingPad/TeleportToSpawn/…` |
 | 4+4 | finish portal / teleport back to stage start (Stage1 teleport copy differs slightly) | `Workspace/Stage*/TeleportBackToStageStart/…` |
