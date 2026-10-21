@@ -38,6 +38,21 @@ local function addPortalMedal(stage)
 	surface.PixelsPerStud = 50
 	surface.LightInfluence = 0
 
+	-- a door face gets a dark rounded backing behind its lines: an open door is a ghost and the text must stay readable
+	local backing = nil
+	if not portalLabel then
+		backing = Instance.new("Frame")
+		backing.Name = "Backing"
+		backing.AnchorPoint = Vector2.new(0.5, 0)
+		backing.BackgroundColor3 = Color3.new(0, 0, 0)
+		backing.BackgroundTransparency = 0.35
+		backing.BorderSizePixel = 0
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0, 18)
+		corner.Parent = backing
+		backing.Parent = surface
+	end
+
 	-- below the stage-name label in the upper part of the face
 	local label = Instance.new("TextLabel")
 	label.AnchorPoint = Vector2.new(0.5, 0)
@@ -123,6 +138,12 @@ local function addPortalMedal(stage)
 		for _, line in { coinLine, needsLine } do
 			line.Position = UDim2.fromScale(0.5, LINE_TOP + shift + row * LINE_STEP)
 			row += 1
+		end
+		if backing then
+			-- from just above the stars to just under the last line
+			local top = 0.4 + shift - 0.03
+			backing.Position = UDim2.fromScale(0.5, top)
+			backing.Size = UDim2.fromScale(0.78, LINE_TOP + shift + row * LINE_STEP + 0.02 - top)
 		end
 	end
 	local function refreshNeeds()

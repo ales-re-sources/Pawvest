@@ -10,7 +10,7 @@ local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 
 local LocalPlayer = Players.LocalPlayer
 
-local OPEN_TRANSPARENCY = 0.75 -- the open door: faint, the face lines stay readable
+local OPEN_TRANSPARENCY = 0.4 -- the open door: a dark ghost (no collision), dark enough that the face text stays readable
 local POPUP_COOLDOWN = 1.5 -- seconds between popups from one door
 
 local function addDoor(stage)
