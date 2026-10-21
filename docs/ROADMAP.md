@@ -304,7 +304,7 @@ run-seeded samples, pendulum rig), and the jump lab: KitLab row 5 (z≈690) has 
 height ladder (+1 to +16 studs); the reach table is measured and recorded in STAGES §1.0 (single jump 8.3-12.5 reach /
 7.3-9.0 rise, Double Jump 14.7-21.6 / 14.5-18.0, Triple Jump 20.5-29.8 / 22.0-27.0). Ghost drawing, checked with the F7 two-client
 run (2026-10-21): a player inside the ghost zone is seen at transparency 0.65 by the other client (0.00 for the player
-himself / herself and for anyone outside), in both directions; leaving the zone and respawning both reset it to 0.00.
+themselves and for anyone outside), in both directions; leaving the zone and respawning both reset it to 0.00.
 
 S3.1 spike: tilt plate, carrying the player on moving parts, client-side kill (go / no-go for the approach); S3.2 timed
 components (blinking beams, movers, rotators, pistons, pendulums, disappearing plates) and `StageCamera`; S3.3 kit-local
