@@ -49,6 +49,19 @@ StageConfig.Stages = {
 		rewardFactor = 0.5,
 	},
 	{
+		key = "IslandHop", -- new stages get a semantic key = folder name (docs/STAGES.md §7.4)
+		displayName = "Stage 1", -- shown name = position in World 1 (1 = Island Hop, 2 = key "Stage 1", 3 Blink, 4 = key "Stage 2", 5 = key "Stage 3"); the key never changes
+		folder = "IslandHop",
+		order = 1,
+		world = 1,
+		requires = {},
+		tBase = 52, -- seconds; provisional until measured in M6a
+		tiers = StageConfig.DefaultTiers,
+		unlock = { stage = "Stage 4", medal = "Bronze" }, -- Tutorial
+		unlockPrice = 500,
+		rewardFactor = 0.75, -- curve 0.5 + 0.25 × order (GDD §5)
+	},
+	{
 		key = "Stage 1",
 		displayName = "Stage 2", -- shown name = position in World 1 (1 Island Hop, 2 = key "Stage 1", 3 Blink, 4 = key "Stage 2", 5 = key "Stage 3"); the key never changes
 		folder = "Stage1",
@@ -57,8 +70,8 @@ StageConfig.Stages = {
 		requires = {},
 		tBase = 70,
 		tiers = StageConfig.DefaultTiers,
-		unlock = { stage = "Stage 4", medal = "Bronze" }, -- Tutorial
-		unlockPrice = 500,
+		unlock = { stage = "IslandHop", medal = "Bronze" },
+		unlockPrice = 1000,
 		rewardFactor = 1.0,
 	},
 	{

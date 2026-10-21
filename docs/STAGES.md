@@ -465,36 +465,32 @@ decor, measured `T_base`), one per world island, about three for the kit, one pe
 Labyrinth's layout cycle and the dropper's height the most), bonus stages 1–2× (§5.3). Adding a stage stays as in
 AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, key, prices).
 
-### 7.6 S4.1 Island Hop: design check (2026-10-21)
-- **Place:** the west **near** gate (`World1.SoonGate1`, z 302) becomes the real gate of a new stage folder `IslandHop` (key
-  and folder `IslandHop`, shown "Stage 1"); the closed gate model is deleted. The course leaves west from x -438 inside the
-  band z 272..335 (Stage 2 occupies z 204..266 to its south, so the lanes never touch; nothing lies north of z 335 up to the
-  south wall); the kill floor (`DebugBaseplate`, x -1371..676) already covers it. About 400 studs long, folded into a **gentle
-  S-curve** (decided): two or three bends inside the band, so a checkpoint's LookVector must follow the local direction.
-- **Built from** `StageKit.Gate`, `Top10Leaderboard` and `Arrival` (cloned from Stage 2 and shifted +60 in z: gate pivot
-  (-429.6, 83.1, 302), board 29 studs north of the gate line along the wall, `Arrival` 11 studs in front) and
-  `StageKit.Checkpoint`; scripts need no edits.
-- **Signature: stud pillars over the sea.** Sections (teach -> test -> twist, GDD pillar 1, no kill parts, the sea is the only
-  hazard): (1) warm-up of wide pillars (6 x 6, gaps 3-4); (2) pillar field, tops 4 x 4 down to 3 x 3, staggered, gaps 4-6.5;
-  (3) slow conveyors (anchored parts with `AssemblyLinearVelocity`, 6 studs/s, with and against the direction), (4) the first
-  moving platform: one `Mover_Slide` across a 14-stud gap, **run-seeded** (decided: fair Top-10 and a clean `T_base`) with a
-  safe waiting pillar on both banks; (5) finish island + finish portal. Rest strip after every hard section.
-- **Reach limits from the jump lab (§1.0)** so Bronze never needs a talent: gap (edge to edge) at most 6.5 studs, rise at most
-  4 studs, landing at least 3 x 3; Run Speed or Jump Height only buy Gold shortcuts (one 7.5-stud gap on the Gold line); the talent
-  coin sits on a ledge of at least 10 studs or behind a gap of at least 14, which only Double Jump reaches.
-- **Checkpoints:** block 100-199: `TimerStart` is the first, plates `101`..`105` (a checkpoint every 10-13 s of a 52 s run), each with
-  its front along the local course direction.
-- **Coins** (ids `IslandHop_1`..`_7`, never reuse): 4 easy (20), 2 risky (50), 1 talent (100) = 280 Coins, the same mix as
-  Stage 2; none behind a score board.
-- **StageConfig entry:** key `IslandHop`, displayName "Stage 1", folder `IslandHop`, order 1, world 1, `requires = {}`, `tBase` 52
-  (provisional, measured in M6a), default tiers, reward factor 0.75 (medals 150 / 300 / 600), unlock Bronze on the Tutorial
-  (key `"Stage 4"`) or 500 Coins.
-- **Unlock chain switched now** (decided): Stage 2 (key `"Stage 1"`) becomes Bronze on Island Hop / 1 000 Coins; Stage 4 and 5 keep
-  their bars until S4.2 adds Blink. World 1 then has 4 stages: the hub gate and the world panel read x / 12 stars until
-  Blink exists (computed from the stage list).
-- **Checks:** a playtest run through every gate position of the course (reach limits, carry on the mover, conveyors, respawn
-  facing at each checkpoint), unlock flow (Tutorial Bronze opens the door; Stage 2's door follows Island Hop), finish -> `Arrival`,
-  Top-10 board, coins pay once, no script errors; a rough scripted `T_base` run.
+### 7.6 S4.1 Island Hop (design check and as built, 2026-10-21)
+- **Place:** the west **near** gate (z 302; the closed `SoonGate1` was deleted) is the gate of the stage folder `IslandHop` (key and
+  folder `IslandHop`, shown "Stage 1"). The course leaves west from x -438 inside the band z 272..335 (Stage 2 occupies z 204..266
+  to its south); the kill floor already covers it. About 370 studs long, a **gentle S-curve** (decided): headings 0 deg (warm-up),
+  12 deg north-west (pillar field, z up to about 322), -22 deg south-west (conveyors), -8 deg (moving platform), +6 deg (climb).
+- **Built from** Stage 2's west gate pose: its `Gate`, `Top10Leaderboard`, `Arrival` and finish portal cloned and moved +60 in z (board
+  at z 273 beside the gate; the two decor pieces that stood there were removed), `StageKit.Checkpoint` and `Mover_Slide`.
+- **Signature: stud pillars over the sea** (stud-textured columns from the sea up; no kill parts, the sea is the only hazard):
+  (A) warm-up, six 6 x 6 pillars, gaps 4, plate `102`; (B) pillar field, twelve 4 x 4 / 3 x 3 pillars staggered 3-5 studs sideways,
+  gaps 4-6, rises -2..+1, plate `103`; (C) three small pillars, two **conveyors** (8 x 18, speed 6 studs/s, first against and then
+  with the run), a rest pillar, plate `104`; (D) pillar, 8 x 8 bank, then **one run-seeded `Mover_Slide`** (10 x 8, amplitude 6,
+  period 6 s, 1 stud from each bank at the ends) across a 22-stud gap to plate `105`; (E) six pillars rising 8 studs, a 16 x 16
+  finish island with the finish portal, entered along the course.
+- **Conveyors are a new tiny component** (`KitConveyors.server.luau`): parts tagged `KitConveyor` with attribute `Speed` (studs/s along the
+  part's front; negative = backwards); the server sets the anchored part's `AssemblyLinearVelocity` once.
+- **Reach limits (§1.0)** hold for Bronze without talents: every gap on the main line is at most 6.1 studs edge to edge, every rise at most
+  +1.5, landings at least 3 x 3. A baseline bot (Run Speed 0, Jump Height 0, no Double Jump) crossed every leg, most on the
+  first attempt; the tightest legs (3 x 3 pillars with 5-5.6 stud gaps and a sideways stagger) needed up to three tries, which
+  M6a should keep an eye on.
+- **Checkpoints:** the start plate `101` (first checkpoint; `TimerStart` counts as it) and `102`..`105`, each facing along its
+  section's heading (a respawn faces the course).
+- **Coins** `IslandHop_1`..`_7` (4 easy 20, 2 risky 50, 1 talent 100 = 280): side pillars off the course; the talent coin sits
+  on a 3 x 3 tower 11.5 studs above the finish island (only Double Jump reaches it); none behind a score board.
+- **StageConfig:** key `IslandHop`, displayName "Stage 1", order 1, world 1, `tBase` 52 (provisional, M6a), reward factor 0.75,
+  unlock Bronze on the Tutorial or 500 Coins; Stage 2 (key `"Stage 1"`) now needs Bronze on Island Hop or 1 000 Coins; Stage 4 and 5 keep
+  their bars until S4.2. World 1 has four stages until Blink exists: the hub gate and the world panel read x / 12 stars.
 
 ## 8. Milestones (agreed 2026-10-21; status and full scopes in [ROADMAP.md](ROADMAP.md))
 Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.

@@ -38,8 +38,8 @@ equal to their folder, e.g. `IslandHop`; checkpoint blocks of 100 per new stage,
 | # | World | Stage | Internal key | Built | Required talents | Unlock |
 |---|---|---|---|---|---|---|
 | T | – (hub) | Tutorial | `"Stage 4"` ¹ | yes | – | always open |
-| 1 | 1 | Stage 1 (Island Hop) | `IslandHop` | P (S4.1) | – | Bronze on Tutorial **or** 500 |
-| 2 | 1 | Stage 2 (today's first stage) | `"Stage 1"` | yes | – | Bronze on Stage 1 **or** 1 000 |
+| 1 | 1 | Stage 1 (Island Hop) | `IslandHop` | yes (S4.1) | – | Bronze on Tutorial **or** 500 |
+| 2 | 1 | Stage 2 (today's first stage) | `"Stage 1"` | yes | – | Bronze on Stage 1 **or** 1 000 (switched in S4.1) |
 | 3 | 1 | Stage 3 (Blink ★ rhythm) | `Blink` | P (S4.2) | – | Bronze on Stage 2 **or** 1 500 |
 | 4 | 1 | Stage 4 (today's second stage) | `"Stage 2"` | yes | – | Bronze on Stage 3 **or** 2 000 |
 | 5 | 1 | Stage 5 (today's third stage), finale | `"Stage 3"` | yes | – | Bronze on Stage 4 **or** 2 000 |
@@ -117,7 +117,7 @@ Run Speed and Jump Height never become requirements; they stay the way to faster
 | Stage | T_base (s) | Bronze | Silver | Gold |
 |---|---|---|---|---|
 | Tutorial | 30 | ≤ 48 s | ≤ 33 s | ≤ 24 s |
-| 1 Island Hop (P) | 45–60 → 52 | ≤ 83 s | ≤ 57 s | ≤ 42 s |
+| 1 Island Hop | 52 (provisional, built S4.1) | ≤ 83 s | ≤ 57 s | ≤ 42 s |
 | 2 Stage 1 | 70 | ≤ 112 s | ≤ 77 s | ≤ 56 s |
 | 3 Blink (P) | 70–90 → 80 | ≤ 128 s | ≤ 88 s | ≤ 64 s |
 | 4 Stage 2 | 100 | ≤ 160 s | ≤ 110 s | ≤ 80 s |
@@ -162,7 +162,7 @@ stages move along the curve: Stage 1 (n = 2) 1.0, Stage 2 (n = 4) 1.5, **Stage 3
 | Stage | Factor | Bronze | Silver | Gold | Stage total |
 |---|---|---|---|---|---|
 | Tutorial | 0.5 | 100 | 200 | 400 | 700 |
-| 1 Island Hop (P) | 0.75 | 150 | 300 | 600 | 1 050 |
+| 1 Island Hop | 0.75 | 150 | 300 | 600 | 1 050 |
 | 2 Stage 1 | 1.0 | 200 | 400 | 800 | 1 400 |
 | 3 Blink (P) | 1.25 | 250 | 500 | 1 000 | 1 750 |
 | 4 Stage 2 | 1.5 | 300 | 600 | 1 200 | 2 100 |
@@ -170,7 +170,7 @@ stages move along the curve: Stage 1 (n = 2) 1.0, Stage 2 (n = 4) 1.5, **Stage 3
 | 6–10 (P) | 2.0 … 3.0 | | | | 2 800 / 3 150 / 3 500 / 3 850 / 4 200 |
 | 11–15 (P) | 3.25 … 4.25 | | | | 4 550 / 4 900 / 5 250 / 5 600 / 5 950 |
 | 16–20 (P) | 4.5 … 5.5 | | | | 6 300 / 6 650 / 7 000 / 7 350 / 7 700 |
-| **All 21** | | | | | **88 200** (World 1 with the Tutorial: 9 450; today's four stages 6 700, was 7 000) |
+| **All 21** | | | | | **88 200** (World 1 with the Tutorial: 9 450; the five built stages 7 750) |
 
 ### Repeat reward (every finish, diminishing)
 Every finish with a medal also pays
@@ -204,15 +204,16 @@ every stage** (decided 2026-10-21: no scaling with the stage factor). Planned st
 | Stage | Coin budget (Coins) | Placed mix |
 |---|---|---|
 | Tutorial | 120 | 2×50, 1×20 (behind the score board) |
-| Stage 1 | 280 | 4×20, 2×50, 1×100 |
-| Stage 2 | 380 | 4×20, 2×50, 2×100 |
-| Stage 3 | 480 | 4×20, 2×50, 3×100 |
-| **All** | **1 260** | 27 coins |
+| Stage 1 (Island Hop, S4.1) | 280 | 4×20, 2×50, 1×100 |
+| Stage 2 (key `"Stage 1"`) | 280 | 4×20, 2×50, 1×100 |
+| Stage 4 (key `"Stage 2"`) | 380 | 4×20, 2×50, 2×100 |
+| Stage 5 (key `"Stage 3"`) | 480 | 4×20, 2×50, 3×100 |
+| **All** | **1 540** | 34 coins |
 
-Talent-gated coins need Double Jump (placed out of reach of a Jump Height 3 jump). All four stages have their coins
-(M4 first batch: Tutorial + Stage 1; M4.1: Stage 2 + Stage 3).
+Talent-gated coins need Double Jump (placed out of reach of a Jump Height 3 jump). All five built stages have their coins
+(M4 first batch: Tutorial + Stage 1; M4.1: Stage 2 + Stage 3; S4.1: Island Hop).
 
-**One-time total of today's four stages: 6 700 (medals) + 1 260 (coins) = 7 960 Coins** (all 21 planned stages:
+**One-time total of the five built stages (Tutorial, Island Hop, Stages 2, 4, 5): 7 750 (medals) + 1 540 (coins) = 9 290 Coins** (all 21 planned stages:
 88 200 medals + roughly 8 000 coins at about 400 per stage), plus repeat rewards, garden production and the pet bonus,
 which have no fixed cap.
 
