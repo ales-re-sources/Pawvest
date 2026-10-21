@@ -357,8 +357,12 @@ bar switched to Bronze on Island Hop / 1 000. New: `KitConveyors.server.luau` (t
 - *Not checked:* real `T_base` (52 s provisional) and the difficulty of the 3 x 3 pillar legs (M6a).
 - *Follow-up from the user's check:* Stage 2 folder (`Stage2`, key `"Stage 2"`, shown Stage 4): the Quick Respawn fall reset (30 studs below the plate) sent players back before they reached the bounce bricks of Level 12 (tops 46-61, the plates 107 high); the folder attribute `FallResetDepth = 70` (Studio-only) puts the reset below the lowest brick (limit 37).
 - *Lesson:* Argon does not sync instances / scripts created through the MCP to disk (AGENTS.md "Adding a world stage").
-S4.2 Blink, the rhythm special (stage 3, with its music); the new display
-names and unlock chain switched on; challenge coins and a measured `T_base` for both.
+S4.2 Blink, the rhythm special (stage 3, shown "Stage 3"): **design check done 2026-10-21, scope in STAGES 7.7** (decided: metronome
+placeholder now and a Creator Store track later; the beat is per run, music follows the player's run time). East near gate, a 480-stud
+east lane at 120 BPM: count-in plates, beam rows, piston bridge, "drop the beat" finale; every timed part run-seeded; checkpoints
+201-206, 8 coins (300), key `Blink`, tBase 80, factor 1.25, Bronze on Stage 2 / 1 500; the unlock chain is completed (Stage 4: Bronze on
+Blink / 2 000, Stage 5: Bronze on Stage 4 / 2 000). New: `StageMusic.client.luau` (run-time music / metronome), a "Music" row in
+Settings (`MusicSettings.client.luau`), a timing check for the fairness rules. A measured `T_base` for both new stages comes in M6a.
 
 ### M6a — First live test + World 1 balancing
 The first live test (open checks below) with 6 stages, then M6 for World 1 (scope in "M6 — Balancing pass" below).

@@ -252,9 +252,10 @@ Decided: **one special stage per world** (marked ★ in §4), a stage that plays
 
 ### 5.2 World specials
 **World 1 — Blink (stage 3): rhythm stage.** Blinking beams, disappearing plates and pistons switch on the beat of the stage
-music. A Studio-only `Sound` with a `BPM` attribute (100–120) drives the schedule; the beat comes from server time
-(shared, like every kit timer) and the music's `TimePosition` follows it, so the course still works if the sound fails to
-load. Beams telegraph on the off-beat; most hazards switch on bars 2 and 4. A mute option in Settings.
+music. A Studio-only `Sound` with a `BPM` attribute (100–120) drives the schedule. **Decided in the S4.2 design check
+(2026-10-21): the beat is per run, not shared:** every hazard is run-seeded and the music starts with the player's timer and
+follows run time (`TimePosition` = run time mod the loop length), so every run sees the same sequence; the course still works
+if the sound fails to load. Beams telegraph on the off-beat; most hazards switch on bars 2 and 4. A mute option in Settings.
 
 **World 2 — Labyrinth (stage 9): isometric shifting maze.**
 - Seen from above with the `Iso` camera; about 15 × 15 cells of 8 studs (about 120 × 120 studs), walls on the cell edges.
@@ -491,6 +492,39 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
 - **StageConfig:** key `IslandHop`, displayName "Stage 1", order 1, world 1, `tBase` 52 (provisional, M6a), reward factor 0.75,
   unlock Bronze on the Tutorial or 500 Coins; Stage 2 (key `"Stage 1"`) now needs Bronze on Island Hop or 1 000 Coins; Stage 4 and 5 keep
   their bars until S4.2. World 1 has four stages until Blink exists: the hub gate and the world panel read x / 12 stars.
+
+### 7.7 S4.2 Blink (design check, 2026-10-21; decisions: metronome now / track later, per-run beat)
+- **Place:** the east **near** gate (`World1.SoonGate3`, z 302, x -320) becomes the gate of the stage folder `Blink` (key and folder
+  `Blink`, shown "Stage 3"; the closed gate is deleted). The course runs **east** along z 272..335, mirror of Island Hop; the lane
+  is free up to x 200 (Stage 4's course lies south of it, z 203..266). `Gate`, `Top10Leaderboard`, `Arrival` and the finish portal
+  are clones of the east far gate (Stage 4) moved +60 in z; the script files are copied by hand (AGENTS "Adding a world stage").
+- **Beat:** `BPM` 120 (beat 0.5 s, bar 2 s, two bars 4 s); every period is a multiple of a beat, so waits stay short and learnable
+  (§2.3). A track at another BPM only changes the attribute and the periods the builder derives from it.
+- **Course** (about 480 studs, `T_base` 80 s, a checkpoint every 12-14 s: `201` start plate .. `206`):
+  1. *Count-in* (plates `Plate_Disappearing`, 8 x 8, period 4 s, 75 % solid, telegraph 0.5 s, staggered so one plate is always
+     ready): teaches "the floor has a beat" with the sea as the only hazard.
+  2. *Beam rows*: a solid 16-wide platform crossed by four `Hazard_BlinkBeam` rows 8 studs apart (period 2 s, 50 % on, telegraph
+     0.4 s), phases stepped so a runner at full speed meets all rows in the same state; slower players wait on the safe floor between
+     rows; every row has a safe spot in front of it.
+  3. *Piston bridge*: a 6-wide bridge with `Hazard_PistonPush` blocks from the sides every two bars (telegraph 0.5 s, pushes towards the
+     sea = a respawn, never into a kill part), alcoves opposite each piston.
+  4. *Drop the beat* (the finale): disappearing plates with beams crossing the gaps and one last piston, then the finish island and
+     portal.
+  All timed parts are `RunSeeded`; phases make t = 0 safe.
+- **Music** (new `StageMusic.client.luau`): while a run of a stage with a `Music` Sound in its folder is active, the client plays the sound
+  looped with `TimePosition` = (run time) mod `TimeLength` (re-synced when it drifts by more than 0.15 s) and stops it when the run
+  ends or is cancelled. **Placeholder:** a metronome (a short tick sound on every beat, scheduled from run time, a louder one on
+  bar starts) so the beat is audible without a track; the real track (Creator Store, 100-120 BPM, licence checked) replaces it later.
+  **Mute:** `MusicSettings.client.luau` adds a "Music: On / Off" row to the Settings panel (player attribute `MusicMuted`, kept for
+  the session; saving it in the profile is a later option).
+- **Fairness checks** (before the user's visual check): an offline timing check in Luau that a constant-speed runner (WalkSpeed 16,
+  also 20.8) can get through every beam row and piston from a safe spot within one bar of waiting, a bot playtest of the sequence, and the
+  usual flow checks. Visuals stay plain (deferred decision).
+- **Coins** `Blink_1`..`_8`: 5 easy (20), 2 risky (50, inside a beam's off window or beside a piston), 1 talent (100, a perch 11.5 studs
+  above its platform) = 300 Coins; none behind a score board.
+- **StageConfig:** key `Blink`, displayName "Stage 3", order 3, world 1, `tBase` 80, reward factor 1.25, unlock Bronze on Stage 2 (key
+  `"Stage 1"`) or 1 500. **Unlock chain completed:** Stage 4 (key `"Stage 2"`) Bronze on Blink or 2 000 (was Silver on Stage 2 / 1 500),
+  Stage 5 (key `"Stage 3"`) Bronze on Stage 4 or 2 000 (was Silver / 3 000). The hub gate and world panel then read x / 15 stars.
 
 ## 8. Milestones (agreed 2026-10-21; status and full scopes in [ROADMAP.md](ROADMAP.md))
 Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.
