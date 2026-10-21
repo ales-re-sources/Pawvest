@@ -345,7 +345,8 @@ of `LandingPad`; the Tutorial keeps its old pad (moved 70 studs north to clear t
   Tutorial portal arrives on its moved pad; no script errors.
 - *Lesson:* moving script containers on disk deletes the Studio parts inside them, including scripted parts stashed elsewhere
   (the `TimerStart` / `GateExit` stashes were deleted and rebuilt from known numbers; AGENTS.md gotcha).
-S4.1 Island Hop (stage 1); S4.2 Blink, the rhythm special (stage 3, with its music); the new display
+S4.1 Island Hop (stage 1; design check done 2026-10-21, scope in STAGES 7.6: west near gate, S-curve of stud pillars over the sea, conveyors and one run-seeded
+mover, checkpoints 101-105, 7 coins, key `IslandHop`, Bronze on Tutorial / 500; Stage 2's bar switches to Bronze on Island Hop / 1 000); S4.2 Blink, the rhythm special (stage 3, with its music); the new display
 names and unlock chain switched on; challenge coins and a measured `T_base` for both.
 
 ### M6a — First live test + World 1 balancing
