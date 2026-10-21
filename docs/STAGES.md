@@ -206,7 +206,7 @@ Display number = position in the game (`order`, `displayName` in `StageConfig`);
 
 | # | World | Name / theme (prov.) | Signature | Other components | Requires | `T_base` (s) | Source |
 |---|---|---|---|---|---|---|---|
-| T | 1 | Tutorial | basics | jumps, first kill part | – | 30 | today's Tutorial (`"Stage 4"`) |
+| T | – | Tutorial (hub stage, no world) | basics | jumps, first kill part | – | 30 | today's Tutorial (`"Stage 4"`) |
 | 1 | 1 | Island Hop | stud pillars | wide gaps, slow conveyors, first moving platform | – | 45–60 | **new** |
 | 2 | 1 | Stage 1 (today) | variety | laser strips, spinners, lava floor, choice stage, jump pads | – | 70 | `"Stage 1"` |
 | 3 | 1 | Blink ★ special: rhythm | **blinking beams** pulsing to the music | disappearing plates, beam waves, pistons on the beat | – | 70–90 | **new** |
@@ -396,7 +396,13 @@ levels later if Gold on Worlds 3–4 needs them (M6).
   **challenge coins found x / y** across the world's stages, and its lock (requirement + price, §7.2). World 1's gate is
   always open; Worlds 2–4 use the world-stars rule of §7.2.
 - The stage return portal ("Hub") and the Home button lead to the stage's **world island** (`StageConfig.world` → world
-  spawn), the Home button on a world island to the hub.
+  spawn), the Home button on a world island to the hub. The Tutorial (world 0) returns to the hub.
+- **S4.0 decisions (2026-10-21):** the Tutorial counts in no world (World 1 = 15 stars); the World 1 island sits **north of the
+  hub** (centre (-1126, 16, -250), radius 65, a gap of sea to the hub's rim) and is reached **by the gate only, no bridge**;
+  all **five arches stand from the start** in final order (1 Island Hop, 2 Stage 1, 3 Blink, 4 Stage 2, 5 Stage 3), the two
+  future ones closed with a "Coming soon" sign until their stage exists; the **world stars board waits for World 2 (S5)**;
+  the hub gate for World 1 is a 1.25× stud arch on the hub's central slot (the Tutorial keeps its place, the two free slots
+  are for the gates of Worlds 2 and 3). The island's return gate stands opposite the arc and leads to the hub.
 - Islands and courses sit in the same sea; `DebugBaseplate` (the kill floor) must cover every new course, or be extended.
 
 ### 7.2 Unlock chain and prices

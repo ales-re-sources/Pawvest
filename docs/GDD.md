@@ -37,7 +37,7 @@ equal to their folder, e.g. `IslandHop`; checkpoint blocks of 100 per new stage,
 
 | # | World | Stage | Internal key | Built | Required talents | Unlock |
 |---|---|---|---|---|---|---|
-| T | 1 | Tutorial | `"Stage 4"` ¹ | yes | – | always open |
+| T | – (hub) | Tutorial | `"Stage 4"` ¹ | yes | – | always open |
 | 1 | 1 | Island Hop | `IslandHop` | P (S4.1) | – | Bronze on Tutorial **or** 500 |
 | 2 | 1 | Stage 1 (today) | `"Stage 1"` | yes | – | Bronze on Island Hop **or** 1 000 |
 | 3 | 1 | Blink ★ rhythm | `Blink` | P (S4.2) | – | Bronze on Stage 1 **or** 1 500 |
@@ -64,6 +64,9 @@ equal to their folder, e.g. `IslandHop`; checkpoint blocks of 100 per new stage,
 ² **World opener** (stages 6, 11, 16): **10 of the 15 stars of the previous world** (decided 2026-10-21; 10 = Silver on
 every stage of the world, provisional) **or** the price. This needs a new unlock rule type (stars in a world) next to
 the medal-on-previous-stage rule, built in S1.1. The previous rule (Silver on the finale) is not used.
+
+The Tutorial belongs to no world (decided 2026-10-21): it stays a hub stage, its stars count in the total and on the hub
+board but not toward a world, so World 1 is exactly 5 stages = 15 stars and the opener rule "10 of 15" stays exact.
 
 ★ = the world's special stage (plays differently from a normal obby, STAGES §5). **Bonus stages** (S11, STAGES §5.3) come
 on top: not numbered, outside the unlock chain (no bar, no price; each opens with its world), reward factor 1.0, medals,

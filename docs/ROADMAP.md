@@ -329,7 +329,23 @@ spinners moved to the kit. Design: STAGES §2.4, §5.1.
 
 ### S4 — World 1 complete
 S4.0 World 1 island ("crossroad", the 3 existing stage portals move onto it, return gate) and the World 1 gate in the hub
-(stars x / 15 and coins found x / y on its face); S4.1 Island Hop (stage 1); S4.2 Blink, the rhythm special (stage 3, with its music); the new display
+(stars x / 15 and coins found x / y on its face). **S4.0 scope (agreed 2026-10-21):**
+- *Config:* `StageConfig.Tutorial.world = 0`; `StageConfig.Worlds[1] = { name = "World 1", gate = "GateWorld1", folder = "World1" }`
+  and helpers (`PortalFolder(stage)`, `ReturnSpawn(stage)`, `LocationKey(stage)`); the score panel and `Home` know three kinds
+  of place: hub, world island, stage.
+- *Scene (Studio-only, `Workspace.World1`):* part-built stud island (radius 65, centre (-1126, 16, -250), same look as the hub:
+  grass disk, rock, cobblestone plaza and ring, hedge ring, invisible barrier ring, decor), a `Spawn` pad, five arches in an
+  arc (the three existing portals `TeleportToStage1..3` moved here to slots 2, 4, 5; slots 1 and 3 closed with "Coming soon"),
+  and a return gate to the hub opposite the arc.
+- *Hub:* `Workspace.StartLocation.GateWorld1` (1.25× arch, gate script) in place of Stage 2's old arch slot; the other old
+  stage arches are removed from the hub.
+- *Flows:* hub gate → island `Spawn`; stage return portals and Home from a stage → island; Home on the island and the island's
+  return gate → hub; Tutorial and garden unchanged. `HubPortalMedals` / `PortalBarriers` find portals through
+  `StageConfig.PortalFolder`; a new `HubGateFaces` client script draws stars x / 15 (existing stages only until S4.1 / S4.2)
+  and coins found x / y on the gate.
+- *Acceptance:* the three stages still unlock, teleport, time and pay as before (same bars / prices until S4); gate and island
+  teleports, Home and return portals all land in the right place with the camera facing the arc; stars and coins on the gate
+  follow medals and pickups; no script errors; `git status` clean after Argon sync with no duplicate instances. S4.1 Island Hop (stage 1); S4.2 Blink, the rhythm special (stage 3, with its music); the new display
 names and unlock chain switched on; challenge coins and a measured `T_base` for both.
 
 ### M6a — First live test + World 1 balancing
