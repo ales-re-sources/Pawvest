@@ -36,6 +36,28 @@ computes to 7.9 studs (a measured jump in M4 reached about 9); Double Jump reach
 separates "can" from "cannot" with a clear margin. The other two talents differ by 1–2 studs or 5 % of speed per level, too
 little for a fair hard gate (§6.1). The component kit (S3) measures a full reach table in a jump lab.
 
+### 1.0 Measured reach table (S3.3b jump lab, 2026-10-21)
+Measured in a Studio playtest on a flat runway (KitLab row 5): the character runs at full speed, jumps once at the same height
+and lands level; the extra jumps are Double Jump style `Jumping` state changes, timed by the better of two policies (at the
+apex, or as early as the 0.26 s gap allows). Values are root part positions in studs: **flat reach** = distance from take-off
+to landing, **rise** = highest point above the take-off. A crossable gap between two platforms is the flat reach minus about
+1–2 studs (the root stands slightly inside each edge).
+
+| Run Speed | Jump Height | Single jump: reach / rise | 1 air jump (Double Jump): reach / rise | 2 air jumps (Triple Jump): reach / rise |
+|---|---|---|---|---|
+| 0 (16.0) | 0 (power 50) | 8.3 / 7.3 | 14.7 / 14.5 | 20.5 / 22.0 |
+| 0 (16.0) | 3 (power 55.7) | 9.5 / 9.0 | 16.4 / 18.0 | 22.5 / 27.0 |
+| 3 (18.9) | 0 | 9.9 / 7.3 | 17.4 / 14.7 | 24.4 / 22.0 |
+| 3 (18.9) | 3 | 11.3 / 9.0 | 19.5 / 18.0 | 26.7 / 27.0 |
+| 5 (20.8) | 0 | 11.0 / 7.3 | 19.3 / 14.5 | 27.0 / 22.0 |
+| 5 (20.8) | 3 | 12.5 / 9.0 | 21.6 / 18.0 | 29.8 / 27.0 |
+
+Reading it for design: a single jump (rise 7.3–9.0) is cleanly separated from Double Jump (14.5–18.0); every Run Speed / Jump
+Height combination of a single jump stays below the Double Jump baseline (14.5 rise, 14.7 reach), so a "needs Double Jump"
+ledge of ≥ 10 studs or gap of ≥ 14 studs is a real gate (the figures above supersede the earlier estimates of about 12.7 /
+19 studs in §6.1). Triple Jump adds about 6 studs of reach and 7.5 of rise over Double Jump. Run Speed 5 gives +2.7 studs of
+single-jump reach, Jump Height 3 +1.7 studs of rise: the soft talents move numbers by 1–3 studs, as §6.1 assumes.
+
 ### 1.1 Studio survey findings (2026-10-21, read-only)
 - Place settings: `Players.RespawnTime` **3 s**, `CharacterAutoLoads` on, `StreamingEnabled` **off**; 2 441 parts in
   `Workspace` (each stage 250–320 parts including its decorated landing pad). 20 more stages add about
