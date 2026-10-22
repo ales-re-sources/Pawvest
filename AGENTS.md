@@ -166,10 +166,10 @@ Most of the 119 scripts are identical copies. Edit them consistently (grep by co
 
 | Count | Variant | Example |
 |---|---|---|
-| 31 | checkpoint → `CheckpointTouchHandler.OnTouched` | `Workspace/Stage1/1/C/Script.server.luau` |
-| 16 | kill on touch (`Humanoid.Health = 0`) | `Workspace/Stage3/Part_01/Script.server.luau` |
-| 8 | kill player on touch (debounced by `hit`) | `Workspace/Stage1/LaserStripStage/Part_01/…` |
-| 0 | ~~spinner~~: since S3.3c the Stage 1 spinners (`Workspace/Stage1/SpinnerStage_1` / `_2`) are kit parts: attributes `Kind = Spin`, `Speed = 60` (the old 2° per `wait()`), `Kill` on the two sweeper bars, `Carry = false` on the two spinning plates, tag `KitMover`, no scripts (the folders only hold `init.meta.json`; the hub pillars `Part_4/5`, `_2: Part_2/6` no longer rotate, their rotation was invisible) | – |
+| 31 | checkpoint → `CheckpointTouchHandler.OnTouched` | `Workspace/World1/Stage2/1/C/Script.server.luau` |
+| 16 | kill on touch (`Humanoid.Health = 0`) | `Workspace/World1/Stage5/Part_01/Script.server.luau` |
+| 8 | kill player on touch (debounced by `hit`) | `Workspace/World1/Stage2/LaserStripStage/Part_01/…` |
+| 0 | ~~spinner~~: since S3.3c the Stage 2 spinners (`Workspace/World1/Stage2/SpinnerStage_1` / `_2`) are kit parts: attributes `Kind = Spin`, `Speed = 60` (the old 2° per `wait()`), `Kill` on the two sweeper bars, `Carry = false` on the two spinning plates, tag `KitMover`, no scripts (the folders only hold `init.meta.json`; the hub pillars `Part_4/5`, `_2: Part_2/6` no longer rotate, their rotation was invisible) | – |
 | 7 | `TimerStart` (5 world stages, the Tutorial, the kit template) | `Workspace/Stage*/Gate/TimerStart/…`, `Workspace/Tutorial/LandingPad/TimerStart/…` |
 | 1 | `TeleportToSpawn` (Tutorial only since S4.0) | `Workspace/Tutorial/LandingPad/TeleportToSpawn/…` |
 | 6 | `GateExit` (5 stages + the kit template) | `Workspace/Stage*/Gate/GateExit/…` |
@@ -177,10 +177,10 @@ Most of the 119 scripts are identical copies. Edit them consistently (grep by co
 | 1 | hub portal `TeleportToTutorial` (the stage portals are gone since S4.0: the stages open through door gates) | `Workspace/StartLocation/TeleportToTutorial/…` |
 | 4 | world gate `GateWorld1`..`4` (find their world by the model name; refuse while the island folder is missing) | `Workspace/StartLocation/GateWorld*/Script.server.luau` |
 | 2 | `WorldStarsBoard` (world found by the folder name) | `Workspace/World*/WorldStarsBoard.server.luau` |
-| 4 | Top10Leaderboard | `Workspace/Stage1/Top10Leaderboard/Script…` |
+| 4 | Top10Leaderboard | `Workspace/World1/Stage2/Top10Leaderboard/Script…` |
 | 6 | `GateSign` | `Workspace/Stage*/Gate/GateSign.server.luau` |
-| 3 | ChoiceStage random safe `Step` | `Workspace/Stage1/ChoiceStage_*/Script…` |
-| 3 | bounce brick: declares `LAUNCH_SPEED` (attribute `LaunchSpeed` + tag `BounceBrick`; the launch is done by `BounceBricks.client`) — all 300 since the user's tuning (2026-10-21); `Bounce Brick_1`–`_3` are siblings | `Workspace/Stage2/12/Level 12/Bounce Brick_*` |
+| 3 | ChoiceStage random safe `Step` | `Workspace/World1/Stage2/ChoiceStage_*/Script…` |
+| 3 | bounce brick: declares `LAUNCH_SPEED` (attribute `LaunchSpeed` + tag `BounceBrick`; the launch is done by `BounceBricks.client`) — all 300 since the user's tuning (2026-10-21); `Bounce Brick_1`–`_3` are siblings | `Workspace/World1/Stage4/12/Level 12/Bounce Brick_*` |
 
 ## Networking & persistence
 
@@ -246,7 +246,7 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
   Clean up Studio-side duplicates only while Argon is disconnected.
 - Initial sync priority is **Client** (Studio overwrites files on connect): commit before connecting and check
   `git status` right after; files edited while disconnected are overwritten by Studio's copy.
-- `Workspace.Stage2` carries the Studio-only attribute `FallResetDepth = 70` (QuickRespawnClient's default is 30): the bounce bricks of Level 12 lie 46-61 studs below the plates, a smaller depth resets the player before they reach them. Set the attribute on a stage folder whenever a course has a catch or bounce surface far below its plates.
+- `Workspace.World1.Stage4` carries the Studio-only attribute `FallResetDepth = 70` (QuickRespawnClient's default is 30): the bounce bricks of Level 12 lie 46-61 studs below the plates, a smaller depth resets the player before they reach them. Set the attribute on a stage folder whenever a course has a catch or bounce surface far below its plates.
 - Studio playtests with API access read/write the **live** DataStores — snapshot and restore anything a test changes.
 - `CheckpointTouchHandler`'s `Sound`/`Orig` children exist only in Studio (`CheckpointClient` clones `Sound` on the client).
 - Checkpoint `Core` / `Beam` are authored in the "not reached" look; `CheckpointClient` reads that look once per pad and tweens to and
@@ -258,7 +258,7 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
 - **Moving a script container on disk recreates its Studio instance and drops its Studio-only children** (S4.0: `git mv` of
   `TeleportToStage1..3` into `World1/` deleted their `Arch` / `Portal`; rebuilt from the Tutorial portal). Reparent in Studio,
   keep a copy of the Studio-only children, and rebuild after the disk move.
-- `Workspace/Stage3/level.2` is a Model literally named `level.2` (dot in the name). Its checkpoint `level.2/26` (the plate between the four jump plates of `level.1` and the wrap-around floor, 11 studs from the last plate) was renamed from `21` on disk in S1.1; Argon recreated it as a default part at the origin and the 23-stud gap made Stage 5 impossible until it was rebuilt on 2026-10-22 (plate 16 x 1 x 12 at z 80.1, the Core / Beam copied from `Stage3/21`). Never rename a checkpoint folder on disk without redoing its Studio parts.
+- `Workspace/World1/Stage5/level.2` is a Model literally named `level.2` (dot in the name). Its checkpoint `level.2/26` (the plate between the four jump plates of `level.1` and the wrap-around floor, 11 studs from the last plate) was renamed from `21` on disk in S1.1; Argon recreated it as a default part at the origin and the 23-stud gap made Stage 5 impossible until it was rebuilt on 2026-10-22 (plate 16 x 1 x 12 at z 80.1, the Core / Beam copied from `Stage5/21`). Never rename a checkpoint folder on disk without redoing its Studio parts.
 - Decorations (H1) are clones from the Studio-only library `ServerStorage.DecorKit` (the "Stud pack V1" models: Tree1,
   Tree2, Flowers, Grass1/2, Rock, Bush, Wall, Shop, Leaderboard frame used for signs, StudPortal = template of the hub portal arches). Their stud textures are
   MaterialVariants in `MaterialService.StudPack` (`Studs`, `Inlets`, `Universal`…), looked up by name: keep that folder.
@@ -271,8 +271,8 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
   part (tag + `CoinId`) inside its stage folder. Coins have no Highlight (removed in M4.1: Roblox renders at most 31 at once and 29 coins would use nearly all).
 - Admins are listed once in `ReplicatedStorage.AdminConfig`; every admin remote must check `AdminConfig.IsAdmin`
   on the server (the client check only hides the panel). The RunSpeed/DoubleJump toggles are client-side debug tools.
-- Tutorial is unfinished but has a hub portal (`TeleportToTutorial`). Stage2, Stage3 and Tutorial landing pads are geometrically identical (offsets from Stage2: Stage3 x −52.2, z +0.2; Tutorial x −121.6);
-  Stage1's pad sits at hub height with its board at a different offset.
+- The Tutorial keeps its old-style `LandingPad` (floor, `StartGate`, `TimerStart`, return portal); the world stages have no landing pad since S4.0.
+- **ChoiceStage duplicates when moving scene parts:** the three `Step` parts of a ChoiceStage share one name; code that matches children by name (the "graft" of Studio-only parts into freshly synced script containers) overwrites the first one with the second. Move such children without matching.
 - Legacy APIs are common (`wait`, `spawn`, `:connect`, `findFirstChild`); prefer `task.*` and
   `Players:GetPlayerFromCharacter` in new code, but don't mass-rewrite without asking.
 
@@ -283,6 +283,7 @@ MCP `screen_capture` with a camera position leaves the Edit camera on `Scriptabl
 `workspace.CurrentCamera.CameraType = Enum.CameraType.Fixed` (Edit) so the user can move the viewport again.
 
 Multi-client: the user starts Test → Start Test Session → **Server and Clients** (F7), then Test → **Add Clients**.
+Studio MCP habits that cost time: `screen_capture` sometimes times out and the viewport then stays white until Studio is restarted (the data is still right: check geometry with `execute_luau`); do not leave a playtest running (`start_stop_play` false at the end of every test, `Edit` calls fail in Play mode); a `MoveTo` bot cannot walk on a kit mover (use `Humanoid:Move`); teleporting a character into a coin or trigger is flaky (walk onto it); a character may not be loaded right after `start_stop_play` (wait for `HumanoidRootPart`). Snapshot and restore recipe for the live DataStores: copy `PlayerProfiles` `user_<id>` into `TestSnapshots` (`profile_<id>`, plus the `MostStars` value) before a test, write it back after the playtest has stopped (the profile is saved again on shutdown), and remove the test's entries from `GlobalLeaderboardsStore`. Accounts: `Lekzdrh` (9892673032, the developer in Studio) and `AhojRupert` (769364524, another admin account).
 `list_roblox_studios` then shows one extra instance per client and one for the server (unnamed);
 `get_studio_state` tells them apart by the focused DataModel. Test users have UserIds −1, −2… and create
 `PlayerProfiles` records `user_-1`, `user_-2` — remove them afterwards.
