@@ -53,8 +53,8 @@ local function addPortalMedal(stage)
 	local attribute = StageConfig.MedalAttribute(stage)
 	local unlockedAttribute = StageConfig.UnlockedAttribute(stage)
 	local function refresh()
-		-- unearned stars: light on a portal / closed door, dark on the open door (black text there)
-		local light = portalLabel ~= nil or LocalPlayer:GetAttribute(unlockedAttribute) ~= true
+		-- unearned stars: light on a closed door (white text there), dark on a portal (black text) and on the open door
+		local light = portalLabel == nil and LocalPlayer:GetAttribute(unlockedAttribute) ~= true
 		label.Text = MedalText.Stars(LocalPlayer:GetAttribute(attribute) or 0, if light then UNEARNED else "#4A4A4A", if light then UNEARNED_TRANSPARENCY else 0)
 	end
 	LocalPlayer:GetAttributeChangedSignal(attribute):Connect(refresh)
