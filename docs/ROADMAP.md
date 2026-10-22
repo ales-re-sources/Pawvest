@@ -368,6 +368,9 @@ S4 tuning, third round: `TimerStart` of all six gates shrunk from 48 x 30 x 4 to
 the doors, on the wall top and through the doorway at four world gates and the Tutorial.
 S4 tuning, fourth round: the World 1 hub gate is shut until one of its stages is open (Bronze on the Tutorial or buying Stage 1): face shows the lock, local barrier + unlock popup, server refusal
 (`StageUnlocks.IsWorldOpen`, `HubGateLocks.client`); checked closed (blocked, popup, face) and open (walks through) in a playtest.
+S4 tuning, fifth round: the unlock popup is retired; a shut stage door and a shut world gate carry a ProximityPrompt ("Unlock · price", hold E; "Needs N Coins" when short) and a toast reports
+the result (`GatePrompts.client`, `StageUnlockPopup` deleted). Checked: world gate bought with 600 Coins ("World 1 unlocked!", barrier and prompt gone), a stage door without enough Coins ("Not enough Coins"),
+no popup when walking into a shut door.
 S4.2 Blink, the rhythm special (stage 3, shown "Stage 3"): **done: built, Studio-checked and visually approved by the user (2026-10-22).** Design and as-built values
 in STAGES 7.7 (metronome placeholder now and a Creator Store track later; the beat is per run, music follows the player's run time): a straight
 east lane at 120 BPM (count-in plates, beam rows, piston bridge, "drop the beat" finale), every timed part run-seeded, checkpoints 201-206, 8 coins (300),

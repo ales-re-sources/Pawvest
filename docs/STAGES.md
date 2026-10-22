@@ -396,7 +396,7 @@ levels later if Gold on Worlds 3–4 needs them (M6).
 - **The world gate shows progress** (face, like the stage portals): the world's **stars x / 15** (medals earned), the
   **challenge coins found x / y** across the world's stages, and its lock (requirement + price, §7.2). **A world's gate is shut until one of its stages is open** for the
   player (decided 2026-10-22, so nobody enters a courtyard of closed gates): World 1 opens with Bronze on the Tutorial or by buying Stage 1; the face shows the
-  lock (requirement + price), a local barrier fills the gate, touching it opens the unlock popup ("World 1 is locked", it unlocks Stage 1), and the server refuses the
+  lock (requirement + price), a local barrier fills the gate, a prompt on it ("Unlock · 500 Coins", hold E) buys Stage 1, which opens the world, and the server refuses the
   teleport. Worlds 2–4 open with their first stage under the world-stars rule of §7.2.
 - The stage return portal ("Hub") and the Home button lead to the stage's **world island** (`StageConfig.world` → world
   spawn), the Home button on a world island to the hub. The Tutorial (world 0) returns to the hub.
@@ -416,10 +416,10 @@ levels later if Gold on Worlds 3–4 needs them (M6).
     rotated 90 degrees about their gates (whole stage folders, every part's CFrame); Stage 3 stayed, the Tutorial pad was
     moved 70 studs north to clear the west lanes. The two future gates stand closed with a "Coming soon" sign.
   - *Door gates:* each gate is a stud gate (two pillars, beams, sign) with a wooden **door** that stays shut for a player while
-    the stage is locked (white text with stars / coins / lock lines on it, touching it opens the unlock popup); once the bar is
+    the stage is locked (white text with stars / coins / lock lines on it, a prompt on it, "Unlock · 1 000 Coins", buys the stage); once the bar is
     met or the stage bought, the door is a faint ghost with black text and the doorway is free. **Walking through starts the
     stage and the timer at once** (`TimerStart`, the server checks the unlock). Walking back out cancels the run (`GateExit`).
-  - *Tuning after the first walk-through (2026-10-22):* the unlock popup has no Close button and closes by itself 20 studs from the gate; **lane dividers**
+  - *Tuning after the first walk-through (2026-10-22):* the unlock popup was first made to close by itself 20 studs from the gate, then **replaced by gate prompts** (a ProximityPrompt on each shut door and on a shut world gate, plus a toast; `GatePrompts`); **lane dividers**
     (`Workspace.LaneDividers`, glass panes between Island Hop / Stage 2 and Blink / Stage 4) stop players hopping between neighbouring lanes (Island Hop's plate 105 lay
     19 studs from Stage 2's lava section, within Double Jump + Run Speed reach) and walking along the courtyard wall top from one lane to the next;
     **getting around a gate stays possible** (over the wall, or around a locked door): the timer does not start, finish rewards and times do not count, Coins

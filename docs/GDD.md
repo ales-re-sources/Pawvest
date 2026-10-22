@@ -80,7 +80,7 @@ Prices follow `price(n) ≈ medal total of stage n−1, rounded to 500` (stage 1
 stages so players never see a gap in the numbering; nothing is live yet, so no grandfather rule is needed if this lands
 **before the first live test**.
 
-**Required talents** are shown, never enforced: the hub portal and the unlock popup list "Needs: …", arriving without a
+**Required talents** are shown, never enforced: the gate face lists "Needs: …" (the unlock popup of M3 was replaced by a prompt on the gate), arriving without a
 required talent shows a warning with a button to the Skills panel, and entry stays open. The course geometry is the real gate.
 
 **Checkpoints** (H2) are square stud plates (16 × 12) across the course with a small green tile in the middle. Only the
