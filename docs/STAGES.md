@@ -563,8 +563,8 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
 
 ### 7.8 S5 Worlds hub (design check 2026-10-22; decisions with the user)
 - **Hub gates:** the hub gets the gates of Worlds 2, 3 and 4 next to `GateWorld1`: clones of `GateWorld1` (1.25x stud arch, `Portal` with its name
-  label, `PointLight`, the gate script) on the same circle round the plaza centre (radius about 44) at 30, 60 and 90 degrees from World 1's gate
-  (positive side, away from the stars board), facing the plaza. Models `GateWorld2`..`GateWorld4` (script files copied on disk, Argon creates the
+  label, `PointLight`, the gate script) on the same circle round the plaza centre (radius about 44) at 90 / 60 / 30 / 0 degrees for Worlds 1 / 2 / 3 / 4 (positive side, away from the stars board;
+  Tutorial at 142 degrees), facing the plaza: reading from the Tutorial gate the worlds run 1, 2, 3, 4 (user decision 2026-10-22). Models `GateWorld2`..`GateWorld4` (script files copied on disk, Argon creates the
   bare models, the Studio-only children are cloned in).
 - **"Coming soon" (decided):** `StageConfig.Worlds[n].soon = true` for Worlds 2-4 until their stages exist (S6 flips World 2's flag, S7/S9 Worlds
   3 and 4). A soon world has no stages in `StageConfig`: its gate is shut for normal players (local barrier, the server refuses the teleport) and
