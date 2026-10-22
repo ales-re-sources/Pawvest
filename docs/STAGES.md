@@ -665,6 +665,9 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   - *Ceiling:* an invisible part over each maze at the walls' top (y + 16) holds every talent; a baseline single jump (root rise 6.2) does not clear a 9.5 hedge, a Double Jump under the ceiling does (rise 11.3), so does a single jump with Jump Height 3 (9.4: soft).
   - *Camera:* a `CameraZone` per maze (`Iso`, Yaw 90 = looking along the course, Pitch 60, Fov 25, Distance 180 / 230) and a `KitGhostZone` over each.
   - *Coins:* two in dead ends of the small maze, five in dead ends of the big one (the two deepest are the risky ones), the talent coin on a 3 x 3 pillar 17 studs beside `E` (beyond a baseline Double Jump).
+  - *After the user's first look:* (a) checkpoint `702` (z 527) was an easy Double Jump from Stage 8's sweeper pads (z 516): a glass lane divider `LaneDividers.World2West` (z 523.5, x -1000..-431.5, y 2..170, like World 1's) plus
+    `World2West_WallTop` over the courtyard wall now separates the Stage 8 / Stage 9 lanes (a running single and double jump from Stage 8 stop at it); (b) the walls overlapped the crossing walls by half a stud, so a shifting wall's end
+    showed through a grey wall's face (shared plane): every wall is now 8.9 long and ends inside a 1.3 x 16 x 1.3 grey corner post (`Post_n`) at each joint.
 
 ## 8. Milestones (agreed 2026-10-21; status and full scopes in [ROADMAP.md](ROADMAP.md))
 Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.
