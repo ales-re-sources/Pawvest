@@ -10,6 +10,9 @@
 --                      Back s (retract time), Telegraph s (the part tints to WarnColor before it strikes), Phase
 --               Swing  pendulum: Hinge "Z" (default) or "X", Angle deg, Period, Phase; hangs from the part's top (Pivot
 --                      Vector3 offset from the part centre overrides)
+--               Flip   flipper plate: rests, then turns 180 degrees about its centre (Hinge "X" (default) or "Z") in Turn s
+--                      (default 0.5) at the end of every half Period, so it flips over and back once per Period; tints to
+--                      WarnColor for Telegraph s (default 0.8) before, and is not solid while it turns (the rider drops), Phase
 --             Optional on any mover: Kill (touching it kills), Push studs/s (touching it knocks the character back along
 --             the part's motion, PushLift studs/s upward, default 25), AirCarry s (how long a jump off keeps following it), Carry = false (the
 --             character standing on it is not carried, e.g. a spinning plate you have to stay on by running against it).
@@ -202,6 +205,10 @@ local function moverFrame(part: BasePart, data, now: number): (CFrame, string)
 		local angle = math.rad(KitMath.Swing(now, period, phase, attr(part, "Angle", 45)))
 		local rotation = if attr(part, "Hinge", "Z") == "X" then CFrame.Angles(angle, 0, 0) else CFrame.Angles(0, 0, angle)
 		return data.base * CFrame.new(pivot) * rotation * CFrame.new(-pivot), "on"
+	elseif kind == "Flip" then
+		local degrees, state = KitMath.Flip(now, period, phase, attr(part, "Turn", 0.5), attr(part, "Telegraph", 0.8))
+		local angle = math.rad(degrees)
+		return data.base * (if attr(part, "Hinge", "X") == "Z" then CFrame.Angles(0, 0, angle) else CFrame.Angles(angle, 0, 0)), state
 	end
 	return data.base + axis.Unit * attr(part, "Amplitude", 10) * KitMath.Sine(now, period, phase), "on"
 end
@@ -255,8 +262,12 @@ RunService.PreSimulation:Connect(function(dt: number)
 		part.CFrame = frame
 		if state ~= data.state then
 			data.state = state
-			if attr(part, "Kind", "Slide") == "Piston" then
+			local kind = attr(part, "Kind", "Slide")
+			if kind == "Piston" or kind == "Flip" then
 				part.Color = if state == "warning" then attr(part, "WarnColor", WARN_COLOR) else data.color
+			end
+			if kind == "Flip" then
+				part.CanCollide = state ~= "on"
 			end
 		end
 	end
@@ -417,7 +428,8 @@ RunService.PreSimulation:Connect(function(dt: number)
 	end
 
 	-- carry: grounded on a mover → apply its frame delta; remember the point velocity for the jump off
-	local carriedBy = if standing and grounded and attr(standing, "Carry", true) then movers[standing] else nil
+	-- a mover that is not solid (a turning flipper) carries nobody
+	local carriedBy = if standing and grounded and standing.CanCollide and attr(standing, "Carry", true) then movers[standing] else nil
 	if carriedBy then
 		local before = root.Position
 		root.CFrame = carriedBy.delta * root.CFrame

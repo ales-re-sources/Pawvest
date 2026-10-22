@@ -140,6 +140,19 @@ StageConfig.Stages = {
 		unlockPrice = 3000,
 		rewardFactor = 2.25,
 	},
+	{
+		key = "Stage8", -- Turntable: turntables, sweeper bars, flippers, flat windmills
+		displayName = "Stage 8",
+		folder = "Stage8",
+		order = 8,
+		world = 2,
+		requires = { { id = "DoubleJump", level = 1 } },
+		tBase = 105,
+		tiers = StageConfig.DefaultTiers,
+		unlock = { stage = "Stage7", medal = "Bronze" },
+		unlockPrice = 3000,
+		rewardFactor = 2.5,
+	},
 }
 
 -- Worlds (docs/STAGES.md §7.1): `stage.world` 1..n; a world is a courtyard in Workspace.<folder> (plaza, wall, return portal)

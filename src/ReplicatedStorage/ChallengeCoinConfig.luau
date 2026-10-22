@@ -76,6 +76,14 @@ ChallengeCoinConfig.Coins = {
 	{ id = "Stage7_6", stage = "Stage7", tier = "Risky" },
 	{ id = "Stage7_7", stage = "Stage7", tier = "Risky" },
 	{ id = "Stage7_8", stage = "Stage7", tier = "Talent" },
+	{ id = "Stage8_1", stage = "Stage8", tier = "Easy" },
+	{ id = "Stage8_2", stage = "Stage8", tier = "Easy" },
+	{ id = "Stage8_3", stage = "Stage8", tier = "Easy" },
+	{ id = "Stage8_4", stage = "Stage8", tier = "Easy" },
+	{ id = "Stage8_5", stage = "Stage8", tier = "Easy" },
+	{ id = "Stage8_6", stage = "Stage8", tier = "Risky" },
+	{ id = "Stage8_7", stage = "Stage8", tier = "Risky" },
+	{ id = "Stage8_8", stage = "Stage8", tier = "Talent" },
 }
 
 ChallengeCoinConfig.ById = {}

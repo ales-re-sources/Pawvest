@@ -97,6 +97,21 @@ function KitMath.Piston(now: number, period: number, duty: number, phase: number
 	return extension, KitMath.Window(now, period, duty, phase, telegraph)
 end
 
+-- Flipper: rests flat, then turns 180 degrees in the last `turn` seconds of each half cycle (so it flips over and back once
+-- per `period`). Returns the angle in degrees (0..360) and "on" while it turns, "warning" for the `telegraph` seconds
+-- before, "off" while it rests.
+function KitMath.Flip(now: number, period: number, phase: number, turn: number, telegraph: number): (number, string)
+	local half = period / 2
+	local t = KitMath.Cycle(now, period, phase) * period
+	local flips = if t >= half then 1 else 0
+	local into = t - flips * half
+	local restEnd = half - turn
+	if into >= restEnd then
+		return 180 * (flips + smooth((into - restEnd) / turn)), "on"
+	end
+	return 180 * flips, if restEnd - into <= telegraph then "warning" else "off"
+end
+
 -- Pendulum angle in degrees.
 function KitMath.Swing(now: number, period: number, phase: number, amplitude: number): number
 	return amplitude * KitMath.Sine(now, period, phase)

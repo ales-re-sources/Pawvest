@@ -428,7 +428,17 @@ A measured `T_base` for both new stages comes in M6a.
   - *Wind made visible (user request):* `KitZones.client` gives every wind zone a local `WindParticles` emitter (streaks along Push, rate following the gust; checked: rates pulse with the gusts of Stage 7, opposed gusts alternate); the look itself is unchecked.
   - *Not checked:* the look (the Studio viewport renders white in these sessions), real T_base, human difficulty of the lift / slider timing and the tilt plates (M6b), lane dividers between the Stage 6 and Stage 7 lanes and over the wall top (not built: the lanes are
     about 30 studs apart and diverge; a World 1 style glass divider can follow if the user asks), the Top-10 boards' spots next to the gates.
-- **S6.2 Turntable + Labyrinth** and **S6.3 Clocktower:** scoped when they start (STAGES §4, §5.2).
+- **S6.2 Turntable + Labyrinth (design check done 2026-10-22; decisions: a new kit kind Flip for flippers, Labyrinth = a small teaching maze + a big maze, no guards).**
+  Gates for stages 8 (west near) and 9 (west far), `StageConfig` entries `Stage8` / `Stage9` (T_base 105 / 105, factors 2.5 / 2.75, Bronze on the previous stage or 3 000 / 3 500), coins `Stage8_1..8`,
+  `Stage9_1..8`, checkpoints `601`-, `701`-; `SoonGate8` / `SoonGate9` replaced by the real gates; courses as in STAGES §7.9.
+  - *Acceptance checks:* the gates start the timers, a baseline bot with one air jump crosses every leg (turntables, sweeper pads, both flipper rows, the flat windmills, the Double Jump ledges, the
+    finale turntable with its sweeper, the crumbling plates; the maze through every layout change), a player lingering on a flipper drops, finish -> `Arrival`, payout and medal; no script errors; the user's visual check.
+  - *Stage 8 as built:* STAGES §7.9; `KitMover` Kind `Flip` (`KitMath.Flip`; tints before, not solid while it turns, a turning flipper carries nobody).
+  - *Stage 8 checked in a playtest (developer profile; snapshot restored, `leaderboard_Stage8` / `WorldStars_2` removed, MostStars back to 5):* buying Stage 8 (3 000) opens the gate, the gate starts the timer, a client bot
+    crossed the whole course at baseline with one air jump and finished in 58.6 s (including the pauses between test calls): Gold, 3 500 Coins + 250 run reward (factor 2.5), free egg; per leg: turntables 5/5, sweeper pads by
+    waiting in a corner and crossing when the bar turns away 4/4, flippers 2/2 (row 1) and 4/4 (row 2 after its wave was turned to follow the player; 2/3 before), a bot standing on a flipper drops when it turns, windmills 3/3,
+    the finale sweeper jumped by a naive reacting bot 4/5 at -45 deg/s (2/4 at -60); no script errors.
+- **S6.3 Clocktower:** scoped when it starts (STAGES §4).
 
 ### M6a — First live test + World 1 balancing
 The first live test (open checks below) with 6 stages, then M6 for World 1 (scope in "M6 — Balancing pass" below).

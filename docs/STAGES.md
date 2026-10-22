@@ -635,6 +635,17 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
 - **Checks (done in S6.1):** a client bot (`Humanoid:Move` on RenderStepped with the control module disabled) crossed every leg of both courses at baseline Run Speed with one air jump, including the lift, the sliders (jumping
   when the gap is closing) and the tilt / crumble plates, the wind and the finale; the lift and slider timing is tight for a bot but fair for a player. A bot is not a human: M6b re-checks every margin.
 - **Not in S6.1:** Stages 8-10 (S6.2 / S6.3), bonus portals, World 3.
+- **S6.2 design check (2026-10-22):** Turntable gets **flippers** as a new kit kind (`KitMover` Kind `Flip`: rests, tints to `WarnColor` for `Telegraph` s, turns 180 degrees about its centre in `Turn` s at the end of every half
+  `Period` and is not solid while it turns, so the rider drops); the Labyrinth is **a small teaching maze followed by a big maze**, **no guards**.
+- **S6.2 Stage 8 Turntable as built** (key `Stage8`, west near gate (x -431.7, z 505), course west, plate centres at `u` studs from the first plate `601` at x -438, so x = -438 - u; surface y 78.5; the gate, board, `Arrival`,
+  finish and checkpoints are Stage 6's rotated 180 degrees about (-375, 505); every mover is run-seeded): (1) three 16 x 16 **turntables** (`Turn1..3`, 30 / -40 / 35 deg/s, on 4 x 4 axle columns) with a rest pillar, gaps of 6 when
+  flat (the corners come closer), checkpoint `602` at 100; (2) two 22 x 22 **sweeper pads** (`Pad1` / `Pad2` columns) with a 22-stud kill bar each (`Sweep1` 60, `Sweep2` -80 deg/s, 1.5 high, 0.5 over the floor, not solid): the
+  centre is always swept, the pad corners are the safe spots, crossing along an edge when the bar turns away or jumping the bar, checkpoint `603` at 170; (3) five 8 x 8 **flippers** (`Flip1..5`, period 6, turn 0.5, telegraph 0.8, each
+  0.6 s ahead of the one behind it) with gaps of 5 and a Double Jump gap of 12 to checkpoint `604` (259); (4) two **flat windmills** (`Mill1` / `Mill2`: crosses of two 5 x 28 arms, 25 / -25 deg/s, tips 3 apart and 3 from the rest pillars
+  when an arm lines up with the course, every 3.6 s): ride an arm, wait at the hub, walk out about 0.9 s before the next line-up; checkpoint `605` (364); (5) two Double Jump ledges (h 11 / 22) and the **finale turntable** (`Turn4`, 20 x 20, 30 deg/s,
+  h 22) under a counter-turning 18-stud sweeper (`Sweep3`, -45 deg/s: the corners stay clear), checkpoint `606` (432, h 22); (6) four fast flippers (`FlipB1..4`, period 4, turn 0.4, each 0.75 s *after* the one before it, so a steady
+  runner follows the wave), three crumbling plates and the 16 x 16 finish island (h 14, 6 gap, drop 8) with the portal at `u` 542. About 550 studs. Flipper axles are not solid (a dropped player falls past them). Coins: five easy (side
+  pillars, the pad edge, the crumble row), two risky (over `Mill2`'s far tip, the finale turntable's rim), one talent coin 23 studs over ledge `L2` (beyond a baseline Double Jump).
 
 ## 8. Milestones (agreed 2026-10-21; status and full scopes in [ROADMAP.md](ROADMAP.md))
 Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.
