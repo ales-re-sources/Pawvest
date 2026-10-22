@@ -195,7 +195,7 @@ fall reset to the current checkpoint. A server script does all respawns (`Charac
 
 ### S3 — Obstacle kit + jump lab
 **S3.1 scope (agreed 2026-10-21):** a throw-away-or-keep spike that decides GO / NO-GO for the client-driven kit (STAGES §2.4).
-- **Lab:** Studio-only `Workspace.KitLab` at (-700, 16, 450) (free area, sea below as kill floor; no hub portal, reached by
+- **Lab:** Studio-only `Workspace.KitLab` at (547, 16, -475) (moved there from (-700, 16, 450) in S6.2, where World 2's west lanes now run; free area, sea below as kill floor; no hub portal, reached by
   teleport in tests; grows into the S3.3 jump lab). Three stations on one grass slab with a spawn pad.
 - **Code:** one client script `ObstacleKit.client.luau` (tags `KitMover`, `KitTilt`, `KitBeam`; behaviour from attributes), no
   server scripts besides what `RespawnService` already does.
@@ -300,7 +300,7 @@ Code: `ObstacleKit.client.luau` (the spike is already the kit core); lab: `Works
 
 **S3.3b result (2026-10-21, awaits the user's visual check):** `KitGhosts.client.luau` (ghost zones),
 `ServerStorage.StageKit.Obstacles` (28 templates: movers, hazards, plates, switches, zones, camera zones, ghost zone,
-run-seeded samples, pendulum rig), and the jump lab: KitLab row 5 (z≈690) has a gap ladder (gaps 6-24 studs, labelled) and a
+run-seeded samples, pendulum rig), and the jump lab: KitLab row 5 (z≈-235 since the move) has a gap ladder (gaps 6-24 studs, labelled) and a
 height ladder (+1 to +16 studs); the reach table is measured and recorded in STAGES §1.0 (single jump 8.3-12.5 reach /
 7.3-9.0 rise, Double Jump 14.7-21.6 / 14.5-18.0, Triple Jump 20.5-29.8 / 22.0-27.0). Ghost drawing, checked with the F7 two-client
 run (2026-10-21): a player inside the ghost zone is seen at transparency 0.65 by the other client (0.00 for the player
