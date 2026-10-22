@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local ChallengeCoinConfig = require(ReplicatedStorage:WaitForChild("ChallengeCoinConfig"))
 local MedalText = require(ReplicatedStorage:WaitForChild("MedalText"))
+local PortalFaceStyle = require(ReplicatedStorage:WaitForChild("PortalFaceStyle"))
 
 local LocalPlayer = Players.LocalPlayer
 local playerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -36,11 +37,9 @@ local function addGate(world)
 		label.Position = UDim2.fromScale(0.5, y)
 		label.Size = LINE_SIZE
 		label.BackgroundTransparency = 1
-		label.Font = Enum.Font.GothamBold
+		PortalFaceStyle.Apply(label)
 		label.TextScaled = true
 		label.RichText = true
-		label.TextStrokeTransparency = 0.4
-		label.TextColor3 = Color3.new(1, 1, 1)
 		label.Parent = surface
 		return label
 	end

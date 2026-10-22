@@ -9,6 +9,7 @@ local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local MedalText = require(ReplicatedStorage:WaitForChild("MedalText"))
 local ChallengeCoinConfig = require(ReplicatedStorage:WaitForChild("ChallengeCoinConfig"))
 local TalentConfig = require(ReplicatedStorage:WaitForChild("TalentConfig"))
+local PortalFaceStyle = require(ReplicatedStorage:WaitForChild("PortalFaceStyle"))
 
 local LocalPlayer = Players.LocalPlayer
 local playerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -44,10 +45,9 @@ local function addPortalMedal(stage)
 	label.Position = UDim2.fromScale(0.5, 0.4 + shift)
 	label.Size = UDim2.fromScale(0.7, 0.1)
 	label.BackgroundTransparency = 1
-	label.Font = Enum.Font.GothamBold
+	PortalFaceStyle.Apply(label) -- white with a black outline; the door faces override it per state in layout()
 	label.TextScaled = true
 	label.RichText = true
-	label.TextStrokeTransparency = 0.4
 	label.Parent = surface
 
 	local attribute = StageConfig.MedalAttribute(stage)

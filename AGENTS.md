@@ -47,6 +47,7 @@ src/
     KitMath.luau                      obstacle kit timing maths (pure): Cycle, Window (beam on / warning / off), Plate, Lift, Piston, Sine, Swing, Gust, TimeBase (server time or run time); every client derives the same phase from workspace:GetServerTimeNow()
     TimeFormat.luau                   tenths rounding, "mm:ss.t" and short "m:ss" formatting
     MedalText.luau                    rich text for stars, medal limits and the timer's medal target
+    PortalFaceStyle.luau              text style of the lines on hub portal / gate faces (white, dark-navy outline like the portal's name label): Apply(label); used by HubPortalMedals (portals) and HubGateFaces; a new hub portal gets the same look by using it (door faces keep their own closed / open colours)
     AdminConfig.luau                  admin UserIds + IsAdmin (client UI gating and server checks)
     ChallengeCoinConfig.luau          challenge coins: tier values (20 / 50 / 100), coin list (id, stage, tier), Found x/y, Encode/Decode of the CollectedCoins attribute
     TalentConfig.luau                 talents (Run Speed, Double Jump, Jump Height, Quick Respawn): costs, optional per-level effect text, effect helpers (RespawnDelay, HasFallReset), Talent_<id> attribute names
