@@ -374,6 +374,8 @@ no popup when walking into a shut door.
 S4 tuning, sixth round: Island Hop's price went 500 -> removed -> **200 Coins** (user decision: a small price may help later monetization; a player without a Tutorial medal can earn at most 120 Coins, so for new
 players Bronze on the Tutorial stays the only path).
 S4 tuning, seventh round: the status lines on the Tutorial portal were dark text while the World 1 gate's were white; both hub portals now share `PortalFaceStyle` (user's choice after a first try with white: the name stays white with a dark outline, every status line is black with a white outline).
+S4 restyle (2026-10-22, started): the stage end portals of all six stages (Tutorial, Stages 1-5) now use the stud-stone arch portal of the hub (labelled "Finish"); Studio-checked: walking
+into the finish of Blink, Island Hop, Stage 2 and Stage 5 returns to the arrival point (Stage 4's and the Tutorial's end are reached by climbing, unchanged). Restyling the original stages' course parts follows one stage at a time.
 S4.2 Blink, the rhythm special (stage 3, shown "Stage 3"): **done: built, Studio-checked and visually approved by the user (2026-10-22).** Design and as-built values
 in STAGES 7.7 (metronome placeholder now and a Creator Store track later; the beat is per run, music follows the player's run time): a straight
 east lane at 120 BPM (count-in plates, beam rows, piston bridge, "drop the beat" finale), every timed part run-seeded, checkpoints 201-206, 8 coins (300),
