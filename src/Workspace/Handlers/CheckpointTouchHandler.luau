@@ -4,6 +4,9 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
 
+local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
+local TimerHandler = require(script.Parent.PlayerTimerHandler)
+
 -- server -> client (part, first): the player's checkpoint (respawn point) is now that part; CheckpointClient lights its pad
 -- (and turns the previous one off) for that player only and plays script.Sound when `first` (first time in the run)
 local reachedEvent = Instance.new("RemoteEvent")
@@ -15,6 +18,13 @@ local resetEvent = Instance.new("RemoteEvent")
 resetEvent.Name = "CheckpointsReset"
 resetEvent.Parent = ReplicatedStorage
 
+-- server -> client (stageKey): the player reached a checkpoint of a stage while no timer runs for it (they got in around the
+-- gate, e.g. over the courtyard wall): StageExploreWarning tells them this run is not timed
+local exploreEvent = Instance.new("RemoteEvent")
+exploreEvent.Name = "ExploreWarning"
+exploreEvent.Parent = ReplicatedStorage
+
+local explored = {} -- [Player] = stage key already warned about (until a run starts or another stage's checkpoint is reached)
 local lastCheckpoints = {} -- [Player] = last checkpoint part touched (respawn point; skips the work on repeated touches)
 local reached = {} -- [Player] = { [checkpoint part] = true } reached in the current run: the sound plays once per run
 local firstOfStage = {} -- [stage folder] = C part of its lowest-numbered checkpoint (cache)
@@ -22,11 +32,13 @@ local firstOfStage = {} -- [stage folder] = C part of its lowest-numbered checkp
 Players.PlayerRemoving:Connect(function(player)
 	lastCheckpoints[player] = nil
 	reached[player] = nil
+	explored[player] = nil
 end)
 
 -- A new run starts (TimerStart): every checkpoint plays its sound and its pad animation again when reached
 function module.NewRun(player)
 	reached[player] = nil
+	explored[player] = nil
 	lastCheckpoints[player] = nil -- so the first checkpoint lights again even if it was the last one before
 	resetEvent:FireClient(player)
 end
@@ -67,6 +79,16 @@ function module.OnTouched(part, hit)
 	part = resolve(part)
 	if lastCheckpoints[player] ~= part then
 		lastCheckpoints[player] = part
+
+		-- a stage's checkpoint without a running timer for that stage: an exploring run (warn once per stage)
+		local found, stage = pcall(StageConfig.ForInstance, part)
+		if found then
+			local _, runningKey = TimerHandler.GetTimer(player)
+			if runningKey ~= stage.key and explored[player] ~= stage.key then
+				explored[player] = stage.key
+				exploreEvent:FireClient(player, stage.key)
+			end
+		end
 
 		-- the pad follows the respawn point (also back to an earlier checkpoint); the sound only on the first reach in this run
 		local seen = reached[player]

@@ -417,6 +417,11 @@ levels later if Gold on Worlds 3–4 needs them (M6).
     the stage is locked (white text with stars / coins / lock lines on it, touching it opens the unlock popup); once the bar is
     met or the stage bought, the door is a faint ghost with black text and the doorway is free. **Walking through starts the
     stage and the timer at once** (`TimerStart`, the server checks the unlock). Walking back out cancels the run (`GateExit`).
+  - *Tuning after the first walk-through (2026-10-22):* the unlock popup has no Close button and closes by itself 20 studs from the gate; **lane dividers**
+    (`Workspace.LaneDividers`, glass panes between Island Hop / Stage 2 and Blink / Stage 4) stop players hopping between neighbouring lanes (Island Hop's plate 105 lay
+    19 studs from Stage 2's lava section, within Double Jump + Run Speed reach) and walking along the courtyard wall top from one lane to the next;
+    **getting around a gate stays possible** (over the wall, or around a locked door): the timer does not start, finish rewards and times do not count, Coins
+    do, and the first checkpoint reached without a timer shows the banner "Exploring Stage N without a timer ... at your own risk" (`StageExploreWarning`).
   - *LandingPad broken down:* the old pad object is gone for world stages: each stage folder holds `Gate` (door gate with
     `TimerStart`, `GateExit`, `GateSign`), `Top10Leaderboard` (standing in the courtyard beside the gate) and `Arrival` (where
     finish and Home land, in front of the gate); the plaza replaces the pad floor, decor and rock.

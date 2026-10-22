@@ -1,9 +1,11 @@
 -- Unlock popup (docs/GDD.md §3): opens when the server reports a touch on a locked hub portal (UnlockRemotes.Locked).
 -- Shows the bar (required medal) and the Coin price; the button only asks the server to unlock (stageKey), the server
--- prices and decides everything. The GUI is built here, not in Studio.
+-- prices and decides everything. The GUI is built here, not in Studio. There is no Close button: the popup closes by itself
+-- when the player walks away from the gate (CLOSE_DISTANCE studs, measured to the gate's door / portal face).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local MedalText = require(ReplicatedStorage:WaitForChild("MedalText"))
@@ -16,6 +18,7 @@ local lockedEvent = remotes:WaitForChild("Locked")
 local player = Players.LocalPlayer
 
 local CLOSE_AFTER_UNLOCK = 3 -- seconds
+local CLOSE_DISTANCE = 20 -- studs (horizontal) from the gate's face before the popup closes
 local COLOR_PANEL = Color3.fromRGB(32, 32, 32)
 local COLOR_BUY = Color3.fromRGB(60, 170, 70)
 local COLOR_LOCKED = Color3.fromRGB(110, 110, 110)
@@ -73,8 +76,6 @@ local needsLabel = line("Needs", 3, 16, Color3.new(1, 1, 1))
 local orLabel = line("Or", 4, 16, COLOR_INFO)
 local buyButton = button("Unlock", 5, COLOR_BUY)
 local infoLabel = line("Info", 6, 14, COLOR_INFO)
-local closeButton = button("Close", 7, COLOR_LOCKED)
-closeButton.Text = "Close"
 
 local panel = create("Frame", {
 	Name = "Panel",
@@ -98,7 +99,6 @@ local panel = create("Frame", {
 	orLabel,
 	buyButton,
 	infoLabel,
-	closeButton,
 })
 
 local screenGui = create("ScreenGui", {
@@ -109,12 +109,14 @@ local screenGui = create("ScreenGui", {
 }, { panel })
 
 local current = nil -- stage shown in the popup
+local currentFace: BasePart? = nil -- the gate face the player has to stay near
 local coins = 0
 local showGeneration = 0
 
 local function hide()
 	showGeneration += 1
 	current = nil
+	currentFace = nil
 	screenGui.Enabled = false
 end
 
@@ -149,6 +151,7 @@ end
 
 local function show(stage)
 	current = stage
+	currentFace = StageConfig.FaceTarget(stage)
 	showGeneration += 1
 	setInfo(string.format("You have %d Coins", coins), COLOR_INFO)
 	refresh()
@@ -160,7 +163,23 @@ buyButton.Activated:Connect(function()
 		buyEvent:FireServer(current.key)
 	end
 end)
-closeButton.Activated:Connect(hide)
+
+-- walking away from the gate closes the popup
+RunService.Heartbeat:Connect(function()
+	local face = currentFace
+	if not face then
+		return
+	end
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if not root then
+		return
+	end
+	local offset = root.Position - face.Position
+	if Vector3.new(offset.X, 0, offset.Z).Magnitude > CLOSE_DISTANCE then
+		hide()
+	end
+end)
 
 -- GateDoors (a locked door gate was touched) asks for the popup through this player attribute (a stage key)
 player:GetAttributeChangedSignal("OpenUnlockPopup"):Connect(function()

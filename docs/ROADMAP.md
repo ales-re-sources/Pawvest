@@ -357,6 +357,10 @@ bar switched to Bronze on Island Hop / 1 000. New: `KitConveyors.server.luau` (t
 - *Not checked:* real `T_base` (52 s provisional) and the difficulty of the 3 x 3 pillar legs (M6a).
 - *Follow-up from the user's check:* Stage 2 folder (`Stage2`, key `"Stage 2"`, shown Stage 4): the Quick Respawn fall reset (30 studs below the plate) sent players back before they reached the bounce bricks of Level 12 (tops 46-61, the plates 107 high); the folder attribute `FallResetDepth = 70` (Studio-only) puts the reset below the lowest brick (limit 37).
 - *Lesson:* Argon does not sync instances / scripts created through the MCP to disk (AGENTS.md "Adding a world stage").
+S4 tuning (2026-10-22, user's walk-through): unlock popup closes itself when the player walks away from the gate (no Close button); glass lane dividers between Island Hop / Stage 2 and
+Blink / Stage 4 (also over the courtyard wall top); an exploring-run banner when a checkpoint is reached without a timer (getting around a gate stays allowed: no timer, no
+medal or finish reward, Coins count). Studio-checked (popup closes at 20 studs, the panes stop walking and 5-air-jump attempts on the wall top, the banner appears for a locked
+stage and for a bypassed unlocked one and disappears when a timed run starts).
 S4.2 Blink, the rhythm special (stage 3, shown "Stage 3"): **done: built, Studio-checked and visually approved by the user (2026-10-22).** Design and as-built values
 in STAGES 7.7 (metronome placeholder now and a Creator Store track later; the beat is per run, music follows the player's run time): a straight
 east lane at 120 BPM (count-in plates, beam rows, piston bridge, "drop the beat" finale), every timed part run-seeded, checkpoints 201-206, 8 coins (300),
