@@ -441,6 +441,12 @@ A measured `T_base` for both new stages comes in M6a.
   - *Made harder after the user's first run (too easy):* kicker paddle on `Turn1`, spinning planks instead of `Turn2` / `Turn3`, faster sweepers / windmills / flippers (STAGES §7.9); kit: `PushTime`, knock-back along the
     mover's local motion. Bot (developer talents Run Speed 3 / Jump Height 3): Turn1 with the paddle 4/5, the planks 2/3 with the right timing and failing when leaving 2 s early, sweeper pads 5/6, flipper rows 2/2 and 3/3,
     windmills 3/3, the finale sweeper 3/5 at -55 deg/s (2/4 at -60). Not re-run as one timed run.
+  - *Stage 9 as built:* STAGES §7.9 (mazes, `KitMaze.client`, layouts, ceiling, camera); `Stage9` in `StageConfig`, coins `Stage9_1..8`, `SoonGate9` replaced.
+  - *Stage 9 checked in a playtest (developer profile; snapshot `profile_9892673032_s9` restored, `leaderboard_Stage9` removed, star boards restored):* walls swap every 8 / 6 s with the glow line and the flash before;
+    a character standing on a rising wall's line ends 2.3 studs clear of it; the iso camera switches on inside the big maze; a maze-solving bot (re-planning on the live walls every 0.25 s) crossed the small maze in 8-14 s and the big one in
+    18.5-20 s; a baseline single jump is stopped by a hedge, a Double Jump crosses it; a timed run from the gate finished through the portal (187.9 s with a stuck bot and pauses, no medal; the result popup data and
+    pet XP arrived); no script errors.
+  - *Not checked:* the look of the mazes and the iso view (the viewport renders white here), how readable the shifting walls are for a person, the real T_base (105 provisional).
 - **S6.3 Clocktower:** scoped when it starts (STAGES §4).
 
 ### M6a — First live test + World 1 balancing

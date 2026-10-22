@@ -653,6 +653,18 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   which moved to 103): only a jump around the line-up reaches the next plank (bot: leaving the hub 0.3-1.3 s before the line-up works, 2 s before fails); (c) faster sweepers (`Sweep1` 75, `Sweep2` -95, `Sweep3` -55), windmills 30 deg/s with
   6-wide arms (35 with 5-wide arms threw the bot off while boarding), flippers telegraph 0.5 s (row 1 period 5, row 2 period 3.5 / turn 0.35), and both flipper rows now flip **0.6 / 0.55 s after the one before** (a fast runner was overtaken by
   a wave running ahead). The kit's knock-back direction is now the mover's motion at the character (a spinning part used its centre's offset before).
+- **S6.2 Stage 9 Labyrinth as built** (key `Stage9`, west far gate (x -431.7, z 565), course west, x = -438 - u; gate / board / `Arrival` / finish / checkpoints are Stage 7's rotated 180 degrees about (-375, 565)):
+  (1) checkpoint `701`, two pillars with Double Jump gaps of 12; (2) the **small maze** (`Maze.Small`, 7 x 7 cells of 10 studs, u 52-122, centred on z 565, entry in the middle of the near side, exit in the corner cell (6, 0)):
+  2 layouts, period 8 s, 6 shifting walls; (3) checkpoint `702` flush with the exit, a 10 gap (Double Jump), an 11-stud Double Jump ledge `D`, checkpoint `703` (14 gap, 11 down) flush with the **big maze** (`Maze.Big`, 11 x 11
+  cells, u 192-302, centred on z 590 so it stays 19 studs clear of Stage 8's lane): 3 layouts, period 6 s, 18 shifting walls, 5 hedges; (4) checkpoint `704` flush with its exit, a Double Jump gap of 12 to pillar `E`, another to the finish
+  island (8 lower), portal at u 358. About 360 studs. Cells are 10 studs (not 8): with the walls 16 high the iso view's pitch of 60 degrees hides less than one cell behind a wall.
+  - *Walls:* `KitMaze.client` (new) plays tagged `KitMazeWall` parts: `Pattern` ("1" up / "0" sunk per layout step), `Period`, `Phase`, `Telegraph` 1.5 s (a wall about to rise glows as a line on the floor, one about to sink flashes),
+    `RunSeeded` (step 0 at the run start); a change takes 0.4 s, a rising wall pushes an overlapping character out to the nearer side. Static walls are plain parts (grey), shifting walls teal, hedges green (9.5 high).
+  - *Layouts:* generated when the maze was built (seeded): a random spanning tree, then per step a few swaps that cut a passage on the current entry -> exit path and reconnect the two halves through another wall,
+    so every layout is a tree (every cell connected to the exit, checked) and the solution changes every step (path lengths 31 / 19 cells small, 38 / 40 / 28 big). Hedges replace static walls between cells far apart along the tree.
+  - *Ceiling:* an invisible part over each maze at the walls' top (y + 16) holds every talent; a baseline single jump (root rise 6.2) does not clear a 9.5 hedge, a Double Jump under the ceiling does (rise 11.3), so does a single jump with Jump Height 3 (9.4: soft).
+  - *Camera:* a `CameraZone` per maze (`Iso`, Yaw 90 = looking along the course, Pitch 60, Fov 25, Distance 180 / 230) and a `KitGhostZone` over each.
+  - *Coins:* two in dead ends of the small maze, five in dead ends of the big one (the two deepest are the risky ones), the talent coin on a 3 x 3 pillar 17 studs beside `E` (beyond a baseline Double Jump).
 
 ## 8. Milestones (agreed 2026-10-21; status and full scopes in [ROADMAP.md](ROADMAP.md))
 Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.
