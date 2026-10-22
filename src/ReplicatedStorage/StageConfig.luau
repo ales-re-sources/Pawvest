@@ -58,7 +58,7 @@ StageConfig.Stages = {
 		tBase = 52, -- seconds; provisional until measured in M6a
 		tiers = StageConfig.DefaultTiers,
 		unlock = { stage = "Stage 4", medal = "Bronze" }, -- Tutorial
-		unlockPrice = 500,
+		unlockPrice = nil, -- not for sale: without a Tutorial medal a player cannot earn the Coins (a finish without a medal pays nothing)
 		rewardFactor = 0.75, -- curve 0.5 + 0.25 × order (GDD §5)
 	},
 	{
