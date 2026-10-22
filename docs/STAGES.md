@@ -588,6 +588,42 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   stars out of the planned 15 (`Worlds[n].stageCount`).
 - **Not in S5:** the five World 2 stages and their gates (S6), bonus portals (S11), Worlds 3 and 4 islands (S7 / S9), a bridge.
 
+### 7.9 S6 World 2 (design check 2026-10-22, S6.1 in full; S6.2 / S6.3 are scoped when they start)
+- **Slots (World 2 is World 1 rotated 180 degrees about its centre, so every gate sits at the mirrored position):** the five gates in game order are
+  stage 6 = east near (x -318.3, z 505, course runs east, band z 472..535), 7 = east far (x -318.3, z 565, east, band z 541..604), 8 = west near
+  (x -431.7, z 505, west), 9 = west far (x -431.7, z 565, west), 10 = the finale gate at the south end (x -375, z 621.7, the course runs +z). Same
+  gate pose offsets as World 1's (`TimerStart` 13.3 studs outside the wall line, `Arrival` 13 studs inside the courtyard).
+- **Keys and folders:** `Stage6` .. `Stage10` (key = folder = position, §7.4), folders under `Workspace.World2`; checkpoint blocks of 100 from the next free
+  block (the key arena holds 301-303): Stage 6 = `401`-, Stage 7 = `501`-, Stage 8 `601`-, Stage 9 `701`-, Stage 10 `801`-.
+- **StageConfig entries (as GDD §3 / §5):** `world = 2`, `requires = { { id = "DoubleJump", level = 1 } }`, factor `0.5 + 0.25 x n`, `tBase` provisional (middle of
+  §4's range, M6b measures): Stage 6 (Double Up) 90 s, factor 2.0, unlock 10 of 15 stars in World 1 or 2 500; Stage 7 (Seesaw) 100 s, 2.25, Bronze on Stage 6 or 3 000;
+  Stage 8 (Turntable) 105 s, 2.5, 3 000; Stage 9 (Labyrinth) 105 s, 2.75, 3 500; Stage 10 (Clocktower) 135 s, 3.0, 4 000.
+- **World 2 opens with stage 6** (user decision, 2026-10-22; the recommendation was to stay shut until S6.3): when Stage 6 enters `StageConfig` the world's `soon`
+  flag is removed, so the hub gate follows the normal world rule (open when one of the world's stages is open: 10 of 15 stars in World 1, or buy Stage 6 for
+  2 500 at the gate), the stars board and the gate's x / 15 face go live, and players meet a world with only the stages built so far (the later gates in the
+  courtyard stay closed "Coming soon" doors, like World 1's `SoonGate`s were).
+- **Look:** the Island Hop look (stud-textured columns from the sea, grass / sand tops, no kill parts except where a stage needs them), so World 2 matches
+  World 1 until the style decision (STYLE_PREVIEW.md) is made.
+- **Reach rules for Double Jump stages** (§1.0, baseline Run Speed 0 / Jump Height 0 with one air jump: reach 14.7, rise 14.5): a gap or ledge that a single
+  jump with every soft talent cannot make (single reach <= 11, rise <= 9) is a gate; every Double Jump gap on the main line is **12 to 13.5 studs edge to edge**
+  (flat reach 14.7 minus the 1-2 studs the root stands inside each edge), every ledge **10 to 12 studs up**, landings at least 6 x 6; nothing on the main line
+  needs more than a Double Jump with baseline Run Speed.
+- **S6.1 Stage 6 Double Up** (east near gate, ~470 studs, checkpoints `401`-`406`): (1) warm-up, three 8 x 8 pillars with single-jump gaps (a reminder that
+  the stage needs the talent, the "Needs:" line and arrival warning already exist); (2) five 8 x 8 plates with 12-13.5 stud gaps (the first real Double
+  Jump gaps), checkpoint plate between; (3) a staircase of three 6 x 6 towers rising 11-12 studs each (Double Jump ledges), checkpoint on top; (4) two kit **lifts**
+  (`Mover_Lift`, distance 22, period 8 s, pause 1.5 s) between towers with a 9-stud gap from the landing; (5) three kit **slide movers** (run-seeded,
+  amplitude 9, period 5 s) across a 28-stud gap, the last bank 12 studs from the mover's end (a Double Jump); (6) a drop of 10 studs to the 16 x 16 finish island
+  and portal. No kill parts: the sea is the hazard. Talent coin: a 3 x 3 pillar 19 studs above the finish island (Double Jump + Jump Height 3 or a later Triple Jump).
+- **S6.1 Stage 7 Seesaw** (east far gate, ~420 studs, checkpoints `501`-`506`): the signature **tilt plates** (`Plate_Tilt`, kit-local: the plate tips toward where you
+  stand, slides you off past the slide angle): (1) one wide, gentle plate over the sea to teach it (max angle 12); (2) a chain of four plates 3 studs apart, each a
+  little more sensitive; (3) a narrow 6-stud beam with a **steady crosswind** zone (`Zone_WindSteady`, push 14) and gusts on a second crossing; (4) tilt plates
+  across 10-11 stud gaps where a slide-off is recovered with the air jump (the Double Jump recovery of §4); (5) two crumbling plates as a rest before the
+  finale; (6) three ascending tilt plates with gusts, to the finish island. Fall risks only (the sea).
+- **Coins:** 8 per stage like the others (5 easy 20, 2 risky 50, 1 talent 100 = 300), ids `Stage6_1`..`_8`, `Stage7_1`..`_8`, none behind a score board.
+- **Checks:** an offline KitMath / reach planner for the movers and a bot crossing every leg at baseline Run Speed with one air jump (as for Blink); the plate chain of
+  Stage 7 is walked by hand (tilt is client-side and needs real input).
+- **Not in S6.1:** Stages 8-10 (S6.2 / S6.3), bonus portals, World 3.
+
 ## 8. Milestones (agreed 2026-10-21; status and full scopes in [ROADMAP.md](ROADMAP.md))
 Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.
 

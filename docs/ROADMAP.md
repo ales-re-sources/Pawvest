@@ -51,7 +51,7 @@ Rules:
 | S4 | World 1 complete (Island Hop, Blink) — done 2026-10-22: S4.0 courtyard + hub gate, S4.1 Island Hop, S4.2 Blink (user's visual checks) | ✔ (S4.0-S4.2) | ✔ (S4.0-S4.2) | – |
 | M6a | First live test + World 1 balancing | – | – | – |
 | S5 | Worlds hub — done 2026-10-22: gates for Worlds 2-4 (coming soon, admins only), World 2 courtyard, signs, per-world stars boards (user's visual check) | ✔ | ✔ | – |
-| S6 | World 2 (stages 6–10) | – | – | – |
+| S6 | World 2 (stages 6–10) — S6.1 Double Up + Seesaw in progress (design check 2026-10-22) | – | – | – |
 | S7 | Talents: Triple Jump + Dash | – | – | – |
 | S8 | World 3 (stages 11–15) | – | – | – |
 | S9 | Talents: Wall Jump + Glide | – | – | – |
@@ -410,6 +410,15 @@ A measured `T_base` for both new stages comes in M6a.
   an admin passes the World 2 gate, lands on the World 2 spawn pad facing north, the return gate brings them to the hub spawn, Home on the plaza goes to the hub;
   World 1 still works unchanged (gate, Home from a stage, return gate); medals earned in World 1 move the World 1 board (and the global board) and no other;
   no script errors; the user's visual check of the three gates, the World 2 courtyard and the boards.
+
+### S6 — World 2 (design: STAGES §7.9)
+- **S6.1 Double Up + Seesaw (design check done 2026-10-22; decisions: World 2 opens with stage 6, Island Hop look, gate slots mirrored from World 1 by the 180-degree rotation).**
+  Gates for stages 6 (east near) and 7 (east far) in the World 2 courtyard, `StageConfig` entries `Stage6` / `Stage7` (world 2, requires Double Jump 1, factors 2.0 / 2.25,
+  unlock 10 of 15 stars in World 1 or 2 500 / Bronze on Stage 6 or 3 000), `Worlds[2].soon` removed; courses as in STAGES §7.9; coins `Stage6_1..8`, `Stage7_1..8`; checkpoints `401`-`406`, `501`-`506`.
+  - *Acceptance checks:* an admin and a normal player (10 stars or Coins) pass the World 2 gate; each stage's gate starts the timer and shows its "Needs: Double Jump" line; the arrival warning
+    fires without the talent; a baseline bot with one air jump crosses every leg of both courses (Double Jump gaps / ledges are impossible with a single jump and every soft talent); the tilt plates
+    and the crosswind are walked by hand; finish portal returns to `Arrival`, Home lands there, medals move the World 1 + World 2 boards; all 16 coins pay once; no script errors; the user's visual check.
+- **S6.2 Turntable + Labyrinth** and **S6.3 Clocktower:** scoped when they start (STAGES §4, §5.2).
 
 ### M6a — First live test + World 1 balancing
 The first live test (open checks below) with 6 stages, then M6 for World 1 (scope in "M6 — Balancing pass" below).
