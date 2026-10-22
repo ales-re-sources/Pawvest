@@ -14,7 +14,8 @@
 --                      (default 0.5) at the end of every half Period, so it flips over and back once per Period; tints to
 --                      WarnColor for Telegraph s (default 0.8) before, and is not solid while it turns (the rider drops), Phase
 --             Optional on any mover: Kill (touching it kills), Push studs/s (touching it knocks the character back along
---             the part's motion, PushLift studs/s upward, default 25), AirCarry s (how long a jump off keeps following it), Carry = false (the
+--             the part's motion, PushLift studs/s upward, default 25; PushTime s keeps that shove going for a while,
+--             default 0 = one kick, which the Humanoid's air braking stops within about 2 studs), AirCarry s (how long a jump off keeps following it), Carry = false (the
 --             character standing on it is not carried, e.g. a spinning plate you have to stay on by running against it).
 --   KitBeam   blinking kill beam: Period s, Duty (on share 0..1), Phase, Telegraph s before "on"; Kill defaults to true.
 --   KitPlate  disappearing plate: Period, Duty (solid share), Phase, Telegraph s (flickers before it vanishes).
@@ -224,6 +225,8 @@ local standSample = nil -- { part, local position, since }
 local lastSwitch = nil -- the colour switch the character stood on last frame (a switch fires once per step-on)
 local pushedUntil = 0 -- os.clock() before which no further knock-back is applied
 local PUSH_COOLDOWN = 0.6
+local shove = Vector3.zero -- horizontal velocity a PushTime mover keeps applying until shoveUntil
+local shoveUntil = 0
 
 local frameMs = 0
 local lastPublish = 0
@@ -487,7 +490,8 @@ RunService.PreSimulation:Connect(function(dt: number)
 			for part, data in movers do
 				if data.state == "on" then
 					local push = attr(part, "Push", 0)
-					local step = data.delta.Position
+					-- the mover's motion at the character (a spinning paddle shoves along its turn, not toward its centre)
+					local step = data.delta * root.Position - root.Position
 					if push > 0 and step.Magnitude > 1e-3 and os.clock() > pushedUntil and touchesCharacter(part) then
 						-- knock-back: launch the character along the mover's motion (a standing Humanoid would cancel a
 						-- plain velocity, so it goes into freefall); one launch per PUSH_COOLDOWN
@@ -495,6 +499,9 @@ RunService.PreSimulation:Connect(function(dt: number)
 						player:SetAttribute("KitPushedBy", part.Name)
 						root.AssemblyLinearVelocity = step.Unit * push + Vector3.new(0, attr(part, "PushLift", 25), 0)
 						humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
+						local flat = Vector3.new(step.X, 0, step.Z)
+						shove = if flat.Magnitude > 1e-3 then flat.Unit * push else Vector3.zero
+						shoveUntil = os.clock() + attr(part, "PushTime", 0)
 					end
 					if attr(part, "Kill", false) and touchesCharacter(part) then
 						killer = part
@@ -505,6 +512,10 @@ RunService.PreSimulation:Connect(function(dt: number)
 		end
 		if killer then
 			kill(killer)
+		end
+		-- a long shove: keep the horizontal push against the Humanoid's air braking
+		if os.clock() < shoveUntil then
+			root.AssemblyLinearVelocity = shove + Vector3.new(0, root.AssemblyLinearVelocity.Y, 0)
 		end
 	end
 

@@ -646,6 +646,13 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   h 22) under a counter-turning 18-stud sweeper (`Sweep3`, -45 deg/s: the corners stay clear), checkpoint `606` (432, h 22); (6) four fast flippers (`FlipB1..4`, period 4, turn 0.4, each 0.75 s *after* the one before it, so a steady
   runner follows the wave), three crumbling plates and the 16 x 16 finish island (h 14, 6 gap, drop 8) with the portal at `u` 542. About 550 studs. Flipper axles are not solid (a dropped player falls past them). Coins: five easy (side
   pillars, the pad edge, the crumble row), two risky (over `Mill2`'s far tip, the finale turntable's rim), one talent coin 23 studs over ledge `L2` (beyond a baseline Double Jump).
+- **Stage 8 made harder (user: "still too easy, did it first try; turntables should kick me; Double Jump saved the day several times", 2026-10-22).** Note: the developer account has Run Speed 3 and Jump Height 3, so a
+  running Double Jump covers about 21 studs (the 14.7 of §1.0 is baseline from a standstill take-off): square turntables cannot force timing for such a player (the flat and corner gaps differ by only 0.4 x the plate size).
+  Changes: (a) a **kicker paddle** on `Turn1` (`Kick1`, 1.2 x 3 x 16, -50 deg/s against the plate's 30, `Push` 40, `PushLift` 25, new kit attribute `PushTime` 0.4: the shove is kept up for 0.4 s, which throws a standing player off the plate;
+  a one-shot push was braked by the Humanoid within 2 studs); (b) `Turn2` / `Turn3` became **spinning planks** `Plank1` / `Plank2` (4 x 20, 60 / -60 deg/s, they line up with the course every 3 s, tips 3 from `R1`, 9 apart, 3 from checkpoint `602`,
+  which moved to 103): only a jump around the line-up reaches the next plank (bot: leaving the hub 0.3-1.3 s before the line-up works, 2 s before fails); (c) faster sweepers (`Sweep1` 75, `Sweep2` -95, `Sweep3` -55), windmills 30 deg/s with
+  6-wide arms (35 with 5-wide arms threw the bot off while boarding), flippers telegraph 0.5 s (row 1 period 5, row 2 period 3.5 / turn 0.35), and both flipper rows now flip **0.6 / 0.55 s after the one before** (a fast runner was overtaken by
+  a wave running ahead). The kit's knock-back direction is now the mover's motion at the character (a spinning part used its centre's offset before).
 
 ## 8. Milestones (agreed 2026-10-21; status and full scopes in [ROADMAP.md](ROADMAP.md))
 Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.

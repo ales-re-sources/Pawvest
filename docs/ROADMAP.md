@@ -438,6 +438,9 @@ A measured `T_base` for both new stages comes in M6a.
     crossed the whole course at baseline with one air jump and finished in 58.6 s (including the pauses between test calls): Gold, 3 500 Coins + 250 run reward (factor 2.5), free egg; per leg: turntables 5/5, sweeper pads by
     waiting in a corner and crossing when the bar turns away 4/4, flippers 2/2 (row 1) and 4/4 (row 2 after its wave was turned to follow the player; 2/3 before), a bot standing on a flipper drops when it turns, windmills 3/3,
     the finale sweeper jumped by a naive reacting bot 4/5 at -45 deg/s (2/4 at -60); no script errors.
+  - *Made harder after the user's first run (too easy):* kicker paddle on `Turn1`, spinning planks instead of `Turn2` / `Turn3`, faster sweepers / windmills / flippers (STAGES §7.9); kit: `PushTime`, knock-back along the
+    mover's local motion. Bot (developer talents Run Speed 3 / Jump Height 3): Turn1 with the paddle 4/5, the planks 2/3 with the right timing and failing when leaving 2 s early, sweeper pads 5/6, flipper rows 2/2 and 3/3,
+    windmills 3/3, the finale sweeper 3/5 at -55 deg/s (2/4 at -60). Not re-run as one timed run.
 - **S6.3 Clocktower:** scoped when it starts (STAGES §4).
 
 ### M6a — First live test + World 1 balancing
