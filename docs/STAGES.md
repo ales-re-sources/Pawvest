@@ -394,8 +394,10 @@ levels later if Gold on Worlds 3–4 needs them (M6).
   built in S4 (today's three stage portals move onto it); Worlds 2–4 follow with their milestones. A bridge like the
   garden's is optional decoration; the gate is the fast way.
 - **The world gate shows progress** (face, like the stage portals): the world's **stars x / 15** (medals earned), the
-  **challenge coins found x / y** across the world's stages, and its lock (requirement + price, §7.2). World 1's gate is
-  always open; Worlds 2–4 use the world-stars rule of §7.2.
+  **challenge coins found x / y** across the world's stages, and its lock (requirement + price, §7.2). **A world's gate is shut until one of its stages is open** for the
+  player (decided 2026-10-22, so nobody enters a courtyard of closed gates): World 1 opens with Bronze on the Tutorial or by buying Stage 1; the face shows the
+  lock (requirement + price), a local barrier fills the gate, touching it opens the unlock popup ("World 1 is locked", it unlocks Stage 1), and the server refuses the
+  teleport. Worlds 2–4 open with their first stage under the world-stars rule of §7.2.
 - The stage return portal ("Hub") and the Home button lead to the stage's **world island** (`StageConfig.world` → world
   spawn), the Home button on a world island to the hub. The Tutorial (world 0) returns to the hub.
 - **S4.0 design (third version 2026-10-21; replaces the island with arch portals and the long row of pads):** a world is a

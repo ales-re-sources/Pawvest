@@ -1,9 +1,11 @@
 -- Hub world gate (S4.0, docs/STAGES.md §7.1): touching the gate's Portal teleports the player to the island of its world
--- (StageConfig.Worlds, found by the gate model's name), arriving on the island's spawn pad. World 1's gate is always open;
--- later worlds get their lock check here (S5). The gate face with stars and coins comes from HubGateFaces.client.
+-- (StageConfig.Worlds, found by the gate model's name), arriving on the island's spawn pad. The gate is shut until one of the
+-- world's stages is open for the player (World 1: Bronze on the Tutorial or buying Stage 1), so nobody walks into a courtyard
+-- of closed gates; the client mirrors that (HubGateLocks: a barrier + the unlock popup, HubGateFaces: the lock text).
 
 local Players = game:GetService("Players")
 local StageConfig = require(game:GetService("ReplicatedStorage").StageConfig)
+local StageUnlocks = require(game:GetService("ServerScriptService").StageUnlocks)
 local TimerHandler = require(workspace.Handlers.PlayerTimerHandler)
 
 local world = StageConfig.WorldByGate[script.Parent.Name]
@@ -18,6 +20,9 @@ portal.Touched:Connect(function(hit)
 	local player = character and Players:GetPlayerFromCharacter(character)
 	if not (player and root) then
 		return
+	end
+	if StageUnlocks.IsWorldOpen(player, world) ~= true then
+		return -- shut (or the profile is still loading); the client shows why
 	end
 	local now = os.clock()
 	if lastTouch[player] and now - lastTouch[player] < COOLDOWN then

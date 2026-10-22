@@ -109,6 +109,7 @@ local screenGui = create("ScreenGui", {
 }, { panel })
 
 local current = nil -- stage shown in the popup
+local currentWorld = nil -- set when the popup was opened by a shut world gate: `current` is then the world's first stage
 local currentFace: BasePart? = nil -- the gate face the player has to stay near
 local coins = 0
 local showGeneration = 0
@@ -116,6 +117,7 @@ local showGeneration = 0
 local function hide()
 	showGeneration += 1
 	current = nil
+	currentWorld = nil
 	currentFace = nil
 	screenGui.Enabled = false
 end
@@ -131,7 +133,7 @@ local function refresh()
 	end
 	local price = current.unlockPrice
 	local unlocked = player:GetAttribute(StageConfig.UnlockedAttribute(current)) == true
-	titleLabel.Text = current.displayName .. (if unlocked then " unlocked!" else " is locked")
+	titleLabel.Text = (if currentWorld then currentWorld.name else current.displayName) .. (if unlocked then " unlocked!" else " is locked")
 	barLabel.Text = "Earn " .. (MedalText.UnlockBar(current) or "")
 	barLabel.Visible = not unlocked
 	-- required talents of the stage (S1.2): shown with or without the lock, entry never depends on them
@@ -141,7 +143,7 @@ local function refresh()
 	needsLabel.Text = needs or ""
 	needsLabel.Visible = needs ~= nil
 	orLabel.Visible = not unlocked and price ~= nil
-	orLabel.Text = "or unlock it now:"
+	orLabel.Text = if currentWorld then "or unlock " .. current.displayName .. " now:" else "or unlock it now:"
 	buyButton.Visible = not unlocked and price ~= nil
 	if price then
 		buyButton.Text = string.format("Unlock for %d Coins", price)
@@ -149,9 +151,10 @@ local function refresh()
 	end
 end
 
-local function show(stage)
+local function show(stage, world)
 	current = stage
-	currentFace = StageConfig.FaceTarget(stage)
+	currentWorld = world
+	currentFace = if world then StageConfig.WorldGatePortal(world) else StageConfig.FaceTarget(stage)
 	showGeneration += 1
 	setInfo(string.format("You have %d Coins", coins), COLOR_INFO)
 	refresh()
@@ -189,6 +192,20 @@ player:GetAttributeChangedSignal("OpenUnlockPopup"):Connect(function()
 		local stage = StageConfig.ByKey[stageKey]
 		if stage and stage.unlock then
 			show(stage)
+		end
+	end
+end)
+
+-- HubGateLocks (a shut world gate was touched) asks for the popup through this player attribute (a world index); the popup then
+-- shows the world's first stage, whose bar and price are what opens the world
+player:GetAttributeChangedSignal("OpenWorldPopup"):Connect(function()
+	local index = player:GetAttribute("OpenWorldPopup")
+	if type(index) == "number" then
+		player:SetAttribute("OpenWorldPopup", nil)
+		local world = StageConfig.Worlds[index]
+		local entry = StageConfig.StagesOfWorld(index)[1]
+		if world and entry and entry.unlock then
+			show(entry, world)
 		end
 	end
 end)

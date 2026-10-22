@@ -48,6 +48,21 @@ function StageUnlocks.IsUnlocked(player: Player, stage): boolean?
 	return isOpen(profile, stage)
 end
 
+-- True if the hub gate of `world` is open for the player (any of its stages is open), false if all are locked, nil while the
+-- profile is still loading.
+function StageUnlocks.IsWorldOpen(player: Player, world): boolean?
+	local loading = false
+	for _, stage in StageConfig.StagesOfWorld(world.index) do
+		local open = StageUnlocks.IsUnlocked(player, stage)
+		if open == true then
+			return true
+		elseif open == nil then
+			loading = true
+		end
+	end
+	return if loading then nil else false
+end
+
 -- Opens the unlock popup on the player's client.
 function StageUnlocks.ShowLocked(player: Player, stage)
 	lockedEvent:FireClient(player, stage.key)

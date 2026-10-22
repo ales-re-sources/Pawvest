@@ -166,6 +166,23 @@ function StageConfig.FaceTarget(stage): BasePart
 	return workspace:WaitForChild("StartLocation"):WaitForChild(stage.hubPortal):WaitForChild("Portal")
 end
 
+-- The stages of world `index`, in game order. A world's hub gate is open for a player when any of them is open (the first one
+-- opens with the Tutorial medal or its price), so a player is never sent to a courtyard whose gates are all shut.
+function StageConfig.StagesOfWorld(index: number)
+	local list = {}
+	for _, stage in StageConfig.Stages do
+		if stage.world == index then
+			table.insert(list, stage)
+		end
+	end
+	return list
+end
+
+-- The gate part (the Portal of the world's hub gate model) a player touches to travel to the world.
+function StageConfig.WorldGatePortal(world): BasePart
+	return workspace:WaitForChild("StartLocation"):WaitForChild(world.gate):WaitForChild("Portal")
+end
+
 -- Score-panel key of the place a stage returns to: its world's name, or StageConfig.HubName for a hub stage.
 function StageConfig.LocationKey(stage): string
 	local world = StageConfig.Worlds[stage.world]

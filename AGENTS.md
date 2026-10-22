@@ -63,7 +63,7 @@ src/
     StarBoard.luau                    hub "most stars" ranking: OrderedDataStore MostStars (UserId → total stars); Sync(player) writes only when the total changes (new medal, admin reset, join back-fill), Refresh / Top / Changed feed the hub board
     StageResults.luau                 finish → personal best, medal, one-time payout + daily repeat reward, free egg on first Gold, pet XP (medal + movement); Medal_<folder> attributes
     RunDistance.luau                  server-measured horizontal studs during a run (Start / Stop from PlayerTimerHandler); steps faster than WalkSpeed allows (teleports, respawns) are dropped
-    StageUnlocks.luau                 hub portal gate: bar (previous stage's medal) or bought unlock; UnlockRemotes, Unlocked_<folder> attributes
+    StageUnlocks.luau                 stage gate: bar (previous stage's medal) or bought unlock; IsUnlocked / IsWorldOpen (a world gate is open when any of its stages is); UnlockRemotes, Unlocked_<folder> attributes
     HomeService.server.luau           GoHome remote: Home button → from a stage of a world to that world's island spawn, from anywhere else to the hub spawn; cancels the running timer
     Garden.server.luau                garden boot: requires GardenPlots + GardenService + GardenIncubators + GardenFood (no portals since H1: the garden is reached over Workspace.GardenBridge)
     GardenPlots.luau                  borrows one of 12 plots per player on join / releases on leave: player attribute GardenPlot, plot attributes OwnerUserId / OwnerName, sign text; PlotChanged
@@ -84,7 +84,8 @@ src/
     TalentDoubleJump.client.luau      Double Jump talent: extra air jumps from the Talent_DoubleJump attribute
     StageResultsPopup.client.luau     results popup after a finish incl. pet XP line (GUI built in code)
     GateDoors.client.luau             door gates of the world stages (S4.0): door solid + unlock popup while locked, ghost when unlocked (local only); OpenUnlockPopup player attribute asks StageUnlockPopup
-    HubGateFaces.client.luau          world gate faces in the hub (S4.0): stars earned x / max and challenge coins found x/y of the world on its gate's Portal face
+    HubGateFaces.client.luau          world gate faces in the hub (S4.0): stars earned x / max and challenge coins found x/y of the world on its gate's Portal face; the requirement + price instead while the gate is shut
+    HubGateLocks.client.luau          shut world gates (S4.x): while none of a world's stages is open, a local barrier fills the hub gate and touching it sets the player attribute OpenWorldPopup (StageUnlockPopup shows "World 1 is locked"); the GateWorld1 server script also refuses the teleport
     HubPortalMedals.client.luau       own best-medal stars, challenge coins "found x/y" + lock requirement/price on each stage's face (StageConfig.FaceTarget: the Door of its start gate, the hub portal for the Tutorial) (local SurfaceGuis; layout kept inside the arch's opening)
     CameraFacing.client.luau          (skips while a StageCamera mode is active) camera turns to the character's facing after a teleport (> 30 studs in a frame at > 500 studs/s) and on the first spawn; the targets set the facing: `SpawnLocation` looks at the Tutorial / Stage 1 portals, `TeleportDestination` along the course
     CheckpointClient.client.luau      checkpoints for the local player (H2): CheckpointReached(part, first) lights that pad (Core 3 → 7 Neon, PointLight, Beam rises; 1 s) and turns the previous one back, so only the current checkpoint glows; `first` also plays workspace.Handlers.CheckpointTouchHandler.Sound (SoundService copy); CheckpointsReset turns the lit pad back; values in the LOOK table
