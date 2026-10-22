@@ -30,12 +30,13 @@ StageConfig.RunRewardFloor = 10
 StageConfig.DefaultTiers = { Bronze = 1.6, Silver = 1.1, Gold = 0.8 }
 
 -- Per stage: `world` (1–4, GDD §3) and `requires` = { { id = <talent id>, level = <n> }, … } (talents the course needs;
--- shown as a hint and warning, never enforced). `order` is the position in the game; display numbers leave gaps for the
--- World 1 stages built in S4 (Island Hop = 1, Blink = 3). `unlock` is { stage = <key>, medal = <tier> } or
+-- shown as a hint and warning, never enforced). `order` is the position in the game. Since 2026-10-22 the key and the folder of
+-- a world stage are its position ("Stage1" … "Stage5", docs/STAGES.md §7.4); the stage folders live in the world's folder
+-- (Workspace.World1.Stage1 …), the Tutorial's in Workspace. `unlock` is { stage = <key>, medal = <tier> } or
 -- { world = <n>, stars = <n> } (stars summed over that world's stages, GDD §3).
 StageConfig.Stages = {
 	{
-		key = "Stage 4", -- legacy key of the Tutorial, kept so recorded times are not lost
+		key = "Tutorial", -- DataStore key of times, medals and the board: never changes again without migrating the stored profiles
 		displayName = "Tutorial",
 		folder = "Tutorial", -- stage folder in Workspace
 		hubPortal = "TeleportToTutorial",
@@ -49,67 +50,67 @@ StageConfig.Stages = {
 		rewardFactor = 0.5,
 	},
 	{
-		key = "IslandHop", -- new stages get a semantic key = folder name (docs/STAGES.md §7.4)
-		displayName = "Stage 1", -- shown name = position in World 1 (1 = Island Hop, 2 = key "Stage 1", 3 Blink, 4 = key "Stage 2", 5 = key "Stage 3"); the key never changes
-		folder = "IslandHop",
+		key = "Stage1", -- Island Hop
+		displayName = "Stage 1",
+		folder = "Stage1",
 		order = 1,
 		world = 1,
 		requires = {},
 		tBase = 52, -- seconds; provisional until measured in M6a
 		tiers = StageConfig.DefaultTiers,
-		unlock = { stage = "Stage 4", medal = "Bronze" }, -- Tutorial
+		unlock = { stage = "Tutorial", medal = "Bronze" },
 		unlockPrice = 200, -- a small price on purpose: Coins cannot be earned without a medal (a finish without one pays nothing), so this is a shortcut for later purchases (e.g. Coin packs), not a path for new players
 		rewardFactor = 0.75, -- curve 0.5 + 0.25 × order (GDD §5)
 	},
 	{
-		key = "Stage 1",
-		displayName = "Stage 2", -- shown name = position in World 1 (1 Island Hop, 2 = key "Stage 1", 3 Blink, 4 = key "Stage 2", 5 = key "Stage 3"); the key never changes
-		folder = "Stage1",
+		key = "Stage2", -- the variety stage (lasers, spinners, lava, choice steps)
+		displayName = "Stage 2",
+		folder = "Stage2",
 		order = 2,
 		world = 1,
 		requires = {},
 		tBase = 70,
 		tiers = StageConfig.DefaultTiers,
-		unlock = { stage = "IslandHop", medal = "Bronze" },
+		unlock = { stage = "Stage1", medal = "Bronze" },
 		unlockPrice = 1000,
 		rewardFactor = 1.0,
 	},
 	{
-		key = "Blink", -- rhythm special (docs/STAGES.md §5.2, §7.7)
-		displayName = "Stage 3", -- shown name = position in World 1; the key never changes
-		folder = "Blink",
+		key = "Stage3", -- Blink, the rhythm special (docs/STAGES.md §5.2, §7.7)
+		displayName = "Stage 3",
+		folder = "Stage3",
 		order = 3,
 		world = 1,
 		requires = {},
 		tBase = 60, -- seconds; provisional until measured in M6a (a perfect run takes about 40 s)
 		tiers = StageConfig.DefaultTiers,
-		unlock = { stage = "Stage 1", medal = "Bronze" }, -- Stage 2
+		unlock = { stage = "Stage2", medal = "Bronze" },
 		unlockPrice = 1500,
 		rewardFactor = 1.25, -- curve 0.5 + 0.25 × order (GDD §5)
 	},
 	{
-		key = "Stage 2",
-		displayName = "Stage 4", -- shown name = position in World 1 (1 Island Hop, 2 = key "Stage 1", 3 Blink, 4 = key "Stage 2", 5 = key "Stage 3"); the key never changes
-		folder = "Stage2",
+		key = "Stage4", -- bounce corridors
+		displayName = "Stage 4",
+		folder = "Stage4",
 		order = 4,
 		world = 1,
 		requires = {},
 		tBase = 100,
 		tiers = StageConfig.DefaultTiers,
-		unlock = { stage = "Blink", medal = "Bronze" },
+		unlock = { stage = "Stage3", medal = "Bronze" },
 		unlockPrice = 2000,
 		rewardFactor = 1.5,
 	},
 	{
-		key = "Stage 3",
-		displayName = "Stage 5", -- shown name = position in World 1 (1 Island Hop, 2 = key "Stage 1", 3 Blink, 4 = key "Stage 2", 5 = key "Stage 3"); the key never changes
-		folder = "Stage3",
+		key = "Stage5", -- the precision finale
+		displayName = "Stage 5",
+		folder = "Stage5",
 		order = 5,
 		world = 1,
 		requires = {},
 		tBase = 120,
 		tiers = StageConfig.DefaultTiers,
-		unlock = { stage = "Stage 2", medal = "Bronze" }, -- Stage 4
+		unlock = { stage = "Stage4", medal = "Bronze" },
 		unlockPrice = 2000,
 		rewardFactor = 1.75, -- curve 0.5 + 0.25 × order (GDD §5)
 	},
@@ -132,10 +133,12 @@ StageConfig.Worlds = {
 }
 StageConfig.WorldByGate = {}
 StageConfig.WorldByName = {}
+StageConfig.WorldByFolder = {}
 for index, world in StageConfig.Worlds do
 	world.index = index
 	StageConfig.WorldByGate[world.gate] = world
 	StageConfig.WorldByName[world.name] = world
+	StageConfig.WorldByFolder[world.folder] = world
 end
 
 table.sort(StageConfig.Stages, function(a, b)
@@ -153,24 +156,42 @@ for _, stage in StageConfig.Stages do
 	end
 end
 
--- Returns the stage whose Workspace folder contains `instance` (e.g. a script inside Workspace.Stage2).
+-- Returns the stage whose folder contains `instance` (e.g. a script inside Workspace.World1.Stage2), and that folder. A stage
+-- folder is the nearest ancestor named like a stage's `folder` whose parent is Workspace (hub stage) or a world folder.
 function StageConfig.ForInstance(instance: Instance)
 	local node = instance
-	while node and node.Parent ~= workspace do
-		node = node.Parent
+	while node and node ~= workspace do
+		local stage = StageConfig.ByFolder[node.Name]
+		local parent = node.Parent
+		if stage and parent and (parent == workspace or StageConfig.WorldByFolder[parent.Name]) then
+			return stage, node
+		end
+		node = parent
 	end
-	local stage = node and StageConfig.ByFolder[node.Name]
-	if not stage then
-		error("StageConfig: no stage folder above " .. instance:GetFullName())
+	error("StageConfig: no stage folder above " .. instance:GetFullName())
+end
+
+-- The folder of `stage` in the scene: Workspace.<world folder>.<stage folder> for a world stage, Workspace.<folder> for the hub
+-- stage. StageFolder waits for the scene to load; FindStageFolder returns nil when it is not there (yet).
+function StageConfig.StageFolder(stage): Instance
+	local world = StageConfig.Worlds[stage.world]
+	if world then
+		return workspace:WaitForChild(world.folder):WaitForChild(stage.folder)
 	end
-	return stage
+	return workspace:WaitForChild(stage.folder)
+end
+
+function StageConfig.FindStageFolder(stage): Instance?
+	local world = StageConfig.Worlds[stage.world]
+	local parent = if world then workspace:FindFirstChild(world.folder) else workspace
+	return parent and parent:FindFirstChild(stage.folder)
 end
 
 -- The part whose face shows a stage's stars, coins and lock lines: the Door of its start gate for a world stage (S4.0: the
 -- stage lies physically behind the gate), the hub portal for a hub stage (the Tutorial). Waits for the scene to load.
 function StageConfig.FaceTarget(stage): BasePart
 	if StageConfig.Worlds[stage.world] then
-		return workspace:WaitForChild(stage.folder):WaitForChild("Gate"):WaitForChild("Door")
+		return StageConfig.StageFolder(stage):WaitForChild("Gate"):WaitForChild("Door")
 	end
 	return workspace:WaitForChild("StartLocation"):WaitForChild(stage.hubPortal):WaitForChild("Portal")
 end
@@ -202,7 +223,7 @@ end
 -- (its Arrival marker) for a world stage, the hub's SpawnLocation for a hub stage. Waits for the scene.
 function StageConfig.ReturnSpawn(stage): BasePart
 	if StageConfig.Worlds[stage.world] then
-		return workspace:WaitForChild(stage.folder):WaitForChild("Arrival")
+		return StageConfig.StageFolder(stage):WaitForChild("Arrival")
 	end
 	return workspace:WaitForChild("StartLocation"):WaitForChild("SpawnLocation")
 end

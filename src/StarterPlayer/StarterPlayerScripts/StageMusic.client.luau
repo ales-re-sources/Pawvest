@@ -40,7 +40,7 @@ end
 
 local function startMusic(stageKey: string, start: number)
 	local stage = StageConfig.ByKey[stageKey]
-	local folder = stage and workspace:FindFirstChild(stage.folder)
+	local folder = stage and StageConfig.FindStageFolder(stage)
 	local sound = folder and folder:FindFirstChild("Music")
 	if not (sound and sound:IsA("Sound")) then
 		stopMusic()

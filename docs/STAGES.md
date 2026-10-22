@@ -12,10 +12,10 @@ first: GDD → ROADMAP → code); the open questions in §9 are answered then.
 
 | Stage (key) | Course | Checkpoints | `T_base` | Obstacles | Skill |
 |---|---|---|---|---|---|
-| Tutorial (`"Stage 4"`) | 284 studs, flat | 3 (23–25), 80–100 studs apart | 30 | gaps up to about 6 studs (one 16-stud step at the start), 10 small tops; no kill parts | none |
-| Stage 1 (`"Stage 1"`) | 605 studs, flat | 9 (1–9), about 57 studs apart | 70 | laser strips + lava floor + lava block (9 kill parts), 2 spinner groups (8 sweepers), 3 choice stages, side jumps (15-stud gaps), jump pads (45-stud launches) | none |
-| Stage 2 (`"Stage 2"`) | 535 studs, climbs 114 | 5 (10–14), 50–200 studs apart | 100 | kill-part corridors (6 kill parts), gaps of 9.5–11 studs, a bounce-brick chain (3 bricks, 33–54-stud launches) | none (DJ coins) |
-| Stage 3 (`"Stage 3"`) | **293 studs**, flat | 4 plates (20, 21, **21**, 22), about 100 studs apart | 120 | see below | none, but very hard |
+| Tutorial (`Tutorial`, was `"Stage 4"`) | 284 studs, flat | 3 (23–25), 80–100 studs apart | 30 | gaps up to about 6 studs (one 16-stud step at the start), 10 small tops; no kill parts | none |
+| Stage 2 (`Stage2`, was `"Stage 1"`) | 605 studs, flat | 9 (1–9), about 57 studs apart | 70 | laser strips + lava floor + lava block (9 kill parts), 2 spinner groups (8 sweepers), 3 choice stages, side jumps (15-stud gaps), jump pads (45-stud launches) | none |
+| Stage 4 (`Stage4`, was `"Stage 2"`) | 535 studs, climbs 114 | 5 (10–14), 50–200 studs apart | 100 | kill-part corridors (6 kill parts), gaps of 9.5–11 studs, a bounce-brick chain (3 bricks, 33–54-stud launches) | none (DJ coins) |
+| Stage 5 (`Stage5`, was `"Stage 3"`) | **293 studs**, flat | 4 plates (20, 21, **21**, 22), about 100 studs apart | 120 | see below | none, but very hard |
 
 **Why Stage 3 is hard** (Studio survey, 2026-10-21): it is the *shortest* course but the slowest, because every metre is
 precision. It has three sections and no timing obstacle at all:
@@ -206,12 +206,12 @@ Display number = position in the game (`order`, `displayName` in `StageConfig`);
 
 | # | World | Name / theme (prov.) | Signature | Other components | Requires | `T_base` (s) | Source |
 |---|---|---|---|---|---|---|---|
-| T | – | Tutorial (hub stage, no world) | basics | jumps, first kill part | – | 30 | today's Tutorial (`"Stage 4"`) |
+| T | – | Tutorial (hub stage, no world) | basics | jumps, first kill part | – | 30 | today's Tutorial (`Tutorial`) |
 | 1 | 1 | Island Hop | stud pillars | wide gaps, slow conveyors, first moving platform | – | 45–60 | **new** |
-| 2 | 1 | Stage 1 (today) | variety | laser strips, spinners, lava floor, choice stage, jump pads | – | 70 | `"Stage 1"` |
+| 2 | 1 | Stage 2 (today) | variety | laser strips, spinners, lava floor, choice stage, jump pads | – | 70 | `Stage2` |
 | 3 | 1 | Blink ★ special: rhythm | **blinking beams** pulsing to the music | disappearing plates, beam waves, pistons on the beat | – | 70–90 | **new** |
-| 4 | 1 | Stage 2 (today) | bounce corridors | kill-part corridors, bounce bricks | – | 100 | `"Stage 2"` |
-| 5 | 1 | Stage 3 (today) | dense precision (World 1 finale) | dense kill parts | – | 120 | `"Stage 3"` |
+| 4 | 1 | Stage 4 (today) | bounce corridors | kill-part corridors, bounce bricks | – | 100 | `Stage4` |
+| 5 | 1 | Stage 5 (today) | dense precision (World 1 finale) | dense kill parts | – | 120 | `Stage5` |
 | 6 | 2 | Double Up | Double Jump gaps and ledges | moving platforms, elevators | Double Jump | 80–100 | new |
 | 7 | 2 | Seesaw | **tilt plates** | wind, DJ recovery jumps | Double Jump | 90–110 | new |
 | 8 | 2 | Turntable | **rotating plates** | sweepers, flippers, crumbling plates | Double Jump | 90–120 | new |
@@ -492,7 +492,8 @@ levels later if Gold on Worlds 3–4 needs them (M6).
 ### 7.4 Keys, folders, checkpoints
 - `StageConfig` already separates `key` / `folder` (stable) from `order` / `displayName` (shown): the re-order only edits
   `order` and `displayName`.
-- **New stages get a semantic key = folder name** fixed at creation (`IslandHop`, `Blink`, `DoubleUp`, …), never "Stage N":
+- **Renamed 2026-10-22: key = folder = position** (`Stage1` … `Stage5`, `Tutorial`; World 2 will be `Stage6` …). The old keys (`IslandHop`, `"Stage 1"`, `Blink`, `"Stage 2"`, `"Stage 3"`, `"Stage 4"`) and the folders at the Workspace root were replaced in one go while nothing was live: the stage folders moved under their world (`Workspace.World1.Stage1` …), the keys, coin ids (`<folder>_<n>`) and the DataStore records of the developers' accounts were migrated (profiles: BestTimes, Medals, UnlockedStages, RunsToday, CollectedCoins; boards `leaderboard_<key>`). Sections 7.6 / 7.7 below keep the names of their time.
+- ~~New stages get a semantic key = folder name~~ (superseded by the line above) (`IslandHop`, `Blink`, `DoubleUp`, …), never "Stage N":
   numbers would clash with display numbers after any re-order. Coin ids follow (`Blink_1`), boards follow
   (`leaderboard_Blink`). The display name can change any time.
 - Checkpoint names must be numbers (the handler and leaderstats read them). Give each new stage its own block of 100
@@ -617,7 +618,7 @@ M6); two answers differ from the recommendation (marked ≠).
 | World themes and names (sky, factory, storm, summit…)? | pick with the style decision ([STYLE_PREVIEW.md](STYLE_PREVIEW.md)); stud style for now |
 | World gate bar: Silver on the previous finale, or "N stars in the previous world" (needs code)? | **≠ N stars in the previous world: 10 of 15** (Silver everywhere; N provisional); new unlock rule type in S1.1 |
 | Scale challenge-coin values with the stage factor? | **≠ no, flat 20 / 50 / 100** |
-| Semantic keys for new stages (`Blink`) instead of `"Stage N"`? | yes |
+| Semantic keys for new stages (`Blink`) instead of `"Stage N"`? | was yes; replaced 2026-10-22 by key = folder = position (`Stage3`) |
 | Re-tune today's Stage 3 factor from 2.0 to 1.75 (curve) or keep 2.0? | 1.75 (already-paid Coins are unaffected) |
 | Move today's spinners to the kit (smoother, no server loop)? | yes, in S3.3, optional |
 | Should a world island also have a garden-style bridge? | gate first, bridges later as decor |

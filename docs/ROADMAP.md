@@ -380,6 +380,9 @@ beams, zig-zag, climb) is now a stud-textured column from the sea (sand; beams d
 **Stage 2 (key `Stage1`) restyled, awaits the user's look:** floors, jump pads, the red rest plates (now terracotta stud columns), stepping blocks (unions get a column below) and the nine checkpoints are stud
 columns from the sea (sand); the choice steps, the spinner plates and the side-jump walls keep their shape with the Studs material and their colours; the lava floor got the `Lava block` material (cracked lava);
 lasers, lava block and kit movers are untouched. Checked in a playtest: lasers still kill, columns hold a player; the Studio viewport stopped rendering after a screenshot timeout, so the look is unchecked.
+**Stage rename (2026-10-22):** keys, folders and coin ids now equal the position (`Stage1` Island Hop, `Stage2`, `Stage3` Blink, `Stage4`, `Stage5`; Tutorial key `Tutorial`), the stage folders live under
+`Workspace.World1`; `StageConfig.ForInstance` finds the stage folder among the ancestors, `StageFolder` / `FindStageFolder` locate it. The developers' DataStore records (profiles, boards) were migrated with backups
+(`TestSnapshots` keys `rename_backup_*`). Checked in a playtest: stage resolution, gates, timers, finish, unlock prompt, Blink's metronome, the explore banner. Entries below keep the names of their time.
 S4.2 Blink, the rhythm special (stage 3, shown "Stage 3"): **done: built, Studio-checked and visually approved by the user (2026-10-22).** Design and as-built values
 in STAGES 7.7 (metronome placeholder now and a Creator Store track later; the beat is per run, music follows the player's run time): a straight
 east lane at 120 BPM (count-in plates, beam rows, piston bridge, "drop the beat" finale), every timed part run-seeded, checkpoints 201-206, 8 coins (300),

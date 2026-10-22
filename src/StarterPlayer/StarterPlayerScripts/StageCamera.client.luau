@@ -93,7 +93,7 @@ local function currentMode(root: BasePart)
 	local source = best
 	if not source and runStageKey then
 		local stage = StageConfig.ByKey[runStageKey]
-		local folder = stage and workspace:FindFirstChild(stage.folder)
+		local folder = stage and StageConfig.FindStageFolder(stage)
 		if folder and MODES[folder:GetAttribute("CameraMode")] then
 			source = folder
 		end

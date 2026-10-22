@@ -13,6 +13,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
 local TalentConfig = require(ReplicatedStorage:WaitForChild("TalentConfig"))
+local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local reachedEvent = ReplicatedStorage:WaitForChild("CheckpointReached")
 local resetEvent = ReplicatedStorage:WaitForChild("CheckpointsReset")
 
@@ -58,8 +59,10 @@ local function flash()
 end
 
 local function stageDepth(part: BasePart): number
-	local stage = part
-	while stage.Parent and stage.Parent ~= workspace do
+	-- the stage folder (Workspace.World1.Stage4 …), or for a plate outside every stage the top-level folder it lies in
+	local found, _, folder = pcall(StageConfig.ForInstance, part)
+	local stage = if found then folder else part
+	while not found and stage.Parent and stage.Parent ~= workspace do
 		stage = stage.Parent
 	end
 	local depth = stage:GetAttribute("FallResetDepth")

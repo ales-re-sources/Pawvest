@@ -50,8 +50,9 @@ local function resolve(part)
 	if tonumber(part.Parent.Name) then
 		return part
 	end
-	local stage = part
-	while stage.Parent and stage.Parent ~= workspace do
+	local found, _, folder = pcall(StageConfig.ForInstance, part)
+	local stage = if found then folder else part
+	while not found and stage.Parent and stage.Parent ~= workspace do
 		stage = stage.Parent
 	end
 	local first = firstOfStage[stage]

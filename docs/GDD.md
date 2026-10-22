@@ -32,17 +32,17 @@ pets level up while you play; the pet garden (§7.6) raises pets and produces Co
 The game grows to **20 numbered stages in 4 worlds of 5** plus the Tutorial (plan and design reasons:
 [STAGES.md](STAGES.md); decided 2026-10-21). Only the Tutorial and today's three stages exist; every other row is
 **planned** (P) and gets its scope when its milestone starts. The display number is the position in the game
-(`order` / `displayName` in `StageConfig`); the internal **key and folder never change** (new stages get a semantic key
-equal to their folder, e.g. `IslandHop`; checkpoint blocks of 100 per new stage, STAGES §7.4).
+(`order` / `displayName` in `StageConfig`); the internal **key and folder equal the position** since 2026-10-22 (`Stage1` … `Stage5`, `Tutorial`;
+they were `IslandHop`, `"Stage 1"`, `Blink`, `"Stage 2"`, `"Stage 3"`, `"Stage 4"` before; STAGES §7.4); checkpoint blocks of 100 per new stage.
 
 | # | World | Stage | Internal key | Built | Required talents | Unlock |
 |---|---|---|---|---|---|---|
-| T | – (hub) | Tutorial | `"Stage 4"` ¹ | yes | – | always open |
-| 1 | 1 | Stage 1 (Island Hop) | `IslandHop` | yes (S4.1) | – | Bronze on Tutorial **or** 200 |
-| 2 | 1 | Stage 2 (today's first stage) | `"Stage 1"` | yes | – | Bronze on Stage 1 **or** 1 000 (switched in S4.1) |
-| 3 | 1 | Stage 3 (Blink ★ rhythm) | `Blink` | yes (S4.2) | – | Bronze on Stage 2 **or** 1 500 |
-| 4 | 1 | Stage 4 (today's second stage) | `"Stage 2"` | yes | – | Bronze on Stage 3 **or** 2 000 |
-| 5 | 1 | Stage 5 (today's third stage), finale | `"Stage 3"` | yes | – | Bronze on Stage 4 **or** 2 000 |
+| T | – (hub) | Tutorial | `Tutorial` ¹ | yes | – | always open |
+| 1 | 1 | Stage 1 (Island Hop) | `Stage1` | yes (S4.1) | – | Bronze on Tutorial **or** 200 |
+| 2 | 1 | Stage 2 (the variety stage) | `Stage2` | yes | – | Bronze on Stage 1 **or** 1 000 (switched in S4.1) |
+| 3 | 1 | Stage 3 (Blink ★ rhythm) | `Stage3` | yes (S4.2) | – | Bronze on Stage 2 **or** 1 500 |
+| 4 | 1 | Stage 4 (bounce corridors) | `Stage4` | yes | – | Bronze on Stage 3 **or** 2 000 |
+| 5 | 1 | Stage 5 (the precision finale) | `Stage5` | yes | – | Bronze on Stage 4 **or** 2 000 |
 | 6 | 2 | Double Up | `DoubleUp` | P (S6) | Double Jump | World gate ² **or** 2 500 |
 | 7 | 2 | Seesaw | `Seesaw` | P (S6) | Double Jump | Bronze on 6 **or** 3 000 |
 | 8 | 2 | Turntable | `Turntable` | P (S6) | Double Jump | Bronze on 7 **or** 3 000 |
@@ -59,7 +59,7 @@ equal to their folder, e.g. `IslandHop`; checkpoint blocks of 100 per new stage,
 | 19 | 4 | Clockwork | `Clockwork` | P (S10) | all so far | Bronze on 18 **or** 7 000 |
 | 20 | 4 | Summit, finale | `Summit` | P (S10) | all talents | Bronze on 19 **or** 7 500 |
 
-¹ Existing DataStore key; keep it so recorded times are not lost. Today's keys never change either; only their `order`,
+¹ DataStore key. Keys were renamed to the stage positions on 2026-10-22 (nothing was live; the stored profiles and boards of the developers' accounts were migrated). From now on a key never changes; only a stage's `order`,
 `displayName`, bar and price do (S1.1 / S4). Folder and key names above for planned stages are proposals, fixed at creation.
 ² **World opener** (stages 6, 11, 16): **10 of the 15 stars of the previous world** (decided 2026-10-21; 10 = Silver on
 every stage of the world, provisional) **or** the price. This needs a new unlock rule type (stars in a world) next to
@@ -205,10 +205,10 @@ every stage** (decided 2026-10-21: no scaling with the stage factor). Planned st
 |---|---|---|
 | Tutorial | 120 | 2×50, 1×20 (behind the score board) |
 | Stage 1 (Island Hop, S4.1) | 280 | 4×20, 2×50, 1×100 |
-| Stage 2 (key `"Stage 1"`) | 280 | 4×20, 2×50, 1×100 |
+| Stage 2 | 280 | 4×20, 2×50, 1×100 |
 | Stage 3 (Blink, S4.2) | 300 | 5×20, 2×50, 1×100 |
-| Stage 4 (key `"Stage 2"`) | 380 | 4×20, 2×50, 2×100 |
-| Stage 5 (key `"Stage 3"`) | 480 | 4×20, 2×50, 3×100 |
+| Stage 4 | 380 | 4×20, 2×50, 2×100 |
+| Stage 5 | 480 | 4×20, 2×50, 3×100 |
 | **All** | **1 840** | 42 coins |
 
 Talent-gated coins need Double Jump (placed out of reach of a Jump Height 3 jump). All six built stages have their coins
