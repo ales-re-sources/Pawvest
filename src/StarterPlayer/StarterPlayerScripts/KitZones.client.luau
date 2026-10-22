@@ -68,7 +68,7 @@ local function addWindEmitter(part: BasePart)
 	emitter.Rate = 0
 	emitter.Shape = Enum.ParticleEmitterShape.Box
 	emitter.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume
-	emitter.ShapeInOut = Enum.ParticleEmitterShapeInOut.InAndOut
+	emitter.ShapeInOut = Enum.ParticleEmitterShapeInOut.Outward -- InAndOut sent half of the streaks against the wind
 	emitter.Enabled = true
 	emitter.Parent = part
 	windEmitters[part] = emitter
