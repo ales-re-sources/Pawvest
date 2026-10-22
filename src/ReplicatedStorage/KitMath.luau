@@ -112,6 +112,14 @@ function KitMath.Flip(now: number, period: number, phase: number, turn: number, 
 	return 180 * flips, if restEnd - into <= telegraph then "warning" else "off"
 end
 
+-- Clockwork progress: whole ticks done plus the eased share of the current one; each tick of `tick` seconds moves in its
+-- first `move` seconds and rests for the rest (a ticking clock hand / gear). Multiply by the step size.
+function KitMath.Ticked(now: number, tick: number, move: number): number
+	local ticks = math.floor(now / tick)
+	local into = now - ticks * tick
+	return ticks + smooth(into / math.max(move, 1e-3))
+end
+
 -- Pendulum angle in degrees.
 function KitMath.Swing(now: number, period: number, phase: number, amplitude: number): number
 	return amplitude * KitMath.Sine(now, period, phase)

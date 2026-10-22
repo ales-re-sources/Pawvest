@@ -5,7 +5,8 @@
 --   KitMover  Kind (default "Slide"), all carry the character standing on them:
 --               Slide  sine ping-pong: Axis Vector3, Amplitude studs, Period s, Phase 0..1
 --               Lift   elevator: Axis, Distance studs, Period s (full cycle), Pause s at each end, Phase
---               Spin   turntable / sweeper bar around the part's Y axis: Speed deg/s, Phase deg
+--               Spin   turntable / sweeper bar around the part's Y axis: Speed deg/s, Phase deg; Tick s (S6.3) makes it a
+--                      clockwork step: Speed x Tick degrees per tick, moved in the first TickMove s (default 0.25) of it
 --               Piston strikes out and pulls back: Axis, Stroke studs, Period, Duty (extended share), Out s (strike time),
 --                      Back s (retract time), Telegraph s (the part tints to WarnColor before it strikes), Phase
 --               Swing  pendulum: Hinge "Z" (default) or "X", Angle deg, Period, Phase; hangs from the part's top (Pivot
@@ -24,6 +25,9 @@
 --   KitSwitch / KitColorPlate  colour puzzle (kit-local): stepping on a KitSwitch (attributes Group, Color; Color "Toggle"
 --             flips Red / Blue) sets that Group's colour; a KitColorPlate (Group, Color "Red" / "Blue") is solid only while its
 --             Group shows its colour, a ghost otherwise. Groups start Red.
+--   KitButton / KitDoor  pressure door (kit-local, S6.3, the Clocktower): standing on a KitButton (attributes Group, Time s, default 4)
+--             opens every KitDoor of that Group for Time s for the local player (ghost, not solid; it flashes in its last
+--             second and the button glows while it is open); stepping on the button again restarts the time.
 --   RunSeeded  attribute on any timed part (mover, beam, plate): it runs on time since that player's stage timer started
 --             (StageTimerUpdate) instead of server time, so every run sees the same sequence; set Phase so that t = 0 is safe.
 --   KitTilt   hinge plate (local X axis): the plate tips toward the side the player stands on, a spring pulls it back;
@@ -62,6 +66,10 @@ local crumbles = {} -- [part] = { state, base, transparency, since }
 local switches = {} -- [part] = true
 local colorPlates = {} -- [part] = { transparency, solid }
 local colorState = {} -- [group] = "Red" / "Blue"
+local buttons = {} -- [part] = { color }
+local doors = {} -- [part] = { transparency, look }
+local doorOpenUntil = {} -- [group] = os.clock() when that group's doors close again
+local BUTTON_ON_COLOR = Color3.fromRGB(90, 230, 120)
 local runStart: number? = nil -- server time the player's current run started (StageTimerUpdate)
 local timeBaseChanged = false -- a run started or ended: run-seeded movers jump to their new time, nobody is carried by it
 
@@ -127,6 +135,18 @@ local function addColorPlate(part: Instance)
 	end
 end
 
+local function addButton(part: Instance)
+	if part:IsA("BasePart") then
+		buttons[part] = { color = part.Color }
+	end
+end
+
+local function addDoor(part: Instance)
+	if part:IsA("BasePart") then
+		doors[part] = { transparency = part.Transparency, look = "shut" }
+	end
+end
+
 local function track(tag: string, add: (Instance) -> (), registry: { [Instance]: any })
 	for _, part in CollectionService:GetTagged(tag) do
 		add(part)
@@ -144,6 +164,8 @@ track("KitPlate", addPlate, plates)
 track("KitCrumble", addCrumble, crumbles)
 track("KitSwitch", addSwitch, switches)
 track("KitColorPlate", addColorPlate, colorPlates)
+track("KitButton", addButton, buttons)
+track("KitDoor", addDoor, doors)
 
 -- the player's run: StageTimerUpdate (elapsed >= 0, stageKey) while it runs, (-1, ...) when it ends
 ReplicatedStorage:WaitForChild("StageTimerUpdate").OnClientEvent:Connect(function(elapsed: number)
@@ -183,7 +205,9 @@ local function moverFrame(part: BasePart, data, now: number): (CFrame, string)
 	local phase = attr(part, "Phase", 0)
 	if kind == "Spin" then
 		-- reduce the angle in double precision first: server time is ~1.8e9 s, and CFrame.Angles keeps only float32
-		local degrees = (attr(part, "Speed", 60) * now + phase) % 360
+		local tick = attr(part, "Tick", 0)
+		local turns = if tick > 0 then KitMath.Ticked(now, tick, attr(part, "TickMove", 0.25)) * tick else now
+		local degrees = (attr(part, "Speed", 60) * turns + phase) % 360
 		return data.base * CFrame.Angles(0, math.rad(degrees), 0), "on"
 	end
 	local axis: Vector3 = attr(part, "Axis", Vector3.new(0, 0, 1))
@@ -323,7 +347,7 @@ RunService.PreSimulation:Connect(function(dt: number)
 		local depth = if hit then root.Position.Y - hit.Position.Y else 0
 		local instance = hit and depth >= MIN_FLOOR_DEPTH and depth <= MAX_FLOOR_DEPTH and hit.Instance
 		-- a kill hazard is never a floor (a sweeper bar at shin height would otherwise carry the character along with it)
-		if instance and not attr(instance, "Kill", false) and (movers[instance] or tilts[instance] or crumbles[instance] or switches[instance]) then
+		if instance and not attr(instance, "Kill", false) and (movers[instance] or tilts[instance] or crumbles[instance] or switches[instance] or buttons[instance]) then
 			standing = instance
 		end
 	end
@@ -333,6 +357,7 @@ RunService.PreSimulation:Connect(function(dt: number)
 		if next(colorState) ~= nil then
 			table.clear(colorState)
 		end
+		table.clear(doorOpenUntil)
 		for part, data in crumbles do
 			if data.state ~= "solid" then
 				data.state = "solid"
@@ -379,6 +404,29 @@ RunService.PreSimulation:Connect(function(dt: number)
 		colorState[group] = color
 	end
 	lastSwitch = if standing and switches[standing] then standing else nil
+
+	-- pressure buttons: standing on one (re)opens its group's doors for Time seconds
+	if standing and buttons[standing] then
+		doorOpenUntil[attr(standing, "Group", "A")] = os.clock() + attr(standing, "Time", 4)
+	end
+	local clockNow = os.clock()
+	for part, data in buttons do
+		local open = (doorOpenUntil[attr(part, "Group", "A")] or 0) > clockNow
+		local color = if open then BUTTON_ON_COLOR else data.color
+		if part.Color ~= color then
+			part.Color = color
+		end
+	end
+	-- doors: a ghost while open, flashing in the last second, solid otherwise
+	for part, data in doors do
+		local left = (doorOpenUntil[attr(part, "Group", "A")] or 0) - clockNow
+		local look = if left <= 0 then "shut" elseif left < 1 and math.floor(left * 8) % 2 == 0 then "flash" else "open"
+		if look ~= data.look then
+			data.look = look
+			part.CanCollide = look == "shut"
+			part.Transparency = if look == "shut" then data.transparency elseif look == "flash" then 0.5 else 0.85
+		end
+	end
 
 	-- colour plates: solid while their group shows their colour, a ghost otherwise
 	for part, data in colorPlates do

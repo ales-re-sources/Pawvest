@@ -447,7 +447,15 @@ A measured `T_base` for both new stages comes in M6a.
     18.5-20 s; a baseline single jump is stopped by a hedge, a Double Jump crosses it; a timed run from the gate finished through the portal (187.9 s with a stuck bot and pauses, no medal; the result popup data and
     pet XP arrived); no script errors.
   - *Not checked:* the look of the mazes and the iso view (the viewport renders white here), how readable the shifting walls are for a person, the real T_base (105 provisional).
-- **S6.3 Clocktower:** scoped when it starts (STAGES §4).
+  - *Open (user, 2026-10-22, later):* the big maze may need to be harder: hazards inside it, a bigger maze, or the patrolling guards after all (STAGES §5.2 extras); decide in the balancing pass (M6b) or when the user asks.
+- **S6.3 Clocktower (design check done 2026-10-23; decisions: a tower climb, one 1 s clock tick, pressure doors).** Gate in the south wall (finale slot), `StageConfig` `Stage10` (T_base 135, factor 3.0, Bronze on Stage 9 or 4 000),
+  coins `Stage10_1..8`, checkpoints `801`-`806`, `SoonGate10` replaced; kit: Spin `Tick` / `TickMove` (`KitMath.Ticked`), `KitButton` / `KitDoor`; course as in STAGES §7.9.
+  - *Checked in a playtest (developer profile; snapshot `profile_9892673032_s10` restored, `leaderboard_Stage10` removed, star boards restored):* a client bot (one air jump, the account's Run Speed 3 / Jump Height 3) crossed every side, each one
+    several times while tuning (pistons: waiting between them 3/3, running blind thrown off 3/3; pendulums blind 1/3 clean; doors: open 2/2 + 4/4, shut they stop the bot 2/2; planks while lined up 3/3; last stairs timed off the first piston 2/2);
+    then one timed run from the courtyard through the gate up to the roof finished in 89.6 s (with the pauses between test calls): Gold, 4 410 Coins + 315 run reward (factor 3.0), free egg; no script errors.
+  - *Not checked:* the look (the viewport renders white here), the tick sound in a run, human difficulty and the real T_base (135 provisional, the bot run suggests a perfect run of about 75 s), the clock platform for a human (the bot died there 1 in 3
+    when it cut back across the hand's reach).
+  - *Argon note:* an edit to `ObstacleKit` (the button code) did not reach Studio although earlier edits of the same file did; `touch` did not help, a real content change did. After script edits, check the Studio source before a playtest.
 
 ### M6a — First live test + World 1 balancing
 The first live test (open checks below) with 6 stages, then M6 for World 1 (scope in "M6 — Balancing pass" below).

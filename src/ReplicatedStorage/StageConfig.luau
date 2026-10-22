@@ -166,6 +166,19 @@ StageConfig.Stages = {
 		unlockPrice = 3500,
 		rewardFactor = 2.75,
 	},
+	{
+		key = "Stage10", -- Clocktower (World 2 finale): a three-lap climb round a tower, everything on a 1 s clock tick
+		displayName = "Stage 10",
+		folder = "Stage10",
+		order = 10,
+		world = 2,
+		requires = { { id = "DoubleJump", level = 1 } },
+		tBase = 135,
+		tiers = StageConfig.DefaultTiers,
+		unlock = { stage = "Stage9", medal = "Bronze" },
+		unlockPrice = 4000,
+		rewardFactor = 3.0,
+	},
 }
 
 -- Worlds (docs/STAGES.md §7.1): `stage.world` 1..n; a world is a courtyard in Workspace.<folder> (plaza, wall, return portal)
