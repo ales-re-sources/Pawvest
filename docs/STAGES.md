@@ -276,6 +276,32 @@ if the sound fails to load. Beams telegraph on the off-beat; most hazards switch
 - The character runs in a 4-stud lane between invisible walls (simpler and sturdier than a constraint on the depth axis).
 - Triple Jump and Dash read perfectly in 2D; laser grids, sweeping lasers and colour switches fill the lane; background
   layers (decor) give depth.
+- **First level (user's 2D drawing, 2026-10-22): the key arena**, built as the standalone prototype `Workspace.KeyArena`
+  (not in `StageConfig` yet, no timer, medals or portal; reached only by teleporting; floats at x 800, y 120, z 1200).
+  - *Goal:* an isolated room, start bottom left, exit bottom right; collect the **teal key** (top left) and the **green key**
+    (hanging in the E-shaped structure, upper right); picking up the teal key makes the teal force-field gate beside the pillar
+    disappear at once (key attribute `OpensGate`, no lock needed; user's change 2026-10-22), the green key opens the exit door
+    when the player touches its lock zone. An opened gate is fully invisible and non-solid for that player. Spikes kill. Keys and opened gates are per player, persist through deaths (3 checkpoints: start,
+    before the pillar, behind the gate) and reset at the exit.
+  - *Scale:* 1 drawing unit = 4 studs (the arena is 172 x 64 studs inside); positions are converted from the drawing's
+    pixels (41.5 px per unit), so the layout is the drawing's. Lane 6 studs deep (invisible front wall, dark back panel),
+    camera zone `Side`, distance 55 (the whole arena is 64 studs high; the default 40 shows only part of it).
+  - *Deliberate changes to the drawing:* the exit opening is 2 units high (the drawing's 1 unit is below a character's
+    height); the teal gate is full height (the 3-unit pillar alone is cleared by a Triple Jump); the yellow orb is a bounce
+    brick (`LaunchSpeed` 60, launches straight up; the way past the spiked block in the low corridor); spike kill boxes
+    are 60 % of the drawn spike (hanging ones 50 %) so the A-B corridor stays passable for a 5-stud character; keys have a
+    7 x 6 stud pickup box because the key pocket under the hanging bar is only 4.4 studs high; spikes are light red.
+  - *Reachability (kinematic search, calibrated on the real humanoid: 7.27 studs per jump, 16 studs/s):* **Double Jump alone
+    cannot even climb onto platform A** (5 units = 20 studs, a Double Jump rises 14.5); **Triple Jump (2 air jumps, 21.8
+    studs) completes the level** (start -> A -> left ledge -> platform B and the teal key -> over the spiked blocks -> pillar
+    top -> green key -> orb -> exit). So the level belongs to the Triple Jump tier (stage 14, S7). Dash is not needed by
+    that route; the low corridor under platform A (4 floor spikes under a 12-stud ceiling) is the Dash shortcut, not checked
+    yet. With the Triple Jump the margins are small (floor -> A needs 20.2 of 21.8 studs): playtest with the real talent
+    in S7 and lower platform A by a quarter unit if it feels harsh.
+  - *Scripts:* `ArenaConfig` (names, tags, attributes), `ArenaServer` (spikes, checkpoints, keys, locks, exit; no per-part
+    scripts, everything is found by tag) and `ArenaClient` (local key / gate state, key HUD, toasts).
+  - *To do when the stage gets its slot:* `StageConfig` entry (key, world 3, requires), `TimerStart` / finish portal at
+    the start / exit (the exit zone currently just teleports back to the start), Top-10 board, challenge coins, hub portal.
 
 **World 4 — Glide Canyon (stage 17): dropper.**
 - Starts at the top of a tall shaft (400–600 studs); the player falls through rings, past blinking beams and rotating bars,
@@ -534,6 +560,29 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
 - **StageConfig:** key `Blink`, displayName "Stage 3", order 3, world 1, `tBase` **60** (provisional; the perfect run takes about 40 s, so 80 was too
   generous; M6a measures), reward factor 1.25, unlock Bronze on Stage 2 (key `"Stage 1"`) or 1 500. Unlock chain completed: Stage 4 (key `"Stage 2"`)
   Bronze on Blink or 2 000, Stage 5 (key `"Stage 3"`) Bronze on Stage 4 or 2 000. The hub gate and the world panel read x / 15 stars.
+
+### 7.8 S5 Worlds hub (design check 2026-10-22; decisions with the user)
+- **Hub gates:** the hub gets the gates of Worlds 2, 3 and 4 next to `GateWorld1`: clones of `GateWorld1` (1.25x stud arch, `Portal` with its name
+  label, `PointLight`, the gate script) on the same circle round the plaza centre (radius about 44) at 30, 60 and 90 degrees from World 1's gate
+  (positive side, away from the stars board), facing the plaza. Models `GateWorld2`..`GateWorld4` (script files copied on disk, Argon creates the
+  bare models, the Studio-only children are cloned in).
+- **"Coming soon" (decided):** `StageConfig.Worlds[n].soon = true` for Worlds 2-4 until their stages exist (S6 flips World 2's flag, S7/S9 Worlds
+  3 and 4). A soon world has no stages in `StageConfig`: its gate is shut for normal players (local barrier, the server refuses the teleport) and
+  open for admins (`AdminConfig.IsAdmin`) so the island can be built and tested. The face shows "Coming soon" and the future requirement
+  (`world.unlock` / `world.unlockPrice`, informational until S6 copies them onto the first stage: World 2 = 10 of 15 stars in World 1 or 2 500,
+  World 3 = 10 of 15 in World 2 or 4 000, World 4 = 10 of 15 in World 3 or 6 000, per §7.2). No unlock prompt on a soon gate.
+- **World 2 courtyard (decided):** the same compact rectangle as World 1, 263 studs north of it (x -430..-320, z 450..620, y 77): `Plaza`, `Rock`,
+  `Wall` with the gate openings, `Spawn`, `ReturnGate` (back to the hub), `Decor`, cloned from `Workspace.World1`; `Workspace.World2`. The five
+  stage gates (2 + 2 on the long sides, 1 at the north end) come with S6; the plaza reserves the two bonus portal slots beside the return gate
+  (S11), no portals yet. The kill floor already covers the area (baseplate to z 923); lanes of the later stages run east / west like World 1's.
+- **World stars boards (decided):** each world plaza gets a board of the players with the most stars earned in that world (not the total):
+  `StarBoard` is generalised to boards (`MostStars` stays the global one; `WorldStars_<n>` one OrderedDataStore per world with stages, written when
+  that world's stars change, next to the global write), a board model (clone of `StartLocation.StarsLeaderboard`) and a `WorldStarsBoard`
+  script per world folder. World 1's board stands beside the south return gate; World 2's board stays empty until S6.
+- **Return / Home:** already world-aware (`StageConfig.Worlds`, `ReturnSpawn`, `HomeService`): the return gate of a world goes to the hub spawn,
+  Home from a stage lands on that stage's `Arrival`, Home on a courtyard plaza goes to the hub. The score panel shows the world's name and its
+  stars out of the planned 15 (`Worlds[n].stageCount`).
+- **Not in S5:** the five World 2 stages and their gates (S6), bonus portals (S11), Worlds 3 and 4 islands (S7 / S9), a bridge.
 
 ## 8. Milestones (agreed 2026-10-21; status and full scopes in [ROADMAP.md](ROADMAP.md))
 Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.

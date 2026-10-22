@@ -387,6 +387,18 @@ Stage 4 / 2 000). New: `StageMusic.client.luau`, a "Music" row in Settings (`Mus
 - *Not checked:* real `T_base` (60 s provisional) and the real music track (M6a / later).
 A measured `T_base` for both new stages comes in M6a.
 
+### S5 — Worlds hub (design check done 2026-10-22; decisions in STAGES §7.8)
+- **S5.1 Config and gates:** `StageConfig.Worlds` entries for Worlds 2-4 (`gate`, `folder`, `spawn`, `soon = true`, planned `stageCount = 5`, informational
+  `unlock` / `unlockPrice`); `StageUnlocks.IsWorldOpen` shuts a soon world for everyone except admins; `HubGateFaces` shows "Coming soon" + the requirement on a soon
+  gate; `HubGateLocks` keeps the barrier (not for admins); hub gates `GateWorld2`..`GateWorld4` (Studio: clones of `GateWorld1`, scripts copied on disk).
+- **S5.2 World 2 courtyard:** `Workspace.World2` cloned from `World1` 263 studs north (plaza, rock, wall, spawn, return gate, decor, two reserved bonus-portal
+  slots), a "World 2" sign; admins reach it through the hub gate.
+- **S5.3 World stars boards:** per-world `OrderedDataStore` (`WorldStars_<n>`) in `StarBoard`, board models + `WorldStarsBoard` scripts on the World 1 and World 2 plazas.
+- **Acceptance checks:** a normal player at the World 2 / 3 / 4 gates cannot pass (barrier locally, teleport refused by the server) and the face reads "Coming soon";
+  an admin passes the World 2 gate, lands on the World 2 spawn pad facing north, the return gate brings them to the hub spawn, Home on the plaza goes to the hub;
+  World 1 still works unchanged (gate, Home from a stage, return gate); medals earned in World 1 move the World 1 board (and the global board) and no other;
+  no script errors; the user's visual check of the three gates, the World 2 courtyard and the boards.
+
 ### M6a — First live test + World 1 balancing
 The first live test (open checks below) with 6 stages, then M6 for World 1 (scope in "M6 — Balancing pass" below).
 
@@ -396,6 +408,14 @@ Turntable + Labyrinth, S6.3 Clocktower) · S7 Triple Jump + Dash (+ World 3 isla
 S8.2 Dash Bridge + Laser Lab, S8.3 Rising Tide) · S9 Wall Jump + Glide (+ World 4 island) · S10 World 4 (S10.1 Wall Climb +
 Glide Canyon, S10.2 Moon Base + Clockwork, S10.3 Summit) · M6b final balancing · S11 bonus stages (S11.1 Darkness + Memory
 path, S11.2 Stealth + Chase, S11.3 Giant room + Minecart).
+
+**Prototype ahead of S8.2 (2026-10-22, Studio-validated, awaits the user's visual check):** the Laser Lab level the user drew
+(keys + gates + spikes in a side-view room) is built as `Workspace.KeyArena` with `ArenaServer` / `ArenaClient` /
+`ArenaConfig`; details, deliberate changes and the reach analysis are in STAGES §5.2. Checked in a playtest: spikes kill,
+checkpoints respawn on the plates, keys / locks / gates / exit work per player, the `Side` camera zone and the key HUD
+switch on inside the room. Not checked: how it looks (screen captures of the 3D view came back blank), a real run with the
+Triple Jump talent (not built; the route was checked with a kinematic model). Open: its slot (stage 14 / World 3 needs S5 +
+S7 first) and the `StageConfig` entry.
 
 ### P3 — Trading
 - **Prerequisite:** profile session locking in `PlayerProfile` (`UpdateAsync` with a `{ JobId, Time }` lock instead of
