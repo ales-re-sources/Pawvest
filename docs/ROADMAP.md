@@ -361,6 +361,9 @@ S4 tuning (2026-10-22, user's walk-through): unlock popup closes itself when the
 Blink / Stage 4 (also over the courtyard wall top); an exploring-run banner when a checkpoint is reached without a timer (getting around a gate stays allowed: no timer, no
 medal or finish reward, Coins count). Studio-checked (popup closes at 20 studs, the panes stop walking and 5-air-jump attempts on the wall top, the banner appears for a locked
 stage and for a bypassed unlocked one and disappears when a timed run starts).
+S4 tuning, second round: the exploring banner now also shows when the respawn point is already that checkpoint (it only fired when the respawn point changed); Stage 3 (shown Stage 5)
+had lost its checkpoint between `level.1` and `level.2` (a default part at the origin since the S1.1 rename), a 23-stud gap, now rebuilt (11-stud gap like the other jumps). Open for M6a: the
+11-12 stud jumps of Stage 5 need more than a baseline single jump.
 S4.2 Blink, the rhythm special (stage 3, shown "Stage 3"): **done: built, Studio-checked and visually approved by the user (2026-10-22).** Design and as-built values
 in STAGES 7.7 (metronome placeholder now and a Creator Store track later; the beat is per run, music follows the player's run time): a straight
 east lane at 120 BPM (count-in plates, beam rows, piston bridge, "drop the beat" finale), every timed part run-seeded, checkpoints 201-206, 8 coins (300),

@@ -24,7 +24,8 @@ local exploreEvent = Instance.new("RemoteEvent")
 exploreEvent.Name = "ExploreWarning"
 exploreEvent.Parent = ReplicatedStorage
 
-local explored = {} -- [Player] = stage key already warned about (until a run starts or another stage's checkpoint is reached)
+local EXPLORE_REWARN = 120 -- seconds before the same stage warns the same player again
+local explored = {} -- [Player] = { key = stage key, at = os.clock() } of the last warning (cleared when a run starts)
 local lastCheckpoints = {} -- [Player] = last checkpoint part touched (respawn point; skips the work on repeated touches)
 local reached = {} -- [Player] = { [checkpoint part] = true } reached in the current run: the sound plays once per run
 local firstOfStage = {} -- [stage folder] = C part of its lowest-numbered checkpoint (cache)
@@ -77,18 +78,23 @@ function module.OnTouched(part, hit)
 	if not humanoid or humanoid.Health <= 0 then return end
 
 	part = resolve(part)
-	if lastCheckpoints[player] ~= part then
-		lastCheckpoints[player] = part
 
-		-- a stage's checkpoint without a running timer for that stage: an exploring run (warn once per stage)
-		local found, stage = pcall(StageConfig.ForInstance, part)
-		if found then
-			local _, runningKey = TimerHandler.GetTimer(player)
-			if runningKey ~= stage.key and explored[player] ~= stage.key then
-				explored[player] = stage.key
+	-- a stage's checkpoint without a running timer for that stage: an exploring run. Warn once per stage (again after
+	-- EXPLORE_REWARN seconds, e.g. a second visit); this runs on every touch, not only when the respawn point changes, because
+	-- the respawn point may already be that plate from an earlier visit
+	local found, stage = pcall(StageConfig.ForInstance, part)
+	if found then
+		local _, runningKey = TimerHandler.GetTimer(player)
+		if runningKey ~= stage.key then
+			local last = explored[player]
+			if not last or last.key ~= stage.key or os.clock() - last.at > EXPLORE_REWARN then
+				explored[player] = { key = stage.key, at = os.clock() }
 				exploreEvent:FireClient(player, stage.key)
 			end
 		end
+	end
+	if lastCheckpoints[player] ~= part then
+		lastCheckpoints[player] = part
 
 		-- the pad follows the respawn point (also back to an earlier checkpoint); the sound only on the first reach in this run
 		local seen = reached[player]

@@ -422,6 +422,9 @@ levels later if Gold on Worlds 3–4 needs them (M6).
     19 studs from Stage 2's lava section, within Double Jump + Run Speed reach) and walking along the courtyard wall top from one lane to the next;
     **getting around a gate stays possible** (over the wall, or around a locked door): the timer does not start, finish rewards and times do not count, Coins
     do, and the first checkpoint reached without a timer shows the banner "Exploring Stage N without a timer ... at your own risk" (`StageExploreWarning`).
+  - *Stage 5 fix (2026-10-22):* the checkpoint between `level.1` and `level.2` of Stage 3 had been lost (see AGENTS gotchas), leaving a 23-stud gap; restored, the
+    gap is 11 studs like the three before it. These 11-12 stud jumps are at the limit of a single jump (a baseline run reaches about 8.3 studs root to root,
+    the jump lab table in 1.0), so Stage 5 in practice wants Run Speed or Jump Height talents; to be weighed in M6a against the GDD rule that World 1 needs none.
   - *LandingPad broken down:* the old pad object is gone for world stages: each stage folder holds `Gate` (door gate with
     `TimerStart`, `GateExit`, `GateSign`), `Top10Leaderboard` (standing in the courtyard beside the gate) and `Arrival` (where
     finish and Home land, in front of the gate); the plaza replaces the pad floor, decor and rock.
