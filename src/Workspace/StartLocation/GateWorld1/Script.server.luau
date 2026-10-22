@@ -30,7 +30,11 @@ portal.Touched:Connect(function(hit)
 	end
 	lastTouch[player] = now
 
-	local spawn = workspace:WaitForChild(world.folder):WaitForChild(world.spawn)
+	local island = workspace:FindFirstChild(world.folder)
+	local spawn = island and island:FindFirstChild(world.spawn)
+	if not spawn then
+		return -- the island is not built yet (an admin at a `soon` gate): nowhere to go
+	end
 	root.CFrame = spawn.CFrame + Vector3.new(0, 5, 0)
 	TimerHandler.UpdateScorePanel(player, world.name)
 end)

@@ -571,10 +571,13 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   open for admins (`AdminConfig.IsAdmin`) so the island can be built and tested. The face shows "Coming soon" and the future requirement
   (`world.unlock` / `world.unlockPrice`, informational until S6 copies them onto the first stage: World 2 = 10 of 15 stars in World 1 or 2 500,
   World 3 = 10 of 15 in World 2 or 4 000, World 4 = 10 of 15 in World 3 or 6 000, per §7.2). No unlock prompt on a soon gate.
-- **World 2 courtyard (decided):** the same compact rectangle as World 1, 263 studs north of it (x -430..-320, z 450..620, y 77): `Plaza`, `Rock`,
-  `Wall` with the gate openings, `Spawn`, `ReturnGate` (back to the hub), `Decor`, cloned from `Workspace.World1`; `Workspace.World2`. The five
-  stage gates (2 + 2 on the long sides, 1 at the north end) come with S6; the plaza reserves the two bonus portal slots beside the return gate
-  (S11), no portals yet. The kill floor already covers the area (baseplate to z 923); lanes of the later stages run east / west like World 1's.
+- **World 2 courtyard (decided, as built):** the same compact rectangle as World 1, cloned 263 studs south of it (x -430..-320, z 450..620, y 77) and
+  **rotated 180 degrees about its centre**, so the entrance (`ReturnGate`, `Spawn` pad) is on the side facing World 1 and the finale gate will be at the far
+  south end, whose course runs south, away from World 1 (a plain copy would have sent the finale lane through World 1's courtyard). `Workspace.World2`: `Plaza`,
+  `Rock`, `Wall` with the gate openings, `Spawn`, `ReturnGate`, `Decor`, `StarsLeaderboard`, `WorldSign`, `WorldStarsBoard`. The five stage gates (2 + 2 on the long
+  sides, 1 at the far end) come with S6; the plaza reserves the two bonus portal slots beside the return gate (S11), no portals yet. The kill floor already covers the
+  area (baseplate to z 923); lanes of the later stages run east / west like World 1's. Both courtyards also get a **world sign** ("World N" on two wooden posts, 27 studs
+  in front of the arrival pad) and their stars board.
 - **World stars boards (decided):** each world plaza gets a board of the players with the most stars earned in that world (not the total):
   `StarBoard` is generalised to boards (`MostStars` stays the global one; `WorldStars_<n>` one OrderedDataStore per world with stages, written when
   that world's stars change, next to the global write), a board model (clone of `StartLocation.StarsLeaderboard`) and a `WorldStarsBoard`

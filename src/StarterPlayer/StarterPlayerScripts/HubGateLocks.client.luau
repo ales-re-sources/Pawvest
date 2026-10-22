@@ -7,6 +7,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
+local AdminConfig = require(ReplicatedStorage:WaitForChild("AdminConfig"))
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -25,6 +26,9 @@ local function addGate(world)
 	barrier.CFrame = portal.CFrame
 
 	local function isOpen(): boolean
+		if world.soon then
+			return AdminConfig.IsAdmin(LocalPlayer.UserId) -- the stages are not built yet (S5): admins test the island, the server agrees
+		end
 		for _, stage in stages do
 			if LocalPlayer:GetAttribute(StageConfig.UnlockedAttribute(stage)) == true then
 				return true

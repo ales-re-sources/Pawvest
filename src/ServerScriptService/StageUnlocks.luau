@@ -11,6 +11,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local StageConfig = require(ReplicatedStorage.StageConfig)
+local AdminConfig = require(ReplicatedStorage.AdminConfig)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 
 local BUY_COOLDOWN = 0.25 -- seconds between requests per player
@@ -49,8 +50,11 @@ function StageUnlocks.IsUnlocked(player: Player, stage): boolean?
 end
 
 -- True if the hub gate of `world` is open for the player (any of its stages is open), false if all are locked, nil while the
--- profile is still loading.
+-- profile is still loading. A world whose stages are not built yet (`soon`, S5) is open for admins only, so its island can be tested.
 function StageUnlocks.IsWorldOpen(player: Player, world): boolean?
+	if world.soon then
+		return AdminConfig.IsAdmin(player.UserId)
+	end
 	local loading = false
 	for _, stage in StageConfig.StagesOfWorld(world.index) do
 		local open = StageUnlocks.IsUnlocked(player, stage)

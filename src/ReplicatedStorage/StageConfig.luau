@@ -118,8 +118,17 @@ StageConfig.Stages = {
 -- Worlds (docs/STAGES.md §7.1): `stage.world` 1..n; a world is a courtyard in Workspace.<folder> (plaza, wall, return portal)
 -- with a `spawn` part, the stage pads stand on it, and a gate model <gate> in Workspace.StartLocation (the hub) leads there.
 -- The Tutorial is world 0 (the hub).
+-- `soon = true` (S5): the world's stages are not built yet (not in StageConfig.Stages): its gate stays shut for everyone but admins,
+-- the face reads "Coming soon" and the future requirement (`unlock` / `unlockPrice`, informational until S6 copies them onto the world's
+-- first stage), `stageCount` = planned stages (5 per world, so the score panel and the gate show x / 15).
 StageConfig.Worlds = {
 	[1] = { name = "World 1", gate = "GateWorld1", folder = "World1", spawn = "Spawn" },
+	[2] = { name = "World 2", gate = "GateWorld2", folder = "World2", spawn = "Spawn", soon = true, stageCount = 5,
+		unlock = { world = 1, stars = 10 }, unlockPrice = 2500 },
+	[3] = { name = "World 3", gate = "GateWorld3", folder = "World3", spawn = "Spawn", soon = true, stageCount = 5,
+		unlock = { world = 2, stars = 10 }, unlockPrice = 4000 },
+	[4] = { name = "World 4", gate = "GateWorld4", folder = "World4", spawn = "Spawn", soon = true, stageCount = 5,
+		unlock = { world = 3, stars = 10 }, unlockPrice = 6000 },
 }
 StageConfig.WorldByGate = {}
 StageConfig.WorldByName = {}
@@ -277,7 +286,7 @@ function StageConfig.WorldStars(medals, world: number): number
 	return stars
 end
 
--- Most stars a world can give (3 per stage).
+-- Most stars a world can give (3 per stage; a world whose stages are not built yet counts its planned stages).
 function StageConfig.MaxWorldStars(world: number): number
 	local count = 0
 	for _, stage in StageConfig.Stages do
@@ -285,7 +294,8 @@ function StageConfig.MaxWorldStars(world: number): number
 			count += 1
 		end
 	end
-	return count * #StageConfig.Medals
+	local planned = StageConfig.Worlds[world] and StageConfig.Worlds[world].stageCount or 0
+	return math.max(count, planned) * #StageConfig.Medals
 end
 
 -- Stars (medal indices) summed over all stages for `medals` ([stageKey] = medal index); the hub score panel and the

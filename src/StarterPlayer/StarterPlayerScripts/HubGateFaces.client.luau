@@ -54,6 +54,11 @@ local function addGate(world)
 	end
 
 	local function refresh()
+		if world.soon then
+			starsLabel.Text = "🔒 Coming soon"
+			coinsLabel.Text = MedalText.UnlockBar({ unlock = world.unlock }) or ""
+			return
+		end
 		local open = false
 		for _, stage in stages do
 			if LocalPlayer:GetAttribute(StageConfig.UnlockedAttribute(stage)) == true then

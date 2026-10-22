@@ -391,8 +391,8 @@ A measured `T_base` for both new stages comes in M6a.
 - **S5.1 Config and gates:** `StageConfig.Worlds` entries for Worlds 2-4 (`gate`, `folder`, `spawn`, `soon = true`, planned `stageCount = 5`, informational
   `unlock` / `unlockPrice`); `StageUnlocks.IsWorldOpen` shuts a soon world for everyone except admins; `HubGateFaces` shows "Coming soon" + the requirement on a soon
   gate; `HubGateLocks` keeps the barrier (not for admins); hub gates `GateWorld2`..`GateWorld4` (Studio: clones of `GateWorld1`, scripts copied on disk).
-- **S5.2 World 2 courtyard:** `Workspace.World2` cloned from `World1` 263 studs north (plaza, rock, wall, spawn, return gate, decor, two reserved bonus-portal
-  slots), a "World 2" sign; admins reach it through the hub gate.
+- **S5.2 World 2 courtyard:** `Workspace.World2` cloned from `World1` 263 studs south and rotated 180 degrees (plaza, rock, wall, spawn, return gate, decor, two
+  reserved bonus-portal slots), a "World N" sign on both courtyards; admins reach it through the hub gate.
 - **S5.3 World stars boards:** per-world `OrderedDataStore` (`WorldStars_<n>`) in `StarBoard`, board models + `WorldStarsBoard` scripts on the World 1 and World 2 plazas.
 - **Acceptance checks:** a normal player at the World 2 / 3 / 4 gates cannot pass (barrier locally, teleport refused by the server) and the face reads "Coming soon";
   an admin passes the World 2 gate, lands on the World 2 spawn pad facing north, the return gate brings them to the hub spawn, Home on the plaza goes to the hub;
