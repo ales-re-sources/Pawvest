@@ -425,6 +425,7 @@ A measured `T_base` for both new stages comes in M6a.
     Bronze), Stage 7's gate starts its timer, without Double Jump the arrival warning shows "Stage 7 needs a talent", a coin pays (+20) and counts once, Home lands on `Arrival`; a client bot crossed every leg of both courses at baseline Run Speed with one air jump
     (margins in STAGES §7.9), a single jump with Run Speed 5 and Jump Height 3 reaches a 12 stud gap only by 0 studs (the 11 stud ledges are the real gate); no script errors.
   - *After the user's first look:* both courses were found too short (30-40 s) and lengthened to about 630 / 760 studs (zigzag, sideways stones, gauntlet, gust beam; STAGES §7.9), perfect runs about 60 s by estimate; checkpoints `407` / `408` / `507` / `508` added.
+  - *Wind made visible (user request):* `KitZones.client` gives every wind zone a local `WindParticles` emitter (streaks along Push, rate following the gust; checked: rates pulse with the gusts of Stage 7, opposed gusts alternate); the look itself is unchecked.
   - *Not checked:* the look (the Studio viewport renders white in these sessions), real T_base, human difficulty of the lift / slider timing and the tilt plates (M6b), lane dividers between the Stage 6 and Stage 7 lanes and over the wall top (not built: the lanes are
     about 30 studs apart and diverge; a World 1 style glass divider can follow if the user asks), the Top-10 boards' spots next to the gates.
 - **S6.2 Turntable + Labyrinth** and **S6.3 Clocktower:** scoped when they start (STAGES §4, §5.2).
