@@ -133,7 +133,7 @@ src/
 | Child | Script behaviour |
 |---|---|
 | `Gate` (Model) | the door gate in the courtyard wall: Studio-only pillars, beams, `Sign` (`Sign.Gui.Title`), `Door`, plus the scripted children below; the course starts directly behind it (no teleport into a stage) |
-| `Gate/TimerStart` | starts the timer unless one already runs on this stage (refused unless `StageUnlocks.IsUnlocked`, shows the stage on the score panel) + acts as checkpoint; an invisible 48 x 30 x 4 trigger across the gate line; touching it counts as reaching the stage's first checkpoint (`CheckpointTouchHandler`, H2), so the respawn point is that plate |
+| `Gate/TimerStart` | starts the timer unless one already runs on this stage (refused unless `StageUnlocks.IsUnlocked`, shows the stage on the score panel) + acts as checkpoint; an invisible 21 x 16 x 4 trigger exactly in the doorway between the pillars (floor to 16 studs; it used to be 48 x 30 x 4 and started runs for players walking beside the gate or on the wall top; the Tutorial's `LandingPad/TimerStart` and the `StageKit.Gate` template have the same size); touching it counts as reaching the stage's first checkpoint (`CheckpointTouchHandler`, H2), so the respawn point is that plate |
 | `Gate/Door` | Studio-only wooden door between the pillars; `GateDoors.client` makes it solid + opens the unlock popup while the stage is locked for the local player, a faint ghost once unlocked; `HubPortalMedals` draws stars / coins / lock lines on its Back face (white text closed, black open) |
 | `Gate/GateExit` | invisible trigger just outside the door on the courtyard side; walking back out cancels the running timer (panel -> world) |
 | `Gate/GateSign` | script: writes the `StageConfig` display name on `Gate.Sign.Gui.Title` |

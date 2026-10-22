@@ -364,6 +364,8 @@ stage and for a bypassed unlocked one and disappears when a timed run starts).
 S4 tuning, second round: the exploring banner now also shows when the respawn point is already that checkpoint (it only fired when the respawn point changed); Stage 3 (shown Stage 5)
 had lost its checkpoint between `level.1` and `level.2` (a default part at the origin since the S1.1 rename), a 23-stud gap, now rebuilt (11-stud gap like the other jumps). Open for M6a: the
 11-12 stud jumps of Stage 5 need more than a baseline single jump.
+S4 tuning, third round: `TimerStart` of all six gates shrunk from 48 x 30 x 4 to the 21 x 16 x 4 doorway (a run started when walking beside the gate or on the wall top); checked beside
+the doors, on the wall top and through the doorway at four world gates and the Tutorial.
 S4.2 Blink, the rhythm special (stage 3, shown "Stage 3"): **done: built, Studio-checked and visually approved by the user (2026-10-22).** Design and as-built values
 in STAGES 7.7 (metronome placeholder now and a Creator Store track later; the beat is per run, music follows the player's run time): a straight
 east lane at 120 BPM (count-in plates, beam rows, piston bridge, "drop the beat" finale), every timed part run-seeded, checkpoints 201-206, 8 coins (300),
