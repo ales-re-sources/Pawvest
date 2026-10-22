@@ -38,7 +38,7 @@ equal to their folder, e.g. `IslandHop`; checkpoint blocks of 100 per new stage,
 | # | World | Stage | Internal key | Built | Required talents | Unlock |
 |---|---|---|---|---|---|---|
 | T | – (hub) | Tutorial | `"Stage 4"` ¹ | yes | – | always open |
-| 1 | 1 | Stage 1 (Island Hop) | `IslandHop` | yes (S4.1) | – | Bronze on Tutorial (not for sale) |
+| 1 | 1 | Stage 1 (Island Hop) | `IslandHop` | yes (S4.1) | – | Bronze on Tutorial **or** 200 |
 | 2 | 1 | Stage 2 (today's first stage) | `"Stage 1"` | yes | – | Bronze on Stage 1 **or** 1 000 (switched in S4.1) |
 | 3 | 1 | Stage 3 (Blink ★ rhythm) | `Blink` | yes (S4.2) | – | Bronze on Stage 2 **or** 1 500 |
 | 4 | 1 | Stage 4 (today's second stage) | `"Stage 2"` | yes | – | Bronze on Stage 3 **or** 2 000 |
@@ -74,7 +74,7 @@ board but not toward a world, so World 1 is exactly 5 stages = 15 stars and the 
 on top: not numbered, outside the unlock chain (no bar, no price; each opens with its world), reward factor 1.0, medals,
 Top-10 board and challenge coins like any stage; their stars count toward the total (+3 each).
 
-Prices follow `price(n) ≈ medal total of stage n−1, rounded to 500` (stage 1 is not for sale: only Bronze on the Tutorial opens it, decided 2026-10-22, because without a medal the Tutorial pays at most its 120 Coins); buying every other unlock costs 80 500
+Prices follow `price(n) ≈ medal total of stage n−1, rounded to 500` (stage 1 is set to 200, decided 2026-10-22: a new player cannot earn Coins without a Tutorial medal, the Tutorial pays at most its 120 challenge-coin Coins without one, so the price is a shortcut for later purchases, not a path for new players); buying every unlock costs 80 700
 (skipping stays possible and expensive). Today's bars and prices change with the re-order (Stage 1: Bronze on Island Hop /
 1 000; Stage 2: Bronze on Blink / 2 000; Stage 3: Bronze on Stage 2 / 2 000), applied in S4 together with the new
 stages so players never see a gap in the numbering; nothing is live yet, so no grandfather rule is needed if this lands
@@ -283,7 +283,7 @@ levels later if Gold on Worlds 3–4 needs them (M6b).
 | Pet garden (§7.6) | target 200–1 000 | 6 mixed pets at Lv 5 ≈ 200 / h, a strong set ≈ 630 / h (≈ 940 with the pet bonus); offline production capped at 8 h (a strong set: ≈ 5 000 per 8 h) |
 | Pet bonus | × 1.0–1.5 | on all of the above |
 
-Sinks: talents (6 800 today, 45 800 planned), stage unlocks (6 500 today, 80 500 planned), eggs (§7.2), pet slots (7 000), garden pens (32 500), incubators (17 000)
+Sinks: talents (6 800 today, 45 800 planned), stage unlocks (6 700 today, 80 700 planned), eggs (§7.2), pet slots (7 000), garden pens (32 500), incubators (17 000)
 and feeding (§7.6).
 
 Notes:

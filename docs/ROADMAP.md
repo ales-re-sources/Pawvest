@@ -371,8 +371,8 @@ S4 tuning, fourth round: the World 1 hub gate is shut until one of its stages is
 S4 tuning, fifth round: the unlock popup is retired; a shut stage door and a shut world gate carry a ProximityPrompt ("Unlock · price", hold E; "Needs N Coins" when short) and a toast reports
 the result (`GatePrompts.client`, `StageUnlockPopup` deleted). Checked: world gate bought with 600 Coins ("World 1 unlocked!", barrier and prompt gone), a stage door without enough Coins ("Not enough Coins"),
 no popup when walking into a shut door.
-S4 tuning, sixth round: Island Hop (Stage 1) is no longer for sale (`unlockPrice = nil`): a player without a Tutorial medal can earn at most 120 Coins, so the 500-Coin option was dead. The world gate and
-Island Hop's door show only the Bronze requirement and carry no prompt.
+S4 tuning, sixth round: Island Hop's price went 500 -> removed -> **200 Coins** (user decision: a small price may help later monetization; a player without a Tutorial medal can earn at most 120 Coins, so for new
+players Bronze on the Tutorial stays the only path).
 S4.2 Blink, the rhythm special (stage 3, shown "Stage 3"): **done: built, Studio-checked and visually approved by the user (2026-10-22).** Design and as-built values
 in STAGES 7.7 (metronome placeholder now and a Creator Store track later; the beat is per run, music follows the player's run time): a straight
 east lane at 120 BPM (count-in plates, beam rows, piston bridge, "drop the beat" finale), every timed part run-seeded, checkpoints 201-206, 8 coins (300),

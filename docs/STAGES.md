@@ -396,7 +396,7 @@ levels later if Gold on Worlds 3–4 needs them (M6).
 - **The world gate shows progress** (face, like the stage portals): the world's **stars x / 15** (medals earned), the
   **challenge coins found x / y** across the world's stages, and its lock (requirement + price, §7.2). **A world's gate is shut until one of its stages is open** for the
   player (decided 2026-10-22, so nobody enters a courtyard of closed gates): World 1 opens with Bronze on the Tutorial or by buying Stage 1; the face shows the
-  lock (requirement + price), a local barrier fills the gate, Stage 1 is not for sale (decided 2026-10-22: without a Tutorial medal a player cannot earn the Coins), so the gate has no prompt and only Bronze on the Tutorial opens it; the server refuses the
+  lock (requirement + price), a local barrier fills the gate, a prompt on it ("Unlock · 200 Coins", hold E) buys Stage 1, which opens the world (the price is low on purpose, decided 2026-10-22; a player without a Tutorial medal cannot earn it anyway); the server refuses the
   teleport. Worlds 2–4 open with their first stage under the world-stars rule of §7.2.
 - The stage return portal ("Hub") and the Home button lead to the stage's **world island** (`StageConfig.world` → world
   spawn), the Home button on a world island to the hub. The Tutorial (world 0) returns to the hub.
@@ -447,9 +447,9 @@ levels later if Gold on Worlds 3–4 needs them (M6).
 
   | n | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 |
   |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-  | Price | – (Island Hop is not for sale) | 1 000 | 1 500 | 2 000 | 2 000 | 2 500 | 3 000 | 3 000 | 3 500 | 4 000 | 4 000 | 4 500 | 5 000 | 5 500 | 5 500 | 6 000 | 6 500 | 6 500 | 7 000 | 7 500 |
+  | Price | 200 (Island Hop: low on purpose, see GDD §3) | 1 000 | 1 500 | 2 000 | 2 000 | 2 500 | 3 000 | 3 000 | 3 500 | 4 000 | 4 000 | 4 500 | 5 000 | 5 500 | 5 500 | 6 000 | 6 500 | 6 500 | 7 000 | 7 500 |
 
-  Buying every unlock costs 80 500: skipping stays possible and expensive (GDD §3).
+  Buying every unlock costs 80 700: skipping stays possible and expensive (GDD §3).
 - The re-order changes the bars of today's Stage 1 (now after Island Hop) and Stage 2 (after Blink). Nothing is live yet, so
   this should land **before the first live test**; afterwards it would need a grandfather rule.
 
@@ -502,7 +502,7 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
 - **Coins** `IslandHop_1`..`_7` (4 easy 20, 2 risky 50, 1 talent 100 = 280): side pillars off the course; the talent coin sits
   on a 3 x 3 tower 11.5 studs above the finish island (only Double Jump reaches it); none behind a score board.
 - **StageConfig:** key `IslandHop`, displayName "Stage 1", order 1, world 1, `tBase` 52 (provisional, M6a), reward factor 0.75,
-  unlock Bronze on the Tutorial (the 500-Coin price was dropped later, see §7.1); Stage 2 (key `"Stage 1"`) now needs Bronze on Island Hop or 1 000 Coins; Stage 4 and 5 keep
+  unlock Bronze on the Tutorial or 200 Coins (first 500, then none, then 200, see §7.1); Stage 2 (key `"Stage 1"`) now needs Bronze on Island Hop or 1 000 Coins; Stage 4 and 5 keep
   their bars until S4.2. World 1 has four stages until Blink exists: the hub gate and the world panel read x / 12 stars.
 
 ### 7.7 S4.2 Blink (design check and as built, 2026-10-22; decisions: metronome now / track later, per-run beat)
