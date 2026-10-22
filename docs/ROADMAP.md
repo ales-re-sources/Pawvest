@@ -51,7 +51,7 @@ Rules:
 | S4 | World 1 complete (Island Hop, Blink) — done 2026-10-22: S4.0 courtyard + hub gate, S4.1 Island Hop, S4.2 Blink (user's visual checks) | ✔ (S4.0-S4.2) | ✔ (S4.0-S4.2) | – |
 | M6a | First live test + World 1 balancing | – | – | – |
 | S5 | Worlds hub — done 2026-10-22: gates for Worlds 2-4 (coming soon, admins only), World 2 courtyard, signs, per-world stars boards (user's visual check) | ✔ | ✔ | – |
-| S6 | World 2 (stages 6–10) — S6.1 Double Up + Seesaw in progress (design check 2026-10-22) | – | – | – |
+| S6 | World 2 (stages 6–10) — S6.1 Double Up + Seesaw built and Studio-checked 2026-10-22 (awaits the user's visual check), S6.2 / S6.3 not started | ✔ (S6.1) | ✔ (S6.1) | – |
 | S7 | Talents: Triple Jump + Dash | – | – | – |
 | S8 | World 3 (stages 11–15) | – | – | – |
 | S9 | Talents: Wall Jump + Glide | – | – | – |
@@ -418,6 +418,14 @@ A measured `T_base` for both new stages comes in M6a.
   - *Acceptance checks:* an admin and a normal player (10 stars or Coins) pass the World 2 gate; each stage's gate starts the timer and shows its "Needs: Double Jump" line; the arrival warning
     fires without the talent; a baseline bot with one air jump crosses every leg of both courses (Double Jump gaps / ledges are impossible with a single jump and every soft talent); the tilt plates
     and the crosswind are walked by hand; finish portal returns to `Arrival`, Home lands there, medals move the World 1 + World 2 boards; all 16 coins pay once; no script errors; the user's visual check.
+  - *As built:* STAGES §7.9 (values), `Worlds[2].soon` removed (World 2 opens with Stage 6: 10 of 15 stars in World 1 or 2 500), `Stage6` / `Stage7` in `StageConfig`, coins `Stage6_1..8`, `Stage7_1..8` in `ChallengeCoinConfig`, `SoonGate8..10`
+    (closed doors) on the unbuilt openings.
+  - *Checked in a playtest (Studio, developer profile; snapshot restored afterwards):* the World 2 hub gate face reads "10 of 15 in World 1 or 2500 Coins", buying Stage 6 (2 500) opens it, the hub gate lands on the World 2 spawn,
+    Stage 6's gate starts the timer and the score panel shows its limits (T_base 90 -> 2:24 / 1:39 / 1:12), the finish portal returns to `Arrival` (a slow run: Bronze, +400 Coins medal payout and +100 run reward = factor 2.0, Stage 7 unlocked by the
+    Bronze), Stage 7's gate starts its timer, without Double Jump the arrival warning shows "Stage 7 needs a talent", a coin pays (+20) and counts once, Home lands on `Arrival`; a client bot crossed every leg of both courses at baseline Run Speed with one air jump
+    (margins in STAGES §7.9), a single jump with Run Speed 5 and Jump Height 3 reaches a 12 stud gap only by 0 studs (the 11 stud ledges are the real gate); no script errors.
+  - *Not checked:* the look (the Studio viewport renders white in these sessions), real T_base, human difficulty of the lift / slider timing and the tilt plates (M6b), lane dividers between the Stage 6 and Stage 7 lanes and over the wall top (not built: the lanes are
+    about 30 studs apart and diverge; a World 1 style glass divider can follow if the user asks), the Top-10 boards' spots next to the gates.
 - **S6.2 Turntable + Labyrinth** and **S6.3 Clocktower:** scoped when they start (STAGES §4, §5.2).
 
 ### M6a — First live test + World 1 balancing

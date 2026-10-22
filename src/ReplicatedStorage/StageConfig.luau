@@ -114,6 +114,32 @@ StageConfig.Stages = {
 		unlockPrice = 2000,
 		rewardFactor = 1.75, -- curve 0.5 + 0.25 × order (GDD §5)
 	},
+	{
+		key = "Stage6", -- Double Up (World 2, docs/STAGES.md §7.9): Double Jump gaps and ledges, lifts, slide movers
+		displayName = "Stage 6",
+		folder = "Stage6",
+		order = 6,
+		world = 2,
+		requires = { { id = "DoubleJump", level = 1 } },
+		tBase = 90, -- seconds; provisional until measured in M6b
+		tiers = StageConfig.DefaultTiers,
+		unlock = { world = 1, stars = 10 }, -- the world opener: 10 of the 15 stars of World 1
+		unlockPrice = 2500,
+		rewardFactor = 2.0, -- curve 0.5 + 0.25 × order (GDD §5)
+	},
+	{
+		key = "Stage7", -- Seesaw: kit-local tilt plates, crosswind, crumbling rests
+		displayName = "Stage 7",
+		folder = "Stage7",
+		order = 7,
+		world = 2,
+		requires = { { id = "DoubleJump", level = 1 } },
+		tBase = 100,
+		tiers = StageConfig.DefaultTiers,
+		unlock = { stage = "Stage6", medal = "Bronze" },
+		unlockPrice = 3000,
+		rewardFactor = 2.25,
+	},
 }
 
 -- Worlds (docs/STAGES.md §7.1): `stage.world` 1..n; a world is a courtyard in Workspace.<folder> (plaza, wall, return portal)
@@ -124,8 +150,7 @@ StageConfig.Stages = {
 -- first stage), `stageCount` = planned stages (5 per world, so the score panel and the gate show x / 15).
 StageConfig.Worlds = {
 	[1] = { name = "World 1", gate = "GateWorld1", folder = "World1", spawn = "Spawn" },
-	[2] = { name = "World 2", gate = "GateWorld2", folder = "World2", spawn = "Spawn", soon = true, stageCount = 5,
-		unlock = { world = 1, stars = 10 }, unlockPrice = 2500 },
+	[2] = { name = "World 2", gate = "GateWorld2", folder = "World2", spawn = "Spawn", stageCount = 5 },
 	[3] = { name = "World 3", gate = "GateWorld3", folder = "World3", spawn = "Spawn", soon = true, stageCount = 5,
 		unlock = { world = 2, stars = 10 }, unlockPrice = 4000 },
 	[4] = { name = "World 4", gate = "GateWorld4", folder = "World4", spawn = "Spawn", soon = true, stageCount = 5,

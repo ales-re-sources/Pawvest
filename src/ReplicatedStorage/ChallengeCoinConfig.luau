@@ -60,6 +60,22 @@ ChallengeCoinConfig.Coins = {
 	{ id = "Stage5_8", stage = "Stage5", tier = "Talent" },
 	{ id = "Stage5_9", stage = "Stage5", tier = "Talent" },
 	{ id = "Stage5_10", stage = "Stage5", tier = "Talent" },
+	{ id = "Stage6_1", stage = "Stage6", tier = "Easy" },
+	{ id = "Stage6_2", stage = "Stage6", tier = "Easy" },
+	{ id = "Stage6_3", stage = "Stage6", tier = "Easy" },
+	{ id = "Stage6_4", stage = "Stage6", tier = "Easy" },
+	{ id = "Stage6_5", stage = "Stage6", tier = "Easy" },
+	{ id = "Stage6_6", stage = "Stage6", tier = "Risky" },
+	{ id = "Stage6_7", stage = "Stage6", tier = "Risky" },
+	{ id = "Stage6_8", stage = "Stage6", tier = "Talent" }, -- needs Double Jump plus Jump Height 2-3 (the stage itself requires Double Jump)
+	{ id = "Stage7_1", stage = "Stage7", tier = "Easy" },
+	{ id = "Stage7_2", stage = "Stage7", tier = "Easy" },
+	{ id = "Stage7_3", stage = "Stage7", tier = "Easy" },
+	{ id = "Stage7_4", stage = "Stage7", tier = "Easy" },
+	{ id = "Stage7_5", stage = "Stage7", tier = "Easy" },
+	{ id = "Stage7_6", stage = "Stage7", tier = "Risky" },
+	{ id = "Stage7_7", stage = "Stage7", tier = "Risky" },
+	{ id = "Stage7_8", stage = "Stage7", tier = "Talent" },
 }
 
 ChallengeCoinConfig.ById = {}

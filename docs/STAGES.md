@@ -604,24 +604,27 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   courtyard stay closed "Coming soon" doors, like World 1's `SoonGate`s were).
 - **Look:** the Island Hop look (stud-textured columns from the sea, grass / sand tops, no kill parts except where a stage needs them), so World 2 matches
   World 1 until the style decision (STYLE_PREVIEW.md) is made.
-- **Reach rules for Double Jump stages** (§1.0, baseline Run Speed 0 / Jump Height 0 with one air jump: reach 14.7, rise 14.5): a gap or ledge that a single
-  jump with every soft talent cannot make (single reach <= 11, rise <= 9) is a gate; every Double Jump gap on the main line is **12 to 13.5 studs edge to edge**
-  (flat reach 14.7 minus the 1-2 studs the root stands inside each edge), every ledge **10 to 12 studs up**, landings at least 6 x 6; nothing on the main line
-  needs more than a Double Jump with baseline Run Speed.
-- **S6.1 Stage 6 Double Up** (east near gate, ~470 studs, checkpoints `401`-`406`): (1) warm-up, three 8 x 8 pillars with single-jump gaps (a reminder that
-  the stage needs the talent, the "Needs:" line and arrival warning already exist); (2) five 8 x 8 plates with 12-13.5 stud gaps (the first real Double
-  Jump gaps), checkpoint plate between; (3) a staircase of three 6 x 6 towers rising 11-12 studs each (Double Jump ledges), checkpoint on top; (4) two kit **lifts**
-  (`Mover_Lift`, distance 22, period 8 s, pause 1.5 s) between towers with a 9-stud gap from the landing; (5) three kit **slide movers** (run-seeded,
-  amplitude 9, period 5 s) across a 28-stud gap, the last bank 12 studs from the mover's end (a Double Jump); (6) a drop of 10 studs to the 16 x 16 finish island
-  and portal. No kill parts: the sea is the hazard. Talent coin: a 3 x 3 pillar 19 studs above the finish island (Double Jump + Jump Height 3 or a later Triple Jump).
-- **S6.1 Stage 7 Seesaw** (east far gate, ~420 studs, checkpoints `501`-`506`): the signature **tilt plates** (`Plate_Tilt`, kit-local: the plate tips toward where you
-  stand, slides you off past the slide angle): (1) one wide, gentle plate over the sea to teach it (max angle 12); (2) a chain of four plates 3 studs apart, each a
-  little more sensitive; (3) a narrow 6-stud beam with a **steady crosswind** zone (`Zone_WindSteady`, push 14) and gusts on a second crossing; (4) tilt plates
-  across 10-11 stud gaps where a slide-off is recovered with the air jump (the Double Jump recovery of §4); (5) two crumbling plates as a rest before the
-  finale; (6) three ascending tilt plates with gusts, to the finish island. Fall risks only (the sea).
+- **Reach rules for Double Jump stages** (§1.0): measured in the S6.1 bot tests (baseline Run Speed 0 / Jump Height 0, one air jump; the bot jumps 0.6 studs
+  before the edge and double-jumps at 0.24 s): a Double Jump crosses a **12-12.5 stud gap with 1.6-2.4 studs to spare**, a **11 stud ledge with 4.6-4.9**, a 12 stud ledge
+  with none (so ledges stay at 11); a single jump with **Run Speed 5 and Jump Height 3 still crosses a 12 stud gap by 0 studs** (landed on the edge), so a gap of 12-12.5 is only a
+  soft gate and the real gate on Double Up is the 11 stud ledges (single rise with every soft talent is 9.0). Rules used: Double Jump gaps 12-12.5 (never more than 13: margin 1.4 at 13),
+  ledges 11, landings at least 6 x 6; **single-jump gaps at most 6.5** (a baseline single jump reaches 8.3: gaps of 8 to 10 landed on the edge), 4-5 when the next plate is 4 higher.
+- **S6.1 Stage 6 Double Up as built** (key `Stage6`, east near gate (x -318.3, z 505), course east, plate centres at `u` studs from the first plate `401` at x -312; surface y 78.5):
+  (1) warm-up: three 8 x 8 pillars, gaps 5; (2) **Double Jump gaps**: five 8 x 8 pillars at `u` 61.5 / 82 / 102.5 / 123 / 143.5 with gaps of 12.5, lateral stagger +3 / -3 / +3, checkpoint `402` plate at 166
+  (gap 12.5); (3) **ledges**: three 6 x 6 towers 11 studs apart in height (h 11 / 22 / 33) with gaps of 6, checkpoint `403` plate at 220 (h 33); (4) a kit **lift** (`Lift1`, 8 x 8, rises 22 studs, period 10 s, pause 1.5 s,
+  6 stud gaps both ends) to checkpoint `404` (h 55, plate at 252.5); (5) two **run-seeded slide movers** (10 x 8, amplitude 8, period 6 s, opposite phases, 6 stud gap to the plate and to each other at the extremes, standing still
+  at their extremes for about a second) and a final **Double Jump gap of 11** from the last mover's right extreme to checkpoint `405` (h 55, plate at 339.5); (6) descent: `406` (h 45, 8 gap), pillars at h 37 / 29 / 21 (6 gaps)
+  and a 16 x 16 finish island at h 13 (8 gap) with the finish portal at `u` 421.5. About 440 studs.
+- **S6.1 Stage 7 Seesaw as built** (key `Stage7`, east far gate (z 565)): (1) a gentle 14 x 14 `Plate_Tilt` (Sens 2, max 12) and a rest pillar; (2) four 10 x 10 tilt plates 3 apart (Sens 5 / 6 / 7 / 8, slide angle 25) to checkpoint `502`
+  (plate at 106, 6 gap); (3) a 40 x 6 **beam in a steady crosswind** (`Wind1`, push 10 studs/s, 6 on the ground) and a rest pillar; (4) four 12 x 12 tilt plates (Sens 6) with **10-11 stud gaps** (Double Jump jumps, the
+  recovery after a slide-off), checkpoint `503` (plate at 277); (5) four 6 x 6 **crumbling plates** (delay 0.8 s) after a 10 gap, checkpoint `504` (343, 11 gap), a second 40 x 6 beam in **gusts** (push -14, period 5 s, duty 0.5);
+  (6) checkpoint `505` (406.5), three 12 x 12 tilt plates rising 4 each with gaps of 4 inside a gust zone (`Gust3`), checkpoint `506` (h 12, 11 gap), 6 gap to the finish island (h 12) with the portal at `u` 502.5. About 510 studs.
+- **Gate / courtyard:** the stage folders are `Workspace.World2.Stage6` / `Stage7`, built from clones of Blink's `Gate`, `Top10Leaderboard`, `Arrival`, finish portal and checkpoints moved +203 / +263 in z (script files copied by hand into
+  `src/Workspace/World2/Stage6`, `Stage7`, Argon created the bare instances, the Studio-only parts were merged into them). The three unbuilt gate openings carry closed "Coming soon" door models `SoonGate8`, `SoonGate9`, `SoonGate10`
+  (Studio-only clones of the gate without scripts), replaced by the real gates in S6.2 / S6.3.
 - **Coins:** 8 per stage like the others (5 easy 20, 2 risky 50, 1 talent 100 = 300), ids `Stage6_1`..`_8`, `Stage7_1`..`_8`, none behind a score board.
-- **Checks:** an offline KitMath / reach planner for the movers and a bot crossing every leg at baseline Run Speed with one air jump (as for Blink); the plate chain of
-  Stage 7 is walked by hand (tilt is client-side and needs real input).
+- **Checks (done in S6.1):** a client bot (`Humanoid:Move` on RenderStepped with the control module disabled) crossed every leg of both courses at baseline Run Speed with one air jump, including the lift, the sliders (jumping
+  when the gap is closing) and the tilt / crumble plates, the wind and the finale; the lift and slider timing is tight for a bot but fair for a player. A bot is not a human: M6b re-checks every margin.
 - **Not in S6.1:** Stages 8-10 (S6.2 / S6.3), bonus portals, World 3.
 
 ## 8. Milestones (agreed 2026-10-21; status and full scopes in [ROADMAP.md](ROADMAP.md))
