@@ -50,7 +50,7 @@ Rules:
 | S3 | Obstacle kit + jump lab — S3.1 spike (GO decided 2026-10-21) and S3.2a / S3.2b (hazards, StageCamera; user's visual check done) done; S3.3a / b / c done (kit-local plates, zones, ghosts, templates, reach table, Stage 1 spinners on the kit; user's visual check of Stage 1 done 2026-10-21) | ✔ | ✔ | – |
 | S4 | World 1 complete (Island Hop, Blink) — done 2026-10-22: S4.0 courtyard + hub gate, S4.1 Island Hop, S4.2 Blink (user's visual checks) | ✔ (S4.0-S4.2) | ✔ (S4.0-S4.2) | – |
 | M6a | First live test + World 1 balancing | – | – | – |
-| S5 | Worlds hub (world gates, World 2 island) | – | – | – |
+| S5 | Worlds hub — done 2026-10-22: gates for Worlds 2-4 (coming soon, admins only), World 2 courtyard, signs, per-world stars boards (user's visual check) | ✔ | ✔ | – |
 | S6 | World 2 (stages 6–10) | – | – | – |
 | S7 | Talents: Triple Jump + Dash | – | – | – |
 | S8 | World 3 (stages 11–15) | – | – | – |
