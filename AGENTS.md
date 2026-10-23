@@ -191,7 +191,7 @@ Most of the 119 scripts are identical copies. Edit them consistently (grep by co
 | 4 | Top10Leaderboard | `Workspace/World1/Stage2/Top10Leaderboard/Script…` |
 | 6 | `GateSign` | `Workspace/Stage*/Gate/GateSign.server.luau` |
 | 3 | ChoiceStage random safe `Step` | `Workspace/World1/Stage2/ChoiceStage_*/Script…` |
-| 3 | bounce brick: declares `LAUNCH_SPEED` (attribute `LaunchSpeed` + tag `BounceBrick`; the launch is done by `BounceBricks.client`) — all 300 since the user's tuning (2026-10-21); `Bounce Brick_1`–`_3` are siblings | `Workspace/World1/Stage4/12/Level 12/Bounce Brick_*` |
+| 3 | bounce brick: declares `LAUNCH_SPEED` (attribute `LaunchSpeed` + tag `BounceBrick`; the launch is done by `BounceBricks.client`) — all 300 since the user's tuning (2026-10-21); `Bounce Brick_1`–`_3` are siblings | `Workspace/World1/Stage4/12/Bounce Brick_*` (the `Level 12` model is gone; the bricks sit in the checkpoint model `12`) |
 
 ## Networking & persistence
 
