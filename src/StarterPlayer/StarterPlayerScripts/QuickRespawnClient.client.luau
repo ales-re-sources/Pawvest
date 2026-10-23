@@ -107,14 +107,26 @@ player.CharacterAdded:Connect(function()
 	end
 end)
 
+-- A teleport (finish portal, Home, a world gate) also leaves the course, with or without a running timer: the character
+-- jumping more than TELEPORT_STEP studs in one frame forgets the plate. A respawn is a new character (no jump measured)
+-- and the reset below moves `lastRoot` itself.
+local TELEPORT_STEP = 40
+local lastCharacter, lastRoot = nil, nil
+
 game:GetService("RunService").Heartbeat:Connect(function()
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if root then
+		if character == lastCharacter and lastRoot and (root.Position - lastRoot).Magnitude > TELEPORT_STEP then
+			plate = nil
+		end
+		lastCharacter, lastRoot = character, root.Position
+	end
 	if not TalentConfig.HasFallReset(level()) then
 		return
 	end
 	local target = plate
-	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
 	if not (target and target.Parent and humanoid and root) or humanoid.Health <= 0 then
 		return
 	end
@@ -141,6 +153,7 @@ game:GetService("RunService").Heartbeat:Connect(function()
 	lastReset = os.clock()
 
 	placeOnPlate(character, target)
+	lastRoot = root.Position -- our own jump back to the plate is no teleport away
 	root.AssemblyLinearVelocity = Vector3.zero
 	root.AssemblyAngularVelocity = Vector3.zero
 	flash()
