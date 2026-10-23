@@ -19,6 +19,8 @@
 --             default 0 = one kick, which the Humanoid's air braking stops within about 2 studs), AirCarry s (how long a jump off keeps following it), Carry = false (the
 --             character standing on it is not carried, e.g. a spinning plate you have to stay on by running against it).
 --   KitBeam   blinking kill beam: Period s, Duty (on share 0..1), Phase, Telegraph s before "on"; Kill defaults to true.
+--   KitKill   static kill part (S6.3, the Clocktower's gargoyles): touching it kills; its look is left alone (often an
+--             invisible hit box round a decoration).
 --   KitPlate  disappearing plate: Period, Duty (solid share), Phase, Telegraph s (flickers before it vanishes).
 --   KitCrumble crumbling plate (kit-local): shakes when the player stands on it, vanishes after Delay s (default 0.8), is back
 --             after Return s (default 3). Other players see it at rest.
@@ -65,6 +67,7 @@ local BEAM_TRANSPARENCY = { off = 1, warning = 0.8, on = 0.15 }
 local movers = {} -- [part] = { base, cframe, delta, color, state }
 local tilts = {} -- [part] = { base, angle, speed }
 local beams = {} -- [part] = { state }
+local killParts = {} -- [part] = true
 local plates = {} -- [part] = { state, transparency }
 local crumbles = {} -- [part] = { state, base, transparency, since }
 local switches = {} -- [part] = true
@@ -204,6 +207,11 @@ track("KitSwitch", addSwitch, switches)
 track("KitColorPlate", addColorPlate, colorPlates)
 track("KitButton", addButton, buttons)
 track("KitDoor", addDoor, doors)
+track("KitKill", function(part)
+	if part:IsA("BasePart") then
+		killParts[part] = true
+	end
+end, killParts)
 
 -- the player's run: StageTimerUpdate (elapsed >= 0, stageKey) while it runs, (-1, ...) when it ends
 ReplicatedStorage:WaitForChild("StageTimerUpdate").OnClientEvent:Connect(function(elapsed: number)
@@ -596,6 +604,14 @@ RunService.PreSimulation:Connect(function(dt: number)
 			if data.state == "on" and attr(part, "Kill", true) and touchesCharacter(part) then
 				killer = part
 				break
+			end
+		end
+		if not killer then
+			for part in killParts do
+				if touchesCharacter(part) then
+					killer = part
+					break
+				end
 			end
 		end
 		if not killer then
