@@ -48,35 +48,146 @@ local function isAdminUser(userId)
 	return AdminConfig.IsAdmin(userId)
 end
 
--- Hover effect function
-local function createHoverEffect(button)
-	local hoverStroke = button:FindFirstChildOfClass("UIStroke")
-	if not hoverStroke then return end
-	
-	local hoverIn = TweenService:Create(hoverStroke, TweenInfo.new(0.2), {Transparency = 0})
-	local hoverOut = TweenService:Create(hoverStroke, TweenInfo.new(0.2), {Transparency = 1})
-	
+-- Brick tile look (stud style): the Studio button becomes a transparent click area holding a dark Lip (the brick's
+-- side, visible under the face), and a Top frame with the coloured face, two studs on its upper edge and the glyph
+-- (the button's old Text). Hover lifts the Top, a press pushes it down onto the lip.
+local BRICK_COLORS = {
+	HomeButton = Color3.fromRGB(229, 83, 61),
+	SkillsButton = Color3.fromRGB(245, 180, 0),
+	PetsButton = Color3.fromRGB(58, 165, 92),
+	SettingsButton = Color3.fromRGB(47, 127, 214),
+	AdminButton = Color3.fromRGB(125, 91, 208),
+}
+local LIP = 5 -- studs of brick side under the face
+local LIFT_HOVER = -2
+local LIFT_PRESS = LIP - 2
+local LIFT_TWEEN = TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+local function shade(color, factor)
+	if factor < 1 then
+		return color:Lerp(Color3.new(0, 0, 0), 1 - factor)
+	end
+	return color:Lerp(Color3.new(1, 1, 1), factor - 1)
+end
+
+local function corner(parent, radius)
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0, radius)
+	c.Parent = parent
+end
+
+local function styleBrick(button)
+	local color = BRICK_COLORS[button.Name] or Color3.fromRGB(160, 160, 160)
+	local glyphText = button.Text
+	button.Text = ""
+	button.AutoButtonColor = false
+	button.BackgroundTransparency = 1
+	button.ClipsDescendants = false
+	local stroke = button:FindFirstChildOfClass("UIStroke")
+	if stroke then
+		stroke.Enabled = false
+	end
+
+	local lip = Instance.new("Frame")
+	lip.Name = "Lip"
+	lip.Size = UDim2.fromScale(1, 1)
+	lip.BackgroundColor3 = shade(color, 0.62)
+	lip.BorderSizePixel = 0
+	corner(lip, 7)
+	lip.Parent = button
+
+	local top = Instance.new("Frame")
+	top.Name = "Top"
+	top.Size = UDim2.new(1, 0, 1, -LIP)
+	top.BackgroundTransparency = 1
+	top.Parent = button
+
+	for i = 1, 2 do
+		local stud = Instance.new("Frame")
+		stud.Name = "Stud" .. i
+		stud.AnchorPoint = Vector2.new(0.5, 1)
+		stud.Position = UDim2.new(i == 1 and 0.3 or 0.7, 0, 0, 2)
+		stud.Size = UDim2.fromOffset(14, 7)
+		stud.BackgroundColor3 = shade(color, 1.12)
+		stud.BorderSizePixel = 0
+		corner(stud, 3)
+		local studStroke = Instance.new("UIStroke")
+		studStroke.Color = shade(color, 0.62)
+		studStroke.Thickness = 1.5
+		studStroke.Parent = stud
+		stud.Parent = top
+	end
+
+	local face = Instance.new("Frame")
+	face.Name = "Face"
+	face.Size = UDim2.fromScale(1, 1)
+	face.BackgroundColor3 = color
+	face.BorderSizePixel = 0
+	corner(face, 7)
+	local faceStroke = Instance.new("UIStroke")
+	faceStroke.Color = shade(color, 0.62)
+	faceStroke.Thickness = 1.5
+	faceStroke.Parent = face
+	local shine = Instance.new("UIGradient")
+	shine.Rotation = 90
+	shine.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(215, 215, 215))
+	shine.Parent = face
+	face.Parent = top
+
+	-- dark round socket behind the glyph: the emoji stay readable on every brick colour (⚡ on yellow, ⚙ on blue)
+	local socket = Instance.new("Frame")
+	socket.Name = "Socket"
+	socket.AnchorPoint = Vector2.new(0.5, 0.5)
+	socket.Position = UDim2.fromScale(0.5, 0.5)
+	socket.Size = UDim2.fromOffset(34, 34)
+	socket.BackgroundColor3 = shade(color, 0.4)
+	socket.BackgroundTransparency = 0.25
+	socket.BorderSizePixel = 0
+	corner(socket, 17)
+	socket.Parent = face
+
+	local glyph = Instance.new("TextLabel")
+	glyph.Name = "Glyph"
+	glyph.Size = UDim2.fromScale(1, 1)
+	glyph.BackgroundTransparency = 1
+	glyph.Text = glyphText
+	glyph.Font = button.Font
+	glyph.TextSize = button.TextSize
+	glyph.TextColor3 = Color3.new(1, 1, 1)
+	glyph.ZIndex = socket.ZIndex + 1
+	glyph.Parent = face
+
+	local hovering, pressed = false, false
+	local function lift()
+		local y = pressed and LIFT_PRESS or (hovering and LIFT_HOVER or 0)
+		TweenService:Create(top, LIFT_TWEEN, { Position = UDim2.fromOffset(0, y) }):Play()
+	end
 	button.MouseEnter:Connect(function()
-		hoverIn:Play()
+		hovering = true
+		lift()
 	end)
-	
 	button.MouseLeave:Connect(function()
-		hoverOut:Play()
+		hovering, pressed = false, false
+		lift()
 	end)
+	button.MouseButton1Down:Connect(function()
+		pressed = true
+		lift()
+	end)
+	button.MouseButton1Up:Connect(function()
+		pressed = false
+		lift()
+	end)
+end
+
+for _, icon in { homeButton, skillsButton, petsButton, settingsButton, adminButton } do
+	styleBrick(icon)
 end
 
 -- Check if player is admin and show/hide admin button accordingly
 if isAdminUser(player.UserId) then
-	-- Apply hover effects only if admin
 	adminButton.Visible = true
-	createHoverEffect(adminButton)
 end
-
--- Apply hover effects to other buttons
-createHoverEffect(homeButton)
-createHoverEffect(skillsButton)
-createHoverEffect(settingsButton)
-createHoverEffect(petsButton)
 
 
 -- Panel state tracking

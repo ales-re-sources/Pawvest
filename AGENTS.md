@@ -117,7 +117,7 @@ src/
     FoodShopClient.client.luau        food stand panel (every pet with level, XP, XP to Lv 20; one feed button per food); test hook: FoodShopGui attribute Open
   StarterGui/
     CoinGui/CoinDisplayScript.client.luau        top-right coin counter
-    ScreenGui/TopLeftIcons/ButtonHandler.client.luau  icons Home (🏠 go to hub) / Skills (⚡) / Pets (🐶, cloned in code) / Settings / Admin, positioned in code in this order; slide-in panels (AdminConfig)
+    ScreenGui/TopLeftIcons/ButtonHandler.client.luau  icons Home (🏠 go to hub) / Skills (⚡) / Pets (🐶, cloned in code) / Settings / Admin, positioned in code in this order and styled in code as stud bricks (`styleBrick`: colour per button name in `BRICK_COLORS`, Lip + Top (Face, two studs, Socket, Glyph = the Studio button's emoji Text); hover lifts, press sinks); slide-in panels (AdminConfig)
     ScreenGui/SkillsPanel/TalentRows.client.luau  "Your skills" panel (⚡ button): talent rows built in code
     ScreenGui/AdminPanel/...                      RunSpeed (16↔64), DoubleJump (up to 5 air jumps), ScoreReset, AdminAddCoins.client.luau (+Coins button, built in code)
   Workspace/
