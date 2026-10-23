@@ -451,15 +451,22 @@ local AWAY_SHOW_SECONDS = 5 -- the announcement stays this long, then fades out
 local AWAY_FADE_IN = TweenInfo.new(0.3)
 local AWAY_FADE_OUT = TweenInfo.new(1)
 
+local awayToken = 0 -- a newer announcement restarts the 5 s; the older one's fade-out is skipped
+
 local function showAway(text: string)
+	awayToken += 1
+	local mine = awayToken
 	awayText.Text = text
 	awayPanel.GroupTransparency = 1
 	awayPanel.Visible = true
 	TweenService:Create(awayPanel, AWAY_FADE_IN, { GroupTransparency = 0 }):Play()
 	task.delay(AWAY_SHOW_SECONDS, function()
+		if awayToken ~= mine then
+			return
+		end
 		local fade = TweenService:Create(awayPanel, AWAY_FADE_OUT, { GroupTransparency = 1 })
 		fade.Completed:Connect(function(state)
-			if state == Enum.PlaybackState.Completed then
+			if state == Enum.PlaybackState.Completed and awayToken == mine then
 				awayPanel.Visible = false
 			end
 		end)

@@ -169,7 +169,7 @@ local function floorMark(part: BasePart): BasePart
 end
 
 local function addBeam(part: Instance)
-	if part:IsA("BasePart") then
+	if part:IsA("BasePart") and not beams[part] then
 		beams[part] = { state = "off", mark = if part:GetAttribute("FloorMark") then floorMark(part) else nil, look = nil }
 	end
 end
@@ -249,6 +249,11 @@ local function track(tag: string, add: (Instance) -> (), registry: { [Instance]:
 	end
 	CollectionService:GetInstanceAddedSignal(tag):Connect(add)
 	CollectionService:GetInstanceRemovedSignal(tag):Connect(function(part)
+		local data = registry[part]
+		-- local helper parts (a beam's floor strip) go with their part, also when it streams out
+		if type(data) == "table" and typeof(data.mark) == "Instance" then
+			data.mark:Destroy()
+		end
 		registry[part] = nil
 	end)
 end
