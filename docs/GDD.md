@@ -329,7 +329,9 @@ There is no egg stand on the central island (removed 2026-10-18). The odds are a
 | Golden egg | 4 000 | – | 45 % | 35 % | 15 % | 5 % | garden incubator, hatches in 1 hour |
 
 Free eggs:
-- one Basic egg on the first join after pets launch (also for existing players),
+- one Basic egg on the first join after pets launch (also for existing players, and again after an admin reset); a free
+  egg that starts while the player has never hatched a pet (and nothing incubates) is **ready to hatch at once** (no
+  5-minute wait), so a new player gets the first pet right away,
 - one Basic egg for the **first Gold on each stage** (4 in total).
 
 A free egg starts by itself (no Coins) in the lowest empty incubator as soon as one is empty: on join, when the egg is

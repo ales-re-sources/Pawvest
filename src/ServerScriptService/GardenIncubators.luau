@@ -7,7 +7,9 @@
 -- rolled at Hatch and joins the inventory through PetService.AddPet (auto-equip into a free slot).
 -- Free eggs (launch egg, first Gold) wait in profile.FreeEggs and are started for free in the lowest empty incubator as
 -- soon as one is empty: on join / admin reset (garden setup hook), when one is granted, after a hatch and after an
--- incubator is bought. They respect the inventory cap like bought eggs.
+-- incubator is bought. They respect the inventory cap like bought eggs. A free egg placed while the player has never
+-- hatched a pet (NextPetUid 1) and nothing incubates is ready at once (ReadyAt = now): a new player (or an admin after a
+-- reset) does not wait for the first pet.
 -- Remotes (in GardenRemotes): StartEgg(incubator, eggId), Hatch(incubator), BuyIncubator(expectedIncubator) (client → server);
 -- answers through GardenRemotes.Result; GardenRemotes.State.incubators = { count, eggs = { ["n"] = { egg, readyAt } } }.
 -- Drawing: Workspace.Garden.Plots.Plot_NN.Incubator_n (Studio-only: Base with Prompt + Info, Egg) gets attributes State
@@ -144,7 +146,10 @@ local function startFreeEggs(profile, garden): number
 			if not free or PetService.PetCount(profile) + GardenConfig.IncubatingCount(garden) >= PetConfig.MaxPets then
 				return started
 			end
-			garden.Incubators[tostring(free)] = { Egg = eggId, StartedAt = now, ReadyAt = now + egg.hatchSeconds }
+			-- the player's very first pet (never hatched one, nothing incubating) is ready at once
+			local instant = profile.NextPetUid == 1 and GardenConfig.IncubatingCount(garden) == 0
+			garden.Incubators[tostring(free)] =
+				{ Egg = eggId, StartedAt = now, ReadyAt = if instant then now else now + egg.hatchSeconds }
 			profile.FreeEggs[eggId] -= 1
 			if profile.FreeEggs[eggId] == 0 then
 				profile.FreeEggs[eggId] = nil
