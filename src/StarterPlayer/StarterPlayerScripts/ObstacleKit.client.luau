@@ -21,6 +21,8 @@
 --   KitBeam   blinking kill beam: Period s, Duty (on share 0..1), Phase, Telegraph s before "on"; Kill defaults to true.
 --             OffTransparency / WarnTransparency / OnTransparency (defaults 1 / 0.8 / 0.15) change its look per state;
 --             with Kill = false it is a marker only (the Labyrinth's glow columns over its lava cells).
+--             FloorMark = true lays a local strip along the beam's foot (a little wider than the beam): green right after
+--             the beam goes off, shading to orange as it comes back (flashing in the Telegraph), red while it is on.
 --   KitKill   static kill part (S6.3, the Clocktower's gargoyles): touching it kills; its look is left alone (often an
 --             invisible hit box round a decoration).
 --   KitPlate  disappearing plate: Period, Duty (solid share), Phase, Telegraph s (flickers before it vanishes).
@@ -147,9 +149,28 @@ local function addTilt(part: Instance)
 	end
 end
 
+-- The floor strip of a FloorMark beam (local only): along its foot, MARK_MARGIN wider on each side than the beam.
+local MARK_MARGIN = 1
+local MARK_SAFE = Color3.fromRGB(80, 220, 110)
+local MARK_ON = Color3.fromRGB(255, 50, 50)
+local function floorMark(part: BasePart): BasePart
+	local mark = Instance.new("Part")
+	mark.Name = "KitBeamMark"
+	mark.Anchored = true
+	mark.CanCollide = false
+	mark.CanQuery = false
+	mark.CanTouch = false
+	mark.CastShadow = false
+	mark.Material = Enum.Material.Neon
+	mark.Size = Vector3.new(part.Size.X + 2 * MARK_MARGIN, 0.2, part.Size.Z)
+	mark.CFrame = part.CFrame * CFrame.new(0, -part.Size.Y / 2 + 0.1, 0)
+	mark.Parent = workspace.CurrentCamera
+	return mark
+end
+
 local function addBeam(part: Instance)
 	if part:IsA("BasePart") then
-		beams[part] = { state = "off" }
+		beams[part] = { state = "off", mark = if part:GetAttribute("FloorMark") then floorMark(part) else nil, look = nil }
 	end
 end
 
@@ -394,13 +415,33 @@ RunService.PreSimulation:Connect(function(dt: number)
 	end
 
 	for part, data in beams do
-		local state = KitMath.Window(
-			KitMath.TimeBase(now, runStart, attr(part, "RunSeeded", false)),
-			attr(part, "Period", 4),
-			attr(part, "Duty", 0.5),
-			attr(part, "Phase", 0),
-			attr(part, "Telegraph", 0.4)
-		)
+		local time = KitMath.TimeBase(now, runStart, attr(part, "RunSeeded", false))
+		local period = attr(part, "Period", 4)
+		local duty = attr(part, "Duty", 0.5)
+		local phase = attr(part, "Phase", 0)
+		local state = KitMath.Window(time, period, duty, phase, attr(part, "Telegraph", 0.4))
+		if data.mark then
+			-- the strip shades from green to orange over the off window (in 10 steps), flashes in the warning, red while on
+			local look
+			if state == "on" then
+				look = "on"
+			elseif state == "warning" then
+				look = if math.floor(now * 10) % 2 == 0 then "w1" else "w0"
+			else
+				look = math.floor(KitMath.Cycle(time, period, phase) / math.max(1 - duty, 1e-3) * 10)
+			end
+			if look ~= data.look then
+				data.look = look
+				local mark = data.mark
+				if look == "on" then
+					mark.Color, mark.Transparency = MARK_ON, 0.1
+				elseif look == "w1" or look == "w0" then
+					mark.Color, mark.Transparency = WARN_COLOR, if look == "w1" then 0.1 else 0.6
+				else
+					mark.Color, mark.Transparency = MARK_SAFE:Lerp(WARN_COLOR, KitMath.Smooth(look / 10)), 0.35
+				end
+			end
+		end
 		if state ~= data.state then
 			data.state = state
 			-- OffTransparency / WarnTransparency / OnTransparency override the default look per part
