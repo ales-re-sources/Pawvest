@@ -682,7 +682,8 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
     - *Lava:* six blinking floor tiles (`Lava_n`, `KitBeam`, period 4, on 40 %, warning 0.8 s, phases sixths apart, run-seeded) over a dark `LavaMark_n`, on cells the route uses in most layouts, none next to a guard lane (waiting for lava
       inside a lane got a bot killed), one at the switch room's east doorway.
     - *Coins:* easy `Stage9_3..5` in dead ends next to the routes ((13, 5), (11, 1), (8, 5)), risky `Stage9_6` / `_7` in dead ends off guard lane G4 ((14, 11), (10, 11)); `Stage9_8` moved with `T1`.
-    - *Camera:* `Big_Camera` / `Big_Ghosts` cover the new maze, Distance 260 (was 230).
+    - *Camera:* `Big_Camera` / `Big_Ghosts` cover the new maze, Distance 260 (was 230). `Big_Camera` also reaches over checkpoint `703` (x -782..-614; user, 2026-10-23: a respawn on `703` showed the normal camera
+      and switched to iso one step later, which was confusing); checked: a respawn on `703` is in the iso view from its first frame.
     - *Checked (playtest, developer profile, restored afterwards):* the Studio walls give a connected maze in all 4 layouts (rebuilt from the parts); guards slide, lava blinks, both kill (KitKilledBy), a lane's end pocket and a side cell are
       safe; the switch latches the door open and it stays open after a death (respawn on `705`); exit door -> `704` -> Double Jump to `E` works; no script errors. An offline bot (16 studs/s, replanning on the walls it sees, no hazards)
       crosses entry -> switch -> exit in 48.75 s from every phase of the cycle (old big maze 18.5-20 s). The live client bot reached the switch but its guard avoidance was too timid to finish; a human run is still to come.
