@@ -30,7 +30,9 @@
 --   KitButton / KitDoor  pressure door (kit-local, S6.3, the Clocktower): standing on a KitButton (attributes Group, Time s, default 4)
 --             opens every KitDoor of that Group for Time s for the local player; stepping on the button again restarts the time.
 --             The door slides OpenDistance studs (default its height) along OpenAxis (world Vector3, default up) in OpenTime s
---             (default 0.4) and back when the time is up; the button glows while it is open and a countdown of the seconds
+--             (default 0.4) and back when the time is up; OpenTurn (degrees, default 0) also turns it about the vertical
+--             axis through its centre (OpenDistance then defaults to 0): the Clocktower's turning gargoyle, its other parts
+--             welded to the tagged hit box; the button glows while it is open and a countdown of the seconds
 --             left floats over the button and over the door's closed position. Latch = true on a button (the Labyrinth's
 --             exit switch) keeps its group open for the rest of the run instead, with no countdown and also after a death;
 --             the start or end of a run closes it again.
@@ -485,8 +487,8 @@ RunService.PreSimulation:Connect(function(dt: number)
 		end
 		showCountdown(data.label, if latched[group] then 0 else left)
 	end
-	-- doors: slide open along OpenAxis while their group is open, back when the time is up (solid all the time: an
-	-- open door is out of the way, a closing one pushes the character out of the doorway)
+	-- doors: slide open along OpenAxis (and turn by OpenTurn) while their group is open, back when the time is up (solid
+	-- all the time: an open door is out of the way, a closing one pushes the character out of the doorway)
 	for part, data in doors do
 		local group = attr(part, "Group", "A")
 		local left = (doorOpenUntil[group] or 0) - clockNow
@@ -495,7 +497,12 @@ RunService.PreSimulation:Connect(function(dt: number)
 		if shown ~= data.shown then
 			data.shown = shown
 			local axis: Vector3 = attr(part, "OpenAxis", Vector3.new(0, 1, 0))
-			part.CFrame = data.base + axis.Unit * attr(part, "OpenDistance", part.Size.Y) * KitMath.Smooth(shown)
+			local turn = attr(part, "OpenTurn", 0)
+			local distance = attr(part, "OpenDistance", if turn ~= 0 then 0 else part.Size.Y)
+			local eased = KitMath.Smooth(shown)
+			part.CFrame = CFrame.Angles(0, math.rad(turn * eased), 0) * data.base.Rotation
+				+ data.base.Position
+				+ axis.Unit * distance * eased
 		end
 		showCountdown(data.label, if latched[group] then 0 else left)
 	end
