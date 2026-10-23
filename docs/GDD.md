@@ -134,11 +134,12 @@ Timer precision: tenths of a second (server-measured). A run starts at `TimerSta
 and is cancelled by leaving through `TeleportToSpawn`.
 
 Medal rules:
-- A finish slower than the Bronze threshold earns no medal and no Coins (the time still counts as a personal best).
+- A finish slower than the Bronze threshold earns no medal and no medal or repeat Coins (the time still counts as a
+  personal best); the first finish of a stage still pays the first-finish payout (§5) and every finish pays pet XP (§7.4).
 - A player's medal on a stage is the highest tier ever reached; it is never revoked, also not when thresholds are retuned.
 - Best times recorded before medals existed (pre-M1) do not grant medals retroactively; the next finish does.
 - After every finish a results popup shows: time, personal best (or "New record!"), the medal of this run,
-  Coins paid (medal payout and repeat reward), and the threshold of the next medal not yet earned.
+  Coins paid (medal payout, first-finish payout and repeat reward), and the threshold of the next medal not yet earned.
 
 Limits are visible before and during a run:
 - **Score panel** (on arriving at a stage): all three limits, e.g. `★ 1:52  ★★ 1:17  ★★★ 0:56`; tiers already
@@ -172,7 +173,13 @@ stages move along the curve: Stage 1 (n = 2) 1.0, Stage 2 (n = 4) 1.5, **Stage 3
 | 16–20 (P) | 4.5 … 5.5 | | | | 6 300 / 6 650 / 7 000 / 7 350 / 7 700 |
 | **All 21** | | | | | **88 200** (World 1 with the Tutorial, all six built stages: 9 450) |
 
-### Repeat reward (every finish, diminishing)
+### First-finish payout (one-time per stage, per player)
+The first finish of a stage pays **100 × stage factor** (Tutorial 50, factor 3.0 → 300), medal or not (decided
+2026-10-23: a slow first finish should not go unrewarded). It is paid on top of any medal payout of that run. "First"
+means the profile has no best time for the stage yet, so players who finished a stage before this rule get nothing
+retroactively. All 21 planned stages: 6 300 Coins in total.
+
+### Repeat reward (every medal finish, diminishing)
 Every finish with a medal also pays
 
 ```
@@ -180,7 +187,8 @@ run reward = max(10, round(50 × stage factor × medal multiplier × 0.8^n))
 ```
 
 where the medal multiplier is that **run's** medal (Bronze ×1, Silver ×1.5, Gold ×2) and `n` is the number of earlier
-finishes of that stage by the player **today** (UTC day; resets at midnight UTC). A finish without a medal pays 0.
+medal finishes of that stage by the player **today** (UTC day; resets at midnight UTC). A finish without a medal pays 0
+and does **not** count towards `n` (decided 2026-10-23: a slow run never lowers the next medal run's reward).
 It is paid on top of any medal payout, also on the first finish.
 
 | Stage | First run Bronze | Silver | Gold | Gold, sum of the first 10 runs of a day |
@@ -352,7 +360,7 @@ L19→20: 828; ~6 700 XP from 1 to 20). Every **equipped** pet receives the full
 | Source | XP |
 |---|---|
 | Finish with Bronze / Silver / Gold (the run's medal) | 5 / 10 / 20 |
-| Finish without a medal | 0 |
+| Finish without a medal | 2 |
 | Challenge coin collected | +1 |
 | Movement while a stage timer runs | 1 XP per 20 studs, max 30 per run |
 | Feeding in the pet garden (§7.6) | per food item |

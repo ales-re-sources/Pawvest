@@ -64,7 +64,7 @@ src/
     PetService.luau                   pets: eggs (paid / free; a hatched pet takes a free slot), equip slots, sell; PetRemotes, EquippedPets attribute, Multiplier, GrantFreeEgg, AddXP (equipped pets, level-ups), AddPet / PetCount (shared with the incubators)
     AvatarThumbs.luau                 leaderboard avatars: Show(PhotoN ImageLabel, userId or name) fetches the head shot (GetUserThumbnailAsync, in-memory cache 30 min; legacy entries without UserId resolved by name)
     StarBoard.luau                    "most stars" rankings: OrderedDataStore MostStars (UserId → total stars, the hub board) and one `WorldStars_<n>` per built world (stars earned in that world, S5; `StarBoard.World(n)`, an empty stand-in for a `soon` world); Sync(player) writes every board only when its total changes (new medal, admin reset, join back-fill), Refresh / Top / Changed feed a board
-    StageResults.luau                 finish → personal best, medal, one-time payout + daily repeat reward, free egg on first Gold, pet XP (medal + movement); Medal_<folder> attributes
+    StageResults.luau                 finish → personal best, medal, one-time medal payout, one-time first-finish payout (medal or not), daily repeat reward (medal finishes only; only they count towards its decay), free egg on first Gold, pet XP (medal or FinishXp + movement); Medal_<folder> attributes
     RunDistance.luau                  server-measured horizontal studs during a run (Start / Stop from PlayerTimerHandler); steps faster than WalkSpeed allows (teleports, respawns) are dropped
     StageUnlocks.luau                 stage gate: bar (previous stage's medal) or bought unlock; IsUnlocked / IsWorldOpen (a world gate is open when any of its stages is; a `soon` world is open for admins only); UnlockRemotes, Unlocked_<folder> attributes
     HomeService.server.luau           GoHome remote: Home button → from a stage of a world to that world's island spawn, from anywhere else to the hub spawn; cancels the running timer
@@ -225,7 +225,7 @@ DataStores:
 Gameplay Coins (medals, repeat rewards, pickups, future sources) go through `CoinRewards.Grant`; purchases and
 deductions (and pet sales) call `PlayerProfile.AddCoins` directly. The multiplier is `PetService.Multiplier`
 (1 + equipped pets' bonus, capped at +50 %). All Coin amounts were scaled ×10 in R2: records below `Version = 3` (and legacy
-`PlayerCoins`) get `Coins × 10` once on load — never multiply stored Coins by hand. `RunsToday = { Day = <UTC day>, [stageKey] = finishes }` drives
+`PlayerCoins`) get `Coins × 10` once on load — never multiply stored Coins by hand. `RunsToday = { Day = <UTC day>, [stageKey] = medal finishes }` drives
 the diminishing repeat reward (`StageConfig.RunReward`).
 
 Player attributes `Medal_<stage folder>` (0–3) mirror `PlayerProfile.Medals` for client displays; `Unlocked_<stage folder>`

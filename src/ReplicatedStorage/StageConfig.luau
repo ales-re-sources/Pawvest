@@ -26,6 +26,9 @@ StageConfig.RunRewardBase = 50
 StageConfig.RunRewardDecay = 0.8
 StageConfig.RunRewardFloor = 10
 
+-- One-time payout for the first finish of a stage, medal or not (GDD §5): round(FinishPayoutBase × factor)
+StageConfig.FinishPayoutBase = 100
+
 -- Medal thresholds as multiples of tBase (GDD §4); a stage may point `tiers` at its own table.
 StageConfig.DefaultTiers = { Bronze = 1.6, Silver = 1.1, Gold = 0.8 }
 
@@ -319,6 +322,11 @@ function StageConfig.Payout(stage, fromMedal: number, toMedal: number): number
 		coins += StageConfig.Medals[medal].basePayout * stage.rewardFactor
 	end
 	return math.floor(coins + 0.5)
+end
+
+-- One-time Coins for the first finish of `stage`, paid on top of any medal payout.
+function StageConfig.FinishPayout(stage): number
+	return math.floor(StageConfig.FinishPayoutBase * stage.rewardFactor + 0.5)
 end
 
 -- Repeat reward for a run with medal index `medal` after `finishesToday` earlier finishes of `stage` today; 0 without a medal.

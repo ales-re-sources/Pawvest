@@ -42,9 +42,10 @@ end
 
 -- Records a finished run that covered `studs` horizontal studs (RunDistance) and returns the result for the results
 -- popup, or nil if the profile is not loaded:
--- { stageKey, displayName, time, best, newBest, medal (this run), bestMedal, coins (medal payout),
---   runCoins (repeat reward), runsToday (finishes of this stage today, this one included), freeEgg? (egg id granted
---   for the first Gold), petXp (XP each equipped pet received: medal + movement), moveXp, petsLeveled (pets that
+-- { stageKey, displayName, time, best, newBest, medal (this run), bestMedal, coins (medal payout), finishCoins
+--   (first-finish payout), runCoins (repeat reward), runsToday (medal finishes of this stage today, this one included),
+--   freeEgg? (egg id granted for the first Gold), petXp (XP each equipped pet received: medal or finish + movement),
+--   moveXp, petsLeveled (pets that
 --   gained it; 0 = none equipped or all maxed), nextMedal?, nextThreshold? }
 function StageResults.RecordFinish(player: Player, stageKey: string, elapsed: number, studs: number?)
 	local profile = PlayerProfile.Get(player)
@@ -54,9 +55,16 @@ function StageResults.RecordFinish(player: Player, stageKey: string, elapsed: nu
 	end
 
 	local previousBest = profile.BestTimes[stageKey]
-	local newBest = previousBest == nil or elapsed < previousBest
+	local firstFinish = previousBest == nil
+	local newBest = firstFinish or elapsed < previousBest
 	if newBest then
 		profile.BestTimes[stageKey] = elapsed
+	end
+
+	-- the first finish pays once, medal or not (a stored best time = finished before)
+	local finishCoins = 0
+	if firstFinish then
+		finishCoins = CoinRewards.Grant(player, StageConfig.FinishPayout(stage), "finish") or 0
 	end
 
 	-- each tier pays once: only tiers above the best medal so far are paid
@@ -74,18 +82,23 @@ function StageResults.RecordFinish(player: Player, stageKey: string, elapsed: nu
 		freeEgg = GOLD_EGG
 	end
 
-	-- every finish counts towards the daily decay; only finishes with a medal pay
+	-- only finishes with a medal pay the repeat reward and count towards its daily decay
 	local runs = runsToday(profile)
 	local earlierFinishes = runs[stageKey] or 0
-	runs[stageKey] = earlierFinishes + 1
+	if medal > 0 then
+		runs[stageKey] = earlierFinishes + 1
+	end
 	local runCoins = CoinRewards.Grant(player, StageConfig.RunReward(stage, medal, earlierFinishes), "run") or 0
-	-- pet XP: the run's medal (not only a new one) plus movement during the run
+	-- pet XP: the run's medal (not only a new one; FinishXp without one) plus movement during the run
 	local moveXp = PetConfig.MoveXp(studs or 0)
-	local petXp = (PetConfig.MedalXp[medal] or 0) + moveXp
+	local petXp = (PetConfig.MedalXp[medal] or PetConfig.FinishXp) + moveXp
 	local petsLeveled = PetService.AddXP(player, petXp)
 
+	if medal > previousMedal or firstFinish then
+		-- a new medal (and its free egg) or the first-finish payout is saved at once; run counts follow later
+		task.spawn(PlayerProfile.Save, player)
+	end
 	if medal > previousMedal then
-		task.spawn(PlayerProfile.Save, player) -- a new medal (and its free egg) is saved at once; run counts follow later
 		task.spawn(StarBoard.Sync, player) -- the hub "most stars" ranking follows the medals
 	end
 
@@ -100,8 +113,9 @@ function StageResults.RecordFinish(player: Player, stageKey: string, elapsed: nu
 		medal = medal,
 		bestMedal = bestMedal,
 		coins = coins,
+		finishCoins = finishCoins,
 		runCoins = runCoins,
-		runsToday = earlierFinishes + 1,
+		runsToday = runs[stageKey] or 0,
 		freeEgg = freeEgg,
 		petXp = petXp,
 		moveXp = moveXp,

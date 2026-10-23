@@ -197,7 +197,8 @@ function PetConfig.XpToNext(level: number): number?
 end
 
 -- XP sources (GDD §7.4); every equipped pet receives the full amount of each event
-PetConfig.MedalXp = { 5, 10, 20 } -- MedalXp[medal] for the run's medal (Bronze / Silver / Gold); no medal: 0
+PetConfig.MedalXp = { 5, 10, 20 } -- MedalXp[medal] for the run's medal (Bronze / Silver / Gold); no medal: FinishXp
+PetConfig.FinishXp = 2 -- a finish without a medal
 PetConfig.CoinXp = 1 -- per collected coin
 PetConfig.StudsPerXp = 20 -- movement while a stage timer runs (horizontal studs, measured on the server)
 PetConfig.MaxMoveXp = 30 -- per run

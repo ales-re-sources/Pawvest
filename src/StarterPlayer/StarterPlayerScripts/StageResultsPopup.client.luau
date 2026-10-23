@@ -1,4 +1,5 @@
--- Results popup after a finished run (docs/GDD.md §4–5): time, record, medal of the run, medal payout, repeat reward,
+-- Results popup after a finished run (docs/GDD.md §4–5): time, record, medal of the run, medal payout, first-finish
+-- payout, repeat reward,
 -- pet XP (§7.4), free egg of the first Gold (§7.2), next goal.
 -- Driven by the finish message StageTimerUpdate(-1, final, result); the GUI is built here, not in Studio.
 
@@ -65,11 +66,13 @@ local recordLabel = addLine("Record", 3, 18)
 local starsLabel = addLine("Stars", 4, 36)
 local medalLabel = addLine("Medal", 5, 18)
 local coinsLabel = addLine("Coins", 6, 22)
-local runLabel = addLine("RunReward", 7, 18)
-local petLabel = addLine("PetXp", 8, 16)
-local eggLabel = addLine("FreeEgg", 9, 16)
-local nextLabel = addLine("Next", 10, 16)
+local finishLabel = addLine("FirstFinish", 7, 18)
+local runLabel = addLine("RunReward", 8, 18)
+local petLabel = addLine("PetXp", 9, 16)
+local eggLabel = addLine("FreeEgg", 10, 16)
+local nextLabel = addLine("Next", 11, 16)
 coinsLabel.TextColor3 = Color3.fromRGB(120, 230, 120)
+finishLabel.TextColor3 = Color3.fromRGB(120, 230, 120)
 runLabel.TextColor3 = Color3.fromRGB(120, 230, 120)
 petLabel.TextColor3 = Color3.fromRGB(180, 150, 255)
 eggLabel.TextColor3 = Color3.fromRGB(255, 215, 90)
@@ -92,6 +95,9 @@ local function show(result)
 	medalLabel.Text = if result.medal > 0 then StageConfig.Medals[result.medal].name .. " medal" else "No medal"
 	coinsLabel.Visible = result.coins > 0
 	coinsLabel.Text = string.format("+%d Coins", result.coins)
+	local finishCoins = result.finishCoins or 0
+	finishLabel.Visible = finishCoins > 0
+	finishLabel.Text = string.format("First finish +%d Coins", finishCoins)
 	local runCoins = result.runCoins or 0
 	runLabel.Visible = runCoins > 0
 	runLabel.Text = string.format("Run reward +%d (run %d today)", runCoins, result.runsToday or 1)
