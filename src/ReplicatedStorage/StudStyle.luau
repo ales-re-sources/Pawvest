@@ -29,6 +29,7 @@ StudStyle.PanelColors = {
 	SkillsPanel = StudStyle.Colors.Yellow,
 	SettingsPanel = StudStyle.Colors.Blue,
 	AdminPanel = StudStyle.Colors.Purple,
+	PetsPanel = StudStyle.Colors.Green, -- PetsGui.Panel (PetsPanel.client)
 }
 
 StudStyle.Font = Enum.Font.FredokaOne
