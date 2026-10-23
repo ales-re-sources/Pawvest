@@ -37,82 +37,123 @@ Players.PlayerRemoving:Connect(function(player)
 	panelStages[player] = nil
 end)
 
--- Helper to load global leaderboard for a stage
+local TOP_ROWS = 10
+
+-- last Top-10 of each stage this server read or wrote, [stageKey] = list; lets a finish that cannot make the board skip
+-- the DataStore. Boards only get faster, so a stale copy errs towards writing (except right after an admin removal
+-- elsewhere, which the next board refresh, at most a minute later, picks up)
+local cachedBoards = {}
+
+-- Loads a stage's global Top-10 ({} when there is none or the read fails)
 local function loadGlobalLeaderboard(stageName)
 	local key = "leaderboard_" .. stageName
 	local success, data = pcall(function()
 		return GlobalLeaderboardsStore:GetAsync(key)
 	end)
-	if success and data then
+	if success and type(data) == "table" then
+		cachedBoards[stageName] = data
 		return data
 	end
 	return {}
 end
 
--- Helper to save global leaderboard for a stage
-local function saveGlobalLeaderboard(stageName, leaderboard)
-	local key = "leaderboard_" .. stageName
-	pcall(function()
-		GlobalLeaderboardsStore:SetAsync(key, leaderboard)
-	end)
+-- The entry of a player: by UserId, or by name for entries written before UserIds were stored
+local function findEntry(leaderboard, playerName, userId)
+	for _, entry in leaderboard do
+		if (userId and entry.UserId == userId) or entry.PlayerName == playerName then
+			return entry
+		end
+	end
+	return nil
 end
 
--- Helper to update global Top-10 leaderboard
+-- True when `elapsed` would change the Top-10: better than the player's own entry, or (without one) a free row or
+-- faster than the last row
+local function wouldChange(leaderboard, playerName, elapsed, userId)
+	local entry = findEntry(leaderboard, playerName, userId)
+	if entry then
+		return elapsed < entry.Elapsed or entry.UserId == nil or entry.PlayerName ~= playerName
+	end
+	local last = leaderboard[TOP_ROWS]
+	return #leaderboard < TOP_ROWS or (last ~= nil and elapsed < last.Elapsed)
+end
+
+-- Records a time on a stage's global Top-10, nil when it did not change.
+-- UpdateAsync, not GetAsync + SetAsync: two servers posting at the same moment would otherwise overwrite each other's
+-- record. The transform may run more than once and returns nil (no write) when the time does not make the board.
 -- userId is stored with the entry so boards can show the avatar (older entries get it on their next record)
 local function updateGlobalLeaderboard(stageName, playerName, elapsed, userId)
-	local leaderboard = loadGlobalLeaderboard(stageName)
-
-	-- Check if player already has a time on this leaderboard
-	local existingEntry = nil
-	for i, entry in leaderboard do
-		if entry.PlayerName == playerName then
-			existingEntry = entry
-			break
-		end
+	local cached = cachedBoards[stageName]
+	if cached and not wouldChange(cached, playerName, elapsed, userId) then
+		return nil
 	end
-
-	-- Update existing entry or add new one
-	if existingEntry then
-		if elapsed < existingEntry.Elapsed then
-			existingEntry.Elapsed = elapsed
-		end
-		existingEntry.UserId = userId or existingEntry.UserId
-	else
-		table.insert(leaderboard, {PlayerName = playerName, Elapsed = elapsed, UserId = userId})
-	end
-
-	-- Sort by elapsed time (ascending)
-	table.sort(leaderboard, function(a, b)
-		return a.Elapsed < b.Elapsed
+	local written = nil
+	local ok, err = pcall(function()
+		GlobalLeaderboardsStore:UpdateAsync("leaderboard_" .. stageName, function(old)
+			local leaderboard = if type(old) == "table" then old else {}
+			cachedBoards[stageName] = leaderboard
+			written = nil
+			if not wouldChange(leaderboard, playerName, elapsed, userId) then
+				return nil
+			end
+			local entry = findEntry(leaderboard, playerName, userId)
+			if entry then
+				entry.Elapsed = math.min(entry.Elapsed, elapsed)
+				entry.PlayerName = playerName
+				entry.UserId = userId or entry.UserId
+			else
+				table.insert(leaderboard, { PlayerName = playerName, Elapsed = elapsed, UserId = userId })
+			end
+			table.sort(leaderboard, function(a, b)
+				return a.Elapsed < b.Elapsed
+			end)
+			for i = #leaderboard, TOP_ROWS + 1, -1 do
+				leaderboard[i] = nil
+			end
+			written = leaderboard
+			return leaderboard
+		end)
 	end)
-
-	-- Keep only Top-10
-	if #leaderboard > 10 then
-		for i = 11, #leaderboard do
-			leaderboard[i] = nil
-		end
+	if not ok then
+		warn("PlayerTimerHandler: Top-10 update failed for " .. stageName .. ": " .. tostring(err))
+		cachedBoards[stageName] = nil -- the transform may have changed the cached list before the write failed
+		return nil
 	end
-
-	-- Save the updated leaderboard
-	saveGlobalLeaderboard(stageName, leaderboard)
-	leaderboardChanged:Fire(stageName, leaderboard)
-
-	return leaderboard
+	if written then
+		cachedBoards[stageName] = written
+		leaderboardChanged:Fire(stageName, written)
+	end
+	return written
 end
 
 
 -- Removes a player's entries from every stage's Top-10 (admin self-reset); boards redraw via LeaderboardChanged
 local function removeFromGlobalLeaderboards(playerName)
 	for _, stage in StageConfig.Stages do
-		local leaderboard = loadGlobalLeaderboard(stage.key)
-		local kept = {}
-		for _, entry in leaderboard do
-			if entry.PlayerName ~= playerName then
-				table.insert(kept, entry)
-			end
-		end
-		if #kept < #leaderboard then
-			saveGlobalLeaderboard(stage.key, kept)
+		local kept = nil
+		local ok, err = pcall(function()
+			GlobalLeaderboardsStore:UpdateAsync("leaderboard_" .. stage.key, function(old)
+				kept = nil
+				if type(old) ~= "table" then
+					return nil
+				end
+				local list = {}
+				for _, entry in old do
+					if entry.PlayerName ~= playerName then
+						table.insert(list, entry)
+					end
+				end
+				if #list == #old then
+					return nil
+				end
+				kept = list
+				return list
+			end)
+		end)
+		if not ok then
+			warn("PlayerTimerHandler: Top-10 removal failed for " .. stage.key .. ": " .. tostring(err))
+		elseif kept then
+			cachedBoards[stage.key] = kept
 			leaderboardChanged:Fire(stage.key, kept)
 		end
 	end

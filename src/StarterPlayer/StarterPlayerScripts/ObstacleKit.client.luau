@@ -65,6 +65,8 @@ local OVERLAP_MARGIN = 8 -- studs beyond a part's own radius within which the ov
 local TOUCH_PAD = 0.1 -- studs added to a hazard's size for the touch test (about what a physical contact adds; all kit hazards are tested as boxes)
 local WARN_COLOR = Color3.fromRGB(255, 170, 60)
 local BEAM_TRANSPARENCY = { off = 1, warning = 0.8, on = 0.15 }
+local NEAR_DISTANCE = 200 -- studs (beyond a mover's own radius) from the character within which movers update every frame
+local FAR_EVERY = 4 -- farther movers (other stages) update every FAR_EVERY-th frame, still moving but carrying nobody
 
 local movers = {} -- [part] = { base, cframe, delta, color, state }
 local tilts = {} -- [part] = { base, angle, speed }
@@ -89,22 +91,50 @@ floorParams.FilterType = Enum.RaycastFilterType.Exclude
 local bodyParams = OverlapParams.new()
 bodyParams.FilterType = Enum.RaycastFilterType.Include
 
+-- Attribute reads are cached per part (the frame loop reads several per kit part every frame, and GetAttribute is far
+-- slower than a table lookup); AttributeChanged drops a changed value, so tuning a part in Studio still takes effect.
+-- Only kit parts are read (each registry check comes before the attribute), so the AttributeChanged connections stay
+-- one per kit part; weak keys let a part that left the kit go.
+local NONE = {} -- cached "attribute not set"
+local attrCache = setmetatable({}, { __mode = "k" }) -- [Instance] = { [name] = value or NONE }
+
 local function attr(part: Instance, name: string, default: any): any
-	local value = part:GetAttribute(name)
+	local cache = attrCache[part]
+	if not cache then
+		local fresh = {}
+		cache = fresh
+		attrCache[part] = fresh
+		part.AttributeChanged:Connect(function(changed: string)
+			fresh[changed] = nil
+		end)
+	end
+	local value = cache[name]
 	if value == nil then
+		value = part:GetAttribute(name)
+		if value == nil then
+			value = NONE
+		end
+		cache[name] = value
+	end
+	if value == NONE then
 		return default
 	end
 	return value
 end
 
+local moverCount = 0
 local function addMover(part: Instance)
 	if part:IsA("BasePart") then
+		moverCount += 1
 		movers[part] = {
 			base = part.CFrame,
 			cframe = part.CFrame,
 			delta = CFrame.identity,
 			color = part.Color,
 			state = "on",
+			radius = part.Size.Magnitude / 2,
+			slot = moverCount % FAR_EVERY, -- far movers take turns, a quarter of them per frame
+			near = false,
 		}
 	end
 end
@@ -303,6 +333,7 @@ local shoveUntil = 0
 
 local frameMs = 0
 local lastPublish = 0
+local frameIndex = 0
 
 local function publish(name: string, value: any)
 	if player:GetAttribute(name) ~= value then
@@ -330,10 +361,22 @@ end
 RunService.PreSimulation:Connect(function(dt: number)
 	local started = os.clock()
 	local now = workspace:GetServerTimeNow()
+	frameIndex += 1
 
+	-- movers far from the character (or the camera, without one) run at a lower rate; a mover's delta is only trusted
+	-- while it is near in two frames in a row, so a mover coming back from the low rate never jerks a character
+	local camera = workspace.CurrentCamera
+	local focus = if root and root.Parent then root.Position elseif camera then camera.CFrame.Position else nil
 	for part, data in movers do
+		local near = focus == nil or (part.Position - focus).Magnitude < NEAR_DISTANCE + data.radius
+		if not near and (frameIndex + data.slot) % FAR_EVERY ~= 0 then
+			data.delta = CFrame.identity
+			data.near = false
+			continue
+		end
 		local frame, state = moverFrame(part, data, KitMath.TimeBase(now, runStart, attr(part, "RunSeeded", false)))
-		data.delta = if timeBaseChanged then CFrame.identity else frame * data.cframe:Inverse()
+		data.delta = if timeBaseChanged or not (near and data.near) then CFrame.identity else frame * data.cframe:Inverse()
+		data.near = near
 		data.cframe = frame
 		part.CFrame = frame
 		if state ~= data.state then
@@ -396,7 +439,7 @@ RunService.PreSimulation:Connect(function(dt: number)
 		local depth = if hit then root.Position.Y - hit.Position.Y else 0
 		local instance = hit and depth >= MIN_FLOOR_DEPTH and depth <= MAX_FLOOR_DEPTH and hit.Instance
 		-- a kill hazard is never a floor (a sweeper bar at shin height would otherwise carry the character along with it)
-		if instance and not attr(instance, "Kill", false) and (movers[instance] or tilts[instance] or crumbles[instance] or switches[instance] or buttons[instance]) then
+		if instance and (movers[instance] or tilts[instance] or crumbles[instance] or switches[instance] or buttons[instance]) and not attr(instance, "Kill", false) then
 			standing = instance
 		end
 	end
@@ -524,6 +567,14 @@ RunService.PreSimulation:Connect(function(dt: number)
 			local offset = data.base:PointToObjectSpace(root.Position).Z
 			target = attr(part, "Sens", 8) * offset
 		end
+		if target == 0 and math.abs(data.angle) < 1e-3 and math.abs(data.speed) < 1e-3 then
+			-- at rest: put it back exactly once instead of rewriting its CFrame every frame
+			if data.angle ~= 0 or data.speed ~= 0 then
+				data.angle, data.speed = 0, 0
+				part.CFrame = data.base
+			end
+			continue
+		end
 		local spring = attr(part, "Spring", 40)
 		local damping = attr(part, "Damping", 12)
 		local limit = attr(part, "MaxAngle", 40)
@@ -626,7 +677,7 @@ RunService.PreSimulation:Connect(function(dt: number)
 				if data.state == "on" then
 					local push = attr(part, "Push", 0)
 					-- the mover's motion at the character (a spinning paddle shoves along its turn, not toward its centre)
-					local step = data.delta * root.Position - root.Position
+					local step = if push > 0 then data.delta * root.Position - root.Position else Vector3.zero
 					if push > 0 and step.Magnitude > 1e-3 and os.clock() > pushedUntil and touchesCharacter(part) then
 						-- knock-back: launch the character along the mover's motion (a standing Humanoid would cancel a
 						-- plain velocity, so it goes into freefall); one launch per PUSH_COOLDOWN

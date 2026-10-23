@@ -41,6 +41,8 @@ local RUN_BACK = 4 -- extra studs behind the owner while their stage timer runs
 local RUN_FADE = 0.6 -- minimum LocalTransparencyModifier of the owner's pets while their stage timer runs
 local RUN_BLEND_SPEED = 4 -- how fast the run mode fades in / out (1/s)
 local LEVEL_UP_WINDOW = 1 -- seconds a level-up may wait for its model to appear in the world
+local CULL_DISTANCE = 150 -- studs from the camera to another player's character beyond which their pets leave the world
+local CULL_HYSTERESIS = 15 -- ... and they come back this much inside it, so a player at the border does not flicker
 
 local running = false -- the local player's stage timer is running
 local runBlend = 0 -- 0 = normal formation, 1 = run mode
@@ -210,11 +212,29 @@ RunService.Heartbeat:Connect(function(dt)
 	for player, state in followers do
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart")
-		if not root or #state.pets == 0 then
-			-- no character (dead, respawning, streamed out): hide the pets and jump back on the next spawn
+		-- another player far from the camera (usually on another stage): their pets cost a PivotTo of every part each
+		-- frame but are a few pixels at most, so they leave the world like the pets of a player without a character
+		local culled = false
+		if root and cameraPosition and player ~= LocalPlayer then
+			local limit = if state.culled then CULL_DISTANCE else CULL_DISTANCE + CULL_HYSTERESIS
+			culled = (root.Position - cameraPosition).Magnitude > limit
+		end
+		state.culled = culled
+		if not root or culled or #state.pets == 0 then
+			-- no character (dead, respawning, streamed out) or far away: hide the pets and jump back when they return
 			state.anchor = nil
 			for _, pet in state.pets do
-				pet.model.Parent = nil
+				if pet.model.Parent ~= nil then
+					pet.model.Parent = nil
+				end
+				if pet.ghost and pet.ghost.model.Parent ~= nil then
+					pet.ghost.model.Parent = nil
+				end
+				if pet.moment then
+					-- a level-up moment needs Pose every frame; one that leaves the view is cut short (it cleans up its effects)
+					pet.moment:Cancel()
+					pet.moment = nil
+				end
 			end
 			continue
 		end
