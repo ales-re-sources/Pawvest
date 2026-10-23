@@ -29,7 +29,9 @@
 --             opens every KitDoor of that Group for Time s for the local player; stepping on the button again restarts the time.
 --             The door slides OpenDistance studs (default its height) along OpenAxis (world Vector3, default up) in OpenTime s
 --             (default 0.4) and back when the time is up; the button glows while it is open and a countdown of the seconds
---             left floats over the button and over the door's closed position.
+--             left floats over the button and over the door's closed position. Latch = true on a button (the Labyrinth's
+--             exit switch) keeps its group open for the rest of the run instead, with no countdown and also after a death;
+--             the start or end of a run closes it again.
 --   RunSeeded  attribute on any timed part (mover, beam, plate): it runs on time since that player's stage timer started
 --             (StageTimerUpdate) instead of server time, so every run sees the same sequence; set Phase so that t = 0 is safe.
 --   KitTilt   hinge plate (local X axis): the plate tips toward the side the player stands on, a spring pulls it back;
@@ -71,6 +73,7 @@ local colorState = {} -- [group] = "Red" / "Blue"
 local buttons = {} -- [part] = { color }
 local doors = {} -- [part] = { transparency, look }
 local doorOpenUntil = {} -- [group] = os.clock() when that group's doors close again
+local latched = {} -- [group] = true: a Latch button of that group was pressed in this run
 local BUTTON_ON_COLOR = Color3.fromRGB(90, 230, 120)
 local runStart: number? = nil -- server time the player's current run started (StageTimerUpdate)
 local timeBaseChanged = false -- a run started or ended: run-seeded movers jump to their new time, nobody is carried by it
@@ -207,6 +210,7 @@ ReplicatedStorage:WaitForChild("StageTimerUpdate").OnClientEvent:Connect(functio
 	local newStart = if type(elapsed) == "number" and elapsed >= 0 then workspace:GetServerTimeNow() - elapsed else nil
 	if (newStart == nil) ~= (runStart == nil) or (newStart and runStart and math.abs(newStart - runStart) > 0.5) then
 		timeBaseChanged = true
+		table.clear(latched)
 	end
 	runStart = newStart
 	player:SetAttribute("KitRunStart", runStart or 0)
@@ -440,9 +444,13 @@ RunService.PreSimulation:Connect(function(dt: number)
 	end
 	lastSwitch = if standing and switches[standing] then standing else nil
 
-	-- pressure buttons: standing on one (re)opens its group's doors for Time seconds
+	-- pressure buttons: standing on one (re)opens its group's doors for Time seconds (a Latch button for the run)
 	if standing and buttons[standing] then
-		doorOpenUntil[attr(standing, "Group", "A")] = os.clock() + attr(standing, "Time", 4)
+		if attr(standing, "Latch", false) then
+			latched[attr(standing, "Group", "A")] = true
+		else
+			doorOpenUntil[attr(standing, "Group", "A")] = os.clock() + attr(standing, "Time", 4)
+		end
 	end
 	local clockNow = os.clock()
 	-- the countdown shows whole seconds left (5, 4, … 1, 0 in the last second), red in the last two
@@ -461,25 +469,27 @@ RunService.PreSimulation:Connect(function(dt: number)
 		end
 	end
 	for part, data in buttons do
-		local left = (doorOpenUntil[attr(part, "Group", "A")] or 0) - clockNow
-		local color = if left > 0 then BUTTON_ON_COLOR else data.color
+		local group = attr(part, "Group", "A")
+		local left = (doorOpenUntil[group] or 0) - clockNow
+		local color = if left > 0 or latched[group] then BUTTON_ON_COLOR else data.color
 		if part.Color ~= color then
 			part.Color = color
 		end
-		showCountdown(data.label, left)
+		showCountdown(data.label, if latched[group] then 0 else left)
 	end
 	-- doors: slide open along OpenAxis while their group is open, back when the time is up (solid all the time: an
 	-- open door is out of the way, a closing one pushes the character out of the doorway)
 	for part, data in doors do
-		local left = (doorOpenUntil[attr(part, "Group", "A")] or 0) - clockNow
+		local group = attr(part, "Group", "A")
+		local left = (doorOpenUntil[group] or 0) - clockNow
 		local step = dt / math.max(attr(part, "OpenTime", 0.4), 1e-3)
-		local shown = math.clamp(data.shown + (if left > 0 then step else -step), 0, 1)
+		local shown = math.clamp(data.shown + (if left > 0 or latched[group] then step else -step), 0, 1)
 		if shown ~= data.shown then
 			data.shown = shown
 			local axis: Vector3 = attr(part, "OpenAxis", Vector3.new(0, 1, 0))
 			part.CFrame = data.base + axis.Unit * attr(part, "OpenDistance", part.Size.Y) * KitMath.Smooth(shown)
 		end
-		showCountdown(data.label, left)
+		showCountdown(data.label, if latched[group] then 0 else left)
 	end
 
 	-- colour plates: solid while their group shows their colour, a ghost otherwise

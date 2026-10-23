@@ -447,7 +447,9 @@ A measured `T_base` for both new stages comes in M6a.
     18.5-20 s; a baseline single jump is stopped by a hedge, a Double Jump crosses it; a timed run from the gate finished through the portal (187.9 s with a stuck bot and pauses, no medal; the result popup data and
     pet XP arrived); no script errors.
   - *Not checked:* the look of the mazes and the iso view (the viewport renders white here), how readable the shifting walls are for a person, the real T_base (105 provisional).
-  - *Open (user, 2026-10-22, later):* the big maze may need to be harder: hazards inside it, a bigger maze, or the patrolling guards after all (STAGES §5.2 extras); decide in the balancing pass (M6b) or when the user asks.
+  - *Big maze reworked (user, 2026-10-23, "harder and bigger"; was the open point from 2026-10-22):* 15 x 15 cells, an exit door opened by a latching switch in a room at the far edge (checkpoint `705`), four patrolling guards in
+    fixed lanes, six blinking lava cells, walls shifting every 5 s (36 shifting walls, 4 layouts); kit: `KitButton` attribute `Latch`; `Stage9` T_base 105 -> 140 (provisional). Details and checks: STAGES §7.9. Implemented, Studio-validated
+    in parts (hazards, latch, solvability, exit); open: the user's run and look, a full timed run, the old maze copy `ServerStorage.Stage9_OldBigMaze` to delete after the user's check.
 - **S6.3 Clocktower (design check done 2026-10-23; decisions: a tower climb, one 1 s clock tick, pressure doors).** Gate in the south wall (finale slot), `StageConfig` `Stage10` (T_base 135, factor 3.0, Bronze on Stage 9 or 4 000),
   coins `Stage10_1..8`, checkpoints `801`-`806`, `SoonGate10` replaced; kit: Spin `Tick` / `TickMove` (`KitMath.Ticked`), `KitButton` / `KitDoor`; course as in STAGES §7.9.
   - *Checked in a playtest (developer profile; snapshot `profile_9892673032_s10` restored, `leaderboard_Stage10` removed, star boards restored):* a client bot (one air jump, the account's Run Speed 3 / Jump Height 3) crossed every side, each one

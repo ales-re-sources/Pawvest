@@ -597,7 +597,7 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   block (the key arena holds 301-303): Stage 6 = `401`-, Stage 7 = `501`-, Stage 8 `601`-, Stage 9 `701`-, Stage 10 `801`-.
 - **StageConfig entries (as GDD §3 / §5):** `world = 2`, `requires = { { id = "DoubleJump", level = 1 } }`, factor `0.5 + 0.25 x n`, `tBase` provisional (middle of
   §4's range, M6b measures): Stage 6 (Double Up) 90 s, factor 2.0, unlock 10 of 15 stars in World 1 or 2 500; Stage 7 (Seesaw) 100 s, 2.25, Bronze on Stage 6 or 3 000;
-  Stage 8 (Turntable) 105 s, 2.5, 3 000; Stage 9 (Labyrinth) 105 s, 2.75, 3 500; Stage 10 (Clocktower) 135 s, 3.0, 4 000.
+  Stage 8 (Turntable) 105 s, 2.5, 3 000; Stage 9 (Labyrinth) 105 s (140 since the big maze rework), 2.75, 3 500; Stage 10 (Clocktower) 135 s, 3.0, 4 000.
 - **World 2 opens with stage 6** (user decision, 2026-10-22; the recommendation was to stay shut until S6.3): when Stage 6 enters `StageConfig` the world's `soon`
   flag is removed, so the hub gate follows the normal world rule (open when one of the world's stages is open: 10 of 15 stars in World 1, or buy Stage 6 for
   2 500 at the gate), the stars board and the gate's x / 15 face go live, and players meet a world with only the stages built so far (the later gates in the
@@ -668,6 +668,25 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   - *After the user's first look:* (a) checkpoint `702` (z 527) was an easy Double Jump from Stage 8's sweeper pads (z 516): a glass lane divider `LaneDividers.World2West` (z 523.5, x -1000..-431.5, y 2..170, like World 1's) plus
     `World2West_WallTop` over the courtyard wall now separates the Stage 8 / Stage 9 lanes (a running single and double jump from Stage 8 stop at it); (b) the walls overlapped the crossing walls by half a stud, so a shifting wall's end
     showed through a grey wall's face (shared plane): every wall is now 8.9 long and ends inside a 1.3 x 16 x 1.3 grey corner post (`Post_n`) at each joint.
+  - *Big maze made bigger and harder (user, 2026-10-23: all four options picked):* `Maze.Big` is now **15 x 15 cells** (x -630..-780, z 535..685; it grew north and west, the south edge stays clear of Stage 8's lane), cells (i, j) at
+    x = -635 - 10 i, z = 540 + 10 j, entry (0, 2) from `703`, exit (14, 8); `704`, `Base_704`, `E`, `T1`, the finish island and the portal moved 40 studs west (portal x -836). The old maze is kept as `ServerStorage.Stage9_OldBigMaze` until the user's check.
+    - *Exit switch:* the exit is a gold `ExitDoor` (`KitDoor`, Group `LabyrinthExit`, sinks 16.2 into the floor, "Find the switch" on its maze side); the gold `Switch` (`KitButton`, new kit attribute **`Latch`**: open for the rest of the run, no countdown,
+      kept through a death, closed again when a run starts or ends) lies in a 3 x 2-cell **switch room** at the north edge (cells 7-9, 13-14, no inner walls or posts) under a light `SwitchBeacon`, with checkpoint **`705`** beside it.
+      So the maze is crossed twice: entry -> switch, switch -> exit.
+    - *Faster shifting:* 4 layouts, `Period` 5 (was 6), 36 shifting walls (6 swaps per step: a passage on the current route is cut and the halves joined elsewhere, preferring a long new route); route lengths entry -> room / room -> exit
+      33 / 12, 41 / 48, 68 / 46, 47 / 50 cells. 173 static walls, 3 hedges (fewer shortcuts than before), 254 posts.
+    - *Guards:* four red kill pillars (`Guard_G1..G4`, 6 x 10 x 6, `KitMover` Slide, `Kill`, run-seeded) in straight **guard lanes** that stay open in every layout: G1 row j 5 (i 2-7, amplitude 15, period 7), G2 column i 11 (j 2-7, 15 / 8), G3 row j 10
+      (i 1-5, 10 / 5.5), G4 row j 12 (i 10-14, 10 / 6); max speed 11-13.5 studs/s (below the walk speed). A guard covers its lane's inner cells only, the two end cells are safe pockets, and both ends of a lane are walled for good, so
+      a route enters and leaves a lane through its sides. One guard in a 1-wide lane cannot be passed head-on, so the generator only accepts layouts whose route runs at most 2 cells along a lane (cross it, or follow the guard
+      out). Every layout's route touches 2-3 lanes.
+    - *Lava:* six blinking floor tiles (`Lava_n`, `KitBeam`, period 4, on 40 %, warning 0.8 s, phases sixths apart, run-seeded) over a dark `LavaMark_n`, on cells the route uses in most layouts, none next to a guard lane (waiting for lava
+      inside a lane got a bot killed), one at the switch room's east doorway.
+    - *Coins:* easy `Stage9_3..5` in dead ends next to the routes ((13, 5), (11, 1), (8, 5)), risky `Stage9_6` / `_7` in dead ends off guard lane G4 ((14, 11), (10, 11)); `Stage9_8` moved with `T1`.
+    - *Camera:* `Big_Camera` / `Big_Ghosts` cover the new maze, Distance 260 (was 230).
+    - *Checked (playtest, developer profile, restored afterwards):* the Studio walls give a connected maze in all 4 layouts (rebuilt from the parts); guards slide, lava blinks, both kill (KitKilledBy), a lane's end pocket and a side cell are
+      safe; the switch latches the door open and it stays open after a death (respawn on `705`); exit door -> `704` -> Double Jump to `E` works; no script errors. An offline bot (16 studs/s, replanning on the walls it sees, no hazards)
+      crosses entry -> switch -> exit in 48.75 s from every phase of the cycle (old big maze 18.5-20 s). The live client bot reached the switch but its guard avoidance was too timid to finish; a human run is still to come.
+    - *Not checked:* the look in the iso view, a full timed run, human difficulty of the guard lanes and lava, the real T_base (140 provisional).
 - **S6.3 design check (2026-10-23):** the Clocktower is **a climb round a tower**, everything moves on **one 1 s clock tick** (Blink's metronome sound at 60 BPM, every hazard run-seeded), and it gets **pressure doors** (new kit
   `KitButton` / `KitDoor`). Kit additions: `Tick` / `TickMove` on Spin movers (a clockwork step of Speed x Tick degrees per tick, `KitMath.Ticked`), `KitButton` (Group, Time) opening every `KitDoor` of its Group for Time s, kit-local.
 - **S6.3 Stage 10 Clocktower as built** (key `Stage10`, the south gate (x -375, z 621.7), checkpoint `801` at z 628 facing +z, an `Entry` slab, then the tower): a 40 x 40 stone `Tower.Core` centred on (-347, 686) up to h 120 (the roof) with a 20 x 20
