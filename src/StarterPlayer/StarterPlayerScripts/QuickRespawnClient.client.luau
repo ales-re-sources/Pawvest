@@ -87,6 +87,13 @@ end)
 resetEvent.OnClientEvent:Connect(function()
 	plate = nil
 end)
+-- the run ended (finish, Home, cancel): the finish teleport can land far below the last plate (the Clocktower's roof is
+-- 100 studs above the World 2 plaza), which must not count as a fall
+ReplicatedStorage:WaitForChild("StageTimerUpdate").OnClientEvent:Connect(function(elapsed)
+	if type(elapsed) == "number" and elapsed < 0 then
+		plate = nil
+	end
+end)
 
 -- Fade after an instant respawn (not on the join spawn, nor with the slower respawns that have their own wait).
 local firstSpawn = true

@@ -683,6 +683,11 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   - *Fixed while testing:* steps that ended under a checkpoint plate (a checkpoint plate sticks 8 studs back toward the arriving side) or under the next pad made a head-bonk trap (the beam of side 2, the steps of sides 1 / 7 moved back); a
     0.5-stud gap between a flipper and a step wedged the character (now 2); 45-degree plank ticks lined up for only 0.75 s (now 90 every 2 ticks); flipper waves that ran ahead of a hopping player (now one tick apart); door 2 at 4.5 s was too short
     for three flippers on the tick (6 s); the last pistons out half the time left no gap on crumbling stairs (now out 1 s in every 3); 14-high doors could be jump-climbed (20 now).
+  - *After the user's first runs (2026-10-23):* (a) the finish dropped the player back on a checkpoint: the plaza is about 100 studs below the last checkpoint, so Quick Respawn's fall reset fired after the finish teleport;
+    `QuickRespawnClient` now forgets the plate when the run ends (StageTimerUpdate < 0: finish, Home, cancel); (b) the doors carry a hint ("Locked - step on the red button back at the corner") and the buttons are 6 x 6 Neon;
+    (c) `Corner_12` is gone: from the last crumbling stairs you jump sideways (5 studs, 1 up) onto the tower's roof; (d) the finish portal stands in the middle of the `Belfry` top (h 150), reached by a `BelfryLadder` truss on the
+    belfry's west face with a kill beam (`LadderBeam`) across it at h 136 on the tick (period 2): stop below it on the ladder and climb on when it switches off; (e) the conveyor is faster (-12) and carries three low **hurdle beams**
+    (1.4 high, on the tick, the middle one alternating) that you jump while the belt pulls you back; (f) T_base 135 -> 90 (Gold < 72 s; a first run with several deaths got Silver, AhojRupert's best is 65.9 s).
 
 ## 8. Milestones (agreed 2026-10-21; status and full scopes in [ROADMAP.md](ROADMAP.md))
 Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.

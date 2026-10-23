@@ -455,6 +455,10 @@ A measured `T_base` for both new stages comes in M6a.
     then one timed run from the courtyard through the gate up to the roof finished in 89.6 s (with the pauses between test calls): Gold, 4 410 Coins + 315 run reward (factor 3.0), free egg; no script errors.
   - *Not checked:* the look (the viewport renders white here), the tick sound in a run, human difficulty and the real T_base (135 provisional, the bot run suggests a perfect run of about 75 s), the clock platform for a human (the bot died there 1 in 3
     when it cut back across the hand's reach).
+  - *After the user's first runs:* finish no longer drops you on a checkpoint (`QuickRespawnClient` forgets the plate at run end), door hints, no top corner pad, finish on the belfry top behind a ladder with a beam on the tick,
+    conveyor hurdles, T_base 90 (STAGES §7.9). Checked in a playtest (snapshot `profile_9892673032_s10b`, the Stage 10 board and star boards restored): after the finish the character stays on the plaza (2 s later still at `Arrival`), the ladder
+    climb works when waiting below the beam (climbing straight into it kills), the hurdles 3/3 when jumped, stairs -> roof works (bot 3 of 5, its own jump logic). Bot note: in this session `Humanoid.Jump = true` did nothing with the
+    controls disabled; `ChangeState(Jumping)` works.
   - *Argon note:* an edit to `ObstacleKit` (the button code) did not reach Studio although earlier edits of the same file did; `touch` did not help, a real content change did. After script edits, check the Studio source before a playtest.
 
 ### M6a — First live test + World 1 balancing
