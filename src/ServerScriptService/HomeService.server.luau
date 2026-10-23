@@ -49,7 +49,7 @@ goHomeEvent.OnServerEvent:Connect(function(player)
 		then StageConfig.ReturnSpawn(stage)
 		else workspace.StartLocation.SpawnLocation
 	character:PivotTo(destination.CFrame + Vector3.new(0, 5, 0))
-	TimerHandler.ResetTimer(player) -- leaving the stage cancels a running timer
+	TimerHandler.ResetTimer(player, "home") -- leaving the stage cancels a running timer
 	TimerHandler.UpdateScorePanel(player, if stage then StageConfig.LocationKey(stage) else StageConfig.HubName)
 end)
 

@@ -13,6 +13,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local ArenaConfig = require(ReplicatedStorage.ArenaConfig)
 local CheckpointTouchHandler = require(workspace:WaitForChild("Handlers"):WaitForChild("CheckpointTouchHandler"))
+local Telemetry = require(game:GetService("ServerScriptService").Telemetry)
 
 -- Max distance (studs) between the character's root and a key on the server: rejects keys moved on a client.
 local MAX_REACH = 15
@@ -44,6 +45,7 @@ local function setupSpike(part: Instance)
 			local _, humanoid = aliveCharacter(hit)
 			if humanoid then
 				humanoid.Health = 0
+				Telemetry.MarkKill(humanoid.Parent, part) -- cause of death (T1a)
 			end
 		end)
 	end

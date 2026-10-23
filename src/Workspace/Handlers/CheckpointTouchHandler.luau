@@ -6,6 +6,7 @@ local ServerStorage = game:GetService("ServerStorage")
 
 local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local TimerHandler = require(script.Parent.PlayerTimerHandler)
+local Telemetry = require(game:GetService("ServerScriptService").Telemetry)
 
 -- server -> client (part, first): the player's checkpoint (respawn point) is now that part; CheckpointClient lights its pad
 -- (and turns the previous one off) for that player only and plays script.Sound when `first` (first time in the run)
@@ -106,6 +107,7 @@ function module.OnTouched(part, hit)
 		local first = not seen[part]
 		seen[part] = true
 		reachedEvent:FireClient(player, part, first)
+		Telemetry.Checkpoint(player, part) -- run funnel step and segment
 
 		-- checkpoint...
 		local checkpointData = ServerStorage:FindFirstChild("CheckpointData")

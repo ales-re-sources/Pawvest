@@ -18,6 +18,9 @@ local legacyScoreStore = DataStoreService:GetDataStore("PlayerScoresStore")
 
 local profiles = {} -- [Player] = profile
 local saveBlocked = {} -- [Player] = true when the load failed
+local fresh = {} -- [Player] = true when neither a stored record nor legacy data existed (a new player)
+local left = {} -- [Player] = true once the OnLeaving callbacks ran
+local leavingCallbacks = {}
 local activeSaves = 0
 
 local coinsChanged = Instance.new("BindableEvent")
@@ -51,6 +54,7 @@ local function newProfile()
 		-- up to which production was paid (absent until the first settle), Carry = production left over from the last payout;
 		-- P2b1: Incubators["1".."3"] = { Egg, StartedAt, ReadyAt } (server os.time()), IncubatorCount = incubators owned
 		Garden = { Pens = {}, PenCount = 1, Carry = 0, Incubators = {}, IncubatorCount = 1 },
+		LastQuit = {}, -- { Stage, Segment, At = os.time() } of the last leave, cleared on the next join (Telemetry, T1a)
 	}
 end
 
@@ -146,6 +150,7 @@ local function load(player)
 		profile, data = migrateLegacy(player.UserId)
 		ok = profile ~= nil
 		migrated = ok
+		fresh[player] = ok and profile.Coins == 0 and next(profile.BestTimes) == nil or nil
 	elseif ok and type(data) == "table" then
 		profile = reconcile(data)
 	elseif ok then
@@ -163,6 +168,30 @@ local function load(player)
 	profiles[player] = profile
 	if migrated then
 		save(player)
+	end
+end
+
+-- True for a player who had neither a stored profile nor legacy data when they joined (telemetry Session).
+function PlayerProfile.IsNew(player: Player): boolean
+	return fresh[player] == true
+end
+
+-- Registers fn(player, profile or nil), run once per leaving player right before the leave save, also when the server
+-- shuts down (BindToClose), so it may still change the profile (Telemetry writes LastQuit).
+function PlayerProfile.OnLeaving(fn)
+	table.insert(leavingCallbacks, fn)
+end
+
+local function runLeaving(player)
+	if left[player] then
+		return
+	end
+	left[player] = true
+	for _, fn in leavingCallbacks do
+		local ok, err = pcall(fn, player, profiles[player])
+		if not ok then
+			warn("PlayerProfile: OnLeaving callback failed: " .. tostring(err))
+		end
 	end
 end
 
@@ -216,9 +245,12 @@ for _, player in Players:GetPlayers() do
 end
 
 Players.PlayerRemoving:Connect(function(player)
+	runLeaving(player)
 	save(player)
 	profiles[player] = nil
 	saveBlocked[player] = nil
+	fresh[player] = nil
+	left[player] = nil
 end)
 
 task.spawn(function()
@@ -232,6 +264,7 @@ end)
 
 game:BindToClose(function()
 	for _, player in Players:GetPlayers() do
+		runLeaving(player)
 		task.spawn(save, player)
 	end
 	local deadline = os.clock() + SHUTDOWN_TIMEOUT

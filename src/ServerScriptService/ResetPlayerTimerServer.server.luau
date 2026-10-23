@@ -32,7 +32,7 @@ resetTimerEvent.OnServerEvent:Connect(function(player)
 	end
 	lastReset[player] = now
 
-	handler.ResetTimer(player)
+	handler.ResetTimer(player, "reset")
 	if not PlayerProfile.Reset(player) then
 		return -- profile still loading
 	end

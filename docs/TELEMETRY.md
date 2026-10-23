@@ -1,6 +1,6 @@
 # Oby sandbox — Telemetry (design)
 
-Status: design agreed 2026-10-23, not implemented. Milestones **T1a** (core) and **T1b** (skills) in [ROADMAP.md](ROADMAP.md).
+Status: design agreed 2026-10-23; design check against the API limits done 2026-10-23 (see "Design check" below), T1a implemented. Milestones **T1a** (core) and **T1b** (skills) in [ROADMAP.md](ROADMAP.md).
 
 ## Goal
 Data for rebalancing (M6a / M6b), answering a few questions only:
@@ -17,17 +17,24 @@ Not a goal: per-player tracking, positions / heatmaps, per-frame data, our own b
 ## Backend
 Roblox **AnalyticsService**, read in the Creator Dashboard (Analytics → Funnels, Progression, Economy, Custom events).
 No servers, no DataStore cost. Studio sessions are not recorded by the dashboard, so the module has a debug switch that
-prints every event instead. Re-check the current API and limits (custom-field cardinality, events per minute per
-server) on create.roblox.com when implementing; the design keeps every field low-cardinality and aggregates the
-frequent events.
+prints every event. The limits that shape this design (create.roblox.com, checked 2026-10-23; they reset daily):
+
+| Limit | Value |
+|---|---|
+| requests per minute (whole experience) | 120 + 20 × CCU |
+| custom fields per event | 3; after 8 000 combined values per event the rest is grouped as "Other" |
+| custom event names | 100 |
+| funnels | **10**; 100 steps each; only the 10 most recent `funnelSessionId`s per user and funnel are tracked; a step logged after skipped ones completes the skipped ones |
+| economy | 20 transaction types, 100 item SKUs |
 
 ## Terms
 - **Run**: from `TimerStart` to finish, cancel (gate exit, Home, Tutorial return, admin reset) or quit. Every run gets a
   `runId` (GUID) for the funnel session.
 - **Segment** `<stageKey>#<k>`: `k` = position (1-based, in course order) of the last checkpoint reached in this run;
   `#0` before the first one (the start gate counts as the first checkpoint, so `#0` is rare). Course order = numeric sort
-  of the stage's checkpoint folders, with an optional `checkpointOrder` list in the `StageConfig` entry for exceptions
-  (Stage 5's `level.2/26` — verify its place in Studio).
+  of the stage's checkpoint folders, with a `checkpointOrder` list in the `StageConfig` entry for exceptions (checked in
+  Studio 2026-10-23: Stage5 `20 26 21 22`, Stage6 `401-405 407 408 406`, Stage7 `501-505 507 508 506`, Stage9
+  `701 702 703 705 704`).
 - **Cause** of a fail:
   - `fall` — falling off, **whatever the player's talents**: without Quick Respawn level 2 the player dies on the sea
     (`DebugBaseplate`); with it they never reach the sea, `QuickRespawnClient` puts them back on the plate once they
@@ -45,16 +52,17 @@ frequent events.
 ### T1a — core
 | Event | API | Fields | When |
 |---|---|---|---|
-| Run funnel | `LogFunnelStepEvent(player, "Run_<stageKey>", runId, step, stepName)` | step 1 `start`, 2..n `cp<k>`, last `finish` | each step once per run, in order (going back to an earlier checkpoint logs nothing) |
-| Stage progression | `LogProgressionStartEvent` / `CompleteEvent` / `FailEvent` (path = world, level = stage index) | complete: medal, time, deaths in run; fail = run cancelled or quit: segment, deaths in run | run start / finish / cancel |
+| Run funnel | `LogFunnelStepEvent(player, "StageRun", runId, step, stepName, { CF01 = stage })` — **one** funnel for every stage (10-funnel cap), broken down by CF01 | step 1 `start`, `k + 1` = `cp<k>` (k = 1..20), 22 = `finish` | each step once per run, only forward (going back to an earlier checkpoint logs nothing); a stage with fewer checkpoints jumps to 22 at the finish and the dashboard completes the skipped steps, so its curve is flat after its last checkpoint |
+| Stage progression | `LogProgressionStartEvent` / `CompleteEvent` / `FailEvent` (path = world name, `Hub` for the Tutorial; level = position in the world, 1-based; levelName = stage key) | complete: CF01 medal (`none` / `Bronze` / `Silver` / `Gold`) · CF02 deaths bucket; fail = run cancelled or quit: CF01 segment · CF02 deaths bucket; CF03 is kept for T1b's loadout | run start / finish / cancel |
 | `Fail` | `LogCustomEvent`, value = count | CF01 stage · CF02 segment · CF03 cause | aggregated per player per (stage, segment, cause), flushed every 60 s and on leave |
-| `RunEnd` | `LogCustomEvent`, value = run seconds | CF01 stage · CF02 segment · CF03 reason (`finish` / `exit` / `home` / `quit` / `reset`) | every run end |
+| `RunEnd` | `LogCustomEvent`, value = run seconds | CF01 stage · CF02 segment · CF03 reason (`finish` / `exit` / `home` / `quit` / `reset` / `switch`) | every run end |
 | `Quit` | `LogCustomEvent`, value = seconds since the last checkpoint | CF01 stage (or `hub` / `garden` / world name) · CF02 segment · CF03 `run` / `idle` | player leaves |
 | `Return` | `LogCustomEvent`, value = days away | CF01 / CF02 = the stored quit | next join of a player whose profile has a `LastQuit` |
 | `Session` | `LogCustomEvent` | CF01 locale (`player.LocaleId`) · CF02 platform (touch / gamepad / keyboard, reported by the client) · CF03 `new` / `returning` | join |
 
 Deaths outside a run (hub, garden, exploring a stage without timer) are counted with stage `none` / the stage folder and
-segment `#-`, so they do not mix with run data.
+segment `#-`, so they do not mix with run data. Deaths bucket: `0`, `1-2`, `3-5`, `6-10`, `11+` (deaths + fall resets in the
+run). Times and counts never go into custom fields (cardinality); they are event values.
 
 ### T1b — skills
 | Event | API | Fields |
@@ -81,25 +89,51 @@ segment `#-`, so they do not mix with run data.
   per-player run state (runId, stage, segment, deaths, last checkpoint time); the `Fail` aggregation + 60 s flush;
   `Session` / `Return` on join, `Quit` on leave. Attribute `TelemetryDebug` on the module → print instead of / as well
   as logging.
+- **Ghost runs:** walking out through a door gate touches `TimerStart` again right after `GateExit` cancelled the run,
+  which starts a run that `GateExit` ends a moment later. A run's first events (start, progression start, checkpoints)
+  are held back for 2 s; a run ending by `exit` within that time sends nothing.
+- **Rate guard:** expected load is about 12-15 requests per minute for a player who is running stages (funnel steps,
+  progression, `RunEnd`, a few `Fail`), under the 20 per CCU the limit grants. The module still drops events above
+  100 + 15 × players in the current minute and warns once per minute when it does.
 - **Hooks** (call sites only, no gameplay change):
   - `Workspace/Handlers/PlayerTimerHandler.luau` — start / stop / reset / `PlayerRemoving` (the one choke point for
-    run start, finish, cancel and quit); `ResetTimer` gains a `reason` argument (GateExit copies, `HomeService`, Tutorial
-    `TeleportToSpawn`, admin reset).
+    run start, finish, cancel and quit); `ResetTimer` gains a `reason` argument, default `exit` (so the GateExit copies and
+    the Tutorial's `TeleportToSpawn` stay unchanged); `HomeService` passes `home`, the admin reset `reset`; a start while
+    another stage's run is going ends that run with `switch`.
   - `Workspace/Handlers/CheckpointTouchHandler.luau` — respawn point changed → `Checkpoint`.
-  - `ServerScriptService/RespawnService.server.luau` — `Humanoid.Died` → `Fail`. The cause is classified about 1 s later,
-    so a client report can arrive: a server kill mark on the character (attribute `KilledBy`, set by the kill-script
-    variants, `DebugBaseplate` → `fall`, `ArenaServer` spikes), else the client's report, else `other`.
-  - **`TelemetryRemotes.Report`** (client → server, created at runtime): `("kill", partPath)` from `ObstacleKit`'s
-    `kill()`, `("fall")` from `QuickRespawnClient` after a fall reset, `("platform", kind)` once on join. Rate-limited
-    (about 1 / s per player), the path must resolve to a part inside a stage folder; anything else is dropped. Telemetry
-    only — never trusted for gameplay.
+  - `Humanoid.Died` → `Fail`: the module connects it itself (`RespawnService` stays unchanged). The cause is classified
+    about 1 s later, so a client report can arrive: a server kill mark (`Telemetry.MarkKill(character, part)`, called by
+    the kill-script variants, `DebugBaseplate` → `fall`, `ArenaServer` spikes; the first mark per character wins; a
+    function call, not a string attribute, because full names are ambiguous with names like `level.2`), else the
+    client's report, else `other`.
+  - **`TelemetryRemotes.Report`** (client → server, created at runtime): `("kill", part)` from `ObstacleKit`'s
+    `kill()` (the part instance, not a path), `("fall")` from `QuickRespawnClient` after a fall reset, `("platform",
+    kind)` once on join (`TelemetryClient.client`). Kill / fall reports are rate-limited (a second one within 1 s is
+    dropped), the part must lie inside a stage folder; anything else is dropped. Telemetry only — never trusted for
+    gameplay.
   - `ServerScriptService/TalentService.server.luau` — after a purchase → `TalentBought` (T1b).
 - **Profile:** `LastQuit = {}` (`{ Stage, Segment, At }`) in `PlayerProfile.newProfile()` (no version bump). The profile
-  saves in its own `PlayerRemoving`, so `PlayerProfile` gets a `BeforeSave` callback list run in its leave handler before
-  the save; Telemetry writes `LastQuit` there.
+  saves in its own `PlayerRemoving`, so `PlayerProfile` gets an `OnLeaving(fn)` callback list, run once per player before
+  the leave save (also from `BindToClose`, so stopping a server or a playtest counts as a quit); Telemetry writes
+  `LastQuit` there. `PlayerProfile.IsNew(player)` (no stored record and no legacy data) gives `Session`'s `new` /
+  `returning`.
+- **Quit area:** the running stage, else `garden` on the garden island, else the score panel's place (`hub` or the
+  world name; `PlayerTimerHandler` pushes it with `Telemetry.SetArea`, because it forgets the panel in its own
+  `PlayerRemoving`); value = seconds since the last checkpoint / run start / run end / join.
+- **Kill path:** relative to the stage folder, 2 levels (`Beams/Beam_4`, `Part_01`, `11/level 11`); outside every stage,
+  relative to the top-level Workspace folder, whose name is then the stage field (`KeyArena`).
 - The kill-script variants (16 + 8 copies + `DebugBaseplate`) get one line each that marks the character; edit them as
   content changes on disk (never move or rename the folders), with the usual copy discipline (AGENTS.md → Reusable
   script variants) and the `ServerStorage.StageKit` copies if any.
+
+## Design check (2026-10-23)
+Changes against the first draft, from the API limits above: one `StageRun` funnel instead of one per stage (11 stages
+today, about 21 planned, 10 funnels allowed); progression custom fields bucketed (exact time and death counts would
+exhaust the 8 000 combinations; the time is `RunEnd`'s value); CF03 of the progression events kept free for T1b's
+loadout; a rate guard; `checkpointOrder` exceptions checked in Studio; `ResetTimer`'s default reason; kill marks as a
+function call; `Died` hooked in the module; `PlayerProfile.OnLeaving` also on shutdown. The debug switch is the
+`ServerScriptService` attribute `TelemetryDebug = true` (read on every event, so it can be toggled during a playtest):
+every event is printed as `[Telemetry] …`; without it the module is silent.
 
 ## Acceptance checks (Studio, debug switch on)
 - T1a: a run start → checkpoints → finish logs funnel steps 1..n in order exactly once, also when a checkpoint is touched

@@ -158,4 +158,10 @@ game:GetService("RunService").Heartbeat:Connect(function()
 	root.AssemblyAngularVelocity = Vector3.zero
 	flash()
 	respawned:Fire(target)
+	-- telemetry (T1a): a fall reset counts like a fall into the sea
+	local remotes = ReplicatedStorage:FindFirstChild("TelemetryRemotes")
+	local report = remotes and remotes:FindFirstChild("Report")
+	if report then
+		report:FireServer("fall")
+	end
 end)

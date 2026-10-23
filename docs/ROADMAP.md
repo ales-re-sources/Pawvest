@@ -49,7 +49,7 @@ Rules:
 | S2 | Quick Respawn talent (Studio-checked: 3 / 1 / 0 s delays, fall reset, Home, Skills row) | ✔ | ✔ | – |
 | S3 | Obstacle kit + jump lab — S3.1 spike (GO decided 2026-10-21) and S3.2a / S3.2b (hazards, StageCamera; user's visual check done) done; S3.3a / b / c done (kit-local plates, zones, ghosts, templates, reach table, Stage 1 spinners on the kit; user's visual check of Stage 1 done 2026-10-21) | ✔ | ✔ | – |
 | S4 | World 1 complete (Island Hop, Blink) — done 2026-10-22: S4.0 courtyard + hub gate, S4.1 Island Hop, S4.2 Blink (user's visual checks) | ✔ (S4.0-S4.2) | ✔ (S4.0-S4.2) | – |
-| T1a | Telemetry core: run funnels, fails per segment / cause, quits and returns ([TELEMETRY.md](TELEMETRY.md)) — design agreed 2026-10-23 | – | – | – |
+| T1a | Telemetry core: run funnels, fails per segment / cause, quits and returns ([TELEMETRY.md](TELEMETRY.md)) — design check + implementation 2026-10-23 | ✔ | ✔ | – |
 | T1b | Telemetry: skills (purchases, arrivals without a talent, loadout per run) | – | – | – |
 | L1 | Localization infrastructure + HUD in Czech ([LOCALIZATION.md](LOCALIZATION.md)) — design agreed 2026-10-23 | – | – | – |
 | L2 | Localization: all client panels + config display names | – | – | – |
@@ -476,12 +476,36 @@ A measured `T_base` for both new stages comes in M6a.
 - **Outputs:** `ServerScriptService/Telemetry.luau` (AnalyticsService only here); per-stage run funnel (start → checkpoints
   → finish); progression start / complete / fail; `Fail` aggregated per (stage, segment, cause) with cause `fall`
   (sea death **or** Quick Respawn fall reset) / `kill:<obstacle>` / `other`; `RunEnd` reasons; `Quit` + `Return` (profile
-  `LastQuit`, `PlayerProfile.BeforeSave`); `Session` (locale, platform); `TelemetryRemotes.Report` (client kill / fall /
+  `LastQuit`, `PlayerProfile.OnLeaving`); `Session` (locale, platform); `TelemetryRemotes.Report` (client kill / fall /
   platform, rate-limited); debug switch `TelemetryDebug`.
-- **Boundary:** hooks only (`PlayerTimerHandler`, `CheckpointTouchHandler`, `RespawnService`, kill-script variants,
-  `ObstacleKit`, `QuickRespawnClient`, `ResetTimer` callers); no gameplay change; no own backend.
+- **Design check (2026-10-23, TELEMETRY.md → Design check):** the API allows only 10 funnels, so all stages share one
+  `StageRun` funnel (steps `start`, `cp1`..`cp20`, `finish` = 22) broken down by CF01 = stage; progression fields are
+  bucketed (medal, deaths bucket; CF03 kept for T1b); a per-server rate guard; `checkpointOrder` for Stage5 / 6 / 7 / 9
+  (course order checked in Studio); `ResetTimer(player, reason = "exit")`; kill marks via `Telemetry.MarkKill`;
+  `PlayerProfile.OnLeaving` / `IsNew`; debug switch = `ServerScriptService` attribute `TelemetryDebug`.
+- **Inputs:** `StageConfig` (stages, worlds, `checkpointOrder`), the profile, the existing run / checkpoint / death flow.
+- **Boundary:** hooks only (`PlayerTimerHandler`, `CheckpointTouchHandler`, `HomeService`, `ResetPlayerTimerServer`,
+  `PlayerProfile`, the 24 kill-script copies + `DebugBaseplate`, `ArenaServer`, `ObstacleKit`, `QuickRespawnClient`,
+  new `TelemetryClient.client`); no gameplay change; no own backend; no Studio-only changes.
 - **Acceptance checks:** TELEMETRY.md → Acceptance checks (T1a items); Live-validated only when every event type shows
   in the Creator Dashboard after publishing.
+- *Checked in playtests (developer profile; snapshot `profile_9892673032_t1a` restored, the Stage 2 Top-10 and star boards
+  restored; debug switch on):* `Session` (`en-us`, `keyboard`, `returning`); a Stage 2 run logs `start`, `cp1`, `cp2`,
+  `cp3` once each while touching 2, 3, 1, 3 (going back logs nothing), a later run jumping 1 → 5 → 9 → finish logs
+  `cp1`, `cp5`, `cp9`, `finish` (22) + progression complete (`Gold`, `0`); Stage 5 maps 20 / 26 / 21 to cp1 / cp2 / cp3;
+  deaths on segment `Stage2#3`: laser (server kill) `kill:LaserStripStage/Part_01`, spinner bar (kit client kill)
+  `kill:SpinnerStage_1/Part_2`, the sea with Quick Respawn 0 `fall`, a fall reset with Quick Respawn 2 `fall` (no death,
+  segment `Stage2#2`); six deaths within a minute gave one `Fail` with value 6; an arena spike outside a run
+  `KeyArena · #- · kill:Spikes/Column2_20`; run ends `exit` (gate), `home` (GoHome), `quit` (stopping the playtest:
+  progression fail `Stage2#3` / `6-10`, `Quit run`, `LastQuit` saved), `finish`; the next join logged `Return` with the
+  stored stage / segment; idle quits `hub` and `World 1`; the report remote dropped a non-stage part and a second report
+  within 1 s. AnalyticsService accepts every call in Studio ("event fired"); no script errors.
+- *Fixed during the check:* every stage kill was `other` (the stage-folder test in `causeOf`); the idle area read the
+  panel key after `PlayerTimerHandler` had forgotten it (now pushed by `Telemetry.SetArea`); walking out through a gate
+  touches `TimerStart` again right after `GateExit` and started a ghost run of 0.1 s (existing gate behaviour) — a run
+  ending by `exit` within 2 s now sends nothing (its first events are held back for 2 s).
+- *Not checked:* the Home **button** click (the remote was fired), the garden quit area, the rate guard, the dashboard
+  itself (Live-validated after publishing).
 
 ### T1b — Telemetry: skills
 - **Outputs:** economy event + `TalentBought` (talent, star bucket, last stage) on every purchase; `ArrivalWithoutTalent`

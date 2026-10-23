@@ -36,7 +36,8 @@ StageConfig.DefaultTiers = { Bronze = 1.6, Silver = 1.1, Gold = 0.8 }
 -- shown as a hint and warning, never enforced). `order` is the position in the game. Since 2026-10-22 the key and the folder of
 -- a world stage are its position ("Stage1" … "Stage5", docs/STAGES.md §7.4); the stage folders live in the world's folder
 -- (Workspace.World1.Stage1 …), the Tutorial's in Workspace. `unlock` is { stage = <key>, medal = <tier> } or
--- { world = <n>, stars = <n> } (stars summed over that world's stages, GDD §3).
+-- { world = <n>, stars = <n> } (stars summed over that world's stages, GDD §3). `checkpointOrder` (optional) lists the
+-- checkpoint folder names in course order where it differs from the numeric order (telemetry segments, docs/TELEMETRY.md).
 StageConfig.Stages = {
 	{
 		key = "Tutorial", -- DataStore key of times, medals and the board: never changes again without migrating the stored profiles
@@ -116,6 +117,7 @@ StageConfig.Stages = {
 		unlock = { stage = "Stage4", medal = "Bronze" },
 		unlockPrice = 2000,
 		rewardFactor = 1.75, -- curve 0.5 + 0.25 × order (GDD §5)
+		checkpointOrder = { "20", "26", "21", "22" }, -- level.2/26 lies between 20 and 21
 	},
 	{
 		key = "Stage6", -- Double Up (World 2, docs/STAGES.md §7.9): Double Jump gaps and ledges, lifts, slide movers
@@ -129,6 +131,7 @@ StageConfig.Stages = {
 		unlock = { world = 1, stars = 10 }, -- the world opener: 10 of the 15 stars of World 1
 		unlockPrice = 2500,
 		rewardFactor = 2.0, -- curve 0.5 + 0.25 × order (GDD §5)
+		checkpointOrder = { "401", "402", "403", "404", "405", "407", "408", "406" }, -- 407 / 408 were added later
 	},
 	{
 		key = "Stage7", -- Seesaw: kit-local tilt plates, crosswind, crumbling rests
@@ -142,6 +145,7 @@ StageConfig.Stages = {
 		unlock = { stage = "Stage6", medal = "Bronze" },
 		unlockPrice = 3000,
 		rewardFactor = 2.25,
+		checkpointOrder = { "501", "502", "503", "504", "505", "507", "508", "506" },
 	},
 	{
 		key = "Stage8", -- Turntable: turntables, sweeper bars, flippers, flat windmills
@@ -168,6 +172,7 @@ StageConfig.Stages = {
 		unlock = { stage = "Stage8", medal = "Bronze" },
 		unlockPrice = 3500,
 		rewardFactor = 2.75,
+		checkpointOrder = { "701", "702", "703", "705", "704" }, -- 705 = the switch room inside the big maze
 	},
 	{
 		key = "Stage10", -- Clocktower (World 2 finale): a three-lap climb round a tower, everything on a 1 s clock tick

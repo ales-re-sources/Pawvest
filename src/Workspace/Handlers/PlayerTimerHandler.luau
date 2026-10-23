@@ -15,6 +15,7 @@ local MedalText = require(ReplicatedStorage.MedalText)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local StageResults = require(ServerScriptService.StageResults)
 local RunDistance = require(ServerScriptService.RunDistance)
+local Telemetry = require(ServerScriptService.Telemetry)
 
 local StageTimerUpdate = ReplicatedStorage:WaitForChild("StageTimerUpdate")
 local TalentConfig = require(ReplicatedStorage.TalentConfig)
@@ -164,6 +165,7 @@ end
 local function updateScorePanel(player, stageKey)
 	if stageKey then
 		panelStages[player] = stageKey
+		Telemetry.SetArea(player, stageKey) -- where an idle player quits
 		-- arriving on a stage (the hub portals pass its key): warn about required talents the player lacks (S1.2);
 		-- entry is never blocked
 		local arrived = StageConfig.ByKey[stageKey]
@@ -245,6 +247,7 @@ end
 
 
 local function startTimer(player, stageKey)
+	Telemetry.RunStarted(player, stageKey) -- also ends a run still going on another stage ("switch")
 	timers[player] = { StageKey = stageKey, StartClock = os.clock() }
 	RunDistance.Start(player) -- movement pet XP counts only during a run
 	StageTimerUpdate:FireClient(player, 0, stageKey)
@@ -259,13 +262,15 @@ local function getTimer(player)
 	return nil
 end
 
--- cancels the run (player left the stage); returns the elapsed time or nil
-local function resetTimer(player)
+-- cancels the run (player left the stage); returns the elapsed time or nil. `reason` for telemetry: "exit" (default: gate
+-- exit, the Tutorial's return portal), "home" or "reset"
+local function resetTimer(player, reason: string?)
 	local timer = timers[player]
 	if not timer then
 		return nil
 	end
 	timers[player] = nil
+	Telemetry.RunEnded(player, reason or "exit")
 	RunDistance.Stop(player) -- a cancelled run earns no movement XP
 	StageTimerUpdate:FireClient(player, -1)
 	return TimeFormat.Tenths(os.clock() - timer.StartClock)
@@ -282,6 +287,7 @@ local function stopTimer(player)
 
 	local elapsed = TimeFormat.Tenths(os.clock() - timer.StartClock)
 	local result = StageResults.RecordFinish(player, timer.StageKey, elapsed, RunDistance.Stop(player))
+	Telemetry.RunEnded(player, "finish", result)
 	StageTimerUpdate:FireClient(player, -1, elapsed, result)
 
 	updateScorePanel(player, nil) -- record and earned medals may have changed

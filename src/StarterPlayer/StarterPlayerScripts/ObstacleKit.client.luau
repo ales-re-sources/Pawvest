@@ -384,6 +384,12 @@ local function kill(part: Instance)
 	humanoid.Health = 0
 	player:SetAttribute("KitKillAt", workspace:GetServerTimeNow())
 	player:SetAttribute("KitKilledBy", part.Parent.Name .. "." .. part.Name)
+	-- telemetry (T1a): the server cannot see a client kill's cause
+	local remotes = ReplicatedStorage:FindFirstChild("TelemetryRemotes")
+	local report = remotes and remotes:FindFirstChild("Report")
+	if report then
+		report:FireServer("kill", part)
+	end
 end
 
 RunService.PreSimulation:Connect(function(dt: number)
