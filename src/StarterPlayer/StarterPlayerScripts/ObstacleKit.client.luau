@@ -26,8 +26,10 @@
 --             flips Red / Blue) sets that Group's colour; a KitColorPlate (Group, Color "Red" / "Blue") is solid only while its
 --             Group shows its colour, a ghost otherwise. Groups start Red.
 --   KitButton / KitDoor  pressure door (kit-local, S6.3, the Clocktower): standing on a KitButton (attributes Group, Time s, default 4)
---             opens every KitDoor of that Group for Time s for the local player (ghost, not solid; it flashes in its last
---             second and the button glows while it is open); stepping on the button again restarts the time.
+--             opens every KitDoor of that Group for Time s for the local player; stepping on the button again restarts the time.
+--             The door slides OpenDistance studs (default its height) along OpenAxis (world Vector3, default up) in OpenTime s
+--             (default 0.4) and back when the time is up; the button glows while it is open and a countdown of the seconds
+--             left floats over the button and over the door's closed position.
 --   RunSeeded  attribute on any timed part (mover, beam, plate): it runs on time since that player's stage timer started
 --             (StageTimerUpdate) instead of server time, so every run sees the same sequence; set Phase so that t = 0 is safe.
 --   KitTilt   hinge plate (local X axis): the plate tips toward the side the player stands on, a spring pulls it back;
@@ -135,15 +137,47 @@ local function addColorPlate(part: Instance)
 	end
 end
 
+-- A floating countdown (local only) over `adornee`, hidden until a door group is open.
+local function countdownLabel(adornee: BasePart, offset: number): TextLabel
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "KitCountdown"
+	gui.Adornee = adornee
+	gui.Size = UDim2.fromScale(4, 3)
+	gui.StudsOffsetWorldSpace = Vector3.new(0, offset, 0)
+	gui.LightInfluence = 0
+	gui.Enabled = false
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.fromScale(1, 1)
+	label.BackgroundTransparency = 1
+	label.Font = Enum.Font.GothamBlack
+	label.TextScaled = true
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.TextStrokeTransparency = 0
+	label.Parent = gui
+	gui.Parent = player:WaitForChild("PlayerGui")
+	return label
+end
+
 local function addButton(part: Instance)
 	if part:IsA("BasePart") then
-		buttons[part] = { color = part.Color }
+		buttons[part] = { color = part.Color, label = countdownLabel(part, 3) }
 	end
 end
 
 local function addDoor(part: Instance)
 	if part:IsA("BasePart") then
-		doors[part] = { transparency = part.Transparency, look = "shut" }
+		-- the countdown hangs over the doorway (the door itself slides away), on a local invisible anchor
+		local anchor = Instance.new("Part")
+		anchor.Name = "KitDoorAnchor"
+		anchor.Anchored = true
+		anchor.CanCollide = false
+		anchor.CanQuery = false
+		anchor.CanTouch = false
+		anchor.Transparency = 1
+		anchor.Size = Vector3.one
+		anchor.CFrame = part.CFrame
+		anchor.Parent = workspace.CurrentCamera
+		doors[part] = { base = part.CFrame, shown = 0, label = countdownLabel(anchor, part.Size.Y / 2 + 2) }
 	end
 end
 
@@ -410,22 +444,38 @@ RunService.PreSimulation:Connect(function(dt: number)
 		doorOpenUntil[attr(standing, "Group", "A")] = os.clock() + attr(standing, "Time", 4)
 	end
 	local clockNow = os.clock()
+	-- the countdown shows whole seconds left (5, 4, … 1, 0 in the last second), red in the last two
+	local function showCountdown(label: TextLabel, left: number)
+		local gui = label.Parent :: BillboardGui
+		gui.Enabled = left > 0
+		if left > 0 then
+			local text = tostring(math.floor(left))
+			if label.Text ~= text then
+				label.Text = text
+				label.TextColor3 = if left < 2 then Color3.fromRGB(255, 90, 70) else Color3.new(1, 1, 1)
+			end
+		end
+	end
 	for part, data in buttons do
-		local open = (doorOpenUntil[attr(part, "Group", "A")] or 0) > clockNow
-		local color = if open then BUTTON_ON_COLOR else data.color
+		local left = (doorOpenUntil[attr(part, "Group", "A")] or 0) - clockNow
+		local color = if left > 0 then BUTTON_ON_COLOR else data.color
 		if part.Color ~= color then
 			part.Color = color
 		end
+		showCountdown(data.label, left)
 	end
-	-- doors: a ghost while open, flashing in the last second, solid otherwise
+	-- doors: slide open along OpenAxis while their group is open, back when the time is up (solid all the time: an
+	-- open door is out of the way, a closing one pushes the character out of the doorway)
 	for part, data in doors do
 		local left = (doorOpenUntil[attr(part, "Group", "A")] or 0) - clockNow
-		local look = if left <= 0 then "shut" elseif left < 1 and math.floor(left * 8) % 2 == 0 then "flash" else "open"
-		if look ~= data.look then
-			data.look = look
-			part.CanCollide = look == "shut"
-			part.Transparency = if look == "shut" then data.transparency elseif look == "flash" then 0.5 else 0.85
+		local step = dt / math.max(attr(part, "OpenTime", 0.4), 1e-3)
+		local shown = math.clamp(data.shown + (if left > 0 then step else -step), 0, 1)
+		if shown ~= data.shown then
+			data.shown = shown
+			local axis: Vector3 = attr(part, "OpenAxis", Vector3.new(0, 1, 0))
+			part.CFrame = data.base + axis.Unit * attr(part, "OpenDistance", part.Size.Y) * KitMath.Smooth(shown)
 		end
+		showCountdown(data.label, left)
 	end
 
 	-- colour plates: solid while their group shows their colour, a ghost otherwise
