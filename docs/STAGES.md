@@ -687,7 +687,9 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
     `QuickRespawnClient` now forgets the plate when the run ends (StageTimerUpdate < 0: finish, Home, cancel); (b) the doors carry a hint ("Locked - step on the red button back at the corner") and the buttons are 6 x 6 Neon;
     (c) `Corner_12` is gone: from the last crumbling stairs you jump sideways (5 studs, 1 up) onto the tower's roof; (d) the finish portal stands in the middle of the `Belfry` top (h 150), reached by a `BelfryLadder` truss on the
     belfry's west face with a kill beam (`LadderBeam`) across it at h 136 on the tick (period 2): stop below it on the ladder and climb on when it switches off; (e) the conveyor is faster (-12) and carries three low **hurdle beams**
-    (1.4 high, on the tick, the middle one alternating) that you jump while the belt pulls you back; the pendulums are brass (Metal), not red: red means "kills on touch", they only knock you off; (f) T_base 135 -> 90 (Gold < 72 s; a first run with several deaths got Silver, AhojRupert's best is 65.9 s).
+    (1.4 high, on the tick, the middle one alternating) that you jump while the belt pulls you back; the pendulums are brass (Metal), not red: red means "kills on touch", they only knock you off; the five pistons rest 1 stud out of the wall (their face sat flush with the wall face and flickered; stroke 10 now,
+    same reach) and look like rams: dark steel (DiamondPlate) with an orange push plate on the face (orange = pushes, like Stage 8's kicker), a silver rod behind them (welded, non-colliding: it follows the anchored ram), a dark
+    frame round each opening on the wall (`Course.PistonFrames`), the warning tint amber (`WarnColor`); (f) T_base 135 -> 90 (Gold < 72 s; a first run with several deaths got Silver, AhojRupert's best is 65.9 s).
 
 ## 8. Milestones (agreed 2026-10-21; status and full scopes in [ROADMAP.md](ROADMAP.md))
 Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.
