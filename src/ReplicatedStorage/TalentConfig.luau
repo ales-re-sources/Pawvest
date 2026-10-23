@@ -15,7 +15,7 @@ export type Talent = {
 
 TalentConfig.List = {
 	{ id = "RunSpeed", name = "Run Speed", costs = { 200, 400, 600, 900, 1300 }, perLevel = 0.06, effect = "+6% run speed" },
-	{ id = "DoubleJump", name = "Double Jump", costs = { 1500 }, perLevel = 1, effect = "1 extra jump in the air" },
+	{ id = "DoubleJump", name = "Double Jump", costs = { 3000 }, perLevel = 1, effect = "1 extra jump in the air" }, -- 1 500 until 2026-10-23 (GDD §6)
 	{ id = "JumpHeight", name = "Jump Height", costs = { 300, 600, 1000 }, perLevel = 0.08, effect = "+8% jump height" },
 	{
 		id = "QuickRespawn",

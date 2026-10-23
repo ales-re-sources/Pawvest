@@ -227,9 +227,13 @@ entries), confirmed by a second click; it never affects other players and the se
 | Talent | Levels | Effect per level | Cost per level | Total |
 |---|---|---|---|---|
 | Run Speed | 5 | +6 % WalkSpeed (16 → 20.8 at max) | 200 / 400 / 600 / 900 / 1 300 | 3 400 |
-| Double Jump | 1 | one extra jump in the air | 1 500 | 1 500 |
+| Double Jump | 1 | one extra jump in the air | 3 000 | 3 000 |
 | Jump Height | 3 | +8 % jump height | 300 / 600 / 1 000 | 1 900 |
-| **Today's tree** | | | | **6 800** |
+| **Today's tree** | | | | **8 300** |
+
+Double Jump costs 3 000 (1 500 until 2026-10-23): it is the only hard gate of World 2 and opens the talent coins of World 1
+(8 × 100), so at 1 500 it was bought right after Stage 1 for 14 % of the Tutorial + World 1 medal income. 3 000 is the
+highest price that keeps the constraints below (4 000 breaks the Stage 5 Gold set and the 65 % share at stage 17).
 
 **Planned talents** (P; STAGES §6.2; ids never renamed; all client-driven, level server-owned as `Talent_<id>`; Run Speed
 and Jump Height stay soft, never required). Only talents that are hard gates can be *required* by a stage.
@@ -237,12 +241,12 @@ and Jump Height stay soft, never required). Only talents that are hard gates can
 | Talent | Id | Effect | Levels | Cost (prov.) | Total | First required at |
 |---|---|---|---|---|---|---|
 | Quick Respawn (P, S2) | `QuickRespawn` | utility, **never required**: level 1 respawns after 1 s instead of 3 s, level 2 instantly and adds a fall reset to the checkpoint; the timer keeps running | 2 | 1 000 / 3 000 | 4 000 | – |
-| Triple Jump (P, S7) | `DoubleJump` level 2 | 2 air jumps (reach about 19 studs) | +1 level | 5 000 | (DJ total 6 500) | stage 11 |
+| Triple Jump (P, S7) | `DoubleJump` level 2 | 2 air jumps (reach about 19 studs) | +1 level | 5 000 | (DJ total 8 000) | stage 11 |
 | Dash (P, S7) | `Dash` | in the air, a short horizontal burst (about 10 studs in 0.2 s), once per air time; key + mobile button | 1 | 8 000 | 8 000 | stage 13 |
 | Wall Jump (P, S9) | `WallJump` | against a wall in the air, jump kicks up and away; does not refill air jumps | 1 | 10 000 | 10 000 | stage 16 |
 | Glide (P, S9) | `Glide` | hold jump while falling: fall speed capped at about 8 studs/s | 1 | 12 000 | 12 000 | stage 17 |
 
-**Full planned tree: 45 800** (Run Speed 3 400 + Jump Height 1 900 + Double Jump 1 500 + Triple Jump 5 000 + Quick Respawn
+**Full planned tree: 47 300** (Run Speed 3 400 + Jump Height 1 900 + Double Jump 3 000 + Triple Jump 5 000 + Quick Respawn
 4 000 + Dash 8 000 + Wall Jump 10 000 + Glide 12 000). Talents compete with pets, pens and incubators (about 56 500
 together) for the same Coins.
 
@@ -258,19 +262,19 @@ Repeat rewards and pets only add to this, so the tables are lower bounds.
 | Gold on | Designed talent set | Cost | Earnable before | OK |
 |---|---|---|---|---|
 | 2 Stage 1 | Run Speed 2 | 600 | 700 + 1 050 + 600 = 2 350 | ✔ |
-| 4 Stage 2 | Run Speed 3 + Double Jump | 2 700 | 700 + 1 050 + 1 400 + 1 750 + 900 = 5 800 | ✔ |
-| 5 Stage 3 | Run Speed 5 + Double Jump + Jump Height 2 | 5 800 | 7 000 + 1 050 = 8 050 | ✔ |
+| 4 Stage 2 | Run Speed 3 + Double Jump | 4 200 | 700 + 1 050 + 1 400 + 1 750 + 900 = 5 800 | ✔ |
+| 5 Stage 3 | Run Speed 5 + Double Jump + Jump Height 2 | 7 300 | 7 000 + 1 050 = 8 050 | ✔ |
 
 **Required talents** (a player must be able to afford the required set before the stage that first needs it, from the
 medals of all stages before it):
 
 | First required at | Required set | Cost | One-time medals before | Share | OK |
 |---|---|---|---|---|---|
-| 6 | Double Jump | 1 500 | 9 450 | 16 % | ✔ |
-| 11 | + Triple Jump | 6 500 | 26 950 | 24 % | ✔ |
-| 13 | + Dash | 14 500 | 36 400 | 40 % | ✔ |
-| 16 | + Wall Jump | 24 500 | 53 200 | 46 % | ✔ |
-| 17 | + Glide | 36 500 | 59 500 | 61 % | ✔ |
+| 6 | Double Jump | 3 000 | 9 450 | 32 % | ✔ |
+| 11 | + Triple Jump | 8 000 | 26 950 | 30 % | ✔ |
+| 13 | + Dash | 16 000 | 36 400 | 44 % | ✔ |
+| 16 | + Wall Jump | 26 000 | 53 200 | 49 % | ✔ |
+| 17 | + Glide | 38 000 | 59 500 | 64 % | ✔ |
 
 Share ≤ 65 % keeps talents a real investment without blocking the no-grind path. Run Speed and Jump Height could get more
 levels later if Gold on Worlds 3–4 needs them (M6b).
@@ -283,7 +287,7 @@ levels later if Gold on Worlds 3–4 needs them (M6b).
 | Pet garden (§7.6) | target 200–1 000 | 6 mixed pets at Lv 5 ≈ 200 / h, a strong set ≈ 630 / h (≈ 940 with the pet bonus); offline production capped at 8 h (a strong set: ≈ 5 000 per 8 h) |
 | Pet bonus | × 1.0–1.5 | on all of the above |
 
-Sinks: talents (6 800 today, 45 800 planned), stage unlocks (6 700 today, 80 700 planned), eggs (§7.2), pet slots (7 000), garden pens (32 500), incubators (17 000)
+Sinks: talents (8 300 today, 47 300 planned), stage unlocks (6 700 today, 80 700 planned), eggs (§7.2), pet slots (7 000), garden pens (32 500), incubators (17 000)
 and feeding (§7.6).
 
 Notes:

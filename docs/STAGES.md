@@ -399,13 +399,13 @@ Medal total per stage = 1 400 × factor (1 050 … 7 700); all 21 stages: **88 2
 The no-grind constraint (GDD §6) for required talents, against all medals on the stages before:
 | First required at | Required set | Cost | One-time medals before | Share | OK |
 |---|---|---|---|---|---|
-| 6 | Double Jump | 1 500 | 9 450 | 16 % | ✔ |
-| 11 | + Triple Jump | 6 500 | 26 950 | 24 % | ✔ |
-| 13 | + Dash | 14 500 | 36 400 | 40 % | ✔ |
-| 16 | + Wall Jump | 24 500 | 53 200 | 46 % | ✔ |
-| 17 | + Glide | 36 500 | 59 500 | 61 % | ✔ |
+| 6 | Double Jump | 3 000 | 9 450 | 32 % | ✔ |
+| 11 | + Triple Jump | 8 000 | 26 950 | 30 % | ✔ |
+| 13 | + Dash | 16 000 | 36 400 | 44 % | ✔ |
+| 16 | + Wall Jump | 26 000 | 53 200 | 49 % | ✔ |
+| 17 | + Glide | 38 000 | 59 500 | 64 % | ✔ |
 
-With Run Speed and Jump Height (5 300) and Quick Respawn (4 000) the whole tree costs **45 800**. Talents stay a real investment that competes with
+With Run Speed and Jump Height (5 300) and Quick Respawn (4 000) the whole tree costs **47 300** (Double Jump 3 000 since 2026-10-23). Talents stay a real investment that competes with
 pets, pens and incubators (≈ 56 500 together), without blocking the no-grind path. Run Speed / Jump Height could get more
 levels later if Gold on Worlds 3–4 needs them (M6).
 
