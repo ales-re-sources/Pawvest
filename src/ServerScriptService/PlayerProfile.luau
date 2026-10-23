@@ -55,6 +55,7 @@ local function newProfile()
 		-- P2b1: Incubators["1".."3"] = { Egg, StartedAt, ReadyAt } (server os.time()), IncubatorCount = incubators owned
 		Garden = { Pens = {}, PenCount = 1, Carry = 0, Incubators = {}, IncubatorCount = 1 },
 		LastQuit = {}, -- { Stage, Segment, At = os.time() } of the last leave, cleared on the next join (Telemetry, T1a)
+		Language = "", -- chosen language code ("en", "cs"), "" = automatic from the player's locale (LanguageService, L1)
 	}
 end
 

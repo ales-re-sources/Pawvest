@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local MedalText = require(ReplicatedStorage:WaitForChild("MedalText"))
 local TalentConfig = require(ReplicatedStorage:WaitForChild("TalentConfig"))
+local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local arrivalEvent = ReplicatedStorage:WaitForChild("StageArrival")
 
 local player = Players.LocalPlayer
@@ -34,6 +35,7 @@ local function line(name: string, order: number, textSize: number)
 		Name = name,
 		LayoutOrder = order,
 		Size = UDim2.new(1, -24, 0, textSize + 6),
+		AutomaticSize = Enum.AutomaticSize.Y, -- wrapped lines (longer in Czech) grow the panel
 		BackgroundTransparency = 1,
 		Font = Enum.Font.GothamBold,
 		TextSize = textSize,
@@ -59,8 +61,8 @@ end
 
 local titleLabel = line("Title", 1, 20)
 local needsLabel = line("Needs", 2, 16)
-local skillsButton = button("Skills", 3, COLOR_BUTTON, "Open Skills")
-local closeButton = button("Close", 4, COLOR_CLOSE, "Continue")
+local skillsButton = button("Skills", 3, COLOR_BUTTON, "")
+local closeButton = button("Close", 4, COLOR_CLOSE, "")
 
 local panel = create("Frame", {
 	Name = "Panel",
@@ -89,9 +91,26 @@ local screenGui = create("ScreenGui", {
 	ResetOnSpawn = false,
 	DisplayOrder = 6,
 	Enabled = false,
+	AutoLocalize = false, -- translated by Locale (L1)
 }, { panel })
 
 local generation = 0
+local shownStage = nil -- re-rendered when the language changes
+
+-- fills the popup for `stage`; false when the player has every talent it needs
+local function render(stage): boolean
+	local needs = MedalText.Needs(stage, function(id)
+		return player:GetAttribute(TalentConfig.AttributeName(id)) or 0
+	end)
+	if not needs then
+		return false
+	end
+	titleLabel.Text = Locale.T("hud.arrival.title", { stage = Locale.StageName(stage) })
+	needsLabel.Text = needs .. "\n" .. Locale.T("hud.arrival.body")
+	skillsButton.Text = Locale.T("hud.arrival.openSkills")
+	closeButton.Text = Locale.T("hud.arrival.continue")
+	return true
+end
 
 local function hide()
 	generation += 1
@@ -103,14 +122,10 @@ arrivalEvent.OnClientEvent:Connect(function(stageKey)
 	if not stage then
 		return
 	end
-	local needs = MedalText.Needs(stage, function(id)
-		return player:GetAttribute(TalentConfig.AttributeName(id)) or 0
-	end)
-	if not needs then
+	if not render(stage) then
 		return
 	end
-	titleLabel.Text = stage.displayName .. " needs a talent"
-	needsLabel.Text = needs .. "\nYou can still enter, but some jumps are out of reach."
+	shownStage = stage
 	generation += 1
 	local shown = generation
 	screenGui.Enabled = true
@@ -130,5 +145,11 @@ skillsButton.Activated:Connect(function()
 	hide()
 end)
 closeButton.Activated:Connect(hide)
+
+Locale.Changed:Connect(function()
+	if screenGui.Enabled and shownStage then
+		render(shownStage)
+	end
+end)
 
 screenGui.Parent = playerGui

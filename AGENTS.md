@@ -13,7 +13,7 @@ per-stage Top-10 leaderboards, collectible coins and a small admin panel.
 - [docs/PET_GROWTH.md](docs/PET_GROWTH.md) — design and plan for the pet growth visuals (P1e1–P1f).
 - [docs/STYLE_PREVIEW.md](docs/STYLE_PREVIEW.md) — parked voxel / pixel-art style previews (Studio-only `ServerStorage.StylePreview`), decision pending.
 - [docs/TELEMETRY.md](docs/TELEMETRY.md) — telemetry design (T1a / T1b): AnalyticsService events for run funnels, fails per segment / cause, quits and returns, skills; how to read them on the Creator Dashboard. T1a (core) and T1b (skills) implemented.
-- [docs/LOCALIZATION.md](docs/LOCALIZATION.md) — localization design (L1–L4): English + Czech, `Locale.T`, string tables, `LocKey` for server texts, language row in Settings. Not implemented yet.
+- [docs/LOCALIZATION.md](docs/LOCALIZATION.md) — localization design (L1–L4): English + Czech, `Locale.T`, string tables, `LocKey` for server texts, language row in Settings. L1 (infrastructure + HUD) implemented; L2 (client panels) / L3 (server + Studio texts) not yet.
 - [docs/STAGES.md](docs/STAGES.md) — stage expansion to ≈ 20 stages: obstacle component catalogue, combination patterns, difficulty curve, special / bonus stages, talent gating, worlds / hub layout, proposed S milestones.
 
 Work milestone by milestone per ROADMAP (design check → implement → Studio validation → status update → commit);
@@ -46,6 +46,8 @@ Roblox Studio MCP is available for inspecting/editing the live place (`search_ga
 src/
   ReplicatedStorage/
     StageConfig.luau                  stage list (key, folder, world, requires, hub portal, T_base, tiers, unlock, reward factor, optional `checkpointOrder` where the course order differs from the numeric one: Stage5 / 6 / 7 / 9) + Worlds (name, gate model, island folder, spawn part; Worlds 3-4 carry `soon = true`, `stageCount` and an informational `unlock` / `unlockPrice` until their stages exist (S5; World 2 lost the flag with S6.1); the Tutorial is world 0 = hub) with PortalFolder / LocationKey / ReturnSpawn + medal, run-reward, world-stars and unlock-bar math
+    Locale.luau                       localization (L1, docs/LOCALIZATION.md): T(key, args?, lang?) with {name} placeholders, nested key arguments ({ key = … }) and plural forms by args.count (en one / other, cs one / few / other), fallback lang -> English -> the key; Current() (client: player attribute Language, else LocaleId; server: "en"), Changed (client); StageName / WorldName / HubName / MedalName / TalentName / EggName (fall back to the config's English name); SetKey(label, key, args) / SetText(label, text) for labels rendered per player by LocalizedText.client (attributes LocKey / LocArgs JSON, tag Loc); Missing(lang) = the missing-key check; Supported = { en, cs }
+    Strings/                          string tables, one module per area (Common, Names, Hud): ["area.thing.detail"] = { en = "…", cs = "…" }; Locale lists the areas in AREAS
     KitMath.luau                      obstacle kit timing maths (pure): Cycle, Window (beam on / warning / off), Plate, Lift, Piston, Flip, Ticked (clockwork steps), Sine, Swing, Gust, TimeBase (server time or run time); every client derives the same phase from workspace:GetServerTimeNow()
     TimeFormat.luau                   tenths rounding, "mm:ss.t" and short "m:ss" formatting
     MedalText.luau                    rich text for stars, medal limits and the timer's medal target
@@ -82,9 +84,12 @@ src/
     ChallengeCoins.server.luau        challenge coin pickup (tag ChallengeCoin, attribute CoinId): validated touch → CollectedCoins, CoinRewards.Grant, +1 pet XP, CollectedCoins attribute
     ResetPlayerTimerServer.server.luau  ResetPlayerTimer remote → admin-only full reset of the caller's own progress
     AdminCoinsServer.server.luau      AdminAddCoins remote → admin-only +AdminConfig.AddCoinsAmount Coins for the caller (debug; created at runtime)
+    LanguageService.server.luau       the player's language (L1): profile Language ("" = automatic), player attributes LanguageSetting (the choice) / Language (resolved: the choice or the LocaleId, English when unsupported), LanguageRemotes.Set(code or "")
     Telemetry.luau                    telemetry (T1a, docs/TELEMETRY.md): the only AnalyticsService caller; one run funnel `StageRun` for every stage (CF01 = stage; steps start / cp1..cp20 / finish = 22), progression start / complete / fail, custom events Fail (aggregated per (stage, segment, cause), flushed every 60 s and on leave), RunEnd, Quit, Return, Session; T1b: loadout (`RS3 DJ1 JH3 QR2`) in CF03 of the progression events, economy event + TalentBought per talent purchase, ArrivalWithoutTalent; API RunStarted / RunEnded (PlayerTimerHandler), TalentBought (TalentService), ArrivalWithoutTalent (PlayerTimerHandler), Checkpoint (CheckpointTouchHandler), MarkKill(character, part) (kill scripts, ArenaServer), SetArea; watches Humanoid.Died itself; `TelemetryRemotes.Report`; writes profile LastQuit in `PlayerProfile.OnLeaving`; a run ending by `exit` within 2 s sends nothing (ghost run of a gate walk-out); debug: ServerScriptService attribute `TelemetryDebug = true` prints `[Telemetry] …`
     KitConveyors.server.luau          conveyors (S4.1): anchored parts tagged KitConveyor carry whatever stands on them along the part's front at attribute `Speed` studs/s (negative = backwards; the server sets AssemblyLinearVelocity once, per part and on attribute change)
   StarterPlayer/StarterPlayerScripts/
+    LocalizedText.client.luau         renders every label tagged Loc (Locale.SetKey, e.g. the server-written ScorePanel) in the player's language; re-applies on language, attribute or Text change
+    LanguageSettings.client.luau      "Language: …" row in the Settings panel (LayoutOrder 2, below Music): Automatic -> English -> Čeština -> Automatic via LanguageRemotes.Set
     TelemetryClient.client.luau       sends ("platform", touch / gamepad / keyboard) once on `TelemetryRemotes.Report` (Session); ObstacleKit's kill() reports ("kill", part), QuickRespawnClient's fall reset ("fall")
     StageMusic.client.luau            music of a rhythm stage (S4.2): a Studio-only Sound `Music` in the stage folder (attributes BPM, Metronome, BaseVolume) plays while that stage's run is active, driven by the run time (StageTimerUpdate): a tick on every beat (Metronome) or a looped track at TimePosition = run time mod length; silenced by the player attribute MusicMuted
     MusicSettings.client.luau         "Music: On / Off" row in the Settings panel (a StudStyle brick; sets MusicMuted for the session; the row is added to every re-created ScreenGui)
@@ -212,6 +217,7 @@ RemoteEvents (in `ReplicatedStorage`; first three exist only in Studio, not in f
 | `CheckpointsReset` | server → client, no arguments | created at runtime by `CheckpointTouchHandler`; a new run started (`NewRun`) → `CheckpointClient` turns every pad back |
 | `GoHome` | client → server, no arguments | Home button; created at runtime by `HomeService`, 3 s cooldown, server teleports + cancels the timer |
 | `GoGarden` | client → server, no arguments | Pets panel "Go to my garden"; created at runtime by `HomeService` (shares GoHome's cooldown), server teleports in front of the caller's plot (`GardenPlots.PlotOf`) facing it + cancels the timer |
+| `LanguageRemotes.Set` | client → server `(code)`: `""` = automatic, else a `Locale.Supported` code | created at runtime by `LanguageService`; stored in the profile, mirrored to the attributes `LanguageSetting` / `Language` |
 | `TelemetryRemotes.Report` | client → server `("platform", kind)` / `("kill", part)` / `("fall")` | created at runtime by `Telemetry`; telemetry only, never trusted for gameplay; kill / fall rate-limited to 1 per s, the part must lie in a stage folder |
 | `TalentRemotes.Buy` / `.Result` | client → server `(talentId, expectedLevel)` / server → client `(talentId, ok, level or reason)` | created at runtime by `TalentService`; the price is never sent |
 | `UnlockRemotes.Buy` / `.Result` / `.Locked` | client → server `(stageKey)` / server → client `(stageKey, ok, reason?)` / server → client `(stageKey)` | created at runtime by `StageUnlocks`; price from `StageConfig.unlockPrice`; `Locked` is unused since the unlock popup was replaced by gate prompts (S4 tuning) |
@@ -225,7 +231,7 @@ DataStores:
 
 | Store | Key | Value |
 |---|---|---|
-| `PlayerProfiles` | `user_<UserId>` | `{ Version = 3, Coins, BestTimes[stageKey], Medals, UnlockedStages, CollectedCoins, Talents, RunsToday, Pets[uid] = { Kind, Level, XP }, EquippedPets, PetSlots, NextPetUid, FreeEggs[eggId], LaunchEgg, Garden = { Pens["1".."6"] = uid, PenCount, LastSeen = server os.time, Carry, Incubators["1".."3"] = { Egg, StartedAt, ReadyAt }, IncubatorCount }, LastQuit = { Stage, Segment, At } (telemetry, cleared on join) }` |
+| `PlayerProfiles` | `user_<UserId>` | `{ Version = 3, Coins, BestTimes[stageKey], Medals, UnlockedStages, CollectedCoins, Talents, RunsToday, Pets[uid] = { Kind, Level, XP }, EquippedPets, PetSlots, NextPetUid, FreeEggs[eggId], LaunchEgg, Garden = { Pens["1".."6"] = uid, PenCount, LastSeen = server os.time, Carry, Incubators["1".."3"] = { Egg, StartedAt, ReadyAt }, IncubatorCount }, LastQuit = { Stage, Segment, At } (telemetry, cleared on join), Language ("" = automatic, "en", "cs") }` |
 | `PlayerCoins` | `UserId` | legacy integer coins — read once for migration |
 | `PlayerScoresStore` | `player_<UserId>` | legacy `{ {StageName, Elapsed}, … }` — read once for migration |
 | `GlobalLeaderboardsStore` | `leaderboard_<StageName>` | Top-10 `{ {PlayerName, Elapsed, UserId?}, … }` (UserId missing on entries from before the avatar boards) |
@@ -251,6 +257,17 @@ back in the stored profile between playtests (snapshot and restore it).
 `ChallengeCoinsClient` hides those coins for that player only (the server never hides a coin).
 
 Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (ObjectValue, runtime only).
+
+## Localization rules (L1, docs/LOCALIZATION.md)
+- Never set player-visible text as a literal: use `Locale.T(key)` on the client or `Locale.SetKey(label, key, args)` from
+  the server (`Locale.SetText` only for texts without words: times, star lines). Names of stages, worlds, medals, talents
+  and eggs go through `Locale.StageName` etc., never `displayName` / `name` directly. (L2 / L3 convert what is still
+  English: the other panels, server-written signs and boards, Studio-authored labels.)
+- Keys are `area.thing.detail`, never renamed once shipped (a rename = new key, old one removed).
+- A new string needs every supported language before commit: `require(game.ReplicatedStorage.Locale).Missing("cs")`
+  (command bar / MCP, Edit mode) must return an empty list.
+- A GUI that stays on screen re-renders on `Locale.Changed`; GUIs built in code set `AutoLocalize = false`.
+- Czech texts are longer: let lines wrap and grow (`TextWrapped` + `AutomaticSize`) and check `TextFits` in Czech.
 
 ## Gotchas
 - **ChoiceStage** scripts pick a random child and require `p.Name == "Step"`; the three `Step` parts

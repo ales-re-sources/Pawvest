@@ -6,6 +6,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
+local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -24,11 +25,16 @@ local function addRow(screenGui: Instance)
 	button.TextSize = 18
 
 	local function refresh()
-		button.Text = "Music: " .. (if player:GetAttribute("MusicMuted") == true then "Off" else "On")
+		local state = Locale.T(if player:GetAttribute("MusicMuted") == true then "common.off" else "common.on")
+		button.Text = Locale.T("settings.music", { state = state })
 	end
 	button.Activated:Connect(function()
 		player:SetAttribute("MusicMuted", player:GetAttribute("MusicMuted") ~= true)
 		refresh()
+	end)
+	local languageChanged = Locale.Changed:Connect(refresh)
+	button.Destroying:Connect(function()
+		languageChanged:Disconnect()
 	end)
 	refresh()
 	StudStyle.Brick(button, { studs = 5 })

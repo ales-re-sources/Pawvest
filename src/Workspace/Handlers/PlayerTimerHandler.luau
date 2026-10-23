@@ -19,6 +19,7 @@ local Telemetry = require(ServerScriptService.Telemetry)
 
 local StageTimerUpdate = ReplicatedStorage:WaitForChild("StageTimerUpdate")
 local TalentConfig = require(ReplicatedStorage.TalentConfig)
+local Locale = require(ReplicatedStorage.Locale)
 
 -- server → client (stageKey): the player arrived on a stage without a talent it requires (StageArrivalWarning.client)
 local stageArrival = Instance.new("RemoteEvent")
@@ -194,36 +195,40 @@ local function updateScorePanel(player, stageKey)
 	local profile = PlayerProfile.Get(player)
 	local medals = if profile then profile.Medals else {}
 
+	-- texts are keys, rendered in each player's language by LocalizedText.client (L1)
 	-- a world island: the world's name and the stars earned in it
 	local world = StageConfig.WorldByName[stageKey]
 	if world then
-		scorePanel.StageName.Text = world.name
-		scorePanel.StageRecord.Text = "Choose a stage!"
+		Locale.SetKey(scorePanel.StageName, "world.name." .. world.index)
+		Locale.SetKey(scorePanel.StageRecord, "hud.score.chooseStage")
 		if medalsLabel then
-			medalsLabel.Text = string.format("Stars earned: %d / %d", StageConfig.WorldStars(medals, world.index), StageConfig.MaxWorldStars(world.index))
+			Locale.SetKey(medalsLabel, "hud.score.starsEarned", {
+				n = StageConfig.WorldStars(medals, world.index),
+				max = StageConfig.MaxWorldStars(world.index),
+			})
 		end
 		return
 	end
 
 	local stage = StageConfig.ByKey[stageKey]
 	if not stage then
-		scorePanel.StageName.Text = StageConfig.HubName
-		scorePanel.StageRecord.Text = "Enter portal!"
+		Locale.SetKey(scorePanel.StageName, "hub.name")
+		Locale.SetKey(scorePanel.StageRecord, "hud.score.enterPortal")
 		if medalsLabel then
-			medalsLabel.Text = string.format("Stars earned: %d / %d", StageConfig.TotalStars(medals), StageConfig.MaxStars())
+			Locale.SetKey(medalsLabel, "hud.score.starsEarned", { n = StageConfig.TotalStars(medals), max = StageConfig.MaxStars() })
 		end
 		return
 	end
 
-	scorePanel.StageName.Text = stage.displayName
+	Locale.SetKey(scorePanel.StageName, "stage.name." .. stage.key)
 	local best = profile and profile.BestTimes[stage.key]
 	if best then
-		scorePanel.StageRecord.Text = "Your record: " .. TimeFormat.Format(best)
+		Locale.SetKey(scorePanel.StageRecord, "hud.score.record", { time = TimeFormat.Format(best) })
 	else
-		scorePanel.StageRecord.Text = "First try!"
+		Locale.SetKey(scorePanel.StageRecord, "hud.score.firstTry")
 	end
 	if medalsLabel then
-		medalsLabel.Text = MedalText.Limits(stage, medals[stage.key] or 0)
+		Locale.SetText(medalsLabel, MedalText.Limits(stage, medals[stage.key] or 0)) -- stars and times only
 	end
 end
 

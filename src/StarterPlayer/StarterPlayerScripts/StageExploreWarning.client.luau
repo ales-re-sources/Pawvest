@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
 local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
+local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local exploreEvent = ReplicatedStorage:WaitForChild("ExploreWarning")
 local StageTimerUpdate = ReplicatedStorage:WaitForChild("StageTimerUpdate")
 
@@ -56,10 +57,12 @@ screenGui.Name = "StageExploreWarning"
 screenGui.ResetOnSpawn = false
 screenGui.DisplayOrder = 5
 screenGui.Enabled = false
+screenGui.AutoLocalize = false -- translated by Locale (L1)
 panel.Parent = screenGui
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local generation = 0
+local shownStage = nil -- re-rendered when the language changes
 
 local function hide()
 	generation += 1
@@ -73,10 +76,8 @@ local function show(stageKey: string)
 	end
 	generation += 1
 	local mine = generation
-	label.Text = string.format(
-		"<b>Exploring %s without a timer</b>\nYou got in around the gate: no time, medal or finish reward counts here, but Coins you pick up do. Go through the gate to run it for real. Carrying on is at your own risk.",
-		stage.displayName
-	)
+	shownStage = stage
+	label.Text = Locale.T("hud.explore", { stage = Locale.StageName(stage) })
 	panel.BackgroundTransparency = 0.1
 	label.TextTransparency = 0
 	stroke.Transparency = 0
@@ -98,6 +99,12 @@ local function show(stageKey: string)
 end
 
 exploreEvent.OnClientEvent:Connect(show)
+
+Locale.Changed:Connect(function()
+	if screenGui.Enabled and shownStage then
+		label.Text = Locale.T("hud.explore", { stage = Locale.StageName(shownStage) })
+	end
+end)
 
 -- a timed run started: the warning no longer applies
 StageTimerUpdate.OnClientEvent:Connect(function(elapsed)

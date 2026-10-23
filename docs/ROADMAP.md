@@ -51,7 +51,7 @@ Rules:
 | S4 | World 1 complete (Island Hop, Blink) — done 2026-10-22: S4.0 courtyard + hub gate, S4.1 Island Hop, S4.2 Blink (user's visual checks) | ✔ (S4.0-S4.2) | ✔ (S4.0-S4.2) | – |
 | T1a | Telemetry core: run funnels, fails per segment / cause, quits and returns ([TELEMETRY.md](TELEMETRY.md)) — design check + implementation 2026-10-23 | ✔ | ✔ | – |
 | T1b | Telemetry: skills (purchases, arrivals without a talent, loadout per run) — done 2026-10-23 | ✔ | ✔ | – |
-| L1 | Localization infrastructure + HUD in Czech ([LOCALIZATION.md](LOCALIZATION.md)) — design agreed 2026-10-23 | – | – | – |
+| L1 | Localization infrastructure + HUD in Czech ([LOCALIZATION.md](LOCALIZATION.md)) — done 2026-10-23 (Czech texts await the user's review) | ✔ | ✔ | – |
 | L2 | Localization: all client panels + config display names | – | – | – |
 | L3 | Localization: server-written + Studio-authored texts, overflow check | – | – | – |
 | M6a | First live test + World 1 balancing | – | – | – |
@@ -533,6 +533,26 @@ English default + Czech; language from `player.LocaleId`, override in Settings (
 `Language`); Claude-written string tables in `ReplicatedStorage/Strings`; server texts via `LocKey` attributes rendered by
 `LocalizedText.client`; Roblox auto-translation off.
 - **L1:** infrastructure + Settings row + HUD essentials (ScorePanel, timer, results popup, gate prompts, warnings).
+  *Design check 2026-10-23 (LOCALIZATION.md → Design check (L1)):* the stage / world / hub / medal / talent / egg names
+  the HUD shows come into L1; `MedalText` Target / Needs / TalentName; Settings row Automatic / English / Čeština;
+  `Locale.SetKey` / `SetText` for server labels. *Outputs:* `ReplicatedStorage/Locale.luau`, `Strings/Common`, `Hud`,
+  `Names`; `LanguageService.server` (profile `Language`, attributes `LanguageSetting` / `Language`, `LanguageRemotes.Set`);
+  `LocalizedText.client`; `LanguageSettings.client` (row); converted: `PlayerTimerHandler` ScorePanel, `StageTimerClientUpdater`
+  (via MedalText), `StageResultsPopup`, `GatePrompts`, `StageExploreWarning`, `StageArrivalWarning`, `MusicSettings`.
+  *Boundary:* no other panel, no Studio-only change.
+  *Checked in playtests (developer profile, snapshot `profile_9892673032_l1` restored, the test's Tutorial Top-10 entry
+  removed, MostStars back to 0):* missing-key check 0 for `cs` and `en`; plurals (`+1 mince`, `+3 mince`, `+400 mincí`),
+  nested name keys and `FromLocaleId` (`cs-cz` → cs, `en-us` / `ja-jp` → en); locale `en-us` + Automatic → English
+  everywhere; clicking the Settings icon and the Language row (Automatic → English → Čeština) turned the Music / Language
+  rows, the ScorePanel and the gate prompts Czech at once; explore warning, arrival popup and timer target ("bez medaile")
+  in Czech; an open arrival popup re-rendered on a switch; a Tutorial finish in Czech (popup + ScorePanel); a rejoin kept
+  Čeština; after making the popup lines wrap (below) no converted label overflows (TextFits) and the screen captures show
+  the diacritics.
+  *Fixed during the check:* the Czech free-egg line overflowed the results popup and the arrival popup's Needs line
+  (3 lines in a 1-line box, already in English): their lines now wrap and grow (AutomaticSize Y).
+  *Not checked:* the Player Emulator with locale `cs-cz` on first join (only `FromLocaleId` was tested); the `ě` in the
+  Studio-authored ScorePanel's font (FredokaOne) looks lighter, probably a fallback glyph (L3 font check); the Settings
+  panel title and every other panel stay English until L2 / L3.
 - **L2:** every client panel + config display names + `MedalText`.
 - **L3:** server-written and Studio-authored texts, overflow check in Czech.
 - **L4 (later):** more languages chosen from the telemetry `Session` locale data.

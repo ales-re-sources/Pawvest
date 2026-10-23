@@ -1,6 +1,7 @@
 # Oby sandbox — Localization (design)
 
-Status: design agreed 2026-10-23, not implemented. Milestones **L1–L3** (L4 later) in [ROADMAP.md](ROADMAP.md),
+Status: design agreed 2026-10-23; L1 implemented and Studio-validated 2026-10-23 (see "Design check (L1)" below); the
+Czech texts await the user's review. L2 / L3 not started. Milestones **L1–L3** (L4 later) in [ROADMAP.md](ROADMAP.md),
 after telemetry (T1a / T1b, [TELEMETRY.md](TELEMETRY.md)).
 
 ## Goal
@@ -44,6 +45,32 @@ Top-10 / stars board titles, garden plot signs, pen labels, incubator lock text)
 - Fonts: check that the fonts in use render Czech diacritics (ě š č ř ž ý á í é ů ú); longer strings must fit
   (`TextScaled` or size changes in Studio).
 
+## Design check (L1, 2026-10-23)
+Against the code, the design holds with these decisions:
+- **Display names move partly into L1.** The L1 HUD shows stage, world and hub names (ScorePanel, results popup, explore /
+  arrival warnings, gate prompts and toasts), medal names, talent names (arrival warning) and egg names (results popup).
+  Their keys come in L1 (`Strings/Names`: `stage.name.<key>`, `world.name.<n>`, `hub.name`, `medal.name.<Bronze…>`,
+  `talent.name.<id>`, `pet.egg.<id>`); L2 adds the rest (pet kinds, rarities, foods, talent effect texts) and switches
+  the remaining panels over. Ids stay the DataStore keys; `displayName` / `name` in the configs remain the English
+  source and the fallback.
+- **`MedalText`** in L1: `Target` ("no medal"), `Needs` and `TalentName` go through `Locale.T` (used by the timer and the
+  arrival warning); `UnlockBar` (portal and gate faces) stays for L2 with its panels. On the server `Locale.T` answers in
+  English; the server never builds translated text, it sends keys.
+- **Language setting = three states:** the Settings row cycles **Automatic → English → Čeština → Automatic** and reads
+  "Language: Automatic (English)" / "Jazyk: Čeština" in the current language. Profile `Language` (`""` = automatic),
+  player attributes `LanguageSetting` (the stored choice) and `Language` (the resolved code the clients render in).
+  Until the attribute arrives a client uses its own `LocaleId`.
+- **Server labels:** `Locale.SetKey(label, key, args)` sets `LocKey` / `LocArgs` (JSON) / tag `Loc` and the English text
+  as a fallback; `Locale.SetText(label, text)` writes a literal (times, star lines) and clears the key. `LocalizedText`
+  re-applies the translation when the language, the attributes or the label's `Text` change (the server's English
+  fallback replicating after the attributes must not win). Argument values may themselves be keys
+  (`{ key = "stage.name.Stage6" }`), so a ScorePanel line never needs a server-side translation.
+- **Plural:** a string may hold forms instead of one text; `en = { one, other }`, `cs = { one, few, other }` (1 / 2-4 /
+  else), chosen by the `count` argument.
+- **The Music row** of the Settings panel is converted with the new Language row (same panel).
+- **AutoLocalize = false** on the ScreenGuis built in L1 code; the Studio-authored `ScreenGui` gets it in L3. The user
+  turns off automatic translation on the Creator Dashboard before publishing (Localization → Settings).
+
 ## Rollout
 | Milestone | Scope |
 |---|---|
@@ -52,7 +79,7 @@ Top-10 / stars board titles, garden plot signs, pen labels, incubator lock text)
 | **L3** — server + Studio texts | gate signs, Top-10 / stars boards, garden plot signs / pens / incubators; MCP pass over Studio-authored `TextLabel` / `TextButton` literals in StarterGui and Workspace (tag + key); overflow check of every panel in Czech |
 | **L4** — more languages (later) | chosen from the telemetry locale data; only new string fields + `Supported` entries |
 
-## Rules (for AGENTS.md once L1 lands)
+## Rules (copied to AGENTS.md with L1)
 - Never set player-visible text as a literal: use `Locale.T(key)` on the client or `LocKey` / `LocArgs` from the server.
 - Keys are `area.thing.detail`, never renamed once shipped (a rename = new key, old one removed).
 - A new string needs every supported language before commit (the missing-key check reports 0).

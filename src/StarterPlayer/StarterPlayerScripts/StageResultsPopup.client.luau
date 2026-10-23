@@ -10,6 +10,7 @@ local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
 local MedalText = require(ReplicatedStorage:WaitForChild("MedalText"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
+local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 
 local SHOW_SECONDS = 7
 local DIM = "#5A5A5A"
@@ -19,6 +20,7 @@ screenGui.Name = "StageResults"
 screenGui.ResetOnSpawn = false
 screenGui.DisplayOrder = 5
 screenGui.Enabled = false
+screenGui.AutoLocalize = false -- translated by Locale (L1)
 
 local panel = Instance.new("TextButton") -- a button so a click closes it
 panel.Name = "Panel"
@@ -50,6 +52,8 @@ local function addLine(name, order, textSize)
 	label.Name = name
 	label.LayoutOrder = order
 	label.Size = UDim2.new(1, -24, 0, textSize + 6)
+	label.AutomaticSize = Enum.AutomaticSize.Y -- a long line (Czech) wraps and grows the panel
+	label.TextWrapped = true
 	label.BackgroundTransparency = 1
 	label.Font = Enum.Font.GothamBold
 	label.TextSize = textSize
@@ -79,42 +83,53 @@ eggLabel.TextColor3 = Color3.fromRGB(255, 215, 90)
 nextLabel.TextColor3 = Color3.fromRGB(190, 190, 190)
 
 local showGeneration = 0
+local shownResult = nil -- the result on screen, re-rendered when the language changes
 
 local function hide()
 	showGeneration += 1
 	screenGui.Enabled = false
 end
 
-local function show(result)
-	titleLabel.Text = result.displayName .. " finished"
+local function render(result)
+	local stage = StageConfig.ByKey[result.stageKey]
+	titleLabel.Text = Locale.T("results.title", { stage = if stage then Locale.StageName(stage) else result.displayName })
 	timeLabel.Text = TimeFormat.Format(result.time)
 	recordLabel.Text = if result.newBest
-		then string.format('<font color="%s">New record!</font>', MedalText.Gold)
-		else "Record: " .. TimeFormat.Format(result.best)
+		then string.format('<font color="%s">%s</font>', MedalText.Gold, Locale.T("results.newRecord"))
+		else Locale.T("results.record", { time = TimeFormat.Format(result.best) })
 	starsLabel.Text = MedalText.Stars(result.medal, DIM)
-	medalLabel.Text = if result.medal > 0 then StageConfig.Medals[result.medal].name .. " medal" else "No medal"
+	medalLabel.Text = if result.medal > 0
+		then Locale.T("medal.label." .. StageConfig.Medals[result.medal].name)
+		else Locale.T("results.noMedal")
 	coinsLabel.Visible = result.coins > 0
-	coinsLabel.Text = string.format("+%d Coins", result.coins)
+	coinsLabel.Text = Locale.T("results.coins", { count = result.coins })
 	local finishCoins = result.finishCoins or 0
 	finishLabel.Visible = finishCoins > 0
-	finishLabel.Text = string.format("First finish +%d Coins", finishCoins)
+	finishLabel.Text = Locale.T("results.firstFinish", { count = finishCoins })
 	local runCoins = result.runCoins or 0
 	runLabel.Visible = runCoins > 0
-	runLabel.Text = string.format("Run reward +%d (run %d today)", runCoins, result.runsToday or 1)
+	runLabel.Text = Locale.T("results.runReward", { count = runCoins, run = result.runsToday or 1 })
 	local petXp = result.petXp or 0
 	petLabel.Visible = petXp > 0 and (result.petsLeveled or 0) > 0
-	petLabel.Text = string.format("Pets +%d XP (%d from moving)", petXp, result.moveXp or 0)
+	petLabel.Text = Locale.T("results.petXp", { xp = petXp, move = result.moveXp or 0 })
 	local freeEgg = PetConfig.Eggs[result.freeEgg or ""]
 	eggLabel.Visible = freeEgg ~= nil
-	eggLabel.Text = if freeEgg then "🎁 Free " .. freeEgg.name .. " → your incubator" else ""
+	eggLabel.Text = if freeEgg then Locale.T("results.freeEgg", { egg = Locale.EggName(freeEgg) }) else ""
 	if result.nextMedal and result.nextThreshold then
-		nextLabel.Text = string.format("Next: %s under %s",
-			StageConfig.Medals[result.nextMedal].name, TimeFormat.Format(result.nextThreshold))
+		nextLabel.Text = Locale.T("results.next", {
+			medal = Locale.MedalName(StageConfig.Medals[result.nextMedal]),
+			time = TimeFormat.Format(result.nextThreshold),
+		})
 	elseif result.nextMedal then
 		nextLabel.Text = ""
 	else
-		nextLabel.Text = "All medals earned!"
+		nextLabel.Text = Locale.T("results.allMedals")
 	end
+end
+
+local function show(result)
+	shownResult = result
+	render(result)
 
 	showGeneration += 1
 	local generation = showGeneration
@@ -127,6 +142,12 @@ local function show(result)
 end
 
 panel.Activated:Connect(hide)
+
+Locale.Changed:Connect(function()
+	if screenGui.Enabled and shownResult then
+		render(shownResult)
+	end
+end)
 
 StageTimerUpdate.OnClientEvent:Connect(function(elapsed, _final, result)
 	if elapsed >= 0 then

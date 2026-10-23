@@ -4,6 +4,7 @@
 local StageConfig = require(script.Parent.StageConfig)
 local TimeFormat = require(script.Parent.TimeFormat)
 local TalentConfig = require(script.Parent.TalentConfig)
+local Locale = require(script.Parent.Locale)
 
 local MedalText = {}
 
@@ -57,10 +58,11 @@ function MedalText.UnlockBar(stage): string?
 	return font(MedalText.Gold, stars) .. " " .. rule.medal .. " on " .. previous.displayName
 end
 
--- Display name of a required talent ("Double Jump", or "Double Jump 2" above level 1 on a multi-level talent).
+-- Display name of a required talent ("Double Jump", or "Double Jump 2" above level 1 on a multi-level talent), in the
+-- client's language (Locale).
 function MedalText.TalentName(need): string
 	local talent = TalentConfig.ById[need.id]
-	local name = if talent then talent.name else need.id
+	local name = if talent then Locale.TalentName(talent) else need.id
 	if talent and #talent.costs > 1 and need.level > 1 then
 		return name .. " " .. need.level
 	end
@@ -77,14 +79,14 @@ function MedalText.Needs(stage, levelOf: (string) -> number): string?
 	for _, need in stage.requires do
 		table.insert(parts, font(if levelOf(need.id) >= need.level then "#7CE07C" else "#F06A5E", MedalText.TalentName(need)))
 	end
-	return "Needs: " .. table.concat(parts, ", ")
+	return Locale.T("hud.needs", { list = table.concat(parts, ", ") })
 end
 
 -- Best medal still reachable after `elapsed` seconds, with its limit: "★★★ 0:56", or "no medal".
 function MedalText.Target(stage, elapsed: number): string
 	local medal = StageConfig.EvaluateMedal(stage, elapsed)
 	if medal == 0 then
-		return "no medal"
+		return Locale.T("hud.timer.noMedal")
 	end
 	return font(MedalText.Gold, string.rep("★", medal)) .. " " .. TimeFormat.Short(StageConfig.Threshold(stage, medal))
 end
