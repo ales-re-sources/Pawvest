@@ -52,6 +52,7 @@ Rules:
 | T1a | Telemetry core: run funnels, fails per segment / cause, quits and returns ([TELEMETRY.md](TELEMETRY.md)) — design check + implementation 2026-10-23 | ✔ | ✔ | – |
 | T1b | Telemetry: skills (purchases, arrivals without a talent, loadout per run) — done 2026-10-23 | ✔ | ✔ | – |
 | L1 | Localization infrastructure + HUD in Czech ([LOCALIZATION.md](LOCALIZATION.md)) — done 2026-10-23 (Czech texts await the user's review) | ✔ | ✔ | – |
+| L1.1 | Strings workflow: CSV source (English + translations + context side by side), `tools/loc.py` build / check / lint / review, pseudo-language — done 2026-10-24 | ✔ | ✔ | – |
 | L2 | Localization: all client panels + config display names | – | – | – |
 | L3 | Localization: server-written + Studio-authored texts, overflow check | – | – | – |
 | M6a | First live test + World 1 balancing | – | – | – |
@@ -553,6 +554,18 @@ English default + Czech; language from `player.LocaleId`, override in Settings (
   *Not checked:* the Player Emulator with locale `cs-cz` on first join (only `FromLocaleId` was tested); the `ě` in the
   Studio-authored ScorePanel's font (FredokaOne) looks lighter, probably a fallback glyph (L3 font check); the Settings
   panel title and every other panel stay English until L2 / L3.
+- **L1.1 (2026-10-24, user request: one reviewable table with English and translations side by side plus a context hint,
+  compiled for the code):** `localization/strings.csv` (UTF-8 with BOM, comma; no `sep=,` line because Excel then garbles
+  the Czech letters, checked in the user's Excel; `sep=` / semicolon files are still read), `tools/loc.py` (`build`:
+  generated `Strings/en|cs|qps.luau` + review statuses reset when the English changes; `check`; `lint` against
+  `tools/loc_lint_baseline.txt`; `review`), the hand-written `Strings/Common|Names|Hud` replaced, pseudo-language `qps`
+  in the Settings row for Studio / admins. Workflow and process: LOCALIZATION.md → Strings workflow.
+  *Checked:* `check` 0 errors on the migrated 74 keys; deliberate breakage (a placeholder typo, a missing translation, a
+  formula cell, an unknown key in code, English changed after review, a `sep=;` semicolon file, a new literal in code,
+  generated files with CRLF) caught or handled; the CSV opens in Excel with Czech intact (Excel automation); in a playtest
+  the Settings row cycles Automatic → English → Čeština → [Pseudo] by clicks and the converted HUD shows bracketed
+  pseudo text everywhere.
+  *Found:* the Settings panel title is still a literal (L2 / L3); FredokaOne lacks the Czech caron letters (L3 font check).
 - **L2:** every client panel + config display names + `MedalText`.
 - **L3:** server-written and Studio-authored texts, overflow check in Czech.
 - **L4 (later):** more languages chosen from the telemetry `Session` locale data.

@@ -1,7 +1,8 @@
 -- LanguageSettings (L1, docs/LOCALIZATION.md): the "Language" row of the Settings panel, below the Music row. Each click
--- moves to the next choice, Automatic -> English -> Čeština -> Automatic, and asks the server (LanguageRemotes.Set); the
--- server stores it in the profile and sets the player attributes LanguageSetting / Language, which every GUI follows. The
--- panel is part of the ScreenGui that is re-created on every respawn, so the row is added each time it appears.
+-- moves to the next choice, Automatic -> English -> Čeština (-> [Pseudo] in Studio and for admins) -> Automatic, and asks
+-- the server (LanguageRemotes.Set); the server stores it in the profile and sets the player attributes LanguageSetting /
+-- Language, which every GUI follows. The panel is part of the ScreenGui that is re-created on every respawn, so the row is
+-- added each time it appears.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -13,22 +14,18 @@ local setEvent = ReplicatedStorage:WaitForChild("LanguageRemotes"):WaitForChild(
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- "" (automatic) followed by the supported codes
-local CHOICES = { "" }
-for _, code in Locale.Order do
-	table.insert(CHOICES, code)
-end
+local CHOICES = Locale.Choices(player) -- "" (automatic), the languages, the pseudo-language in Studio / for admins
 
 local function setting(): string
 	local value = player:GetAttribute(Locale.SettingAttribute)
-	return if type(value) == "string" and (value == "" or Locale.Supported[value]) then value else ""
+	return if type(value) == "string" and table.find(CHOICES, value) then value else ""
 end
 
 local function rowText(): string
 	local current = setting()
 	local name = if current == ""
-		then Locale.T("settings.language.auto", { name = Locale.Supported[Locale.Current()] })
-		else Locale.Supported[current]
+		then Locale.T("settings.language.auto", { name = Locale.Names[Locale.Current()] })
+		else Locale.Names[current]
 	return Locale.T("settings.language", { name = name })
 end
 
