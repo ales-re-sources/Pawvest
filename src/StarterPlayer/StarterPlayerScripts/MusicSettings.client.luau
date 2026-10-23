@@ -3,6 +3,9 @@
 -- every respawn, so the row is added each time it appears.
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -17,14 +20,8 @@ local function addRow(screenGui: Instance)
 	button.Name = "MusicRow"
 	button.LayoutOrder = 1
 	button.Size = UDim2.new(1, -20, 0, 40)
-	button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-	button.TextColor3 = Color3.new(1, 1, 1)
-	button.Font = Enum.Font.SourceSansBold
-	button.TextSize = 16
-	button.AutoButtonColor = true
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 8)
-	corner.Parent = button
+	button.BackgroundColor3 = StudStyle.PanelColors.SettingsPanel
+	button.TextSize = 18
 
 	local function refresh()
 		button.Text = "Music: " .. (if player:GetAttribute("MusicMuted") == true then "Off" else "On")
@@ -34,6 +31,7 @@ local function addRow(screenGui: Instance)
 		refresh()
 	end)
 	refresh()
+	StudStyle.Brick(button, { studs = 5 })
 	button.Parent = panel
 end
 

@@ -7,6 +7,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local TalentConfig = require(ReplicatedStorage:WaitForChild("TalentConfig"))
+local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local remotes = ReplicatedStorage:WaitForChild("TalentRemotes")
 local buyEvent = remotes:WaitForChild("Buy")
 local resultEvent = remotes:WaitForChild("Result")
@@ -15,10 +16,9 @@ local panel = script.Parent
 local player = Players.LocalPlayer
 
 local ROW_HEIGHT = 54
-local COLOR_ROW = Color3.fromRGB(45, 45, 45)
-local COLOR_BUY = Color3.fromRGB(60, 170, 70)
-local COLOR_LOCKED = Color3.fromRGB(110, 110, 110)
-local COLOR_INFO = Color3.fromRGB(190, 190, 190)
+local COLOR_BUY = StudStyle.Colors.Green
+local COLOR_LOCKED = StudStyle.Colors.Grey
+local COLOR_INFO = Color3.fromRGB(235, 222, 190)
 local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
 
 local REJECT_TEXT = {
@@ -99,7 +99,7 @@ for index, talent in TalentConfig.List do
 		BackgroundTransparency = 1,
 		Position = UDim2.new(0, 10, 0, 4),
 		Size = UDim2.new(1, -90, 0, 24),
-		Font = Enum.Font.SourceSansBold,
+		Font = StudStyle.Font,
 		TextSize = 17,
 		TextColor3 = Color3.new(1, 1, 1),
 		TextXAlignment = Enum.TextXAlignment.Left,
@@ -122,14 +122,16 @@ for index, talent in TalentConfig.List do
 		Font = Enum.Font.SourceSansBold,
 		TextSize = 16,
 		TextColor3 = Color3.new(1, 1, 1),
-	}, { create("UICorner", { CornerRadius = UDim.new(0, 8) }) })
-	create("Frame", {
+		BackgroundColor3 = COLOR_LOCKED,
+	})
+	StudStyle.Brick(button) -- refreshRow recolours it through BackgroundColor3 / Text
+	local rowFrame = create("Frame", {
 		Name = "Talent_" .. talent.id,
 		LayoutOrder = index,
-		BackgroundColor3 = COLOR_ROW,
 		Size = UDim2.new(0, 240, 0, ROW_HEIGHT),
-		Parent = panel,
-	}, { create("UICorner", { CornerRadius = UDim.new(0, 8) }), title, info, button })
+	}, { title, info, button })
+	StudStyle.Row(rowFrame, panel.Name)
+	rowFrame.Parent = panel
 
 	local row = { talent = talent, title = title, info = info, button = button, flash = 0 }
 	rows[talent.id] = row

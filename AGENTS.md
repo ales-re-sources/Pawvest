@@ -50,6 +50,7 @@ src/
     TimeFormat.luau                   tenths rounding, "mm:ss.t" and short "m:ss" formatting
     MedalText.luau                    rich text for stars, medal limits and the timer's medal target
     PortalFaceStyle.luau              text style of the status lines on hub portal / gate faces (black with a white outline; the portal's name label stays white with a dark outline): Apply(label); used by HubPortalMedals (portals) and HubGateFaces; a new hub portal gets the same look by using it (door faces keep their own closed / open colours)
+    StudStyle.luau                    stud-brick look of the screen GUI, built in code: Colors / PanelColors (panel colour = colour of the icon that opens it), Brick(button, { studs, socket }) (Lip + Top (Face, Studs, optional Socket, Glyph); the button's BackgroundColor3 / Text stay the source of truth and are mirrored, so scripts that set them keep working; sets Style = Custom; hover lifts, press sinks; calling it again rebuilds), Panel (deep tone, title strip with studs, list layout to the top + AutomaticSize Y), Row, Plate (coin counter, status card), Title (FredokaOne, white with a dark outline)
     AdminConfig.luau                  admin UserIds + IsAdmin (client UI gating and server checks)
     ChallengeCoinConfig.luau          challenge coins: tier values (20 / 50 / 100), coin list (id, stage, tier), Found x/y, Encode/Decode of the CollectedCoins attribute
     TalentConfig.luau                 talents (Run Speed, Double Jump, Jump Height, Quick Respawn): costs, optional per-level effect text, effect helpers (RespawnDelay, HasFallReset), Talent_<id> attribute names
@@ -84,7 +85,7 @@ src/
     KitConveyors.server.luau          conveyors (S4.1): anchored parts tagged KitConveyor carry whatever stands on them along the part's front at attribute `Speed` studs/s (negative = backwards; the server sets AssemblyLinearVelocity once, per part and on attribute change)
   StarterPlayer/StarterPlayerScripts/
     StageMusic.client.luau            music of a rhythm stage (S4.2): a Studio-only Sound `Music` in the stage folder (attributes BPM, Metronome, BaseVolume) plays while that stage's run is active, driven by the run time (StageTimerUpdate): a tick on every beat (Metronome) or a looped track at TimePosition = run time mod length; silenced by the player attribute MusicMuted
-    MusicSettings.client.luau         "Music: On / Off" row in the Settings panel (sets MusicMuted for the session; the row is added to every re-created ScreenGui)
+    MusicSettings.client.luau         "Music: On / Off" row in the Settings panel (a StudStyle brick; sets MusicMuted for the session; the row is added to every re-created ScreenGui)
     StageTimerClientUpdater.client.luau  StageTimer label: counts locally between start/stop from StageTimerUpdate
     TalentDoubleJump.client.luau      Double Jump talent: extra air jumps from the Talent_DoubleJump attribute
     StageResultsPopup.client.luau     results popup after a finish incl. pet XP line (GUI built in code)
@@ -116,10 +117,10 @@ src/
     IncubatorClient.client.luau       incubator prompts (own plot only), incubator panel (unlock / start a Basic or Golden egg / free eggs waiting / countdown / Hatch + reveal), countdown labels on every plot from ReadyAt + GetServerTimeNow; test hook: IncubatorGui attribute OpenIncubator
     FoodShopClient.client.luau        food stand panel (every pet with level, XP, XP to Lv 20; one feed button per food); test hook: FoodShopGui attribute Open
   StarterGui/
-    CoinGui/CoinDisplayScript.client.luau        top-right coin counter
-    ScreenGui/TopLeftIcons/ButtonHandler.client.luau  icons Home (🏠 go to hub) / Skills (⚡) / Pets (🐶, cloned in code) / Settings / Admin, positioned in code in this order and styled in code as stud bricks (`styleBrick`: colour per button name in `BRICK_COLORS`, Lip + Top (Face, two studs, Socket, Glyph = the Studio button's emoji Text); hover lifts, press sinks); slide-in panels (AdminConfig)
-    ScreenGui/SkillsPanel/TalentRows.client.luau  "Your skills" panel (⚡ button): talent rows built in code
-    ScreenGui/AdminPanel/...                      RunSpeed (16↔64), DoubleJump (up to 5 air jumps), ScoreReset, AdminAddCoins.client.luau (+Coins button, built in code)
+    CoinGui/CoinDisplayScript.client.luau        top-right coin counter (StudStyle wooden plate)
+    ScreenGui/TopLeftIcons/ButtonHandler.client.luau  icons Home (🏠 go to hub) / Skills (⚡) / Pets (🐶, cloned in code) / Settings / Admin, positioned in code in this order and styled in code with StudStyle (icons = bricks with a glyph socket, colours in `ICON_COLORS`; also the Skills / Settings / Admin panels and the ScorePanel status card as a wooden plate); slide-in panels (AdminConfig)
+    ScreenGui/SkillsPanel/TalentRows.client.luau  "Your skills" panel (⚡ button): talent rows built in code (StudStyle rows, Buy / MAX bricks)
+    ScreenGui/AdminPanel/...                      RunSpeed (16↔64), DoubleJump (up to 5 air jumps), ScoreReset, AdminAddCoins.client.luau (+Coins button, built in code; also styles the panel's contents with StudStyle)
   Workspace/
     Handlers/                         ModuleScripts shared by all stage scripts (required via workspace.Handlers.*)
       CheckpointTouchHandler.luau     checkpoint touch → respawn point, fires CheckpointReached(part, first) to that player whenever the respawn point changes (`first` = first reach in the run → sound); a TimerStart touch counts as the stage's lowest-numbered checkpoint; NewRun from TimerStart fires CheckpointsReset; fires ExploreWarning(stageKey) on a checkpoint touch without a running timer for that stage (on every touch, not only when the respawn point changes; again after 120 s, cleared by NewRun); dead characters ignored; a respawn is placed on the stored plate facing its LookVector (the course direction)

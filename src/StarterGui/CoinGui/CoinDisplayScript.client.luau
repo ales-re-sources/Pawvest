@@ -6,7 +6,13 @@ local player = Players.LocalPlayer
 local coinUpdateEvent = ReplicatedStorage:WaitForChild("CoinUpdateEvent")
 
 -- Get the TextLabel
-local coinTextLabel = script.Parent:WaitForChild("Frame"):WaitForChild("TextLabel")
+local coinFrame = script.Parent:WaitForChild("Frame")
+local coinTextLabel = coinFrame:WaitForChild("TextLabel")
+
+-- Stud-brick look (StudStyle): a wooden plate with studs, the count in white chunky text
+local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
+StudStyle.Plate(coinFrame, StudStyle.Colors.Wood, 4)
+StudStyle.Title(coinTextLabel, StudStyle.Colors.Wood)
 
 -- Function to update the coin display
 local function updateCoinDisplay(coinAmount)
