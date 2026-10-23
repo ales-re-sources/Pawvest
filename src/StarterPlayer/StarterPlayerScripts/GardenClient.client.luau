@@ -3,6 +3,8 @@
 -- toast for online payouts.
 -- Display only: a click just names a pen and a pet; GardenService validates ownership, price and time. The prompts of other
 -- players' plots are switched off locally (the server rejects them anyway). The GUI is built here (no Studio GUI).
+-- Stud-brick look (StudStyle, wood): brick buttons, pet rows with a PetPortrait, the penned pet as a large portrait;
+-- the toast and the "welcome back" card are wooden plates too.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -11,7 +13,9 @@ local TweenService = game:GetService("TweenService")
 
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
+local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
+local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
 -- looked up by name: `remotes.Remove` would be the built-in Instance:Remove() method, not the RemoteEvent
@@ -23,16 +27,17 @@ local player = Players.LocalPlayer
 
 local WIDTH = 360
 local HEIGHT = 440
-local ROW_HEIGHT = 52
+local ROW_HEIGHT = 58
+local CARD_SIZE = 140 -- portrait of the penned pet
 local CLOSE_DISTANCE = 32 -- studs from the pen pad; walking further away closes the panel
 
-local COLOR_PANEL = Color3.fromRGB(40, 40, 40)
-local COLOR_ROW = Color3.fromRGB(55, 55, 55)
-local COLOR_BUY = Color3.fromRGB(60, 170, 70)
-local COLOR_EQUIP = Color3.fromRGB(60, 120, 200)
-local COLOR_LOCKED = Color3.fromRGB(110, 110, 110)
-local COLOR_SELL = Color3.fromRGB(190, 80, 70)
-local COLOR_INFO = Color3.fromRGB(190, 190, 190)
+local COLOR_PANEL = StudStyle.PanelColors.GardenPen
+local COLOR_ROW = StudStyle.PetRowColor(COLOR_PANEL)
+local COLOR_BUY = StudStyle.Colors.Green
+local COLOR_EQUIP = StudStyle.Colors.Blue
+local COLOR_LOCKED = StudStyle.Colors.Grey
+local COLOR_SELL = StudStyle.Colors.Red
+local COLOR_INFO = Color3.fromRGB(235, 222, 190)
 local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
 local COLOR_OK = Color3.fromRGB(120, 230, 120)
 
@@ -63,18 +68,23 @@ end
 local function label(name: string, props)
 	props.Name = name
 	props.BackgroundTransparency = 1
-	props.Font = props.Font or Enum.Font.GothamBold
+	props.Font = props.Font or StudStyle.Font
 	props.TextColor3 = props.TextColor3 or Color3.new(1, 1, 1)
 	props.TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Left
 	return create("TextLabel", props)
 end
 
-local function button(name: string, props)
+-- a brick button (StudStyle.Brick: colour and text keep being set on the button itself)
+local function button(name: string, props, studs: number?)
 	props.Name = name
-	props.Font = Enum.Font.GothamBold
 	props.TextColor3 = Color3.new(1, 1, 1)
-	return create("TextButton", props, { create("UICorner", { CornerRadius = UDim.new(0, 8) }) })
+	local instance = create("TextButton", props)
+	StudStyle.Brick(instance, { studs = studs })
+	return instance
 end
+
+local rowPortrait = PetPortrait.Cache()
+local cardPortrait = PetPortrait.Cache()
 
 local function rate(n: number): string
 	return string.format("%g", n)
@@ -92,21 +102,23 @@ end
 
 -- Pen panel ---------------------------------------------------------------------------------------------------------------
 
-local titleLabel = label("Title", {
-	Position = UDim2.new(0, 12, 0, 8),
-	Size = UDim2.new(1, -60, 0, 26),
+-- the brick title strip: StudStyle.Panel styles a child named TitleLabel
+local titleLabel = label("TitleLabel", {
+	Size = UDim2.new(1, 0, 0, 34),
 	TextSize = 20,
+	TextXAlignment = Enum.TextXAlignment.Center,
 })
 local closeButton = button("Close", {
 	AnchorPoint = Vector2.new(1, 0),
-	Position = UDim2.new(1, -8, 0, 8),
-	Size = UDim2.fromOffset(30, 26),
-	BackgroundColor3 = COLOR_LOCKED,
+	Position = UDim2.new(1, -6, 0, 4),
+	Size = UDim2.fromOffset(30, 28),
+	ZIndex = 2,
+	BackgroundColor3 = COLOR_SELL,
 	TextSize = 16,
 	Text = "X",
-})
+}, 1)
 local infoLabel = label("Info", {
-	Position = UDim2.new(0, 12, 0, 38),
+	Position = UDim2.new(0, 12, 0, 42),
 	Size = UDim2.new(1, -24, 0, 36),
 	Font = Enum.Font.Gotham,
 	TextSize = 14,
@@ -116,14 +128,23 @@ local infoLabel = label("Info", {
 	RichText = true,
 })
 local actionButton = button("Action", {
-	Position = UDim2.new(0, 10, 0, 80),
-	Size = UDim2.new(1, -20, 0, 36),
-	TextSize = 16,
+	Position = UDim2.new(0, 10, 0, 88),
+	Size = UDim2.new(1, -20, 0, 38),
+	TextSize = 17,
+}, 6)
+-- the penned pet, large, under the "take it out" button
+local penCard = PetPortrait.Holder({
+	AnchorPoint = Vector2.new(0.5, 0),
+	Position = UDim2.new(0.5, 0, 0, 140),
+	Size = UDim2.fromOffset(CARD_SIZE, CARD_SIZE),
+	BackgroundColor3 = COLOR_ROW,
+	Visible = false,
 })
+create("UIStroke", { ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Thickness = 3, Parent = penCard })
 local list = create("ScrollingFrame", {
 	Name = "Pets",
-	Position = UDim2.new(0, 8, 0, 80),
-	Size = UDim2.new(1, -16, 1, -128),
+	Position = UDim2.new(0, 8, 0, 86),
+	Size = UDim2.new(1, -16, 1, -136),
 	BackgroundTransparency = 1,
 	BorderSizePixel = 0,
 	ScrollBarThickness = 5,
@@ -131,10 +152,10 @@ local list = create("ScrollingFrame", {
 	AutomaticCanvasSize = Enum.AutomaticSize.Y,
 }, {
 	create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 6) }),
-	create("UIPadding", { PaddingRight = UDim.new(0, 6) }),
+	create("UIPadding", { PaddingRight = UDim.new(0, 6), PaddingTop = UDim.new(0, 6) }), -- room for the first row's studs
 })
 local emptyLabel = label("Empty", {
-	Position = UDim2.new(0, 12, 0, 90),
+	Position = UDim2.new(0, 12, 0, 96),
 	Size = UDim2.new(1, -24, 0, 60),
 	Font = Enum.Font.Gotham,
 	TextSize = 15,
@@ -159,35 +180,33 @@ local panel = create("Frame", {
 	AnchorPoint = Vector2.new(0.5, 0.5),
 	Position = UDim2.fromScale(0.5, 0.5),
 	Size = UDim2.fromOffset(WIDTH, HEIGHT),
-	BackgroundColor3 = COLOR_PANEL,
 	Visible = false,
 }, {
-	create("UICorner", { CornerRadius = UDim.new(0, 8) }),
-	create("UIStroke", { Color = Color3.fromRGB(80, 80, 80), Thickness = 1 }),
 	titleLabel,
 	closeButton,
 	infoLabel,
 	actionButton,
+	penCard,
 	list,
 	emptyLabel,
 	footerLabel,
 })
+StudStyle.Panel(panel, COLOR_PANEL)
 
 -- Toast and "welcome back" announcement
 local toast = label("Toast", {
 	AnchorPoint = Vector2.new(0.5, 0),
 	Position = UDim2.new(0.5, 0, 0, 70),
-	Size = UDim2.fromOffset(300, 30),
-	BackgroundTransparency = 0.3,
-	BackgroundColor3 = COLOR_PANEL,
+	Size = UDim2.fromOffset(300, 34),
 	TextSize = 18,
-	TextColor3 = COLOR_OK,
 	TextXAlignment = Enum.TextXAlignment.Center,
 	Visible = false,
 })
-create("UICorner", { CornerRadius = UDim.new(0, 8) }).Parent = toast
+StudStyle.Plate(toast, COLOR_PANEL, 4)
+StudStyle.Title(toast, COLOR_PANEL)
 
--- "Welcome back" announcement: top centre, nothing to click, fades out by itself (CanvasGroup fades text and background)
+-- "Welcome back" announcement: top centre, nothing to click, fades out by itself (CanvasGroup fades text and background;
+-- it clips its children, so this wooden card has an outline but no studs)
 local awayTitle = label("Title", {
 	Size = UDim2.new(1, 0, 0, 24),
 	TextSize = 20,
@@ -195,6 +214,7 @@ local awayTitle = label("Title", {
 	Text = "🌱 Welcome back!",
 	LayoutOrder = 1,
 })
+StudStyle.Title(awayTitle, COLOR_PANEL)
 local awayText = label("Text", {
 	Size = UDim2.new(1, 0, 0, 0),
 	AutomaticSize = Enum.AutomaticSize.Y,
@@ -212,11 +232,16 @@ local awayPanel = create("CanvasGroup", {
 	Size = UDim2.fromOffset(420, 0),
 	AutomaticSize = Enum.AutomaticSize.Y,
 	BackgroundColor3 = COLOR_PANEL,
-	BackgroundTransparency = 0.15,
+	BackgroundTransparency = 0,
 	GroupTransparency = 1,
 	Visible = false,
 }, {
-	create("UICorner", { CornerRadius = UDim.new(0, 8) }),
+	create("UICorner", { CornerRadius = UDim.new(0, 10) }),
+	create("UIStroke", {
+		ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+		Color = StudStyle.Shade(COLOR_PANEL, 0.62),
+		Thickness = 3,
+	}),
 	create("UIPadding", {
 		PaddingTop = UDim.new(0, 8),
 		PaddingBottom = UDim.new(0, 10),
@@ -266,10 +291,10 @@ end
 local function petRow(index: number, pet)
 	local placeButton = button("Place", {
 		AnchorPoint = Vector2.new(1, 0.5),
-		Position = UDim2.new(1, -6, 0.5, 0),
-		Size = UDim2.fromOffset(70, 28),
+		Position = UDim2.new(1, -8, 0.5, 2),
+		Size = UDim2.fromOffset(72, 32),
 		BackgroundColor3 = COLOR_EQUIP,
-		TextSize = 14,
+		TextSize = 15,
 		Text = "Place",
 	})
 	local row = create("Frame", {
@@ -286,17 +311,23 @@ local function petRow(index: number, pet)
 			BackgroundColor3 = pet.rarity.color,
 			BorderSizePixel = 0,
 		}, { create("UICorner", { CornerRadius = UDim.new(0, 3) }) }),
+		PetPortrait.Holder({
+			Position = UDim2.fromOffset(16, 6),
+			Size = UDim2.fromOffset(46, 46),
+			BackgroundColor3 = StudStyle.Shade(COLOR_PANEL, 0.18),
+		}, rowPortrait(pet)),
 		label("Name", {
-			Position = UDim2.new(0, 18, 0, 4),
-			Size = UDim2.new(1, -100, 0, 24),
+			Position = UDim2.new(0, 70, 0, 6),
+			Size = UDim2.new(1, -160, 0, 24),
 			TextSize = 16,
 			TextColor3 = pet.rarity.color,
+			TextStrokeTransparency = 0.4,
 			TextTruncate = Enum.TextTruncate.AtEnd,
 			Text = string.format("%s  Lv %d", pet.kind, pet.level),
 		}),
 		label("Detail", {
-			Position = UDim2.new(0, 18, 0, 28),
-			Size = UDim2.new(1, -100, 0, 18),
+			Position = UDim2.new(0, 70, 0, 31),
+			Size = UDim2.new(1, -160, 0, 18),
 			Font = Enum.Font.Gotham,
 			TextSize = 13,
 			TextColor3 = COLOR_OK,
@@ -314,12 +345,15 @@ end
 
 refresh = function()
 	for _, row in rows do
+		PetPortrait.Release(row) -- the portraits stay cached
 		row:Destroy()
 	end
 	table.clear(rows)
+	PetPortrait.Release(penCard)
 	actionButton.Visible = false
 	list.Visible = false
 	emptyLabel.Visible = false
+	penCard.Visible = false
 
 	local state = gardenState
 	local pen = openPen
@@ -358,6 +392,12 @@ refresh = function()
 		actionButton.Visible = true
 		actionButton.Text = "Take " .. data.Kind .. " out of the pen"
 		actionButton.BackgroundColor3 = COLOR_SELL
+		local portrait = cardPortrait({ uid = uid, kind = data.Kind, level = level })
+		if portrait then
+			portrait.Parent = penCard
+		end
+		penCard.UIStroke.Color = rarity.color
+		penCard.Visible = true
 		if not flashing then
 			showInfo(
 				string.format(

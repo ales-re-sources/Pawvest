@@ -7,17 +7,17 @@
 -- Layout: pet list on top (click a row = equip it, click an equipped one = unequip it), the equip slots as three square
 -- bricks at the bottom (#PetConfig.SlotPrices): a slot shows its equipped pet (click = unequip), "Empty", or a lock;
 -- the next slot to buy takes two clicks ("Sure?"), and hovering any slot shows a tooltip (price, whether it is
--- affordable). Equipped pets fill the slots in PetsChanged.equipped order. Pet portraits are ViewportFrames with a
--- clone of ReplicatedStorage.PetModels[kind] dressed by PetLook.Apply, cached per uid and level.
+-- affordable). Equipped pets fill the slots in PetsChanged.equipped order. Pet portraits come from PetPortrait (one
+-- cache for the rows, one for the slots).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
-local PetLook = require(ReplicatedStorage:WaitForChild("PetLook"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
+local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
 
 local remotes = PetClient.Remotes
 local player = Players.LocalPlayer
@@ -88,59 +88,8 @@ local function button(name: string, props, studs: number?)
 end
 
 -- Pet portraits -------------------------------------------------------------------------------------------------------
-local petModels = ReplicatedStorage:WaitForChild("PetModels", 10)
-
--- A ViewportFrame showing the pet from the front (the model's front is -Z, its LookVector), slightly from the side
--- and above; nil when the model is missing.
-local function makePortrait(kind: string, level: number, uid: string): ViewportFrame?
-	local template = petModels and petModels:FindFirstChild(kind)
-	if not template then
-		return nil
-	end
-	local model = template:Clone()
-	if not PetLook.Apply(model, kind, level, uid) then
-		model:Destroy()
-		return nil
-	end
-	local frame = create("ViewportFrame", {
-		Name = "Portrait",
-		BackgroundTransparency = 1,
-		Size = UDim2.fromScale(1, 1),
-		Ambient = Color3.fromRGB(170, 170, 170),
-		LightColor = Color3.new(1, 1, 1),
-		LightDirection = Vector3.new(-1, -1.5, -1),
-	})
-	model.Parent = frame
-	local box, size = model:GetBoundingBox()
-	local root = model.PrimaryPart :: BasePart
-	local fov = 40
-	local view = (root.CFrame.LookVector + root.CFrame.RightVector * 0.45 + Vector3.new(0, 0.35, 0)).Unit
-	local distance = (size.Magnitude / 2) / math.tan(math.rad(fov / 2)) * 1.05
-	local camera = create("Camera", { FieldOfView = fov })
-	camera.CFrame = CFrame.lookAt(box.Position + view * distance, box.Position)
-	camera.Parent = frame
-	frame.CurrentCamera = camera
-	return frame
-end
-
--- cache[uid] = { key = "kind:level", frame = ViewportFrame? }: one cache per place a pet is shown at the same time
-local function newPortraitCache()
-	local cache = {}
-	return function(pet: PetClient.OwnedPet): ViewportFrame?
-		local key = pet.kind .. ":" .. pet.level
-		local entry = cache[pet.uid]
-		if not entry or entry.key ~= key then
-			if entry and entry.frame then
-				entry.frame:Destroy()
-			end
-			entry = { key = key, frame = makePortrait(pet.kind, pet.level, pet.uid) }
-			cache[pet.uid] = entry
-		end
-		return entry.frame
-	end
-end
-local listPortrait = newPortraitCache()
-local slotPortrait = newPortraitCache()
+local listPortrait = PetPortrait.Cache()
+local slotPortrait = PetPortrait.Cache()
 
 -- Panel ---------------------------------------------------------------------------------------------------------------
 -- the brick title strip: StudStyle.Panel styles a child named TitleLabel

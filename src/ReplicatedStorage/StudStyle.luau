@@ -30,7 +30,15 @@ StudStyle.PanelColors = {
 	SettingsPanel = StudStyle.Colors.Blue,
 	AdminPanel = StudStyle.Colors.Purple,
 	PetsPanel = StudStyle.Colors.Green, -- PetsGui.Panel (PetsPanel.client)
+	GardenPen = StudStyle.Colors.Wood, -- GardenGui.Panel (GardenClient), also its toast and the "welcome back" card
+	Incubator = StudStyle.Colors.Yellow, -- IncubatorGui.Panel (IncubatorClient)
+	FoodShop = StudStyle.Colors.Red, -- FoodShopGui.Panel (FoodShopClient)
 }
+
+-- dark row behind pet names in rarity colours (green, blue, purple, gold must all read on it)
+function StudStyle.PetRowColor(panelColor: Color3): Color3
+	return StudStyle.Shade(panelColor, 0.28)
+end
 
 StudStyle.Font = Enum.Font.FredokaOne
 

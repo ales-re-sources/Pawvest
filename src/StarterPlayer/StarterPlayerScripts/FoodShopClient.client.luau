@@ -1,6 +1,7 @@
 -- Food shop client (docs/GDD.md §7.6, P2b2): the prompt on the garden plaza's food stand opens the food panel: every owned
 -- pet with its level, XP and the XP still needed for level 20, and one feed button per food. Display only: a click just
 -- names a pet and a food; GardenFood validates the distance, the price and the level. The GUI is built here (no Studio GUI).
+-- Stud-brick look (StudStyle, red): title strip, pet rows with a PetPortrait, the foods as brick buttons.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,23 +9,27 @@ local RunService = game:GetService("RunService")
 
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
+local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
+local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
 local feedEvent = remotes:WaitForChild("Feed") -- looked up by name, never `remotes.X`
 local player = Players.LocalPlayer
 
-local WIDTH = 460
-local HEIGHT = 460
-local ROW_HEIGHT = 56
+local WIDTH = 480
+local HEIGHT = 480
+local ROW_HEIGHT = 62
 local FOOD_BUTTON_WIDTH = 62
+local TEXT_LEFT = 74 -- name and detail start right of the portrait
 local CLOSE_DISTANCE = GardenConfig.FoodStandDistance -- walking further from the stand closes the panel (the server rejects it too)
 
-local COLOR_PANEL = Color3.fromRGB(40, 40, 40)
-local COLOR_ROW = Color3.fromRGB(55, 55, 55)
-local COLOR_BUY = Color3.fromRGB(60, 170, 70)
-local COLOR_LOCKED = Color3.fromRGB(110, 110, 110)
-local COLOR_INFO = Color3.fromRGB(190, 190, 190)
+local COLOR_PANEL = StudStyle.PanelColors.FoodShop
+local COLOR_ROW = StudStyle.PetRowColor(COLOR_PANEL)
+local COLOR_BUY = StudStyle.Colors.Green
+local COLOR_LOCKED = StudStyle.Colors.Grey
+local COLOR_CLOSE = StudStyle.Shade(StudStyle.Colors.Red, 0.75) -- a darker red than the panel's title strip
+local COLOR_INFO = Color3.fromRGB(235, 222, 190)
 local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
 local COLOR_OK = Color3.fromRGB(120, 230, 120)
 
@@ -49,18 +54,22 @@ end
 local function label(name: string, props)
 	props.Name = name
 	props.BackgroundTransparency = 1
-	props.Font = props.Font or Enum.Font.GothamBold
+	props.Font = props.Font or StudStyle.Font
 	props.TextColor3 = props.TextColor3 or Color3.new(1, 1, 1)
 	props.TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Left
 	return create("TextLabel", props)
 end
 
-local function button(name: string, props)
+-- a brick button (StudStyle.Brick: colour and text keep being set on the button itself)
+local function button(name: string, props, studs: number?)
 	props.Name = name
-	props.Font = Enum.Font.GothamBold
 	props.TextColor3 = Color3.new(1, 1, 1)
-	return create("TextButton", props, { create("UICorner", { CornerRadius = UDim.new(0, 8) }) })
+	local instance = create("TextButton", props)
+	StudStyle.Brick(instance, { studs = studs })
+	return instance
 end
+
+local rowPortrait = PetPortrait.Cache()
 
 -- Panel ------------------------------------------------------------------------------------------------------------------
 
@@ -72,22 +81,24 @@ for _, food in GardenConfig.Foods do
 	)
 end
 
-local titleLabel = label("Title", {
-	Position = UDim2.new(0, 12, 0, 8),
-	Size = UDim2.new(1, -60, 0, 26),
+-- the brick title strip: StudStyle.Panel styles a child named TitleLabel
+local titleLabel = label("TitleLabel", {
+	Size = UDim2.new(1, 0, 0, 34),
 	TextSize = 20,
+	TextXAlignment = Enum.TextXAlignment.Center,
 	Text = "🍓 Pet food",
 })
 local closeButton = button("Close", {
 	AnchorPoint = Vector2.new(1, 0),
-	Position = UDim2.new(1, -8, 0, 8),
-	Size = UDim2.fromOffset(30, 26),
-	BackgroundColor3 = COLOR_LOCKED,
+	Position = UDim2.new(1, -6, 0, 4),
+	Size = UDim2.fromOffset(30, 28),
+	ZIndex = 2,
+	BackgroundColor3 = COLOR_CLOSE,
 	TextSize = 16,
 	Text = "X",
-})
+}, 1)
 local menuLabel = label("Menu", {
-	Position = UDim2.new(0, 12, 0, 38),
+	Position = UDim2.new(0, 12, 0, 42),
 	Size = UDim2.new(1, -24, 0, 36),
 	Font = Enum.Font.Gotham,
 	TextSize = 14,
@@ -97,7 +108,7 @@ local menuLabel = label("Menu", {
 	Text = table.concat(menu, "   ") .. "\nOnly the fed pet gets the XP.",
 })
 local statusLabel = label("Status", {
-	Position = UDim2.new(0, 12, 0, 78),
+	Position = UDim2.new(0, 12, 0, 82),
 	Size = UDim2.new(1, -24, 0, 22),
 	TextSize = 15,
 	TextColor3 = COLOR_INFO,
@@ -106,8 +117,8 @@ local statusLabel = label("Status", {
 })
 local list = create("ScrollingFrame", {
 	Name = "Pets",
-	Position = UDim2.new(0, 8, 0, 104),
-	Size = UDim2.new(1, -16, 1, -112),
+	Position = UDim2.new(0, 8, 0, 108),
+	Size = UDim2.new(1, -16, 1, -116),
 	BackgroundTransparency = 1,
 	BorderSizePixel = 0,
 	ScrollBarThickness = 5,
@@ -115,10 +126,10 @@ local list = create("ScrollingFrame", {
 	AutomaticCanvasSize = Enum.AutomaticSize.Y,
 }, {
 	create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 6) }),
-	create("UIPadding", { PaddingRight = UDim.new(0, 6) }),
+	create("UIPadding", { PaddingRight = UDim.new(0, 6), PaddingTop = UDim.new(0, 2) }),
 })
 local emptyLabel = label("Empty", {
-	Position = UDim2.new(0, 12, 0, 110),
+	Position = UDim2.new(0, 12, 0, 114),
 	Size = UDim2.new(1, -24, 0, 40),
 	Font = Enum.Font.Gotham,
 	TextSize = 15,
@@ -133,11 +144,8 @@ local panel = create("Frame", {
 	AnchorPoint = Vector2.new(0.5, 0.5),
 	Position = UDim2.fromScale(0.5, 0.5),
 	Size = UDim2.fromOffset(WIDTH, HEIGHT),
-	BackgroundColor3 = COLOR_PANEL,
 	Visible = false,
 }, {
-	create("UICorner", { CornerRadius = UDim.new(0, 8) }),
-	create("UIStroke", { Color = Color3.fromRGB(80, 80, 80), Thickness = 1 }),
 	titleLabel,
 	closeButton,
 	menuLabel,
@@ -145,6 +153,7 @@ local panel = create("Frame", {
 	list,
 	emptyLabel,
 })
+StudStyle.Panel(panel, COLOR_PANEL)
 
 local screenGui = create("ScreenGui", {
 	Name = "FoodShopGui",
@@ -184,15 +193,16 @@ local function petRow(order: number, entry)
 	local toMax = GardenConfig.XpToMax(pet)
 	local maxed = entry.level >= PetConfig.MaxLevel
 	local detail = if maxed
-		then "Max level · " .. where(entry)
+		then "Max level\n" .. where(entry)
 		else string.format(
-			"XP %s/%s · %s XP to Lv %d · %s",
+			"XP %s/%s · %s\n%s XP to Lv %d",
 			PetClient.Number(entry.xp),
 			PetClient.Number(entry.xpNext),
+			where(entry),
 			PetClient.Number(toMax),
-			PetConfig.MaxLevel,
-			where(entry)
+			PetConfig.MaxLevel
 		)
+	local textWidth = -(TEXT_LEFT + 6 + #GardenConfig.Foods * (FOOD_BUTTON_WIDTH + 4))
 	local row = create("Frame", {
 		Name = "Pet_" .. entry.uid,
 		LayoutOrder = order,
@@ -207,20 +217,27 @@ local function petRow(order: number, entry)
 			BackgroundColor3 = entry.rarity.color,
 			BorderSizePixel = 0,
 		}, { create("UICorner", { CornerRadius = UDim.new(0, 3) }) }),
+		PetPortrait.Holder({
+			Position = UDim2.fromOffset(16, 6),
+			Size = UDim2.fromOffset(50, 50),
+			BackgroundColor3 = StudStyle.Shade(COLOR_PANEL, 0.18),
+		}, rowPortrait(entry)),
 		label("Name", {
-			Position = UDim2.new(0, 18, 0, 5),
-			Size = UDim2.new(1, -(24 + 3 * (FOOD_BUTTON_WIDTH + 4)), 0, 24),
+			Position = UDim2.new(0, TEXT_LEFT, 0, 6),
+			Size = UDim2.new(1, textWidth, 0, 22),
 			TextSize = 16,
 			TextColor3 = entry.rarity.color,
+			TextStrokeTransparency = 0.4,
 			TextTruncate = Enum.TextTruncate.AtEnd,
 			Text = string.format("%s  Lv %d", entry.kind, entry.level),
 		}),
 		label("Detail", {
-			Position = UDim2.new(0, 18, 0, 30),
-			Size = UDim2.new(1, -(24 + 3 * (FOOD_BUTTON_WIDTH + 4)), 0, 18),
+			Position = UDim2.new(0, TEXT_LEFT, 0, 29),
+			Size = UDim2.new(1, textWidth, 0, 30),
 			Font = Enum.Font.Gotham,
 			TextSize = 12,
 			TextColor3 = COLOR_INFO,
+			TextYAlignment = Enum.TextYAlignment.Top,
 			TextTruncate = Enum.TextTruncate.AtEnd,
 			Text = detail,
 		}),
@@ -228,13 +245,12 @@ local function petRow(order: number, entry)
 	for index, food in GardenConfig.Foods do
 		local feedButton = button("Feed_" .. food.id, {
 			AnchorPoint = Vector2.new(1, 0.5),
-			Position = UDim2.new(1, -6 - (#GardenConfig.Foods - index) * (FOOD_BUTTON_WIDTH + 4), 0.5, 0),
-			Size = UDim2.fromOffset(FOOD_BUTTON_WIDTH, 40),
+			Position = UDim2.new(1, -6 - (#GardenConfig.Foods - index) * (FOOD_BUTTON_WIDTH + 4), 0.5, 2),
+			Size = UDim2.fromOffset(FOOD_BUTTON_WIDTH, 46),
 			BackgroundColor3 = if not maxed and PetClient.Coins >= food.price then COLOR_BUY else COLOR_LOCKED,
-			TextSize = 13,
+			TextSize = 14,
 			Text = food.icon .. "\n" .. PetClient.Number(food.price),
-			AutoButtonColor = not maxed,
-		})
+		}, 2)
 		feedButton.Parent = row
 		feedButton.Activated:Connect(function()
 			if maxed then
@@ -252,6 +268,7 @@ end
 
 local function refresh()
 	for _, row in rows do
+		PetPortrait.Release(row) -- the portraits stay cached
 		row:Destroy()
 	end
 	table.clear(rows)

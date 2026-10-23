@@ -4,6 +4,7 @@
 -- Display only: a click just names an incubator; GardenIncubators validates ownership, price, the inventory cap and the
 -- hatch time against the server's os.time(). The countdown uses workspace:GetServerTimeNow() (synced to the server, not
 -- the device clock), so a wrong device clock only changes what is shown. The GUI is built here (no Studio GUI).
+-- Stud-brick look (StudStyle, yellow): title strip, brick buttons (unlock / eggs green, Hatch purple).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -11,6 +12,7 @@ local RunService = game:GetService("RunService")
 
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
+local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
@@ -24,11 +26,12 @@ local WIDTH = 380
 local HEIGHT = 330
 local CLOSE_DISTANCE = 32 -- studs from the incubator; walking further away closes the panel
 
-local COLOR_PANEL = Color3.fromRGB(40, 40, 40)
-local COLOR_BUY = Color3.fromRGB(60, 170, 70)
-local COLOR_HATCH = Color3.fromRGB(230, 170, 30)
-local COLOR_LOCKED = Color3.fromRGB(110, 110, 110)
-local COLOR_INFO = Color3.fromRGB(190, 190, 190)
+local COLOR_PANEL = StudStyle.PanelColors.Incubator
+local COLOR_BUY = StudStyle.Colors.Green
+local COLOR_HATCH = StudStyle.Colors.Purple -- stands out on the yellow panel
+local COLOR_LOCKED = StudStyle.Colors.Grey
+local COLOR_CLOSE = StudStyle.Colors.Red
+local COLOR_INFO = Color3.fromRGB(235, 222, 190)
 local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
 local COLOR_OK = Color3.fromRGB(120, 230, 120)
 
@@ -60,17 +63,19 @@ end
 local function label(name: string, props)
 	props.Name = name
 	props.BackgroundTransparency = 1
-	props.Font = props.Font or Enum.Font.GothamBold
+	props.Font = props.Font or StudStyle.Font
 	props.TextColor3 = props.TextColor3 or Color3.new(1, 1, 1)
 	props.TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Left
 	return create("TextLabel", props)
 end
 
-local function button(name: string, props)
+-- a brick button (StudStyle.Brick: colour and text keep being set on the button itself)
+local function button(name: string, props, studs: number?)
 	props.Name = name
-	props.Font = Enum.Font.GothamBold
 	props.TextColor3 = Color3.new(1, 1, 1)
-	return create("TextButton", props, { create("UICorner", { CornerRadius = UDim.new(0, 8) }) })
+	local instance = create("TextButton", props)
+	StudStyle.Brick(instance, { studs = studs })
+	return instance
 end
 
 local function hex(color: Color3): string
@@ -113,21 +118,23 @@ end
 
 -- Panel ------------------------------------------------------------------------------------------------------------------
 
-local titleLabel = label("Title", {
-	Position = UDim2.new(0, 12, 0, 8),
-	Size = UDim2.new(1, -60, 0, 26),
+-- the brick title strip: StudStyle.Panel styles a child named TitleLabel
+local titleLabel = label("TitleLabel", {
+	Size = UDim2.new(1, 0, 0, 34),
 	TextSize = 20,
+	TextXAlignment = Enum.TextXAlignment.Center,
 })
 local closeButton = button("Close", {
 	AnchorPoint = Vector2.new(1, 0),
-	Position = UDim2.new(1, -8, 0, 8),
-	Size = UDim2.fromOffset(30, 26),
-	BackgroundColor3 = COLOR_LOCKED,
+	Position = UDim2.new(1, -6, 0, 4),
+	Size = UDim2.fromOffset(30, 28),
+	ZIndex = 2,
+	BackgroundColor3 = COLOR_CLOSE,
 	TextSize = 16,
 	Text = "X",
-})
+}, 1)
 local bodyLabel = label("Body", {
-	Position = UDim2.new(0, 12, 0, 40),
+	Position = UDim2.new(0, 12, 0, 44),
 	Size = UDim2.new(1, -24, 0, 150),
 	Font = Enum.Font.Gotham,
 	TextSize = 15,
@@ -147,9 +154,9 @@ local statusLabel = label("Status", {
 local actionButton = button("Action", {
 	AnchorPoint = Vector2.new(0, 1),
 	Position = UDim2.new(0, 10, 1, -12),
-	Size = UDim2.new(1, -20, 0, 40),
-	TextSize = 17,
-})
+	Size = UDim2.new(1, -20, 0, 42),
+	TextSize = 18,
+}, 6)
 -- empty incubator: one button per egg (PetConfig.EggOrder), side by side in place of the action button
 local eggButtons = {} -- { { id, button } }
 for position, eggId in PetConfig.EggOrder do
@@ -159,10 +166,10 @@ for position, eggId in PetConfig.EggOrder do
 		button = button("Egg_" .. eggId, {
 			AnchorPoint = Vector2.new(0, 1),
 			Position = UDim2.new((position - 1) / count, if position == 1 then 10 else 5, 1, -12),
-			Size = UDim2.new(1 / count, -15, 0, 40),
-			TextSize = 15,
+			Size = UDim2.new(1 / count, -15, 0, 42),
+			TextSize = 16,
 			Visible = false,
-		}),
+		}, 3),
 	})
 end
 
@@ -171,11 +178,8 @@ local panel = create("Frame", {
 	AnchorPoint = Vector2.new(0.5, 0.5),
 	Position = UDim2.fromScale(0.5, 0.5),
 	Size = UDim2.fromOffset(WIDTH, HEIGHT),
-	BackgroundColor3 = COLOR_PANEL,
 	Visible = false,
 }, {
-	create("UICorner", { CornerRadius = UDim.new(0, 8) }),
-	create("UIStroke", { Color = Color3.fromRGB(80, 80, 80), Thickness = 1 }),
 	titleLabel,
 	closeButton,
 	bodyLabel,
@@ -185,6 +189,7 @@ local panel = create("Frame", {
 for _, entry in eggButtons do
 	entry.button.Parent = panel
 end
+StudStyle.Panel(panel, COLOR_PANEL)
 
 local screenGui = create("ScreenGui", {
 	Name = "IncubatorGui",
