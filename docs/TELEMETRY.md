@@ -1,6 +1,6 @@
 # Oby sandbox — Telemetry (design)
 
-Status: design agreed 2026-10-23; design check against the API limits done 2026-10-23 (see "Design check" below), T1a implemented. Milestones **T1a** (core) and **T1b** (skills) in [ROADMAP.md](ROADMAP.md).
+Status: design agreed 2026-10-23; design check against the API limits done 2026-10-23 (see "Design check" below), T1a and T1b implemented and Studio-validated (2026-10-23). Milestones **T1a** (core) and **T1b** (skills) in [ROADMAP.md](ROADMAP.md).
 
 ## Goal
 Data for rebalancing (M6a / M6b), answering a few questions only:
@@ -44,8 +44,9 @@ prints every event. The limits that shape this design (create.roblox.com, checke
   - `kill:<obstacle>` — a kill part: its path inside the stage folder, **truncated to 2 levels** (`Beams/Beam_4`,
     `LaserStripStage/Part_04`, `Movers/Mover_Slide`). Arena spikes the same.
   - `other` — anything unexplained (reset by the player, unknown kill).
-- **Loadout** (T1b): compact talent levels, e.g. `R1 D2 J0 Q2` (Run Speed, Double Jump, Jump Height, Quick Respawn) from
-  the `Talent_<id>` attributes.
+- **Loadout** (T1b): compact talent levels at the run's start, e.g. `RS3 DJ1 JH3 QR2` (Run Speed, Double Jump, Jump
+  Height, Quick Respawn; the code is the capitals of the talent id, so later talents get their own: `TJ`, `D`, `WJ`, `G`)
+  from the `Talent_<id>` attributes, in `TalentConfig.List` order. Today 6 × 2 × 4 × 3 = 144 loadouts at most.
 
 ## Events
 
@@ -53,7 +54,7 @@ prints every event. The limits that shape this design (create.roblox.com, checke
 | Event | API | Fields | When |
 |---|---|---|---|
 | Run funnel | `LogFunnelStepEvent(player, "StageRun", runId, step, stepName, { CF01 = stage })` — **one** funnel for every stage (10-funnel cap), broken down by CF01 | step 1 `start`, `k + 1` = `cp<k>` (k = 1..20), 22 = `finish` | each step once per run, only forward (going back to an earlier checkpoint logs nothing); a stage with fewer checkpoints jumps to 22 at the finish and the dashboard completes the skipped steps, so its curve is flat after its last checkpoint |
-| Stage progression | `LogProgressionStartEvent` / `CompleteEvent` / `FailEvent` (path = world name, `Hub` for the Tutorial; level = position in the world, 1-based; levelName = stage key) | complete: CF01 medal (`none` / `Bronze` / `Silver` / `Gold`) · CF02 deaths bucket; fail = run cancelled or quit: CF01 segment · CF02 deaths bucket; CF03 is kept for T1b's loadout | run start / finish / cancel |
+| Stage progression | `LogProgressionStartEvent` / `CompleteEvent` / `FailEvent` (path = world name, `Hub` for the Tutorial; level = position in the world, 1-based; levelName = stage key) | start: CF03 loadout (T1b); complete: CF01 medal (`none` / `Bronze` / `Silver` / `Gold`) · CF02 deaths bucket · CF03 loadout; fail = run cancelled or quit: CF01 end reason (as `RunEnd`) · CF02 deaths bucket · CF03 loadout (T1b; T1a had the segment in CF01, see Design check T1b) | run start / finish / cancel |
 | `Fail` | `LogCustomEvent`, value = count | CF01 stage · CF02 segment · CF03 cause | aggregated per player per (stage, segment, cause), flushed every 60 s and on leave |
 | `RunEnd` | `LogCustomEvent`, value = run seconds | CF01 stage · CF02 segment · CF03 reason (`finish` / `exit` / `home` / `quit` / `reset` / `switch`) | every run end |
 | `Quit` | `LogCustomEvent`, value = seconds since the last checkpoint | CF01 stage (or `hub` / `garden` / world name) · CF02 segment · CF03 `run` / `idle` | player leaves |
@@ -67,10 +68,10 @@ run). Times and counts never go into custom fields (cardinality); they are event
 ### T1b — skills
 | Event | API | Fields |
 |---|---|---|
-| Talent purchase | `LogEconomyEvent` (sink, currency `Coins`, amount = price, balance after, transaction type `Shop`, item SKU `<talentId>_<level>`) | — |
-| `TalentBought` | `LogCustomEvent`, value = new level | CF01 talent · CF02 progress bucket of total stars (`0`, `1-5`, `6-15`, `16-30`, `31+`) · CF03 last stage played |
-| `ArrivalWithoutTalent` | `LogCustomEvent` | CF01 stage · CF02 missing talent(s) — from the existing `StageArrival` check in `PlayerTimerHandler` |
-| loadout on runs | the progression `Complete` / `Fail` events of T1b carry the loadout as a custom field | `Fail` keeps its 3 fields; the per-loadout view comes from progression |
+| Talent purchase | `LogEconomyEvent` (sink, currency `Coins`, amount = price, balance after, transaction type `Shop`, item SKU `<talentId>_<level>`, 15 SKUs today of the 100 allowed) | — |
+| `TalentBought` | `LogCustomEvent`, value = new level | CF01 talent · CF02 progress bucket of total stars (`0`, `1-5`, `6-15`, `16-30`, `31+`) · CF03 last stage played (the stage of the player's last run in this session, `none` before one) |
+| `ArrivalWithoutTalent` | `LogCustomEvent` | CF01 stage · CF02 missing talent(s) as `<id><level>` joined by `+` (`DoubleJump1`) — from the existing `StageArrival` check in `PlayerTimerHandler`, i.e. on every gate entry without the talent; held back with the run's first events, so a ghost run's entry is dropped |
+| loadout on runs | the progression start / complete / fail events carry the loadout in CF03 | `Fail` keeps its 3 fields; the per-loadout view comes from progression |
 
 ## Reading the questions on the dashboard
 | Question | Where |
@@ -134,6 +135,12 @@ loadout; a rate guard; `checkpointOrder` exceptions checked in Studio; `ResetTim
 function call; `Died` hooked in the module; `PlayerProfile.OnLeaving` also on shutdown. The debug switch is the
 `ServerScriptService` attribute `TelemetryDebug = true` (read on every event, so it can be toggled during a playtest):
 every event is printed as `[Telemetry] …`; without it the module is silent.
+
+**T1b (2026-10-23):** with the loadout in CF03, a progression fail of segment × deaths bucket × loadout could reach about
+200 × 5 × 144 combinations, far over 8 000. The fail event therefore drops the segment (it stays in `RunEnd` and `Quit`)
+and carries the end reason instead: 5 reasons × 5 buckets × 144 loadouts = 3 600; complete: 4 medals × 5 × 144 = 2 880.
+New talents (S7, S9) multiply the loadouts: review the bound then (e.g. bucket Run Speed). Only talent purchases are
+logged as economy events; the other Coin sources and sinks (medals, unlocks, eggs, pens, food) are left for M6.
 
 ## Acceptance checks (Studio, debug switch on)
 - T1a: a run start → checkpoints → finish logs funnel steps 1..n in order exactly once, also when a checkpoint is touched

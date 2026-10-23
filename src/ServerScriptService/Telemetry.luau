@@ -1,8 +1,10 @@
--- Telemetry (T1a, docs/TELEMETRY.md): the only caller of AnalyticsService. Server-only.
+-- Telemetry (T1a / T1b, docs/TELEMETRY.md): the only caller of AnalyticsService. Server-only.
 --   * run funnel "StageRun" (one funnel for every stage, CF01 = stage): step 1 start, k + 1 = cp<k>, FINISH_STEP = finish;
 --   * stage progression start / complete / fail (path = world name or "Hub", level = position in the world);
 --   * custom events Fail (aggregated per player and (stage, segment, cause), flushed every minute and on leave), RunEnd,
---     Quit, Return and Session.
+--     Quit, Return and Session;
+--   * skills (T1b): the loadout (talent levels at the run's start, "RS3 DJ1 JH3 QR2") on the progression events, an economy
+--     event + TalentBought per talent purchase (TalentService), ArrivalWithoutTalent (PlayerTimerHandler's arrival check).
 -- Hooks: PlayerTimerHandler calls RunStarted / RunEnded, CheckpointTouchHandler calls Checkpoint, the kill scripts call
 -- MarkKill; deaths (Humanoid.Died), joins, leaves (PlayerProfile.OnLeaving) and the client reports are watched here.
 -- Debug: with the ServerScriptService attribute TelemetryDebug = true every event is printed as "[Telemetry] …".
@@ -14,6 +16,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local StageConfig = require(ReplicatedStorage.StageConfig)
+local TalentConfig = require(ReplicatedStorage.TalentConfig)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 
 local FUNNEL = "StageRun"
@@ -31,6 +34,7 @@ local GARDEN_RADIUS = 145 -- studs from the garden island's centre (the island i
 local RATE_BASE, RATE_PER_PLAYER = 100, 15 -- events per minute and server (the API allows 120 + 20 × CCU per experience)
 local PLATFORMS = { touch = true, gamepad = true, keyboard = true }
 local DEATH_BUCKETS = { { 0, "0" }, { 2, "1-2" }, { 5, "3-5" }, { 10, "6-10" } } -- above the last: "11+"
+local STAR_BUCKETS = { { 0, "0" }, { 5, "1-5" }, { 15, "6-15" }, { 30, "16-30" } } -- above the last: "31+"
 
 local CF = {
 	Enum.AnalyticsCustomFieldKeys.CustomField01.Name,
@@ -41,7 +45,8 @@ local CF = {
 local Telemetry = {}
 
 -- [Player] = {
---   run = { id, stage, startClock, cp (position of the current checkpoint, 0 before the first), maxStep, deaths } or nil,
+--   run = { id, stage, startClock, cp (position of the current checkpoint, 0 before the first), maxStep, deaths, loadout,
+--     queue (events held back while the run is younger than GHOST_TIME) } or nil, lastStage (key of the last run's stage),
 --   lastActivity (os.clock of the last checkpoint / run start / run end / join), lastReport, clientKill = { part, at },
 --   platform, area (score panel key, SetArea), fails = { [key] = { stage, segment, cause, count } }
 -- }
@@ -134,13 +139,27 @@ local function round(value: number, step: number): number
 	return math.floor(value / step + 0.5) * step
 end
 
-local function deathsBucket(deaths: number): string
-	for _, bucket in DEATH_BUCKETS do
-		if deaths <= bucket[1] then
+local function bucketOf(buckets, value: number, above: string): string
+	for _, bucket in buckets do
+		if value <= bucket[1] then
 			return bucket[2]
 		end
 	end
-	return "11+"
+	return above
+end
+
+local function deathsBucket(deaths: number): string
+	return bucketOf(DEATH_BUCKETS, deaths, "11+")
+end
+
+-- Talent levels from the Talent_<id> attributes, e.g. "RS3 DJ1 JH3 QR2" (code = the capitals of the talent id)
+local function loadout(player: Player): string
+	local parts = {}
+	for _, talent in TalentConfig.List do
+		local level = TalentConfig.ClampLevel(talent.id, player:GetAttribute(TalentConfig.AttributeName(talent.id)))
+		table.insert(parts, (string.gsub(talent.id, "%l", "")) .. level)
+	end
+	return table.concat(parts, " ")
 end
 
 local function segment(run): string
@@ -268,12 +287,22 @@ function Telemetry.RunStarted(player: Player, stageKey: string)
 	if s.run then
 		Telemetry.RunEnded(player, "switch")
 	end
-	local run = { id = HttpService:GenerateGUID(false), stage = stage, startClock = os.clock(), cp = 0, maxStep = 1, deaths = 0, queue = {} }
+	local run = {
+		id = HttpService:GenerateGUID(false),
+		stage = stage,
+		startClock = os.clock(),
+		cp = 0,
+		maxStep = 1,
+		deaths = 0,
+		loadout = loadout(player),
+		queue = {},
+	}
 	s.run = run
+	s.lastStage = stage.key
 	s.lastActivity = os.clock()
 	runSend(player, run, "LogFunnelStepEvent", FUNNEL, run.id, 1, "start", fields(stage.key))
 	local path, level = progression(stage)
-	runSend(player, run, "LogProgressionStartEvent", path, level, stage.key)
+	runSend(player, run, "LogProgressionStartEvent", path, level, stage.key, fields(nil, nil, run.loadout))
 	task.delay(GHOST_TIME, function()
 		if s.run == run then
 			releaseQueue(player, run)
@@ -302,11 +331,45 @@ function Telemetry.RunEnded(player: Player, reason: string, result: { medal: num
 	if reason == "finish" then
 		send("LogFunnelStepEvent", player, FUNNEL, run.id, FINISH_STEP, "finish", fields(stage.key))
 		local medal = result and StageConfig.Medals[result.medal]
-		send("LogProgressionCompleteEvent", player, path, level, stage.key, fields(if medal then medal.name else "none", bucket))
+		send("LogProgressionCompleteEvent", player, path, level, stage.key, fields(if medal then medal.name else "none", bucket, run.loadout))
 	else
-		send("LogProgressionFailEvent", player, path, level, stage.key, fields(seg, bucket))
+		-- the segment stays in RunEnd: with the loadout it would exceed the custom fields' combination limit
+		send("LogProgressionFailEvent", player, path, level, stage.key, fields(reason, bucket, run.loadout))
 	end
 	send("LogCustomEvent", player, "RunEnd", round(os.clock() - run.startClock, 0.1), fields(stage.key, seg, reason))
+end
+
+-- TalentService bought level `level` of talent `talentId` for `cost` Coins, leaving `balance`
+function Telemetry.TalentBought(player: Player, talentId: string, level: number, cost: number, balance: number)
+	send(
+		"LogEconomyEvent",
+		player,
+		Enum.AnalyticsEconomyFlowType.Sink,
+		"Coins",
+		cost,
+		balance,
+		Enum.AnalyticsEconomyTransactionType.Shop.Name,
+		talentId .. "_" .. level
+	)
+	local profile = PlayerProfile.Get(player)
+	local stars = if profile then StageConfig.TotalStars(profile.Medals) else 0
+	local s = state(player)
+	send("LogCustomEvent", player, "TalentBought", level, fields(talentId, bucketOf(STAR_BUCKETS, stars, "31+"), s.lastStage or "none"))
+end
+
+-- PlayerTimerHandler: the player arrived on stage `stageKey` without the talents in `missing` ({ { id, level }, … })
+function Telemetry.ArrivalWithoutTalent(player: Player, stageKey: string, missing)
+	local names = {}
+	for _, need in missing do
+		table.insert(names, need.id .. need.level)
+	end
+	local args = fields(stageKey, table.concat(names, "+"))
+	local run = states[player] and states[player].run
+	if run and run.stage.key == stageKey then
+		runSend(player, run, "LogCustomEvent", "ArrivalWithoutTalent", 1, args) -- the gate entry of this run: dropped with a ghost run
+	else
+		send("LogCustomEvent", player, "ArrivalWithoutTalent", 1, args)
+	end
 end
 
 -- The player's respawn point moved to checkpoint part `part` (CheckpointTouchHandler); a checkpoint of the running stage

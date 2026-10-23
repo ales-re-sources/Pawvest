@@ -50,7 +50,7 @@ Rules:
 | S3 | Obstacle kit + jump lab — S3.1 spike (GO decided 2026-10-21) and S3.2a / S3.2b (hazards, StageCamera; user's visual check done) done; S3.3a / b / c done (kit-local plates, zones, ghosts, templates, reach table, Stage 1 spinners on the kit; user's visual check of Stage 1 done 2026-10-21) | ✔ | ✔ | – |
 | S4 | World 1 complete (Island Hop, Blink) — done 2026-10-22: S4.0 courtyard + hub gate, S4.1 Island Hop, S4.2 Blink (user's visual checks) | ✔ (S4.0-S4.2) | ✔ (S4.0-S4.2) | – |
 | T1a | Telemetry core: run funnels, fails per segment / cause, quits and returns ([TELEMETRY.md](TELEMETRY.md)) — design check + implementation 2026-10-23 | ✔ | ✔ | – |
-| T1b | Telemetry: skills (purchases, arrivals without a talent, loadout per run) | – | – | – |
+| T1b | Telemetry: skills (purchases, arrivals without a talent, loadout per run) — done 2026-10-23 | ✔ | ✔ | – |
 | L1 | Localization infrastructure + HUD in Czech ([LOCALIZATION.md](LOCALIZATION.md)) — design agreed 2026-10-23 | – | – | – |
 | L2 | Localization: all client panels + config display names | – | – | – |
 | L3 | Localization: server-written + Studio-authored texts, overflow check | – | – | – |
@@ -508,9 +508,25 @@ A measured `T_base` for both new stages comes in M6a.
   itself (Live-validated after publishing).
 
 ### T1b — Telemetry: skills
+- **Design check (2026-10-23, TELEMETRY.md → Design check T1b):** the loadout (`RS3 DJ1 JH3 QR2`, codes from the talent
+  ids) goes into CF03 of the progression start / complete / fail events; the fail event swaps its segment for the end
+  reason so its combinations stay under 8 000; last stage = the last run of the session; only talent purchases become
+  economy events.
 - **Outputs:** economy event + `TalentBought` (talent, star bucket, last stage) on every purchase; `ArrivalWithoutTalent`
-  from the `StageArrival` check; loadout (`R1 D2 J0 Q2`) on the progression events.
+  from the `StageArrival` check; loadout on the progression events.
+- **Boundary:** `Telemetry.luau`, one call in `TalentService` after a purchase, one in `PlayerTimerHandler`'s arrival check;
+  no gameplay change.
 - **Acceptance checks:** TELEMETRY.md → Acceptance checks (T1b items).
+- *Checked in playtests (developer profile; snapshot `profile_9892673032_t1b` restored; debug switch on):* Run Speed 4 and 5
+  bought by clicking the Skills icon and the Buy brick: `LogEconomyEvent` Sink / Coins / 900 / balance / `Shop` /
+  `RunSpeed_4` and `TalentBought` 4 (`RunSpeed`, `16-30`, `none`), after a Stage 6 run `TalentBought` 5 with last stage
+  `Stage6`; with `Talent_DoubleJump` set to 0 a Stage 6 gate entry logs `ArrivalWithoutTalent` (`Stage6`, `DoubleJump1`)
+  and progression start / fail carry `RS4 DJ0 JH3 QR2` (fail: `exit`, `0`); the next playtest's run carried `RS5 …`;
+  no script errors.
+- *Fixed during the check:* the ghost run of a gate walk-out also logged `ArrivalWithoutTalent`; it now goes through the
+  run's held-back events and is dropped with the ghost run.
+- *Not checked:* the loadout on a progression **complete** (same code path as fail; a finish would have changed the
+  Stage 6 boards).
 
 ### L1–L3 — Localization (design: [LOCALIZATION.md](LOCALIZATION.md))
 English default + Czech; language from `player.LocaleId`, override in Settings (profile `Language`, attribute

@@ -9,6 +9,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
+local Telemetry = require(ServerScriptService.Telemetry)
 local TalentConfig = require(ReplicatedStorage.TalentConfig)
 
 local BUY_COOLDOWN = 0.25 -- seconds between requests per player
@@ -122,6 +123,7 @@ buyEvent.OnServerEvent:Connect(function(player, id, expectedLevel)
 	publish(player, profile)
 	apply(player, profile)
 	resultEvent:FireClient(player, id, true, current + 1)
+	Telemetry.TalentBought(player, id, current + 1, cost, profile.Coins)
 	task.spawn(PlayerProfile.Save, player) -- spent Coins and the level are saved together
 end)
 

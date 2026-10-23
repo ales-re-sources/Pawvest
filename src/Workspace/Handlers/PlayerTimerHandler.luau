@@ -175,6 +175,7 @@ local function updateScorePanel(player, stageKey)
 			end)
 			if #missing > 0 then
 				stageArrival:FireClient(player, stageKey)
+				Telemetry.ArrivalWithoutTalent(player, stageKey, missing)
 			end
 		end
 	else
