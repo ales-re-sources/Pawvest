@@ -146,6 +146,7 @@ local function countdownLabel(adornee: BasePart, offset: number): TextLabel
 	gui.StudsOffsetWorldSpace = Vector3.new(0, offset, 0)
 	gui.LightInfluence = 0
 	gui.Enabled = false
+	gui.ResetOnSpawn = false -- PlayerGui drops resetting guis on every respawn; the kit keeps its labels for good
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.fromScale(1, 1)
 	label.BackgroundTransparency = 1
@@ -446,7 +447,10 @@ RunService.PreSimulation:Connect(function(dt: number)
 	local clockNow = os.clock()
 	-- the countdown shows whole seconds left (5, 4, … 1, 0 in the last second), red in the last two
 	local function showCountdown(label: TextLabel, left: number)
-		local gui = label.Parent :: BillboardGui
+		local gui = label.Parent :: BillboardGui?
+		if not gui then
+			return
+		end
 		gui.Enabled = left > 0
 		if left > 0 then
 			local text = tostring(math.floor(left))
