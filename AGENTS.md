@@ -120,7 +120,7 @@ src/
     FoodShopClient.client.luau        food stand panel (every pet with level, XP, XP to Lv 20; one feed button per food); test hook: FoodShopGui attribute Open
   StarterGui/
     CoinGui/CoinDisplayScript.client.luau        top-right coin counter (StudStyle wooden plate)
-    ScreenGui/TopLeftIcons/ButtonHandler.client.luau  icons Home (🏠 go to hub) / Skills (⚡) / Pets (🐶, cloned in code) / Settings / Admin, positioned in code in this order and styled in code with StudStyle (icons = bricks with a glyph socket, colours in `ICON_COLORS`; also the Skills / Settings / Admin panels and the ScorePanel status card as a wooden plate); slide-in panels (AdminConfig)
+    ScreenGui/TopLeftIcons/ButtonHandler.client.luau  icons Home (🏠 go to hub) / Skills (⚡) / Pets (🐶) / Settings / Admin: Studio-only placeholder TextButtons in `TopLeftIcons` (mixed mode: Studio holds the buttons with their emoji Text, code styles them; Edit mode shows the plain placeholders; the Pets button falls back to a clone of Skills if its placeholder is missing), positioned in code in this order and styled in code with StudStyle (icons = bricks with a glyph socket, colours in `ICON_COLORS`; also the Skills / Settings / Admin panels and the ScorePanel status card as a wooden plate); slide-in panels (AdminConfig)
     ScreenGui/SkillsPanel/TalentRows.client.luau  "Your skills" panel (⚡ button): talent rows built in code (StudStyle rows, Buy / MAX bricks)
     ScreenGui/AdminPanel/...                      RunSpeed (16↔64), DoubleJump (up to 5 air jumps), ScoreReset, AdminAddCoins.client.luau (+Coins button, built in code; also styles the panel's contents with StudStyle)
   Workspace/

@@ -30,12 +30,16 @@ local adminPanel = screenGui.Parent:WaitForChild("AdminPanel")
 local skillsPanel = screenGui.Parent:WaitForChild("SkillsPanel")
 local settingsPanel = screenGui.Parent:WaitForChild("SettingsPanel")
 
--- 🐶 Pets button: created here (a copy of the Skills button, so no Studio edit). The panel itself is built by
+-- 🐶 Pets button: a Studio placeholder like the other icons (mixed mode: Studio holds the buttons, this script styles
+-- them); a copy of the Skills button stands in if the placeholder is missing. The panel itself is built by
 -- PetsPanel.client.luau in its own ScreenGui "PetsGui" and opened through its SetOpen event / Open attribute.
-local petsButton = skillsButton:Clone()
-petsButton.Name = "PetsButton"
-petsButton.Text = "🐶"
-petsButton.Parent = screenGui
+local petsButton = screenGui:FindFirstChild("PetsButton")
+if not petsButton then
+	petsButton = skillsButton:Clone()
+	petsButton.Name = "PetsButton"
+	petsButton.Text = "🐶"
+	petsButton.Parent = screenGui
+end
 local petsGui = playerGui:WaitForChild("PetsGui", 10)
 local petsSetOpen = petsGui and petsGui:WaitForChild("SetOpen", 10)
 
