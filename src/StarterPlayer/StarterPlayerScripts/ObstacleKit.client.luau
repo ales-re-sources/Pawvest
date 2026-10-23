@@ -19,6 +19,8 @@
 --             default 0 = one kick, which the Humanoid's air braking stops within about 2 studs), AirCarry s (how long a jump off keeps following it), Carry = false (the
 --             character standing on it is not carried, e.g. a spinning plate you have to stay on by running against it).
 --   KitBeam   blinking kill beam: Period s, Duty (on share 0..1), Phase, Telegraph s before "on"; Kill defaults to true.
+--             OffTransparency / WarnTransparency / OnTransparency (defaults 1 / 0.8 / 0.15) change its look per state;
+--             with Kill = false it is a marker only (the Labyrinth's glow columns over its lava cells).
 --   KitKill   static kill part (S6.3, the Clocktower's gargoyles): touching it kills; its look is left alone (often an
 --             invisible hit box round a decoration).
 --   KitPlate  disappearing plate: Period, Duty (solid share), Phase, Telegraph s (flickers before it vanishes).
@@ -401,7 +403,9 @@ RunService.PreSimulation:Connect(function(dt: number)
 		)
 		if state ~= data.state then
 			data.state = state
-			part.Transparency = BEAM_TRANSPARENCY[state]
+			-- OffTransparency / WarnTransparency / OnTransparency override the default look per part
+			local name = if state == "on" then "OnTransparency" elseif state == "warning" then "WarnTransparency" else "OffTransparency"
+			part.Transparency = attr(part, name, BEAM_TRANSPARENCY[state])
 		end
 	end
 

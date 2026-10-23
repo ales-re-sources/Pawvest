@@ -681,6 +681,9 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
       out). Every layout's route touches 2-3 lanes.
     - *Lava:* six blinking floor tiles (`Lava_n`, `KitBeam`, period 4, on 40 %, warning 0.8 s, phases sixths apart, run-seeded) over a dark `LavaMark_n`, on cells the route uses in most layouts, none next to a guard lane (waiting for lava
       inside a lane got a bot killed), one at the switch room's east doorway.
+      *Glow columns (user, 2026-10-23: "corners where lava is not visible"):* the iso camera looks down at 60 degrees from the east, so a 16-high wall on that side of a cell hides about 9 of its 10 studs of floor (rays from the camera offset:
+      3 of the 6 tiles 0 % visible in one wall state). Every lava cell now has a `LavaGlow_n` over it: an 8.6 x 15.8 x 8.6 neon column up to the wall tops (`KitBeam`, `Kill = false`, the tile's timing; new kit attributes
+      `OffTransparency` 0.88 / `WarnTransparency` 0.7 / `OnTransparency` 0.5), whose top is 100 % visible for all six; checked in a playtest that it switches with its tile. The look itself is unchecked (captures render white).
     - *Coins:* easy `Stage9_3..5` in dead ends next to the routes ((13, 5), (11, 1), (8, 5)), risky `Stage9_6` / `_7` in dead ends off guard lane G4 ((14, 11), (10, 11)); `Stage9_8` moved with `T1`.
     - *Camera:* `Big_Camera` / `Big_Ghosts` cover the new maze, Distance 260 (was 230). `Big_Camera` also reaches over checkpoint `703` (x -782..-614; user, 2026-10-23: a respawn on `703` showed the normal camera
       and switched to iso one step later, which was confusing); checked: a respawn on `703` is in the iso view from its first frame.
