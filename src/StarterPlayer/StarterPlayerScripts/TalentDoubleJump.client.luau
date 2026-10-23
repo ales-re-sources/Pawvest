@@ -8,7 +8,7 @@ local UserInputService = game:GetService("UserInputService")
 
 local TalentConfig = require(ReplicatedStorage:WaitForChild("TalentConfig"))
 
-local MIN_AIR_JUMP_GAP = 0.25 -- seconds; ignores held-key repeats and the ground jump itself
+local MIN_AIR_JUMP_GAP = 0.12 -- seconds; ignores held-key repeats and the ground jump itself
 
 local player = Players.LocalPlayer
 local attribute = TalentConfig.AttributeName("DoubleJump")
