@@ -49,6 +49,11 @@ Rules:
 | S2 | Quick Respawn talent (Studio-checked: 3 / 1 / 0 s delays, fall reset, Home, Skills row) | ✔ | ✔ | – |
 | S3 | Obstacle kit + jump lab — S3.1 spike (GO decided 2026-10-21) and S3.2a / S3.2b (hazards, StageCamera; user's visual check done) done; S3.3a / b / c done (kit-local plates, zones, ghosts, templates, reach table, Stage 1 spinners on the kit; user's visual check of Stage 1 done 2026-10-21) | ✔ | ✔ | – |
 | S4 | World 1 complete (Island Hop, Blink) — done 2026-10-22: S4.0 courtyard + hub gate, S4.1 Island Hop, S4.2 Blink (user's visual checks) | ✔ (S4.0-S4.2) | ✔ (S4.0-S4.2) | – |
+| T1a | Telemetry core: run funnels, fails per segment / cause, quits and returns ([TELEMETRY.md](TELEMETRY.md)) — design agreed 2026-10-23 | – | – | – |
+| T1b | Telemetry: skills (purchases, arrivals without a talent, loadout per run) | – | – | – |
+| L1 | Localization infrastructure + HUD in Czech ([LOCALIZATION.md](LOCALIZATION.md)) — design agreed 2026-10-23 | – | – | – |
+| L2 | Localization: all client panels + config display names | – | – | – |
+| L3 | Localization: server-written + Studio-authored texts, overflow check | – | – | – |
 | M6a | First live test + World 1 balancing | – | – | – |
 | S5 | Worlds hub — done 2026-10-22: gates for Worlds 2-4 (coming soon, admins only), World 2 courtyard, signs, per-world stars boards (user's visual check) | ✔ | ✔ | – |
 | S6 | World 2 (stages 6–10) — S6.1 Double Up + Seesaw built and Studio-checked 2026-10-22 (awaits the user's visual check), S6.2 / S6.3 not started | ✔ (S6.1) | ✔ (S6.1) | – |
@@ -67,6 +72,10 @@ World 1 from real finish times. S5–S10 follow in order (each world needs its w
 S11 (bonus stages) can slot in after any world island exists (S5 or later). P3 (trading) comes after all 20 stages (user
 decision); it needs profile session locking (its first step). M7 is scoped after M6b. Nothing is live-validated yet: the
 open checks below belong to the first live test.
+
+Order addendum (2026-10-23, user decision): **T1a → T1b → L1 → L2 → L3**, next after the World 2 work in progress. Telemetry
+comes first because M6a needs it: data only accumulates once it is live, so T1a must ship with (or before) the first live
+test. Localization does not block the live test. L4 (more languages) is chosen later from the telemetry locale data.
 
 ## Done
 
@@ -463,6 +472,32 @@ A measured `T_base` for both new stages comes in M6a.
     controls disabled; `ChangeState(Jumping)` works.
   - *Argon note:* an edit to `ObstacleKit` (the button code) did not reach Studio although earlier edits of the same file did; `touch` did not help, a real content change did. After script edits, check the Studio source before a playtest.
 
+### T1a — Telemetry core (design: [TELEMETRY.md](TELEMETRY.md))
+- **Outputs:** `ServerScriptService/Telemetry.luau` (AnalyticsService only here); per-stage run funnel (start → checkpoints
+  → finish); progression start / complete / fail; `Fail` aggregated per (stage, segment, cause) with cause `fall`
+  (sea death **or** Quick Respawn fall reset) / `kill:<obstacle>` / `other`; `RunEnd` reasons; `Quit` + `Return` (profile
+  `LastQuit`, `PlayerProfile.BeforeSave`); `Session` (locale, platform); `TelemetryRemotes.Report` (client kill / fall /
+  platform, rate-limited); debug switch `TelemetryDebug`.
+- **Boundary:** hooks only (`PlayerTimerHandler`, `CheckpointTouchHandler`, `RespawnService`, kill-script variants,
+  `ObstacleKit`, `QuickRespawnClient`, `ResetTimer` callers); no gameplay change; no own backend.
+- **Acceptance checks:** TELEMETRY.md → Acceptance checks (T1a items); Live-validated only when every event type shows
+  in the Creator Dashboard after publishing.
+
+### T1b — Telemetry: skills
+- **Outputs:** economy event + `TalentBought` (talent, star bucket, last stage) on every purchase; `ArrivalWithoutTalent`
+  from the `StageArrival` check; loadout (`R1 D2 J0 Q2`) on the progression events.
+- **Acceptance checks:** TELEMETRY.md → Acceptance checks (T1b items).
+
+### L1–L3 — Localization (design: [LOCALIZATION.md](LOCALIZATION.md))
+English default + Czech; language from `player.LocaleId`, override in Settings (profile `Language`, attribute
+`Language`); Claude-written string tables in `ReplicatedStorage/Strings`; server texts via `LocKey` attributes rendered by
+`LocalizedText.client`; Roblox auto-translation off.
+- **L1:** infrastructure + Settings row + HUD essentials (ScorePanel, timer, results popup, gate prompts, warnings).
+- **L2:** every client panel + config display names + `MedalText`.
+- **L3:** server-written and Studio-authored texts, overflow check in Czech.
+- **L4 (later):** more languages chosen from the telemetry `Session` locale data.
+- **Acceptance checks:** LOCALIZATION.md → Acceptance checks, for the milestone's scope.
+
 ### M6a — First live test + World 1 balancing
 The first live test (open checks below) with 6 stages, then M6 for World 1 (scope in "M6 — Balancing pass" below).
 
@@ -491,7 +526,7 @@ S7 first) and the `StageConfig` entry.
   crash right after the trade); a profile open on server A cannot be loaded for writing on server B.
 
 ### M6 — Balancing pass (run as M6a for World 1, M6b for all stages)
-- **Outputs:** measured `T_base` per stage (H2 made every course 17–53 studs longer); finish-time telemetry; tuned numbers in GDD + `StageConfig` / `PetConfig` /
+- **Outputs:** measured `T_base` per stage (H2 made every course 17–53 studs longer); finish-time telemetry (T1a / T1b); tuned numbers in GDD + `StageConfig` / `PetConfig` /
   `GardenConfig`.
 - **Known items:** the repeat-reward floor (Tutorial loop ~1 400 Coins / h), pet bonus values, slot prices, the Basic egg's
   5-minute hatch time, garden production vs stage income.
