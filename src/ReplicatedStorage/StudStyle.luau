@@ -185,6 +185,7 @@ function StudStyle.Brick(button: GuiButton, options: { studs: number?, socket: b
 		glyph.TextSize = tb.TextSize
 		glyph.TextScaled = tb.TextScaled
 		glyph.TextWrapped = tb.TextWrapped
+		glyph.RichText = tb.RichText -- e.g. a smaller second line (<font size>)
 		glyph.TextColor3 = Color3.new(1, 1, 1)
 		glyph.TextStrokeTransparency = if opts.socket then 1 else 0.3
 		glyph.ZIndex = 2
