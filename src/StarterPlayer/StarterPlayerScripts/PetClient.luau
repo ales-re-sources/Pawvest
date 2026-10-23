@@ -35,7 +35,8 @@ export type OwnedPet = {
 	sellValue: number,
 }
 
--- Inventory as a list: equipped first, then rarest, then highest level, then oldest.
+-- Inventory as a list in a fixed order: rarest, then highest level, then by kind name, then oldest. Equipping, unequipping
+-- or penning a pet never moves it (its row just changes its marks); only a hatch, a sale or a level-up reorders.
 function PetClient.Inventory(): { OwnedPet }
 	local state = PetClient.State
 	local list = {}
@@ -60,17 +61,14 @@ function PetClient.Inventory(): { OwnedPet }
 		end
 	end
 	table.sort(list, function(a, b)
-		if a.equipped ~= b.equipped then
-			return a.equipped
-		end
-		if (a.penned ~= nil) ~= (b.penned ~= nil) then
-			return a.penned ~= nil
-		end
 		if a.rarity.order ~= b.rarity.order then
 			return a.rarity.order > b.rarity.order
 		end
 		if a.level ~= b.level then
 			return a.level > b.level
+		end
+		if a.kind ~= b.kind then
+			return a.kind < b.kind
 		end
 		return (tonumber(a.uid) or 0) < (tonumber(b.uid) or 0)
 	end)
