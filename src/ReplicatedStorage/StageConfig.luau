@@ -160,7 +160,7 @@ StageConfig.Stages = {
 		order = 9,
 		world = 2,
 		requires = { { id = "DoubleJump", level = 1 } },
-		tBase = 140, -- 105 until the big maze grew to 15 x 15 with the exit switch, guards and lava (2026-10-23; provisional)
+		tBase = 100, -- 105 in S6.2, 140 when the big maze grew to 15 x 15 (switch, guards, lava), 100 after the user's first run on it (106 s got Gold; Gold < 80 s now)
 		tiers = StageConfig.DefaultTiers,
 		unlock = { stage = "Stage8", medal = "Bronze" },
 		unlockPrice = 3500,

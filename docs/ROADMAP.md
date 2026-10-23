@@ -448,7 +448,7 @@ A measured `T_base` for both new stages comes in M6a.
     pet XP arrived); no script errors.
   - *Not checked:* the look of the mazes and the iso view (the viewport renders white here), how readable the shifting walls are for a person, the real T_base (105 provisional).
   - *Big maze reworked (user, 2026-10-23, "harder and bigger"; was the open point from 2026-10-22):* 15 x 15 cells, an exit door opened by a latching switch in a room at the far edge (checkpoint `705`), four patrolling guards in
-    fixed lanes, six blinking lava cells, walls shifting every 5 s (36 shifting walls, 4 layouts); kit: `KitButton` attribute `Latch`; `Stage9` T_base 105 -> 140 (provisional). Details and checks: STAGES §7.9. Implemented, Studio-validated
+    fixed lanes, six blinking lava cells, walls shifting every 5 s (36 shifting walls, 4 layouts); kit: `KitButton` attribute `Latch`; `Stage9` T_base 105 -> 140 -> 100 (after the user's first run: Gold < 80 s; old-maze records removed). Later the same day: camera zone over `703`, glow columns over the lava cells; the user: "maze looks good now". Details and checks: STAGES §7.9. Implemented, Studio-validated
     in parts (hazards, latch, solvability, exit); open: the user's run and look, a full timed run, the old maze copy `ServerStorage.Stage9_OldBigMaze` to delete after the user's check.
 - **S6.3 Clocktower (design check done 2026-10-23; decisions: a tower climb, one 1 s clock tick, pressure doors).** Gate in the south wall (finale slot), `StageConfig` `Stage10` (T_base 135, factor 3.0, Bronze on Stage 9 or 4 000),
   coins `Stage10_1..8`, checkpoints `801`-`806`, `SoonGate10` replaced; kit: Spin `Tick` / `TickMove` (`KitMath.Ticked`), `KitButton` / `KitDoor`; course as in STAGES §7.9.

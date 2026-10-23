@@ -597,7 +597,7 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   block (the key arena holds 301-303): Stage 6 = `401`-, Stage 7 = `501`-, Stage 8 `601`-, Stage 9 `701`-, Stage 10 `801`-.
 - **StageConfig entries (as GDD §3 / §5):** `world = 2`, `requires = { { id = "DoubleJump", level = 1 } }`, factor `0.5 + 0.25 x n`, `tBase` provisional (middle of
   §4's range, M6b measures): Stage 6 (Double Up) 90 s, factor 2.0, unlock 10 of 15 stars in World 1 or 2 500; Stage 7 (Seesaw) 100 s, 2.25, Bronze on Stage 6 or 3 000;
-  Stage 8 (Turntable) 105 s, 2.5, 3 000; Stage 9 (Labyrinth) 105 s (140 since the big maze rework), 2.75, 3 500; Stage 10 (Clocktower) 135 s, 3.0, 4 000.
+  Stage 8 (Turntable) 105 s, 2.5, 3 000; Stage 9 (Labyrinth) 105 s (140 with the big maze rework, 100 after the user's first run on it), 2.75, 3 500; Stage 10 (Clocktower) 135 s, 3.0, 4 000.
 - **World 2 opens with stage 6** (user decision, 2026-10-22; the recommendation was to stay shut until S6.3): when Stage 6 enters `StageConfig` the world's `soon`
   flag is removed, so the hub gate follows the normal world rule (open when one of the world's stages is open: 10 of 15 stars in World 1, or buy Stage 6 for
   2 500 at the gate), the stars board and the gate's x / 15 face go live, and players meet a world with only the stages built so far (the later gates in the
@@ -691,6 +691,9 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
       safe; the switch latches the door open and it stays open after a death (respawn on `705`); exit door -> `704` -> Double Jump to `E` works; no script errors. An offline bot (16 studs/s, replanning on the walls it sees, no hazards)
       crosses entry -> switch -> exit in 48.75 s from every phase of the cycle (old big maze 18.5-20 s). The live client bot reached the switch but its guard avoidance was too timid to finish; a human run is still to come.
     - *Not checked:* the look in the iso view, a full timed run, human difficulty of the guard lanes and lava, the real T_base (140 provisional).
+    - *Medals tightened (user, 2026-10-23: "the maze looks good now", a first run of 1:46 got Gold undeservedly):* T_base 140 -> **100** (Gold < 80 s, Silver < 110 s, Bronze < 160 s), so a first run is Silver and Gold needs a learned
+      route (estimate for a clean run with Run Speed 3: about 70-75 s). The two old-maze records (Lekzdrh 42.3 s, AhojRupert 70.6 s) were removed from `leaderboard_Stage9` and from both profiles' `BestTimes.Stage9` (medals kept;
+      snapshots in `TestSnapshots`: `leaderboard_Stage9_before_rework_cleanup`, `profile_<id>_s9_cleanup`).
 - **S6.3 design check (2026-10-23):** the Clocktower is **a climb round a tower**, everything moves on **one 1 s clock tick** (Blink's metronome sound at 60 BPM, every hazard run-seeded), and it gets **pressure doors** (new kit
   `KitButton` / `KitDoor`). Kit additions: `Tick` / `TickMove` on Spin movers (a clockwork step of Speed x Tick degrees per tick, `KitMath.Ticked`), `KitButton` (Group, Time) opening every `KitDoor` of its Group for Time s, kit-local.
 - **S6.3 Stage 10 Clocktower as built** (key `Stage10`, the south gate (x -375, z 621.7), checkpoint `801` at z 628 facing +z, an `Entry` slab, then the tower): a 40 x 40 stone `Tower.Core` centred on (-347, 686) up to h 120 (the roof) with a 20 x 20
