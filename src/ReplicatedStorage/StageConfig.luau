@@ -173,7 +173,7 @@ StageConfig.Stages = {
 		order = 10,
 		world = 2,
 		requires = { { id = "DoubleJump", level = 1 } },
-		tBase = 90, -- 135 in S6.3: a first run with several deaths still got Silver, and AhojRupert's best is 65.9 s (Gold now < 72 s)
+		tBase = 75, -- 135 in S6.3, 90 after the first runs, 75 when the user asked for more (Gold < 60 s; AhojRupert's best 65.9 s is Silver)
 		tiers = StageConfig.DefaultTiers,
 		unlock = { stage = "Stage9", medal = "Bronze" },
 		unlockPrice = 4000,
