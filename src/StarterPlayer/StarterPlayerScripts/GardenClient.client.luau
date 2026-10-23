@@ -1,5 +1,6 @@
 -- Garden client (docs/GDD.md §7.6): pen prompts on the player's own plot, the pen panel (unlock a pen, place a pet, remove it),
--- the "while you were away" popup after the join payout and a small toast for online payouts.
+-- the "welcome back" announcement after the join payout (top centre, fades out after 5 s, nothing to close) and a small
+-- toast for online payouts.
 -- Display only: a click just names a pen and a pet; GardenService validates ownership, price and time. The prompts of other
 -- players' plots are switched off locally (the server rejects them anyway). The GUI is built here (no Studio GUI).
 
@@ -172,7 +173,7 @@ local panel = create("Frame", {
 	footerLabel,
 })
 
--- Toast and "while you were away" popup
+-- Toast and "welcome back" announcement
 local toast = label("Toast", {
 	AnchorPoint = Vector2.new(0.5, 0),
 	Position = UDim2.new(0.5, 0, 0, 70),
@@ -186,42 +187,45 @@ local toast = label("Toast", {
 })
 create("UICorner", { CornerRadius = UDim.new(0, 8) }).Parent = toast
 
+-- "Welcome back" announcement: top centre, nothing to click, fades out by itself (CanvasGroup fades text and background)
 local awayTitle = label("Title", {
-	Position = UDim2.new(0, 12, 0, 10),
-	Size = UDim2.new(1, -24, 0, 28),
-	TextSize = 22,
-	Text = "Welcome back!",
+	Size = UDim2.new(1, 0, 0, 24),
+	TextSize = 20,
+	TextXAlignment = Enum.TextXAlignment.Center,
+	Text = "🌱 Welcome back!",
+	LayoutOrder = 1,
 })
 local awayText = label("Text", {
-	Position = UDim2.new(0, 12, 0, 46),
-	Size = UDim2.new(1, -24, 0, 80),
+	Size = UDim2.new(1, 0, 0, 0),
+	AutomaticSize = Enum.AutomaticSize.Y,
 	Font = Enum.Font.Gotham,
 	TextSize = 16,
 	TextWrapped = true,
-	TextYAlignment = Enum.TextYAlignment.Top,
+	TextXAlignment = Enum.TextXAlignment.Center,
 	RichText = true,
+	LayoutOrder = 2,
 })
-local awayButton = button("Ok", {
-	AnchorPoint = Vector2.new(0.5, 1),
-	Position = UDim2.new(0.5, 0, 1, -12),
-	Size = UDim2.fromOffset(120, 34),
-	BackgroundColor3 = COLOR_BUY,
-	TextSize = 16,
-	Text = "Collect",
-})
-local awayPanel = create("Frame", {
+local awayPanel = create("CanvasGroup", {
 	Name = "Away",
-	AnchorPoint = Vector2.new(0.5, 0.5),
-	Position = UDim2.fromScale(0.5, 0.45),
-	Size = UDim2.fromOffset(380, 210),
+	AnchorPoint = Vector2.new(0.5, 0),
+	Position = UDim2.new(0.5, 0, 0, 12),
+	Size = UDim2.fromOffset(420, 0),
+	AutomaticSize = Enum.AutomaticSize.Y,
 	BackgroundColor3 = COLOR_PANEL,
+	BackgroundTransparency = 0.15,
+	GroupTransparency = 1,
 	Visible = false,
 }, {
 	create("UICorner", { CornerRadius = UDim.new(0, 8) }),
-	create("UIStroke", { Color = Color3.fromRGB(80, 80, 80), Thickness = 1 }),
+	create("UIPadding", {
+		PaddingTop = UDim.new(0, 8),
+		PaddingBottom = UDim.new(0, 10),
+		PaddingLeft = UDim.new(0, 12),
+		PaddingRight = UDim.new(0, 12),
+	}),
+	create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 4) }),
 	awayTitle,
 	awayText,
-	awayButton,
 })
 
 local screenGui = create("ScreenGui", {
@@ -443,6 +447,25 @@ end)
 
 local shownAway = {} -- [payout id] = true: the server may send the join payout again on RequestState
 local toastToken = 0
+local AWAY_SHOW_SECONDS = 5 -- the announcement stays this long, then fades out
+local AWAY_FADE_IN = TweenInfo.new(0.3)
+local AWAY_FADE_OUT = TweenInfo.new(1)
+
+local function showAway(text: string)
+	awayText.Text = text
+	awayPanel.GroupTransparency = 1
+	awayPanel.Visible = true
+	TweenService:Create(awayPanel, AWAY_FADE_IN, { GroupTransparency = 0 }):Play()
+	task.delay(AWAY_SHOW_SECONDS, function()
+		local fade = TweenService:Create(awayPanel, AWAY_FADE_OUT, { GroupTransparency = 1 })
+		fade.Completed:Connect(function(state)
+			if state == Enum.PlaybackState.Completed then
+				awayPanel.Visible = false
+			end
+		end)
+		fade:Play()
+	end)
+end
 
 local function showToast(text: string)
 	toastToken += 1
@@ -476,14 +499,10 @@ remotes:WaitForChild("Payout").OnClientEvent:Connect(function(info)
 		if info.capped then
 			text ..= string.format("\nProduction while away is capped at %d hours.", GardenConfig.OfflineCapSeconds // 3600)
 		end
-		awayText.Text = text
-		awayPanel.Visible = true
+		showAway(text)
 	else
 		showToast(string.format("🌱 Garden +%s Coins", PetClient.Number(info.paid)))
 	end
-end)
-awayButton.Activated:Connect(function()
-	awayPanel.Visible = false
 end)
 
 -- Pen prompts ---------------------------------------------------------------------------------------------------------------

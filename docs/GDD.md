@@ -449,7 +449,7 @@ collecting and caring over obby runs.
 
   Level 1 → 20 (~6 700 XP) costs about 10 000 Coins in Feasts.
 - **Offline income.** On join, production since the last visit is paid, capped at 8 hours, and shown in a
-  "while you were away" popup.
+  "welcome back" announcement at the top of the screen that fades out after 5 seconds (nothing to close).
 
 ### 7.7 Trading (P3)
 Players on the same server can trade pets and Coins. Both players confirm the final offer; the server swaps

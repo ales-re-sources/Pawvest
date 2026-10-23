@@ -429,7 +429,7 @@ requestStateEvent.OnServerEvent:Connect(function(player)
 	end
 end)
 
--- Join: pays the production since the last visit and, for a real absence, queues the "while you were away" popup.
+-- Join: pays the production since the last visit and, for a real absence, queues the "welcome back" announcement.
 local function setup(player: Player)
 	local profile = PlayerProfile.WaitFor(player)
 	if not profile then

@@ -26,7 +26,7 @@ GardenConfig.BaseRates = { Common = 10, Uncommon = 20, Rare = 40, Epic = 70, Leg
 GardenConfig.LevelRate = 40 -- permille of the base rate per level above 1 (Lv 20 = ×1.76)
 GardenConfig.OfflineCapSeconds = 8 * 3600 -- production counted at most this long since LastSeen
 GardenConfig.PayoutSeconds = 300 -- online payout interval
-GardenConfig.MinAwaySeconds = 60 -- shorter absences do not open the "while you were away" popup
+GardenConfig.MinAwaySeconds = 60 -- shorter absences do not show the "welcome back" announcement
 GardenConfig.PenNamePrefix = "Pen_" -- Workspace.Garden.Plots.Plot_NN.Pen_1..6 (Studio-only models)
 
 local UNITS_PER_COIN_SECOND = 3600 * 1000
