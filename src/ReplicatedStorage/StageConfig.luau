@@ -187,6 +187,32 @@ StageConfig.Stages = {
 		unlockPrice = 4000,
 		rewardFactor = 3.0,
 	},
+	{
+		key = "Stage11", -- Triple Peaks (World 3, docs/STAGES.md §7.11): Triple Jump ledges, a lift, a crusher ridge
+		displayName = "Stage 11",
+		folder = "Stage11",
+		order = 11,
+		world = 3,
+		requires = { { id = "DoubleJump", level = 2 } }, -- Triple Jump
+		tBase = 110, -- seconds; provisional until measured in M6b
+		tiers = StageConfig.DefaultTiers,
+		unlock = { world = 2, stars = 10 }, -- the world opener: 10 of the 15 stars of World 2
+		unlockPrice = 4000,
+		rewardFactor = 3.25,
+	},
+	{
+		key = "Stage12", -- Ice Rink: kit ice (KitIce), a crosswind on ice, a pressure door, Triple ledges onto ice
+		displayName = "Stage 12",
+		folder = "Stage12",
+		order = 12,
+		world = 3,
+		requires = { { id = "DoubleJump", level = 2 } },
+		tBase = 120,
+		tiers = StageConfig.DefaultTiers,
+		unlock = { stage = "Stage11", medal = "Bronze" },
+		unlockPrice = 4500,
+		rewardFactor = 3.5,
+	},
 }
 
 -- Worlds (docs/STAGES.md §7.1): `stage.world` 1..n; a world is a courtyard in Workspace.<folder> (plaza, wall, return portal)
@@ -198,8 +224,7 @@ StageConfig.Stages = {
 StageConfig.Worlds = {
 	[1] = { name = "World 1", gate = "GateWorld1", folder = "World1", spawn = "Spawn" },
 	[2] = { name = "World 2", gate = "GateWorld2", folder = "World2", spawn = "Spawn", stageCount = 5 },
-	[3] = { name = "World 3", gate = "GateWorld3", folder = "World3", spawn = "Spawn", soon = true, stageCount = 5,
-		unlock = { world = 2, stars = 10 }, unlockPrice = 4000 },
+	[3] = { name = "World 3", gate = "GateWorld3", folder = "World3", spawn = "Spawn", stageCount = 5 },
 	[4] = { name = "World 4", gate = "GateWorld4", folder = "World4", spawn = "Spawn", soon = true, stageCount = 5,
 		unlock = { world = 3, stars = 10 }, unlockPrice = 6000 },
 }

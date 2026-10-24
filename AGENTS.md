@@ -55,7 +55,7 @@ src/StarterPlayer/StarterPlayerScripts/  client: obstacle kit (ObstacleKit, KitZ
                               checkpoints, gates / portals, pets (PetClient, PetFollow, PetsPanel), garden panels, settings
 src/StarterGui/               CoinGui, ScreenGui (TopLeftIcons/ButtonHandler, SkillsPanel, AdminPanel)
 src/Workspace/Handlers/       CheckpointTouchHandler, PlayerTimerHandler (required by every stage script)
-src/Workspace/                StartLocation (hub), Tutorial, World1 (Stage1-5), World2 (Stage6-10), KeyArena, Garden,
+src/Workspace/                StartLocation (hub), Tutorial, World1 (Stage1-5), World2 (Stage6-10), World3 (Stage11-12), KeyArena, Garden,
                               DebugBaseplate (the sea kill brick); scene content of these is Studio-only
 ```
 

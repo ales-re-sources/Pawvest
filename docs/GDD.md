@@ -48,8 +48,8 @@ they were `IslandHop`, `"Stage 1"`, `Blink`, `"Stage 2"`, `"Stage 3"`, `"Stage 4
 | 8 | 2 | Turntable | `Turntable` | P (S6) | Double Jump | Bronze on 7 **or** 3 000 |
 | 9 | 2 | Labyrinth ★ iso maze | `Labyrinth` | P (S6) | Double Jump | Bronze on 8 **or** 3 500 |
 | 10 | 2 | Clocktower, finale | `Clocktower` | P (S6) | Double Jump | Bronze on 9 **or** 4 000 |
-| 11 | 3 | Triple Peaks | `TriplePeaks` | P (S8) | Triple Jump | World gate ² **or** 4 000 |
-| 12 | 3 | Ice Rink | `IceRink` | P (S8) | Triple Jump | Bronze on 11 **or** 4 500 |
+| 11 | 3 | Triple Peaks | `Stage11` | yes (S8.1) | Triple Jump | World gate ² **or** 4 000 |
+| 12 | 3 | Ice Rink | `Stage12` | yes (S8.1) | Triple Jump | Bronze on 11 **or** 4 500 |
 | 13 | 3 | Dash Bridge | `DashBridge` | P (S8) | Triple Jump, Dash | Bronze on 12 **or** 5 000 |
 | 14 | 3 | Laser Lab ★ side-scroller | `LaserLab` | P (S8) | Triple Jump, Dash | Bronze on 13 **or** 5 500 |
 | 15 | 3 | Rising Tide, finale | `RisingTide` | P (S8) | Triple Jump, Dash | Bronze on 14 **or** 5 500 |

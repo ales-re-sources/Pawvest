@@ -100,6 +100,22 @@ ChallengeCoinConfig.Coins = {
 	{ id = "Stage10_6", stage = "Stage10", tier = "Risky" },
 	{ id = "Stage10_7", stage = "Stage10", tier = "Risky" },
 	{ id = "Stage10_8", stage = "Stage10", tier = "Talent" },
+	{ id = "Stage11_1", stage = "Stage11", tier = "Easy" },
+	{ id = "Stage11_2", stage = "Stage11", tier = "Easy" },
+	{ id = "Stage11_3", stage = "Stage11", tier = "Easy" },
+	{ id = "Stage11_4", stage = "Stage11", tier = "Easy" },
+	{ id = "Stage11_5", stage = "Stage11", tier = "Easy" },
+	{ id = "Stage11_6", stage = "Stage11", tier = "Risky" },
+	{ id = "Stage11_7", stage = "Stage11", tier = "Risky" },
+	{ id = "Stage11_8", stage = "Stage11", tier = "Talent" }, -- 24.5 studs out from the summit: Triple Jump plus Run Speed 4-5, or Dash
+	{ id = "Stage12_1", stage = "Stage12", tier = "Easy" },
+	{ id = "Stage12_2", stage = "Stage12", tier = "Easy" },
+	{ id = "Stage12_3", stage = "Stage12", tier = "Easy" },
+	{ id = "Stage12_4", stage = "Stage12", tier = "Easy" },
+	{ id = "Stage12_5", stage = "Stage12", tier = "Easy" },
+	{ id = "Stage12_6", stage = "Stage12", tier = "Risky" },
+	{ id = "Stage12_7", stage = "Stage12", tier = "Risky" },
+	{ id = "Stage12_8", stage = "Stage12", tier = "Talent" }, -- beside the last ice ledge, like Stage11_8
 }
 
 ChallengeCoinConfig.ById = {}

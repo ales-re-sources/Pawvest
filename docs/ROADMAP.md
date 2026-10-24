@@ -59,7 +59,7 @@ Rules:
 | S5 | Worlds hub — done 2026-10-22: gates for Worlds 2-4 (coming soon, admins only), World 2 courtyard, signs, per-world stars boards (user's visual check) | ✔ | ✔ | – |
 | S6 | World 2 (stages 6–10) — S6.1 Double Up + Seesaw built and Studio-checked 2026-10-22 (awaits the user's visual check), S6.2 / S6.3 not started | ✔ (S6.1) | ✔ (S6.1) | – |
 | S7 | Talents: Triple Jump + Dash (+ World 3 courtyard) — done 2026-10-24: talents, Q / gamepad / touch button, reach table, World 3 courtyard east of the hub (awaits the user's visual check and a real-device touch check) | ✔ | ✔ | – |
-| S8 | World 3 (stages 11–15) | – | – | – |
+| S8 | World 3 (stages 11–15) — S8.1 Triple Peaks + Ice Rink built and Studio-checked 2026-10-24 (kit ice, World 3 open; awaits the user's visual check), S8.2 / S8.3 not started | ✔ (S8.1) | ✔ (S8.1) | – |
 | S9 | Talents: Wall Jump + Glide | – | – | – |
 | S10 | World 4 (stages 16–20) | – | – | – |
 | M6b | Final balancing (all stages) | – | – | – |
@@ -488,6 +488,16 @@ A measured `T_base` for both new stages comes in M6a.
   and back through the return gate. The world board localizes. No errors. Reach table in STAGES §1.0.
   *Not checked:* the touch button on a real phone (the placement is ContextActionService's default beside Jump), a normal player at the World 3 gate (code
   unchanged since S5), the trail's look.
+
+### S8 — World 3 (design: STAGES §7.11 for S8.1)
+- **S8.1 outputs:** `Workspace.World3.Stage11` (Triple Peaks: Triple ledges, a lift, a crusher ridge) and `Stage12` (Ice Rink: ice, crosswind, a pressure door,
+  ledges onto ice), `StageConfig` entries (`requires` Triple Jump; World 3 opens with Stage 11: `Worlds[3].soon` removed), 16 challenge coins, the kit's
+  `KitIce` (ObstacleKit), closed `SoonGate13..15` doors, the `World3East` lane divider.
+- **Acceptance checks:** a baseline Triple Jump lands every Triple ledge and a maxed Double Jump (Run Speed 5 + Jump Height 3) does not; ice keeps momentum and
+  slides you off a plate you stop on; the wind beam needs counter-steering; the door stays open long enough for a run across the ice track; the crushers kill and
+  their gaps are safe; a run starts at the gate, every checkpoint fires, the finish ends it; World 3's hub gate follows the world rule (10 of 15 World 2 stars or
+  buy Stage 11).
+- *Studio check (2026-10-24):* see STAGES §7.11 → Checks. *Not checked:* the look, a human run / `T_base`, coin pickups, a normal player at the World 3 hub gate.
 
 ### T1a — Telemetry core (design: [TELEMETRY.md](TELEMETRY.md))
 - **Outputs:** `ServerScriptService/Telemetry.luau` (AnalyticsService only here); per-stage run funnel (start → checkpoints

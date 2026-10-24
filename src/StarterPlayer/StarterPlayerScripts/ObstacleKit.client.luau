@@ -40,6 +40,10 @@
 --             left floats over the button and over the door's closed position. Latch = true on a button (the Labyrinth's
 --             exit switch) keeps its group open for the rest of the run instead, with no countdown and also after a death;
 --             the start or end of a run closes it again.
+--   KitIce    ice floor (S8.1, the Ice Rink): while the character stands on it, the kit drives its horizontal velocity: toward
+--             the input direction x WalkSpeed at Accel studs/s² (default 14), coasting without input and slowing at Brake
+--             studs/s² (default 5). It starts from the character's real velocity every frame, so a wall, wind or a push
+--             still count. In the air the Humanoid steers again as usual.
 --   RunSeeded  attribute on any timed part (mover, beam, plate): it runs on time since that player's stage timer started
 --             (StageTimerUpdate) instead of server time, so every run sees the same sequence; set Phase so that t = 0 is safe.
 --   KitTilt   hinge plate (local X axis): the plate tips toward the side the player stands on, a spring pulls it back;
@@ -85,6 +89,7 @@ local buttons = {} -- [part] = { color }
 local doors = {} -- [part] = { transparency, look }
 local doorOpenUntil = {} -- [group] = os.clock() when that group's doors close again
 local latched = {} -- [group] = true: a Latch button of that group was pressed in this run
+local ices = {} -- [part] = true
 local BUTTON_ON_COLOR = Color3.fromRGB(90, 230, 120)
 local runStart: number? = nil -- server time the player's current run started (StageTimerUpdate)
 local timeBaseChanged = false -- a run started or ended: run-seeded movers jump to their new time, nobody is carried by it
@@ -272,6 +277,11 @@ track("KitKill", function(part)
 		killParts[part] = true
 	end
 end, killParts)
+track("KitIce", function(part)
+	if part:IsA("BasePart") then
+		ices[part] = true
+	end
+end, ices)
 
 -- the player's run: StageTimerUpdate (elapsed >= 0, stageKey) while it runs, (-1, ...) when it ends
 ReplicatedStorage:WaitForChild("StageTimerUpdate").OnClientEvent:Connect(function(elapsed: number)
@@ -351,6 +361,7 @@ local carriedUntil = 0
 local wasCarried = false
 local carriedPart = nil -- the mover the character was last carried by
 local airMover = nil -- mover data the character just jumped off, followed in the air until airUntil
+local iceDrive: LinearVelocity? = nil -- the root's ice drive (KitIce), created on the first ice floor of a character
 local airUntil = 0
 local standSample = nil -- { part, local position, since }
 local lastSwitch = nil -- the colour switch the character stood on last frame (a switch fires once per step-on)
@@ -495,7 +506,7 @@ RunService.PreSimulation:Connect(function(dt: number)
 		local depth = if hit then root.Position.Y - hit.Position.Y else 0
 		local instance = hit and depth >= MIN_FLOOR_DEPTH and depth <= MAX_FLOOR_DEPTH and hit.Instance
 		-- a kill hazard is never a floor (a sweeper bar at shin height would otherwise carry the character along with it)
-		if instance and (movers[instance] or tilts[instance] or crumbles[instance] or switches[instance] or buttons[instance]) and not attr(instance, "Kill", false) then
+		if instance and (movers[instance] or tilts[instance] or crumbles[instance] or switches[instance] or buttons[instance] or ices[instance]) and not attr(instance, "Kill", false) then
 			standing = instance
 		end
 	end
@@ -691,6 +702,44 @@ RunService.PreSimulation:Connect(function(dt: number)
 		else
 			airMover = nil
 		end
+	end
+
+	-- ice: the Humanoid walks at full speed on any floor whatever its friction, so on a KitIce part a plane LinearVelocity
+	-- on the root takes over the horizontal motion (vertical stays free for jumps and falls)
+	local onIce = alive and grounded and standing ~= nil and ices[standing] ~= nil
+	if onIce then
+		local drive = iceDrive
+		if not drive or drive.Parent ~= root then
+			local attachment = Instance.new("Attachment")
+			attachment.Name = "KitIceAttachment"
+			attachment.Parent = root
+			drive = Instance.new("LinearVelocity")
+			drive.Name = "KitIceDrive"
+			drive.Attachment0 = attachment
+			drive.RelativeTo = Enum.ActuatorRelativeTo.World
+			drive.VelocityConstraintMode = Enum.VelocityConstraintMode.Plane
+			drive.PrimaryTangentAxis = Vector3.xAxis
+			drive.SecondaryTangentAxis = Vector3.zAxis
+			drive.Parent = root
+			iceDrive = drive
+		end
+		local velocity = root.AssemblyLinearVelocity
+		local flat = Vector3.new(velocity.X, 0, velocity.Z)
+		local wanted = humanoid.MoveDirection * humanoid.WalkSpeed
+		if wanted.Magnitude > 0.01 then
+			local change = wanted - flat
+			local step = attr(standing, "Accel", 14) * dt
+			flat = if change.Magnitude <= step then wanted else flat + change.Unit * step
+		else
+			local speed = flat.Magnitude
+			flat = if speed > 0.01 then flat * (math.max(speed - attr(standing, "Brake", 5) * dt, 0) / speed) else Vector3.zero
+		end
+		-- enough force for the drive, not so much that it shoves through walls or other characters
+		drive.MaxForce = root.AssemblyMass * 300
+		drive.PlaneVelocity = Vector2.new(flat.X, flat.Z)
+		drive.Enabled = true
+	elseif iceDrive and iceDrive.Enabled then
+		iceDrive.Enabled = false
 	end
 
 	-- diagnostics: how far the character drifts from its spot on the mover while standing still

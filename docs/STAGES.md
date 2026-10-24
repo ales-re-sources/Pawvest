@@ -750,6 +750,61 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   west down to x ~ -800, clear of KitLab (x 447+, z -500..-190), the hub (x -1214..-1038) and the garden). The kill floor already covers it. Scripts:
   `World3/ReturnGate` and `World3/WorldStarsBoard` copied on disk from World 2. `Worlds[3].soon` stays true (S8 flips it with the stages): admins only.
 
+### 7.11 S8.1 Triple Peaks + Ice Rink (design check 2026-10-24; decisions with the user)
+- **Slots:** World 3 is World 2 moved by (+225, 0, -1150), so the gates sit at World 2's positions moved the same way: stage 11 = east near gate
+  (x -93.3, z -645, course runs east, band z -678..-615), stage 12 = east far gate (x -93.3, z -585, east, band z -609..-546); the sea east of the
+  courtyard is empty up to KitLab (x 447+, z -500 and north), so a course may run to x ~ 430. Gate / board / `Arrival` / finish / checkpoints are clones of
+  Stage 6's / Stage 7's moved by (+225, 0, -1150). The other three openings get closed `SoonGate13..15` doors like World 2 had.
+- **Keys and folders:** `Stage11` / `Stage12` under `Workspace.World3`; checkpoint blocks `901`- and `1001`-.
+- **StageConfig:** `world = 3`, `requires = { { id = "DoubleJump", level = 2 } }` (Triple Jump); Stage 11 `tBase` 110, factor 3.25, unlock 10 of 15 stars in
+  World 2 or 4 000; Stage 12 `tBase` 120, factor 3.5, Bronze on Stage 11 or 4 500 (GDD §3 / §5; provisional, M6b measures).
+- **World 3 opens with stage 11** (user decision, as World 2 did): `Worlds[3].soon` is removed when Stage 11 enters `StageConfig`.
+- **Reach rules for Triple Jump stages** (§1.0, measured again in the bot tests of S8.1): the gate is the **ledge height**, not the gap (a Double Jump with
+  Run Speed 5 + Jump Height 3 reaches 21.6 flat, more than a baseline Triple Jump's 21.1, but rises only 18.0 against 21.8). Ledges between the best Double Jump
+  and the baseline Triple Jump, gaps a baseline Triple Jump crosses with margin.
+- **Stage 11 Triple Peaks** (signature: Triple Jump towers; also elevators and crushers): warm-up on Double Jump ledges, a first Triple ledge over a safe floor,
+  peaks climbed by Triple ledges, kit lifts between peaks (jump off at the top onto the next ledge), a ridge under **crushers** (kit `Piston` pointing down with
+  `Kill`, telegraphed), the summit and a descent to the finish island. No new kit code.
+- **Stage 12 Ice Rink** (signature: ice; also wind and timed doors): a teaching rink with a soft stop, ice plates with gaps (brake before the edge), crosswind
+  on ice, a pressure door (`KitButton` / `KitDoor`) with a sprint across ice, Triple ledges taken from ice, a finale.
+- **Ice = kit ice** (user decision): new `KitIce` tag in `ObstacleKit`. While the character stands on a `KitIce` part (the kit's floor ray), the client takes over
+  its horizontal velocity: it moves toward the input direction x walk speed at `Accel` studs/s² and coasts without input, slowing at `Brake` studs/s²
+  (attributes on the part); jumps keep the momentum (the air is the Humanoid's again). Same on every device, tunable per part; it stops at once on death.
+- **Coins:** 8 per stage (5 easy 20, 2 risky 50, 1 talent 100), ids `Stage11_1..8`, `Stage12_1..8`; the talent coin needs a talent beyond the requirement (Dash).
+- **Measured in the S8.1 bot tests (2026-10-24):** standing rises match §1.0 (Double Jump 14.5, with Jump Height 3 18.0; Triple Jump 22.0, with Jump Height 3 26.9),
+  but a **17-stud ledge was landed by a Double Jump with Run Speed 5 + Jump Height 3** (gap 6): a ledge is cleared with a root rise of about its own height, not 2.5
+  more as the Stage 6 note suggested. So **Triple ledges are 20** (gap 6): a baseline Triple Jump lands them with three jump timings (apex, every 0.3 s, from 1.2 or
+  2.8 studs before the edge; jumping 0.6 before the edge with late air jumps failed), a maxed Double Jump fails with every timing. Flat Triple gaps of 17 (with an 8
+  stud side shift) are crossed by a baseline Triple Jump, not by a baseline Double Jump (soft, a fast Double Jump may make them).
+- **Stage 11 Triple Peaks as built** (x = -87 + u, z = -645 + l, surface h above y 78.5; checkpoint plates are 12 along the course, 16 wide): `901` (u 0);
+  (1) Double Jump warm-up pillars `A1`-`A3` (8 x 8, h 0 / 11 / 22, gaps 6); (2) `Shelf1` (20 x 20, h 22) with tower `T1` (h 42) on its far end: the first Triple
+  ledge, a miss lands on the shelf; `902` (u 84, h 42); (3) peaks: `P1` (h 62, Triple ledge), `P2` (6 x 6, h 62, flat gap 17), `P3` (6 x 6, h 82, Triple ledge from a
+  6-stud runway), `P4` (h 75), `903` (u 176, h 75); (4) drop 17 onto the kit lift `Lift1` (8 x 8, h 58 -> 92, period 10, pause 1.5), Triple ledge from its top to
+  `P5` (h 112), `904` (u 226, h 112); (5) the **crusher ridge** `Ridge` (66 x 6, h 112, flush with `904` / `905`) under `Crusher1..4` (6 x 4 x 8 at u 246 / 258 / 270 /
+  282, 9 studs over the ridge, kit `Piston` Axis down, Stroke 9, Period 3, Duty 0.25, Out 0.2, Back 0.6, Telegraph 0.6, `Kill`, run-seeded, Phase 0.75 / 0.5 /
+  0.25 / 0: each slams 0.75 s after the one before, so a walker who leaves as crusher 1 lifts follows the wave); the 6-stud gaps between them are safe; `905`
+  (u 304, h 112); (6) `Summit` (h 132, Triple ledge), descent `D1`-`D4` (h 115 / 98 / 81 / 64, gaps 12-14), finish island (16 x 16, h 47), portal at u 432. About
+  440 studs. Coins: easy on `Shelf1`'s corner, `P4`, the ridge between crushers 2 and 3, `D2`, the finish island; risky on a 4 x 4 side pillar 9 studs beside `P2`
+  and under crusher 4; talent on a 3 x 3 pillar 24.5 studs beside the summit (Triple Jump + Run Speed 4-5, or Dash).
+- **Stage 12 Ice Rink as built** (z = -585 + l): `1001` (u 0); (1) `Rink1` (44 x 24 ice, low side rails) flush with the plate, rest plate `R1`, ice turns `I1`
+  (36 x 8) -> `I2` (sideways, to l 24) -> `I3`, `1002` (u 142, l 20); (2) four 10 x 10 ice plates `J1`-`J4` with gaps 5-7 and side shifts of 8 (hop on at once:
+  a stop slides you off), `1003` (u 226); (3) `WindBeam` (66 x 8 ice, flush both ends) in a steady crosswind `Wind1` (Push 6 toward +z; 10 blew even a correcting
+  bot off), `1004` (u 304); (4) **pressure door**: `Button` (Group `IceDoor`, 6 s) on `1004`'s far edge, ice track `Track1..3` with two 5-stud gaps, `IceDoor`
+  (12 wide, 20 high, slides up) between 32-high walls and a lintel, `1005` (u 390) behind it; (5) Triple ledges onto ice `K1`-`K3` (10 x 10 ice, h 20 / 40 / 60,
+  gaps 6-7), finish island (h 49, drop 11), portal at u 466. About 470 studs. Coins: easy on the rink corner, `I2`'s corner, `J3`, the beam's upwind edge, the
+  finish island; risky on the beam's downwind edge and on a 6 x 6 ice plate 10 beside `J2`; talent on a 3 x 3 pillar 21.5 beside `K3`.
+- **Kit ice tuning** (defaults Accel 14, Brake 5): from rest it reaches 15.5 studs/s in 1 s and coasts 21 studs after letting go.
+- **Checks (Studio playtest 2026-10-24, bots at baseline Walk Speed 16 / Jump Power 50 unless noted; developer profile snapshot `profile_<id>_s81` restored, the
+  Stage 11 / 12 boards removed):** every Triple ledge of both stages (also from the lift's top and from ice), the flat 17 gap, the ice hop chain (one timing made all
+  four hops, another slid off after the second), the wind beam (correcting runner across, straight runner blown off), the door sprint (button to doorway 4.4 s of 6 s),
+  the crusher ridge (walker leaving as crusher 1 lifts crosses, later starts are killed by `Crusher3` / `4`; Run Speed 5 crosses from 0.2-0.5 s; standing under a
+  crusher kills in 0.7 s, standing in a gap is safe); a locked stage's door stops a player; an unlocked run: gate starts the timer, `901`-`905` / `1001`-`1005` fire
+  in order, the finish portal ends the run with a result (Gold for the teleported test run) and sends the player to the courtyard. No script errors or warnings.
+- *Fixed while testing:* 2-4 stud seams between checkpoint plates and the next ice / ridge part (made flush), the button-to-track gap, the crusher wave ran toward
+  the player (a higher Phase is earlier in `KitMath.Cycle`), the first crosswind (10).
+- *Not checked:* the look (screen captures came back white), a human run and the real `T_base` (110 / 120 provisional), the coins being collected, the talent
+  coins' reach with Dash, the door countdown on screen.
+
 ## 8. Milestones (agreed 2026-10-21; status and full scopes in [ROADMAP.md](ROADMAP.md))
 Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.
 
