@@ -102,6 +102,11 @@ Against the code, the design holds with these decisions:
   `Loc` and attribute `LocKey` set through the MCP (not in files, so `loc.py check` notes `sign.*` as unused). The Stage 9
   maze exit door label and the `KitLab` / Admin panel texts stay English.
 
+- **Font check (2026-10-24, width heuristic, no render):** a letter with a caron/ring should be as wide as its base letter.
+  FredokaOne differs for č ě ř ů ň (and ť ď, which many fonts widen); GothamBold, Nunito and Bangers match everywhere, BuilderSansBold
+  and SourceSansBold only differ for ť ď. So FredokaOne mixes in a fallback font for Czech; GothamBold is the safe stud-style
+  substitute (`StudStyle.Font`), decision pending with the user.
+
 ## Strings workflow (L1.1, 2026-10-24)
 **Source:** `localization/strings.csv`, the one table people edit: `key`, `context` (where the text appears, what goes
 into each `{placeholder}`, grammar notes such as "feminine in Czech"), `en`, and per translation `<lang>` /
