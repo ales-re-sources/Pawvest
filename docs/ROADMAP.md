@@ -58,7 +58,7 @@ Rules:
 | M6a | First live test + World 1 balancing | – | – | – |
 | S5 | Worlds hub — done 2026-10-22: gates for Worlds 2-4 (coming soon, admins only), World 2 courtyard, signs, per-world stars boards (user's visual check) | ✔ | ✔ | – |
 | S6 | World 2 (stages 6–10) — S6.1 Double Up + Seesaw built and Studio-checked 2026-10-22 (awaits the user's visual check), S6.2 / S6.3 not started | ✔ (S6.1) | ✔ (S6.1) | – |
-| S7 | Talents: Triple Jump + Dash (+ World 3 courtyard) — done 2026-10-24: talents, Q / gamepad / touch button, reach table, World 3 courtyard east of the hub (awaits the user's visual check and a real-device touch check) | ✔ | ✔ | – |
+| S7 | Talents: Triple Jump + Dash (+ World 3 courtyard) — done 2026-10-24: talents, Q / gamepad / touch button, reach table, World 3 courtyard east of the hub; closed 2026-10-24 (the visual and real-device touch checks were waived by the user; Live-validated comes with the next publish) | ✔ | ✔ | – |
 | S8 | World 3 (stages 11–15) — S8.1 Triple Peaks + Ice Rink built and Studio-checked 2026-10-24 (kit ice, World 3 open; awaits the user's visual check), S8.2 / S8.3 not started | ✔ (S8.1) | ✔ (S8.1) | – |
 | S9 | Talents: Wall Jump + Glide | – | – | – |
 | S10 | World 4 (stages 16–20) | – | – | – |
@@ -486,8 +486,8 @@ A measured `T_base` for both new stages comes in M6a.
   speed. Three Space presses give three jumps with level 2 (the 4th is ignored). Skills row: "Double Jump 0/2", "Triple Jump 1/2" / "2/2" (Czech too).
   Without Dash the action is unbound. "Needs:" reads Triple Jump / Dash / Quick Respawn 2. The admin went through the World 3 hub gate onto its spawn
   and back through the return gate. The world board localizes. No errors. Reach table in STAGES §1.0.
-  *Not checked:* the touch button on a real phone (the placement is ContextActionService's default beside Jump), a normal player at the World 3 gate (code
-  unchanged since S5), the trail's look.
+  *Not checked (milestone closed anyway, 2026-10-24):* the touch button on a real phone (the placement is ContextActionService's default beside Jump), a normal
+  player at the World 3 gate (code unchanged since S5; S8.1 now owns it), the trail's look.
 
 ### S8 — World 3 (design: STAGES §7.11 for S8.1)
 - **S8.1 outputs:** `Workspace.World3.Stage11` (Triple Peaks: Triple ledges, a lift, a crusher ridge) and `Stage12` (Ice Rink: ice, crosswind, a pressure door,
