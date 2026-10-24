@@ -5,19 +5,23 @@ Reads every number that already exists in the game from the Luau configs in src/
 cannot drift silently), adds the planned content that is not in a config yet (PLANNED below, from the GDD / STAGES),
 and reports the Coin economy.
 
-  python tools/economy.py report   # baseline tables (faucets, sinks, obby hour, today's pen economy)
-  python tools/economy.py sim      # day-by-day simulation per archetype and purchase policy (--days, --seeds)
-  python tools/economy.py check    # acceptance checks of E0 that can run so far; exit 1 on a failure
+  python tools/economy.py report   # baseline tables (faucets, sinks, obby hour, today's pen economy) and the crop field tables
+  python tools/economy.py sim      # day-by-day simulation per archetype and purchase policy (--days, --seeds) incl. the field
+  python tools/economy.py field    # catalogue size and ladder-scale comparison (how the guardrails move)
+  python tools/economy.py check    # acceptance checks of E0 that can run so far (incl. guardrails A-C); exit 1 on a failure
+  options: --garden pens|field|both (default field: pens become Field posts; pens = today's Coins-per-hour pens; both = grandfathered
+           pens that pay AND work as posts), --crops min|mvp|full, --scale <ladder scale>
   python tools/economy.py drift    # only the drift check (configs vs tools/economy_pins.json and the formulas)
   python tools/economy.py pin      # accept the current config values as the reviewed state (rewrites the pins)
 
 Drift workflow: when a price or rate changes in a config, `check` fails with the differing value. Re-run `report`, decide
-whether the model still holds, then `pin`. New numbers for crops, fields and landmarks are not here yet (E0 continues).
+whether the model still holds, then `pin`. New numbers (crop field, Renown, expansion and upgrade prices, reserved sinks) live in the FIELD block below, provisional until E1.
 All values are Coins before the pet multiplier unless a column says otherwise. Python 3.9+, standard library only.
 """
 import argparse
 import json
 import math
+import random
 import re
 import sys
 from pathlib import Path
@@ -425,12 +429,107 @@ SIM = {
 }
 
 
+# --------------------------------------------------------------------------------------------------------------------
+# The crop FIELD (E0, EXPANSION §5, ROADMAP -> E0 "Field model"). Provisional: every number is a model assumption until E1
+# copies the reviewed ones into CropConfig. Crop prices derive from the ladder (net Coins per square-hour x scale).
+# --------------------------------------------------------------------------------------------------------------------
+MULT_REF = 1.48  # pet multiplier of a developed player (cap +50 %), used by the static field tables
+
+FIELD = {
+    "scale": 0.15,  # global factor on the ladder below: the 20 / 45 / 90 / 150 of EXPANSION §5 break the 24-hour rule on a field of tens of squares
+    "ladder": {1: 20, 2: 45, 3: 90, 4: 150},  # net Coins per square-hour at scale 1, tier 4 = rare (obby-unlocked only)
+    "seed_frac": 0.25,  # seed cost / sale price (EXPANSION §5: 20-30 %)
+    "max_squares": 150,  # provisional ceiling the plot rework must be able to draw (ROADMAP open decision 4)
+    "start_squares": 6,
+    # expansion tiers: (squares after the purchase, price in Coins, Renown gate); the free start field is `start_squares`
+    "expansions": [(8, 800, 1), (10, 2000, 3), (12, 4000, 5), (14, 7500, 8), (16, 12000, 11), (18, 18000, 14), (20, 28000, 17),
+                   (22, 42000, 20), (24, 65000, 24)],
+    "tier_gate": {1: 0, 2: 8, 3: 25},  # Renown needed to plant a tier (rare crops: seeds from the obby, no gate)
+    "renown": {"k": 3.0, "p": 1.6, "weight": {1: 1, 2: 3, 3: 6, 4: 12}, "requests_per_day": 0.0},  # points for level L = k x L^p; request board = placeholder
+    "gardener": {"share": 0.35, "squares": 1, "max_tier": 3},  # share of hatched pets with Green thumb; squares each Gardener replants; best tier it may plant
+    "capacity": 40,  # seeds the stock holds and crops the barn holds between two visits (limits the Gardener's cycles)
+    # upgrades: levels cost `prices`; growth = grow time x (1 - step x level); barn = capacity + step x level; gardener = squares + step x level
+    "upgrades": {
+        "growth": {"step": 0.05, "prices": [3000, 8000, 20000, 45000]},
+        "barn": {"step": 20, "prices": [1500, 4000, 10000, 25000, 60000]},
+        "gardener": {"step": 1, "prices": [12000]},
+    },
+    "rare": {"per_first_gold": 1, "daily": 1, "sale_share": 0.5},  # rare seeds from the obby; the rest of the harvest is kept for landmarks (placeholder)
+    # sinks the model does not design yet (landmark Coins parts, estate tiers, decor, stations; EXPANSION §9): a geometric ladder, bought last
+    "reserved": {"first": 8000, "ratio": 1.3, "count": 20},
+    "bias": {"talent-first": 1.5, "pets-first": 0.7},  # field price x bias when merged into a policy's buying order
+    "sink_share": {30: 0.60, 60: 0.80},  # OPEN decision 1 (proposal): sinks / cumulative faucet by day 30 and day 60
+    "a_band": (0.8, 1.0),  # guardrail A: the best-developed archetype's 24 h field / first obby hour must land inside this band
+    "garden_share_max_obby": 0.5,  # the garden must not be a majority of Obby main's income
+}
+
+# Crop catalogue: tier 1-3 by Renown gate, tier 4 = rare (one signature crop per world 1-3). `h` = grow time in hours. `size` = 2 means a 2 x 2 crop.
+CROP_DEFS = [
+    {"id": "Radish", "tier": 1, "h": 1 / 3}, {"id": "Carrot", "tier": 1, "h": 1}, {"id": "Potato", "tier": 1, "h": 3},
+    {"id": "Corn", "tier": 2, "h": 6}, {"id": "Pumpkin", "tier": 2, "h": 8},
+    {"id": "Giant melon", "tier": 3, "h": 12}, {"id": "Trophy pumpkin", "tier": 3, "h": 12, "size": 2},
+    {"id": "Rare W1", "tier": 4, "h": 6, "world": 1}, {"id": "Rare W2", "tier": 4, "h": 8, "world": 2}, {"id": "Rare W3", "tier": 4, "h": 10, "world": 3},
+]
+CATALOGUES = {
+    "min": ["Potato", "Pumpkin", "Giant melon", "Rare W1", "Rare W2", "Rare W3"],  # one per tier + one rare per world
+    "mvp": ["Potato", "Corn", "Pumpkin", "Giant melon", "Rare W1", "Rare W2", "Rare W3"],  # Corn fills the 6 h slot (+10 % for Obby main); Carrot / Radish add nothing
+    "full": ["Radish", "Carrot", "Potato", "Corn", "Pumpkin", "Giant melon", "Trophy pumpkin", "Rare W1", "Rare W2", "Rare W3"],
+}
+POLICIES = ("talent-first", "pets-first")
+GARDEN_MODES = ("pens", "field", "both")  # pens = today's Coins-per-hour pens; field = pens become Field posts (replace); both = grandfather (pens pay AND are posts)
+
+
 def learn_runs(stage):
     return SIM["learn_base"] + SIM["learn_per_order"] * stage["order"]
 
 
 def xp_next(level):
     return lua_round(10 * level ** 1.5)
+
+
+def make_crops(scale, catalogue):
+    """The crop table of a ladder scale and catalogue: sale = net per square-hour x grow time / (1 - seed share), seed = share of the sale."""
+    F = FIELD
+    crops = {}
+    for c in CROP_DEFS:
+        if c["id"] not in CATALOGUES[catalogue]:
+            continue
+        size = c.get("size", 1)
+        net_h = F["ladder"][c["tier"]] * scale
+        sale = max(2, round(net_h * c["h"] * size / (1 - F["seed_frac"])))
+        seed = max(1, round(sale * F["seed_frac"]))
+        crops[c["id"]] = {"id": c["id"], "tier": c["tier"], "h": c["h"], "size": size, "sale": sale, "seed": seed, "net": sale - seed,
+                          "rare": c["tier"] == 4, "world": c.get("world"), "gate": F["tier_gate"].get(c["tier"], 0)}
+    return crops
+
+
+def build_field(P, mode="field", catalogue="mvp", scale=None):
+    """P["field"]: the crop table, price lists and gates the simulation reads (FIELD x scale x catalogue)."""
+    F = FIELD
+    scale = F["scale"] if scale is None else scale
+    crops = make_crops(scale, catalogue)
+    prices = {"exp": [p for _, p, _ in F["expansions"]], "res": [round(F["reserved"]["first"] * F["reserved"]["ratio"] ** k, -2) for k in range(F["reserved"]["count"])]}
+    for name, u in F["upgrades"].items():
+        prices[name] = list(u["prices"])
+    P["field"] = {"mode": mode, "catalogue": catalogue, "scale": scale, "crops": crops, "prices": prices,
+                  "exp_squares": [s for s, _, _ in F["expansions"]], "exp_gate": [g for _, _, g in F["expansions"]],
+                  "on": mode in ("field", "both"), "pens_pay": mode in ("pens", "both")}
+    return P["field"]
+
+
+def renown_level(points):
+    R = FIELD["renown"]
+    return int((max(points, 0.0) / R["k"]) ** (1 / R["p"]))
+
+
+def visit_schedule(arch):
+    """Sessions of one period: [(start hour, gap in hours to the next session start)] (the wrap-around gap spans the idle days)."""
+    sess = sorted(arch["sessions"])
+    period_h = arch["period_days"] * 24.0
+    return [(start, (sess[i + 1][0] if i + 1 < len(sess) else sess[0][0] + period_h) - start) for i, (start, _) in enumerate(sess)]
+
+
+FAMILIES = ("exp", "growth", "barn", "gardener", "res")
 
 
 def policy_items(P, name):
@@ -440,40 +539,78 @@ def policy_items(P, name):
     slots, incs, pens = [("slot", 2), ("slot", 3)], [("inc", 2), ("inc", 3)], [("pen", k) for k in range(2, 7)]
     rest = T("DoubleJump", 2) + T("Dash") + T("WallJump") + T("Glide")
     if name == "talent-first":
-        return (T("DoubleJump", 1, 1) + T("RunSpeed") + T("JumpHeight") + T("QuickRespawn")
-                + [slots[0], incs[0], pens[0], slots[1], pens[1], incs[1]] + pens[2:] + rest)
-    return ([slots[0], incs[0], pens[0], slots[1], incs[1], pens[1]] + pens[2:] + T("DoubleJump", 1, 1) + T("RunSpeed")
-            + T("JumpHeight") + T("QuickRespawn") + rest)
+        items = (T("DoubleJump", 1, 1) + T("RunSpeed") + T("JumpHeight") + T("QuickRespawn")
+                 + [slots[0], incs[0], pens[0], slots[1], pens[1], incs[1]] + pens[2:] + rest)
+    else:
+        items = ([slots[0], incs[0], pens[0], slots[1], incs[1], pens[1]] + pens[2:] + T("DoubleJump", 1, 1) + T("RunSpeed")
+                 + T("JumpHeight") + T("QuickRespawn") + rest)
+    if not P["field"]["on"]:
+        return items
+    field = [(fam, k + 1) for fam in FAMILIES[:4] for k in range(len(P["field"]["prices"][fam]))]
+    field.sort(key=lambda it: item_price(P, it))
+    out, i, j, bias = [], 0, 0, FIELD["bias"][name]
+    while i < len(items) or j < len(field):  # merge two ordered lists by price, the field's price x the policy's bias
+        if j >= len(field) or (i < len(items) and item_price(P, items[i]) <= item_price(P, field[j]) * bias):
+            out.append(items[i])
+            i += 1
+        else:
+            out.append(field[j])
+            j += 1
+    return out + [("res", k + 1) for k in range(len(P["field"]["prices"]["res"]))]
 
 
 def item_price(P, it):
     if it[0] == "talent":
         return P["talents"][it[1]]["costs"][it[2] - 1]
+    if it[0] in FAMILIES:
+        return P["field"]["prices"][it[0]][it[1] - 1]
     return {"slot": P["slot_prices"], "pen": P["pen_prices"], "inc": P["incubator_prices"]}[it[0]][it[1] - 1]
 
 
 def item_name(it):
-    return f"{it[1]} L{it[2]}" if it[0] == "talent" else {"slot": "Pet slot", "pen": "Pen", "inc": "Incubator"}[it[0]] + f" {it[1]}"
+    if it[0] == "talent":
+        return f"{it[1]} L{it[2]}"
+    return {"slot": "Pet slot", "pen": "Pen", "inc": "Incubator", "exp": "Field tier", "growth": "Growth", "barn": "Barn",
+            "gardener": "Gardener coverage", "res": "Reserved sink"}[it[0]] + f" {it[1]}"
 
 
 class Player:
-    def __init__(self, P, arch, policy, rng):
+    def __init__(self, P, arch, policy, rng, gardeners=True):
         self.P, self.arch, self.policy, self.rng = P, arch, policy, rng
+        self.grng = random.Random(7919 + rng.getstate()[1][0] % 100000)  # separate stream: Green-thumb rolls must not shift the egg rolls
         self.stages = sorted(P["stages"], key=lambda s: s["order"])
         self.coins = 0.0
         self.done = []  # cleared stages
         self.learn_left = None
         self.talents = {t: 0 for t in P["talents"]}
         self.slots, self.pens, self.incs = 1, 1, 1
-        self.pets = []  # {"r": rarity, "lvl": n, "xp": n, "where": "eq" | "pen" | "spare"}
+        self.lvl = {fam: 0 for fam in FAMILIES}  # owned levels of the field sinks
+        self.pets = []  # {"r": rarity, "lvl": n, "xp": n, "g": Green thumb, "where": "eq" | "pen" | "spare"}
         self.free_eggs = 1  # the launch egg
         self.mult = 1.0
         self.afford, self.bought = {}, {}
         self.items = policy_items(P, policy)
+        self.sessions = sorted(arch["sessions"])
         self.visits = len(arch["sessions"])  # visits on an active day
+        self.sched = visit_schedule(arch)
         self.eq = []
         self.dt = {s["key"]: s["t_base"] * MODEL["gold_run_factor"] + MODEL["run_overhead_s"] for s in self.stages}
         self.cache = {}
+        # field state
+        self.F = P["field"]
+        self.gardeners_on = gardeners
+        self.sq = FIELD["start_squares"]
+        self.post_g = 0  # Gardener pets on posts
+        self.manual = []  # [crop id, planted at (h), plants]
+        self.cov_crop, self.cov_prog, self.cov_n = None, 0.0, 0
+        self.seed_stock = 0
+        self.rare_seeds = {}  # world -> seeds
+        self.rare_kept = 0.0
+        self.renown_pts = 0.0
+        self.last_t = None
+        self.spend, self.cum = {}, {"repeat": 0.0, "onetime": 0.0, "pen": 0.0, "field": 0.0, "sell": 0.0}
+        self.stat = {"harv": 0.0, "man_harv": 0.0, "visit_sq": 0.0, "rare_given": 0.0}
+        self.sold = 0.0
         self.manage()
 
     # ---- pets -------------------------------------------------------------------------------------------------
@@ -484,19 +621,27 @@ class Player:
         return pen_rate(self.P, p["r"], p["lvl"])
 
     def manage(self):
-        """Equip the best pets by bonus, pen the best of the rest by production, sell weak spares."""
-        P = self.P
+        """Equip the best pets by bonus; pen / post the best of the rest; sell weak spares."""
+        P, F = self.P, self.F
         pets = sorted(self.pets, key=lambda p: -self.bonus(p))
         for i, p in enumerate(pets):
             p["where"] = "eq" if i < self.slots else "spare"
-        rest = sorted([p for p in pets if p["where"] == "spare"], key=lambda p: -self.rate(p))
-        for p in rest[: self.pens]:
-            p["where"] = "pen"
-        for p in rest[self.pens:]:
+        spare = [p for p in pets if p["where"] == "spare"]
+        if F["mode"] == "field":  # pens became posts: Gardeners work them, other pets earn nothing there
+            rest = sorted(spare, key=lambda p: (not p["g"], -self.bonus(p)))
+            for p in [p for p in rest if p["g"]][: self.pens]:
+                p["where"] = "pen"
+        else:
+            rest = sorted(spare, key=lambda p: -self.rate(p))
+            for p in rest[: self.pens]:
+                p["where"] = "pen"
+        for p in [p for p in spare if p["where"] == "spare"]:
             if P["rarities"][p["r"]]["order"] < SIM["keep_order"]:
                 self.coins += P["rarities"][p["r"]]["sell"]
+                self.sold += P["rarities"][p["r"]]["sell"]
                 self.pets.remove(p)
         self.eq = [p for p in self.pets if p["where"] == "eq"]
+        self.post_g = sum(1 for p in self.pets if p["where"] == "pen" and p["g"])
         self.mult = 1 + min(P["max_bonus"], sum(self.bonus(p) for p in self.eq)) / 1000
 
     def add_xp(self, amount):
@@ -523,7 +668,7 @@ class Player:
     def new_pet(self, egg):
         w = self.P["eggs"][egg]["weights"]
         r = self.rng.choices(list(w), weights=list(w.values()))[0]
-        self.pets.append({"r": r, "lvl": 1, "xp": 0, "where": "spare"})
+        self.pets.append({"r": r, "lvl": 1, "xp": 0, "g": self.grng.random() < FIELD["gardener"]["share"], "where": "spare"})
 
     # ---- obby -------------------------------------------------------------------------------------------------
     def reward(self, s, n):
@@ -539,6 +684,13 @@ class Player:
     def required_missing(self, stage):
         reqs = sorted({(t, l) for (t, l), at in PLANNED["required_at"].items() if at <= stage["order"]})
         return [("talent", t, l) for t, l in reqs if self.talents[t] < l]
+
+    def give_rare(self, world, count, row):
+        if world >= 1 and count > 0:
+            w = min(world, 3)
+            self.rare_seeds[w] = self.rare_seeds.get(w, 0) + count
+            self.stat["rare_given"] += count
+            row["rare"] += count
 
     def play(self, minutes, day_row):
         budget = minutes * 60.0
@@ -563,10 +715,12 @@ class Player:
             day_row["onetime"] += pay
             self.add_xp(learn_runs(s) * self.run_xp(s, P["medal_xp"][0]) + int(coin_val / 40) * P["coin_xp"])
             self.free_eggs += 1  # first Gold of a stage gives a free Basic egg
+            self.give_rare(s["world"], FIELD["rare"]["per_first_gold"], day_row)
             self.done.append(s)
         # 2. farm Gold runs on cleared stages (greedy by Coins per second, daily decay per stage)
         counts = {s["key"]: 0 for s in self.done}
         gold_xp = P["medal_xp"][2]
+        ran = False
         while self.done:
             best = max(self.done, key=lambda s: self.reward(s, counts[s["key"]]) / self.dt[s["key"]])
             if self.dt[best["key"]] > budget:
@@ -577,35 +731,171 @@ class Player:
             self.coins += pay
             day_row["repeat"] += pay
             self.add_xp(self.run_xp(best, gold_xp))
+            ran = True
+        if ran and self.F["on"]:  # the daily first-run seed: a rare seed of one of the worlds reached
+            worlds = sorted({min(s["world"], 3) for s in self.done if s["world"] >= 1})
+            if worlds:
+                self.give_rare(self.grng.choice(worlds), FIELD["rare"]["daily"], day_row)
+
+    # ---- the field --------------------------------------------------------------------------------------------
+    def renown_level(self):
+        return renown_level(self.renown_pts)
+
+    def growth(self):
+        return 1 - FIELD["upgrades"]["growth"]["step"] * self.lvl["growth"]
+
+    def capacity(self):
+        return FIELD["capacity"] + FIELD["upgrades"]["barn"]["step"] * self.lvl["barn"]
+
+    def per_gardener(self):
+        return FIELD["gardener"]["squares"] + FIELD["upgrades"]["gardener"]["step"] * self.lvl["gardener"]
+
+    def covered(self):
+        return min(self.sq, self.post_g * self.per_gardener()) if self.gardeners_on and self.F["on"] else 0
+
+    def sell(self, crop, items, row):
+        if items <= 0:
+            return
+        share = FIELD["rare"]["sale_share"] if crop["rare"] else 1.0
+        gross = items * share * crop["sale"] * self.mult
+        self.coins += gross
+        self.cum["field"] += gross
+        row["field"] += gross
+        self.rare_kept += items * (1 - share) if crop["rare"] else 0.0
+        row["harv"] += items
+        self.stat["harv"] += items
+        self.renown_pts += items * FIELD["renown"]["weight"][crop["tier"]]
+
+    def pay(self, cat, amount, row=None):
+        self.coins -= amount
+        self.spend[cat] = self.spend.get(cat, 0.0) + amount
+        if row is not None:
+            row["seeds"] += amount
+
+    def visit(self, t, gap, row):
+        """One visit at absolute hour t; `gap` = hours to the next visit. Harvest what is ripe, sell, replant."""
+        F, cat, gs = self.F, self.F["crops"], self.growth()
+        T = 0.0 if self.last_t is None else t - self.last_t
+        # 1. Gardener squares cycled by themselves since the last visit (limited by the seed stock and the barn)
+        if self.cov_n and self.cov_crop:
+            c = cat[self.cov_crop]
+            g = c["h"] * gs
+            raw = (self.cov_prog + T) / g
+            n = min(int(raw), self.capacity() // self.cov_n, self.seed_stock // self.cov_n)
+            self.cov_prog = (self.cov_prog + T) - n * g if n >= int(raw) else 0.0
+            self.seed_stock -= n * self.cov_n
+            self.sell(c, n * self.cov_n, row)
+        # 2. manual squares: one harvest per square, if ripe
+        keep = []
+        for grp in self.manual:
+            c = cat[grp[0]]
+            if t - grp[1] >= c["h"] * gs - 1e-9:
+                self.sell(c, grp[2], row)
+                self.stat["man_harv"] += grp[2]
+            else:
+                keep.append(grp)
+        self.manual = keep
+        # 3. coverage for the coming interval, then replant the empty manual squares
+        self.cov_n = self.covered()
+        lvl = self.renown_level()
+        common = [c for c in cat.values() if not c["rare"] and c["size"] == 1 and c["gate"] <= lvl]
+        big = [c for c in cat.values() if not c["rare"] and c["size"] > 1 and c["gate"] <= lvl]
+        if self.cov_n and common:
+            best, best_v = None, -1.0
+            for c in common:
+                if c["tier"] > FIELD["gardener"]["max_tier"]:
+                    continue
+                g = c["h"] * gs
+                prog = self.cov_prog if c["id"] == self.cov_crop else 0.0  # switching crop loses the growth in progress
+                v = min((prog + gap) / g, self.capacity() / self.cov_n) * self.cov_n * c["net"] * (1.05 if c["id"] == self.cov_crop else 1.0)
+                if v > best_v:
+                    best, best_v, best_cyc = c, v, min(int((prog + gap) / g), self.capacity() // self.cov_n)
+            if best is not None:
+                if best["id"] != self.cov_crop:
+                    self.cov_crop, self.cov_prog = best["id"], 0.0
+                need = max(0, best_cyc * self.cov_n - self.seed_stock)
+                buy = min(need, int(max(self.coins, 0) // best["seed"]))
+                self.pay("seeds", buy * best["seed"], row)
+                self.seed_stock += buy
+        else:
+            self.cov_crop = None
+        free = self.sq - self.cov_n - sum(grp[2] * cat[grp[0]]["size"] for grp in self.manual)
+        for world in sorted(self.rare_seeds, reverse=True):  # rare seeds first (best first), on squares that will be ripe in time
+            rc = next((c for c in cat.values() if c["rare"] and c["world"] == world), None)
+            while rc and self.rare_seeds[world] > 0 and free >= 1 and rc["h"] * gs <= gap + 1e-9:
+                self.rare_seeds[world] -= 1
+                self.manual.append([rc["id"], t, 1])
+                free -= 1
+        fit = [c for c in common if c["h"] * gs <= gap + 1e-9] or ([min(common, key=lambda c: c["h"])] if common else [])
+        pool = fit + [c for c in big if c["h"] * gs <= gap + 1e-9]
+        if pool and free >= 1:
+            c = max(pool, key=lambda c: c["net"] / c["size"])
+            plants = min(int(free // c["size"]), int(max(self.coins, 0) // c["seed"]))
+            if plants > 0:
+                self.pay("seeds", plants * c["seed"], row)
+                self.manual.append([c["id"], t, plants])
+                self.stat["visit_sq"] += plants * c["size"]
+        self.last_t = t
+
+    def potential(self, ignore_gardeners=False):
+        """Guardrail A: Coins per day (before the multiplier) of the current field if every square is planted and replanted at every
+        opportunity with the best unlocked crop: Gardener squares cycle 24 h a day, the others give one harvest per visit."""
+        F, gs = self.F, self.growth()
+        lvl = self.renown_level()
+        common = [c for c in F["crops"].values() if not c["rare"] and c["gate"] <= lvl]
+        if not F["on"]:
+            return 0.0, 0.0
+        cov = 0 if ignore_gardeners else self.covered()
+        gard = [c for c in common if c["size"] == 1 and c["tier"] <= FIELD["gardener"]["max_tier"]]
+        m = self.mult  # sales are multiplied at sale time, seeds are not: the multiplier counts on this side as on the hour-1 side
+        value = lambda c: m * c["sale"] - c["seed"]
+        auto = cov * max((24 / (c["h"] * gs) * value(c) for c in gard), default=0.0)
+        per_day = 0.0
+        for _, gap in self.sched:
+            per_day += max((value(c) / c["size"] for c in common if c["h"] * gs <= gap + 1e-9), default=0.0)
+        manual = (self.sq - cov) * per_day / self.arch["period_days"]
+        if F["pens_pay"]:  # --garden both: the grandfathered pens still pay Coins per hour, uncapped by the 24-hour rule
+            auto += sum(self.rate(p) for p in self.pets if p["where"] == "pen") * 24 * m
+        return auto, manual
 
     # ---- money ------------------------------------------------------------------------------------------------
+    def level_of(self, fam):
+        return {"slot": self.slots, "pen": self.pens, "inc": self.incs}.get(fam, self.lvl.get(fam))
+
     def owned(self, it):
         if it[0] == "talent":
             return self.talents[it[1]] >= it[2]
-        return {"slot": self.slots, "pen": self.pens, "inc": self.incs}[it[0]] >= it[1]
+        return self.level_of(it[0]) >= it[1]
 
     def prereq_ok(self, it):
         if it[0] == "talent":
             return self.talents[it[1]] == it[2] - 1
-        return {"slot": self.slots, "pen": self.pens, "inc": self.incs}[it[0]] == it[1] - 1
+        return self.level_of(it[0]) == it[1] - 1
+
+    def gate_ok(self, it):
+        return it[0] != "exp" or self.renown_level() >= self.F["exp_gate"][it[1] - 1]
 
     def buy(self, it, day):
-        self.coins -= item_price(self.P, it)
+        self.pay(it[0], item_price(self.P, it))
         if it[0] == "talent":
             self.talents[it[1]] = it[2]
         elif it[0] == "slot":
             self.slots = it[1]
         elif it[0] == "pen":
             self.pens = it[1]
-        else:
+        elif it[0] == "inc":
             self.incs = it[1]
+        else:
+            self.lvl[it[0]] = it[1]
+            if it[0] == "exp":
+                self.sq = self.F["exp_squares"][it[1] - 1]
         self.bought.setdefault(it, day)
         self.manage()
 
     def shop(self, day, day_row):
         P = self.P
         for it in self.items:
-            if it not in self.afford and self.coins >= item_price(P, it):
+            if it not in self.afford and self.coins >= item_price(P, it) and self.gate_ok(it):
                 self.afford[it] = day
         for it in sorted({it for s in self.stages for it in self.required_missing(s)}):
             if it not in self.afford and self.coins >= item_price(P, it):
@@ -622,7 +912,7 @@ class Player:
                     continue
                 saving = True
                 break
-            cand = [it for it in self.items if not self.owned(it) and self.prereq_ok(it)][: SIM["window"]]
+            cand = [it for it in self.items if not self.owned(it) and self.prereq_ok(it) and self.gate_ok(it)][: SIM["window"]]
             hit = next((it for it in cand if self.coins >= item_price(P, it)), None)
             if hit is None:
                 break
@@ -634,7 +924,7 @@ class Player:
             cap = max(0, min(self.incs * self.visits - used, room))
             n_eggs = int(min(cap, (self.coins * SIM["egg_share"][self.policy]) // P["eggs"]["Basic"]["price"]))
             for _ in range(n_eggs):
-                self.coins -= P["eggs"]["Basic"]["price"]
+                self.pay("egg", P["eggs"]["Basic"]["price"])
                 self.new_pet("Basic")
             if n_eggs:
                 self.manage()
@@ -643,7 +933,7 @@ class Player:
                 while budget >= food["price"] and any(p["where"] == "eq" and p["lvl"] < P["max_level"] for p in self.pets):
                     tgt = min((p for p in self.pets if p["where"] == "eq" and p["lvl"] < P["max_level"]), key=lambda p: p["lvl"])
                     budget -= food["price"]
-                    self.coins -= food["price"]
+                    self.pay("food", food["price"])
                     tgt["xp"] += food["xp"]
                     while tgt["lvl"] < P["max_level"] and tgt["xp"] >= xp_next(tgt["lvl"]):
                         tgt["xp"] -= xp_next(tgt["lvl"])
@@ -652,19 +942,36 @@ class Player:
 
     def day(self, d):
         a = self.arch
-        row = {"repeat": 0.0, "onetime": 0.0, "pen": 0.0, "blocked": 0}
-        if d % a["period_days"] == 0:
+        row = {"repeat": 0.0, "onetime": 0.0, "pen": 0.0, "field": 0.0, "seeds": 0.0, "harv": 0.0, "rare": 0, "blocked": 0}
+        sold0 = self.sold
+        active = d % a["period_days"] == 0
+        if active:
             self.play(a["obby_min"], row)
+        if self.F["on"]:
+            self.renown_pts += FIELD["renown"]["requests_per_day"]
+            if active:
+                for start, gap in self.sched:
+                    self.visit(d * 24.0 + start, gap, row)
         pen_rate_now = sum(self.rate(p) for p in self.pets if p["where"] == "pen")
-        row["pen"] = pen_rate_now * covered_hours_per_day(self.P, a) * self.mult
+        row["pen"] = pen_rate_now * covered_hours_per_day(self.P, a) * self.mult if self.F["pens_pay"] else 0.0
         self.coins += row["pen"]
-        if d % a["period_days"] == 0:
+        if active:
             self.shop(d + 1, row)
-        pen_rate_after = sum(self.rate(p) for p in self.pets if p["where"] == "pen")
+        pen_rate_after = sum(self.rate(p) for p in self.pets if p["where"] == "pen") if self.F["pens_pay"] else 0.0
+        row["sell"] = self.sold - sold0
+        for k in ("repeat", "onetime", "pen", "sell"):
+            self.cum[k] += row[k]
+        auto, manual = self.potential()
+        pot0 = sum(self.potential(True))
+        h1 = hour1(self.P, self.done)
         row.update({
             "stage": len(self.done), "mult": self.mult, "bank": self.coins, "pets": len(self.pets),
             "eq_lvl": sum(p["lvl"] for p in self.eq) / len(self.eq) if self.eq else 0, "pen_h": pen_rate_after,
-            "talents": sum(self.talents.values()), "pens": self.pens, "hour1": hour1(self.P, self.done),
+            "talents": sum(self.talents.values()), "pens": self.pens, "hour1": h1,
+            "sq": self.sq, "cov": self.covered(), "post_g": self.post_g, "renown": self.renown_level(),
+            "f24_auto": auto, "f24_man": manual, "f24_0": pot0, "ratio": (auto + manual) / (h1 * self.mult) if h1 else 0.0,
+            "faucet": sum(self.cum.values()), "sink": sum(self.spend.values()), "spend": dict(self.spend),
+            "field_net": row["field"] - row["seeds"],
         })
         return row
 
@@ -679,14 +986,65 @@ def hour1(P, done):
     return _hour1_cache[key]
 
 
-def simulate(P, arch, policy, days, seeds):
-    import random
+def simulate(P, arch, policy, days, seeds, gardeners=True):
     runs = []
     for seed in range(seeds):
-        pl = Player(P, arch, policy, random.Random(1000 + seed))
+        pl = Player(P, arch, policy, random.Random(1000 + seed), gardeners)
         runs.append(([pl.day(d) for d in range(days)], pl))
     return runs
 
+
+def mean(xs):
+    xs = list(xs)
+    return sum(xs) / len(xs) if xs else 0.0
+
+
+_G_CACHE = {}
+
+
+def guardrails(P, days=60, seeds=6):
+    """Run every archetype x policy (with and without Gardeners) and collect the numbers of guardrails A, B, C. Cached per setting."""
+    key = (P["field"]["mode"], P["field"]["catalogue"], P["field"]["scale"], days, seeds, json.dumps(FIELD, sort_keys=True, default=str))
+    if key in _G_CACHE:
+        return _G_CACHE[key]
+    out = {}
+    for arch in ARCHETYPES:
+        for pol in POLICIES:
+            runs = simulate(P, arch, pol, days, seeds)
+            runs0 = simulate(P, arch, pol, days, seeds, gardeners=False)
+            m = {"runs": runs}
+            worst = (0.0, 0, 0)
+            for si, (rows, _) in enumerate(runs):
+                for d, r in enumerate(rows):
+                    if r["hour1"] and r["ratio"] > worst[0]:
+                        worst = (r["ratio"], d + 1, si)
+            m["a_max"], m["a_day"], m["a_seed"] = worst
+            last = [rows[-1] for rows, _ in runs]
+            m["a_final"] = mean(r["ratio"] for r in last)
+            m["a_auto"] = mean(r["f24_auto"] / (r["hour1"] * r["mult"]) for r in last)
+            m["a_man"] = mean(r["f24_man"] / (r["hour1"] * r["mult"]) for r in last)
+            w = slice(max(0, days - 7), days)
+            m["net_g"] = mean(mean(r["field_net"] for r in rows[w]) for rows, _ in runs)
+            m["net_0"] = mean(mean(r["field_net"] for r in rows[w]) for rows, _ in runs0)
+            m["gross_g"] = mean(mean(r["field"] for r in rows[w]) for rows, _ in runs)
+            m["pot_g"] = mean(r["f24_auto"] + r["f24_man"] for r in last)
+            m["pot_0"] = mean(r["f24_0"] for r in last)  # the same field with no Gardener
+            m["b_struct"] = all(r["f24_auto"] + r["f24_man"] >= r["f24_0"] - 1e-9 for rows, _ in runs for r in rows)
+            for dd in (30, 60):
+                if dd <= days:
+                    m[f"sink{dd}"] = mean(rows[dd - 1]["sink"] / max(1.0, rows[dd - 1]["faucet"]) for rows, _ in runs)
+                    nores = lambda r: sum(v for k, v in r["spend"].items() if k != "res")
+                    if dd == 60:
+                        m["res60"] = mean(rows[-1]["spend"].get("res", 0.0) for rows, _ in runs)
+                        m["res_need60"] = max(0.0, mean(FIELD["sink_share"][60] * rows[-1]["faucet"] - nores(rows[-1]) for rows, _ in runs))
+                    m[f"sink{dd}_nores"] = mean(nores(rows[dd - 1]) / max(1.0, rows[dd - 1]["faucet"]) for rows, _ in runs)
+            m["garden_share"] = mean(
+                mean(r["field"] + r["pen"] for r in rows[w]) / max(1.0, mean(r["repeat"] + r["onetime"] + r["pen"] + r["field"] + r["sell"] for r in rows[w]))
+                for rows, _ in runs)
+            m["bank"] = mean(rows[-1]["bank"] for rows, _ in runs)
+            out[(arch["name"], pol)] = m
+    _G_CACHE[key] = out
+    return out
 
 
 # --------------------------------------------------------------------------------------------------------------------
@@ -756,7 +1114,7 @@ def required_sets(P):
     return out
 
 
-def run_checks(P):
+def run_checks(P, days=60, seeds=6):
     results = []
     d = drift(P)
     results.append(("1 Drift: configs equal the reviewed pins, formulas unchanged", not d, "; ".join(d[:3]) + (" ..." if len(d) > 3 else "")))
@@ -771,6 +1129,7 @@ def run_checks(P):
             cfg_first[(tid, lv)] = min(cfg_first.get((tid, lv), 99), s["order"])
     mismatched = [f"{k} config {cfg_first[k]} vs plan {v}" for k, v in PLANNED["required_at"].items() if k in cfg_first and cfg_first[k] != v]
     results.append(("3 Required talents of built stages match the planned table", not mismatched, "; ".join(mismatched)))
+    results.extend(field_checks(P, days, seeds))
     return results
 
 
@@ -867,30 +1226,81 @@ def cmd_report(P):
     print(table(["Pet set, 24 h uncapped", "Coins"] + [f"vs hour 1 ({name})" for name, _ in prog], rows))
     print("  Today only the 8 h offline cap keeps the pens near the rule; the crop field has no such cap, so its ceiling must come from\n"
           "  square count, seed cost and seed stock (E0 question 3).")
+    field_report(P)
 
 
-def cmd_check(P):
-    results = run_checks(P)
+def cmd_check(P, days, seeds):
+    results = run_checks(P, days, seeds)
     for name, ok, detail in results:
         print(f"[{tick(ok):4}] {name}" + (f"  ({detail})" if detail else ""))
     failed = [r for r in results if not r[1]]
     print(f"\n{len(results) - len(failed)} / {len(results)} checks pass" + ("" if not failed else f", {len(failed)} FAIL"))
-    print("Not implemented yet (E0 continues): guardrails A-C, dead end, rare crops, repricing, sensitivity (checks 4-11).")
+    print("Not implemented yet (E0 continues): dead end (7), rare-crop supply (8), repricing (10), sensitivity (11).")
     return 1 if failed else 0
+
+
+def field_checks(P, days=60, seeds=6):
+    """Acceptance checks 4-6 (guardrails A, B, C) and the garden share of Obby main, from the day-by-day simulation."""
+    if not P["field"]["on"]:
+        return [("4-6 Field guardrails A, B, C", True, "skipped: --garden pens has no field")]
+    G = guardrails(P, days, seeds)
+    res, lo, hi = [], *FIELD["a_band"]
+    for arch in ARCHETYPES:
+        nm = arch["name"]
+        ms = {pol: G[(nm, pol)] for pol in POLICIES}
+        w = max(ms.values(), key=lambda m: m["a_max"])
+        fin = " / ".join(f"{ms[p]['a_final']:.2f}x" for p in POLICIES)
+        res.append((f"4 A 24-hour rule, {nm}: field over 24 h <= first obby hour, every day", w["a_max"] <= 1.0,
+                    f"worst {w['a_max']:.2f}x on day {w['a_day']}; day {days}: {fin} (talent-first / pets-first)"))
+    for pol in POLICIES:
+        best = max(ARCHETYPES, key=lambda a: G[(a["name"], pol)]["a_final"])
+        v = G[(best["name"], pol)]["a_final"]
+        res.append((f"4 A target band {lo}-{hi}x at day {days}, best-developed archetype, {pol}", lo <= v <= hi, f"{v:.2f}x ({best['name']})"))
+    for arch in ARCHETYPES:
+        nm = arch["name"]
+        bad = [pol for pol in POLICIES if not (G[(nm, pol)]["b_struct"] and G[(nm, pol)]["pot_g"] > G[(nm, pol)]["pot_0"] + 1e-9
+                                                and G[(nm, pol)]["net_g"] > G[(nm, pol)]["net_0"])]
+        d = "; ".join(f"{pol}: 24 h potential {n(G[(nm, pol)]['pot_g'])} with / {n(G[(nm, pol)]['pot_0'])} without Gardeners, net/day {n(G[(nm, pol)]['net_g'])} / {n(G[(nm, pol)]['net_0'])}"
+                      for pol in POLICIES)
+        res.append((f"5 B Gardener-run field beats the same field without a Gardener, {nm}", not bad, d))
+    for arch in ARCHETYPES:
+        nm = arch["name"]
+        ms = [G[(nm, pol)] for pol in POLICIES]
+        s30, s60 = min(m["sink30"] for m in ms), min(m["sink60"] for m in ms)
+        r30, r60 = min(m["sink30_nores"] for m in ms), min(m["sink60_nores"] for m in ms)
+        resv = max(m["res60"] for m in ms)
+        res.append((f"6 C sink share, {nm}: >= {FIELD['sink_share'][30]:.0%} by day 30 and >= {FIELD['sink_share'][60]:.0%} by day 60",
+                    s30 >= FIELD["sink_share"][30] and s60 >= FIELD["sink_share"][60],
+                    f"day 30 {s30:.0%}, day 60 {s60:.0%} (worst policy); without the reserved sinks {r30:.0%} / {r60:.0%}; "
+                    f"reserved sinks bought {n(resv)}, needed for {FIELD['sink_share'][60]:.0%} by day 60: {n(max(m['res_need60'] for m in ms))}"))
+    for arch in ARCHETYPES:
+        nm = arch["name"]
+        sh = [G[(nm, pol)]["garden_share"] for pol in POLICIES]
+        txt = f"garden share of income, last 7 days: {sh[0]:.0%} / {sh[1]:.0%}"
+        if nm == "Obby main":
+            res.append(("6 Garden income is not a majority for Obby main", max(sh) <= FIELD["garden_share_max_obby"], txt))
+        else:
+            res.append((f"6 Garden share reported, {nm}", True, txt))
+    return res
 
 
 def cmd_sim(P, days, seeds):
     import statistics
-    print(f"DAY-BY-DAY SIMULATION: {days} days, {seeds} seeds per cell (egg rolls differ), pet multiplier ON, Coins after the multiplier\n")
-    print("Assumptions (SIM / MODEL blocks in economy.py, all provisional): a new stage takes "
+    F = P["field"]
+    print(f"DAY-BY-DAY SIMULATION: {days} days, {seeds} seeds per cell (egg rolls differ), pet multiplier ON, Coins after the multiplier")
+    print(f"Garden mode: {F['mode']} ({'pens pay Coins per hour' if F['pens_pay'] else 'pens are Field posts, no Coins per hour'}"
+          f"{'; Field squares and crops ON' if F['on'] else ''}); catalogue {F['catalogue']} ({len(F['crops'])} crops), ladder scale {F['scale']}\n")
+    print("Assumptions (SIM / MODEL / FIELD blocks in economy.py, all provisional): a new stage takes "
           f"({SIM['learn_base']} + {SIM['learn_per_order']} x stage number) runs x (T_base x {SIM['learn_factor']} + {MODEL['run_overhead_s']:.0f} s) and ends in Gold; farming = Gold runs, greedy;\n"
           "required talents are bought first (saving for them blocks other purchases); stage unlocks are never bought; Golden eggs are not bought;\n"
-          "equipped pets (best bonus) get the full XP of each run; the next best pets sit in pens; spare Common / Uncommon pets are sold.\n")
+          "equipped pets (best bonus) get the full XP of each run; the next best pets sit in pens / on posts; spare Common / Uncommon pets are sold;\n"
+          "field: every visit harvests what is ripe, sells it (pet multiplier at sale time), buys seeds and replants; Gardeners cycle their squares between visits.\n")
+    G = guardrails(P, days, seeds)
     snaps = [d for d in (1, 3, 7, 14, 30, 45, 60) if d <= days]
-    for policy in ("talent-first", "pets-first"):
+    for policy in POLICIES:
         afford_rows = {}
         for arch in ARCHETYPES:
-            runs = simulate(P, arch, policy, days, seeds)
+            runs = G[(arch["name"], policy)]["runs"]
 
             def avg(key, d, window=1):
                 vals = [sum(r[key] for r in rows[max(0, d - window):d]) / len(rows[max(0, d - window):d]) for rows, _ in runs]
@@ -898,25 +1308,109 @@ def cmd_sim(P, days, seeds):
             print(f"== {policy} / {arch['name']} (obby {arch['obby_min']} min per {arch['period_days']} d; incomes = mean of the last 7 days)")
             rows = []
             for d in snaps:
-                inc = [avg(k, d, 7) for k in ("repeat", "onetime", "pen")]
-                ratio = avg("pen_h", d) * 24 / max(1, avg("hour1", d))
+                inc = [avg(k, d, 7) for k in ("repeat", "onetime", "pen", "field")]
                 rows.append((d, f"{avg('stage', d):.0f}", f"{avg('talents', d):.0f}", f"{avg('pets', d):.0f}", f"{avg('eq_lvl', d):.1f}",
-                             f"{avg('mult', d):.2f}", n(inc[0]), n(inc[1]), n(inc[2]), f"{inc[2] / max(1, sum(inc)):.0%}", f"{ratio:.1f}x",
+                             f"{avg('mult', d):.2f}", n(inc[0]), n(inc[1]), n(inc[2]), n(inc[3]), f"{(inc[2] + inc[3]) / max(1, sum(inc)):.0%}",
                              n(avg("bank", d))))
-            print(table(["Day", "Stages", "Talents", "Pets", "Eq Lv", "Mult", "Repeat/d", "One-time/d", "Pens/d", "Pens share", "Pens24/h1", "Bank"], rows))
+            print(table(["Day", "Stages", "Talents", "Pets", "Eq Lv", "Mult", "Repeat/d", "One-time/d", "Pens/d", "Field/d", "Garden share", "Bank"], rows))
+            if F["on"]:
+                rows = []
+                for d in snaps:
+                    rows.append((d, f"{avg('sq', d):.0f}", f"{avg('cov', d):.0f}", f"{avg('post_g', d):.1f}", f"{avg('renown', d):.0f}", n(avg("harv", d, 7)),
+                                 n(avg("seeds", d, 7)), n(avg("field_net", d, 7)), f"{avg('ratio', d):.2f}x",
+                                 f"{avg('sink', d) / max(1, avg('faucet', d)):.0%}", n(avg("faucet", d))))
+                print("   field:")
+                print(table(["Day", "Squares", "Covered", "Gardeners", "Renown", "Harvests/d", "Seeds/d", "Field net/d", "24h/h1 (A)", "Sink share", "Faucet cum."], rows))
+                last = [r[-1]["spend"] for r, _ in runs]
+                tot = {k: sum(s.get(k, 0) for s in last) / len(last) for k in sorted({k for s in last for k in s})}
+                allv = sum(tot.values())
+                print("   sinks to day %d: " % days + ", ".join(f"{k} {n(v)} ({v / allv:.0%})" for k, v in sorted(tot.items(), key=lambda kv: -kv[1]) if v > 0))
+                rare = statistics.mean(sum(r["rare"] for r in rows_) for rows_, _ in runs) / max(1, days) * 7
+                print(f"   rare seeds from the obby: {rare:.1f} a week on average; stage/day-60 pet multiplier {avg('mult', days):.2f}")
             blocked = statistics.mean(sum(r["blocked"] for r in rws) for rws, _ in runs)
             print(f"   days blocked by a missing required talent: {blocked:.1f}\n")
-            for it in sorted({it for _, pl in runs for it in list(pl.afford) + list(pl.bought)}, key=lambda x: (x[0] != "talent", x)):
+            for it in sorted({it for _, pl in runs for it in list(pl.afford) + list(pl.bought)}, key=lambda x: (x[0] != "talent", x[0], x[1], x[2] if len(x) > 2 else 0)):
                 med = lambda attr: statistics.median([getattr(pl, attr).get(it, math.inf) for _, pl in runs])
                 a, b = med("afford"), med("bought")
                 afford_rows.setdefault(it, {})[arch["name"]] = f"{'-' if a == math.inf else int(a)}/{'-' if b == math.inf else int(b)}"
         print(f"Time to afford / time bought (median day, '-' = not within {days} days) -- {policy}")
         order = sorted(afford_rows, key=lambda x: (x[0] != "talent", x[0], x[1], x[2] if len(x) > 2 else 0))
         print(table(["Sink", "Price"] + [a["name"] for a in ARCHETYPES],
-                    [[item_name(it), n(item_price(P, it))] + [afford_rows[it].get(a["name"], "-") for a in ARCHETYPES] for it in order]))
+                    [[item_name(it), n(item_price(P, it))] + [afford_rows[it].get(a["name"], "-") for a in ARCHETYPES] for it in order if it[0] != "res" or it[1] % 4 == 1]))
         print()
-    print("Pens24/h1 = a fully running pen set over 24 h divided by the player's first obby hour at the same progress (the 24-hour rule; both sides\n"
-          "carry the same multiplier). > 1 breaks the rule.")
+    print("24h/h1 (A) = the field's 24-hour potential (Gardener squares cycle 24 h, the others give one harvest per visit, every square always replanted, net of\n"
+          "seeds) divided by the player's first obby hour at the same progress; the multiplier is on both sides. > 1 breaks the 24-hour rule.\n")
+    if F["on"]:
+        print("GUARDRAILS (also in `check`)")
+        for name, ok, detail in field_checks(P, days, seeds):
+            print(f"[{tick(ok):4}] {name}  ({detail})")
+
+
+def cmd_field(P, days, seeds):
+    """Catalogue and ladder-scale comparison: how the guardrails move with the number of crops and the price scale."""
+    saved = (P["field"]["catalogue"], P["field"]["scale"], P["field"]["mode"])
+    print("CATALOGUE COMPARISON (ladder scale %s, garden mode %s; A = worst 24 h field / first obby hour, day-60 field net per day, talent-first)" % (saved[1], saved[2]))
+    rows = []
+    for name in CATALOGUES:
+        build_field(P, saved[2], name, saved[1])
+        G = guardrails(P, days, seeds)
+        for arch in ARCHETYPES:
+            m = G[(arch["name"], "talent-first")]
+            rows.append((name, len(P["field"]["crops"]), arch["name"], f"{m['a_max']:.2f}x", f"{m['a_final']:.2f}x", n(m["net_g"]), f"{m['garden_share']:.0%}", f"{m['sink60']:.0%}"))
+    print(table(["Catalogue", "Crops", "Archetype", "A worst", "A day 60", "Field net/d", "Garden share", "Sink day 60"], rows, right_from=3))
+    print("\nLADDER SCALE SWEEP (catalogue %s, talent-first)" % saved[0])
+    rows = []
+    for sc in (1.0, 0.5, 0.35, 0.25, 0.15):
+        build_field(P, saved[2], saved[0], sc)
+        G = guardrails(P, days, seeds)
+        for arch in ARCHETYPES:
+            m = G[(arch["name"], "talent-first")]
+            rows.append((sc, arch["name"], f"{m['a_max']:.2f}x", f"{m['a_final']:.2f}x", n(m["net_g"]), f"{m['garden_share']:.0%}", f"{m['sink60']:.0%}"))
+    print(table(["Scale", "Archetype", "A worst", "A day 60", "Field net/d", "Garden share", "Sink day 60"], rows, right_from=2))
+    build_field(P, saved[2], saved[0], saved[1])
+
+
+def field_report(P):
+    F = P["field"]
+    print(f"\n7. The crop field (provisional, FIELD block; ladder scale {F['scale']}, catalogue {F['catalogue']}, garden mode {F['mode']})")
+    rows = []
+    for c in sorted(F["crops"].values(), key=lambda c: (c["tier"], c["h"])):
+        hrs = f"{c['h'] * 60:.0f} min" if c["h"] < 1 else f"{c['h']:.0f} h"
+        rows.append((c["id"], "rare W%d" % c["world"] if c["rare"] else c["tier"], hrs, f"{c['size']}x{c['size']}" if c["size"] > 1 else "1", c["sale"], c["seed"],
+                     c["net"], f"{c['net'] / c['h'] / c['size']:.1f}", f"{c['seed'] / c['sale']:.0%}", "obby" if c["rare"] else f"Renown {c['gate']}"))
+    print(table(["Crop", "Tier", "Grow", "Squares", "Sale", "Seed", "Net", "Net/square-h", "Seed share", "Unlock"], rows, right_from=3))
+    print(f"\n   Expansion tiers (free start field {FIELD['start_squares']} squares; provisional ceiling {FIELD['max_squares']}):")
+    cum, rows = 0, []
+    for k, (sq, price, gate) in enumerate(FIELD["expansions"]):
+        cum += price
+        rows.append((k + 1, sq, n(price), gate, n(cum)))
+    print(table(["Tier", "Squares", "Price", "Renown", "Cumulative"], rows, right_from=0))
+    print("   Upgrades: " + "; ".join(f"{name} ({'+' if name != 'growth' else '-'}{u['step'] if name != 'growth' else str(round(u['step'] * 100)) + ' % grow time'} per level) " + "/".join(n(p) for p in u["prices"])
+                                      for name, u in FIELD["upgrades"].items()))
+    res = F["prices"]["res"]
+    print(f"   Reserved sink ladder (landmarks / estate / decor placeholder): {len(res)} steps from {n(res[0])} to {n(res[-1])}, total {n(sum(res))}")
+    print(f"   Gardener: {FIELD['gardener']['share']:.0%} of hatched pets have Green thumb, each replants {FIELD['gardener']['squares']} squares (+ upgrades), posts = pens owned (prices unchanged).")
+
+    print()
+    print("8. Structural value of one square per day by archetype (Coins after the multiplier "
+          f"{MULT_REF}, minus seeds; one harvest per visit, the best crop that is ripe by the next visit; Gardener square = best crop cycling 24 h)")
+    h1 = hour1(P, list(P["stages"]))
+    budget = 0.9 * h1 * MULT_REF
+    rows, casual_model = [], None
+    for sc in (1.0, 0.5, 0.25, FIELD["scale"], 0.1, 0.05):
+        cs = [c for c in make_crops(sc, F["catalogue"]).values() if not c["rare"] and c["size"] == 1]
+        val = lambda c: MULT_REF * c["sale"] - c["seed"]
+        per = [sum(max((val(c) for c in cs if c["h"] <= gap + 1e-9), default=0) for _, gap in visit_schedule(a)) / a["period_days"] for a in ARCHETYPES]
+        auto = max(24 / c["h"] * val(c) for c in cs)
+        if sc == FIELD["scale"]:
+            casual_model = per[1]
+        rows.append([sc if sc != FIELD["scale"] else f"{sc} (model)", n(auto)] + [n(p) for p in per] + [f"{budget / auto:.0f}"] + [f"{budget / p:.0f}" for p in per[:3]])
+    print(table(["Ladder scale", "Gardener sq/day"] + [a["name"] + " sq/day" for a in ARCHETYPES] + ["Fits, all Gardener", "Fits, manual: Obby", "Casual", "Garden"], rows))
+    print(f"   Last stage: first obby hour {n(h1)} ({n(h1 * MULT_REF)} with the multiplier); 'Fits' = squares whose 24 h potential stays at 0.9x of it.")
+    sc150 = FIELD["scale"] * budget / FIELD["max_squares"] / casual_model
+    potato = make_crops(sc150, "min")["Potato"]
+    print(f"   Read: the ladder of EXPANSION §5 as written (scale 1) fits only 4-7 squares; the {FIELD['max_squares']}-square ceiling would need scale "
+          f"{sc150:.3f} (a potato selling for {potato['sale']} Coins with a seed of {potato['seed']}).")
 
 
 def main():
@@ -925,11 +1419,15 @@ def main():
     except Exception:
         pass
     ap = argparse.ArgumentParser(description="Pawvest economy model (ROADMAP E0)")
-    ap.add_argument("command", choices=["report", "sim", "check", "drift", "pin"])
+    ap.add_argument("command", choices=["report", "sim", "field", "check", "drift", "pin"])
+    ap.add_argument("--garden", choices=GARDEN_MODES, default="field")
+    ap.add_argument("--crops", choices=list(CATALOGUES), default="mvp")
+    ap.add_argument("--scale", type=float, default=None)
     ap.add_argument("--days", type=int, default=60)
     ap.add_argument("--seeds", type=int, default=6)
     args = ap.parse_args()
     P = load()
+    build_field(P, args.garden, args.crops, args.scale)
     if args.command == "report":
         cmd_report(P)
         return 0
@@ -937,7 +1435,10 @@ def main():
         cmd_sim(P, args.days, args.seeds)
         return 0
     if args.command == "check":
-        return cmd_check(P)
+        return cmd_check(P, args.days, args.seeds)
+    if args.command == "field":
+        cmd_field(P, args.days, args.seeds)
+        return 0
     if args.command == "drift":
         d = drift(P)
         print("\n".join(d) if d else "no drift")

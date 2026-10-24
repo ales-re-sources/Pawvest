@@ -56,7 +56,7 @@ Rules:
 | L2 | Localization: all client panels + config display names — done 2026-10-24 (Czech texts await the user's review) | ✔ | ✔ | – |
 | L3 | Localization: server-written + Studio-authored texts — texts done 2026-10-24 (Czech awaits review); font check and per-panel Czech overflow pass still open | ✔ | ✔ (texts) | – |
 | M6a | First live test + World 1 balancing | – | – | – |
-| E0 | Economy model for the pet-garden expansion (scope written 2026-10-24; `tools/economy.py` loader, drift check, reproduction, report and day-by-day sim done; [EXPANSION.md](EXPANSION.md) §11) | partial | – | – |
+| E0 | Economy model for the pet-garden expansion (scope written 2026-10-24; `tools/economy.py` loader, drift check, reproduction, report, day-by-day sim, crop field + guardrails A-C (39 checks green, provisional numbers in [ECONOMY.md](ECONOMY.md)) done; repricing, dead end, rare supply and sensitivity pending; [EXPANSION.md](EXPANSION.md) §11) | partial | – | – |
 | E1.0 | Client-drawn plots spike: GO / NO-GO on the plot architecture before E1 (scope written 2026-10-24, no code) | – | – | – |
 | S5 | Worlds hub — done 2026-10-22: gates for Worlds 2-4 (coming soon, admins only), World 2 courtyard, signs, per-world stars boards (user's visual check) | ✔ | ✔ | – |
 | S6 | World 2 (stages 6–10) — S6.1 Double Up + Seesaw built and Studio-checked 2026-10-22 (awaits the user's visual check), S6.2 / S6.3 not started | ✔ (S6.1) | ✔ (S6.1) | – |
@@ -322,7 +322,7 @@ the archetype's minutes and Gold-run share.
 **Progress (2026-10-24): baseline step done.** `tools/economy.py` loads every existing number from the Luau configs with a small table reader
 (no duplicated constants), pins them in `tools/economy_pins.json` (`drift` / `check` fail when a config changes; `pin` accepts the new state after
 review), reproduces the GDD figures (acceptance checks 1-3 run and pass: 21 / 21), and prints the baseline (`report`). The day-by-day simulation
-(`sim`) is built, see below. Not built yet: crops / field, guardrails A-C as checks, repricing, sensitivity (checks 4-11).
+(`sim`) is built, see below. The crop field and guardrails A-C (checks 4-6) are built too (field step below). Not built yet: dead end (7), rare-crop supply (8), repricing (10), sensitivity (11).
 
 **Baseline findings** (`python tools/economy.py report`; run times are model assumptions, hour 1 for World 1 comes out at ~2 700 vs the GDD's ~2 230)
 - The first obby hour of a day grows steeply with progress because the repeat-reward decay is per stage: ~2 700 (Tutorial + World 1), ~5 500 (+ World 2),
@@ -353,8 +353,24 @@ Findings of the current game (before crops):
 - **Free eggs:** the code grants a free Basic egg for the first Gold on **every** stage (StageResults `GOLD_EGG`), (up to 21 + the launch egg). GDD §7.2 said 4 and was corrected
   to match the code on 2026-10-24; the simulation follows the code.
 
+**Field step (2026-10-24, `python tools/economy.py check` / `sim` / `field`; numbers in [ECONOMY.md](ECONOMY.md), all provisional).** The model now has the crop field: one grid of squares
+(6 free, 9 expansion tiers), visit-based harvest (one per square per visit, ripe crops wait), Green-thumb Gardener pets on Field posts that re-cycle their squares between visits from a seed
+stock and barn, seeds as a real cost, sales through the pet multiplier, Renown as a derived level, a rare-seed drip from the obby, upgrades (growth, barn, Gardener coverage) and a placeholder
+ladder for the sinks that are not designed yet (landmarks / estate / decor). `--garden pens|field|both` switches between today's pens, pens-become-posts and grandfathered pens. 39 checks pass in
+about 2 s, including A (24-hour rule on every day, every archetype x policy), the A target band, B, C and the Obby main garden share. Findings:
+- **The EXPANSION §5 ladder (20 / 45 / 90 / 150 per square-hour) only fits 4-7 squares** under the 24-hour rule at the last stage (first obby hour 10 188). Tuned: ladder scale 0.15 (3 / 6.7 / 13.5 / 22.5)
+  and a field of 6 -> 24 squares; **the 150-square ceiling is not needed (the plot rework draws 24-30)**; squares x scale is what the rule limits. Binding archetype: Casual (long gaps, a 12 h crop ripens each visit) at
+  0.95x; Obby main 0.85x, Garden main 0.86x (0.70x at day 60), Binge 0.55x. About half of the potential is the Gardener part. A is linear in the ladder scale (+20 % -> 1.14x), and also sensitive to
+  squares per Gardener and the growth upgrade: flag them for M6a telemetry.
+- **Catalogue:** six crops (Potato, Pumpkin, Giant melon + one rare per world) pass every check; the recommended MVP is **seven** (+ Corn, the 6 h slot, +10 % for Obby main). Carrot, Radish and a 2 x 2 crop add under 1 %.
+- **B holds:** with / without Gardeners the net per day is 12.6k / 9.5k (Obby main), 14.1k / 12.6k (Casual), 8.5k / 2.2k (Garden main), 4.4k / 0.1k (Binge).
+- **C needs content that does not exist yet:** existing sinks plus the field absorb 35 % (Obby main) / 53 % (Casual) of the faucet by day 60; the 80 % proposal needs ~0.97 M / 0.36 M Coins of landmark / estate / decor sinks
+  (the placeholder ladder supplies them; the check prints both values). Obby main's garden share is 39 %, but **Casual's is 58 %** (garden majority for a 45-minute player).
+- **Pens:** grandfathering them (`--garden both`) breaks A (worst day 2.2-2.7x) and puts Obby main's garden share at 53 %: the model supports replacing the Coins-per-hour production when posts arrive.
+- Rare seeds from the obby: 7-9 a week for Obby main / Casual, 2-3 for Garden main / Binge.
+
 **Done when** `check` is green, `docs/ECONOMY.md` and the GDD / EXPANSION edits are committed, and the user has confirmed the ladder, the
-price proposal and the pen-income migration. E0b (applying the prices) is a separate small milestone. Status: in progress (baseline step).
+price proposal and the pen-income migration. E0b (applying the prices) is a separate small milestone. Status: in progress (baseline, simulation and field steps done; repricing next).
 
 **Decided:** form = script (2026-10-24); the garden is one free-form field of squares (not fixed beds); guardrail = the 24-hour rule (check 4), measured against the **first obby hour of a fresh day** (about 2 230; the later steady hour is only reported).
 
@@ -365,7 +381,10 @@ price proposal and the pen-income migration. E0b (applying the prices) is a sepa
    unlocks after the last stage of their world, last field tier by day 60).
 3. *Live players:* how many exist (probably only the developer and test accounts). If nobody has live pen income the migration collapses to
    "replace pens"; otherwise grandfather.
-4. *Maximum field:* provisional ceiling of 150 squares for the model; the real limit comes from the plot-architecture decision (EXPANSION §12).
+4. *Maximum field:* provisional ceiling of 150 squares for the model; the real limit comes from the plot-architecture decision (EXPANSION §12). The field step shows 24 squares are enough at ladder scale 0.15.
+5. *Field size and ladder scale* (new, 2026-10-24): accept 24 squares at scale 0.15 (potato 12 / melon 216 Coins), or fewer squares with larger numbers (12 squares at about scale 0.3)?
+6. *Casual as a garden-majority player* (new): 58 % of a 45-minute player's income is the field at the 0.95x A level; ROADMAP Q5 wants a majority only for Garden main. Accept, or lower the field to about 0.75x (below the 0.8-1.0 band).
+7. *Placeholder sinks* (new): the sink share of open decision 1 holds only with ~1 M Coins of landmark / estate / decor sinks (E6 / E7); keep the share or lower it.
 
 ### E1.0 — Client-drawn plots spike (scope, 2026-10-24; before E1, after or alongside E0)
 **Goal.** Decide GO / NO-GO on the plot architecture of EXPANSION §12: the server keeps only garden data, each client draws the plots it needs
