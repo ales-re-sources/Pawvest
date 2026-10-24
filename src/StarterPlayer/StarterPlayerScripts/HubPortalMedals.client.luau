@@ -2,6 +2,8 @@
 -- the stage is locked, its requirement and price (docs/GDD.md §3 "Hub portals"). Medals, coins and lock state come from
 -- player attributes set by StageResults, ChallengeCoins and StageUnlocks; every player sees only their own.
 -- The stars are a SurfaceGui on the same face as the portal's stage-name label ("Stage N"), so they are part of the gate.
+-- Finished goals get a green tick (Gold: after the stars, every coin found: after the coin line); GateMastery adds the gold
+-- check above a gate whose stage is mastered (both goals done).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -10,6 +12,7 @@ local MedalText = require(ReplicatedStorage:WaitForChild("MedalText"))
 local ChallengeCoinConfig = require(ReplicatedStorage:WaitForChild("ChallengeCoinConfig"))
 local TalentConfig = require(ReplicatedStorage:WaitForChild("TalentConfig"))
 local PortalFaceStyle = require(ReplicatedStorage:WaitForChild("PortalFaceStyle"))
+local StageMastery = require(ReplicatedStorage:WaitForChild("StageMastery"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 
 local LocalPlayer = Players.LocalPlayer
@@ -25,14 +28,35 @@ local LINE_TOP = 0.51 -- first line under the stars
 local LINE_STEP = 0.085
 local LINE_SIZE = UDim2.fromScale(0.74, 0.08)
 
-local function addPortalMedal(stage)
-	local portal = StageConfig.FaceTarget(stage)
+-- The Tutorial's start gate has no Door (an open doorway): a local invisible one, the size and place of a world gate's
+-- Door, carries its face.
+local function gateFaceAnchor(stage): BasePart?
+	local gate = StageMastery.WaitGate(stage)
+	local sign = gate and gate:WaitForChild("Sign", 30)
+	if not sign then
+		return nil
+	end
+	local door = Instance.new("Part")
+	door.Name = "FaceAnchor"
+	door.Anchored = true
+	door.CanCollide = false
+	door.CanTouch = false
+	door.CanQuery = false
+	door.Transparency = 1
+	door.Size = Vector3.new(22.4, 12.2, 1)
+	door.CFrame = sign.CFrame * CFrame.new(0, -8.8, 0)
+	door.Parent = gate
+	return door
+end
+
+-- `portal` is the part whose face shows the lines; `suffix` keeps the SurfaceGui names apart when a stage has two faces.
+local function addPortalMedal(stage, portal: BasePart, suffix: string)
 	local portalLabel = portal:FindFirstChildOfClass("SurfaceGui")
 	-- a door has no stage-name label (the gate's sign carries it), so its lines start higher than on a portal face
 	local shift = if portalLabel then 0 else DOOR_SHIFT
 
 	local surface = Instance.new("SurfaceGui")
-	surface.Name = "PortalMedal_" .. stage.folder
+	surface.Name = "PortalMedal_" .. stage.folder .. suffix
 	surface.ResetOnSpawn = false
 	surface.Adornee = portal
 	surface.Face = if portalLabel then portalLabel.Face else Enum.NormalId.Back
@@ -70,11 +94,13 @@ local function addPortalMedal(stage)
 		coinLine.Position = UDim2.fromScale(0.5, LINE_TOP + shift)
 		coinLine.Size = LINE_SIZE
 		coinLine.Parent = surface
+		local setCoinTick = StageMastery.AddTick(coinLine)
 		local collectedAttribute = ChallengeCoinConfig.CollectedAttribute
 		local function refreshCoins()
 			local collected = ChallengeCoinConfig.Decode(LocalPlayer:GetAttribute(collectedAttribute))
 			local found, total = ChallengeCoinConfig.Found(stage.key, collected)
 			coinLine.Text = Locale.T("faces.coinsFound", { found = found, total = total })
+			setCoinTick(found >= total)
 		end
 		LocalPlayer:GetAttributeChangedSignal(collectedAttribute):Connect(refreshCoins)
 		Locale.Changed:Connect(refreshCoins)
@@ -117,6 +143,11 @@ local function addPortalMedal(stage)
 		needsLine.Parent = surface
 	end
 
+	local setStarsTick = StageMastery.AddTick(label)
+	local function refreshStarsTick()
+		setStarsTick(StageMastery.Goals(stage, LocalPlayer).gold)
+	end
+
 	-- the lines stack under the stars: lock lines (only while locked), coins found, needs
 	local function layout()
 		local locked = LocalPlayer:GetAttribute(unlockedAttribute) == false
@@ -152,6 +183,10 @@ local function addPortalMedal(stage)
 		end
 	end
 	LocalPlayer:GetAttributeChangedSignal(unlockedAttribute):Connect(layout)
+	StageMastery.Watch(stage, LocalPlayer, function()
+		refreshStarsTick()
+		layout()
+	end)
 	for _, need in stage.requires do
 		LocalPlayer:GetAttributeChangedSignal(TalentConfig.AttributeName(need.id)):Connect(refreshNeeds)
 	end
@@ -164,6 +199,14 @@ end
 
 for _, stage in StageConfig.Stages do
 	if stage.hubPortal or StageConfig.Worlds[stage.world] then
-		task.spawn(addPortalMedal, stage)
+		task.spawn(function()
+			addPortalMedal(stage, StageConfig.FaceTarget(stage), "")
+			if stage.hubPortal then
+				local anchor = gateFaceAnchor(stage)
+				if anchor then
+					addPortalMedal(stage, anchor, "_Gate")
+				end
+			end
+		end)
 	end
 end

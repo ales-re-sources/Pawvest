@@ -100,6 +100,19 @@ must always stay completable.
 **Hub portals** show: stage name, locked/unlocked, requirement + price when locked, best medal earned,
 and challenge coins found `x/y`.
 
+**Mastered stage.** A stage is *mastered* for a player when the top medal (Gold) is earned **and** every challenge coin of
+the stage is found (a stage without coins needs only Gold). It tells the player "you are done here"; the only goals left
+are beating your own record and the Top 10. Purely a display, no reward. Local to the player (read from `Medal_<stage>` and
+`CollectedCoins`):
+- each finished goal gets a green tick on the gate's door face (after the stars, after the coin line);
+- once both are done a gold check badge bobs above the start gate, visible across the courtyard; the gate, its sign and the
+  "Stage N" title stay as authored. The Tutorial gets it above its start gate (`LandingPad.StartGate`, which has no door: its
+  tick face hangs on a local invisible anchor) and above its hub portal.
+The hub world gates follow the same rule for the whole world: a green tick after the stars line when every star of the
+world is earned and after the coins line when every coin of its stages is found, and the gold check above the gate once the
+world is mastered (all its stages; a world with stages not built yet or marked `soon` shows nothing).
+Open: showing the personal best time on the mastered door (needs a replicated best-time attribute).
+
 ## 4. Time tiers
 Each stage has `T_base` = time of a clean run by the developer **with exactly the talents the stage requires** (none on
 the Tutorial and stages 1–5). Default thresholds (tunable per stage):

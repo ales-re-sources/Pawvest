@@ -1,6 +1,7 @@
 -- Hub world gates (S4.0): draws the local player's progress in a world on its gate's face, like HubPortalMedals does for
 -- stage portals: the stars earned in the world out of the stars its stages can give, and the challenge coins found. Medals
 -- and coins come from the player attributes StageResults and ChallengeCoins keep; every player sees only their own.
+-- A finished goal (every star of the world / every coin of its stages) gets a green tick after its line (StageMastery).
 -- While the gate is shut (none of the world's stages is open for the player) the face shows what opens it instead.
 
 local Players = game:GetService("Players")
@@ -9,6 +10,7 @@ local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local ChallengeCoinConfig = require(ReplicatedStorage:WaitForChild("ChallengeCoinConfig"))
 local MedalText = require(ReplicatedStorage:WaitForChild("MedalText"))
 local PortalFaceStyle = require(ReplicatedStorage:WaitForChild("PortalFaceStyle"))
+local StageMastery = require(ReplicatedStorage:WaitForChild("StageMastery"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 
 local LocalPlayer = Players.LocalPlayer
@@ -46,6 +48,8 @@ local function addGate(world)
 	end
 	local starsLabel = line("Stars", STARS_Y)
 	local coinsLabel = line("Coins", COINS_Y)
+	local setStarsTick = StageMastery.AddTick(starsLabel)
+	local setCoinsTick = StageMastery.AddTick(coinsLabel)
 
 	local stages = {}
 	for _, stage in StageConfig.Stages do
@@ -55,6 +59,8 @@ local function addGate(world)
 	end
 
 	local function refresh()
+		setStarsTick(false)
+		setCoinsTick(false)
 		if world.soon then
 			starsLabel.Text = Locale.T("faces.comingSoon")
 			coinsLabel.Text = MedalText.UnlockBar({ unlock = world.unlock }) or ""
@@ -86,6 +92,9 @@ local function addGate(world)
 			total += t
 		end
 		coinsLabel.Text = Locale.T("faces.coinsFound", { found = found, total = total })
+		local goals = StageMastery.WorldGoals(world.index, LocalPlayer)
+		setStarsTick(goals.gold)
+		setCoinsTick(goals.coins)
 	end
 
 	for _, stage in stages do
