@@ -56,7 +56,7 @@ Rules:
 | L2 | Localization: all client panels + config display names — done 2026-10-24 (Czech texts await the user's review) | ✔ | ✔ | – |
 | L3 | Localization: server-written + Studio-authored texts — texts done 2026-10-24 (Czech awaits review); font check and per-panel Czech overflow pass still open | ✔ | ✔ (texts) | – |
 | M6a | First live test + World 1 balancing | – | – | – |
-| E0 | Economy model for the pet-garden expansion (scope written 2026-10-24, no code; [EXPANSION.md](EXPANSION.md) §11) | – | – | – |
+| E0 | Economy model for the pet-garden expansion (scope written 2026-10-24; `tools/economy.py` baseline step done: loader, drift check, reproduction, report; [EXPANSION.md](EXPANSION.md) §11) | partial | – | – |
 | E1.0 | Client-drawn plots spike: GO / NO-GO on the plot architecture before E1 (scope written 2026-10-24, no code) | – | – | – |
 | S5 | Worlds hub — done 2026-10-22: gates for Worlds 2-4 (coming soon, admins only), World 2 courtyard, signs, per-world stars boards (user's visual check) | ✔ | ✔ | – |
 | S6 | World 2 (stages 6–10) — S6.1 Double Up + Seesaw built and Studio-checked 2026-10-22 (awaits the user's visual check), S6.2 / S6.3 not started | ✔ (S6.1) | ✔ (S6.1) | – |
@@ -319,8 +319,24 @@ the archetype's minutes and Gold-run share.
 11. Sensitivity: a table of ±20 % on each new parameter and which acceptance check flips; any parameter whose ±20 % breaks a guardrail is
    flagged for telemetry in M6a.
 
+**Progress (2026-10-24): baseline step done.** `tools/economy.py` loads every existing number from the Luau configs with a small table reader
+(no duplicated constants), pins them in `tools/economy_pins.json` (`drift` / `check` fail when a config changes; `pin` accepts the new state after
+review), reproduces the GDD figures (acceptance checks 1-3 run and pass: 21 / 21), and prints the baseline (`report`). Not built yet: the day-by-day
+simulation, crops / field, guardrails A-C, repricing, sensitivity (checks 4-11).
+
+**Baseline findings** (`python tools/economy.py report`; run times are model assumptions, hour 1 for World 1 comes out at ~2 700 vs the GDD's ~2 230)
+- The first obby hour of a day grows steeply with progress because the repeat-reward decay is per stage: ~2 700 (Tutorial + World 1), ~5 500 (+ World 2),
+  ~6 500 (+ World 3 built). The 24-hour rule therefore compares against the hour at the player's own progress, not one fixed number.
+- **Today's pens already break the 24-hour rule** for early players: 6 mixed Lv5 pens make ~4 700 per 24 h (1.8x the World 1 first hour), a strong
+  Lv10 set ~15 000 (5.6x). Only the 8 h offline cap holds it in check; for a Casual player the pens (~3 400 a day with the mixed set) out-earn the
+  obby (~2 300 a day at World 1). The crop field must not inherit this: its ceiling comes from squares, seed cost and stock.
+- One-time sinks (talents 47 300, 20 stage unlocks ~78 700 with provisional prices for 13-20, slots 7 000, pens 32 500, incubators 17 000 = 182 500) are
+  1.8x the one-time faucet (medals + first finish + challenge coins = 101 640). Repeat rewards and the garden must fill the difference, which is
+  the room the repricing has to work with.
+- A Basic egg resells for ~48 % of its price and a Golden egg for ~18 %, so selling pets is a weak faucet today.
+
 **Done when** `check` is green, `docs/ECONOMY.md` and the GDD / EXPANSION edits are committed, and the user has confirmed the ladder, the
-price proposal and the pen-income migration. E0b (applying the prices) is a separate small milestone. Status: scope only (not started).
+price proposal and the pen-income migration. E0b (applying the prices) is a separate small milestone. Status: in progress (baseline step).
 
 **Decided:** form = script (2026-10-24); the garden is one free-form field of squares (not fixed beds); guardrail = the 24-hour rule (check 4), measured against the **first obby hour of a fresh day** (about 2 230; the later steady hour is only reported).
 

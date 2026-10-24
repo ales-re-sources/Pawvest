@@ -1,0 +1,301 @@
+{
+ "coin_counts": {
+  "Stage1": 7,
+  "Stage10": 8,
+  "Stage11": 8,
+  "Stage12": 8,
+  "Stage2": 7,
+  "Stage3": 8,
+  "Stage4": 8,
+  "Stage5": 9,
+  "Stage6": 8,
+  "Stage7": 8,
+  "Stage8": 8,
+  "Stage9": 8,
+  "Tutorial": 3
+ },
+ "coin_tiers": {
+  "Easy": 20,
+  "Risky": 50,
+  "Talent": 100
+ },
+ "eggs": {
+  "Basic": [
+   500,
+   300,
+   {
+    "Common": 600,
+    "Epic": 35,
+    "Legendary": 5,
+    "Rare": 110,
+    "Uncommon": 250
+   }
+  ],
+  "Golden": [
+   4000,
+   3600,
+   {
+    "Epic": 150,
+    "Legendary": 50,
+    "Rare": 350,
+    "Uncommon": 450
+   }
+  ]
+ },
+ "finish_base": 100,
+ "foods": [
+  [
+   "Berry",
+   50,
+   25
+  ],
+  [
+   "Cake",
+   400,
+   250
+  ],
+  [
+   "Feast",
+   1500,
+   1000
+  ]
+ ],
+ "incubator_prices": [
+  0,
+  5000,
+  12000
+ ],
+ "medals": [
+  [
+   200,
+   1
+  ],
+  [
+   400,
+   1.5
+  ],
+  [
+   800,
+   2
+  ]
+ ],
+ "offline_cap_h": 8.0,
+ "pen_level_rate": 40,
+ "pen_prices": [
+  0,
+  1000,
+  2500,
+  5000,
+  9000,
+  15000
+ ],
+ "pen_rates": {
+  "Common": 10,
+  "Epic": 70,
+  "Legendary": 120,
+  "Rare": 40,
+  "Uncommon": 20
+ },
+ "pet_levels": [
+  20,
+  5,
+  500
+ ],
+ "rarities": {
+  "Common": [
+   20,
+   100
+  ],
+  "Epic": [
+   100,
+   1500
+  ],
+  "Legendary": [
+   150,
+   5000
+  ],
+  "Rare": [
+   70,
+   500
+  ],
+  "Uncommon": [
+   40,
+   200
+  ]
+ },
+ "run_reward": [
+  50,
+  0.8,
+  10
+ ],
+ "slot_prices": [
+  0,
+  2000,
+  5000
+ ],
+ "stage:Stage1": [
+  1,
+  1,
+  0.75,
+  52,
+  200,
+  []
+ ],
+ "stage:Stage10": [
+  10,
+  2,
+  3.0,
+  75,
+  4000,
+  [
+   [
+    "DoubleJump",
+    1
+   ]
+  ]
+ ],
+ "stage:Stage11": [
+  11,
+  3,
+  3.25,
+  110,
+  4000,
+  [
+   [
+    "DoubleJump",
+    2
+   ]
+  ]
+ ],
+ "stage:Stage12": [
+  12,
+  3,
+  3.5,
+  120,
+  4500,
+  [
+   [
+    "DoubleJump",
+    2
+   ]
+  ]
+ ],
+ "stage:Stage2": [
+  2,
+  1,
+  1.0,
+  70,
+  1000,
+  []
+ ],
+ "stage:Stage3": [
+  3,
+  1,
+  1.25,
+  60,
+  1500,
+  []
+ ],
+ "stage:Stage4": [
+  4,
+  1,
+  1.5,
+  100,
+  2000,
+  []
+ ],
+ "stage:Stage5": [
+  5,
+  1,
+  1.75,
+  120,
+  2000,
+  []
+ ],
+ "stage:Stage6": [
+  6,
+  2,
+  2.0,
+  90,
+  2500,
+  [
+   [
+    "DoubleJump",
+    1
+   ]
+  ]
+ ],
+ "stage:Stage7": [
+  7,
+  2,
+  2.25,
+  100,
+  3000,
+  [
+   [
+    "DoubleJump",
+    1
+   ]
+  ]
+ ],
+ "stage:Stage8": [
+  8,
+  2,
+  2.5,
+  105,
+  3000,
+  [
+   [
+    "DoubleJump",
+    1
+   ]
+  ]
+ ],
+ "stage:Stage9": [
+  9,
+  2,
+  2.75,
+  100,
+  3500,
+  [
+   [
+    "DoubleJump",
+    1
+   ]
+  ]
+ ],
+ "stage:Tutorial": [
+  0,
+  0,
+  0.5,
+  30,
+  null,
+  []
+ ],
+ "talent_costs": {
+  "Dash": [
+   8000
+  ],
+  "DoubleJump": [
+   3000,
+   5000
+  ],
+  "JumpHeight": [
+   300,
+   600,
+   1000
+  ],
+  "QuickRespawn": [
+   1000,
+   3000
+  ],
+  "RunSpeed": [
+   200,
+   400,
+   600,
+   900,
+   1300
+  ]
+ },
+ "world4_unlock_price": 6000
+}

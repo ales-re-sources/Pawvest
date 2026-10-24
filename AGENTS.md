@@ -17,6 +17,7 @@ per-stage Top-10 leaderboards, collectible coins and a small admin panel.
 - [docs/LOCALIZATION.md](docs/LOCALIZATION.md) — localization design (L1–L4): English + Czech, `Locale.T`, string tables, `LocKey` for server texts, language row in Settings. L1 (infrastructure + HUD) implemented; L2 (client panels) and L3 (server + Studio texts) implemented.
 - [docs/EXPANSION.md](docs/EXPANSION.md) — **Pawvest** (the game's official name since 2026-10-24; formerly "Oby sandbox"): pet-garden simulator direction (E1–E8): posts, pet traits and careers, crop economy, critter raids, restoration bundles, estate; MVP cut and update plan; draft, nothing built.
 - [docs/STAGES.md](docs/STAGES.md) — stage expansion to ≈ 20 stages: obstacle component catalogue, combination patterns, difficulty curve, special / bonus stages, talent gating, worlds / hub layout, proposed S milestones.
+- `tools/economy.py` — economy model (E0): reads the Coin numbers from the Luau configs, `report` (baseline tables), `check` (drift against `tools/economy_pins.json` + acceptance checks), `pin` (accept reviewed config values). Run `check` after changing any price, rate or reward in a config; see ROADMAP → E0.
 
 Work milestone by milestone per ROADMAP (design check → implement → Studio validation → status update → commit);
 update the status levels (Implemented / Studio-validated / Live-validated) only after validation.
