@@ -43,19 +43,28 @@ function MedalText.Limits(stage, bestMedal: number): string
 	return table.concat(parts, "   ")
 end
 
--- Unlock bar of a stage (GDD §3): "★★ Silver on Stage 1" with gold stars; nil for a stage without an unlock rule.
+-- Unlock bar of a stage (GDD §3): "★★ Silver on Stage 1" with gold stars, in the client's language; nil for a stage
+-- without an unlock rule.
 function MedalText.UnlockBar(stage): string?
 	local rule = stage.unlock
 	if not rule then
 		return nil
 	end
 	if rule.world then
-		return font(MedalText.Gold, "★") .. " " .. rule.stars .. " of " .. StageConfig.MaxWorldStars(rule.world)
-			.. " in World " .. rule.world
+		return Locale.T("unlock.bar.world", {
+			star = font(MedalText.Gold, "★"),
+			n = rule.stars,
+			max = StageConfig.MaxWorldStars(rule.world),
+			world = rule.world,
+		})
 	end
 	local previous = StageConfig.ByKey[rule.stage]
-	local stars = string.rep("★", StageConfig.MedalIndex[rule.medal])
-	return font(MedalText.Gold, stars) .. " " .. rule.medal .. " on " .. previous.displayName
+	local medalIndex = StageConfig.MedalIndex[rule.medal]
+	return Locale.T("unlock.bar.stage", {
+		stars = font(MedalText.Gold, string.rep("★", medalIndex)),
+		medal = Locale.MedalName(StageConfig.Medals[medalIndex]),
+		stage = Locale.StageName(previous),
+	})
 end
 
 -- Display name of a required talent ("Double Jump", or "Double Jump 2" above level 1 on a multi-level talent), in the

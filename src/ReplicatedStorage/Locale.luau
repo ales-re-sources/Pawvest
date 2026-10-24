@@ -112,11 +112,33 @@ local function pluralIndex(lang: string, count: number?): number
 	return if count == 1 then 1 else 2
 end
 
+-- Whole number with the language's digit grouping: "12,500" in English, "12 500" (no-break space) in Czech
+function Locale.Number(n: number, lang: string?): string
+	lang = lang or Locale.Current()
+	local text = string.format("%d", math.floor(n))
+	local separator = if lang == "cs" then "\u{00A0}" else ","
+	local digits = if string.sub(text, 1, 1) == "-" then string.sub(text, 2) else text
+	if #digits <= 3 or (lang == "cs" and #digits <= 4) then
+		return text -- Czech groups from five digits on ("1500", "12 500")
+	end
+	local grouped = string.reverse((string.gsub(string.reverse(digits), "(%d%d%d)", "%1" .. separator)))
+	if string.sub(grouped, 1, #separator) == separator then
+		grouped = string.sub(grouped, #separator + 1)
+	end
+	return (if digits ~= text then "-" else "") .. grouped
+end
+
+-- A decimal written as text ("4.5", e.g. PetClient.Percent) with the language's decimal mark ("4,5" in Czech)
+function Locale.Decimal(text: string, lang: string?): string
+	lang = lang or Locale.Current()
+	return if lang == "cs" then (string.gsub(text, "%.", ",")) else text
+end
+
 local function format(value: any, lang: string): string
 	if type(value) == "table" and type(value.key) == "string" then
 		return Locale.T(value.key, value.args, lang)
 	elseif type(value) == "number" and value == math.floor(value) and math.abs(value) < 1e15 then
-		return string.format("%d", value)
+		return Locale.Number(value, lang)
 	end
 	return tostring(value)
 end
@@ -178,6 +200,44 @@ end
 
 function Locale.EggName(egg): string -- an entry of PetConfig.Eggs
 	return named("pet.egg." .. egg.id, egg.name)
+end
+
+function Locale.PetKindName(kind: string): string -- a key of PetConfig.Kinds
+	return named("pet.kind." .. kind, kind)
+end
+
+function Locale.RarityName(rarityId: string): string -- an id of PetConfig.Rarities
+	return named("pet.rarity." .. rarityId, rarityId)
+end
+
+function Locale.FoodName(food): string -- an entry of GardenConfig.Foods
+	return named("food.name." .. food.id, food.name)
+end
+
+-- What buying `level` of `talent` gives: the per-level text when the talent has one (talent.effect.<id>.<level>), else the
+-- talent's general effect (talent.effect.<id>); the config's English as the fallback
+function Locale.TalentEffect(talent, level: number): string
+	local perLevel = "talent.effect." .. talent.id .. "." .. level
+	if english[perLevel] then
+		return Locale.T(perLevel)
+	end
+	return named("talent.effect." .. talent.id, talent.effects and talent.effects[level] or talent.effect)
+end
+
+-- A time span: "7 h 59 min", "12 min", "45 s"
+function Locale.Duration(seconds: number): string
+	seconds = math.max(0, math.floor(seconds))
+	if seconds >= 3600 then
+		return Locale.T("common.duration.hm", { h = seconds // 3600, m = (seconds % 3600) // 60 })
+	elseif seconds >= 60 then
+		return Locale.T("common.duration.m", { m = seconds // 60 })
+	end
+	return Locale.T("common.duration.s", { s = seconds })
+end
+
+-- "Cat Lv 12": a pet's name with its level, the way every pet list and label shows it
+function Locale.PetName(kind: string, level: number): string
+	return Locale.T("pet.nameLevel", { kind = Locale.PetKindName(kind), level = level })
 end
 
 -- The label shows `key` (with `args`) in each viewer's language; the English text is written as the fallback

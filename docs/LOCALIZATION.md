@@ -2,7 +2,8 @@
 
 Status: design agreed 2026-10-23; L1 implemented and Studio-validated 2026-10-23 (see "Design check (L1)" below); L1.1
 (strings workflow: CSV source, `tools/loc.py`, pseudo-language) 2026-10-24, see "Strings workflow". The Czech texts await
-the user's review. L2 / L3 not started. Milestones **L1–L3** (L4 later) in [ROADMAP.md](ROADMAP.md),
+the user's review. L2 (client panels) implemented and Studio-validated 2026-10-24, see "Design check (L2)". L3 not
+started. Milestones **L1–L3** (L4 later) in [ROADMAP.md](ROADMAP.md),
 after telemetry (T1a / T1b, [TELEMETRY.md](TELEMETRY.md)).
 
 ## Goal
@@ -71,6 +72,25 @@ Against the code, the design holds with these decisions:
 - **The Music row** of the Settings panel is converted with the new Language row (same panel).
 - **AutoLocalize = false** on the ScreenGuis built in L1 code; the Studio-authored `ScreenGui` gets it in L3. The user
   turns off automatic translation on the Creator Dashboard before publishing (Localization → Settings).
+
+## Design check (L2, 2026-10-24)
+- **Names held as data** go through `Locale` helpers that fall back to the config's English: `PetKindName`
+  (`pet.kind.<Kind>`), `RarityName` (`pet.rarity.<id>`), `FoodName` (`food.name.<id>`), `TalentEffect`
+  (`talent.effect.<id>` or per level `talent.effect.<id>.<level>`), `PetName` ("Cat Lv 12", `pet.nameLevel`). The configs
+  keep their English `name` / `effect` fields as source and fallback; those lines carry `-- loc: ignore`.
+- **Numbers:** every whole-number placeholder is formatted by `Locale.Number` (English "12,500"; Czech groups from five
+  digits, "1500" / "12 500" with a no-break space); decimals through `Locale.Decimal` ("4,5" in Czech); percentages as
+  `common.percentBonus` ("+4.5%" / "+4,5 %"). Time spans through `Locale.Duration` (`common.duration.*`).
+- **Pet levels keep "Lv" in Czech:** "úroveň" is already the stage name (`stage.name.*`), so "Kočka Lv 12" avoids two
+  meanings of one word. Open point for the user's review.
+- **Shared texts:** refusals that several panels share are `common.reject.*` (coins, stale, loading, failed, far,
+  noplot), the "N more Coins needed" line `common.needMoreCoins`; each panel keeps its own keys for the rest.
+- **Grammar:** where Czech agreement differs by noun, one key per case instead of a fragment: the arena toasts are
+  `arena.keyCollected.<key>` ("Tyrkysový klíč") and `arena.gateOpened.<key>` ("Tyrkysová brána"); sentences with a pet
+  name put the name after a colon ("Máš nového mazlíčka: {pet}!") so no case ending is needed.
+- **Panel titles authored in Studio** (Skills, Settings) are set from the panels' scripts; the Admin panel stays English.
+- **Server-written texts** in the garden (pen / incubator billboards, plot signs) and the boards stay for L3; the garden
+  pen pet label built on the server by `PetLook.LabelText` is English there until L3.
 
 ## Strings workflow (L1.1, 2026-10-24)
 **Source:** `localization/strings.csv`, the one table people edit: `key`, `context` (where the text appears, what goes

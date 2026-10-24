@@ -155,7 +155,7 @@ local function load(player)
 	elseif ok and type(data) == "table" then
 		profile = reconcile(data)
 	elseif ok then
-		ok, data = false, "record is not a table"
+		ok, data = false, "record is not a table" -- loc: ignore (log message)
 	end
 
 	if not player.Parent then

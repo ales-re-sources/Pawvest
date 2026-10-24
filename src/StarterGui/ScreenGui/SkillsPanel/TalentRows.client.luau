@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local TalentConfig = require(ReplicatedStorage:WaitForChild("TalentConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
+local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local remotes = ReplicatedStorage:WaitForChild("TalentRemotes")
 local buyEvent = remotes:WaitForChild("Buy")
 local resultEvent = remotes:WaitForChild("Result")
@@ -21,11 +22,11 @@ local COLOR_LOCKED = StudStyle.Colors.Grey
 local COLOR_INFO = Color3.fromRGB(235, 222, 190)
 local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
 
-local REJECT_TEXT = {
-	coins = "Not enough Coins",
-	maxed = "Already maxed",
-	stale = "Out of date, try again",
-	loading = "Still loading...",
+local REJECT_KEYS = {
+	coins = "common.reject.coins",
+	maxed = "skills.reject.maxed",
+	stale = "common.reject.stale",
+	loading = "common.reject.loading",
 }
 
 local function create(className: string, props, children)
@@ -52,16 +53,16 @@ local function refreshRow(row)
 	local max = #talent.costs
 	local cost = TalentConfig.NextCost(talent.id, level)
 
-	row.title.Text = talent.name .. "  " .. level .. "/" .. max
+	row.title.Text = Locale.TalentName(talent) .. "  " .. level .. "/" .. max
 	if row.flash == 0 then
 		row.info.TextColor3 = COLOR_INFO
-		row.info.Text = cost and (talent.effects and talent.effects[level + 1] or talent.effect) or "Maxed out"
+		row.info.Text = if cost then Locale.TalentEffect(talent, level + 1) else Locale.T("skills.maxedOut")
 	end
 	if cost then
-		row.button.Text = "Buy " .. cost
+		row.button.Text = Locale.T("skills.buy", { price = cost })
 		row.button.BackgroundColor3 = coins >= cost and COLOR_BUY or COLOR_LOCKED
 	else
-		row.button.Text = "MAX"
+		row.button.Text = Locale.T("skills.max")
 		row.button.BackgroundColor3 = COLOR_LOCKED
 	end
 end
@@ -151,8 +152,22 @@ end
 resultEvent.OnClientEvent:Connect(function(id, ok, detail)
 	local row = rows[id]
 	if row and not ok then
-		flash(row, REJECT_TEXT[detail] or "Purchase failed")
+		flash(row, Locale.T(REJECT_KEYS[detail] or "skills.reject.failed"))
 	end
+end)
+
+-- the panel's title strip is authored in Studio; its text comes from here
+local function title()
+	local titleLabel = panel:FindFirstChild("TitleLabel")
+	if titleLabel and titleLabel:IsA("TextLabel") then
+		titleLabel.Text = Locale.T("skills.title")
+	end
+end
+title()
+
+Locale.Changed:Connect(function()
+	title()
+	refreshAll()
 end)
 
 task.spawn(function()

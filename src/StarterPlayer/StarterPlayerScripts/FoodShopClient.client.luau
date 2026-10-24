@@ -18,6 +18,7 @@ local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
+local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
 local feedEvent = remotes:WaitForChild("Feed") -- looked up by name, never `remotes.X`
@@ -40,14 +41,16 @@ local COLOR_CLOSE = StudStyle.Shade(StudStyle.Colors.Red, 0.75) -- a darker red 
 local COLOR_INFO = Color3.fromRGB(235, 222, 190)
 local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
 local COLOR_OK = Color3.fromRGB(120, 230, 120)
-local DEFAULT_STATUS = "Feed a pet to give it XP. Only the fed pet gets it."
-
-local REJECT_TEXT = {
-	coins = "Not enough Coins",
-	maxed = "This pet is already level 20",
-	far = "Too far from the food stand",
-	loading = "Still loading...",
+local REJECT_KEYS = {
+	coins = "common.reject.coins",
+	maxed = "food.reject.maxed",
+	far = "food.reject.far",
+	loading = "common.reject.loading",
 }
+
+local function rejectText(reason: string?): string
+	return Locale.T(reason and REJECT_KEYS[reason] or "common.reject.failed", { max = PetConfig.MaxLevel })
+end
 
 local function create(className: string, props, children)
 	local instance = Instance.new(className)
@@ -87,7 +90,6 @@ local titleLabel = label("TitleLabel", {
 	Size = UDim2.new(1, 0, 0, 34),
 	TextSize = 20,
 	TextXAlignment = Enum.TextXAlignment.Center,
-	Text = "🍓 Pet food",
 })
 local closeButton = button("Close", {
 	AnchorPoint = Vector2.new(1, 0),
@@ -126,7 +128,6 @@ local emptyLabel = label("Empty", {
 	TextSize = 15,
 	TextColor3 = COLOR_INFO,
 	TextWrapped = true,
-	Text = "You have no pets yet. Hatch one in your incubator.",
 	Visible = false,
 })
 
@@ -174,7 +175,15 @@ local screenGui = create("ScreenGui", {
 	Name = "FoodShopGui",
 	ResetOnSpawn = false,
 	DisplayOrder = 5,
+	AutoLocalize = false, -- translated by Locale (L2)
 }, { panel })
+
+-- texts that do not depend on the state (set again when the language changes)
+local function staticTexts()
+	titleLabel.Text = Locale.T("food.title")
+	emptyLabel.Text = Locale.T("food.empty")
+end
+staticTexts()
 
 -- State ------------------------------------------------------------------------------------------------------------------
 
@@ -187,7 +196,7 @@ local armToken = 0
 local flashToken = 0
 
 local function showDefaultStatus()
-	statusLabel.Text = DEFAULT_STATUS
+	statusLabel.Text = Locale.T("food.status")
 	statusLabel.TextColor3 = COLOR_INFO
 end
 
@@ -212,16 +221,17 @@ local function outcome(entry, food): string
 	local pet = PetClient.State.pets[entry.uid]
 	local copy = { Level = entry.level, XP = entry.xp }
 	local gained = PetConfig.GainXp(copy, food.xp) or 0
-	local name = string.format("<font color='%s'>%s</font> Lv %d", hex(entry.rarity.color), entry.kind, entry.level)
+	local kind = string.format("<font color='%s'>%s</font>", hex(entry.rarity.color), Locale.PetKindName(entry.kind))
+	local name = Locale.T("pet.nameLevel", { kind = kind, level = entry.level })
 	local text
 	if gained > 0 then
-		text = string.format("%s → Lv %d", name, copy.Level)
+		text = Locale.T("food.outcome.levelUp", { name = name, level = copy.Level })
 	else
-		text = string.format("%s · XP %s → %s/%s", name, PetClient.Number(entry.xp), PetClient.Number(copy.XP), PetClient.Number(entry.xpNext))
+		text = Locale.T("food.outcome.xp", { name = name, from = entry.xp, to = copy.XP, next = entry.xpNext })
 	end
 	local wasted = food.xp - GardenConfig.XpToMax(pet)
 	if wasted > 0 then
-		text ..= string.format("\n<font color='#f0a05a'>%s XP wasted past Lv %d</font>", PetClient.Number(wasted), PetConfig.MaxLevel)
+		text ..= "\n" .. Locale.T("food.wasted", { xp = wasted, max = PetConfig.MaxLevel })
 	end
 	return text
 end
@@ -252,13 +262,13 @@ local function updateTooltip()
 	end
 	local food = info.food
 	local lines = {
-		string.format("<b>%s %s</b> · %s Coins", food.icon, food.name, PetClient.Number(food.price)),
+		Locale.T("food.tooltip.head", { icon = food.icon, food = Locale.FoodName(food), count = food.price }),
 		outcome(info.entry, food),
 	}
 	if PetClient.Coins < food.price then
-		table.insert(lines, string.format("<font color='#f06a5a'>Need %s more Coins</font>", PetClient.Number(food.price - PetClient.Coins)))
+		table.insert(lines, Locale.T("common.needMoreCoins", { count = food.price - PetClient.Coins }))
 	elseif armed == key then
-		table.insert(lines, "<font color='#78e678'>Tap again to feed</font>")
+		table.insert(lines, Locale.T("food.tapAgain"))
 	end
 	tooltip.Text = table.concat(lines, "\n")
 	-- above the button; below it near the top of the list (it would cover the title and the close button), and kept
@@ -306,11 +316,11 @@ end
 
 local function where(entry): string
 	if entry.equipped then
-		return "equipped"
+		return Locale.T("food.where.equipped")
 	elseif entry.penned then
-		return "in pen " .. entry.penned
+		return Locale.T("food.where.pen", { pen = entry.penned })
 	end
-	return "resting"
+	return Locale.T("food.where.resting")
 end
 
 local function petRow(order: number, entry)
@@ -318,15 +328,14 @@ local function petRow(order: number, entry)
 	local toMax = GardenConfig.XpToMax(pet)
 	local maxed = entry.level >= PetConfig.MaxLevel
 	local detail = if maxed
-		then "Max level\n" .. where(entry)
-		else string.format(
-			"XP %s/%s · %s\n%s XP to Lv %d",
-			PetClient.Number(entry.xp),
-			PetClient.Number(entry.xpNext),
-			where(entry),
-			PetClient.Number(toMax),
-			PetConfig.MaxLevel
-		)
+		then Locale.T("food.detail.max", { where = where(entry) })
+		else Locale.T("food.detail", {
+			xp = entry.xp,
+			next = entry.xpNext,
+			where = where(entry),
+			toMax = toMax,
+			max = PetConfig.MaxLevel,
+		})
 	local textWidth = -(TEXT_LEFT + 6 + #GardenConfig.Foods * (FOOD_BUTTON_WIDTH + 4))
 	local maxTag = maxed
 		and label("MaxTag", {
@@ -336,7 +345,7 @@ local function petRow(order: number, entry)
 			TextSize = 16,
 			TextColor3 = Color3.fromRGB(255, 205, 60),
 			TextXAlignment = Enum.TextXAlignment.Center,
-			Text = "★ Max level",
+			Text = Locale.T("food.maxTag"),
 		})
 	local row = create("Frame", {
 		Name = "Pet_" .. entry.uid,
@@ -364,7 +373,7 @@ local function petRow(order: number, entry)
 			TextColor3 = entry.rarity.color,
 			TextStrokeTransparency = 0.4,
 			TextTruncate = Enum.TextTruncate.AtEnd,
-			Text = string.format("%s  Lv %d", entry.kind, entry.level),
+			Text = Locale.PetName(entry.kind, entry.level),
 		}),
 		label("Detail", {
 			Position = UDim2.new(0, TEXT_LEFT, 0, 29),
@@ -390,12 +399,7 @@ local function petRow(order: number, entry)
 			BackgroundColor3 = if PetClient.Coins >= food.price then COLOR_BUY else COLOR_LOCKED,
 			TextSize = 14,
 			RichText = true,
-			Text = string.format(
-				"%s +%s XP\n<font size='12'>%s Coins</font>",
-				food.icon,
-				PetClient.Number(food.xp),
-				PetClient.Number(food.price)
-			),
+			Text = Locale.T("food.button", { icon = food.icon, xp = food.xp, count = food.price }),
 		}, 2)
 		feedButton.Parent = row
 		buttons[key] = { button = feedButton, entry = entry, food = food }
@@ -418,7 +422,7 @@ local function petRow(order: number, entry)
 				if lastInputWasTouch() then
 					arm(key)
 				end
-				return flash(REJECT_TEXT.coins, COLOR_ERROR)
+				return flash(rejectText("coins"), COLOR_ERROR)
 			end
 			if lastInputWasTouch() and armed ~= key then
 				return arm(key) -- first tap: preview
@@ -516,16 +520,28 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 		return
 	end
 	if not ok then
-		return flash(REJECT_TEXT[detail] or "Request failed", COLOR_ERROR)
+		return flash(rejectText(detail), COLOR_ERROR)
 	end
 	local food = GardenConfig.FoodById[detail.food]
 	local pet = PetClient.State and PetClient.State.pets[detail.uid]
-	local kind = pet and pet.Kind or "Your pet"
-	local text = string.format("%s %s +%s XP", food and food.icon or "", kind, PetClient.Number(detail.xp))
-	if type(detail.levels) == "number" and detail.levels > 0 then
-		text ..= string.format(" · Level up! Lv %d", detail.level)
+	local leveled = type(detail.levels) == "number" and detail.levels > 0
+	flash(
+		Locale.T(if leveled then "food.fedLevelUp" else "food.fed", {
+			icon = food and food.icon or "",
+			kind = if pet then Locale.PetKindName(pet.Kind) else Locale.T("food.yourPet"),
+			xp = detail.xp,
+			level = detail.level,
+		}),
+		COLOR_OK
+	)
+end)
+
+Locale.Changed:Connect(function()
+	staticTexts()
+	if openStand then
+		showDefaultStatus()
+		refresh()
 	end
-	flash(text, COLOR_OK)
 end)
 
 -- Prompt -----------------------------------------------------------------------------------------------------------------

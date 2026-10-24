@@ -16,6 +16,7 @@ local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
+local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
 -- looked up by name: `remotes.Remove` would be the built-in Instance:Remove() method, not the RemoteEvent
@@ -41,17 +42,17 @@ local COLOR_INFO = Color3.fromRGB(235, 222, 190)
 local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
 local COLOR_OK = Color3.fromRGB(120, 230, 120)
 
-local REJECT_TEXT = {
-	coins = "Not enough Coins",
-	stale = "Out of date, try again",
-	maxed = "All pens unlocked",
-	locked = "Unlock this pen first",
-	occupied = "This pen already holds a pet",
-	equipped = "Unequip the pet first (Pets panel)",
-	penned = "That pet is already in a pen",
-	far = "Too far from your plot",
-	noplot = "You have no plot on this server",
-	loading = "Still loading...",
+local REJECT_KEYS = {
+	coins = "common.reject.coins",
+	stale = "common.reject.stale",
+	maxed = "garden.reject.maxed",
+	locked = "garden.reject.locked",
+	occupied = "garden.reject.occupied",
+	equipped = "garden.reject.equipped",
+	penned = "garden.reject.penned",
+	far = "common.reject.far",
+	noplot = "common.reject.noplot",
+	loading = "common.reject.loading",
 }
 
 local function create(className: string, props, children)
@@ -86,18 +87,9 @@ end
 local rowPortrait = PetPortrait.Cache()
 local cardPortrait = PetPortrait.Cache()
 
+-- Coins per hour, possibly a decimal, with the language's decimal mark
 local function rate(n: number): string
-	return string.format("%g", n)
-end
-
--- "7 h 59 min", "12 min", "45 s"
-local function duration(seconds: number): string
-	if seconds >= 3600 then
-		return string.format("%d h %d min", seconds // 3600, (seconds % 3600) // 60)
-	elseif seconds >= 60 then
-		return string.format("%d min", seconds // 60)
-	end
-	return string.format("%d s", seconds)
+	return Locale.Decimal(string.format("%g", n))
 end
 
 -- Pen panel ---------------------------------------------------------------------------------------------------------------
@@ -161,7 +153,6 @@ local emptyLabel = label("Empty", {
 	TextSize = 15,
 	TextColor3 = COLOR_INFO,
 	TextWrapped = true,
-	Text = "No free pets. Hatch one in an incubator, or unequip one in the Pets panel.",
 	Visible = false,
 })
 local footerLabel = label("Footer", {
@@ -211,7 +202,6 @@ local awayTitle = label("Title", {
 	Size = UDim2.new(1, 0, 0, 24),
 	TextSize = 20,
 	TextXAlignment = Enum.TextXAlignment.Center,
-	Text = "🌱 Welcome back!",
 	LayoutOrder = 1,
 })
 StudStyle.Title(awayTitle, COLOR_PANEL)
@@ -257,7 +247,15 @@ local screenGui = create("ScreenGui", {
 	Name = "GardenGui",
 	ResetOnSpawn = false,
 	DisplayOrder = 5,
+	AutoLocalize = false, -- translated by Locale (L2)
 }, { panel, toast, awayPanel })
+
+-- texts that do not depend on the state (set again when the language changes)
+local function staticTexts()
+	emptyLabel.Text = Locale.T("garden.empty")
+	awayTitle.Text = Locale.T("garden.welcome")
+end
+staticTexts()
 
 -- State -------------------------------------------------------------------------------------------------------------------
 
@@ -295,7 +293,7 @@ local function petRow(index: number, pet)
 		Size = UDim2.fromOffset(72, 32),
 		BackgroundColor3 = COLOR_EQUIP,
 		TextSize = 15,
-		Text = "Place",
+		Text = Locale.T("garden.place"),
 	})
 	local row = create("Frame", {
 		Name = "Pet_" .. pet.uid,
@@ -323,7 +321,7 @@ local function petRow(index: number, pet)
 			TextColor3 = pet.rarity.color,
 			TextStrokeTransparency = 0.4,
 			TextTruncate = Enum.TextTruncate.AtEnd,
-			Text = string.format("%s  Lv %d", pet.kind, pet.level),
+			Text = Locale.PetName(pet.kind, pet.level),
 		}),
 		label("Detail", {
 			Position = UDim2.new(0, 70, 0, 31),
@@ -331,7 +329,7 @@ local function petRow(index: number, pet)
 			Font = Enum.Font.Gotham,
 			TextSize = 13,
 			TextColor3 = COLOR_OK,
-			Text = rate(GardenConfig.RatePerHour({ Kind = pet.kind, Level = pet.level })) .. " Coins/h",
+			Text = Locale.T("garden.rate", { rate = rate(GardenConfig.RatePerHour({ Kind = pet.kind, Level = pet.level })) }),
 		}),
 		placeButton,
 	})
@@ -360,12 +358,8 @@ refresh = function()
 	if not (state and pen) then
 		return
 	end
-	titleLabel.Text = "🌱 Pen " .. pen
-	footerLabel.Text = string.format(
-		"Garden income: <font color='#a8e6a0'>%s Coins/h</font> (before the pet bonus) · paid every %d min",
-		rate(state.rate),
-		GardenConfig.PayoutSeconds // 60
-	)
+	titleLabel.Text = Locale.T("garden.title", { pen = pen })
+	footerLabel.Text = Locale.T("garden.footer", { rate = rate(state.rate), minutes = GardenConfig.PayoutSeconds // 60 })
 
 	local uid = state.pens[tostring(pen)]
 	if pen > state.penCount then
@@ -373,16 +367,16 @@ refresh = function()
 		actionButton.Visible = true
 		if pen == nextPen then
 			local price = GardenConfig.PenPrices[nextPen]
-			actionButton.Text = string.format("Unlock pen %d: %s Coins", nextPen, PetClient.Number(price))
+			actionButton.Text = Locale.T("garden.unlockPen", { pen = nextPen, count = price })
 			actionButton.BackgroundColor3 = if PetClient.Coins >= price then COLOR_BUY else COLOR_LOCKED
 			if not flashing then
-				showInfo("Pets in pens produce Coins, even while you are away.", COLOR_INFO)
+				showInfo(Locale.T("garden.info.unlock"), COLOR_INFO)
 			end
 		else
-			actionButton.Text = "Unlock pen " .. nextPen .. " first"
+			actionButton.Text = Locale.T("garden.unlockFirst", { pen = nextPen })
 			actionButton.BackgroundColor3 = COLOR_LOCKED
 			if not flashing then
-				showInfo("Pens are unlocked in order.", COLOR_INFO)
+				showInfo(Locale.T("garden.info.order"), COLOR_INFO)
 			end
 		end
 	elseif uid and PetClient.State and PetClient.State.pets[uid] then
@@ -390,7 +384,7 @@ refresh = function()
 		local rarity = PetConfig.RarityOf(data.Kind)
 		local level = PetConfig.ClampLevel(data.Level)
 		actionButton.Visible = true
-		actionButton.Text = "Take " .. data.Kind .. " out of the pen"
+		actionButton.Text = Locale.T("garden.takeOut", { kind = Locale.PetKindName(data.Kind) })
 		actionButton.BackgroundColor3 = COLOR_SELL
 		local portrait = cardPortrait({ uid = uid, kind = data.Kind, level = level })
 		if portrait then
@@ -400,12 +394,7 @@ refresh = function()
 		penCard.Visible = true
 		if not flashing then
 			showInfo(
-				string.format(
-					"%s Lv %d · <font color='#a8e6a0'>%s Coins/h</font>. A penned pet gains no XP and gives no pet bonus.",
-					data.Kind,
-					level,
-					rate(GardenConfig.RatePerHour(data))
-				),
+				Locale.T("garden.info.penned", { name = Locale.PetName(data.Kind, level), rate = rate(GardenConfig.RatePerHour(data)) }),
 				rarity.color
 			)
 		end
@@ -422,7 +411,7 @@ refresh = function()
 		list.Visible = count > 0
 		emptyLabel.Visible = count == 0
 		if not flashing then
-			showInfo("Choose a pet for this pen. It produces Coins while it stays here.", COLOR_INFO)
+			showInfo(Locale.T("garden.info.choose"), COLOR_INFO)
 		end
 	end
 end
@@ -472,14 +461,21 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 	end
 	if ok then
 		if action == "BuyPen" then
-			flash(string.format("Pen %d unlocked", detail), COLOR_OK)
+			flash(Locale.T("garden.penUnlocked", { pen = detail }), COLOR_OK)
 		elseif action == "Place" then
-			flash("Placed. It produces Coins from now on.", COLOR_OK)
+			flash(Locale.T("garden.placed"), COLOR_OK)
 		elseif action == "Remove" then
-			flash("Back in your inventory.", COLOR_OK)
+			flash(Locale.T("garden.removed"), COLOR_OK)
 		end
 	else
-		flash(REJECT_TEXT[detail] or "Request failed", COLOR_ERROR)
+		flash(Locale.T(REJECT_KEYS[detail] or "common.reject.failed"), COLOR_ERROR)
+	end
+end)
+
+Locale.Changed:Connect(function()
+	staticTexts()
+	if openPen then
+		refresh()
 	end
 end)
 
@@ -535,20 +531,16 @@ remotes:WaitForChild("Payout").OnClientEvent:Connect(function(info)
 			return
 		end
 		shownAway[info.id] = true
-		local text = string.format(
-			"Your pens produced <font color='#78e678'>%s Coins</font> in %s.",
-			PetClient.Number(info.paid),
-			duration(info.seconds)
-		)
+		local text = Locale.T("garden.away", { count = info.paid, duration = Locale.Duration(info.seconds) })
 		if info.paid ~= info.base then
-			text ..= string.format("\n(%s base + your pet bonus)", PetClient.Number(info.base))
+			text ..= "\n" .. Locale.T("garden.awayBase", { base = info.base })
 		end
 		if info.capped then
-			text ..= string.format("\nProduction while away is capped at %d hours.", GardenConfig.OfflineCapSeconds // 3600)
+			text ..= "\n" .. Locale.T("garden.awayCapped", { count = GardenConfig.OfflineCapSeconds // 3600 })
 		end
 		showAway(text)
 	else
-		showToast(string.format("🌱 Garden +%s Coins", PetClient.Number(info.paid)))
+		showToast(Locale.T("garden.toast", { count = info.paid }))
 	end
 end)
 

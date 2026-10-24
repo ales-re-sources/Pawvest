@@ -53,7 +53,7 @@ Rules:
 | T1b | Telemetry: skills (purchases, arrivals without a talent, loadout per run) — done 2026-10-23 | ✔ | ✔ | – |
 | L1 | Localization infrastructure + HUD in Czech ([LOCALIZATION.md](LOCALIZATION.md)) — done 2026-10-23 (Czech texts await the user's review) | ✔ | ✔ | – |
 | L1.1 | Strings workflow: CSV source (English + translations + context side by side), `tools/loc.py` build / check / lint / review, pseudo-language — done 2026-10-24 | ✔ | ✔ | – |
-| L2 | Localization: all client panels + config display names | – | – | – |
+| L2 | Localization: all client panels + config display names — done 2026-10-24 (Czech texts await the user's review) | ✔ | ✔ | – |
 | L3 | Localization: server-written + Studio-authored texts, overflow check | – | – | – |
 | M6a | First live test + World 1 balancing | – | – | – |
 | S5 | Worlds hub — done 2026-10-22: gates for Worlds 2-4 (coming soon, admins only), World 2 courtyard, signs, per-world stars boards (user's visual check) | ✔ | ✔ | – |
@@ -567,6 +567,26 @@ English default + Czech; language from `player.LocaleId`, override in Settings (
   pseudo text everywhere.
   *Found:* the Settings panel title is still a literal (L2 / L3); FredokaOne lacks the Czech caron letters (L3 font check).
 - **L2:** every client panel + config display names + `MedalText`.
+  *Design check 2026-10-24 (LOCALIZATION.md → Design check (L2)):* names held as data (pet kinds, rarities, foods, talent
+  effects) through `Locale` helpers; numbers and decimals in the language's format (`Locale.Number` / `Decimal`, used by
+  every number placeholder); shared `common.*` rejects; gendered Czech toasts as one key per case; the Skills and
+  Settings panel titles (Studio-authored) set from their scripts; the configs' English names stay as source and fallback
+  (`-- loc: ignore`).
+  *As built:* 150 keys added (226 in all, 280 CSV rows); converted `PetsPanel`, `TalentRows`, `GardenClient`,
+  `IncubatorClient`, `FoodShopClient`, `ArenaClient`, `HubGateFaces`, `HubPortalMedals`, `PetFollow` / `PetLook` (pet
+  labels, level-up text), `MedalText.UnlockBar`, `LanguageSettings` (panel title); every panel re-renders on
+  `Locale.Changed`. Lint baseline 159 → 18 (all L3: boards, garden server labels, the free plot sign).
+  *Checked in a playtest (developer profile, snapshot `profile_9892673032_l2` restored; display-only pet / garden state
+  fired from the server):* in the pseudo-language a script found no unbracketed text in the Pets, Skills, pen (all four
+  states), incubator (all three states, plot egg labels) and food stand panels incl. the hovered food tooltip; in Czech
+  every visible label of those panels fits (`TextFits`, stud-brick buttons measured on their visible `Glyph`) except the
+  Skills buy button ("Koupit 3000", 80 px in 70: now "Kup 3000"); hub gate and stage door faces read in Czech; screen
+  captures of the Pets / Skills (pseudo) and Skills / incubator (Czech) panels.
+  *Not checked:* the arena HUD on screen (keys toasts only by code); a real hatch / feed / sale message (the texts were
+  checked through the panels' state, not by doing the action); pseudo text 40 % longer overflows the Pets summary line
+  and a slot caption (Czech fits).
+  *Left for L3:* the server-written world billboards (pens, incubators, "Free plot", boards), Studio-authored labels, the
+  FredokaOne caron glyphs.
 - **L3:** server-written and Studio-authored texts, overflow check in Czech.
 - **L4 (later):** more languages chosen from the telemetry `Session` locale data.
 - **Acceptance checks:** LOCALIZATION.md → Acceptance checks, for the milestone's scope.

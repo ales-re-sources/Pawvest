@@ -14,6 +14,7 @@ local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
+local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
 -- looked up by name (never `remotes.X`: a name like Remove would resolve to an Instance method)
@@ -35,18 +36,18 @@ local COLOR_INFO = Color3.fromRGB(235, 222, 190)
 local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
 local COLOR_OK = Color3.fromRGB(120, 230, 120)
 
-local REJECT_TEXT = {
-	coins = "Not enough Coins",
-	stale = "Out of date, try again",
-	maxed = "All incubators unlocked",
-	locked = "Unlock this incubator first",
-	occupied = "This incubator already holds an egg",
-	full = "Your inventory is full (50 pets). Sell a pet first.",
-	empty = "There is no egg in this incubator",
-	notready = "Not ready yet",
-	far = "Too far from your plot",
-	noplot = "You have no plot on this server",
-	loading = "Still loading...",
+local REJECT_KEYS = {
+	coins = "common.reject.coins",
+	stale = "common.reject.stale",
+	maxed = "incubator.reject.maxed",
+	locked = "incubator.reject.locked",
+	occupied = "incubator.reject.occupied",
+	full = "incubator.reject.full",
+	empty = "incubator.reject.empty",
+	notready = "incubator.reject.notready",
+	far = "common.reject.far",
+	noplot = "common.reject.noplot",
+	loading = "common.reject.loading",
 }
 
 local function create(className: string, props, children)
@@ -94,10 +95,14 @@ end
 -- "1 hour", "30 min"
 local function hatchTime(seconds: number): string
 	if seconds % 3600 == 0 then
-		local hours = seconds // 3600
-		return hours .. (if hours == 1 then " hour" else " hours")
+		return Locale.T("common.hours", { count = seconds // 3600 })
 	end
-	return seconds // 60 .. " min"
+	return Locale.T("common.duration.m", { m = seconds // 60 })
+end
+
+local function eggName(eggId: string): string
+	local egg = PetConfig.Eggs[eggId]
+	return if egg then Locale.EggName(egg) else eggId
 end
 
 -- Odds of an egg as rich text: "<Uncommon 45 %> · <Rare 35 %> · …" in rarity colours.
@@ -109,7 +114,12 @@ local function odds(eggId: string): string
 		if weight and weight > 0 then
 			table.insert(
 				parts,
-				string.format("<font color='%s'>%s %s %%</font>", hex(rarity.color), rarity.id, PetClient.Percent(weight))
+				string.format(
+					"<font color='%s'>%s %s %%</font>",
+					hex(rarity.color),
+					Locale.RarityName(rarity.id),
+					Locale.Decimal(PetClient.Percent(weight))
+				)
 			)
 		end
 	end
@@ -195,6 +205,7 @@ local screenGui = create("ScreenGui", {
 	Name = "IncubatorGui",
 	ResetOnSpawn = false,
 	DisplayOrder = 5,
+	AutoLocalize = false, -- translated by Locale (L2)
 }, { panel })
 
 -- State ------------------------------------------------------------------------------------------------------------------
@@ -248,52 +259,51 @@ refresh = function()
 	if not (state and index) then
 		return
 	end
-	titleLabel.Text = "🥚 Incubator " .. index
+	titleLabel.Text = Locale.T("incubator.title", { n = index })
 	local entry = state.eggs[tostring(index)]
 	local status, statusColor = "", COLOR_INFO
 
 	if index > state.count then
 		local nextIndex = state.count + 1
-		bodyLabel.Text = "Incubators hatch eggs in real time, even while you are away."
+		bodyLabel.Text = Locale.T("incubator.body.locked")
 		if index == nextIndex then
 			local price = GardenConfig.IncubatorPrices[nextIndex]
 			setAction(
-				string.format("Unlock incubator %d: %s Coins", nextIndex, PetClient.Number(price)),
+				Locale.T("incubator.unlock", { n = nextIndex, count = price }),
 				if PetClient.Coins >= price then COLOR_BUY else COLOR_LOCKED
 			)
 		else
-			setAction("Unlock incubator " .. nextIndex .. " first", COLOR_LOCKED)
-			status = "Incubators are unlocked in order."
+			setAction(Locale.T("incubator.unlockFirst", { n = nextIndex }), COLOR_LOCKED)
+			status = Locale.T("incubator.order")
 		end
 	elseif entry then
-		local name = PetConfig.Eggs[entry.egg] and PetConfig.Eggs[entry.egg].name or entry.egg
 		local remaining = entry.readyAt - workspace:GetServerTimeNow()
-		bodyLabel.Text = string.format("%s\n%s", name, odds(entry.egg))
+		bodyLabel.Text = string.format("%s\n%s", eggName(entry.egg), odds(entry.egg))
 		if remaining > 0 then
-			status = "Hatches in " .. countdown(remaining)
-			setAction("Hatching...", COLOR_LOCKED)
+			status = Locale.T("incubator.hatchesIn", { time = countdown(remaining) })
+			setAction(Locale.T("incubator.hatching"), COLOR_LOCKED)
 		else
-			status, statusColor = "Ready to hatch!", COLOR_OK
-			setAction("Hatch", COLOR_HATCH)
+			status, statusColor = Locale.T("incubator.ready"), COLOR_OK
+			setAction(Locale.T("incubator.hatch"), COLOR_HATCH)
 		end
 	else
-		local lines = { "Hatches in real time, also while you are away." }
+		local lines = { Locale.T("incubator.body.empty") }
 		for _, eggId in PetConfig.EggOrder do
 			local egg = PetConfig.Eggs[eggId]
-			table.insert(lines, string.format("<b>%s</b> · %s\n%s", egg.name, hatchTime(egg.hatchSeconds), odds(eggId)))
+			table.insert(lines, string.format("<b>%s</b> · %s\n%s", eggName(eggId), hatchTime(egg.hatchSeconds), odds(eggId)))
 		end
 		bodyLabel.Text = table.concat(lines, "\n")
 		setAction("", COLOR_LOCKED, false)
 		for _, button in eggButtons do
 			local egg = PetConfig.Eggs[button.id]
-			button.button.Text = string.format("%s: %s", egg.name, PetClient.Number(egg.price))
+			button.button.Text = eggName(button.id) .. ": " .. Locale.Number(egg.price)
 			button.button.BackgroundColor3 = if PetClient.Coins >= egg.price then COLOR_BUY else COLOR_LOCKED
 			button.button.Visible = true
 		end
 	end
 	local waiting = waitingFreeEggs()
 	if waiting > 0 and status == "" then
-		status = string.format("🎁 %d free egg%s will start in the next empty incubator", waiting, if waiting == 1 then "" else "s")
+		status = Locale.T("incubator.freeEggs", { count = waiting })
 	end
 	if not flashing then
 		statusLabel.Text = status
@@ -359,23 +369,26 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 		return
 	end
 	if not ok then
-		flash(REJECT_TEXT[detail] or "Request failed", COLOR_ERROR)
+		flash(Locale.T(REJECT_KEYS[detail] or "common.reject.failed", { max = PetConfig.MaxPets }), COLOR_ERROR)
 	elseif action == "BuyIncubator" then
-		flash(string.format("Incubator %d unlocked", detail), COLOR_OK)
+		flash(Locale.T("incubator.unlocked", { n = detail }), COLOR_OK)
 	elseif action == "StartEgg" then
-		flash("The egg is warming up. Come back when it is ready!", COLOR_OK)
+		flash(Locale.T("incubator.started"), COLOR_OK)
 	elseif action == "Hatch" then
 		local rarity = PetConfig.RarityById[detail.rarity]
-		flash(
-			string.format(
-				"You got a <font color='%s'>%s (%s)</font>!%s",
-				hex(rarity and rarity.color or Color3.new(1, 1, 1)),
-				tostring(detail.kind),
-				tostring(detail.rarity),
-				if detail.equipped then " It follows you now." else " It is in your Pets panel."
-			),
-			COLOR_OK
+		local pet = string.format(
+			"<font color='%s'>%s (%s)</font>",
+			hex(rarity and rarity.color or Color3.new(1, 1, 1)),
+			Locale.PetKindName(tostring(detail.kind)),
+			Locale.RarityName(tostring(detail.rarity))
 		)
+		flash(Locale.T(if detail.equipped then "incubator.hatched.follows" else "incubator.hatched.panel", { pet = pet }), COLOR_OK)
+	end
+end)
+
+Locale.Changed:Connect(function()
+	if openIndex then
+		refresh()
 	end
 end)
 
@@ -443,9 +456,8 @@ local function drawCountdowns()
 			local info = base and base:FindFirstChild("Info")
 			local text = info and info:FindFirstChildOfClass("TextLabel")
 			if text and model:GetAttribute("State") == "egg" and type(readyAt) == "number" then
-				local name = PetConfig.Eggs[eggId] and PetConfig.Eggs[eggId].name or "Egg"
 				local remaining = readyAt - now
-				text.Text = name .. "\n" .. (if remaining > 0 then countdown(remaining) else "✨ Ready!")
+				text.Text = eggName(tostring(eggId)) .. "\n" .. (if remaining > 0 then countdown(remaining) else Locale.T("incubator.label.ready"))
 			end
 		end
 	end

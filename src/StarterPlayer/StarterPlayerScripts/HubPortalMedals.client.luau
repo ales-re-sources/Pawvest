@@ -10,6 +10,7 @@ local MedalText = require(ReplicatedStorage:WaitForChild("MedalText"))
 local ChallengeCoinConfig = require(ReplicatedStorage:WaitForChild("ChallengeCoinConfig"))
 local TalentConfig = require(ReplicatedStorage:WaitForChild("TalentConfig"))
 local PortalFaceStyle = require(ReplicatedStorage:WaitForChild("PortalFaceStyle"))
+local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 
 local LocalPlayer = Players.LocalPlayer
 local playerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -73,30 +74,39 @@ local function addPortalMedal(stage)
 		local function refreshCoins()
 			local collected = ChallengeCoinConfig.Decode(LocalPlayer:GetAttribute(collectedAttribute))
 			local found, total = ChallengeCoinConfig.Found(stage.key, collected)
-			coinLine.Text = string.format("💰 found %d/%d", found, total)
+			coinLine.Text = Locale.T("faces.coinsFound", { found = found, total = total })
 		end
 		LocalPlayer:GetAttributeChangedSignal(collectedAttribute):Connect(refreshCoins)
+		Locale.Changed:Connect(refreshCoins)
 		refreshCoins()
 	end
 
 	-- lock lines below the stars while the stage is locked (M3); hidden until the server publishes the state
 	local locks = {}
-	local bar = MedalText.UnlockBar(stage)
-	if bar then
-		local lockLines = {
-			"🔒 " .. bar,
-			if stage.unlockPrice then "or " .. stage.unlockPrice .. " Coins" else nil,
-		}
-		for index, text in lockLines do
-			local lock = label:Clone()
-			lock.Name = "Lock" .. index
-			lock.Size = LINE_SIZE
-			lock.Text = text
-			lock.Visible = false
-			lock.Parent = surface
-			table.insert(locks, lock)
+	local function lockTexts()
+		local bar = MedalText.UnlockBar(stage)
+		if not bar then
+			return {}
 		end
+		return {
+			"🔒 " .. bar,
+			if stage.unlockPrice then Locale.T("faces.orCoins", { count = stage.unlockPrice }) else nil,
+		}
 	end
+	for index, text in lockTexts() do
+		local lock = label:Clone()
+		lock.Name = "Lock" .. index
+		lock.Size = LINE_SIZE
+		lock.Text = text
+		lock.Visible = false
+		lock.Parent = surface
+		table.insert(locks, lock)
+	end
+	Locale.Changed:Connect(function()
+		for index, text in lockTexts() do
+			locks[index].Text = text
+		end
+	end)
 
 	-- required talents (S1.2): "Needs: Double Jump", green when owned and red when not; no line without requirements
 	local needsLine = nil
@@ -145,6 +155,7 @@ local function addPortalMedal(stage)
 	for _, need in stage.requires do
 		LocalPlayer:GetAttributeChangedSignal(TalentConfig.AttributeName(need.id)):Connect(refreshNeeds)
 	end
+	Locale.Changed:Connect(refreshNeeds)
 	layout()
 	refreshNeeds()
 

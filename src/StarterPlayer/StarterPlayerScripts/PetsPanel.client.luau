@@ -18,6 +18,7 @@ local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
+local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 
 local remotes = PetClient.Remotes
 local player = Players.LocalPlayer
@@ -47,16 +48,25 @@ local COLOR_INFO = Color3.fromRGB(190, 190, 190)
 local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
 local COLOR_OK = Color3.fromRGB(120, 230, 120)
 
-local REJECT_TEXT = {
-	coins = "Not enough Coins",
-	full = "Pet inventory is full",
-	slots = "All slots in use: click a slot below to unequip a pet",
-	equipped = "Unequip it before selling",
-	penned = "In a garden pen: remove it there first",
-	stale = "Out of date, try again",
-	maxed = "All slots unlocked",
-	loading = "Still loading...",
+local REJECT_KEYS = {
+	coins = "common.reject.coins",
+	full = "pets.reject.full",
+	slots = "pets.reject.slots",
+	equipped = "pets.reject.equipped",
+	penned = "pets.reject.penned",
+	stale = "common.reject.stale",
+	maxed = "pets.reject.maxed",
+	loading = "common.reject.loading",
 }
+
+local function rejectText(reason: string?): string
+	return Locale.T(reason and REJECT_KEYS[reason] or "common.reject.failed")
+end
+
+-- "+4.5%" in the player's language
+local function bonusText(permille: number): string
+	return Locale.T("common.percentBonus", { pct = Locale.Decimal(PetClient.Percent(permille)) })
+end
 
 local function create(className: string, props, children)
 	local instance = Instance.new(className)
@@ -97,7 +107,6 @@ local titleLabel = label("TitleLabel", {
 	Size = UDim2.new(1, 0, 0, 34),
 	TextSize = 20,
 	TextXAlignment = Enum.TextXAlignment.Center,
-	Text = "🐶 Pets",
 })
 local closeButton = button("Close", {
 	AnchorPoint = Vector2.new(1, 0),
@@ -119,7 +128,6 @@ local gardenButton = button("Garden", {
 	Size = UDim2.new(1, -20, 0, 34),
 	BackgroundColor3 = COLOR_GARDEN,
 	TextSize = 16,
-	Text = "🌱 Go to my garden",
 }, 6)
 local infoLabel = label("Info", {
 	Position = UDim2.new(0, 12, 0, 110),
@@ -151,15 +159,22 @@ local emptyLabel = label("Empty", {
 	TextSize = 15,
 	TextColor3 = COLOR_INFO,
 	TextWrapped = true,
-	Text = "No pets yet. Hatch one in an incubator in the pet garden!",
 	Visible = false,
 })
 local slotsLabel = label("SlotsTitle", {
 	Position = UDim2.new(0, 12, 0, SLOTS_TOP - 28),
 	Size = UDim2.new(1, -24, 0, 18),
 	TextSize = 15,
-	Text = "Equipped pets",
 })
+
+-- texts that do not depend on the pet state (set again when the language changes)
+local function staticTexts()
+	titleLabel.Text = Locale.T("pets.title")
+	gardenButton.Text = Locale.T("pets.garden")
+	emptyLabel.Text = Locale.T("pets.empty")
+	slotsLabel.Text = Locale.T("pets.slotsTitle")
+end
+staticTexts()
 local tooltip = label("Tooltip", {
 	AnchorPoint = Vector2.new(0.5, 1),
 	Size = UDim2.fromOffset(190, 44),
@@ -199,6 +214,7 @@ local screenGui = create("ScreenGui", {
 	Name = "PetsGui",
 	ResetOnSpawn = false,
 	DisplayOrder = 4,
+	AutoLocalize = false, -- translated by Locale (L2)
 }, { panel, setOpenEvent })
 
 local pendingSell: string? = nil -- uid waiting for the second click
@@ -224,9 +240,9 @@ local function defaultInfo()
 		end
 	end
 	if waiting > 0 then
-		showInfo(string.format("🎁 %d free egg%s waiting for an empty incubator", waiting, if waiting == 1 then "" else "s"), COLOR_OK)
+		showInfo(Locale.T("pets.freeEggs", { count = waiting }), COLOR_OK)
 	else
-		showInfo("Click a pet to equip it: equipped pets raise every Coin reward", COLOR_INFO)
+		showInfo(Locale.T("pets.hint"), COLOR_INFO)
 	end
 end
 
@@ -278,24 +294,21 @@ local function slotTooltip(index: number): string?
 	end
 	if slot.kind == "pet" then
 		local pet = slot.pet
-		return string.format(
-			"<font color='#%s'>%s Lv %d</font> · +%s%% Coins\nClick to unequip",
-			pet.rarity.color:ToHex(),
-			pet.kind,
-			pet.level,
-			PetClient.Percent(pet.bonus)
-		)
+		return Locale.T("pets.slot.pet", {
+			name = string.format("<font color='#%s'>%s</font>", pet.rarity.color:ToHex(), Locale.PetName(pet.kind, pet.level)),
+			bonus = bonusText(pet.bonus),
+		})
 	elseif slot.kind == "empty" then
-		return "Free slot\nClick a pet above to equip it"
+		return Locale.T("pets.slot.free")
 	end
 	local price = PetConfig.SlotPrices[index]
-	local head = string.format("Slot %d · %s Coins", index, PetClient.Number(price))
+	local head = Locale.T("pets.slot.price", { slot = index, count = price })
 	if slot.kind == "locked" then
-		return head .. "\nBuy slot " .. (state.slots + 1) .. " first"
+		return head .. "\n" .. Locale.T("pets.slot.buyFirst", { slot = state.slots + 1 })
 	elseif PetClient.Coins >= price then
-		return head .. "\n<font color='#78e678'>You can buy it</font>"
+		return head .. "\n" .. Locale.T("pets.slot.canBuy")
 	end
-	return head .. string.format("\n<font color='#f06a5a'>%s more Coins needed</font>", PetClient.Number(price - PetClient.Coins))
+	return head .. "\n" .. Locale.T("common.needMoreCoins", { count = price - PetClient.Coins })
 end
 
 local function updateTooltip()
@@ -349,11 +362,11 @@ for index = 1, slotCount do
 			clearPending()
 			remotes.Unequip:FireServer(slot.pet.uid)
 		elseif slot.kind == "empty" then
-			flash("Click a pet above to equip it", COLOR_INFO)
+			flash(Locale.T("pets.slot.equipHint"), COLOR_INFO)
 		elseif slot.kind == "locked" then
-			flash(string.format("Buy slot %d first", state.slots + 1), COLOR_ERROR)
+			flash(Locale.T("pets.slot.buyFirst", { slot = state.slots + 1 }), COLOR_ERROR)
 		elseif PetClient.Coins < PetConfig.SlotPrices[index] then
-			flash(REJECT_TEXT.coins, COLOR_ERROR)
+			flash(rejectText("coins"), COLOR_ERROR)
 		elseif pendingSlot == index then
 			clearPending()
 			remotes.BuySlot:FireServer(index)
@@ -397,7 +410,7 @@ local function refreshSlots(inventory)
 		if slot.kind == "pet" then
 			b.BackgroundColor3 = COLOR_SLOT
 			b.Text = ""
-			slot.caption.Text = string.format("%s Lv %d", pet.kind, pet.level)
+			slot.caption.Text = Locale.PetName(pet.kind, pet.level)
 			slot.caption.TextColor3 = Color3.new(1, 1, 1) -- rarity colours (Common grey) are too faint on the sand plate
 			local portrait = slotPortrait(pet)
 			if portrait then
@@ -406,13 +419,13 @@ local function refreshSlots(inventory)
 			end
 		elseif slot.kind == "empty" then
 			b.BackgroundColor3 = COLOR_SLOT
-			b.Text = "Empty"
+			b.Text = Locale.T("pets.slot.empty")
 			slot.caption.Text = ""
 		elseif slot.kind == "buy" then
 			local price = PetConfig.SlotPrices[index]
 			b.BackgroundColor3 = if PetClient.Coins >= price then COLOR_BUY else COLOR_LOCKED
-			b.Text = if pendingSlot == index then "Sure?" else "🔒\nBuy"
-			slot.caption.Text = if pendingSlot == index then PetClient.Number(price) else ""
+			b.Text = Locale.T(if pendingSlot == index then "pets.slot.sure" else "pets.slot.buy")
+			slot.caption.Text = if pendingSlot == index then Locale.Number(price) else ""
 			slot.caption.TextColor3 = Color3.new(1, 1, 1)
 		else
 			b.BackgroundColor3 = COLOR_LOCKED_LATER
@@ -427,11 +440,11 @@ end
 local function onRowClicked(pet)
 	clearPending()
 	if pet.penned then
-		flash(REJECT_TEXT.penned, COLOR_ERROR)
+		flash(rejectText("penned"), COLOR_ERROR)
 	elseif pet.equipped then
 		remotes.Unequip:FireServer(pet.uid)
 	elseif PetClient.State and equippedCount() >= PetClient.State.slots then
-		flash(REJECT_TEXT.slots, COLOR_ERROR)
+		flash(rejectText("slots"), COLOR_ERROR)
 	else
 		remotes.Equip:FireServer(pet.uid)
 	end
@@ -448,9 +461,12 @@ local function buildRow(index: number, pet)
 		Size = UDim2.fromOffset(84, 24),
 		BackgroundColor3 = if pet.equipped or pet.penned then COLOR_LOCKED elseif confirming then COLOR_SELL else COLOR_SELL_IDLE,
 		TextSize = 13,
-		Text = (if confirming then "Sure? +" else "Sell ") .. PetClient.Number(pet.sellValue),
+		Text = Locale.T(if confirming then "pets.sellSure" else "pets.sell", { price = pet.sellValue }),
 	})
-	local tagText = if pet.penned then "In pen " .. pet.penned elseif pet.equipped then "✔ Equipped" else ""
+	local tagText = if pet.penned
+		then Locale.T("pets.tag.pen", { pen = pet.penned })
+		elseif pet.equipped then Locale.T("pets.tag.equipped")
+		else ""
 	local portraitHolder = create("Frame", {
 		Name = "PortraitHolder",
 		Position = UDim2.fromOffset(12, 6),
@@ -492,7 +508,7 @@ local function buildRow(index: number, pet)
 			TextColor3 = rarityColor,
 			TextStrokeTransparency = 0.4,
 			TextTruncate = Enum.TextTruncate.AtEnd,
-			Text = string.format("%s  Lv %d", pet.kind, pet.level),
+			Text = Locale.PetName(pet.kind, pet.level),
 		}),
 		label("Detail", {
 			Position = UDim2.new(0, 74, 0, 30),
@@ -502,12 +518,9 @@ local function buildRow(index: number, pet)
 			TextColor3 = COLOR_INFO,
 			TextWrapped = true,
 			TextYAlignment = Enum.TextYAlignment.Top,
-			Text = string.format(
-				"%s · +%s%%\n%s",
-				pet.rarity.id,
-				PetClient.Percent(pet.bonus),
-				if pet.xpNext then string.format("%d/%d XP", pet.xp, pet.xpNext) else "max level"
-			),
+			Text = Locale.T("pets.detail", { rarity = Locale.RarityName(pet.rarity.id), bonus = bonusText(pet.bonus) })
+				.. "\n"
+				.. if pet.xpNext then Locale.T("pet.xp", { xp = pet.xp, next = pet.xpNext }) else Locale.T("pet.maxLevel"),
 		}),
 		label("Tag", {
 			AnchorPoint = Vector2.new(1, 0),
@@ -532,11 +545,11 @@ local function buildRow(index: number, pet)
 	end)
 	sellButton.Activated:Connect(function()
 		if pet.penned then
-			flash(REJECT_TEXT.penned, COLOR_ERROR)
+			flash(rejectText("penned"), COLOR_ERROR)
 			return
 		end
 		if pet.equipped then
-			flash(REJECT_TEXT.equipped, COLOR_ERROR)
+			flash(rejectText("equipped"), COLOR_ERROR)
 			return
 		end
 		if pendingSell == pet.uid then
@@ -556,7 +569,7 @@ end
 refresh = function()
 	local state = PetClient.State
 	if not state then
-		summaryLabel.Text = "Loading..."
+		summaryLabel.Text = Locale.T("common.loading")
 		refreshSlots({})
 		return
 	end
@@ -569,14 +582,13 @@ refresh = function()
 		clearPending()
 	end
 
-	summaryLabel.Text = string.format(
-		"Coin bonus <font color='#78e678'>+%s%%</font>  ·  Equipped %d/%d  ·  Pets %d/%d",
-		PetClient.Percent(math.round((state.multiplier - 1) * 1000)),
-		#state.equipped,
-		state.slots,
-		#inventory,
-		PetConfig.MaxPets
-	)
+	summaryLabel.Text = Locale.T("pets.summary", {
+		bonus = bonusText(math.round((state.multiplier - 1) * 1000)),
+		equipped = #state.equipped,
+		slots = state.slots,
+		pets = #inventory,
+		max = PetConfig.MaxPets,
+	})
 
 	for _, row in rows do
 		local portrait = row:FindFirstChild("Portrait", true)
@@ -601,13 +613,18 @@ end
 PetClient.Result:Connect(function(action, ok, detail)
 	if ok then
 		if action == "SellPet" then
-			flash(string.format("Sold for %s Coins", PetClient.Number(detail.coins)), COLOR_OK)
+			flash(Locale.T("pets.sold", { count = detail.coins }), COLOR_OK)
 		elseif action == "BuySlot" then
-			flash(string.format("Slot %d unlocked", detail), COLOR_OK)
+			flash(Locale.T("pets.slotUnlocked", { slot = detail }), COLOR_OK)
 		end
 	else
-		flash(REJECT_TEXT[detail] or "Request failed", COLOR_ERROR)
+		flash(rejectText(detail), COLOR_ERROR)
 	end
+end)
+
+Locale.Changed:Connect(function()
+	staticTexts()
+	refresh()
 end)
 
 -- Open / close (driven by the 🐾 button through SetOpen)
@@ -640,7 +657,7 @@ end)
 
 gardenButton.Activated:Connect(function()
 	if player:GetAttribute("GardenPlot") == nil then
-		flash("Your garden plot is not ready yet", COLOR_ERROR)
+		flash(Locale.T("pets.gardenNotReady"), COLOR_ERROR)
 		return
 	end
 	local goGarden = ReplicatedStorage:FindFirstChild("GoGarden")

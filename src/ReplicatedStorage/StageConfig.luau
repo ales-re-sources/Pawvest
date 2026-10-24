@@ -5,7 +5,7 @@ local TimeFormat = require(script.Parent.TimeFormat)
 
 local StageConfig = {}
 
-StageConfig.HubName = "Central Island"
+StageConfig.HubName = "Central Island" -- loc: ignore (English source and fallback; players see Locale)
 
 -- Medal tiers in ascending order (GDD §4–5). A medal is stored as its index here; 0 = no medal.
 -- runMultiplier scales the repeat reward of a run with that medal.

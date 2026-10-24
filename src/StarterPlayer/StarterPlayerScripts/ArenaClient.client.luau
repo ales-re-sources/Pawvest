@@ -9,6 +9,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local ArenaConfig = require(ReplicatedStorage:WaitForChild("ArenaConfig"))
+local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -28,6 +29,7 @@ gui.Name = "ArenaGui"
 gui.ResetOnSpawn = false
 gui.DisplayOrder = 5
 gui.Enabled = false
+gui.AutoLocalize = false -- translated by Locale (L2)
 gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local bar = Instance.new("Frame")
@@ -44,7 +46,10 @@ title.BackgroundTransparency = 1
 title.Position = UDim2.fromOffset(12, 0)
 title.Size = UDim2.new(0, 60, 1, 0)
 title.Font = Enum.Font.GothamBold
-title.Text = "KEYS"
+title.Text = Locale.T("arena.keys")
+Locale.Changed:Connect(function()
+	title.Text = Locale.T("arena.keys")
+end)
 title.TextColor3 = Color3.new(1, 1, 1)
 title.TextSize = 16
 title.TextXAlignment = Enum.TextXAlignment.Left
@@ -174,7 +179,7 @@ local function onKeysChanged()
 	held = ArenaConfig.Decode(LocalPlayer:GetAttribute(ArenaConfig.KeysAttribute))
 	for _, id in names(held) do
 		if not previous[id] then
-			showToast(id .. " key collected", ArenaConfig.KeyColors[id])
+			showToast(Locale.T("arena.keyCollected." .. id), ArenaConfig.KeyColors[id])
 		end
 	end
 	refreshKeys()
@@ -185,7 +190,7 @@ local function onOpenedChanged()
 	opened = ArenaConfig.Decode(LocalPlayer:GetAttribute(ArenaConfig.OpenedAttribute))
 	for _, id in names(opened) do
 		if not previous[id] then
-			showToast(id .. " gate opened", ArenaConfig.KeyColors[id])
+			showToast(Locale.T("arena.gateOpened." .. id), ArenaConfig.KeyColors[id])
 		end
 	end
 	for part, state in gates do
@@ -207,7 +212,7 @@ LocalPlayer:GetAttributeChangedSignal(ArenaConfig.OpenedAttribute):Connect(onOpe
 LocalPlayer:GetAttributeChangedSignal("CameraZone"):Connect(refreshVisibility)
 LocalPlayer:GetAttributeChangedSignal(ArenaConfig.ClearsAttribute):Connect(function()
 	if (LocalPlayer:GetAttribute(ArenaConfig.ClearsAttribute) or 0) > 0 then
-		showToast("Arena cleared!", Color3.fromRGB(255, 225, 80))
+		showToast(Locale.T("arena.cleared"), Color3.fromRGB(255, 225, 80))
 	end
 end)
 onKeysChanged()

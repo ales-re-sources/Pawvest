@@ -1,5 +1,6 @@
 ﻿key,context,en,cs,cs_status,cs_en_hash
 # Settings panel,,,,,
+settings.title,Title of the Settings panel (⚙ icon); the text is set by LanguageSettings,Settings,Nastavení,new,h453d7fe8
 settings.music,"Settings panel, Music row; {state} = common.on / common.off",Music: {state},Hudba: {state},new,h7e079ff8
 common.on,State of a setting that is on (Music row),On,Zapnuto,new,h88870f51
 common.off,State of a setting that is off (Music row),Off,Vypnuto,new,h23ccb8cc
@@ -89,3 +90,192 @@ hud.arrival.title,Popup title when entering a stage without a talent it needs; {
 hud.arrival.body,"Popup text under the ""Needs:"" line","You can still enter, but some jumps are out of reach.","Vstoupit můžeš, ale na některé skoky nedosáhneš.",new,h9040d3f0
 hud.arrival.openSkills,Popup button: opens the Skills panel,Open Skills,Otevřít dovednosti,new,ha5865bf5
 hud.arrival.continue,Popup button: closes it,Continue,Pokračovat,new,hae7250da
+# Shared (L2),,,,,
+common.loading,A panel whose data has not arrived yet,Loading...,Načítání…,new,h75bf472a
+common.reject.coins,A purchase was refused: the player has too few Coins,Not enough Coins,Nemáš dost mincí,new,h35fbd693
+common.reject.stale,"A request was refused because the panel showed old data (double click, lag)","Out of date, try again","Údaje se mezitím změnily, zkus to znovu",new,ha5b6c678
+common.reject.loading,A request was refused while the player's data is still loading,Still loading...,Ještě se načítá…,new,hefd53ef6
+common.reject.failed,Any other refused request,Request failed,Požadavek se nepovedl,new,hde410c21
+common.reject.far,A garden request was refused: the player is too far from their plot,Too far from your plot,Jsi moc daleko od své zahrádky,new,ha9194174
+common.reject.noplot,A garden request was refused: no garden plot was free on this server,You have no plot on this server,Na tomhle serveru nemáš zahrádku,new,h089bd3d2
+common.percentBonus,"A Coin bonus in percent; {pct} = number with the decimal mark of the language (4.5 / 4,5)",+{pct}%,+{pct} %,new,h2fef22d6
+"# Names: pets, rarities, foods",,,,,
+pet.kind.Cat,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Cat,Kočka,new,hdcb47fa3
+pet.kind.Dog,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Dog,Pes,new,h231bfb72
+pet.kind.Bunny,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Bunny,Králíček,new,h2dddb1ed
+pet.kind.Fox,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Fox,Liška,new,h6d371310
+pet.kind.Owl,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Owl,Sova,new,h4f10da25
+pet.kind.Panda,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Panda,Panda,new,hcb0dc805
+pet.kind.Dragon,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Dragon,Drak,new,h727ad337
+pet.kind.Phoenix,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Phoenix,Fénix,new,hfbc26b8d
+pet.rarity.Common,"Rarity of a pet, after its name (""Rare · +7%""); Czech masculine (mazlíček)",Common,Běžný,new,h67b2e7c8
+pet.rarity.Uncommon,"Rarity of a pet, after its name (""Rare · +7%""); Czech masculine (mazlíček)",Uncommon,Neobvyklý,new,hd24293ad
+pet.rarity.Rare,"Rarity of a pet, after its name (""Rare · +7%""); Czech masculine (mazlíček)",Rare,Vzácný,new,h4f7853ac
+pet.rarity.Epic,"Rarity of a pet, after its name (""Rare · +7%""); Czech masculine (mazlíček)",Epic,Epický,new,h21e553c2
+pet.rarity.Legendary,"Rarity of a pet, after its name (""Rare · +7%""); Czech masculine (mazlíček)",Legendary,Legendární,new,h6dfca44d
+pet.nameLevel,"A pet with its level, e.g. ""Cat Lv 12"" (lists, slots, labels over pets). Czech keeps ""Lv"": ""úroveň"" is the stage name",{kind} Lv {level},{kind} Lv {level},new,h26ab2b28
+pet.xp,Pet experience towards the next level,{xp}/{next} XP,{xp}/{next} XP,new,h1984ac76
+pet.maxLevel,Instead of the XP line when the pet is at level 20,max level,max. Lv,new,h04ed8881
+pet.levelUp,Floating text over a pet that just levelled up,Level {level}!,Lv {level}!,new,h46b2b999
+food.name.Berry,Pet food at the food stand in the garden (cheap / medium / big),Berry,Bobule,new,hba69c030
+food.name.Cake,Pet food at the food stand in the garden (cheap / medium / big),Cake,Dort,new,h0de9cd25
+food.name.Feast,Pet food at the food stand in the garden (cheap / medium / big),Feast,Hostina,new,hbe3b8af3
+# Talents (Skills panel),,,,,
+skills.title,"Title of the Skills panel (⚡ icon); the panel is authored in Studio, the text set by TalentRows",Your skills,Tvoje dovednosti,new,hf87da291
+talent.effect.RunSpeed,Skills panel: what the next level of Run Speed gives,\+6% run speed,\+6 % rychlost běhu,new,hc0e4b7b6
+talent.effect.DoubleJump,Skills panel: what Double Jump gives,1 extra jump in the air,1 skok navíc ve vzduchu,new,habc671ca
+talent.effect.JumpHeight,Skills panel: what the next level of Jump Height gives,\+8% jump height,\+8 % výška skoku,new,hda4d4692
+talent.effect.QuickRespawn.1,Skills panel: Quick Respawn level 1,Respawn after 1 s,Oživení po 1 s,new,hdc37fae5
+talent.effect.QuickRespawn.2,Skills panel: Quick Respawn level 2 (no waiting; a fall puts the player back on the checkpoint),Instant respawn + fall reset,Okamžité oživení + návrat po pádu,new,hbcfabb29
+skills.maxedOut,Skills panel: second line of a talent at its highest level,Maxed out,Na maximu,new,h5c0a2f9d
+skills.buy,Skills panel button (70 px wide: keep it short); {price} = Coins,Buy {price},Kup {price},new,ha9b337f4
+skills.max,Skills panel button of a talent at its highest level,MAX,MAX,new,h693fda0e
+skills.reject.maxed,"Skills panel: refused, the talent is at its highest level",Already maxed,Už je na maximu,new,h91cd8ee8
+skills.reject.failed,Skills panel: any other refused purchase,Purchase failed,Nákup se nepovedl,new,hdf3992a8
+# Hub gate and portal faces,,,,,
+faces.comingSoon,Face of a hub world gate whose world is not built yet,🔒 Coming soon,🔒 Už brzy,new,h909c77ff
+faces.orCoins[one],"Face of a shut gate, under the requirement: the price instead; {count} = Coins. Form for 1",or {count} Coin,nebo {count} mince,new,hfdcbc5fc
+faces.orCoins[few],Form for 2-4 (Czech only),,nebo {count} mince,new,hfdcbc5fc
+faces.orCoins[other],Form for 0 and 5+,or {count} Coins,nebo {count} mincí,new,hfdcbc5fc
+faces.coinsFound,Gate / door face: challenge coins found in the stage or world,💰 found {found}/{total},💰 nalezeno {found}/{total},new,h8957d27a
+unlock.bar.world,"What opens a world or stage: stars in a world; {star} = a gold star, {n} of {max} stars, {world} = world number",{star} {n} of {max} in World {world},{star} {n} z {max} ve Světě {world},new,h42eba5d2
+unlock.bar.stage,"What opens a stage: a medal on the stage before; {stars} = gold stars, {medal} = medal tier, {stage} = stage name",{stars} {medal} on {stage},{stars} {medal}: {stage},new,hf1e5a1f1
+# Key arena HUD,,,,,
+arena.keys,Title of the key bar at the top of the side-view arena (capitals),KEYS,KLÍČE,new,h72228141
+arena.keyCollected.Teal,"Arena toast when this key is picked up (Czech: masculine, klíč)",Teal key collected,Tyrkysový klíč sebrán,new,haf4e9523
+arena.gateOpened.Teal,"Arena toast when this key opens its gate (Czech: feminine, brána)",Teal gate opened,Tyrkysová brána otevřena,new,hf542dd9f
+arena.keyCollected.Green,"Arena toast when this key is picked up (Czech: masculine, klíč)",Green key collected,Zelený klíč sebrán,new,h6cab5024
+arena.gateOpened.Green,"Arena toast when this key opens its gate (Czech: feminine, brána)",Green gate opened,Zelená brána otevřena,new,h5cd7deeb
+arena.cleared,Arena toast after leaving through the exit with every key,Arena cleared!,Aréna zdolána!,new,h80f81507
+# Pets panel (🐶),,,,,
+pets.title,Panel title,🐶 Pets,🐶 Mazlíčci,new,h92496bfc
+pets.garden,Button: teleports the player in front of their garden plot,🌱 Go to my garden,🌱 Do mé zahrádky,new,h3e5af0fb
+pets.empty,Shown instead of the list while the player has no pet,No pets yet. Hatch one in an incubator in the pet garden!,Zatím nemáš žádného mazlíčka. Vylíhni si ho v inkubátoru v zahradě mazlíčků!,new,h2f4ed2fb
+pets.slotsTitle,"Heading above the three equip slots at the bottom (""equip"" = take a pet with you; it follows you and raises Coin rewards)",Equipped pets,Nasazení mazlíčci,new,h502b0f88
+pets.freeEggs[one],Info line while free eggs wait for an empty garden incubator; {count} = eggs. Form for 1,🎁 {count} free egg waiting for an empty incubator,🎁 {count} vejce zdarma čeká na volný inkubátor,new,h92639edf
+pets.freeEggs[few],Form for 2-4 (Czech only),,🎁 {count} vejce zdarma čekají na volný inkubátor,new,h92639edf
+pets.freeEggs[other],Form for 0 and 5+,🎁 {count} free eggs waiting for an empty incubator,🎁 {count} vajec zdarma čeká na volný inkubátor,new,h92639edf
+pets.hint,Info line by default,Click a pet to equip it: equipped pets raise every Coin reward,Kliknutím mazlíčka nasadíš: nasazení mazlíčci zvyšují každou odměnu v mincích,new,h9553538d
+pets.slot.pet,"Tooltip of a slot holding a pet; {name} = coloured ""Cat Lv 3"", {bonus} = ""+4.5%""",{name} · {bonus} Coins\nClick to unequip,{name} · {bonus} mincí\nKliknutím ho sundáš,new,h2f9c6240
+pets.slot.free,Tooltip of an owned empty slot,Free slot\nClick a pet above to equip it,Volný slot\nKlikni nahoře na mazlíčka a nasaď ho,new,h4bb7054f
+pets.slot.price[one],"Tooltip of a slot not bought yet: first line; {slot} = 2 or 3, {count} = price in Coins. Form for 1",Slot {slot} · {count} Coin,Slot {slot} · {count} mince,new,h2f471277
+pets.slot.price[few],Form for 2-4 (Czech only),,Slot {slot} · {count} mince,new,h2f471277
+pets.slot.price[other],Form for 0 and 5+,Slot {slot} · {count} Coins,Slot {slot} · {count} mincí,new,h2f471277
+pets.slot.buyFirst,Tooltip / message: slots are bought in order; {slot} = the next one to buy,Buy slot {slot} first,Nejdřív kup slot {slot},new,h07613e80
+pets.slot.canBuy,Tooltip of the next slot when the player can afford it (green),<font color='#78e678'>You can buy it</font>,<font color='#78e678'>Můžeš ho koupit</font>,new,h0460947f
+common.needMoreCoins[one],"Tooltip line (red) when the player cannot afford something (Pets slot, food); {count} = Coins missing. Form for 1",<font color='#f06a5a'>{count} more Coin needed</font>,<font color='#f06a5a'>Chybí ti {count} mince</font>,new,h5fdff559
+common.needMoreCoins[few],Form for 2-4 (Czech only),,<font color='#f06a5a'>Chybí ti {count} mince</font>,new,h5fdff559
+common.needMoreCoins[other],Form for 0 and 5+,<font color='#f06a5a'>{count} more Coins needed</font>,<font color='#f06a5a'>Chybí ti {count} mincí</font>,new,h5fdff559
+pets.slot.empty,Text on an owned slot without a pet (short: a square button),Empty,Prázdný,new,hc1e47bd8
+pets.slot.sure,The next slot after the first click: click again to buy (short),Sure?,Opravdu?,new,h993adf4d
+pets.slot.buy,"The next slot to buy (short, under a lock icon)",🔒\nBuy,🔒\nKoupit,new,ha1832e3e
+pets.slot.equipHint,Message after clicking an empty slot,Click a pet above to equip it,Klikni nahoře na mazlíčka a nasaď ho,new,h79990b38
+pets.sell,Button on a pet row; {price} = Coins it sells for,Sell {price},Prodat {price},new,hd59c366f
+pets.sellSure,The same button after the first click (click again to sell),Sure? +{price},Opravdu? +{price},new,hd972c14b
+pets.tag.pen,Tag on a pet row: the pet is in garden pen {pen},In pen {pen},V ohradě {pen},new,h86bfbe40
+pets.tag.equipped,Tag on a pet row: the pet is equipped,✔ Equipped,✔ Nasazen,new,h54da571e
+pets.detail,"Second line of a pet row; {rarity} = rarity name, {bonus} = ""+4.5%""",{rarity} · {bonus},{rarity} · {bonus},new,h572028f1
+pets.summary,"Line under the title; {bonus} = total Coin bonus ('+12%'), {equipped}/{slots} equipped, {pets}/{max} owned",Coin bonus <font color='#78e678'>{bonus}</font>  ·  Equipped {equipped}/{slots}  ·  Pets {pets}/{max},Bonus mincí <font color='#78e678'>{bonus}</font>  ·  Nasazeno {equipped}/{slots}  ·  Mazlíčci {pets}/{max},new,h1d121492
+pets.sold[one],Message after a sale; {count} = Coins received. Form for 1,Sold for {count} Coin,Prodáno za {count} minci,new,hf1bfe328
+pets.sold[few],Form for 2-4 (Czech only),,Prodáno za {count} mince,new,hf1bfe328
+pets.sold[other],Form for 0 and 5+,Sold for {count} Coins,Prodáno za {count} mincí,new,hf1bfe328
+pets.slotUnlocked,Message after buying a slot,Slot {slot} unlocked,Slot {slot} odemčen,new,h08b459bb
+pets.gardenNotReady,Message: the garden plot is not assigned yet (just joined),Your garden plot is not ready yet,Tvoje zahrádka ještě není připravená,new,h1b30371e
+pets.reject.full,Refused: the pet inventory is full (50),Pet inventory is full,Inventář mazlíčků je plný,new,h0264530e
+pets.reject.slots,Refused: every slot holds a pet,All slots in use: click a slot below to unequip a pet,Všechny sloty jsou obsazené: klikni dole na slot a mazlíčka sundej,new,h02961e7d
+pets.reject.equipped,Refused: an equipped pet cannot be sold,Unequip it before selling,Před prodejem ho sundej,new,hce22c2df
+pets.reject.penned,Refused: the pet is in a garden pen,In a garden pen: remove it there first,Je v ohradě v zahradě: nejdřív ho tam vyndej,new,hef0cb2c3
+pets.reject.maxed,Refused: every slot is bought,All slots unlocked,Všechny sloty jsou odemčené,new,h480c3a6c
+# Durations,,,,,
+common.duration.hm,"A time span of hours and minutes, e.g. ""7 h 59 min""",{h} h {m} min,{h} h {m} min,new,hdc897d78
+common.duration.m,"A time span in minutes, e.g. ""12 min""",{m} min,{m} min,new,hd1bd0c46
+common.duration.s,"A time span in seconds, e.g. ""45 s""",{s} s,{s} s,new,h130ff2da
+common.hours[one],"A whole number of hours, e.g. an egg's hatch time ""1 hour""; {count} = hours. Form for 1",{count} hour,{count} hodina,new,h8c6097ee
+common.hours[few],Form for 2-4 (Czech only),,{count} hodiny,new,h8c6097ee
+common.hours[other],Form for 0 and 5+,{count} hours,{count} hodin,new,h8c6097ee
+# Garden pen panel,,,,,
+garden.title,Pen panel title; {pen} = pen number 1-6,🌱 Pen {pen},🌱 Ohrada {pen},new,hc4abf29d
+garden.footer,"Pen panel footer; {rate} = Coins per hour of the whole plot (may be a decimal), {minutes} = payout interval",Garden income: <font color='#a8e6a0'>{rate} Coins/h</font> (before the pet bonus) · paid every {minutes} min,Příjem zahrádky: <font color='#a8e6a0'>{rate} mincí/h</font> (bez bonusu mazlíčků) · vyplácí se každých {minutes} min,new,hb9da9830
+garden.unlockPen[one],"Button: buy the next pen; {pen} = its number, {count} = price. Form for 1",Unlock pen {pen}: {count} Coin,Odemknout ohradu {pen}: {count} mince,new,h72afa625
+garden.unlockPen[few],Form for 2-4 (Czech only),,Odemknout ohradu {pen}: {count} mince,new,h72afa625
+garden.unlockPen[other],Form for 0 and 5+,Unlock pen {pen}: {count} Coins,Odemknout ohradu {pen}: {count} mincí,new,h72afa625
+garden.info.unlock,Info above the unlock button,"Pets in pens produce Coins, even while you are away.","Mazlíčci v ohradách vyrábějí mince, i když nejsi ve hře.",new,he43d5834
+garden.unlockFirst,Button of a pen after the next one (grey); {pen} = the next pen to buy,Unlock pen {pen} first,Nejdřív odemkni ohradu {pen},new,h36acd651
+garden.info.order,Info for a pen after the next one,Pens are unlocked in order.,Ohrady se odemykají postupně.,new,h035d174a
+garden.takeOut,Button on a pen holding a pet; {kind} = pet kind,Take {kind} out of the pen,Vyndat z ohrady: {kind},new,h42f88bbc
+garden.info.penned,"Info on a pen holding a pet; {name} = ""Cat Lv 3"", {rate} = its Coins per hour",{name} · <font color='#a8e6a0'>{rate} Coins/h</font>. A penned pet gains no XP and gives no pet bonus.,{name} · <font color='#a8e6a0'>{rate} mincí/h</font>. Mazlíček v ohradě nezískává XP a nedává bonus.,new,h150810e7
+garden.info.choose,Info on an empty pen above the list of free pets,Choose a pet for this pen. It produces Coins while it stays here.,"Vyber mazlíčka do ohrady. Dokud tu zůstane, vyrábí mince.",new,hc6e08c59
+garden.place,Button on a pet row: put it in this pen (short),Place,Umístit,new,h8ae77f96
+garden.rate,Pet row: Coins per hour that pet would produce; {rate} may be a decimal,{rate} Coins/h,{rate} mincí/h,new,hc220fa84
+garden.empty,"Empty pen, no free pet to place","No free pets. Hatch one in an incubator, or unequip one in the Pets panel.","Žádný volný mazlíček. Vylíhni si ho v inkubátoru, nebo ho sundej v panelu Mazlíčci.",new,h3a3101df
+garden.welcome,"Title of the ""welcome back"" card (offline pen production paid on join)",🌱 Welcome back!,🌱 Vítej zpátky!,new,h58a94374
+garden.away[one],"Welcome back card text; {count} = Coins paid, {duration} = time away (""7 h 59 min""). Form for 1",Your pens produced <font color='#78e678'>{count} Coin</font> in {duration}.,Tvoje ohrady vyrobily za {duration} <font color='#78e678'>{count} minci</font>.,new,h7f2afbea
+garden.away[few],Form for 2-4 (Czech only),,Tvoje ohrady vyrobily za {duration} <font color='#78e678'>{count} mince</font>.,new,h7f2afbea
+garden.away[other],Form for 0 and 5+,Your pens produced <font color='#78e678'>{count} Coins</font> in {duration}.,Tvoje ohrady vyrobily za {duration} <font color='#78e678'>{count} mincí</font>.,new,h7f2afbea
+garden.awayBase,Welcome back card: when the pet bonus added to the payout; {base} = Coins without the bonus,({base} base + your pet bonus),({base} základ + bonus tvých mazlíčků),new,hfad86214
+garden.awayCapped[one],Welcome back card: production while away is limited; {count} = hours. Form for 1,Production while away is capped at {count} hour.,Výroba bez tebe je omezená na {count} hodinu.,new,h9ad39b31
+garden.awayCapped[few],Form for 2-4 (Czech only),,Výroba bez tebe je omezená na {count} hodiny.,new,h9ad39b31
+garden.awayCapped[other],Form for 0 and 5+,Production while away is capped at {count} hours.,Výroba bez tebe je omezená na {count} hodin.,new,h9ad39b31
+garden.toast[one],Short toast for a payout while playing; {count} = Coins. Form for 1,🌱 Garden +{count} Coin,🌱 Zahrádka +{count} mince,new,hb18743f6
+garden.toast[few],Form for 2-4 (Czech only),,🌱 Zahrádka +{count} mince,new,hb18743f6
+garden.toast[other],Form for 0 and 5+,🌱 Garden +{count} Coins,🌱 Zahrádka +{count} mincí,new,hb18743f6
+garden.penUnlocked,Message after buying a pen,Pen {pen} unlocked,Ohrada {pen} odemčena,new,hdefaa454
+garden.placed,Message after placing a pet,Placed. It produces Coins from now on.,Umístěno. Od teď vyrábí mince.,new,h88210982
+garden.removed,Message after taking a pet out,Back in your inventory.,Zpátky v inventáři.,new,h59de7abc
+garden.reject.maxed,Refused: every pen is bought,All pens unlocked,Všechny ohrady jsou odemčené,new,h27abc176
+garden.reject.locked,Refused: the pen is not bought,Unlock this pen first,Nejdřív tuhle ohradu odemkni,new,h2756943b
+garden.reject.occupied,Refused: the pen holds a pet,This pen already holds a pet,V téhle ohradě už mazlíček je,new,h8d911d34
+garden.reject.equipped,Refused: an equipped pet cannot go into a pen,Unequip the pet first (Pets panel),Nejdřív mazlíčka sundej (panel Mazlíčci),new,h488bb4c0
+garden.reject.penned,Refused: the pet is in another pen,That pet is already in a pen,Ten mazlíček už je v ohradě,new,h3803ee16
+# Incubator panel,,,,,
+incubator.title,Incubator panel title; {n} = incubator number 1-3,🥚 Incubator {n},🥚 Inkubátor {n},new,hd5e8d5be
+incubator.body.locked,Text of an incubator not bought yet,"Incubators hatch eggs in real time, even while you are away.","Inkubátory líhnou vejce ve skutečném čase, i když nejsi ve hře.",new,h480d0efc
+incubator.unlock[one],"Button: buy the next incubator; {n} = its number, {count} = price. Form for 1",Unlock incubator {n}: {count} Coin,Odemknout inkubátor {n}: {count} mince,new,h7ecab8e3
+incubator.unlock[few],Form for 2-4 (Czech only),,Odemknout inkubátor {n}: {count} mince,new,h7ecab8e3
+incubator.unlock[other],Form for 0 and 5+,Unlock incubator {n}: {count} Coins,Odemknout inkubátor {n}: {count} mincí,new,h7ecab8e3
+incubator.unlockFirst,Button of an incubator after the next one (grey),Unlock incubator {n} first,Nejdřív odemkni inkubátor {n},new,h63e7c68e
+incubator.order,Status for an incubator after the next one,Incubators are unlocked in order.,Inkubátory se odemykají postupně.,new,h04ecaaf4
+incubator.hatchesIn,"Status while an egg incubates; {time} = countdown ""42:07""",Hatches in {time},Vylíhne se za {time},new,hbfaf5215
+incubator.hatching,Button (grey) while the egg incubates,Hatching...,Líhne se…,new,hcff0297a
+incubator.ready,Status when the egg can hatch (green),Ready to hatch!,Připraveno k vylíhnutí!,new,h4aa312f3
+incubator.hatch,Button: hatch the egg now,Hatch,Vylíhnout,new,ha0a5eaee
+incubator.body.empty,"First line of an empty incubator, above the eggs to choose","Hatches in real time, also while you are away.","Líhne se ve skutečném čase, i když nejsi ve hře.",new,hd6045426
+incubator.freeEggs[one],Status: free eggs start by themselves in the next empty incubator; {count} = eggs waiting. Form for 1,🎁 {count} free egg will start in the next empty incubator,🎁 Vejce zdarma čekající na volný inkubátor: {count},new,h5f21d558
+incubator.freeEggs[few],Form for 2-4 (Czech only),,🎁 Vejce zdarma čekající na volný inkubátor: {count},new,h5f21d558
+incubator.freeEggs[other],Form for 0 and 5+,🎁 {count} free eggs will start in the next empty incubators,🎁 Vejce zdarma čekající na volný inkubátor: {count},new,h5f21d558
+incubator.unlocked,Message after buying an incubator,Incubator {n} unlocked,Inkubátor {n} odemčen,new,h071ed29e
+incubator.started,Message after putting an egg in,The egg is warming up. Come back when it is ready!,"Vejce se zahřívá. Vrať se, až bude připravené!",new,h0ea3ff6d
+incubator.hatched.follows,"Message after hatching when the pet was equipped at once; {pet} = coloured ""Cat (Common)""",You got a {pet}! It follows you now.,Máš nového mazlíčka: {pet}! Teď tě následuje.,new,h1b5f17fb
+incubator.hatched.panel,Message after hatching when no equip slot was free,You got a {pet}! It is in your Pets panel.,Máš nového mazlíčka: {pet}! Najdeš ho v panelu Mazlíčci.,new,hce032885
+incubator.label.ready,Text over an egg in a plot's incubator once it can hatch,✨ Ready!,✨ Hotovo!,new,hd37ff7a0
+incubator.reject.maxed,Refused: every incubator is bought,All incubators unlocked,Všechny inkubátory jsou odemčené,new,h30705bfa
+incubator.reject.locked,Refused: the incubator is not bought,Unlock this incubator first,Nejdřív tenhle inkubátor odemkni,new,h1ea71739
+incubator.reject.occupied,Refused: the incubator holds an egg,This incubator already holds an egg,V tomhle inkubátoru už vejce je,new,h2ab4834e
+incubator.reject.full,Refused: the pet inventory is full; {max} = 50,Your inventory is full ({max} pets). Sell a pet first.,Máš plný inventář ({max} mazlíčků). Nejdřív nějakého prodej.,new,hb427b029
+incubator.reject.empty,Refused: nothing to hatch,There is no egg in this incubator,V tomhle inkubátoru žádné vejce není,new,h20ff33bb
+incubator.reject.notready,Refused: the egg needs more time,Not ready yet,Ještě není připravené,new,h16f18a63
+# Food stand panel,,,,,
+food.title,Food stand panel title,🍓 Pet food,🍓 Krmení pro mazlíčky,new,h10d5bce0
+food.status,Default status line,Feed a pet to give it XP. Only the fed pet gets it.,Nakrm mazlíčka a získá XP. Dostane je jen ten nakrmený.,new,hde20b086
+food.empty,Shown instead of the list while the player has no pet,You have no pets yet. Hatch one in your incubator.,Zatím nemáš žádného mazlíčka. Vylíhni si ho v inkubátoru.,new,h4301e9df
+food.where.equipped,Pet row: where the pet is now (lower case),equipped,nasazený,new,h10431f5d
+food.where.pen,Pet row: the pet is in pen {pen},in pen {pen},v ohradě {pen},new,h848096e3
+food.where.resting,Pet row: the pet is neither equipped nor penned,resting,odpočívá,new,hd8509054
+food.detail,"Pet row details; {xp}/{next} XP, {where} = food.where.*, {toMax} = XP to the last level {max}",XP {xp}/{next} · {where}\n{toMax} XP to Lv {max},XP {xp}/{next} · {where}\n{toMax} XP do Lv {max},new,heb53a5fd
+food.detail.max,Pet row details of a pet at the last level; {where} = food.where.*,Max level\n{where},Max. Lv\n{where},new,h8e7e437a
+food.maxTag,Shown instead of the food buttons for a pet at the last level,★ Max level,★ Max. Lv,new,h5a7b36ca
+food.button[one],"Food button: XP it gives over its price; {icon} = food emoji, {xp} = XP, {count} = price. Form for 1",{icon} +{xp} XP\n<font size='12'>{count} Coin</font>,{icon} +{xp} XP\n<font size='12'>{count} mince</font>,new,hdfb0e729
+food.button[few],Form for 2-4 (Czech only),,{icon} +{xp} XP\n<font size='12'>{count} mince</font>,new,hdfb0e729
+food.button[other],Form for 0 and 5+,{icon} +{xp} XP\n<font size='12'>{count} Coins</font>,{icon} +{xp} XP\n<font size='12'>{count} mincí</font>,new,hdfb0e729
+food.tooltip.head[one],"Tooltip first line; {icon} {food} = food, {count} = price. Form for 1",<b>{icon} {food}</b> · {count} Coin,<b>{icon} {food}</b> · {count} mince,new,h303245e7
+food.tooltip.head[few],Form for 2-4 (Czech only),,<b>{icon} {food}</b> · {count} mince,new,h303245e7
+food.tooltip.head[other],Form for 0 and 5+,<b>{icon} {food}</b> · {count} Coins,<b>{icon} {food}</b> · {count} mincí,new,h303245e7
+food.outcome.levelUp,"Tooltip: the food raises the pet's level; {name} = coloured ""Owl Lv 6"", {level} = new level",{name} → Lv {level},{name} → Lv {level},new,hf1df605f
+food.outcome.xp,"Tooltip: the food only adds XP; {name} = coloured ""Owl Lv 6"", XP {from} → {to}/{next}",{name} · XP {from} → {to}/{next},{name} · XP {from} → {to}/{next},new,he05b5290
+food.wasted,"Tooltip (orange): XP beyond the last level is lost; {xp} = lost XP, {max} = last level",<font color='#f0a05a'>{xp} XP wasted past Lv {max}</font>,<font color='#f0a05a'>{xp} XP nad Lv {max} propadne</font>,new,h44ac9a45
+food.tapAgain,Tooltip on a touch screen after the first tap (green),<font color='#78e678'>Tap again to feed</font>,<font color='#78e678'>Klepni znovu a nakrm</font>,new,hb5886b9d
+food.fed,"Message after feeding; {icon} = food emoji, {kind} = pet kind, {xp} = XP gained",{icon} {kind} +{xp} XP,{icon} {kind} +{xp} XP,new,ha04507b3
+food.fedLevelUp,Message after feeding when the pet levelled up; {level} = new level,{icon} {kind} +{xp} XP · Level up! Lv {level},{icon} {kind} +{xp} XP · Postup! Lv {level},new,h0e49428e
+food.yourPet,Stand-in for the pet kind in food.fed when the pet is unknown,Your pet,Tvůj mazlíček,new,h1b3953dd
+food.reject.maxed,Refused: the pet is at the last level; {max} = 20,This pet is already level {max},Tenhle mazlíček už má Lv {max},new,h0c80ae4c
+food.reject.far,Refused: the player walked away from the food stand,Too far from the food stand,Jsi moc daleko od stánku s krmením,new,hf190d1fe

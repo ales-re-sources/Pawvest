@@ -62,7 +62,7 @@ end
 PetConfig.Eggs = {
 	Basic = {
 		id = "Basic",
-		name = "Basic egg",
+		name = "Basic egg", -- loc: ignore (English source and fallback; players see Locale)
 		price = 500,
 		hatchSeconds = 300,
 		look = { color = Color3.fromRGB(236, 228, 208), material = Enum.Material.SmoothPlastic, glow = false }, -- plain cream
@@ -70,7 +70,7 @@ PetConfig.Eggs = {
 	},
 	Golden = {
 		id = "Golden",
-		name = "Golden egg",
+		name = "Golden egg", -- loc: ignore (English source and fallback; players see Locale)
 		price = 4000,
 		hatchSeconds = 3600,
 		look = { color = Color3.fromRGB(255, 200, 40), material = Enum.Material.SmoothPlastic, glow = true }, -- shiny gold

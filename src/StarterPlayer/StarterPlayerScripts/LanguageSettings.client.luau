@@ -42,8 +42,13 @@ local function addRow(screenGui: Instance)
 	button.BackgroundColor3 = StudStyle.PanelColors.SettingsPanel
 	button.TextSize = 18
 
+	-- the panel's title strip is authored in Studio; its text comes from here (L2)
+	local titleLabel = panel:FindFirstChild("TitleLabel")
 	local function refresh()
 		button.Text = rowText()
+		if titleLabel and titleLabel:IsA("TextLabel") then
+			titleLabel.Text = Locale.T("settings.title")
+		end
 	end
 	button.Activated:Connect(function()
 		local index = table.find(CHOICES, setting()) or 1

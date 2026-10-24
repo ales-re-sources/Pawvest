@@ -9,6 +9,7 @@ local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local ChallengeCoinConfig = require(ReplicatedStorage:WaitForChild("ChallengeCoinConfig"))
 local MedalText = require(ReplicatedStorage:WaitForChild("MedalText"))
 local PortalFaceStyle = require(ReplicatedStorage:WaitForChild("PortalFaceStyle"))
+local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 
 local LocalPlayer = Players.LocalPlayer
 local playerGui = LocalPlayer:WaitForChild("PlayerGui")
@@ -55,7 +56,7 @@ local function addGate(world)
 
 	local function refresh()
 		if world.soon then
-			starsLabel.Text = "🔒 Coming soon"
+			starsLabel.Text = Locale.T("faces.comingSoon")
 			coinsLabel.Text = MedalText.UnlockBar({ unlock = world.unlock }) or ""
 			return
 		end
@@ -68,7 +69,7 @@ local function addGate(world)
 		local entry = stages[1]
 		if not open and entry and entry.unlock then
 			starsLabel.Text = "🔒 " .. (MedalText.UnlockBar(entry) or "")
-			coinsLabel.Text = if entry.unlockPrice then string.format("or %d Coins", entry.unlockPrice) else ""
+			coinsLabel.Text = if entry.unlockPrice then Locale.T("faces.orCoins", { count = entry.unlockPrice }) else ""
 			return
 		end
 		local medals = {}
@@ -84,7 +85,7 @@ local function addGate(world)
 			found += f
 			total += t
 		end
-		coinsLabel.Text = string.format("💰 found %d/%d", found, total)
+		coinsLabel.Text = Locale.T("faces.coinsFound", { found = found, total = total })
 	end
 
 	for _, stage in stages do
@@ -92,6 +93,7 @@ local function addGate(world)
 		LocalPlayer:GetAttributeChangedSignal(StageConfig.UnlockedAttribute(stage)):Connect(refresh)
 	end
 	LocalPlayer:GetAttributeChangedSignal(ChallengeCoinConfig.CollectedAttribute):Connect(refresh)
+	Locale.Changed:Connect(refresh)
 	refresh()
 	surface.Parent = playerGui
 end

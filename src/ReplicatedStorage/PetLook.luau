@@ -15,6 +15,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
+local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 
 local PetLook = {}
 
@@ -112,7 +113,8 @@ end
 function PetLook.LabelText(kind: string, level: number): string
 	level = PetConfig.ClampLevel(level)
 	local tier = PetLook.Tier(level)
-	return kind .. " Lv " .. level .. if tier > 0 then " " .. string.rep("★", tier) else ""
+	-- in the client's language; the server (garden pens) gets English until L3 renders those labels per player
+	return Locale.PetName(kind, level) .. if tier > 0 then " " .. string.rep("★", tier) else ""
 end
 
 -- Accent tint (P1e3): parts of the model with the Studio attribute Accent = true (stripes, ear insides, tail tip, belly...)
@@ -983,7 +985,7 @@ function PetLook.LevelUp(model: Model, kind: string, level: number, ghost: Model
 		text.BackgroundTransparency = 1
 		text.Font = Enum.Font.GothamBlack
 		text.TextScaled = true
-		text.Text = "Level " .. level .. "!"
+		text.Text = Locale.T("pet.levelUp", { level = level })
 		text.TextColor3 = color
 		text.TextStrokeTransparency = 0.2
 		text.Parent = gui

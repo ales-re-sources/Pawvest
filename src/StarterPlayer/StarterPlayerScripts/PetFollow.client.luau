@@ -24,6 +24,7 @@ local LocalPlayer = Players.LocalPlayer
 
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local PetLook = require(ReplicatedStorage:WaitForChild("PetLook"))
+local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PetModels = ReplicatedStorage:WaitForChild("PetModels")
 local StageTimerUpdate = ReplicatedStorage:WaitForChild("StageTimerUpdate")
 
@@ -199,6 +200,19 @@ end
 
 Players.PlayerAdded:Connect(track)
 Players.PlayerRemoving:Connect(untrack)
+
+-- the labels ("Cat Lv 12 ★") follow the player's language (L2)
+Locale.Changed:Connect(function()
+	for _, follower in followers do
+		for _, pet in follower.pets do
+			local gui = pet.model and pet.model:FindFirstChild("Label")
+			local text = gui and gui:FindFirstChildOfClass("TextLabel")
+			if text then
+				text.Text = PetLook.LabelText(pet.kind, pet.level)
+			end
+		end
+	end
+end)
 for _, player in Players:GetPlayers() do
 	track(player)
 end
