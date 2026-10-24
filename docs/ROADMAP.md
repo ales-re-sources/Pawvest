@@ -56,7 +56,7 @@ Rules:
 | L2 | Localization: all client panels + config display names — done 2026-10-24 (Czech texts await the user's review) | ✔ | ✔ | – |
 | L3 | Localization: server-written + Studio-authored texts — texts done 2026-10-24 (Czech awaits review); font check and per-panel Czech overflow pass still open | ✔ | ✔ (texts) | – |
 | M6a | First live test + World 1 balancing | – | – | – |
-| E0 | Economy model for the pet-garden expansion (scope written 2026-10-24; `tools/economy.py` baseline step done: loader, drift check, reproduction, report; [EXPANSION.md](EXPANSION.md) §11) | partial | – | – |
+| E0 | Economy model for the pet-garden expansion (scope written 2026-10-24; `tools/economy.py` loader, drift check, reproduction, report and day-by-day sim done; [EXPANSION.md](EXPANSION.md) §11) | partial | – | – |
 | E1.0 | Client-drawn plots spike: GO / NO-GO on the plot architecture before E1 (scope written 2026-10-24, no code) | – | – | – |
 | S5 | Worlds hub — done 2026-10-22: gates for Worlds 2-4 (coming soon, admins only), World 2 courtyard, signs, per-world stars boards (user's visual check) | ✔ | ✔ | – |
 | S6 | World 2 (stages 6–10) — S6.1 Double Up + Seesaw built and Studio-checked 2026-10-22 (awaits the user's visual check), S6.2 / S6.3 not started | ✔ (S6.1) | ✔ (S6.1) | – |
@@ -321,8 +321,8 @@ the archetype's minutes and Gold-run share.
 
 **Progress (2026-10-24): baseline step done.** `tools/economy.py` loads every existing number from the Luau configs with a small table reader
 (no duplicated constants), pins them in `tools/economy_pins.json` (`drift` / `check` fail when a config changes; `pin` accepts the new state after
-review), reproduces the GDD figures (acceptance checks 1-3 run and pass: 21 / 21), and prints the baseline (`report`). Not built yet: the day-by-day
-simulation, crops / field, guardrails A-C, repricing, sensitivity (checks 4-11).
+review), reproduces the GDD figures (acceptance checks 1-3 run and pass: 21 / 21), and prints the baseline (`report`). The day-by-day simulation
+(`sim`) is built, see below. Not built yet: crops / field, guardrails A-C as checks, repricing, sensitivity (checks 4-11).
 
 **Baseline findings** (`python tools/economy.py report`; run times are model assumptions, hour 1 for World 1 comes out at ~2 700 vs the GDD's ~2 230)
 - The first obby hour of a day grows steeply with progress because the repeat-reward decay is per stage: ~2 700 (Tutorial + World 1), ~5 500 (+ World 2),
@@ -334,6 +334,24 @@ simulation, crops / field, guardrails A-C, repricing, sensitivity (checks 4-11).
   1.8x the one-time faucet (medals + first finish + challenge coins = 101 640). Repeat rewards and the garden must fill the difference, which is
   the room the repricing has to work with.
 - A Basic egg resells for ~48 % of its price and a Golden egg for ~18 %, so selling pets is a weak faucet today.
+
+**Simulation step (2026-10-24, `python tools/economy.py sim`).** Four archetypes x two purchase policies (talent-first, pets-first) x 60 days,
+6 egg-roll seeds each: obby (learn a stage, then farm Gold runs with the daily decay), pet XP and levels for the equipped pets, the pet multiplier on
+every faucet, pens, eggs, food, and time-to-afford / time-bought per sink. The learning curve (stage n takes 5 + n runs of T_base x 1.4 + 25 s) is the
+largest assumption and is provisional until telemetry exists (a dedicated player clears all 21 stages in ~17 days at 2 h a day, Casual in ~30).
+Findings of the current game (before crops):
+- **Pet leveling saturates within days.** Equipped pets reach about Lv 20 in 7-14 days for every archetype except *Garden main* (~30 days): a Gold run
+  gives up to 50 XP to each equipped pet (20 medal + 30 movement), so Lv 1 -> 20 (6 714 XP) is ~134 runs. The multiplier then sits at ~1.47 and only
+  rarity / slots can raise it. XP and food are therefore not a lasting sink or progression axis; the egg luck is the only variable left.
+- **The existing sinks run out.** An *Obby main* player has bought all talents, pens, slots and incubators by day ~6; *Casual* by day ~14; *Binge* ~22; *Garden
+  main* ~29. At day 60 the bank holds 0.2 M (Binge), 0.3-0.5 M (Garden main), 0.8 M (Casual) and 1.8 M Coins (Obby main). At full progress income is ~39 000 a day (Obby main:
+  23 700 repeat + 15 400 pens), ~23 000 (Casual), ~18 000 (Garden main, 87-89 % pens). E1's sinks must absorb this, not the 182 500 one-time sinks of today.
+- **Pens already dominate for the casual player at full progress:** pens are 51 % of *Casual* income at day 60 (and 87-89 % for *Garden main*); for
+  *Obby main* 36-40 %, inside the "never a majority for Obby main" rule. Pens never level here (penned pets get no XP unless fed), and even so a full
+  pen set sits at ~1.0-1.1x the first obby hour (24-hour rule) at full progress. The crop field must stay under that line with levels and the multiplier counted.
+- Required talents block a player only 0-5 days in total (they save for Double Jump, Triple Jump, Dash...): the no-grind path holds for every archetype.
+- **Free eggs:** the code grants a free Basic egg for the first Gold on **every** stage (StageResults `GOLD_EGG`), not for 4 stages as GDD §7.2 says
+  (up to 21 + the launch egg). The GDD needs a correction (or the code a limit); the simulation follows the code.
 
 **Done when** `check` is green, `docs/ECONOMY.md` and the GDD / EXPANSION edits are committed, and the user has confirmed the ladder, the
 price proposal and the pen-income migration. E0b (applying the prices) is a separate small milestone. Status: in progress (baseline step).

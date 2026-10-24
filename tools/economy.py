@@ -6,6 +6,7 @@ cannot drift silently), adds the planned content that is not in a config yet (PL
 and reports the Coin economy.
 
   python tools/economy.py report   # baseline tables (faucets, sinks, obby hour, today's pen economy)
+  python tools/economy.py sim      # day-by-day simulation per archetype and purchase policy (--days, --seeds)
   python tools/economy.py check    # acceptance checks of E0 that can run so far; exit 1 on a failure
   python tools/economy.py drift    # only the drift check (configs vs tools/economy_pins.json and the formulas)
   python tools/economy.py pin      # accept the current config values as the reviewed state (rewrites the pins)
@@ -266,6 +267,11 @@ def load():
     P["max_level"] = luau("PetConfig.luau", "PetConfig.MaxLevel")
     P["level_bonus"] = luau("PetConfig.luau", "PetConfig.LevelBonus")
     P["max_bonus"] = luau("PetConfig.luau", "PetConfig.MaxBonus")
+    P["medal_xp"] = luau("PetConfig.luau", "PetConfig.MedalXp")
+    P["finish_xp"] = luau("PetConfig.luau", "PetConfig.FinishXp")
+    P["coin_xp"] = luau("PetConfig.luau", "PetConfig.CoinXp")
+    P["studs_per_xp"] = luau("PetConfig.luau", "PetConfig.StudsPerXp")
+    P["max_move_xp"] = luau("PetConfig.luau", "PetConfig.MaxMoveXp")
 
     P["pen_prices"] = luau("GardenConfig.luau", "GardenConfig.PenPrices")
     P["pen_rates"] = luau("GardenConfig.luau", "GardenConfig.BaseRates")
@@ -295,6 +301,7 @@ def pin_values(P):
         "eggs": {k: [e["price"], e["hatch_s"], e["weights"]] for k, e in P["eggs"].items()},
         "slot_prices": P["slot_prices"],
         "pet_levels": [P["max_level"], P["level_bonus"], P["max_bonus"]],
+        "pet_xp": [P["medal_xp"], P["finish_xp"], P["coin_xp"], P["studs_per_xp"], P["max_move_xp"]],
         "pen_prices": P["pen_prices"],
         "pen_rates": P["pen_rates"],
         "pen_level_rate": P["pen_level_rate"],
@@ -398,6 +405,288 @@ def covered_hours_per_day(P, arch):
 
 def pet_bonus(P, kind_rarity, level):
     return P["rarities"][kind_rarity]["bonus"] + P["level_bonus"] * (level - 1)
+
+
+# --------------------------------------------------------------------------------------------------------------------
+# Day-by-day simulation of one player: obby, pets (XP, levels, multiplier), pens, purchases by policy.
+# --------------------------------------------------------------------------------------------------------------------
+SIM = {
+    "learn_base": 5,  # runs to first-clear a stage with Gold (practice, deaths): learn_base + learn_per_order x order, each taking
+    "learn_per_order": 1,  # T_base x learn_factor + overhead; provisional, to be replaced by telemetry (T1a funnels) after M6a
+    "learn_factor": 1.4,
+    "coin_capture": 0.8,  # share of a stage's challenge-coin value collected when it is first cleared
+    "move_speed": 16.0,  # studs/s while a timer runs, for movement XP
+    "move_share": 0.6,  # share of a run spent actually moving
+    "egg_share": {"talent-first": 0.10, "pets-first": 0.35},  # share of leftover Coins spent on Basic eggs each day
+    "food_share": {"talent-first": 0.03, "pets-first": 0.15},  # share of leftover Coins spent on food for equipped pets
+    "keep_order": 3,  # spare pets below this rarity order (Rare = 3) are sold
+    "window": 3,  # the player may skip at most 2 unaffordable items to buy a cheaper one behind them
+    "pet_cap": 50,
+}
+
+
+def learn_runs(stage):
+    return SIM["learn_base"] + SIM["learn_per_order"] * stage["order"]
+
+
+def xp_next(level):
+    return lua_round(10 * level ** 1.5)
+
+
+def policy_items(P, name):
+    def T(tid, lo=1, hi=None):
+        top = len(P["talents"][tid]["costs"])
+        return [("talent", tid, lv) for lv in range(lo, (hi or top) + 1)]
+    slots, incs, pens = [("slot", 2), ("slot", 3)], [("inc", 2), ("inc", 3)], [("pen", k) for k in range(2, 7)]
+    rest = T("DoubleJump", 2) + T("Dash") + T("WallJump") + T("Glide")
+    if name == "talent-first":
+        return (T("DoubleJump", 1, 1) + T("RunSpeed") + T("JumpHeight") + T("QuickRespawn")
+                + [slots[0], incs[0], pens[0], slots[1], pens[1], incs[1]] + pens[2:] + rest)
+    return ([slots[0], incs[0], pens[0], slots[1], incs[1], pens[1]] + pens[2:] + T("DoubleJump", 1, 1) + T("RunSpeed")
+            + T("JumpHeight") + T("QuickRespawn") + rest)
+
+
+def item_price(P, it):
+    if it[0] == "talent":
+        return P["talents"][it[1]]["costs"][it[2] - 1]
+    return {"slot": P["slot_prices"], "pen": P["pen_prices"], "inc": P["incubator_prices"]}[it[0]][it[1] - 1]
+
+
+def item_name(it):
+    return f"{it[1]} L{it[2]}" if it[0] == "talent" else {"slot": "Pet slot", "pen": "Pen", "inc": "Incubator"}[it[0]] + f" {it[1]}"
+
+
+class Player:
+    def __init__(self, P, arch, policy, rng):
+        self.P, self.arch, self.policy, self.rng = P, arch, policy, rng
+        self.stages = sorted(P["stages"], key=lambda s: s["order"])
+        self.coins = 0.0
+        self.done = []  # cleared stages
+        self.learn_left = None
+        self.talents = {t: 0 for t in P["talents"]}
+        self.slots, self.pens, self.incs = 1, 1, 1
+        self.pets = []  # {"r": rarity, "lvl": n, "xp": n, "where": "eq" | "pen" | "spare"}
+        self.free_eggs = 1  # the launch egg
+        self.mult = 1.0
+        self.afford, self.bought = {}, {}
+        self.items = policy_items(P, policy)
+        self.visits = len(arch["sessions"])  # visits on an active day
+        self.eq = []
+        self.dt = {s["key"]: s["t_base"] * MODEL["gold_run_factor"] + MODEL["run_overhead_s"] for s in self.stages}
+        self.cache = {}
+        self.manage()
+
+    # ---- pets -------------------------------------------------------------------------------------------------
+    def bonus(self, p):
+        return self.P["rarities"][p["r"]]["bonus"] + self.P["level_bonus"] * (p["lvl"] - 1)
+
+    def rate(self, p):
+        return pen_rate(self.P, p["r"], p["lvl"])
+
+    def manage(self):
+        """Equip the best pets by bonus, pen the best of the rest by production, sell weak spares."""
+        P = self.P
+        pets = sorted(self.pets, key=lambda p: -self.bonus(p))
+        for i, p in enumerate(pets):
+            p["where"] = "eq" if i < self.slots else "spare"
+        rest = sorted([p for p in pets if p["where"] == "spare"], key=lambda p: -self.rate(p))
+        for p in rest[: self.pens]:
+            p["where"] = "pen"
+        for p in rest[self.pens:]:
+            if P["rarities"][p["r"]]["order"] < SIM["keep_order"]:
+                self.coins += P["rarities"][p["r"]]["sell"]
+                self.pets.remove(p)
+        self.eq = [p for p in self.pets if p["where"] == "eq"]
+        self.mult = 1 + min(P["max_bonus"], sum(self.bonus(p) for p in self.eq)) / 1000
+
+    def add_xp(self, amount):
+        levelled = False
+        for p in self.eq:
+            if p["lvl"] >= self.P["max_level"]:
+                continue
+            p["xp"] += amount
+            while p["lvl"] < self.P["max_level"] and p["xp"] >= xp_next(p["lvl"]):
+                p["xp"] -= xp_next(p["lvl"])
+                p["lvl"] += 1
+                levelled = True
+        if levelled:
+            self.mult = 1 + min(self.P["max_bonus"], sum(self.bonus(p) for p in self.eq)) / 1000
+
+    def hatch(self, limit):
+        """Start up to `limit` free eggs (bought eggs are hatched where they are bought); returns hatched count."""
+        n = min(limit, self.free_eggs)
+        for _ in range(n):
+            self.free_eggs -= 1
+            self.new_pet("Basic")
+        return n
+
+    def new_pet(self, egg):
+        w = self.P["eggs"][egg]["weights"]
+        r = self.rng.choices(list(w), weights=list(w.values()))[0]
+        self.pets.append({"r": r, "lvl": 1, "xp": 0, "where": "spare"})
+
+    # ---- obby -------------------------------------------------------------------------------------------------
+    def reward(self, s, n):
+        key = (s["key"], n)
+        if key not in self.cache:
+            self.cache[key] = run_reward(self.P, s, 3, n)
+        return self.cache[key]
+
+    def run_xp(self, s, medal_xp):
+        studs = SIM["move_speed"] * s["t_base"] * MODEL["gold_run_factor"] * SIM["move_share"]
+        return medal_xp + min(self.P["max_move_xp"], int(studs // self.P["studs_per_xp"]))
+
+    def required_missing(self, stage):
+        reqs = sorted({(t, l) for (t, l), at in PLANNED["required_at"].items() if at <= stage["order"]})
+        return [("talent", t, l) for t, l in reqs if self.talents[t] < l]
+
+    def play(self, minutes, day_row):
+        budget = minutes * 60.0
+        P = self.P
+        # 1. learn new stages while talents allow
+        while budget > 0 and len(self.done) < len(self.stages):
+            s = self.stages[len(self.done)]
+            if self.required_missing(s):
+                day_row["blocked"] = 1
+                break
+            if self.learn_left is None:
+                self.learn_left = learn_runs(s) * (s["t_base"] * SIM["learn_factor"] + MODEL["run_overhead_s"])
+            spend = min(budget, self.learn_left)
+            budget -= spend
+            self.learn_left -= spend
+            if self.learn_left > 1e-9:
+                break
+            self.learn_left = None
+            coin_val = (sum(P["coins_by_stage"].get(s["key"], [])) if s["built"] else PLANNED["coins_per_planned_stage"]) * SIM["coin_capture"]
+            pay = (stage_medal_total(P, s) + first_finish(P, s) + coin_val) * self.mult
+            self.coins += pay
+            day_row["onetime"] += pay
+            self.add_xp(learn_runs(s) * self.run_xp(s, P["medal_xp"][0]) + int(coin_val / 40) * P["coin_xp"])
+            self.free_eggs += 1  # first Gold of a stage gives a free Basic egg
+            self.done.append(s)
+        # 2. farm Gold runs on cleared stages (greedy by Coins per second, daily decay per stage)
+        counts = {s["key"]: 0 for s in self.done}
+        gold_xp = P["medal_xp"][2]
+        while self.done:
+            best = max(self.done, key=lambda s: self.reward(s, counts[s["key"]]) / self.dt[s["key"]])
+            if self.dt[best["key"]] > budget:
+                break
+            budget -= self.dt[best["key"]]
+            pay = self.reward(best, counts[best["key"]]) * self.mult
+            counts[best["key"]] += 1
+            self.coins += pay
+            day_row["repeat"] += pay
+            self.add_xp(self.run_xp(best, gold_xp))
+
+    # ---- money ------------------------------------------------------------------------------------------------
+    def owned(self, it):
+        if it[0] == "talent":
+            return self.talents[it[1]] >= it[2]
+        return {"slot": self.slots, "pen": self.pens, "inc": self.incs}[it[0]] >= it[1]
+
+    def prereq_ok(self, it):
+        if it[0] == "talent":
+            return self.talents[it[1]] == it[2] - 1
+        return {"slot": self.slots, "pen": self.pens, "inc": self.incs}[it[0]] == it[1] - 1
+
+    def buy(self, it, day):
+        self.coins -= item_price(self.P, it)
+        if it[0] == "talent":
+            self.talents[it[1]] = it[2]
+        elif it[0] == "slot":
+            self.slots = it[1]
+        elif it[0] == "pen":
+            self.pens = it[1]
+        else:
+            self.incs = it[1]
+        self.bought.setdefault(it, day)
+        self.manage()
+
+    def shop(self, day, day_row):
+        P = self.P
+        for it in self.items:
+            if it not in self.afford and self.coins >= item_price(P, it):
+                self.afford[it] = day
+        for it in sorted({it for s in self.stages for it in self.required_missing(s)}):
+            if it not in self.afford and self.coins >= item_price(P, it):
+                self.afford[it] = day
+        used = self.hatch(self.incs * self.visits)
+        saving = False
+        while True:
+            need = self.required_missing(self.stages[min(len(self.done), len(self.stages) - 1)]) if len(self.done) < len(self.stages) else []
+            need = [it for it in need if self.prereq_ok(it)]
+            if need:
+                it = min(need, key=lambda x: item_price(P, x))
+                if self.coins >= item_price(P, it):
+                    self.buy(it, day)
+                    continue
+                saving = True
+                break
+            cand = [it for it in self.items if not self.owned(it) and self.prereq_ok(it)][: SIM["window"]]
+            hit = next((it for it in cand if self.coins >= item_price(P, it)), None)
+            if hit is None:
+                break
+            self.buy(hit, day)
+        used += self.hatch(self.incs * self.visits - used)
+        if not saving:
+            # eggs: Basic eggs bought into free incubator capacity, limited by the pet cap
+            room = SIM["pet_cap"] - len(self.pets)
+            cap = max(0, min(self.incs * self.visits - used, room))
+            n_eggs = int(min(cap, (self.coins * SIM["egg_share"][self.policy]) // P["eggs"]["Basic"]["price"]))
+            for _ in range(n_eggs):
+                self.coins -= P["eggs"]["Basic"]["price"]
+                self.new_pet("Basic")
+            if n_eggs:
+                self.manage()
+            budget = self.coins * SIM["food_share"][self.policy]
+            for food in sorted(P["foods"], key=lambda f: -f["xp"]):
+                while budget >= food["price"] and any(p["where"] == "eq" and p["lvl"] < P["max_level"] for p in self.pets):
+                    tgt = min((p for p in self.pets if p["where"] == "eq" and p["lvl"] < P["max_level"]), key=lambda p: p["lvl"])
+                    budget -= food["price"]
+                    self.coins -= food["price"]
+                    tgt["xp"] += food["xp"]
+                    while tgt["lvl"] < P["max_level"] and tgt["xp"] >= xp_next(tgt["lvl"]):
+                        tgt["xp"] -= xp_next(tgt["lvl"])
+                        tgt["lvl"] += 1
+                    self.manage()
+
+    def day(self, d):
+        a = self.arch
+        row = {"repeat": 0.0, "onetime": 0.0, "pen": 0.0, "blocked": 0}
+        if d % a["period_days"] == 0:
+            self.play(a["obby_min"], row)
+        pen_rate_now = sum(self.rate(p) for p in self.pets if p["where"] == "pen")
+        row["pen"] = pen_rate_now * covered_hours_per_day(self.P, a) * self.mult
+        self.coins += row["pen"]
+        if d % a["period_days"] == 0:
+            self.shop(d + 1, row)
+        pen_rate_after = sum(self.rate(p) for p in self.pets if p["where"] == "pen")
+        row.update({
+            "stage": len(self.done), "mult": self.mult, "bank": self.coins, "pets": len(self.pets),
+            "eq_lvl": sum(p["lvl"] for p in self.eq) / len(self.eq) if self.eq else 0, "pen_h": pen_rate_after,
+            "talents": sum(self.talents.values()), "pens": self.pens, "hour1": hour1(self.P, self.done),
+        })
+        return row
+
+
+_hour1_cache = {}
+
+
+def hour1(P, done):
+    key = len(done)
+    if key not in _hour1_cache:
+        _hour1_cache[key] = obby_sim(P, done, 65)[2][0] if done else 0
+    return _hour1_cache[key]
+
+
+def simulate(P, arch, policy, days, seeds):
+    import random
+    runs = []
+    for seed in range(seeds):
+        pl = Player(P, arch, policy, random.Random(1000 + seed))
+        runs.append(([pl.day(d) for d in range(days)], pl))
+    return runs
+
 
 
 # --------------------------------------------------------------------------------------------------------------------
@@ -590,17 +879,62 @@ def cmd_check(P):
     return 1 if failed else 0
 
 
+def cmd_sim(P, days, seeds):
+    import statistics
+    print(f"DAY-BY-DAY SIMULATION: {days} days, {seeds} seeds per cell (egg rolls differ), pet multiplier ON, Coins after the multiplier\n")
+    print("Assumptions (SIM / MODEL blocks in economy.py, all provisional): a new stage takes "
+          f"({SIM['learn_base']} + {SIM['learn_per_order']} x stage number) runs x (T_base x {SIM['learn_factor']} + {MODEL['run_overhead_s']:.0f} s) and ends in Gold; farming = Gold runs, greedy;\n"
+          "required talents are bought first (saving for them blocks other purchases); stage unlocks are never bought; Golden eggs are not bought;\n"
+          "equipped pets (best bonus) get the full XP of each run; the next best pets sit in pens; spare Common / Uncommon pets are sold.\n")
+    snaps = [d for d in (1, 3, 7, 14, 30, 45, 60) if d <= days]
+    for policy in ("talent-first", "pets-first"):
+        afford_rows = {}
+        for arch in ARCHETYPES:
+            runs = simulate(P, arch, policy, days, seeds)
+
+            def avg(key, d, window=1):
+                vals = [sum(r[key] for r in rows[max(0, d - window):d]) / len(rows[max(0, d - window):d]) for rows, _ in runs]
+                return sum(vals) / len(vals)
+            print(f"== {policy} / {arch['name']} (obby {arch['obby_min']} min per {arch['period_days']} d; incomes = mean of the last 7 days)")
+            rows = []
+            for d in snaps:
+                inc = [avg(k, d, 7) for k in ("repeat", "onetime", "pen")]
+                ratio = avg("pen_h", d) * 24 / max(1, avg("hour1", d))
+                rows.append((d, f"{avg('stage', d):.0f}", f"{avg('talents', d):.0f}", f"{avg('pets', d):.0f}", f"{avg('eq_lvl', d):.1f}",
+                             f"{avg('mult', d):.2f}", n(inc[0]), n(inc[1]), n(inc[2]), f"{inc[2] / max(1, sum(inc)):.0%}", f"{ratio:.1f}x",
+                             n(avg("bank", d))))
+            print(table(["Day", "Stages", "Talents", "Pets", "Eq Lv", "Mult", "Repeat/d", "One-time/d", "Pens/d", "Pens share", "Pens24/h1", "Bank"], rows))
+            blocked = statistics.mean(sum(r["blocked"] for r in rws) for rws, _ in runs)
+            print(f"   days blocked by a missing required talent: {blocked:.1f}\n")
+            for it in sorted({it for _, pl in runs for it in list(pl.afford) + list(pl.bought)}, key=lambda x: (x[0] != "talent", x)):
+                med = lambda attr: statistics.median([getattr(pl, attr).get(it, math.inf) for _, pl in runs])
+                a, b = med("afford"), med("bought")
+                afford_rows.setdefault(it, {})[arch["name"]] = f"{'-' if a == math.inf else int(a)}/{'-' if b == math.inf else int(b)}"
+        print(f"Time to afford / time bought (median day, '-' = not within {days} days) -- {policy}")
+        order = sorted(afford_rows, key=lambda x: (x[0] != "talent", x[0], x[1], x[2] if len(x) > 2 else 0))
+        print(table(["Sink", "Price"] + [a["name"] for a in ARCHETYPES],
+                    [[item_name(it), n(item_price(P, it))] + [afford_rows[it].get(a["name"], "-") for a in ARCHETYPES] for it in order]))
+        print()
+    print("Pens24/h1 = a fully running pen set over 24 h divided by the player's first obby hour at the same progress (the 24-hour rule; both sides\n"
+          "carry the same multiplier). > 1 breaks the rule.")
+
+
 def main():
     try:
         sys.stdout.reconfigure(encoding="utf-8")
     except Exception:
         pass
     ap = argparse.ArgumentParser(description="Pawvest economy model (ROADMAP E0)")
-    ap.add_argument("command", choices=["report", "check", "drift", "pin"])
+    ap.add_argument("command", choices=["report", "sim", "check", "drift", "pin"])
+    ap.add_argument("--days", type=int, default=60)
+    ap.add_argument("--seeds", type=int, default=6)
     args = ap.parse_args()
     P = load()
     if args.command == "report":
         cmd_report(P)
+        return 0
+    if args.command == "sim":
+        cmd_sim(P, args.days, args.seeds)
         return 0
     if args.command == "check":
         return cmd_check(P)
