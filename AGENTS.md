@@ -3,7 +3,7 @@
 Roblox obby (obstacle course): a central hub island with portals to timed stages, checkpoints,
 per-stage Top-10 leaderboards, collectible coins and a small admin panel.
 
-- Place: **"Oby sandbox"**, placeId `83181838162651` (pinned in `Oby.project.json` → `placeIds`).
+- Place: **"Oby sandbox"**, placeId `73033440513091` (pinned in `Oby.project.json` → `placeIds`; the game was re-uploaded to another account on 2026-10-24, the old place `83181838162651` is dead and its DataStores did not move).
 - Code is synced to this repo with **Argon** (Rojo-compatible); the **scene lives only in the place file**.
 - Language: Luau, legacy run context (`.server.luau` = Script, `.client.luau` = LocalScript, `.luau` = ModuleScript).
 
@@ -15,6 +15,7 @@ per-stage Top-10 leaderboards, collectible coins and a small admin panel.
 - [docs/STYLE_PREVIEW.md](docs/STYLE_PREVIEW.md) — parked voxel / pixel-art style previews (Studio-only `ServerStorage.StylePreview`), decision pending.
 - [docs/TELEMETRY.md](docs/TELEMETRY.md) — telemetry design (T1a / T1b): AnalyticsService events for run funnels, fails per segment / cause, quits and returns, skills; how to read them on the Creator Dashboard. T1a (core) and T1b (skills) implemented.
 - [docs/LOCALIZATION.md](docs/LOCALIZATION.md) — localization design (L1–L4): English + Czech, `Locale.T`, string tables, `LocKey` for server texts, language row in Settings. L1 (infrastructure + HUD) implemented; L2 (client panels) and L3 (server + Studio texts) implemented.
+- [docs/EXPANSION.md](docs/EXPANSION.md) — **Pawvest** (the game's official name since 2026-10-24; "Oby sandbox" is the working / place name): pet-garden simulator direction (E1–E8): posts, pet traits and careers, crop economy, critter raids, restoration bundles, estate; MVP cut and update plan; draft, nothing built.
 - [docs/STAGES.md](docs/STAGES.md) — stage expansion to ≈ 20 stages: obstacle component catalogue, combination patterns, difficulty curve, special / bonus stages, talent gating, worlds / hub layout, proposed S milestones.
 
 Work milestone by milestone per ROADMAP (design check → implement → Studio validation → status update → commit);

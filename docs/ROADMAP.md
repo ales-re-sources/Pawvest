@@ -157,6 +157,10 @@ Stage expansion plan and design: [STAGES.md](STAGES.md) (catalogue, curve, world
 milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.
 Only S1 is scoped in full; the others get their scope when they start (workflow step 2).
 
+Pet-garden simulator (E0–E8, direction decided 2026-10-24, draft, nothing started): [EXPANSION.md](EXPANSION.md) §10–11 (game name **Pawvest**; the MVP
+cut is E1 + E2 + hatch-time traits + first landmark and request board + basic ledger, then updates U1–U5). E0 (economy
+model) comes first; E1 (beds and crops) is the first build milestone. They get their scope when they start.
+
 ### S1 — Stage framework
 - **Design check (first) — DONE 2026-10-21** (docs only; answers recorded in STAGES §9, GDD §3–6 updated). Decided with
   the user: Stage 3 factor **1.75**; challenge-coin values **stay flat** (no scaling, the S1.1 bullet below is void);

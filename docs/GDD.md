@@ -413,6 +413,9 @@ effect, not an accessory). Which pieces comes from the pet id and the kind (no w
 no flame tail on Owl / Panda, no crown together with horns); the Lv 10 piece stays and the second one is added at Lv 20. Details: [PET_GROWTH.md](PET_GROWTH.md).
 
 ### 7.6 Pet garden (minigame, P2)
+*Direction (2026-10-24): this section describes the garden as built; [EXPANSION.md](EXPANSION.md) replaces the pen production with
+crops, posts and raids once E1 is designed in detail. Not rewritten yet.*
+
 A free area reached on foot from the central island, where pets are raised. Aimed at players who prefer
 collecting and caring over obby runs.
 - **Where.** A separate island in the same place (not a separate place), joined to the central island by a wooden
