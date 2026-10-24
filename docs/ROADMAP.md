@@ -350,8 +350,8 @@ Findings of the current game (before crops):
   *Obby main* 36-40 %, inside the "never a majority for Obby main" rule. Pens never level here (penned pets get no XP unless fed), and even so a full
   pen set sits at ~1.0-1.1x the first obby hour (24-hour rule) at full progress. The crop field must stay under that line with levels and the multiplier counted.
 - Required talents block a player only 0-5 days in total (they save for Double Jump, Triple Jump, Dash...): the no-grind path holds for every archetype.
-- **Free eggs:** the code grants a free Basic egg for the first Gold on **every** stage (StageResults `GOLD_EGG`), not for 4 stages as GDD §7.2 says
-  (up to 21 + the launch egg). The GDD needs a correction (or the code a limit); the simulation follows the code.
+- **Free eggs:** the code grants a free Basic egg for the first Gold on **every** stage (StageResults `GOLD_EGG`), (up to 21 + the launch egg). GDD §7.2 said 4 and was corrected
+  to match the code on 2026-10-24; the simulation follows the code.
 
 **Done when** `check` is green, `docs/ECONOMY.md` and the GDD / EXPANSION edits are committed, and the user has confirmed the ladder, the
 price proposal and the pen-income migration. E0b (applying the prices) is a separate small milestone. Status: in progress (baseline step).

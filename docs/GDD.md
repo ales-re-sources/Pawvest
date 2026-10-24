@@ -345,7 +345,8 @@ Free eggs:
 - one Basic egg on the first join after pets launch (also for existing players, and again after an admin reset); a free
   egg that starts while the player has never hatched a pet (and nothing incubates) is **ready to hatch at once** (no
   5-minute wait), so a new player gets the first pet right away,
-- one Basic egg for the **first Gold on each stage** (4 in total).
+- one Basic egg for the **first Gold on each stage**, the Tutorial included (`StageResults`: any stage's first Gold; 21 over the planned
+  game, plus the launch egg; corrected 2026-10-24, the text said 4).
 
 A free egg starts by itself (no Coins) in the lowest empty incubator as soon as one is empty: on join, when the egg is
 earned, after a hatch and after an incubator is bought. While every incubator is busy (or the inventory cap is reached) it
