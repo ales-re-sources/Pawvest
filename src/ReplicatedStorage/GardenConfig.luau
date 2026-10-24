@@ -9,7 +9,6 @@ GardenConfig.PlotSize = 40 -- studs, square
 GardenConfig.PlotAttribute = "GardenPlot" -- player attribute: index of the borrowed plot (absent when none)
 GardenConfig.OwnerIdAttribute = "OwnerUserId" -- plot model attribute: UserId of the current owner (absent when free)
 GardenConfig.OwnerNameAttribute = "OwnerName" -- plot model attribute: name of the current owner (absent when free)
-GardenConfig.FreeSignText = "Free plot"
 
 -- Name of the Workspace.Garden.Plots model of plot `index` ("Plot_01" … "Plot_12").
 function GardenConfig.PlotName(index: number): string

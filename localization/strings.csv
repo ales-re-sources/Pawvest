@@ -279,3 +279,24 @@ food.fedLevelUp,Message after feeding when the pet levelled up; {level} = new le
 food.yourPet,Stand-in for the pet kind in food.fed when the pet is unknown,Your pet,Tvůj mazlíček,new,h1b3953dd
 food.reject.maxed,Refused: the pet is at the last level; {max} = 20,This pet is already level {max},Tenhle mazlíček už má Lv {max},new,h0c80ae4c
 food.reject.far,Refused: the player walked away from the food stand,Too far from the food stand,Jsi moc daleko od stánku s krmením,new,hf190d1fe
+# Server-written signs and boards (L3),,,,,
+board.top10,"Title of a stage's Top-10 board (SurfaceGui, server-written, tagged Loc); {stage} = stage name (feminine in Czech), {rows} = 10",{stage} - top {rows}!,{stage} – top {rows}!,new,h813379d2
+board.worldStars,"Title of a world's most-stars board in its courtyard; {world} = world name (""Svět 1""), {rows} = 10",{world} stars - top {rows}!,Hvězdy: {world} – top {rows}!,new,hfb8a5a28
+board.hubStars,Title of the hub's most-stars board; {rows} = 10,Most stars - top {rows}!,Nejvíc hvězd – top {rows}!,new,h1e3851bd
+garden.sign.plotFree,Sign of a garden plot nobody owns right now (an owned plot shows the owner's name),Free plot,Volný pozemek,new,h456835a7
+garden.sign.pen.locked,Billboard on a pen pad that is not bought yet; {n} = pen number 1-6,🔒 Pen {n},🔒 Ohrada {n},new,h66c82e4e
+garden.sign.pen.empty,Billboard on a bought pen with no pet; {n} = pen number; second line after the line break,Pen {n}\nempty,Ohrada {n}\nprázdná,new,h0cbb3486
+garden.sign.incubator.locked,Billboard on an incubator that is not bought yet; {n} = incubator number 1-3,🔒 Incubator {n},🔒 Inkubátor {n},new,h4af320b7
+garden.sign.incubator.empty,Billboard on a bought incubator without an egg; {n} = incubator number; second line after the line break,Incubator {n}\nempty,Inkubátor {n}\nprázdný,new,haa069ea7
+garden.penPet.label,"Label over a pet standing in a garden pen (rich text, green second line). {pet} = ""Cat Lv 12"", {stars} = tier badge with a leading space ("" ★★"") or empty, {rate} = ""4.5 Coins/h""",{pet}{stars}\n<font color='#a8e6a0'>{rate}</font>,{pet}{stars}\n<font color='#a8e6a0'>{rate}</font>,new,hca8d2d56
+# Studio-authored signs (L3; tagged Loc with LocKey in the place file),,,,,
+sign.plot,Number on a garden plot's sign (Workspace.Garden.Plots.Plot_NN.Sign); {n} = plot number 1-12,Plot {n},Pozemek {n},new,h1927be07
+sign.foodStand,"Sign over the pet food stand in the garden (capitals, big letters; keep it short)",🍓 PET FOOD,🍓 KRMENÍ,new,hfe6570f5
+sign.garden.title,Hub sign pointing to the pet garden (title line),Pet Garden,Zahrada mazlíčků,new,hdd8bd319
+sign.garden.sub,Hub sign pointing to the pet garden (second line),over the bridge,přes most,new,h16087c51
+sign.hub.sub,"Garden sign pointing back to the hub, under the hub's name",stages this way,úrovně tímto směrem,new,h3b9bcf33
+sign.start,"Start line sign at a stage gate, the tutorial and the key arena (capitals)",START,START,new,h718ab2ee
+sign.finish,Label of a stage's finish portal,Finish,Cíl,new,hf25ee280
+sign.exit,Exit sign of the key arena (capitals),EXIT,VÝCHOD,new,h1aab843f
+sign.hubPortal,"Label of a portal that leads back to the hub (tutorial, worlds); not the hub's name",Hub,Centrum,new,hf7bf415c
+sign.welcome,Welcome board in the tutorial,Welcome!,Vítej!,new,h258fd7ce

@@ -31,6 +31,8 @@ export type Label = {
 	size: UDim2,
 	maxDistance: number,
 	gap: number, -- studs between the top of the scaled model and the label
+	locKey: string?, -- server labels: translated per viewer (Locale.SetKey) while `text` stays the English fallback
+	locArgs: { [string]: any }?,
 }
 
 -- size / center: the bounding box of the scaled model in the PrimaryPart's space; lift: how far to raise the root so the
@@ -104,17 +106,25 @@ local function addLabel(model: Model, root: BasePart, rarity: PetConfig.Rarity, 
 	text.TextScaled = true
 	text.RichText = label.richText == true
 	text.Text = label.text
+	if label.locKey then
+		Locale.SetKey(text, label.locKey, label.locArgs)
+	end
 	text.TextColor3 = rarity.color
 	text.TextStrokeTransparency = 0.3
 	text.Parent = gui
 end
 
--- Label text of a pet: "Cat Lv 12 ★★", one star per look tier (none below Lv 5), so the tier shows on the label too.
+-- The tier badge appended to a label: " ★★", one star per look tier (none below Lv 5)
+function PetLook.TierStars(level: number): string
+	local tier = PetLook.Tier(PetConfig.ClampLevel(level))
+	return if tier > 0 then " " .. string.rep("★", tier) else ""
+end
+
+-- Label text of a pet: "Cat Lv 12 ★★", so the tier shows on the label too. In the caller's language (the server, which
+-- has none, writes English and tags its labels with the key + args of the same text instead, see GardenService).
 function PetLook.LabelText(kind: string, level: number): string
 	level = PetConfig.ClampLevel(level)
-	local tier = PetLook.Tier(level)
-	-- in the client's language; the server (garden pens) gets English until L3 renders those labels per player
-	return Locale.PetName(kind, level) .. if tier > 0 then " " .. string.rep("★", tier) else ""
+	return Locale.PetName(kind, level) .. PetLook.TierStars(level)
 end
 
 -- Accent tint (P1e3): parts of the model with the Studio attribute Accent = true (stripes, ear insides, tail tip, belly...)

@@ -14,7 +14,7 @@ per-stage Top-10 leaderboards, collectible coins and a small admin panel.
 - [docs/PET_GROWTH.md](docs/PET_GROWTH.md) — design and plan for the pet growth visuals (P1e1–P1f).
 - [docs/STYLE_PREVIEW.md](docs/STYLE_PREVIEW.md) — parked voxel / pixel-art style previews (Studio-only `ServerStorage.StylePreview`), decision pending.
 - [docs/TELEMETRY.md](docs/TELEMETRY.md) — telemetry design (T1a / T1b): AnalyticsService events for run funnels, fails per segment / cause, quits and returns, skills; how to read them on the Creator Dashboard. T1a (core) and T1b (skills) implemented.
-- [docs/LOCALIZATION.md](docs/LOCALIZATION.md) — localization design (L1–L4): English + Czech, `Locale.T`, string tables, `LocKey` for server texts, language row in Settings. L1 (infrastructure + HUD) implemented; L2 (client panels) / L3 (server + Studio texts) not yet.
+- [docs/LOCALIZATION.md](docs/LOCALIZATION.md) — localization design (L1–L4): English + Czech, `Locale.T`, string tables, `LocKey` for server texts, language row in Settings. L1 (infrastructure + HUD) implemented; L2 (client panels) and L3 (server + Studio texts) implemented.
 - [docs/STAGES.md](docs/STAGES.md) — stage expansion to ≈ 20 stages: obstacle component catalogue, combination patterns, difficulty curve, special / bonus stages, talent gating, worlds / hub layout, proposed S milestones.
 
 Work milestone by milestone per ROADMAP (design check → implement → Studio validation → status update → commit);

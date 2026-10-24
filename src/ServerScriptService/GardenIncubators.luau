@@ -20,6 +20,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 
 local GardenConfig = require(ReplicatedStorage.GardenConfig)
 local PetConfig = require(ReplicatedStorage.PetConfig)
+local Locale = require(ReplicatedStorage.Locale)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local PetService = require(ServerScriptService.PetService)
 local GardenService = require(ServerScriptService.GardenService)
@@ -119,11 +120,14 @@ GardenService.AddRenderer(function(_index, plot, profile)
 			info.Enabled = state ~= "free"
 		end
 		if text then
-			text.Text = if state == "locked"
-				then "🔒 Incubator " .. number
-				elseif state == "empty" then "Incubator " .. number .. "\nempty"
-				elseif entry then PetConfig.Eggs[entry.Egg].name -- clients add the countdown
-				else ""
+			if state == "locked" then
+				Locale.SetKey(text, "garden.sign.incubator.locked", { n = number })
+			elseif state == "empty" then
+				Locale.SetKey(text, "garden.sign.incubator.empty", { n = number })
+			else
+				-- an egg: clients write the egg name and the countdown themselves (IncubatorClient.drawCountdowns)
+				Locale.SetText(text, if entry then PetConfig.Eggs[entry.Egg].name else "")
+			end
 		end
 	end
 end)

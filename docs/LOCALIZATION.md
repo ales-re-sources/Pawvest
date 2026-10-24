@@ -2,8 +2,8 @@
 
 Status: design agreed 2026-10-23; L1 implemented and Studio-validated 2026-10-23 (see "Design check (L1)" below); L1.1
 (strings workflow: CSV source, `tools/loc.py`, pseudo-language) 2026-10-24, see "Strings workflow". The Czech texts await
-the user's review. L2 (client panels) implemented and Studio-validated 2026-10-24, see "Design check (L2)". L3 not
-started. Milestones **L1–L3** (L4 later) in [ROADMAP.md](ROADMAP.md),
+the user's review. L2 (client panels) implemented and Studio-validated 2026-10-24, see "Design check (L2)". L3 (server + Studio
+texts) implemented 2026-10-24, see "L3 notes"; font check and Czech overflow pass still open. Milestones **L1–L3** (L4 later) in [ROADMAP.md](ROADMAP.md),
 after telemetry (T1a / T1b, [TELEMETRY.md](TELEMETRY.md)).
 
 ## Goal

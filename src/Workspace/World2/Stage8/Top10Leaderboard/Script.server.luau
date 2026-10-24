@@ -1,5 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StageConfig = require(ReplicatedStorage.StageConfig)
+local Locale = require(ReplicatedStorage.Locale)
 local TimeFormat = require(ReplicatedStorage.TimeFormat)
 local AvatarThumbs = require(game:GetService("ServerScriptService").AvatarThumbs)
 local handler = require(workspace.Handlers.PlayerTimerHandler)
@@ -10,7 +11,7 @@ local stage = StageConfig.ForInstance(script)
 local scoreBlock = script.Parent.Model.ScoreBlock
 
 -- the title comes from the stage, so a copied board can never show another stage's name
-scoreBlock.SurfaceGui.DataLabel.Text = stage.displayName .. " - top 10!"
+Locale.SetKey(scoreBlock.SurfaceGui.DataLabel, "board.top10", { stage = { key = "stage.name." .. stage.key }, rows = ROWS })
 
 
 -- Draws all rows; rows without an entry are cleared, so a shorter list leaves no stale names

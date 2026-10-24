@@ -137,6 +137,8 @@ end
 local function format(value: any, lang: string): string
 	if type(value) == "table" and type(value.key) == "string" then
 		return Locale.T(value.key, value.args, lang)
+	elseif type(value) == "table" and type(value.decimal) == "string" then
+		return Locale.Decimal(value.decimal, lang) -- { decimal = "4.5" }: server-written, shown with the viewer's decimal mark
 	elseif type(value) == "number" and value == math.floor(value) and math.abs(value) < 1e15 then
 		return Locale.Number(value, lang)
 	end

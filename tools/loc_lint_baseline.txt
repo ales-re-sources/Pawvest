@@ -1,19 +1,1 @@
 # loc.py lint baseline: literal texts per file still waiting for L2 / L3. Only ever lower these numbers.
-1 ReplicatedStorage/GardenConfig.luau
-1 ServerScriptService/GardenIncubators.luau
-1 ServerScriptService/GardenService.luau
-1 ServerStorage/StageKit/Top10Leaderboard/Script.server.luau
-1 Workspace/StartLocation/StarsBoard.server.luau
-1 Workspace/Tutorial/LandingPad/Top10Leaderboard/Script.server.luau
-1 Workspace/World1/Stage1/Top10Leaderboard/Script.server.luau
-1 Workspace/World1/Stage2/Top10Leaderboard/Script.server.luau
-1 Workspace/World1/Stage3/Top10Leaderboard/Script.server.luau
-1 Workspace/World1/Stage4/Top10Leaderboard/Script.server.luau
-1 Workspace/World1/Stage5/Top10Leaderboard/Script.server.luau
-1 Workspace/World1/WorldStarsBoard.server.luau
-1 Workspace/World2/Stage10/Top10Leaderboard/Script.server.luau
-1 Workspace/World2/Stage6/Top10Leaderboard/Script.server.luau
-1 Workspace/World2/Stage7/Top10Leaderboard/Script.server.luau
-1 Workspace/World2/Stage8/Top10Leaderboard/Script.server.luau
-1 Workspace/World2/Stage9/Top10Leaderboard/Script.server.luau
-1 Workspace/World2/WorldStarsBoard.server.luau

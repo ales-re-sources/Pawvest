@@ -18,6 +18,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local GardenConfig = require(ReplicatedStorage.GardenConfig)
 local PetConfig = require(ReplicatedStorage.PetConfig)
 local PetLook = require(ReplicatedStorage.PetLook)
+local Locale = require(ReplicatedStorage.Locale)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local CoinRewards = require(ServerScriptService.CoinRewards)
 local PetService = require(ServerScriptService.PetService)
@@ -188,6 +189,12 @@ local function makePenPet(pet, uid: string, pad: BasePart): Model?
 			string.format("%g", GardenConfig.RatePerHour(pet))
 		),
 		richText = true,
+		locKey = "garden.penPet.label",
+		locArgs = {
+			pet = { key = "pet.nameLevel", args = { kind = { key = "pet.kind." .. pet.Kind }, level = level } },
+			stars = PetLook.TierStars(level),
+			rate = { key = "garden.rate", args = { rate = { decimal = string.format("%g", GardenConfig.RatePerHour(pet)) } } },
+		},
 		size = UDim2.new(6, 0, 1.4, 0),
 		maxDistance = 90,
 		gap = 1,
@@ -258,7 +265,13 @@ local function renderPlot(index: number)
 			info.Enabled = state == "locked" or state == "empty"
 		end
 		if text then
-			text.Text = if state == "locked" then "🔒 Pen " .. number elseif state == "empty" then "Pen " .. number .. "\nempty" else ""
+			if state == "locked" then
+				Locale.SetKey(text, "garden.sign.pen.locked", { n = number })
+			elseif state == "empty" then
+				Locale.SetKey(text, "garden.sign.pen.empty", { n = number })
+			else
+				Locale.SetText(text, "")
+			end
 		end
 	end
 

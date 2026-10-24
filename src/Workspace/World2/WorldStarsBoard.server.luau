@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local StageConfig = require(ReplicatedStorage.StageConfig)
+local Locale = require(ReplicatedStorage.Locale)
 local StarBoard = require(ServerScriptService.StarBoard)
 local AvatarThumbs = require(ServerScriptService.AvatarThumbs)
 
@@ -24,7 +25,7 @@ local board = StarBoard.World(world.index)
 local scoreBlock = script.Parent:WaitForChild("StarsLeaderboard"):WaitForChild("Model"):WaitForChild("ScoreBlock")
 local maxStars = StageConfig.MaxWorldStars(world.index)
 
-scoreBlock.SurfaceGui.DataLabel.Text = string.format("%s stars - top %d!", world.name, ROWS)
+Locale.SetKey(scoreBlock.SurfaceGui.DataLabel, "board.worldStars", { world = { key = "world.name." .. world.index }, rows = ROWS })
 
 -- Draws all rows; rows without an entry are cleared, so a shorter list leaves no stale names
 local function render(top)

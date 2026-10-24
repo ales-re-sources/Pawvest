@@ -54,7 +54,7 @@ Rules:
 | L1 | Localization infrastructure + HUD in Czech ([LOCALIZATION.md](LOCALIZATION.md)) — done 2026-10-23 (Czech texts await the user's review) | ✔ | ✔ | – |
 | L1.1 | Strings workflow: CSV source (English + translations + context side by side), `tools/loc.py` build / check / lint / review, pseudo-language — done 2026-10-24 | ✔ | ✔ | – |
 | L2 | Localization: all client panels + config display names — done 2026-10-24 (Czech texts await the user's review) | ✔ | ✔ | – |
-| L3 | Localization: server-written + Studio-authored texts, overflow check | – | – | – |
+| L3 | Localization: server-written + Studio-authored texts — texts done 2026-10-24 (Czech awaits review); font check and per-panel Czech overflow pass still open | ✔ | ✔ (texts) | – |
 | M6a | First live test + World 1 balancing | – | – | – |
 | S5 | Worlds hub — done 2026-10-22: gates for Worlds 2-4 (coming soon, admins only), World 2 courtyard, signs, per-world stars boards (user's visual check) | ✔ | ✔ | – |
 | S6 | World 2 (stages 6–10) — S6.1 Double Up + Seesaw built and Studio-checked 2026-10-22 (awaits the user's visual check), S6.2 / S6.3 not started | ✔ (S6.1) | ✔ (S6.1) | – |
@@ -587,7 +587,12 @@ English default + Czech; language from `player.LocaleId`, override in Settings (
   and a slot caption (Czech fits).
   *Left for L3:* the server-written world billboards (pens, incubators, "Free plot", boards), Studio-authored labels, the
   FredokaOne caron glyphs.
-- **L3:** server-written and Studio-authored texts, overflow check in Czech.
+- **L3:** server-written and Studio-authored texts, overflow check in Czech. *Done 2026-10-24:* Top-10 / world / hub stars board
+  titles (`board.*`), gate signs (`stage.name.*`), garden plot / pen / incubator signs (`garden.sign.*`), pen pet labels
+  (`garden.penPet.label`, via `PetLook` label `locKey` / `locArgs`), and 11 Studio-authored sign kinds tagged `Loc` + `LocKey`
+  in the place file (`sign.*`, `world.name.*`, `hub.name`, `stage.name.Tutorial`). Lint baseline 18 → 0. Studio playtest in
+  Czech and English: every tagged label translated, no errors. *Open:* FredokaOne font check, Czech overflow screenshots of
+  the panels, the Stage 9 maze exit door label ("Find the switch", left alone while another session edits the maze).
 - **L4 (later):** more languages chosen from the telemetry `Session` locale data.
 - **Acceptance checks:** LOCALIZATION.md → Acceptance checks, for the milestone's scope.
 
