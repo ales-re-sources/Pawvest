@@ -67,12 +67,12 @@ function MedalText.UnlockBar(stage): string?
 	})
 end
 
--- Display name of a required talent ("Double Jump", or "Double Jump 2" above level 1 on a multi-level talent), in the
--- client's language (Locale).
+-- Display name of a required talent ("Double Jump"; the level's own name on a talent with per-level names: "Triple Jump";
+-- else "Quick Respawn 2" above level 1 on a multi-level talent), in the client's language (Locale).
 function MedalText.TalentName(need): string
 	local talent = TalentConfig.ById[need.id]
-	local name = if talent then Locale.TalentName(talent) else need.id
-	if talent and #talent.costs > 1 and need.level > 1 then
+	local name = if talent then Locale.TalentName(talent, need.level) else need.id
+	if talent and not talent.names and #talent.costs > 1 and need.level > 1 then
 		return name .. " " .. need.level
 	end
 	return name

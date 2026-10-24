@@ -196,7 +196,14 @@ function Locale.MedalName(medal): string -- an entry of StageConfig.Medals
 	return named("medal.name." .. medal.name, medal.name)
 end
 
-function Locale.TalentName(talent): string -- an entry of TalentConfig.List
+-- `level` (optional) picks a per-level name on a talent with `names` (talent.name.<id>.<level> above level 1: "Triple Jump")
+function Locale.TalentName(talent, level: number?): string -- an entry of TalentConfig.List
+	if level and level > 1 and talent.names then
+		local index = math.min(level, #talent.names)
+		if index > 1 then
+			return named("talent.name." .. talent.id .. "." .. index, talent.names[index])
+		end
+	end
 	return named("talent.name." .. talent.id, talent.name)
 end
 

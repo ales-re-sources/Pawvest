@@ -139,7 +139,9 @@ every event is printed as `[Telemetry] …`; without it the module is silent.
 **T1b (2026-10-23):** with the loadout in CF03, a progression fail of segment × deaths bucket × loadout could reach about
 200 × 5 × 144 combinations, far over 8 000. The fail event therefore drops the segment (it stays in `RunEnd` and `Quit`)
 and carries the end reason instead: 5 reasons × 5 buckets × 144 loadouts = 3 600; complete: 4 medals × 5 × 144 = 2 880.
-New talents (S7, S9) multiply the loadouts: review the bound then (e.g. bucket Run Speed). Only talent purchases are
+New talents (S7, S9) multiply the loadouts. **S7 (2026-10-24):** Double Jump 0-2 and Dash 0-1 would make 432 loadouts (fails
+10 800), so the loadout buckets Run Speed (level 0 → `RS0`, 1-3 → `RS2`, 4-5 → `RS5`; e.g. "RS2 DJ2 JH3 QR2 D1"): 216 loadouts,
+fails 5 400, completes 4 320. S9 (Wall Jump, Glide: x 4) will need another cut. Only talent purchases are
 logged as economy events; the other Coin sources and sinks (medals, unlocks, eggs, pens, food) are left for M6.
 
 ## Acceptance checks (Studio, debug switch on)

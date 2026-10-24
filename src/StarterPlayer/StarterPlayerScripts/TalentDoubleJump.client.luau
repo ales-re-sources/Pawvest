@@ -35,8 +35,8 @@ end
 
 UserInputService.JumpRequest:Connect(function()
 	local h = humanoid
-	if not h or h.Health <= 0 then
-		return
+	if not h or h.Health <= 0 or (h.Parent and h.Parent:GetAttribute("Dashing")) then
+		return -- a jump during a dash (TalentDash, 0.2 s) would only be eaten by its flat burst
 	end
 	local state = h:GetState()
 	if state ~= Enum.HumanoidStateType.Freefall and state ~= Enum.HumanoidStateType.Jumping then

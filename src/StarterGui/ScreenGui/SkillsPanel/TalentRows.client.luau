@@ -53,7 +53,8 @@ local function refreshRow(row)
 	local max = #talent.costs
 	local cost = TalentConfig.NextCost(talent.id, level)
 
-	row.title.Text = Locale.TalentName(talent) .. "  " .. level .. "/" .. max
+	-- a talent with per-level names shows the level it sells ("Triple Jump 1/2"), maxed the level it has
+	row.title.Text = Locale.TalentName(talent, math.min(level + 1, max)) .. "  " .. level .. "/" .. max
 	if row.flash == 0 then
 		row.info.TextColor3 = COLOR_INFO
 		row.info.Text = if cost then Locale.TalentEffect(talent, level + 1) else Locale.T("skills.maxedOut")

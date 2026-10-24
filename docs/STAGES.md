@@ -58,6 +58,19 @@ ledge of ≥ 10 studs or gap of ≥ 14 studs is a real gate (the figures above s
 19 studs in §6.1). Triple Jump adds about 6 studs of reach and 7.5 of rise over Double Jump. Run Speed 5 gives +2.7 studs of
 single-jump reach, Jump Height 3 +1.7 studs of rise: the soft talents move numbers by 1–3 studs, as §6.1 assumes.
 
+**With the real talents (S7, 2026-10-24, World 3 plaza, Jump Height 0, every jump and the dash at the apex):** Triple Jump
+(`Talent_DoubleJump` 2) gives 3 jumps (the 4th press is ignored) and rises 21.8. The dash itself measured 10.00 studs in 0.200 s at a constant
+height (the real `TalentDash`; one per air time, none on the ground). Bot runs, flat reach / rise:
+
+| Run Speed | Single | + Dash | Double Jump | DJ + Dash | Triple Jump | TJ + Dash |
+|---|---|---|---|---|---|---|
+| 0 (16.0) | 8.8 / 7.3 | 18.8 | 15.2 / 14.5 | 25.4 | 21.1 / 21.8 | 32.1 |
+| 5 (20.8) | 11.4 / 7.3 | 22.3 | 19.8 / 14.5 | 30.1 | 27.4 / 21.8 | 37.7 |
+
+A dash at the apex adds 10-11 studs to any jump. A dash later in the fall adds a little more, because it stops the fall for 0.2 s.
+A **Dash gate** is therefore a flat gap above the best Triple Jump reach (29.8 with Run Speed 5 + Jump Height 3), so 32+ studs,
+or a gap of 12-18 studs under a low ceiling that leaves no room for air jumps (a single jump + Dash crosses 18.8).
+
 ### 1.1 Studio survey findings (2026-10-21, read-only)
 - Place settings: `Players.RespawnTime` **3 s**, `CharacterAutoLoads` on, `StreamingEnabled` **off**; 2 441 parts in
   `Workspace` (each stage 250–320 parts including its decorated landing pad). 20 more stages add about
@@ -716,6 +729,26 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
     (1.4 high, on the tick, the middle one alternating) that you jump while the belt pulls you back; the pendulums are brass (Metal), not red: red means "kills on touch", they only knock you off; the five pistons rest 1 stud out of the wall (their face sat flush with the wall face and flickered; stroke 10 now,
     same reach) and look like rams: dark steel (DiamondPlate) with an orange push plate on the face (orange = pushes, like Stage 8's kicker), a silver rod behind them (welded, non-colliding: it follows the anchored ram), a dark
     frame round each opening on the wall (`Course.PistonFrames`, standing 0.05-0.55 off the wall face), the warning tint amber (`WarnColor`); the two stair pistons span h 113.5-119.5 (one's top sat on the roof plane at 120 and flickered, the other stuck 4 studs out of the roof); decor in the stud style (user: "studded design"; modelled on the Creator Store's "Stud Window" / "Studded Door" but built from the place's own StudPack variants so the studs match the world, the store models use the legacy stud surfaces at another scale and one window kit carried hidden scripts): 27 windows (`Tower.Windows.Window_<face>_<row>_<offset>`: brown `Inlets` frame and cross mullion, glass over a dark backing, a grey `Studs` sill, three per row between the course bands of each face, every face off the wall plane), the doors in `Studs` wood with a dark `Studs` border and a centre stile plus a yellow knob on both faces (welded: they slide with the door), a `Studs` stone `Lintel_n` over each doorway; (f) T_base 135 -> 90 (Gold < 72 s; a first run with several deaths got Silver, AhojRupert's best is 65.9 s), then 75 (Gold < 60, Silver < 82.5, Bronze < 120) when the user asked for more; (g) a **roof fence** (`Tower.RoofFence`: a 3-high `Studs` stone parapet, at first with glass up to h 145; the user found the glass ugly and forced, so it carries a row of 15 **stud gargoyles** instead (`RoofFence.Gargoyles`: plinth, body, head with snout, red Neon eyes, horns, raised wings, claws; each with an invisible solid `Hit` box tagged `KitKill`, 4 x 9.5 x 3, 4.4 apart, up to h 132.5: touching one kills, and no Double Jump gets over the row)) along the roof's south edge and its west edge from z 678: from the first crumbling stairs (h 111) and from `806` / door 2's doorstep (h 110) a Double Jump reached the roof and skipped side 11 (bot peaks h 126-130; with the gargoyles every such jump dies on one: crumble 1 / 2 and the doorstep 3/3, from the flipper level the roof is out of reach); the west edge stays open only beside the top two stairs (z 666-678), where the course steps onto the roof.
+
+### 7.10 S7 Triple Jump + Dash + World 3 courtyard (design check 2026-10-24; decisions with the user)
+- **Triple Jump** = `DoubleJump` level 2 (costs 3 000 / 5 000; `TalentConfig.AirJumps` already scales). Decided: **the row renames itself**: per-level names
+  (`names = { "Double Jump", "Triple Jump" }`, strings `talent.name.DoubleJump` / `talent.name.DoubleJump.2`); the Skills row shows the name of the level it
+  sells ("Double Jump 0/2", then "Triple Jump 1/2", maxed "Triple Jump 2/2"), and a requirement `{ id = "DoubleJump", level = 2 }` reads "Needs: Triple Jump".
+- **Dash** (`Dash`, 1 level, 8 000): in the air only, **once per air time** (reset on landing / climbing / swimming like the air jumps), a **flat** burst
+  (decided): height is held for 0.2 s at 50 studs/s (about 10 studs), then the normal fall resumes with the run speed in the dash direction. Direction = the
+  move direction, else the character's facing. Air jumps stay usable after a dash (combos are in the reach table); a jump pressed during the 0.2 s is ignored.
+  Controls (decided): **Q**, gamepad **X**, and an on-screen **Dash** button on touch devices (`ContextActionService` touch button beside Jump), bound only
+  while the player owns the talent. Client-driven like Double Jump (`TalentDash.client`); the level is server-owned. A short local trail shows the dash.
+- **No world gate on buying**: both talents can be bought any time (talent coins of earlier worlds use them, §7.3); the course geometry is the gate (§6.3).
+- **Telemetry** (TELEMETRY.md T1b bound): with DJ 0-2 and Dash 0-1 the loadouts grow from 144 to 432 (fail events 10 800 > 8 000), so Run Speed is
+  bucketed in the loadout (level 0 → `RS0`, 1-3 → `RS2`, 4-5 → `RS5`): 3 x 3 x 4 x 3 x 2 = 216 loadouts, fails 5 400, completes 4 320.
+- **Reach table** (§1.0): measured again with the real talents in the jump lab: Triple Jump, Dash after a single / double / triple jump.
+- **World 3 courtyard** (decided: the free sea **east of the hub**, not south of World 2): a copy of World 2's courtyard (Plaza, Rock, Wall with the gate
+  openings, Spawn, ReturnGate, Decor, StarsLeaderboard, WorldSign) moved by (+225, 0, -1150): x -205..-95, z -700..-530, same orientation as World 2
+  (entrance, `Spawn` and the return gate on the north side (-z, z ~ -700), the finale gate at the south end (z ~ -530), its course running south (+z) toward
+  z ~ -250, clear of the Tutorial (x -473..-425); side lanes east up to x ~ 450 and
+  west down to x ~ -800, clear of KitLab (x 447+, z -500..-190), the hub (x -1214..-1038) and the garden). The kill floor already covers it. Scripts:
+  `World3/ReturnGate` and `World3/WorldStarsBoard` copied on disk from World 2. `Worlds[3].soon` stays true (S8 flips it with the stages): admins only.
 
 ## 8. Milestones (agreed 2026-10-21; status and full scopes in [ROADMAP.md](ROADMAP.md))
 Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.

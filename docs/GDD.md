@@ -249,8 +249,8 @@ and Jump Height stay soft, never required). Only talents that are hard gates can
 | Talent | Id | Effect | Levels | Cost (prov.) | Total | First required at |
 |---|---|---|---|---|---|---|
 | Quick Respawn (P, S2) | `QuickRespawn` | utility, **never required**: level 1 respawns after 1 s instead of 3 s, level 2 instantly and adds a fall reset to the checkpoint; the timer keeps running | 2 | 1 000 / 3 000 | 4 000 | – |
-| Triple Jump (P, S7) | `DoubleJump` level 2 | 2 air jumps (reach about 19 studs) | +1 level | 5 000 | (DJ total 8 000) | stage 11 |
-| Dash (P, S7) | `Dash` | in the air, a short horizontal burst (about 10 studs in 0.2 s), once per air time; key + mobile button | 1 | 8 000 | 8 000 | stage 13 |
+| Triple Jump (S7, built 2026-10-24) | `DoubleJump` level 2 | 2 air jumps (reach about 19 studs) | +1 level | 5 000 | (DJ total 8 000) | stage 11 |
+| Dash (S7, built 2026-10-24) | `Dash` | in the air, a short horizontal burst (about 10 studs in 0.2 s), once per air time; key + mobile button | 1 | 8 000 | 8 000 | stage 13 |
 | Wall Jump (P, S9) | `WallJump` | against a wall in the air, jump kicks up and away; does not refill air jumps | 1 | 10 000 | 10 000 | stage 16 |
 | Glide (P, S9) | `Glide` | hold jump while falling: fall speed capped at about 8 studs/s | 1 | 12 000 | 12 000 | stage 17 |
 

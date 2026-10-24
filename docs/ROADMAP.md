@@ -58,7 +58,7 @@ Rules:
 | M6a | First live test + World 1 balancing | – | – | – |
 | S5 | Worlds hub — done 2026-10-22: gates for Worlds 2-4 (coming soon, admins only), World 2 courtyard, signs, per-world stars boards (user's visual check) | ✔ | ✔ | – |
 | S6 | World 2 (stages 6–10) — S6.1 Double Up + Seesaw built and Studio-checked 2026-10-22 (awaits the user's visual check), S6.2 / S6.3 not started | ✔ (S6.1) | ✔ (S6.1) | – |
-| S7 | Talents: Triple Jump + Dash | – | – | – |
+| S7 | Talents: Triple Jump + Dash (+ World 3 courtyard) — done 2026-10-24: talents, Q / gamepad / touch button, reach table, World 3 courtyard east of the hub (awaits the user's visual check and a real-device touch check) | ✔ | ✔ | – |
 | S8 | World 3 (stages 11–15) | – | – | – |
 | S9 | Talents: Wall Jump + Glide | – | – | – |
 | S10 | World 4 (stages 16–20) | – | – | – |
@@ -472,6 +472,22 @@ A measured `T_base` for both new stages comes in M6a.
     climb works when waiting below the beam (climbing straight into it kills), the hurdles 3/3 when jumped, stairs -> roof works (bot 3 of 5, its own jump logic). Bot note: in this session `Humanoid.Jump = true` did nothing with the
     controls disabled; `ChangeState(Jumping)` works.
   - *Argon note:* an edit to `ObstacleKit` (the button code) did not reach Studio although earlier edits of the same file did; `touch` did not help, a real content change did. After script edits, check the Studio source before a playtest.
+
+### S7 — Talents: Triple Jump + Dash, World 3 courtyard (design: STAGES §7.10, design check done 2026-10-24)
+- **Outputs:** `DoubleJump` level 2 (Triple Jump, 5 000) with per-level names; `Dash` talent (8 000) with `TalentDash.client` (Q / gamepad X / touch
+  button); Skills panel row; strings; telemetry loadout with bucketed Run Speed; reach table with the real talents; `Workspace.World3` courtyard east of
+  the hub (admins only while `soon`).
+- **Acceptance checks:** buying level 2 of Double Jump gives 2 air jumps and the row reads "Triple Jump"; a requirement of level 2 reads "Needs: Triple
+  Jump"; without the talent Q does nothing and no touch button shows; with it one dash per air time, flat for 0.2 s (about 10 studs), none on the ground,
+  a new one after landing; an admin passes the World 3 hub gate onto the World 3 spawn, the return gate goes back to the hub, the world stars board
+  renders; a normal player is refused at the World 3 gate.
+- *Studio check (2026-10-24, playtest; talent levels set as local attributes, no profile touched):* Q on the ground does nothing; in the air one
+  dash of 10.00 studs in 0.200 s at a constant height, three presses in one fall give one dash, a new dash after landing; it leaves the burst at run
+  speed. Three Space presses give three jumps with level 2 (the 4th is ignored). Skills row: "Double Jump 0/2", "Triple Jump 1/2" / "2/2" (Czech too).
+  Without Dash the action is unbound. "Needs:" reads Triple Jump / Dash / Quick Respawn 2. The admin went through the World 3 hub gate onto its spawn
+  and back through the return gate. The world board localizes. No errors. Reach table in STAGES §1.0.
+  *Not checked:* the touch button on a real phone (the placement is ContextActionService's default beside Jump), a normal player at the World 3 gate (code
+  unchanged since S5), the trail's look.
 
 ### T1a — Telemetry core (design: [TELEMETRY.md](TELEMETRY.md))
 - **Outputs:** `ServerScriptService/Telemetry.luau` (AnalyticsService only here); per-stage run funnel (start → checkpoints

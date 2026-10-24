@@ -11,11 +11,20 @@ export type Talent = {
 	perLevel: number, -- effect per level as a fraction
 	effect: string, -- panel text for one level
 	effects: { string }?, -- panel text per level when the levels differ (effects[n] = what buying level n gives)
+	names: { string }?, -- name per level when a level reads as a talent of its own (names[n] = name of level n; S7 Triple Jump)
 }
 
 TalentConfig.List = {
 	{ id = "RunSpeed", name = "Run Speed", costs = { 200, 400, 600, 900, 1300 }, perLevel = 0.06, effect = "+6% run speed" }, -- loc: ignore (English source and fallback; players see Locale)
-	{ id = "DoubleJump", name = "Double Jump", costs = { 3000 }, perLevel = 1, effect = "1 extra jump in the air" }, -- 1 500 until 2026-10-23 (GDD §6); loc: ignore
+	{
+		id = "DoubleJump",
+		name = "Double Jump", -- loc: ignore (English source and fallback; players see Locale)
+		costs = { 3000, 5000 }, -- level 1 was 1 500 until 2026-10-23 (GDD §6); level 2 = Triple Jump (S7)
+		perLevel = 1,
+		effect = "1 extra jump in the air", -- loc: ignore (English source and fallback; players see Locale)
+		effects = { "1 extra jump in the air", "A second extra jump in the air" }, -- loc: ignore (English source and fallback; players see Locale)
+		names = { "Double Jump", "Triple Jump" }, -- loc: ignore (English source and fallback; players see Locale)
+	},
 	{ id = "JumpHeight", name = "Jump Height", costs = { 300, 600, 1000 }, perLevel = 0.08, effect = "+8% jump height" }, -- loc: ignore (English source and fallback; players see Locale)
 	{
 		id = "QuickRespawn",
@@ -24,6 +33,13 @@ TalentConfig.List = {
 		perLevel = 1,
 		effect = "faster respawn", -- loc: ignore (English source and fallback; players see Locale)
 		effects = { "Respawn after 1 s", "Instant respawn + fall reset" }, -- loc: ignore (English source and fallback; players see Locale)
+	},
+	{
+		id = "Dash",
+		name = "Dash", -- loc: ignore (English source and fallback; players see Locale)
+		costs = { 8000 }, -- S7 (STAGES §6.2 / §7.10)
+		perLevel = 1,
+		effect = "A burst forward in the air (Q)", -- loc: ignore (English source and fallback; players see Locale)
 	},
 } :: { Talent }
 
@@ -78,6 +94,19 @@ end
 -- True when the talent resets a lost (falling) character to its checkpoint (level 2).
 function TalentConfig.HasFallReset(level: number): boolean
 	return level >= 2
+end
+
+-- Name of `level` of a talent with per-level names (English fallback; players see Locale.TalentName), else its name.
+function TalentConfig.LevelName(talent: Talent, level: number): string
+	return talent.names and talent.names[math.clamp(level, 1, #talent.names)] or talent.name
+end
+
+-- Dash (S7, STAGES §7.10): a flat burst in the air, once per air time.
+TalentConfig.DashSpeed = 50 -- studs per second
+TalentConfig.DashTime = 0.2 -- seconds: about 10 studs
+
+function TalentConfig.HasDash(level: number): boolean
+	return level >= 1
 end
 
 -- Extra jumps allowed in the air.

@@ -44,6 +44,8 @@ talent.name.RunSpeed,"Talent (skill) name: Skills panel, ""Needs:"" lines of the
 talent.name.DoubleJump,"Talent (skill) name: Skills panel, ""Needs:"" lines of the arrival popup",Double Jump,Dvojitý skok,new,hbf4c55b8
 talent.name.JumpHeight,"Talent (skill) name: Skills panel, ""Needs:"" lines of the arrival popup",Jump Height,Výška skoku,new,hc8f803a6
 talent.name.QuickRespawn,"Talent (skill) name: Skills panel, ""Needs:"" lines of the arrival popup",Quick Respawn,Rychlé oživení,new,h4ca75c6f
+talent.name.DoubleJump.2,"Name of Double Jump level 2 (two jumps in the air): the Skills row once Double Jump is owned, ""Needs:"" lines",Triple Jump,Trojitý skok,new,hd4bc2346
+talent.name.Dash,"Talent (skill) name: Skills panel, ""Needs:"" lines of the arrival popup",Dash,Výpad,new,h76f645c2
 pet.egg.Basic,"Egg name (cheap egg, 5 min to hatch); results popup free egg line, incubators",Basic egg,Obyčejné vejce,new,h34aaec11
 pet.egg.Golden,"Egg name (expensive egg, 1 h to hatch)",Golden egg,Zlaté vejce,new,hf543d666
 # Score panel (top right),,,,,
@@ -127,6 +129,9 @@ talent.effect.DoubleJump,Skills panel: what Double Jump gives,1 extra jump in th
 talent.effect.JumpHeight,Skills panel: what the next level of Jump Height gives,\+8% jump height,\+8 % výška skoku,new,hda4d4692
 talent.effect.QuickRespawn.1,Skills panel: Quick Respawn level 1,Respawn after 1 s,Oživení po 1 s,new,hdc37fae5
 talent.effect.QuickRespawn.2,Skills panel: Quick Respawn level 2 (no waiting; a fall puts the player back on the checkpoint),Instant respawn + fall reset,Okamžité oživení + návrat po pádu,new,hbcfabb29
+talent.effect.DoubleJump.2,Skills panel: what Triple Jump (Double Jump level 2) adds,A second extra jump in the air,Druhý skok navíc ve vzduchu,new,habd162dd
+talent.effect.Dash,Skills panel: what Dash gives; Q = the keyboard key (touch screens get a Dash button),A burst forward in the air (Q),Rychlý výpad vpřed ve vzduchu (Q),new,h1b62c6a4
+talent.dash.button,On-screen touch button beside Jump (small round button: one short word),Dash,Výpad,new,h76f645c2
 skills.maxedOut,Skills panel: second line of a talent at its highest level,Maxed out,Na maximu,new,h5c0a2f9d
 skills.buy,Skills panel button (70 px wide: keep it short); {price} = Coins,Buy {price},Kup {price},new,ha9b337f4
 skills.max,Skills panel button of a talent at its highest level,MAX,MAX,new,h693fda0e
