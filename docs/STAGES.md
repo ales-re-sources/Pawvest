@@ -793,6 +793,9 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   (12 wide, 20 high, slides up) between 32-high walls and a lintel, `1005` (u 390) behind it; (5) Triple ledges onto ice `K1`-`K3` (10 x 10 ice, h 20 / 40 / 60,
   gaps 6-7), finish island (h 49, drop 11), portal at u 466. About 470 studs. Coins: easy on the rink corner, `I2`'s corner, `J3`, the beam's upwind edge, the
   finish island; risky on the beam's downwind edge and on a 6 x 6 ice plate 10 beside `J2`; talent on a 3 x 3 pillar 21.5 beside `K3`.
+- **Fall reset (user, 2026-10-24: with Quick Respawn 2 the descent reset the player to `905` around `D4`):** the descent goes 65 studs below `905`, past the
+  default 30-stud `FallResetDepth`; the Stage 11 folder now carries `FallResetDepth = 75` (Studio-only attribute; the reset stays clamped above the sea for the low
+  checkpoints). Checked with a bot with Quick Respawn 2: depth 30 resets on the jump to `D4`, depth 75 lands `D4` and the finish island.
 - **Kit ice tuning** (defaults Accel 14, Brake 5): from rest it reaches 15.5 studs/s in 1 s and coasts 21 studs after letting go.
 - **Checks (Studio playtest 2026-10-24, bots at baseline Walk Speed 16 / Jump Power 50 unless noted; developer profile snapshot `profile_<id>_s81` restored, the
   Stage 11 / 12 boards removed):** every Triple ledge of both stages (also from the lift's top and from ice), the flat 17 gap, the ice hop chain (one timing made all

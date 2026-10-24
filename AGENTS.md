@@ -166,7 +166,7 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
   Clean up Studio-side duplicates only while Argon is disconnected.
 - Initial sync priority is **Client** (Studio overwrites files on connect): commit before connecting and check
   `git status` right after; files edited while disconnected are overwritten by Studio's copy.
-- `Workspace.World1.Stage4` carries the Studio-only attribute `FallResetDepth = 70` (QuickRespawnClient's default is 30): the bounce bricks of Level 12 lie 46-61 studs below the plates, a smaller depth resets the player before they reach them. Set the attribute on a stage folder whenever a course has a catch or bounce surface far below its plates.
+- `Workspace.World1.Stage4` carries the Studio-only attribute `FallResetDepth = 70` (QuickRespawnClient's default is 30): the bounce bricks of Level 12 lie 46-61 studs below the plates, a smaller depth resets the player before they reach them. `Workspace.World3.Stage11` carries `FallResetDepth = 75` (S8.1: its descent ends 65 studs below checkpoint `905`; at 30 the jump to `D4` was reset). Set the attribute on a stage folder whenever a course has a catch or bounce surface, or a platform it continues on, far below its last checkpoint.
 - Studio playtests with API access read/write the **live** DataStores — snapshot and restore anything a test changes.
 - `CheckpointTouchHandler`'s `Sound`/`Orig` children exist only in Studio (`CheckpointClient` clones `Sound` on the client).
 - Checkpoint `Core` / `Beam` are authored in the "not reached" look; `CheckpointClient` reads that look once per pad and tweens to and
