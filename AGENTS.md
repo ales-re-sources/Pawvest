@@ -3,7 +3,7 @@
 Roblox obby (obstacle course): a central hub island with portals to timed stages, checkpoints,
 per-stage Top-10 leaderboards, collectible coins and a small admin panel.
 
-- Place: **"Oby sandbox"**, placeId `73033440513091` (pinned in `Oby.project.json` → `placeIds`; the game was re-uploaded to another account on 2026-10-24, the old place `83181838162651` is dead and its DataStores did not move).
+- Place: **"Oby sandbox"**, placeId `73033440513091` (pinned in `Pawvest.project.json` → `placeIds`; the game was re-uploaded to another account on 2026-10-24, the old place `83181838162651` is dead and its DataStores did not move).
 - Code is synced to this repo with **Argon** (Rojo-compatible); the **scene lives only in the place file**.
 - Language: Luau, legacy run context (`.server.luau` = Script, `.client.luau` = LocalScript, `.luau` = ModuleScript).
 
@@ -32,7 +32,7 @@ Consequences:
 - Changing a part's size/color/position, GUI layout, or adding a RemoteEvent must be done in Studio
   (manually or via the Roblox Studio MCP), not in files.
 - Never run `argon build` to produce the real place — it would contain only scripts and default parts.
-- Safety nets that must stay on: `$keepUnknowns: true` on every service in `Oby.project.json` and
+- Safety nets that must stay on: `$keepUnknowns: true` on every service in `Pawvest.project.json` and
   the plugin's **Keep Unknowns** setting. Without them a Server-priority sync deletes the scene.
 - Sibling names must be unique (Argon drops duplicates on syncback). New parts that get a script
   need unique names (`Part_11`, `KillPart_3`, …). Exception: ChoiceStage `Step` parts — see Gotchas.

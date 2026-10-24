@@ -1,7 +1,7 @@
 # Pawvest — pet-garden simulator expansion design (E1–E8)
 
 Status: **draft, direction decided 2026-10-24** (brainstorm with the user, nothing built yet).
-**Name: Pawvest** (decided 2026-10-24; "Oby sandbox" was the working title and is still the Studio place name / `Oby.project.json`
+**Name: Pawvest** (decided 2026-10-24; "Oby sandbox" was the working title and is still the Studio place name / the `name` in `Pawvest.project.json`
 until the user renames the experience). Store subtitle "Pets · Garden · Obby", tagline "Grow. Guard. Run.". Availability on Roblox
 and trademark are still to be checked. Avoid leading with "Grow" / "Garden" (the market leader "Grow a Garden" has pets with abilities). All numbers are
 placeholders until an economy model exists (see §10). This document says *what* the next big expansion is; milestones
