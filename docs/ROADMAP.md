@@ -211,7 +211,7 @@ Never covered in Studio, so check them on a real server:
 - two servers at once (boards and `MostStars` updating across servers);
 - a locked portal's unlock popup on the redesigned hub (only the barrier was tested there);
 - a real 1-hour Golden egg and the inventory cap with free eggs waiting;
-- touch / mobile layout of every panel and popup.
+- touch / mobile layout of every panel and popup (planned as milestone MU below).
 
 Housekeeping (Studio): `ReplicatedStorage.StageTimerStopped` is unused and can be deleted.
 
@@ -433,6 +433,17 @@ S7 first) and the `StageConfig` entry.
 
 ### M7 — Monetization
 Deferred; scoped after M6 (GDD §8).
+
+### MU — Mobile UX acceptance check (to be planned, noted 2026-10-24)
+Decision (2026-10-24): Pawvest stays on Roblox and is treated as a **mobile-first game inside Roblox** (most Roblox playtime is on phones;
+a standalone mobile port is revisited only if live retention / spend telemetry justifies it). So a mobile acceptance check must be planned
+and scoped before the first public live test and before M7 (monetization UI); it gets its scope when it starts (workflow step 2).
+- **To cover (draft):** touch layout of every panel and popup (Pets, Skills, Settings, garden, incubators, food stand, results, unlock
+  prompts) at phone sizes, tap targets, safe areas / notch, Czech text length; touch controls for the obstacle kit and talents (the S7 touch
+  button was never checked on a real phone); performance on a mid-range phone (many pets, 12-player garden, part counts); short-session
+  feel of the first minutes; telemetry platform split (T1a) used to compare phone vs PC.
+- **Acceptance (draft):** a checklist run on a real phone and on Studio's device emulator, results recorded here; absorbs the last item of
+  "Open checks for the first live test".
 
 ## Ideas (unscheduled)
 - **UI sounds.** The creator **SodaBreadle** on the Creator Store has many short free UI sounds (the level-up jingle
