@@ -190,7 +190,7 @@ component can *require* (hard) or only *reward* (soft: faster medal, shortcut).
 - **S3.1 spike result (2026-10-21):** carry by frame delta is exact (no drift) and needs a short air-carry (0.5 s) after
   jumping off; tilt plates need an explicit slide-off (freefall + downhill velocity) because `MaxSlopeAngle` is 89; the client
   kill reaches the server in one message; 100 movers cost 0.34 ms per frame. Other players see riders ~0.2 s behind a moving
-  platform (replication delay). Details in [ROADMAP.md](ROADMAP.md) S3.
+  platform (replication delay). Details: `git show 53bd79b:docs/ROADMAP.md` (S3).
 - For the special stages the kit also holds `StageCamera`, run-seeded schedules and ghost drawing of other players (§5.1).
 
 ## 3. Combination patterns
@@ -813,7 +813,7 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
 - *Not checked:* the look (screen captures came back white), a human run and the real `T_base` (110 / 120 provisional), the coins being collected, the talent
   coins' reach with Dash, the door countdown on screen.
 
-## 8. Milestones (agreed 2026-10-21; status and full scopes in [ROADMAP.md](ROADMAP.md))
+## 8. Milestones (agreed 2026-10-21; status in [ROADMAP.md](ROADMAP.md), full scopes of finished milestones in `git show 53bd79b:docs/ROADMAP.md`)
 Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.
 
 | Phase | # | Milestone | Parts |
