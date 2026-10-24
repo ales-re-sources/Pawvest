@@ -57,6 +57,7 @@ Rules:
 | L3 | Localization: server-written + Studio-authored texts — texts done 2026-10-24 (Czech awaits review); font check and per-panel Czech overflow pass still open | ✔ | ✔ (texts) | – |
 | M6a | First live test + World 1 balancing | – | – | – |
 | E0 | Economy model for the pet-garden expansion (scope written 2026-10-24, no code; [EXPANSION.md](EXPANSION.md) §11) | – | – | – |
+| E1.0 | Client-drawn plots spike: GO / NO-GO on the plot architecture before E1 (scope written 2026-10-24, no code) | – | – | – |
 | S5 | Worlds hub — done 2026-10-22: gates for Worlds 2-4 (coming soon, admins only), World 2 courtyard, signs, per-world stars boards (user's visual check) | ✔ | ✔ | – |
 | S6 | World 2 (stages 6–10) — S6.1 Double Up + Seesaw built and Studio-checked 2026-10-22 (awaits the user's visual check), S6.2 / S6.3 not started | ✔ (S6.1) | ✔ (S6.1) | – |
 | S7 | Talents: Triple Jump + Dash (+ World 3 courtyard) — done 2026-10-24: talents, Q / gamepad / touch button, reach table, World 3 courtyard east of the hub; closed 2026-10-24 (the visual and real-device touch checks were waived by the user; Live-validated comes with the next publish) | ✔ | ✔ | – |
@@ -222,7 +223,7 @@ Each milestone gets its scope when it starts (workflow step 2).
 
 Pet-garden simulator (E0–E8, direction decided 2026-10-24, draft, nothing started): [EXPANSION.md](EXPANSION.md) §10–11 (game name **Pawvest**; the MVP
 cut is E1 + E2 + hatch-time traits + first landmark and request board + basic ledger, then updates U1–U5). E0 (economy
-model) comes first (scope below); E1 (beds and crops) is the first build milestone. They get their scope when they start.
+model) and the plot-architecture spike E1.0 come first (scopes below); E1 (the field and crops) is the first build milestone. They get their scope when they start.
 
 ### E0 — Economy model (scope, 2026-10-24; draft until the open decisions below are confirmed)
 **Goal.** One reproducible model of the whole Coin economy (faucets, sinks, time) that fixes the numbers E1 needs and proves the
@@ -248,9 +249,9 @@ number of Gardener posts), seed stock, Renown gates, station multiplier (1.5-2×
 on any square. Capacity comes from the number of squares (expansion tiers of the field, bought with Coins and Renown), not from a fixed
 bed list, and the crop catalogue size becomes a content question rather than a structural one: the model takes any crop list. Parameters:
 squares per expansion tier and their prices, the upgrades (for example faster growth, a barn, more Gardener coverage), optional crops
-that cover 2 × 2 squares (giant melon, trophy pumpkin). The **upper bound is physical**: a plot is 40 × 40 studs and also holds pens
-(posts) and 3 incubators, so the square size and the free area must be measured in Studio (one `execute_luau` on `Workspace.Garden.Plots.Plot_01`)
-before the model fixes the maximum number of squares. E0 outputs the minimum catalogue that makes the ladder work (at least one crop per tier
+that cover 2 × 2 squares (giant melon, trophy pumpkin). The plot geometry is **not** a constraint of E0 (decided 2026-10-24: the plot area and layout will be reworked, and the architecture may move
+to client-drawn plots, see EXPANSION §12 "Plot architecture"): the maximum field is a model parameter with a provisional ceiling
+(proposal: 150 squares) that the plot rework must be able to draw. E0 outputs the minimum catalogue that makes the ladder work (at least one crop per tier
 plus a rare one per world) and a recommended MVP size; six stays a proposal, not a constraint.
 
 **Player archetypes** (each simulated day by day, 60 days): *Obby main* (2 h obby, 3 garden visits), *Casual* (45 min, 2 visits),
@@ -330,7 +331,45 @@ price proposal and the pen-income migration. E0b (applying the prices) is a sepa
    unlocks after the last stage of their world, last field tier by day 60).
 3. *Live players:* how many exist (probably only the developer and test accounts). If nobody has live pen income the migration collapses to
    "replace pens"; otherwise grandfather.
-4. *Square size and maximum field:* measured in Studio before the model fixes it (see Field model).
+4. *Maximum field:* provisional ceiling of 150 squares for the model; the real limit comes from the plot-architecture decision (EXPANSION §12).
+
+### E1.0 — Client-drawn plots spike (scope, 2026-10-24; before E1, after or alongside E0)
+**Goal.** Decide GO / NO-GO on the plot architecture of EXPANSION §12: the server keeps only garden data, each client draws the plots it needs
+(its own, others' within view distance at lower detail). A spike in the style of S3.1: small, measured, and it ends in a decision.
+
+**Inputs.** Today's server drawing (`GardenService` pens and pet models, `GardenIncubators`), `GardenPlots` / `GardenConfig.NewAssigner`
+(12 borrowed plots), `GardenClient` prompts, `HomeService` `GoGarden` (plot position), `PetFollow` (already client-rendered from attributes).
+
+**Outputs.** A prototype `PlotView` (client module, behind an admin / Studio flag, the live garden untouched) that draws a plot from a plain
+state table; a pure plot-position formula in `GardenConfig` (slot → CFrame, row / column) used by client and server; a test field of up to 150
+squares with crop stand-ins; measurements; the decision with the numbers written into EXPANSION §12, plus a migration plan for E1 (what
+replaces `Workspace.Garden.Plots`, the pens, the incubators and the sign).
+
+**Boundary.** No crops economy, no DataStore changes, no new profile fields, no art pass (stand-in blocks only), no city: the layout question
+(compact neighbourhood plus teleports vs a large walkable city) is decided from the measurements, not built. If NO-GO, the fallback is the
+current server plots with more slots and E1 proceeds on them.
+
+**Acceptance checks (hard)**
+1. One plot is drawn on a client from a data table only: 6 pens with pet models, 3 incubators with a live countdown, a 150-square field with crop
+   stand-ins; no server-built instance exists for it. Placing a pet through the existing remote changes the drawing within 1 s.
+2. The plot-position formula gives 30 slots with no overlap and ≥ 8 studs between plots; the server computes the same position as the client
+   (compared by a test), and `GoGarden` lands in front of the right plot without a plot model on the server.
+3. Scale: with 30 plots' state in range, distance-based detail (full ≤ 120 studs, low detail ≤ 300, nothing beyond) keeps the drawn instances at
+   **≤ 5 000** in total and no single build or update frame above 50 ms (builds are spread over frames); instance count, build time and memory are
+   recorded for 1, 12 and 30 plots, in Studio and with the mobile emulation.
+4. Interaction: a `ProximityPrompt` on a client-built part fires the server remote and the server accepts it only for the caller's own plot by
+   position computed from the slot; a request from 100 studs away is rejected. Two clients (Server and Clients): B standing in B's plot is not seen
+   inside A's plot, and each sees the other's pets.
+5. Server cost: the server's Workspace gains no per-plot instances and the join of a 12-player test does not exceed today's profile load; a visit
+   (client B views A's plot, same server) needs only A's data message.
+6. Offline visit (design only, not built): the snapshot read is specified (key, compact encoding, size per garden at 150 squares, DataStore
+   requests per visit against the budget) and its number is recorded.
+7. The decision is written down: GO / NO-GO, the player cap it allows, the layout (neighbourhood + teleports or city) and the E1 migration list.
+
+**Studio-only work.** The test field and stand-ins are built from code (nothing to author); note anything added by hand. Playtests need the
+Server and Clients mode for check 4; `screen_capture` one call at a time.
+
+**Status.** Scope only (not started).
 
 ### S8 — World 3 (design: STAGES §7.11 for S8.1)
 - **S8.1 outputs:** `Workspace.World3.Stage11` (Triple Peaks: Triple ledges, a lift, a crusher ridge) and `Stage12` (Ice Rink: ice, crosswind, a pressure door,

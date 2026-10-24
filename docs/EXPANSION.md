@@ -215,7 +215,8 @@ funnel telemetry decides whether the loop works.
 | Stage | Content | Ships in |
 |---|---|---|
 | E0 | Economy model (spreadsheet or script) against GDD §6; fixes the ladder, seed prices, sink share | before the MVP |
-| E1 | Beds, crops, stock, sell, seed shop, Renown; pens renamed posts (Field only); minimal Green-thumb Gardener | MVP |
+| E1.0 | Spike: client-drawn plots, GO / NO-GO on the plot architecture (§12; ROADMAP → E1.0) | before E1 |
+| E1 | Field of squares, crops, stock, sell, seed shop, Renown; pens renamed posts (Field only); minimal Green-thumb Gardener | MVP |
 | E2 | Obby seed links (species unlocks, daily seed) so the obby matters from day one | MVP |
 | E3 | Traits, quirks, careers, field guide (data and hatch roll in the MVP, full UI in U2) | MVP / U2 |
 | E4 | Critters, forecast board, offline raids, ledger, Perimeter post | U1 |
@@ -228,7 +229,14 @@ funnel telemetry decides whether the loop works.
 - **Onboarding.** The first ten minutes must show one loop: plant, post a pet, come back to a ledger. Posts and traits are revealed gradually.
 - **Content volume.** Critters, aptitudes, quirks, crops, landmarks: English and Czech (loc workflow), Studio-only art and models.
 - **Profile size and save cost** (items, traits, decor); keep compact encodings, check the DataStore limit per key.
-- **12 plots per server.** The simulation runs on server data; visuals are a view of it.
+- **Plot architecture (open, raised 2026-10-24).** Today `GardenService` draws pens and pet models as server instances into 12 plots built in
+  Studio, and a server holds 12 players. Direction under discussion: the server keeps only data (profile, timestamps, validation) and **each
+  client draws the plots it needs from that data**: its own, plus others' within view distance, at lower detail. Plot positions then come from a formula
+  (row / column by slot), so the player cap is no longer tied to built plots and the field size is not bounded by a 40 × 40 stud plot. Visits: a live visit
+  to an owner on the same server needs only the owner's data; a visit to an offline owner or another server needs a compact snapshot read (to design).
+  Alternative: a large walkable city with teleports to key places; that is a layout choice on top of the same drawing model, not a different
+  architecture. Decided 2026-10-24: run the spike E1.0 (ROADMAP) before E1: draw one plot from data on the client, measure instance count and cost at the maximum field
+  with 24-30 plots in range, check ProximityPrompts / pet followers, and the server-side checks that today use the plot's position.
 - **Live players.** What happens to existing pets (traits rolled retroactively from the uid?), pens, eggs and offline income at migration.
 - **Free outdoor decor.** Placement exploits, per-item save size, collision with paths and neighbouring plots, mobile controls.
 - **Bundles must stay finite.** Fix the first 6–8 landmarks and their contents before E6.
