@@ -1,157 +1,157 @@
 ﻿key,context,en,cs,cs_status,cs_en_hash
 # Settings panel,,,,,
-settings.title,Title of the Settings panel (⚙ icon); the text is set by LanguageSettings,Settings,Nastavení,new,h453d7fe8
-settings.music,"Settings panel, Music row; {state} = common.on / common.off",Music: {state},Hudba: {state},new,h7e079ff8
+settings.title,Title of the Settings panel (⚙ icon); the text is set by LanguageSettings,Settings,Nastavení,ok,h453d7fe8
+settings.music,"Settings panel, Music row; {state} = common.on / common.off",Music: {state},Hudba: {state},ok,h7e079ff8
 common.on,State of a setting that is on (Music row),On,Zapnuto,new,h88870f51
 common.off,State of a setting that is off (Music row),Off,Vypnuto,new,h23ccb8cc
-settings.language,"Settings panel, Language row; {name} = a language name in its own language (English, Čeština) or settings.language.auto",Language: {name},Jazyk: {name},new,hd53397e5
-settings.language.auto,Language row while the language follows the player's Roblox locale; {name} = that language,Automatic ({name}),Automaticky ({name}),new,h5f0769cc
+settings.language,"Settings panel, Language row; {name} = a language name in its own language (English, Čeština) or settings.language.auto",Language: {name},Jazyk: {name},ok,hd53397e5
+settings.language.auto,Language row while the language follows the player's Roblox locale; {name} = that language,Automatic ({name}),Automaticky ({name}),ok,h5f0769cc
 "# Names: hub, worlds, stages",,,,,
 hub.name,The central hub island (score panel title),Central Island,Centrální ostrov,new,h7b457675
 stage.name.Tutorial,"Name of the tutorial stage (score panel, results title, gate prompt). Feminine in Czech, like Úroveň",Tutorial,Výuka,new,h9863aa84
-world.name.1,Name of world 1 (a courtyard of 5 stages). Masculine in Czech (Svět),World 1,Svět 1,new,hdb38aa1f
-world.name.2,Name of world 2 (a courtyard of 5 stages). Masculine in Czech (Svět),World 2,Svět 2,new,h4f021973
-world.name.3,Name of world 3 (a courtyard of 5 stages). Masculine in Czech (Svět),World 3,Svět 3,new,hfd5f162e
-world.name.4,Name of world 4 (a courtyard of 5 stages). Masculine in Czech (Svět),World 4,Svět 4,new,h4b5be5e0
-stage.name.Stage1,Name of stage 1. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 1,Úroveň 1,new,h4c5bf4c6
-stage.name.Stage2,Name of stage 2. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 2,Úroveň 2,new,h669d7e51
-stage.name.Stage3,Name of stage 3. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 3,Úroveň 3,new,hf2f6bc5a
-stage.name.Stage4,Name of stage 4. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 4,Úroveň 4,new,hb9d7ea6e
-stage.name.Stage5,Name of stage 5. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 5,Úroveň 5,new,h8a9429e4
-stage.name.Stage6,Name of stage 6. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 6,Úroveň 6,new,hc0d31666
-stage.name.Stage7,Name of stage 7. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 7,Úroveň 7,new,ha631b869
-stage.name.Stage8,Name of stage 8. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 8,Úroveň 8,new,h748c2d67
-stage.name.Stage9,Name of stage 9. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 9,Úroveň 9,new,hedeaceb6
-stage.name.Stage10,Name of stage 10. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 10,Úroveň 10,new,h0c4569d9
-stage.name.Stage11,Name of stage 11. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 11,Úroveň 11,new,hb3665c38
-stage.name.Stage12,Name of stage 12. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 12,Úroveň 12,new,hd4ee8962
-stage.name.Stage13,Name of stage 13. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 13,Úroveň 13,new,hbbe61855
-stage.name.Stage14,Name of stage 14. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 14,Úroveň 14,new,h2372ba78
-stage.name.Stage15,Name of stage 15. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 15,Úroveň 15,new,hcba7ce70
-stage.name.Stage16,Name of stage 16. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 16,Úroveň 16,new,hcfc830c5
-stage.name.Stage17,Name of stage 17. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 17,Úroveň 17,new,h94cec71a
-stage.name.Stage18,Name of stage 18. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 18,Úroveň 18,new,ha4ce44d5
-stage.name.Stage19,Name of stage 19. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 19,Úroveň 19,new,ha85aaae8
-stage.name.Stage20,Name of stage 20. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 20,Úroveň 20,new,h7d0bc3ea
+world.name.1,Name of world 1 (a courtyard of 5 stages). Masculine in Czech (Svět),World 1,1. svět,ok,hdb38aa1f
+world.name.2,Name of world 2 (a courtyard of 5 stages). Masculine in Czech (Svět),World 2,2. svět,ok,h4f021973
+world.name.3,Name of world 3 (a courtyard of 5 stages). Masculine in Czech (Svět),World 3,3. svět,ok,hfd5f162e
+world.name.4,Name of world 4 (a courtyard of 5 stages). Masculine in Czech (Svět),World 4,4. svět,ok,h4b5be5e0
+stage.name.Stage1,Name of stage 1. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 1,Úroveň 1,ok,h4c5bf4c6
+stage.name.Stage2,Name of stage 2. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 2,Úroveň 2,ok,h669d7e51
+stage.name.Stage3,Name of stage 3. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 3,Úroveň 3,ok,hf2f6bc5a
+stage.name.Stage4,Name of stage 4. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 4,Úroveň 4,ok,hb9d7ea6e
+stage.name.Stage5,Name of stage 5. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 5,Úroveň 5,ok,h8a9429e4
+stage.name.Stage6,Name of stage 6. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 6,Úroveň 6,ok,hc0d31666
+stage.name.Stage7,Name of stage 7. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 7,Úroveň 7,ok,ha631b869
+stage.name.Stage8,Name of stage 8. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 8,Úroveň 8,ok,h748c2d67
+stage.name.Stage9,Name of stage 9. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 9,Úroveň 9,ok,hedeaceb6
+stage.name.Stage10,Name of stage 10. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 10,Úroveň 10,ok,h0c4569d9
+stage.name.Stage11,Name of stage 11. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 11,Úroveň 11,ok,hb3665c38
+stage.name.Stage12,Name of stage 12. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 12,Úroveň 12,ok,hd4ee8962
+stage.name.Stage13,Name of stage 13. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 13,Úroveň 13,ok,hbbe61855
+stage.name.Stage14,Name of stage 14. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 14,Úroveň 14,ok,h2372ba78
+stage.name.Stage15,Name of stage 15. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 15,Úroveň 15,ok,hcba7ce70
+stage.name.Stage16,Name of stage 16. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 16,Úroveň 16,ok,hcfc830c5
+stage.name.Stage17,Name of stage 17. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 17,Úroveň 17,ok,h94cec71a
+stage.name.Stage18,Name of stage 18. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 18,Úroveň 18,ok,ha4ce44d5
+stage.name.Stage19,Name of stage 19. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 19,Úroveň 19,ok,ha85aaae8
+stage.name.Stage20,Name of stage 20. Feminine in Czech (Úroveň): texts that take {stage} agree with it,Stage 20,Úroveň 20,ok,h7d0bc3ea
 "# Names: medals, talents, eggs",,,,,
-medal.name.Bronze,"Medal tier on its own, e.g. ""Next: {medal} under 1:20"" (results.next)",Bronze,Bronz,new,h797b53bc
-medal.name.Silver,"Medal tier on its own, e.g. ""Next: {medal} under 1:20"" (results.next)",Silver,Stříbro,new,heb5c6409
-medal.name.Gold,"Medal tier on its own, e.g. ""Next: {medal} under 1:20"" (results.next)",Gold,Zlato,new,h68b9810d
-medal.label.Bronze,Results popup: the medal this run earned,Bronze medal,Bronzová medaile,new,hac67a311
-medal.label.Silver,Results popup: the medal this run earned,Silver medal,Stříbrná medaile,new,h2da2778b
-medal.label.Gold,Results popup: the medal this run earned,Gold medal,Zlatá medaile,new,he8ee66a8
-talent.name.RunSpeed,"Talent (skill) name: Skills panel, ""Needs:"" lines of the arrival popup",Run Speed,Rychlost běhu,new,h714164ae
-talent.name.DoubleJump,"Talent (skill) name: Skills panel, ""Needs:"" lines of the arrival popup",Double Jump,Dvojitý skok,new,hbf4c55b8
-talent.name.JumpHeight,"Talent (skill) name: Skills panel, ""Needs:"" lines of the arrival popup",Jump Height,Výška skoku,new,hc8f803a6
-talent.name.QuickRespawn,"Talent (skill) name: Skills panel, ""Needs:"" lines of the arrival popup",Quick Respawn,Rychlé oživení,new,h4ca75c6f
-talent.name.DoubleJump.2,"Name of Double Jump level 2 (two jumps in the air): the Skills row once Double Jump is owned, ""Needs:"" lines",Triple Jump,Trojitý skok,new,hd4bc2346
-talent.name.Dash,"Talent (skill) name: Skills panel, ""Needs:"" lines of the arrival popup",Dash,Výpad,new,h76f645c2
-pet.egg.Basic,"Egg name (cheap egg, 5 min to hatch); results popup free egg line, incubators",Basic egg,Obyčejné vejce,new,h34aaec11
-pet.egg.Golden,"Egg name (expensive egg, 1 h to hatch)",Golden egg,Zlaté vejce,new,hf543d666
+medal.name.Bronze,"Medal tier on its own, e.g. ""Next: {medal} under 1:20"" (results.next)",Bronze,Bronz,ok,h797b53bc
+medal.name.Silver,"Medal tier on its own, e.g. ""Next: {medal} under 1:20"" (results.next)",Silver,Stříbro,ok,heb5c6409
+medal.name.Gold,"Medal tier on its own, e.g. ""Next: {medal} under 1:20"" (results.next)",Gold,Zlato,ok,h68b9810d
+medal.label.Bronze,Results popup: the medal this run earned,Bronze medal,Bronzová medaile,ok,hac67a311
+medal.label.Silver,Results popup: the medal this run earned,Silver medal,Stříbrná medaile,ok,h2da2778b
+medal.label.Gold,Results popup: the medal this run earned,Gold medal,Zlatá medaile,ok,he8ee66a8
+talent.name.RunSpeed,"Talent (skill) name: Skills panel, ""Needs:"" lines of the arrival popup",Run Speed,Rychlost běhu,ok,h714164ae
+talent.name.DoubleJump,"Talent (skill) name: Skills panel, ""Needs:"" lines of the arrival popup",Double Jump,Dvojitý skok,ok,hbf4c55b8
+talent.name.JumpHeight,"Talent (skill) name: Skills panel, ""Needs:"" lines of the arrival popup",Jump Height,Výška skoku,ok,hc8f803a6
+talent.name.QuickRespawn,"Talent (skill) name: Skills panel, ""Needs:"" lines of the arrival popup",Quick Respawn,Rychlé oživení,ok,h4ca75c6f
+talent.name.DoubleJump.2,"Name of Double Jump level 2 (two jumps in the air): the Skills row once Double Jump is owned, ""Needs:"" lines",Triple Jump,Trojitý skok,ok,hd4bc2346
+talent.name.Dash,"Talent (skill) name: Skills panel, ""Needs:"" lines of the arrival popup",Dash,Výpad,ok,h76f645c2
+pet.egg.Basic,"Egg name (cheap egg, 5 min to hatch); results popup free egg line, incubators",Basic egg,Obyčejné vejce,ok,h34aaec11
+pet.egg.Golden,"Egg name (expensive egg, 1 h to hatch)",Golden egg,Zlaté vejce,ok,hf543d666
 # Score panel (top right),,,,,
-hud.score.record,"Second line on a stage; {time} = personal best, e.g. 1:23.4",Your record: {time},Tvůj rekord: {time},new,h843f7a81
-hud.score.firstTry,Second line on a stage the player has never finished,First try!,První pokus!,new,h37b1e26c
-hud.score.chooseStage,Second line on a world courtyard (the stage gates are around),Choose a stage!,Vyber si úroveň!,new,h7381cee7
-hud.score.enterPortal,Second line in the hub: go through a world gate,Enter portal!,Vstup do brány!,new,h77812350
-hud.score.starsEarned,Third line in the hub / a world; {n} stars earned of {max},Stars earned: {n} / {max},Získané hvězdy: {n} / {max},new,h84a4d1aa
+hud.score.record,"Second line on a stage; {time} = personal best, e.g. 1:23.4",Your record: {time},Tvůj rekord: {time},ok,h843f7a81
+hud.score.firstTry,Second line on a stage the player has never finished,First try!,První pokus!,ok,h37b1e26c
+hud.score.chooseStage,Second line on a world courtyard (the stage gates are around),Choose a stage!,Vyber si úroveň!,ok,h7381cee7
+hud.score.enterPortal,Second line in the hub: go through a world gate,Enter portal!,Vstup do portálu!,ok,h77812350
+hud.score.starsEarned,Third line in the hub / a world; {n} stars earned of {max},Stars earned: {n} / {max},Získané hvězdy: {n} / {max},ok,h84a4d1aa
 # Stage timer and requirements,,,,,
-hud.timer.noMedal,"After the timer when no medal is reachable any more (lower case, follows the time)",no medal,bez medaile,new,h66387c41
-hud.needs,Talents a stage needs; {list} = coloured talent names separated by commas,Needs: {list},Potřeba: {list},new,h1d4c40fc
+hud.timer.noMedal,"After the timer when no medal is reachable any more (lower case, follows the time)",no medal,bez medaile,ok,h66387c41
+hud.needs,Talents a stage needs; {list} = coloured talent names separated by commas,Needs: {list},Vyžaduje: {list},new,h1d4c40fc
 # Results popup (after a finish),,,,,
-results.title,"Title; {stage} = stage name (Czech: feminine, ""Úroveň 6 dokončena"")",{stage} finished,{stage} dokončena,new,hcfea88ec
-results.newRecord,Under the time when it beats the personal best (gold),New record!,Nový rekord!,new,h14ead05b
-results.record,Under the time otherwise; {time} = personal best,Record: {time},Rekord: {time},new,h4b968ab7
-results.noMedal,Medal line when the run earned no medal,No medal,Bez medaile,new,h3614076c
-results.coins[one],Medal payout line; {count} = Coins. Form for 1,+{count} Coin,+{count} mince,new,h1befc8cc
-results.coins[few],Form for 2-4 (Czech only),,+{count} mince,new,h1befc8cc
-results.coins[other],Form for 0 and 5+,+{count} Coins,+{count} mincí,new,h1befc8cc
-results.firstFinish[one],One-time payout for the first finish of a stage; {count} = Coins. Form for 1,First finish +{count} Coin,První dokončení +{count} mince,new,h846d8b07
-results.firstFinish[few],Form for 2-4 (Czech only),,První dokončení +{count} mince,new,h846d8b07
-results.firstFinish[other],Form for 0 and 5+,First finish +{count} Coins,První dokončení +{count} mincí,new,h846d8b07
-results.runReward,"Daily repeat reward; {count} = Coins, {run} = how many runs of this stage today (1, 2, …)",Run reward +{count} (run {run} today),Odměna za běh +{count} ({run}. běh dnes),new,hedbe8e28
-results.petXp,"Pet experience; {xp} = total XP, {move} = the part earned by moving during the run",Pets +{xp} XP ({move} from moving),Mazlíčci +{xp} XP ({move} za pohyb),new,h18e0efed
-results.freeEgg,"First Gold on a stage gives a free egg, which waits in the garden incubator; {egg} = egg name",🎁 Free {egg} → your incubator,🎁 {egg} zdarma → do tvého inkubátoru,new,h656d5bad
-results.next,"Next goal; {medal} = medal tier (medal.name.*), {time} = its time limit",Next: {medal} under {time},Další cíl: {medal} pod {time},new,hfa6bbb41
-results.allMedals,Last line when every medal of the stage is earned,All medals earned!,Všechny medaile získány!,new,h91b54d74
+results.title,"Title; {stage} = stage name (Czech: feminine, ""Úroveň 6 dokončena"")",{stage} finished,{stage} dokončena,ok,hcfea88ec
+results.newRecord,Under the time when it beats the personal best (gold),New record!,Nový rekord!,ok,h14ead05b
+results.record,Under the time otherwise; {time} = personal best,Record: {time},Rekord: {time},ok,h4b968ab7
+results.noMedal,Medal line when the run earned no medal,No medal,Bez medaile,ok,h3614076c
+results.coins[one],Medal payout line; {count} = Coins. Form for 1,+{count} Coin,+{count} mince,ok,h1befc8cc
+results.coins[few],Form for 2-4 (Czech only),,+{count} mince,ok,h1befc8cc
+results.coins[other],Form for 0 and 5+,+{count} Coins,+{count} mincí,ok,h1befc8cc
+results.firstFinish[one],One-time payout for the first finish of a stage; {count} = Coins. Form for 1,First finish +{count} coin,První dokončení +{count} mince,new,h004fe6ae
+results.firstFinish[few],Form for 2-4 (Czech only),,První dokončení +{count} mince,new,h004fe6ae
+results.firstFinish[other],Form for 0 and 5+,First finish +{count} coins,První dokončení +{count} mincí,new,h004fe6ae
+results.runReward,"Daily repeat reward; {count} = Coins, {run} = how many runs of this stage today (1, 2, …)",Run reward +{count} coins\n(run {run} today),Odměna za dokončení +{count} mincí\n(dnes {run}. Pokus),new,h0dfb4a09
+results.petXp,"Pet experience; {xp} = total XP, {move} = the part earned by moving during the run",Pets +{xp} XP ({move} from moving),Mazlíčci +{xp} XP ({move} za pohyb),ok,h18e0efed
+results.freeEgg,"First Gold on a stage gives a free egg, which waits in the garden incubator; {egg} = egg name",🎁 Free {egg} → your incubator,🎁 {egg} zdarma → do tvého inkubátoru,ok,h656d5bad
+results.next,"Next goal; {medal} = medal tier (medal.name.*), {time} = its time limit",Next: {medal} under {time},Další cíl: {medal} pod {time},ok,hfa6bbb41
+results.allMedals,Last line when every medal of the stage is earned,All medals earned!,Všechny medaile získány!,ok,h91b54d74
 # Gates (unlock prompt and messages),,,,,
-gate.prompt.unlock[one],Hold-E prompt on a shut gate the player can afford; {count} = price. Form for 1,Unlock · {count} Coin,Odemknout · {count} mince,new,h412a8913
-gate.prompt.unlock[few],Form for 2-4 (Czech only),,Odemknout · {count} mince,new,h412a8913
-gate.prompt.unlock[other],Form for 0 and 5+ (prices are 200 and more),Unlock · {count} Coins,Odemknout · {count} mincí,new,h412a8913
-gate.prompt.needs[one],The same prompt when the player cannot afford it; {count} = price. Form for 1,Needs {count} Coin,Potřebuješ {count} minci,new,hc7fb3379
-gate.prompt.needs[few],Form for 2-4 (Czech only),,Potřebuješ {count} mince,new,hc7fb3379
-gate.prompt.needs[other],Form for 0 and 5+,Needs {count} Coins,Potřebuješ {count} mincí,new,hc7fb3379
-gate.toast.unlocked,"Short message after buying a gate; {name} = stage or world name (any gender, hence the Czech word order)",{name} unlocked!,Odemčeno: {name}!,new,hbcffaedd
-gate.toast.gate,Fallback name in gate.toast.unlocked when the stage is unknown,Gate,Brána,new,ha8d07fb4
-gate.reject.coins,Message when the purchase fails: not enough Coins,Not enough Coins,Nemáš dost mincí,new,h35fbd693
-gate.reject.owned,Message when the gate is open already,Already unlocked,Už je odemčeno,new,ha2c4620f
-gate.reject.loading,Message while the player's data is still loading,Still loading...,Ještě se načítá…,new,hefd53ef6
-gate.reject.failed,Message for any other failure,Unlock failed,Odemčení se nepovedlo,new,hb827097a
+gate.prompt.unlock[one],Hold-E prompt on a shut gate the player can afford; {count} = price. Form for 1,Unlock · {count} Coin,Odemknout · {count} mince,ok,h412a8913
+gate.prompt.unlock[few],Form for 2-4 (Czech only),,Odemknout · {count} mince,ok,h412a8913
+gate.prompt.unlock[other],Form for 0 and 5+ (prices are 200 and more),Unlock · {count} Coins,Odemknout · {count} mincí,ok,h412a8913
+gate.prompt.needs[one],The same prompt when the player cannot afford it; {count} = price. Form for 1,Needs {count} Coin,Potřebuješ {count} minci,ok,hc7fb3379
+gate.prompt.needs[few],Form for 2-4 (Czech only),,Potřebuješ {count} mince,ok,hc7fb3379
+gate.prompt.needs[other],Form for 0 and 5+,Needs {count} Coins,Potřebuješ {count} mincí,ok,hc7fb3379
+gate.toast.unlocked,"Short message after buying a gate; {name} = stage or world name (any gender, hence the Czech word order)",{name} unlocked!,Odemčeno: {name}!,ok,hbcffaedd
+gate.toast.gate,Fallback name in gate.toast.unlocked when the stage is unknown,Gate,Brána,ok,ha8d07fb4
+gate.reject.coins,Message when the purchase fails: not enough Coins,Not enough Coins,Nemáš dost mincí,ok,h35fbd693
+gate.reject.owned,Message when the gate is open already,Already unlocked,Už je odemčeno,ok,ha2c4620f
+gate.reject.loading,Message while the player's data is still loading,Still loading...,Ještě se načítá…,ok,hefd53ef6
+gate.reject.failed,Message for any other failure,Unlock failed,Odemčení se nepovedlo,ok,hb827097a
 # Warnings,,,,,
-hud.explore,"Banner when the player reached a stage checkpoint around the gate (no timer runs); {stage} = stage name. <b> = bold title, \n = line break","<b>Exploring {stage} without a timer</b>\nYou got in around the gate: no time, medal or finish reward counts here, but Coins you pick up do. Go through the gate to run it for real. Carrying on is at your own risk.","<b>{stage} bez časomíry</b>\nDovnitř vedla cesta mimo bránu: čas, medaile ani odměna za dokončení se tu nepočítají, sebrané mince ano. Pro opravdový běh projdi branou. Pokračuješ na vlastní riziko.",new,h6896c21e
-hud.arrival.title,Popup title when entering a stage without a talent it needs; {stage} = stage name (Czech: feminine),{stage} needs a talent,{stage} vyžaduje dovednost,new,h7482c762
-hud.arrival.body,"Popup text under the ""Needs:"" line","You can still enter, but some jumps are out of reach.","Vstoupit můžeš, ale na některé skoky nedosáhneš.",new,h9040d3f0
-hud.arrival.openSkills,Popup button: opens the Skills panel,Open Skills,Otevřít dovednosti,new,ha5865bf5
-hud.arrival.continue,Popup button: closes it,Continue,Pokračovat,new,hae7250da
+hud.explore,"Banner when the player reached a stage checkpoint around the gate (no timer runs); {stage} = stage name. <b> = bold title, \n = line break","<b>Exploring {stage} without a timer</b>\nYou got in around the gate: no time, medal or finish reward counts here, but Coins you pick up do. Go through the gate to run it for real. Carrying on is at your own risk.","<b>{stage} bez měření času</b>\nDovnitř vedla cesta mimo bránu: čas, medaile ani odměna za dokončení se tu nepočítají, sebrané mince ano. Projdi branou. Jinak pokračuješ na vlastní riziko.",ok,h6896c21e
+hud.arrival.title,Popup title when entering a stage without a talent it needs; {stage} = stage name (Czech: feminine),{stage} needs a talent,{stage} vyžaduje dovednost,ok,h7482c762
+hud.arrival.body,"Popup text under the ""Needs:"" line","You can still enter, but some jumps are out of reach.","Vstoupit můžeš, ale některé skoky nezvládneš.",ok,h9040d3f0
+hud.arrival.openSkills,Popup button: opens the Skills panel,Open Skills,Otevřít dovednosti,ok,ha5865bf5
+hud.arrival.continue,Popup button: closes it,Continue,Pokračovat,ok,hae7250da
 # Shared (L2),,,,,
-common.loading,A panel whose data has not arrived yet,Loading...,Načítání…,new,h75bf472a
-common.reject.coins,A purchase was refused: the player has too few Coins,Not enough Coins,Nemáš dost mincí,new,h35fbd693
-common.reject.stale,"A request was refused because the panel showed old data (double click, lag)","Out of date, try again","Údaje se mezitím změnily, zkus to znovu",new,ha5b6c678
-common.reject.loading,A request was refused while the player's data is still loading,Still loading...,Ještě se načítá…,new,hefd53ef6
-common.reject.failed,Any other refused request,Request failed,Požadavek se nepovedl,new,hde410c21
-common.reject.far,A garden request was refused: the player is too far from their plot,Too far from your plot,Jsi moc daleko od své zahrádky,new,ha9194174
-common.reject.noplot,A garden request was refused: no garden plot was free on this server,You have no plot on this server,Na tomhle serveru nemáš zahrádku,new,h089bd3d2
-common.percentBonus,"A Coin bonus in percent; {pct} = number with the decimal mark of the language (4.5 / 4,5)",+{pct}%,+{pct} %,new,h2fef22d6
+common.loading,A panel whose data has not arrived yet,Loading...,Načítám…,ok,h75bf472a
+common.reject.coins,A purchase was refused: the player has too few Coins,Not enough Coins,Nemáš dost mincí,ok,h35fbd693
+common.reject.stale,"A request was refused because the panel showed old data (double click, lag)","Out of date, try again","Údaje se mezitím změnily, zkus to znovu",ok,ha5b6c678
+common.reject.loading,A request was refused while the player's data is still loading,Still loading...,Ještě se načítá…,ok,hefd53ef6
+common.reject.failed,Any other refused request,Request failed,Požadavek se nepovedl,ok,hde410c21
+common.reject.far,A garden request was refused: the player is too far from their plot,Too far from your plot,Jsi moc daleko od své zahrádky,ok,ha9194174
+common.reject.noplot,A garden request was refused: no garden plot was free on this server,You have no plot on this server,Na tomhle serveru nemáš zahrádku,ok,h089bd3d2
+common.percentBonus,"A Coin bonus in percent; {pct} = number with the decimal mark of the language (4.5 / 4,5)",+{pct}%,+{pct} %,ok,h2fef22d6
 "# Names: pets, rarities, foods",,,,,
-pet.kind.Cat,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Cat,Kočka,new,hdcb47fa3
-pet.kind.Dog,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Dog,Pes,new,h231bfb72
-pet.kind.Bunny,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Bunny,Králíček,new,h2dddb1ed
-pet.kind.Fox,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Fox,Liška,new,h6d371310
-pet.kind.Owl,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Owl,Sova,new,h4f10da25
-pet.kind.Panda,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Panda,Panda,new,hcb0dc805
-pet.kind.Dragon,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Dragon,Drak,new,h727ad337
-pet.kind.Phoenix,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Phoenix,Fénix,new,hfbc26b8d
-pet.rarity.Common,"Rarity of a pet, after its name (""Rare · +7%""); Czech masculine (mazlíček)",Common,Běžný,new,h67b2e7c8
-pet.rarity.Uncommon,"Rarity of a pet, after its name (""Rare · +7%""); Czech masculine (mazlíček)",Uncommon,Neobvyklý,new,hd24293ad
-pet.rarity.Rare,"Rarity of a pet, after its name (""Rare · +7%""); Czech masculine (mazlíček)",Rare,Vzácný,new,h4f7853ac
-pet.rarity.Epic,"Rarity of a pet, after its name (""Rare · +7%""); Czech masculine (mazlíček)",Epic,Epický,new,h21e553c2
-pet.rarity.Legendary,"Rarity of a pet, after its name (""Rare · +7%""); Czech masculine (mazlíček)",Legendary,Legendární,new,h6dfca44d
-pet.nameLevel,"A pet with its level, e.g. ""Cat Lv 12"" (lists, slots, labels over pets). Czech keeps ""Lv"": ""úroveň"" is the stage name",{kind} Lv {level},{kind} Lv {level},new,h26ab2b28
-pet.xp,Pet experience towards the next level,{xp}/{next} XP,{xp}/{next} XP,new,h1984ac76
-pet.maxLevel,Instead of the XP line when the pet is at level 20,max level,max. Lv,new,h04ed8881
-pet.levelUp,Floating text over a pet that just levelled up,Level {level}!,Lv {level}!,new,h46b2b999
-food.name.Berry,Pet food at the food stand in the garden (cheap / medium / big),Berry,Bobule,new,hba69c030
-food.name.Cake,Pet food at the food stand in the garden (cheap / medium / big),Cake,Dort,new,h0de9cd25
-food.name.Feast,Pet food at the food stand in the garden (cheap / medium / big),Feast,Hostina,new,hbe3b8af3
+pet.kind.Cat,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Cat,Kočička,ok,hdcb47fa3
+pet.kind.Dog,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Dog,Pejsek,ok,h231bfb72
+pet.kind.Bunny,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Bunny,Králíček,ok,h2dddb1ed
+pet.kind.Fox,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Fox,Liška,ok,h6d371310
+pet.kind.Owl,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Owl,Sova,ok,h4f10da25
+pet.kind.Panda,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Panda,Panda,ok,hcb0dc805
+pet.kind.Dragon,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Dragon,Drak,ok,h727ad337
+pet.kind.Phoenix,"Pet kind (Pets panel, pen and food stand rows, labels over pets)",Phoenix,Fénix,ok,hfbc26b8d
+pet.rarity.Common,"Rarity of a pet, after its name (""Rare · +7%""); Czech masculine (mazlíček)",Common,Běžný,ok,h67b2e7c8
+pet.rarity.Uncommon,"Rarity of a pet, after its name (""Rare · +7%""); Czech masculine (mazlíček)",Uncommon,Neobvyklý,ok,hd24293ad
+pet.rarity.Rare,"Rarity of a pet, after its name (""Rare · +7%""); Czech masculine (mazlíček)",Rare,Vzácný,ok,h4f7853ac
+pet.rarity.Epic,"Rarity of a pet, after its name (""Rare · +7%""); Czech masculine (mazlíček)",Epic,Epický,ok,h21e553c2
+pet.rarity.Legendary,"Rarity of a pet, after its name (""Rare · +7%""); Czech masculine (mazlíček)",Legendary,Legendární,ok,h6dfca44d
+pet.nameLevel,"A pet with its level, e.g. ""Cat Lv 12"" (lists, slots, labels over pets). Czech keeps ""Lv"": ""úroveň"" is the stage name",{kind} Lv {level},{kind} Lv {level},ok,h26ab2b28
+pet.xp,Pet experience towards the next level,{xp}/{next} XP,{xp}/{next} XP,ok,h1984ac76
+pet.maxLevel,Instead of the XP line when the pet is at level 20,max level,max. Lv,ok,h04ed8881
+pet.levelUp,Floating text over a pet that just levelled up,Level {level}!,Lv {level}!,ok,h46b2b999
+food.name.Berry,Pet food at the food stand in the garden (cheap / medium / big),Berry,Bobule,ok,hba69c030
+food.name.Cake,Pet food at the food stand in the garden (cheap / medium / big),Cake,Dort,ok,h0de9cd25
+food.name.Feast,Pet food at the food stand in the garden (cheap / medium / big),Feast,Hostina,ok,hbe3b8af3
 # Talents (Skills panel),,,,,
-skills.title,"Title of the Skills panel (⚡ icon); the panel is authored in Studio, the text set by TalentRows",Your skills,Tvoje dovednosti,new,hf87da291
-talent.effect.RunSpeed,Skills panel: what the next level of Run Speed gives,\+6% run speed,\+6 % rychlost běhu,new,hc0e4b7b6
-talent.effect.DoubleJump,Skills panel: what Double Jump gives,1 extra jump in the air,1 skok navíc ve vzduchu,new,habc671ca
-talent.effect.JumpHeight,Skills panel: what the next level of Jump Height gives,\+8% jump height,\+8 % výška skoku,new,hda4d4692
-talent.effect.QuickRespawn.1,Skills panel: Quick Respawn level 1,Respawn after 1 s,Oživení po 1 s,new,hdc37fae5
-talent.effect.QuickRespawn.2,Skills panel: Quick Respawn level 2 (no waiting; a fall puts the player back on the checkpoint),Instant respawn + fall reset,Okamžité oživení + návrat po pádu,new,hbcfabb29
-talent.effect.DoubleJump.2,Skills panel: what Triple Jump (Double Jump level 2) adds,A second extra jump in the air,Druhý skok navíc ve vzduchu,new,habd162dd
-talent.effect.Dash,Skills panel: what Dash gives; Q = the keyboard key (touch screens get a Dash button),A burst forward in the air (Q),Rychlý výpad vpřed ve vzduchu (Q),new,h1b62c6a4
-talent.dash.button,On-screen touch button beside Jump (small round button: one short word),Dash,Výpad,new,h76f645c2
-skills.maxedOut,Skills panel: second line of a talent at its highest level,Maxed out,Na maximu,new,h5c0a2f9d
-skills.buy,Skills panel button (70 px wide: keep it short); {price} = Coins,Buy {price},Kup {price},new,ha9b337f4
-skills.max,Skills panel button of a talent at its highest level,MAX,MAX,new,h693fda0e
-skills.reject.maxed,"Skills panel: refused, the talent is at its highest level",Already maxed,Už je na maximu,new,h91cd8ee8
-skills.reject.failed,Skills panel: any other refused purchase,Purchase failed,Nákup se nepovedl,new,hdf3992a8
+skills.title,"Title of the Skills panel (⚡ icon); the panel is authored in Studio, the text set by TalentRows",Your skills,Dovednosti,ok,hf87da291
+talent.effect.RunSpeed,Skills panel: what the next level of Run Speed gives,\+6% run speed,\+6 % k rychlosti běhu,ok,hc0e4b7b6
+talent.effect.DoubleJump,Skills panel: what Double Jump gives,1 extra jump in the air,1 skok navíc ve vzduchu,ok,habc671ca
+talent.effect.JumpHeight,Skills panel: what the next level of Jump Height gives,\+8% jump height,\+8 % k výšce skoku,ok,hda4d4692
+talent.effect.QuickRespawn.1,Skills panel: Quick Respawn level 1,Respawn after 1 s,Oživení po 1 s,ok,hdc37fae5
+talent.effect.QuickRespawn.2,Skills panel: Quick Respawn level 2 (no waiting; a fall puts the player back on the checkpoint),Instant respawn + fall reset,Okamžité oživení + návrat po pádu,ok,hbcfabb29
+talent.effect.DoubleJump.2,Skills panel: what Triple Jump (Double Jump level 2) adds,A second extra jump in the air,Druhý skok navíc ve vzduchu,ok,habd162dd
+talent.effect.Dash,Skills panel: what Dash gives; Q = the keyboard key (touch screens get a Dash button),A burst forward in the air (Q),Rychlý výpad vpřed ve vzduchu (Q),ok,h1b62c6a4
+talent.dash.button,On-screen touch button beside Jump (small round button: one short word),Dash,Výpad,ok,h76f645c2
+skills.maxedOut,Skills panel: second line of a talent at its highest level,Maxed out,Na maximu,ok,h5c0a2f9d
+skills.buy,Skills panel button (70 px wide: keep it short); {price} = Coins,Buy {price},Za {price},ok,ha9b337f4
+skills.max,Skills panel button of a talent at its highest level,MAX,MAX,ok,h693fda0e
+skills.reject.maxed,"Skills panel: refused, the talent is at its highest level",Already maxed,Už je na maximu,ok,h91cd8ee8
+skills.reject.failed,Skills panel: any other refused purchase,Purchase failed,Nákup se nepovedl,ok,hdf3992a8
 # Hub gate and portal faces,,,,,
-faces.comingSoon,Face of a hub world gate whose world is not built yet,🔒 Coming soon,🔒 Už brzy,new,h909c77ff
-faces.orCoins[one],"Face of a shut gate, under the requirement: the price instead; {count} = Coins. Form for 1",or {count} Coin,nebo {count} mince,new,hfdcbc5fc
-faces.orCoins[few],Form for 2-4 (Czech only),,nebo {count} mince,new,hfdcbc5fc
-faces.orCoins[other],Form for 0 and 5+,or {count} Coins,nebo {count} mincí,new,hfdcbc5fc
-faces.coinsFound,Gate / door face: challenge coins found in the stage or world,💰 found {found}/{total},💰 nalezeno {found}/{total},new,h8957d27a
-unlock.bar.world,"What opens a world or stage: stars in a world; {star} = a gold star, {n} of {max} stars, {world} = world number",{star} {n} of {max} in World {world},{star} {n} z {max} ve Světě {world},new,h42eba5d2
-unlock.bar.stage,"What opens a stage: a medal on the stage before; {stars} = gold stars, {medal} = medal tier, {stage} = stage name",{stars} {medal} on {stage},{stars} {medal}: {stage},new,hf1e5a1f1
+faces.comingSoon,Face of a hub world gate whose world is not built yet,🔒 Coming soon,🔒 Už brzy,ok,h909c77ff
+faces.orCoins[one],"Face of a shut gate, under the requirement: the price instead; {count} = Coins. Form for 1",or {count} Coin,nebo za {count} mince,ok,hfdcbc5fc
+faces.orCoins[few],Form for 2-4 (Czech only),,nebo za {count} mince,ok,hfdcbc5fc
+faces.orCoins[other],Form for 0 and 5+,or {count} Coins,nebo za {count} mincí,ok,hfdcbc5fc
+faces.coinsFound,Gate / door face: challenge coins found in the stage or world,💰 found {found}/{total},💰 nalezeno {found}/{total},ok,h8957d27a
+unlock.bar.world,"What opens a world or stage: stars in a world; {star} = a gold star, {n} of {max} stars, {world} = world number",{star} {n} of {max} in World {world},{star} {n} z {max} v {world}. světě,ok,h42eba5d2
+unlock.bar.stage,"What opens a stage: a medal on the stage before; {stars} = gold stars, {medal} = medal tier, {stage} = stage name",{stars} {medal} on {stage},{medal} ({stars}) z {stage},ok,hf1e5a1f1
 # Key arena HUD,,,,,
-arena.keys,Title of the key bar at the top of the side-view arena (capitals),KEYS,KLÍČE,new,h72228141
-arena.keyCollected.Teal,"Arena toast when this key is picked up (Czech: masculine, klíč)",Teal key collected,Tyrkysový klíč sebrán,new,haf4e9523
-arena.gateOpened.Teal,"Arena toast when this key opens its gate (Czech: feminine, brána)",Teal gate opened,Tyrkysová brána otevřena,new,hf542dd9f
-arena.keyCollected.Green,"Arena toast when this key is picked up (Czech: masculine, klíč)",Green key collected,Zelený klíč sebrán,new,h6cab5024
-arena.gateOpened.Green,"Arena toast when this key opens its gate (Czech: feminine, brána)",Green gate opened,Zelená brána otevřena,new,h5cd7deeb
-arena.cleared,Arena toast after leaving through the exit with every key,Arena cleared!,Aréna zdolána!,new,h80f81507
+arena.keys,Title of the key bar at the top of the side-view arena (capitals),KEYS,KLÍČE,ok,h72228141
+arena.keyCollected.Teal,"Arena toast when this key is picked up (Czech: masculine, klíč)",Teal key collected,Tyrkysový klíč sebrán,ok,haf4e9523
+arena.gateOpened.Teal,"Arena toast when this key opens its gate (Czech: feminine, brána)",Teal gate opened,Tyrkysová brána otevřena,ok,hf542dd9f
+arena.keyCollected.Green,"Arena toast when this key is picked up (Czech: masculine, klíč)",Green key collected,Zelený klíč sebrán,ok,h6cab5024
+arena.gateOpened.Green,"Arena toast when this key opens its gate (Czech: feminine, brána)",Green gate opened,Zelená brána otevřena,ok,h5cd7deeb
+arena.cleared,Arena toast after leaving through the exit with every key,Arena cleared!,Aréna zdolána!,ok,h80f81507
 # Pets panel (🐶),,,,,
 pets.title,Panel title,🐶 Pets,🐶 Mazlíčci,new,h92496bfc
 pets.garden,Button: teleports the player in front of their garden plot,🌱 Go to my garden,🌱 Do mé zahrádky,new,h3e5af0fb
@@ -261,7 +261,7 @@ incubator.reject.empty,Refused: nothing to hatch,There is no egg in this incubat
 incubator.reject.notready,Refused: the egg needs more time,Not ready yet,Ještě není připravené,new,h16f18a63
 # Food stand panel,,,,,
 food.title,Food stand panel title,🍓 Pet food,🍓 Krmení pro mazlíčky,new,h10d5bce0
-food.status,Default status line,Feed a pet to give it XP. Only the fed pet gets it.,Nakrm mazlíčka a získá XP. Dostane je jen ten nakrmený.,new,hde20b086
+food.status,Default status line,Feed a pet to give it XP. Only the fed pet gets it.,Nakrm mazlíčka ať získá XP. Dostane je jen ten nakrmený.,new,hde20b086
 food.empty,Shown instead of the list while the player has no pet,You have no pets yet. Hatch one in your incubator.,Zatím nemáš žádného mazlíčka. Vylíhni si ho v inkubátoru.,new,h4301e9df
 food.where.equipped,Pet row: where the pet is now (lower case),equipped,nasazený,new,h10431f5d
 food.where.pen,Pet row: the pet is in pen {pen},in pen {pen},v ohradě {pen},new,h848096e3
@@ -303,5 +303,5 @@ sign.hub.sub,"Garden sign pointing back to the hub, under the hub's name",stages
 sign.start,"Start line sign at a stage gate, the tutorial and the key arena (capitals)",START,START,new,h718ab2ee
 sign.finish,Label of a stage's finish portal,Finish,Cíl,new,hf25ee280
 sign.exit,Exit sign of the key arena (capitals),EXIT,VÝCHOD,new,h1aab843f
-sign.hubPortal,"Label of a portal that leads back to the hub (tutorial, worlds); not the hub's name",Hub,Centrum,new,hf7bf415c
-sign.welcome,Welcome board in the tutorial,Welcome!,Vítej!,new,h258fd7ce
+sign.hubPortal,"Label of a portal that leads back to the hub (tutorial, worlds); not the hub's name",Hub,Zpět,ok,hf7bf415c
+sign.welcome,Welcome board in the tutorial,Welcome!,Vítej!,ok,h258fd7ce
