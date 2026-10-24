@@ -40,6 +40,7 @@ touch movement or stage times.
 | Decoration | Free placement **outside only**, per-tier limit, validated on the server; the cottage is fixed |
 | Field (2026-10-24) | One field of squares the player plants freely, instead of fixed beds (§5 "bed" reads as "square"); capacity grows by field expansion tiers; max size limited by the 40 × 40 plot, measured in Studio during E0 |
 | Garden vs obby (2026-10-24) | **24-hour rule:** one active obby hour (mini-games count) ≈ 24 hours of fully automated planting at the same progress; checked by the E0 model (ROADMAP → E0) |
+| Online vs offline (2026-10-24) | Offline income must exist, but **online income, even passive, is much higher**, to give players a reason to keep Roblox open. A parameter pair `online_rate` 1.0 / `offline_rate` (provisional 0.33, about 3x; the number is an open decision) applies to everything passive: crop growth, Gardener replanting, pen production; offline time is capped (pens 8 h, field its own cap, provisional 12 h). The 24-hour rule is checked for the online case (offline can only be lower). Not a Roblox payout (Engagement-Based Payouts ended 2025-07-24; Creator Rewards pays per Active Spender) and never pure AFK: income depends on the player being present |
 | Prices (2026-10-24) | E0 also re-prices all sinks (talents, unlocks, slots, eggs, incubators, posts, food, field expansion and upgrades); applied in E0b after approval |
 
 ## 3. One pet, one post

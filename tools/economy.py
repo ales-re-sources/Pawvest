@@ -10,7 +10,8 @@ and reports the Coin economy.
   python tools/economy.py field    # catalogue size and ladder-scale comparison (how the guardrails move)
   python tools/economy.py check    # acceptance checks of E0 that can run so far (incl. guardrails A-C); exit 1 on a failure
   options: --garden pens|field|both (default field: pens become Field posts; pens = today's Coins-per-hour pens; both = grandfathered
-           pens that pay AND work as posts), --crops min|mvp|full, --scale <ladder scale>
+           pens that pay AND work as posts), --crops min|mvp|full, --scale <ladder scale>,
+           --offline-rate <x> (passive income while away relative to online, default 0.33; 1 = no difference), --offline-cap <hours> (field)
   python tools/economy.py drift    # only the drift check (configs vs tools/economy_pins.json and the formulas)
   python tools/economy.py pin      # accept the current config values as the reviewed state (rewrites the pins)
 
@@ -396,15 +397,24 @@ def pen_set_rate(P, entries):
     return sum(pen_rate(P, rarity, level) * count for rarity, level, count in entries)
 
 
-def covered_hours_per_day(P, arch):
-    """Hours per day for which pens produce: online time plus the offline gap after each session, capped (GardenConfig)."""
+def covered_hours_per_day(P, arch, weighted=False):
+    """Hours per day for which pens produce: online time plus the offline gap after each session, capped (GardenConfig).
+    weighted: online hours x online_rate + offline hours x offline_rate (the passive-income rule); the baseline report uses today's unweighted hours."""
+    on, off = pen_hours(P, arch, weighted)
+    return on + off
+
+
+def pen_hours(P, arch, weighted=True):
+    """(online hours, offline hours) per day in which pens produce, weighted by the online / offline rate."""
     period_h = arch["period_days"] * 24.0
     sess = sorted(arch["sessions"])
-    total = 0.0
+    on = off = 0.0
     for i, (start, length) in enumerate(sess):
         nxt = sess[i + 1][0] if i + 1 < len(sess) else sess[0][0] + period_h
-        total += length + min(max(nxt - (start + length), 0.0), P["offline_cap_h"])
-    return total / arch["period_days"]
+        on += length
+        off += min(max(nxt - (start + length), 0.0), P["offline_cap_h"])
+    wo, wf = (FIELD["online_rate"], FIELD["offline_rate"]) if weighted else (1.0, 1.0)
+    return on * wo / arch["period_days"], off * wf / arch["period_days"]
 
 
 def pet_bonus(P, kind_rarity, level):
@@ -461,6 +471,9 @@ FIELD = {
     "sink_share": {30: 0.60, 60: 0.80},  # OPEN decision 1 (proposal): sinks / cumulative faucet by day 30 and day 60
     "a_band": (0.8, 1.0),  # guardrail A: the best-developed archetype's 24 h field / first obby hour must land inside this band
     "garden_share_max_obby": 0.5,  # the garden must not be a majority of Obby main's income
+    # Online vs offline (user rule 2026-10-24): everything passive (crop growth, Gardener replanting, pen production) runs at `online_rate` while the player is
+    # in the experience and at `offline_rate` while away, for at most `offline_cap_h` hours after a session. Provisional: the user gave no number (open decision).
+    "online_rate": 1.0, "offline_rate": 0.33, "offline_cap_h": 12.0,  # pens keep GardenConfig.OfflineCapSeconds (8 h)
 }
 
 # Crop catalogue: tier 1-3 by Renown gate, tier 4 = rare (one signature crop per world 1-3). `h` = grow time in hours. `size` = 2 means a 2 x 2 crop.
@@ -523,10 +536,42 @@ def renown_level(points):
 
 
 def visit_schedule(arch):
-    """Sessions of one period: [(start hour, gap in hours to the next session start)] (the wrap-around gap spans the idle days)."""
+    """Sessions of one period: [(start hour, gap in hours to the next session start, session length)] (the wrap-around gap spans the idle days)."""
     sess = sorted(arch["sessions"])
     period_h = arch["period_days"] * 24.0
-    return [(start, (sess[i + 1][0] if i + 1 < len(sess) else sess[0][0] + period_h) - start) for i, (start, _) in enumerate(sess)]
+    return [(start, (sess[i + 1][0] if i + 1 < len(sess) else sess[0][0] + period_h) - start, length) for i, (start, length) in enumerate(sess)]
+
+
+_ceil_cache = {}
+
+
+def manual_day_ceiling(sched, period_days, options):
+    """Online ceiling of one manually tended square: the best long-run Coins per square and day when the player is present for every gap
+    (a crop is ripe once the visit gaps since planting add up to its grow time; it may span several visits). options = [(Coins per square, grow hours)]."""
+    key = (tuple(sched), period_days, tuple(options))
+    if key not in _ceil_cache:
+        n, horizon, best = len(sched), 120, 0.0
+        for start in range(n):
+            gaps = [sched[(start + k) % n][1] for k in range(horizon)]
+            f = [0.0] * (horizon + 1)
+            for i in range(horizon - 1, -1, -1):
+                v = f[i + 1]
+                for val, h in options:
+                    acc, j = 0.0, i
+                    while j < horizon and acc < h - 1e-9:
+                        acc += gaps[j]
+                        j += 1
+                    if acc >= h - 1e-9 and val + f[j] > v:
+                        v = val + f[j]
+                f[i] = v
+            best = max(best, f[0] / sum(gaps) * 24.0)
+        _ceil_cache[key] = best
+    return _ceil_cache[key]
+
+
+def eff_time(gap, length):
+    """Growth hours a passive process gets between two visits: full speed while online, offline_rate for the capped time away."""
+    return min(length, gap) * FIELD["online_rate"] + min(max(gap - length, 0.0), FIELD["offline_cap_h"]) * FIELD["offline_rate"]
 
 
 FAMILIES = ("exp", "growth", "barn", "gardener", "res")
@@ -602,7 +647,9 @@ class Player:
         self.sq = FIELD["start_squares"]
         self.post_g = 0  # Gardener pets on posts
         self.manual = []  # [crop id, planted at (h), plants]
-        self.cov_crop, self.cov_prog, self.cov_n = None, 0.0, 0
+        self.cov_crop, self.cov_n = None, 0
+        self.cov_on = self.cov_off = 0.0  # growth progress of the Gardener squares' crop, hours earned online / offline
+        self.last_len = 0.0
         self.seed_stock = 0
         self.rare_seeds = {}  # world -> seeds
         self.rare_kept = 0.0
@@ -753,7 +800,7 @@ class Player:
     def covered(self):
         return min(self.sq, self.post_g * self.per_gardener()) if self.gardeners_on and self.F["on"] else 0
 
-    def sell(self, crop, items, row):
+    def sell(self, crop, items, row, on_share):
         if items <= 0:
             return
         share = FIELD["rare"]["sale_share"] if crop["rare"] else 1.0
@@ -761,6 +808,8 @@ class Player:
         self.coins += gross
         self.cum["field"] += gross
         row["field"] += gross
+        row["field_on"] += gross * on_share
+        row["field_off"] += gross * (1 - on_share)
         self.rare_kept += items * (1 - share) if crop["rare"] else 0.0
         row["harv"] += items
         self.stat["harv"] += items
@@ -772,25 +821,51 @@ class Player:
         if row is not None:
             row["seeds"] += amount
 
-    def visit(self, t, gap, row):
-        """One visit at absolute hour t; `gap` = hours to the next visit. Harvest what is ripe, sell, replant."""
+    def wall_to_ripe(self, idx, g):
+        """Wall-clock hours from visit `idx` until a crop needing `g` growth hours is ripe at a visit (None if never)."""
+        acc = wall = 0.0
+        for k in range(120):
+            _, gap, length = self.sched[(idx + k) % len(self.sched)]
+            acc += eff_time(gap, length)
+            wall += gap
+            if acc >= g - 1e-9:
+                return wall
+        return None
+
+    def visit(self, t, idx, row):
+        """One visit (session start) at absolute hour t, entry `idx` of the schedule. Harvest what is ripe, sell, replant.
+        Crops and Gardener squares grow at online_rate while the player was online and at offline_rate (capped) while away."""
         F, cat, gs = self.F, self.F["crops"], self.growth()
+        _, gap, length = self.sched[idx]
         T = 0.0 if self.last_t is None else t - self.last_t
+        d_on = min(self.last_len, T) * FIELD["online_rate"]
+        d_off = min(max(T - self.last_len, 0.0), FIELD["offline_cap_h"]) * FIELD["offline_rate"]
         # 1. Gardener squares cycled by themselves since the last visit (limited by the seed stock and the barn)
         if self.cov_n and self.cov_crop:
             c = cat[self.cov_crop]
             g = c["h"] * gs
-            raw = (self.cov_prog + T) / g
+            self.cov_on += d_on
+            self.cov_off += d_off
+            prog = self.cov_on + self.cov_off
+            raw = prog / g
             n = min(int(raw), self.capacity() // self.cov_n, self.seed_stock // self.cov_n)
-            self.cov_prog = (self.cov_prog + T) - n * g if n >= int(raw) else 0.0
+            on_share = self.cov_on / prog if prog > 0 else 0.0
+            if n >= int(raw):
+                rest = prog - n * g
+                self.cov_on, self.cov_off = on_share * rest, (1 - on_share) * rest
+            else:  # barn or stock full: the ripe crop waits
+                self.cov_on = self.cov_off = 0.0
             self.seed_stock -= n * self.cov_n
-            self.sell(c, n * self.cov_n, row)
+            self.sell(c, n * self.cov_n, row, on_share)
         # 2. manual squares: one harvest per square, if ripe
         keep = []
         for grp in self.manual:
             c = cat[grp[0]]
-            if t - grp[1] >= c["h"] * gs - 1e-9:
-                self.sell(c, grp[2], row)
+            g = c["h"] * gs
+            grp[3] += d_on
+            grp[4] += d_off
+            if grp[3] + grp[4] >= g - 1e-9:
+                self.sell(c, grp[2], row, min(grp[3], g) / g)
                 self.stat["man_harv"] += grp[2]
             else:
                 keep.append(grp)
@@ -800,19 +875,20 @@ class Player:
         lvl = self.renown_level()
         common = [c for c in cat.values() if not c["rare"] and c["size"] == 1 and c["gate"] <= lvl]
         big = [c for c in cat.values() if not c["rare"] and c["size"] > 1 and c["gate"] <= lvl]
+        eff = eff_time(gap, length)
         if self.cov_n and common:
             best, best_v = None, -1.0
             for c in common:
                 if c["tier"] > FIELD["gardener"]["max_tier"]:
                     continue
                 g = c["h"] * gs
-                prog = self.cov_prog if c["id"] == self.cov_crop else 0.0  # switching crop loses the growth in progress
-                v = min((prog + gap) / g, self.capacity() / self.cov_n) * self.cov_n * c["net"] * (1.05 if c["id"] == self.cov_crop else 1.0)
+                prog = self.cov_on + self.cov_off if c["id"] == self.cov_crop else 0.0  # switching crop loses the growth in progress
+                v = min((prog + eff) / g, self.capacity() / self.cov_n) * self.cov_n * c["net"] * (1.05 if c["id"] == self.cov_crop else 1.0)
                 if v > best_v:
-                    best, best_v, best_cyc = c, v, min(int((prog + gap) / g), self.capacity() // self.cov_n)
+                    best, best_v, best_cyc = c, v, min(int((prog + eff) / g), self.capacity() // self.cov_n)
             if best is not None:
                 if best["id"] != self.cov_crop:
-                    self.cov_crop, self.cov_prog = best["id"], 0.0
+                    self.cov_crop, self.cov_on, self.cov_off = best["id"], 0.0, 0.0
                 need = max(0, best_cyc * self.cov_n - self.seed_stock)
                 buy = min(need, int(max(self.coins, 0) // best["seed"]))
                 self.pay("seeds", buy * best["seed"], row)
@@ -820,22 +896,25 @@ class Player:
         else:
             self.cov_crop = None
         free = self.sq - self.cov_n - sum(grp[2] * cat[grp[0]]["size"] for grp in self.manual)
-        for world in sorted(self.rare_seeds, reverse=True):  # rare seeds first (best first), on squares that will be ripe in time
+        for world in sorted(self.rare_seeds, reverse=True):  # rare seeds first (best first)
             rc = next((c for c in cat.values() if c["rare"] and c["world"] == world), None)
-            while rc and self.rare_seeds[world] > 0 and free >= 1 and rc["h"] * gs <= gap + 1e-9:
+            while rc and self.rare_seeds[world] > 0 and free >= 1 and self.wall_to_ripe(idx, rc["h"] * gs) is not None:
                 self.rare_seeds[world] -= 1
-                self.manual.append([rc["id"], t, 1])
+                self.manual.append([rc["id"], t, 1, 0.0, 0.0])
                 free -= 1
-        fit = [c for c in common if c["h"] * gs <= gap + 1e-9] or ([min(common, key=lambda c: c["h"])] if common else [])
-        pool = fit + [c for c in big if c["h"] * gs <= gap + 1e-9]
-        if pool and free >= 1:
-            c = max(pool, key=lambda c: c["net"] / c["size"])
-            plants = min(int(free // c["size"]), int(max(self.coins, 0) // c["seed"]))
+        # the crop with the best net per square and wall-clock hour until it is ripe at a visit (it may span several visits)
+        best, best_rate = None, 0.0
+        for c in common + big:
+            w = self.wall_to_ripe(idx, c["h"] * gs)
+            if w and c["net"] / c["size"] / w > best_rate:
+                best, best_rate = c, c["net"] / c["size"] / w
+        if best and free >= 1:
+            plants = min(int(free // best["size"]), int(max(self.coins, 0) // best["seed"]))
             if plants > 0:
-                self.pay("seeds", plants * c["seed"], row)
-                self.manual.append([c["id"], t, plants])
-                self.stat["visit_sq"] += plants * c["size"]
-        self.last_t = t
+                self.pay("seeds", plants * best["seed"], row)
+                self.manual.append([best["id"], t, plants, 0.0, 0.0])
+                self.stat["visit_sq"] += plants * best["size"]
+        self.last_t, self.last_len = t, length
 
     def potential(self, ignore_gardeners=False):
         """Guardrail A: Coins per day (before the multiplier) of the current field if every square is planted and replanted at every
@@ -850,12 +929,11 @@ class Player:
         m = self.mult  # sales are multiplied at sale time, seeds are not: the multiplier counts on this side as on the hour-1 side
         value = lambda c: m * c["sale"] - c["seed"]
         auto = cov * max((24 / (c["h"] * gs) * value(c) for c in gard), default=0.0)
-        per_day = 0.0
-        for _, gap in self.sched:
-            per_day += max((value(c) / c["size"] for c in common if c["h"] * gs <= gap + 1e-9), default=0.0)
-        manual = (self.sq - cov) * per_day / self.arch["period_days"]
+        # online ceiling: the player is present for the whole gap (offline can only be lower)
+        per_day = manual_day_ceiling(self.sched, self.arch["period_days"], [(value(c) / c["size"], c["h"] * gs) for c in common])
+        manual = (self.sq - cov) * per_day
         if F["pens_pay"]:  # --garden both: the grandfathered pens still pay Coins per hour, uncapped by the 24-hour rule
-            auto += sum(self.rate(p) for p in self.pets if p["where"] == "pen") * 24 * m
+            auto += sum(self.rate(p) for p in self.pets if p["where"] == "pen") * 24 * m * FIELD["online_rate"]
         return auto, manual
 
     # ---- money ------------------------------------------------------------------------------------------------
@@ -942,7 +1020,8 @@ class Player:
 
     def day(self, d):
         a = self.arch
-        row = {"repeat": 0.0, "onetime": 0.0, "pen": 0.0, "field": 0.0, "seeds": 0.0, "harv": 0.0, "rare": 0, "blocked": 0}
+        row = {"repeat": 0.0, "onetime": 0.0, "pen": 0.0, "field": 0.0, "seeds": 0.0, "harv": 0.0, "rare": 0, "blocked": 0,
+               "field_on": 0.0, "field_off": 0.0, "pen_on": 0.0, "pen_off": 0.0}
         sold0 = self.sold
         active = d % a["period_days"] == 0
         if active:
@@ -950,10 +1029,13 @@ class Player:
         if self.F["on"]:
             self.renown_pts += FIELD["renown"]["requests_per_day"]
             if active:
-                for start, gap in self.sched:
-                    self.visit(d * 24.0 + start, gap, row)
+                for idx, (start, _gap, _length) in enumerate(self.sched):
+                    self.visit(d * 24.0 + start, idx, row)
         pen_rate_now = sum(self.rate(p) for p in self.pets if p["where"] == "pen")
-        row["pen"] = pen_rate_now * covered_hours_per_day(self.P, a) * self.mult if self.F["pens_pay"] else 0.0
+        if self.F["pens_pay"]:
+            h_on, h_off = pen_hours(self.P, a)
+            row["pen_on"], row["pen_off"] = pen_rate_now * h_on * self.mult, pen_rate_now * h_off * self.mult
+            row["pen"] = row["pen_on"] + row["pen_off"]
         self.coins += row["pen"]
         if active:
             self.shop(d + 1, row)
@@ -1042,6 +1124,15 @@ def guardrails(P, days=60, seeds=6):
                 mean(r["field"] + r["pen"] for r in rows[w]) / max(1.0, mean(r["repeat"] + r["onetime"] + r["pen"] + r["field"] + r["sell"] for r in rows[w]))
                 for rows, _ in runs)
             m["bank"] = mean(rows[-1]["bank"] for rows, _ in runs)
+            # online vs offline: garden income (field + pens) earned during online hours vs offline hours, last 7 days
+            inc_on = mean(mean(r["field_on"] + r["pen_on"] for r in rows[w]) for rows, _ in runs)
+            inc_off = mean(mean(r["field_off"] + r["pen_off"] for r in rows[w]) for rows, _ in runs)
+            on_h = sum(length for _, length in arch["sessions"]) / arch["period_days"]
+            m["on_hours"], m["inc_on"], m["inc_off"] = on_h, inc_on, inc_off
+            m["on_share"] = inc_on / max(1e-9, inc_on + inc_off)
+            m["inc_h_on"], m["inc_h_off"] = inc_on / on_h, inc_off / (24.0 - on_h)
+            m["oo_ratio"] = m["inc_h_on"] / m["inc_h_off"] if m["inc_h_off"] > 1e-9 else math.inf
+            m["real_ratio"] = mean(mean(r["field_net"] for r in rows[w]) / max(1.0, r["hour1"] * r["mult"]) for rows, _ in runs)  # realised net per day / the first obby hour
             out[(arch["name"], pol)] = m
     _G_CACHE[key] = out
     return out
@@ -1273,6 +1364,15 @@ def field_checks(P, days=60, seeds=6):
                     s30 >= FIELD["sink_share"][30] and s60 >= FIELD["sink_share"][60],
                     f"day 30 {s30:.0%}, day 60 {s60:.0%} (worst policy); without the reserved sinks {r30:.0%} / {r60:.0%}; "
                     f"reserved sinks bought {n(resv)}, needed for {FIELD['sink_share'][60]:.0%} by day 60: {n(max(m['res_need60'] for m in ms))}"))
+    need = 1 / FIELD["offline_rate"] if FIELD["offline_rate"] > 0 else math.inf
+    for arch in ARCHETYPES:
+        nm = arch["name"]
+        ms = [G[(nm, pol)] for pol in POLICIES]
+        r = min(m["oo_ratio"] for m in ms)
+        res.append((f"O Online income per hour >= {need:.1f}x offline income per hour, {nm} (online_rate {FIELD['online_rate']}, offline_rate {FIELD['offline_rate']})",
+                    r >= need - 1e-6 and min(m["inc_off"] for m in ms) > 0,
+                    f"garden income earned in online hours {min(m['on_share'] for m in ms):.0%}-{max(m['on_share'] for m in ms):.0%} (online {ms[0]['on_hours']:.1f} h a day); "
+                    f"per hour online {n(min(m['inc_h_on'] for m in ms))} vs offline {n(max(m['inc_h_off'] for m in ms))} = {r:.1f}x"))
     for arch in ARCHETYPES:
         nm = arch["name"]
         sh = [G[(nm, pol)]["garden_share"] for pol in POLICIES]
@@ -1289,7 +1389,8 @@ def cmd_sim(P, days, seeds):
     F = P["field"]
     print(f"DAY-BY-DAY SIMULATION: {days} days, {seeds} seeds per cell (egg rolls differ), pet multiplier ON, Coins after the multiplier")
     print(f"Garden mode: {F['mode']} ({'pens pay Coins per hour' if F['pens_pay'] else 'pens are Field posts, no Coins per hour'}"
-          f"{'; Field squares and crops ON' if F['on'] else ''}); catalogue {F['catalogue']} ({len(F['crops'])} crops), ladder scale {F['scale']}\n")
+          f"{'; Field squares and crops ON' if F['on'] else ''}); catalogue {F['catalogue']} ({len(F['crops'])} crops), ladder scale {F['scale']}")
+    print(f"Passive income: online_rate {FIELD['online_rate']}, offline_rate {FIELD['offline_rate']} (field offline cap {FIELD['offline_cap_h']:g} h, pens {P['offline_cap_h']:g} h)\n")
     print("Assumptions (SIM / MODEL / FIELD blocks in economy.py, all provisional): a new stage takes "
           f"({SIM['learn_base']} + {SIM['learn_per_order']} x stage number) runs x (T_base x {SIM['learn_factor']} + {MODEL['run_overhead_s']:.0f} s) and ends in Gold; farming = Gold runs, greedy;\n"
           "required talents are bought first (saving for them blocks other purchases); stage unlocks are never bought; Golden eggs are not bought;\n"
@@ -1325,6 +1426,10 @@ def cmd_sim(P, days, seeds):
                 tot = {k: sum(s.get(k, 0) for s in last) / len(last) for k in sorted({k for s in last for k in s})}
                 allv = sum(tot.values())
                 print("   sinks to day %d: " % days + ", ".join(f"{k} {n(v)} ({v / allv:.0%})" for k, v in sorted(tot.items(), key=lambda kv: -kv[1]) if v > 0))
+                gm = G[(arch["name"], policy)]
+                print(f"   online vs offline (last 7 days): garden income {n(gm['inc_on'])} online / {n(gm['inc_off'])} offline per day = {gm['on_share']:.0%} online "
+                      f"({gm['on_hours']:.1f} online hours a day); per hour {n(gm['inc_h_on'])} online vs {n(gm['inc_h_off'])} offline = {gm['oo_ratio']:.1f}x; "
+                      f"realised field net / online ceiling's yardstick (first obby hour) {gm['real_ratio']:.2f}x")
                 rare = statistics.mean(sum(r["rare"] for r in rows_) for rows_, _ in runs) / max(1, days) * 7
                 print(f"   rare seeds from the obby: {rare:.1f} a week on average; stage/day-60 pet multiplier {avg('mult', days):.2f}")
             blocked = statistics.mean(sum(r["blocked"] for r in rws) for rws, _ in runs)
@@ -1400,7 +1505,7 @@ def field_report(P):
     for sc in (1.0, 0.5, 0.25, FIELD["scale"], 0.1, 0.05):
         cs = [c for c in make_crops(sc, F["catalogue"]).values() if not c["rare"] and c["size"] == 1]
         val = lambda c: MULT_REF * c["sale"] - c["seed"]
-        per = [sum(max((val(c) for c in cs if c["h"] <= gap + 1e-9), default=0) for _, gap in visit_schedule(a)) / a["period_days"] for a in ARCHETYPES]
+        per = [manual_day_ceiling(visit_schedule(a), a["period_days"], [(val(c), c["h"]) for c in cs]) for a in ARCHETYPES]
         auto = max(24 / c["h"] * val(c) for c in cs)
         if sc == FIELD["scale"]:
             casual_model = per[1]
@@ -1423,10 +1528,16 @@ def main():
     ap.add_argument("--garden", choices=GARDEN_MODES, default="field")
     ap.add_argument("--crops", choices=list(CATALOGUES), default="mvp")
     ap.add_argument("--scale", type=float, default=None)
+    ap.add_argument("--offline-rate", type=float, default=None)
+    ap.add_argument("--offline-cap", type=float, default=None)
     ap.add_argument("--days", type=int, default=60)
     ap.add_argument("--seeds", type=int, default=6)
     args = ap.parse_args()
     P = load()
+    if args.offline_rate is not None:
+        FIELD["offline_rate"] = args.offline_rate
+    if args.offline_cap is not None:
+        FIELD["offline_cap_h"] = args.offline_cap
     build_field(P, args.garden, args.crops, args.scale)
     if args.command == "report":
         cmd_report(P)
