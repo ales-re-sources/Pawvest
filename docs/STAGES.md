@@ -796,6 +796,11 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
 - **Fall reset (user, 2026-10-24: with Quick Respawn 2 the descent reset the player to `905` around `D4`):** the descent goes 65 studs below `905`, past the
   default 30-stud `FallResetDepth`; the Stage 11 folder now carries `FallResetDepth = 75` (Studio-only attribute; the reset stays clamped above the sea for the low
   checkpoints). Checked with a bot with Quick Respawn 2: depth 30 resets on the jump to `D4`, depth 75 lands `D4` and the finish island.
+- **Door countdown made visible (user, 2026-10-24: on the Ice Rink and the Clocktower's two doors the countdown went unnoticed; you always run past the button):**
+  the doorway countdown is now big (0.6 x the door's width, 5-10 studs) at the door's middle instead of over its top, shows the seconds rounded up (6 ... 1) with
+  a bar under it that shrinks green -> orange (half time) -> red (last 2 s), and is drawn through walls (AlwaysOnTop) so it shows round the Clocktower's corners;
+  the last 3 seconds tick (Studio-only `ReplicatedStorage.DoorTickSound` = the metronome tick, faster each second; silent without it). Checked on the Ice Rink door:
+  6 -> 1 with the bar 1.00 -> 0.16, then hidden, ticks at 3 / 2 / 1. *Not checked:* the look (the capture timed out), the Clocktower doors in play.
 - **Kit ice tuning** (defaults Accel 14, Brake 5): from rest it reaches 15.5 studs/s in 1 s and coasts 21 studs after letting go.
 - **Checks (Studio playtest 2026-10-24, bots at baseline Walk Speed 16 / Jump Power 50 unless noted; developer profile snapshot `profile_<id>_s81` restored, the
   Stage 11 / 12 boards removed):** every Triple ledge of both stages (also from the lift's top and from ice), the flat 17 gap, the ice hop chain (one timing made all

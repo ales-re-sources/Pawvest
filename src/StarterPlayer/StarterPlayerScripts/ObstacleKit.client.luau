@@ -37,7 +37,8 @@
 --             (default 0.4) and back when the time is up; OpenTurn (degrees, default 0) also turns it about the vertical
 --             axis through its centre (OpenDistance then defaults to 0): the Clocktower's turning gargoyle, its other parts
 --             welded to the tagged hit box; the button glows while it is open and a countdown of the seconds
---             left floats over the button and over the door's closed position. Latch = true on a button (the Labyrinth's
+--             left floats over the button and, big with a shrinking bar and visible through walls, in the doorway at the
+--             door's middle (S8.1 tuning: the one over the door's top went unnoticed); the last 3 seconds tick. Latch = true on a button (the Labyrinth's
 --             exit switch) keeps its group open for the rest of the run instead, with no countdown and also after a death;
 --             the start or end of a run closes it again.
 --   KitIce    ice floor (S8.1, the Ice Rink): while the character stands on it, the kit drives its horizontal velocity: toward
@@ -58,6 +59,7 @@ local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
 
 local KitMath = require(ReplicatedStorage:WaitForChild("KitMath"))
 
@@ -72,6 +74,7 @@ local AIR_CARRY = 0.5 -- seconds a jump off a mover keeps following it (attribut
 local OVERLAP_MARGIN = 8 -- studs beyond a part's own radius within which the overlap tests run
 local TOUCH_PAD = 0.1 -- studs added to a hazard's size for the touch test (about what a physical contact adds; all kit hazards are tested as boxes)
 local WARN_COLOR = Color3.fromRGB(255, 170, 60)
+local TICK_SECONDS = 3 -- an open door ticks in its last seconds (Studio-only ReplicatedStorage.DoorTickSound; silent without it)
 local BEAM_TRANSPARENCY = { off = 1, warning = 0.8, on = 0.15 }
 local NEAR_DISTANCE = 200 -- studs (beyond a mover's own radius) from the character within which movers update every frame
 local FAR_EVERY = 4 -- farther movers (other stages) update every FAR_EVERY-th frame, still moving but carrying nobody
@@ -88,6 +91,8 @@ local colorState = {} -- [group] = "Red" / "Blue"
 local buttons = {} -- [part] = { color }
 local doors = {} -- [part] = { transparency, look }
 local doorOpenUntil = {} -- [group] = os.clock() when that group's doors close again
+local doorOpenTime = {} -- [group] = the Time its button gave (the doorway bar's full length)
+local lastTick = 0 -- whole seconds left on the last frame (door ticks)
 local latched = {} -- [group] = true: a Latch button of that group was pressed in this run
 local ices = {} -- [part] = true
 local BUTTON_ON_COLOR = Color3.fromRGB(90, 230, 120)
@@ -203,24 +208,44 @@ local function addColorPlate(part: Instance)
 	end
 end
 
--- A floating countdown (local only) over `adornee`, hidden until a door group is open.
-local function countdownLabel(adornee: BasePart, offset: number): TextLabel
+-- A floating countdown (local only) over `adornee`, hidden until a door group is open. `width` studs wide (default 4);
+-- `big` (the doorway's) adds a bar that shrinks with the time left and stays visible through walls, so a player who ran
+-- past the button and round a corner still sees how long the door stays open.
+local function countdownLabel(adornee: BasePart, offset: number, width: number?, big: boolean?): TextLabel
+	local w = width or 4
 	local gui = Instance.new("BillboardGui")
 	gui.Name = "KitCountdown"
 	gui.Adornee = adornee
-	gui.Size = UDim2.fromScale(4, 3)
+	gui.Size = UDim2.fromScale(w, w * 0.75)
 	gui.StudsOffsetWorldSpace = Vector3.new(0, offset, 0)
 	gui.LightInfluence = 0
+	gui.AlwaysOnTop = big == true
 	gui.Enabled = false
 	gui.ResetOnSpawn = false -- PlayerGui drops resetting guis on every respawn; the kit keeps its labels for good
 	local label = Instance.new("TextLabel")
-	label.Size = UDim2.fromScale(1, 1)
+	label.Size = UDim2.fromScale(1, if big then 0.8 else 1)
 	label.BackgroundTransparency = 1
 	label.Font = Enum.Font.GothamBlack
 	label.TextScaled = true
 	label.TextColor3 = Color3.new(1, 1, 1)
 	label.TextStrokeTransparency = 0
 	label.Parent = gui
+	if big then
+		local track = Instance.new("Frame")
+		track.Name = "Track"
+		track.AnchorPoint = Vector2.new(0.5, 1)
+		track.Position = UDim2.fromScale(0.5, 1)
+		track.Size = UDim2.fromScale(0.9, 0.12)
+		track.BackgroundColor3 = Color3.new(0, 0, 0)
+		track.BackgroundTransparency = 0.4
+		track.BorderSizePixel = 0
+		track.Parent = gui
+		local bar = Instance.new("Frame")
+		bar.Name = "Bar"
+		bar.Size = UDim2.fromScale(1, 1)
+		bar.BorderSizePixel = 0
+		bar.Parent = track
+	end
 	gui.Parent = player:WaitForChild("PlayerGui")
 	return label
 end
@@ -244,7 +269,9 @@ local function addDoor(part: Instance)
 		anchor.Size = Vector3.one
 		anchor.CFrame = part.CFrame
 		anchor.Parent = workspace.CurrentCamera
-		doors[part] = { base = part.CFrame, shown = 0, label = countdownLabel(anchor, part.Size.Y / 2 + 2) }
+		-- in the doorway at the door's middle, about as wide as the doorway (its widest horizontal side)
+		local width = math.clamp(math.max(part.Size.X, part.Size.Z) * 0.6, 5, 10)
+		doors[part] = { base = part.CFrame, shown = 0, label = countdownLabel(anchor, 0, width, true) }
 	end
 end
 
@@ -569,22 +596,51 @@ RunService.PreSimulation:Connect(function(dt: number)
 		if attr(standing, "Latch", false) then
 			latched[attr(standing, "Group", "A")] = true
 		else
-			doorOpenUntil[attr(standing, "Group", "A")] = os.clock() + attr(standing, "Time", 4)
+			local group = attr(standing, "Group", "A")
+			doorOpenUntil[group] = os.clock() + attr(standing, "Time", 4)
+			doorOpenTime[group] = attr(standing, "Time", 4)
 		end
 	end
 	local clockNow = os.clock()
-	-- the countdown shows whole seconds left (5, 4, … 1, 0 in the last second), red in the last two
-	local function showCountdown(label: TextLabel, left: number)
+	-- the last TICK_SECONDS whole seconds of an open group tick (higher toward the end), once per second for all groups
+	local tickNow = 0
+	for group, untilTime in doorOpenUntil do
+		local left = untilTime - clockNow
+		if left > 0 then
+			tickNow = math.max(tickNow, math.ceil(left))
+		end
+	end
+	if tickNow ~= lastTick then
+		if tickNow > 0 and tickNow <= TICK_SECONDS and lastTick ~= 0 then
+			local sound = ReplicatedStorage:FindFirstChild("DoorTickSound")
+			if sound and sound:IsA("Sound") then
+				sound.PlaybackSpeed = 1 + (TICK_SECONDS - tickNow) * 0.25
+				SoundService:PlayLocalSound(sound)
+			end
+		end
+		lastTick = tickNow
+	end
+	-- the countdown shows the seconds left rounded up (6, 5, … 1), red in the last two; the doorway's bar shrinks with it
+	local function showCountdown(label: TextLabel, left: number, total: number?)
 		local gui = label.Parent :: BillboardGui?
 		if not gui then
 			return
 		end
 		gui.Enabled = left > 0
 		if left > 0 then
-			local text = tostring(math.floor(left))
+			local text = tostring(math.ceil(left))
+			local urgent = left <= 2
 			if label.Text ~= text then
 				label.Text = text
-				label.TextColor3 = if left < 2 then Color3.fromRGB(255, 90, 70) else Color3.new(1, 1, 1)
+				label.TextColor3 = if urgent then Color3.fromRGB(255, 90, 70) else Color3.new(1, 1, 1)
+			end
+			local track = gui:FindFirstChild("Track")
+			local bar = track and track:FindFirstChild("Bar") :: Frame?
+			if bar then
+				bar.Size = UDim2.fromScale(math.clamp(left / math.max(total or left, 1e-3), 0, 1), 1)
+				bar.BackgroundColor3 = if urgent then Color3.fromRGB(255, 90, 70)
+					elseif left <= (total or left) / 2 then WARN_COLOR
+					else Color3.fromRGB(110, 220, 120)
 			end
 		end
 	end
@@ -614,7 +670,7 @@ RunService.PreSimulation:Connect(function(dt: number)
 				+ data.base.Position
 				+ axis.Unit * distance * eased
 		end
-		showCountdown(data.label, if latched[group] then 0 else left)
+		showCountdown(data.label, if latched[group] then 0 else left, doorOpenTime[group])
 	end
 
 	-- colour plates: solid while their group shows their colour, a ghost otherwise
