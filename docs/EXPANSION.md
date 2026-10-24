@@ -38,6 +38,9 @@ touch movement or stage times.
 | Unifying rule | One pet, one post. Existing pens become posts |
 | Long goals | Island restoration bundles, estate tiers + cottage, pet mastery, garden score — all four |
 | Decoration | Free placement **outside only**, per-tier limit, validated on the server; the cottage is fixed |
+| Field (2026-10-24) | One field of squares the player plants freely, instead of fixed beds (§5 "bed" reads as "square"); capacity grows by field expansion tiers; max size limited by the 40 × 40 plot, measured in Studio during E0 |
+| Garden vs obby (2026-10-24) | **24-hour rule:** one active obby hour (mini-games count) ≈ 24 hours of fully automated planting at the same progress; checked by the E0 model (ROADMAP → E0) |
+| Prices (2026-10-24) | E0 also re-prices all sinks (talents, unlocks, slots, eggs, incubators, posts, food, field expansion and upgrades); applied in E0b after approval |
 
 ## 3. One pet, one post
 | Post | What the pet does | Notes |

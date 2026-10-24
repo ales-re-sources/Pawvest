@@ -56,6 +56,7 @@ Rules:
 | L2 | Localization: all client panels + config display names — done 2026-10-24 (Czech texts await the user's review) | ✔ | ✔ | – |
 | L3 | Localization: server-written + Studio-authored texts — texts done 2026-10-24 (Czech awaits review); font check and per-panel Czech overflow pass still open | ✔ | ✔ (texts) | – |
 | M6a | First live test + World 1 balancing | – | – | – |
+| E0 | Economy model for the pet-garden expansion (scope written 2026-10-24, no code; [EXPANSION.md](EXPANSION.md) §11) | – | – | – |
 | S5 | Worlds hub — done 2026-10-22: gates for Worlds 2-4 (coming soon, admins only), World 2 courtyard, signs, per-world stars boards (user's visual check) | ✔ | ✔ | – |
 | S6 | World 2 (stages 6–10) — S6.1 Double Up + Seesaw built and Studio-checked 2026-10-22 (awaits the user's visual check), S6.2 / S6.3 not started | ✔ (S6.1) | ✔ (S6.1) | – |
 | S7 | Talents: Triple Jump + Dash (+ World 3 courtyard) — done 2026-10-24: talents, Q / gamepad / touch button, reach table, World 3 courtyard east of the hub; closed 2026-10-24 (the visual and real-device touch checks were waived by the user; Live-validated comes with the next publish) | ✔ | ✔ | – |
@@ -221,7 +222,115 @@ Each milestone gets its scope when it starts (workflow step 2).
 
 Pet-garden simulator (E0–E8, direction decided 2026-10-24, draft, nothing started): [EXPANSION.md](EXPANSION.md) §10–11 (game name **Pawvest**; the MVP
 cut is E1 + E2 + hatch-time traits + first landmark and request board + basic ledger, then updates U1–U5). E0 (economy
-model) comes first; E1 (beds and crops) is the first build milestone. They get their scope when they start.
+model) comes first (scope below); E1 (beds and crops) is the first build milestone. They get their scope when they start.
+
+### E0 — Economy model (scope, 2026-10-24; draft until the open decisions below are confirmed)
+**Goal.** One reproducible model of the whole Coin economy (faucets, sinks, time) that fixes the numbers E1 needs and proves the
+GDD §6 constraints and the EXPANSION §5 guardrails still hold with crops added, **and re-prices every Coin sink** (talents, stage unlocks,
+pet slots, eggs, incubators, posts, food, field expansion and upgrades, stations) so each is bought at a deliberate point in the
+player's timeline. No game code changes in E0 itself; the output is numbers and docs, and the price changes are applied afterwards (E0b).
+
+**Form.** `tools/economy.py` (Python, stdlib only, like `tools/loc.py`): `python tools/economy.py report` prints the tables,
+`check` runs the acceptance checks below and exits non-zero on a failure, `csv` writes the timelines for Excel. Parameters for
+things that already exist (medal base, factor formula, repeat reward, talent / pet / egg / pen / incubator / food prices, rarity
+bonus, pen rates) are **read from the Luau configs by regex where the table is flat, otherwise copied into one `PARAMS` block with
+a drift check** that fails when a config value differs. New numbers (crops, seeds, Renown gates, request rewards, landmark
+bundles) live only in the model until E1 copies them into `CropConfig`.
+
+**Inputs (existing, GDD §5-§7).** Medals and first-finish payout per stage (21 stages planned), repeat reward with the daily decay,
+challenge coins (~160 planned), talent tree (47 300), stage unlocks (80 700), pets (eggs, slots 7 000, rarity bonus, +50 % cap,
+sell values, levels / XP, food prices), pens 32 500, incubators 17 000, pen production (rates by rarity, 8 h offline cap).
+**Inputs (new, EXPANSION §5-§9).** The crop ladder (tiers, grow time, sale price, seed cost 20-30 %), the **field** (a grid of squares the
+player plants freely, see below), field expansion and upgrade prices, Gardener auto-replant coverage (squares per Gardener pet and the
+number of Gardener posts), seed stock, Renown gates, station multiplier (1.5-2×), request board (3 a day), the first landmark (Kitchen) bundle.
+
+**Field model (decided 2026-10-24, replaces "6 beds").** The garden has one **field** made of squares; the player puts any unlocked crop
+on any square. Capacity comes from the number of squares (expansion tiers of the field, bought with Coins and Renown), not from a fixed
+bed list, and the crop catalogue size becomes a content question rather than a structural one: the model takes any crop list. Parameters:
+squares per expansion tier and their prices, the upgrades (for example faster growth, a barn, more Gardener coverage), optional crops
+that cover 2 × 2 squares (giant melon, trophy pumpkin). The **upper bound is physical**: a plot is 40 × 40 studs and also holds pens
+(posts) and 3 incubators, so the square size and the free area must be measured in Studio (one `execute_luau` on `Workspace.Garden.Plots.Plot_01`)
+before the model fixes the maximum number of squares. E0 outputs the minimum catalogue that makes the ladder work (at least one crop per tier
+plus a rare one per world) and a recommended MVP size; six stays a proposal, not a constraint.
+
+**Player archetypes** (each simulated day by day, 60 days): *Obby main* (2 h obby, 3 garden visits), *Casual* (45 min, 2 visits),
+*Garden main* (15 min obby, 5 visits, long offline gaps), *Binge* (one 6 h day, then nothing for a week). Each has a visit
+schedule, an obby minutes budget by stage reached, and a purchase policy (talent-first or pets-first; two variants).
+
+**Questions the model must answer (each becomes a number or a rule in EXPANSION / GDD)**
+1. **Baseline.** What does today's pen economy pay per archetype and per day? The GDD says 6 mixed pets at Lv 5 ≈ 197 Coins/h and a
+   strong set ≈ 5 000 per 8 h offline, which is above the E1 target (a casual 4-bed garden ≈ 1 100 a day). E1 would then be a nerf for live
+   players: decide the migration (grandfather the pen income to a cut-off date, convert to a one-time payout, or retune the crops up).
+2. **Crop ladder.** Sale price, seed cost, grow time and gate per tier so that net Coins per square-hour land on ≈ 20 / 45 / 90 / 150 (rare)
+   and the guardrails hold (the per-bed numbers of EXPANSION §5 are read as per square until the model replaces them).
+3. **Field and Gardener capacity.** Squares per expansion tier, their prices, the Gardener coverage and the seed stock needed, so that the
+   structural cap (not the 8 h rule) limits output. Reference: a fully replanted square cycles 24 h a day, 6 squares × 90 = ~13 000 a day against
+   the 24-hour rule below, so the cap has to come from square count, seed cost and stock, not from grow time alone.
+4. **Sink share.** How much of each faucet the sinks absorb (seeds, beds, stations, barn, decor, landmark bundles, talents,
+   unlocks) at days 1, 7, 30, 60; the time to buy everything per archetype, so no archetype hits "nothing left to buy" before day 60
+   and none is stuck with Coins but no sink.
+5. **Obby vs garden balance.** Hourly and daily Coins by source per archetype and per world reached; the share from the garden
+   must stay a majority only for *Garden main*, never for *Obby main*.
+6. **Pet bonus interaction.** The +50 % multiplier applies to crop sales at sale time: verify it does not push the best archetype
+   beyond the guardrail (the bonus multiplies the garden too).
+7. **Rare crops and requests.** How many rare crops the obby drip supplies per week (daily first-run seed, world signature crops) against
+   what the first landmark and the request board consume; sets the bundle sizes and the request rewards.
+8. **Talent / unlock timing under the new faucet.** The §6 "required set share ≤ 65 %" table recomputed with the garden income and
+   the new sinks: crops must not let a player buy Dash before World 2, nor starve the no-grind path.
+9. **Repricing.** For every sink (talents, stage unlocks, pet slots, Basic / Golden egg, incubators, posts, food, field expansion tiers,
+   field upgrades, stations, landmark Coins parts) the day each archetype can first afford it. The model proposes a price per sink that
+   lands that day inside a target band (bands: open decision 3), shown as old price, proposed price, change %, and the archetype days.
+   Talent prices must keep the §6 required-set table (≤ 65 % share) and the Gold sets of World 1.
+
+**Outputs**
+- `tools/economy.py` + `tools/economy_README.md` (how to change a number and re-run) — or a section in this file if it stays short.
+- `docs/ECONOMY.md`: the chosen parameters, the tables from `report`, the archetype timelines, the decisions taken and why.
+- **A price proposal table** (old price → new price per sink, with the time-to-afford it produces). It is only a proposal until the user
+  approves it; applying it is **E0b**: GDD §6 / §7 first, then the config values (`TalentConfig`, `StageConfig.unlockPrice`, `PetConfig`,
+  `GardenConfig`), then `loc.py` if a price appears in a text, then a Studio check that the shops show the new prices. Existing buyers are
+  not refunded or charged again (a lowered price stays in their favour, a raised one only affects what is not yet bought).
+- EXPANSION §5 / §9 and GDD §6-§7.6 updated with the final ladder, prices and guardrail numbers (GDD first, per the workflow rule).
+- A list of E1 inputs ready to copy into `CropConfig` (crops, seed prices, bed prices, Renown thresholds, request rewards) and the
+  migration decision for pen income.
+
+**Boundary.** In: the numbers, the model, docs, the price proposal. Out of E0 (in E0b once approved): any Luau change and any Studio change. Out entirely: telemetry events (E1 extends TELEMETRY.md), monetization
+(M7), trading (P3), critters / raids (the model leaves a placeholder "loss rate" parameter for U1), estate tiers and decor prices (U4; only a
+reserved sink share). The model is not a simulator of the game: no stochastic eggs beyond expected values, no player skill model beyond
+the archetype's minutes and Gold-run share.
+
+**Acceptance checks (hard; `python tools/economy.py check` prints each and fails on any miss)**
+1. Drift: every existing-config parameter equals the model's value; changing `PenPrices[2]` in the config makes the check fail.
+2. Reproduction: the model returns the GDD figures it already states — one-time medal total of the six built stages = 9 450, all 21 stages =
+   88 200, first-finish total 6 300, planned talent tree 47 300, Gold-run sum of a day on Stage 2 = 668, 6 mixed Lv 5 pens = 197 ± 1 Coins/h.
+3. GDD §6 required-set table: every share ≤ 65 % with garden income **off**, and the recomputed table with it **on** is printed beside it.
+4. Guardrail A, **the 24-hour rule** (decided 2026-10-24): one active obby hour (mini-games count) ≈ 24 hours of fully automated planting.
+   For every archetype at every progress point the model computes the Coins of a fully developed, fully replanted field over 24 h and compares
+   it with that player's first obby hour of a fresh day (2 230 at the time of this scope, scales with the stages reached, includes the pet
+   bonus on both sides). It must stay ≤ 1.0 ×; the report prints the ratio, the target is 0.8-1.0 × so the garden is a real income, not a decoration.
+5. Guardrail B: a field with no Gardener harvests at most once per square per visit (nothing replants itself), so a visit-less day pays
+   strictly less than a Gardener-run day.
+6. Guardrail C: the sinks absorb at least the fixed share of the faucet decided below, measured over days 1-60 per archetype.
+7. No dead end: every archetype can afford the next required talent before the stage that needs it, without a purchase from the garden.
+8. Rare crops: the weekly rare-crop supply of the obby drip ≥ the first landmark's need within 14 days for *Casual*, and the supply is
+   zero for a player who never runs an obby.
+10. Repricing: for every sink the proposed price puts the first affordable day of each archetype inside its band; no price changes by more than
+    ×2 or ÷2 from today's without being listed as "large change" for the user to confirm.
+11. Sensitivity: a table of ±20 % on each new parameter and which acceptance check flips; any parameter whose ±20 % breaks a guardrail is
+   flagged for telemetry in M6a.
+
+**Done when** `check` is green, `docs/ECONOMY.md` and the GDD / EXPANSION edits are committed, and the user has confirmed the ladder, the
+price proposal and the pen-income migration. E0b (applying the prices) is a separate small milestone. Status: scope only (not started).
+
+**Decided:** form = script (2026-10-24); the garden is one free-form field of squares (not fixed beds); guardrail = the 24-hour rule (check 4), measured against the **first obby hour of a fresh day** (about 2 230; the later steady hour is only reported).
+
+**Open decisions (confirm before starting)**
+1. *Sink share:* the fixed share the sinks must absorb (proposal: 60 % of the faucet by day 30, 80 % of the cumulative faucet by day 60).
+2. *Time-to-afford bands* for repricing (proposal for the Casual archetype: first extra pet slot / first field expansion on day 1-2, first
+   incubator and Run Speed 3 by day 3-5, Double Jump with the Stage 2 medals, field expansion tiers about one a week, the last talents and
+   unlocks after the last stage of their world, last field tier by day 60).
+3. *Live players:* how many exist (probably only the developer and test accounts). If nobody has live pen income the migration collapses to
+   "replace pens"; otherwise grandfather.
+4. *Square size and maximum field:* measured in Studio before the model fixes it (see Field model).
 
 ### S8 — World 3 (design: STAGES §7.11 for S8.1)
 - **S8.1 outputs:** `Workspace.World3.Stage11` (Triple Peaks: Triple ledges, a lift, a crusher ridge) and `Stage12` (Ice Rink: ice, crosswind, a pressure door,
