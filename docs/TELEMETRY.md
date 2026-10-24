@@ -124,7 +124,7 @@ run). Times and counts never go into custom fields (cardinality); they are event
 - **Kill path:** relative to the stage folder, 2 levels (`Beams/Beam_4`, `Part_01`, `11/level 11`); outside every stage,
   relative to the top-level Workspace folder, whose name is then the stage field (`KeyArena`).
 - The kill-script variants (16 + 8 copies + `DebugBaseplate`) get one line each that marks the character; edit them as
-  content changes on disk (never move or rename the folders), with the usual copy discipline (AGENTS.md → Reusable
+  content changes on disk (never move or rename the folders), with the usual copy discipline (docs/LAYOUT.md → Reusable
   script variants) and the `ServerStorage.StageKit` copies if any.
 
 ## Design check (2026-10-23)

@@ -353,6 +353,7 @@ def cmd_check(_args) -> int:
     rows = read_csv()
     errors: list[str] = []
     warnings: list[str] = []
+    waiting = {lang: 0 for lang in TRANSLATIONS}
     entries = collect(rows, errors)
 
     for base, entry in entries.items():
@@ -378,7 +379,7 @@ def cmd_check(_args) -> int:
                 if tags(text) != tags(reference):
                     errors.append(f"{label}: {lang} rich-text tags differ from English")
             if any(row[f"{lang}_status"] == "new" for row in entry.rows):
-                warnings.append(f"{base}: {lang} waiting for review")
+                waiting[lang] += 1
 
     for row in rows:
         for col in [SOURCE] + TRANSLATIONS:
@@ -406,6 +407,10 @@ def cmd_check(_args) -> int:
     for base in entries:
         if base not in used_literals and not any(base.startswith(p) for p in prefixes):
             warnings.append(f"{base}: not used by any code")
+    # one line per language, not per key: the list itself is `loc.py review`
+    for lang, count in waiting.items():
+        if count:
+            warnings.append(f"{count} {lang} texts waiting for review (python tools/loc.py review --lang {lang})")
 
     for line in errors:
         print("ERROR  " + line)
