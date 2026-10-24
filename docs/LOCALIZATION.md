@@ -1,4 +1,4 @@
-# Oby sandbox — Localization (design)
+# Pawvest — Localization (design)
 
 Status: design agreed 2026-10-23; L1 implemented and Studio-validated 2026-10-23 (see "Design check (L1)" below); L1.1
 (strings workflow: CSV source, `tools/loc.py`, pseudo-language) 2026-10-24, see "Strings workflow". The Czech texts await

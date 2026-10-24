@@ -1,4 +1,4 @@
-# Oby sandbox — Stage expansion plan (≈ 20 stages)
+# Pawvest — Stage expansion plan (≈ 20 stages)
 
 Status: **agreed plan** (2026-10-21); nothing is built yet. Decided with the user: today's Stage 3 becomes the finale of
 World 1 (slot 5); stages are grouped in **worlds of 5**; four **new talents** (Triple Jump, Dash, Glide, Wall Jump) plus the

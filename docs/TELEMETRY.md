@@ -1,4 +1,4 @@
-# Oby sandbox — Telemetry (design)
+# Pawvest — Telemetry (design)
 
 Status: design agreed 2026-10-23; design check against the API limits done 2026-10-23 (see "Design check" below), T1a and T1b implemented and Studio-validated (2026-10-23). Milestones **T1a** (core) and **T1b** (skills) in [ROADMAP.md](ROADMAP.md).
 

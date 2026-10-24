@@ -1,9 +1,9 @@
-# Oby sandbox — agent guide
+# Pawvest — agent guide
 
-Roblox obby (obstacle course): a central hub island with portals to timed stages, checkpoints,
+Roblox obby (obstacle course) growing into a pet-garden game: a central hub island with portals to timed stages, checkpoints,
 per-stage Top-10 leaderboards, collectible coins and a small admin panel.
 
-- Place: **"Oby sandbox"**, placeId `73033440513091` (pinned in `Pawvest.project.json` → `placeIds`; the game was re-uploaded to another account on 2026-10-24, the old place `83181838162651` is dead and its DataStores did not move).
+- Place: **"Pawvest"** (formerly "Oby sandbox"), placeId `73033440513091` (pinned in `Pawvest.project.json` → `placeIds`; the game was re-uploaded to another account on 2026-10-24, the old place `83181838162651` is dead and its DataStores did not move).
 - Code is synced to this repo with **Argon** (Rojo-compatible); the **scene lives only in the place file**.
 - Language: Luau, legacy run context (`.server.luau` = Script, `.client.luau` = LocalScript, `.luau` = ModuleScript).
 
@@ -15,7 +15,7 @@ per-stage Top-10 leaderboards, collectible coins and a small admin panel.
 - [docs/STYLE_PREVIEW.md](docs/STYLE_PREVIEW.md) — parked voxel / pixel-art style previews (Studio-only `ServerStorage.StylePreview`), decision pending.
 - [docs/TELEMETRY.md](docs/TELEMETRY.md) — telemetry design (T1a / T1b): AnalyticsService events for run funnels, fails per segment / cause, quits and returns, skills; how to read them on the Creator Dashboard. T1a (core) and T1b (skills) implemented.
 - [docs/LOCALIZATION.md](docs/LOCALIZATION.md) — localization design (L1–L4): English + Czech, `Locale.T`, string tables, `LocKey` for server texts, language row in Settings. L1 (infrastructure + HUD) implemented; L2 (client panels) and L3 (server + Studio texts) implemented.
-- [docs/EXPANSION.md](docs/EXPANSION.md) — **Pawvest** (the game's official name since 2026-10-24; "Oby sandbox" is the working / place name): pet-garden simulator direction (E1–E8): posts, pet traits and careers, crop economy, critter raids, restoration bundles, estate; MVP cut and update plan; draft, nothing built.
+- [docs/EXPANSION.md](docs/EXPANSION.md) — **Pawvest** (the game's official name since 2026-10-24; formerly "Oby sandbox"): pet-garden simulator direction (E1–E8): posts, pet traits and careers, crop economy, critter raids, restoration bundles, estate; MVP cut and update plan; draft, nothing built.
 - [docs/STAGES.md](docs/STAGES.md) — stage expansion to ≈ 20 stages: obstacle component catalogue, combination patterns, difficulty curve, special / bonus stages, talent gating, worlds / hub layout, proposed S milestones.
 
 Work milestone by milestone per ROADMAP (design check → implement → Studio validation → status update → commit);
@@ -175,10 +175,7 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
 - Argon does not turn an existing plain Studio instance into a synced folder when a script file is added under it
   (it made a second empty `HomePanel`). Renaming such a folder on disk replaces the Studio instance with a bare Frame (styled
   children lost, rebuilt by hand). After adding/renaming script containers, check Studio for duplicates / lost children.
-- **Moving a script container on disk recreates its Studio instance, drops its Studio-only children and also deletes a copy of the scripted part that was stashed elsewhere in Studio** (Argon tracks the instance, not the path): stash only Studio-only parts (they survive) and note the scripted parts' properties first.
-- **Moving a script container on disk recreates its Studio instance and drops its Studio-only children** (S4.0: `git mv` of
-  `TeleportToStage1..3` into `World1/` deleted their `Arch` / `Portal`; rebuilt from the Tutorial portal). Reparent in Studio,
-  keep a copy of the Studio-only children, and rebuild after the disk move.
+- **Moving a script container on disk recreates its Studio instance, drops its Studio-only children and also deletes a copy of the scripted part that was stashed elsewhere in Studio** (Argon tracks the instance, not the path): stash only Studio-only parts (they survive) and note the scripted parts' properties first. Example (S4.0): `git mv` of `TeleportToStage1..3` into `World1/` deleted their `Arch` / `Portal` (rebuilt from the Tutorial portal). Reparent in Studio instead, keep a copy of the Studio-only children, and rebuild after any disk move.
 - `Workspace/World1/Stage5/level.2` is a Model literally named `level.2` (dot in the name). Its checkpoint `level.2/26` (the plate between the four jump plates of `level.1` and the wrap-around floor, 11 studs from the last plate) was renamed from `21` on disk in S1.1; Argon recreated it as a default part at the origin and the 23-stud gap made Stage 5 impossible until it was rebuilt on 2026-10-22 (plate 16 x 1 x 12 at z 80.1, the Core / Beam copied from `Stage5/21`). Never rename a checkpoint folder on disk without redoing its Studio parts.
 - Decorations (H1) are clones from the Studio-only library `ServerStorage.DecorKit` (the "Stud pack V1" models: Tree1,
   Tree2, Flowers, Grass1/2, Rock, Bush, Wall, Shop, Leaderboard frame used for signs, StudPortal = template of the hub portal arches). Their stud textures are

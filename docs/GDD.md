@@ -1,4 +1,4 @@
-# Oby sandbox — Game Design Document
+# Pawvest — Game Design Document
 
 Status: **draft**. All numbers are placeholders until `T_base` is measured in the M6 balancing pass
 (see [ROADMAP.md](ROADMAP.md)). This document says *what* the game is; the roadmap says *how and when* it is built.
