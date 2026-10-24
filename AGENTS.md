@@ -134,8 +134,8 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
 ## Localization rules (L1 / L1.1, docs/LOCALIZATION.md → Strings workflow)
 - Never set player-visible text as a literal: use `Locale.T(key)` on the client or `Locale.SetKey(label, key, args)` from
   the server (`Locale.SetText` only for texts without words: times, star lines). Names of stages, worlds, medals, talents
-  and eggs go through `Locale.StageName` etc., never `displayName` / `name` directly. (L2 / L3 convert what is still
-  English: the other panels, server-written signs and boards, Studio-authored labels.)
+  and eggs go through `Locale.StageName` etc., never `displayName` / `name` directly. A Studio-authored label gets the tag `Loc` + attribute `LocKey` (+ `LocArgs` JSON) in the place file;
+  its script must not write the same label's `Text` afterwards.
 - Strings live only in `localization/strings.csv` (key, context hint, `en`, `cs`, `cs_status`, `cs_en_hash`): a new or
   changed string gets its row with a useful context (where it shows, what each `{placeholder}` holds, Czech grammar
   notes), English and Czech, `cs_status` = `new`. Never edit `src/ReplicatedStorage/Strings/*.luau` (generated).

@@ -92,6 +92,16 @@ Against the code, the design holds with these decisions:
 - **Server-written texts** in the garden (pen / incubator billboards, plot signs) and the boards stay for L3; the garden
   pen pet label built on the server by `PetLook.LabelText` is English there until L3.
 
+## L3 notes (2026-10-24)
+- Server texts use `Locale.SetKey` / `SetText`: board titles (`board.top10`, `board.worldStars`, `board.hubStars`), gate signs
+  (`GateSign` -> `stage.name.<key>`), plot sign (`garden.sign.plotFree`; an owner's name is a literal), pen / incubator
+  billboards (`garden.sign.pen.*`, `garden.sign.incubator.*`; an incubating egg's label is written by `IncubatorClient`).
+- `PetLook.Apply`'s label takes `locKey` / `locArgs` (pen pets are built on the server); `PetLook.TierStars` is the badge.
+  A key argument may be `{ decimal = "4.5" }`: shown with the viewer's decimal mark.
+- Studio-authored signs (plot numbers, food stand, hub / garden signs, portals, START / Finish / EXIT, Welcome) carry the tag
+  `Loc` and attribute `LocKey` set through the MCP (not in files, so `loc.py check` notes `sign.*` as unused). The Stage 9
+  maze exit door label and the `KitLab` / Admin panel texts stay English.
+
 ## Strings workflow (L1.1, 2026-10-24)
 **Source:** `localization/strings.csv`, the one table people edit: `key`, `context` (where the text appears, what goes
 into each `{placeholder}`, grammar notes such as "feminine in Czech"), `en`, and per translation `<lang>` /
