@@ -42,7 +42,7 @@ Rules:
 | M5 | Leaderboards + hub navigation | ✔ | ✔ | – |
 | P1 | Pets: data, panel, followers, XP | ✔ | ✔ | – |
 | P1e | Pet growth visuals | ✔ | ✔ | – |
-| P1g | Pet stud restyle (Studio-only models) — Fox, Cat, Dog, Bunny, Owl and Panda done 2026-10-25 (user picked the looks), eyes grow at half the body's rate (all kinds); Dragon, Phoenix not started | ✔ (Fox, Cat, Dog, Bunny, Owl, Panda) | – | – |
+| P1g | Pet stud restyle (Studio-only models) — Fox, Cat, Dog, Bunny, Owl, Panda and Dragon done 2026-10-25 (user picked the looks), eyes grow at half the body's rate (all kinds); Phoenix not started | ✔ (all but Phoenix) | – | – |
 | P2 | Pet garden: plots, pens, incubators, food | ✔ | ✔ | – |
 | H1 | Hub island redesign + stud portals + stud landing pads | ✔ | ✔ | – |
 | H2 | Stud checkpoints (square plate, growing core + light) | ✔ | ✔ | – |
@@ -121,7 +121,7 @@ size 1.0 → 1.6, a staged level-up moment, tier effects at Lv 5 / 10 / 15 / 20 
 texture, accessories at Lv 10 / 20, Bunny coats. Followers and garden pens are drawn by the same code.
 
 **P1g — Pet stud restyle** (recipe: [PET_GROWTH.md](PET_GROWTH.md) → Stud restyle). Studio-only model work, one kind at a
-time: stud texture on the big main-colour parts, shaped ears / face / tail for detail. Fox, Cat, Dog, Bunny, Owl and Panda done 2026-10-25; eyes
+time: stud texture on the big main-colour parts, shaped ears / face / tail for detail. Fox, Cat, Dog, Bunny, Owl, Panda and Dragon done 2026-10-25; eyes
 (attribute `Eye`) grow at half the body's rate for every kind (Lv 20: ×1.3 on a ×1.6 pet). Check per kind:
 the follower at Lv 1 / 10 / 20 with each allowed accessory, the garden pen and the panel portrait look right.
 

@@ -89,7 +89,7 @@ no code change). Fox is done; the user picked it from five previews (texture eve
   level-tinted parts `Accent = true`.
 - A variant with `variant.material` (PetLook `jitterBody`) replaces the Material on some big parts, so those parts lose the
   stud texture (the MaterialVariant needs base `Plastic`); intended, that is the variant's texture.
-- The replaced models are kept in the Studio-only `ServerStorage.PetModelBackup` (`Fox_Old_20261025`, `Cat_Old_20261025`, `Dog_Old_20261025`, `Bunny_Old_20261025`, `Owl_Old_20261025`, `Panda_Old_20261025`).
+- The replaced models are kept in the Studio-only `ServerStorage.PetModelBackup` (`Fox_Old_20261025`, `Cat_Old_20261025`, `Dog_Old_20261025`, `Bunny_Old_20261025`, `Owl_Old_20261025`, `Panda_Old_20261025`, `Dragon_Old_20261025`).
 - *Cat* (done 2026-10-25, 54 parts): shorter wider ears with pink insides, tabby stripes (forehead "M", cheeks, three across
   the back, a tail ring), cream muzzle pads / chin / chest / paws, whiskers, a thin upright tail curling forward. Eyes after the
   user's reference photo (the first green iris with a slit pupil looked threatening): dark-brown rim, gold outer and green
@@ -117,6 +117,13 @@ no code change). Fox is done; the user picked it from five previews (texture eve
   with a grey rim that reads on the patch and two catchlights, an off-white raised muzzle with a wide nose and a small "w"
   mouth, pink blush discs (Accent), the black shoulder band (Accent, as before), black legs and paws, a small white tail
   ball (the Panda still skips FlameTail), a bamboo sprig (two stalks, two nodes, two leaves) leaning by the left front paw.
+- *Dragon* (done 2026-10-25, 65 parts; the Epic pet gets the most detail): gold horns in two segments curving back, lilac
+  side fins, a narrow snout with a low slope on top (kept clear of the eyes), nostrils and two baby fangs, bat wings
+  (membrane wedge, scallop, bone, gold claw), three gold back spikes, a lilac belly with plate lines, a thick three-segment
+  tail with a gold spade; gold parts and the belly are Accent as before. Eyes ("wide slit", picked from seven options):
+  dark-purple rim, gold outer and fire-orange inner iris, a vertical capsule pupil 0.15 wide (a narrow slit looked cold,
+  the first amber ring with a small round pupil and a brow floating above it looked surprised), two catchlights, a brow
+  ridge resting on the rim (outer end 4° up).
 - *Eyes grow slower than the pet* (`PetLook` `EYE_GROWTH = 0.5`, every kind): at Lv 20 the body is ×1.6, the eyes ×1.3
   (fully growing eyes looked intense, fixed-size eyes too small). Parts with the Studio attribute `Eye = true` (eyes, rims,
   pupils, shines, Owl rings, Panda patches) are shrunk back after `ScaleTo` as one group around the point between the eyes on
