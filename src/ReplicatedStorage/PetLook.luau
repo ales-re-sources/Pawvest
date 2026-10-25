@@ -767,9 +767,46 @@ function PetLook.UpdateFx(fx: Fx, now: number, far: boolean, faded: boolean)
 	end
 end
 
+local EYE_GROWTH = 0.5 -- share of the body's growth the eyes keep (Lv 20: body x1.6, eyes x1.3; big eyes looked intense)
+
+-- Eyes grow slower than the pet: the parts with the Studio attribute Eye = true (eye, rim, pupil, shine, patch) are shrunk
+-- back after ScaleTo as one group, around the point between the eyes on the face, so the pair keeps its Lv 1 layout
+-- (spacing grows like the eyes, never wider apart) and stays on the face. Eyes must sit on the front (-Z) of the head.
+local function shrinkEyes(model: Model, root: BasePart, scale: number)
+	local k = (1 + (scale - 1) * EYE_GROWTH) / scale
+	if k >= 1 then
+		return
+	end
+	local eyes = {}
+	local low, high = Vector3.one * math.huge, -Vector3.one * math.huge
+	for _, part in model:GetDescendants() do
+		if part:IsA("BasePart") and part:GetAttribute("Eye") == true then
+			local rel = root.CFrame:ToObjectSpace(part.CFrame)
+			local half = Vector3.new(
+				math.abs(rel.XVector.X) * part.Size.X + math.abs(rel.YVector.X) * part.Size.Y + math.abs(rel.ZVector.X) * part.Size.Z,
+				math.abs(rel.XVector.Y) * part.Size.X + math.abs(rel.YVector.Y) * part.Size.Y + math.abs(rel.ZVector.Y) * part.Size.Z,
+				math.abs(rel.XVector.Z) * part.Size.X + math.abs(rel.YVector.Z) * part.Size.Y + math.abs(rel.ZVector.Z) * part.Size.Z
+			) / 2
+			low = low:Min(rel.Position - half)
+			high = high:Max(rel.Position + half)
+			table.insert(eyes, part)
+		end
+	end
+	if #eyes == 0 then
+		return
+	end
+	-- pivot: centre of the eyes' box across the face, on its back (the face surface)
+	local pivot = root.CFrame * CFrame.new((low.X + high.X) / 2, (low.Y + high.Y) / 2, high.Z)
+	for _, part in eyes do
+		local rel = pivot:ToObjectSpace(part.CFrame)
+		part.Size *= k
+		part.CFrame = pivot * CFrame.new(rel.Position * k) * rel.Rotation
+	end
+end
+
 -- Dresses a fresh, unparented clone of PetModels[kind] for `level`: forces the safety flags, shifts the body colours by the
 -- uid's Seed (nil uid: none), tints the accent parts, scales
--- it by level around its root, adds the label (if given) above the scaled model, the Epic / Legendary glow and the tier
+-- it by level around its root (the eyes grow slower, shrinkEyes), adds the label (if given) above the scaled model, the Epic / Legendary glow and the tier
 -- effects. Call once per clone. Returns the metrics the formation needs (of the model without effects), or nil if the model
 -- has no PrimaryPart.
 function PetLook.Apply(model: Model, kind: string, level: number, uid: string?, label: Label?): Metrics?
@@ -800,6 +837,7 @@ function PetLook.Apply(model: Model, kind: string, level: number, uid: string?, 
 
 	local scale = PetLook.Scale(level)
 	model:ScaleTo(scale)
+	shrinkEyes(model, root, scale)
 	-- accessories are built on the scaled model and before the bounding box, so metrics, label and halo include them
 	local accessories = PetLook.AccessoriesOf(kind, level, variant)
 	if #accessories > 0 then
