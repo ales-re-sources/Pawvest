@@ -2,7 +2,7 @@
 
 **Status: PROVISIONAL (2026-10-24, E0 in progress).** Every number for the crop field, Renown, expansion tiers, upgrades, reserved sinks, the online /
 offline rates and the archetype behaviour is a model assumption until the user confirms it and E1 copies it into `CropConfig`. Numbers that already
-exist in the game are read from the Luau configs (drift-pinned). Scope and acceptance checks: [ROADMAP.md](ROADMAP.md) → E0. Design: [EXPANSION.md](EXPANSION.md) §2, §5, §9.
+exist in the game are read from the Luau configs (drift-pinned). Scope and acceptance checks: [ROADMAP.md](ROADMAP.md) → E0. Design: [EXPANSION.md](EXPANSION.md) §2, §5, §12.
 
 ## How to re-run
 

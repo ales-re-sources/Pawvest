@@ -1,18 +1,20 @@
-# Pawvest — pet-garden simulator expansion design (E1–E8)
+# Pawvest — pet-garden simulator expansion design (E1–E11)
 
-Status: **draft, direction decided 2026-10-24** (brainstorm with the user, nothing built yet).
+Status: **draft, direction decided 2026-10-24, extended 2026-10-25** (seed shop, harvest rolls, garden tools, farm stages, mini-game gates,
+weather and live events, social, comfort-only monetization, drop plan; brainstorms with the user, nothing built yet).
 **Name: Pawvest** (decided 2026-10-24; "Oby sandbox" was the working title; the Studio place, the project and the repository folder are renamed). Store subtitle "Pets · Garden · Obby", tagline "Grow. Guard. Run.". Availability on Roblox
 and trademark are still to be checked. Avoid leading with "Grow" / "Garden" (the market leader "Grow a Garden" has pets with abilities). All numbers are
-placeholders until an economy model exists (see §10). This document says *what* the next big expansion is; milestones
+placeholders until the economy model confirms them ([ECONOMY.md](ECONOMY.md), ROADMAP → E0). This document says *what* the next big expansion is; milestones
 become ROADMAP entries when they start. It builds on GDD §7 (pets, garden) and does not change the obby.
 
 ## 1. Vision and pillars
 **Pitch:** *grow things, put your pets on guard, run obbies for rare seeds.*
 
 Today the garden is a vending machine (GDD §7.6: a pet in a pen pays Coins per hour, incubators, a food stand) and a pet is
-mechanically a number (rarity bonus + level). The goal is a pet and garden game in which pets stay unique (they differ in
-*what they can do*, not in how big their number is), the obby and puzzles supply the garden, and the garden is the reason to
-come back.
+mechanically a number (rarity bonus + level). The obby is finite content: about an hour today, two with balancing, and players finish
+stages faster than they can be built. The goal is a pet and garden game in which **systems** (crops growing, harvest rolls, weather,
+weekly events) give a reason to come back, pets stay unique (they differ in *what they can do*, not in how big their number is), and the
+obby and mini-games supply the garden with what it cannot make.
 
 | Pillar | Meaning |
 |---|---|
@@ -20,17 +22,18 @@ come back.
 | One pet, one post | A pet is in one place at a time; allocation is the game |
 | The garden is a place | It grows while you are away, is attacked while you are away, and visibly evolves |
 | The obby is the expedition | A skilful run brings back things the garden cannot make |
-| Money buys verbs and looks | Coins unlock new abilities and a visible estate, never just a bigger number |
+| Coins buy verbs and looks | Coins unlock tools, abilities and a visible estate, never just a bigger number |
+| Robux buys comfort | Time, capacity reached sooner, convenience and cosmetics; never luck, never a random item (§13) |
 
 **Change to GDD pillar 2:** "slow or idle sources are a steady trickle, never the fastest route" becomes: the garden is the
 main *passive* source and a developed garden out-earns a lazy obby day, but it never beats an active obby hour at the same
-progress, and the best crops are only reachable through the obby. Pillar 3 (fair leaderboards) is unchanged: pets never
-touch movement or stage times.
+progress, and the best crops are only reachable through the obby. Pillar 3 (fair leaderboards) is unchanged: pets, tools and
+anything bought never touch movement or stage times. **GDD §9** is narrowed by §13: no Coin packs, no Robux eggs.
 
 ## 2. Decided
 | Topic | Decision |
 |---|---|
-| Core | Farm-sim garden + guardian defence. Collector is a by-product (field guide over trait data, strays later) |
+| Core | Farm-sim garden + guardian defence. Collector is a by-product (field guide over trait and harvest data, strays later) |
 | Expeditions | Pets are **not** sent away (they would duplicate the farm's timers); the obby is the expedition |
 | Pet identity | Traits + careers; breeding is out for now but the trait set must stay breeding-ready |
 | Raids | Offline only, resolved by the server, reported in a ledger. No active shoo mode, no PvP |
@@ -38,16 +41,23 @@ touch movement or stage times.
 | Unifying rule | One pet, one post. Existing pens become posts |
 | Long goals | Island restoration bundles, estate tiers + cottage, pet mastery, garden score — all four |
 | Decoration | Free placement **outside only**, per-tier limit, validated on the server; the cottage is fixed |
-| Field (2026-10-24) | One field of squares the player plants freely, instead of fixed beds (§5 "bed" reads as "square"); capacity grows by field expansion tiers; **decided 2026-10-25 (E0): 12 squares at ladder scale ~0.3** (the 24-hour rule limits squares × scale), so a plot draws at most 12 squares |
+| Field (2026-10-24) | One field of squares the player plants freely, instead of fixed beds; capacity grows by field expansion tiers; **decided 2026-10-25 (E0): 12 squares at ladder scale ~0.3** (the 24-hour rule limits squares × scale), so a plot draws at most 12 squares |
 | Garden vs obby (2026-10-24) | **24-hour rule:** one active obby hour (mini-games count) ≈ 24 hours of fully automated planting at the same progress; checked by the E0 model (ROADMAP → E0) |
 | Online vs offline (2026-10-24) | Offline income must exist, but **online income, even passive, is much higher**, to give players a reason to keep Roblox open. A parameter pair `online_rate` 1.0 / `offline_rate` (provisional 0.33, about 3x; the number is an open decision) applies to everything passive: crop growth, Gardener replanting, pen production; offline time is capped (pens 8 h, field its own cap, provisional 12 h). The 24-hour rule is checked for the online case (offline can only be lower). Not a Roblox payout (Engagement-Based Payouts ended 2025-07-24; Creator Rewards pays per Active Spender) and never pure AFK: income depends on the player being present |
-| Prices (2026-10-24) | E0 also re-prices all sinks (talents, unlocks, slots, eggs, incubators, posts, food, field expansion and upgrades); applied in E0b after approval |
+| Prices (2026-10-24) | E0 also re-prices all sinks (talents, unlocks, slots, eggs, incubators, posts, food, field expansion and upgrades, tools); applied in E0b after approval |
+| Seed shop (2026-10-25) | A fixed catalogue gated by Renown, plus **rotating limited stock** for tiers 1–3 (restock every few minutes). Rare seeds are never sold (§5.2) |
+| Harvest rolls (2026-10-25) | Every harvest rolls a **size** (weight) and may roll a **shiny variant**; rolled on the server, deterministic per planting (§5.3) |
+| Garden tools (2026-10-25) | A second upgrade tree beside the obby skills, bought with Coins and gated by Renown: size luck, shiny luck, growth, yield, comfort (§6) |
+| Farm stages (2026-10-25) | Obby stages themed on the farm; each owns one unique rare crop whose seeds come only from that stage (§8.2) |
+| Mini-game gates (2026-10-25) | Mini-games may gate content, but only by **completion**, never by time or skill ceiling (§8.3) |
+| Monetization (2026-10-25) | **No paid random items** (no eggs for Robux, Coins / seeds / crops are never sold for Robux, no Coin packs) and **luck is never sold**. Robux buys comfort (§13) |
+| Live ops (2026-10-25) | A drop every **1–2 weeks** (the user can ship at that pace). Systemic content (weather, restocks, weekly challenge) before authored seasons (§9, §14) |
 
 ## 3. One pet, one post
 | Post | What the pet does | Notes |
 |---|---|---|
-| **Field** | Works the beds (Gardener auto-replant, §5) | Replaces the Coins-per-hour pen |
-| **Perimeter** | Guards a side of the garden (§6) | Arrives with E4 |
+| **Field** | Works the squares (Gardener auto-replant, §5) | Replaces the Coins-per-hour pen |
+| **Perimeter** | Guards a side of the garden (§7) | Arrives with E4 |
 | **With you** | Follows you in the obby (today's 3 equipped slots) | Earns Explorer XP; may reveal secret coins, never affects times |
 | *(unposted)* | Rests; keeps its bond | |
 
@@ -65,11 +75,11 @@ touch movement or stage times.
 | Quirk | Effect | Cost |
 |---|---|---|
 | Light sleeper | Guards at night | Weak by day |
-| Digger | Finds a seed when idle | Scatters the bed it works |
+| Digger | Finds a seed when idle | Scatters the square it works |
 | Glutton | Food gives extra XP | Nibbles crops |
 | Hoarder | Stores overflow harvest | Slower to react to raids |
 | Skittish | Spots threats early | Flees a fight |
-| Lucky | Sometimes a rare drop | Lower base yield |
+| Lucky | Higher shiny chance on the squares it works (§5.3) | Lower base yield |
 | Greedy | Extra yield | Some crops lost |
 | Sleepy | Works well at night only | Idle by day |
 | Brave | Holds the line alone | Ignores forecasts |
@@ -78,50 +88,92 @@ touch movement or stage times.
 - **Careers.** Three XP tracks: **Explorer** (obby runs, with you), **Gardener** (field work), **Guardian** (perimeter). A pet's
   history decides how it evolves and which aptitude steps it can take. The existing visuals carry meaning: the P1f accessories
   and P1e3 tier effects reflect the career (a long-serving guard gets the scarf, a gardener the straw hat).
-- **Mastery.** novice → skilled needs career XP; skilled → **master** needs a rare tonic brewed from a rare crop (§7, §9).
+- **Mastery.** novice → skilled needs career XP; skilled → **master** needs a rare tonic brewed from a rare crop (§8, §12).
 - **Bond.** Favourite food, mood and affection. Mood gives only bonuses, never penalties (no guilt-driven check-ins).
 - Personal spending: dyes, outfits, names, and a den furnished to the pet's preferences (a fox wants a burrow).
 - Data: `Pets[uid]` grows `Aptitude`, `Quirks`, `CareerXP = { Explorer, Gardener, Guardian }`, `Bond`, `Post`; PetLook already
   derives individuality from the uid, the same seeding gives the traits at hatch.
 
 ## 5. Crop economy
-Coins stay the one currency. Harvests are **items** (`Garden.Items[crop] = n`, a small table in the profile) with four uses:
+Coins stay the one currency. The profit loop: **buy seeds → plant → harvest → sell → buy better seeds and tools** (§6).
+Harvests are **items** (`Garden.Items[crop] = n`, a small table in the profile; a shiny or record-size item is kept apart, §5.3) with four uses:
 sell (through `CoinRewards.Grant`, so the pet bonus applies at sale time), process at a station (about 1.5–2× the raw value), turn in
 on the request board or in a restoration bundle, replant as seed stock.
 
-**Bed loop (no chores).**
-- A bed holds one crop. A ripe crop waits and never rots; raids are the risk (§6).
-- A bed gives **one harvest per visit**, then stays empty. A **Gardener pet on the Field post auto-replants** from the seed stock
-  while the player is away, so the bed keeps cycling for as long as there are seeds. The pet matters through a capability, not a percentage.
-- The cap is structural, so the 8 h offline rule is not needed for crops: beds, seed stock and the number of Gardener posts limit the output.
+### 5.1 Field loop (no chores)
+- A square holds one crop. A ripe crop waits and never rots; raids are the risk (§7).
+- A square gives **one harvest per visit**, then stays empty. A **Gardener pet on the Field post auto-replants** from the seed stock
+  while the player is away, so the square keeps cycling for as long as there are seeds. The pet matters through a capability, not a percentage.
+- Output is limited by squares, seed stock, Gardener posts and the online / offline rates (§2).
+- **Grow times match real-life gaps** (a quick crop for a short session, 1 h for lunch, 8–12 h for the night), so "what do I plant before I
+  leave?" is the decision at the end of every session.
 - Quirks bend the loop (Lucky, Greedy, Sleepy, Digger above).
 
-**Value ladder (provisional)**
+### 5.2 Seed shop
+- **Catalogue:** every unlocked species of tiers 1–3 can be bought at a fixed price; Renown and obby first finishes unlock species (§8.1).
+- **Rotating stock:** on top of the catalogue, a restock every few minutes (provisional 5–10, the same moment on every server, from the UTC clock)
+  offers limited quantities of some species, sometimes one the player has not unlocked yet or a discount. It gives a reason to glance at
+  the shop on every visit. The stock is never sold for Robux (a paid restock would be a paid random draw, §13).
+- **Rare seeds are never in the shop:** world signature crops and farm-stage crops come only from the obby (§8).
+- Seed cost is 20–30 % of the sale price (the ladder below is net of it).
 
-| Tier | Gate | Example crops (grow time) | Net Coins per bed-hour |
+### 5.3 Harvest rolls: size and shiny
+Every harvest rolls on the server, with a seed derived from `(UserId, square, plantedAt)`, so reloading or rejoining cannot reroll it
+(the same approach as the raid timeline, §7). The Gardener's offline harvests roll too and appear in the ledger.
+
+- **Size (weight).** A continuous roll with a long tail: "Pumpkin, 41.2 kg". Sale value scales with the size factor; its expected value
+  is 1.0 with no tools, so the ladder holds. Labels: normal, Big, **Giant** (top few %). The field guide keeps the **personal best per crop**,
+  a record above a server threshold is announced to the server, and a giant can be kept as a yard trophy (E7) instead of sold.
+- **Shiny variants.** A rare variant worth several times the normal crop (provisional: Golden ×5 at about 1 %; weather variants ×2–3 only
+  during that weather, §9.1). Size and shiny stack. Each crop × variant is an entry in the field guide (§11).
+- The expected value of size × shiny, with tools and Lucky pets maxed, is part of the ladder in the E0 model: it must not break the
+  24-hour rule.
+
+### 5.4 Value ladder (provisional)
+
+| Tier | Gate | Example crops (grow time) | Net Coins per square-hour |
 |---|---|---|---|
 | 1 | start | Radish 20 min, Carrot 1 h, Potato 3 h | about 20 |
 | 2 | Renown 5 | Corn 6 h, Pumpkin 8 h | about 45 |
 | 3 | Renown 12 | Giant melon 12 h | about 90 |
-| Rare | obby unlock | one signature crop per world | about 150 |
+| Rare | obby only | one signature crop per world, one per farm stage | about 150 |
 
-*E0 re-scaled this ladder (2026-10-25, [ECONOMY.md](ECONOMY.md)): × 0.3, i.e. about 6 / 13.5 / 27 / 45 net per square-hour, Renown gates 8 / 25, a field of 12 squares; the Casual estimate below is superseded by the E0 model.*
+*E0 re-scaled this ladder (2026-10-25, [ECONOMY.md](ECONOMY.md)): × 0.3, i.e. about 6 / 13.5 / 27 / 45 net per square-hour, Renown gates 8 / 25, a field of 12 squares; the old casual estimate is superseded by the E0 model.*
 
-"Net" is after the seed cost (20–30 % of the sale price). A casual player with 4 beds (about 14 effective bed-hours a day) nets
-roughly 1 100 Coins a day, about half of one good obby hour (GDD §6: ~2 230 in the first hour, ~500 / h later).
-
-**Guardrails** (to hold after every rebalance, like GDD §6):
+### 5.5 Guardrails
+To hold after every rebalance, like GDD §6 (checked by `tools/economy.py check`, ECONOMY.md):
 - Early garden income per day stays below the obby's first-hour income.
 - Rare crops pay the most and only the obby unlocks them.
-- Seeds, beds, stations, barn size, decor and bundles absorb a fixed share of the faucet (no inflation).
-- A developed garden is the main passive income but never beats an active obby hour at the same progress.
+- Seeds, squares, tools, stations, barn size, decor and bundles absorb a fixed share of the faucet (no inflation).
+- A developed garden is the main passive income but never beats an active obby hour at the same progress, with tools maxed and harvest rolls at their expected value.
+- Comfort purchases (§13) speed progress up by a bounded factor and never change the online ceiling of the 24-hour rule.
 
-**Renown** is a derived garden level (harvests, requests, restorations); it gates beds, stations and seed tiers and is never spent.
-**Request board:** three requests a day ("6 carrots + 2 flour"), paying Coins, a rare item and Renown.
+### 5.6 Renown, requests, stations
+**Renown** is a derived garden level (harvests, requests, restorations); it gates seed tiers, squares, tools and stations and is never spent.
+**Request board:** three requests a day ("6 carrots + 2 flour"; sometimes "a Big pumpkin" or "a Golden carrot"), paying Coins, a rare item and Renown.
 **Stations** (queues with timers; Craft pets run them): Mill (grain → flour), Kitchen (crops → pet food, a cheaper route to levels than
 Berry / Cake / Feast), Compost (leftovers → fertiliser that speeds growth), Workshop (decor, plot upgrades), Apothecary (tonics, mastery items).
 
-## 6. Critters and raids
+## 6. Garden tools
+A second upgrade tree beside the obby skills (`TalentService` pattern: levels, a price per level, a panel like the Skills panel), bought
+with **Coins only** and gated by Renown. Tools are the garden's main progression sink (ECONOMY open decision 1 needs one) and never touch
+the obby. Effects are bounded; numbers are placeholders for E0.
+
+| Tool | Raises | Axis | Ships |
+|---|---|---|---|
+| Fertiliser bag | the size roll (expected value up to about +15 %, a longer tail) | Size luck | MVP |
+| Sprinkler | growth speed **while the owner is online** (up to about +25 %; nothing offline) | Speed | MVP |
+| Hoe | chance of a second item per harvest | Yield | MVP |
+| Golden trowel | shiny chance (up to about ×2) | Shiny luck | D1 |
+| Seed pouch / barn | seed stock and storage capacity (Gardener auto-replant runs longer) | Comfort | D1 |
+| Basket | harvest every ripe square with one prompt | Comfort | D2 |
+| Scarecrow | raid defence on one side (§7) | Defence | D5 |
+
+- Data: `Garden.Tools[id] = level` in the profile.
+- Tools are luck **bought with Coins**: no tool and no tool level is ever sold for Robux (§13).
+- E0 models the tool tree (prices, levels, the maxed case against the 24-hour rule).
+
+## 7. Critters and raids
 Critters raid the garden while the player is away; not other players.
 - **Forecast board** shows the coming visitors, like weather ("mole tracks at the east fence, crows at dawn"). It is the reason to
   look before leaving: the player assigns guards with the forecast in front of them.
@@ -135,103 +187,219 @@ Critters raid the garden while the player is away; not other players.
 | Raccoons | stored goods, at night | night watch |
 | Locust swarm (weekly) | everything | wide coverage |
 
-- **Resolution** is deterministic on join: each bed is a timeline of events, critter visits and rare drops are seeded by
+- **Resolution** is deterministic on join: each square is a timeline of events, critter visits and rare drops are seeded by
   `(UserId, day, index)`, so reloading or rejoining cannot reroll them. Test with the incubators' clock trick (move stored times back).
-- **Losses are soft:** some crops or Coins, never pets. The GDD's "welcome back" popup grows into a **ledger** of the absence:
-  raids ("Rex chased off 3 crows. Slugs ate 2 carrots."), harvest, finished station queues, strays at the gate.
-- Unresolved: loss caps per raid and how much a perfect defence earns (§10).
+- **Losses are soft:** some crops or Coins, never pets, never a shiny or a trophy. The GDD's "welcome back" popup grows into a **ledger** of
+  the absence: raids ("Rex chased off 3 crows. Slugs ate 2 carrots."), harvests and their rolls, finished station queues, strays at the gate.
+- The Scarecrow tool (§6) is a Coin-bought counter for one side, weaker than a posted pet.
+- Unresolved: loss caps per raid and how much a perfect defence earns (§16).
 
-## 7. Obby and puzzle links
-- **Species unlocks (seed catalogue).** First finish / first Gold of a stage and challenge-coin milestones unlock crop species; each world has
-  a signature crop (for example an ice melon from the ice-rink world). A daily first-run gives one rare seed.
-- **Rare items come only from the obby.** Rare crops are ingredients for landmarks (§9), tonics (pet mastery), unique products
-  (frost fertiliser against a critter type, a night-watch tonic) and trophies (a giant pumpkin on display in the yard).
-- Puzzle rooms (the Laser Lab prototype `Workspace.KeyArena`) are the same kind of source and give one-time items.
+## 8. Obby, farm stages and mini-games
+### 8.1 Obby links
+- **Species unlocks (seed catalogue).** First finish / first Gold of a stage and challenge-coin milestones unlock crop species in the shop
+  catalogue (§5.2).
+- **World signature crops.** Each world has one rare crop (for example an ice melon from the ice-rink world); its seeds come from the
+  first Gold of that world's stages and the **daily first-run seed** (the first finish of a day gives one rare seed).
+- **Rare items come only from the obby.** Rare crops are ingredients for landmarks (§12), tonics (pet mastery), unique products
+  (frost fertiliser against a critter type, a night-watch tonic) and trophies.
 - Pets never touch times or movement; an Explorer pet may only reveal secret coins.
 
-## 8. Collector layer
-A **field guide** over trait data (kinds, aptitudes, coats, quirks, plants, critters). **Wandering strays** arrive at the gate for a
-limited time with their traits visible: adopt on sight instead of rolling blind (eggs stay as a blind route). Breeding is deferred; keep
-the trait set breeding-ready (inherit a main aptitude, mutate a quirk).
+### 8.2 Farm stages
+Obby stages themed on the farm (greenhouse, scarecrow field, orchard canopy, barn loft…), built from the existing kit (STAGES.md §2).
+Each farm stage **owns one unique rare crop**:
+- the first finish unlocks the species and gives a few seeds; the first Gold gives more; the daily first run of that stage gives one;
+- its seeds are never in the shop, so every new farm stage is also a garden update (obby drops and garden drops feed each other);
+- the crop is the ingredient of a specific landmark, tonic or request, so each farm stage has a visible purpose in the garden.
 
-## 9. Long-term goals: what money and rare seeds are for
+Open: farm stages as **bonus stages** outside the unlock chain (STAGES.md §5.3; reachable from the garden island, so garden-first players
+find them; recommended) or as numbered stages in the worlds. Times and medals follow GDD §4 like any stage.
+
+### 8.3 Mini-games as gates
+Mini-games (puzzle rooms like the Laser Lab prototype `Workspace.KeyArena`, garden-side games) may unlock content, under one rule:
+**a gate tests completion, never speed or skill ceiling**, so a garden-first player cannot get stuck. A gate shows a hint, is retryable
+without cost, and stays replayable afterwards for a small daily reward.
+
+| Use | Example |
+|---|---|
+| Restoration bundle input (§12) | Old mill: Coins + wheat + a Craft pet + clear the Gear Puzzle |
+| One-time unlock | A puzzle room opens a seed tier or a station |
+| Repeatable source | Fishing at the Pond (after its restoration), a harvest rush; short, counts as active time in the 24-hour rule |
+
+Each mini-game is 1–3 minutes (GDD pillar 1) and passes the mobile check (ROADMAP → MU).
+
+## 9. Weather and live events
+### 9.1 Weather
+- A schedule **derived from the UTC clock**, the same on every server, so it can be announced in game (the forecast board, a countdown) and
+  outside it (group, socials). Provisional: one event about every 45–60 minutes, 5–10 minutes long; rare kinds rotate through the day so
+  every time zone gets them.
+- Kinds (provisional): **Rain** (faster growth), **Frost** (Frosted variant), **Sunshower** (Golden chance up), **Aurora** (rare, Starlit variant),
+  later the Locust swarm (E4).
+- Weather affects only crops whose owner is **online on that server** while it lasts (online beats offline, §2); a variant chance is applied
+  once per crop when the event ends and recorded for its harvest roll (§5.3).
+- Art: a sky / lighting preset and particles per kind, a material or colour swap on the crop models per variant; no new models.
+- A player may buy **Rain** for their server (§13): growth only, never a variant weather.
+
+### 9.2 Weekly obby challenge
+- One existing stage per week with a **modifier** from the kit (low gravity and wind from `KitZones`, no checkpoints, a ghost of last week's #1),
+  chosen by a fixed rotation.
+- A **weekly Top-10** that resets every Monday 00:00 UTC (new `GlobalLeaderboardsStore` keys per week), so new players can top a board.
+- Rewards: a finish gives a rare seed; the weekly Top-10 gets a cosmetic trophy for the yard. Pillar 3 holds: same talent and pet rules.
+- It turns the finished stages into a renewable resource and gives obby players a weekly reason to return.
+
+### 9.3 Seasons
+- 4–6 weeks each: a theme, 3–4 seasonal crops, one seasonal pet kind (adopted, not hatched from a paid egg), a decor set, a seasonal farm
+  stage or challenge.
+- A **season pass** with a free and a premium track (§13), fed by season XP from everything (harvests, runs, requests, mini-games).
+- Starts only after weather, restocks and the weekly challenge run without attention (the weeks between drops stay alive).
+
+### 9.4 Streak calendar
+A 7-day loop of small rewards; a missed day **pauses** the streak instead of resetting it (no guilt, like pet mood).
+
+## 10. Social
+- **Friend bonus:** a small bonus on harvest sales while a friend is on the same server (provisional +10 %, outside the pet multiplier cap; in E0).
+- **Visits and likes:** the plot ring is walkable; a like on another plot feeds its garden score (once per plot per day).
+- **Help a neighbour:** one optional tap on another player's plot gives both a small growth boost (once per plot per day; not a chore).
+- **Gifts:** seeds and common crops to a friend, capped per day (no pets, no shiny items; alt accounts must not become a faucet).
+- **Invites:** the Roblox invite prompt with a reward when an invited friend joins. Creator Rewards also pays for bringing new and lapsed
+  players (to be verified against the current terms), so return mechanics are a revenue line in themselves.
+- Trading (P3) stays open (§16).
+
+## 11. Collector layer
+A **field guide** over trait and harvest data: kinds, aptitudes, coats, quirks, crops × variants, size records, critters. **Wandering strays**
+arrive at the gate for a limited time with their traits visible: adopt on sight instead of rolling blind; they are the main non-random
+route to pets (whether eggs stay is open, §16). Breeding is deferred; keep the trait set breeding-ready (inherit a main aptitude, mutate a quirk).
+
+## 12. Long-term goals: what money and rare seeds are for
 Money is not the goal; it is one input into goals the player can see.
 
 **Island restoration (the spine).** The garden island has overgrown landmarks, restored by **bundles** of five kinds of input: Coins,
-common crops, one rare crop, a pet-skill requirement (for example a skilled Digger), and for some an obby achievement. Money is one
-input out of five, so every play style feeds the goal. First sketch (finite, authorable, shipped one at a time):
+common crops, one rare crop, a pet-skill requirement (for example a skilled Digger), and for some an obby achievement or a mini-game
+completion (§8.3). Money is one input out of five, so every play style feeds the goal. First sketch (finite, authorable, shipped one at a time):
 
 | Landmark | Unlocks | Bundle sketch |
 |---|---|---|
-| Old mill | Mill station | Coins, wheat, a Craft pet |
+| Kitchen | Kitchen station (takes over the food stand's role) | Coins, tier-1 crops, a Big crop |
+| Old mill | Mill station | Coins, wheat, a Craft pet, the Gear Puzzle |
 | Greenhouse | growing in any season | Coins, tier-2 crops, a rare crop of world 1 |
-| Pond | water crops, later fishing | Coins, a Green thumb pet |
+| Pond | water crops, fishing mini-game | Coins, a Green thumb pet |
 | Orchard | perennial trees | Coins, saplings (tier 3), a rare crop of world 2 |
 | Watchtower | longer forecast, +1 Perimeter post | Coins, a skilled Keen-eyes pet, Gold on a world-2 stage |
 | Training grounds | career steps to skilled | Coins, a pet with 2 careers started |
 | Nursery | choose between hatched strays | Coins, rare crop, 5 pets in the field guide |
-| Observatory | seasonal event access | Coins, rare crops of three worlds |
+| Observatory | weather forecast for the whole day, seasonal event access | Coins, rare crops of three worlds, a Starlit crop |
 
 **Estate tiers:** Patch → Homestead → Estate → Grand Garden, each a visible overhaul that other players see when they walk the plot
-ring. A **cottage** with fixed rooms whose shelves fill by themselves (medals, field-guide book, pet portraits). **Outdoor decor** is
+ring. A **cottage** with fixed rooms whose shelves fill by themselves (medals, field-guide book, pet portraits, giant-crop trophies). **Outdoor decor** is
 placed freely within a per-tier limit; the server validates bounds, collisions and count; store a compact position + rotation per item.
 
 **Pet mastery** (§4) makes rare seeds gate the best form of a favourite pet. **Garden score** on the plot sign sums collection %,
-restorations and masteries, visible to visitors.
+restorations, masteries and likes, visible to visitors; it is **not ranked** on a board (bought cosmetics would make a ranking pay-to-win).
 
-**Horizons:** session (harvest, request, hatch) · week (next bundle, a pet rank-up, the next world's seed) · month+ (estate tier,
-field guide complete, whole island restored).
+**Horizons:** minutes (restock, weather) · session (harvest and its rolls, request, hatch) · day (ledger, daily seed, streak) · week (weekly
+challenge, next bundle, a pet rank-up, the next farm stage) · month+ (season, estate tier, field guide complete, whole island restored).
 
-## 10. MVP and content updates
-The MVP is the smallest build that shows the whole loop (plant, post a pet, run an obby for a rare seed, come back to a ledger) and is
-worth opening to the public. Every later piece ships as an announceable update; obby drops alternate with garden drops.
+## 13. Monetization: sell comfort
+Decided 2026-10-25 (supersedes the candidate list of GDD §9):
+1. **No paid random items.** No eggs for Robux; Coins, seeds, crops and the shop's rotating stock are never sold for Robux (so Coin eggs
+   never become paid random items through bought Coins); no Coin packs.
+2. **Luck is never sold.** Size and shiny chances come only from Coin-bought tools, pets and free weather; paid weather is growth only.
+3. **Everything that changes the economy is earnable through play and capped** (GDD §9): Robux only reaches it sooner.
+4. **The obby stays clean** (pillar 3): nothing bought affects a time; a skip gives no time, no medal, no payout and no challenge coin.
+5. **Offers appear at a pain point, never on join**, and nothing in the first session: a full field, a long crop still growing, the ledger's
+   "growth paused after 12 h" (shown as information, not guilt).
+
+| Motive | Product | Kind |
+|---|---|---|
+| Idle comfort | **Night shift**: offline rate 0.33 → 0.5 and offline cap 12 → 24 h (provisional); never changes online income | game pass |
+| Impatience | Instant grow (one square, price by remaining time, daily cap); finish an incubator | developer product |
+| Capacity | +1 post, +1 incubator, the next field squares reached before their Renown / Coin gate (never beyond the earnable maximum) | game pass / product |
+| Generosity | **Rain for the server** (10 min, growth only), the buyer's name announced; everyone on the server benefits | developer product |
+| Status | Pet dyes and outfits, decor packs, plot themes, trails, a VIP tag | game pass / product |
+| Completion | Season pass premium track (§9.3) | product per season |
+| First purchase | Starter pack, one time: a decor set, +1 post, 3 days of Night shift | developer product |
+| Obby | Skip a stage / a checkpoint (rule 4) | developer product |
+
+- Prices are placeholders (Robux price points are set at M7 / D2).
+- E0 gets a **Spender archetype** (Night shift, capacity early, a daily instant grow) to check that paying speeds progress up by a bounded
+  factor (provisional ≤ 1.5× per day) and that the 24-hour rule's online ceiling is unchanged.
+- Telemetry (TELEMETRY.md) gets purchase and offer events: where an offer was shown, whether it converted.
+
+## 14. MVP and drop plan
+The MVP is the smallest build that shows the whole loop (buy seeds, plant, post a pet, run an obby for a rare seed, come back to a ledger,
+upgrade a tool) and is worth opening to the public. After it, **a drop every 1–2 weeks**; obby drops alternate with garden drops; a drop
+that is too big for two weeks (critters, World 4, estate) is split.
 
 **Already built (comes with the MVP):** obby World 1 and World 2 (World 3 is built too; holding it back as a first content drop is an option),
 pets, incubators, food, talents, telemetry, English / Czech localization.
 
 **New in the MVP**
-1. **E1** beds and crops: about six crops in tiers 1–2, seed shop, selling, light Renown, pens renamed posts, Gardener auto-replant for Green-thumb pets only.
+1. **E1** field and crops: about six crops in tiers 1–2, seed shop with catalogue and rotating stock, selling, the size roll, light Renown,
+   pens renamed posts, Gardener auto-replant for Green-thumb pets only; tools tier 1 (Fertiliser, Sprinkler, Hoe).
 2. **E2** obby links: at least two rare crops (one from World 1, one from World 2) and the daily first-run seed.
 3. **Traits rolled at hatch, only the working ones shown.** The full trait data (aptitude, quirks, career XP) is stored from the first hatch, the
    UI shows only what already does something, so no live pet needs a retroactive roll later.
-4. **First landmark + request board.** The first restoration (the Kitchen, which takes over the food stand's role) is the goal beyond Coins; three daily requests.
-5. **Basic ledger on join** (harvest ready, eggs ready); raids plug into it later.
+4. **Request board** (three daily requests) as the first goal beyond Coins and tools.
+5. **Basic ledger on join** (harvests and their rolls, eggs ready); raids plug into it later.
 6. **Onboarding** for the first ten minutes and telemetry for the garden funnel (extends TELEMETRY.md).
 
-**Not in the MVP:** critters and raids, mastery tonics and the other stations, estate tiers / decor / cottage, strays, seasons, trading (P3), obby World 4.
+**Not in the MVP:** shiny variants and weather, the comfort shop, critters and raids, mastery tonics and the other stations, landmarks, estate
+tiers / decor / cottage, strays, seasons, trading (P3), obby World 4.
 
 **Gates before going public** (existing roadmap items): the first live test (M6a) and the balancing pass, the Czech text review, the mobile layout
-check, a monetization decision (M7; it may be deferred but must respect the fairness pillar). A **soft launch** (friends, then unlisted) comes first; the garden
+check (MU), the comfort shop (D2) or a decision to launch without it. A **soft launch** (friends, then unlisted) comes first; the garden
 funnel telemetry decides whether the loop works.
 
-**Updates after launch**
+**Drops after the MVP** (order provisional; each about 1–2 weeks)
 
-| Update | Content | Why here |
-|---|---|---|
-| U1 "The Critters" | E4: forecast board, raids, Perimeter post, full ledger | The defence fantasy, the strongest hook |
-| U2 "Mastery" | E3 in full (traits shown, careers, field guide), E5 stations, mastery tonics | Pets get depth |
-| U3 "World 4" + restoration | Obby World 4 (S9–S10), more landmarks (E6) | Obby players and goal-chasers |
-| U4 "The Estate" | E7: estate tiers, outdoor decor, cottage, garden score | Visible personalization |
-| U5 "Seasons and Strays" | E8: seasonal crops, strays, weekly visitor | Calendar-driven return |
+| Drop | Content | Build stages | Why here |
+|---|---|---|---|
+| D1 "Shiny" | Shiny variants, scheduled weather, Golden trowel, seed pouch, field-guide records | E9, E1 | The collection chase and the first clock-time reason to be online; no new art |
+| D2 "Comfort" | Comfort shop: Night shift, instant grow, starter pack, Rain for the server, first cosmetics; Basket | M7 | Monetization once the loop is proven |
+| D3 "Weekly" | Weekly obby challenge, first farm stage and its crop, streak calendar | E10, E2 | Obby drop; renewable obby content |
+| D4 "The Kitchen" | First landmark (Kitchen), first mini-game gate (puzzle room) | E6, E5 | The first long goal |
+| D5 "The Critters" | Forecast board, raids, Perimeter post, Scarecrow, full ledger (may split in two) | E4 | The defence fantasy, the strongest hook |
+| D6 "Neighbours" | Friend bonus, likes, help a neighbour, gifts, invites | E11 | Growth through friends |
+| D7 "Mastery" | Traits shown, careers, field guide in full, stations, mastery tonics | E3, E5 | Pets get depth |
+| D8 "World 4" | Obby World 4 (S9–S10), second farm stage, more landmarks (split) | S, E2, E6 | Obby players and goal-chasers |
+| D9 "The Estate" | Estate tiers, outdoor decor, cottage, garden score (split) | E7 | Visible personalization |
+| D10 "Season 1" | First season and pass, strays, weekly visitor | E10, E8 | Calendar-driven return |
 
-## 11. Build stages (progressive reveal; each stage ships alone)
+At the stated pace D1–D10 is about 3–5 months after the MVP.
+
+## 15. Build stages (progressive reveal; each stage ships alone)
 | Stage | Content | Ships in |
 |---|---|---|
-| E0 | Economy model (spreadsheet or script) against GDD §6; fixes the ladder, seed prices, sink share | before the MVP |
-| E1.0 | Spike: client-drawn plots, GO / NO-GO on the plot architecture (§12; ROADMAP → E1.0) | before E1 |
-| E1 | Field of squares, crops, stock, sell, seed shop, Renown; pens renamed posts (Field only); minimal Green-thumb Gardener | MVP |
-| E2 | Obby seed links (species unlocks, daily seed) so the obby matters from day one | MVP |
-| E3 | Traits, quirks, careers, field guide (data and hatch roll in the MVP, full UI in U2) | MVP / U2 |
-| E4 | Critters, forecast board, offline raids, ledger, Perimeter post | U1 |
-| E5 | Stations, request board (the board and the Kitchen are in the MVP), mastery tonics | MVP / U2 |
-| E6 | Island restoration bundles and landmark abilities (first landmark in the MVP) | MVP / U3 |
-| E7 | Estate tiers, outdoor decor, cottage shelves, garden score | U4 |
-| E8 | Strays, weekly visitor, seasons | U5 |
+| E0 | Economy model (`tools/economy.py`) against GDD §6; fixes the ladder, seed prices, sink share; later adds harvest rolls, tools, the Spender archetype | before the MVP, extended per drop |
+| E1.0 | Spike: client-drawn plots, GO / NO-GO on the plot architecture (§16; ROADMAP → E1.0) | before E1 |
+| E1 | Field of squares, crops, stock, sell, seed shop (catalogue + rotating stock), size roll, Renown, tools tier 1; pens renamed posts (Field only); minimal Green-thumb Gardener | MVP |
+| E2 | Obby seed links (species unlocks, daily seed, world signature crops), farm stages and their crops | MVP / D3 / D8 |
+| E3 | Traits, quirks, careers, field guide (data and hatch roll in the MVP, full UI in D7) | MVP / D7 |
+| E4 | Critters, forecast board, offline raids, ledger, Perimeter post, Scarecrow | D5 |
+| E5 | Request board (MVP), stations, mastery tonics | MVP / D4 / D7 |
+| E6 | Island restoration bundles and landmark abilities, mini-game gates | D4 / D8 |
+| E7 | Estate tiers, outdoor decor, cottage shelves, garden score | D9 |
+| E8 | Strays, weekly visitor | D10 |
+| E9 | Shiny variants, weather schedule, Golden trowel | D1 |
+| E10 | Weekly obby challenge, streak calendar, seasons and the season pass | D3 / D10 |
+| E11 | Social: friend bonus, likes, help a neighbour, gifts, invites | D6 |
+| M7 | Comfort shop (§13) | D2 |
 
-## 12. Risks and open questions
-- **Onboarding.** The first ten minutes must show one loop: plant, post a pet, come back to a ledger. Posts and traits are revealed gradually.
-- **Content volume.** Critters, aptitudes, quirks, crops, landmarks: English and Czech (loc workflow), Studio-only art and models.
-- **Profile size and save cost** (items, traits, decor); keep compact encodings, check the DataStore limit per key.
+## 16. Risks and open questions
+**Open decisions for the user**
+1. **Coin eggs:** keep the Coin incubators (no Robux eggs, decided) or remove eggs entirely and make strays the only pet source? With rule 1 of §13
+   Coin eggs are not paid random items, but instant grow sells time that becomes Coins: check the current Roblox paid-random-items rules before D2.
+2. **Farm stages:** bonus stages outside the unlock chain (recommended) or numbered world stages (§8.2).
+3. **Trading (P3):** the strongest retention driver in pet games, but dupes, scams and moderation; plan for it or rule it out.
+4. **Numbers:** size and shiny distributions, tool levels, Night shift values, weather cadence, friend bonus; all go through E0.
+
+**Risks**
+- **Onboarding.** The first ten minutes must show one loop: buy seeds, plant, post a pet, come back to a ledger. Posts, tools and traits are revealed gradually.
+- **Content volume and the 1–2 week pace.** Crops, variants, quirks, critters, landmarks, farm stages: English and Czech (loc workflow), Studio-only art.
+  Systemic content (weather, restocks, weekly challenge) keeps weeks without a drop alive; seasons wait until it does.
+- **Luck inflation.** Size × shiny × tools × Lucky pets × weather multiply; the expected value must stay inside the ladder (E0, §5.5).
+- **Clock-time events need players on the same server.** A server holds 12 players today; scheduled weather is shared by all servers, so it works
+  without matchmaking, but paid Rain only helps the buyer's server.
+- **Profile size and save cost** (items, shiny items, size records, tools, traits, decor); keep compact encodings, check the DataStore limit per key.
 - **Plot architecture (open, raised 2026-10-24).** Today `GardenService` draws pens and pet models as server instances into 12 plots built in
   Studio, and a server holds 12 players. Direction under discussion: the server keeps only data (profile, timestamps, validation) and **each
   client draws the plots it needs from that data**: its own, plus others' within view distance, at lower detail. Plot positions then come from a formula
@@ -243,4 +411,6 @@ funnel telemetry decides whether the loop works.
 - **Live players.** What happens to existing pets (traits rolled retroactively from the uid?), pens, eggs and offline income at migration.
 - **Free outdoor decor.** Placement exploits, per-item save size, collision with paths and neighbouring plots, mobile controls.
 - **Bundles must stay finite.** Fix the first 6–8 landmarks and their contents before E6.
+- **Mini-game gates** must stay passable for every player (completion only, mobile check); a gate that blocks garden-first players breaks §8.3.
+- **Gifts and alt accounts.** Daily caps, no shiny or pet gifts; the friend bonus must not reward a second account parked on the server.
 - **Raids.** Loss caps and the reward for perfect defence; the fairness of a loss the player could not see coming (the forecast must be reliable).

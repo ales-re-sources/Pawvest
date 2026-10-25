@@ -57,7 +57,7 @@ Rules:
 | L2 | Localization: all client panels + config display names — done 2026-10-24 (Czech texts await the user's review) | ✔ | ✔ | – |
 | L3 | Localization: server-written + Studio-authored texts — texts done 2026-10-24 (Czech awaits review); font check and per-panel Czech overflow pass still open | ✔ | ✔ (texts) | – |
 | M6a | First live test + World 1 balancing | – | – | – |
-| E0 | Economy model for the pet-garden expansion (scope written 2026-10-24; `tools/economy.py` loader, drift check, reproduction, report, day-by-day sim, crop field + guardrails A-C (43 checks green, provisional numbers in [ECONOMY.md](ECONOMY.md)) done; repricing, dead end, rare supply and sensitivity pending; [EXPANSION.md](EXPANSION.md) §11) | partial | – | – |
+| E0 | Economy model for the pet-garden expansion (scope written 2026-10-24; `tools/economy.py` loader, drift check, reproduction, report, day-by-day sim, crop field + guardrails A-C (43 checks green, provisional numbers in [ECONOMY.md](ECONOMY.md)) done; repricing, dead end, rare supply and sensitivity pending; [EXPANSION.md](EXPANSION.md) §15) | partial | – | – |
 | E1.0 | Client-drawn plots spike: GO / NO-GO on the plot architecture before E1 (scope written 2026-10-24, no code) | – | – | – |
 | S5 | Worlds hub — done 2026-10-22: gates for Worlds 2-4 (coming soon, admins only), World 2 courtyard, signs, per-world stars boards (user's visual check) | ✔ | ✔ | – |
 | S6 | World 2 (stages 6–10) — S6.1 Double Up + Seesaw built and Studio-checked 2026-10-22 (awaits the user's visual check), S6.2 / S6.3 not started | ✔ (S6.1) | ✔ (S6.1) | – |
@@ -227,7 +227,7 @@ Stage expansion plan and design: [STAGES.md](STAGES.md) (catalogue, curve, world
 milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.
 Each milestone gets its scope when it starts (workflow step 2).
 
-Pet-garden simulator (E0–E8, direction decided 2026-10-24, draft, nothing started): [EXPANSION.md](EXPANSION.md) §10–11 (game name **Pawvest**; the MVP
+Pet-garden simulator (E0–E11, direction decided 2026-10-24, draft, nothing started): [EXPANSION.md](EXPANSION.md) §14–15 (game name **Pawvest**; the MVP
 cut is E1 + E2 + hatch-time traits + first landmark and request board + basic ledger, then updates U1–U5). E0 (economy
 model) and the plot-architecture spike E1.0 come first (scopes below); E1 (the field and crops) is the first build milestone. They get their scope when they start.
 
@@ -247,7 +247,7 @@ bundles) live only in the model until E1 copies them into `CropConfig`.
 **Inputs (existing, GDD §5-§7).** Medals and first-finish payout per stage (21 stages planned), repeat reward with the daily decay,
 challenge coins (~160 planned), talent tree (47 300), stage unlocks (80 700), pets (eggs, slots 7 000, rarity bonus, +50 % cap,
 sell values, levels / XP, food prices), pens 32 500, incubators 17 000, pen production (rates by rarity, 8 h offline cap).
-**Inputs (new, EXPANSION §5-§9).** The crop ladder (tiers, grow time, sale price, seed cost 20-30 %), the **field** (a grid of squares the
+**Inputs (new, EXPANSION §5-§12).** The crop ladder (tiers, grow time, sale price, seed cost 20-30 %), the **field** (a grid of squares the
 player plants freely, see below), field expansion and upgrade prices, Gardener auto-replant coverage (squares per Gardener pet and the
 number of Gardener posts), seed stock, Renown gates, station multiplier (1.5-2×), request board (3 a day), the first landmark (Kitchen) bundle.
 
@@ -256,7 +256,7 @@ on any square. Capacity comes from the number of squares (expansion tiers of the
 bed list, and the crop catalogue size becomes a content question rather than a structural one: the model takes any crop list. Parameters:
 squares per expansion tier and their prices, the upgrades (for example faster growth, a barn, more Gardener coverage), optional crops
 that cover 2 × 2 squares (giant melon, trophy pumpkin). The plot geometry is **not** a constraint of E0 (decided 2026-10-24: the plot area and layout will be reworked, and the architecture may move
-to client-drawn plots, see EXPANSION §12 "Plot architecture"): the maximum field is a model parameter with a provisional ceiling
+to client-drawn plots, see EXPANSION §16 "Plot architecture"): the maximum field is a model parameter with a provisional ceiling
 (proposal: 150 squares; **decided 2026-10-25: 12 squares at ladder scale ~0.3**) that the plot rework must be able to draw. E0 outputs the minimum catalogue that makes the ladder work (at least one crop per tier
 plus a rare one per world) and a recommended MVP size; six stays a proposal, not a constraint.
 
@@ -296,7 +296,7 @@ schedule, an obby minutes budget by stage reached, and a purchase policy (talent
   approves it; applying it is **E0b**: GDD §6 / §7 first, then the config values (`TalentConfig`, `StageConfig.unlockPrice`, `PetConfig`,
   `GardenConfig`), then `loc.py` if a price appears in a text, then a Studio check that the shops show the new prices. Existing buyers are
   not refunded or charged again (a lowered price stays in their favour, a raised one only affects what is not yet bought).
-- EXPANSION §5 / §9 and GDD §6-§7.6 updated with the final ladder, prices and guardrail numbers (GDD first, per the workflow rule).
+- EXPANSION §5 / §12 and GDD §6-§7.6 updated with the final ladder, prices and guardrail numbers (GDD first, per the workflow rule).
 - A list of E1 inputs ready to copy into `CropConfig` (crops, seed prices, bed prices, Renown thresholds, request rewards) and the
   migration decision for pen income.
 
@@ -394,12 +394,12 @@ price proposal and the pen-income migration. E0b (applying the prices) is a sepa
    unlocks after the last stage of their world, last field tier by day 60).
 3. *Live players:* how many exist (probably only the developer and test accounts). If nobody has live pen income the migration collapses to
    "replace pens"; otherwise grandfather.
-4. ~~*Maximum field*~~ **Decided 2026-10-25:** 12 squares at ladder scale about 0.3 (potato 24 / melon 432 Coins), so the plot rework draws 12 squares (EXPANSION §12; the E1.0 spike below may keep its 150-square stress test as headroom).
+4. ~~*Maximum field*~~ **Decided 2026-10-25:** 12 squares at ladder scale about 0.3 (potato 24 / melon 432 Coins), so the plot rework draws 12 squares (EXPANSION §16; the E1.0 spike below may keep its 150-square stress test as headroom).
 6. *Placeholder sinks* (new): the sink share of open decision 1 holds only with ~0.8 M Coins of landmark / estate / decor sinks (E6 / E7) for an Obby-main player; keep the share or lower it.
 7. *Online / offline numbers* (new, 2026-10-24): `offline_rate` 0.33 and the field offline cap 12 h are placeholders (the user gave no number). Choose the rate (0.2 stronger, 0.5 gentler) and the cap (24-48 h helps only Binge).
 
 ### E1.0 — Client-drawn plots spike (scope, 2026-10-24; before E1, after or alongside E0)
-**Goal.** Decide GO / NO-GO on the plot architecture of EXPANSION §12: the server keeps only garden data, each client draws the plots it needs
+**Goal.** Decide GO / NO-GO on the plot architecture of EXPANSION §16: the server keeps only garden data, each client draws the plots it needs
 (its own, others' within view distance at lower detail). A spike in the style of S3.1: small, measured, and it ends in a decision.
 
 **Inputs.** Today's server drawing (`GardenService` pens and pet models, `GardenIncubators`), `GardenPlots` / `GardenConfig.NewAssigner`
@@ -407,7 +407,7 @@ price proposal and the pen-income migration. E0b (applying the prices) is a sepa
 
 **Outputs.** A prototype `PlotView` (client module, behind an admin / Studio flag, the live garden untouched) that draws a plot from a plain
 state table; a pure plot-position formula in `GardenConfig` (slot → CFrame, row / column) used by client and server; a test field of up to 150
-squares with crop stand-ins; measurements; the decision with the numbers written into EXPANSION §12, plus a migration plan for E1 (what
+squares with crop stand-ins; measurements; the decision with the numbers written into EXPANSION §16, plus a migration plan for E1 (what
 replaces `Workspace.Garden.Plots`, the pens, the incubators and the sign).
 
 **Boundary.** No crops economy, no DataStore changes, no new profile fields, no art pass (stand-in blocks only), no city: the layout question
