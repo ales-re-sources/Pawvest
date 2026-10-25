@@ -481,7 +481,7 @@ S7 first) and the `StageConfig` entry.
 - **Acceptance checks:** every stage has a measured `T_base`; GDD §6 economy constraint table still all ✔.
 
 ### M7 — Monetization
-Deferred; scoped after M6 (GDD §8).
+Comfort only, decided 2026-10-25 (GDD §9, EXPANSION §13: no paid random items, luck never sold); ships as drop D2 after the MVP.
 
 ### MU — Mobile UX acceptance check (to be planned, noted 2026-10-24)
 Decision (2026-10-24): Pawvest stays on Roblox and is treated as a **mobile-first game inside Roblox** (most Roblox playtime is on phones;

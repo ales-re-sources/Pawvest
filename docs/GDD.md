@@ -484,13 +484,19 @@ otherwise items could be duplicated across servers.
 - Open question: show the talents used next to a time, or keep a separate "no-talent" board?
 - Possible later: "rarest pets" / "highest pet level" board.
 
-## 9. Monetization (deferred)
-Not designed yet; decide after M6. Candidates: cosmetics (trails, skins, portal effects, pet accessories), convenience
-passes (2× Coins, extra pet slot, faster incubators, skip stage), Coin packs. Rule for any candidate: everything
-purchasable must also be earnable through play and capped, so money only speeds progress up.
-Eggs are Coins-only for now. Selling random items (eggs) for Robux, or for anything bought with Robux, requires
-disclosing the odds under Roblox rules — the egg UI already shows them. Leaderboard fairness (§1.3) is re-evaluated
-at that point.
+## 9. Monetization (comfort only)
+Decided 2026-10-25. The product list and offer rules are in [EXPANSION.md](EXPANSION.md) §13; the shop ships as M7 (drop D2).
+- **No paid random items.** Eggs are never sold for Robux, and neither is anything that buys an egg: Coins, seeds, crops and
+  the seed shop's stock are never sold for Robux (no Coin packs). Eggs stay Coins-only (whether eggs stay at all is open,
+  EXPANSION §16); the egg UI keeps showing the odds.
+- **Luck and weather are never sold.** Egg odds, harvest size and variant chances come only from play: Coin-bought tools,
+  crafted fertilisers, pets and the weather schedule.
+- **Robux buys comfort:** time (longer offline cap, instant grow, faster incubators), capacity reached sooner (pet slot,
+  post, incubator), cosmetics (trails, skins, portal effects, pet accessories, decor), skip stage. No 2× Coins pass: it is
+  neither earnable nor capped.
+- Rule: everything purchasable that changes the economy must also be earnable through play and capped, so money only
+  speeds progress up.
+- Leaderboard fairness (§1.3): nothing bought affects a stage time; a skipped stage gives no time, no medal and no payout.
 
 ## 10. Balancing & telemetry
 - **Measuring `T_base`:** developer runs each stage clean, no talents, 3 attempts, take the median.
