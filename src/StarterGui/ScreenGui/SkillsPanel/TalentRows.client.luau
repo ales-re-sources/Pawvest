@@ -9,6 +9,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TalentConfig = require(ReplicatedStorage:WaitForChild("TalentConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
+local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
 local remotes = ReplicatedStorage:WaitForChild("TalentRemotes")
 local buyEvent = remotes:WaitForChild("Buy")
 local resultEvent = remotes:WaitForChild("Result")
@@ -93,7 +94,30 @@ if placeholder then
 	placeholder:Destroy()
 end
 
-panel.Size = UDim2.new(0, 250, 0, 35 + #TalentConfig.List * (ROW_HEIGHT + 10) + 5)
+-- Short screens (a phone in landscape): the panel is scaled down and the rows scroll in a list capped to what fits.
+-- The panel itself fits its content (StudStyle.Panel: AutomaticSize.Y): title 35 + gap 10 + list + bottom padding 10.
+local fitScale = PanelFit.Scale()
+if fitScale < 1 then
+	create("UIScale", { Scale = fitScale, Parent = panel })
+end
+local listHeight = math.min(#TalentConfig.List * (ROW_HEIGHT + 10) - 10, PanelFit.MaxHeight(fitScale) - 55)
+local rowList = create("ScrollingFrame", {
+	Name = "Rows",
+	LayoutOrder = 1,
+	BackgroundTransparency = 1,
+	BorderSizePixel = 0,
+	Size = UDim2.new(1, 0, 0, math.max(listHeight, ROW_HEIGHT)),
+	ScrollBarThickness = 5,
+	CanvasSize = UDim2.new(),
+	AutomaticCanvasSize = Enum.AutomaticSize.Y,
+}, {
+	create("UIListLayout", {
+		SortOrder = Enum.SortOrder.LayoutOrder,
+		Padding = UDim.new(0, 10),
+		HorizontalAlignment = Enum.HorizontalAlignment.Center,
+	}),
+})
+rowList.Parent = panel
 
 for index, talent in TalentConfig.List do
 	local title = create("TextLabel", {
@@ -133,7 +157,7 @@ for index, talent in TalentConfig.List do
 		Size = UDim2.new(0, 240, 0, ROW_HEIGHT),
 	}, { title, info, button })
 	StudStyle.Row(rowFrame, panel.Name)
-	rowFrame.Parent = panel
+	rowFrame.Parent = rowList
 
 	local row = { talent = talent, title = title, info = info, button = button, flash = 0 }
 	rows[talent.id] = row

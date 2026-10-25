@@ -19,15 +19,26 @@ local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
+local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
 
 local remotes = PetClient.Remotes
 local player = Players.LocalPlayer
 
 local WIDTH = 340
-local HEIGHT = 560
+-- Short screens (a phone in landscape): the panel is scaled down (PanelFit) and shortened to what fits; the slot bricks
+-- shrink and the list takes the rest (it scrolls).
+local FIT_SCALE = PanelFit.Scale()
+local HEIGHT = math.clamp(PanelFit.MaxHeight(FIT_SCALE), 300, 560)
+local COMPACT = HEIGHT < 480
 local ROW_HEIGHT = 66
-local SLOT_SIZE = 96
-local SLOT_GAP = 16
+local SLOT_SIZE = if COMPACT then 52 else 96
+local SLOT_GAP = if COMPACT then 12 else 16
+-- header rows (summary, garden button, info line) and the top of the list: packed tighter when compact
+local SUMMARY_TOP = if COMPACT then 38 else 42
+local GARDEN_TOP = if COMPACT then 58 else 70
+local GARDEN_HEIGHT = if COMPACT then 30 else 34
+local INFO_TOP = if COMPACT then 92 else 110
+local LIST_TOP = if COMPACT then 114 else 134
 local CONFIRM_SECONDS = 3 -- how long "Sure?" waits for the second click
 local POS_OPEN = UDim2.new(0, 10, 0, 80.3)
 local POS_CLOSED = UDim2.new(0, -WIDTH - 20, 0, 80.3)
@@ -118,19 +129,19 @@ local closeButton = button("Close", {
 	Text = "X",
 }, 1)
 local summaryLabel = label("Summary", {
-	Position = UDim2.new(0, 12, 0, 42),
+	Position = UDim2.new(0, 12, 0, SUMMARY_TOP),
 	Size = UDim2.new(1, -24, 0, 20),
 	TextSize = 15,
 	RichText = true,
 })
 local gardenButton = button("Garden", {
-	Position = UDim2.new(0, 10, 0, 70),
-	Size = UDim2.new(1, -20, 0, 34),
+	Position = UDim2.new(0, 10, 0, GARDEN_TOP),
+	Size = UDim2.new(1, -20, 0, GARDEN_HEIGHT),
 	BackgroundColor3 = COLOR_GARDEN,
 	TextSize = 16,
 }, 6)
 local infoLabel = label("Info", {
-	Position = UDim2.new(0, 12, 0, 110),
+	Position = UDim2.new(0, 12, 0, INFO_TOP),
 	Size = UDim2.new(1, -24, 0, 20),
 	Font = Enum.Font.Gotham,
 	TextSize = 13,
@@ -138,11 +149,10 @@ local infoLabel = label("Info", {
 	TextTruncate = Enum.TextTruncate.AtEnd,
 })
 local SLOTS_TOP = HEIGHT - 10 - SLOT_SIZE -- top of the slot bricks
-local LIST_TOP = 134
 local list = create("ScrollingFrame", {
 	Name = "Inventory",
 	Position = UDim2.new(0, 8, 0, LIST_TOP),
-	Size = UDim2.new(1, -16, 0, SLOTS_TOP - 30 - LIST_TOP),
+	Size = UDim2.new(1, -16, 0, SLOTS_TOP - (if COMPACT then 6 else 30) - LIST_TOP), -- compact: no "Equipped pets" title
 	BackgroundTransparency = 1,
 	BorderSizePixel = 0,
 	ScrollBarThickness = 5,
@@ -165,6 +175,7 @@ local slotsLabel = label("SlotsTitle", {
 	Position = UDim2.new(0, 12, 0, SLOTS_TOP - 28),
 	Size = UDim2.new(1, -24, 0, 18),
 	TextSize = 15,
+	Visible = not COMPACT,
 })
 
 -- texts that do not depend on the pet state (set again when the language changes)
@@ -208,6 +219,9 @@ local panel = create("Frame", {
 	tooltip,
 })
 StudStyle.Panel(panel, COLOR_PANEL)
+if FIT_SCALE < 1 then
+	create("UIScale", { Scale = FIT_SCALE, Parent = panel })
+end
 
 local setOpenEvent = create("BindableEvent", { Name = "SetOpen" })
 local screenGui = create("ScreenGui", {

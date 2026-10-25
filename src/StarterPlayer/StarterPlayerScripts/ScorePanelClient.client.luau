@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
+local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -20,10 +21,6 @@ local TOGGLE_TWEEN = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirect
 
 local collapsed = nil -- nil until the first card: then the default for this screen, afterwards the player's choice
 local current = nil -- { panel, scale, glyph, details } of the card now on screen
-
-local function isSmallScreen()
-	return camera.ViewportSize.Y < SMALL_SCREEN_HEIGHT
-end
 
 local function layout(card)
 	card.scale.Scale = math.clamp(camera.ViewportSize.Y / 600, 0.7, 1)
@@ -53,7 +50,7 @@ local function setup(screenGui)
 	local details = { panel:WaitForChild("StageRecord"), panel:FindFirstChild("StageMedals") }
 
 	if collapsed == nil then
-		collapsed = isSmallScreen()
+		collapsed = PanelFit.ViewportHeight() < SMALL_SCREEN_HEIGHT -- not the camera's first placeholder size
 	end
 
 	-- a long (Czech) name shrinks instead of running under the toggle
