@@ -89,7 +89,7 @@ no code change). Fox is done; the user picked it from five previews (texture eve
   level-tinted parts `Accent = true`.
 - A variant with `variant.material` (PetLook `jitterBody`) replaces the Material on some big parts, so those parts lose the
   stud texture (the MaterialVariant needs base `Plastic`); intended, that is the variant's texture.
-- The replaced models are kept in the Studio-only `ServerStorage.PetModelBackup` (`Fox_Old_20261025`, `Cat_Old_20261025`, `Dog_Old_20261025`).
+- The replaced models are kept in the Studio-only `ServerStorage.PetModelBackup` (`Fox_Old_20261025`, `Cat_Old_20261025`, `Dog_Old_20261025`, `Bunny_Old_20261025`).
 - *Cat* (done 2026-10-25, 54 parts): shorter wider ears with pink insides, tabby stripes (forehead "M", cheeks, three across
   the back, a tail ring), cream muzzle pads / chin / chest / paws, whiskers, a thin upright tail curling forward. Eyes after the
   user's reference photo (the first green iris with a slit pupil looked threatening): dark-brown rim, gold outer and green
@@ -99,6 +99,11 @@ no code change). Fox is done; the user picked it from five previews (texture eve
   left eye, a cream forehead blaze, a boxy cream snout with a big shiny nose, a mouth line and the tongue out to one side, a
   brown saddle spot, cream bib and front paws, the red collar lowered below the head with a round gold tag on a ring
   (Accent; the Dog still skips the scarf), a short upturned tail with a cream tip.
+- *Bunny* (done 2026-10-25, 45 parts): tall ears in two segments bending outward (pink insides, rounded tips), chubby cheek
+  puffs, pink blush discs, two small muzzle pads with a pink nose, mouth line and buck teeth, dark ruby eyes with a big pupil
+  and slightly larger catchlights (they must read on the near-black coat), round haunches, long back feet with pink toe
+  pads, short front legs, a faintly pink chest (Accent), a cotton tail of three balls. Coats: the big white parts take the
+  grey / black coat; the muzzle pads are kept under `TEXTURE_MIN_SIZE` on purpose, so a dark Bunny keeps a light muzzle.
 - *Eyes grow slower than the pet* (`PetLook` `EYE_GROWTH = 0.5`, every kind): at Lv 20 the body is ×1.6, the eyes ×1.3
   (fully growing eyes looked intense, fixed-size eyes too small). Parts with the Studio attribute `Eye = true` (eyes, rims,
   pupils, shines, Owl rings, Panda patches) are shrunk back after `ScaleTo` as one group around the point between the eyes on
