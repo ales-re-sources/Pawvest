@@ -42,6 +42,7 @@ Rules:
 | M5 | Leaderboards + hub navigation | ✔ | ✔ | – |
 | P1 | Pets: data, panel, followers, XP | ✔ | ✔ | – |
 | P1e | Pet growth visuals | ✔ | ✔ | – |
+| P1g | Pet stud restyle (Studio-only models) — Fox done 2026-10-25 (user picked the look), other 7 kinds not started | ✔ (Fox) | – | – |
 | P2 | Pet garden: plots, pens, incubators, food | ✔ | ✔ | – |
 | H1 | Hub island redesign + stud portals + stud landing pads | ✔ | ✔ | – |
 | H2 | Stud checkpoints (square plate, growing core + light) | ✔ | ✔ | – |
@@ -118,6 +119,10 @@ levels 1–20.
 **P1e — Pet growth visuals** (design: [PET_GROWTH.md](PET_GROWTH.md)). The look is a pure function of (kind, level, uid):
 size 1.0 → 1.6, a staged level-up moment, tier effects at Lv 5 / 10 / 15 / 20 with distance LOD, per-pet colour and
 texture, accessories at Lv 10 / 20, Bunny coats. Followers and garden pens are drawn by the same code.
+
+**P1g — Pet stud restyle** (recipe: [PET_GROWTH.md](PET_GROWTH.md) → Stud restyle). Studio-only model work, one kind at a
+time: stud texture on the big main-colour parts, shaped ears / face / tail for detail. Fox done 2026-10-25. Check per kind:
+the follower at Lv 1 / 10 / 20 with each allowed accessory, the garden pen and the panel portrait look right.
 
 **P2 — Pet garden.** A garden island with 12 plots, one borrowed per player (servers of 12 players). Each plot has 6 pens
 whose pets produce Coins, also offline (capped at 8 h, server time only), and 3 incubators, the only place eggs hatch:

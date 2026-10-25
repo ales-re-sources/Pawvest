@@ -75,6 +75,22 @@ Dragon/Phoenix/Owl, no horns on Dragon). Rule: T2 (Lv 10-14) gets 1 accessory, T
 Because pieces use only part names (`Head`, `Body`, `Tail`, `Root`) and the bounding box, replacing the blocky models with
 real art later keeps working; missing parts fall back to bounding-box positions.
 
+### Stud restyle (P1g, started 2026-10-25)
+The plain 15-23 block models get a stud-toy look and more detail, one kind at a time, Studio-only (`ReplicatedStorage.PetModels`;
+no code change). Fox is done; the user picked it from five previews (texture everywhere, real cylinder studs, brick-built
+"BrickHeadz" with seams, and two mixes). The picked recipe, for the other kinds to follow:
+- *Stud texture only on the big main-colour parts* (Fox: `Head`, `Body`, `Tail`, `Tail2`): Material `Plastic` + MaterialVariant
+  `StudsSmall` (`MaterialService.StudPack`). Everything white or small (face, chest, ear insides, tips, legs, paws) stays
+  SmoothPlastic: the texture reads as a waffle on small areas. No cylinder studs (they barely show at pet size).
+- *More detail from shaped parts:* triangular ears from two mirrored WedgeParts (outer, inner Accent, dark tip Accent), a face
+  mask wrapping the lower head with cheek tufts (Accent), a sloped muzzle (WedgePart on top), round cylinder eyes with a
+  shine, a tail of 2-3 tapering segments with a white tip (Accent), paws. About 35-40 parts per pet (was ~20).
+- *Keep the names PetLook relies on:* `Root` (invisible PrimaryPart, front −Z), `Head`, `Body`, `Tail*`; mark the
+  level-tinted parts `Accent = true`.
+- A variant with `variant.material` (PetLook `jitterBody`) replaces the Material on some big parts, so those parts lose the
+  stud texture (the MaterialVariant needs base `Plastic`); intended, that is the variant's texture.
+- The replaced models are kept in the Studio-only `ServerStorage.PetModelBackup` (`Fox_Old_20261025`).
+
 ## Critical files
 - new `src/ReplicatedStorage/PetLook.luau`
 - `src/ReplicatedStorage/PetConfig.luau` (`MaxScale`, `Tiers`, helper `TierOf`)
