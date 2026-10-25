@@ -183,6 +183,9 @@ component can *require* (hard) or only *reward* (soft: faster medal, shortcut).
   on later (20 stages are many parts).
 - **Cost**: animate only parts within about 300 studs of the camera; the server animates nothing.
 - Templates live in `ServerStorage.StageKit.Obstacles` (Studio-only), next to `LandingPad` and `Checkpoint`.
+- **Colour language (2026-10-25):** red = kills, yellow / gold = movers and pushers, blue = tilt plates, teal = disappearing / flip
+  plates, green = switches and checkpoints, pastel violet = low gravity, **pink (`#FF46B4`) = bounce** (stud trampolines,
+  the KeyArena orb). A new component takes a colour not on this list.
 - **Visuals are deferred (user decision 2026-10-21):** every kit component is deliberately plain (grey / coloured boxes); wind
   and updraft particles, plate looks, beam glow etc. come in a later visual pass together with the world style decision
   ([STYLE_PREVIEW.md](STYLE_PREVIEW.md)), as presets on the `StageKit.Obstacles` templates. Only the functionality (attributes
@@ -300,7 +303,7 @@ if the sound fails to load. Beams telegraph on the off-beat; most hazards switch
     pixels (41.5 px per unit), so the layout is the drawing's. Lane 6 studs deep (invisible front wall, dark back panel),
     camera zone `Side`, distance 55 (the whole arena is 64 studs high; the default 40 shows only part of it).
   - *Deliberate changes to the drawing:* the exit opening is 2 units high (the drawing's 1 unit is below a character's
-    height); the teal gate is full height (the 3-unit pillar alone is cleared by a Triple Jump); the yellow orb is a bounce
+    height); the teal gate is full height (the 3-unit pillar alone is cleared by a Triple Jump); the orb (pink since 2026-10-25, the bounce colour; drawn yellow) is a bounce
     brick (`LaunchSpeed` 60, launches straight up; the way past the spiked block in the low corridor); spike kill boxes
     are 60 % of the drawn spike (hanging ones 50 %) so the A-B corridor stays passable for a 5-stud character; keys have a
     7 x 6 stud pickup box because the key pocket under the hanging bar is only 4.4 studs high; spikes are light red.
