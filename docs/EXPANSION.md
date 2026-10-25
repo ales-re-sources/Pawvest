@@ -38,7 +38,7 @@ touch movement or stage times.
 | Unifying rule | One pet, one post. Existing pens become posts |
 | Long goals | Island restoration bundles, estate tiers + cottage, pet mastery, garden score — all four |
 | Decoration | Free placement **outside only**, per-tier limit, validated on the server; the cottage is fixed |
-| Field (2026-10-24) | One field of squares the player plants freely, instead of fixed beds (§5 "bed" reads as "square"); capacity grows by field expansion tiers; max size limited by the 40 × 40 plot, measured in Studio during E0 |
+| Field (2026-10-24) | One field of squares the player plants freely, instead of fixed beds (§5 "bed" reads as "square"); capacity grows by field expansion tiers; **decided 2026-10-25 (E0): 12 squares at ladder scale ~0.3** (the 24-hour rule limits squares × scale), so a plot draws at most 12 squares |
 | Garden vs obby (2026-10-24) | **24-hour rule:** one active obby hour (mini-games count) ≈ 24 hours of fully automated planting at the same progress; checked by the E0 model (ROADMAP → E0) |
 | Online vs offline (2026-10-24) | Offline income must exist, but **online income, even passive, is much higher**, to give players a reason to keep Roblox open. A parameter pair `online_rate` 1.0 / `offline_rate` (provisional 0.33, about 3x; the number is an open decision) applies to everything passive: crop growth, Gardener replanting, pen production; offline time is capped (pens 8 h, field its own cap, provisional 12 h). The 24-hour rule is checked for the online case (offline can only be lower). Not a Roblox payout (Engagement-Based Payouts ended 2025-07-24; Creator Rewards pays per Active Spender) and never pure AFK: income depends on the player being present |
 | Prices (2026-10-24) | E0 also re-prices all sinks (talents, unlocks, slots, eggs, incubators, posts, food, field expansion and upgrades); applied in E0b after approval |
@@ -104,6 +104,8 @@ on the request board or in a restoration bundle, replant as seed stock.
 | 2 | Renown 5 | Corn 6 h, Pumpkin 8 h | about 45 |
 | 3 | Renown 12 | Giant melon 12 h | about 90 |
 | Rare | obby unlock | one signature crop per world | about 150 |
+
+*E0 re-scaled this ladder (2026-10-25, [ECONOMY.md](ECONOMY.md)): × 0.3, i.e. about 6 / 13.5 / 27 / 45 net per square-hour, Renown gates 8 / 25, a field of 12 squares; the Casual estimate below is superseded by the E0 model.*
 
 "Net" is after the seed cost (20–30 % of the sale price). A casual player with 4 beds (about 14 effective bed-hours a day) nets
 roughly 1 100 Coins a day, about half of one good obby hour (GDD §6: ~2 230 in the first hour, ~500 / h later).

@@ -251,7 +251,7 @@ bed list, and the crop catalogue size becomes a content question rather than a s
 squares per expansion tier and their prices, the upgrades (for example faster growth, a barn, more Gardener coverage), optional crops
 that cover 2 × 2 squares (giant melon, trophy pumpkin). The plot geometry is **not** a constraint of E0 (decided 2026-10-24: the plot area and layout will be reworked, and the architecture may move
 to client-drawn plots, see EXPANSION §12 "Plot architecture"): the maximum field is a model parameter with a provisional ceiling
-(proposal: 150 squares) that the plot rework must be able to draw. E0 outputs the minimum catalogue that makes the ladder work (at least one crop per tier
+(proposal: 150 squares; **decided 2026-10-25: 12 squares at ladder scale ~0.3**) that the plot rework must be able to draw. E0 outputs the minimum catalogue that makes the ladder work (at least one crop per tier
 plus a rare one per world) and a recommended MVP size; six stays a proposal, not a constraint.
 
 **Player archetypes** (each simulated day by day, 60 days): *Obby main* (2 h obby, 3 garden visits), *Casual* (45 min, 2 visits),
@@ -354,18 +354,18 @@ Findings of the current game (before crops):
   to match the code on 2026-10-24; the simulation follows the code.
 
 **Field step (2026-10-24, `python tools/economy.py check` / `sim` / `field`; numbers in [ECONOMY.md](ECONOMY.md), all provisional).** The model now has the crop field: one grid of squares
-(6 free, 9 expansion tiers), visit-based harvest (one per square per visit, ripe crops wait), Green-thumb Gardener pets on Field posts that re-cycle their squares between visits from a seed
-stock and barn, seeds as a real cost, sales through the pet multiplier, Renown as a derived level, a rare-seed drip from the obby, upgrades (growth, barn, Gardener coverage) and a placeholder
+(4 free, 8 expansion tiers up to 12 squares), visit-based harvest (one per square per visit, ripe crops wait), Green-thumb Gardener pets on Field posts that re-cycle their squares between visits from a seed
+stock and barn, seeds as a real cost, sales through the pet multiplier, Renown as a derived level, a rare-seed drip from the obby, upgrades (growth, barn; a Gardener coverage level was dropped because one more square per Gardener would cover the whole 12-square field) and a placeholder
 ladder for the sinks that are not designed yet (landmarks / estate / decor). `--garden pens|field|both` switches between today's pens, pens-become-posts and grandfathered pens. 43 checks pass in
 about 3 s, including A (24-hour rule on every day, every archetype x policy), the A target band, B, C, the Obby main garden share and the online / offline rule (below). Findings:
-- **The EXPANSION §5 ladder (20 / 45 / 90 / 150 per square-hour) only fits 4-7 squares** under the 24-hour rule at the last stage (first obby hour 10 188). Tuned: ladder scale 0.15 (3 / 6.7 / 13.5 / 22.5)
-  and a field of 6 -> 24 squares; **the 150-square ceiling is not needed (the plot rework draws 24-30)**; squares x scale is what the rule limits. The online ceiling reaches 0.95x for Obby main and Casual,
-  0.80x worst for Garden main (0.70x at day 60), 0.52x for Binge. About half of it is the Gardener part. A is linear in the ladder scale (+20 % -> 1.14x), and also sensitive to
-  squares per Gardener, the growth upgrade and the tier-3 gate (25; 12-15 gives 1.05x early): flag them for M6a telemetry.
+- **The EXPANSION §5 ladder (20 / 45 / 90 / 150 per square-hour) only fits 4-7 squares** under the 24-hour rule at the last stage (first obby hour 10 188). Squares x scale is what the rule limits (150 squares would need scale 0.04, 24 squares 0.24).
+  **Decided 2026-10-25 (open decision 4): 12 squares at ladder scale 0.3 (6 / 13.5 / 27 / 45 per square-hour), 4 free squares + 8 expansion tiers; the plot rework needs to draw only 12 squares.** The online ceiling reaches
+  0.95x for Obby main and Casual, 0.87x worst for Garden main (0.76x at day 60), 0.27x for Binge (its Renown stays below the tier-3 gate). About half of it is the Gardener part. A is linear in the ladder scale (+20 % -> 1.14x), and also
+  sensitive to squares per Gardener (2 -> 1.06x), the growth upgrade and the tier-3 gate (25; 12-15 gives 1.28x early): flag them for M6a telemetry.
 - **Catalogue:** six crops (Potato, Pumpkin, Giant melon + one rare per world) pass every check; the recommended MVP is **seven** (+ Corn, the 6 h slot, +10 % for Obby main). Carrot, Radish and a 2 x 2 crop add under 1 %.
-- **B holds, with a thin margin under the online / offline rule:** with / without Gardeners the net per day is 6.8k / 6.3k (Obby main), 4.5k / 3.9k (Casual), 3.8k / 3.6k (Garden main), 0.37k / 0.12k (Binge); B flips with several parameters in the sensitivity run, so the Gardener needs a bigger edge.
-- **C needs content that does not exist yet:** existing sinks plus the field absorb 38 % (Obby main) / 70 % (Casual) of the faucet by day 60; the 80 % proposal needs ~0.72 M / 0.08 M Coins of landmark / estate / decor sinks
-  (the placeholder ladder supplies them; the check prints both values). Garden share of income: Obby main 25 %, Casual 31 %, Garden main 72 % (the only majority, as Q5 wants), Binge 8 %.
+- **B holds, with a thin margin under the online / offline rule:** with / without Gardeners the net per day is 6.6k / 6.2k (Obby main, +7 %), 4.7k / 4.1k (Casual, +15 %), 4.3k / 3.9k (Garden main, +10 %), 0.32k / 0.27k (Binge, +21 %); B flips with two parameters in the sensitivity run, so the Gardener needs a bigger edge by design (not by more coverage, which breaks A).
+- **C needs content that does not exist yet:** existing sinks plus the field absorb 36 % (Obby main) / 68 % (Casual) of the faucet by day 60; the 80 % proposal needs ~0.76 M / 0.10 M Coins of landmark / estate / decor sinks
+  (the placeholder ladder supplies them; the check prints both values). Garden share of income: Obby main 25 %, Casual 32 %, Garden main 73 % (the only majority, as Q5 wants), Binge 7 %.
 - **Pens:** grandfathering them (`--garden both`) breaks A (worst day 2.2-2.7x) and puts Obby main's garden share at 53 %: the model supports replacing the Coins-per-hour production when posts arrive.
 - Rare seeds from the obby: 7-9 a week for Obby main / Casual, 2-3 for Garden main / Binge.
 
@@ -373,11 +373,11 @@ about 3 s, including A (24-hour rule on every day, every archetype x policy), th
 `online_rate` 1.0 / `offline_rate` 0.33 (online ~3x; **the number is an open decision**) and a field offline cap (`offline_cap_h` 12 h, provisional; pens keep 8 h). It scales all passive income: crop growth (a long crop may
 span several visits), Gardener replanting, and the pen production kept for comparison. Roblox no longer pays for uptime (Engagement-Based Payouts ended 2025-07-24), so nothing is modelled as a payout and nothing is paid for pure AFK.
 Guardrail A is checked for the online case (the ceiling does not depend on the rates); the new check `O` requires garden income per online hour >= 1 / `offline_rate` x per offline hour and some offline income:
-Obby main 3.2x, Casual 3.5x, Garden main 3.1x, Binge 54x. Consequences: the field's realised net per day falls to 6.7k / 4.5k / 3.7k / 0.4k (about half to two thirds of the unweighted 13.7k / 14.2k / 12.8k / 0.5k for the active
-archetypes), only 13-35 % of garden income is earned online (online hours are 1-3.5 of 24), **Binge is almost cut off** (one session a week, a 12 h cap: field 0.4k a day, garden 8 % of income) and Garden main stays at 0.27x of the
-first obby hour. Levers: the cap (24 h lifts Binge to 0.6k, 48 h to 1.0k) and the rate (0.1 makes online the majority for Obby main, 68 %, but halves the field income again). Pens would drop from 21.5 to 9.4 paid hours a day (Obby main).
+Obby main 3.3x, Casual 3.5x, Garden main 3.2x, Binge 59x. Consequences: the field's realised net per day falls to 6.6k / 4.7k / 4.3k / 0.3k (about half to two thirds of the unweighted 13.9k / 13.9k / 12.7k / 0.4k for the active
+archetypes), only 13-36 % of garden income is earned online (online hours are 1-3.5 of 24), **Binge is almost cut off** (one session a week, a 12 h cap: field 0.3k a day, garden 7 % of income) and Garden main stays at 0.30x of the
+first obby hour. Levers: the cap (24 h lifts only Binge, to 0.4k) and the rate (0.1 makes online the majority for Obby main, 67 %, but halves the field income again; 0.5 puts A at 1.00x). Pens would drop from 21.5 to 9.4 paid hours a day (Obby main).
 **Done when** `check` is green, `docs/ECONOMY.md` and the GDD / EXPANSION edits are committed, and the user has confirmed the ladder, the
-price proposal and the pen-income migration. E0b (applying the prices) is a separate small milestone. Status: in progress (baseline, simulation and field steps done; repricing next).
+price proposal and the pen-income migration. E0b (applying the prices) is a separate small milestone. Status: in progress (baseline, simulation and field steps done; field retuned to 12 squares on 2026-10-25; repricing next).
 
 **Decided:** form = script (2026-10-24); the garden is one free-form field of squares (not fixed beds); guardrail = the 24-hour rule (check 4), measured against the **first obby hour of a fresh day** (about 2 230; the later steady hour is only reported).
 
@@ -388,9 +388,8 @@ price proposal and the pen-income migration. E0b (applying the prices) is a sepa
    unlocks after the last stage of their world, last field tier by day 60).
 3. *Live players:* how many exist (probably only the developer and test accounts). If nobody has live pen income the migration collapses to
    "replace pens"; otherwise grandfather.
-4. *Maximum field:* provisional ceiling of 150 squares for the model; the real limit comes from the plot-architecture decision (EXPANSION §12). The field step shows 24 squares are enough at ladder scale 0.15.
-5. *Field size and ladder scale* (new, 2026-10-24): accept 24 squares at scale 0.15 (potato 12 / melon 216 Coins), or fewer squares with larger numbers (12 squares at about scale 0.3)?
-6. *Placeholder sinks* (new): the sink share of open decision 1 holds only with ~0.7 M Coins of landmark / estate / decor sinks (E6 / E7) for an Obby-main player; keep the share or lower it.
+4. ~~*Maximum field*~~ **Decided 2026-10-25:** 12 squares at ladder scale about 0.3 (potato 24 / melon 432 Coins), so the plot rework draws 12 squares (EXPANSION §12; the E1.0 spike below may keep its 150-square stress test as headroom).
+6. *Placeholder sinks* (new): the sink share of open decision 1 holds only with ~0.8 M Coins of landmark / estate / decor sinks (E6 / E7) for an Obby-main player; keep the share or lower it.
 7. *Online / offline numbers* (new, 2026-10-24): `offline_rate` 0.33 and the field offline cap 12 h are placeholders (the user gave no number). Choose the rate (0.2 stronger, 0.5 gentler) and the cap (24-48 h helps only Binge).
 
 ### E1.0 — Client-drawn plots spike (scope, 2026-10-24; before E1, after or alongside E0)

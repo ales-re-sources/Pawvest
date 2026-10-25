@@ -446,14 +446,13 @@ SIM = {
 MULT_REF = 1.48  # pet multiplier of a developed player (cap +50 %), used by the static field tables
 
 FIELD = {
-    "scale": 0.15,  # global factor on the ladder below: the 20 / 45 / 90 / 150 of EXPANSION §5 break the 24-hour rule on a field of tens of squares
+    "scale": 0.3,  # global factor on the ladder below: the 20 / 45 / 90 / 150 of EXPANSION §5 break the 24-hour rule on a field of tens of squares
     "ladder": {1: 20, 2: 45, 3: 90, 4: 150},  # net Coins per square-hour at scale 1, tier 4 = rare (obby-unlocked only)
     "seed_frac": 0.25,  # seed cost / sale price (EXPANSION §5: 20-30 %)
-    "max_squares": 150,  # provisional ceiling the plot rework must be able to draw (ROADMAP open decision 4)
-    "start_squares": 6,
+    "max_squares": 12,  # the field the plot rework must draw (decided 2026-10-25: 12 squares at ladder scale ~0.3; the original ceiling was 150)
+    "start_squares": 4,
     # expansion tiers: (squares after the purchase, price in Coins, Renown gate); the free start field is `start_squares`
-    "expansions": [(8, 800, 1), (10, 2000, 3), (12, 4000, 5), (14, 7500, 8), (16, 12000, 11), (18, 18000, 14), (20, 28000, 17),
-                   (22, 42000, 20), (24, 65000, 24)],
+    "expansions": [(5, 600, 1), (6, 1500, 2), (7, 3500, 4), (8, 7500, 7), (9, 14000, 10), (10, 24000, 14), (11, 40000, 19), (12, 65000, 25)],
     "tier_gate": {1: 0, 2: 8, 3: 25},  # Renown needed to plant a tier (rare crops: seeds from the obby, no gate)
     "renown": {"k": 3.0, "p": 1.6, "weight": {1: 1, 2: 3, 3: 6, 4: 12}, "requests_per_day": 0.0},  # points for level L = k x L^p; request board = placeholder
     "gardener": {"share": 0.35, "squares": 1, "max_tier": 3},  # share of hatched pets with Green thumb; squares each Gardener replants; best tier it may plant
@@ -462,7 +461,7 @@ FIELD = {
     "upgrades": {
         "growth": {"step": 0.05, "prices": [3000, 8000, 20000, 45000]},
         "barn": {"step": 20, "prices": [1500, 4000, 10000, 25000, 60000]},
-        "gardener": {"step": 1, "prices": [12000]},
+        "gardener": {"step": 1, "prices": []},  # no coverage level: on 12 squares one more square per Gardener would cover the whole field (A 1.06x)
     },
     "rare": {"per_first_gold": 1, "daily": 1, "sale_share": 0.5},  # rare seeds from the obby; the rest of the harvest is kept for landmarks (placeholder)
     # sinks the model does not design yet (landmark Coins parts, estate tiers, decor, stations; EXPANSION §9): a geometric ladder, bought last
@@ -1491,10 +1490,10 @@ def field_report(P):
         rows.append((k + 1, sq, n(price), gate, n(cum)))
     print(table(["Tier", "Squares", "Price", "Renown", "Cumulative"], rows, right_from=0))
     print("   Upgrades: " + "; ".join(f"{name} ({'+' if name != 'growth' else '-'}{u['step'] if name != 'growth' else str(round(u['step'] * 100)) + ' % grow time'} per level) " + "/".join(n(p) for p in u["prices"])
-                                      for name, u in FIELD["upgrades"].items()))
+                                      for name, u in FIELD["upgrades"].items() if u["prices"]))
     res = F["prices"]["res"]
     print(f"   Reserved sink ladder (landmarks / estate / decor placeholder): {len(res)} steps from {n(res[0])} to {n(res[-1])}, total {n(sum(res))}")
-    print(f"   Gardener: {FIELD['gardener']['share']:.0%} of hatched pets have Green thumb, each replants {FIELD['gardener']['squares']} squares (+ upgrades), posts = pens owned (prices unchanged).")
+    print(f"   Gardener: {FIELD['gardener']['share']:.0%} of hatched pets have Green thumb, each replants {FIELD['gardener']['squares']} square(s), posts = pens owned (prices unchanged).")
 
     print()
     print("8. Structural value of one square per day by archetype (Coins after the multiplier "
@@ -1512,10 +1511,11 @@ def field_report(P):
         rows.append([sc if sc != FIELD["scale"] else f"{sc} (model)", n(auto)] + [n(p) for p in per] + [f"{budget / auto:.0f}"] + [f"{budget / p:.0f}" for p in per[:3]])
     print(table(["Ladder scale", "Gardener sq/day"] + [a["name"] + " sq/day" for a in ARCHETYPES] + ["Fits, all Gardener", "Fits, manual: Obby", "Casual", "Garden"], rows))
     print(f"   Last stage: first obby hour {n(h1)} ({n(h1 * MULT_REF)} with the multiplier); 'Fits' = squares whose 24 h potential stays at 0.9x of it.")
-    sc150 = FIELD["scale"] * budget / FIELD["max_squares"] / casual_model
-    potato = make_crops(sc150, "min")["Potato"]
-    print(f"   Read: the ladder of EXPANSION §5 as written (scale 1) fits only 4-7 squares; the {FIELD['max_squares']}-square ceiling would need scale "
-          f"{sc150:.3f} (a potato selling for {potato['sale']} Coins with a seed of {potato['seed']}).")
+    print("   Read: the ladder of EXPANSION §5 as written (scale 1) fits only 4-7 squares; squares x scale is what the rule limits:")
+    for squares in (FIELD["max_squares"], 24, 150):
+        sc = FIELD["scale"] * budget / squares / casual_model
+        potato = make_crops(sc, "min")["Potato"]
+        print(f"   - {squares} squares (all manual, Casual's long gaps) -> scale {sc:.3f} (a potato sells for {potato['sale']} Coins, seed {potato['seed']})")
 
 
 def main():
