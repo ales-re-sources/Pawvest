@@ -89,7 +89,7 @@ no code change). Fox is done; the user picked it from five previews (texture eve
   level-tinted parts `Accent = true`.
 - A variant with `variant.material` (PetLook `jitterBody`) replaces the Material on some big parts, so those parts lose the
   stud texture (the MaterialVariant needs base `Plastic`); intended, that is the variant's texture.
-- The replaced models are kept in the Studio-only `ServerStorage.PetModelBackup` (`Fox_Old_20261025`, `Cat_Old_20261025`, `Dog_Old_20261025`, `Bunny_Old_20261025`, `Owl_Old_20261025`, `Panda_Old_20261025`, `Dragon_Old_20261025`).
+- The replaced models are kept in the Studio-only `ServerStorage.PetModelBackup` (`Fox_Old_20261025`, `Cat_Old_20261025`, `Dog_Old_20261025`, `Bunny_Old_20261025`, `Owl_Old_20261025`, `Panda_Old_20261025`, `Dragon_Old_20261025`, `Phoenix_Old_20261025`).
 - *Cat* (done 2026-10-25, 54 parts): shorter wider ears with pink insides, tabby stripes (forehead "M", cheeks, three across
   the back, a tail ring), cream muzzle pads / chin / chest / paws, whiskers, a thin upright tail curling forward. Eyes after the
   user's reference photo (the first green iris with a slit pupil looked threatening): dark-brown rim, gold outer and green
@@ -124,6 +124,14 @@ no code change). Fox is done; the user picked it from five previews (texture eve
   dark-purple rim, gold outer and fire-orange inner iris, a vertical capsule pupil 0.15 wide (a narrow slit looked cold,
   the first amber ring with a small round pupil and a brow floating above it looked surprised), two catchlights, a brow
   ridge resting on the rim (outer end 4° up).
+- *Phoenix* (done 2026-10-25, 65 parts): the first stud version read as a chicken (upright crest fan = a rooster's comb,
+  small down-pointing beak, wings folded flat, stubby tail). The firebird: raised wings of four long feathers fanned up,
+  out and back from each shoulder (gold Neon on top down to deep red), three thin crest plumes swept back over the head
+  with glowing orbs, a long tail of three plumes sweeping back and down and curling up into glowing orbs plus two short red
+  ones, a hooked raptor beak sticking forward, a three-point feather breastplate, the Cat's eye layout in fire colours with
+  a gold flick up from the outer corners, gold feet with darker talons. Neon / Accent parts as on the original (crest,
+  gold wing feather, tail plumes). It is bigger than the others: bounding box 2.9 × 3.0 × 4.2 at Lv 1 (old 2.3 × 2.8 × 3.5),
+  4.6 × 4.8 × 6.8 at Lv 20; the formation spaces by the box, the garden pen fit at Lv 20 is not checked yet.
 - *Eyes grow slower than the pet* (`PetLook` `EYE_GROWTH = 0.5`, every kind): at Lv 20 the body is ×1.6, the eyes ×1.3
   (fully growing eyes looked intense, fixed-size eyes too small). Parts with the Studio attribute `Eye = true` (eyes, rims,
   pupils, shines, Owl rings, Panda patches) are shrunk back after `ScaleTo` as one group around the point between the eyes on
