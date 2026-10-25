@@ -13,6 +13,13 @@ local coinTextLabel = coinFrame:WaitForChild("TextLabel")
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 StudStyle.Plate(coinFrame, StudStyle.Colors.Wood, 4)
 StudStyle.Title(coinTextLabel, StudStyle.Colors.Wood)
+StudStyle.Coin(coinFrame:WaitForChild("ImageLabel"))
+-- the count centred in the plate's space right of the coin
+coinTextLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+coinTextLabel.Position = UDim2.fromScale(0.62, 0.5)
+coinTextLabel.Size = UDim2.fromScale(0.6, 0.64)
+coinTextLabel.TextXAlignment = Enum.TextXAlignment.Center
+coinTextLabel.TextYAlignment = Enum.TextYAlignment.Center
 
 -- Function to update the coin display
 local function updateCoinDisplay(coinAmount)

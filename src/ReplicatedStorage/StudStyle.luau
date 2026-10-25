@@ -9,6 +9,7 @@
 --   Row(frame, panelName)   a row inside a panel: a lighter tone of that panel's colour
 --   Plate(frame, color)     a free-standing plate (coin counter, status card): colour, outline, shine, studs on top
 --   Title(label, color)     chunky white text with a dark outline in the colour's shade
+--   Coin(holder, color?)    stud coin icon (gold disc, beaded border, one embossed stud) drawn inside an ImageLabel / Frame
 
 local TweenService = game:GetService("TweenService")
 
@@ -246,6 +247,80 @@ function StudStyle.Plate(frame: GuiObject, color: Color3, studs: number?)
 	outline(frame, shade(color, EDGE), 3)
 	shine(frame)
 	addStuds(frame, color, studs or 3, 18)
+end
+
+-- round disc filling `parent` (scale sizes, so it follows the holder)
+local function disc(name: string, parent: Instance, size: number, y: number, color: Color3): Frame
+	local f = Instance.new("Frame")
+	f.Name = name
+	f.AnchorPoint = Vector2.new(0.5, 0.5)
+	f.Position = UDim2.fromScale(0.5, y)
+	f.Size = UDim2.fromScale(size, size)
+	f.BackgroundColor3 = color
+	f.BorderSizePixel = 0
+	local c = Instance.new("UICorner")
+	c.CornerRadius = UDim.new(0.5, 0)
+	c.Parent = f
+	f.Parent = parent
+	return f
+end
+
+-- Stud coin icon drawn inside `holder` (an ImageLabel's image is cleared): a gold disc with a dark edge under it,
+-- a diagonal shine, a beaded border of small studs and one flat embossed stud in the middle. Square and round whatever
+-- the holder's size; calling it again rebuilds the look.
+function StudStyle.Coin(holder: GuiObject, color: Color3?)
+	local gold = color or StudStyle.Colors.Yellow
+	if holder:IsA("ImageLabel") or holder:IsA("ImageButton") then
+		holder.Image = ""
+	end
+	holder.BackgroundTransparency = 1
+	local old = holder:FindFirstChild("Coin")
+	if old then
+		old:Destroy()
+	end
+	local ratio = holder:FindFirstChildOfClass("UIAspectRatioConstraint") or Instance.new("UIAspectRatioConstraint")
+	ratio.AspectRatio = 1
+	ratio.Parent = holder
+
+	local coin = Instance.new("Frame")
+	coin.Name = "Coin"
+	coin.BackgroundTransparency = 1
+	coin.Size = UDim2.fromScale(1, 1)
+
+	-- the coin's edge peeks out under the face like a brick's lip
+	local edge = disc("Edge", coin, 0.88, 0.53, shade(gold, EDGE))
+	outline(edge, shade(gold, 0.4), 2)
+	local face = disc("Face", coin, 0.88, 0.47, shade(gold, 1.12))
+	outline(face, shade(gold, 0.4), 2)
+	-- metal shine: a light diagonal band across a slightly darker face
+	local band = Instance.new("UIGradient")
+	band.Rotation = 45
+	local dim, lit = Color3.new(0.78, 0.78, 0.78), Color3.new(1, 1, 1)
+	band.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, dim),
+		ColorSequenceKeypoint.new(0.3, dim),
+		ColorSequenceKeypoint.new(0.4, lit),
+		ColorSequenceKeypoint.new(0.52, lit),
+		ColorSequenceKeypoint.new(0.62, dim),
+		ColorSequenceKeypoint.new(1, dim),
+	})
+	band.Parent = face
+
+	-- beaded border like a minted coin: a ring of small studs
+	local beads = 12
+	for i = 1, beads do
+		local a = (i - 1) / beads * math.pi * 2
+		local bead = disc("Bead" .. i, face, 0.09, 0.5, shade(gold, 0.8))
+		bead.Position = UDim2.fromScale(0.5 + 0.39 * math.cos(a), 0.5 + 0.39 * math.sin(a))
+	end
+
+	-- the stud embossed flat into the face: a thin shadow below, no glint
+	disc("StudShadow", face, 0.4, 0.55, shade(gold, EDGE))
+	local stud = disc("Stud", face, 0.4, 0.5, shade(gold, 1.12))
+	outline(stud, shade(gold, 0.8), 1.5)
+
+	coin.Parent = holder
+	return coin
 end
 
 function StudStyle.Panel(frame: GuiObject, color: Color3)
