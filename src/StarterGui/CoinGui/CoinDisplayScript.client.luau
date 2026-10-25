@@ -21,6 +21,20 @@ coinTextLabel.Size = UDim2.fromScale(0.6, 0.64)
 coinTextLabel.TextXAlignment = Enum.TextXAlignment.Center
 coinTextLabel.TextYAlignment = Enum.TextYAlignment.Center
 
+-- The plate sits in the Roblox top bar's empty right side instead of below it: the gui ignores the top bar inset
+-- (but still keeps clear of a phone's notch) and the plate is sized to the bar's height.
+local GuiService = game:GetService("GuiService")
+script.Parent.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
+local function placePlate()
+	local bar = GuiService.TopbarInset.Height
+	local height = math.clamp(bar - 12, 30, 46)
+	coinFrame.AnchorPoint = Vector2.new(1, 0)
+	coinFrame.Size = UDim2.fromOffset(height * 3.3, height)
+	coinFrame.Position = UDim2.new(1, -12, 0, math.max(6, (bar - height) / 2))
+end
+placePlate()
+GuiService:GetPropertyChangedSignal("TopbarInset"):Connect(placePlate)
+
 -- Function to update the coin display
 local function updateCoinDisplay(coinAmount)
 	if coinTextLabel then
