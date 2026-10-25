@@ -89,7 +89,7 @@ no code change). Fox is done; the user picked it from five previews (texture eve
   level-tinted parts `Accent = true`.
 - A variant with `variant.material` (PetLook `jitterBody`) replaces the Material on some big parts, so those parts lose the
   stud texture (the MaterialVariant needs base `Plastic`); intended, that is the variant's texture.
-- The replaced models are kept in the Studio-only `ServerStorage.PetModelBackup` (`Fox_Old_20261025`, `Cat_Old_20261025`, `Dog_Old_20261025`, `Bunny_Old_20261025`, `Owl_Old_20261025`).
+- The replaced models are kept in the Studio-only `ServerStorage.PetModelBackup` (`Fox_Old_20261025`, `Cat_Old_20261025`, `Dog_Old_20261025`, `Bunny_Old_20261025`, `Owl_Old_20261025`, `Panda_Old_20261025`).
 - *Cat* (done 2026-10-25, 54 parts): shorter wider ears with pink insides, tabby stripes (forehead "M", cheeks, three across
   the back, a tail ring), cream muzzle pads / chin / chest / paws, whiskers, a thin upright tail curling forward. Eyes after the
   user's reference photo (the first green iris with a slit pupil looked threatening): dark-brown rim, gold outer and green
@@ -112,6 +112,11 @@ no code change). Fox is done; the user picked it from five previews (texture eve
   Learned on the way (user feedback): an iris marked Accent turns Neon in the rarity colour at Lv 20 and the pet looks
   startled — keep eyes off the Accent list; lids drooping at the outer ends or covering half the iris look sad / tired;
   thin triangle tufts read like the Cat's ears, the Owl needs the blocky corner plumes.
+- *Panda* (done 2026-10-25, 42 parts): round black ears facing front (cylinders, dark grey insides), teardrop eye patches
+  (a disc and a smaller one below-outside; tagged `Eye`, no longer Accent, so they stay black at Lv 20), dark brown eyes
+  with a grey rim that reads on the patch and two catchlights, an off-white raised muzzle with a wide nose and a small "w"
+  mouth, pink blush discs (Accent), the black shoulder band (Accent, as before), black legs and paws, a small white tail
+  ball (the Panda still skips FlameTail), a bamboo sprig (two stalks, two nodes, two leaves) leaning by the left front paw.
 - *Eyes grow slower than the pet* (`PetLook` `EYE_GROWTH = 0.5`, every kind): at Lv 20 the body is ×1.6, the eyes ×1.3
   (fully growing eyes looked intense, fixed-size eyes too small). Parts with the Studio attribute `Eye = true` (eyes, rims,
   pupils, shines, Owl rings, Panda patches) are shrunk back after `ScaleTo` as one group around the point between the eyes on
