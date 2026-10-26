@@ -4,9 +4,12 @@
 -- lies in the same plane, faces the same way and overlaps a face of another visible part z-fights (flickering mixed
 -- textures). Touching faces that point opposite ways (a door resting on its sill) are fine.
 -- Prints one line per clash, or "clean". Extend `tagged` to audit other moving parts by giving them a state function.
+-- STATIC_ROOT (a Workspace path, e.g. "World3.Stage14") audits every visible block part under it against its neighbours
+-- instead (S8.2b: room parts built through a 2-stud back panel shared its outer face and flickered when seen from behind).
 local CollectionService = game:GetService("CollectionService")
 
 local PLANE_EPS, MIN_AREA, STEPS = 0.02, 0.05, 4
+local STATIC_ROOT: string? = nil
 
 local function faces(cf: CFrame, size: Vector3)
 	local axes = { cf.RightVector, cf.UpVector, cf.LookVector }
@@ -62,6 +65,44 @@ local function doorCFrame(part: BasePart, base: CFrame, t: number): CFrame
 end
 
 local report = {}
+
+-- clashes between two static parts (each pair once)
+local HIDDEN_TAGS = { "CameraZone", "KitZone", "KitGhostZone" } -- boxes the client hides at runtime
+local function visibleBlock(p: BasePart): boolean
+	for _, tag in HIDDEN_TAGS do
+		if p:HasTag(tag) then
+			return false
+		end
+	end
+	return p.Transparency < 1 and not (p:IsA("Part") and p.Shape ~= Enum.PartType.Block)
+end
+if STATIC_ROOT then
+	local root: Instance = workspace
+	for name in string.gmatch(STATIC_ROOT, "[^%.]+") do
+		root = root:FindFirstChild(name) or error("no " .. name .. " in " .. root:GetFullName())
+	end
+	local seen = {}
+	for _, a in root:GetDescendants() do
+		if a:IsA("BasePart") and visibleBlock(a) then
+			for _, b in workspace:GetPartBoundsInBox(a.CFrame, a.Size + Vector3.one * 0.2) do
+				local ka, kb = a:GetDebugId(), b:GetDebugId()
+				local key = if ka < kb then ka .. kb else kb .. ka
+				if b ~= a and visibleBlock(b) and not seen[key] then
+					seen[key] = true
+					for _, fa in faces(a.CFrame, a.Size) do
+						for _, fb in faces(b.CFrame, b.Size) do
+							if fa.n:Dot(fb.n) > 0.999 and math.abs(fa.n:Dot(fb.c - fa.c)) < PLANE_EPS and overlapArea(fa, fb) > MIN_AREA then
+								table.insert(report, string.format("%s (face %s) z-fights with %s (face %s)", a:GetFullName(), fa.name, b:GetFullName(), fb.name))
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+	return if #report == 0 then "clean" else table.concat(report, "\n")
+end
+
 for _, door in CollectionService:GetTagged("KitDoor") do
 	if door:IsA("BasePart") and door:IsDescendantOf(workspace) then
 		local params = OverlapParams.new()

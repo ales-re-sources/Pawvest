@@ -203,6 +203,11 @@ the lintel the moment it slides up into it.
   `KitDoor` from closed to open and lists each coplanar, same-facing, overlapping face; the result must be "clean" for the stage
   you touched. (State 2026-10-26: it also lists `Stage9.Maze.Big.ExitDoor` vs the posts / floor and `Stage10.Movers.Door_10` vs
   `Tower.Core`; not looked at yet.)
+- **Static parts z-fight too** (S8.2b, user 2026-10-26: Stage 14's back panel flickered seen from behind / from the start island): room
+  parts built 10 deep ran through the 2-stud back panel and shared its outer face. Parts that overlap must not share a face plane: end
+  floors, ceilings and walls at the panel's inner face, put walls under (not through) a ceiling, start a beam on its emitter. Set
+  `STATIC_ROOT` in the audit (e.g. `"World3.Stage14"`) to check a whole stage's static parts; hidden zones are skipped. (State
+  2026-10-26: Stage 14 is clean except the gate and finish-arch clones every stage shares: arch stones that overlap each other.)
 
 ### 2.4 Kit architecture (for S3)
 - One client module (`ObstacleKit`) drives every tagged part through `CollectionService` (`BlinkBeam`, `Mover`, `Rotator`,
@@ -913,6 +918,11 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
     portal ends the run with a result (Gold for the teleported test run) and returns the player to the courtyard. No script errors or warnings.
   - *Fixed while testing:* a 4-stud hole in the floor under the hall's east wall and a 2-stud one between `1201` and the hall (a lane probe now finds only the
     two gaps), a support pillar sticking 6 studs up into the finale pit (a perch above the lasers), the finale ceiling, the sweepers.
+  - *User's first look (2026-10-26):* the back panel flickered when seen from behind / from the start island: the Beam Hall's floor, ceilings,
+    walls, blocks, slabs and emitters were 10 deep (z -585..-575) and shared the panel's outer face. All now end at z -577 (the panel's inner face);
+    also fixed by the static coplanar audit (§2.3.1): the vault's corner walls vs its ceiling, `Base_L_Post`, the entry's lintel (inside the vault
+    wall, deleted) and tiles (were on the panel's back), the beams' ends vs their emitters, the yellow edge strips, the hatch rims inside the
+    panel (deleted), the `1204`-`1206` plates (5.8 deep).
   - *Not checked:* the look (screen captures came back white), whether the camera blends between `LabCamera` (45) and `VaultCamera` (55), a human run through
     the vault (the bot teleported between its sections; the route was checked by the kinematic search in §5.2), the real `T_base` (135 provisional).
 

@@ -200,6 +200,8 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
   lifts are thinner than their frame, doors swing (`OpenTurn` + `OpenHinge`) instead of sliding into a lintel, frame walls reach the
   ground / sea (a player can jump into the gap below a floating wall). After building or changing a `KitDoor` run
   `tools/kit_coplanar_audit.luau` via the MCP `execute_luau` (Edit) and get "clean"; rules: docs/STAGES.md §2.3.1.
+  Static parts flicker the same way (Stage 14's floors and ceilings ran through its back panel): after building a stage, run the
+  audit with `STATIC_ROOT` set to its folder.
 - A cloned stage's gate sign (`Gate.Sign.Gui.Title`) keeps the template / source stage's literal text in the place file (Stage 11 said "Stage 6", Stage 12
   "Stage 7"): set the Studio text of every new stage's sign (the `GateSign` script writes the localized name at runtime, the literal is what Edit mode shows).
 - Legacy APIs are common (`wait`, `spawn`, `:connect`, `findFirstChild`); prefer `task.*` and
