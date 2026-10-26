@@ -132,7 +132,6 @@ return {
 	["arena.gateOpened.Teal"] = "Tyrkysová brána otevřena",
 	["arena.keyCollected.Green"] = "Zelený klíč sebrán",
 	["arena.gateOpened.Green"] = "Zelená brána otevřena",
-	["arena.cleared"] = "Aréna zdolána!",
 	["pets.title"] = "🐶 Mazlíčci",
 	["pets.garden"] = "🌱 Do mé zahrádky",
 	["pets.empty"] = "Zatím nemáš žádného mazlíčka. Vylíhni si ho v inkubátoru v zahradě mazlíčků!",

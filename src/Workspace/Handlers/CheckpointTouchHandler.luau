@@ -25,6 +25,10 @@ local exploreEvent = Instance.new("RemoteEvent")
 exploreEvent.Name = "ExploreWarning"
 exploreEvent.Parent = ReplicatedStorage
 
+-- server-side signal (player): a new run started (NewRun); ArenaServer resets the Laser Lab's keys and gates on it
+local runStarted = Instance.new("BindableEvent")
+module.RunStarted = runStarted.Event
+
 local EXPLORE_REWARN = 120 -- seconds before the same stage warns the same player again
 local explored = {} -- [Player] = { key = stage key, at = os.clock() } of the last warning (cleared when a run starts)
 local lastCheckpoints = {} -- [Player] = last checkpoint part touched (respawn point; skips the work on repeated touches)
@@ -43,6 +47,7 @@ function module.NewRun(player)
 	explored[player] = nil
 	lastCheckpoints[player] = nil -- so the first checkpoint lights again even if it was the last one before
 	resetEvent:FireClient(player)
+	runStarted:Fire(player)
 end
 
 -- The stage's start gate (TimerStart) stands just before the first checkpoint: touching it counts as reaching that

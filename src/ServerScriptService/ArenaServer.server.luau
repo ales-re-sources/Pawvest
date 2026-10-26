@@ -1,11 +1,11 @@
--- ArenaServer: rules of the key arena (Workspace.KeyArena, ArenaConfig). All parts are Studio-only and found by tag:
---   ArenaSpike       a touch kills the character
---   ArenaCheckpoint  plate C of a numbered checkpoint model: handed to CheckpointTouchHandler (respawn point, pad animation)
---   ArenaKey         pickup: the player holds the key (attribute ArenaKeys) until they leave through the exit
+-- ArenaServer: key and gate rules of the Laser Lab's Key Vault (room 1 of Workspace.World3.Stage14, ArenaConfig; was the
+-- KeyArena prototype, docs/STAGES.md §5.2 / §7.12). All parts are Studio-only and found by tag:
+--   ArenaKey         pickup: the player holds the key (attribute ArenaKeys) for the rest of the run
 --   ArenaLock        zone: touching it with the matching key opens that gate for the player (attribute ArenaOpened)
---   ArenaExit        zone: with every key the player is sent back to the start and the keys / gates reset (ArenaClears + 1)
 -- The server never moves or hides a key or a gate: ArenaClient shows each player their own state from the attributes.
--- Keys and opened gates survive deaths (the checkpoints keep the run short) and are reset by the exit or when the player leaves.
+-- Keys and opened gates survive deaths (the stage's checkpoints keep the run short) and are reset when a new run starts
+-- (CheckpointTouchHandler.RunStarted, the stage's TimerStart) or the player leaves. Spikes are KitKill parts and the
+-- checkpoints are ordinary stage checkpoints.
 
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
@@ -13,11 +13,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local ArenaConfig = require(ReplicatedStorage.ArenaConfig)
 local CheckpointTouchHandler = require(workspace:WaitForChild("Handlers"):WaitForChild("CheckpointTouchHandler"))
-local Telemetry = require(game:GetService("ServerScriptService").Telemetry)
 
 -- Max distance (studs) between the character's root and a key on the server: rejects keys moved on a client.
 local MAX_REACH = 15
-local START_CHECKPOINT = "301"
 
 local keys = {} -- [Player] = { [keyId] = true }
 local opened = {} -- [Player] = { [keyId] = true }
@@ -37,26 +35,6 @@ local function aliveCharacter(hit: BasePart)
 		return player, humanoid, root
 	end
 	return nil
-end
-
-local function setupSpike(part: Instance)
-	if part:IsA("BasePart") then
-		part.Touched:Connect(function(hit)
-			local _, humanoid = aliveCharacter(hit)
-			if humanoid then
-				humanoid.Health = 0
-				Telemetry.MarkKill(humanoid.Parent, part) -- cause of death (T1a)
-			end
-		end)
-	end
-end
-
-local function setupCheckpoint(part: Instance)
-	if part:IsA("BasePart") then
-		part.Touched:Connect(function(hit)
-			CheckpointTouchHandler.OnTouched(part, hit)
-		end)
-	end
 end
 
 local function setupKey(part: Instance)
@@ -94,42 +72,9 @@ local function setupLock(part: Instance)
 	end)
 end
 
-local function startPlate(): BasePart?
-	local folder = workspace:FindFirstChild(ArenaConfig.Folder)
-	local model = folder and folder:FindFirstChild(START_CHECKPOINT)
-	local plate = model and model:FindFirstChild("C")
-	return plate and plate:IsA("BasePart") and plate or nil
-end
-
-local function setupExit(part: Instance)
-	if not part:IsA("BasePart") then
-		return
-	end
-	part.Touched:Connect(function(hit)
-		local player, _, root = aliveCharacter(hit)
-		if not player or not keys[player] or not ArenaConfig.HasAllKeys(keys[player]) then
-			return
-		end
-		keys[player] = {}
-		opened[player] = {}
-		publish(player)
-		player:SetAttribute(ArenaConfig.ClearsAttribute, (player:GetAttribute(ArenaConfig.ClearsAttribute) or 0) + 1)
-		-- back to the start, which is also the respawn point again
-		local plate = startPlate()
-		if plate then
-			local top = plate.Position.Y + plate.Size.Y / 2
-			root.Parent:PivotTo(CFrame.lookAt(Vector3.new(plate.Position.X, top + 4, plate.Position.Z), Vector3.new(plate.Position.X + 1, top + 4, plate.Position.Z)))
-			CheckpointTouchHandler.OnTouched(plate, root)
-		end
-	end)
-end
-
 local tagSetups = {
-	[ArenaConfig.Tags.Spike] = setupSpike,
-	[ArenaConfig.Tags.Checkpoint] = setupCheckpoint,
 	[ArenaConfig.Tags.Key] = setupKey,
 	[ArenaConfig.Tags.Lock] = setupLock,
-	[ArenaConfig.Tags.Exit] = setupExit,
 }
 for tag, setup in tagSetups do
 	for _, part in CollectionService:GetTagged(tag) do
@@ -138,18 +83,22 @@ for tag, setup in tagSetups do
 	CollectionService:GetInstanceAddedSignal(tag):Connect(setup)
 end
 
-local function setupPlayer(player: Player)
+local function resetPlayer(player: Player)
 	keys[player] = {}
 	opened[player] = {}
-	player:SetAttribute(ArenaConfig.ClearsAttribute, 0)
 	publish(player)
 end
 
-Players.PlayerAdded:Connect(setupPlayer)
+Players.PlayerAdded:Connect(resetPlayer)
 for _, player in Players:GetPlayers() do
-	setupPlayer(player)
+	resetPlayer(player)
 end
 Players.PlayerRemoving:Connect(function(player)
 	keys[player] = nil
 	opened[player] = nil
+end)
+CheckpointTouchHandler.RunStarted:Connect(function(player: Player)
+	if keys[player] and (next(keys[player]) or next(opened[player])) then
+		resetPlayer(player)
+	end
 end)

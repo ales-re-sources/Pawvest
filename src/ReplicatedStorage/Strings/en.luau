@@ -132,7 +132,6 @@ return {
 	["arena.gateOpened.Teal"] = "Teal gate opened",
 	["arena.keyCollected.Green"] = "Green key collected",
 	["arena.gateOpened.Green"] = "Green gate opened",
-	["arena.cleared"] = "Arena cleared!",
 	["pets.title"] = "🐶 Pets",
 	["pets.garden"] = "🌱 Go to my garden",
 	["pets.empty"] = "No pets yet. Hatch one in an incubator in the pet garden!",

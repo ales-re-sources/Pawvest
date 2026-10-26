@@ -62,7 +62,7 @@ Rules:
 | S5 | Worlds hub — done 2026-10-22: gates for Worlds 2-4 (coming soon, admins only), World 2 courtyard, signs, per-world stars boards (user's visual check) | ✔ | ✔ | – |
 | S6 | World 2 (stages 6–10) — S6.1 Double Up + Seesaw, S6.2 Turntable + Labyrinth, S6.3 Clocktower all built 2026-10-22 / 23, each crossed by a bot and one timed run paid out; Studio validation pending the open checks (course look, human difficulty / `T_base`, the user's Stage 9 run, door coplanar audit hits on `Stage9.Maze.Big.ExitDoor` and `Stage10.Movers.Door_10`, tick sound), see the S6 notes below | ✔ | partial | – |
 | S7 | Talents: Triple Jump + Dash (+ World 3 courtyard) — done 2026-10-24: talents, Q / gamepad / touch button, reach table, World 3 courtyard east of the hub; closed 2026-10-24 (the visual and real-device touch checks were waived by the user; Live-validated comes with the next publish) | ✔ | ✔ | – |
-| S8 | World 3 (stages 11–15) — S8.1 Triple Peaks + Ice Rink built and Studio-checked 2026-10-24 (kit ice, World 3 open), checked and tuned by the user 2026-10-26; S8.2 designed (STAGES §7.12: Long Dash = Dash level 2, kit `Roll` balls); S8.2a Stage 13 Dash Bridge built and bot-checked 2026-10-26 (awaits the user's check), S8.2b Laser Lab and S8.3 not started | ✔ (S8.1) | ✔ (S8.1) | – |
+| S8 | World 3 (stages 11–15) — S8.1 Triple Peaks + Ice Rink built and Studio-checked 2026-10-24 (kit ice, World 3 open), checked and tuned by the user 2026-10-26; S8.2 designed (STAGES §7.12: Long Dash = Dash level 2, kit `Roll` balls); S8.2a Stage 13 Dash Bridge built and bot-checked 2026-10-26 (awaits the user's check), S8.2b Stage 14 Laser Lab built and bot-checked 2026-10-26 (awaits the user's check), S8.3 not started | ✔ (S8.1) | ✔ (S8.1) | – |
 | S9 | Talents: Wall Jump + Glide | – | – | – |
 | S10 | World 4 (stages 16–20) | – | – | – |
 | M6b | Final balancing (all stages) | – | – | – |
@@ -447,6 +447,17 @@ Server and Clients mode for check 4; `screen_capture` one call at a time.
 - *Studio check (2026-10-24):* see STAGES §7.11 → Checks. *User's check (2026-10-26):* both stages played, look and difficulty accepted after the tuning
   (Ice Rink door swing, button moved, door time 8.5 s, checkpoint `1004` removed). *Still open:* the real `T_base` (M6b), a normal player at the World 3 hub gate.
 - **S8.2 (design check: STAGES §7.12):** `Stage13` Dash Bridge and `Stage14` Laser Lab (the `KeyArena` prototype moved into World 3 as its first room).
+- **S8.2b Laser Lab (design accepted 2026-10-26; built and bot-checked the same day, STAGES §7.12 → "as built" / "Checks"; awaits the user's check;
+  the colour climb became an enclosed hatch shaft, sweepers turn with the walker, the finale bay is 54 high):** outputs: `Workspace.World3.Stage14`
+  (gate / board / `Arrival`, entry hall, room 1 Key Vault = the arena turned 180°, the Cooling Deck with Long Dash gap 1, room 2 Beam Hall: laser grid,
+  sweepers, colour climb, Long Dash gap 2 through a beam, balcony + finish portal), `StageConfig` entry (`requires` Triple Jump + Long Dash, `tBase` 135,
+  factor 4.0, Bronze on Stage 13 or 5 500; `economy.py check`), 8 coins `Stage14_1..8`, `ArenaServer` / `ArenaClient` integration (keys reset at run
+  start, stage checkpoints `1201`-`1206`, `KitKill` spikes), `SoonGate14` and `Workspace.KeyArena` removed.
+  Acceptance checks: Triple Jump + Long Dash completes the stage and baseline Triple Jump + short Dash does not cross either 34 gap; floor -> platform A
+  works for the bot at least two tries in three; the grid wave can be walked and every pocket between beams is safe; the sweepers' safe spot is safe;
+  a wrong toggle drops the player to the shaft floor and the floor pad resets the colours; keys and gates reset at a new run, not at a death; the side
+  camera never shows Stage 13 parts in front of the lane; a baseline Triple Jump + Long Dash cannot reach the talent coin, Jump Height 3 can; a full run
+  fires `1201`-`1206` in order and ends with a result.
 
 ### M6a — First live test + World 1 balancing
 The first live test (open checks below) with 6 stages, then M6 for World 1 (scope in "M6 — Balancing pass" below).

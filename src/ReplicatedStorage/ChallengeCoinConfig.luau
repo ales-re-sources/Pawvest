@@ -124,6 +124,14 @@ ChallengeCoinConfig.Coins = {
 	{ id = "Stage13_6", stage = "Stage13", tier = "Risky" }, -- in a ball pocket beside the ramp
 	{ id = "Stage13_7", stage = "Stage13", tier = "Risky" }, -- under the fourth axe
 	{ id = "Stage13_8", stage = "Stage13", tier = "Talent" }, -- a pillar 41 studs off F1: Long Dash with Run Speed + Jump Height near max
+	{ id = "Stage14_1", stage = "Stage14", tier = "Easy" },
+	{ id = "Stage14_2", stage = "Stage14", tier = "Easy" },
+	{ id = "Stage14_3", stage = "Stage14", tier = "Easy" },
+	{ id = "Stage14_4", stage = "Stage14", tier = "Easy" },
+	{ id = "Stage14_5", stage = "Stage14", tier = "Easy" },
+	{ id = "Stage14_6", stage = "Stage14", tier = "Risky" }, -- between laser grid beams 2 and 3, above the walking line
+	{ id = "Stage14_7", stage = "Stage14", tier = "Risky" }, -- over the sweepers' safe spot
+	{ id = "Stage14_8", stage = "Stage14", tier = "Talent" }, -- a ledge 25.5 above the Beam Hall floor: Triple Jump with Jump Height 3
 }
 
 ChallengeCoinConfig.ById = {}

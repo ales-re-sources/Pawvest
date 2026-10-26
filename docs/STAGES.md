@@ -349,8 +349,7 @@ if the sound fails to load. Beams telegraph on the off-beat; most hazards switch
     in S7 and lower platform A by a quarter unit if it feels harsh.
   - *Scripts:* `ArenaConfig` (names, tags, attributes), `ArenaServer` (spikes, checkpoints, keys, locks, exit; no per-part
     scripts, everything is found by tag) and `ArenaClient` (local key / gate state, key HUD, toasts).
-  - *To do when the stage gets its slot:* `StageConfig` entry (key, world 3, requires), `TimerStart` / finish portal at
-    the start / exit (the exit zone currently just teleports back to the start), Top-10 board, challenge coins, hub portal.
+  - *Done in S8.2b (2026-10-26):* the prototype became room 1 (the Key Vault) of Stage 14, see §7.12; `Workspace.KeyArena` is gone.
 
 **World 4 — Glide Canyon (stage 17): dropper.**
 - Starts at the top of a tall shaft (400–600 studs); the player falls through rings, past blinking beams and rotating bars,
@@ -837,7 +836,85 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   in order, the finish portal ends it with a result (Gold). No script errors.
 - *Not checked:* the look, a human run. The bot's clean segments took about 30 s: the provisional `tBase` 120 is very likely too generous (Gold came easily);
   set it after the user's run, as for Stage 10. *For S8.2b:* Stage 14's lane (z -609..-546) lies within a Long Dash of Stage 13's south edge (35 studs): put a
-  `World3West` lane divider between them.
+  `World3West` lane divider between them (superseded by the S8.2b draft below: the lane sits at z -580, 61 studs off).
+- **Stage 14 Laser Lab, S8.2b draft (2026-10-26, Studio survey the same day; awaits the user's design check).** Coordinates as Stage 13: x = -213 - u,
+  surface h above the plaza top (y 78). Everything below lies in the band z -609..-546, empty sea west of the courtyard (checked: only `DebugBaseplate`).
+  - *Lane and camera:* lane centre **z -580**, 6 deep (z -583..-577), invisible walls on both sides up to the room ceilings / h 45 outdoors (a Triple Jump
+    + Long Dash rises 27 and reaches 46: nothing leaves the lane). `Side` zones with `Yaw 180`, Pitch 3: the camera sits at z -635 (room 1, Distance 55) /
+    z -625 (outdoors and room 2, Distance 45, rooms 40 high), behind it are Stage 13's southmost parts (`GantryPost2` z -642.5..-639.5, `R1` / `1101`
+    z ≤ -639): **Stage 13 keeps every part north of z -638 along the lab** (at lane z -585, the gate's centre, the camera would stand inside `GantryPost2`).
+    Stage 13's track is 61 studs from the lab's north wall, beyond a maxed Long Dash (46.5): no `World3West` divider. Whether the camera blends between two
+    `Side` zones with different distances: check in the build (else one distance for the whole lab).
+  - *Entry (u 0-36):* Stage 14's gate / board / `Arrival` from `StageKit` on the west far opening (`SoonGate14`, centre z -585, removed); `1201` at u 0
+    (z -585) like `1101`; a 12-wide entry hall narrows to the lane (z -580) by u 20, the first camera zone starts at u 10 (past `GateExit`). One teaching
+    beam at u 28 (`KitBeam`, Period 2, Duty 0.5, floor to the hall ceiling): the first sight of "lit = death" with a safe floor before it.
+  - *Room 1, Key Vault (u 36-244):* the `KeyArena` prototype, every part mapped (x, y, z) -> (543 - x, y - 42, 620 - z) (a 180° turn about Y, floor y 120
+    -> 78): start bottom right of the lab's map = screen left, exit opening at u ≈ 228-234, the shell's west wall at u 244. Arena checkpoint `301` is
+    dropped (`1201` is 40 studs before it), `302` / `303` become `1202` (before the pillar) / `1203` (behind the teal gate). Integration as above
+    (keys reset at run start, `KitKill` spikes, exit zone removed: the green gate is the exit door). Before moving: measure floor -> platform A (20.2 of
+    21.8 studs with Triple Jump) and the low corridor under A (Dash shortcut, but §1.0: Triple Jump hovers under low ceilings) with the real talents;
+    lower A by 1 stud if the bot needs more than one try in three.
+  - *Transit, Cooling Deck (u 244-314, outdoors, h 0):* deck u 244-268 with `1204` at u 252, a **34 gap over the sea** (u 268-302, Long Dash gate 1;
+    plain, no hazard), landing deck u 302-314 at room 2's door. The sky behind the gap is the stage's one daylight moment between two dark rooms.
+  - *Room 2, Beam Hall (inner u 316-530, h 0-40):*
+    (a) *laser grid* u 326-366 under a 12-high ceiling: four floor-to-ceiling `KitBeam`s (1 x 12 x 6, at u 334 / 342 / 350 / 358), Period 3, Duty 0.5,
+    Telegraph 0.4, run-seeded, Phase steps of 1/6 so the off window travels west at 16 studs/s (a walker who joins the wave walks through; 8-stud safe
+    pockets between beams for everyone else); (b) *sweepers* u 374-414: two double-arm laser bars (`KitMover Spin` + `Kill`, 21 x 1.5 x 6, local Y
+    tilted onto world Z so they turn in the lane's plane) on hubs at u 382 / 406, h 10, Speed 60 deg/s (an arm sweeps the floor every 3 s), the second
+    90° behind the first; the floor at u 394 lies 12 from both hubs and is the safe spot; `1205` at u 424; (c) *colour climb* u 434-470 up to h 28:
+    grey stubs with `KitSwitch Color = "Toggle"` pads and red / blue `KitColorPlate` tiers between them, a floor pad `Color = "Red"` that resets the
+    puzzle; a wrong toggle ghosts the next tier and drops the player back to the safe shaft floor (no death, lost time); a Triple Jump that skips one
+    tier is a welcome shortcut, but the top must need at least one correct toggle; `1206` on the top ledge (u 470-482, h 28); (d) *finale*: a **34
+    gap** (u 482-516, Long Dash gate 2) dropping 4 to the exit ledge, over a laser floor (`KitKill`, h -10), with one floor-to-ceiling `KitBeam` at
+    u 499 (Period 2.5, Duty 0.4, Telegraph 0.5, run-seeded): take off as it goes dark. Exit door at u 530 to a balcony (u 532-550, h 24) with the finish
+    portal at u 544 (`LookVector` -X). About 550 studs, x down to -763.
+  - *Ghosts:* `KitGhostZone`s over room 1 (other players' gates / keys) and the colour climb (other players on a plate that is a ghost for you).
+  - *Coins (8):* easy on the entry hall, `PlatformB` and beside the orb in room 1, the transit landing, a side tier of the climb; risky between grid
+    beams 2 and 3 (above the walking line: a jump inside a dark window) and at h 6 over the sweeper safe spot; talent on a 3 x 3 ledge **25.5 above
+    room 2's floor** over the sweeper safe spot (Triple Jump rises 21.8, with Jump Height 3 27.0: the "maxed soft talents" coin), placed so that a
+    baseline Triple Jump + Long Dash reaches it from nowhere (bot check).
+  - *Time:* entry 3 s, room 1 about 50 s, transit 6 s, room 2 about 35 s: about 95 s for a clean run; `tBase` stays at the provisional 135 until the
+    user's run (Stage 13's bot run showed the provisional values are generous).
+  - *No new code for room 2 / transit:* everything is existing kit (`KitBeam`, `KitMover Spin`, `KitSwitch` / `KitColorPlate`, `KitKill`, `KitGhostZone`,
+    `CameraZone`). Code changes are the arena integration only (`ArenaServer` / `ArenaClient` / `ArenaConfig`) plus config (`StageConfig`,
+    `ChallengeCoinConfig`). Check whether a `KitBeam`'s telegraph (Warn transparency 0.8) reads in the side view; `FloorMark` does not (seen edge-on).
+- **Stage 14 Laser Lab as built (S8.2b, 2026-10-26)** (x = -213 - u, lane z -583..-577, plaza top y 78 = h 0): `1201` (16 x 12, u 0, z -581); `Entry` hall
+  u 8-40 (ceiling h 14, `TeachBeam` at u 28, Period 2, Duty 0.5); `Vault` u 40-240 (the arena turned 180°, entrance door 8 high in its east wall, the alcove end
+  removed so the exit opens onto the deck; platform A 1 stud lower; `1202` / `1203` at u 142 / 164, 8 x 6 vault-style plates); `Deck` u 240-268 with `1204`
+  (u 252), the 34 gap u 268-302 over the sea (yellow edge strips), landing u 302-314; `BeamHall` u 314-534, h 0-40: `Grid` u 326-366 under a 12-high block
+  (`Beam1..4` at u 334 / 342 / 350 / 358, Period 3, Duty 0.5, Telegraph 0.4, Phase 1, 5/6, 4/6, 3/6 → the dark window moves west at 16 studs/s, run-seeded),
+  `Sweepers` (hubs u 381 / 407 at **h 12**, bars 21 x 6 x 1.5, **both -45 deg/s**, Phase 0 / 90, run-seeded; `TalentLedge` 3 x 1 x 6, top h 25.5 at u 394),
+  `1205` (u 424); **`ColourShaft`** u 432-482 (changed from the draft's open climb: with Triple Jump + Long Dash any stub at h ≥ 6 skips an open climb):
+  an enclosed shaft of two full-width slabs, each with one hatch: slab 1 (h 10-11) holds the red `Hatch1` (u 452-458), slab 2 (h 21-22) the blue `Hatch2`
+  (u 440-446); `Toggle0` on the floor (u 436-441) and `Toggle1` on slab 1 (u 462-467), Group `Lab`; the hatches are open in opposite colours, so every floor
+  needs its own toggle and no jump passes both; a wrong toggle closes the hatch above (no death); `1206` on slab 2 (u 468); `Finale`: take-off u 482 (h 22),
+  34 gap over a `LaserFloor` (KitKill, h -10) with `FinaleBeam` at u 499 (Period 2.5, Duty 0.4, Telegraph 0.5, run-seeded), landing u 516-530 (h 18),
+  exit door, `Balcony` (u 534-554) and the portal at u 544; **the bay over the finale is 54 high** (ceiling y 132 from u 474: at 40 a Triple Jump from
+  slab 2 hit the ceiling and fell short). Coins: easy in the hall, on platform B, by the orb, on the landing deck, on slab 1; risky between grid beams 2 and 3
+  (h 8) and over the sweeper safe spot (h 12); talent on `TalentLedge`. 303 parts. `SoonGate14` and the prototype `Workspace.KeyArena` deleted.
+- **Checks (Studio playtests 2026-10-26, bot with Triple Jump + Long Dash at Run Speed 0 / Jump Height 0; profile snapshot `profile_<id>_s82b` restored,
+  the Stage 14 board entry removed):**
+  - *Floor -> platform A:* at the drawn 20.2 studs 4 of 12 take-off / timing variants landed (pushing toward A too early slips under it); 1 stud lower 8 of 12
+    in the lab. The low corridor under A is a real Long Dash route: single jump + Long Dash clears its four floor spikes, short Dash and Triple Jump
+    hovering do not.
+  - *Keys:* the teal key (Triple Jump from platform B) opens the teal gate at once, the green key (Triple Jump from the slab step beside the pillar) and its
+    lock open the exit gate; both reset when a new run starts at the gate, not at a death.
+  - *Long Dash gates:* deck gap: baseline TJ + Long Dash crosses, TJ + short Dash, DJ + Long Dash and a maxed Triple Jump fall, a maxed TJ + short Dash
+    crosses (the known soft shortcut). Finale: TJ + Long Dash taken as the beam goes dark lands at u 518, a take-off 0.5 s later dies in the beam.
+  - *Grid:* a walker starting as beam 1 goes dark (or up to 0.5 s later) walks through, later starters die at beam 1; the pockets between beams are safe.
+  - *Sweepers:* as drafted (hubs h 10, then h 12; one turning against the walker) almost no start time got through (0 of 6 bot walkers; a kinematic check
+    of the bar box vs the body box: 1 of 36 start angles). Both turning with the walker at 45 deg/s: a walker starting at a random moment clears each one
+    53-55 % of the time; the safe spot between them held for 6.5 s.
+  - *Colour shaft:* without a toggle a Triple Jump bonks on the closed `Hatch1`; `Toggle0` -> Blue, a Double Jump through `Hatch1`; on slab 1 the closed
+    `Hatch2` stops a Triple Jump; `Toggle1` -> Red, a Double Jump through `Hatch2`.
+  - *Talent coin:* a baseline Triple Jump rises 21.8 and misses the ledge, Jump Height 3 (27.0) lands on it and collects `Stage14_8`; coins `_3` / `_4`
+    collected in passing.
+  - *Full run:* the gate starts the timer, the side camera switches on (`LabCamera`, `VaultCamera` in room 1), `1201`-`1206` fire in order, the finish
+    portal ends the run with a result (Gold for the teleported test run) and returns the player to the courtyard. No script errors or warnings.
+  - *Fixed while testing:* a 4-stud hole in the floor under the hall's east wall and a 2-stud one between `1201` and the hall (a lane probe now finds only the
+    two gaps), a support pillar sticking 6 studs up into the finale pit (a perch above the lasers), the finale ceiling, the sweepers.
+  - *Not checked:* the look (screen captures came back white), whether the camera blends between `LabCamera` (45) and `VaultCamera` (55), a human run through
+    the vault (the bot teleported between its sections; the route was checked by the kinematic search in §5.2), the real `T_base` (135 provisional).
 
 ## 8. Milestones (agreed 2026-10-21; status in [ROADMAP.md](ROADMAP.md), full scopes of finished milestones in `git show 53bd79b:docs/ROADMAP.md`)
 Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.

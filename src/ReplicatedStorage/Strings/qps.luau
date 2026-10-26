@@ -132,7 +132,6 @@ return {
 	["arena.gateOpened.Teal"] = "[!! Ťěál gáťě öpěňěď ~~~~~~ !!]",
 	["arena.keyCollected.Green"] = "[!! Gřěěň kěý čöllěčťěď ~~~~~~~~ !!]",
 	["arena.gateOpened.Green"] = "[!! Gřěěň gáťě öpěňěď ~~~~~~~ !!]",
-	["arena.cleared"] = "[!! Ářěňá člěářěď! ~~~~~~ !!]",
 	["pets.title"] = "[!! 🐶 Pěťš ~~ !!]",
 	["pets.garden"] = "[!! 🌱 Gö ťö mý gářďěň ~~~~~~~ !!]",
 	["pets.empty"] = "[!! Ňö pěťš ýěť. Háťčh öňě íň áň íňčůbáťöř íň ťhě pěť gářďěň! ~~~~~~~~~~~~~~~~~~~~~~~ !!]",

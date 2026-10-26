@@ -226,6 +226,19 @@ StageConfig.Stages = {
 		unlockPrice = 5000,
 		rewardFactor = 3.75,
 	},
+	{
+		key = "Stage14", -- Laser Lab (docs/STAGES.md §7.12): side view (Side camera), the Key Vault, laser grid, sweepers, colour climb, Long Dash gaps
+		displayName = "Stage 14",
+		folder = "Stage14",
+		order = 14,
+		world = 3,
+		requires = { { id = "DoubleJump", level = 2 }, { id = "Dash", level = 2 } }, -- Triple Jump, Long Dash
+		tBase = 135,
+		tiers = StageConfig.DefaultTiers,
+		unlock = { stage = "Stage13", medal = "Bronze" },
+		unlockPrice = 5500,
+		rewardFactor = 4.0,
+	},
 }
 
 -- Worlds (docs/STAGES.md §7.1): `stage.world` 1..n; a world is a courtyard in Workspace.<folder> (plaza, wall, return portal)

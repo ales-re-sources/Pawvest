@@ -1,7 +1,7 @@
--- ArenaClient: what the local player sees of the key arena (Workspace.KeyArena, ArenaConfig / ArenaServer). Everything here
--- is local: a key the player holds disappears for them only, a gate they opened turns into a faint ghost and stops colliding
--- for them only (the client owns its character's physics, like GateDoors). Also the key HUD (shown inside the arena's camera
--- zone) and short toasts, built in code.
+-- ArenaClient: what the local player sees of the Laser Lab's Key Vault (Stage 14 room 1, ArenaConfig / ArenaServer). Everything
+-- here is local: a key the player holds disappears for them only, a gate they opened disappears and stops colliding for them
+-- only (the client owns its character's physics, like GateDoors). Also the key HUD (shown inside the vault's camera zone) and
+-- short toasts, built in code.
 
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
@@ -210,11 +210,6 @@ CollectionService:GetInstanceAddedSignal(ArenaConfig.Tags.Gate):Connect(addGate)
 LocalPlayer:GetAttributeChangedSignal(ArenaConfig.KeysAttribute):Connect(onKeysChanged)
 LocalPlayer:GetAttributeChangedSignal(ArenaConfig.OpenedAttribute):Connect(onOpenedChanged)
 LocalPlayer:GetAttributeChangedSignal("CameraZone"):Connect(refreshVisibility)
-LocalPlayer:GetAttributeChangedSignal(ArenaConfig.ClearsAttribute):Connect(function()
-	if (LocalPlayer:GetAttribute(ArenaConfig.ClearsAttribute) or 0) > 0 then
-		showToast(Locale.T("arena.cleared"), Color3.fromRGB(255, 225, 80))
-	end
-end)
 onKeysChanged()
 onOpenedChanged()
 refreshVisibility()

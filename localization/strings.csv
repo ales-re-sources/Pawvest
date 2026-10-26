@@ -153,7 +153,6 @@ arena.keyCollected.Teal,"Arena toast when this key is picked up (Czech: masculin
 arena.gateOpened.Teal,"Arena toast when this key opens its gate (Czech: feminine, brána)",Teal gate opened,Tyrkysová brána otevřena,ok,hf542dd9f
 arena.keyCollected.Green,"Arena toast when this key is picked up (Czech: masculine, klíč)",Green key collected,Zelený klíč sebrán,ok,h6cab5024
 arena.gateOpened.Green,"Arena toast when this key opens its gate (Czech: feminine, brána)",Green gate opened,Zelená brána otevřena,ok,h5cd7deeb
-arena.cleared,Arena toast after leaving through the exit with every key,Arena cleared!,Aréna zdolána!,ok,h80f81507
 # Pets panel (🐶),,,,,
 pets.title,Panel title,🐶 Pets,🐶 Mazlíčci,new,h92496bfc
 pets.garden,Button: teleports the player in front of their garden plot,🌱 Go to my garden,🌱 Do mé zahrádky,new,h3e5af0fb
