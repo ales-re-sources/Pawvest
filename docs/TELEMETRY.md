@@ -141,7 +141,8 @@ every event is printed as `[Telemetry] …`; without it the module is silent.
 and carries the end reason instead: 5 reasons × 5 buckets × 144 loadouts = 3 600; complete: 4 medals × 5 × 144 = 2 880.
 New talents (S7, S9) multiply the loadouts. **S7 (2026-10-24):** Double Jump 0-2 and Dash 0-1 would make 432 loadouts (fails
 10 800), so the loadout buckets Run Speed (level 0 → `RS0`, 1-3 → `RS2`, 4-5 → `RS5`; e.g. "RS2 DJ2 JH3 QR2 D1"): 216 loadouts,
-fails 5 400, completes 4 320. S9 (Wall Jump, Glide: x 4) will need another cut. Only talent purchases are
+fails 5 400, completes 4 320. **S8.2 (2026-10-26):** Long Dash makes Dash 0-2 (324 loadouts, fails 8 100), so Jump Height is bucketed
+too (0 → `JH0`, 1-2 → `JH2`, 3 → `JH3`): 3 x 3 x 3 x 3 x 3 = 243 loadouts, fails 6 075, completes 4 860. S9 (Wall Jump, Glide: x 4) will need another cut. Only talent purchases are
 logged as economy events; the other Coin sources and sinks (medals, unlocks, eggs, pens, food) are left for M6.
 
 ## Acceptance checks (Studio, debug switch on)

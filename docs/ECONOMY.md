@@ -45,7 +45,7 @@ edited there (a changed config makes `check` fail until `pin`).
 
 | Check | Definition in the model | Result (6 seeds x 2 policies) |
 |---|---|---|
-| 4 A, 24-hour rule | The field's **online ceiling** on every day (Gardener squares cycle 24 h at `online_rate`, the others get the best plan of a player present for every gap; sales x multiplier minus seeds) divided by the player's **first obby hour of a fresh day at the same progress** (also x multiplier). <= 1.0x every day, every archetype x policy. Offline can only be lower | Obby main 0.95x worst, Casual 0.95x, Garden main 0.87x, Binge 0.27x |
+| 4 A, 24-hour rule | The field's **online ceiling** on every day (Gardener squares cycle 24 h at `online_rate`, the others get the best plan of a player present for every gap; sales x multiplier minus seeds) divided by the player's **first obby hour of a fresh day at the same progress** (also x multiplier). <= 1.0x every day, every archetype x policy. Offline can only be lower | Obby main 0.95x worst, Casual 0.95x (**1.04x on day 16 since S8.2**: Dash split into Dash 5 000 + Long Dash 3 000; accepted by the user 2026-10-26, the check stays red as a reminder), Garden main 0.87x, Binge 0.27x |
 | 4 A target | The best-developed archetype at day 60 lies in 0.8-1.0x | 0.95x (Casual / Obby main) |
 | 5 B | The same field without any Gardener has a lower 24 h potential and a lower realised net per day | Net per day with / without: Obby main 6 580 / 6 155, Casual 4 713 / 4 115, Garden main 4 293 / 3 914, Binge 324 / 267 (**thin margin**, finding 5) |
 | 6 C | Sinks / cumulative faucet >= 60 % by day 30 and >= 80 % by day 60 (**open decision 1**: `FIELD["sink_share"]`) | 93-97 % / 93-97 % incl. the reserved ladder (finding 4) |

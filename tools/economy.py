@@ -41,7 +41,7 @@ PLANNED = {
     "unlock_price": {13: 5000, 14: 5000, 15: 5500, 16: 6000, 17: 6000, 18: 6500, 19: 6500, 20: 7000},
     "talents": {"WallJump": [10000], "Glide": [12000]},  # GDD §6 planned talents
     # first stage that needs a talent level (GDD §6 required-set table); checked against StageConfig `requires`
-    "required_at": {("DoubleJump", 1): 6, ("DoubleJump", 2): 11, ("Dash", 1): 13, ("WallJump", 1): 16, ("Glide", 1): 17},
+    "required_at": {("DoubleJump", 1): 6, ("DoubleJump", 2): 11, ("Dash", 2): 13, ("WallJump", 1): 16, ("Glide", 1): 17},
     "coins_per_planned_stage": 400,  # challenge coins, GDD §5 ("about 400 per stage")
     "required_share_max": 0.65,  # GDD §6
 }

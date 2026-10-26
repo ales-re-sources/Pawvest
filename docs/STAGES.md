@@ -68,8 +68,25 @@ height (the real `TalentDash`; one per air time, none on the ground). Bot runs, 
 | 5 (20.8) | 11.4 / 7.3 | 22.3 | 19.8 / 14.5 | 30.1 | 27.4 / 21.8 | 37.7 |
 
 A dash at the apex adds 10-11 studs to any jump. A dash later in the fall adds a little more, because it stops the fall for 0.2 s.
-A **Dash gate** is therefore a flat gap above the best Triple Jump reach (29.8 with Run Speed 5 + Jump Height 3), so 32+ studs,
-or a gap of 12-18 studs under a low ceiling that leaves no room for air jumps (a single jump + Dash crosses 18.8).
+~~A Dash gate is a flat gap above 29.8, or a gap of 12-18 under a low ceiling~~: superseded by the S8.2 measurements below (the open
+window was 2 studs, and a ceiling does not stop air jumps).
+
+**Long Dash (Dash level 2, S8.2, 2026-10-26; bot with the real numbers, dash at the apex, 0.32 s at 50 studs/s = 16 studs):**
+
+| Run Speed / Jump Height | Single + Long Dash | DJ + Long Dash | Triple Jump | TJ + Dash | TJ + Long Dash |
+|---|---|---|---|---|---|
+| 0 / 0 | 25.3 | 31.6 | 20.6 | 31.7 | 37.5 |
+| 5 / 3 | 29.0 | 38.3 | 29.8 | 40.8 | 46.5 |
+
+Real gaps (edge to edge, landing plate level with the take-off): baseline TJ + Long Dash crosses 36; baseline TJ + Dash and a maxed Triple
+Jump without Dash fail at 32; baseline DJ + Long Dash fails at 33. **A Dash gate is a flat gap of 34**: 2+ studs of margin both ways. A
+maxed Triple Jump with the short Dash (40.8) also crosses it: Run Speed + Jump Height stand in for Long Dash, a soft-talent shortcut
+(user, 2026-10-26: shortcuts are welcome, they give replay value).
+
+**Low ceilings do not gate air jumps (S8.2 bot tests):** under a solid ceiling 7-9 studs above the floor, a Triple Jump that lets the
+character drop 2-3 studs below the take-off height before each air jump hovers on: it crossed 14-18 studs under an 8-stud ceiling, as
+far as a single jump + Dash (14-16). A kill ceiling leaks the same way and its margin depends on the avatar's height. Ceilings stay
+decoration or soft gaps.
 
 ### 1.1 Studio survey findings (2026-10-21, read-only)
 - Place settings: `Players.RespawnTime` **3 s**, `CharacterAutoLoads` on, `StreamingEnabled` **off**; 2 441 parts in
@@ -758,6 +775,49 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   the player (a higher Phase is earlier in `KitMath.Cycle`), the first crosswind (10).
 - *Not checked:* the look (screen captures came back white), a human run and the real `T_base` (110 / 120 provisional), the coins being collected, the talent
   coins' reach with Dash, the door countdown on screen.
+- **User's check (2026-10-26):** both stages played and accepted after the tuning above (door swing, button at the start of `WindBeam`, 8.5 s, no `1004`).
+
+### 7.12 S8.2 Dash Bridge + Laser Lab (design check 2026-10-26; decisions with the user: Long Dash as Dash level 2, a `Roll` kit kind, soft-talent coins, arena + Dash room)
+- **Slots** (Studio survey 2026-10-26): the west openings of the World 3 courtyard. Stage 13 = west near gate (`SoonGate13`, x -219..-190, z -659..-630;
+  course runs **west**, band z -678..-615), stage 14 = west far gate (`SoonGate14`, z -599..-570; west, band z -609..-546). The sea west of the courtyard is
+  empty from x -222 to x -1000 (checked: no parts in x -1000..-222, z -720..-520), the hub starts at x -1038, so a course may run to about x -950 (the S7 note
+  said -800 to keep a margin to the hub; ≈ 500 studs either way). `SoonGate15` stays closed until S8.3. Gate / board / `Arrival` / checkpoints from `StageKit`
+  as in §7.11. Keys and folders `Stage13` / `Stage14` under `World3`; checkpoint blocks `1101`- and `1201`-.
+- **StageConfig (provisional, M6b measures):** both `requires = { { id = "DoubleJump", level = 2 }, { id = "Dash", level = 2 } }` (Triple Jump, Long Dash). Stage 13 `tBase` 120, factor
+  3.75, Bronze on Stage 12 or 5 000; Stage 14 `tBase` 135, factor 4.0, Bronze on Stage 13 or 5 500 (the World 2 / World 3 steps continued). `tools/economy.py check`
+  after the entries.
+- **Dash gates = Long Dash** (decided 2026-10-26 after the bot tests in §1.0): open-air gaps had a 2-stud window (baseline TJ + Dash 31.7 vs a
+  maxed Triple Jump 29.8) and low ceilings leaked (Triple Jump hover). The user chose a longer dash as a **second Dash level, Long Dash**
+  (0.32 s at the same 50 studs/s = 16 studs; a faster burst could pass thin kill beams between two touch tests), so stages 1-12 keep their
+  tuning. Prices: Dash 5 000 + Long Dash 3 000 (the 8 000 of the old single level, split: the GDD §6 required set at stage 17 is already at
+  64 % of the 65 % cap). Hard Dash gaps are **34 studs flat** (§1.0). Telemetry: Dash 0-2 made the loadouts 324, so Jump Height is bucketed
+  too (TELEMETRY.md). *Economy model:* `check` passes the required-set shares (44 % / 64 %) but the Casual 24-hour rule reaches 1.04x on
+  day 16 with any split of the two levels (1.00x allowed; the model buys the two levels at different times among the field squares);
+  prices not pinned yet, decision with the user.
+- **Stage 13 Dash Bridge** (signature: Dash gaps; also pendulums and rolling balls), about 450 studs west, checkpoints every 20-30 s:
+  (1) *teach*: a short-Dash gap (20-24) over a safe catch floor 8 below (a miss walks back up a ramp), then a 34 Long Dash gap over the same floor;
+  (2) *test*: three 34 gaps over the sea, one of them with a side ledge route of Triple ledges (slower, the Gold route skips it); (3) *pendulums*: a 6-wide bridge under four swinging axes (`KitMover Swing` + `Kill`,
+  swinging across the bridge, run-seeded, a wave like the crusher ridge); (4) *rolling balls*: a 10-wide ramp climbing 20 studs, balls roll down it toward the
+  player in lanes; jump them or step into the side pockets; (5) *finale*: a Dash gap with a pendulum swinging through it (dash through its window), the finish
+  island and the portal. Coins: 5 easy, 2 risky (a ball pocket, beside a pendulum), 1 talent (Run Speed 5 + Jump Height 3, below).
+- **Rolling balls need new kit code:** `KitMover Kind = "Roll"`: the ball travels along `Axis` for `Distance` studs at a constant speed within `Period` (Phase,
+  RunSeeded as the other movers), turns about the axis across its path so it looks rolling, sinks / fades in `Fade` s at both ends (no pop-in at the top),
+  `Kill` by default. No physics (§2.1 T). The alternative without code, a `Slide` ball rolling back and forth, reads as a ping-pong, not a ball coming at you.
+- **Stage 14 Laser Lab** (signature: 2D side view; §5.2): the `KeyArena` prototype becomes its **first room**, followed by a **second room** for the Dash:
+  sweeping lasers (a `KitMover Spin` + `Kill` bar turning in the lane's plane, part tilted so its Y axis points across the lane), laser grids (`KitBeam` rows,
+  run-seeded) and colour switches (`KitSwitch` / `KitColorPlate`), with two 34-stud Long Dash gaps and an exit to the finish portal. The arena alone is about 172 studs
+  across and too short for a 120-150 s stage; the two rooms together aim at `T_base` ≈ 135.
+  - *Camera:* `Side` with `Yaw 180` (looking south, so screen right = west = along the course), distance 55 as the arena uses. The camera then sits about 55
+    studs north of the lab's lane, inside stage 13's band: **stage 13 keeps every part north of z -645 along the lab's length** (the camera looks away from them).
+    The arena is turned 180° about Y (a rotation, not a mirror: start bottom left, exit bottom right stay as drawn).
+  - *Integration:* the arena's own checkpoints (`ArenaCheckpoint`, start `301`) become stage checkpoints `1201`-; keys and opened gates reset when a new run
+    starts (`CheckpointsReset` / timer start) instead of at the exit; the exit zone leads on to room 2 instead of teleporting back; spikes become `KitKill` (client
+    kill like every other stage, telemetry by part); `ArenaServer` keeps keys / locks / gates. The prototype at x 800 is removed after the move.
+  - *Dash shortcut in room 1:* the low corridor under platform A (§5.2, not checked yet) is measured with the real Dash; if it works it is the Gold route.
+- **Talent coins** (decided: maxed soft talents now): §7.3 wants a talent beyond the requirement, but stages 13 / 14 already require every World 3 talent and World 4's are not built. Either
+  a "maxed soft talents" coin now (Run Speed 5 + Jump Height 3, e.g. a 33-stud open gap) or the coin waits for S9 (Wall Jump) and the stages ship with 7 coins.
+- **Split** (default taken): S8.2a Dash Bridge (with `Roll`) and S8.2b Laser Lab, each with its Studio check, the user's check and a commit, Dash Bridge first (its gates
+  are measured in the jump lab and the Laser Lab's room 2 reuses them).
 
 ## 8. Milestones (agreed 2026-10-21; status in [ROADMAP.md](ROADMAP.md), full scopes of finished milestones in `git show 53bd79b:docs/ROADMAP.md`)
 Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.

@@ -120,6 +120,16 @@ function KitMath.Ticked(now: number, tick: number, move: number): number
 	return ticks + smooth(into / math.max(move, 1e-3))
 end
 
+-- Rolling ball (S8.2): travels its path once per `period`, progress 0..1 = the cycle. It fades in over the first `fade`
+-- seconds and out over the last `fade` seconds (harmless then). Returns progress, visibility 0..1 and "on" / "off".
+function KitMath.Roll(now: number, period: number, phase: number, fade: number): (number, number, string)
+	local progress = KitMath.Cycle(now, period, phase)
+	local t = progress * period
+	local fadeTime = math.max(fade, 1e-3)
+	local visible = math.min(1, t / fadeTime, (period - t) / fadeTime)
+	return progress, visible, if visible >= 1 then "on" else "off"
+end
+
 -- Pendulum angle in degrees.
 function KitMath.Swing(now: number, period: number, phase: number, amplitude: number): number
 	return amplitude * KitMath.Sine(now, period, phase)

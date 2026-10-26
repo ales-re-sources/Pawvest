@@ -285,7 +285,8 @@
  ],
  "talent_costs": {
   "Dash": [
-   8000
+   5000,
+   3000
   ],
   "DoubleJump": [
    3000,

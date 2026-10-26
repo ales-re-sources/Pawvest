@@ -37,9 +37,11 @@ TalentConfig.List = {
 	{
 		id = "Dash",
 		name = "Dash", -- loc: ignore (English source and fallback; players see Locale)
-		costs = { 8000 }, -- S7 (STAGES §6.2 / §7.10)
+		costs = { 5000, 3000 }, -- S7 (STAGES §6.2 / §7.10): 8 000 for level 1 until S8.2 added Long Dash (§7.12); the sum stays 8 000 (GDD §6, 65 % share)
 		perLevel = 1,
 		effect = "A burst forward in the air (Q)", -- loc: ignore (English source and fallback; players see Locale)
+		effects = { "A burst forward in the air (Q)", "The burst goes farther" }, -- loc: ignore (English source and fallback; players see Locale)
+		names = { "Dash", "Long Dash" }, -- loc: ignore (English source and fallback; players see Locale)
 	},
 } :: { Talent }
 
@@ -101,12 +103,19 @@ function TalentConfig.LevelName(talent: Talent, level: number): string
 	return talent.names and talent.names[math.clamp(level, 1, #talent.names)] or talent.name
 end
 
--- Dash (S7, STAGES §7.10): a flat burst in the air, once per air time.
+-- Dash (S7, STAGES §7.10): a flat burst in the air, once per air time. Long Dash (level 2, S8.2, STAGES §7.12) lasts longer
+-- at the same speed: a faster burst would move the character more than a stud per frame and could pass a thin kill beam
+-- between two of ObstacleKit's touch tests.
 TalentConfig.DashSpeed = 50 -- studs per second
-TalentConfig.DashTime = 0.2 -- seconds: about 10 studs
+TalentConfig.DashTimes = { 0.2, 0.32 } -- seconds per level: about 10 / 16 studs
 
 function TalentConfig.HasDash(level: number): boolean
 	return level >= 1
+end
+
+-- Seconds a dash lasts at `level` (0 without the talent).
+function TalentConfig.DashTime(level: number): number
+	return TalentConfig.DashTimes[math.clamp(level, 0, #TalentConfig.DashTimes)] or 0
 end
 
 -- Extra jumps allowed in the air.

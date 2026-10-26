@@ -14,6 +14,10 @@
 --               Flip   flipper plate: rests, then turns 180 degrees about its centre (Hinge "X" (default) or "Z") in Turn s
 --                      (default 0.5) at the end of every half Period, so it flips over and back once per Period; tints to
 --                      WarnColor for Telegraph s (default 0.8) before, and is not solid while it turns (the rider drops), Phase
+--               Roll   rolling ball (S8.2, the Dash Bridge ramp): travels Distance studs (default 40) along Axis once per
+--                      Period, turning as it rolls, then starts again at its Studio position; fades in over the first and
+--                      out over the last Fade s (default 0.4), harmless while faded. Give it Kill = true and CanCollide off;
+--                      a Ball-shaped part is hit-tested as a sphere. Phase / RunSeeded as on every mover
 --             Optional on any mover: Kill (touching it kills), Push studs/s (touching it knocks the character back along
 --             the part's motion, PushLift studs/s upward, default 25; PushTime s keeps that shove going for a while,
 --             default 0 = one kick, which the Humanoid's air braking stops within about 2 studs), AirCarry s (how long a jump off keeps following it), Carry = false (the
@@ -383,6 +387,14 @@ local function moverFrame(part: BasePart, data, now: number): (CFrame, string)
 		local degrees, state = KitMath.Flip(now, period, phase, attr(part, "Turn", 0.5), attr(part, "Telegraph", 0.8))
 		local angle = math.rad(degrees)
 		return data.base * (if attr(part, "Hinge", "X") == "Z" then CFrame.Angles(0, 0, angle) else CFrame.Angles(angle, 0, 0)), state
+	elseif kind == "Roll" then
+		local progress, visible, state = KitMath.Roll(now, period, phase, attr(part, "Fade", 0.4))
+		local distance = attr(part, "Distance", 40) * progress
+		-- turn about the horizontal axis across the path, one radian per radius travelled (reduced before the float32 CFrame)
+		local across = axis.Unit:Cross(Vector3.yAxis)
+		local spin = if across.Magnitude > 1e-3 then CFrame.fromAxisAngle(across.Unit, -(distance / math.max(part.Size.Y / 2, 0.1)) % (2 * math.pi)) else CFrame.identity
+		data.visible = visible
+		return CFrame.new(data.base.Position + axis.Unit * distance) * spin * data.base.Rotation, state
 	end
 	return data.base + axis.Unit * attr(part, "Amplitude", 10) * KitMath.Sine(now, period, phase), "on"
 end
@@ -420,7 +432,14 @@ end
 -- Touch, like the Touched event it replaces: a box slightly larger than the part, because a solid hazard pushes the
 -- character out of any real overlap within one physics step and a bar only grazing a leg would never test positive.
 local function touchesCharacter(part: BasePart): boolean
-	return near(part) and #workspace:GetPartBoundsInBox(part.CFrame, part.Size + Vector3.one * TOUCH_PAD, bodyParams) > 0
+	if not near(part) then
+		return false
+	end
+	if part:IsA("Part") and part.Shape == Enum.PartType.Ball then
+		-- a ball's box reaches past its surface at the corners (and turns with a rolling ball)
+		return #workspace:GetPartBoundsInRadius(part.Position, part.Size.X / 2 + TOUCH_PAD, bodyParams) > 0
+	end
+	return #workspace:GetPartBoundsInBox(part.CFrame, part.Size + Vector3.one * TOUCH_PAD, bodyParams) > 0
 end
 
 local function kill(part: Instance)
@@ -456,6 +475,10 @@ RunService.PreSimulation:Connect(function(dt: number)
 		data.near = near
 		data.cframe = frame
 		part.CFrame = frame
+		if data.visible then
+			-- a rolling ball fades in at the top of its path and out at the bottom
+			part.LocalTransparencyModifier = 1 - data.visible
+		end
 		if state ~= data.state then
 			data.state = state
 			local kind = attr(part, "Kind", "Slide")

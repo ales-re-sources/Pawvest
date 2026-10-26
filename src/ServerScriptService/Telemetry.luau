@@ -152,18 +152,22 @@ local function deathsBucket(deaths: number): string
 	return bucketOf(DEATH_BUCKETS, deaths, "11+")
 end
 
--- Run Speed level -> the level that stands for its bucket (S7: 0 / 1-3 / 4-5), so the loadouts stay within the custom-field
--- combinations (docs/TELEMETRY.md, T1b bound)
-local RUN_SPEED_BUCKET = { [0] = 0, 2, 2, 2, 5, 5 }
+-- Talent level -> the level that stands for its bucket, so the loadouts stay within the custom-field combinations
+-- (docs/TELEMETRY.md, T1b bound): Run Speed 0 / 1-3 / 4-5 (S7), Jump Height 0 / 1-2 / 3 (S8.2, Long Dash made Dash 0-2)
+local BUCKETS = {
+	RunSpeed = { [0] = 0, 2, 2, 2, 5, 5 },
+	JumpHeight = { [0] = 0, 2, 2, 3 },
+}
 
 -- Talent levels from the Talent_<id> attributes, e.g. "RS2 DJ1 JH3 QR2 D0" (code = the capitals of the talent id; Run Speed
--- bucketed)
+-- and Jump Height bucketed)
 local function loadout(player: Player): string
 	local parts = {}
 	for _, talent in TalentConfig.List do
 		local level = TalentConfig.ClampLevel(talent.id, player:GetAttribute(TalentConfig.AttributeName(talent.id)))
-		if talent.id == "RunSpeed" then
-			level = RUN_SPEED_BUCKET[level] or level
+		local bucket = BUCKETS[talent.id]
+		if bucket then
+			level = bucket[level] or level
 		end
 		table.insert(parts, (string.gsub(talent.id, "%l", "")) .. level)
 	end

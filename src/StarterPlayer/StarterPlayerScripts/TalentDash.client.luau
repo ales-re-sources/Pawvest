@@ -1,5 +1,5 @@
 -- Dash talent (S7, docs/STAGES.md §7.10): in the air, Q / gamepad X / the touch button gives a flat burst forward
--- (TalentConfig.DashSpeed for TalentConfig.DashTime, about 10 studs, height held), once per air time; landing, climbing
+-- (TalentConfig.DashSpeed for TalentConfig.DashTime(level): about 10 studs, 16 with Long Dash (level 2); height held), once per air time; landing, climbing
 -- or swimming gives it back. Movement is client-driven in Roblox, so this runs here; the level is the server-owned
 -- attribute Talent_Dash (purchase). The action (and with it the touch button) is bound only while the player owns it.
 -- While a dash runs the character carries the attribute `Dashing` (TalentDoubleJump ignores jumps then).
@@ -28,7 +28,7 @@ local function inAir(h: Humanoid): boolean
 end
 
 -- A white trail behind the root part for the burst, local only (others see the movement itself)
-local function trail(root: BasePart)
+local function trail(root: BasePart, duration: number)
 	local a0 = Instance.new("Attachment")
 	a0.Position = Vector3.new(0, 0.8, 0)
 	local a1 = Instance.new("Attachment")
@@ -44,7 +44,7 @@ local function trail(root: BasePart)
 	a0.Parent = root
 	a1.Parent = root
 	t.Parent = root
-	task.delay(TalentConfig.DashTime + TRAIL_TIME, function()
+	task.delay(duration + TRAIL_TIME, function()
 		t.Enabled = false
 		task.wait(t.Lifetime)
 		t:Destroy()
@@ -60,9 +60,11 @@ local function dash()
 	if not (h and root) or h.Health <= 0 or used or dashing or not inAir(h) then
 		return
 	end
-	if not TalentConfig.HasDash(TalentConfig.ClampLevel("Dash", player:GetAttribute(attribute))) then
+	local level = TalentConfig.ClampLevel("Dash", player:GetAttribute(attribute))
+	if not TalentConfig.HasDash(level) then
 		return
 	end
+	local duration = TalentConfig.DashTime(level)
 	local direction = Vector3.new(h.MoveDirection.X, 0, h.MoveDirection.Z)
 	if direction.Magnitude < 0.1 then
 		direction = Vector3.new(root.CFrame.LookVector.X, 0, root.CFrame.LookVector.Z)
@@ -74,7 +76,7 @@ local function dash()
 	used = true
 	dashing = true
 	character:SetAttribute("Dashing", true)
-	trail(root)
+	trail(root, duration)
 
 	-- a world-space LinearVelocity without a force limit holds the burst (and the height) against gravity and air control
 	local attachment = Instance.new("Attachment")
@@ -90,7 +92,7 @@ local function dash()
 	velocity.Parent = root
 
 	local started = os.clock()
-	while os.clock() - started < TalentConfig.DashTime and h.Health > 0 and root.Parent and inAir(h) do
+	while os.clock() - started < duration and h.Health > 0 and root.Parent and inAir(h) do
 		RunService.Heartbeat:Wait()
 	end
 	velocity:Destroy()

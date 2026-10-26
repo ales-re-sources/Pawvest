@@ -60,9 +60,9 @@ Rules:
 | E0 | Economy model for the pet-garden expansion (scope written 2026-10-24; `tools/economy.py` loader, drift check, reproduction, report, day-by-day sim, crop field + guardrails A-C (43 checks green, provisional numbers in [ECONOMY.md](ECONOMY.md)) done; repricing, dead end, rare supply and sensitivity pending; [EXPANSION.md](EXPANSION.md) §15) | partial | – | – |
 | E1.0 | Client-drawn plots spike: GO / NO-GO on the plot architecture before E1 (scope written 2026-10-24, no code) | – | – | – |
 | S5 | Worlds hub — done 2026-10-22: gates for Worlds 2-4 (coming soon, admins only), World 2 courtyard, signs, per-world stars boards (user's visual check) | ✔ | ✔ | – |
-| S6 | World 2 (stages 6–10) — S6.1 Double Up + Seesaw built and Studio-checked 2026-10-22 (awaits the user's visual check), S6.2 / S6.3 not started | ✔ (S6.1) | ✔ (S6.1) | – |
+| S6 | World 2 (stages 6–10) — S6.1 Double Up + Seesaw, S6.2 Turntable + Labyrinth, S6.3 Clocktower all built 2026-10-22 / 23, each crossed by a bot and one timed run paid out; Studio validation pending the open checks (course look, human difficulty / `T_base`, the user's Stage 9 run, door coplanar audit hits on `Stage9.Maze.Big.ExitDoor` and `Stage10.Movers.Door_10`, tick sound), see the S6 notes below | ✔ | partial | – |
 | S7 | Talents: Triple Jump + Dash (+ World 3 courtyard) — done 2026-10-24: talents, Q / gamepad / touch button, reach table, World 3 courtyard east of the hub; closed 2026-10-24 (the visual and real-device touch checks were waived by the user; Live-validated comes with the next publish) | ✔ | ✔ | – |
-| S8 | World 3 (stages 11–15) — S8.1 Triple Peaks + Ice Rink built and Studio-checked 2026-10-24 (kit ice, World 3 open; awaits the user's visual check), S8.2 / S8.3 not started | ✔ (S8.1) | ✔ (S8.1) | – |
+| S8 | World 3 (stages 11–15) — S8.1 Triple Peaks + Ice Rink built and Studio-checked 2026-10-24 (kit ice, World 3 open), checked and tuned by the user 2026-10-26; S8.2 Dash Bridge + Laser Lab designed (STAGES §7.12: Long Dash = Dash level 2, kit `Roll` balls), build not started, S8.3 not started | ✔ (S8.1) | ✔ (S8.1) | – |
 | S9 | Talents: Wall Jump + Glide | – | – | – |
 | S10 | World 4 (stages 16–20) | – | – | – |
 | M6b | Final balancing (all stages) | – | – | – |
@@ -444,7 +444,9 @@ Server and Clients mode for check 4; `screen_capture` one call at a time.
   slides you off a plate you stop on; the wind beam needs counter-steering; the door stays open long enough for a run across the ice track; the crushers kill and
   their gaps are safe; a run starts at the gate, every checkpoint fires, the finish ends it; World 3's hub gate follows the world rule (10 of 15 World 2 stars or
   buy Stage 11).
-- *Studio check (2026-10-24):* see STAGES §7.11 → Checks. *Not checked:* the look, a human run / `T_base`, coin pickups, a normal player at the World 3 hub gate.
+- *Studio check (2026-10-24):* see STAGES §7.11 → Checks. *User's check (2026-10-26):* both stages played, look and difficulty accepted after the tuning
+  (Ice Rink door swing, button moved, door time 8.5 s, checkpoint `1004` removed). *Still open:* the real `T_base` (M6b), a normal player at the World 3 hub gate.
+- **S8.2 (design check: STAGES §7.12):** `Stage13` Dash Bridge and `Stage14` Laser Lab (the `KeyArena` prototype moved into World 3 as its first room).
 
 ### M6a — First live test + World 1 balancing
 The first live test (open checks below) with 6 stages, then M6 for World 1 (scope in "M6 — Balancing pass" below).

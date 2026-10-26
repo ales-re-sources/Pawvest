@@ -50,8 +50,8 @@ they were `IslandHop`, `"Stage 1"`, `Blink`, `"Stage 2"`, `"Stage 3"`, `"Stage 4
 | 10 | 2 | Clocktower, finale | `Clocktower` | P (S6) | Double Jump | Bronze on 9 **or** 4 000 |
 | 11 | 3 | Triple Peaks | `Stage11` | yes (S8.1) | Triple Jump | World gate ² **or** 4 000 |
 | 12 | 3 | Ice Rink | `Stage12` | yes (S8.1) | Triple Jump | Bronze on 11 **or** 4 500 |
-| 13 | 3 | Dash Bridge | `DashBridge` | P (S8) | Triple Jump, Dash | Bronze on 12 **or** 5 000 |
-| 14 | 3 | Laser Lab ★ side-scroller | `LaserLab` | P (S8) | Triple Jump, Dash | Bronze on 13 **or** 5 500 |
+| 13 | 3 | Dash Bridge | `Stage13` | P (S8.2) | Triple Jump, Long Dash | Bronze on 12 **or** 5 000 |
+| 14 | 3 | Laser Lab ★ side-scroller | `Stage14` | P (S8.2) | Triple Jump, Long Dash | Bronze on 13 **or** 5 500 |
 | 15 | 3 | Rising Tide, finale | `RisingTide` | P (S8) | Triple Jump, Dash | Bronze on 14 **or** 5 500 |
 | 16 | 4 | Wall Climb | `WallClimb` | P (S10) | + Wall Jump | World gate ² **or** 6 000 |
 | 17 | 4 | Glide Canyon ★ dropper | `GlideCanyon` | P (S10) | + Glide | Bronze on 16 **or** 6 500 |
@@ -263,12 +263,13 @@ and Jump Height stay soft, never required). Only talents that are hard gates can
 |---|---|---|---|---|---|---|
 | Quick Respawn (P, S2) | `QuickRespawn` | utility, **never required**: level 1 respawns after 1 s instead of 3 s, level 2 instantly and adds a fall reset to the checkpoint; the timer keeps running | 2 | 1 000 / 3 000 | 4 000 | – |
 | Triple Jump (S7, built 2026-10-24) | `DoubleJump` level 2 | 2 air jumps (reach about 19 studs) | +1 level | 5 000 | (DJ total 8 000) | stage 11 |
-| Dash (S7, built 2026-10-24) | `Dash` | in the air, a short horizontal burst (about 10 studs in 0.2 s), once per air time; key + mobile button | 1 | 8 000 | 8 000 | stage 13 |
+| Dash (S7, built 2026-10-24) | `Dash` | in the air, a short horizontal burst (about 10 studs in 0.2 s), once per air time; key + mobile button | 1 | 5 000 (8 000 until S8.2) | 5 000 | – |
+| Long Dash (S8.2, 2026-10-26) | `Dash` level 2 | the burst lasts 0.32 s: about 16 studs (STAGES §1.0, §7.12) | +1 level | 3 000 | (Dash total 8 000) | stage 13 |
 | Wall Jump (P, S9) | `WallJump` | against a wall in the air, jump kicks up and away; does not refill air jumps | 1 | 10 000 | 10 000 | stage 16 |
 | Glide (P, S9) | `Glide` | hold jump while falling: fall speed capped at about 8 studs/s | 1 | 12 000 | 12 000 | stage 17 |
 
 **Full planned tree: 47 300** (Run Speed 3 400 + Jump Height 1 900 + Double Jump 3 000 + Triple Jump 5 000 + Quick Respawn
-4 000 + Dash 8 000 + Wall Jump 10 000 + Glide 12 000). Talents compete with pets, pens and incubators (about 56 500
+4 000 + Dash 5 000 + Long Dash 3 000 + Wall Jump 10 000 + Glide 12 000). Talents compete with pets, pens and incubators (about 56 500
 together) for the same Coins.
 
 ### Economy constraints (must hold after every rebalance)
@@ -293,7 +294,7 @@ medals of all stages before it):
 |---|---|---|---|---|---|
 | 6 | Double Jump | 3 000 | 9 450 | 32 % | ✔ |
 | 11 | + Triple Jump | 8 000 | 26 950 | 30 % | ✔ |
-| 13 | + Dash | 16 000 | 36 400 | 44 % | ✔ |
+| 13 | + Dash + Long Dash | 16 000 | 36 400 | 44 % | ✔ |
 | 16 | + Wall Jump | 26 000 | 53 200 | 49 % | ✔ |
 | 17 | + Glide | 38 000 | 59 500 | 64 % | ✔ |
 
