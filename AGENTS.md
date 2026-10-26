@@ -162,7 +162,7 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
 - **ChoiceStage** scripts pick a random child and require `p.Name == "Step"`; the three `Step` parts
   per ChoiceStage must keep that exact (duplicate) name. They are not synced (no code inside).
 - `PlayerProfile` is saved on leave, every 60 s and in `BindToClose`; a failed load blocks saving for that session.
-  Writes to one key are spaced `MIN_WRITE_GAP` (7 s; Roblox allows one per 6 s, closer ones queue and log "DataStore request was added to queue"): `PlayerProfile.Save` defers and coalesces, leave / shutdown use `save(player, true)`. Never call `SetAsync` on `PlayerProfiles` directly.
+  Writes to one key are spaced `MIN_WRITE_GAP` (7 s; Roblox allows one per 6 s, closer ones queue and log "DataStore request was added to queue"): `PlayerProfile.Save` only marks the profile dirty and a loop writes it, leave / shutdown write once directly. Never call `SetAsync` on `PlayerProfiles` directly.
   Don't `require` it from the MCP command context during a playtest: that creates a second copy that also saves.
 - Only **one** Argon plugin may be enabled in Studio (the CLI installs `%LOCALAPPDATA%\Roblox\Plugins\Argon.rbxm`;
   a Creator Store copy must stay disabled). Two plugins each create every new file → duplicate scripts.

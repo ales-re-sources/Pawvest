@@ -1,7 +1,7 @@
 -- PlayerProfile: one DataStore record per player holding all persistent progress. Server-only.
 -- Loaded on join, saved on leave, every AUTOSAVE_INTERVAL seconds and on shutdown, and after purchases / rewards.
--- Roblox allows one write per key every 6 s and queues (and warns about) closer ones, so save() coalesces: a write that
--- comes too soon after the last one is deferred and merged with any other save requested meanwhile.
+-- Roblox allows one write per key every 6 s and queues (and warns about) closer ones, so Save only marks the profile
+-- dirty and one loop writes dirty profiles at most every MIN_WRITE_GAP seconds; leaving / shutdown write once directly.
 -- A missing record is built from the legacy PlayerCoins / PlayerScoresStore data (left untouched).
 -- If loading fails the player plays on a default profile that is never saved, so stored data is never overwritten.
 
@@ -13,7 +13,7 @@ local COIN_SCALE = 10 -- R2: Coins stored before version 3 (and legacy PlayerCoi
 local AUTOSAVE_INTERVAL = 60
 local MAX_ATTEMPTS = 3
 local SHUTDOWN_TIMEOUT = 25
-local MIN_WRITE_GAP = 7 -- seconds between writes of one key; the limit is 6 s, closer writes sit in the request queue
+local MIN_WRITE_GAP = 7 -- seconds between loop writes of one key; the limit is 6 s, closer writes sit in the request queue
 
 local profileStore = DataStoreService:GetDataStore("PlayerProfiles")
 local legacyCoinStore = DataStoreService:GetDataStore("PlayerCoins")
@@ -25,10 +25,9 @@ local fresh = {} -- [Player] = true when neither a stored record nor legacy data
 local left = {} -- [Player] = true once the OnLeaving callbacks ran
 local leavingCallbacks = {}
 local activeSaves = 0
+local dirty = {} -- [Player] = true when a save was requested and not yet written
 local lastWrite = {} -- [Player] = os.clock() when the last write started
-local writing = {} -- [Player] = true while a write (with its retries) runs
-local deferred = {} -- [Player] = true while a deferred save is scheduled
-local finalizing = {} -- [Player] = true while the leave / shutdown save waits or writes
+local closing = {} -- [Player] = true once the leave / shutdown save started
 
 local coinsChanged = Instance.new("BindableEvent")
 local profileReset = Instance.new("BindableEvent")
@@ -134,64 +133,28 @@ end
 
 local function write(player)
 	local profile = profiles[player]
-	writing[player] = true
+	if not profile or saveBlocked[player] then
+		return false
+	end
+	dirty[player] = nil
 	lastWrite[player] = os.clock()
 	activeSaves += 1
 	local ok, err = withRetries(function()
 		profileStore:SetAsync(profileKey(player.UserId), profile, { player.UserId })
 	end)
 	activeSaves -= 1
-	writing[player] = nil
 	if not ok then
+		dirty[player] = true -- the loop tries again
 		warn("PlayerProfile: save failed for " .. player.Name .. ": " .. tostring(err))
 	end
 	return ok
 end
 
--- Seconds until the key may be written again without queueing.
-local function writeDelay(player)
-	return (lastWrite[player] or -math.huge) + MIN_WRITE_GAP - os.clock()
-end
-
--- Saves the profile. Too soon after the last write (or while one runs), the save is deferred to the end of the gap and
--- shared by every save requested until then; returns true then, the write happens later. `final` (leave, shutdown)
--- waits out the gap itself and writes the current state before returning.
-local function save(player, final)
-	if not profiles[player] or saveBlocked[player] then
-		return false
+-- Requests a save; the loop below writes it within MIN_WRITE_GAP seconds, merged with any other request until then.
+local function save(player)
+	if profiles[player] and not saveBlocked[player] then
+		dirty[player] = true
 	end
-	if final then
-		if finalizing[player] then -- PlayerRemoving and BindToClose both ask: one write is enough
-			while finalizing[player] do
-				task.wait(0.1)
-			end
-			return true
-		end
-		finalizing[player] = true
-		activeSaves += 1 -- keeps BindToClose waiting while the gap runs out
-		while writing[player] or writeDelay(player) > 0 do
-			task.wait(0.1)
-		end
-		activeSaves -= 1
-		local ok = write(player)
-		finalizing[player] = nil
-		return ok
-	end
-	if finalizing[player] then
-		return true -- the final save writes the current state
-	end
-	local delay = writeDelay(player)
-	if writing[player] or delay > 0 then
-		if not deferred[player] then
-			deferred[player] = true
-			task.delay(math.max(delay, 1), function()
-				deferred[player] = nil
-				save(player)
-			end)
-		end
-		return true
-	end
-	return write(player)
 end
 
 local function load(player)
@@ -221,7 +184,7 @@ local function load(player)
 	end
 	profiles[player] = profile
 	if migrated then
-		save(player)
+		write(player)
 	end
 end
 
@@ -300,20 +263,34 @@ end
 
 Players.PlayerRemoving:Connect(function(player)
 	runLeaving(player)
-	save(player, true)
+	if not closing[player] then
+		closing[player] = true
+		write(player)
+	end
 	profiles[player] = nil
 	saveBlocked[player] = nil
+	dirty[player] = nil
 	lastWrite[player] = nil
-	deferred[player] = nil
+	closing[player] = nil
 	fresh[player] = nil
 	left[player] = nil
 end)
 
 task.spawn(function()
+	local nextAutosave = os.clock() + AUTOSAVE_INTERVAL
 	while true do
-		task.wait(AUTOSAVE_INTERVAL)
+		task.wait(1)
+		local autosave = os.clock() >= nextAutosave
+		if autosave then
+			nextAutosave += AUTOSAVE_INTERVAL
+		end
 		for _, player in Players:GetPlayers() do
-			task.spawn(save, player)
+			if autosave then
+				save(player)
+			end
+			if dirty[player] and not closing[player] and os.clock() - (lastWrite[player] or -math.huge) >= MIN_WRITE_GAP then
+				task.spawn(write, player)
+			end
 		end
 	end
 end)
@@ -321,7 +298,10 @@ end)
 game:BindToClose(function()
 	for _, player in Players:GetPlayers() do
 		runLeaving(player)
-		task.spawn(save, player, true)
+		if not closing[player] then
+			closing[player] = true
+			task.spawn(write, player)
+		end
 	end
 	local deadline = os.clock() + SHUTDOWN_TIMEOUT
 	while activeSaves > 0 and os.clock() < deadline do
