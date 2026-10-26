@@ -196,6 +196,12 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
   After cloning or rotating a course check `portal.CFrame.LookVector:Dot(approach) > 0`.
 - The Tutorial keeps its old-style `LandingPad` (floor, `StartGate`, `TimerStart`, return portal); the world stages have no landing pad since S4.0.
 - **ChoiceStage duplicates when moving scene parts:** the three `Step` parts of a ChoiceStage share one name; code that matches children by name (the "graft" of Studio-only parts into freshly synced script containers) overwrites the first one with the second. Move such children without matching.
+- **Moving kit parts must not share a face plane with the frame they move in** (z-fighting flicker; the Ice Rink door did it twice): doors /
+  lifts are thinner than their frame, doors swing (`OpenTurn` + `OpenHinge`) instead of sliding into a lintel, frame walls reach the
+  ground / sea (a player can jump into the gap below a floating wall). After building or changing a `KitDoor` run
+  `tools/kit_coplanar_audit.luau` via the MCP `execute_luau` (Edit) and get "clean"; rules: docs/STAGES.md §2.3.1.
+- A cloned stage's gate sign (`Gate.Sign.Gui.Title`) keeps the template / source stage's literal text in the place file (Stage 11 said "Stage 6", Stage 12
+  "Stage 7"): set the Studio text of every new stage's sign (the `GateSign` script writes the localized name at runtime, the literal is what Edit mode shows).
 - Legacy APIs are common (`wait`, `spawn`, `:connect`, `findFirstChild`); prefer `task.*` and
   `Players:GetPlayerFromCharacter` in new code, but don't mass-rewrite without asking.
 

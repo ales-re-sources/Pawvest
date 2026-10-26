@@ -131,7 +131,7 @@ StageConfig.Stages = {
 		unlock = { world = 1, stars = 10 }, -- the world opener: 10 of the 15 stars of World 1
 		unlockPrice = 2500,
 		rewardFactor = 2.0, -- curve 0.5 + 0.25 × order (GDD §5)
-		checkpointOrder = { "401", "402", "403", "404", "405", "407", "408", "406" }, -- 407 / 408 were added later
+		checkpointOrder = { "401", "402", "403", "404", "405", "407", "408" }, -- 407 / 408 were added later; 406 was deleted (S6 end staircase closed up, 2026-10-26)
 	},
 	{
 		key = "Stage7", -- Seesaw: kit-local tilt plates, crosswind, crumbling rests

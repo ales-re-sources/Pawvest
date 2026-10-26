@@ -171,6 +171,22 @@ component can *require* (hard) or only *reward* (soft: faster medal, shortcut).
 - Moving parts never push a player into a kill part without a chance to react (≥ 0.5 s).
 - Timers on one stage share a **base period** (multiples of 1 s), so waits are short and learnable.
 
+### 2.3.1 Moving parts vs frame (build rules; user, 2026-10-26: the Ice Rink door flickered "again")
+A part that moves (door, lift, piston, flipper) must never lie in the same plane as a face of the static geometry around it
+while facing the same way: the renderer cannot decide which one wins and the two textures flicker in a mixed pattern
+(z-fighting). It hit the Ice Rink door twice: a 2-stud door in a 2-stud frame (walls, lintel) shares all four side planes with
+the lintel the moment it slides up into it.
+- **Make the moving part thinner than its frame** (door 1 stud in a 2-stud frame, a lift 0.2 narrower than its shaft) and never
+  flush with a neighbour in any direction it travels; never slide a door *into* the lintel, swing it (`OpenTurn` + `OpenHinge`,
+  ObstacleKit header) or let it drop into a slot that is wider than itself.
+- Faces that touch but point opposite ways (a door resting on its sill, its top under the lintel) are fine.
+- Frame walls go down to the sea / the ground, not just under the plates: a player who falls beside the course can jump into any
+  gap below a floating wall and reach the part behind it (the Ice Rink's `DoorWallL/R`).
+- **Check before you finish a door:** run `tools/kit_coplanar_audit.luau` through the Studio MCP `execute_luau` (Edit). It walks every
+  `KitDoor` from closed to open and lists each coplanar, same-facing, overlapping face; the result must be "clean" for the stage
+  you touched. (State 2026-10-26: it also lists `Stage9.Maze.Big.ExitDoor` vs the posts / floor and `Stage10.Movers.Door_10` vs
+  `Tower.Core`; not looked at yet.)
+
 ### 2.4 Kit architecture (for S3)
 - One client module (`ObstacleKit`) drives every tagged part through `CollectionService` (`BlinkBeam`, `Mover`, `Rotator`,
   `TiltPlate`, `Crumble`, `ColourSwitch`, `Piston`, `Pendulum`, `WindZone`, …), configured by attributes on the Studio
@@ -619,7 +635,7 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   | 9 | Labyrinth | 100 (was 105, 140 during the maze rework) | 2.75 | Bronze on 8 or 3 500 | ~360 + maze | 701-705 |
   | 10 | Clocktower | 75 (was 135, 90) | 3.0 | Bronze on 9 or 4 000 | ~700, 120 high | 801-806 |
 
-  (`407` / `408` / `507` / `508` were added when the courses were lengthened, so numbers are not in course order: `406` / `506` stay the last.)
+  (`407` / `408` / `507` / `508` were added when the courses were lengthened, so numbers are not in course order: `506` stays the last; Stage 6's `406` was deleted 2026-10-26, `408` is its last checkpoint.)
 - **World 2 opens with stage 6** (user decision, 2026-10-22): the `soon` flag was removed with Stage 6, so the hub gate follows the normal world rule (10 of 15 World 1 stars, or buy Stage 6); the unbuilt openings
   carried closed "Coming soon" doors (`SoonGate8..10`, replaced by the real gates). **Look:** the Island Hop look (stud columns from the sea) until the style decision (STYLE_PREVIEW.md).
 - **Reach rules for Double Jump stages** (measured with a baseline bot, Run Speed 0 / Jump Height 0, one air jump; it jumps 0.6 studs before the edge and double-jumps at 0.24 s): a Double Jump crosses a **12-12.5 stud gap
@@ -718,8 +734,9 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
 - **Stage 12 Ice Rink as built** (z = -585 + l): `1001` (u 0); (1) `Rink1` (44 x 24 ice, low side rails) flush with the plate, rest plate `R1`, ice turns `I1`
   (36 x 8) -> `I2` (sideways, to l 24) -> `I3`, `1002` (u 142, l 20); (2) four 10 x 10 ice plates `J1`-`J4` with gaps 5-7 and side shifts of 8 (hop on at once:
   a stop slides you off), `1003` (u 226); (3) `WindBeam` (66 x 8 ice, flush both ends) in a steady crosswind `Wind1` (Push 6 toward +z; 10 blew even a correcting
-  bot off), `1004` (u 304); (4) **pressure door**: `Button` (Group `IceDoor`, 6 s) on `1004`'s far edge, ice track `Track1..3` with two 5-stud gaps, `IceDoor`
-  (12 wide, 20 high, slides up) between 32-high walls and a lintel, `1005` (u 390) behind it; (5) Triple ledges onto ice `K1`-`K3` (10 x 10 ice, h 20 / 40 / 60,
+  bot off), the rest plate `Plate_1004` (u 304; **no checkpoint since 2026-10-26**: the door segment was too forgiving, now a fall on the track or at the door replays the wind beam from `1003`); (4) **pressure door**: `Button` (Group `IceDoor`, **5 s** since 2026-10-26, was 6; a bot running at full speed needs 3.0 s from the button's edge to the door, a ~2 s margin) on the plate's far edge, ice track `Track1..3` with two 5-stud gaps, `IceDoor`
+  (a 1-stud wooden door, 12 wide, 20 high, hinged on its north edge; swings 90° toward the approaching player: `OpenTurn -90`, `OpenHinge (0, 0, -5.5)`, 0.7 s;
+  fixed 2026-10-26, see §2.3.1) between walls (down to y -4) and a lintel, `1005` (u 390) behind it; (5) Triple ledges onto ice `K1`-`K3` (10 x 10 ice, h 20 / 40 / 60,
   gaps 6-7), finish island (h 49, drop 11), portal at u 466. About 470 studs. Coins: easy on the rink corner, `I2`'s corner, `J3`, the beam's upwind edge, the
   finish island; risky on the beam's downwind edge and on a 6 x 6 ice plate 10 beside `J2`; talent on a 3 x 3 pillar 21.5 beside `K3`.
 - **Fall reset (user, 2026-10-24: with Quick Respawn 2 the descent reset the player to `905` around `D4`):** the descent goes 65 studs below `905`, past the

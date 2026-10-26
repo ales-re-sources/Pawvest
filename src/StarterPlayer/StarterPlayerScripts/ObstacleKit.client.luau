@@ -36,7 +36,12 @@
 --             The door slides OpenDistance studs (default its height) along OpenAxis (world Vector3, default up) in OpenTime s
 --             (default 0.4) and back when the time is up; OpenTurn (degrees, default 0) also turns it about the vertical
 --             axis through its centre (OpenDistance then defaults to 0): the Clocktower's turning gargoyle, its other parts
---             welded to the tagged hit box; the button glows while it is open and a countdown of the seconds
+--             welded to the tagged hit box; OpenHinge (world Vector3 offset from the part's centre, e.g. (0, 0, -6) for
+--             the edge of a door 12 wide) moves that axis to a hinge line, so OpenTurn swings the part like a door (the
+--             Ice Rink's IceDoor, turn -90 opens it toward the approaching player; its handle parts are welded to it).
+--             A door must never share a face plane with the frame it moves in (see docs/STAGES.md, "Moving parts
+--             vs frame"): the lifted Ice Rink door was as thick as its lintel and flickered; make it thinner than the
+--             frame and swing it instead of sliding it through the lintel. The button glows while it is open and a countdown of the seconds
 --             left floats over the button and, big with a shrinking bar and visible through walls, in the doorway at the
 --             door's middle (S8.1 tuning: the one over the door's top went unnoticed); the last 3 seconds tick. Latch = true on a button (the Labyrinth's
 --             exit switch) keeps its group open for the rest of the run instead, with no countdown and also after a death;
@@ -666,9 +671,17 @@ RunService.PreSimulation:Connect(function(dt: number)
 			local turn = attr(part, "OpenTurn", 0)
 			local distance = attr(part, "OpenDistance", if turn ~= 0 then 0 else part.Size.Y)
 			local eased = KitMath.Smooth(shown)
-			part.CFrame = CFrame.Angles(0, math.rad(turn * eased), 0) * data.base.Rotation
-				+ data.base.Position
-				+ axis.Unit * distance * eased
+			local turned = CFrame.Angles(0, math.rad(turn * eased), 0)
+			local hinge = part:GetAttribute("OpenHinge")
+			local placed
+			if typeof(hinge) == "Vector3" then
+				-- swing about a vertical hinge line at that world offset from the part's centre (a real door)
+				local pivot = data.base.Position + hinge
+				placed = CFrame.new(pivot) * turned * CFrame.new(-pivot) * data.base
+			else
+				placed = turned * data.base.Rotation + data.base.Position
+			end
+			part.CFrame = placed + axis.Unit * distance * eased
 		end
 		showCountdown(data.label, if latched[group] then 0 else left, doorOpenTime[group])
 	end

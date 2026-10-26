@@ -33,7 +33,7 @@ prints every event. The limits that shape this design (create.roblox.com, checke
 - **Segment** `<stageKey>#<k>`: `k` = position (1-based, in course order) of the last checkpoint reached in this run;
   `#0` before the first one (the start gate counts as the first checkpoint, so `#0` is rare). Course order = numeric sort
   of the stage's checkpoint folders, with a `checkpointOrder` list in the `StageConfig` entry for exceptions (checked in
-  Studio 2026-10-23: Stage5 `20 26 21 22`, Stage6 `401-405 407 408 406`, Stage7 `501-505 507 508 506`, Stage9
+  Studio 2026-10-23: Stage5 `20 26 21 22`, Stage6 `401-405 407 408` (`406` deleted 2026-10-26), Stage7 `501-505 507 508 506`, Stage9
   `701 702 703 705 704`).
 - **Cause** of a fail:
   - `fall` — falling off, **whatever the player's talents**: without Quick Respawn level 2 the player dies on the sea
