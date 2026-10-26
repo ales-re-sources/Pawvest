@@ -50,7 +50,7 @@ they were `IslandHop`, `"Stage 1"`, `Blink`, `"Stage 2"`, `"Stage 3"`, `"Stage 4
 | 10 | 2 | Clocktower, finale | `Clocktower` | P (S6) | Double Jump | Bronze on 9 **or** 4 000 |
 | 11 | 3 | Triple Peaks | `Stage11` | yes (S8.1) | Triple Jump | World gate ² **or** 4 000 |
 | 12 | 3 | Ice Rink | `Stage12` | yes (S8.1) | Triple Jump | Bronze on 11 **or** 4 500 |
-| 13 | 3 | Dash Bridge | `Stage13` | P (S8.2) | Triple Jump, Long Dash | Bronze on 12 **or** 5 000 |
+| 13 | 3 | Dash Bridge | `Stage13` | yes (S8.2) | Triple Jump, Long Dash | Bronze on 12 **or** 5 000 |
 | 14 | 3 | Laser Lab ★ side-scroller | `Stage14` | P (S8.2) | Triple Jump, Long Dash | Bronze on 13 **or** 5 500 |
 | 15 | 3 | Rising Tide, finale | `RisingTide` | P (S8) | Triple Jump, Dash | Bronze on 14 **or** 5 500 |
 | 16 | 4 | Wall Climb | `WallClimb` | P (S10) | + Wall Jump | World gate ² **or** 6 000 |

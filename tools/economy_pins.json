@@ -4,6 +4,7 @@
   "Stage10": 8,
   "Stage11": 8,
   "Stage12": 8,
+  "Stage13": 8,
   "Stage2": 7,
   "Stage3": 8,
   "Stage4": 8,
@@ -187,6 +188,23 @@
   [
    [
     "DoubleJump",
+    2
+   ]
+  ]
+ ],
+ "stage:Stage13": [
+  13,
+  3,
+  3.75,
+  120,
+  5000,
+  [
+   [
+    "DoubleJump",
+    2
+   ],
+   [
+    "Dash",
     2
    ]
   ]

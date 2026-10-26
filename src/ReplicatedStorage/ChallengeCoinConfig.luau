@@ -116,6 +116,14 @@ ChallengeCoinConfig.Coins = {
 	{ id = "Stage12_6", stage = "Stage12", tier = "Risky" },
 	{ id = "Stage12_7", stage = "Stage12", tier = "Risky" },
 	{ id = "Stage12_8", stage = "Stage12", tier = "Talent" }, -- beside the last ice ledge, like Stage11_8
+	{ id = "Stage13_1", stage = "Stage13", tier = "Easy" },
+	{ id = "Stage13_2", stage = "Stage13", tier = "Easy" },
+	{ id = "Stage13_3", stage = "Stage13", tier = "Easy" },
+	{ id = "Stage13_4", stage = "Stage13", tier = "Easy" },
+	{ id = "Stage13_5", stage = "Stage13", tier = "Easy" },
+	{ id = "Stage13_6", stage = "Stage13", tier = "Risky" }, -- in a ball pocket beside the ramp
+	{ id = "Stage13_7", stage = "Stage13", tier = "Risky" }, -- under the fourth axe
+	{ id = "Stage13_8", stage = "Stage13", tier = "Talent" }, -- a pillar 41 studs off F1: Long Dash with Run Speed + Jump Height near max
 }
 
 ChallengeCoinConfig.ById = {}

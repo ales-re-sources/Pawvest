@@ -213,6 +213,19 @@ StageConfig.Stages = {
 		unlockPrice = 4500,
 		rewardFactor = 3.5,
 	},
+	{
+		key = "Stage13", -- Dash Bridge (docs/STAGES.md §7.12): 34-stud Long Dash gaps, swinging axes, rolling balls (kit Roll)
+		displayName = "Stage 13",
+		folder = "Stage13",
+		order = 13,
+		world = 3,
+		requires = { { id = "DoubleJump", level = 2 }, { id = "Dash", level = 2 } }, -- Triple Jump, Long Dash
+		tBase = 120,
+		tiers = StageConfig.DefaultTiers,
+		unlock = { stage = "Stage12", medal = "Bronze" },
+		unlockPrice = 5000,
+		rewardFactor = 3.75,
+	},
 }
 
 -- Worlds (docs/STAGES.md §7.1): `stage.world` 1..n; a world is a courtyard in Workspace.<folder> (plaza, wall, return portal)

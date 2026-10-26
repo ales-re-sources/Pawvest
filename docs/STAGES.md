@@ -818,6 +818,25 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   a "maxed soft talents" coin now (Run Speed 5 + Jump Height 3, e.g. a 33-stud open gap) or the coin waits for S9 (Wall Jump) and the stages ship with 7 coins.
 - **Split** (default taken): S8.2a Dash Bridge (with `Roll`) and S8.2b Laser Lab, each with its Studio check, the user's check and a commit, Dash Bridge first (its gates
   are measured in the jump lab and the Laser Lab's room 2 reuses them).
+- **Stage 13 Dash Bridge as built (S8.2a, 2026-10-26)** (x = -213 - u, course along z -657, surface h above y 78.5; everything north of z -644 for the Laser Lab
+  camera): `1101` (u 0, z -645, Stage 11's gate / board / `Arrival` mirrored across the courtyard about (-150, -645)); (1) runway `R1` (u 6-26), a 22 gap (any Dash)
+  to `L1` (u 48-64), a 34 gap to `L2` (u 98-112), both over brown catch floors 8 lower with a truss back up; `1102` (u 118); (2) 34 gaps over the sea to `P1` (h -2),
+  `P2` (h -4), `1103` (u 256, h -6); (3) a 6-wide `Bridge` (u 262-330) under `Axe1..4` (1.5 x 14 x 4 at u 276 / 290 / 304 / 318, hung from an overhead beam at h 12,
+  `Swing` Hinge X across the bridge, Angle 55, Period 3, run-seeded, Phase 0 / 0.708 / 0.417 / 0.125 = a wave a 16 studs/s walker follows); `1104` (u 336);
+  (4) `Ramp` (u 342-422, h -6 -> 14, 10 wide) with `Ball1..4` (diameter 5, `Roll` Distance 80, Period 6, Fade 0.4, run-seeded; lanes z -659.5 / -654.5,
+  one ball every 1.5 s alternating lanes, a lane every 3 s; 3 balls per lane were too dense: even a jumping bot died) and side `Pocket1..3`; `1105` (u 428, h 14);
+  (5) a 34 gap (drop 4) through `AxeFinale` (2 x 34 x 4 from a gantry at h 50, Angle 50, Period 4) to `F1` (u 468-482, h 10), a 22 gap (drop 6) to `Finish`
+  (u 504-520, h 4), portal at u 514. About 520 studs. Coins: easy on `R1`'s corner, `L2`, `P1`, the bridge between axes 2 and 3, the finish island; risky in
+  `Pocket2` and under `Axe4`; talent on `TalentPillar` (3 x 3, 41 studs north of `F1`).
+- **Checks (Studio playtest 2026-10-26, bot with the stored profile at Triple Jump + Long Dash, snapshot `profile_<id>_s82` restored, the Stage 13 board removed):**
+  every gap crossed with Triple Jump + Long Dash at the apex (landings at u 63.6 / 100 / 162 / 208 / 254); walkers over the axe bridge: 3 of 6 start times
+  crossed (`Axe1` / `Axe3` killed the others), standing under `Axe2` kills; ramp: a bot that jumps the balls of its lane got up every time (5.7 s), a plain
+  walker died within 2 s; finale: 4 of 8 start times passed the pendulum; talent pillar: baseline Triple Jump + Long Dash falls short, Run Speed 3 lands it,
+  Run Speed 5 + Jump Height 3 overshoots the 3 x 3 top unless steered; coin pickups (`Stage13_4`, `_7`, `_8`); a full run: gate starts the timer, `1101`-`1105`
+  in order, the finish portal ends it with a result (Gold). No script errors.
+- *Not checked:* the look, a human run. The bot's clean segments took about 30 s: the provisional `tBase` 120 is very likely too generous (Gold came easily);
+  set it after the user's run, as for Stage 10. *For S8.2b:* Stage 14's lane (z -609..-546) lies within a Long Dash of Stage 13's south edge (35 studs): put a
+  `World3West` lane divider between them.
 
 ## 8. Milestones (agreed 2026-10-21; status in [ROADMAP.md](ROADMAP.md), full scopes of finished milestones in `git show 53bd79b:docs/ROADMAP.md`)
 Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.
