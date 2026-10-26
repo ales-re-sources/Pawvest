@@ -2,7 +2,7 @@
 -- (see AdminCoinsServer; the server checks the admin list and fixes the amount). Built in code as a copy of the
 -- Reset Score button, so the panel needs no Studio edit; the panel is made taller to fit it.
 -- This script also gives the admin panel's contents the stud-brick look (StudStyle; the panel itself is styled by
--- ButtonHandler): Reset Score a red brick, +Coins a yellow one, the toggle rows in the panel's row tone.
+-- ButtonHandler): Reset Score a red brick, +Coins a yellow one, the toggle row in the panel's row tone.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -33,14 +33,12 @@ end)
 
 resetButton.BackgroundColor3 = StudStyle.Colors.Red
 StudStyle.Brick(resetButton, { studs = 4 })
-for _, name in { "DoubleJumpFrame", "RunSpeedFrame" } do
-	local row = panel:FindFirstChild(name)
-	if row then
-		StudStyle.Row(row, panel.Name)
-		local label = row:FindFirstChild("Label")
-		if label and label:IsA("TextLabel") then
-			label.Font = StudStyle.Font
-			label.TextColor3 = Color3.new(1, 1, 1)
-		end
+local speedRow = panel:FindFirstChild("RunSpeedFrame")
+if speedRow then
+	StudStyle.Row(speedRow, panel.Name)
+	local label = speedRow:FindFirstChild("Label")
+	if label and label:IsA("TextLabel") then
+		label.Font = StudStyle.Font
+		label.TextColor3 = Color3.new(1, 1, 1)
 	end
 end

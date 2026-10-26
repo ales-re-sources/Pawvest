@@ -191,7 +191,7 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
   stored in profiles: never rename or reuse one; a new coin needs a new id in `ChallengeCoinConfig` **and** the Studio
   part (tag + `CoinId`) inside its stage folder. Coins have no Highlight (removed in M4.1: Roblox renders at most 31 at once and 29 coins would use nearly all).
 - Admins are listed once in `ReplicatedStorage.AdminConfig`; every admin remote must check `AdminConfig.IsAdmin`
-  on the server (the client check only hides the panel). The RunSpeed/DoubleJump toggles are client-side debug tools.
+  on the server (the client check only hides the panel). The RunSpeed toggle is a client-side debug tool (the admin Double Jump toggle was removed 2026-10-26: admins buy the talent).
 - A finish portal's label is on its Back face: its `LookVector` must point along the approach (last checkpoint -> portal).
   After cloning or rotating a course check `portal.CFrame.LookVector:Dot(approach) > 0`.
 - The Tutorial keeps its old-style `LandingPad` (floor, `StartGate`, `TimerStart`, return portal); the world stages have no landing pad since S4.0.
