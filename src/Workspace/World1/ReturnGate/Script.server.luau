@@ -1,10 +1,13 @@
--- Return gate of a world island (S4.0): touching its Portal teleports the player back to the hub spawn.
+-- Return gate of a world island (S4.0): touching its Portal teleports the player back to the hub, in front of the hub gate that
+-- led to this world, looking out of it.
 
 local Players = game:GetService("Players")
 local StageConfig = require(game:GetService("ReplicatedStorage").StageConfig)
 local TimerHandler = require(workspace.Handlers.PlayerTimerHandler)
 
 local portal = script.Parent:WaitForChild("Portal")
+local world = StageConfig.WorldByFolder[script.Parent.Parent.Name]
+local destination = StageConfig.HubExitCFrame(StageConfig.WorldGatePortal(world))
 
 local COOLDOWN = 2 -- seconds per player
 local lastTouch = {} -- [Player] = os.clock()
@@ -22,7 +25,7 @@ portal.Touched:Connect(function(hit)
 	end
 	lastTouch[player] = now
 
-	root.CFrame = workspace.StartLocation.SpawnLocation.CFrame + Vector3.new(0, 5, 0)
+	root.CFrame = destination
 	TimerHandler.UpdateScorePanel(player, StageConfig.HubName)
 end)
 

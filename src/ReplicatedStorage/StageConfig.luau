@@ -329,13 +329,32 @@ function StageConfig.LocationKey(stage): string
 	return if world then world.name else StageConfig.HubName
 end
 
--- The part a player is teleported to when leaving `stage` (finish, Home button): the plaza in front of the stage's own gate
--- (its Arrival marker) for a world stage, the hub's SpawnLocation for a hub stage. Waits for the scene.
-function StageConfig.ReturnSpawn(stage): BasePart
+-- Where a player lands on a stage's courtyard: on its Arrival marker (in front of the gate, the marker looks at the gate), turned
+-- round to look away from the gate, over the island.
+function StageConfig.ArrivalCFrame(arrival: BasePart): CFrame
+	return arrival.CFrame * CFrame.Angles(0, math.pi, 0) + Vector3.new(0, 5, 0)
+end
+
+-- Where a player lands when they come back through a hub portal (a world's return gate, the Tutorial's return portal): in front
+-- of the portal that sent them there, looking away from it, like stepping out of a door. The hub portals' LookVector points
+-- away from the hub centre, so the hub side is behind them.
+local HUB_EXIT_DISTANCE = 9 -- studs from the portal's centre, along the hub side
+function StageConfig.HubExitCFrame(portal: BasePart): CFrame
+	local look = portal.CFrame.LookVector
+	local out = Vector3.new(-look.X, 0, -look.Z).Unit
+	local feet = portal.Position.Y - portal.Size.Y / 2
+	local position = Vector3.new(portal.Position.X, feet + 5, portal.Position.Z) + out * HUB_EXIT_DISTANCE
+	return CFrame.lookAt(position, position + out)
+end
+
+-- Where a player is teleported when leaving `stage` (finish, Home button): the plaza in front of the stage's own gate for a world
+-- stage, in front of the stage's hub portal for a hub stage (the Tutorial). Waits for the scene.
+function StageConfig.ReturnCFrame(stage): CFrame
 	if StageConfig.Worlds[stage.world] then
-		return StageConfig.StageFolder(stage):WaitForChild("Arrival")
+		return StageConfig.ArrivalCFrame(StageConfig.StageFolder(stage):WaitForChild("Arrival"))
 	end
-	return workspace:WaitForChild("StartLocation"):WaitForChild("SpawnLocation")
+	local start = workspace:WaitForChild("StartLocation")
+	return StageConfig.HubExitCFrame(start:WaitForChild(stage.hubPortal):WaitForChild("Portal"))
 end
 
 -- Time limit (seconds, tenths) for medal index `medal` on `stage`, or nil while the stage has no tBase.

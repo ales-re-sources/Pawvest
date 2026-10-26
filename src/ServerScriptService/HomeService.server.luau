@@ -65,9 +65,9 @@ goHomeEvent.OnServerEvent:Connect(function(player)
 		stage = nil -- already on the courtyard (e.g. after a finish): Home goes on to the hub
 	end
 	local destination = if stage and StageConfig.Worlds[stage.world]
-		then StageConfig.ReturnSpawn(stage)
-		else workspace.StartLocation.SpawnLocation
-	character:PivotTo(destination.CFrame + Vector3.new(0, 5, 0))
+		then StageConfig.ReturnCFrame(stage)
+		else workspace.StartLocation.SpawnLocation.CFrame + Vector3.new(0, 5, 0)
+	character:PivotTo(destination)
 	TimerHandler.ResetTimer(player, "home") -- leaving the stage cancels a running timer
 	TimerHandler.UpdateScorePanel(player, if stage then StageConfig.LocationKey(stage) else StageConfig.HubName)
 end)

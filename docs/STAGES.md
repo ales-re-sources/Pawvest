@@ -632,8 +632,9 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   `StarBoard` is generalised to boards (`MostStars` stays the global one; `WorldStars_<n>` one OrderedDataStore per world with stages, written when
   that world's stars change, next to the global write), a board model (clone of `StartLocation.StarsLeaderboard`) and a `WorldStarsBoard`
   script per world folder. World 1's board stands beside the south return gate; World 2's board stays empty until S6.
-- **Return / Home:** already world-aware (`StageConfig.Worlds`, `ReturnSpawn`, `HomeService`): the return gate of a world goes to the hub spawn,
-  Home from a stage lands on that stage's `Arrival`, Home on a courtyard plaza goes to the hub. The score panel shows the world's name and its
+- **Return / Home:** already world-aware (`StageConfig.Worlds`, `ReturnCFrame`, `HomeService`): the return gate of a world lands in front of the world's hub gate, looking out of it
+  (`HubExitCFrame`, like stepping out of a door; the Tutorial's return portal does the same at its hub portal), the finish portals and Home from a stage land on that
+  stage's `Arrival` facing the island (away from the gate), Home on a courtyard plaza goes to the hub. The score panel shows the world's name and its
   stars out of the planned 15 (`Worlds[n].stageCount`).
 - **Not in S5:** the five World 2 stages and their gates (S6), bonus portals (S11), Worlds 3 and 4 islands (S7 / S9), a bridge.
 
