@@ -89,8 +89,24 @@ end
 
 -- Panel state tracking
 local isPanelOpen = false
--- The skills panel is visible from the start, so it counts as the open panel (opening another one closes it)
+-- This ScreenGui is re-created on every respawn, with the Skills panel visible as authored. The first spawn keeps that
+-- (it counts as the open panel: opening another one closes it); after that the player's own choice is restored, so a
+-- panel they closed stays closed through a death. The choice lives in a player attribute ("" = none open).
+local OPEN_PANEL_ATTRIBUTE = "OpenPanel"
 local lastOpenPanel = skillsPanel.Visible and skillsPanel or nil
+local remembered = player:GetAttribute(OPEN_PANEL_ATTRIBUTE)
+if remembered ~= nil then
+	lastOpenPanel = nil
+	for _, panel in { skillsPanel, settingsPanel, adminPanel } do
+		local open = panel.Name == remembered and (panel ~= adminPanel or isAdminUser(player.UserId))
+		panel.Visible = open
+		panel.Position = UDim2.new(0, if open then 10 else -250, 0, 80.3)
+		if open then
+			lastOpenPanel = panel
+		end
+	end
+end
+player:SetAttribute(OPEN_PANEL_ATTRIBUTE, if lastOpenPanel then lastOpenPanel.Name else "")
 
 local function petsOpen()
 	return petsGui ~= nil and petsGui:GetAttribute("Open") == true
@@ -115,6 +131,7 @@ local function closePanel(panel)
 		end
 	end)
 	lastOpenPanel = nil
+	player:SetAttribute(OPEN_PANEL_ATTRIBUTE, "")
 end
 
 -- Panel animation functions
@@ -126,6 +143,7 @@ local function openPanel(panel)
 	
 	closePets()
 	lastOpenPanel = panel
+	player:SetAttribute(OPEN_PANEL_ATTRIBUTE, panel.Name)
 
 	panel.Visible = true
 	isPanelOpen = true
