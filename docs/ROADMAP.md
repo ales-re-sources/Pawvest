@@ -489,6 +489,11 @@ courtyard); affordable skills and ready eggs were not signalled either. Phase 1 
   snapshotted and restored): with Stage 3 next, captures show the arrow on the left edge with the gate behind, on the right edge
   pointing right with the gate ahead-right, above the gate pointing down when facing it; hidden 12 studs from the gate and during a
   run; the egg marker reads "Ready!" / "Hotovo!"; 0 console errors.
+  *Aim fix (2026-10-27, user's playtest):* close to a gate, looking up, the point above the sign left the screen and the edge
+  arrow pointed up at the top of the gate. The arrow now aims at the target at the player's height; while that spot is in view
+  left to right it stays above it pointing down, pinned under the top of the free area. Checked with a scripted camera 14 studs
+  from Stage 3's gate (the point above the sign at y -24 on screen): arrow at y 188 pointing down at the doorway (capture);
+  turned away it pointed sideways (left edge 87°, right edge 270° with the gate behind); 0 errors; profile restored.
 - **Acceptance checks:**
   1. Finishing Stage 2 with a medal (Stage 3 open, no medal) shows the marker labelled "Stage 3" above Stage 3's gate sign,
      drawn over the World 1 sign when the sign is between the camera and the gate (screen capture from Stage 2's `Arrival`);

@@ -251,22 +251,30 @@ local function placeMarkers(dt: number)
 		if not show then
 			continue
 		end
-		local target = marker.adornee.Position + Vector3.new(0, marker.height, 0)
-		local point = camera:WorldToViewportPoint(target)
+		-- `hover`: where the arrow floats; `aim`: the target at the player's height (a gate's doorway), which the arrow points
+		-- at, so a player close to a gate looking up is never sent to the point above its sign
+		local hover = marker.adornee.Position + Vector3.new(0, marker.height, 0)
+		local aim = Vector3.new(hover.X, root.Position.Y, hover.Z)
+		local point = camera:WorldToViewportPoint(hover)
+		local aimPoint = camera:WorldToViewportPoint(aim)
 		local left, right = EDGE_INSET, view.X - EDGE_INSET
 		local top, bottom = EDGE_TOP, view.Y * (1 - EDGE_BOTTOM)
-		local onScreen = point.Z > 0 and point.X >= left and point.X <= right and point.Y >= top and point.Y <= bottom
+		local ahead = aimPoint.Z > 0 and aimPoint.X >= left and aimPoint.X <= right
 		local labelSize = marker.label.AbsoluteSize
 		local angle, arrowAt, labelAt
-		if onScreen then
-			-- above the target, pointing down at it, the label above the arrow
+		if ahead then
+			-- above the target pointing down at it, the label above the arrow; kept inside the free area (when the hover
+			-- point is above the screen the arrow stays pinned under its top, still pointing down at the target)
+			local x = if point.Z > 0 then math.clamp(point.X, left, right) else aimPoint.X
+			local y = if point.Z > 0 then point.Y else top
+			y = math.clamp(y, top + ARROW_HEIGHT, math.max(top + ARROW_HEIGHT, bottom))
 			angle = 0
-			arrowAt = Vector2.new(point.X, point.Y - ARROW_HEIGHT / 2 + bob)
+			arrowAt = Vector2.new(x, y - ARROW_HEIGHT / 2 + bob)
 			labelAt = arrowAt - Vector2.new(0, ARROW_HEIGHT / 2 + labelSize.Y / 2)
 		else
 			-- on the edge of the free area, from its centre towards the target (camera space, screen y down); a target
 			-- behind the camera goes to the side of the shorter turn, at mid-height
-			local relative = camera.CFrame:PointToObjectSpace(target)
+			local relative = camera.CFrame:PointToObjectSpace(aim)
 			local direction = Vector2.new(relative.X, -relative.Y)
 			if relative.Z > 0 then
 				direction = Vector2.new(if relative.X < 0 then -1 else 1, 0)
