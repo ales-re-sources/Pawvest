@@ -194,7 +194,7 @@ Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (Obj
   on the server (the client check only hides the panel). The RunSpeed toggle is a client-side debug tool (the admin Double Jump toggle was removed 2026-10-26: admins buy the talent).
 - A finish portal's label is on its Back face: its `LookVector` must point along the approach (last checkpoint -> portal).
   After cloning or rotating a course check `portal.CFrame.LookVector:Dot(approach) > 0`.
-- The Tutorial keeps its old-style `LandingPad` (floor, `StartGate`, `TimerStart`, return portal); the world stages have no landing pad since S4.0.
+- The Tutorial keeps its old-style `LandingPad` (floor, `StartGate`, `TimerStart`, `GateExit`, return portal); the world stages have no landing pad since S4.0.
 - **ChoiceStage duplicates when moving scene parts:** the three `Step` parts of a ChoiceStage share one name; code that matches children by name (the "graft" of Studio-only parts into freshly synced script containers) overwrites the first one with the second. Move such children without matching.
 - **Moving kit parts must not share a face plane with the frame they move in** (z-fighting flicker; the Ice Rink door did it twice): doors /
   lifts are thinner than their frame, doors swing (`OpenTurn` + `OpenHinge`) instead of sliding into a lintel, frame walls reach the
