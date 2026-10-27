@@ -25,6 +25,8 @@
 --   KitBeam   blinking kill beam: Period s, Duty (on share 0..1), Phase, Telegraph s before "on"; Kill defaults to true.
 --             OffTransparency / WarnTransparency / OnTransparency (defaults 1 / 0.8 / 0.15) change its look per state;
 --             with Kill = false it is a marker only (the Labyrinth's glow columns over its lava cells).
+--             ParticleEmitter children are enabled while the beam is on (also in the Telegraph when the emitter has
+--             Warn = true) and switched off otherwise: flames over the Labyrinth's lava tiles.
 --             FloorMark = true lays a local strip along the beam's foot (a little wider than the beam): green right after
 --             the beam goes off, shading to orange as it comes back (flashing in the Telegraph), red while it is on.
 --   KitKill   static kill part (S6.3, the Clocktower's gargoyles): touching it kills; its look is left alone (often an
@@ -189,7 +191,19 @@ end
 
 local function addBeam(part: Instance)
 	if part:IsA("BasePart") and not beams[part] then
-		beams[part] = { state = "off", mark = if part:GetAttribute("FloorMark") then floorMark(part) else nil, look = nil }
+		local emitters = {}
+		for _, child in part:GetChildren() do
+			if child:IsA("ParticleEmitter") then
+				child.Enabled = false
+				table.insert(emitters, child)
+			end
+		end
+		beams[part] = {
+			state = "off",
+			mark = if part:GetAttribute("FloorMark") then floorMark(part) else nil,
+			look = nil,
+			emitters = emitters,
+		}
 	end
 end
 
@@ -524,6 +538,9 @@ RunService.PreSimulation:Connect(function(dt: number)
 			-- OffTransparency / WarnTransparency / OnTransparency override the default look per part
 			local name = if state == "on" then "OnTransparency" elseif state == "warning" then "WarnTransparency" else "OffTransparency"
 			part.Transparency = attr(part, name, BEAM_TRANSPARENCY[state])
+			for _, emitter in data.emitters do
+				emitter.Enabled = state == "on" or (state == "warning" and emitter:GetAttribute("Warn") == true)
+			end
 		end
 	end
 
