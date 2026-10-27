@@ -255,4 +255,6 @@ return {
 	["sign.exit"] = "VÝCHOD",
 	["sign.hubPortal"] = "Zpět",
 	["sign.welcome"] = "Vítej!",
+	["sign.giveUp.title"] = "Moc těžké?",
+	["sign.giveUp.sub"] = "Zkus nejdřív 2. svět",
 }

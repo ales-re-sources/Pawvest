@@ -255,4 +255,6 @@ return {
 	["sign.exit"] = "[!! ĚXÍŤ ~~ !!]",
 	["sign.hubPortal"] = "[!! Hůb ~~ !!]",
 	["sign.welcome"] = "[!! Wělčömě! ~~~ !!]",
+	["sign.giveUp.title"] = "[!! Ťöö ťöůgh? ~~~~ !!]",
+	["sign.giveUp.sub"] = "[!! Ťřý Wöřlď 2 fířšť ~~~~~~~ !!]",
 }

@@ -310,3 +310,5 @@ sign.finish,Label of a stage's finish portal,Finish,Cíl,new,hf25ee280
 sign.exit,Exit sign of the key arena (capitals),EXIT,VÝCHOD,new,h1aab843f
 sign.hubPortal,"Label of a portal that leads back to the hub (tutorial, worlds); not the hub's name",Hub,Zpět,ok,hf7bf415c
 sign.welcome,Welcome board in the tutorial,Welcome!,Vítej!,ok,h258fd7ce
+sign.giveUp.title,"Wooden sign on the checkpoint before the end of Stage 5 (title line, two short lines in big letters); hints that the stage is hard",Too tough?,Moc těžké?,new,hdd71c48b
+sign.giveUp.sub,"Same sign, second line; tells the player World 2 is open and can be tried first (World 2 is written out, no placeholder; Czech 2. svět)",Try World 2 first,Zkus nejdřív 2. svět,new,h49ad4ee9

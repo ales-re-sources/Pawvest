@@ -255,4 +255,6 @@ return {
 	["sign.exit"] = "EXIT",
 	["sign.hubPortal"] = "Hub",
 	["sign.welcome"] = "Welcome!",
+	["sign.giveUp.title"] = "Too tough?",
+	["sign.giveUp.sub"] = "Try World 2 first",
 }
