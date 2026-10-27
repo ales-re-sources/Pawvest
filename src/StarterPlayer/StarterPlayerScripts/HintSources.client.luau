@@ -1,7 +1,8 @@
 -- Hint sources, phase 1 (docs/GDD.md §11, ROADMAP G1); Hints.luau draws them.
---   Next stage: the first stage in game order that is open and has no medal. A marker with its name above its start gate sign while
---     the player is in that stage's courtyard (the Tutorial: near its landing pad), above its hub entrance (world gate /
---     the Tutorial's hub portal) while the player is in the hub.
+--   Next stage: the latest open stage (highest game order) without a medal. A marker with its name above its start gate sign
+--     while the player is in that stage's courtyard (the Tutorial: near its landing pad), above its hub entrance (world gate /
+--     the Tutorial's hub portal) in the hub or the garden (unless a ready egg's marker is shown there), above the portal
+--     back to the hub in any other courtyard or the Tutorial.
 --   Skills: a dot on the Skills icon when a talent level became affordable that was not affordable while the panel was open.
 --   Ready egg: a dot on the Pets icon and "Go to my garden", a "Ready!" marker above the incubator while in the garden, and a
 --     toast once per egg.
@@ -113,30 +114,55 @@ for _, stage in StageConfig.Stages do
 	end
 end
 
+-- The portals back to the hub: ["world<n>"] = the courtyard's ReturnGate portal, ["tutorial"] = the Tutorial's TeleportToSpawn.
+local exitPortals = {}
+for index, world in StageConfig.Worlds do
+	if not world.soon then
+		task.spawn(function()
+			local folder = workspace:WaitForChild(world.folder, 30)
+			local gate = folder and folder:WaitForChild("ReturnGate", 30)
+			exitPortals["world" .. index] = gate and gate:WaitForChild("Portal", 30)
+		end)
+	end
+end
+task.spawn(function()
+	local tutorial = workspace:WaitForChild("Tutorial", 30)
+	local pad = tutorial and tutorial:WaitForChild("LandingPad", 30)
+	local exit = pad and pad:WaitForChild("TeleportToSpawn", 30)
+	exitPortals.tutorial = exit and exit:WaitForChild("Portal", 30)
+end)
+
+-- The latest open stage (highest game order) without a medal: players are pushed forwards, not back to an older stage they
+-- skipped (a medalled frontier, e.g. a world bar not met yet, falls back to the latest open stage still without one).
 local function nextStage()
 	if player:GetAttribute(StageConfig.UnlockedAttribute(StageConfig.Stages[1])) == nil then
 		return nil -- profile not loaded yet
 	end
+	local latest = nil
 	for _, stage in StageConfig.Stages do
 		local open = player:GetAttribute(StageConfig.UnlockedAttribute(stage)) == true
 		if open and (player:GetAttribute(StageConfig.MedalAttribute(stage)) or 0) == 0 then
-			return stage
+			latest = stage
 		end
 	end
-	return nil
+	return latest
 end
 
-local function updateNext(area: string?)
+local function updateNext(area: string?, eggShown: boolean)
 	local stage = nextStage()
 	local part, height = nil, nil
-	if stage and area then
-		if area == "hub" then
+	if stage and area and not (area == "garden" and eggShown) then
+		local home = if StageConfig.Worlds[stage.world] then "world" .. stage.world else "tutorial"
+		if area == home then
+			part, height = gateSigns[stage.key], GATE_MARKER_HEIGHT
+		elseif area == "hub" or area == "garden" then
 			local entrance = hubEntrances[stage.key]
 			if entrance then
 				part, height = entrance[1], entrance[2]
 			end
-		elseif area == (if StageConfig.Worlds[stage.world] then "world" .. stage.world else "tutorial") then
-			part, height = gateSigns[stage.key], GATE_MARKER_HEIGHT
+		else
+			-- another courtyard or the Tutorial: the way back to the hub
+			part, height = exitPortals[area], PORTAL_MARKER_HEIGHT
 		end
 	end
 	Hints.SetMarker("next", part, if stage then function()
@@ -227,9 +253,10 @@ local function updateEggs(area: string?)
 		local cframe, size = first:GetBoundingBox()
 		local top = cframe.Position.Y + size.Y / 2
 		Hints.SetMarker("egg", base, readyLabel, top - base.Position.Y + INCUBATOR_MARKER_GAP)
-	else
-		Hints.SetMarker("egg", nil)
+		return true
 	end
+	Hints.SetMarker("egg", nil)
+	return false
 end
 
 -- Loop --------------------------------------------------------------------------------------------------------------------
@@ -237,7 +264,6 @@ end
 while true do
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 	local area = if root then areaOf(root.Position) else nil
-	updateNext(area)
-	updateEggs(area)
+	updateNext(area, updateEggs(area)) -- one marker per area: in the garden a ready egg wins
 	task.wait(0.5)
 end

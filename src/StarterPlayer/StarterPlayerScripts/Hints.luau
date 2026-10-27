@@ -213,6 +213,9 @@ function Hints.SetMarker(id: string, adornee: BasePart?, label: (() -> string)?,
 		marker = { holder = holder, arrow = arrow, label = labelObject, angle = 0 }
 		markers[id] = marker
 	end
+	if marker.adornee ~= adornee then
+		marker.holder:SetAttribute("Target", adornee:GetFullName()) -- for tests
+	end
 	marker.adornee = adornee
 	marker.height = height or 6
 	marker.text = label

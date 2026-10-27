@@ -530,10 +530,13 @@ incubator models) and never ask the server for anything.
 - At most one world marker per area (a world courtyard, the hub, the garden).
 
 **Hints (phase 1):**
-- **Next stage:** the first stage in game order that is open for the player and has no medal yet (none when every open stage
-  has a medal; Gold chasing has the mastered badge, §3). Its marker (labelled with the stage's name) stands above the stage's start gate while the
-  player is in that stage's courtyard (the Tutorial: near its landing pad) and above the hub entrance (the world's hub gate,
-  the Tutorial's hub portal) while the player is in the hub. It hides within 25 studs of its target, so the player who lands
+- **Next stage:** the latest stage in game order that is open for the player and has no medal yet, so players are pushed
+  forwards (a player with World 2 open is sent to Stage 6, not back to an unfinished Stage 5); when the latest open stage
+  already has a medal (e.g. a world bar not met yet) the latest open one still without a medal is used, and none when every
+  open stage has a medal (Gold chasing has the mastered badge, §3). Its marker (labelled with the stage's name) stands above
+  the stage's start gate while the player is in that stage's courtyard (the Tutorial: near its landing pad), above the hub
+  entrance (the world's hub gate, the Tutorial's hub portal) while the player is in the hub or the garden (in the garden a
+  ready egg's marker wins), and above the portal back to the hub while the player is in another courtyard or the Tutorial. It hides within 25 studs of its target, so the player who lands
   in front of a gate after a finish without a medal is not pointed at the gate behind them.
 - **Skills:** a dot on the Skills icon when a talent level became affordable that the player has not seen affordable with the
   panel open (the panel's green Buy brick already marks the row).

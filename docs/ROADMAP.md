@@ -494,6 +494,12 @@ courtyard); affordable skills and ready eggs were not signalled either. Phase 1 
   left to right it stays above it pointing down, pinned under the top of the free area. Checked with a scripted camera 14 studs
   from Stage 3's gate (the point above the sign at y -24 on screen): arrow at y 188 pointing down at the doorway (capture);
   turned away it pointed sideways (left edge 87°, right edge 270° with the gate behind); 0 errors; profile restored.
+  *Latest open stage (2026-10-27, user decision):* the next stage changed from the first open stage without a medal to the
+  latest one, and courtyards of other worlds / the Tutorial point at their portal back to the hub (the garden at the hub
+  entrance). Checked in a playtest via the marker's `Target` attribute (profile snapshotted and restored): the profile as is
+  (Stage 7 latest) gave World 1 / World 3 / Tutorial -> their return portals, World 2 -> Stage 7's gate, hub -> the World 2
+  gate, garden -> the ready egg (without it: the hub gate); local attributes for check 9 gave "Stage 6" on World 1's return
+  portal and Stage 6's gate, then "Stage 5" on its gate; 0 errors.
 - **Acceptance checks:**
   1. Finishing Stage 2 with a medal (Stage 3 open, no medal) shows the marker labelled "Stage 3" above Stage 3's gate sign,
      drawn over the World 1 sign when the sign is between the camera and the gate (screen capture from Stage 2's `Arrival`);
@@ -503,7 +509,11 @@ courtyard); affordable skills and ready eggs were not signalled either. Phase 1 
   3. While a run is active no world marker is shown (checked on the marker frame's `Visible`); after the finish or Home it returns.
   4. A player with every open stage medalled has no next-stage marker anywhere; a player with no Tutorial medal sees it above the
      Tutorial's hub portal while in the hub.
-  5. In the hub the marker stands above the hub gate of the next stage's world and no stage-gate marker is enabled.
+  5. In the hub the marker stands above the hub gate of the next stage's world and no stage-gate marker is enabled; in another
+     world's courtyard it stands above that courtyard's return portal.
+  9. The next stage is the latest open one without a medal: with Stages 5 and 6 open and neither medalled the marker reads
+     "Stage 6" (World 1: on its return portal; World 2: on Stage 6's gate); with Stage 6 medalled and Stage 7 shut it reads
+     "Stage 5".
   6. Coins rising past a talent's next price lights the Skills dot; opening the Skills panel clears it; it stays off while
      the Coins stay the same and lights again only when another level becomes affordable; a respawn keeps it (re-attached).
   7. An egg on the own plot whose `ReadyAt` has passed shows the dot on the Pets icon and on "Go to my garden", the "Ready!"
