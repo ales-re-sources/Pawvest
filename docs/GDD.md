@@ -505,3 +505,41 @@ Decided 2026-10-25. The product list and offer rules are in [EXPANSION.md](EXPAN
   to a DataStore / AnalyticsService funnel.
 - **Re-tune when:** Gold rate < 10 % among players with the designed talent set, or > 60 % of finishers stop at Bronze,
   or a stage's unlock is bought more often than earned, or garden income exceeds the obby first-hour income (pillar 2).
+
+## 11. Player guidance (hints)
+Decided 2026-10-27. A player who finishes a stage, earns Coins or waits for an egg should always see what they can do next
+without reading anything. One client-side system (milestone G1) draws every such hint, so the game speaks one visual
+language. Hints are local to the player and display only: they read state the client already has (attributes, leaderstats,
+incubator models) and never ask the server for anything.
+
+**Three kinds of signal, each with one job:**
+
+| Signal | Answers | Look |
+|---|---|---|
+| World marker | *Where do I go?* | a green disc with a white downward chevron and a short label, bobbing above the target; drawn on the screen (not in the 3D world) at a constant size, so a sign or a wall never hides it; when the target is off screen it sits at the screen edge and its chevron points towards it (a target behind the player: bottom edge, "turn around") |
+| HUD dot | *Which button?* | a red dot on the top-right corner of a top-left icon (and of a button inside a panel); one pulse when it appears, then still |
+| Toast | *Something happened elsewhere* | one line at the bottom of the screen for a few seconds, once per event |
+
+**Rules (they keep the hints from becoming noise):**
+- Flag only what pays off now: something to claim, or something the player can afford. Never "you could, if…".
+- A shop dot clears once seen: it lights when an offer *becomes* affordable that was not affordable the last time the panel was
+  open, and opening the panel clears it (the seen list lasts for the session). A reward waiting to be claimed (a ready egg)
+  keeps its dot and marker until it is claimed.
+- No blinking: a dot pulses once when it appears, a marker only bobs.
+- Quiet during a run: markers hide, toasts wait until the run ends; dots stay.
+- At most one world marker per area (a world courtyard, the hub, the garden).
+
+**Hints (phase 1):**
+- **Next stage:** the first stage in game order that is open for the player and has no medal yet (none when every open stage
+  has a medal; Gold chasing has the mastered badge, §3). Its marker ("Next") stands above the stage's start gate while the
+  player is in that stage's courtyard (the Tutorial: near its landing pad) and above the hub entrance (the world's hub gate,
+  the Tutorial's hub portal) while the player is in the hub. It hides within 25 studs of its target, so the player who lands
+  in front of a gate after a finish without a medal is not pointed at the gate behind them.
+- **Skills:** a dot on the Skills icon when a talent level became affordable that the player has not seen affordable with the
+  panel open (the panel's green Buy brick already marks the row).
+- **Ready egg:** a dot on the Pets icon and on its "Go to my garden" button while an egg on the player's plot is ready to
+  hatch; a marker ("Ready!") above that incubator while the player is in the garden; a toast "Your egg is ready!" once per egg
+  (also on joining with an egg already ready).
+
+**Later, if playtests ask for it:** pen production close to its 8 h cap, an affordable gate unlock (the gate prompt covers it up
+close), a short ground trail from the Arrival to the next gate after a finish, a "Next: <stage>" line in the results popup.

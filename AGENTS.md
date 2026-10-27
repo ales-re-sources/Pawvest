@@ -226,6 +226,8 @@ Studio MCP habits that cost time: a **minimized Studio window renders no 3D** (c
 `require` in the MCP `execute_luau` **Edit** context caches a ModuleScript across calls: after the module changed on disk
 (Argon) it may still return the old version (2026-10-24: `Locale` after L1.1). Check `.Source` in Studio, or test in a
 playtest (modules load fresh there).
+A `BillboardGui` with `AlwaysOnTop = true` did not show in MCP `screen_capture` images (2026-10-27, G1 markers; the same GUI without it
+did): check such GUIs by properties, or draw on-top markers as ScreenGui frames (`Hints.luau`).
 MCP `screen_capture` with a camera position leaves the Edit camera on `Scriptable`: when done, set it back with
 `workspace.CurrentCamera.CameraType = Enum.CameraType.Fixed` (Edit) so the user can move the viewport again.
 

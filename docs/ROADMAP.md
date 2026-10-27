@@ -56,6 +56,7 @@ Rules:
 | L1.1 | Strings workflow: CSV source (English + translations + context side by side), `tools/loc.py` build / check / lint / review, pseudo-language — done 2026-10-24 | ✔ | ✔ | – |
 | L2 | Localization: all client panels + config display names — done 2026-10-24 (Czech texts await the user's review) | ✔ | ✔ | – |
 | L3 | Localization: server-written + Studio-authored texts — texts done 2026-10-24 (Czech awaits review); font check and per-panel Czech overflow pass still open | ✔ | ✔ (texts) | – |
+| G1 | Player guidance hints (GDD §11): next-stage marker, Skills dot, ready-egg dot / marker / toast — built and Studio-checked 2026-10-27 (marker drawn as a ScreenGui with a screen-edge arrow); awaits the user's visual check in play | ✔ | ✔ | – |
 | M6a | First live test + World 1 balancing | – | – | – |
 | E0 | Economy model for the pet-garden expansion (scope written 2026-10-24; `tools/economy.py` loader, drift check, reproduction, report, day-by-day sim, crop field + guardrails A-C (43 checks green, provisional numbers in [ECONOMY.md](ECONOMY.md)) done; repricing, dead end, rare supply and sensitivity pending; [EXPANSION.md](EXPANSION.md) §15) | partial | – | – |
 | E1.0 | Client-drawn plots spike: GO / NO-GO on the plot architecture before E1 (scope written 2026-10-24, no code) | – | – | – |
@@ -458,6 +459,46 @@ Server and Clients mode for check 4; `screen_capture` one call at a time.
   a wrong toggle drops the player to the shaft floor and the floor pad resets the colours; keys and gates reset at a new run, not at a death; the side
   camera never shows Stage 13 parts in front of the lane; a baseline Triple Jump + Long Dash cannot reach the talent coin, Jump Height 3 can; a full run
   fires `1201`-`1206` in order and ends with a result.
+
+### G1 — Player guidance hints (design: GDD §11; scope 2026-10-27, user request)
+A player who finished a stage did not know where to go next (in World 1 the big wooden world sign hides the gates across the
+courtyard); affordable skills and ready eggs were not signalled either. Phase 1 of one hint system.
+- **Inputs:** player attributes `Medal_<folder>`, `Unlocked_<folder>`, `Talent_<id>`, `GardenPlot`, `OpenPanel`; leaderstats
+  `Coins`; the incubator models' `State` / `ReadyAt` on the own plot; `StageTimerUpdate` (run active / ended); `PetsGui.Open`.
+  Area rectangles from the scene: each world courtyard's `Wall` folder, the hub (`StartLocation`), the garden (`Garden`), the
+  Tutorial's landing pad.
+- **Outputs:** `StarterPlayerScripts/Hints.luau` (module: HUD dots, world markers, toast, run state; re-attaches dots to the
+  icons after a respawn re-creates the ScreenGui), `StarterPlayerScripts/HintSources.client.luau` (the three phase-1 hints);
+  strings `hints.next`, `hints.ready`, `hints.eggReady`. No server change, no remote, no Studio-only change.
+- **Boundary:** display only (nothing is sent to the server); no in-panel highlight beyond the existing green Buy brick; the
+  later hints of GDD §11 are not part of G1.
+- *Studio check (2026-10-27, one playtest, live profile snapshotted and restored):* checks 1-8 passed. Next = Stage 2 (the profile's
+  state): marker above Stage 2's sign from across the courtyard (capture: clear of the World 1 sign), on the bottom edge pointing
+  down with the gate behind, hidden at Stage 2's `Arrival` (12 studs), hidden while a `StageTimerUpdate` run was active and back
+  after the cancel; in the hub it stood on the World 1 gate, with `Medal_Tutorial` 0 (local) on the Tutorial's hub portal, with
+  every open stage medalled (local) nowhere. Skills dot: off with the seen levels, on at 3 500 Coins (local) for Double Jump,
+  cleared by `OpenPanel` = SkillsPanel, off again at 3 600, on at 5 500 (Dash), kept through a respawn. Egg: a real egg became
+  ready during the test (Pets + "Go to my garden" dots, toast once, "Ready!" marker in the garden replacing "Next"); a hatched
+  (local `State`) or incubating egg cleared everything. Czech and pseudo texts fit (marker label, two-line toast); 0 console
+  errors or warnings. The first build drew the marker as an `AlwaysOnTop` BillboardGui, which did not show in the captures (one
+  without `AlwaysOnTop` did, but the sign covered its label): the marker became a ScreenGui frame placed at the projected point.
+  *Not checked:* the Skills panel opened by a click (the attribute was set directly), a real hatch through the panel.
+- **Acceptance checks:**
+  1. Finishing Stage 2 with a medal (Stage 3 open, no medal) shows the "Next" marker above Stage 3's gate sign, drawn over the
+     World 1 sign when the sign is between the camera and the gate (screen capture from Stage 2's `Arrival`); with the gate
+     behind the camera the marker sits on the bottom screen edge pointing down.
+  2. Walking to within 25 studs of the marked gate hides the marker; walking back out shows it again.
+  3. While a run is active no world marker is shown (checked on the marker frame's `Visible`); after the finish or Home it returns.
+  4. A player with every open stage medalled has no "Next" marker anywhere; a player with no Tutorial medal sees it above the
+     Tutorial's hub portal while in the hub.
+  5. In the hub the marker stands above the hub gate of the next stage's world and no stage-gate marker is enabled.
+  6. Coins rising past a talent's next price lights the Skills dot; opening the Skills panel clears it; it stays off while
+     the Coins stay the same and lights again only when another level becomes affordable; a respawn keeps it (re-attached).
+  7. An egg on the own plot whose `ReadyAt` has passed shows the dot on the Pets icon and on "Go to my garden", the "Ready!"
+     marker above that incubator in the garden, and the toast once (not again a second later); hatching it clears dot and
+     marker. An egg still incubating shows none of them.
+  8. Every new text in Czech and in the pseudo-language: no literal, no cut-off text; `loc.py check` 0 errors, lint within the
+     baseline; no new console errors.
 
 ### M6a — First live test + World 1 balancing
 The first live test (open checks below) with 6 stages, then M6 for World 1 (scope in "M6 — Balancing pass" below).
