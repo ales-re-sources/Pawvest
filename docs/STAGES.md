@@ -652,8 +652,8 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   | Stage | Name | tBase | Factor | Unlock | Length | Checkpoints |
   |---|---|---|---|---|---|---|
   | 6 | Double Up | 90 | 2.0 | 10 of 15 World 1 stars or 2 500 | ~630 studs | 401-408 |
-  | 7 | Seesaw | 100 | 2.25 | Bronze on 6 or 3 000 | ~760 | 501-508 |
-  | 8 | Turntable | 105 | 2.5 | Bronze on 7 or 3 000 | ~550 | 601-606 |
+  | 7 | Seesaw | 80 (was 100) | 2.25 | Bronze on 6 or 3 000 | ~760 | 501-508 |
+  | 8 | Turntable | 75 (was 105) | 2.5 | Bronze on 7 or 3 000 | ~550 | 601-606 |
   | 9 | Labyrinth | 100 (was 105, 140 during the maze rework) | 2.75 | Bronze on 8 or 3 500 | ~360 + maze | 701-705 |
   | 10 | Clocktower | 75 (was 135, 90) | 3.0 | Bronze on 9 or 4 000 | ~700, 120 high | 801-806 |
 

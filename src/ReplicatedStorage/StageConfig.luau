@@ -140,7 +140,7 @@ StageConfig.Stages = {
 		order = 7,
 		world = 2,
 		requires = { { id = "DoubleJump", level = 1 } },
-		tBase = 100,
+		tBase = 80, -- 100 until the user's first run took Gold / Silver with every coin collected (Gold < 64 s now)
 		tiers = StageConfig.DefaultTiers,
 		unlock = { stage = "Stage6", medal = "Bronze" },
 		unlockPrice = 3000,
@@ -154,7 +154,7 @@ StageConfig.Stages = {
 		order = 8,
 		world = 2,
 		requires = { { id = "DoubleJump", level = 1 } },
-		tBase = 105,
+		tBase = 75, -- 105 until the user's first run took Gold / Silver with every coin collected (Gold < 60 s now)
 		tiers = StageConfig.DefaultTiers,
 		unlock = { stage = "Stage7", medal = "Bronze" },
 		unlockPrice = 3000,
