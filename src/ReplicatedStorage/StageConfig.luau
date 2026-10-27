@@ -220,7 +220,7 @@ StageConfig.Stages = {
 		order = 13,
 		world = 3,
 		requires = { { id = "DoubleJump", level = 2 }, { id = "Dash", level = 2 } }, -- Triple Jump, Long Dash
-		tBase = 120,
+		tBase = 90, -- 120 provisional (the bot's clean segments took ~30 s); 90 when the user asked for more aggressive timing (Gold < 72 s)
 		tiers = StageConfig.DefaultTiers,
 		unlock = { stage = "Stage12", medal = "Bronze" },
 		unlockPrice = 5000,

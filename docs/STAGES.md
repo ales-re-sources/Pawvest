@@ -789,7 +789,7 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   empty from x -222 to x -1000 (checked: no parts in x -1000..-222, z -720..-520), the hub starts at x -1038, so a course may run to about x -950 (the S7 note
   said -800 to keep a margin to the hub; ≈ 500 studs either way). `SoonGate15` stays closed until S8.3. Gate / board / `Arrival` / checkpoints from `StageKit`
   as in §7.11. Keys and folders `Stage13` / `Stage14` under `World3`; checkpoint blocks `1101`- and `1201`-.
-- **StageConfig (provisional, M6b measures):** both `requires = { { id = "DoubleJump", level = 2 }, { id = "Dash", level = 2 } }` (Triple Jump, Long Dash). Stage 13 `tBase` 120, factor
+- **StageConfig (provisional, M6b measures):** both `requires = { { id = "DoubleJump", level = 2 }, { id = "Dash", level = 2 } }` (Triple Jump, Long Dash). Stage 13 `tBase` 90 (was 120; Gold < 72 s), factor
   3.75, Bronze on Stage 12 or 5 000; Stage 14 `tBase` 135, factor 4.0, Bronze on Stage 13 or 5 500 (the World 2 / World 3 steps continued). `tools/economy.py check`
   after the entries.
 - **Dash gates = Long Dash** (decided 2026-10-26 after the bot tests in §1.0): open-air gaps had a 2-stud window (baseline TJ + Dash 31.7 vs a
@@ -827,8 +827,9 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
 - **Stage 13 Dash Bridge as built (S8.2a, 2026-10-26)** (x = -213 - u, course along z -657, surface h above y 78.5; everything north of z -644 for the Laser Lab
   camera): `1101` (u 0, z -645, Stage 11's gate / board / `Arrival` mirrored across the courtyard about (-150, -645)); (1) runway `R1` (u 6-26), a 22 gap (any Dash)
   to `L1` (u 48-64), a 34 gap to `L2` (u 98-112), both over brown catch floors 8 lower with a truss back up; `1102` (u 118); (2) 34 gaps over the sea to `P1` (h -2),
-  `P2` (h -4), `1103` (u 256, h -6); (3) a 6-wide `Bridge` (u 262-330) under `Axe1..4` (1.5 x 14 x 4 at u 276 / 290 / 304 / 318, hung from an overhead beam at h 12,
-  `Swing` Hinge X across the bridge, Angle 55, Period 3, run-seeded, Phase 0 / 0.708 / 0.417 / 0.125 = a wave a 16 studs/s walker follows); `1104` (u 336);
+  `P2` (h -4), `1103` (u 256, h -6); (3) a 6-wide `Bridge` (u 262-330) under `Axe1..4` (1.5 x 32 x 4 at u 276 / 290 / 304 / 318, hung from an overhead beam whose underside is at h 30 (it was h 12 and a Triple Jump, rising 21.8, 27.0 with Jump Height 3,
+  landed on top of it and walked past the axes; now the beam top is 38 above the bridge, the posts 18 taller, the axes longer so the tips stay 4 above the deck),
+  `Swing` Hinge X across the bridge, Angle 24 (was 55 on 14-stud axes: a longer arm needs a smaller angle to keep the closed share of the period; 8 bot walkers at 16 studs/s: 3 crossed), Period 3, run-seeded, Phase 0 / 0.708 / 0.417 / 0.125 = a wave a 16 studs/s walker follows); `1104` (u 336);
   (4) `Ramp` (u 342-422, h -6 -> 14, 10 wide) with `Ball1..4` (diameter 5, `Roll` Distance 80, Period 6, Fade 0.4, run-seeded; lanes z -659.5 / -654.5,
   one ball every 1.5 s alternating lanes, a lane every 3 s; 3 balls per lane were too dense: even a jumping bot died) and side `Pocket1..3`; `1105` (u 428, h 14);
   (5) a 34 gap (drop 4) through `AxeFinale` (2 x 34 x 4 from a gantry at h 50, Angle 50, Period 4) to `F1` (u 468-482, h 10), a 22 gap (drop 6) to `Finish`
