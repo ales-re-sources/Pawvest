@@ -194,7 +194,7 @@ StageConfig.Stages = {
 		order = 11,
 		world = 3,
 		requires = { { id = "DoubleJump", level = 2 } }, -- Triple Jump
-		tBase = 110, -- seconds; provisional until measured in M6b
+		tBase = 85, -- 110 provisional until measured; 85 when the user asked for more aggressive timing (Gold < 68 s)
 		tiers = StageConfig.DefaultTiers,
 		unlock = { world = 2, stars = 10 }, -- the world opener: 10 of the 15 stars of World 2
 		unlockPrice = 4000,
@@ -207,7 +207,7 @@ StageConfig.Stages = {
 		order = 12,
 		world = 3,
 		requires = { { id = "DoubleJump", level = 2 } },
-		tBase = 120,
+		tBase = 90, -- 120 provisional until measured; 90 when the user asked for more aggressive timing (Gold < 72 s)
 		tiers = StageConfig.DefaultTiers,
 		unlock = { stage = "Stage11", medal = "Bronze" },
 		unlockPrice = 4500,

@@ -724,8 +724,8 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   courtyard is empty up to KitLab (x 447+, z -500 and north), so a course may run to x ~ 430. Gate / board / `Arrival` / finish / checkpoints are clones of
   Stage 6's / Stage 7's moved by (+225, 0, -1150). The other three openings get closed `SoonGate13..15` doors like World 2 had.
 - **Keys and folders:** `Stage11` / `Stage12` under `Workspace.World3`; checkpoint blocks `901`- and `1001`-.
-- **StageConfig:** `world = 3`, `requires = { { id = "DoubleJump", level = 2 } }` (Triple Jump); Stage 11 `tBase` 110, factor 3.25, unlock 10 of 15 stars in
-  World 2 or 4 000; Stage 12 `tBase` 120, factor 3.5, Bronze on Stage 11 or 4 500 (GDD §3 / §5; provisional, M6b measures).
+- **StageConfig:** `world = 3`, `requires = { { id = "DoubleJump", level = 2 } }` (Triple Jump); Stage 11 `tBase` 85 (was 110; Gold < 68 s), factor 3.25, unlock 10 of 15 stars in
+  World 2 or 4 000; Stage 12 `tBase` 90 (was 120; Gold < 72 s), factor 3.5, Bronze on Stage 11 or 4 500 (GDD §3 / §5; provisional, M6b measures).
 - **World 3 opens with stage 11** (user decision, as World 2 did): `Worlds[3].soon` is removed when Stage 11 enters `StageConfig`.
 - **Reach rules for Triple Jump stages** (§1.0, measured again in the bot tests of S8.1): the gate is the **ledge height**, not the gap (a Double Jump with
   Run Speed 5 + Jump Height 3 reaches 21.6 flat, more than a baseline Triple Jump's 21.1, but rises only 18.0 against 21.8). Ledges between the best Double Jump
