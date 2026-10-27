@@ -3,10 +3,13 @@
 --                                           Targets: "SkillsButton", "PetsButton" (top-left icons), "PetsGarden" (the Pets
 --                                           panel's "Go to my garden"). The icons' ScreenGui is re-created on every respawn,
 --                                           so the dots are re-attached by the loop below.
---   Hints.SetMarker(id, adornee, key, height)  world marker (green disc, chevron, label `Locale.T(key)`) `height` studs above
---                                           `adornee`; nil adornee removes it. A ScreenGui frame: on top of everything at a
---                                           constant size; at the screen edge pointing at the target when it is off screen;
---                                           hidden during a run and within HIDE_DISTANCE studs of its target.
+--   Hints.SetMarker(id, adornee, label, height)  world marker: an orange arrow with the text `label()` (re-read when the
+--                                           language changes), `height` studs above `adornee`; nil adornee removes it. Drawn
+--                                           in a ScreenGui (on top of everything, constant size). In view it bobs above the
+--                                           target pointing down; off screen it sits on the screen edge pointing at it (a
+--                                           target behind the camera: the left / right edge of the shorter turn), the label
+--                                           on the side towards the screen centre. Hidden during a run and within
+--                                           HIDE_DISTANCE studs of its target.
 --   Hints.Toast(text)                       one line at the bottom of the screen; waits while a run is active.
 --   Hints.Running                           true while a stage run is active (StageTimerUpdate).
 -- Display only: nothing here talks to the server. The hints themselves live in HintSources.client.luau.
@@ -22,11 +25,14 @@ local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
 local HIDE_DISTANCE = 25 -- studs (horizontal) from a marker's target: the player has found it
-local MARKER_GREEN = Color3.fromRGB(70, 200, 90)
-local MARKER_WIDTH, MARKER_HEIGHT = 140, 84 -- pixels: disc on top, label under it
-local DISC_SIZE = 52 -- pixels
+local ARROW_ORANGE = Color3.fromRGB(255, 154, 31) -- no status uses orange: it only means "go here"
+local ARROW_INK = Color3.fromRGB(122, 58, 0) -- label outline
+local ARROW_WIDTH, ARROW_HEIGHT = 54, 68 -- pixels, the white outline included
 local BOB_PIXELS = 5
-local EDGE_INSET = 60 -- pixels: an off-screen marker stays this far inside the screen edge
+local TURN_SPEED = 12 -- the arrow's rotation eases towards its target angle (about 0.15 s)
+local EDGE_INSET = 60 -- pixels: an off-screen marker stays this far inside the left / right screen edge
+local EDGE_TOP = 150 -- pixels: and below the top-left icons and the score panel
+local EDGE_BOTTOM = 0.3 -- share of the screen height kept free at the bottom (touch joystick and jump button)
 local DOT_RED = Color3.fromRGB(230, 55, 50)
 local DOT_SIZE = 16 -- pixels
 local TOAST_SECONDS = 4
@@ -107,9 +113,8 @@ function Hints.SetDot(target: string, source: string, on: boolean)
 end
 
 -- Markers -----------------------------------------------------------------------------------------------------------------
--- A ScreenGui frame placed every frame at the projected world point (a BillboardGui with AlwaysOnTop did not show in
--- Studio captures, and one without it is hidden by signs). Off screen or behind the camera it sits at the screen edge and
--- its chevron points towards the target.
+-- ScreenGui frames placed every frame at the projected world point (a BillboardGui with AlwaysOnTop did not show in Studio
+-- captures, and one without it is hidden by signs).
 
 local markerGui = Instance.new("ScreenGui")
 markerGui.Name = "HintMarkers"
@@ -119,96 +124,119 @@ markerGui.AutoLocalize = false -- translated by Locale
 markerGui.DisplayOrder = 1 -- under the panels and popups
 markerGui.Parent = playerGui
 
-local markers = {} -- [id] = { frame, arrow, label, key, adornee, height }
+local markers = {} -- [id] = { holder, arrow, label, text, adornee, height, angle }
+
+local CUT_LEFT = NumberSequence.new({
+	NumberSequenceKeypoint.new(0, 1),
+	NumberSequenceKeypoint.new(0.5, 1),
+	NumberSequenceKeypoint.new(0.501, 0),
+	NumberSequenceKeypoint.new(1, 0),
+})
+local CUT_RIGHT = NumberSequence.new({
+	NumberSequenceKeypoint.new(0, 0),
+	NumberSequenceKeypoint.new(0.5, 0),
+	NumberSequenceKeypoint.new(0.501, 1),
+	NumberSequenceKeypoint.new(1, 1),
+})
+
+-- One half of a downward triangle: a frame cut along its diagonal by a hard UIGradient edge. The left half keeps the part
+-- above the diagonal top-left -> bottom-right, the right half the part above the other diagonal.
+local function halfHead(parent: Instance, color: Color3, x: number, y: number, width: number, height: number, left: boolean)
+	local half = Instance.new("Frame")
+	half.BorderSizePixel = 0
+	half.BackgroundColor3 = color
+	half.Position = UDim2.fromOffset(x, y)
+	half.Size = UDim2.fromOffset(width, height)
+	local cut = Instance.new("UIGradient")
+	cut.Rotation = math.deg(math.atan2(height, width)) * (if left then -1 else 1)
+	cut.Transparency = if left then CUT_LEFT else CUT_RIGHT
+	cut.Parent = half
+	half.Parent = parent
+end
+
+-- A down arrow (shaft + head) in the box at (x, y) of the given size.
+local function arrowShape(parent: Instance, color: Color3, x: number, y: number, width: number, height: number, head: number, shaft: number)
+	local body = Instance.new("Frame")
+	body.BorderSizePixel = 0
+	body.BackgroundColor3 = color
+	body.Position = UDim2.fromOffset(x + (width - shaft) / 2, y)
+	body.Size = UDim2.fromOffset(shaft, height - head + 1)
+	body.Parent = parent
+	halfHead(parent, color, x, y + height - head, width / 2, head, true)
+	halfHead(parent, color, x + width / 2, y + height - head, width / 2, head, false)
+end
 
 local function newMarker(): (Frame, Frame, TextLabel)
-	local frame = Instance.new("Frame")
-	frame.Name = "HintMarker"
-	frame.BackgroundTransparency = 1
-	frame.Size = UDim2.fromOffset(MARKER_WIDTH, MARKER_HEIGHT)
-	frame.Visible = false
+	local holder = Instance.new("Frame") -- full screen, so its children are placed in viewport pixels
+	holder.Name = "HintMarker"
+	holder.BackgroundTransparency = 1
+	holder.Size = UDim2.fromScale(1, 1)
+	holder.Visible = false
 
-	local disc = Instance.new("Frame")
-	disc.Name = "Disc"
-	disc.AnchorPoint = Vector2.new(0.5, 0)
-	disc.Position = UDim2.fromScale(0.5, 0)
-	disc.Size = UDim2.fromOffset(DISC_SIZE, DISC_SIZE)
-	disc.BackgroundColor3 = MARKER_GREEN
-	disc.Parent = frame
-	Instance.new("UICorner", disc).CornerRadius = UDim.new(0.5, 0)
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = Color3.new(1, 1, 1)
-	stroke.Thickness = 3
-	stroke.Parent = disc
-	-- a chevron from two bars meeting under the centre; the Arrow frame turns it (0 = pointing down)
-	local arrow = Instance.new("Frame")
+	local arrow = Instance.new("Frame") -- turned as a whole; Rotation 0 = pointing down
 	arrow.Name = "Arrow"
+	arrow.AnchorPoint = Vector2.new(0.5, 0.5)
 	arrow.BackgroundTransparency = 1
-	arrow.Size = UDim2.fromScale(1, 1)
-	arrow.Parent = disc
-	for _, side in { -1, 1 } do
-		local bar = Instance.new("Frame")
-		bar.AnchorPoint = Vector2.new(0.5, 0.5)
-		bar.Position = UDim2.new(0.5, side * 7, 0.5, 2)
-		bar.Size = UDim2.fromOffset(22, 7)
-		bar.Rotation = side * -45
-		bar.BackgroundColor3 = Color3.new(1, 1, 1)
-		bar.BorderSizePixel = 0
-		bar.Parent = arrow
-		Instance.new("UICorner", bar).CornerRadius = UDim.new(0.5, 0)
-	end
+	arrow.Size = UDim2.fromOffset(ARROW_WIDTH, ARROW_HEIGHT)
+	arrow.Parent = holder
+	arrowShape(arrow, Color3.new(1, 1, 1), 0, 0, ARROW_WIDTH, ARROW_HEIGHT, 29, 28) -- outline
+	arrowShape(arrow, ARROW_ORANGE, 6, 4, ARROW_WIDTH - 12, ARROW_HEIGHT - 11, 22, 16)
 
 	local label = Instance.new("TextLabel")
-	label.AnchorPoint = Vector2.new(0.5, 1)
-	label.Position = UDim2.fromScale(0.5, 1)
-	label.Size = UDim2.new(1, 0, 0, 26)
+	label.Name = "Label"
+	label.AnchorPoint = Vector2.new(0.5, 0.5)
+	label.AutomaticSize = Enum.AutomaticSize.X
+	label.Size = UDim2.fromOffset(0, 26)
 	label.BackgroundTransparency = 1
 	label.Font = StudStyle.Font
 	label.TextSize = 22
 	label.TextColor3 = Color3.new(1, 1, 1)
-	label.TextStrokeColor3 = Color3.fromRGB(20, 60, 25)
+	label.TextStrokeColor3 = ARROW_INK
 	label.TextStrokeTransparency = 0
-	label.Parent = frame
+	label.Parent = holder
 
-	frame.Parent = markerGui
-	return frame, arrow, label
+	holder.Parent = markerGui
+	return holder, arrow, label
 end
 
-function Hints.SetMarker(id: string, adornee: BasePart?, key: string?, height: number?)
+function Hints.SetMarker(id: string, adornee: BasePart?, label: (() -> string)?, height: number?)
 	local marker = markers[id]
 	if not adornee then
 		if marker then
-			marker.frame:Destroy()
+			marker.holder:Destroy()
 			markers[id] = nil
 		end
 		return
 	end
 	if not marker then
-		local frame, arrow, label = newMarker()
-		marker = { frame = frame, arrow = arrow, label = label }
+		local holder, arrow, labelObject = newMarker()
+		marker = { holder = holder, arrow = arrow, label = labelObject, angle = 0 }
 		markers[id] = marker
 	end
 	marker.adornee = adornee
 	marker.height = height or 6
-	if marker.key ~= key then
-		marker.key = key
-		marker.label.Text = if key then Locale.T(key) else ""
-	end
+	marker.text = label
+	marker.label.Text = if label then label() else ""
 end
 
--- The marker's frame (tests read Visible and Arrow.Rotation); nil when the marker is not set.
+-- The marker's holder frame (tests read Visible, Arrow.Rotation, Arrow / Label positions); nil when the marker is not set.
 function Hints.Marker(id: string): Frame?
 	local marker = markers[id]
-	return marker and marker.frame
+	return marker and marker.holder
 end
 
 Locale.Changed:Connect(function()
 	for _, marker in markers do
-		marker.label.Text = if marker.key then Locale.T(marker.key) else ""
+		marker.label.Text = if marker.text then marker.text() else ""
 	end
 end)
 
-local function placeMarkers()
+-- Shortest turn from `from` to `to` (degrees).
+local function turn(from: number, to: number): number
+	return (to - from + 180) % 360 - 180
+end
+
+local function placeMarkers(dt: number)
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 	local camera = workspace.CurrentCamera
 	local view = camera.ViewportSize
@@ -219,39 +247,50 @@ local function placeMarkers()
 			local offset = marker.adornee.Position - root.Position
 			show = Vector2.new(offset.X, offset.Z).Magnitude > HIDE_DISTANCE
 		end
-		marker.frame.Visible = show
-		if show then
-			local target = marker.adornee.Position + Vector3.new(0, marker.height, 0)
-			local point = camera:WorldToViewportPoint(target)
-			local onScreen = point.Z > 0
-				and point.X >= EDGE_INSET and point.X <= view.X - EDGE_INSET
-				and point.Y >= EDGE_INSET and point.Y <= view.Y - EDGE_INSET
-			if onScreen then
-				marker.frame.AnchorPoint = Vector2.new(0.5, 1)
-				marker.frame.Position = UDim2.fromOffset(point.X, point.Y + bob)
-				marker.arrow.Rotation = 0
-			else
-				-- from the screen centre towards the target in camera space (screen y points down), clamped to the edge; a
-				-- target behind the camera goes to the bottom edge, towards its side ("turn around")
-				local centre = view / 2
-				local relative = camera.CFrame:PointToObjectSpace(target)
-				local direction = Vector2.new(relative.X, -relative.Y)
-				if relative.Z > 0 then
-					direction = Vector2.new(relative.X, math.max(direction.Y, 0) + relative.Z)
-				end
-				if direction.Magnitude < 1e-3 then
-					direction = Vector2.new(0, 1)
-				end
-				local scale = math.min(
-					(centre.X - EDGE_INSET) / math.max(math.abs(direction.X), 1e-3),
-					(centre.Y - EDGE_INSET) / math.max(math.abs(direction.Y), 1e-3)
-				)
-				local spot = centre + direction * scale
-				marker.frame.AnchorPoint = Vector2.new(0.5, 0.5)
-				marker.frame.Position = UDim2.fromOffset(spot.X, spot.Y)
-				marker.arrow.Rotation = math.deg(math.atan2(direction.Y, direction.X)) - 90
-			end
+		marker.holder.Visible = show
+		if not show then
+			continue
 		end
+		local target = marker.adornee.Position + Vector3.new(0, marker.height, 0)
+		local point = camera:WorldToViewportPoint(target)
+		local left, right = EDGE_INSET, view.X - EDGE_INSET
+		local top, bottom = EDGE_TOP, view.Y * (1 - EDGE_BOTTOM)
+		local onScreen = point.Z > 0 and point.X >= left and point.X <= right and point.Y >= top and point.Y <= bottom
+		local labelSize = marker.label.AbsoluteSize
+		local angle, arrowAt, labelAt
+		if onScreen then
+			-- above the target, pointing down at it, the label above the arrow
+			angle = 0
+			arrowAt = Vector2.new(point.X, point.Y - ARROW_HEIGHT / 2 + bob)
+			labelAt = arrowAt - Vector2.new(0, ARROW_HEIGHT / 2 + labelSize.Y / 2)
+		else
+			-- on the edge of the free area, from its centre towards the target (camera space, screen y down); a target
+			-- behind the camera goes to the side of the shorter turn, at mid-height
+			local relative = camera.CFrame:PointToObjectSpace(target)
+			local direction = Vector2.new(relative.X, -relative.Y)
+			if relative.Z > 0 then
+				direction = Vector2.new(if relative.X < 0 then -1 else 1, 0)
+			end
+			if direction.Magnitude < 1e-3 then
+				direction = Vector2.new(1, 0)
+			end
+			local unit = direction.Unit
+			local centre = Vector2.new((left + right) / 2, (top + bottom) / 2)
+			local scale = math.min(
+				(right - centre.X) / math.max(math.abs(unit.X), 1e-3),
+				(bottom - centre.Y) / math.max(math.abs(unit.Y), 1e-3)
+			)
+			local spot = centre + unit * scale
+			angle = math.deg(math.atan2(unit.Y, unit.X)) - 90
+			arrowAt = spot + unit * bob -- nudges towards the target
+			-- the label on the inner side of the arrow, clear of it
+			local clearance = ARROW_HEIGHT / 2 + math.abs(unit.X) * labelSize.X / 2 + math.abs(unit.Y) * labelSize.Y / 2 + 4
+			labelAt = spot - unit * clearance
+		end
+		marker.angle += turn(marker.angle, angle) * math.min(1, dt * TURN_SPEED)
+		marker.arrow.Rotation = marker.angle
+		marker.arrow.Position = UDim2.fromOffset(arrowAt.X, arrowAt.Y)
+		marker.label.Position = UDim2.fromOffset(labelAt.X, labelAt.Y)
 	end
 end
 

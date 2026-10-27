@@ -79,7 +79,6 @@ return {
 	["hud.arrival.body"] = "Vstoupit můžeš, ale některé skoky nezvládneš.",
 	["hud.arrival.openSkills"] = "Otevřít dovednosti",
 	["hud.arrival.continue"] = "Pokračovat",
-	["hints.next"] = "Další",
 	["hints.ready"] = "Hotovo!",
 	["hints.eggReady"] = "Tvoje vejce je připravené! Vylíhni ho na své zahradě.",
 	["common.loading"] = "Načítám…",

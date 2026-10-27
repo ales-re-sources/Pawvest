@@ -1,5 +1,5 @@
 -- Hint sources, phase 1 (docs/GDD.md §11, ROADMAP G1); Hints.luau draws them.
---   Next stage: the first stage in game order that is open and has no medal. A "Next" marker above its start gate sign while
+--   Next stage: the first stage in game order that is open and has no medal. A marker with its name above its start gate sign while
 --     the player is in that stage's courtyard (the Tutorial: near its landing pad), above its hub entrance (world gate /
 --     the Tutorial's hub portal) while the player is in the hub.
 --   Skills: a dot on the Skills icon when a talent level became affordable that was not affordable while the panel was open.
@@ -139,7 +139,9 @@ local function updateNext(area: string?)
 			part, height = gateSigns[stage.key], GATE_MARKER_HEIGHT
 		end
 	end
-	Hints.SetMarker("next", part, "hints.next", height)
+	Hints.SetMarker("next", part, if stage then function()
+		return Locale.StageName(stage)
+	end else nil, height)
 end
 
 -- Skills ------------------------------------------------------------------------------------------------------------------
@@ -190,6 +192,10 @@ end)
 
 local toastedEggs = {} -- ["<incubator>:<ReadyAt>"] = true: the toast was shown for that egg (this session)
 
+local function readyLabel(): string
+	return Locale.T("hints.ready")
+end
+
 local function ownPlot(): Instance?
 	local index = player:GetAttribute(GardenConfig.PlotAttribute)
 	local garden = workspace:FindFirstChild("Garden")
@@ -220,7 +226,7 @@ local function updateEggs(area: string?)
 	if base and base:IsA("BasePart") and area == "garden" then
 		local cframe, size = first:GetBoundingBox()
 		local top = cframe.Position.Y + size.Y / 2
-		Hints.SetMarker("egg", base, "hints.ready", top - base.Position.Y + INCUBATOR_MARKER_GAP)
+		Hints.SetMarker("egg", base, readyLabel, top - base.Position.Y + INCUBATOR_MARKER_GAP)
 	else
 		Hints.SetMarker("egg", nil)
 	end

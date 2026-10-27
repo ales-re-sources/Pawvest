@@ -56,7 +56,7 @@ Rules:
 | L1.1 | Strings workflow: CSV source (English + translations + context side by side), `tools/loc.py` build / check / lint / review, pseudo-language — done 2026-10-24 | ✔ | ✔ | – |
 | L2 | Localization: all client panels + config display names — done 2026-10-24 (Czech texts await the user's review) | ✔ | ✔ | – |
 | L3 | Localization: server-written + Studio-authored texts — texts done 2026-10-24 (Czech awaits review); font check and per-panel Czech overflow pass still open | ✔ | ✔ (texts) | – |
-| G1 | Player guidance hints (GDD §11): next-stage marker, Skills dot, ready-egg dot / marker / toast — built and Studio-checked 2026-10-27 (marker drawn as a ScreenGui with a screen-edge arrow); awaits the user's visual check in play | ✔ | ✔ | – |
+| G1 | Player guidance hints (GDD §11): next-stage marker, Skills dot, ready-egg dot / marker / toast — built and Studio-checked 2026-10-27 (marker: orange arrow + stage name, drawn as a ScreenGui, on the screen edge when off screen); awaits the user's visual check in play | ✔ | ✔ | – |
 | M6a | First live test + World 1 balancing | – | – | – |
 | E0 | Economy model for the pet-garden expansion (scope written 2026-10-24; `tools/economy.py` loader, drift check, reproduction, report, day-by-day sim, crop field + guardrails A-C (43 checks green, provisional numbers in [ECONOMY.md](ECONOMY.md)) done; repricing, dead end, rare supply and sensitivity pending; [EXPANSION.md](EXPANSION.md) §15) | partial | – | – |
 | E1.0 | Client-drawn plots spike: GO / NO-GO on the plot architecture before E1 (scope written 2026-10-24, no code) | – | – | – |
@@ -469,7 +469,7 @@ courtyard); affordable skills and ready eggs were not signalled either. Phase 1 
   Tutorial's landing pad.
 - **Outputs:** `StarterPlayerScripts/Hints.luau` (module: HUD dots, world markers, toast, run state; re-attaches dots to the
   icons after a respawn re-creates the ScreenGui), `StarterPlayerScripts/HintSources.client.luau` (the three phase-1 hints);
-  strings `hints.next`, `hints.ready`, `hints.eggReady`. No server change, no remote, no Studio-only change.
+  strings `hints.ready`, `hints.eggReady` (the next-stage marker shows the stage's name). No server change, no remote, no Studio-only change.
 - **Boundary:** display only (nothing is sent to the server); no in-panel highlight beyond the existing green Buy brick; the
   later hints of GDD §11 are not part of G1.
 - *Studio check (2026-10-27, one playtest, live profile snapshotted and restored):* checks 1-8 passed. Next = Stage 2 (the profile's
@@ -483,13 +483,20 @@ courtyard); affordable skills and ready eggs were not signalled either. Phase 1 
   errors or warnings. The first build drew the marker as an `AlwaysOnTop` BillboardGui, which did not show in the captures (one
   without `AlwaysOnTop` did, but the sign covered its label): the marker became a ScreenGui frame placed at the projected point.
   *Not checked:* the Skills panel opened by a click (the attribute was set directly), a real hatch through the panel.
+  *Marker redesign (2026-10-27, user review):* the green disc with a chevron read as a tick ("done"), so the marker became an
+  orange arrow labelled with the stage's name (`hints.next` removed), and a target behind the camera moved from the bottom edge
+  (under the touch controls, "down" says no direction) to the side edge of the shorter turn. Re-checked in a playtest (profile
+  snapshotted and restored): with Stage 3 next, captures show the arrow on the left edge with the gate behind, on the right edge
+  pointing right with the gate ahead-right, above the gate pointing down when facing it; hidden 12 studs from the gate and during a
+  run; the egg marker reads "Ready!" / "Hotovo!"; 0 console errors.
 - **Acceptance checks:**
-  1. Finishing Stage 2 with a medal (Stage 3 open, no medal) shows the "Next" marker above Stage 3's gate sign, drawn over the
-     World 1 sign when the sign is between the camera and the gate (screen capture from Stage 2's `Arrival`); with the gate
-     behind the camera the marker sits on the bottom screen edge pointing down.
+  1. Finishing Stage 2 with a medal (Stage 3 open, no medal) shows the marker labelled "Stage 3" above Stage 3's gate sign,
+     drawn over the World 1 sign when the sign is between the camera and the gate (screen capture from Stage 2's `Arrival`);
+     with the gate off to one side it sits on that screen edge pointing at it, with the gate behind the camera on the left /
+     right edge of the shorter turn, the label level and towards the screen centre.
   2. Walking to within 25 studs of the marked gate hides the marker; walking back out shows it again.
   3. While a run is active no world marker is shown (checked on the marker frame's `Visible`); after the finish or Home it returns.
-  4. A player with every open stage medalled has no "Next" marker anywhere; a player with no Tutorial medal sees it above the
+  4. A player with every open stage medalled has no next-stage marker anywhere; a player with no Tutorial medal sees it above the
      Tutorial's hub portal while in the hub.
   5. In the hub the marker stands above the hub gate of the next stage's world and no stage-gate marker is enabled.
   6. Coins rising past a talent's next price lights the Skills dot; opening the Skills panel clears it; it stays off while

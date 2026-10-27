@@ -94,7 +94,6 @@ hud.arrival.body,"Popup text under the ""Needs:"" line","You can still enter, bu
 hud.arrival.openSkills,Popup button: opens the Skills panel,Open Skills,Otevřít dovednosti,ok,ha5865bf5
 hud.arrival.continue,Popup button: closes it,Continue,Pokračovat,ok,hae7250da
 # Hints (G1: world markers and toasts),,,,,
-hints.next,"Label under the green bobbing marker above the gate of the next stage to play (also above its hub gate); one short word, shown over the 3D world",Next,Další,new,h73897736
 hints.ready,Label under the green bobbing marker above an incubator whose egg can hatch now (the player's own garden); one short word,Ready!,Hotovo!,new,h92676a43
 hints.eggReady,"Toast at the bottom of the screen, shown once when an egg in the player's incubator becomes ready to hatch (wherever the player is)",Your egg is ready! Hatch it in your garden.,Tvoje vejce je připravené! Vylíhni ho na své zahradě.,new,hda8587b9
 # Shared (L2),,,,,

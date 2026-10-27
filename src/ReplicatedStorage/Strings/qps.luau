@@ -79,7 +79,6 @@ return {
 	["hud.arrival.body"] = "[!! Ýöů čáň šťíll ěňťěř, bůť šömě jůmpš ářě öůť öf řěáčh. ~~~~~~~~~~~~~~~~~~~~~ !!]",
 	["hud.arrival.openSkills"] = "[!! Öpěň Škíllš ~~~~ !!]",
 	["hud.arrival.continue"] = "[!! Čöňťíňůě ~~~ !!]",
-	["hints.next"] = "[!! Ňěxť ~~ !!]",
 	["hints.ready"] = "[!! Řěáďý! ~~ !!]",
 	["hints.eggReady"] = "[!! Ýöůř ěgg íš řěáďý! Háťčh íť íň ýöůř gářďěň. ~~~~~~~~~~~~~~~~~ !!]",
 	["common.loading"] = "[!! Löáďíňg... ~~~~ !!]",
