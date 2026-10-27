@@ -500,6 +500,11 @@ courtyard); affordable skills and ready eggs were not signalled either. Phase 1 
   (Stage 7 latest) gave World 1 / World 3 / Tutorial -> their return portals, World 2 -> Stage 7's gate, hub -> the World 2
   gate, garden -> the ready egg (without it: the hub gate); local attributes for check 9 gave "Stage 6" on World 1's return
   portal and Stage 6's gate, then "Stage 5" on its gate; 0 errors.
+  *Star-bar fallback (2026-10-27, user decision after an edge-case review):* with Bronze on every stage of a world the player
+  has 5 of the 10 stars the next world needs, every open stage has a medal and the marker used to disappear right where the
+  player is stuck. It now points at the stage to raise (check 10, string `hints.raiseMedal`). Checked in a playtest with local
+  attributes (profile snapshotted and restored): every case of check 10 as written, World 1 all Gold but Stage 4 Silver ->
+  "Stage 4: Gold", everything open and medalled -> no marker; the profile as is still gives "Stage 7"; 0 errors.
 - **Acceptance checks:**
   1. Finishing Stage 2 with a medal (Stage 3 open, no medal) shows the marker labelled "Stage 3" above Stage 3's gate sign,
      drawn over the World 1 sign when the sign is between the camera and the gate (screen capture from Stage 2's `Arrival`);
@@ -507,13 +512,18 @@ courtyard); affordable skills and ready eggs were not signalled either. Phase 1 
      right edge of the shorter turn, the label level and towards the screen centre.
   2. Walking to within 25 studs of the marked gate hides the marker; walking back out shows it again.
   3. While a run is active no world marker is shown (checked on the marker frame's `Visible`); after the finish or Home it returns.
-  4. A player with every open stage medalled has no next-stage marker anywhere; a player with no Tutorial medal sees it above the
+  4. A player with every open stage medalled and no world shut by its star bar has no next-stage marker anywhere; a player with no Tutorial medal sees it above the
      Tutorial's hub portal while in the hub.
   5. In the hub the marker stands above the hub gate of the next stage's world and no stage-gate marker is enabled; in another
      world's courtyard it stands above that courtyard's return portal.
   9. The next stage is the latest open one without a medal: with Stages 5 and 6 open and neither medalled the marker reads
      "Stage 6" (World 1: on its return portal; World 2: on Stage 6's gate); with Stage 6 medalled and Stage 7 shut it reads
      "Stage 5".
+  10. Every open stage medalled and the next world shut by its star bar: the marker goes to the stage of the counted world with
+     the lowest medal (ties: the earliest) and names the medal to reach. World 2 shut, World 1 at Gold / Gold / Bronze / Gold /
+     Bronze reads "Stage 3: Silver" (on Stage 3's gate in World 1, World 1's hub gate in the hub, World 2's return portal);
+     Stage 3 at Silver moves it to "Stage 5: Silver"; World 3 shut with World 2 all Bronze reads "Stage 6: Silver"
+     ("Úroveň 6: Stříbro" in Czech).
   6. Coins rising past a talent's next price lights the Skills dot; opening the Skills panel clears it; it stays off while
      the Coins stay the same and lights again only when another level becomes affordable; a respawn keeps it (re-attached).
   7. An egg on the own plot whose `ReadyAt` has passed shows the dot on the Pets icon and on "Go to my garden", the "Ready!"

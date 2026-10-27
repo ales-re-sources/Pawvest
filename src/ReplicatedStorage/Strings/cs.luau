@@ -81,6 +81,7 @@ return {
 	["hud.arrival.continue"] = "Pokračovat",
 	["hints.ready"] = "Hotovo!",
 	["hints.eggReady"] = "Tvoje vejce je připravené! Vylíhni ho na své zahradě.",
+	["hints.raiseMedal"] = "{stage}: {medal}",
 	["common.loading"] = "Načítám…",
 	["common.reject.coins"] = "Nemáš dost mincí",
 	["common.reject.stale"] = "Údaje se mezitím změnily, zkus to znovu",

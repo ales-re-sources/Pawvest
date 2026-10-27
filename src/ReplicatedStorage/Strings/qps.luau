@@ -81,6 +81,7 @@ return {
 	["hud.arrival.continue"] = "[!! Čöňťíňůě ~~~ !!]",
 	["hints.ready"] = "[!! Řěáďý! ~~ !!]",
 	["hints.eggReady"] = "[!! Ýöůř ěgg íš řěáďý! Háťčh íť íň ýöůř gářďěň. ~~~~~~~~~~~~~~~~~ !!]",
+	["hints.raiseMedal"] = "[!! {stage}: {medal} ~~ !!]",
 	["common.loading"] = "[!! Löáďíňg... ~~~~ !!]",
 	["common.reject.coins"] = "[!! Ňöť ěňöůgh Čöíňš ~~~~~~ !!]",
 	["common.reject.stale"] = "[!! Öůť öf ďáťě, ťřý ágáíň ~~~~~~~~~ !!]",

@@ -81,6 +81,7 @@ return {
 	["hud.arrival.continue"] = "Continue",
 	["hints.ready"] = "Ready!",
 	["hints.eggReady"] = "Your egg is ready! Hatch it in your garden.",
+	["hints.raiseMedal"] = "{stage}: {medal}",
 	["common.loading"] = "Loading...",
 	["common.reject.coins"] = "Not enough Coins",
 	["common.reject.stale"] = "Out of date, try again",

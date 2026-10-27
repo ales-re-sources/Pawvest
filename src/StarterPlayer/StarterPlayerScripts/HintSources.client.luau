@@ -2,7 +2,8 @@
 --   Next stage: the latest open stage (highest game order) without a medal. A marker with its name above its start gate sign
 --     while the player is in that stage's courtyard (the Tutorial: near its landing pad), above its hub entrance (world gate /
 --     the Tutorial's hub portal) in the hub or the garden (unless a ready egg's marker is shown there), above the portal
---     back to the hub in any other courtyard or the Tutorial.
+--     back to the hub in any other courtyard or the Tutorial. When every open stage has a medal and a world's star bar shuts
+--     the next stage: the same marker on the stage of that world with the lowest medal, labelled with the medal to reach.
 --   Skills: a dot on the Skills icon when a talent level became affordable that was not affordable while the panel was open.
 --   Ready egg: a dot on the Pets icon and "Go to my garden", a "Ready!" marker above the incubator while in the garden, and a
 --     toast once per egg.
@@ -132,24 +133,66 @@ task.spawn(function()
 	exitPortals.tutorial = exit and exit:WaitForChild("Portal", 30)
 end)
 
+local function isOpen(stage): boolean
+	return player:GetAttribute(StageConfig.UnlockedAttribute(stage)) == true
+end
+
+local function medalOf(stage): number
+	return player:GetAttribute(StageConfig.MedalAttribute(stage)) or 0
+end
+
+-- The stage to raise a medal on when a world opener's star bar is all that blocks progress: the first shut opener in game
+-- order, then the open stage of the world it counts stars in with the lowest medal (ties: the earliest). Returns the stage
+-- and the medal index to reach.
+local function starBarStage()
+	for _, opener in StageConfig.Stages do
+		local rule = opener.unlock
+		if rule and rule.world and not isOpen(opener) then
+			local best, bestMedal = nil, #StageConfig.Medals
+			for _, stage in StageConfig.Stages do
+				if stage.world == rule.world and isOpen(stage) and medalOf(stage) < bestMedal then
+					best, bestMedal = stage, medalOf(stage)
+				end
+			end
+			return best, if best then bestMedal + 1 else nil
+		end
+	end
+	return nil, nil
+end
+
 -- The latest open stage (highest game order) without a medal: players are pushed forwards, not back to an older stage they
--- skipped (a medalled frontier, e.g. a world bar not met yet, falls back to the latest open stage still without one).
+-- skipped (a medalled frontier falls back to the latest open stage still without one). When every open stage has a medal
+-- and a world's star bar shuts the next stage, the stage to raise a medal on (starBarStage) with the medal to reach.
 local function nextStage()
 	if player:GetAttribute(StageConfig.UnlockedAttribute(StageConfig.Stages[1])) == nil then
-		return nil -- profile not loaded yet
+		return nil, nil -- profile not loaded yet
 	end
 	local latest = nil
 	for _, stage in StageConfig.Stages do
-		local open = player:GetAttribute(StageConfig.UnlockedAttribute(stage)) == true
-		if open and (player:GetAttribute(StageConfig.MedalAttribute(stage)) or 0) == 0 then
+		if isOpen(stage) and medalOf(stage) == 0 then
 			latest = stage
 		end
 	end
-	return latest
+	if latest then
+		return latest, nil
+	end
+	return starBarStage()
+end
+
+local function stageLabel(stage, goal: number?): () -> string
+	return function()
+		if goal then
+			return Locale.T("hints.raiseMedal", {
+				stage = Locale.StageName(stage),
+				medal = Locale.MedalName(StageConfig.Medals[goal]),
+			})
+		end
+		return Locale.StageName(stage)
+	end
 end
 
 local function updateNext(area: string?, eggShown: boolean)
-	local stage = nextStage()
+	local stage, goal = nextStage()
 	local part, height = nil, nil
 	if stage and area and not (area == "garden" and eggShown) then
 		local home = if StageConfig.Worlds[stage.world] then "world" .. stage.world else "tutorial"
@@ -165,9 +208,7 @@ local function updateNext(area: string?, eggShown: boolean)
 			part, height = exitPortals[area], PORTAL_MARKER_HEIGHT
 		end
 	end
-	Hints.SetMarker("next", part, if stage then function()
-		return Locale.StageName(stage)
-	end else nil, height)
+	Hints.SetMarker("next", part, if stage then stageLabel(stage, goal) else nil, height)
 end
 
 -- Skills ------------------------------------------------------------------------------------------------------------------

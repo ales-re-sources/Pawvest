@@ -94,8 +94,9 @@ hud.arrival.body,"Popup text under the ""Needs:"" line","You can still enter, bu
 hud.arrival.openSkills,Popup button: opens the Skills panel,Open Skills,Otevřít dovednosti,ok,ha5865bf5
 hud.arrival.continue,Popup button: closes it,Continue,Pokračovat,ok,hae7250da
 # Hints (G1: world markers and toasts),,,,,
-hints.ready,Label under the green bobbing marker above an incubator whose egg can hatch now (the player's own garden); one short word,Ready!,Hotovo!,new,h92676a43
+hints.ready,Label under the orange bobbing arrow marker above an incubator whose egg can hatch now (the player's own garden); one short word,Ready!,Hotovo!,new,h92676a43
 hints.eggReady,"Toast at the bottom of the screen, shown once when an egg in the player's incubator becomes ready to hatch (wherever the player is)",Your egg is ready! Hatch it in your garden.,Tvoje vejce je připravené! Vylíhni ho na své zahradě.,new,hda8587b9
+hints.raiseMedal,"Label under the orange arrow marker above a stage gate when the next world is shut by its star requirement and every open stage already has a medal: the player should replay {stage} (stage name, e.g. ""Stage 2"") for a better medal; {medal} = the medal tier to reach (Bronze / Silver / Gold, nominative as in medal.name.*). Keep it short (shown on screen over the 3D view)",{stage}: {medal},{stage}: {medal},new,h195788f1
 # Shared (L2),,,,,
 common.loading,A panel whose data has not arrived yet,Loading...,Načítám…,ok,h75bf472a
 common.reject.coins,A purchase was refused: the player has too few Coins,Not enough Coins,Nemáš dost mincí,ok,h35fbd693
