@@ -968,7 +968,7 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
     `PlatformB` -> `Top2` -> `Top1` -> key without a dash (`Top2` -> `Top1` carries 15.3 studs, the first layout needed 19 and fell on the lid); the
     key opens both hatches, removes the strip's kill, shuts `Gate_TealBehind`; the fall lands on the floor at u 62; a maxed Triple Jump out of lane 1's
     right end is stopped by the barrier; baseline jump + Long Dash from the floor recrosses the corridor (lands at u 108). No script errors; static
-    coplanar audit of the vault clean. Backup of the old room: `ServerStorage.VaultBackup_20261027` (tags stripped; delete after the user's check).
+    coplanar audit of the vault clean. The backup of the old room (`ServerStorage.VaultBackup_20261027`) was deleted on 2026-10-28 after the user's check.
   - *Not checked:* a human run of the whole vault, the run-start reset of the switches (needs a real run), the look of the empty upper back panel.
   - *After the user's first playtest (2026-10-28):* the user added `Spikes.Floor_9` (hit u 81.7-83.8 on the floor, the dash felt too easy).
     `VaultCamera` now reaches the gate line (x -457..-205): the entry hall (`TeachBeam`) and checkpoint `1201` used `LabCamera` (Distance 45) or no
@@ -1006,10 +1006,10 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
     7.5 high: a ledge-up is a double jump through the gap; one spike in the middle of every ledge (`Right2_13`, `Right1_12`, `Slab_23`,
     `BaseTiny_15`, `Column1_19`, `ArmTop_24`), and under that roof a plain hop cannot clear it (the head hits the roof): each one is a
     **jump + Long Dash**, the dash corridor's move. The top lane (8 high under the ceiling) also has **`Ceiling_21`** back, from
-    `ServerStorage.VaultBackup_20261027` at 0.7 scale (`Hit` u 189-190.46, h 63.46-65, visual tip at 62.44): right after the ledge-up from
+    the old-room backup at 0.7 scale (`Hit` u 189-190.46, h 63.46-65, visual tip at 62.44): right after the ledge-up from
     `Column_1` the player must walk under it, a hop there dies (the backup's `Hit` had lost its `KitKill` tag; re-added). Taken out with the
     four middle ledges: `Base_L_Post`, `E_ArmBottom`, `Column_2`, `E_ArmMid` and their spikes `PostTop_14`, `ENotch_17`, `Column2_20`,
-    `EMid_16` (the ten-ledge parts are in `ServerStorage.VaultTower10_Backup`).
+    `EMid_16` (their backup was deleted with the old room's on 2026-10-28).
   - *Floor lane:* h 0-7.5 under everything from the doorway (under `E_Bar`) to the green lock and the exit; `Block_Right2`'s gap above it is
     the way in.
   - *Slot and key (widened 2026-10-28 from 4.2 to 10.2, the user got past `EBarSide_22` once in five tries):* `E_Bar` (u 157.83-162, the right half's left wall, to the ceiling) in three parts (`E_BarLower` h 7.5-41, `E_BarNotchBack`
