@@ -63,7 +63,7 @@ Rules:
 | S5 | Worlds hub — done 2026-10-22: gates for Worlds 2-4 (coming soon, admins only), World 2 courtyard, signs, per-world stars boards (user's visual check) | ✔ | ✔ | – |
 | S6 | World 2 (stages 6–10) — S6.1 Double Up + Seesaw, S6.2 Turntable + Labyrinth, S6.3 Clocktower all built 2026-10-22 / 23, each crossed by a bot and one timed run paid out; Studio validation pending the open checks (course look, human difficulty / `T_base`, the user's Stage 9 run, door coplanar audit hits on `Stage9.Maze.Big.ExitDoor` and `Stage10.Movers.Door_10`, tick sound), see the S6 notes below | ✔ | partial | – |
 | S7 | Talents: Triple Jump + Dash (+ World 3 courtyard) — done 2026-10-24: talents, Q / gamepad / touch button, reach table, World 3 courtyard east of the hub; closed 2026-10-24 (the visual and real-device touch checks were waived by the user; Live-validated comes with the next publish) | ✔ | ✔ | – |
-| S8 | World 3 (stages 11–15) — S8.1 Triple Peaks + Ice Rink built and Studio-checked 2026-10-24 (kit ice, World 3 open), checked and tuned by the user 2026-10-26; S8.2 designed (STAGES §7.12: Long Dash = Dash level 2, kit `Roll` balls); S8.2a Stage 13 Dash Bridge built and bot-checked 2026-10-26 (awaits the user's check), S8.2b Stage 14 Laser Lab built and bot-checked 2026-10-26 (awaits the user's check; its Key Vault rebuilt as lanes 2026-10-28), S8.3 not started | ✔ (S8.1) | ✔ (S8.1) | – |
+| S8 | World 3 (stages 11–15) — S8.1 Triple Peaks + Ice Rink built and Studio-checked 2026-10-24 (kit ice, World 3 open), checked and tuned by the user 2026-10-26; S8.2 designed (STAGES §7.12: Long Dash = Dash level 2, kit `Roll` balls); S8.2a Stage 13 Dash Bridge built and bot-checked 2026-10-26 (awaits the user's check), S8.2b Stage 14 Laser Lab built and bot-checked 2026-10-26 (awaits the user's check; its Key Vault rebuilt as lanes 2026-10-28), S8.3 Rising Tide designed 2026-10-28 (STAGES §7.13), S8.3a (`KitTide` + segments 1-2, temporary finish) built and bot-checked the same day (awaits the user's look) | ✔ (S8.1) | ✔ (S8.1) | – |
 | S9 | Talents: Wall Jump + Glide | – | – | – |
 | S10 | World 4 (stages 16–20) | – | – | – |
 | M6b | Final balancing (all stages) | – | – | – |
@@ -468,6 +468,16 @@ Server and Clients mode for check 4; `screen_capture` one call at a time.
     back to 65 high), a ceiling spike in the top lane, the key in a notch at the
     slot floor, a green hatch that opens with the key held as the way back down; the bounce orb is gone (appearing steps were tried and taken out).
     Acceptance: `bash tools/vault_right_checks.sh` passes; a human climb follows the sketch and can jump-dash every ledge spike.
+- **S8.3 Rising Tide (design check: STAGES §7.13, drafted and accepted 2026-10-28 with every recommendation; S8.3a built and bot-checked
+  2026-10-28, awaits the user's look at the tide; STAGES §7.13 → "S8.3a as built" / "S8.3a checks"):** the World 3 finale on the courtyard's
+  south opening (`SoonGate15`), course running south and back north high: a lava tide (new client script `KitTide`, kit-local, reset to each
+  checkpoint's `TideFloor` and rising at its `TideSpeed`) under six segments that replay World 3's signatures (crusher ice ridge + Triple ledges,
+  Long Dash gaps + axe, gusting headwind + timed door, a colour-hatch shaft the lava fills, a rolling-ball ramp + sweeper + last Long Dash gap).
+  Outputs: `Workspace.World3.Stage15` (gate / board / `Arrival` from `StageKit`, checkpoints `1301`-`1306`, `Tide`), `StageConfig` entry
+  (Triple Jump + Long Dash, `tBase` 100 provisional, factor 4.25, Bronze on Stage 14 or 5 500; `economy.py check`), 8 coins `Stage15_1..8`,
+  `KitTide.client.luau`, `SoonGate15` removed. Proposed split: S8.3a `KitTide` + segments 1-2 (the user looks at the tide alone), S8.3b the rest.
+  Acceptance checks: STAGES §7.13 → "Acceptance checks" (tide only during a run, checkpoint / respawn reset, the budget rule with a clean bot and
+  one with a lost hazard cycle per segment, Long Dash gates, telemetry `Stage15.Tide`, full run `1301`-`1306`, coplanar audit clean).
 
 ### G1 — Player guidance hints (design: GDD §11; scope 2026-10-27, user request)
 A player who finished a stage did not know where to go next (in World 1 the big wooden world sign hides the gates across the

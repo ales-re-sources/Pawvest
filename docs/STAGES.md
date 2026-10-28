@@ -788,6 +788,19 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
 - *Not checked:* the look (screen captures came back white), a human run and the real `T_base` (110 / 120 provisional), the coins being collected, the talent
   coins' reach with Dash, the door countdown on screen.
 - **User's check (2026-10-26):** both stages played and accepted after the tuning above (door swing, button at the start of `WindBeam`, 8.5 s, no `1004`).
+- **Crusher press (2026-10-28):** a baseline Triple Jump taken 9-13 studs before `Crusher1` cleared its top and landed in the gap behind it (a first-run
+  shortcut, see §7.13 → "Same open sky"), so the ridge now runs through a press like Stage 15's: Studio-only folder `Stage11.Press` with `PressWallN` /
+  `PressWallS` (2-stud glass walls, transparency 0.5, x 145-211 = the ridge's length, from the sea y 2 to y 203.5 = the crushers' raised top, flush beside
+  the ridge at z -650..-648 / -642..-640) and `PressRoof` (DiamondPlate, x 145-211, z -650..-640, y 203.5-223: 32.5 above the ridge, out of a maxed Triple
+  Jump's reach). `Crusher1..4` are 5.8 across (were 8, overhanging the 6-wide ridge), 0.1 from each wall; their timing attributes are unchanged. The roof
+  ends at `905`'s west edge, so the Triple ledge to `Summit` is open. Checks: static coplanar audit of `Stage11` clean apart from the finish-arch stones /
+  gate and an older `T1` / `Shelf1` pair (+X and -Y faces shared; not touched), the crushers against walls and roof clean at 0 / 2.25 / 4.5 / 6.75 / 9 of
+  the stroke; bots from `904` with the stored maxed profile (WalkSpeed 20.8, JumpPower 55.7, Triple Jump) and at baseline (16 / 50), take-offs at
+  u 224-237 (x 137-150) with air jumps at the apex or every 0.3 s: highest root y 217.6 against the roof's west face (roof top 223), none above
+  y 202 inside the press, every one either walked through under the wave or died at a crusher; Triple Jumps outside the walls (z -652 / -638) peak at
+  220.6 and fall to the sea; baseline walkers leaving the middle of `904` at 8 points of the 3 s cycle: 4 cross (about 5.4 s to `905`), 4 die at
+  `Crusher1`, as before; `905` -> `Summit` lands from 3 take-offs x 2 timings at baseline and with the maxed profile. *Not checked:* the look and the
+  camera inside the press (no capture), a human run. Developer profile, `MostStars` and the Stage 11 board restored from `profile_<id>_s11press`.
 
 ### 7.12 S8.2 Dash Bridge + Laser Lab (design check 2026-10-26; decisions with the user: Long Dash as Dash level 2, a `Roll` kit kind, soft-talent coins, arena + Dash room)
 - **Slots** (Studio survey 2026-10-26): the west openings of the World 3 courtyard. Stage 13 = west near gate (`SoonGate13`, x -219..-190, z -659..-630;
@@ -1040,6 +1053,184 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
     face once lowered). No errors.
   - *Not checked:* a human climb (six lanes, six jump-dashes and the ceiling spike; a death sends the player back to `1202`, there is no checkpoint in the tower),
     the look (old `Decor.Tile` panels still hang on the back wall behind the tower).
+
+### 7.13 S8.3 Rising Tide (design check 2026-10-28; the user took every recommendation the same day: D1 A, D2 sound alone, D3 out-and-back, D4 maxed soft talents, D5 S8.3a / S8.3b)
+The World 3 finale (§3 "each world finale mixes every signature of its world"): one new hazard, a **lava tide** rising under the whole
+course, over a run that takes each World 3 signature again (Triple ledges and crushers, ice, wind and a timed door, Long Dash gaps
+and a pendulum, a colour-hatch shaft, rolling balls and a sweeper). The stages before taught the pieces; here the tide turns every
+wait and every mistake into lost height.
+- **Slot** (Studio survey 2026-10-28): the **south (finale) opening** of the World 3 courtyard, `SoonGate15` (x -165..-135, z -532..-528); the
+  course runs **south (+z)**. South of the wall the sea is empty: x -400..+300, z -528..-60 holds only the Tutorial (x -467..-425, from z -156)
+  and Stage 5's end (x -383..-367, z -62..-46); KitLab starts at x 447. The course stays inside **x -200..-40, z -522..-140**. Gate / board /
+  `Arrival` from `StageKit` turned 180° (the templates face north) onto the opening; `SoonGate15` removed. Key and folder `Stage15` under
+  `World3`, checkpoint block `1301`-, coins `Stage15_1..8`. Coordinates below: **u** = distance south of the gate line (z = -528 + u),
+  **v** = east of the gate's centre (x = -150 + v), **h** = height above the plaza top (y 78).
+- **StageConfig (provisional, M6b measures):** `requires` Triple Jump + Long Dash (as 13 / 14), factor **4.25** (§6.4), unlock **Bronze on Stage 14
+  or 5 500** (§7.2), `tBase` **100** (clean run estimated at about 80 s below; Stage 13's bot run showed provisional values run generous, so set it
+  after the user's run). `tools/economy.py check` after the entry. The display name "Stage 15" and its Czech string already exist; the gate sign's
+  literal text must be set to "Stage 15" in Studio (AGENTS gotcha).
+
+**The tide (new kit piece, `KitTide`)**
+- *What it is:* one Studio part `Stage15.Tide` (tag `KitTide`): a thin Neon slab (4 thick, orange-red, the "kills" colour of §2.4) whose footprint
+  covers the whole course (x -200..-40, z -522..-140; it stops at the courtyard wall). `CanCollide` / `CanTouch` / `CanQuery` off. Only its **height**
+  is animated, and only on the running player's client (build **L**, §2.1: each player races their own tide; other players see none, and may seem to
+  stand in your lava).
+- *Kill test:* while a run of this stage is active, any character part whose bottom is below the tide's top, inside the footprint, kills (client kill
+  like `ObstacleKit`'s: `Health = 0`, `KitKillAt` / `KitKilledBy` = `Stage15.Tide`, `TelemetryRemotes.Report("kill", tide)`, so telemetry counts tide
+  deaths per segment as their own cause). Walls and slabs do not shelter: the test is height only.
+- **D1 - how the tide moves (recommended: A).**
+  - **A. Each checkpoint resets the tide** (recommended): reaching a checkpoint (the `CheckpointReached` event, so the gate's `TimerStart` counts as the
+    first: the server resolves it to the first plate) and every respawn there set the tide to that checkpoint's `TideFloor` (a world y, Studio
+    attribute on the checkpoint's `C` plate), shown sinking over about 1 s, and it rises at its `TideSpeed` (studs/s) from there. Every segment is a fixed, learnable budget, a slow segment carries no debt into
+    the next, and the sinking lava doubles as the checkpoint's reward. Re-touching the same checkpoint does nothing (no camping: standing on a plate,
+    the lava arrives after (plate top - floor) / speed seconds).
+  - *B. Rubber band:* the tide rises with the run and a checkpoint only raises it (never more than `Lag` below you); a death lowers it. Constant
+    pressure, but a slow segment leaves the player arriving at the next checkpoint with lava at their feet.
+  - *C. Pure run timer:* the tide rises with the stage timer, a death lowers it under the checkpoint. A fast player never sees it, a slow one meets
+    an impossible tide late in the run.
+- *Run state:* the tide exists only during a run of `Stage15` (`StageTimerUpdate`): no run = no tide (exploring without a timer shows the usual banner);
+  the finish, Home, `GateExit` and a cancelled run park it out of sight. On death it stops; on the respawn it resets (A).
+- *Telegraph (§2.3):* the tide is the slowest and most visible hazard; it also gets a rumble Sound (Studio-only child of `Tide`) whose volume grows as
+  the gap to the player's feet drops below 15 studs. **D2:** also a small "heat" vignette under 6 studs (one new client effect, no text), or the
+  sound alone for now (recommended: sound alone; add the vignette if the user's run misses the tide coming).
+- *Code:* a new `StarterPlayerScripts/KitTide.client.luau` (like `KitMaze` / `KitWires`, `ObstacleKit` is already 50 kB): listens to
+  `StageTimerUpdate`, `CheckpointReached` and `CharacterAdded`; attributes `TideFloor` / `TideSpeed` on the checkpoints' `C` plates (a checkpoint
+  without them parks the tide: a segment can switch it off), `Footprint` from the part's own size. No server code, no remote, no new strings.
+- *Budget rule (replaces "≥ 0.5 s to react" for this hazard):* in segment k the tide reaches height h after (h - floor_k) / speed_k seconds. At every
+  point of the course this time must be **≥ 1.6 x a clean run's time** to that point from the checkpoint (a Bronze pace with one hazard cycle lost
+  survives) and **≤ 3 x** (the lava must be seen coming; segment 1 teaches and may be looser). The course never drops below its segment's checkpoint by more than a few studs (a descent
+  eats the budget twice); the one deliberate low spot is a risky coin. The bot measures the clean times in the build and the floors / speeds are
+  set from them; the table gives the starting values.
+
+**Course** (about 650 studs, h 0 -> 152; out south on v 0, across east, up a shaft, back north on v 80 high above the drowned outbound leg)
+
+| Seg | From | Content | Floor (h) / speed | Tide reaches | Clean (est.) |
+|---|---|---|---|---|---|
+| 1 *Shore* (teach) | `TimerStart` / `1301` (u 7, h 0) | a 16-wide causeway at h 0 with two single-jump gaps (6), Double Jump steps up to h 11 / 22 | -24 / 1.5 | h 0 at 16 s, h 22 at 31 s | 9 s |
+| 2 *Crusher ice* | `1302` (u 92, h 22) | a flat 8-wide **kit-ice ridge** (u 98-158) under three crushers (Stage 11's wave, Period 3, run-seeded), then two **Triple ledges** (20 high, gap 6) to h 62 | -8 / 1.5 | h 22 at 20 s, h 62 at 47 s | 13 s |
+| 3 *Dash run* | `1303` (u 196, h 62) | three **34-stud Long Dash gaps** to 12 x 12 pillars rising 2 each (h 64 / 66 / 68), a swinging axe through the third gap (Stage 13's finale, Period 3) | 32 / 1.5 | h 62 at 20 s, h 68 at 24 s | 12 s |
+| 4 *Headwind door* | `1304` (u 346, h 68) | the course turns east: `Button` (Group `TideDoor`, 9 s) on the plate, a 60-long 8-wide beam (plain floor, not ice) in a **gusting headwind** (Push 10 toward the west, Period 3, Duty 0.5) with one 12-stud Double Jump gap in its middle, a 1-stud swinging `KitDoor` into the shaft | 38 / 1.5 | h 68 at 20 s | 8 s |
+| 5 *Chimney* (climax) | `1305` (v 80, u 360, h 68) | a 24 x 24 shaft, walls on three sides, **open to the north** (camera): three slabs at h 83 / 98 / 113, each with a red and a blue hatch (`KitSwitch Toggle` pads, Group `Chimney`, Stage 14's colour shaft), a `KitBeam` row across the shaft between slabs 2 and 3 (Period 3); the lava fills the shaft below you | 52 / 2.5 | h 68 at 6.4 s, h 98 at 18 s, top h 128 at 30 s | 16 s |
+| 6 *Summit run* | `1306` (on the shaft's roof, h 128) | back north on v 80: a 10-wide ramp h 128 -> 148 (u 340-260) with **rolling balls** in two lanes and side pockets (Stage 13's ramp), a pad under a **sweeper** (Stage 14's, 45 deg/s, turning with the walker), a last Long Dash gap (34, drop 4) to the summit crag (h 144), the finish portal at u ≈ 140 looking north at the courtyard | 104 / 1.75 | h 128 at 14 s, the crag h 144 at 23 s | 14 s |
+
+- *Headwind (segment 4; user, 2026-10-28: wind that slows you down; "wind seems to ignore jumps and dashes"):* `KitZones` moves the root by
+  `Push` studs/s every frame, at full strength in the air and 0.6 on the ground, so it does act on jumps and dashes. Two things hide it: (1) the
+  existing zones are 14-16 high from the floor (Stage 7, Stage 12's `Wind1` 14), so the root leaves the box above about 11-13 studs and a Double or
+  Triple Jump's apex is out of the wind; (2) the drift is small next to a 50 studs/s dash (Push 6 takes 2 studs off a 0.32 s Long Dash). Segment
+  4's zone therefore reaches **30 above the beam** (above a maxed Triple Jump's root) and blows **against** the course: in a gust a walker makes
+  about 10 studs/s instead of 16, and a jump over the 12 gap drifts back about 8 studs and falls short, so the gap is crossed in the lull (one
+  base period of 3 s) and the gusts cost time while the tide rises. Door time 9 s: about 5 s of walking at the gust-averaged speed + one lull
+  of waiting + 1.5 s margin, measured with the bot in the build. No new code; only a taller zone. (Stage 12's wind beam has the same low zone:
+  a hopping player may dodge its crosswind, to be checked separately.)
+- *Timing:* every timed hazard on a 3 s base period (crushers, axe, beam row, balls 6 s, the headwind's gusts), all **run-seeded** (§2.3: short, learnable waits). Clean
+  run about 72 s of segments + run-ups ≈ 80 s.
+- *Checkpoint spacing:* 8-16 s of clean play, inside World 3's 20-30 s with deaths. If segment 6 is too long in the user's run, `1307` goes on the
+  sweeper pad.
+- *Why out-and-back:* the Clocktower (Stage 10) already spirals round a tower; here the high return leg looks down on the outbound course under the
+  lava, which shows the player how far the tide has come.
+- **D3 - layout (recommended: out-and-back as above).** Alternative: a single volcano cone climbed in a spiral with the lava filling the crater
+  (more compact, closer to the Clocktower).
+- *Camera:* default everywhere; the shaft is open to the north so the camera has room behind a climber. Check in the build whether a `CameraZone`
+  (fixed yaw looking south into the shaft) reads better.
+- *Ghosts:* a `KitGhostZone` over the shaft (other players on a hatch that is a ghost for you), as on Stage 14's colour shaft.
+- *Fall reset:* the tide kills before Quick Respawn's 30-stud fall reset in every segment; no `FallResetDepth` attribute needed.
+- **Coins (8, 20 / 50 / 100 as §7.3):** easy on the causeway's corner, the first Triple ledge, the second dash pillar, a corner of the shaft's
+  slab 2, a ball pocket on the ramp; risky on a ledge 8 below the causeway (h -8: the tide reaches it 10.7 s after the start, so it is a grab
+  at once or not at all) and inside the shaft in the beam row (a dark-window grab with the lava coming); talent: **D4** below.
+- **D4 - talent coin (recommended: maxed soft talents, as Stages 13 / 14):** a 3 x 3 crag 25.5 above `1306` (Jump Height 3 only; a baseline
+  Triple Jump rises 21.8), with the tide's 14 s running, or no talent coin until S9 (Wall Jump) and 7 coins.
+- **D5 - split (recommended: S8.3a / S8.3b):** **S8.3a** `KitTide` + segments 1-2 greybox, Studio check and the user's look at the tide alone
+  (is a rising floor readable and fair?), commit; **S8.3b** segments 3-6, coins, the full check. Alternative: build the stage in one go.
+- **Acceptance checks:** the tide rises only during a `Stage15` run and parks on finish / Home / gate exit; reaching a checkpoint and a respawn put
+  it at that checkpoint's floor; re-touching a plate does not; standing on a checkpoint dies after (top - floor) / speed s; a death in the lava
+  respawns at the checkpoint with the lava down; every point meets the budget rule with a clean bot (≥ 1.6x) and a bot that waits one extra hazard
+  cycle per segment still finishes; a baseline Triple Jump + short Dash does not cross the 34 gaps, Triple Jump + Long Dash does; a wrong toggle in
+  the shaft costs time, not a death; kill telemetry reports `Stage15.Tide`; a full run fires `1301`-`1306` in order and ends with a result; the
+  coplanar audit (§2.3.1) with `STATIC_ROOT = "World3.Stage15"` is clean (the door too).
+- **S8.3a as built (2026-10-28)** (x -150 + v, z = -528 + u, heights as world y; plaza top y 78, plate tops y 78.5):
+  - *Gate / board / `Arrival` / `1301`* are Stage 10's (the World 2 finale gate, same orientation) moved by (+225, 0, -1150); `SoonGate15` deleted;
+    script files copied on disk from Stage 14 (`Gate`, `Top10Leaderboard`, `TeleportBackToStageStart`, `1301`-`1303`), Studio-only children grafted
+    in (descendant counts equal the source's). The sign's literal text is "Stage 15". Every plate stands on a `Plate_<n>` column.
+  - *`Tide`:* Neon (255, 85, 20) slab 160 x 4 x 388 over x -200..-40, z -528..-140 (from the gate line; it began at z -522 first, see the user's
+    look below), parked at y -20, tag `KitTide`, `Speed` 1.5. No `Rumble`
+    sound yet (silent until one is added in Studio).
+  - *Segment 1 `Shore`:* `1301` (u 0-12, y 78.5, `TideFloor` 54.5); `Causeway1..3` (16 wide, y 78.5: u 12-30, 36-54, 60-72, single-jump gaps 6);
+    `Step1` (8 x 8, u 78-86, y 89.5); `1302` (u 92-104, y 100.5): Double Jump ledges of 11 with gaps 6; `LowShelf` (6 x 6, y 70.5, 3 studs west of
+    `Causeway2`): the risky coin's spot.
+  - *Segment 2 `CrusherIce`:* `1302` (`TideFloor` 70.5); `IceRidge` (KitIce, 8 wide, u 104-164, y 100.5, flush with the plate) under `Crusher1..3`
+    (first Stage 11's crusher turned to 10 x 4 x 6, centres u 122 / 134 / 146, 9 over the ice, Stroke 9, Period 3, Phase 0.5 / 0.25 / 0, run-seeded;
+    now in a press with a cascade rhythm, see "Crusher rhythm" below); Triple
+    ledge `T1` (10 x 8, u 170-178, y 120.5); `1303` (u 184-196, y 140.5, `TideFloor` 110.5), a second Triple ledge.
+  - *`FinishTemp` (S8.3a only):* `FinishIsland` (16 x 16, u 196-212, y 140.5) with Stage 14's finish portal turned to face +z (u 206); it moves to
+    the summit in S8.3b.
+- **S8.3a checks (Studio playtest 2026-10-28; bots at baseline WalkSpeed 16 / JumpPower 50 with Triple Jump + Long Dash; the developer profile
+  snapshot `profile_<id>_s83a` restored, `leaderboard_Stage15` removed):**
+  - *Tide:* parked and hidden without a run; the gate starts it at 1301's floor; standing on `1301` kills after 15.0 s on the plate (16 s from the
+    gate, as (78.5 - 54.5) / 1.5), `KitKilledBy` = `Stage15.Tide`; the respawn puts it back at 54.5; `1302` / `1303` set 70.5 / 110.5; the finish parks
+    it. Telemetry classifies the kill as cause `kill:Tide` (read from `Telemetry.causeOf`; the minute's `Fail` flush was not watched).
+  - *Shore:* both 6 gaps (single jump), `Causeway3` -> `Step1` -> `1302` (Double Jump, from 0.6 and 1.5 before the edge) all land; `LowShelf` is
+    reached by walking off `Causeway2` (a jump overshoots its 6-stud top) and left with a Double Jump.
+  - *Crusher ice:* a walker starting from rest on `1302` at 8 points of the 3 s cycle: 4 cross (start 0.75-1.875 s into the cycle), the other 4 die
+    at `Crusher1` only (once past it the wave carries an ice runner through, as on Stage 11); plate to ridge end 3.9 s. Triple Jump from the ice to
+    `T1`: 3 of 4 take-off points land (on the near edge, as Stage 11's 20-stud ledges); `T1` -> `1303`: 3 of 4 (0.6 before the edge falls short).
+  - *Full run:* gate -> `1301` 1.4 s -> `1302` 7.5 s -> (1.0 s waiting for the crusher window) -> `1303` 14.3 s -> finish: the run ends with a
+    result and the tide parks. Smallest gap between the feet and the tide: 17.3 studs in segment 1, 22.5 in segment 2.
+  - *Budget:* a clean run is far ahead of the tide in both segments (segment 1: the causeway is drowned 16 s after the start, the bot left it after
+    about 5 s; segment 2: the ridge drowns 20 s after `1302`, the bot was off it after 5 s). The budget rule's upper bound (≤ 3 x) cannot hold on a
+    climb (the ledges outrun the tide); it applies to the flat parts. Whether the lava reads as a threat here (segment 1 teaches) is the user's call.
+  - No script errors; static coplanar audit of `Stage15` clean apart from the gate and finish-arch stones every stage shares.
+  - *Not checked:* the look (no capture), a human run, the rumble sound (no asset), coins (S8.3b).
+- **User's first look (2026-10-28) and fixes:**
+  - *Standing at the start of `1301` the lava rose in front of the player:* the footprint began at z -522, the plate reaches back to the gate line
+    (z -528), so its first 6 studs were outside the tide. The footprint now starts at the gate line. Check: a bot standing on the plate's rear edge
+    (z -526.9) dies 15.4 s after the gate, `KitKilledBy` = `Stage15.Tide`.
+  - *The crushers could be jumped over* (they hung in open air 9-13 above the ice; a Double Jump rises 14.5). They now work inside a **press**:
+    `PressWallW` / `PressWallE` (2-stud glass walls, transparency 0.5, from the sea to y 113.5, beside the ridge) and `PressRoof` (DiamondPlate,
+    x -156..-144, y 113.5-133, u 113-155): its top is 32.5 above the ice, out of a maxed Triple Jump's reach (27), and the walls stop a detour round
+    the sides. The crushers are 7.8 wide, 0.1 from each wall (no shared face plane; the static audit with the crushers at five points of their stroke
+    is clean). Checks: the stored maxed profile (Run Speed 5, Jump Height 3, Triple Jump) jumping at 5 points of the lead-in peaks at root y 128.3
+    (roof top 133) and never above y 112 inside the press; baseline walkers at 8 points of the cycle: 4 cross in 3.9 s, 4 die at `Crusher1`, as before.
+  - *Same open sky on Stage 11's crusher ridge* (nothing above its `Crusher1..4`): not changed yet. Checked 2026-10-28 with a baseline bot (WalkSpeed
+    16, JumpPower 50) and only the stage's required talent: a **Triple Jump taken 9-13 studs before `Crusher1` clears its top by 0.5-2.5 studs and
+    lands alive in the gap behind it** (3 of 6 take-off points; a Double Jump cleared it once by 0.6 and landed on the edge). So a first-time player
+    can go over the crushers; each hop has to land in a 6-stud gap between kill tops, so it is a different skill rather than a faster way. The user's
+    rule: a shortcut that needs a later talent is fine, one open on the first run is not. Decision pending.
+- **Crusher rhythm (user, 2026-10-28: "first falls down, then second, then last, and they all slowly go up, giving a moment to pass with a dash"):**
+  - *Timing:* one cycle of **4.5 s**: `Crusher1` strikes at 2.2 s, `Crusher2` at 2.6 s, `Crusher3` at 3.0 s (Out 0.2 s, Telegraph 0.6 s), each stays
+    down until the end of the cycle, then **all three rise together over 2.0 s** (`Back`). The kit's piston already works this way: same `Period`
+    and `Phase` (0), `Duty` = 1 - strike / period (0.5111 / 0.4222 / 0.3333), run-seeded. No code change.
+  - *Geometry:* the crushers are 10 long (u 116-126 / 128-138 / 140-150) with **2-stud gaps** (a body cannot stand in one, so the crossing cannot be
+    split by waiting between crushers), 7.8 wide, 4 high, and rise to **15 above the ice** (`Stroke` 15) so a hop + dash fits under them. The press
+    grew with them: walls to y 119.5, roof y 119.5-133 (its top still 32.5 above the ice). Static coplanar audit (crushers at seven points of the
+    stroke) clean.
+  - *Why the dash matters:* a Long Dash covers 16 studs in 0.32 s (50 studs/s, three times a baseline run of 16 studs/s) and holds the height it was
+    pressed at, so a hop + quick dash stays low under the rising crushers. A timing model of the crossing (plate to u 153; R15 head 5.5 above the
+    feet, ±1 stud along the course; dash 0.15 s after the hop; scratchpad script, not kept) gave: baseline runner 0 of 50 start times; one hop-dash
+    0.7 s of the cycle; two hop-dashes (at u 120 and 136) 0.9 s; a runner with Run Speed 5 0.5 s (a soft talent may pass, as everywhere).
+  - *Bots (Studio playtest, baseline WalkSpeed 16 / JumpPower 50, the dash rebuilt as in `TalentDash`; server-time cycle, no run):* leaving the
+    middle of `1302` at 15 points of the cycle (0.3 s apart): **runner 0 of 15** (killed by `Crusher1` at 13 start times, by `Crusher2` / `Crusher3`
+    when it starts as they rise); **two hop-dashes 2 of 15** (leaving 0.0 and 0.3 s after the rise begins, through in 2.75 s), others die at
+    `Crusher1` or `Crusher3`. So the window is about 0.6 s: "go the moment they start lifting". If the user finds it too tight, moving the
+    strikes 0.2 s later (2.4 / 2.8 / 3.2) widened the modelled dash window to 1.1 s and let a baseline runner through 0.3 s of the cycle.
+- **Piston rods, one way through (user, 2026-10-28: "I can jump above them, between crushers and PressRoof; the player can pass only when the
+  crushers are lifted"):** a lowered head (top 4 above the ice) left 15 studs of open space under the roof, so a hop cleared it. Now:
+  - *Rods:* `Rod1..3` (steel, 7.6 x 13.5 x 11.8, unanchored, Massless, CanTouch / CanQuery off, `WeldConstraint` to their head, so ObstacleKit's
+    CFrame on the anchored head carries them) fill the space from the head (sunk 0.1 into it) to y 132.9: with a head down only 1.6 studs remain
+    under the roof; with it up the rod sits inside the roof. The rods do not kill; only the heads do.
+  - *No gaps:* the heads are 12 long and contiguous (u 116-128 / 128-140 / 140-152), so nothing is left to stand in between them.
+  - *Timing:* strikes 0.1 s later for the 2 studs longer row: **2.3 / 2.7 / 3.1 s** (`Duty` 0.48889 / 0.4 / 0.31111); period 4.5, rise 2.0 s,
+    stroke 15 unchanged. Model: baseline runner 0 of 50, two hop-dashes 0.9 s of the cycle, Run Speed 5 runner 0.5 s.
+  - *Checks:* coplanar audit clean (heads and rods through the stroke, neighbours at different strokes; the rods' undersides first lay in the
+    roof's underside plane when up, hence the 0.1 sink). Playtest: the rods follow their heads; the stored maxed profile (Run Speed 5, Jump Height
+    3, Triple Jump) jumping at 4 points in the press from 9 start times: 0 through, never above a head; baseline runner 0 of 15; two hop-dashes
+    **2 of 15** (leaving 0.0 / 0.3 s after the rise begins, 2.87 s through). Same window as before the rods: about 0.6 s, "go as they lift".
+  - *Slimmer rods (user, same day: "thinner than the crusher, for a better visual"):* the rods are now upright steel **cylinders, 6.2 across**
+    (a cylinder part turned 90° about Z; length unchanged, still welded, bottom sunk 0.1 into the head, top at y 132.9). 6.2 is the thinnest that
+    still blocks: the slot between the press walls is 8, so 0.9 is left on each side; a character is about 2 across the shoulders but only about 1
+    deep, so a player strafing sideways (shift lock) might slip through 1.5. Check (playtest, the stored maxed profile): Triple Jumps at 4 points in
+    the press from 9 start times facing forward and 9 strafing sideways (facing the wall, moving along the course), and single hops strafing
+    sideways from 4 start times while the heads are down: **0 of 22 through**; every one is stopped by `Rod1` (furthest u 118) and dies on the
+    lowered `Crusher1`. The coplanar audit does not cover cylinders; their round sides share no plane with the walls or roof.
 
 ## 8. Milestones (agreed 2026-10-21; status in [ROADMAP.md](ROADMAP.md), full scopes of finished milestones in `git show 53bd79b:docs/ROADMAP.md`)
 Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.

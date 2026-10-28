@@ -239,6 +239,19 @@ StageConfig.Stages = {
 		unlockPrice = 5500,
 		rewardFactor = 4.0,
 	},
+	{
+		key = "Stage15", -- Rising Tide (docs/STAGES.md §7.13): World 3 finale, a lava tide (KitTide) under World 3's signatures
+		displayName = "Stage 15",
+		folder = "Stage15",
+		order = 15,
+		world = 3,
+		requires = { { id = "DoubleJump", level = 2 }, { id = "Dash", level = 2 } }, -- Triple Jump, Long Dash
+		tBase = 100, -- provisional (clean run estimated at ~80 s); set after the user's run
+		tiers = StageConfig.DefaultTiers,
+		unlock = { stage = "Stage14", medal = "Bronze" },
+		unlockPrice = 5500,
+		rewardFactor = 4.25,
+	},
 }
 
 -- Worlds (docs/STAGES.md §7.1): `stage.world` 1..n; a world is a courtyard in Workspace.<folder> (plaza, wall, return portal)

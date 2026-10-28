@@ -61,7 +61,7 @@ src/StarterPlayer/StarterPlayerScripts/  client: obstacle kit (ObstacleKit, KitZ
                               checkpoints, gates / portals, pets (PetClient, PetFollow, PetsPanel), garden panels, settings
 src/StarterGui/               CoinGui, ScreenGui (TopLeftIcons/ButtonHandler, SkillsPanel, AdminPanel)
 src/Workspace/Handlers/       CheckpointTouchHandler, PlayerTimerHandler (required by every stage script)
-src/Workspace/                StartLocation (hub), Tutorial, World1 (Stage1-5), World2 (Stage6-10), World3 (Stage11-14), Garden,
+src/Workspace/                StartLocation (hub), Tutorial, World1 (Stage1-5), World2 (Stage6-10), World3 (Stage11-15), Garden,
                               DebugBaseplate (the sea kill brick); scene content of these is Studio-only
 ```
 
@@ -226,6 +226,7 @@ Keep tool output small (it all stays in the context):
 - `python tools/loc.py check` prints errors, a per-language count of texts waiting for review and a summary line;
   `loc.py review` lists the waiting texts when you actually review them.
 Studio MCP habits that cost time: a **minimized Studio window renders no 3D** (captures show only the GUI on white; found 2026-10-27): before capturing check `IsIconic` on the `RobloxStudioBeta` window and restore it with `ShowWindow(handle, 4)` (SW_SHOWNOACTIVATE) from PowerShell; `screen_capture` must run **one call at a time** (never two in one message) with a short pause between (about 1.5 s): parallel captures time out, after which captures come back white (3D not rendered) until Studio is restarted, and the MCP can lose the Studio instance (diagnosed 2026-10-23; sequential captures worked every time; after a restart the instance id changes); do not leave a playtest running (`start_stop_play` false at the end of every test, `Edit` calls fail in Play mode); a `MoveTo` bot cannot walk on a kit mover (use `Humanoid:Move`); teleporting a character into a coin or trigger is flaky (walk onto it); a character may not be loaded right after `start_stop_play` (wait for `HumanoidRootPart`). Snapshot and restore recipe for the live DataStores: copy `PlayerProfiles` `user_<id>` into `TestSnapshots` (`profile_<id>`, plus the `MostStars` value) before a test, write it back after the playtest has stopped (the profile is saved again on shutdown), and remove the test's entries from `GlobalLeaderboardsStore`. Accounts: `Lekzdrh` (9892673032, the developer in Studio) and `AhojRupert` (769364524, another admin account).
+DataStore restores: `GetAsync` returns two values (the value and a `DataStoreKeyInfo`); never pass `store:GetAsync(k)` straight as the last argument of `SetAsync` (the key info lands in the `userIds` slot: "Unable to cast Instance to Array"), assign it to a local first.
 `require` in the MCP `execute_luau` **Edit** context caches a ModuleScript across calls: after the module changed on disk
 (Argon) it may still return the old version (2026-10-24: `Locale` after L1.1). Check `.Source` in Studio, or test in a
 playtest (modules load fresh there).
