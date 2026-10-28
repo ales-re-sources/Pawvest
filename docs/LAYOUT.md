@@ -153,7 +153,7 @@ Most of the 119 scripts are identical copies. Edit them consistently (grep by co
 | Count | Variant | Example |
 |---|---|---|
 | 32 | checkpoint → `CheckpointTouchHandler.OnTouched` | `Workspace/World1/Stage2/1/C/Script.server.luau` |
-| 16 | kill on touch (`Humanoid.Health = 0`, then `Telemetry.MarkKill`, T1a) | `Workspace/World1/Stage5/Part_01/Script.server.luau` |
+| 10 | kill on touch (`Humanoid.Health = 0`, then `Telemetry.MarkKill`, T1a) | `Workspace/World1/Stage5/Part_06/Script.server.luau` |
 | 8 | kill player on touch (debounced by `hit`; then `Telemetry.MarkKill`; `DebugBaseplate`'s script is the same with other whitespace) | `Workspace/World1/Stage2/LaserStripStage/Part_01/…` |
 | 0 | ~~spinner~~: since S3.3c the Stage 2 spinners (`Workspace/World1/Stage2/SpinnerStage_1` / `_2`) are kit parts: attributes `Kind = Spin`, `Speed = 60` (the old 2° per `wait()`), `Kill` on the two sweeper bars, no `Carry` attribute on the two spinning plates (since 2026-10-25 they carry the character like `KitLab.Mover_Spin`; before, `Carry = false` made them only rotate under the player), tag `KitMover`, no scripts (the folders only hold `init.meta.json`; the hub pillars `Part_4/5`, `_2: Part_2/6` no longer rotate, their rotation was invisible) | – |
 | 7 | `TimerStart` (5 world stages, the Tutorial, the kit template) | `Workspace/Stage*/Gate/TimerStart/…`, `Workspace/Tutorial/LandingPad/TimerStart/…` |
