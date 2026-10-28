@@ -801,6 +801,12 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   220.6 and fall to the sea; baseline walkers leaving the middle of `904` at 8 points of the 3 s cycle: 4 cross (about 5.4 s to `905`), 4 die at
   `Crusher1`, as before; `905` -> `Summit` lands from 3 take-offs x 2 timings at baseline and with the maxed profile. *Not checked:* the look and the
   camera inside the press (no capture), a human run. Developer profile, `MostStars` and the Stage 11 board restored from `profile_<id>_s11press`.
+  - *Piston rods (user, 2026-10-28: "like Stage 15"):* `Movers.Rod1..4`, Metal cylinders standing on each crusher (unanchored, Massless, CanTouch /
+    CanQuery off, WeldConstraint to the crusher, as Stage 15's `Rod1..3`). Length 13.5 as on Stage 15 (y 203.4-216.9 at rest, still 4.4 inside the
+    roof at the full 9-stud stroke), but **5.6 across instead of 6.2**: the slot between the glass walls is only 6 here, so a 6.2 rod would cut 0.1 into
+    each wall when it comes down; 5.6 leaves 0.2. Checked in a playtest: every rod stays on its crusher (offset 0.000 over 3.2 s, Crusher1 y 192.5-201.5)
+    and the 8 baseline walkers from `904` give the same result as before (4 cross in 5.4 s, 4 die at `Crusher1`). Profile etc. restored from
+    `profile_<id>_s11rods`. *Not checked:* the look.
 
 ### 7.12 S8.2 Dash Bridge + Laser Lab (design check 2026-10-26; decisions with the user: Long Dash as Dash level 2, a `Roll` kit kind, soft-talent coins, arena + Dash room)
 - **Slots** (Studio survey 2026-10-26): the west openings of the World 3 courtyard. Stage 13 = west near gate (`SoonGate13`, x -219..-190, z -659..-630;
@@ -1231,6 +1237,67 @@ wait and every mistake into lost height.
     the press from 9 start times facing forward and 9 strafing sideways (facing the wall, moving along the course), and single hops strafing
     sideways from 4 start times while the heads are down: **0 of 22 through**; every one is stopped by `Rod1` (furthest u 118) and dies on the
     lowered `Crusher1`. The coplanar audit does not cover cylinders; their round sides share no plane with the walls or roof.
+- **S8.3b as built (2026-10-28)** (world coordinates; the return leg runs north on x -70, v 80). Checkpoints `1304`-`1306`: script folders copied
+  on disk from `1303`, Argon made the bare instances, `C` / `Core` / `Beam` / `Plate_<n>` taken over from `1303` (fronts: `1304` / `1305` east,
+  `1306` north). `FinishTemp` deleted; the finish portal model moved to the summit.
+  - *Segment 3 `DashRun`:* `1303` (z -344..-332, y 140.5) -> 34 gap -> `D1` (12 x 12, z -298..-286, y 142.5) -> 34 gap -> `D2` (z -252..-240, y
+    144.5) -> 34 gap -> `1304` (z -206..-190, y 146.5). `Axe` (4 x 52 x 2, `Swing` Hinge Z across the course, Angle 40, Period 3, Kill, run-seeded)
+    hangs from y 200 over the middle of the third gap (z -223), bottom 3.5 above the take-off; frame `AxePostW` / `AxePostE` (x ±40 from the
+    course, out of the blade's reach) and `AxeBeam` (y 202-205). The first build hung a 34 blade from y 179.5 (Stage 13's proportions): the triple
+    jump's flight peaks 9-15 below that pivot, where the blade hardly moves aside, and every bot died; with the pivot 55 above the take-off the blade
+    is in the flight path only near the bottom of its swing.
+  - *Segment 4 `Headwind`:* `Button` (KitButton, Group `TideDoor`, Time 9) on `1304`; `WindBeam1` / `WindBeam2` (8 wide, y 146.5, x -144..-120 and
+    -108..-84, the 12 gap between); `Wind` (KitZone, 60 x 30 x 12 over the beam, Push (-10, 0, 0), Period 3, Duty 0.5, run-seeded); `TideDoor`
+    (1 x 20 x 8 wooden door in the shaft's west wall, Stage 12's look and bands / knobs welded, hinge on its north edge, OpenTurn -90: it swings out
+    toward the approaching player, clean through the swing in the door audit).
+  - *Segment 5 `Chimney`:* shaft inside x -82..-58, z -210..-186 (walls `WallW_*` / `Lintel` round the door, `WallE`, `WallS` solid, `GlassN`
+    glass at transparency 0.5 so the camera can look in from the north, all from the sea to y 205.5). `1305` on the floor (y 146.5) beside the door;
+    `Slab1..3` (tops y 161.5 / 176.5 / 191.5) and `Roof` (y 206.5), 15 apart (a baseline Triple Jump rises about 21), each with **one 6 x 6 hatch**
+    (KitColorPlate, Group `Chimney`: slab 1 red in the south-east corner, slab 2 blue south-west, slab 3 red south-east, roof blue south-west) and a
+    `Toggle0..3` pad on the level below it (floor east, slab 1 / 3 north-west, slab 2 north-east). Groups start red, so each toggle opens the hatch
+    above and closes the one underfoot; stepping on it twice closes it again (costs a walk back, not a death). This differs from the table's "a red and
+    a blue hatch per slab": one hatch per level is Stage 14's proven pattern and already forces the walk across every slab. `Beam1` / `Beam2`
+    (KitBeam, 1 x 13.8 x 23.8 across the shaft at x -74 / -68, between slab 2 and slab 3, Period 3, Duty 0.5, Telegraph 0.4, Phase 0 / 0.867 so
+    the second follows the first by 0.4 s, run-seeded, FloorMark) cut slab 2 between its hatch and its toggle; `ChimneyGhosts` (KitGhostZone).
+  - *Segment 6 `Summit`:* `1306` on the roof (z -210..-198); `Ramp` (9.9 wide, z -212 -> -292, y 206.5 -> 226.5, Stage 13's slope) on two
+    `RampPost`s, `Ball1..4` (Stage 13's: two lanes x -72.5 / -67.5, Roll Distance 78, Period 6, phases 0 / 0.5 and 0.25 / 0.75, run-seeded),
+    `Pocket1..3` at its sides; `SweepPad` (10 x 24, y 226.5) between glass `SweepWallW` / `SweepWallE` (to y 256, out of a maxed Triple Jump's
+    reach, so nobody goes round the bar), `Sweeper` (21 x 9.8 x 1.5, Spin about the course's cross axis, axle 12 above the pad at z -304, Speed -45:
+    the lower arm moves north with the walker, Phase 90, Kill, Carry false, run-seeded) on `AxleW` / `AxleE` stubs; a 34 gap (drop 4) to `Crag`
+    (16 x 16, z -366..-350, y 222.5) with the finish portal (z -362, facing north); `TalentPillar` (3 x 3, top y 232.5, 25.5 above the roof, off the
+    shaft's south-east corner).
+  - *Tide (checkpoint attributes, world y / studs per s):* `1303` 116.5 / 1.5 (was 110.5), `1304` 125.5 / 1.5, `1305` 130 / 2.5, `1306` 182 / 1.75.
+  - *Coins* (`ChallengeCoins`, ids in `ChallengeCoinConfig`): `Stage15_1` Causeway1's corner, `_2` LowShelf (risky), `_3` on `T1`, `_4` D2's corner,
+    `_5` slab 2's north-west corner, `_6` 6.5 above slab 2 between the two beams (risky), `_7` over `Pocket2`, `_8` on `TalentPillar` (talent).
+    `economy.py pin` for the new coin count, check 43 / 43.
+- **S8.3b checks (Studio playtest 2026-10-28; bots at baseline WalkSpeed 16 / JumpPower 50, Triple Jump + Long Dash rebuilt as before; developer
+  profile snapshot `profile_<id>_s83b` restored, `MostStars` 45, the Stage 15 board left with the user's own 34.8 entry):**
+  - *Long Dash gaps:* `1303` -> `D1` (34, rising 2): Triple Jump + Long Dash at the apex lands 2 studs onto `D1`, dashing 0.2 s after the third jump
+    0.4; a short dash (0.2 s) and a dash 0.1 s after the third jump fall short. Rising 2 per gap makes these the hardest Long Dash gaps so far
+    (Stage 13's are flat or drop). Last gap (34, drop 4): lands 3.5 onto `Crag`.
+  - *Headwind:* walkers from `1304` reach the gap in about 2 s; a Double Jump launched in a gust fell 0.5 short, launched in the lull it lands;
+    button -> door -> `1305` in 5.4 s (door time 9).
+  - *Chimney:* toggle, hatch and Triple Jump up through every level work (each landing beside its hatch); crossing the beams just as `Beam1` goes
+    off passes; 0.3 / 0.6 s later died at `Beam2` before its phase fix (with 0.867 the window is about 1.2 s by the timing).
+  - *Ramp:* a plain walker or a lane-switching bot dies within 2 s (the two lanes cover the width, as on Stage 13); a bot that jumps the balls of its
+    own lane when one is 9-10 studs ahead got up 7 of 8 times in 5.4 s (5-6 studs ahead was too late).
+  - *Sweeper:* leaving the ramp top 0.45-2.4 s after an arm is vertical passes (about 2 s of its 4 s cycle); 0-0.3 s after, the walker catches the
+    rising arm, 3 s after, the next arm comes down.
+  - *Full timed run* (gate -> finish, tide live): `1301` -> `1302` 6.2 s. The crusher press stopped the bot (6 tries, the known 0.6 s window), so it
+    was put on `T1` and jumped to `1303` itself; from there without a death: `1303` -> `1304` 7.2 s (with the axe wait), `1304` -> `1305` 5.8 s,
+    `1305` -> `1306` 16.6 s (with the beam wait), `1306` -> finish 12.7 s; the run ended with a result and the tide parked. Smallest gap between
+    feet and tide: 24.8 / 21.2 / 11.9 / 18.2 studs in segments 3-6 (with the old floors of 3 and 4). Clean run about 55-60 s (`tBase` 100 stays
+    provisional until the user's run).
+  - *Budget:* the tide reaches the segment's end at 3.3x (segment 3) and 3.4x (segment 4) the bot's time, so both floors were raised 6 / 9 studs:
+    now 2.8x / 2.4x. Segment 5: the roof drowns at 30.8 s (1.9x), the floor at 6.6 s (the bot left it after about 3 s); segment 6: the crag at 23 s
+    (1.8x). A lost hazard cycle (axe 3 s, gust 3 s, beams 3 s, sweeper 4 s) still fits every segment by these times (not run as a bot).
+  - *Talent coin:* a baseline Triple Jump from the roof peaks 21.5 above it (pillar 25.5), Jump Height 3 peaks 26.5 and collected `Stage15_8`.
+  - *Tide:* after the finish the portal sent the bot to the gate, which started a new run: the tide rose at `1301` again and killed it there
+    (`Stage15.Tide`), respawns reset it.
+  - Static coplanar audit of `Stage15` clean apart from the gate and finish-arch stones every stage shares (one clash found and fixed: the ramp's
+    sides lay in the sweeper pad's side planes, so the ramp is 9.9 wide); the door audit is clean.
+  - *Not checked:* the look (no capture), a human run, the camera inside the shaft (west wall solid; the north side is glass), the rumble sound
+    (no asset), maxed-talent shortcuts in segments 3-6 (e.g. over the sweeper's top at 22.5 above the pad: a maxed Triple Jump rises 27).
 
 ## 8. Milestones (agreed 2026-10-21; status in [ROADMAP.md](ROADMAP.md), full scopes of finished milestones in `git show 53bd79b:docs/ROADMAP.md`)
 Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.

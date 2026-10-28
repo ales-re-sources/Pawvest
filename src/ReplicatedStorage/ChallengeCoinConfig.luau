@@ -132,6 +132,14 @@ ChallengeCoinConfig.Coins = {
 	{ id = "Stage14_6", stage = "Stage14", tier = "Risky" }, -- between laser grid beams 2 and 3, above the walking line
 	{ id = "Stage14_7", stage = "Stage14", tier = "Risky" }, -- over the sweepers' safe spot
 	{ id = "Stage14_8", stage = "Stage14", tier = "Talent" }, -- a ledge 25.5 above the Beam Hall floor: Triple Jump with Jump Height 3
+	{ id = "Stage15_1", stage = "Stage15", tier = "Easy" },
+	{ id = "Stage15_2", stage = "Stage15", tier = "Risky" }, -- on LowShelf, 8 below the causeway: the tide drowns it 10.7 s after the start
+	{ id = "Stage15_3", stage = "Stage15", tier = "Easy" },
+	{ id = "Stage15_4", stage = "Stage15", tier = "Easy" },
+	{ id = "Stage15_5", stage = "Stage15", tier = "Easy" },
+	{ id = "Stage15_6", stage = "Stage15", tier = "Risky" }, -- a hop between the chimney's two beams, with the lava coming
+	{ id = "Stage15_7", stage = "Stage15", tier = "Easy" },
+	{ id = "Stage15_8", stage = "Stage15", tier = "Talent" }, -- a pillar 25.5 above the shaft roof: Triple Jump with Jump Height 3
 }
 
 ChallengeCoinConfig.ById = {}
