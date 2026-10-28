@@ -63,7 +63,7 @@ Rules:
 | S5 | Worlds hub — done 2026-10-22: gates for Worlds 2-4 (coming soon, admins only), World 2 courtyard, signs, per-world stars boards (user's visual check) | ✔ | ✔ | – |
 | S6 | World 2 (stages 6–10) — S6.1 Double Up + Seesaw, S6.2 Turntable + Labyrinth, S6.3 Clocktower all built 2026-10-22 / 23, each crossed by a bot and one timed run paid out; Studio validation pending the open checks (course look, human difficulty / `T_base`, the user's Stage 9 run, door coplanar audit hits on `Stage9.Maze.Big.ExitDoor` and `Stage10.Movers.Door_10`, tick sound), see the S6 notes below | ✔ | partial | – |
 | S7 | Talents: Triple Jump + Dash (+ World 3 courtyard) — done 2026-10-24: talents, Q / gamepad / touch button, reach table, World 3 courtyard east of the hub; closed 2026-10-24 (the visual and real-device touch checks were waived by the user; Live-validated comes with the next publish) | ✔ | ✔ | – |
-| S8 | World 3 (stages 11–15) — S8.1 Triple Peaks + Ice Rink built and Studio-checked 2026-10-24 (kit ice, World 3 open), checked and tuned by the user 2026-10-26; S8.2 designed (STAGES §7.12: Long Dash = Dash level 2, kit `Roll` balls); S8.2a Stage 13 Dash Bridge built and bot-checked 2026-10-26 (awaits the user's check), S8.2b Stage 14 Laser Lab built and bot-checked 2026-10-26 (awaits the user's check), S8.3 not started | ✔ (S8.1) | ✔ (S8.1) | – |
+| S8 | World 3 (stages 11–15) — S8.1 Triple Peaks + Ice Rink built and Studio-checked 2026-10-24 (kit ice, World 3 open), checked and tuned by the user 2026-10-26; S8.2 designed (STAGES §7.12: Long Dash = Dash level 2, kit `Roll` balls); S8.2a Stage 13 Dash Bridge built and bot-checked 2026-10-26 (awaits the user's check), S8.2b Stage 14 Laser Lab built and bot-checked 2026-10-26 (awaits the user's check; its Key Vault rebuilt as lanes 2026-10-28), S8.3 not started | ✔ (S8.1) | ✔ (S8.1) | – |
 | S9 | Talents: Wall Jump + Glide | – | – | – |
 | S10 | World 4 (stages 16–20) | – | – | – |
 | M6b | Final balancing (all stages) | – | – | – |
@@ -459,6 +459,15 @@ Server and Clients mode for check 4; `screen_capture` one call at a time.
   a wrong toggle drops the player to the shaft floor and the floor pad resets the colours; keys and gates reset at a new run, not at a death; the side
   camera never shows Stage 13 parts in front of the lane; a baseline Triple Jump + Long Dash cannot reach the talent coin, Jump Height 3 can; a full run
   fires `1201`-`1206` in order and ends with a result.
+  - **Vault lanes (2026-10-27/28, the user's sketch; built and bot-checked, awaits the user's check; STAGES §7.12 → "Vault lanes"):** room 1 rebuilt
+    as stacked lanes (98 high on the left), teal hatches that open with the key, a barrier that shuts behind it, two colour switches and 16-stud
+    stepping stones, so the only route is the user's (the "floor -> platform A" route above no longer exists). Acceptance: `tools/vault_reach.py`
+    finds no shortcut at max talents and a route at baseline; a human run follows the sketch and must cross the dash corridor twice.
+  - **Vault tower (2026-10-28, the user's second sketch; built, model- and bot-checked, awaits the user's check; STAGES §7.12 → "Vault tower"):**
+    the green-key half rebuilt as a switchback of six ledges 9.5 apart (first ten, then six 15.8 apart: too long, then too easy; room
+    back to 65 high), a ceiling spike in the top lane, the key in a notch at the
+    slot floor, a green hatch that opens with the key held as the way back down; the bounce orb is gone (appearing steps were tried and taken out).
+    Acceptance: `bash tools/vault_right_checks.sh` passes; a human climb follows the sketch and can jump-dash every ledge spike.
 
 ### G1 — Player guidance hints (design: GDD §11; scope 2026-10-27, user request)
 A player who finished a stage did not know where to go next (in World 1 the big wooden world sign hides the gates across the

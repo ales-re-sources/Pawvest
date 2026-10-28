@@ -130,7 +130,6 @@ return {
 	["faces.coinsFound"] = "[!! 💰 föůňď {found}/{total} ~~~~ !!]",
 	["unlock.bar.world"] = "[!! {star} {n} öf {max} íň Wöřlď {world} ~~~~~~ !!]",
 	["unlock.bar.stage"] = "[!! {stars} {medal} öň {stage} ~~ !!]",
-	["arena.keys"] = "[!! KĚÝŠ ~~ !!]",
 	["arena.keyCollected.Teal"] = "[!! Ťěál kěý čöllěčťěď ~~~~~~~ !!]",
 	["arena.gateOpened.Teal"] = "[!! Ťěál gáťě öpěňěď ~~~~~~ !!]",
 	["arena.keyCollected.Green"] = "[!! Gřěěň kěý čöllěčťěď ~~~~~~~~ !!]",

@@ -1,12 +1,15 @@
 -- ArenaClient: what the local player sees of the Laser Lab's Key Vault (Stage 14 room 1, ArenaConfig / ArenaServer). Everything
--- here is local: a key the player holds disappears for them only, a gate they opened disappears and stops colliding for them
--- only (the client owns its character's physics, like GateDoors). Also the key HUD (shown inside the vault's camera zone) and
+-- here is local: a key the player holds disappears for them only, a gate they opened fades out and stops colliding for them
+-- only (the client owns its character's physics, like GateDoors); a ClosesWhenOpen gate fades in instead, a KillWhileShut
+-- strip stops killing, an OpensWhenHeld gate opens on the key pickup itself (no lock). Every part tagged with a gate's KeyId
+-- goes with it (Pillar_Lock and its lock decor under Gate_Teal). Also the key chips (shown inside the vault's camera zone) and
 -- short toasts, built in code.
 
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 local ArenaConfig = require(ReplicatedStorage:WaitForChild("ArenaConfig"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
@@ -16,10 +19,18 @@ local LocalPlayer = Players.LocalPlayer
 local SPIN_SPEED = math.rad(100) -- key spin around the world Y axis, per second
 local BOB_HEIGHT = 0.5 -- studs
 local OPEN_TRANSPARENCY = 1 -- an opened gate disappears
+local FADE_TIME = 0.8 -- seconds a gate takes to fade out (or in) when a key changes it
+local KILL_TAG = "KitKill" -- ObstacleKit's static kill part
 local TOAST_TIME = 2.5
+-- The key chips ride on the stage timer's row (StarterGui.ScreenGui.StageTimer, Studio-authored, centred at 5 % of the
+-- screen height, 50 px tall), right of its text, so they cost no screen height (a bar under the timer covered too much
+-- of a phone's view); the toast shows under the timer for a moment.
+local TIMER_Y = 0.05
+local TIMER_HALF = 25
+local CHIP_GAP = 12 -- px between the timer text and the chips
 
 local keyModels = {} -- [hit part] = { visual = Model, base = CFrame, parts = { [part] = transparency }, hidden = boolean }
-local gates = {} -- [part] = { transparency = number }
+local gates = {} -- [part] = { transparency = number, collide = boolean, touch = boolean, tween = Tween? }
 local held = {} -- keys held (ArenaKeys)
 local opened = {} -- gates opened (ArenaOpened)
 
@@ -33,38 +44,34 @@ gui.AutoLocalize = false -- translated by Locale (L2)
 gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
 local bar = Instance.new("Frame")
-bar.AnchorPoint = Vector2.new(0.5, 0)
-bar.Position = UDim2.new(0.5, 0, 0, 12)
-bar.Size = UDim2.fromOffset(190, 44)
+bar.AnchorPoint = Vector2.new(0, 0.5)
+bar.Position = UDim2.new(0.5, CHIP_GAP, TIMER_Y, 0)
+bar.AutomaticSize = Enum.AutomaticSize.XY
 bar.BackgroundColor3 = Color3.fromRGB(20, 20, 24)
-bar.BackgroundTransparency = 0.25
+bar.BackgroundTransparency = 0.35
 bar.Parent = gui
-Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 10)
-
-local title = Instance.new("TextLabel")
-title.BackgroundTransparency = 1
-title.Position = UDim2.fromOffset(12, 0)
-title.Size = UDim2.new(0, 60, 1, 0)
-title.Font = Enum.Font.GothamBold
-title.Text = Locale.T("arena.keys")
-Locale.Changed:Connect(function()
-	title.Text = Locale.T("arena.keys")
-end)
-title.TextColor3 = Color3.new(1, 1, 1)
-title.TextSize = 16
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.Parent = bar
+Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 8)
+local padding = Instance.new("UIPadding")
+padding.PaddingLeft = UDim.new(0, 6)
+padding.PaddingRight = UDim.new(0, 6)
+padding.PaddingTop = UDim.new(0, 5)
+padding.PaddingBottom = UDim.new(0, 5)
+padding.Parent = bar
+local list = Instance.new("UIListLayout")
+list.FillDirection = Enum.FillDirection.Horizontal
+list.Padding = UDim.new(0, 6)
+list.SortOrder = Enum.SortOrder.LayoutOrder
+list.Parent = bar
 
 local slots = {} -- [keyId] = Frame (filled when held)
 for index, id in ArenaConfig.Keys do
 	local slot = Instance.new("Frame")
-	slot.AnchorPoint = Vector2.new(0, 0.5)
-	slot.Position = UDim2.new(0, 78 + (index - 1) * 50, 0.5, 0)
-	slot.Size = UDim2.fromOffset(40, 28)
+	slot.LayoutOrder = index
+	slot.Size = UDim2.fromOffset(28, 18)
 	slot.BackgroundColor3 = ArenaConfig.KeyColors[id]
 	slot.BackgroundTransparency = 0.85
 	slot.Parent = bar
-	Instance.new("UICorner", slot).CornerRadius = UDim.new(0, 6)
+	Instance.new("UICorner", slot).CornerRadius = UDim.new(0, 5)
 	local stroke = Instance.new("UIStroke")
 	stroke.Color = ArenaConfig.KeyColors[id]
 	stroke.Thickness = 2
@@ -72,9 +79,26 @@ for index, id in ArenaConfig.Keys do
 	slots[id] = slot
 end
 
+-- right of the timer's text while a run shows it, else centred where the timer would be
+local timerLabel: TextLabel? = nil
+local function placeChips()
+	if not (timerLabel and timerLabel.Parent) then
+		local screen = LocalPlayer.PlayerGui:FindFirstChild("ScreenGui")
+		local found = screen and screen:FindFirstChild("StageTimer")
+		timerLabel = if found and found:IsA("TextLabel") then found else nil
+	end
+	if timerLabel and timerLabel.Visible and timerLabel.Text ~= "" then
+		bar.AnchorPoint = Vector2.new(0, 0.5)
+		bar.Position = UDim2.new(0.5, math.ceil(timerLabel.TextBounds.X / 2) + CHIP_GAP, TIMER_Y, 0)
+	else
+		bar.AnchorPoint = Vector2.new(0.5, 0.5)
+		bar.Position = UDim2.new(0.5, 0, TIMER_Y, 0)
+	end
+end
+
 local toast = Instance.new("TextLabel")
 toast.AnchorPoint = Vector2.new(0.5, 0)
-toast.Position = UDim2.new(0.5, 0, 0, 64)
+toast.Position = UDim2.new(0.5, 0, TIMER_Y, TIMER_HALF + 8) -- under the timer
 toast.Size = UDim2.fromOffset(320, 36)
 toast.BackgroundColor3 = Color3.fromRGB(20, 20, 24)
 toast.BackgroundTransparency = 0.2
@@ -147,18 +171,40 @@ local function refreshKeys()
 end
 
 ------------------------------------------------------------------ gates
-local function refreshGate(part: BasePart, state)
-	local isOpen = opened[part:GetAttribute(ArenaConfig.KeyAttribute)] == true
-	part.CanCollide = not isOpen
-	part.CanTouch = not isOpen
-	part.Transparency = if isOpen then OPEN_TRANSPARENCY else state.transparency
+local function refreshGate(part: BasePart, state, fade: boolean?)
+	local id = part:GetAttribute(ArenaConfig.KeyAttribute)
+	local isOpen = (if part:GetAttribute(ArenaConfig.HeldAttribute) == true then held[id] else opened[id]) == true
+	local shut = isOpen == (part:GetAttribute(ArenaConfig.ClosesAttribute) == true)
+	if part:GetAttribute(ArenaConfig.KillAttribute) == true then
+		-- a local tag change: ObstacleKit stops (or starts) testing the strip for this player only
+		if shut then
+			CollectionService:AddTag(part, KILL_TAG)
+		else
+			CollectionService:RemoveTag(part, KILL_TAG)
+		end
+	else
+		-- decor tagged with its gate (the lock on Pillar_Lock) only fades: it never starts colliding
+		part.CanCollide = shut and state.collide
+		part.CanTouch = shut and state.touch
+	end
+	local transparency = if shut then state.transparency else OPEN_TRANSPARENCY
+	if state.tween then
+		state.tween:Cancel()
+		state.tween = nil
+	end
+	if fade and part.Transparency ~= transparency then
+		state.tween = TweenService:Create(part, TweenInfo.new(FADE_TIME), { Transparency = transparency })
+		state.tween:Play()
+	else
+		part.Transparency = transparency
+	end
 end
 
 local function addGate(part: Instance)
 	if not part:IsA("BasePart") or gates[part] then
 		return
 	end
-	local state = { transparency = part.Transparency }
+	local state = { transparency = part.Transparency, collide = part.CanCollide, touch = part.CanTouch }
 	gates[part] = state
 	refreshGate(part, state)
 end
@@ -183,6 +229,9 @@ local function onKeysChanged()
 		end
 	end
 	refreshKeys()
+	for part, state in gates do
+		refreshGate(part, state, true) -- an OpensWhenHeld gate follows the held keys
+	end
 end
 
 local function onOpenedChanged()
@@ -194,7 +243,7 @@ local function onOpenedChanged()
 		end
 	end
 	for part, state in gates do
-		refreshGate(part, state)
+		refreshGate(part, state, true)
 	end
 end
 
@@ -215,6 +264,9 @@ onOpenedChanged()
 refreshVisibility()
 
 RunService.RenderStepped:Connect(function()
+	if gui.Enabled then
+		placeChips()
+	end
 	local now = os.clock()
 	local spin = CFrame.Angles(0, (now * SPIN_SPEED) % (2 * math.pi), 0)
 	local bob = CFrame.new(0, math.sin(now * 2) * BOB_HEIGHT, 0)

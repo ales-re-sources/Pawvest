@@ -19,6 +19,9 @@ per-stage Top-10 leaderboards, collectible coins and a small admin panel.
 - [docs/STAGES.md](docs/STAGES.md) — stage expansion to ≈ 20 stages: obstacle component catalogue, combination patterns, difficulty curve, special / bonus stages, talent gating, worlds / hub layout, proposed S milestones.
 - [docs/ECONOMY.md](docs/ECONOMY.md) — E0 economy decisions (provisional): crop field parameters, guardrails A-C, recommended crop catalogue / square tiers / ladder scale, open decisions, how to re-run.
 - `tools/economy.py` — economy model (E0): reads the Coin numbers from the Luau configs, `report` (baseline tables), `sim` (60-day archetype simulation incl. the crop field, `--garden pens|field|both`), `check` (drift against `tools/economy_pins.json` + acceptance checks), `pin` (accept reviewed config values). Run `check` after changing any price, rate or reward in a config; see ROADMAP → E0.
+- `tools/vault_reach.py` — 2D reachability search of Stage 14's Key Vault (every path a player with given talents can take; measured jump
+  heights): finds shortcuts at max talents and checks the route at baseline. Re-run it after moving any vault part (docs/STAGES.md → "Vault lanes";
+  the right half, `RIGHT=1`: `bash tools/vault_right_checks.sh`, → "Vault tower").
 
 Work milestone by milestone per ROADMAP (design check → implement → Studio validation → status update → commit);
 update the status levels (Implemented / Studio-validated / Live-validated) only after validation.

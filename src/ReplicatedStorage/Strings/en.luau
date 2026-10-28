@@ -130,7 +130,6 @@ return {
 	["faces.coinsFound"] = "💰 found {found}/{total}",
 	["unlock.bar.world"] = "{star} {n} of {max} in World {world}",
 	["unlock.bar.stage"] = "{stars} {medal} on {stage}",
-	["arena.keys"] = "KEYS",
 	["arena.keyCollected.Teal"] = "Teal key collected",
 	["arena.gateOpened.Teal"] = "Teal gate opened",
 	["arena.keyCollected.Green"] = "Green key collected",

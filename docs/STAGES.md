@@ -386,6 +386,12 @@ Not a stage: a translucent replay of your own best run on any stage, to race aga
 position about 10 times a second during a run; the best run's track is stored in its own DataStore (about 10–30 KB per
 stage and player). Unscheduled; a good replay hook after S10.
 
+### 5.5 Idea: branching appearing steps (user, 2026-10-28)
+A stage built on `KitStep` (ObstacleKit: a block is solid only once the player stood on the previous one of its group). Tried in
+the vault's green-key half and taken out again (the user: not a fan of it there). The idea for a stage of its own: stepping on one
+block makes two appear, and the player has to pick the right one; the other leads to a dead end. `KitStep` would need a block to name
+the block(s) it follows (e.g. a `After` attribute instead of the plain `Step` order). Unscheduled.
+
 ## 6. Skill requirements
 
 ### 6.1 What can be a hard gate
@@ -927,6 +933,113 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
     panel (deleted), the `1204`-`1206` plates (5.8 deep).
   - *Not checked:* the look (screen captures came back white), whether the camera blends between `LabCamera` (45) and `VaultCamera` (55), a human run through
     the vault (the bot teleported between its sections; the route was checked by the kinematic search in §5.2), the real `T_base` (135 provisional).
+- **Vault lanes (room 1 redesigned 2026-10-27/28 from the user's sketch; built and bot-checked, awaits the user's check).** The user's route: the dash
+  corridor along the floor, a switchback up the right (`Block_Float2` from its right side, `Block_Float1`), left along `PlatformA`, up the wall ledges,
+  right along `PlatformB`, up `Block_Top2` -> `Block_Top1` -> the teal key, then a fall back to the entrance floor and the dash corridor again. The
+  old room did not force any of it: a Triple Jump rises 21.8 studs (27.0 with Jump Height 3), a third of the room, and the fastest max-talent path
+  was floor -> `LedgeL1` -> key. Height alone cannot separate levels that close, so the room became **stacked lanes, each under a solid roof, open
+  at alternate ends**, plus one-way teal gates and two colour switches (coordinates u / h as above, lane z -583..-577):
+  - *Shell:* the room is **98 high over u 40-100.7** (`CeilingTall` h 98-102, `BackPanelTall` / `LaneWallTall` h 66-98, `WallLeft` to 98) and stays
+    64 high to the right; `RightWall` (u 96.82-100.7, h 32.8-98) seals lanes 2 and 3 from the right. `VaultCamera` covers h -8..104.
+  - *Lane 0 (floor, roof `PlatformA` + `Hatch_Low`):* `Hatch_Low` (teal `ArenaGate`, u 44-64.4, h 15.4-19.2) closes the gap between the wall and
+    `PlatformA`, so nothing above can be reached from the entrance floor; the only exit is past the spikes (single jump + Long Dash under the 15.4 roof).
+  - *Switchback:* `Block_Float2` widened to u 121.4-129.3; `Switch_Lane1` (`KitSwitch` Group `Vault1`, Color Blue) on its right part ghosts
+    `Bar_Lane1` (`KitColorPlate` Red, u 90.5-91.5 across lane 1). Without the switch a dash + air jumps onto `PlatformA`'s right end leads nowhere.
+  - *Lane 1 (`PlatformA`, roof `PlatformB`), going left:* exit at the left end, up `LedgeL1` / `LedgeL2`. `Switch_Lane2` (Group `Vault2`) on `LedgeL2`
+    ghosts `Bar_Lane2` (u 76-77 across lane 2): jumping from lane 1 straight onto `PlatformB` leads nowhere. `Gate_TealBehind` (u 96.82-98.82,
+    h 19.2-32.8, `ClosesWhenOpen`) is absent until the teal key, then shuts lane 1's right exit.
+  - *Lane 2 (`PlatformB`, roof `Lid` + `Hatch_High` at h 46-48), going right:* `Lid` u 68.5-84 with a deadly top `Spikes.LidKill` (h 48-48.5);
+    `Hatch_High` (teal, u 44-68.5) with `Gates.HatchKill` on top (`ArenaGate` + `KitKill` + `KillWhileShut`: deadly until the key, then gone). Exit
+    up the chimney between the lid's end and `RightWall`.
+  - *Lane 3 (over the deadly lid), going left, 16-stud steps:* `Block_Top2` u 85-91 top 52.6, `Block_Top1` u 71-77 top 68.6 (both 6 wide, spike on the
+    left part), key `Hit` u 58-65 h 88-94. A step of 16 is in a baseline Triple Jump (21.8), two steps (32) are out of a maxed one (27 + ~2 ledge snap),
+    so each stone is needed.
+  - *After the key:* both hatches open, the player falls down the shaft to the entrance floor, `Gate_TealBehind` shuts lane 1, and the only way to the
+    teal gate is the dash corridor again. The right half of the vault (green key, exit) is unchanged.
+  - *Code:* `ArenaConfig.ClosesAttribute` / `KillAttribute` handled in `ArenaClient.refreshGate` (a kill strip's `KitKill` tag is removed locally;
+    `CanTouch` cannot be used, the Stage 10 gargoyles' kill parts have it off); `ObstacleKit` also clears the colour groups at a run start.
+  - *Model:* `tools/vault_reach.py` searches every path (optimal timing, jumps at the apex, the dash anywhere) for a profile: `max` (Jump Height 3,
+    Run Speed 5, slim body, 2-stud ledge snap) to hunt shortcuts, `base` (Triple Jump + Long Dash only) for feasibility. Checks (as built, all pass):
+    with either barrier shut the key is unreachable (and `Switch_Lane2` needs `Bar_Lane1` open); without `Block_Top2` or without `Block_Top1` the key
+    is unreachable even at max; `base` reaches the key through every lane; after the key, with the dash corridor plugged, no max path reaches the
+    right floor. Re-run it after moving any vault part.
+  - *Studio playtest (2026-10-28, bot driving the root velocity, real jumps, the dash rebuilt as in `TalentDash`):* jump rises measured 7.29 / 21.81
+    (baseline single / triple) and 9.03 / 26.99 (Jump Height 3), as the model assumes; pads ghost their barriers, a death shuts them again; baseline
+    `PlatformB` -> `Top2` -> `Top1` -> key without a dash (`Top2` -> `Top1` carries 15.3 studs, the first layout needed 19 and fell on the lid); the
+    key opens both hatches, removes the strip's kill, shuts `Gate_TealBehind`; the fall lands on the floor at u 62; a maxed Triple Jump out of lane 1's
+    right end is stopped by the barrier; baseline jump + Long Dash from the floor recrosses the corridor (lands at u 108). No script errors; static
+    coplanar audit of the vault clean. Backup of the old room: `ServerStorage.VaultBackup_20261027` (tags stripped; delete after the user's check).
+  - *Not checked:* a human run of the whole vault, the run-start reset of the switches (needs a real run), the look of the empty upper back panel.
+  - *After the user's first playtest (2026-10-28):* the user added `Spikes.Floor_9` (hit u 81.7-83.8 on the floor, the dash felt too easy).
+    `VaultCamera` now reaches the gate line (x -457..-205): the entry hall (`TeachBeam`) and checkpoint `1201` used `LabCamera` (Distance 45) or no
+    zone at all, so a respawn at `1201` switched cameras twice. `Gate_Teal` sits on top of `Pillar_Lock` (u 154.9-156.9, h 12.14-64); the pillar and
+    its `LockTeal_*` decor carry `ArenaGate` + `KeyId = Teal` and fade out with it (`ArenaClient` fades every gate change over 0.8 s and never turns
+    on collision of a part authored without it). Checkpoint `1203` (u 164, right behind the old gate, 22 studs after `1202`) removed on disk.
+    The `Beam` cylinders of `1202`-`1206` were lying along Z (rotation 0, 90, 0); turned upright like `StageKit.Checkpoint`.
+    Re-checked: `base` still reaches the key with Floor_9, and from the landing (u 61.7) after the key recrosses the corridor to the right floor;
+    playtest: the start at `1201` is inside `VaultCamera` (camera 55 studs off), the pillar, lock and gate fade out in 0.8 s, the lock decor never
+    collides; the coplanar audit of the vault, entry and checkpoints is clean.
+  - *Switch wires (user's pick of three: wire + pulse, recoloured pads, matching numbers):* nothing tied a pad to its barrier. `Decor.Wire_Lane1_1/2`
+    (up from `Switch_Lane1` at x -340.5, left at y 104 into `Bar_Lane1`) and `Wire_Lane2_1/2` (up from `Switch_Lane2`, along y 119.3 into
+    `Bar_Lane2`): 0.5 wide, 0.25 deep at z -577.30..-577.05 (clear of the back panel's face), dim red SmoothPlastic, tag `KitWire` + Group + Order,
+    no collision / touch / query. `KitWires.client.luau` runs a green bead along the wire at 45 studs/s when the pad is pressed, lights each segment
+    it passes (green Neon, while the group is off Red) and flashes the barrier (a white Neon box fading over 0.6 s); a death or run start puts the
+    wire back to rest. Playtest: bead from the pad to the bar in 1.2 s, flash on arrival, wire dim again after a death, no errors; audit clean.
+    Sound: Studio-only `ReplicatedStorage.SwitchSound` (rbxassetid://830440268, 0.17 s, volume 0.5, added by the user) clicks as the pad is pressed, when the bead sets off.
+- **Vault tower (the right half, green key; rebuilt 2026-10-28 from the user's second sketch; built, model- and bot-checked, awaits the user's check).**
+  The user's route: from the teal pillar along the floor, then `Block_Right2`, `Block_Right1`, `Slab_Step`, `Base_L` (hop `BaseTiny_15`),
+  `Base_L_Post`, the zig-zag between the E's arms and the columns (`E_ArmBottom`, `Column_2`, `E_ArmMid`, `Column_1`, `E_ArmTop`), over
+  `E_Stem` and down the slot between `E_Bar` and the stem past two spikes to the key. As first built the blocks rose 4 studs a step in an open
+  chimney: a maxed Triple Jump (27) skipped from the floor to `Base_L` and from `Base_L` to the E's top, and an arm reached the key from the left
+  (the pocket under `E_Bar` was open on that side). A first fix, blocks that appear one after another (`KitStep`), was taken out again (the user
+  did not like it here; the mechanic stays in ObstacleKit for a stage of its own, §5.5). The bounce orb (`Pickups.Orb` / `OrbRing`) is removed.
+  - *Shell:* the right half is **65 high over u 157.83-220** (`Shell.CeilingRight` h 65-69, as deep as the left half's `Ceiling`, h 64-68,
+    which ends at u 157.83 above the teal pillar; `WallRightUpper` to 65; the back panel and lane wall reach h 66 like the left half's). It was
+    103 high for the ten-ledge tower (`BackPanelRight` / `LaneWallRight` h 66-103, deleted). `VaultCamera` covers h -8..115, `VaultGhosts` h 0..107.
+  - *Tower (switchback lanes, like the first half; ten lanes, then six 15.8 apart, now six 9.5 apart, all 2026-10-28: ten jump-dashes were
+    too long, the tall six-lane version too easy):* six ledges, 2 thick, tops 9.5 apart (9.5, 19, 28.5, 38, 47.5, 57), hung alternately
+    from `Solids.RightMass` (u 200.2-216, h 7.5-65; ledges u 179.2-200.2, gap 174.2-179.2 at the left) and from `E_Stem` (u 172.2-174.2,
+    h 7.5-57, 2 thick; ledges u 174.2-195.2, gap 195.2-200.2 at the right; ledges 21 long since the slot was widened, the spikes of the
+    R-hung ledges moved 2 right with them). Every ledge roofs the lane below except at its gap, the gaps alternate, so
+    each lane is walked in turn: `Block_Right2` (R-hung), `Block_Right1` (stem), `Slab_Step`, `Base_L`, `Column_1`, `E_ArmTop`. The count
+    must be even: the top ledge hangs from the stem, flush with its top, so the climb ends walking left over the stem into the slot. Lanes are
+    7.5 high: a ledge-up is a double jump through the gap; one spike in the middle of every ledge (`Right2_13`, `Right1_12`, `Slab_23`,
+    `BaseTiny_15`, `Column1_19`, `ArmTop_24`), and under that roof a plain hop cannot clear it (the head hits the roof): each one is a
+    **jump + Long Dash**, the dash corridor's move. The top lane (8 high under the ceiling) also has **`Ceiling_21`** back, from
+    `ServerStorage.VaultBackup_20261027` at 0.7 scale (`Hit` u 189-190.46, h 63.46-65, visual tip at 62.44): right after the ledge-up from
+    `Column_1` the player must walk under it, a hop there dies (the backup's `Hit` had lost its `KitKill` tag; re-added). Taken out with the
+    four middle ledges: `Base_L_Post`, `E_ArmBottom`, `Column_2`, `E_ArmMid` and their spikes `PostTop_14`, `ENotch_17`, `Column2_20`,
+    `EMid_16` (the ten-ledge parts are in `ServerStorage.VaultTower10_Backup`).
+  - *Floor lane:* h 0-7.5 under everything from the doorway (under `E_Bar`) to the green lock and the exit; `Block_Right2`'s gap above it is
+    the way in.
+  - *Slot and key (widened 2026-10-28 from 4.2 to 10.2, the user got past `EBarSide_22` once in five tries):* `E_Bar` (u 157.83-162, the right half's left wall, to the ceiling) in three parts (`E_BarLower` h 7.5-41, `E_BarNotchBack`
+    u ..159 h 41-45.5, `E_Bar` h 45.5-65): a notch at the slot floor holds the key (`Key_Green.Visual` at half size, `Hit` u 159-162.4,
+    h 41-45.5: touched only by a player who landed left of the bottom spike). The slot is u 162-172.2; `EBarSide_22` on the bar near its top
+    (h 55.6-56.8), `EBottom_18` on the floor (u 166.8-168.13). The slot floor is `Gates.SlotHatch` (green, u 162-172.2, h 39-41, `KeyId`
+    Green + `OpensWhenHeld`): it fades out as soon as the key is held, with the bottom spike (its parts are ArenaGates too, the hit `KillWhileShut`),
+    and the player drops the shaft below the slot (between `E_BarLower` and the stem) to the floor lane, then walks to the lock.
+  - *Why the narrow slot failed:* stepping off the stem always carries walking speed (about 20 studs/s; with no input the character
+    still drifts about 4 studs), the fall pose reaches the hands about 2 studs ahead, and ObstacleKit tests the bounding boxes of every
+    character part (accessories too). In the 4.2 (and a tried 6.2) slot the hands reached the left wall at feet h 54-55, inside the side
+    spike's band, whatever the input: walking off, letting go, even pulling back at once (the pull-back clears the wall only below h 47, too
+    late to get back left of the bottom spike). In the 10.2 slot (bot runs, all spikes armed): **walk off holding left** lands at the
+    wall on the key (alive); a jump in also passes under the side spike; a **dash in** dies on `EBarSide_22`; **letting go** after the step
+    dies on `EBottom_18` (lands u 165.6-168.8); a slow straight drop (thumbstick) lands right of it (u 168.7-171.8) and hops it to the key.
+  - *Code:* `ArenaConfig.HeldAttribute` (`OpensWhenHeld`): `ArenaClient` opens such a gate on the key pickup itself (no lock) and refreshes
+    gates on key changes. The gate fade of 2026-10-28 (0.8 s, decor never collides) had been lost when Studio restarted and Argon synced
+    Studio's older copy over the file; restored.
+  - *Model:* `RIGHT=1` in `tools/vault_reach.py` (the tower as built, `PLUG=k` fills the gap of ledge k, `HATCH=open`), `MAX_STATES` env;
+    `bash tools/vault_right_checks.sh` (8 checks in parallel, about a minute): a baseline player gets from the doorway to the key and lands
+    left of the bottom spike; with any one of the six gaps plugged a maxed player reaches no key (so every lane is on every way to it); with the
+    hatch open the slot leads to the lock zone. All pass.
+  - *Studio playtest:* drop from the stem: hold u 164.2 past the side spike, steer left below it, land on the hatch at u 163 alive, key
+    taken, hatch and bottom spike fade, fall 79 studs to the floor alive, walk right, the lock opens `Gate_Green` (in the 103-high room; the slot is the same 38 lower now);
+    jump + Long Dash clears a ledge spike under a 7.5 roof (peak 3.3-3.5 above the ledge), a plain running hop dies on it (peak 3.6, the
+    head at the roof); walking under `Ceiling_21` survives, a hop under it dies. Coplanar audit of the vault clean (`E_Bar` snapped to
+    `Pillar_Lock`'s face, which it overlapped by 0.05; `CeilingRight` made as deep as `Ceiling`, its 10-stud depth shared the back panel's
+    face once lowered). No errors.
+  - *Not checked:* a human climb (six lanes, six jump-dashes and the ceiling spike; a death sends the player back to `1202`, there is no checkpoint in the tower),
+    the look (old `Decor.Tile` panels still hang on the back wall behind the tower).
 
 ## 8. Milestones (agreed 2026-10-21; status in [ROADMAP.md](ROADMAP.md), full scopes of finished milestones in `git show 53bd79b:docs/ROADMAP.md`)
 Stage milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.

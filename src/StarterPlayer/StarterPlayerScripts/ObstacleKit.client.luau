@@ -36,7 +36,13 @@
 --             after Return s (default 3). Other players see it at rest.
 --   KitSwitch / KitColorPlate  colour puzzle (kit-local): stepping on a KitSwitch (attributes Group, Color; Color "Toggle"
 --             flips Red / Blue) sets that Group's colour; a KitColorPlate (Group, Color "Red" / "Blue") is solid only while its
---             Group shows its colour, a ghost otherwise. Groups start Red.
+--             Group shows its colour, a ghost otherwise. Groups start Red (again at every death and run start). KitWires
+--             draws the link (KitWire parts from a switch to its plates) from the published KitColors.
+--   KitStep   appearing steps (kit-local, Stage 14's vault, right half): attributes Group, Step (1, 2, …). Step 1 is always
+--             solid; step n is a ghost (GhostTransparency, default 0.75; no collision, no queries) until the player has
+--             stood on step n-1 of its group, then fades in (and ReplicatedStorage.SwitchSound clicks, if present), so only
+--             the next block of a route exists and no jump can skip one. Vanish = true turns it round: solid until step
+--             n-1 was stood on, then gone (the lid over the green key's slot). Groups start over at every death and run start.
 --   KitButton / KitDoor  pressure door (kit-local, S6.3, the Clocktower): standing on a KitButton (attributes Group, Time s, default 4)
 --             opens every KitDoor of that Group for Time s for the local player; stepping on the button again restarts the time.
 --             The door slides OpenDistance studs (default its height) along OpenAxis (world Vector3, default up) in OpenTime s
@@ -63,7 +69,7 @@
 --             is pushed off), SlideSpeed studs/s. Kit-local: other players see the plate at rest.
 -- Diagnostics are mirrored to attributes on the local player: KitStandingOn, KitDrift, KitStandTime, KitFrameMs,
 -- KitTiltAngle, KitKillAt (server time of the last client kill), KitKilledBy (name of the part that killed), KitColors
--- (e.g. "A=Blue,B=Red") and KitRunStart (server time the current run started, 0 when none).
+-- (e.g. "A=Blue,B=Red"), KitSteps (e.g. "Vault3=4": the highest step reached per group) and KitRunStart (server time the current run started, 0 when none).
 -- All kit-local state (crumbled plates, colour groups) resets when the character dies or respawns.
 
 local CollectionService = game:GetService("CollectionService")
@@ -99,6 +105,9 @@ local crumbles = {} -- [part] = { state, base, transparency, since }
 local switches = {} -- [part] = true
 local colorPlates = {} -- [part] = { transparency, solid }
 local colorState = {} -- [group] = "Red" / "Blue"
+local steps = {} -- [part] = { transparency, solid, shown }
+local stepReached = {} -- [group] = highest Step stood on in this life
+local STEP_FADE = 0.25 -- seconds a step takes to fade in or out
 local buttons = {} -- [part] = { color }
 local doors = {} -- [part] = { transparency, look }
 local doorOpenUntil = {} -- [group] = os.clock() when that group's doors close again
@@ -231,6 +240,38 @@ local function addColorPlate(part: Instance)
 	end
 end
 
+local function addStep(part: Instance)
+	if part:IsA("BasePart") then
+		steps[part] = { transparency = part.Transparency, solid = true, shown = 1 }
+	end
+end
+
+-- The step under the feet, by a cast that sees only steps: the vault's steps carry spikes (KitKill boxes on their tops)
+-- that the kit's floor sphere would find first. Ghost steps have CanQuery off, so only solid ones are found.
+local stepParams = RaycastParams.new()
+stepParams.FilterType = Enum.RaycastFilterType.Include
+local stepCount = -1
+local function stepUnder(): BasePart?
+	local count = 0
+	for _ in steps do
+		count += 1
+	end
+	if count ~= stepCount then
+		local list = {}
+		for part in steps do
+			table.insert(list, part)
+		end
+		stepParams.FilterDescendantsInstances = list
+		stepCount = count
+	end
+	if count == 0 then
+		return nil
+	end
+	local hit = workspace:Spherecast(root.Position, FLOOR_RADIUS, Vector3.new(0, -RAY_DEPTH, 0), stepParams)
+	local depth = if hit then root.Position.Y - hit.Position.Y else 0
+	return if hit and depth >= MIN_FLOOR_DEPTH and depth <= MAX_FLOOR_DEPTH then hit.Instance :: BasePart else nil
+end
+
 -- A floating countdown (local only) over `adornee`, hidden until a door group is open. `width` studs wide (default 4);
 -- `big` (the doorway's) adds a bar that shrinks with the time left and stays visible through walls, so a player who ran
 -- past the button and round a corner still sees how long the door stays open.
@@ -320,6 +361,7 @@ track("KitPlate", addPlate, plates)
 track("KitCrumble", addCrumble, crumbles)
 track("KitSwitch", addSwitch, switches)
 track("KitColorPlate", addColorPlate, colorPlates)
+track("KitStep", addStep, steps)
 track("KitButton", addButton, buttons)
 track("KitDoor", addDoor, doors)
 track("KitKill", function(part)
@@ -339,6 +381,8 @@ ReplicatedStorage:WaitForChild("StageTimerUpdate").OnClientEvent:Connect(functio
 	if (newStart == nil) ~= (runStart == nil) or (newStart and runStart and math.abs(newStart - runStart) > 0.5) then
 		timeBaseChanged = true
 		table.clear(latched)
+		table.clear(colorState) -- a new run finds every colour group Red again (the vault's switch barriers shut)
+		table.clear(stepReached) -- and every appearing step back at its start
 	end
 	runStart = newStart
 	player:SetAttribute("KitRunStart", runStart or 0)
@@ -588,6 +632,9 @@ RunService.PreSimulation:Connect(function(dt: number)
 		if next(colorState) ~= nil then
 			table.clear(colorState)
 		end
+		if next(stepReached) ~= nil then
+			table.clear(stepReached)
+		end
 		table.clear(doorOpenUntil)
 		for part, data in crumbles do
 			if data.state ~= "solid" then
@@ -635,6 +682,16 @@ RunService.PreSimulation:Connect(function(dt: number)
 		colorState[group] = color
 	end
 	lastSwitch = if standing and switches[standing] then standing else nil
+
+	-- appearing steps: standing on a solid step counts it as reached (only the next one can be solid)
+	local onStep = if alive and grounded then stepUnder() else nil
+	if onStep and steps[onStep].solid and not attr(onStep, "Vanish", false) then
+		local group = attr(onStep, "Group", "A")
+		local step = attr(onStep, "Step", 1)
+		if step > (stepReached[group] or 0) then
+			stepReached[group] = step
+		end
+	end
 
 	-- pressure buttons: standing on one (re)opens its group's doors for Time seconds (a Latch button for the run)
 	if standing and buttons[standing] then
@@ -733,6 +790,30 @@ RunService.PreSimulation:Connect(function(dt: number)
 			data.solid = solid
 			part.Transparency = if solid then data.transparency else 0.85
 			part.CanCollide = solid
+		end
+	end
+
+	-- appearing steps: solid from the moment the previous step was reached (Vanish: until then), fading in / out
+	for part, data in steps do
+		local step = attr(part, "Step", 1)
+		local reached = (stepReached[attr(part, "Group", "A")] or 0) >= step - 1
+		local solid = if attr(part, "Vanish", false) then not reached else (step <= 1 or reached)
+		if solid ~= data.solid then
+			data.solid = solid
+			part.CanCollide = solid
+			part.CanQuery = solid
+			if solid and alive then
+				local sound = ReplicatedStorage:FindFirstChild("SwitchSound")
+				if sound and sound:IsA("Sound") then
+					SoundService:PlayLocalSound(sound)
+				end
+			end
+		end
+		local target = if solid then 1 else 0
+		if data.shown ~= target then
+			data.shown = math.clamp(data.shown + (if solid then dt else -dt) / STEP_FADE, 0, 1)
+			local ghost = attr(part, "GhostTransparency", 0.75)
+			part.Transparency = ghost + (data.transparency - ghost) * data.shown
 		end
 	end
 
@@ -926,6 +1007,12 @@ RunService.PreSimulation:Connect(function(dt: number)
 	end
 	table.sort(parts)
 	publish("KitColors", table.concat(parts, ","))
+	local reachedList = {}
+	for group, step in stepReached do
+		table.insert(reachedList, group .. "=" .. step)
+	end
+	table.sort(reachedList)
+	publish("KitSteps", table.concat(reachedList, ","))
 
 	frameMs = frameMs * 0.9 + (os.clock() - started) * 1000 * 0.1
 	if started - lastPublish > 0.5 then

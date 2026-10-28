@@ -130,7 +130,6 @@ return {
 	["faces.coinsFound"] = "💰 nalezeno {found}/{total}",
 	["unlock.bar.world"] = "{star} {n} z {max} v {world}. světě",
 	["unlock.bar.stage"] = "{medal} ({stars}) z {stage}",
-	["arena.keys"] = "KLÍČE",
 	["arena.keyCollected.Teal"] = "Tyrkysový klíč sebrán",
 	["arena.gateOpened.Teal"] = "Tyrkysová brána otevřena",
 	["arena.keyCollected.Green"] = "Zelený klíč sebrán",
