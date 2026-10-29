@@ -1357,6 +1357,34 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   `Hatch_High`, `Gate_TealBehind`) and `LockTeal_Disc` are mint, the toasts say "Mint key collected" / "Mint gate opened". Spin and bob unchanged.
   The old keys are in `ServerStorage.KeyBackup_20261029`. Checked in a playtest (`ArenaKeys` set on the server): the held key's 8 parts hide and its
   light goes off, both come back on reset; no errors. Not checked: a real pickup run, a phone.
+- **Teal gate look (user pick "A", 2026-10-29; Studio-only):** `Hatch_Low`, `Hatch_High` and `Gate_TealBehind` were translucent Neon (0.45), which
+  read bright cyan over the blue panel. Now opaque mint `Plastic` + `Studs` (the key's colour: mint brick goes with the mint key), each with a
+  charcoal `StudsSmall` frame on its front face (`FrameTop` / `FrameBottom` full width, `FrameLeft` / `FrameRight` between them, 0.3 wide, 0.1 deep,
+  standing wholly in front of the face so no plane is shared) and a centred keyhole (`KeyholeTop` cylinder over `KeyholeSlot`, the slot 0.02 less
+  proud). The decor parts are children of their gate with `ArenaGate` + `KeyId = Teal` (and `ClosesWhenOpen` on `Gate_TealBehind`'s), CanCollide /
+  CanTouch / CanQuery off, so they fade with it and never collide. Collision unchanged. The old parts are in `ServerStorage.HatchBackup_20261029`.
+  `HatchKill` (and `LidKill` beside it) keep their red Neon strip. **`Gate_TealBehind` is still needed** (user asked, `Bar_Lane1` seemed to block lane 1):
+  the switch is only reset by a death or a run start, so after the key `Bar_Lane1` is normally open; `vault_reach.py` `POST=1 B1=open B2=open` from the
+  landing (61.7) without the gate reaches the right floor (floor -> `PlatformA` -> out of lane 1's right end), with it or with the bar shut it does not.
+  Coplanar audit of Stage 14: nothing from the gates or keys (the 70 older clashes as before). Playtest (`ArenaKeys` / `ArenaOpened` = Teal set on the
+  server): the hatches and their decor fade out and stop colliding, `Gate_TealBehind` and its decor appear (only the gate collides); no errors.
+  - *`Gate_TealBehind` removed (user, same day: "it's visible when the player collects the key and blocks an entrance open from the other side").*
+    Accepted consequence: after the key, with `Switch_Lane1` still pressed, the way floor -> open `Hatch_Low` gap -> `PlatformA` -> lane 1's right end
+    reaches the right floor without the dash corridor (`vault_reach.py` POST no longer adds the gate). `ClosesWhenOpen` stays in the code, unused.
+    Both versions of the gate are in `ServerStorage.HatchBackup_20261029`.
+  - *Green gates in the same look:* `Gate_Green` (the exit door at `LockZone_Green`; the zone itself stays an invisible trigger) and `SlotHatch` are
+    green `(70, 255, 100)` `Plastic` + `Studs` with the same charcoal frame and keyhole (decor with `KeyId = Green`, `SlotHatch`'s also
+    `OpensWhenHeld`). The old lock decor `Decor.LockGreen_Disc` / `_Dot` / `_Slot` (Neon disc, untagged, so it stayed in the doorway after the gate
+    opened) is deleted, copies in the backup folder. Audit: nothing from the gates. Playtest: holding the green key opens `SlotHatch` with its decor
+    while `Gate_Green` stays shut; opening Green fades `Gate_Green` and its decor; no errors.
+  - *`Pillar_Lock` under `E_BarLower` (user, same day):* the floor-to-ceiling pillar (u 154-157.8, white `Studs` with the Neon `LockTeal_*` disc)
+    is now a low door filling the gap under `E_BarLower` exactly (u 157.83-162, h 0-7.5, its top on `E_BarLower`'s bottom face), mint `Studs`
+    with the same frame and keyhole (decor children, `ArenaGate` + `KeyId = Teal`). The E column above it (`E_BarLower` h 7.5-41,
+    `E_BarNotchBack` 41-45.5, `E_Bar` 45.5-66.25) reaches the ceiling (`Ceiling` / `CeilingRight` at 66.25), so the halves stay apart; the
+    column u 154-157.83 is now open left-half space (a dead end). `Decor.LockTeal_*` deleted; the old pillar and decor are in the backup folder.
+    `vault_reach.py` models the new pillar plus an `E_Column` box and has a `PastPillar` target (floor right of the E column): `max` from the
+    entrance with both barriers open reaches the key, the coin and both switches but not `PastPillar`. Audit: nothing
+    from the pillar. Playtest: opening Teal fades the pillar and its decor and drops its collision; no errors.
 
 ### 7.13 S8.3 Rising Tide (design check 2026-10-28; the user took every recommendation the same day: D1 A, D2 sound alone, D3 out-and-back, D4 maxed soft talents, D5 S8.3a / S8.3b)
 The World 3 finale (§3 "each world finale mixes every signature of its world"): one new hazard, a **lava tide** rising under the whole

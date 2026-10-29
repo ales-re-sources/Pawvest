@@ -13,9 +13,10 @@ DT = 1 / 60
 DECIDE = 3  # decide every 3 physics steps (0.05 s)
 
 def solids():
-    """The vault as built on 2026-10-28 (Floor_9 after the first playtest; Pillar_Lock floor to ceiling since 2026-10-29) (docs/STAGES.md -> "Vault lanes"). (u0, u1, h0, h1) boxes; lane z ignored.
+    """The vault as built on 2026-10-28 (Floor_9 after the first playtest; Pillar_Lock under E_BarLower since 2026-10-29) (docs/STAGES.md -> "Vault lanes"). (u0, u1, h0, h1) boxes; lane z ignored.
     Env flags: B1 / B2 = "open" ghosts a switch barrier, POST = 1 is the state after the teal key (hatches open, the
-    barrier behind the key shut, the dash corridor plugged so any way to the right floor that remains skips it),
+    dash corridor plugged so any way to the right floor that remains skips it; Gate_TealBehind, which shut lane 1's right
+    exit, was removed on 2026-10-29: with B1=open the way floor -> PlatformA -> lane 1's right end is accepted),
     DROP = comma list of solids to remove (e.g. Block_Top2: is the stepping stone needed?)."""
     TOP = 98.0
     S = {
@@ -36,7 +37,10 @@ def solids():
         "Block_Top1": (71.0, 77.0, 64.74, 68.6),
         "Block_Float1": (105.2, 109.1, 8.3, 12.1),
         "Block_Float2": (121.4, 129.3, 3.4, 8.1),  # bottom 3.4 since 2026-10-29: no avatar walks under it
-        "Pillar_Lock": (154.0, 157.8, 0, 64),  # floor to ceiling since 2026-10-29 (was 12.1 high with Gate_Teal on top)
+        # under E_BarLower since 2026-10-29 (was floor to ceiling at u 154-157.8, before that 12.1 high with Gate_Teal on top);
+        # the E column above it (E_BarLower, E_BarNotchBack, E_Bar) reaches the ceiling, so the two halves stay apart
+        "Pillar_Lock": (157.83, 162.0, 0, 7.5),
+        "E_Column": (157.83, 162.0, 7.5, 66.25),
         "Hatch_Low": (44.0, 64.4, 15.4, 19.2),
         "Hatch_High": (44.0, 68.5, 46.0, 48.0),
         "Bar_Lane1": (90.5, 91.5, 19.2, 32.8),
@@ -63,6 +67,7 @@ def solids():
         "Coin_2": (85.8, 88.2, 38.8, 41.2),
         "Switch_Lane1": (125.7, 129.3, 8.1, 8.6),
         "Switch_Lane2": (44.1, 48.0, 32.5, 33.0),
+        "PastPillar": (162.0, 172.0, 0.0, 3.0),  # the floor right of the E column: must stay out of reach before the teal key
     }
     if os.environ.get("B1") == "open":
         del S["Bar_Lane1"]
@@ -72,7 +77,6 @@ def solids():
         for n in ("Hatch_Low", "Hatch_High", "Pillar_Lock"):
             del S[n]
         del K["HatchKill"]
-        S["Gate_TealBehind"] = (96.82, 98.82, 19.2, 32.8)
         S["CorridorPlug"] = (83.0, 101.0, 0.0, 15.4)
         T = {"RightFloor": (101.5, 158.0, 0.0, 3.0)}
     for n in filter(None, os.environ.get("DROP", "").split(",")):
@@ -120,7 +124,7 @@ def solids_right():
     S = {
         "Floor": (148, 240, -4, 0),
         "ModelBound": (146, 148, 0, 70.25),
-        "OldCeiling": (148, 157.8, 64, 68),  # the left half's ceiling; Pillar_Lock is open by now
+        "OldCeiling": (148, 157.8, 64, 68),  # the left half's ceiling; Pillar_Lock (under E_BarLower, the doorway) is open by now
         "E_BarLower": (157.8, 162.0, 7.5, 41),
         "E_BarNotchBack": (157.8, 159.0, 41, 45.5),
         "E_Bar": (157.8, 162.0, 45.5, 66.25),

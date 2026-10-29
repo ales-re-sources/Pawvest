@@ -19,7 +19,7 @@ ArenaConfig.Tags = {
 }
 ArenaConfig.KeyAttribute = "KeyId"
 ArenaConfig.OpensGateAttribute = "OpensGate" -- on a key pickup: picking it up opens the gate of the same KeyId at once (no lock zone needed)
--- on a gate: the other way round, absent until its KeyId gate opens, then a barrier (the vault's lane 1 exit, shut behind the teal key)
+-- on a gate: the other way round, absent until its KeyId gate opens, then a barrier (unused since Gate_TealBehind was removed, 2026-10-29)
 ArenaConfig.ClosesAttribute = "ClosesWhenOpen"
 -- on a gate: a kill strip (keeps the KitKill tag and CanCollide off) that is deadly while the gate is shut and harmless once open
 ArenaConfig.KillAttribute = "KillWhileShut"
