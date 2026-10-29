@@ -88,6 +88,57 @@ character drop 2-3 studs below the take-off height before each air jump hovers o
 far as a single jump + Dash (14-16). A kill ceiling leaks the same way and its margin depends on the avatar's height. Ceilings stay
 decoration or soft gaps.
 
+**Avatar size rule (2026-10-29; design for every avatar, players keep their bodies).** An R15 character collides only with its
+`HumanoidRootPart` and torso (head, limbs and accessories never collide), so a roof stops it at the root's top = HipHeight + root height.
+ObstacleKit's kill test checks every body part's box (accessories too until 2026-10-29, now left out), so a kill part above reaches the head first. Measured on rigs
+from `HumanoidDescription`s with the standard body parts (`Players:CreateHumanoidModelFromDescription`):
+
+| Avatar | HipHeight | Collider top | Head top |
+|---|---|---|---|
+| classic, height 0.9 | 1.80 | **3.6** | 4.9 |
+| classic, height 1.0 (Lekzdrh's avatar: 4.1) | 2.00 | 4.0 | 5.2 |
+| classic, height 1.05 | 2.10 | 4.2 | 5.3 |
+| Rthro body type 1, height 1.05 | 3.10 | **5.2** | 6.3 |
+| Rthro body type 1, proportions 1, height 1.05 | 2.77 | 4.9 | 6.0 |
+
+`BodyHeightScale` alone does not even them out (body type moves the collider from 4.2 to 5.2 at one height); only fixed scales plus forced
+standard body parts would, and that changes how players look, so the stages are designed for the spread instead. Bundles with their own body
+meshes were not measured and may lie outside it. Rules:
+- **Collider: plan for 3.6-5.2.** A gap to walk under is **at least 6** (everyone fits) or **at most 3.4** (nobody does), never in between.
+- **Jump headroom** under a roof is counted for the 5.2 collider: the feet rise at most roof - 5.2. **In a jump the head counts too**
+  (measured 2026-10-29 in the colour shaft: a body-type-1 avatar, head top 6.56, bonked at feet 7.3 under a 14-stud roof, and the roof
+  throws the character down, so the arc ends early): an unhindered single jump (rise 7.3) needs about **14** for the tallest avatar
+  (7.3 + 6.6), 12.2 for a classic one. A spike to be hopped under a roof gets a lane of at least 14; lower lanes only take spikes meant
+  for a jump + dash (rows).
+- **Accessories never kill (since 2026-10-29, user decision):** ObstacleKit's hazard test (kill parts, beams, kill movers) checks only
+  the character's own body parts (its BasePart children; accessories and held tools are left out, the list follows parts swapped by
+  `ApplyDescription`). The head still counts.
+- **No kills through solid parts (2026-10-29):** the head and limbs do not collide, so in a jump they pass into a thin slab above and
+  reached a spike standing on it (the user died that way under `ShaftSlab1_26` and `ShaftSlab2_27`; the probe: a Triple Jump on slab 1
+  put the head inside `ShaftSlab2_27`'s kill box for 5 frames). A touch now counts only when a ray from the root to the nearest point
+  of the hazard (stopping 0.15 short of it) meets no CanCollide part, ignoring the character and the hazard's own model (a gargoyle's
+  body). Checked: Triple Jumps under both slab spikes survive; walking into `ShaftSlab2_27` and into the `Right2_13` row kills, a jump
+  under `Ceiling_21` kills, walking under it does not; no errors. The ray runs only when the overlap test already found a touch.
+- **Kill parts above a walkway: at least 7.5** over its floor (head 6.3 plus a margin); ceiling spikes meant to be walked under follow this.
+- Decor that can be walked into (tree crowns, sign boards) is either above 6 or reaches the ground; otherwise only part of the players bump it.
+
+*Scan (2026-10-29, Edit mode, every Block part's top in the stage folders, the hub and the Garden; a 1.5 x 1.5 column free up to 3.4, then the
+first solid or `KitKill` part above it; movers, doors, tilt plates and gates at their authored positions; MeshParts, wedges and side openings
+above a floor not covered; 57 of the 60 `KitKill` parts have `CanQuery` off, so kill parts were measured from their own boxes):*
+- *Gameplay:* Stage 14 `Block_Float2` (4.2 over the lane-0 floor; Lekzdrh's avatar walks under it, a taller one cannot); the key notch in
+  `E_Bar` (4.5 over `SlotHatch`; the key's `Hit` reaches 0.4 into the slot, so it is still taken from there, unverified for a 5.2 avatar);
+  `Ceiling_21` (kill box 6.46 over `E_ArmTop`: a 6.3 head has 0.16, a hat dies); Stage 15 `Chimney.Lintel` (5.0 over `Slab1_N`: the
+  door's upper part beside slab 1 lets small avatars out of the shaft, back to where they came from; harmless, but in the band).
+  Fixed the same day with the four-lane tower (§7.12 "Vault tower"): `Block_Float2` down to h 3.4, `Ceiling_21` 10 over its floor; the
+  notch and the Stage 15 lintel are open.
+- *Jump headroom over floor spikes (feet room above the spike's hit for a 4.0 / 5.2 collider):* Stage 14 tower `Right2_13`, `Slab_23`
+  0.9 for 5.2 (2.1 for 4.0), `Right1_12` 1.0, `BaseTiny_15` / `Column1_19` 1.4, `ArmTop_24` 1.9; the lane-0 spikes (15.4 roof) and
+  `PlatformA`'s (13.5) 6.0 or more. No `KitKill` floor spike in another stage has a roof within 14 studs. The four-lane tower gives
+  every row 5.66 for a 5.2 collider (lanes 12.25, hits 1.39).
+- *Decor:* tree crowns (`Decor.Tree1` / `Tree2`) 3.5-5.9 over the World plazas and the courtyard wall tops, `WorldSign.Board` 5.0 over the
+  plazas, Tutorial landing-pad trees over hedges and rocks, the Tutorial welcome sign 4.5 over the `Inlay`.
+- *Legacy scripted kill parts (18):* none hangs 3.3-6.6 over a floor.
+
 ### 1.1 Studio survey findings (2026-10-21, read-only)
 - Place settings: `Players.RespawnTime` **3 s**, `CharacterAutoLoads` on, `StreamingEnabled` **off**; 2 441 parts in
   `Workspace` (each stage 250–320 parts including its decorated landing pad). 20 more stages add about
@@ -663,7 +714,7 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   | 9 | Labyrinth | 100 (was 105, 140 during the maze rework) | 2.75 | Bronze on 8 or 3 500 | ~360 + maze | 701-705 |
   | 10 | Clocktower | 75 (was 135, 90) | 3.0 | Bronze on 9 or 4 000 | ~700, 120 high | 801-806 |
 
-  (`407` / `408` / `507` / `508` were added when the courses were lengthened, so numbers are not in course order: `506` stays the last; Stage 6's `406` was deleted 2026-10-26, `408` is its last checkpoint.)
+  (`407` / `408` / `507` / `508` were added when the courses were lengthened, so numbers are not in course order: Stage 7's `506` (6 studs before the finish, after the `Fin` climb) was deleted 2026-10-29 and its plate kept as `Pillars.EndPlate`, so `508` is its last; Stage 6's `406` was deleted 2026-10-26, `408` is its last checkpoint.)
 - **World 2 opens with stage 6** (user decision, 2026-10-22): the `soon` flag was removed with Stage 6, so the hub gate follows the normal world rule (10 of 15 World 1 stars, or buy Stage 6); the unbuilt openings
   carried closed "Coming soon" doors (`SoonGate8..10`, replaced by the real gates). **Look:** the Island Hop look (stud columns from the sea) until the style decision (STYLE_PREVIEW.md).
 - **Reach rules for Double Jump stages** (measured with a baseline bot, Run Speed 0 / Jump Height 0, one air jump; it jumps 0.6 studs before the edge and double-jumps at 0.24 s): a Double Jump crosses a **12-12.5 stud gap
@@ -743,14 +794,14 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   on ice, a pressure door (`KitButton` / `KitDoor`) with a sprint across ice, Triple ledges taken from ice, a finale.
 - **Ice = kit ice** (user decision): new `KitIce` tag in `ObstacleKit`. While the character stands on a `KitIce` part (the kit's floor ray), the client takes over
   its horizontal velocity: it moves toward the input direction x walk speed at `Accel` studs/s² and coasts without input, slowing at `Brake` studs/s²
-  (attributes on the part); jumps keep the momentum (the air is the Humanoid's again). Same on every device, tunable per part; it stops at once on death.
+  (attributes on the part); since 2026-10-29 the slide also carries through the air (**ice-air**, below). Same on every device, tunable per part; it stops at once on death.
 - **Ice look (user pick "variant 3", 2026-10-29; Studio-only):** all 17 `KitIce` parts (the 16 of `Stage12.Ice` and `Stage15.CrusherIce.IceRidge`) are smooth `Plastic`
   (no MaterialVariant, `(0.70, 0.87, 0.98)`) and carry decoration children (Anchored, CanCollide / CanTouch / CanQuery / CastShadow off): a `Cap` (`Glass`, `(0.3, 0.65, 0.95)`,
   Transparency 0.3, 0.4 thick, its top 0.05 above the ice), `RimN/S/W/E` white `Studs` bars (0.4 wide, 0.6 high) round the top edge and `CollarN/S/W/E` white `Studs` bands
   (1.6 high, 0.2 proud) on the side faces. **Why:** smooth + glossy = slippery, studs = grip, so the studs only frame the slick surface (the first try, a studded body under a
   translucent cap, still read as grip; the white shine streaks read as painted lanes and were dropped). The floor the kit sees is still the ice part itself (the tag and
   all attributes are on it), the decoration never collides. A side where another collidable part is within 0.5 studs of the face (rails, walls, the next ice part) gets no rim /
-  collar there (`I1`, `I2`, `I3`, `Track3`, `WindBeam`, `Rink1`, `IceRidge`); only a neighbour that is flush with the ice top (a joint, a rail) suppresses the **rim**: the tall glass walls beside `IceRidge` and the `IceDoor` beside `Track3` do not, so those got their rims added by hand (`IceRidge` `RimW` / `RimE`, `Track3` `RimE`); `WindBeam`'s `RimN/S` and `CollarN/S` start 0.3 past the pressure `Door.Button` (8.4 wide, wider than the 8-wide beam, which had blocked its whole long sides) and run to the east end. Applied by script, so a part that is resized needs its children redone. Not playtested (the slide itself is unchanged).
+  collar there (`I1`, `I2`, `I3`, `Track3`, `WindBeam`, `Rink1`, `IceRidge`); only a neighbour that is flush with the ice top (a joint, a rail) suppresses the **rim**: the tall glass walls beside `IceRidge` and the `IceDoor` beside `Track3` do not, so those got their rims added by hand (`IceRidge` `RimW` / `RimE`, `Track3` `RimE`); `WindBeam`'s `RimN/S` and `CollarN/S` start 0.3 past the pressure `Door.Button` (8.4 wide, wider than the 8-wide beam, which had blocked its whole long sides) and run to the east end. Applied by script, so a part that is resized needs its children redone. The switch to Plastic **broke the slide** (fixed by the kit, see ice-air below).
 - **Button / switch look (all stages, user pick "raised plates, no red", 2026-10-29; Studio-only + one kit line):** the pads were Neon (blue / yellow buttons, green switches); red and orange
   mean "kills you" in this game, so no pad is ever red. Every `KitButton` and `KitSwitch` in the stages (15: Stage 9 `Maze.Big.Switch`, Stage 10 `Button_5/10/11`, Stage 12 `Door.Button`,
   Stage 14 `Switch_Lane1/2` and `ColourShaft.Toggle0/1`, Stage 15 `Headwind.Button` and `Chimney.Toggle0-3`; the `ServerStorage.StageKit.Obstacles.Switch_Toggle` template) is the part itself
@@ -759,6 +810,14 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   does not: a gap bridge like `Button_5` / `Button_10`, an overhanging button like `Door.Button`), CanCollide / CanQuery / CanTouch / CastShadow off. The colour-coded `Switch_Red` / `Switch_Blue`
   of `KitLab` and the templates are untouched. **Click:** `ObstacleKit` now plays `ReplicatedStorage.SwitchSound` once per step-on of a pressure button (`lastButton`, like `lastSwitch`);
   colour switches already click through `KitWires`. Not playtested.
+  - *Buttons over a gap (user, 2026-10-29: "the black lining is not done properly"):* the rule above left a button that bridges or overhangs a gap without any border
+    on those sides (`Button_5` was a blue block with a black strip beside it on the checkpoint side). Now the 8 such pads (Stage 10 `Button_5/10/11`, Stage 12
+    `Door.Button`, Stage 14 `Switch_Lane1/2`, `ColourShaft.Toggle0/1`) are built as **housing + cap**: the kit part itself is the charcoal `Studs` housing, its top
+    lowered to floor + 0.25 (0.05 above the `Base` slab's top, so no shared plane), and a child `Cap` (azure `Studs`, 0.35 thick, top at floor + 0.6 as before,
+    Anchored, CanCollide / CanQuery on, CanTouch off) covers it, inset 0.9 on every side over a gap and flush on the floor sides (the `Base` gives the border there).
+    The pressable footprint is unchanged: `ObstacleKit` treats a hit on a button's / switch's `Cap` as the part itself and tints the `Cap` (not the housing) green.
+    `Door.Button`'s `Base` also got its missing 0.9 border toward checkpoint `1005`'s plate. Pads surrounded by floor keep the plain look. Checked in a playtest:
+    `Button_5` pressed from the cap and from the black edge (cap green, back to azure after `Time`), `ColourShaft.Toggle0` toggled from its cap; no errors.
 - **Coins:** 8 per stage (5 easy 20, 2 risky 50, 1 talent 100), ids `Stage11_1..8`, `Stage12_1..8`; the talent coin needs a talent beyond the requirement (Dash).
 - **Measured in the S8.1 bot tests (2026-10-24):** standing rises match §1.0 (Double Jump 14.5, with Jump Height 3 18.0; Triple Jump 22.0, with Jump Height 3 26.9),
   but a **17-stud ledge was landed by a Double Jump with Run Speed 5 + Jump Height 3** (gap 6): a ledge is cleared with a root rise of about its own height, not 2.5
@@ -792,6 +851,23 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   the last 3 seconds tick (Studio-only `ReplicatedStorage.DoorTickSound` = the metronome tick, faster each second; silent without it). Checked on the Ice Rink door:
   6 -> 1 with the bar 1.00 -> 0.16, then hidden, ticks at 3 / 2 / 1. *Not checked:* the look (the capture timed out), the Clocktower doors in play.
 - **Kit ice tuning** (defaults Accel 14, Brake 5): from rest it reaches 15.5 studs/s in 1 s and coasts 21 studs after letting go.
+- **Friction + ice-air (user, 2026-10-29: "after restyling they are not so slippy", and a jump or dash resets the inertia):**
+  - *Friction:* the Humanoid's own walking grips by floor friction. On the restyle's `Plastic` (friction 0.3) it overpowered the drive: a slide
+    from 20.8 studs/s stopped in 1.1 studs, a reversal took 0.1 s. Now the kit gives every `KitIce` part `CustomPhysicalProperties` with friction 0 /
+    weight 100 locally (density and elasticity kept), whatever its material: coast 21.1 studs again, a reversal on the ice 0.9 s.
+  - *Ice-air:* the Humanoid's air control turned a jump into a free brake or U-turn (15.7 -> -20.8 studs/s in 0.3 s; landing back on the ice, the drive
+    started from that). Now, from leaving a `KitIce` part (a jump or an edge) until the next landing, the kit keeps driving the root: toward the
+    input at the left part's `AirAccel` (default 14, as on the ice), never braking without input. Landing on any other floor gives the Humanoid back
+    (after 0.1 s on the ground: it reports a floor for a frame or two after take-off); a teleport (> 10 studs in a frame) or death ends it too. You still
+    steer mid-jump, but gradually: a plain jump changes the speed by about 7 studs/s, a Triple Jump's air time can turn it round. Measured: 17
+    studs/s² (the Humanoid leaks a little past the drive), no input keeps the slide (14.9 for 0.6 s of air).
+  - *Dash:* in ice-air the burst is unchanged, but afterwards the slide from before it is restored (character attribute `IceAir`, read by
+    `TalentDash`) instead of run speed in the dash direction; measured a backward dash: -50 during the burst, +8.4 after, so no brake.
+  - *Course checks (playtest 2026-10-29, client bots at Walk Speed 16 / Jump Power 50, Triple Jump; calibration with `AirAccel` 200 ≈ the old air
+    control):* hop chain `J1`-`J4` 5 / 5 strategies (also with 1 air jump 4 / 4, without 3 / 4); Triple ledges `1005`-`K1`-`K2`-`K3`-`Finish`, each leg from
+    rest 2 / 4 / 7 studs before the edge: 12 / 12; Stage 15 `IceRidge` -> `T1` from 2-10 studs before the edge 8 / 10 (2 falls with a long run-up: the bot
+    reaches `T1`'s face before its third jump's apex), 10 / 10 at `AirAccel` 200. `WindBeam` and the door sprint were not re-run (floor slide only: the
+    friction fix restores the validated tuning). Not checked by a human player yet.
 - **Checks (Studio playtest 2026-10-24, bots at baseline Walk Speed 16 / Jump Power 50 unless noted; developer profile snapshot `profile_<id>_s81` restored, the
   Stage 11 / 12 boards removed):** every Triple ledge of both stages (also from the lift's top and from ice), the flat 17 gap, the ice hop chain (one timing made all
   four hops, another slid off after the second), the wind beam (correcting runner across, straight runner blown off), the door sprint (button to doorway 4.4 s of 6 s),
@@ -843,6 +919,13 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
     Lava block's (rate area / 30, 3-12 per s, size 1-3.6) on every part of 40 or more square studs except the Lava block. Mobile: the place had 6 606 parts
     (StreamingEnabled off) when this was added, +190 tiles is about 3 %; the cost to watch is the smoke overdraw, hence the low rates and the bigger bricks.
     Not measured on a phone. Other red hazards (Stage 2 `SpinnerStage_1` bars, laser strips) are not restyled yet.
+  - *Spike look "GlowRidge" (user pick 2026-10-29 from three previews, see §7.12 "Colour-shaft spikes"):* every spike model (a `Hit` plus two
+    `WedgePart`s; all 27 are in Stage 14: 24 in the vault, 3 in the colour shaft) has charcoal (`#2C2C34`) Plastic + `Studs` wedges and two
+    Neon `#FF5913` `Tip` wedges along the ridge (the top 0.75 or 40 % of the wedge, same slope, 0.03 proud of it, 0.02 longer at each end;
+    CanCollide / CanTouch / CanQuery / CastShadow off; on `EBottom_18` they carry its `ArenaGate` tag and fade with the hatch). Built in each
+    wedge's own frame, so hanging (`Ceiling_21`, `Hang_7/8`) and wall spikes (`EBarSide_22`) get the tip at their point too (checked: the two
+    tips of every model meet at the ridge). `Hit` boxes unchanged. Stage 10's gargoyles (also a `Hit` plus two wedges) are not spikes and keep
+    their look. New spikes: clone a restyled one (e.g. `Vault.Spikes.Right2_13`).
   - *Yellow movers (user pick, 2026-10-28: rimmed plates, spur gear; Studio-only):* all 23 yellow `KitMover` parts (plus `SpinnerStage_2`, below) (Stage 1 `Mover1`; Stage 6 `Lift1`, `Slide1/2`,
     `Stone1-5`; Stage 8 `Mill1A/B`, `Mill2A/B`, `Plank1/2`, `Turn1`, `Turn4`; Stage 10 `Plank_1/2`, `Gear_1-3`; Stage 11 `Lift1`) are `Plastic` + `Studs`, LEGO yellow
     (`#FFD54A`). Plates (20 parts) keep their size and collision and carry four amber `Studs` rim bars `RimN/S/W/E` (`(0.89, 0.58, 0.08)`, 0.4 wide, 0.2 high, 0.03 in from the edge so
@@ -857,6 +940,39 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
     Added the same day: Stage 2 `SpinnerStage_2` (`Part_1`, `Part_3`, the two spinning 16.3 x 4.3 planks, were green `Studs`) now has the yellow plate + rim (no hub: the
     planks keep their small axle pins `Part_2` / `Part_6`, now amber `Studs`); 4 rim children each, offsets checked by turning `Part_1` in Edit mode. The red
     Neon sweeper bars of `SpinnerStage_1` are unchanged.
+  - *Tilt plates (user pick "T1", 2026-10-29; Studio-only):* the light blue plain plates read like the Ice Rink, so all 23 `KitTilt` parts (Stage 7 `Plates`, Stage 10
+    `Movers.Tilt_1-3`, `KitLab.Tilt_1`, `StageKit.Obstacles.Plate_Tilt`) are `Plastic` + `Studs`, green `(58, 165, 92)`, with four dark green `Studs` rim bars `RimN/S/W/E`
+    (`(30, 110, 60)`, 0.4 wide, 0.2 high, 0.03 in from the edge, like the yellow movers) and a charcoal hinge pin on the tilt axis: `Axle` (Cylinder, 0.8 thick, plate
+    width + 1.6, through the plate's centre along its local X, hidden inside it but for 0.8 at each side) and `AxleCapW/E` (Cylinder knobs 1.3 across, 0.4 thick, at
+    the pin's ends). The pin sits on the axis so it only turns about itself while the plate tips (the preview had it under the plate, where it would swing). All
+    children are unanchored, Massless, CanCollide / CanTouch / CanQuery / CastShadow off, welded to the plate, so they follow ObstacleKit's CFrame tilt (checked in a
+    playtest: `Chain1` at 28.9 degrees, offsets unchanged). No pin or knob overlaps another visible or collidable part. Previews rejected: T2 orange with a charcoal
+    pivot stripe (orange is close to the movers' amber rims and the crusher warning), T3 two-tone halves.
+  - *Disappearing plates (`KitPlate`, user decision 2026-10-29):* the teal plain plates now have the standard look of Stage 4's `Part_10` (`Plastic` + `Studs`,
+    `(0.75, 0.67, 0.55)`, opaque, no decoration) on all 19 (Stage 3, `KitLab.Plate_1-4`, `StageKit.Obstacles.Plate_Disappearing`): the flicker and the vanishing
+    are the cue. **Why:** a 30 % transparent plate barely registered at a glance (preview N2), the kit already uses translucency for "not solid" (ghost colour plates
+    0.85, ghost steps 0.75), and the sea tinted a translucent plate blue. Rejected previews: N1 / N3 cream with grey dashed rims, V1-V3 purple / pink with rims.
+    The kit now fades and removes the parts inside a disappearing or crumbling plate with it (`decorOf` / `setPlateLook`: a decoration at base transparency d goes
+    the same share of the way to 1 as the plate; the warning flicker goes 60 % of the way from the plate's own transparency to 1, so 0.6 for an opaque plate as before).
+  - *Crumbling plates (`KitCrumble`, user pick "C1", 2026-10-29; the plates the user meant first):* were plain tan `SmoothPlastic` `(0.78, 0.67, 0.47)`. All 25
+    (Stage 7 `Plates.Crumble1-4` / `CrumbleB1-3`, Stage 8 `Movers.Crumble1-3`, Stage 10 `Movers.Crumble5_1-4` / `Crumble11_1-5`, `KitLab.Crumble_1-5`,
+    `StageKit.Obstacles.Plate_Crumble`) are sandstone `Plastic` + `Studs` `(222, 170, 100)` with three dark brown cracks `Crack_1..10` (`(70, 45, 30)`, segments 0.14 wide,
+    0.06 high on the top, one crack across the plate with two branches; the pattern turns a quarter per plate in name order and mirrors every other pair, scaled to the
+    plate). The cracks are welded, unanchored, Massless, CanCollide / CanTouch / CanQuery / CastShadow off. Checked in a playtest on `Crumble1`: shake 0.17, the cracks
+    keep their offset, plate and cracks vanish together (no collision) and come back together. Rejected previews: C2 3 x 3 loose sandstone tiles on a dark bed, C3
+    terracotta slabs split 2 x 2 by grooves.
+  - *Stage 10 movers (user picks, 2026-10-29; Studio-only; decoration welded, unanchored, Massless, CanCollide / CanTouch / CanQuery / CastShadow off):*
+    - **Flips** `Movers.Flip_1-3`, `FlipB_1-3` (pick "F2"): were teal `SmoothPlastic`. LEGO yellow `Plastic` + `Studs` `#FFD54A` like the yellow movers, amber `Studs` rims
+      on **both** faces (`RimN/S/W/E` on top, `RimBN/BS/BW/BE` underneath: a flip shows its underside half the time) and the tilt plates' charcoal hinge pin on the flip
+      axis (`Axle`, `AxleCapW/E`, local X = `Hinge` "X"). *Known weakness:* the kit's warning tint (255, 170, 60) is close to the yellow, so the 0.6 s telegraph reads
+      weaker than on the purple preview "F1" (rejected); a per-part `WarnColor` would fix it. Stage 8's 9 flips are still teal.
+    - **Pushing pistons** `Piston_1-3`, `PistonB_1-2`: body and `Rod` stone grey `Studs` `#A3A2A5` (were DiamondPlate / Metal), `PushPlate` orange `Inlets`, a yellow
+      `Inlets` `Band` (1 thick, 0.1 proud) 0.6 behind the body's centre across the push axis. At rest only the push plate shows (the body sits in the tower wall).
+    - **Pendulums** `Pendulum_1-3` (Swing, no kill): brass `Studs` `(204, 160, 61)` (were gold Metal) with a charcoal `Hub` cylinder on the hinge axis at the `Pivot`
+      (it overlaps the `Course.PendulumBar_n` it hangs from). A bob at the bottom was dropped: it would look bigger than the part that pushes.
+    - **Clock hand** `Hand_6` (Spin + Kill): charcoal `Studs` (was red `SmoothPlastic`) with glowing red Neon `EdgeL/R` strips along both long sides, the "solid hazard" language.
+    - Checked in a playtest: the flip (turned, tinted and back), piston (10 out), pendulum and hand moved with every decoration at zero offset drift; no errors.
+      Not restyled: `Conveyor_9` (with Stage 1's two conveyors later), the tower's `SecondHand_1-4` (decoration).
 
 ### 7.12 S8.2 Dash Bridge + Laser Lab (design check 2026-10-26; decisions with the user: Long Dash as Dash level 2, a `Roll` kit kind, soft-talent coins, arena + Dash room)
 - **Slots** (Studio survey 2026-10-26): the west openings of the World 3 courtyard. Stage 13 = west near gate (`SoonGate13`, x -219..-190, z -659..-630;
@@ -960,7 +1076,7 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   - *No new code for room 2 / transit:* everything is existing kit (`KitBeam`, `KitMover Spin`, `KitSwitch` / `KitColorPlate`, `KitKill`, `KitGhostZone`,
     `CameraZone`). Code changes are the arena integration only (`ArenaServer` / `ArenaClient` / `ArenaConfig`) plus config (`StageConfig`,
     `ChallengeCoinConfig`). Check whether a `KitBeam`'s telegraph (Warn transparency 0.8) reads in the side view; `FloorMark` does not (seen edge-on).
-- **Stage 14 Laser Lab as built (S8.2b, 2026-10-26)** (x = -213 - u, lane z -583..-577, plaza top y 78 = h 0): `1201` (16 x 12, u 0, z -581); `Entry` hall
+- **Stage 14 Laser Lab as built (S8.2b, 2026-10-26)** (x = -213 - u, lane z -583..-577, plaza top y 78 = h 0; **every z in this section is 5 lower since 2026-10-29**, see "Centred on the gate" below: lane z -588..-582, `1201` z -585): `1201` (16 x 12, u 0, z -581); `Entry` hall
   u 8-40 (ceiling h 14, `TeachBeam` at u 28, Period 2, Duty 0.5); `Vault` u 40-240 (the arena turned 180°, entrance door 8 high in its east wall, the alcove end
   removed so the exit opens onto the deck; platform A 1 stud lower; `1202` / `1203` at u 142 / 164, 8 x 6 vault-style plates); `Deck` u 240-268 with `1204`
   (u 252), the 34 gap u 268-302 over the sea (yellow edge strips), landing u 302-314; `BeamHall` u 314-534, h 0-40: `Grid` u 326-366 under a 12-high block
@@ -1012,7 +1128,7 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
     64 high to the right; `RightWall` (u 96.82-100.7, h 32.8-98) seals lanes 2 and 3 from the right. `VaultCamera` covers h -8..104.
   - *Lane 0 (floor, roof `PlatformA` + `Hatch_Low`):* `Hatch_Low` (teal `ArenaGate`, u 44-64.4, h 15.4-19.2) closes the gap between the wall and
     `PlatformA`, so nothing above can be reached from the entrance floor; the only exit is past the spikes (single jump + Long Dash under the 15.4 roof).
-  - *Switchback:* `Block_Float2` widened to u 121.4-129.3; `Switch_Lane1` (`KitSwitch` Group `Vault1`, Color Blue) on its right part ghosts
+  - *Switchback:* `Block_Float2` widened to u 121.4-129.3 (h 3.4-8.1 since 2026-10-29, the avatar size rule); `Switch_Lane1` (`KitSwitch` Group `Vault1`, Color Blue) on its right part ghosts
     `Bar_Lane1` (`KitColorPlate` Red, u 90.5-91.5 across lane 1). Without the switch a dash + air jumps onto `PlatformA`'s right end leads nowhere.
   - *Lane 1 (`PlatformA`, roof `PlatformB`), going left:* exit at the left end, up `LedgeL1` / `LedgeL2`. `Switch_Lane2` (Group `Vault2`) on `LedgeL2`
     ghosts `Bar_Lane2` (u 76-77 across lane 2): jumping from lane 1 straight onto `PlatformB` leads nowhere. `Gate_TealBehind` (u 96.82-98.82,
@@ -1055,34 +1171,101 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
     it passes (green Neon, while the group is off Red) and flashes the barrier (a white Neon box fading over 0.6 s); a death or run start puts the
     wire back to rest. Playtest: bead from the pad to the bar in 1.2 s, flash on arrival, wire dim again after a death, no errors; audit clean.
     Sound: Studio-only `ReplicatedStorage.SwitchSound` (rbxassetid://830440268, 0.17 s, volume 0.5, added by the user) clicks as the pad is pressed, when the bead sets off.
-- **Vault tower (the right half, green key; rebuilt 2026-10-28 from the user's second sketch; built, model- and bot-checked, awaits the user's check).**
+  - *Colour-shaft wires (user, 2026-10-29: like `Wire_Lane1`, also for `Toggle0` / `Toggle1`):* `BeamHall.ColourShaft.Wire_Toggle0_1..3`
+    (up from `Toggle0` at u 438.5 to h 7.5, right under slab 1 to u 455, up into `Hatch1`'s underside at h 10) and `Wire_Toggle1_1..3`
+    (up from `Toggle1` at u 464.5 to h 17, left between the slabs to u 443, up into `Hatch2` at h 21): each wire leads to the hatch its
+    toggle opens; the same look and depth as the vault wires (0.5 wide, z -577.30..-577.05, dark red SmoothPlastic, no collision / touch /
+    query / shadow), tag `KitWire`, Group `Lab`, Order 1-3 and the new attribute **`Switch`** (`Toggle0` / `Toggle1`). Both toggles share
+    the group, so `KitWires` now picks the pressed switch (the group's switch nearest the player when the colour changes), runs the bead
+    along that switch's wire only and puts the group's other wires back to rest; a `Toggle` switch's wire stays lit after its press.
+    Wires without `Switch` (the vault's) behave as before. Playtest: `Toggle0` -> Blue, bead from the pad, its wire lit, `Hatch1` open;
+    `Toggle1` -> Red, bead from its pad, its wire lit, `Toggle0`'s back to rest, `Hatch2` open; a death puts both back to rest;
+    `Switch_Lane1` still lights `Wire_Lane1`; no errors. Coplanar audit of the shaft: nothing from the wires (it reports the toggle pads
+    sinking into their bases and the floor / slab, like the vault pads, from the button restyle).
+  - *Colour-shaft spikes (user, 2026-10-29: "a few spikes" in the shaft):* three single spikes (the `Right2_13` shape, hit 1.56 x 1.39):
+    `ColourShaft.ShaftFloor_25` (floor, hit u 445.72-447.28, between `Toggle0` and the `Hatch1` column), `ShaftSlab1_26` (slab 1, u 448.22-449.78,
+    between the `Hatch2` column and `Hatch1`), `ShaftSlab2_27` (slab 2, u 454.22-455.78, before `1206`). Playtest (single running jumps at 16):
+    on slab 2 (open above) the hop is easy (feet peak 9, lands 6 past the spike); under the 10-high floor and slab-1 lanes the jump bonks
+    on the slab above and carries only about 4.5 studs: collider 4.1 cleared the floor spike from u 444.3 and died from 443.5 (a take-off
+    window under 1 stud), the 5.3 avatar died from 442.5.
+  - *Taller shaft lanes (user, same day: "make ceilings a bit higher"):* slab 2 stays (h 21-22, level with `TakeoffBlock`, the finale is
+    unchanged), so the floor went down: the hall `Floor` now ends at u 434, `ColourShaft.ShaftFloor` (a copy of it) is the shaft's floor at
+    h -12..-8 (u 434-474), `ShaftRiser` (u 432-434, h -12..-4) closes the step under the hall floor's end; slab 1 (`Slab1East`, `Hatch1`,
+    `Hatch1Rim`, `Slab1West`, `Toggle1`) at h 6-7; `ShaftEastWall` down to h 7 (slab 1's top: no way onto slab 1 from the hall; the way in is
+    under it, 7 high from the hall floor, then an 8-stud drop); `Coin_5` 4 lower; wires follow (`Wire_Toggle0_1` from the pad at h -7.75,
+    along at h 4, into `Hatch1` at h 6; `Wire_Toggle1_1` from h 7.25). **Lanes 14 / 14** (were 10 / 10), hatch climbs 15 (a Triple Jump; the
+    Double Jump of the old shaft no longer reaches). Tried 12 and 13 first: the 5.3 avatar still bonked (head counts in a jump, see the avatar
+    size rule). Spikes moved: `ShaftFloor_25` 2 right (hit u 447.72-449.28, a run-up from `Toggle0`'s end), `ShaftSlab1_26` to u 459.22-460.78
+    (between the closed `Hatch1` and `Toggle1`; at u 449 it stood over the floor spike, and a floor hop with a hat died on it through the
+    1-stud slab). Backup: Studio-only `ServerStorage.ShaftBackup_20261029` (the shaft, the hall floor, `Coin_5` before the change).
+    *Playtest (running single jumps at 16):* collider 4.1: floor spike cleared from every take-off u 442.5-446.2, slab 1 from 454.5-457.3 (a
+    death first, so `Hatch1` is shut), slab 2 from 449.5-452.5; the 5.3 avatar with a hat (and the developer's Jump Height level): floor
+    from 444.5-445.5, slab 1 from 455.5 and 457.3 (456.5 died), a 1-2 stud window. The hat death through slab 1 is gone with the
+    body-parts-only kill test (avatar size rule). Coplanar audit of the shaft: clean apart from the pads.
+  - *Stud spike previews (Studio-only `Workspace.SpikePreview`, removed after the user picked `1_GlowRidge`, see §7.11 "Spike look"):* `0_Current` (light red SmoothPlastic wedges), `1_GlowRidge` (charcoal `#2C2C34` Plastic + `Studs` ridge, Neon
+    `#FF5913` tip wedges along the top 0.75, 0.03 proud of the slopes; the crushers' "B" language), `2_SpikePlate` (charcoal `Studs` plate
+    2.8 x 0.6 x 6 with two red teeth, same overall height 2.31), `4_RedStuds` (the current shape in red `#C4281C` Plastic + `Studs`). 39 spike
+    models would change (Stage 14: 27 with the shaft's three, Stage 10: 12); the `Hit` boxes stay as they are.
+  - *Stud blocks (user, 2026-10-29: "HallCeiling and similar white blocks ... Stud version"):* all 49 white (`(240, 240, 245)` / `(239, 239, 245)`)
+    SmoothPlastic parts of Stage 14 are `Plastic` + `Studs`, colour, size and collision unchanged: `Entry.HallFloor` / `HallCeiling`,
+    `Deck.DeckFloor` / `LandingFloor`, the vault's `Shell` (8) and `Solids` (20, `Pillar_Lock` with its `ArenaGate` fade), `BeamHall`'s floor,
+    ceilings and walls (7), `ColourShaft` (8) and `Finale` (2). Not changed: `LabCamera` (camera zone, 0.9 transparent). Revert = SmoothPlastic,
+    no variant. Studio-only; checked by a capture of the entry hall.
+  - *Centred on the gate (user, 2026-10-29: "the mis-aligned start of the stage"):* the gate opening is centred at z -585 (like Stage 12 / 13, whose
+    first plates sit on their gate's centre line), but `1201` was at z -581 and the hall / lane at -580. Every part of Stage 14 except `Gate`,
+    `Arrival` and `Top10Leaderboard` moved 5 to -z (`1201` 4), 361 parts in one `BulkMoveTo`: lane now z -588..-582 (centre -585), back panel face
+    -582, `1201` / `HallFloor` / `Door` all at z -585. The u / h coordinates (x, y) and `tools/vault_reach.py` are unchanged. Camera: the `Side`
+    zones keep their distances, so `VaultCamera` (55) stands at z -640 and `LabCamera` (45) at -630. Near the vault the only Stage 13 part in
+    front of -640 is the edge of `1101.C` (to -637, y 78.5, 6 below the camera); `GantryPost2` (z -642.5..-639.5, x -664) lies under
+    `LabCamera`, 9.5 behind its camera. The draft's warning above (a lane at -585 puts the camera in `GantryPost2`) held for Distance 55 only.
+    Stage 13's track is now 56 from the lab's north wall, still beyond a maxed Long Dash (46.5). Coplanar audit: no new clash (the known button
+    pads, plus the template's own finish-arch stones and gate parts). Revert: the same parts +5 z (`1201` +4). Studio-only; checked by a capture
+    of the gate; the user playtested it the same day ("looks good").
+  - *Back panels sand blue (user pick "C", 2026-10-29):* the near-black panels hid the charcoal spikes and fit no other stage. The 5 panels
+    (`Vault.Shell.BackPanel` / `BackPanelRight` / `BackPanelTall`, `Entry.HallBack`, `BeamHall.BackPanel`) are LEGO sand blue `(112, 129, 154)`
+    Plastic + `Studs` (were SmoothPlastic `(44, 44, 48)`), the 11 decorative `Tile`s on them (`Vault.Decor`, `Entry`) a darker sand blue
+    `(92, 108, 132)` Plastic + `Inlets` (were SmoothPlastic `(58, 58, 63)`). Previews rejected: A no panels (transparent, collision kept: the
+    hub and the other stages behind the lane were busy and the back-wall wires floated), B stone grey `#A3A2A5` (the white blocks merged into
+    it), D tan `(199, 172, 120)` (in the ceilings' shadow it read as muddy grey). Not changed: the dark emitters, `GridCeiling`, the deck /
+    hall pillars and supports. Studio-only; checked by captures of the vault tower and the beam hall.
+  - *`Gate_Teal` replaced by a full-height `Pillar_Lock` (user, 2026-10-29):* the user saw the translucent Neon gate as decoration only, but
+    `vault_reach.py` (profile `max`, `DROP=Gate_Teal`, target past the pillar) showed that without it a Double Jump clears the 12-high pillar
+    before the teal key. `Pillar_Lock` (white `Studs`, `ArenaGate`, `KeyId = Teal`, unchanged otherwise) now runs from the floor to the ceiling
+    (h 0-64, y 78-142, u 154.0-157.8, 0.9 wider each side than the gate was) and fades with its `LockTeal_*` decor on the teal key;
+    `Gate_Teal` moved to `ServerStorage.VaultBackup_20261029`. Model re-run: `max` reaches neither the pillar's top nor the floor past it before
+    the key (it did stand on the old pillar's top); `base` with both switches still reaches `Key_Teal`. Coplanar audit of the pillar clean.
+    Studio-only (plus `vault_reach.py`); checked by a capture; *not checked* in a playtest (the fade on the key).
+- **Vault tower (the right half, green key; rebuilt 2026-10-28 from the user's second sketch, cut to four taller lanes 2026-10-29 (option A, the avatar size rule); built, model- and bot-checked, awaits the user's check).**
   The user's route: from the teal pillar along the floor, then `Block_Right2`, `Block_Right1`, `Slab_Step`, `Base_L` (hop `BaseTiny_15`),
   `Base_L_Post`, the zig-zag between the E's arms and the columns (`E_ArmBottom`, `Column_2`, `E_ArmMid`, `Column_1`, `E_ArmTop`), over
   `E_Stem` and down the slot between `E_Bar` and the stem past two spikes to the key. As first built the blocks rose 4 studs a step in an open
   chimney: a maxed Triple Jump (27) skipped from the floor to `Base_L` and from `Base_L` to the E's top, and an arm reached the key from the left
   (the pocket under `E_Bar` was open on that side). A first fix, blocks that appear one after another (`KitStep`), was taken out again (the user
   did not like it here; the mechanic stays in ObstacleKit for a stage of its own, §5.5). The bounce orb (`Pickups.Orb` / `OrbRing`) is removed.
-  - *Shell:* the right half is **65 high over u 157.83-220** (`Shell.CeilingRight` h 65-69, as deep as the left half's `Ceiling`, h 64-68,
-    which ends at u 157.83 above the teal pillar; `WallRightUpper` to 65; the back panel and lane wall reach h 66 like the left half's). It was
-    103 high for the ten-ledge tower (`BackPanelRight` / `LaneWallRight` h 66-103, deleted). `VaultCamera` covers h -8..115, `VaultGhosts` h 0..107.
-  - *Tower (switchback lanes, like the first half; ten lanes, then six 15.8 apart, now six 9.5 apart, all 2026-10-28: ten jump-dashes were
-    too long, the tall six-lane version too easy):* six ledges, 2 thick, tops 9.5 apart (9.5, 19, 28.5, 38, 47.5, 57), hung alternately
-    from `Solids.RightMass` (u 200.2-216, h 7.5-65; ledges u 179.2-200.2, gap 174.2-179.2 at the left) and from `E_Stem` (u 172.2-174.2,
-    h 7.5-57, 2 thick; ledges u 174.2-195.2, gap 195.2-200.2 at the right; ledges 21 long since the slot was widened, the spikes of the
-    R-hung ledges moved 2 right with them). Every ledge roofs the lane below except at its gap, the gaps alternate, so
-    each lane is walked in turn: `Block_Right2` (R-hung), `Block_Right1` (stem), `Slab_Step`, `Base_L`, `Column_1`, `E_ArmTop`. The count
-    must be even: the top ledge hangs from the stem, flush with its top, so the climb ends walking left over the stem into the slot. Lanes are
-    7.5 high: a ledge-up is a double jump through the gap; one spike in the middle of every ledge (`Right2_13`, `Right1_12`, `Slab_23`,
-    `BaseTiny_15`, `Column1_19`, `ArmTop_24`), and under that roof a plain hop cannot clear it (the head hits the roof): each one is a
-    **jump + Long Dash**, the dash corridor's move. The top lane (8 high under the ceiling) also has **`Ceiling_21`** back, from
-    the old-room backup at 0.7 scale (`Hit` u 189-190.46, h 63.46-65, visual tip at 62.44): right after the ledge-up from
-    `Column_1` the player must walk under it, a hop there dies (the backup's `Hit` had lost its `KitKill` tag; re-added). Taken out with the
-    four middle ledges: `Base_L_Post`, `E_ArmBottom`, `Column_2`, `E_ArmMid` and their spikes `PostTop_14`, `ENotch_17`, `Column2_20`,
-    `EMid_16` (their backup was deleted with the old room's on 2026-10-28).
-  - *Floor lane:* h 0-7.5 under everything from the doorway (under `E_Bar`) to the green lock and the exit; `Block_Right2`'s gap above it is
-    the way in.
+  - *Shell:* the right half is **69.25 high over u 157.83-220** (`Shell.CeilingRight` h 69.25-73.25, raised 4.25 on 2026-10-29 so the top lane
+    is as tall as the others; `RightMass`, `E_Bar` and `WallRightUpper` reach it; `BackPanelRight` / `LaneWallRight` h 66-73.25 over u 157.83-220
+    extend the back panel and the invisible lane wall, which stop at h 66). The left half's `Ceiling` (h 64-68) ends at u 157.83 above the teal
+    pillar. It was 103 high for the ten-ledge tower, then 65. `VaultCamera` covers h -8..115, `VaultGhosts` h 0..107.
+  - *Tower (switchback lanes, like the first half; ten lanes, then six 15.8 apart, six 9.5 apart (2026-10-28), now four 14.25 apart
+    (2026-10-29: six jump-dashes under a 7.5 roof were too hard, see the user's playtest below)):* four ledges, 2 thick, tops 14.25, 28.5,
+    42.75, 57, hung alternately from `Solids.RightMass` (u 200.2-216, h 7.5-69.25; ledges u 179.2-200.2, gap 174.2-179.2 at the left) and from
+    `E_Stem` (u 172.2-174.2, h 7.5-57, 2 thick; ledges u 174.2-195.2, gap 195.2-200.2 at the right): `Block_Right2` (R-hung), `Block_Right1`
+    (stem), `Column_1` (R), `E_ArmTop` (stem, flush with the stem's top, so the climb ends walking left over the stem into the slot; the
+    count must stay even). Every ledge roofs the lane below except at its gap, the gaps alternate, so each lane is walked in turn. Lanes are
+    **12.25 high**, planned for the tallest avatar (collider 5.2, the avatar size rule): a ledge-up is a **Triple Jump** through the gap (a
+    double jump rises 14.5 against a step of 14.25: too tight to count on). On each of the three lower ledges a **row of three spikes**
+    (`Right2_13` / `b` / `c`, `Right1_12` / `b` / `c`, `Column1_19` / `b` / `c`: the `Right2_13` shape, hits 1.56 x 1.39, pitch 2.25, row 6.06
+    long) ends 0.6 before the gap column the climb leaves by: R-hung ledges u 188.54-194.6, the stem ledge u 179.8-185.86. The row is a
+    **jump + dash**; a single jump does not clear three spikes, and an air jump only hits the roof (the second jump of a double jump adds no
+    distance under a 12.25 roof). The landing after a ledge-up has 9.3 studs before the row (a player holding the direction key through the
+    whole Triple Jump drifts about 7). The top lane has no row, only **`Ceiling_21`** at full scale hanging from the new ceiling (`Hit`
+    u 183.36-185.44, h 67.05-69.25: 10 above `E_ArmTop`, so a walking head and hat pass under it, a hop by any avatar dies). Taken out:
+    `Slab_Step`, `Base_L` and the spikes `Slab_23`, `BaseTiny_15`, `ArmTop_24` (the old `Right1_12` / `Column1_19` shapes replaced by the
+    rows); backup in the Studio-only `ServerStorage.VaultBackup_20261029` until the user's check.
+  - *Floor lane:* h 0-7.5 under the stem, `RightMass` and `E_Bar` from the doorway (under `E_Bar`) to the green lock and the exit, 12.25 under
+    `Block_Right2`; `Block_Right2`'s gap above it is the way in.
   - *Slot and key (widened 2026-10-28 from 4.2 to 10.2, the user got past `EBarSide_22` once in five tries):* `E_Bar` (u 157.83-162, the right half's left wall, to the ceiling) in three parts (`E_BarLower` h 7.5-41, `E_BarNotchBack`
-    u ..159 h 41-45.5, `E_Bar` h 45.5-65): a notch at the slot floor holds the key (`Key_Green.Visual` at half size, `Hit` u 159-162.4,
+    u ..159 h 41-45.5, `E_Bar` h 45.5-69.25): a notch at the slot floor holds the key (`Key_Green.Visual` at half size, `Hit` u 159-162.4,
     h 41-45.5: touched only by a player who landed left of the bottom spike). The slot is u 162-172.2; `EBarSide_22` on the bar near its top
     (h 55.6-56.8), `EBottom_18` on the floor (u 166.8-168.13). The slot floor is `Gates.SlotHatch` (green, u 162-172.2, h 39-41, `KeyId`
     Green + `OpensWhenHeld`): it fades out as soon as the key is held, with the bottom spike (its parts are ArenaGates too, the hit `KillWhileShut`),
@@ -1109,6 +1292,60 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
     face once lowered). No errors.
   - *Not checked:* a human climb (six lanes, six jump-dashes and the ceiling spike; a death sends the player back to `1202`, there is no checkpoint in the tower),
     the look (old `Decor.Tile` panels still hang on the back wall behind the tower).
+  - *User's playtest (2026-10-29): too hard for the target audience.* Three causes measured in Studio:
+    - **Dash into a wall threw the player back:** the dash's unlimited-force LinearVelocity pinned the character against `RightMass` and released
+      it at about 117 studs/s, 14 studs back onto `Right2_13`. The R-hung ledges end at that wall, so a dash over their spike usually ends in it.
+    - **The dash was cut short under the roof:** `TalentDash` ended the burst when the humanoid left Freefall / Jumping, and under the 7.5 roof
+      it reports Landed / Running with the feet still about 2 up (the whole jump lasts about 0.17 s before the head hits the roof). Pressed
+      0.04-0.06 s after the jump the dash ran about 2 studs, 0.12 s 4.5, later nothing; only 0.08-0.10 s gave the full 16.
+    - **Avatars collide at different heights:** the head never collides; the top of the collider is the `HumanoidRootPart` (HipHeight + 2).
+      Lekzdrh's avatar: 4.1 (head top 4.9), so it fits under `Block_Float2` (gap 4.2, h 4.2-8.1 over the lane-0 floor) with 0.1 to spare;
+      longer-legged avatars do not, and under a 7.5 roof their feet rise less (spike kills test every part, accessories too).
+  - *Dash fix (2026-10-29, `TalentDash`):* "on the ground" is a probe under the root (the root's footprint swept to 0.6 below the feet), not the
+    humanoid state, for starting, ending and giving back the dash; a box cast ahead each frame ends the burst at a wall (stepped up to it, then
+    at rest, falling). Playtest with the real keys (Space, Q) on `Block_Right2`: a dash into `RightMass` stops at x -412.65 (wall -413.2),
+    lands, no bounce (largest speed after it 4); jump + dash over `Right2_13` clears its hit by 1.1 (feet 2.5 up) and stops at the wall, alive;
+    pressed 0.133 s after the jump (falling after the head hit the roof) the dash still runs 16.2 studs over the spike; pressed 0.02 s after
+    the jump it holds the feet 1 stud up and dies on the spike (too early, as expected). Under the 7.5 roof the window is now about
+    0.04-0.14 s after the jump instead of 0.08-0.10. Open-air dashes are unchanged (no wall, no false landing). No script errors.
+    *Glancing walls (user, same day: "jump + Q no longer gets anywhere unless I hold left or right"):* with no direction key the dash goes
+    where the character faces, often a little toward the front or back of the 6-deep lane; the wall check stopped it at the lane wall
+    (playtest: 15 degrees off, 6.2 studs, then onto `Right1_12`), the old dash had slid along it. Now a hit whose remaining share along
+    the wall is 0.5 or more (less than 60 degrees into it) slides along the wall with that share of the speed; a near head-on hit stops.
+    Re-test: 15 degrees off on `Block_Right1`, 16.5 studs along the lane over the row, alive; head-on into `RightMass` stops after 2.8,
+    largest speed afterwards 2 (no bounce).
+  - *Rebuild to four lanes (2026-10-29, option A; the layout above):* also `Block_Float2` extended down to h 3.4 (top 8.1 unchanged: no avatar
+    walks under it now, everyone goes over it as the 5.2-tall model always had to). `tools/vault_reach.py`: tower as built, `max` now models
+    the smallest avatar (height 3.6, was 5.0), `base` the tallest (5.2); `vault_right_checks.sh` plugs gaps 1-4. All pass: `base` reaches the
+    key and the slot floor, any one plugged gap keeps a maxed player from the key, the open hatch leads to the lock; room 1 (re-run with the
+    3.6 `max`): either barrier shut or either top stone dropped keeps the teal key out of reach, `base` reaches it, and after the key no path
+    skips the dash corridor. Coplanar audit of the vault: nothing from the rebuild; it reports the switch pads sinking 0.05 into their blocks
+    (`Switch_Lane1` / `Block_Float2`, `Switch_Lane2` / `LedgeL2`, from the button restyle), left for the user.
+    *Playtest* (bot driving the root velocity, jumps through the humanoid state as `TalentDoubleJump` does, the real dash on the Q key; the
+    tall avatar is the player's description with body type 1, height 1.05 = collider **5.3**):
+    - first version, rows of four spikes (8.35 long) in the middle of the ledges: a double jump died on the row at every air-jump timing
+      (0.15 / 0.25 / 0.35 s; the air jump only hits the roof), jump + dash cleared it (4.1 and 5.3 colliders); a Triple Jump climb holding
+      the direction key overshot the 6.8-stud landing onto the next row. Hence three-spike rows against the climb end;
+    - as built: the 5.3 avatar's Triple Jump climbs (`Block_Right2` -> `Block_Right1`, `Block_Right1` -> `Column_1`, air jumps at 0.3 / 0.6 and
+      0.2 / 0.4 s) peak 19.4-20.3 above the ledge and stand 1-6 studs short of the row, alive; jump + dash over `Right1_12` (Q 0.2 s into the
+      jump) clears the hits by about 2.5 and stops at the stem, alive; single jumps over three spikes from u 189 / 188 / 187.2 all die. No errors.
+  - *User's first climb (2026-10-29): a Triple Jump crosses the rows, "probably too easy".* Confirmed: air jumps fired as soon as they
+    are possible bonk on the roof and die on the row (0.2 / 0.4, 0.3 / 0.6, 0.4 / 0.8 s), but air jumps on the way down (feet back
+    below 4 or 2.5 over the ledge) restart the arc each time and carry the player 12-13 studs, over the row to u 175-176. Lower lanes do not
+    stop it (the S8.2 note: under an 8-stud roof a hovering Triple Jump crossed 14-18), and the ledge (21) leaves no room for a longer row.
+    Open: keep it (rows = Triple Jump rhythm or dash) or block air jumps over the rows only (the climbs need them).
+  - *User's height adjustment (2026-10-29, "a bit harder"):* ledge tops 14.25 / 27.81 / 40.75 / 54 (lanes 11.56 / 10.94 / 11.25, top lane
+    12.25), `CeilingRight` h 66.25-70.25, `RightMass` / `E_Bar` to 66.25, `BackPanelRight` to 70.25, `Ceiling_21` hit h 64.05-66.25 (10 over
+    `E_ArmTop`), `EBarSide_22` 1 lower (h 54.6-55.8); `E_Stem` stayed at 57, 3 above `E_ArmTop`. `WallRightUpper` (still to 69.25) ran into the
+    lowered ceiling and z-fought with it: trimmed to 66.25 (audit otherwise as before). `vault_reach.py` follows the new heights; all tower
+    checks pass. Slot entry (bot, walking 16 / Run Speed 20.8, playtest): over the 3-stud stem stub a jump at walking speed lands on
+    `EBottom_18` (u 168, dead), at 20.8 at u 165. Trial in the playtest only: stem trimmed flush (54) -> walking off at 16 still lands on
+    `EBottom_18` (the drop is 3 shorter, so less drift), jumps land at u 161-162.5; with `EBottom_18` also moved 2.2 right (hit u 169-170.33)
+    every entry lands on the key, u 160.7-163.0, collider 4.1 and 5.3. `EBarSide_22` was never touched on these paths (they pass it 5+
+    studs from the wall); it only catches a dash into the slot. The user kept the layout as adjusted (stem stub, `EBottom_18` and
+    `EBarSide_22` where they are).
+  - *Not checked:* a human climb of the new tower, the look (the new back-panel band, the full-scale `Ceiling_21`, the old `Decor.Tile`
+    panels), a climb from the floor lane into lane 1 in Studio (the model finds it), the Run Speed 5 single-jump shortcut over a row.
 
 ### 7.13 S8.3 Rising Tide (design check 2026-10-28; the user took every recommendation the same day: D1 A, D2 sound alone, D3 out-and-back, D4 maxed soft talents, D5 S8.3a / S8.3b)
 The World 3 finale (§3 "each world finale mixes every signature of its world"): one new hazard, a **lava tide** rising under the whole

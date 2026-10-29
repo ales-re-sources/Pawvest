@@ -19,6 +19,6 @@ run() { # name env profile u h target...
 	  echo "$name ($envs $prof from $u,$h, $states):$res$([ "$cap" != 0 ] && echo " state cap hit")" ) &
 }
 run route "" base 159 0 Key_Green SlotFloor
-for k in 1 2 3 4 5 6; do run "plug$k" "PLUG=$k" max 159 0 Key_Green; done
+for k in 1 2 3 4; do run "plug$k" "PLUG=$k" max 159 0 Key_Green; done
 run exit "HATCH=open" base 163.0 41 LockZone_Green
 wait

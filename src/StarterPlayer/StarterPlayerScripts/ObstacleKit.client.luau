@@ -31,7 +31,8 @@
 --             the beam goes off, shading to orange as it comes back (flashing in the Telegraph), red while it is on.
 --   KitKill   static kill part (S6.3, the Clocktower's gargoyles): touching it kills; its look is left alone (often an
 --             invisible hit box round a decoration).
---   KitPlate  disappearing plate: Period, Duty (solid share), Phase, Telegraph s (flickers before it vanishes).
+--   KitPlate  disappearing plate: Period, Duty (solid share), Phase, Telegraph s (flickers before it vanishes). Parts inside
+--             it (a decoration rim; CanCollide off) fade and vanish with it (KitCrumble's too; welded ones shake with it).
 --   KitCrumble crumbling plate (kit-local): shakes when the player stands on it, vanishes after Delay s (default 0.8), is back
 --             after Return s (default 3). Other players see it at rest.
 --   KitSwitch / KitColorPlate  colour puzzle (kit-local): stepping on a KitSwitch (attributes Group, Color; Color "Toggle"
@@ -45,6 +46,8 @@
 --             n-1 was stood on, then gone (the lid over the green key's slot). Groups start over at every death and run start.
 --   KitButton / KitDoor  pressure door (kit-local, S6.3, the Clocktower): standing on a KitButton (attributes Group, Time s, default 4)
 --             opens every KitDoor of that Group for Time s for the local player; stepping on the button again restarts the time.
+--             A button (or KitSwitch) over a gap may carry a raised child part named Cap: standing on it counts as the button and a
+--             button's Cap, not the part, turns green while its group is open.
 --             The door slides OpenDistance studs (default its height) along OpenAxis (world Vector3, default up) in OpenTime s
 --             (default 0.4) and back when the time is up; OpenTurn (degrees, default 0) also turns it about the vertical
 --             axis through its centre (OpenDistance then defaults to 0): the Clocktower's turning gargoyle, its other parts
@@ -61,7 +64,10 @@
 --   KitIce    ice floor (S8.1, the Ice Rink): while the character stands on it, the kit drives its horizontal velocity: toward
 --             the input direction x WalkSpeed at Accel studs/s² (default 14), coasting without input and slowing at Brake
 --             studs/s² (default 5). It starts from the character's real velocity every frame, so a wall, wind or a push
---             still count. In the air the Humanoid steers again as usual.
+--             still count. Ice-air (2026-10-29): after leaving the ice (a jump, an edge) the slide carries on until the next
+--             landing, steered toward the input at AirAccel studs/s² (default 14) and never braked; a dash keeps it too
+--             (TalentDash reads the character attribute IceAir). Landing on any other floor gives the Humanoid back at
+--             once. The kit makes each KitIce part frictionless locally (on a rough material the Humanoid outgrips the drive).
 --   RunSeeded  attribute on any timed part (mover, beam, plate): it runs on time since that player's stage timer started
 --             (StageTimerUpdate) instead of server time, so every run sees the same sequence; set Phase so that t = 0 is safe.
 --   KitTilt   hinge plate (local X axis): the plate tips toward the side the player stands on, a spring pulls it back;
@@ -124,6 +130,10 @@ local floorParams = RaycastParams.new()
 floorParams.FilterType = Enum.RaycastFilterType.Exclude
 local bodyParams = OverlapParams.new()
 bodyParams.FilterType = Enum.RaycastFilterType.Include
+local sightParams = RaycastParams.new()
+sightParams.FilterType = Enum.RaycastFilterType.Exclude
+sightParams.RespectCanCollide = true
+local SIGHT_END = 0.15 -- studs the hazard sight line stops short of the hazard
 
 -- Attribute reads are cached per part (the frame loop reads several per kit part every frame, and GetAttribute is far
 -- slower than a table lookup); AttributeChanged drops a changed value, so tuning a part in Studio still takes effect.
@@ -216,15 +226,35 @@ local function addBeam(part: Instance)
 	end
 end
 
+-- decoration parts inside a disappearing / crumbling plate (its rim, its tiles) fade and vanish with it: [part] = own transparency
+local function decorOf(part: BasePart)
+	local decor = {}
+	for _, child in part:GetDescendants() do
+		if child:IsA("BasePart") then
+			decor[child] = child.Transparency
+		end
+	end
+	return decor
+end
+
 local function addPlate(part: Instance)
 	if part:IsA("BasePart") then
-		plates[part] = { state = "solid", transparency = part.Transparency }
+		plates[part] = { state = "solid", transparency = part.Transparency, decor = decorOf(part) }
+	end
+end
+
+-- a disappearing or crumbling plate at transparency t (from its own transparency when solid to 1 when gone); its decoration follows the same share
+local function setPlateLook(part: BasePart, data, t: number)
+	part.Transparency = t
+	local share = if data.transparency < 1 then math.clamp((t - data.transparency) / (1 - data.transparency), 0, 1) else 1
+	for child, base in data.decor do
+		child.Transparency = base + (1 - base) * share
 	end
 end
 
 local function addCrumble(part: Instance)
 	if part:IsA("BasePart") then
-		crumbles[part] = { state = "solid", base = part.CFrame, transparency = part.Transparency, since = 0 }
+		crumbles[part] = { state = "solid", base = part.CFrame, transparency = part.Transparency, since = 0, decor = decorOf(part) }
 	end
 end
 
@@ -316,7 +346,10 @@ end
 
 local function addButton(part: Instance)
 	if part:IsA("BasePart") then
-		buttons[part] = { color = part.Color, label = countdownLabel(part, 3) }
+		-- a button over a gap is a charcoal housing with a raised child Cap (its black border inside the footprint): the cap shows the state
+		local cap = part:FindFirstChild("Cap")
+		local face = if cap and cap:IsA("BasePart") then cap else part
+		buttons[part] = { color = face.Color, face = face, label = countdownLabel(part, 3) }
 	end
 end
 
@@ -372,6 +405,10 @@ end, killParts)
 track("KitIce", function(part)
 	if part:IsA("BasePart") then
 		ices[part] = true
+		-- the Humanoid's own walking grips by floor friction and overpowers the ice drive on a rough floor (the Plastic
+		-- restyle of 2026-10-29 stopped a slide in 1 stud): slick locally, whatever material the part shows
+		local current = part.CurrentPhysicalProperties
+		part.CustomPhysicalProperties = PhysicalProperties.new(current.Density, 0, current.Elasticity, 100, current.ElasticityWeight)
 	end
 end, ices)
 
@@ -388,13 +425,34 @@ ReplicatedStorage:WaitForChild("StageTimerUpdate").OnClientEvent:Connect(functio
 	player:SetAttribute("KitRunStart", runStart or 0)
 end)
 
+-- hazards test the body parts only (the character's own BaseParts): an accessory or a held tool never kills (a tall hat
+-- reached through a 1-stud slab into a spike standing on it, 2026-10-29); the list follows parts swapped by ApplyDescription
+local bodyConnections: { RBXScriptConnection } = {}
+local function refreshBody()
+	local parts = {}
+	if character then
+		for _, child in character:GetChildren() do
+			if child:IsA("BasePart") then
+				table.insert(parts, child)
+			end
+		end
+	end
+	bodyParams.FilterDescendantsInstances = parts
+end
+
 local function setCharacter(newCharacter: Model?)
 	character = newCharacter
 	humanoid = newCharacter and newCharacter:FindFirstChildOfClass("Humanoid")
 	root = newCharacter and newCharacter:FindFirstChild("HumanoidRootPart")
+	for _, connection in bodyConnections do
+		connection:Disconnect()
+	end
+	table.clear(bodyConnections)
 	if newCharacter then
 		floorParams.FilterDescendantsInstances = { newCharacter }
-		bodyParams.FilterDescendantsInstances = { newCharacter }
+		refreshBody()
+		table.insert(bodyConnections, newCharacter.ChildAdded:Connect(refreshBody))
+		table.insert(bodyConnections, newCharacter.ChildRemoved:Connect(refreshBody))
 	end
 end
 -- a respawned character arrives part by part: wait for the Humanoid and the root part before using it
@@ -464,6 +522,11 @@ local wasCarried = false
 local carriedPart = nil -- the mover the character was last carried by
 local airMover = nil -- mover data the character just jumped off, followed in the air until airUntil
 local iceDrive: LinearVelocity? = nil -- the root's ice drive (KitIce), created on the first ice floor of a character
+local iceAirPart: BasePart? = nil -- the ice part the character stood on last; in the air it keeps the slide (AirAccel)
+local landedTime = 0 -- seconds grounded off ice; ice-air ends after ICE_LAND_TIME (the Humanoid reports a floor for a frame or two after take-off)
+local ICE_LAND_TIME = 0.1
+local lastRootPosition: Vector3? = nil -- a jump of more than TELEPORT_DISTANCE in one frame is a teleport (respawn): ice-air ends
+local TELEPORT_DISTANCE = 10
 local airUntil = 0
 local standSample = nil -- { part, local position, since }
 local lastSwitch = nil -- the colour switch the character stood on last frame (a switch fires once per step-on)
@@ -488,17 +551,42 @@ local function near(part: BasePart): boolean
 	return (part.Position - root.Position).Magnitude < part.Size.Magnitude / 2 + OVERLAP_MARGIN
 end
 
+-- True when a solid part lies between the root and the nearest point of `part`: limbs do not collide, so a hand raised
+-- in a jump reaches through a thin slab into a spike standing on it (Stage 14's colour shaft, 2026-10-29); such a
+-- touch does not count. The hazard's own model is ignored (a gargoyle's body around its hit box).
+local function behindSolid(part: BasePart): boolean
+	local half = part.Size / 2
+	local inPart = part.CFrame:PointToObjectSpace(root.Position)
+	local nearest = part.CFrame:PointToWorldSpace(Vector3.new(
+		math.clamp(inPart.X, -half.X, half.X),
+		math.clamp(inPart.Y, -half.Y, half.Y),
+		math.clamp(inPart.Z, -half.Z, half.Z)
+	))
+	local offset = nearest - root.Position
+	if offset.Magnitude < SIGHT_END + 0.05 then
+		return false
+	end
+	local hazard: Instance = if part.Parent and part.Parent:IsA("Model") then part.Parent else part
+	sightParams.FilterDescendantsInstances = { character :: Instance, hazard }
+	sightParams.CollisionGroup = root.CollisionGroup
+	-- stop short of the point: a spike's nearest point lies on the slab it stands on
+	return workspace:Raycast(root.Position, offset.Unit * (offset.Magnitude - SIGHT_END), sightParams) ~= nil
+end
+
 -- Touch, like the Touched event it replaces: a box slightly larger than the part, because a solid hazard pushes the
 -- character out of any real overlap within one physics step and a bar only grazing a leg would never test positive.
 local function touchesCharacter(part: BasePart): boolean
 	if not near(part) then
 		return false
 	end
+	local touching
 	if part:IsA("Part") and part.Shape == Enum.PartType.Ball then
 		-- a ball's box reaches past its surface at the corners (and turns with a rolling ball)
-		return #workspace:GetPartBoundsInRadius(part.Position, part.Size.X / 2 + TOUCH_PAD, bodyParams) > 0
+		touching = #workspace:GetPartBoundsInRadius(part.Position, part.Size.X / 2 + TOUCH_PAD, bodyParams) > 0
+	else
+		touching = #workspace:GetPartBoundsInBox(part.CFrame, part.Size + Vector3.one * TOUCH_PAD, bodyParams) > 0
 	end
-	return #workspace:GetPartBoundsInBox(part.CFrame, part.Size + Vector3.one * TOUCH_PAD, bodyParams) > 0
+	return touching and not behindSolid(part)
 end
 
 local function kill(part: Instance)
@@ -599,9 +687,10 @@ RunService.PreSimulation:Connect(function(dt: number)
 			attr(part, "Telegraph", 0.6)
 		)
 		if state == "warning" then
-			part.Transparency = if math.floor(now * 8) % 2 == 0 then data.transparency else 0.6
+			-- the flicker goes 60 % of the way from its own transparency to invisible (0.6 for an opaque plate)
+			setPlateLook(part, data, if math.floor(now * 8) % 2 == 0 then data.transparency else data.transparency + (1 - data.transparency) * 0.6)
 		elseif state ~= data.state then
-			part.Transparency = if state == "solid" then data.transparency else 1
+			setPlateLook(part, data, if state == "solid" then data.transparency else 1)
 		end
 		if state ~= data.state then
 			part.CanCollide = state ~= "gone"
@@ -622,6 +711,10 @@ RunService.PreSimulation:Connect(function(dt: number)
 		-- Humanoid still reports a floor for a frame or two after take-off); both must neither carry nor tilt it
 		local depth = if hit then root.Position.Y - hit.Position.Y else 0
 		local instance = hit and depth >= MIN_FLOOR_DEPTH and depth <= MAX_FLOOR_DEPTH and hit.Instance
+		-- the raised Cap of a button / switch over a gap counts as the button itself
+		if instance and instance.Name == "Cap" and instance.Parent and (buttons[instance.Parent] or switches[instance.Parent]) then
+			instance = instance.Parent :: BasePart
+		end
 		-- a kill hazard is never a floor (a sweeper bar at shin height would otherwise carry the character along with it)
 		if instance and (movers[instance] or tilts[instance] or crumbles[instance] or switches[instance] or buttons[instance] or ices[instance]) and not attr(instance, "Kill", false) then
 			standing = instance
@@ -641,7 +734,7 @@ RunService.PreSimulation:Connect(function(dt: number)
 			if data.state ~= "solid" then
 				data.state = "solid"
 				part.CFrame = data.base
-				part.Transparency = data.transparency
+				setPlateLook(part, data, data.transparency)
 				part.CanCollide = true
 			end
 		end
@@ -663,12 +756,12 @@ RunService.PreSimulation:Connect(function(dt: number)
 				data.state = "gone"
 				data.since = clock
 				part.CFrame = data.base
-				part.Transparency = 1
+				setPlateLook(part, data, 1)
 				part.CanCollide = false
 			end
 		elseif clock - data.since >= attr(part, "Return", 3) then
 			data.state = "solid"
-			part.Transparency = data.transparency
+			setPlateLook(part, data, data.transparency)
 			part.CanCollide = true
 		end
 	end
@@ -758,8 +851,8 @@ RunService.PreSimulation:Connect(function(dt: number)
 		local group = attr(part, "Group", "A")
 		local left = (doorOpenUntil[group] or 0) - clockNow
 		local color = if left > 0 or latched[group] then BUTTON_ON_COLOR else data.color
-		if part.Color ~= color then
-			part.Color = color
+		if data.face.Color ~= color then
+			data.face.Color = color
 		end
 		showCountdown(data.label, if latched[group] then 0 else left)
 	end
@@ -905,7 +998,22 @@ RunService.PreSimulation:Connect(function(dt: number)
 	-- ice: the Humanoid walks at full speed on any floor whatever its friction, so on a KitIce part a plane LinearVelocity
 	-- on the root takes over the horizontal motion (vertical stays free for jumps and falls)
 	local onIce = alive and grounded and standing ~= nil and ices[standing] ~= nil
+	-- ice-air: leaving the ice (a jump, an edge) keeps the slide; until the next landing the air steering is limited to
+	-- the part's AirAccel (the Humanoid's own air control would turn a jump into a free brake or U-turn)
+	local teleported = alive and lastRootPosition ~= nil and (root.Position - lastRootPosition).Magnitude > TELEPORT_DISTANCE
+	lastRootPosition = if alive then root.Position else nil
+	landedTime = if alive and grounded and not onIce then landedTime + dt else 0
 	if onIce then
+		iceAirPart = standing
+	elseif not alive or teleported or landedTime > ICE_LAND_TIME then
+		iceAirPart = nil
+	end
+	local iceAir = iceAirPart ~= nil and not grounded
+	if alive and character:GetAttribute("IceAir") ~= (if iceAirPart then true else nil) then
+		character:SetAttribute("IceAir", if iceAirPart then true else nil) -- TalentDash: a dash off ice keeps the slide
+	end
+	-- a dash holds its own burst
+	if (onIce or iceAir) and character:GetAttribute("Dashing") ~= true then
 		local drive = iceDrive
 		if not drive or drive.Parent ~= root then
 			local attachment = Instance.new("Attachment")
@@ -926,8 +1034,10 @@ RunService.PreSimulation:Connect(function(dt: number)
 		local wanted = humanoid.MoveDirection * humanoid.WalkSpeed
 		if wanted.Magnitude > 0.01 then
 			local change = wanted - flat
-			local step = attr(standing, "Accel", 14) * dt
+			local step = (if onIce then attr(standing, "Accel", 14) else attr(iceAirPart, "AirAccel", 14)) * dt
 			flat = if change.Magnitude <= step then wanted else flat + change.Unit * step
+		elseif iceAir then
+			-- no input in the air: the slide carries on (the Humanoid would stop it)
 		else
 			local speed = flat.Magnitude
 			flat = if speed > 0.01 then flat * (math.max(speed - attr(standing, "Brake", 5) * dt, 0) / speed) else Vector3.zero

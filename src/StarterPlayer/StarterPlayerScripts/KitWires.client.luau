@@ -6,6 +6,9 @@
 -- segment it passes lights up (and stays lit while the group is off Red), and the group's colour plates flash as the
 -- bead arrives; ReplicatedStorage.SwitchSound (Studio-only, silent without it) clicks as the switch is pressed. A death or run start resets
 -- the group (ObstacleKit) and puts the wire back to rest. Local only, like the colour state itself.
+-- A group with several switches (Stage 14's colour shaft: Toggle0 / Toggle1 in Group Lab) gives each wire the attribute Switch (the
+-- name of its switch): a press runs the bead along the pressed switch's wire (the group's switch the player stands nearest) and puts
+-- the group's other wires back to rest. A Toggle switch's wire stays lit after its press (its plate is the one that just opened).
 
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
@@ -32,10 +35,13 @@ local function addWire(part: Instance)
 	end
 end
 
-local function segments(group: string): { BasePart }
+-- the group's wire segments; with `switch`, only that switch's wire (and segments that name no switch)
+local function segments(group: string, switch: string?): { BasePart }
 	local list = {}
 	for part in wires do
-		if part:GetAttribute("Group") == group and part:IsDescendantOf(workspace) then
+		local owner = part:GetAttribute("Switch")
+		if part:GetAttribute("Group") == group and part:IsDescendantOf(workspace)
+			and (switch == nil or owner == nil or owner == switch) then
 			table.insert(list, part)
 		end
 	end
@@ -77,15 +83,36 @@ local function tagged(tag: string, group: string): { BasePart }
 	return list
 end
 
--- The bead's route: from the first segment's end nearest the group's switch, then to the far end of every next segment.
-local function route(group: string, list: { BasePart }): { Vector3 }
+-- The group's switch nearest to the player (the one just stepped on), or nil without a character.
+local function pressedSwitch(group: string): BasePart?
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if not root then
+		return nil
+	end
+	local best, pressed = math.huge, nil
+	for _, switch in tagged("KitSwitch", group) do
+		local distance = (switch.Position - root.Position).Magnitude
+		if distance < best then
+			best, pressed = distance, switch
+		end
+	end
+	return pressed
+end
+
+-- The bead's route: from the first segment's end nearest the switch, then to the far end of every next segment.
+local function route(group: string, list: { BasePart }, switch: BasePart?): { Vector3 }
 	local a, b = ends(list[1])
 	local from = a
-	local best = math.huge
-	for _, switch in tagged("KitSwitch", group) do
-		local distance = (switch.Position - list[1].Position).Magnitude
-		if distance < best then
-			best, from = distance, switch.Position
+	if switch then
+		from = switch.Position
+	else
+		local best = math.huge
+		for _, candidate in tagged("KitSwitch", group) do
+			local distance = (candidate.Position - list[1].Position).Magnitude
+			if distance < best then
+				best, from = distance, candidate.Position
+			end
 		end
 	end
 	local points = if (a - from).Magnitude <= (b - from).Magnitude then { a, b } else { b, a }
@@ -130,15 +157,19 @@ local function pulse(group: string, lit: boolean)
 	end
 	token[group] = (token[group] or 0) + 1
 	local mine = token[group]
-	local list = segments(group)
-	for _, part in list do
+	for _, part in segments(group) do
 		setLit(part, false)
 	end
+	local switch = pressedSwitch(group)
+	if switch and switch:GetAttribute("Color") == "Toggle" then
+		lit = true
+	end
+	local list = segments(group, switch and switch.Name)
 	if #list == 0 then
 		flash(group)
 		return
 	end
-	local points = route(group, list)
+	local points = route(group, list, switch)
 	local legs, total = {}, 0
 	for i = 2, #points do
 		legs[i - 1] = (points[i] - points[i - 1]).Magnitude

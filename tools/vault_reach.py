@@ -13,7 +13,7 @@ DT = 1 / 60
 DECIDE = 3  # decide every 3 physics steps (0.05 s)
 
 def solids():
-    """The vault as built on 2026-10-28 (Floor_9 and the teal gate on Pillar_Lock after the first playtest) (docs/STAGES.md -> "Vault lanes"). (u0, u1, h0, h1) boxes; lane z ignored.
+    """The vault as built on 2026-10-28 (Floor_9 after the first playtest; Pillar_Lock floor to ceiling since 2026-10-29) (docs/STAGES.md -> "Vault lanes"). (u0, u1, h0, h1) boxes; lane z ignored.
     Env flags: B1 / B2 = "open" ghosts a switch barrier, POST = 1 is the state after the teal key (hatches open, the
     barrier behind the key shut, the dash corridor plugged so any way to the right floor that remains skips it),
     DROP = comma list of solids to remove (e.g. Block_Top2: is the stepping stone needed?)."""
@@ -35,9 +35,8 @@ def solids():
         "Block_Top2": (85.0, 91.0, 48.74, 52.6),
         "Block_Top1": (71.0, 77.0, 64.74, 68.6),
         "Block_Float1": (105.2, 109.1, 8.3, 12.1),
-        "Block_Float2": (121.4, 129.3, 4.2, 8.1),
-        "Pillar_Lock": (154.0, 157.8, 0, 12.1),
-        "Gate_Teal": (154.9, 156.9, 12.14, 64),  # on top of Pillar_Lock
+        "Block_Float2": (121.4, 129.3, 3.4, 8.1),  # bottom 3.4 since 2026-10-29: no avatar walks under it
+        "Pillar_Lock": (154.0, 157.8, 0, 64),  # floor to ceiling since 2026-10-29 (was 12.1 high with Gate_Teal on top)
         "Hatch_Low": (44.0, 64.4, 15.4, 19.2),
         "Hatch_High": (44.0, 68.5, 46.0, 48.0),
         "Bar_Lane1": (90.5, 91.5, 19.2, 32.8),
@@ -70,7 +69,7 @@ def solids():
     if os.environ.get("B2") == "open":
         del S["Bar_Lane2"]
     if os.environ.get("POST") == "1":
-        for n in ("Hatch_Low", "Hatch_High", "Gate_Teal", "Pillar_Lock"):
+        for n in ("Hatch_Low", "Hatch_High", "Pillar_Lock"):
             del S[n]
         del K["HatchKill"]
         S["Gate_TealBehind"] = (96.82, 98.82, 19.2, 32.8)
@@ -81,23 +80,26 @@ def solids():
     return S, K, T
 
 
-# Right half (green key), docs/STAGES.md -> "Vault tower": a switchback of six ledges, hung alternately from RightMass
-# (right, gap at the left end) and from the E's stem (left, gap at the right end), 9.5 studs apart (7.5 headroom: a
-# ledge-up is a double jump through the gap, a ledge's spike a jump + Long Dash), so every ledge roofs the lane below
-# except at its gap; an even count puts the top ledge on the stem side, flush with the stem's top. The top lane (8 high
-# under the ceiling) also has a spike hanging from the ceiling (walk under it). Then the slot between E_Bar and the stem,
-# the key in a notch of E_Bar at the slot floor, and a green hatch as the slot floor (with the bottom spike on it) that
-# opens once the key is held (the way back down). The room is 65 high (ceiling h 65-69), the left half's ceiling 64.
+# Right half (green key), docs/STAGES.md -> "Vault tower": a switchback of four ledges, hung alternately from RightMass
+# (right, gap at the left end) and from the E's stem (left, gap at the right end), 14.25 studs apart (12.25 headroom,
+# planned for the tallest avatar's 5.2 collider: a ledge-up is a Triple Jump through the gap, a ledge's row of three
+# spikes a jump + dash; an air jump only bonks on the roof), so every ledge roofs the lane below except at its gap; an even count puts the
+# top ledge on the stem side, flush with the stem's top. The top lane (12.25 high under the ceiling) has a spike hanging
+# from the ceiling instead of a row (walk under it). Then the slot between E_Bar and the stem, the key in a notch of
+# E_Bar at the slot floor, and a green hatch as the slot floor (with the bottom spike on it) that opens once the key is
+# held (the way back down). The right half is 69.25 high (ceiling h 69.25-73.25, raised 2026-10-29), the left half 64.
 TOWER_LEFT, TOWER_RIGHT, TOWER_GAP = 174.2, 200.2, 5.0
-CEIL_U = float(os.environ.get("CEIL_U", 189.0))  # left edge of Ceiling_21's hit
+CEIL_U = float(os.environ.get("CEIL_U", 183.36))  # left edge of Ceiling_21's hit
 TOWER_LEDGES = [  # (name, top, attached side); thickness 2
-    ("Block_Right2", 9.5, "R"),
-    ("Block_Right1", 19.0, "L"),
-    ("Slab_Step", 28.5, "R"),
-    ("Base_L", 38.0, "L"),
-    ("Column_1", 47.5, "R"),
-    ("E_ArmTop", 57.0, "L"),
+    ("Block_Right2", 14.25, "R"),
+    ("Block_Right1", 27.81, "L"),
+    ("Column_1", 40.75, "R"),
+    ("E_ArmTop", 54.0, "L"),
 ]
+# left edges of the three spike hits (1.56 wide, 1.39 high) on an R-hung / a stem-hung ledge: each row ends 0.6 before the
+# gap column the climb leaves by, so the landing after a ledge-up has 9.3 studs (a held direction key drifts about 7)
+ROW_R = (188.54, 190.79, 193.04)
+ROW_L = (179.80, 182.05, 184.30)
 
 
 def ledge_box(top, side):
@@ -113,33 +115,30 @@ def gap_box(top, side):
 
 
 def solids_right():
-    """Env: PLUG = k (fill the gap of ledge k, 1-6: is that lane needed?), HATCH = open (the key is held).
+    """Env: PLUG = k (fill the gap of ledge k, 1-4: is that lane needed?), HATCH = open (the key is held).
     Targets: Key_Green, SlotFloor (standing left of the bottom spike), LockZone_Green, onK_<ledge> (standing on ledge k)."""
     S = {
         "Floor": (148, 240, -4, 0),
-        "ModelBound": (146, 148, 0, 69),
-        "OldCeiling": (148, 157.8, 64, 68),  # the left half's ceiling; Pillar_Lock / Gate_Teal are open by now
+        "ModelBound": (146, 148, 0, 70.25),
+        "OldCeiling": (148, 157.8, 64, 68),  # the left half's ceiling; Pillar_Lock is open by now
         "E_BarLower": (157.8, 162.0, 7.5, 41),
         "E_BarNotchBack": (157.8, 159.0, 41, 45.5),
-        "E_Bar": (157.8, 162.0, 45.5, 65),
+        "E_Bar": (157.8, 162.0, 45.5, 66.25),
         "E_Stem": (172.2, 174.2, 7.5, 57),  # 2 thick: the slot is 10.2 wide
         "SlotHatch": (162.0, 172.2, 39, 41),  # the whole slot floor; EBottom_18 stands on it and goes with it
-        "RightMass": (200.2, 216, 7.5, 65),
-        "WallRightUpper": (216, 220, 8, 65),
+        "RightMass": (200.2, 216, 7.5, 66.25),
+        "WallRightUpper": (216, 220, 8, 66.25),
         "Gate_Green": (216, 220, 0, 8),
-        "Ceiling": (157.8, 220, 65, 69),
+        "Ceiling": (157.8, 220, 66.25, 70.25),
     }
-    K = {  # one spike in the middle of the walk along every ledge, one hanging in the top lane, two in the slot
-        "Right2_13": (187.30, 188.86, 9.50, 10.89),
-        "Right1_12": (182.30, 183.86, 19.00, 20.33),
-        "Slab_23": (187.30, 188.86, 28.50, 29.89),
-        "BaseTiny_15": (182.30, 183.50, 38.00, 38.90),
-        "Column1_19": (187.30, 188.50, 47.50, 48.43),
-        "ArmTop_24": (182.30, 183.50, 57.00, 57.90),
-        "Ceiling_21": (CEIL_U, CEIL_U + 1.46, 63.46, 65.00),  # the old spike at 0.7 scale: a walking head passes under its tip
-        "EBarSide_22": (161.97, 162.87, 55.60, 56.80),
+    K = {  # a row of three spikes on the three lower ledges, one hanging in the top lane, two in the slot
+        "Ceiling_21": (CEIL_U, CEIL_U + 2.08, 64.05, 66.25),  # full scale, 10 above E_ArmTop: a walking head and hat pass
+        "EBarSide_22": (161.97, 162.87, 54.60, 55.80),
         "EBottom_18": (166.80, 168.13, 41.00, 42.39),
     }
+    for name, top, row in (("Right2_13", 14.25, ROW_R), ("Right1_12", 27.81, ROW_L), ("Column1_19", 40.75, ROW_R)):
+        for i, u0 in enumerate(row):
+            K[name + ("", "b", "c")[i]] = (u0, u0 + 1.56, top, top + 1.39)
     T = {
         "Key_Green": (159.0, 162.4, 41, 45.5),
         "SlotFloor": (162.0, 166.8, 41, 41.3),
@@ -376,7 +375,9 @@ def chain(model, parent, s):
 
 PROFILES = {
     # name: rise per jump, walk speed, dash time, half width, height, step
-    "max": (9.0, 20.8, 0.32, 0.6, 5.0, 2.0),   # Jump Height 3, Run Speed 5, Long Dash, slim body, generous step-up
+    # max: Jump Height 3, Run Speed 5, Long Dash, slim and short body (the smallest avatar's collider, 3.6; STAGES.md ->
+    # "Avatar size rule"), generous step-up; base: the tallest avatar's collider (5.2)
+    "max": (9.0, 20.8, 0.32, 0.6, 3.6, 2.0),
     "base": (7.27, 16.0, 0.32, 1.0, 5.2, 1.0),  # TJ + Long Dash only, wide body, small step-up
 }
 

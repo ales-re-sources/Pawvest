@@ -2,7 +2,7 @@
 -- here is local: a key the player holds disappears for them only, a gate they opened fades out and stops colliding for them
 -- only (the client owns its character's physics, like GateDoors); a ClosesWhenOpen gate fades in instead, a KillWhileShut
 -- strip stops killing, an OpensWhenHeld gate opens on the key pickup itself (no lock). Every part tagged with a gate's KeyId
--- goes with it (Pillar_Lock and its lock decor under Gate_Teal). Also the key chips (shown inside the vault's camera zone) and
+-- goes with it (the full-height Pillar_Lock and its lock decor). Also the key chips (shown inside the vault's camera zone) and
 -- short toasts, built in code.
 
 local CollectionService = game:GetService("CollectionService")

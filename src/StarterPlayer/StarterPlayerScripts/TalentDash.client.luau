@@ -3,6 +3,10 @@
 -- or swimming gives it back. Movement is client-driven in Roblox, so this runs here; the level is the server-owned
 -- attribute Talent_Dash (purchase). The action (and with it the touch button) is bound only while the player owns it.
 -- While a dash runs the character carries the attribute `Dashing` (TalentDoubleJump ignores jumps then).
+-- "On the ground" is a probe under the root, not the humanoid state: under a low roof (Stage 14's tower, 7.5 high) the
+-- humanoid reports Landed / Running with the feet still 2 studs up, which cut the dash after 2 studs (2026-10-29).
+-- A wall ahead ends the burst at the wall: the unlimited force pinned the character there and threw it back on release.
+-- A glancing wall is slid along instead (a dash facing a little off a narrow lane kept going before the wall check).
 
 local ContextActionService = game:GetService("ContextActionService")
 local Players = game:GetService("Players")
@@ -14,6 +18,9 @@ local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 
 local ACTION = "TalentDash"
 local TRAIL_TIME = 0.35 -- seconds the trail stays after the burst
+local GROUND_SLACK = 0.6 -- feet this close above a floor count as standing
+local WALL_LOOKAHEAD = 1 / 30 -- seconds of burst checked ahead for a wall each frame
+local SLIDE_MIN = 0.5 -- share of the burst along a wall below which the dash stops at it (more than 60 degrees into it)
 
 local player = Players.LocalPlayer
 local attribute = TalentConfig.AttributeName("Dash")
@@ -22,9 +29,27 @@ local humanoid: Humanoid? = nil
 local used = false -- the dash of this air time is spent
 local dashing = false
 
-local function inAir(h: Humanoid): boolean
+local probe = RaycastParams.new()
+probe.FilterType = Enum.RaycastFilterType.Exclude
+probe.RespectCanCollide = true
+
+-- the root's footprint swept down to just below the feet
+local function grounded(h: Humanoid, root: BasePart): boolean
+	probe.CollisionGroup = root.CollisionGroup
+	local reach = root.Size.Y / 2 + h.HipHeight + GROUND_SLACK
+	return workspace:Blockcast(CFrame.new(root.Position), Vector3.new(root.Size.X, 0.1, root.Size.Z), Vector3.new(0, -reach, 0), probe) ~= nil
+end
+
+local function airborne(h: Humanoid, root: BasePart): boolean
 	local state = h:GetState()
-	return state == Enum.HumanoidStateType.Freefall or state == Enum.HumanoidStateType.Jumping
+	if state == Enum.HumanoidStateType.Freefall or state == Enum.HumanoidStateType.Jumping then
+		return true
+	end
+	if state == Enum.HumanoidStateType.Running or state == Enum.HumanoidStateType.RunningNoPhysics
+		or state == Enum.HumanoidStateType.Landed then
+		return not grounded(h, root)
+	end
+	return false -- climbing, swimming, seated, dead…
 end
 
 -- A white trail behind the root part for the burst, local only (others see the movement itself)
@@ -57,7 +82,7 @@ local function dash()
 	local h = humanoid
 	local character = h and h.Parent
 	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
-	if not (h and root) or h.Health <= 0 or used or dashing or not inAir(h) then
+	if not (h and root) or h.Health <= 0 or used or dashing or not airborne(h, root) then
 		return
 	end
 	local level = TalentConfig.ClampLevel("Dash", player:GetAttribute(attribute))
@@ -73,6 +98,9 @@ local function dash()
 		return
 	end
 	direction = direction.Unit
+	-- off ice (ObstacleKit's ice-air) the slide is kept after the burst: a dash shifts the player but is no brake or U-turn
+	local velocity0 = root.AssemblyLinearVelocity
+	local slide = if character:GetAttribute("IceAir") == true then Vector3.new(velocity0.X, 0, velocity0.Z) else nil
 	used = true
 	dashing = true
 	character:SetAttribute("Dashing", true)
@@ -92,14 +120,36 @@ local function dash()
 	velocity.Parent = root
 
 	local started = os.clock()
-	while os.clock() - started < duration and h.Health > 0 and root.Parent and inAir(h) do
+	local walled = false
+	local speed = TalentConfig.DashSpeed
+	while os.clock() - started < duration and h.Health > 0 and root.Parent and airborne(h, root) do
+		probe.CollisionGroup = root.CollisionGroup
+		-- 0.2 shorter than the root, so a roof or floor it skims is no wall
+		local box = Vector3.new(root.Size.X, root.Size.Y - 0.2, root.Size.Z)
+		local facing = CFrame.lookAt(root.Position, root.Position + direction)
+		local hit = workspace:Blockcast(facing.Rotation + root.Position, box, direction * (speed * WALL_LOOKAHEAD), probe)
+		if hit then
+			root.CFrame += direction * math.max(hit.Distance - 0.05, 0)
+			-- a glancing hit slides along the wall with what is left of the burst (the narrow 2.5D lanes: a dash
+			-- facing a little off the lane must not stop at the lane wall); a near head-on one stops there
+			local normal = Vector3.new(hit.Normal.X, 0, hit.Normal.Z)
+			local along = if normal.Magnitude > 0.1 then direction - normal.Unit * direction:Dot(normal.Unit) else Vector3.zero
+			if along.Magnitude < SLIDE_MIN then
+				walled = true
+				break
+			end
+			speed *= along.Magnitude
+			direction = along.Unit
+			velocity.VectorVelocity = direction * speed
+		end
 		RunService.Heartbeat:Wait()
 	end
 	velocity:Destroy()
 	attachment:Destroy()
 	if root.Parent and h.Health > 0 then
-		-- leave the burst at run speed in the dash direction, falling from rest, so the dash adds no extra momentum
-		root.AssemblyLinearVelocity = direction * h.WalkSpeed
+		-- leave the burst at run speed in the dash direction, falling from rest, so the dash adds no extra momentum;
+		-- against a wall, at rest
+		root.AssemblyLinearVelocity = if walled then Vector3.zero else slide or direction * h.WalkSpeed
 	end
 	dashing = false
 	if character.Parent then
@@ -134,13 +184,25 @@ local function onCharacterAdded(character: Model)
 	humanoid = h
 	used = false
 	dashing = false
+	probe.FilterDescendantsInstances = { character }
 	h.StateChanged:Connect(function(_, state)
-		if state == Enum.HumanoidStateType.Landed or state == Enum.HumanoidStateType.Running
-			or state == Enum.HumanoidStateType.Climbing or state == Enum.HumanoidStateType.Swimming then
+		if state == Enum.HumanoidStateType.Climbing or state == Enum.HumanoidStateType.Swimming then
 			used = false
 		end
 	end)
 end
+
+-- standing again gives the dash back (the probe, not Landed: a low roof makes the humanoid "land" in mid-air)
+RunService.Heartbeat:Connect(function()
+	local h = humanoid
+	if not used or dashing or not h then
+		return
+	end
+	local root = h.Parent and h.Parent:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if root and grounded(h, root) then
+		used = false
+	end
+end)
 
 if player.Character then
 	task.spawn(onCharacterAdded, player.Character)
