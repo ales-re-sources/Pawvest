@@ -744,6 +744,21 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
 - **Ice = kit ice** (user decision): new `KitIce` tag in `ObstacleKit`. While the character stands on a `KitIce` part (the kit's floor ray), the client takes over
   its horizontal velocity: it moves toward the input direction x walk speed at `Accel` studs/s² and coasts without input, slowing at `Brake` studs/s²
   (attributes on the part); jumps keep the momentum (the air is the Humanoid's again). Same on every device, tunable per part; it stops at once on death.
+- **Ice look (user pick "variant 3", 2026-10-29; Studio-only):** all 17 `KitIce` parts (the 16 of `Stage12.Ice` and `Stage15.CrusherIce.IceRidge`) are smooth `Plastic`
+  (no MaterialVariant, `(0.70, 0.87, 0.98)`) and carry decoration children (Anchored, CanCollide / CanTouch / CanQuery / CastShadow off): a `Cap` (`Glass`, `(0.3, 0.65, 0.95)`,
+  Transparency 0.3, 0.4 thick, its top 0.05 above the ice), `RimN/S/W/E` white `Studs` bars (0.4 wide, 0.6 high) round the top edge and `CollarN/S/W/E` white `Studs` bands
+  (1.6 high, 0.2 proud) on the side faces. **Why:** smooth + glossy = slippery, studs = grip, so the studs only frame the slick surface (the first try, a studded body under a
+  translucent cap, still read as grip; the white shine streaks read as painted lanes and were dropped). The floor the kit sees is still the ice part itself (the tag and
+  all attributes are on it), the decoration never collides. A side where another collidable part is within 0.5 studs of the face (rails, walls, the next ice part) gets no rim /
+  collar there (`I1`, `I2`, `I3`, `Track3`, `WindBeam`, `Rink1`, `IceRidge`); only a neighbour that is flush with the ice top (a joint, a rail) suppresses the **rim**: the tall glass walls beside `IceRidge` and the `IceDoor` beside `Track3` do not, so those got their rims added by hand (`IceRidge` `RimW` / `RimE`, `Track3` `RimE`); `WindBeam`'s `RimN/S` and `CollarN/S` start 0.3 past the pressure `Door.Button` (8.4 wide, wider than the 8-wide beam, which had blocked its whole long sides) and run to the east end. Applied by script, so a part that is resized needs its children redone. Not playtested (the slide itself is unchanged).
+- **Button / switch look (all stages, user pick "raised plates, no red", 2026-10-29; Studio-only + one kit line):** the pads were Neon (blue / yellow buttons, green switches); red and orange
+  mean "kills you" in this game, so no pad is ever red. Every `KitButton` and `KitSwitch` in the stages (15: Stage 9 `Maze.Big.Switch`, Stage 10 `Button_5/10/11`, Stage 12 `Door.Button`,
+  Stage 14 `Switch_Lane1/2` and `ColourShaft.Toggle0/1`, Stage 15 `Headwind.Button` and `Chimney.Toggle0-3`; the `ServerStorage.StageKit.Obstacles.Switch_Toggle` template) is the part itself
+  as `Plastic` + `Studs`, azure `(0.0, 0.6, 0.86)` (the kit still turns a pressed button green, `BUTTON_ON_COLOR`, and back), grown upward so its top stands 0.6 above the floor it sits in,
+  plus a child `Base`: a charcoal `Studs` slab (floor - 0.05 to floor + 0.2) that reaches 0.9 past the plate on every side where the floor continues (0.03 inside the plate edge where it
+  does not: a gap bridge like `Button_5` / `Button_10`, an overhanging button like `Door.Button`), CanCollide / CanQuery / CanTouch / CastShadow off. The colour-coded `Switch_Red` / `Switch_Blue`
+  of `KitLab` and the templates are untouched. **Click:** `ObstacleKit` now plays `ReplicatedStorage.SwitchSound` once per step-on of a pressure button (`lastButton`, like `lastSwitch`);
+  colour switches already click through `KitWires`. Not playtested.
 - **Coins:** 8 per stage (5 easy 20, 2 risky 50, 1 talent 100), ids `Stage11_1..8`, `Stage12_1..8`; the talent coin needs a talent beyond the requirement (Dash).
 - **Measured in the S8.1 bot tests (2026-10-24):** standing rises match §1.0 (Double Jump 14.5, with Jump Height 3 18.0; Triple Jump 22.0, with Jump Height 3 26.9),
   but a **17-stud ledge was landed by a Double Jump with Run Speed 5 + Jump Height 3** (gap 6): a ledge is cleared with a root rise of about its own height, not 2.5

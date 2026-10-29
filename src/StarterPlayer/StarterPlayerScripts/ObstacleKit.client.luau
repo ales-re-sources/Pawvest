@@ -467,6 +467,7 @@ local iceDrive: LinearVelocity? = nil -- the root's ice drive (KitIce), created 
 local airUntil = 0
 local standSample = nil -- { part, local position, since }
 local lastSwitch = nil -- the colour switch the character stood on last frame (a switch fires once per step-on)
+local lastButton = nil -- the pressure button the character stood on last frame (a button clicks once per step-on)
 local pushedUntil = 0 -- os.clock() before which no further knock-back is applied
 local PUSH_COOLDOWN = 0.6
 local shove = Vector3.zero -- horizontal velocity a PushTime mover keeps applying until shoveUntil
@@ -695,6 +696,12 @@ RunService.PreSimulation:Connect(function(dt: number)
 
 	-- pressure buttons: standing on one (re)opens its group's doors for Time seconds (a Latch button for the run)
 	if standing and buttons[standing] then
+		if standing ~= lastButton then
+			local sound = ReplicatedStorage:FindFirstChild("SwitchSound")
+			if sound and sound:IsA("Sound") then
+				SoundService:PlayLocalSound(sound)
+			end
+		end
 		if attr(standing, "Latch", false) then
 			latched[attr(standing, "Group", "A")] = true
 		else
@@ -703,6 +710,7 @@ RunService.PreSimulation:Connect(function(dt: number)
 			doorOpenTime[group] = attr(standing, "Time", 4)
 		end
 	end
+	lastButton = if standing and buttons[standing] then standing else nil
 	local clockNow = os.clock()
 	-- the last TICK_SECONDS whole seconds of an open group tick (higher toward the end), once per second for all groups
 	local tickNow = 0
