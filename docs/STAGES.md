@@ -791,7 +791,7 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
 - **Crusher press (2026-10-28):** a baseline Triple Jump taken 9-13 studs before `Crusher1` cleared its top and landed in the gap behind it (a first-run
   shortcut, see §7.13 → "Same open sky"), so the ridge now runs through a press like Stage 15's: Studio-only folder `Stage11.Press` with `PressWallN` /
   `PressWallS` (2-stud glass walls, transparency 0.5, x 145-211 = the ridge's length, from the sea y 2 to y 203.5 = the crushers' raised top, flush beside
-  the ridge at z -650..-648 / -642..-640) and `PressRoof` (DiamondPlate, x 145-211, z -650..-640, y 203.5-223: 32.5 above the ridge, out of a maxed Triple
+  the ridge at z -650..-648 / -642..-640) and `PressRoof` (DiamondPlate until 2026-10-28, now charcoal studs, x 145-211, z -650..-640, y 203.5-223: 32.5 above the ridge, out of a maxed Triple
   Jump's reach). `Crusher1..4` are 5.8 across (were 8, overhanging the 6-wide ridge), 0.1 from each wall; their timing attributes are unchanged. The roof
   ends at `905`'s west edge, so the Triple ledge to `Summit` is open. Checks: static coplanar audit of `Stage11` clean apart from the finish-arch stones /
   gate and an older `T1` / `Shelf1` pair (+X and -Y faces shared; not touched), the crushers against walls and roof clean at 0 / 2.25 / 4.5 / 6.75 / 9 of
@@ -801,12 +801,47 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   220.6 and fall to the sea; baseline walkers leaving the middle of `904` at 8 points of the 3 s cycle: 4 cross (about 5.4 s to `905`), 4 die at
   `Crusher1`, as before; `905` -> `Summit` lands from 3 take-offs x 2 timings at baseline and with the maxed profile. *Not checked:* the look and the
   camera inside the press (no capture), a human run. Developer profile, `MostStars` and the Stage 11 board restored from `profile_<id>_s11press`.
-  - *Piston rods (user, 2026-10-28: "like Stage 15"):* `Movers.Rod1..4`, Metal cylinders standing on each crusher (unanchored, Massless, CanTouch /
+  - *Piston rods (user, 2026-10-28: "like Stage 15"):* `Movers.Rod1..4`, Metal cylinders (square studded columns since 2026-10-28, see "Rod and roof look") standing on each crusher (unanchored, Massless, CanTouch /
     CanQuery off, WeldConstraint to the crusher, as Stage 15's `Rod1..3`). Length 13.5 as on Stage 15 (y 203.4-216.9 at rest, still 4.4 inside the
     roof at the full 9-stud stroke), but **5.6 across instead of 6.2**: the slot between the glass walls is only 6 here, so a 6.2 rod would cut 0.1 into
     each wall when it comes down; 5.6 leaves 0.2. Checked in a playtest: every rod stays on its crusher (offset 0.000 over 3.2 s, Crusher1 y 192.5-201.5)
     and the 8 baseline walkers from `904` give the same result as before (4 cross in 5.4 s, 4 die at `Crusher1`). Profile etc. restored from
     `profile_<id>_s11rods`. *Not checked:* the look.
+  - *Crusher look (user pick "B", 2026-10-28):* the lava-red smooth blocks looked like lava, so `Crusher1..4` are now charcoal (`#2D2D34`) Plastic with the
+    `Studs` variant, glowing Neon cracks (`Crack_1..24`, 0.1 thick, a mirrored pattern on every second head) on the four sides, a Neon `BottomGlow` plate and a
+    `ParticleEmitter` of black smoke cloned from Stage 2's `Lava block` (Rate 10). The cracks / plate are children of the crusher, unanchored, Massless,
+    CanCollide / CanTouch / CanQuery off, each with a `WeldConstraint` to it (like the rods), so they travel with the ram. Size, attributes and `Kill` are unchanged;
+    ObstacleKit's telegraph tints the body to `WarnColor` (255, 170, 60) and back, the cracks stay lit. Studio-only. Checked in Edit mode by moving a crusher down 8: cracks, `BottomGlow` and rods travel with it (offsets unchanged); *not checked* in a playtest.
+  - *Rod and roof look (user pick "option 1", 2026-10-28, Stage 11 and Stage 15):* `Rod1..n` are now square columns (Block, not Cylinder) of the same
+    footprint as the old cylinders (5.6 on Stage 11, 6.2 on Stage 15; same 13.5 length, offset, CanCollide, Massless, unanchored, re-welded to their
+    crusher, so blocking is unchanged apart from the corners): stone-grey (`#A3A2A5`) Plastic with `Studs`, a yellow `Inlets` `RodBase` band (1 high) on
+    the head and two charcoal `Studs` `RodCollar_1/2` (0.9 high, 3 and 6 above the head top, 0.2 wider than the rod: 5.8 fits the 6-stud slot, 0.1 each side);
+    the decorations are children of the rod, Massless, CanCollide / CanTouch / CanQuery off, welded to the crusher. `PressRoof` is charcoal Plastic with
+    `Studs` (was DiamondPlate) with four anchored yellow `Inlets` `RoofBand_1..4` (1.2 high, 0.2 thick, 0.1 proud) along both long faces, 0.9 from the bottom
+    and the top. Studio-only; checked in Edit mode on Stage 15 with the heads lowered 8 (rods, bands and cracks follow); *not checked* in a playtest.
+  - *Hazard looks, two languages (user decision, 2026-10-28; Studio-only):* **solid hazards** (crushers, later spikes / blades) use "B": charcoal `Studs`
+    body, glowing Neon cracks, black smoke. **Lava-like floors** use "A", lava bricks: the kill part keeps its size, script and `Touched` hook, is restyled
+    to dark red Plastic with `Studs` (the cracked-lava `MoltenLavaGlow2` variant and the Neon red are gone) and carries `LavaTile_n` children: anchored
+    2 x 4 plates (0.2 high, 0.08 gaps so no face plane is shared with the base), palette dark red / red / orange (`Studs`) with about 1 in 5 tiles Neon orange,
+    `CanCollide` / `CanTouch` / `CanQuery` off, `CastShadow` off. Applied to Stage 2 `Lava block` (66 tiles, keeps its own smoke emitter) and
+    `LavaFloorStage.Part_3` (72), and to Stage 4's `11."level 11"` kill strips `Part_1..4, 6, 7` (52 in all). The smoke is a `LavaSmoke` emitter cloned from the
+    Lava block's (rate area / 30, 3-12 per s, size 1-3.6) on every part of 40 or more square studs except the Lava block. Mobile: the place had 6 606 parts
+    (StreamingEnabled off) when this was added, +190 tiles is about 3 %; the cost to watch is the smoke overdraw, hence the low rates and the bigger bricks.
+    Not measured on a phone. Other red hazards (Stage 2 `SpinnerStage_1` bars, laser strips) are not restyled yet.
+  - *Yellow movers (user pick, 2026-10-28: rimmed plates, spur gear; Studio-only):* all 23 yellow `KitMover` parts (plus `SpinnerStage_2`, below) (Stage 1 `Mover1`; Stage 6 `Lift1`, `Slide1/2`,
+    `Stone1-5`; Stage 8 `Mill1A/B`, `Mill2A/B`, `Plank1/2`, `Turn1`, `Turn4`; Stage 10 `Plank_1/2`, `Gear_1-3`; Stage 11 `Lift1`) are `Plastic` + `Studs`, LEGO yellow
+    (`#FFD54A`). Plates (20 parts) keep their size and collision and carry four amber `Studs` rim bars `RimN/S/W/E` (`(0.89, 0.58, 0.08)`, 0.4 wide, 0.2 high, 0.03 in from the edge so
+    no face plane is shared; they were charcoal until 2026-10-29, when the user dropped the black lining; previews with no lining and a same-yellow `Inlets`
+    lining were rejected) and, on the discs `Turn1/4`, a 3 x 3 amber `Hub`; all are children, Massless, CanCollide / CanTouch / CanQuery / CastShadow off,
+    `WeldConstraint` to the mover (checked in Edit mode on `Stone2`, `Turn1`, `Gear_2`: offsets hold when the mover is moved or turned). `Gear_1-3` are now one
+    `UnionOperation` each (12 teeth, body 8 across, tips 10 across, 1 high, `PreciseConvexDecomposition`) built from a hub block so the union keeps an upright frame;
+    name, `KitMover` tag, attributes (`Speed`, `Tick`, `TickMove`, `Phase`, `RunSeeded`), position and the -90 degree yaw are copied from the old block, plus the 3 x 3 amber `Hub`.
+    **Why the gear is the mover itself:** ObstacleKit carries a rider only when the exact part under their feet is a `KitMover` (`movers[standing]`), so a round
+    gear cannot be decoration on a square block. Its footprint is smaller than the old 10 x 10 square at the corners; the tips still reach 5 studs along the row,
+    so the gaps between the gears (13 apart) are unchanged. *Not checked:* in a playtest (rider carry on the gear, the Stage 10 gear row, Stage 8 / 6 timing).
+    Added the same day: Stage 2 `SpinnerStage_2` (`Part_1`, `Part_3`, the two spinning 16.3 x 4.3 planks, were green `Studs`) now has the yellow plate + rim (no hub: the
+    planks keep their small axle pins `Part_2` / `Part_6`, now amber `Studs`); 4 rim children each, offsets checked by turning `Part_1` in Edit mode. The red
+    Neon sweeper bars of `SpinnerStage_1` are unchanged.
 
 ### 7.12 S8.2 Dash Bridge + Laser Lab (design check 2026-10-26; decisions with the user: Long Dash as Dash level 2, a `Roll` kit kind, soft-talent coins, arena + Dash room)
 - **Slots** (Studio survey 2026-10-26): the west openings of the World 3 courtyard. Stage 13 = west near gate (`SoonGate13`, x -219..-190, z -659..-630;
@@ -1191,7 +1226,7 @@ wait and every mistake into lost height.
     (z -528), so its first 6 studs were outside the tide. The footprint now starts at the gate line. Check: a bot standing on the plate's rear edge
     (z -526.9) dies 15.4 s after the gate, `KitKilledBy` = `Stage15.Tide`.
   - *The crushers could be jumped over* (they hung in open air 9-13 above the ice; a Double Jump rises 14.5). They now work inside a **press**:
-    `PressWallW` / `PressWallE` (2-stud glass walls, transparency 0.5, from the sea to y 113.5, beside the ridge) and `PressRoof` (DiamondPlate,
+    `PressWallW` / `PressWallE` (2-stud glass walls, transparency 0.5, from the sea to y 113.5, beside the ridge) and `PressRoof` (DiamondPlate until 2026-10-28, now charcoal studs,
     x -156..-144, y 113.5-133, u 113-155): its top is 32.5 above the ice, out of a maxed Triple Jump's reach (27), and the walls stop a detour round
     the sides. The crushers are 7.8 wide, 0.1 from each wall (no shared face plane; the static audit with the crushers at five points of their stroke
     is clean). Checks: the stored maxed profile (Run Speed 5, Jump Height 3, Triple Jump) jumping at 5 points of the lead-in peaks at root y 128.3
@@ -1226,6 +1261,7 @@ wait and every mistake into lost height.
   - *No gaps:* the heads are 12 long and contiguous (u 116-128 / 128-140 / 140-152), so nothing is left to stand in between them.
   - *Timing:* strikes 0.1 s later for the 2 studs longer row: **2.3 / 2.7 / 3.1 s** (`Duty` 0.48889 / 0.4 / 0.31111); period 4.5, rise 2.0 s,
     stroke 15 unchanged. Model: baseline runner 0 of 50, two hop-dashes 0.9 s of the cycle, Run Speed 5 runner 0.5 s.
+  - *Look (2026-10-28):* `Crusher1..3` have the Stage 11 look (charcoal `Studs` heads, 36 Neon `Crack_n` parts per head, the pattern repeated twice over the 12-long faces, `BottomGlow`, black smoke emitter from Stage 2's `Lava block`, all welded to the head); rods and `PressRoof` as in Stage 11 → "Rod and roof look" (rod 6.2 across). Studio-only, not playtested.
   - *Checks:* coplanar audit clean (heads and rods through the stroke, neighbours at different strokes; the rods' undersides first lay in the
     roof's underside plane when up, hence the 0.1 sink). Playtest: the rods follow their heads; the stored maxed profile (Run Speed 5, Jump Height
     3, Triple Jump) jumping at 4 points in the press from 9 start times: 0 through, never above a head; baseline runner 0 of 15; two hop-dashes
