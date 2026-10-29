@@ -152,8 +152,8 @@ faces.coinsFound,Gate / door face: challenge coins found in the stage or world,�
 unlock.bar.world,"What opens a world or stage: stars in a world; {star} = a gold star, {n} of {max} stars, {world} = world number",{star} {n} of {max} in World {world},{star} {n} z {max} v {world}. světě,ok,h42eba5d2
 unlock.bar.stage,"What opens a stage: a medal on the stage before; {stars} = gold stars, {medal} = medal tier, {stage} = stage name",{stars} {medal} on {stage},{medal} ({stars}) z {stage},ok,hf1e5a1f1
 # Key arena HUD,,,,,
-arena.keyCollected.Teal,"Arena toast when this key is picked up (Czech: masculine, klíč)",Teal key collected,Tyrkysový klíč sebrán,ok,haf4e9523
-arena.gateOpened.Teal,"Arena toast when this key opens its gate (Czech: feminine, brána)",Teal gate opened,Tyrkysová brána otevřena,ok,hf542dd9f
+arena.keyCollected.Teal,"Arena toast when this key is picked up (Czech: masculine, klíč)",Mint key collected,Mátový klíč sebrán,new,h1fd33618
+arena.gateOpened.Teal,"Arena toast when this key opens its gate (Czech: feminine, brána)",Mint gate opened,Mátová brána otevřena,new,h715fac9f
 arena.keyCollected.Green,"Arena toast when this key is picked up (Czech: masculine, klíč)",Green key collected,Zelený klíč sebrán,ok,h6cab5024
 arena.gateOpened.Green,"Arena toast when this key opens its gate (Czech: feminine, brána)",Green gate opened,Zelená brána otevřena,ok,h5cd7deeb
 # Pets panel (🐶),,,,,

@@ -8,7 +8,7 @@ local ArenaConfig = {}
 ArenaConfig.CameraZone = "VaultCamera" -- the vault's CameraZone part (StageCamera publishes its name as the player attribute CameraZone)
 ArenaConfig.Keys = { "Teal", "Green" } -- every key the exit needs, in HUD order
 ArenaConfig.KeyColors = {
-	Teal = Color3.fromRGB(0, 220, 220),
+	Teal = Color3.fromRGB(100, 255, 190), -- mint since the Stud restyle; the id stays "Teal" (KeyId attributes, string keys)
 	Green = Color3.fromRGB(70, 255, 100),
 }
 

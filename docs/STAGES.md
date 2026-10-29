@@ -1346,6 +1346,17 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
     `EBarSide_22` where they are).
   - *Not checked:* a human climb of the new tower, the look (the new back-panel band, the full-scale `Ceiling_21`, the old `Decor.Tile`
     panels), a climb from the floor lane into lane 1 in Studio (the model finds it), the Run Speed 5 single-jump shortcut over a row.
+- **Key look (user pick "C, mint", 2026-10-29; Studio-only + `ArenaConfig` / `ArenaClient` / two strings):** the Neon keys (flat, edge-on twice a
+  turn) are Stud bricks with a charcoal outline. `Shaft` / `Tooth1` / `Tooth2` are `Plastic` + `StudsSmall` in the key colour, each with a charcoal
+  `*_Outline` copy grown in the key's plane (0.3 on `Key_Teal`, 0.2 on the half-size `Key_Green`: its ring spins 0.2 from `E_BarNotchBack`) and 0.1
+  thinner in depth, so the core's faces stand 0.05 proud (no shared plane). `Ring` / `Ring_Outline` are CSG rings (`GeometryService:SubtractAsync`):
+  the hole is empty (user: "not black"; the black `Hole` part is gone), the outline's hole is smaller by the same growth, so a charcoal lip lines it.
+  A `PointLight` in `Ring` (key colour, range 8, brightness 1.5; 3 tinted the vault's ceiling 7 studs above) is the glow; `ArenaClient` turns a key's
+  lights off with its parts when it is held. **The teal key is mint** `(100, 255, 190)`: cyan sat close to the azure buttons (two of them in the
+  vault) and sank into the blue panel. Its id stays `Teal`; `ArenaConfig.KeyColors.Teal` (HUD chip, toast), the teal gates (`Hatch_Low`,
+  `Hatch_High`, `Gate_TealBehind`) and `LockTeal_Disc` are mint, the toasts say "Mint key collected" / "Mint gate opened". Spin and bob unchanged.
+  The old keys are in `ServerStorage.KeyBackup_20261029`. Checked in a playtest (`ArenaKeys` set on the server): the held key's 8 parts hide and its
+  light goes off, both come back on reset; no errors. Not checked: a real pickup run, a phone.
 
 ### 7.13 S8.3 Rising Tide (design check 2026-10-28; the user took every recommendation the same day: D1 A, D2 sound alone, D3 out-and-back, D4 maxed soft talents, D5 S8.3a / S8.3b)
 The World 3 finale (§3 "each world finale mixes every signature of its world"): one new hazard, a **lava tide** rising under the whole

@@ -29,7 +29,7 @@ local TIMER_Y = 0.05
 local TIMER_HALF = 25
 local CHIP_GAP = 12 -- px between the timer text and the chips
 
-local keyModels = {} -- [hit part] = { visual = Model, base = CFrame, parts = { [part] = transparency }, hidden = boolean }
+local keyModels = {} -- [hit part] = { visual = Model, base = CFrame, parts = { [part] = transparency }, lights = { Light }, hidden = boolean }
 local gates = {} -- [part] = { transparency = number, collide = boolean, touch = boolean, tween = Tween? }
 local held = {} -- keys held (ArenaKeys)
 local opened = {} -- gates opened (ArenaOpened)
@@ -142,6 +142,9 @@ local function setKeyHidden(hit: BasePart, state, hidden: boolean)
 	for part, transparency in state.parts do
 		part.Transparency = if hidden then 1 else transparency
 	end
+	for _, light in state.lights do
+		light.Enabled = not hidden -- the key's glow goes with it
+	end
 	hit.CanTouch = not hidden
 end
 
@@ -153,10 +156,12 @@ local function addKey(hit: Instance)
 	if not (visual and visual:IsA("Model")) then
 		return
 	end
-	local state = { visual = visual, base = visual:GetPivot(), parts = {}, hidden = false }
+	local state = { visual = visual, base = visual:GetPivot(), parts = {}, lights = {}, hidden = false }
 	for _, part in visual:GetDescendants() do
 		if part:IsA("BasePart") then
 			state.parts[part] = part.Transparency
+		elseif part:IsA("Light") then
+			table.insert(state.lights, part)
 		end
 	end
 	keyModels[hit] = state
