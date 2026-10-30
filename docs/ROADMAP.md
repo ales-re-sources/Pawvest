@@ -46,8 +46,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 **Order (2026-10-30).** The obby (15 stages) is nearly finished and goes out first as a soft launch; the garden MVP follows on the E1.0
 architecture and the pet design decided 2026-10-30 (EXPANSION §3–§4, §8.1). World 4 waits until after the MVP.
 
-1. **Close World 3:** the user's sign-off of Stages 11–15 with the new medal times; one more look at Stage 10's times (both admin accounts
-   hold only Bronze there, 107 / 115 s against Gold under 60 s).
+1. **Close World 3:** the user's sign-off of Stages 11–15 with the new medal times. Stage 10's times stay as they are (decided 2026-10-30:
+   the fast test-account times there need every talent, the Long Dash included, so they say nothing about a World 2 player).
 2. **M6a soft launch** (friends, then unlisted) with 15 stages and today's pets and garden: real finish times, the T1a / T1b telemetry on the
    Creator Dashboard, and a **retention baseline of the obby alone**, to measure later what the garden adds. Includes the live-test checks below.
 3. **E0 in parallel:** the re-run for field pets (it gates E1b), then repricing and the remaining checks (section below).
