@@ -119,33 +119,33 @@ the Tutorial and stages 1–5). Default thresholds (tunable per stage):
 
 | Medal | Stars | Threshold | Intent |
 |---|---|---|---|
-| Bronze | ★ | ≤ 1.6 × T_base | finishable by any player who owns the required talents (none on World 1) |
+| Bronze | ★ | ≤ 2.5 × T_base (1.6 × until 2026-10-30) | finishable by any player who owns the required talents (none on World 1), with a few deaths; Bronze unlocks the next stage |
 | Silver | ★★ | ≤ 1.1 × T_base | clean run; early talents help |
 | Gold | ★★★ | ≤ 0.8 × T_base | requires the talents of the stage's designed set (§6) and a good route |
 
 Run Speed and Jump Height never become requirements; they stay the way to faster medals and shortcuts.
 
-World 3 uses its own tiers (`StageConfig.World3Tiers`, 2026-10-30): **Bronze ≤ 2.5 × T_base**, Silver and Gold as above. Its T_base
-values come from the developer's best runs with every talent (Gold ≈ 1.25 × that best), so Silver and Gold are much tighter than
-before, while Bronze, which unlocks the next stage, stays close to the old 1.6 × limits so a first run with deaths still passes.
+2026-10-30: Bronze moved from 1.6 × to 2.5 × T_base for every stage (it unlocks the next stage, so a first run with deaths must pass).
+World 3's T_base values come from the developer's best runs with every talent (Gold ≈ 1.25 × that best), so its Silver and Gold are
+much tighter than before while its Bronze stays close to the old limits. Worlds 1–2 keep their T_base for now (balancing later, M6).
 
 `T_base` is provisional; ranges are STAGES §4's, the thresholds below use the midpoint (planned stages: P).
 
 | Stage | T_base (s) | Bronze | Silver | Gold |
 |---|---|---|---|---|
-| Tutorial | 30 | ≤ 48 s | ≤ 33 s | ≤ 24 s |
-| 1 Island Hop | 52 (provisional, built S4.1) | ≤ 83 s | ≤ 57 s | ≤ 42 s |
-| 2 Stage 1 | 70 | ≤ 112 s | ≤ 77 s | ≤ 56 s |
-| 3 Blink | 60 (provisional, built S4.2; a perfect run is about 40 s) | ≤ 96 s | ≤ 66 s | ≤ 48 s |
-| 4 Stage 2 | 100 | ≤ 160 s | ≤ 110 s | ≤ 80 s |
-| 5 Stage 3 | 120 | ≤ 192 s | ≤ 132 s | ≤ 96 s |
-| 6–10 (P) | 80–100, 90–110, 90–120, 90–120, 120–150 | 1.6 × | 1.1 × | 0.8 × |
+| Tutorial | 30 | ≤ 75 s | ≤ 33 s | ≤ 24 s |
+| 1 Island Hop | 52 (provisional, built S4.1) | ≤ 130 s | ≤ 57 s | ≤ 42 s |
+| 2 Stage 1 | 70 | ≤ 175 s | ≤ 77 s | ≤ 56 s |
+| 3 Blink | 60 (provisional, built S4.2; a perfect run is about 40 s) | ≤ 150 s | ≤ 66 s | ≤ 48 s |
+| 4 Stage 2 | 100 | ≤ 250 s | ≤ 110 s | ≤ 80 s |
+| 5 Stage 3 | 120 | ≤ 300 s | ≤ 132 s | ≤ 96 s |
+| 6–10 | 90, 80, 75, 100, 75 (set after the user's runs, StageConfig) | 2.5 × | 1.1 × | 0.8 × |
 | 11 Triple Peaks | 55 (2026-10-30, from the developer's best 35.4 s) | ≤ 137.5 s | ≤ 60.5 s | ≤ 44 s |
 | 12 Ice Rink | 50 (best 31.7 s) | ≤ 125 s | ≤ 55 s | ≤ 40 s |
 | 13 Dash Bridge | 45 (best 27.9 s) | ≤ 112.5 s | ≤ 49.5 s | ≤ 36 s |
 | 14 Laser Lab | 95 (best 60.4 s) | ≤ 237.5 s | ≤ 104.5 s | ≤ 76 s |
 | 15 Rising Tide | 55 (best 34.8 s) | ≤ 137.5 s | ≤ 60.5 s | ≤ 44 s |
-| 16–20 (P) | 110–130, 90–130, 120–150, 130–170, 160–200 | 1.6 × | 1.1 × | 0.8 × |
+| 16–20 (P) | 110–130, 90–130, 120–150, 130–170, 160–200 | 2.5 × | 1.1 × | 0.8 × |
 
 Every run stays within pillar 1 (1–3 minutes). Provisional `T_base` values (set in M1 so tiers can be evaluated) are
 rough guesses — Stage 1 is consistent with the existing board (best 50 s → Gold, 104 s → Bronze). They are replaced by
