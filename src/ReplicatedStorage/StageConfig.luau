@@ -31,6 +31,9 @@ StageConfig.FinishPayoutBase = 100
 
 -- Medal thresholds as multiples of tBase (GDD §4); a stage may point `tiers` at its own table.
 StageConfig.DefaultTiers = { Bronze = 1.6, Silver = 1.1, Gold = 0.8 }
+-- World 3 (2026-10-30): tBase set from the user's best runs (Gold about 1.25 x them); Bronze unlocks the next stage, so it stays
+-- generous for first runs with deaths (2.5 x tBase, close to the old 1.6 x limits).
+StageConfig.World3Tiers = { Bronze = 2.5, Silver = 1.1, Gold = 0.8 }
 
 -- Per stage: `world` (1–4, GDD §3) and `requires` = { { id = <talent id>, level = <n> }, … } (talents the course needs;
 -- shown as a hint and warning, never enforced). `order` is the position in the game. Since 2026-10-22 the key and the folder of
@@ -194,8 +197,8 @@ StageConfig.Stages = {
 		order = 11,
 		world = 3,
 		requires = { { id = "DoubleJump", level = 2 } }, -- Triple Jump
-		tBase = 85, -- 110 provisional until measured; 85 when the user asked for more aggressive timing (Gold < 68 s)
-		tiers = StageConfig.DefaultTiers,
+		tBase = 55, -- 110 provisional, 85 when the user asked for more aggressive timing, 55 on 2026-10-30 (user's best 35.4 s; Gold < 44 s)
+		tiers = StageConfig.World3Tiers,
 		unlock = { world = 2, stars = 10 }, -- the world opener: 10 of the 15 stars of World 2
 		unlockPrice = 4000,
 		rewardFactor = 3.25,
@@ -207,8 +210,8 @@ StageConfig.Stages = {
 		order = 12,
 		world = 3,
 		requires = { { id = "DoubleJump", level = 2 } },
-		tBase = 90, -- 120 provisional until measured; 90 when the user asked for more aggressive timing (Gold < 72 s)
-		tiers = StageConfig.DefaultTiers,
+		tBase = 50, -- 120 provisional, 90 when the user asked for more aggressive timing, 50 on 2026-10-30 (user's best 31.7 s; Gold < 40 s)
+		tiers = StageConfig.World3Tiers,
 		unlock = { stage = "Stage11", medal = "Bronze" },
 		unlockPrice = 4500,
 		rewardFactor = 3.5,
@@ -220,8 +223,8 @@ StageConfig.Stages = {
 		order = 13,
 		world = 3,
 		requires = { { id = "DoubleJump", level = 2 }, { id = "Dash", level = 2 } }, -- Triple Jump, Long Dash
-		tBase = 90, -- 120 provisional (the bot's clean segments took ~30 s); 90 when the user asked for more aggressive timing (Gold < 72 s)
-		tiers = StageConfig.DefaultTiers,
+		tBase = 45, -- 120 provisional, 90 when the user asked for more aggressive timing, 45 on 2026-10-30 (user's best 27.9 s; Gold < 36 s)
+		tiers = StageConfig.World3Tiers,
 		unlock = { stage = "Stage12", medal = "Bronze" },
 		unlockPrice = 5000,
 		rewardFactor = 3.75,
@@ -233,8 +236,8 @@ StageConfig.Stages = {
 		order = 14,
 		world = 3,
 		requires = { { id = "DoubleJump", level = 2 }, { id = "Dash", level = 2 } }, -- Triple Jump, Long Dash
-		tBase = 135,
-		tiers = StageConfig.DefaultTiers,
+		tBase = 95, -- 135 provisional, 95 on 2026-10-30 (user's best 60.4 s; Gold < 76 s)
+		tiers = StageConfig.World3Tiers,
 		unlock = { stage = "Stage13", medal = "Bronze" },
 		unlockPrice = 5500,
 		rewardFactor = 4.0,
@@ -246,8 +249,8 @@ StageConfig.Stages = {
 		order = 15,
 		world = 3,
 		requires = { { id = "DoubleJump", level = 2 }, { id = "Dash", level = 2 } }, -- Triple Jump, Long Dash
-		tBase = 100, -- provisional (clean run estimated at ~80 s); set after the user's run
-		tiers = StageConfig.DefaultTiers,
+		tBase = 55, -- 100 provisional, 55 on 2026-10-30 (user's best 34.8 s; Gold < 44 s)
+		tiers = StageConfig.World3Tiers,
 		unlock = { stage = "Stage14", medal = "Bronze" },
 		unlockPrice = 5500,
 		rewardFactor = 4.25,

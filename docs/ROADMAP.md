@@ -61,9 +61,9 @@ Rules:
 | E0 | Economy model for the pet-garden expansion (scope written 2026-10-24; `tools/economy.py` loader, drift check, reproduction, report, day-by-day sim, crop field + guardrails A-C (43 checks green, provisional numbers in [ECONOMY.md](ECONOMY.md)) done; repricing, dead end, rare supply and sensitivity pending; [EXPANSION.md](EXPANSION.md) §15) | partial | – | – |
 | E1.0 | Client-drawn plots spike: GO / NO-GO on the plot architecture before E1 (scope written 2026-10-24, no code) | – | – | – |
 | S5 | Worlds hub — done 2026-10-22: gates for Worlds 2-4 (coming soon, admins only), World 2 courtyard, signs, per-world stars boards (user's visual check) | ✔ | ✔ | – |
-| S6 | World 2 (stages 6–10) — S6.1 Double Up + Seesaw, S6.2 Turntable + Labyrinth, S6.3 Clocktower all built 2026-10-22 / 23, each crossed by a bot and one timed run paid out; Studio validation pending the open checks (course look, human difficulty / `T_base`, the user's Stage 9 run, door coplanar audit hits on `Stage9.Maze.Big.ExitDoor` and `Stage10.Movers.Door_10`, tick sound), see the S6 notes below | ✔ | partial | – |
+| S6 | World 2 (stages 6–10) — S6.1 Double Up + Seesaw, S6.2 Turntable + Labyrinth, S6.3 Clocktower all built 2026-10-22 / 23, each crossed by a bot and one timed run paid out; Studio validation pending the open checks (course look, human difficulty / `T_base`, the user's Stage 9 run, door coplanar audit hits on `Stage9.Maze.Big.ExitDoor` and `Stage10.Movers.Door_10`, tick sound), see the S6 notes below; **the user declared World 2 done 2026-10-30** (open note: on Stage 10 both admin accounts hold only Bronze, 107 / 115 s against Gold < 60 s, so its tBase 75 needs one more look) | ✔ | ✔ | – |
 | S7 | Talents: Triple Jump + Dash (+ World 3 courtyard) — done 2026-10-24: talents, Q / gamepad / touch button, reach table, World 3 courtyard east of the hub; closed 2026-10-24 (the visual and real-device touch checks were waived by the user; Live-validated comes with the next publish) | ✔ | ✔ | – |
-| S8 | World 3 (stages 11–15) — S8.1 Triple Peaks + Ice Rink built and Studio-checked 2026-10-24 (kit ice, World 3 open), checked and tuned by the user 2026-10-26; S8.2 designed (STAGES §7.12: Long Dash = Dash level 2, kit `Roll` balls); S8.2a Stage 13 Dash Bridge built and bot-checked 2026-10-26 (awaits the user's check), S8.2b Stage 14 Laser Lab built and bot-checked 2026-10-26 (awaits the user's check; its Key Vault rebuilt as lanes 2026-10-28), S8.3 Rising Tide designed 2026-10-28 (STAGES §7.13), S8.3a (`KitTide` + segments 1-2) built and bot-checked the same day, S8.3b (segments 3-6, coins, finish on the summit) built and bot-checked the same day (awaits the user's run) | ✔ (S8.1) | ✔ (S8.1) | – |
+| S8 | World 3 (stages 11–15) — S8.1 Triple Peaks + Ice Rink built and Studio-checked 2026-10-24 (kit ice, World 3 open), checked and tuned by the user 2026-10-26; S8.2 designed (STAGES §7.12: Long Dash = Dash level 2, kit `Roll` balls); S8.2a Stage 13 Dash Bridge built and bot-checked 2026-10-26 (awaits the user's check), S8.2b Stage 14 Laser Lab built and bot-checked 2026-10-26 (awaits the user's check; its Key Vault rebuilt as lanes 2026-10-28), S8.3 Rising Tide designed 2026-10-28 (STAGES §7.13), S8.3a (`KitTide` + segments 1-2) built and bot-checked the same day, S8.3b (segments 3-6, coins, finish on the summit) built and bot-checked the same day; the user ran all five stages (Gold on each) and medal times were set from those runs 2026-10-30 (tBase 55 / 50 / 45 / 95 / 55, `World3Tiers` with Bronze 2.5 ×, GDD §4); awaits the user's sign-off of World 3 | ✔ | ✔ (S8.1) | – |
 | S9 | Talents: Wall Jump + Glide | – | – | – |
 | S10 | World 4 (stages 16–20) | – | – | – |
 | M6b | Final balancing (all stages) | – | – | – |
@@ -228,9 +228,24 @@ Stage expansion plan and design: [STAGES.md](STAGES.md) (catalogue, curve, world
 milestones hold 2–3 stages each; every sub-milestone ends with a Studio check, the user's visual check and a commit.
 Each milestone gets its scope when it starts (workflow step 2).
 
-Pet-garden simulator (E0–E11, direction decided 2026-10-24, draft, nothing started): [EXPANSION.md](EXPANSION.md) §14–15 (game name **Pawvest**; the MVP
-cut is E1 + E2 + hatch-time traits + first landmark and request board + basic ledger, then updates U1–U5). E0 (economy
-model) and the plot-architecture spike E1.0 come first (scopes below); E1 (the field and crops) is the first build milestone. They get their scope when they start.
+Pet-garden simulator (E0–E11, direction decided 2026-10-24, draft, nothing started): [EXPANSION.md](EXPANSION.md) §14–15 (game name **Pawvest**; MVP
+and drops D1–D10). E0 (economy model) and the plot-architecture spike E1.0 come first (scopes below); E1 is the first build milestone. They get their scope when they start.
+
+**Order from 2026-10-30 (user review: Worlds 1–2 done, mobile reasonably playable with somewhat slower times than PC, E0's open
+decisions can wait):**
+1. **Close World 3:** the user's sign-off of Stages 11–15 with the new medal times; one more look at Stage 10's times.
+2. **M6a as a soft launch** (friends, then unlisted) with the 15 stages, today's pets and garden: real finish times, the T1a / T1b
+   telemetry, and a **retention baseline of the obby alone** to measure what the garden adds later. S9 / S10 (World 4) wait until after
+   the garden MVP (drop D8). When S10 starts, re-check World 4's star bar: World 3's tighter Silver / Gold make 10 of 15 stars harder.
+3. **In parallel:** E0 continues (repricing, dead end, rare supply, sensitivity, then the EXPANSION pieces: harvest rolls, fertilisers,
+   tools, the Spender archetype); its open decisions are settled later and do not block E1.0 or E1a. The E1.0 spike.
+4. **MU** as a short checklist before anything goes public (the user's phone runs are fine so far).
+5. **The MVP** in milestones of about 1–2 weeks: **E1a** field, crops, catalogue, selling · **E1b** pens → posts, Gardener auto-replant,
+   live-player migration · **E1c** size roll, tools tier 1, Renown, daily market cart · **E4-thin** crows + one Perimeter post · **E2** rare
+   seeds from Worlds 1–3 · **E3 / E5** traits at hatch, request board · **ledger, onboarding, garden telemetry**.
+6. **Drops D1–D10** (EXPANSION §14): Critters, Comfort shop (M7), Weekly, Variants, Kitchen, …
+- Pending idea (2026-10-30, not decided): key talents as **world rewards** (Double Jump for finishing World 1, Dash for World 2), Coins buy
+  the levels and the other talents; it removes two Coin sinks, so talent prices rise in the balancing pass (STAGES §6, GDD §6).
 
 ### E0 — Economy model (scope, 2026-10-24; draft until the open decisions below are confirmed)
 **Goal.** One reproducible model of the whole Coin economy (faucets, sinks, time) that fixes the numbers E1 needs and proves the

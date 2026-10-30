@@ -125,6 +125,10 @@ the Tutorial and stages 1–5). Default thresholds (tunable per stage):
 
 Run Speed and Jump Height never become requirements; they stay the way to faster medals and shortcuts.
 
+World 3 uses its own tiers (`StageConfig.World3Tiers`, 2026-10-30): **Bronze ≤ 2.5 × T_base**, Silver and Gold as above. Its T_base
+values come from the developer's best runs with every talent (Gold ≈ 1.25 × that best), so Silver and Gold are much tighter than
+before, while Bronze, which unlocks the next stage, stays close to the old 1.6 × limits so a first run with deaths still passes.
+
 `T_base` is provisional; ranges are STAGES §4's, the thresholds below use the midpoint (planned stages: P).
 
 | Stage | T_base (s) | Bronze | Silver | Gold |
@@ -136,7 +140,11 @@ Run Speed and Jump Height never become requirements; they stay the way to faster
 | 4 Stage 2 | 100 | ≤ 160 s | ≤ 110 s | ≤ 80 s |
 | 5 Stage 3 | 120 | ≤ 192 s | ≤ 132 s | ≤ 96 s |
 | 6–10 (P) | 80–100, 90–110, 90–120, 90–120, 120–150 | 1.6 × | 1.1 × | 0.8 × |
-| 11–15 (P) | 100–120, 110–130, 110–130, 120–150, 130–160 | 1.6 × | 1.1 × | 0.8 × |
+| 11 Triple Peaks | 55 (2026-10-30, from the developer's best 35.4 s) | ≤ 137.5 s | ≤ 60.5 s | ≤ 44 s |
+| 12 Ice Rink | 50 (best 31.7 s) | ≤ 125 s | ≤ 55 s | ≤ 40 s |
+| 13 Dash Bridge | 45 (best 27.9 s) | ≤ 112.5 s | ≤ 49.5 s | ≤ 36 s |
+| 14 Laser Lab | 95 (best 60.4 s) | ≤ 237.5 s | ≤ 104.5 s | ≤ 76 s |
+| 15 Rising Tide | 55 (best 34.8 s) | ≤ 137.5 s | ≤ 60.5 s | ≤ 44 s |
 | 16–20 (P) | 110–130, 90–130, 120–150, 130–170, 160–200 | 1.6 × | 1.1 × | 0.8 × |
 
 Every run stays within pillar 1 (1–3 minutes). Provisional `T_base` values (set in M1 so tiers can be evaluated) are

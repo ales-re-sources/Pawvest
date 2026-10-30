@@ -52,6 +52,8 @@ edited there (a changed config makes `check` fail until `pin`).
 | 6 garden share | Obby main: garden (field + pens) <= 50 % of income. Others only reported | Obby main 25 %, Casual 32 %, Garden main 73 %, Binge 7 % |
 | O online / offline | Garden income per online hour >= 1 / `offline_rate` x per offline hour, and offline income exists | 3.3x Obby main, 3.5x Casual, 3.2x Garden main, 59x Binge |
 
+**Update 2026-10-30:** World 3's tBase was cut to the developer's runs (55 / 50 / 45 / 95 / 55, GDD §4), which shortens the modelled obby hour; A is now 0.81x worst for Obby main, 0.92x Casual, 0.84x Garden main, 0.29x Binge, and the day-60 target sits at 0.80x (Casual), the bottom of the band. The 0.95x figures in this file are from before; re-tune the ladder scale in the repricing step if the band should be met with margin.
+
 Archetypes: Obby main (2 h obby, visits 7:00 / 12:30 / 18:00, 3.5 h online a day), Casual (45 min, 8:00 / 19:00, 1 h), Garden main (15 min, 7 / 12 / 17 / 21, 2 h), Binge (one 6 h day a week, 0.9 h a day).
 
 ## Online vs offline: what it does to each archetype
