@@ -102,9 +102,10 @@ exactly one place at a time; allocation is the game.
   flexibility (Tending today, Pest control when the forecast says crows), never several jobs at once.
 - **Placement is the end-of-session decision:** guards go to the side the forecast names (§7), tenders to the long crops, the middle covers more
   than a corner.
-- **Controls (proposal, settled in the E1 design check):** a prompt at each square plants (seed picker over the seed stock), harvests (shows the
+- **Controls (settled 2026-10-30 in the E1a design check, ROADMAP → E1a):** a prompt at each square plants (seed picker over the seed stock), harvests (shows the
   size roll) and places or moves a pet; each prompt shows only within a few studs of its square (12 prompts side by side, mobile). A Garden panel
-  gives the overview (crop and time left per square, who works where). Whether field pets can also be moved from far away is open (§16).
+  at the own plot gives the overview (crop and time left per square, who works where) and holds the seed catalogue, selling and the next square
+  (no seed stand on the plaza). Whether field pets can also be moved from far away is open (§16).
 - **Data and validation.** `Garden.FieldPets[uid] = { Square, Job }`; the server checks the caller's own plot, an owned square, one pet per square,
   the slot count, that the pet has the aptitude and is not equipped. This generalises today's "equipped XOR penned" (`PetService` /
   `GardenService` already reject the conflicting actions).

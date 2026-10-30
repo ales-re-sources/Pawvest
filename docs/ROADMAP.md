@@ -38,7 +38,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E0 | Economy model — partial (baseline, simulation, field); field-pet re-run, repricing and the rest open | partial | – | – |
 | M6a | Soft launch + World 1 balancing — World 1 balanced by feel (2026-10-30); live test open | – | – | – |
 | MU | Mobile UX check | – | – | – |
-| E1a–E5 | Garden MVP (see "Next") | – | – | – |
+| E1a–E5 | Garden MVP (see "Next"); E1a scoped | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
 
@@ -56,9 +56,9 @@ architecture and the pet design decided 2026-10-30 (EXPANSION §3–§4, §8.1).
 
    | # | Content | Needs |
    |---|---|---|
-   | **E1a** | Plots for real: `PlotView` draws the garden by default, the ring layout for 8-stud gaps (radius 112 / 185, the island grows), the mid pet detail, `GardenRemotes.Plot` replaces the spike feed (EXPANSION §16 migration list). The field: 4 → 12 squares, first crops, seed catalogue and seed stock, selling, square prompts and a Garden panel | E1.0 |
+   | **E1a** | Plots for real: `PlotView` draws the garden by default, the ring layout for 8-stud gaps (radius 112 / 185, the island grows), the mid pet detail, `GardenRemotes.Plot` replaces the spike feed (EXPANSION §16 migration list). The field: 4 → 12 squares, first crops, seed catalogue and seed stock, selling, light Renown, square prompts and a Garden panel | E1.0 |
    | **E1b** | Field pets: pets placed on squares with reach by level, aptitudes rolled at hatch (live pets once from their uid), Tending auto-replant, pens converted to field pet slots and the Coins-per-hour production removed; garden servers of 24 | E0 field-pet re-run |
-   | **E1c** | Size roll, tools tier 1 (Seed sorter, Cloches, Pruning shears), Renown, the daily market cart | E1a |
+   | **E1c** | Size roll, tools tier 1 (Seed sorter, Cloches, Pruning shears), field upgrades (growth, barn), the daily market cart | E1a |
    | **E2** | Seed pouch for medal finishes, rare-seed meter per stage, rare crops of Worlds 1–3 | E1a |
    | **E4-thin** | Crows, Pest-control pets on the field, the forecast line | E1b |
    | **E5 + rest** | Request board, the ledger on join, onboarding for the first ten minutes, garden telemetry | E1b |
@@ -70,6 +70,83 @@ architecture and the pet design decided 2026-10-30 (EXPANSION §3–§4, §8.1).
 
 Pending idea (2026-10-30, not decided): key talents as **world rewards** (Double Jump for finishing World 1, Dash for World 2), Coins buy the
 levels and the other talents; it removes two Coin sinks, so talent prices rise in the balancing pass (STAGES §6, GDD §6).
+
+### E1a — Plots for real + the field (scope 2026-10-30, decisions taken)
+**Goal.** The garden is drawn by the client for everyone, on the new ring layout, with today's gameplay unchanged (**E1a1**, published on its
+own); then the first crop loop on a 4 → 12-square field, open only to admins until E1 ships (**E1a2**). Nothing in E1a breaks the live game, so
+obby fixes keep shipping during the M6a baseline window. Field pets, the end of pen production and Max Players 24 are E1b.
+
+**Design check (2026-10-30).** Matches EXPANSION §3, §5.1–§5.2, §16 and the ECONOMY numbers, with two changes (accepted 2026-10-30): light **Renown** moves
+from E1c into E1a2 (without it only Potato is plantable and the expansion tiers have no gate; it is a derived level, no new system), and the
+**controls** proposal of EXPANSION §3 is settled as below (square prompts + one Garden panel). Upgrades (growth, barn), the size roll, tools and
+the market cart stay in E1c; rare crops and seed pouches in E2.
+
+**E1a1 — Plots drawn by the client (no gameplay change; ~1 week).** EXPANSION §16 migration list items 1–5 and 7, in this order:
+1. `PlotView` draws every plot by default from a real `GardenRemotes.Plot` broadcast (`(userId, state)` / `(userId, nil)`; pens as
+   `Kind:Level:uid`, pen count, eggs as `Egg:readyAt`, owner name); the owner's `State` message stays for the panels. The client runner replaces
+   `PlotViewSpike.client` (distance detail, build budget, own plot first).
+2. Server: `GardenService.renderPlot` / `makePenPet`, the `GardenIncubators` renderer and `GardenPlots`' model writes go; `GardenPlots` keeps
+   the assigner and the `GardenPlot` attribute. `PlotCount` → `PlotSlots` (Max Players stays 12).
+3. Client: `GardenClient` / `IncubatorClient` prompts and countdowns come from `PlotView` (no scan of `Workspace.Garden.Plots`, no `OpenPen`
+   hook); `PetPenFx` / `PetPenLevelUp` follow the drawn pens; `HintSources`' ready-egg marker targets the drawn incubator.
+4. **Mid pet detail:** a pet beyond about 60 studs is one block.
+5. **Layout:** `PlotRings` → radius 112 / 185; the island grows to about radius 215 (Studio: Island, Hedge + Barrier ring, Decor, BridgePath,
+   the bridge end); `HintSources`' Garden rectangle follows; `tools/plot_formula_test.luau` re-pointed at the new layout.
+6. Remove `PlotViewSpike.*` and `PlotViewRemotes`; stash `Workspace.Garden.Plots` in `ServerStorage` until E1a1 is Studio-validated, then delete.
+
+*Studio-only:* the island, hedge, barrier, decor and bridge changes; the plots stash and deletion.
+
+**E1a2 — The field (behind access; ~1–2 weeks).**
+- **Access:** `GardenConfig.FieldAccess = "admins"` (admins + Studio test users; `"all"` when E1 ships). Every field remote checks it on the
+  server; for anyone else no `Field` data is written and the broadcast carries no field (sent per viewer: a player without access sees no
+  field on any plot), so live profiles stay untouched. A code constant, not a Workspace attribute: switched in git and live by publishing;
+  no testers mode (the user, 2026-10-30); removed once E1 ships.
+- **`CropConfig`** (ReplicatedStorage) from ECONOMY.md → "Inputs ready for E1": Potato (start), Corn, Pumpkin (Renown 8), Giant melon (Renown 25)
+  with grow time, sale and seed price; expansion tiers 5–12 (price + Renown); Renown points 1 / 3 / 6 / 12 per harvest by tier, level L at
+  3 × L^1.6 points; barn 40 seeds (fixed until E1c); `online_rate` 1.0, `offline_rate` 0.33, field offline cap 12 h (placeholders, ECONOMY open
+  decision 5). `tools/economy.py` reads it and `check` pins it.
+- **Profile:** `Garden.Field = { Count, Squares["1".."12"] = { Crop, Grown }, SettledAt }` (`Grown` = growth seconds earned, `SettledAt` = server
+  `os.time()`), `Garden.Seeds[crop]` (a new field starts with 4 Potato), `Garden.Items[crop]`, `Garden.Renown` (points; the level is derived). Growth: online time × `online_rate`,
+  offline time (since `SettledAt`, capped) × `offline_rate`, settled on join, leave, before every field action and every 60 s. Ripe crops wait.
+- **Server** `GardenField` (a sibling module on GardenService's hooks, like `GardenIncubators`): remotes `Plant(square, crop)`, `Harvest(square)`,
+  `BuySeeds(crop, count)`, `Sell(crop, count)`, `BuySquare(expectedCount)`; answers on `GardenRemotes.Result`; prices and times never come from
+  the client; the caller must stand at their own plot (`Usable`). Sales go through `CoinRewards.Grant` (pet multiplier at sale time).
+- **Client:** `PlotView` draws the real field behind the plot (crop and growth stage 0–3, stand-in stud blocks, no art pass); a prompt per
+  owned square, shown within about 6 studs: Plant (seed picker over the stock) or Harvest; a **Garden panel** (button on the own plot): squares
+  with crop and time left (`readyAt` sent as "ripe at, if you stay online"), seed catalogue with Renown locks, items and Sell, the next square
+  with price and Renown, the Renown level. New texts through `strings.csv`.
+
+**Acceptance checks.** E1a1:
+1. `Workspace.Garden.Plots` is gone and a join adds **0** instances under server `Workspace`; a non-admin client draws its own plot with one pet
+   model per penned pet whose `Uid` / `Kind` / `Level` match the profile.
+2. Through the real UI on a drawn plot: place a pet in a pen and remove it (profile `Pens` changes; a second client's drawing follows within 2 s);
+   start a Basic egg (the countdown equals `ReadyAt − server now` ± 1 s) and hatch it after moving `ReadyAt` back; the ready-egg marker sits on
+   the drawn incubator.
+3. Pen production unchanged: `LastSeen` moved back 1 h → the join payout equals `GardenConfig.Settle` for 3 600 s exactly.
+4. Layout: every pair of neighbouring plots ≥ 8 studs apart on both rings; rays down from all four corners of every floor hit the island;
+   `GoGarden` lands in front of the caller's plot facing it; a player walks from the hub over the bridge into the garden.
+5. Budget: 30 plots in range (synthetic) ≤ 5 000 client instances; a full plot beyond 60 studs ≤ 80 instances.
+6. `grep` finds no `PlotViewSpike`, `PlotViewRemotes` or `Garden.Plots` reference; no new console errors.
+
+E1a2:
+7. A non-admin's `Plant` is rejected (`locked`) and their saved profile has **no** `Field` key; their client draws no field on any plot.
+8. A new admin profile has `Field.Count = 4`, `Seeds.Potato = 4` and nothing planted; planting on square 5 or an occupied square, with 0 seeds of that crop, or
+   Corn below Renown 8 is rejected and changes nothing.
+9. Plant a Potato through the square prompt: `Seeds.Potato` −1, square 1 holds `Potato` with `Grown = 0`; harvest at `Grown = 10 800 − 60`
+   is rejected (`not ripe`), 60 s online later it succeeds: `Items.Potato` +1, the square is empty, `Renown` +1.
+10. Offline: `SettledAt` moved back 3 h → `Grown` = 3 564 ± 5 on join (not ripe); moved back 24 h → `Grown` = 14 256 ± 5 (cap × 0.33; ripe).
+11. Sell 3 Potatoes with no pet equipped: Coins +72 exactly; selling more than owned is rejected and Coins do not change.
+12. Buy 10 Potato seeds: Coins −60, `Seeds.Potato` +10; buying past 40 seeds or without the Coins is rejected and changes nothing.
+13. `BuySquare(4)` at Renown level 1 with 600 Coins: `Field.Count = 5`, Coins −600; at Renown 0, with 599 Coins, a stale `expectedCount` or at
+    12 squares it is rejected.
+14. Renown level from points matches 3 × L^1.6 at L = 1, 8 and 25 (unit check in the Edit context).
+15. A second client sees the admin's crops at the right stage within 2 s; the plot message stays ≤ 1 KB with 12 squares; 30 synthetic plots
+    with 12-square fields ≤ 5 000 client instances.
+16. `python tools/economy.py check` reads `CropConfig` with drift 0; `loc.py check` 0 errors; the Garden panel's texts fit in Czech at phone size.
+
+**Decisions (the user, 2026-10-30).** (1) Light Renown is in E1a2. (2) Seeds, selling and squares are bought from the Garden panel at the own
+plot (fewer walks on mobile), no seed stand on the plaza. (3) A new field starts with 4 free Potato seeds, so the first plant needs no shop.
+(4) `offline_rate` 0.33 / 12 h cap stay placeholders until ECONOMY open decision 5 is taken.
 
 ### E0 — Economy model
 **Goal.** One reproducible model of the Coin economy (`tools/economy.py`, Python stdlib) that fixes the numbers E1 needs, proves GDD §6 and the
