@@ -33,6 +33,9 @@ edited there (a changed config makes `check` fail until `pin`).
 - **Visits.** A visit is a session start. At a visit: harvest what is ripe (one harvest per square, then the square is empty), sell it (pet multiplier at
   sale time, like `CoinRewards.Grant`), buy seeds (a real cost), replant. Ripe crops wait and never rot. A crop grows `online_rate` hours per online hour
   and `offline_rate` hours per offline hour (capped), so a long crop may span several visits; the player plants the crop with the best net per square and wall-clock hour.
+- *Superseded 2026-10-30 (EXPANSION §3–§4), model not updated yet:* pets stand on field squares with a reach that grows with the aptitude level
+  (own square, then 5, then 3 × 3), a few field pet slots instead of 6 posts, Tending as an aptitude with levels 1–10; stage finishes drop a seed
+  pouch and fill a rare-seed meter (Scouting). The E0 re-run must model reach, Tending strength, slots and the seed pouch (ROADMAP → E0 inputs).
 - **Gardener.** A Green-thumb pet (35 % of hatched pets) on a Field post replants and re-harvests `squares` squares (1; no coverage upgrade, see below)
   by itself from the seed stock, up to the barn capacity (40 + 20 per barn level), at the same online / offline rates. Posts are the existing pens (same prices).
 - **Renown** = derived level from harvests (points per harvest 1 / 3 / 6 / 12 by tier, level L needs 3 x L^1.6 points); gates tier-2 crops (8), tier-3 (25)

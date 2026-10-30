@@ -424,7 +424,7 @@ no flame tail on Owl / Panda, no crown together with horns); the Lv 10 piece sta
 
 ### 7.6 Pet garden (minigame, P2)
 *Direction (2026-10-24): this section describes the garden as built; [EXPANSION.md](EXPANSION.md) replaces the pen production with
-crops, posts and raids once E1 is designed in detail. Not rewritten yet.*
+crops, pets placed on field squares (§3, 2026-10-30) and raids once E1 is designed in detail. Not rewritten yet.*
 
 A free area reached on foot from the central island, where pets are raised. Aimed at players who prefer
 collecting and caring over obby runs.

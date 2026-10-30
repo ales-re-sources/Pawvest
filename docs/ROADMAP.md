@@ -240,9 +240,9 @@ decisions can wait):**
 3. **In parallel:** E0 continues (repricing, dead end, rare supply, sensitivity, then the EXPANSION pieces: harvest rolls, fertilisers,
    tools, the Spender archetype); its open decisions are settled later and do not block E1.0 or E1a. The E1.0 spike.
 4. **MU** as a short checklist before anything goes public (the user's phone runs are fine so far).
-5. **The MVP** in milestones of about 1–2 weeks: **E1a** field, crops, catalogue, selling · **E1b** pens → posts, Gardener auto-replant,
-   live-player migration · **E1c** size roll, tools tier 1, Renown, daily market cart · **E4-thin** crows + one Perimeter post · **E2** rare
-   seeds from Worlds 1–3 · **E3 / E5** traits at hatch, request board · **ledger, onboarding, garden telemetry**.
+5. **The MVP** in milestones of about 1–2 weeks: **E1a** field, crops, catalogue, selling · **E1b** pens → field pets (pets on squares, reach by
+   level, Tending auto-replant; EXPANSION §3), live-player migration · **E1c** size roll, tools tier 1, Renown, daily market cart · **E4-thin** crows +
+   Pest-control pets · **E2** seed pouch and rare-seed meter, rare seeds from Worlds 1–3 · **E3 / E5** aptitudes at hatch (§4), request board · **ledger, onboarding, garden telemetry**.
 6. **Drops D1–D10** (EXPANSION §14): Critters, Comfort shop (M7), Weekly, Variants, Kitchen, …
 - Pending idea (2026-10-30, not decided): key talents as **world rewards** (Double Jump for finishing World 1, Dash for World 2), Coins buy
   the levels and the other talents; it removes two Coin sinks, so talent prices rise in the balancing pass (STAGES §6, GDD §6).
@@ -264,8 +264,9 @@ bundles) live only in the model until E1 copies them into `CropConfig`.
 challenge coins (~160 planned), talent tree (47 300), stage unlocks (80 700), pets (eggs, slots 7 000, rarity bonus, +50 % cap,
 sell values, levels / XP, food prices), pens 32 500, incubators 17 000, pen production (rates by rarity, 8 h offline cap).
 **Inputs (new, EXPANSION §5-§12).** The crop ladder (tiers, grow time, sale price, seed cost 20-30 %), the **field** (a grid of squares the
-player plants freely, see below), field expansion and upgrade prices, Gardener auto-replant coverage (squares per Gardener pet and the
-number of Gardener posts), seed stock, Renown gates, station multiplier (1.5-2×), request board (3 a day), the first landmark (Kitchen) bundle.
+player plants freely, see below), field expansion and upgrade prices, **field pets** (decided 2026-10-30, EXPANSION §3–§4: field pet slots, reach by
+aptitude level, Tending strength, the aptitude XP curve; replaces "1 square per Gardener, 6 posts"), the **stage seed pouch and rare-seed meter**
+with Scouting (§8.1), seed stock, Renown gates, station multiplier (1.5-2×), request board (3 a day), the first landmark (Kitchen) bundle.
 
 **Field model (decided 2026-10-24, replaces "6 beds").** The garden has one **field** made of squares; the player puts any unlocked crop
 on any square. Capacity comes from the number of squares (expansion tiers of the field, bought with Coins and Renown), not from a fixed
@@ -286,7 +287,8 @@ schedule, an obby minutes budget by stage reached, and a purchase policy (talent
    players: decide the migration (grandfather the pen income to a cut-off date, convert to a one-time payout, or retune the crops up).
 2. **Crop ladder.** Sale price, seed cost, grow time and gate per tier so that net Coins per square-hour land on ≈ 20 / 45 / 90 / 150 (rare)
    and the guardrails hold (the per-bed numbers of EXPANSION §5 are read as per square until the model replaces them).
-3. **Field and Gardener capacity.** Squares per expansion tier, their prices, the Gardener coverage and the seed stock needed, so that the
+3. **Field and field-pet capacity.** Squares per expansion tier, their prices, the field pet slots, Tending reach and strength (2026-10-30: reach grows
+   with the aptitude level up to 3 × 3, so the value of tended squares, not their count, must fit the 24-hour rule) and the seed stock needed, so that the
    structural cap (not the 8 h rule) limits output. Reference: a fully replanted square cycles 24 h a day, 6 squares × 90 = ~13 000 a day against
    the 24-hour rule below, so the cap has to come from square count, seed cost and stock, not from grow time alone.
 4. **Sink share.** How much of each faucet the sinks absorb (seeds, beds, stations, barn, decor, landmark bundles, talents,
@@ -296,7 +298,8 @@ schedule, an obby minutes budget by stage reached, and a purchase policy (talent
    must stay a majority only for *Garden main*, never for *Obby main*.
 6. **Pet bonus interaction.** The +50 % multiplier applies to crop sales at sale time: verify it does not push the best archetype
    beyond the guardrail (the bonus multiplies the garden too).
-7. **Rare crops and requests.** How many rare crops the obby drip supplies per week (daily first-run seed, world signature crops) against
+7. **Rare crops and requests.** How many rare crops the obby drip supplies per week (seed pouch, rare-seed meter with maximum Scouting, world
+   signature crops; 2026-10-30) against
    what the first landmark and the request board consume; sets the bundle sizes and the request rewards.
 8. **Talent / unlock timing under the new faucet.** The §6 "required set share ≤ 65 %" table recomputed with the garden income and
    the new sinks: crops must not let a player buy Dash before World 2, nor starve the no-grind path.
