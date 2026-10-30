@@ -121,6 +121,11 @@ Time to buy (median day, Obby main / Casual / Garden main / Binge, talent-first)
    progress; the model supports **replacing the Coins-per-hour production** when the posts arrive (open decision 3 only decides about a one-time payout).
 7. **Rare supply** from the obby: 8.9 seeds a week (Obby main), 7.0 (Casual), 3.3 (Binge), 2.3 (Garden main). Check 8 (landmark need) is still to do.
 8. **Early game is deliberately small.** The field pays little in the first week and the obby stays the opening; A stays under 0.5x in the first week for the active archetypes.
+9. **All built talents are affordable after World 2 (checked and kept 2026-10-27).** A replay from a reset profile (Gold on Tutorial + Stages 1-9, no admin Coins)
+   earned 27 275 one-time (medals 22 750, finishes 1 625, challenge coins 2 900) plus about 4 700 from repeat runs, the pet bonus and pens, and bought every built
+   talent (25 300), slot 2 and pens 2-3 with 1 163 left. That matches the model: the built tree is only 25 300 of the planned 47 300 (Wall Jump 10 000 and Glide
+   12 000 come in S9). Prices stay as they are until those two are built; revisit then. A ~11 000 gap in an earlier playthrough was the admin "+Coins" button
+   (10 000), so check for it before suspecting a leak.
 
 **Sensitivity of A (one-off, worst archetype on any day; not yet a `check` item):** ladder scale +20 % -> 1.14x (FAIL), -20 % -> 0.77x; squares per Gardener 1 -> 2 -> 1.06x (FAIL);
 growth step 5 -> 7 % -> 1.01x (FAIL); tier-3 gate 25 -> 12 or 15 -> 1.28x (FAIL: the gate keeps the early field below the first obby hour); seed share 25 -> 30 % -> 0.98x; Renown k 3 -> 2.4 -> 0.99x;
