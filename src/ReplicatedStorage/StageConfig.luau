@@ -145,7 +145,7 @@ StageConfig.Stages = {
 		unlock = { stage = "Stage6", medal = "Bronze" },
 		unlockPrice = 3000,
 		rewardFactor = 2.25,
-		checkpointOrder = { "501", "502", "503", "504", "505", "507", "508", "506" },
+		checkpointOrder = { "501", "502", "503", "504", "505", "507", "508" }, -- 507 / 508 were added later; 506 (6 studs before the finish) was deleted 2026-10-29
 	},
 	{
 		key = "Stage8", -- Turntable: turntables, sweeper bars, flippers, flat windmills
