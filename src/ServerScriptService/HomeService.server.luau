@@ -2,12 +2,14 @@
 -- that stage's gate, from anywhere else (hub, the world's courtyard, Tutorial, garden) to the hub spawn. A running stage
 -- timer is cancelled and the score panel shows the new place. The remote carries no data; the server decides.
 -- GoGarden (the Pets panel's "Go to my garden" button) works the same way: it lands the player on the grass in front
--- of their borrowed garden plot (GardenPlots), looking at it. Both remotes share one cooldown.
+-- of their borrowed garden plot (GardenPlots; its position from GardenConfig.PlotCFrame, no plot model), looking at it.
+-- Both remotes share one cooldown.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local StageConfig = require(ReplicatedStorage.StageConfig)
+local GardenConfig = require(ReplicatedStorage.GardenConfig)
 local GardenPlots = require(game:GetService("ServerScriptService").GardenPlots)
 local TimerHandler = require(workspace.Handlers.PlayerTimerHandler)
 
@@ -74,16 +76,15 @@ end)
 
 goGardenEvent.OnServerEvent:Connect(function(player)
 	local index = GardenPlots.PlotOf(player)
-	local plot = index and GardenPlots.Model(index)
-	local floor = plot and (plot.PrimaryPart or plot:FindFirstChild("Floor"))
-	if not floor or not floor:IsA("BasePart") then
+	local floor = index and GardenConfig.PlotCFrame(index) -- from the slot: no plot model needed (E1.0)
+	if not floor then
 		return
 	end
 	local character = acceptRequest(player)
 	if not character then
 		return
 	end
-	local position = floor.CFrame:PointToWorldSpace(GARDEN_ARRIVAL) + Vector3.new(0, 5, 0)
+	local position = floor:PointToWorldSpace(GARDEN_ARRIVAL) + Vector3.new(0, 5, 0)
 	local centre = floor.Position
 	character:PivotTo(CFrame.lookAt(position, Vector3.new(centre.X, position.Y, centre.Z)))
 	TimerHandler.ResetTimer(player, "home")

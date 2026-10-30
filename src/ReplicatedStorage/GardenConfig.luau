@@ -15,6 +15,53 @@ function GardenConfig.PlotName(index: number): string
 	return string.format("Plot_%02d", index)
 end
 
+-- Plot positions (E1.0, docs/EXPANSION.md §16): a pure formula slot → floor CFrame, shared by server and client, so no
+-- system needs a plot model to know where a plot is. Slots fill rings round the garden centre, ring by ring; each plot's
+-- front (LookVector, the sign side) faces the centre. Ring 1 is exactly today's 12 Studio plots (radius 100, 30° apart,
+-- slot 1 on +X, counted towards +Z); ring 2 (18 more) exists only in the formula so far (off today's island, r 145).
+GardenConfig.PlotCentre = Vector3.new(-1200, 16.25, -750) -- garden centre at the height of the plot floors' centre
+GardenConfig.PlotRings = {
+	{ count = 12, radius = 100 },
+	{ count = 18, radius = 170 },
+}
+GardenConfig.PlotSlots = 0 -- every slot the rings hold (30)
+for _, ring in GardenConfig.PlotRings do
+	GardenConfig.PlotSlots += ring.count
+end
+
+export type PlotRing = { count: number, radius: number }
+
+-- Ring (1 = inner) and position on it (1..count) of plot slot `slot`, or nil outside the rings. `rings` defaults to
+-- PlotRings (tests pass another layout).
+function GardenConfig.PlotRing(slot: number, rings: { PlotRing }?): (number?, number?)
+	if type(slot) ~= "number" or slot % 1 ~= 0 or slot < 1 then
+		return nil, nil
+	end
+	local first = 1
+	for ringIndex, ring in rings or GardenConfig.PlotRings do
+		if slot < first + ring.count then
+			return ringIndex, slot - first + 1
+		end
+		first += ring.count
+	end
+	return nil, nil
+end
+
+-- Floor CFrame of plot slot `slot` (centre of the 40 x 40 floor, front towards the garden centre), or nil. Ring 1 keeps
+-- today's plots, whose inner corners are only 2.8 studs apart (E1.0 test); a ring of 12 needs a radius of 111+ for 8.
+function GardenConfig.PlotCFrame(slot: number, rings: { PlotRing }?): CFrame?
+	rings = rings or GardenConfig.PlotRings
+	local ringIndex, position = GardenConfig.PlotRing(slot, rings)
+	if not ringIndex then
+		return nil
+	end
+	local ring = (rings :: { PlotRing })[ringIndex]
+	local angle = (position - 1) * 2 * math.pi / ring.count
+	local centre = GardenConfig.PlotCentre
+	local at = centre + Vector3.new(math.cos(angle), 0, math.sin(angle)) * ring.radius
+	return CFrame.lookAt(at, Vector3.new(centre.X, at.Y, centre.Z))
+end
+
 -- Pens and production (docs/GDD.md §7.6). Rates are Coins per hour at level 1; each level above 1 adds LevelRate permille.
 -- All production maths is integer: a pet's "units" are rate × (1000 + LevelRate × (level − 1)), i.e. thousandths of a
 -- Coin per hour, so production over `seconds` is units × seconds / UNITS_PER_COIN_SECOND whole Coins and the remainder

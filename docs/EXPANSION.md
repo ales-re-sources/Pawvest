@@ -458,14 +458,39 @@ At the stated pace D1–D10 is about 3–5 months after the MVP.
 - **Weather and forecast fairness.** A raid the forecast did not announce feels unfair: the forecast must be reliable, and the weather schedule
   must give every time zone its rare kinds.
 - **Profile size and save cost** (items, variants, size records, fertilisers, tools, traits, decor, fair entries); keep compact encodings, check the DataStore limit per key.
-- **Plot architecture (open, raised 2026-10-24).** Today `GardenService` draws pens and pet models as server instances into 12 plots built in
-  Studio, and a server holds 12 players. Direction under discussion: the server keeps only data (profile, timestamps, validation) and **each
-  client draws the plots it needs from that data**: its own, plus others' within view distance, at lower detail. Plot positions then come from a formula
-  (row / column by slot), so the player cap is no longer tied to built plots and the field size is not bounded by a 40 × 40 stud plot. Visits: a live visit
-  to an owner on the same server needs only the owner's data; a visit to an offline owner or another server needs a compact snapshot read (to design).
-  Alternative: a large walkable city with teleports to key places; that is a layout choice on top of the same drawing model, not a different
-  architecture. Decided 2026-10-24: run the spike E1.0 (ROADMAP) before E1: draw one plot from data on the client, measure instance count and cost at the maximum field
-  with 24-30 plots in range, check ProximityPrompts / pet followers, and the server-side checks that today use the plot's position.
+- **Plot architecture (raised 2026-10-24; decided 2026-10-30 by the E1.0 spike: GO, numbers in ROADMAP → E1.0).** Today `GardenService` draws pens
+  and pet models as server instances into 12 plots built in Studio, and a server holds 12 players. **Decision: the server keeps only data** (profile,
+  timestamps, validation) and **each client draws the plots it needs** from one data message per plot: its own, plus others' within view distance at
+  lower detail (full ≤ 120 studs, low ≤ 300, nothing beyond; builds spread over frames within a 6 ms budget). Plot positions come from a formula
+  (`GardenConfig.PlotCFrame(slot)`: rings round the garden centre), so the player cap is no longer tied to built plots and the field is not bounded
+  by a 40 × 40 stud plot. Measured: 30 plots in range cost at most 4 802 client instances with today's 12-square field (the worst spot is the garden
+  centre, where all 12 inner plots are at full detail), no build frame over 7.6 ms, about +6 MB; the server gains no instance and no DataStore request;
+  the server's distance check and `GoGarden` already use the formula.
+  - **Player cap:** the drawing allows **30** (the formula has 30 slots and the 12-square field fits the instance budget). Start the garden servers at
+    **24** in E1b: the 5 000 budget has only about 4 % headroom at 30 and E1 adds posts, tools and crops; raise it to 30 once the mid detail below is in.
+  - **Mid detail first:** pet models are 78 % of the instances (40-94 each). E1a adds a third detail: pets as one block beyond about 60 studs (a full plot
+    drops from about 370 to about 70 instances), which also makes fields larger than 12 squares affordable (the 150-square stress field reached 7 779).
+  - **Layout: compact neighbourhood + teleports, no walkable city.** Rings round the garden plaza, reached over the bridge and by `GoGarden`; the
+    instance cost depends on how many plots are within 120 studs, and a city only adds walking. Today's ring 1 has **2.77 studs** between neighbouring
+    plots (fails the 8-stud rule): E1 moves ring 1 to radius 112 and ring 2 to 185 (gaps 8.99 / 31.5 / 17.9 studs, 13.3 with the field), so the island
+    grows from radius 145 to about 215 and the hedge, barrier and decor ring move out.
+  - **E1 migration list.** (1) Scene: grow the island and move the plaza ring for the new radii; delete `Workspace.Garden.Plots` (12 Studio plots)
+    once `PlotView` draws by default; `PlotCount` → `PlotSlots`, Max Players 24. (2) `GardenPlots` keeps the slot assigner and the `GardenPlot`
+    attribute, drops the plot-model writes (sign text and owner attributes come from the message). (3) Pens: `GardenService.renderPlot` / `makePenPet` go;
+    the spike's feed becomes a real `GardenRemotes.Plot` broadcast (pens as `Kind:Level:uid`, pen count, eggs as `Egg:readyAt`, owner name, field); the
+    owner's own `State` message stays for the panels. `PetPenFx` / `PetPenLevelUp` follow the client's pen models. (4) Incubators: the
+    `GardenIncubators` renderer goes; `IncubatorClient` reads countdowns and prompts from `PlotView`. (5) Prompts: `PlotView` own-plot prompts call
+    the pen / incubator panels directly (no `OpenPen` hook); `HintSources`' ready-egg marker targets the drawn incubator; `GardenClient` / `IncubatorClient`
+    stop scanning `Workspace.Garden.Plots`. (6) Field (E1a): crop data in the profile and in the message, the mid detail, then re-run the budget test.
+    (7) Remove the spike flag and `PlotViewSpike.*` once the real feed exists; keep `tools/plot_formula_test.luau` (re-point its Studio comparison at the
+    new layout). Done already in E1.0: `GardenService.Usable` and `GoGarden` use `PlotCFrame`.
+  - **Offline visit (designed, not built):** a separate store `GardenSnapshots`, key `garden_<UserId>`, written on leave and at most once per 5 min while
+    the garden changes (in the profile save loop, its own key, so the 6 s rule per key does not slow the profile). Encoding: one JSON object
+    `{ v, name, pens = { "Kind:Level:uid" × 6 }, eggs = { "Egg:readyAt" × 3 }, field = one string, 4 characters per square (crop, two base-64
+    characters of minutes until ready, size / variant) }`: about 0.3 KB at 12 squares, 0.9 KB at 150 (limit 4 MB). A visit costs 1 `GetAsync` (read budget
+    60 + 10 × players per minute: 360 at 30 players, so even one visit per player per minute is 8 %) and nothing else; writes stay under 6 per minute at
+    30 players. An owner online on another server is shown from the same snapshot (at most 5 min old); no MessagingService.
+  - Still open: a real-phone measurement (the Studio device emulator was not used; it does not slow the CPU anyway) and a 12-client join.
 - **Live players.** What happens to existing pets (traits rolled retroactively from the uid?), pens, eggs and offline income at migration.
 - **Free outdoor decor.** Placement exploits, per-item save size, collision with paths and neighbouring plots, mobile controls.
 - **Bundles must stay finite.** Fix the first 6–8 landmarks and their contents before E6.

@@ -315,13 +315,14 @@ local function usable(player: Player, action: string)
 		reject(player, action, "loading")
 		return nil
 	end
-	local plot = GardenPlots.PlotOf(player) and GardenPlots.Model(GardenPlots.PlotOf(player))
-	if not plot then
+	-- the plot's position comes from its slot (GardenConfig.PlotCFrame, E1.0), not from the plot model
+	local floor = GardenPlots.PlotOf(player) and GardenConfig.PlotCFrame(GardenPlots.PlotOf(player))
+	if not floor then
 		reject(player, action, "noplot")
 		return nil
 	end
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-	if not (root and plot.PrimaryPart and (root.Position - plot.PrimaryPart.Position).Magnitude <= MAX_DISTANCE) then
+	if not (root and (root.Position - floor.Position).Magnitude <= MAX_DISTANCE) then
 		reject(player, action, "far")
 		return nil
 	end

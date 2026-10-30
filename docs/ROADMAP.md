@@ -59,7 +59,7 @@ Rules:
 | G1 | Player guidance hints (GDD §11): next-stage marker, Skills dot, ready-egg dot / marker / toast — built and Studio-checked 2026-10-27 (marker: orange arrow + stage name, drawn as a ScreenGui, on the screen edge when off screen); awaits the user's visual check in play | ✔ | ✔ | – |
 | M6a | First live test + World 1 balancing | – | – | – |
 | E0 | Economy model for the pet-garden expansion (scope written 2026-10-24; `tools/economy.py` loader, drift check, reproduction, report, day-by-day sim, crop field + guardrails A-C (43 checks green, provisional numbers in [ECONOMY.md](ECONOMY.md)) done; repricing, dead end, rare supply and sensitivity pending; [EXPANSION.md](EXPANSION.md) §15) | partial | – | – |
-| E1.0 | Client-drawn plots spike: GO / NO-GO on the plot architecture before E1 (scope written 2026-10-24, no code) | – | – | – |
+| E1.0 | Client-drawn plots spike — **GO** decided 2026-10-30 (EXPANSION §16 → Plot architecture): `PlotView` prototype behind a Studio flag, slot formula in `GardenConfig` (server `Usable` and `GoGarden` use it), checks 1-7 passed or measured (30 plots 4 802 instances worst case, frames ≤ 24 ms); open: mobile emulation / real phone, the 12-player join | ✔ | ✔ | – |
 | S5 | Worlds hub — done 2026-10-22: gates for Worlds 2-4 (coming soon, admins only), World 2 courtyard, signs, per-world stars boards (user's visual check) | ✔ | ✔ | – |
 | S6 | World 2 (stages 6–10) — S6.1 Double Up + Seesaw, S6.2 Turntable + Labyrinth, S6.3 Clocktower all built 2026-10-22 / 23, each crossed by a bot and one timed run paid out; Studio validation pending the open checks (course look, human difficulty / `T_base`, the user's Stage 9 run, door coplanar audit hits on `Stage9.Maze.Big.ExitDoor` and `Stage10.Movers.Door_10`, tick sound), see the S6 notes below; **the user declared World 2 done 2026-10-30** (open note: on Stage 10 both admin accounts hold only Bronze, 107 / 115 s against Gold < 60 s, so its tBase 75 needs one more look) | ✔ | ✔ | – |
 | S7 | Talents: Triple Jump + Dash (+ World 3 courtyard) — done 2026-10-24: talents, Q / gamepad / touch button, reach table, World 3 courtyard east of the hub; closed 2026-10-24 (the visual and real-device touch checks were waived by the user; Live-validated comes with the next publish) | ✔ | ✔ | – |
@@ -450,7 +450,44 @@ current server plots with more slots and E1 proceeds on them.
 **Studio-only work.** The test field and stand-ins are built from code (nothing to author); note anything added by hand. Playtests need the
 Server and Clients mode for check 4; `screen_capture` one call at a time.
 
-**Status.** Scope only (not started).
+**Status.** Done 2026-10-30, **GO** (decision, cap, layout and E1 migration list: EXPANSION §16 → Plot architecture). Built: `PlotView.luau` +
+`PlotViewSpike.client.luau` (client), `PlotViewSpike.server.luau` (data feed), `GardenConfig.PlotRing` / `PlotCFrame`, `tools/plot_formula_test.luau`;
+`GardenService.Usable` and `HomeService` `GoGarden` now take the plot position from the slot (no plot model). The spike runs only in Studio while the
+Workspace attribute `PlotViewSpike` is true (admins and Studio test users); the live garden is unchanged with it off. Results (Studio, 2026-10-30):
+1. **Pass.** The own plot drawn from data only (5 pets, ready egg, locked pen 6 / incubator 3, 12-square field): 305 instances, built in 6 ms; the
+   Studio plots are hidden on that client only. Remove / Place through the existing remotes redrew the pen in 97-107 ms (also under the 30-plot load).
+2. **Pass with a layout finding.** `PlotCFrame(1..12)` = the Studio plots (0.0000 studs, rotation exact); server and client hash of all 30 slots equal
+   (769875742); `GoGarden` lands at floor space (8, 0, -30) facing the plot without a plot model. Gaps (`tools/plot_formula_test.luau`): **today's ring 1 has
+   only 2.77 studs** between neighbouring plots' inner corners (fails the 8-stud rule; ring 1 ↔ ring 2 28.4, ring 2 12.7, with the field behind ring 1:
+   10.1); the E1 proposal (ring 1 at radius 112, ring 2 at 185) passes: 8.99 / 31.5 / 17.9 (13.3 with the field).
+3. **Pass at 12 squares, fails at the 150-square stress field.** Instances (full / low plots), build work per frame, longest frame, build time:
+
+   | Standing at | Plots | Field | Instances | Full / low | Max step | Max frame | Build |
+   |---|---|---|---|---|---|---|---|
+   | own plot | 1 | 12 | 305 | 1 / 0 | – | – | 6 ms |
+   | own plot | 12 | 12 | 1 709 | 5 / 7 | 6.9 ms | 17 ms | 55 ms |
+   | own plot | 30 | 12 | 4 373 | 10 / 20 | 7.6 ms | 18 ms | 217 ms |
+   | own plot | 30 | 150 | 6 863 | 10 / 20 | 7.2 ms | 18 ms | 249 ms |
+   | garden centre | 12 | 12 | 4 400 | 12 / 0 | 7.3 ms | 18 ms | 188 ms |
+   | garden centre | 30 | 12 | **4 802** | 12 / 18 | 7.2 ms | 18 ms | 218 ms |
+   | garden centre | 30 | 150 | 7 779 | 12 / 18 | 7.3 ms | 18 ms | 269 ms |
+
+   Walking half a ring and out to 420 studs (detail changes): max step 7.5 ms, max frame 18 ms, peak 4 479 instances; a Place / Remove under the
+   30-plot load 1.3 ms of build work, worst frame 24 ms (Studio runs server and client in one process). Memory 0 → 30 plots: about +6 MB total
+   (PhysicsParts +3.7, GraphicsParts +2.0, Instances +1.0 MB). Where the instances go (12 full plots): pens with pet models 3 734 of 4 802 (78 %), field rows
+   285, incubators 210, base 132; 18 low plots 402 together (22 each). **Mobile emulation: not measured** (neither client window had the device emulator on;
+   it changes only screen size and input, not CPU / GPU, so the phone number comes from a real-device run in E1a / MU).
+4. **Pass.** A client-built pen prompt (real E key; `ProximityPrompt:InputHoldBegin()` from a script does not trigger it) opened GardenClient's pen panel,
+   which fires the existing remotes; the server accepted the own plot and answered "far" from 100 studs and from inside neighbour plots 2 and 12
+   (52 studs). Server and Clients (Player1 slot 1, Player2 slot 2, each with a hatched pet placed in pen 1): each client drew the other's plot with that
+   pet (Cat / Bunny), each character stood inside its own plot and not the other's, prompts only on the own plot.
+5. **Pass (12-player join not run).** Server Workspace 13 462 instances with the flag on and 30 plots on the client: no plot instance on the server.
+   The feed makes no DataStore request; one message per garden change, 114-153 B (254 B for a full 6-pen / 3-egg garden); a visit on the same server
+   needs only that message. A 12-client join was not run: by the code a join costs N such messages (about 3 KB at 12 players) and no extra profile read.
+6. **Designed** (EXPANSION §16): snapshot key `GardenSnapshots` / `garden_<UserId>`, about 0.3 KB at 12 squares and 0.9 KB at 150; 1 read per visit,
+   ≤ 1 write per 5 min per player.
+7. **Written** (EXPANSION §16 → Plot architecture).
+Open: a real-phone measurement, a 12-client join, the "mid" pet detail (needed before larger fields).
 
 ### S8 — World 3 (design: STAGES §7.11 for S8.1)
 - **S8.1 outputs:** `Workspace.World3.Stage11` (Triple Peaks: Triple ledges, a lift, a crusher ridge) and `Stage12` (Ice Rink: ice, crosswind, a pressure door,
