@@ -248,7 +248,8 @@ Talent-gated coins need Double Jump (placed out of reach of a Jump Height 3 jump
 which have no fixed cap.
 
 ## 6. Talents
-Bought in the skills panel (top-left). Permanent, server-owned, applied on every spawn.
+Bought in the skills panel (top-left), except **world rewards**: a level a world requires that the server grants when that world
+opens (Double Jump with World 2, K1). Permanent, server-owned, applied on every spawn.
 The current admin toggles (run speed 16↔64, 5 air jumps) remain debug tools only. The admin panel's **Reset Score**
 is a debug full reset of the admin's **own** progress (Coins, times, medals, unlocks, coins found, talents, own Top-10
 entries), confirmed by a second click; it never affects other players and the server ignores it from non-admins.
@@ -256,13 +257,17 @@ entries), confirmed by a second click; it never affects other players and the se
 | Talent | Levels | Effect per level | Cost per level | Total |
 |---|---|---|---|---|
 | Run Speed | 5 | +6 % WalkSpeed (16 → 20.8 at max) | 200 / 400 / 600 / 900 / 1 300 | 3 400 |
-| Double Jump | 1 | one extra jump in the air | 3 000 | 3 000 |
+| Double Jump | 1 | one extra jump in the air | free: granted when World 2 opens | 0 |
 | Jump Height | 3 | +8 % jump height | 300 / 600 / 1 000 | 1 900 |
-| **Today's tree** | | | | **8 300** |
+| **Today's tree** | | | | **5 300** |
 
-Double Jump costs 3 000 (1 500 until 2026-10-23): it is the only hard gate of World 2 and opens the talent coins of World 1
-(8 × 100), so at 1 500 it was bought right after Stage 1 for 14 % of the Tutorial + World 1 medal income. 3 000 is the
-highest price that keeps the constraints below (4 000 breaks the Stage 5 Gold set and the 65 % share at stage 17).
+Double Jump is a **world reward** (decided 2026-11-01 after the kid playtest, ROADMAP K1): the server grants level 1 when
+World 2 opens for the player (the star bar met or the world bought for Coins), with a "new skill" popup; it is never sold
+(`TalentConfig` `rewards = { [1] = 2 }`, cost 0). *Why:* it is World 2's only hard gate, and a young player spent the Coins
+on other things, reached World 2 without it and gave up without knowing why. Until then it cost 3 000 (1 500 until
+2026-10-23). It still opens the talent coins of World 1 (8 × 100) and the World 1 Gold sets below, now as a revisit once
+World 2 is open. Triple Jump (level 2) is still bought. Open: whether the talents World 3 requires (Triple Jump, Dash) become
+World 3 rewards too; the lost Coin sink is made up in the balancing pass (M6b).
 
 **Planned talents** (P; STAGES §6.2; ids never renamed; all client-driven, level server-owned as `Talent_<id>`; Run Speed
 and Jump Height stay soft, never required). Only talents that are hard gates can be *required* by a stage.
@@ -276,7 +281,7 @@ and Jump Height stay soft, never required). Only talents that are hard gates can
 | Wall Jump (P, S9) | `WallJump` | against a wall in the air, jump kicks up and away; does not refill air jumps | 1 | 10 000 | 10 000 | stage 16 |
 | Glide (P, S9) | `Glide` | hold jump while falling: fall speed capped at about 8 studs/s | 1 | 12 000 | 12 000 | stage 17 |
 
-**Full planned tree: 47 300** (Run Speed 3 400 + Jump Height 1 900 + Double Jump 3 000 + Triple Jump 5 000 + Quick Respawn
+**Full planned tree: 44 300** (Run Speed 3 400 + Jump Height 1 900 + Double Jump 0 (world reward) + Triple Jump 5 000 + Quick Respawn
 4 000 + Dash 5 000 + Long Dash 3 000 + Wall Jump 10 000 + Glide 12 000). Talents compete with pets, pens and incubators (about 56 500
 together) for the same Coins.
 
@@ -292,19 +297,21 @@ Repeat rewards and pets only add to this, so the tables are lower bounds.
 | Gold on | Designed talent set | Cost | Earnable before | OK |
 |---|---|---|---|---|
 | 2 Stage 1 | Run Speed 2 | 600 | 700 + 1 050 + 600 = 2 350 | ✔ |
-| 4 Stage 2 | Run Speed 3 + Double Jump | 4 200 | 700 + 1 050 + 1 400 + 1 750 + 900 = 5 800 | ✔ |
-| 5 Stage 3 | Run Speed 5 + Double Jump + Jump Height 2 | 7 300 | 7 000 + 1 050 = 8 050 | ✔ |
+| 4 Stage 2 | Run Speed 3 + Double Jump (world reward) | 1 200 | 700 + 1 050 + 1 400 + 1 750 + 900 = 5 800 | ✔ |
+| 5 Stage 3 | Run Speed 5 + Double Jump (world reward) + Jump Height 2 | 4 300 | 7 000 + 1 050 = 8 050 | ✔ |
+
+Since K1 the two Double Jump sets are reached only after World 2 opens (Gold on these stages is a revisit).
 
 **Required talents** (a player must be able to afford the required set before the stage that first needs it, from the
 medals of all stages before it):
 
 | First required at | Required set | Cost | One-time medals before | Share | OK |
 |---|---|---|---|---|---|
-| 6 | Double Jump | 3 000 | 9 450 | 32 % | ✔ |
-| 11 | + Triple Jump | 8 000 | 26 950 | 30 % | ✔ |
-| 13 | + Dash + Long Dash | 16 000 | 36 400 | 44 % | ✔ |
-| 16 | + Wall Jump | 26 000 | 53 200 | 49 % | ✔ |
-| 17 | + Glide | 38 000 | 59 500 | 64 % | ✔ |
+| 6 | Double Jump (world reward) | 0 | 9 450 | 0 % | ✔ |
+| 11 | + Triple Jump | 5 000 | 26 950 | 19 % | ✔ |
+| 13 | + Dash + Long Dash | 13 000 | 36 400 | 36 % | ✔ |
+| 16 | + Wall Jump | 23 000 | 53 200 | 43 % | ✔ |
+| 17 | + Glide | 35 000 | 59 500 | 59 % | ✔ |
 
 Share ≤ 65 % keeps talents a real investment without blocking the no-grind path. Run Speed and Jump Height could get more
 levels later if Gold on Worlds 3–4 needs them (M6b).

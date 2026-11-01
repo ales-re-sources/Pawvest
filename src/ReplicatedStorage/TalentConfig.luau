@@ -12,6 +12,7 @@ export type Talent = {
 	effect: string, -- panel text for one level
 	effects: { string }?, -- panel text per level when the levels differ (effects[n] = what buying level n gives)
 	names: { string }?, -- name per level when a level reads as a talent of its own (names[n] = name of level n; S7 Triple Jump)
+	rewards: { [number]: number }?, -- world rewards (K1): rewards[n] = world whose opening grants level n; such a level is never sold
 }
 
 TalentConfig.List = {
@@ -19,7 +20,8 @@ TalentConfig.List = {
 	{
 		id = "DoubleJump",
 		name = "Double Jump", -- loc: ignore (English source and fallback; players see Locale)
-		costs = { 3000, 5000 }, -- level 1 was 1 500 until 2026-10-23 (GDD §6); level 2 = Triple Jump (S7)
+		costs = { 0, 5000 }, -- level 1 is a world reward (3 000 until 2026-11-01, 1 500 until 2026-10-23; GDD §6); level 2 = Triple Jump (S7)
+		rewards = { [1] = 2 }, -- granted when World 2 opens (K1)
 		perLevel = 1,
 		effect = "1 extra jump in the air", -- loc: ignore (English source and fallback; players see Locale)
 		effects = { "1 extra jump in the air", "A second extra jump in the air" }, -- loc: ignore (English source and fallback; players see Locale)
@@ -67,7 +69,13 @@ function TalentConfig.ClampLevel(id: string, level: any): number
 	return math.clamp(math.floor(level), 0, #talent.costs)
 end
 
--- Price of the next level, or nil when the talent is maxed.
+-- The world whose opening grants `level` of the talent (never sold), or nil when that level is bought.
+function TalentConfig.RewardWorld(id: string, level: number): number?
+	local rewards = TalentConfig.ById[id].rewards
+	return rewards and rewards[level]
+end
+
+-- Price of the next level, or nil when the talent is maxed (0 for a world reward: check RewardWorld first).
 function TalentConfig.NextCost(id: string, level: number): number?
 	return TalentConfig.ById[id].costs[level + 1]
 end

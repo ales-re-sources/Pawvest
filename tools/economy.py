@@ -1177,7 +1177,7 @@ def reproduction(P):
         ("Medals, Tutorial + stages 1-5 (GDD §5)", 9450, sum(stage_medal_total(P, s) for s in six)),
         ("Medals, all 21 stages", 88200, sum(stage_medal_total(P, s) for s in S)),
         ("First-finish payouts, all 21 stages", 6300, sum(first_finish(P, s) for s in S)),
-        ("Planned talent tree", 47300, full_tree),
+        ("Planned talent tree", 44300, full_tree),  # 47 300 until Double Jump became a world reward (K1, 2026-11-01)
         ("Gold runs, first 10 of a day, factor 1.5", 668, gold_day(by_factor[1.5])),
         ("Gold runs, first 10 of a day, factor 1.0", 446, gold_day(by_factor[1.0])),
         ("Gold runs, first 10 of a day, factor 0.5 (Tutorial)", 227, gold_day(by_factor[0.5])),

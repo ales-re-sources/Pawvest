@@ -221,7 +221,7 @@ local function affordableLevels()
 	for _, talent in TalentConfig.List do
 		local level = TalentConfig.ClampLevel(talent.id, player:GetAttribute(TalentConfig.AttributeName(talent.id)))
 		local cost = TalentConfig.NextCost(talent.id, level)
-		if cost and coins >= cost then
+		if cost and coins >= cost and not TalentConfig.RewardWorld(talent.id, level + 1) then -- a world reward is not for sale
 			table.insert(keys, talent.id .. ":" .. (level + 1))
 		end
 	end

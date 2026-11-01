@@ -34,6 +34,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | T1a, T1b | Telemetry | ✔ | ✔ | – |
 | L1–L3 | Localization (English + Czech) | ✔ | ✔ | – |
 | G1 | Player guidance hints — awaits the user's check in play | ✔ | ✔ | – |
+| K1 | First-hour fixes from the kid playtest (2026-11-01) — Double Jump world reward done; Stage 5, G1 fallback, hatch panel proposed | partial | partial | – |
 | E1.0 | Client-drawn plots spike: **GO** | ✔ | ✔ | – |
 | E0 | Economy model — partial (baseline, simulation, field); field-pet re-run, repricing and the rest open | partial | – | – |
 | M6a | Soft launch + World 1 balancing — World 1 balanced by feel (2026-10-30); live test open | – | – | – |
@@ -68,8 +69,35 @@ architecture and the pet design decided 2026-10-30 (EXPANSION §3–§4, §8.1).
    restoration landmark), Neighbours, Mastery, World 4 (S9 / S10), the Estate, Season 1. **Spending** grows there: restoration bundles (E6, D5)
    and estate tiers / decor / cottage (E7, D9) are the long-term Coin sinks; E0 holds a placeholder for their size until they are designed.
 
-Pending idea (2026-10-30, not decided): key talents as **world rewards** (Double Jump for finishing World 1, Dash for World 2), Coins buy the
-levels and the other talents; it removes two Coin sinks, so talent prices rise in the balancing pass (STAGES §6, GDD §6).
+Key talents as **world rewards** (idea 2026-10-30): **decided for Double Jump on 2026-11-01** (K1: granted when World 2 opens, GDD §6).
+Open: Triple Jump / Dash for World 3. The lost Coin sinks are made up in the balancing pass (STAGES §6, GDD §6).
+
+### K1 — First-hour fixes (kid playtest 2026-11-01; proposed, awaiting the user's decisions)
+A 9-year-old on a phone, fresh progress on the `Lekzdrh` profile, got stuck after about 20 minutes. Target: a new player who does not pay
+always has a next step for the first hour; World 1 and the garden are tuned for 8-10 year olds on a phone.
+- **Seen:** the red HUD dot was understood (G1 dot ✔). Signs and banners were not read until an adult pointed at one (the GDD §11 rule
+  "without reading anything" holds). Too much text at hatching. He kept retrying Stage 5 and almost quit. He spent Coins on other things
+  and never bought Double Jump, so World 2 stopped him and he did not know why.
+- **Stage 5 is a wall:** 12-stud gaps at the limit of a single jump, 0.1-stud wires (on a touch stick), about 30 s of replay per death,
+  while GDD says World 1 needs no talent. G1 makes it worse: the next-stage marker keeps pointing at the latest open stage without a medal,
+  i.e. at Stage 5. And World 2's bar (10 of 15 stars) without Stage 5 means 10 of the 12 stars of Stages 1-4.
+  *Proposed:* gaps down to about 9-10 studs, wires to 1-2 stud beams, a checkpoint inside the tightrope (the hard lines can stay as
+  challenge-coin routes); G1: after several failed runs on a stage, the marker switches to the alternative (the medal elsewhere that
+  raises the star bar, or the world price).
+- **Double Jump can be missed:** World 2 needs it, but nothing makes the player save for it. **Decided 2026-11-01:** a world reward,
+  granted by the server when World 2 opens (star bar or bought), with a "new skill" popup; never sold, the Skills row says it comes
+  with World 2 (GDD §6). Open: the same for Triple Jump / Dash and World 3. *Implemented and Studio-validated 2026-11-01* (`TalentConfig`
+  `rewards`, `StageUnlocks.Changed`, `TalentService` grant + `Granted` remote, `TalentGrantPopup`, Skills row 🔒 + "Free when World 2
+  opens", no Skills dot for it, telemetry `TalentGranted`): on the `Lekzdrh` profile a forged Buy was refused (`reward`, no Coins
+  taken); buying World 2 (2 500) granted level 1 and showed the popup (Czech texts fit), the row moved on to Triple Jump 5 000; a
+  profile with World 2 open and no Double Jump got it on joining; profile restored. Economy model: pins updated (Double Jump 0);
+  check 5 B (Gardeners beat no Gardeners) now fails narrowly for Obby main / talent-first (6 068 vs 6 145 net/day): for the E0
+  field-pet re-run.
+- **The kid's profile shows the real wall:** 5 of the 10 World 1 stars World 2 needs (Bronze on Stages 1, 3, 4, Silver on 2, nothing on
+  5) and 503 Coins against World 2's 2 500. The world reward alone would not have got him in; Stage 5 and the star bar come next.
+- **Hatching text:** the empty incubator lists every egg with a line of percentages. *Proposed:* two egg cards (picture, price,
+  time), odds behind a small "?", the hatch result as a pet reveal (portrait, name in the rarity colour, one line).
+- **Measure it:** in M6a, T1a fails per segment on Stage 5, quits per stage and session length of new players.
 
 ### E1a — Plots for real + the field (scope 2026-10-30, decisions taken)
 **Goal.** The garden is drawn by the client for everyone, on the new ring layout, with today's gameplay unchanged (**E1a1**, published on its

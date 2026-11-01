@@ -4,7 +4,8 @@
 --   * custom events Fail (aggregated per player and (stage, segment, cause), flushed every minute and on leave), RunEnd,
 --     Quit, Return and Session;
 --   * skills (T1b): the loadout (talent levels at the run's start, "RS3 DJ1 JH3 QR2") on the progression events, an economy
---     event + TalentBought per talent purchase (TalentService), ArrivalWithoutTalent (PlayerTimerHandler's arrival check).
+--     event + TalentBought per talent purchase (TalentService), TalentGranted per world reward (TalentService, K1),
+--     ArrivalWithoutTalent (PlayerTimerHandler's arrival check).
 -- Hooks: PlayerTimerHandler calls RunStarted / RunEnded, CheckpointTouchHandler calls Checkpoint, the kill scripts call
 -- MarkKill; deaths (Humanoid.Died), joins, leaves (PlayerProfile.OnLeaving) and the client reports are watched here.
 -- Debug: with the ServerScriptService attribute TelemetryDebug = true every event is printed as "[Telemetry] …".
@@ -367,6 +368,14 @@ function Telemetry.TalentBought(player: Player, talentId: string, level: number,
 	local stars = if profile then StageConfig.TotalStars(profile.Medals) else 0
 	local s = state(player)
 	send("LogCustomEvent", player, "TalentBought", level, fields(talentId, bucketOf(STAR_BUCKETS, stars, "31+"), s.lastStage or "none"))
+end
+
+-- TalentService: a world reward was granted (K1; no Coins move, so no economy event)
+function Telemetry.TalentGranted(player: Player, talentId: string, level: number)
+	local profile = PlayerProfile.Get(player)
+	local stars = if profile then StageConfig.TotalStars(profile.Medals) else 0
+	local s = state(player)
+	send("LogCustomEvent", player, "TalentGranted", level, fields(talentId, bucketOf(STAR_BUCKETS, stars, "31+"), s.lastStage or "none"))
 end
 
 -- PlayerTimerHandler: the player arrived on stage `stageKey` without the talents in `missing` ({ { id, level }, … })

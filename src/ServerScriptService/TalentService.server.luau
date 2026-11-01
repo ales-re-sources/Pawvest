@@ -3,13 +3,17 @@
 -- current + 1, so a forged cost or level can never change what is charged or granted. Levels live in
 -- PlayerProfile.Talents, are mirrored to Talent_<id> player attributes (UI, double jump) and applied to the
 -- Humanoid (WalkSpeed, jump) on every spawn and right after a purchase.
+-- World rewards (K1, GDD §6): a level in `talent.rewards` is never sold; it is granted here once the world it names opens
+-- for the player (StageUnlocks.Changed, also right after the profile loads) and announced on TalentRemotes.Granted.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
+local StageUnlocks = require(ServerScriptService.StageUnlocks)
 local Telemetry = require(ServerScriptService.Telemetry)
+local StageConfig = require(ReplicatedStorage.StageConfig)
 local TalentConfig = require(ReplicatedStorage.TalentConfig)
 
 local BUY_COOLDOWN = 0.25 -- seconds between requests per player
@@ -22,6 +26,9 @@ buyEvent.Parent = remotes
 local resultEvent = Instance.new("RemoteEvent") -- server → client: (talentId, ok: boolean, levelOrReason)
 resultEvent.Name = "Result"
 resultEvent.Parent = remotes
+local grantedEvent = Instance.new("RemoteEvent") -- server → client: (talentId, level) a world reward was granted
+grantedEvent.Name = "Granted"
+grantedEvent.Parent = remotes
 remotes.Parent = ReplicatedStorage
 
 local lastBuy = {} -- [Player] = os.clock() of the last request
@@ -69,6 +76,34 @@ local function onCharacterAdded(player: Player, character: Model)
 	end
 end
 
+-- Grants every world-reward level whose world is open for the player (idempotent; a reset profile has no open world).
+local function grantRewards(player: Player)
+	local profile = PlayerProfile.Get(player)
+	if not profile then
+		return
+	end
+	local granted = {}
+	for _, talent in TalentConfig.List do
+		for level, worldIndex in talent.rewards or {} do
+			local world = StageConfig.Worlds[worldIndex]
+			if levelOf(profile, talent.id) < level and world and StageUnlocks.IsWorldOpen(player, world) then
+				profile.Talents[talent.id] = level
+				table.insert(granted, { id = talent.id, level = level })
+			end
+		end
+	end
+	if #granted == 0 then
+		return
+	end
+	publish(player, profile)
+	apply(player, profile)
+	for _, grant in granted do
+		grantedEvent:FireClient(player, grant.id, grant.level)
+		Telemetry.TalentGranted(player, grant.id, grant.level)
+	end
+	task.spawn(PlayerProfile.Save, player)
+end
+
 local function setupPlayer(player: Player)
 	player.CharacterAdded:Connect(function(character)
 		onCharacterAdded(player, character)
@@ -80,6 +115,7 @@ local function setupPlayer(player: Player)
 	if profile then
 		publish(player, profile)
 		apply(player, profile)
+		grantRewards(player)
 	end
 end
 
@@ -113,6 +149,9 @@ buyEvent.OnServerEvent:Connect(function(player, id, expectedLevel)
 	if expectedLevel ~= current + 1 then
 		return reject(player, id, "stale") -- the panel was out of date (double click, lag) or the request forged
 	end
+	if TalentConfig.RewardWorld(id, current + 1) then
+		return reject(player, id, "reward") -- comes with a world, never sold
+	end
 	local cost = talent.costs[current + 1]
 	if profile.Coins < cost then
 		return reject(player, id, "coins")
@@ -134,6 +173,8 @@ PlayerProfile.ProfileReset:Connect(function(player)
 		apply(player, profile)
 	end
 end)
+
+StageUnlocks.Changed:Connect(grantRewards)
 
 Players.PlayerAdded:Connect(setupPlayer)
 for _, player in Players:GetPlayers() do

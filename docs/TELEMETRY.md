@@ -70,6 +70,7 @@ run). Times and counts never go into custom fields (cardinality); they are event
 |---|---|---|
 | Talent purchase | `LogEconomyEvent` (sink, currency `Coins`, amount = price, balance after, transaction type `Shop`, item SKU `<talentId>_<level>`, 15 SKUs today of the 100 allowed) | — |
 | `TalentBought` | `LogCustomEvent`, value = new level | CF01 talent · CF02 progress bucket of total stars (`0`, `1-5`, `6-15`, `16-30`, `31+`) · CF03 last stage played (the stage of the player's last run in this session, `none` before one) |
+| `TalentGranted` | `LogCustomEvent`, value = granted level | as `TalentBought`; a world reward (Double Jump when World 2 opens, K1); no economy event (no Coins move) |
 | `ArrivalWithoutTalent` | `LogCustomEvent` | CF01 stage · CF02 missing talent(s) as `<id><level>` joined by `+` (`DoubleJump1`) — from the existing `StageArrival` check in `PlayerTimerHandler`, i.e. on every gate entry without the talent; held back with the run's first events, so a ghost run's entry is dropped |
 | loadout on runs | the progression start / complete / fail events carry the loadout in CF03 | `Fail` keeps its 3 fields; the per-loadout view comes from progression |
 
@@ -112,7 +113,7 @@ run). Times and counts never go into custom fields (cardinality); they are event
     kind)` once on join (`TelemetryClient.client`). Kill / fall reports are rate-limited (a second one within 1 s is
     dropped), the part must lie inside a stage folder; anything else is dropped. Telemetry only — never trusted for
     gameplay.
-  - `ServerScriptService/TalentService.server.luau` — after a purchase → `TalentBought` (T1b).
+  - `ServerScriptService/TalentService.server.luau` — after a purchase → `TalentBought` (T1b); after a world reward → `TalentGranted` (K1).
 - **Profile:** `LastQuit = {}` (`{ Stage, Segment, At }`) in `PlayerProfile.newProfile()` (no version bump). The profile
   saves in its own `PlayerRemoving`, so `PlayerProfile` gets an `OnLeaving(fn)` callback list, run once per player before
   the leave save (also from `BindToClose`, so stopping a server or a playtest counts as a quit); Telemetry writes

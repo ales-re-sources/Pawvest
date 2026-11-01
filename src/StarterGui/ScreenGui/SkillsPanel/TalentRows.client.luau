@@ -7,6 +7,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local TalentConfig = require(ReplicatedStorage:WaitForChild("TalentConfig"))
+local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
@@ -22,6 +23,8 @@ local COLOR_BUY = StudStyle.Colors.Green
 local COLOR_LOCKED = StudStyle.Colors.Grey
 local COLOR_INFO = Color3.fromRGB(235, 222, 190)
 local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
+local COLOR_REWARD = Color3.fromRGB(255, 214, 102)
+local REWARD_GLYPH = "🔒" -- button of a level that comes with a world (no words: not localized)
 
 local REJECT_KEYS = {
 	coins = "common.reject.coins",
@@ -48,19 +51,29 @@ end
 local coins = 0
 local rows = {}
 
+-- "Free when World 2 opens" for a level that is a world reward (K1), else nil
+local function rewardText(talent, level: number): string?
+	local world = StageConfig.Worlds[TalentConfig.RewardWorld(talent.id, level) or 0]
+	return world and Locale.T("skills.reward", { world = Locale.WorldName(world) })
+end
+
 local function refreshRow(row)
 	local talent = row.talent
 	local level = levelOf(talent.id)
 	local max = #talent.costs
 	local cost = TalentConfig.NextCost(talent.id, level)
+	local reward = rewardText(talent, level + 1)
 
 	-- a talent with per-level names shows the level it sells ("Triple Jump 1/2"), maxed the level it has
 	row.title.Text = Locale.TalentName(talent, math.min(level + 1, max)) .. "  " .. level .. "/" .. max
 	if row.flash == 0 then
-		row.info.TextColor3 = COLOR_INFO
-		row.info.Text = if cost then Locale.TalentEffect(talent, level + 1) else Locale.T("skills.maxedOut")
+		row.info.TextColor3 = if reward then COLOR_REWARD else COLOR_INFO
+		row.info.Text = reward or (if cost then Locale.TalentEffect(talent, level + 1) else Locale.T("skills.maxedOut"))
 	end
-	if cost then
+	if reward then
+		row.button.Text = REWARD_GLYPH
+		row.button.BackgroundColor3 = COLOR_LOCKED
+	elseif cost then
 		row.button.Text = Locale.T("skills.buy", { price = cost })
 		row.button.BackgroundColor3 = coins >= cost and COLOR_BUY or COLOR_LOCKED
 	else
@@ -167,6 +180,11 @@ for index, talent in TalentConfig.List do
 		if level >= #talent.costs then
 			return
 		end
+		local reward = rewardText(talent, level + 1)
+		if reward then
+			flash(row, reward) -- never sold: the server would refuse it
+			return
+		end
 		buyEvent:FireServer(talent.id, level + 1)
 	end)
 	player:GetAttributeChangedSignal(TalentConfig.AttributeName(talent.id)):Connect(function()
@@ -177,7 +195,9 @@ end
 resultEvent.OnClientEvent:Connect(function(id, ok, detail)
 	local row = rows[id]
 	if row and not ok then
-		flash(row, Locale.T(REJECT_KEYS[detail] or "skills.reject.failed"))
+		local level = TalentConfig.ClampLevel(id, player:GetAttribute(TalentConfig.AttributeName(id)))
+		local text = if detail == "reward" then rewardText(row.talent, level + 1) else nil
+		flash(row, text or Locale.T(REJECT_KEYS[detail] or "skills.reject.failed"))
 	end
 end)
 

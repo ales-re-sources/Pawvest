@@ -509,13 +509,14 @@ Medal total per stage = 1 400 × factor (1 050 … 7 700); all 21 stages: **88 2
 The no-grind constraint (GDD §6) for required talents, against all medals on the stages before:
 | First required at | Required set | Cost | One-time medals before | Share | OK |
 |---|---|---|---|---|---|
-| 6 | Double Jump | 3 000 | 9 450 | 32 % | ✔ |
-| 11 | + Triple Jump | 8 000 | 26 950 | 30 % | ✔ |
-| 13 | + Dash | 16 000 | 36 400 | 44 % | ✔ |
-| 16 | + Wall Jump | 26 000 | 53 200 | 49 % | ✔ |
-| 17 | + Glide | 38 000 | 59 500 | 64 % | ✔ |
+| 6 | Double Jump (world reward) | 0 | 9 450 | 0 % | ✔ |
+| 11 | + Triple Jump | 5 000 | 26 950 | 19 % | ✔ |
+| 13 | + Dash | 13 000 | 36 400 | 36 % | ✔ |
+| 16 | + Wall Jump | 23 000 | 53 200 | 43 % | ✔ |
+| 17 | + Glide | 35 000 | 59 500 | 59 % | ✔ |
 
-With Run Speed and Jump Height (5 300) and Quick Respawn (4 000) the whole tree costs **47 300** (Double Jump 3 000 since 2026-10-23). Talents stay a real investment that competes with
+With Run Speed and Jump Height (5 300) and Quick Respawn (4 000) the whole tree costs **44 300**. Double Jump is a world reward since
+2026-11-01 (granted when World 2 opens, GDD §6, ROADMAP K1; it cost 3 000 from 2026-10-23, 1 500 before). Talents stay a real investment that competes with
 pets, pens and incubators (≈ 56 500 together), without blocking the no-grind path. Run Speed / Jump Height could get more
 levels later if Gold on Worlds 3–4 needs them (M6).
 

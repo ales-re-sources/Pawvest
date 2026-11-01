@@ -5,6 +5,7 @@
 -- The state is mirrored to Unlocked_<folder> player attributes for the portal faces and the unlock popup.
 -- Remotes are created here in ReplicatedStorage.UnlockRemotes: Buy (client → server: stageKey; the price is never sent),
 -- Result (server → client: stageKey, ok, reason?) and Locked (server → client: stageKey; a locked portal was touched).
+-- StageUnlocks.Changed (player) fires after every re-check of a player's unlocks (TalentService grants world rewards on it).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -30,8 +31,10 @@ lockedEvent.Parent = remotes
 remotes.Parent = ReplicatedStorage
 
 local lastBuy = {} -- [Player] = os.clock() of the last request
+local changed = Instance.new("BindableEvent")
 
 local StageUnlocks = {}
+StageUnlocks.Changed = changed.Event
 
 local function isOpen(profile, stage): boolean
 	return StageConfig.MeetsUnlockBar(stage, profile.Medals) or profile.UnlockedStages[stage.key] == true
@@ -80,6 +83,7 @@ local function publish(player: Player)
 	for _, stage in StageConfig.Stages do
 		player:SetAttribute(StageConfig.UnlockedAttribute(stage), isOpen(profile, stage))
 	end
+	changed:Fire(player)
 end
 
 local function setupPlayer(player: Player)
