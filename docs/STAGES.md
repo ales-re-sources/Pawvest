@@ -1213,7 +1213,7 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
     Double Jump of the old shaft no longer reaches). Tried 12 and 13 first: the 5.3 avatar still bonked (head counts in a jump, see the avatar
     size rule). Spikes moved: `ShaftFloor_25` 2 right (hit u 447.72-449.28, a run-up from `Toggle0`'s end), `ShaftSlab1_26` to u 459.22-460.78
     (between the closed `Hatch1` and `Toggle1`; at u 449 it stood over the floor spike, and a floor hop with a hat died on it through the
-    1-stud slab). Backup: Studio-only `ServerStorage.ShaftBackup_20261029` (the shaft, the hall floor, `Coin_5` before the change).
+    1-stud slab). Backup: Studio-only `ServerStorage.ShaftBackup_20261029` (the shaft, the hall floor, `Coin_5` before the change); deleted on 2026-11-01 together with `HatchBackup_` / `KeyBackup_` / `VaultBackup_20261029` after the user's check.
     *Playtest (running single jumps at 16):* collider 4.1: floor spike cleared from every take-off u 442.5-446.2, slab 1 from 454.5-457.3 (a
     death first, so `Hatch1` is shut), slab 2 from 449.5-452.5; the 5.3 avatar with a hat (and the developer's Jump Height level): floor
     from 444.5-445.5, slab 1 from 455.5 and 457.3 (456.5 died), a 1-2 stud window. The hat death through slab 1 is gone with the

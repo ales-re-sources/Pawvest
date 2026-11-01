@@ -244,7 +244,7 @@ areas, Czech text length, touch controls for the kit and talents (the Dash butto
 - **The user's checks:** World 3 sign-off (S8); G1 hints in play.
 - **Localization:** the FredokaOne font with Czech carons, Czech overflow screenshots of the panels, the Stage 9 exit-door label.
 - **E1.0 leftovers** (go to E1a / MU): a real-phone measurement, a 12-client join.
-- **Housekeeping (Studio):** delete `ReplicatedStorage.StageTimerStopped` (unused) and `ServerStorage.Stage9_OldBigMaze`.
+- **Housekeeping (Studio):** delete `ReplicatedStorage.StageTimerStopped` (unused). (`ServerStorage.Stage9_OldBigMaze` was deleted on 2026-11-01.)
 
 ## Done
 What was built and why, newest first. Details: the design docs and git history.

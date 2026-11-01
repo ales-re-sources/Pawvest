@@ -89,7 +89,7 @@ no code change). Fox is done; the user picked it from five previews (texture eve
   level-tinted parts `Accent = true`.
 - A variant with `variant.material` (PetLook `jitterBody`) replaces the Material on some big parts, so those parts lose the
   stud texture (the MaterialVariant needs base `Plastic`); intended, that is the variant's texture.
-- The replaced models are kept in the Studio-only `ServerStorage.PetModelBackup` (`Fox_Old_20261025`, `Cat_Old_20261025`, `Dog_Old_20261025`, `Bunny_Old_20261025`, `Owl_Old_20261025`, `Panda_Old_20261025`, `Dragon_Old_20261025`, `Phoenix_Old_20261025`).
+- The replaced models were kept in the Studio-only `ServerStorage.PetModelBackup` (deleted on 2026-11-01; `Fox_Old_20261025`, `Cat_Old_20261025`, `Dog_Old_20261025`, `Bunny_Old_20261025`, `Owl_Old_20261025`, `Panda_Old_20261025`, `Dragon_Old_20261025`, `Phoenix_Old_20261025`).
 - *Cat* (done 2026-10-25, 54 parts): shorter wider ears with pink insides, tabby stripes (forehead "M", cheeks, three across
   the back, a tail ring), cream muzzle pads / chin / chest / paws, whiskers, a thin upright tail curling forward. Eyes after the
   user's reference photo (the first green iris with a slit pupil looked threatening): dark-brown rim, gold outer and green

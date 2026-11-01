@@ -60,8 +60,8 @@ local function stageKeyOf(part: Instance): string?
 end
 
 local function setupCoin(part: Instance)
-	if not part:IsA("BasePart") then
-		return
+	if not part:IsA("BasePart") or not part:IsDescendantOf(workspace) then
+		return -- tagged parts in ServerStorage (backups, kits) are not live coins
 	end
 	local id = part:GetAttribute(ChallengeCoinConfig.IdAttribute)
 	local coin = ChallengeCoinConfig.ById[id]
