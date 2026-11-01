@@ -1,5 +1,6 @@
 -- "New skill" popup (K1, GDD §6): a world reward was granted (TalentRemotes.Granted from TalentService), e.g. Double Jump
--- when World 2 opens. Big title, one line on how to use it, one button; closes itself after a while. Built here, not in Studio.
+-- when World 2 opens. Big title, one line on how to use it, one button; a tap anywhere on it closes it (young players on a
+-- phone tap the text, not the button), else it closes itself after a while. Built here, not in Studio.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -59,8 +60,10 @@ local okButton = create("TextButton", {
 }, { create("UICorner", { CornerRadius = UDim.new(0, 8) }) })
 
 local scale = create("UIScale", { Scale = 1 })
-local panel = create("Frame", {
+local panel = create("TextButton", { -- a button, so a tap on the text closes it too
 	Name = "Panel",
+	AutoButtonColor = false,
+	Text = "",
 	AnchorPoint = Vector2.new(0.5, 0),
 	Position = UDim2.new(0.5, 0, 0, 90),
 	Size = UDim2.fromOffset(320, 0),
@@ -126,6 +129,7 @@ grantedEvent.OnClientEvent:Connect(function(talentId, level)
 end)
 
 okButton.Activated:Connect(hide)
+panel.Activated:Connect(hide)
 
 Locale.Changed:Connect(function()
 	if screenGui.Enabled and shown then
