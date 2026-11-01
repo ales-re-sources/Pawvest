@@ -88,10 +88,10 @@ local function refreshAll()
 	end
 end
 
-local function flash(row, text: string)
+local function flash(row, text: string, color: Color3?)
 	row.flash += 1
 	local mine = row.flash
-	row.info.TextColor3 = COLOR_ERROR
+	row.info.TextColor3 = color or COLOR_ERROR
 	row.info.Text = text
 	task.delay(2, function()
 		if row.flash == mine then
@@ -182,7 +182,7 @@ for index, talent in TalentConfig.List do
 		end
 		local reward = rewardText(talent, level + 1)
 		if reward then
-			flash(row, reward) -- never sold: the server would refuse it
+			flash(row, reward, COLOR_REWARD) -- never sold: the server would refuse it
 			return
 		end
 		buyEvent:FireServer(talent.id, level + 1)
@@ -196,8 +196,12 @@ resultEvent.OnClientEvent:Connect(function(id, ok, detail)
 	local row = rows[id]
 	if row and not ok then
 		local level = TalentConfig.ClampLevel(id, player:GetAttribute(TalentConfig.AttributeName(id)))
-		local text = if detail == "reward" then rewardText(row.talent, level + 1) else nil
-		flash(row, text or Locale.T(REJECT_KEYS[detail] or "skills.reject.failed"))
+		local reward = if detail == "reward" then rewardText(row.talent, level + 1) else nil
+		if reward then
+			flash(row, reward, COLOR_REWARD)
+		else
+			flash(row, Locale.T(REJECT_KEYS[detail] or "skills.reject.failed"))
+		end
 	end
 end)
 

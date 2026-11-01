@@ -20,11 +20,26 @@ first: GDD → ROADMAP → code); the open questions in §9 are answered then.
 **Why Stage 3 is hard** (Studio survey, 2026-10-21): it is the *shortest* course but the slowest, because every metre is
 precision. It has three sections and no timing obstacle at all:
 1. **Max-distance jumps** (20 → 21): four 16 × 7 plates with **12-stud gaps**, each plate 1 stud higher than the last, at the
-   limit of a single jump.
+   limit of a single jump. **Rebuilt 2026-11-01** (K1; the user could no longer clear it without talents): **five gaps of 10.5**
+   (20 → `level.1.Part_1..4` → 26; was 12 / 12 / 12 / 12 / 11.02) with the four plates spaced evenly between 20 and 26 (16 × 1 ×
+   8.61, z centres 158.19 / 139.08 / 119.97 / 100.86; heights unchanged, each 1 higher; nothing downstream moved), and a
+   **1-stud lip**: every landing plate (also 26's) overhangs its column (`Columns.Column_7` / `_8` / `_6` / `_5` / `_4`) by 1 stud
+   on the approach side. *The lip is the trick:* a character that arrives just short of the edge while holding forward grabs it and
+   climbs up (Humanoid `Climbing` state; the user's "kept pressing up and climbed the edge"); a column flush with its plate is a
+   plain wall and the same jump slides down it. Measured (bot, forward held like the stick, playtest): the jump carries about 8.5
+   studs without talents (WalkSpeed 16, JumpPower 50); **without talents, jumping at the edge**, 20 → 26 cleared twice in a row with
+   5 edge climbs each, **jumping 0.5 stud early fails**; with Run Speed 2 + Jump Height 3 (the kid's) or Run Speed 5 it lands without
+   climbing. 11 fails without talents even with the lip, flush 10.5 fails too. Coplanar audit of the plates and columns clean.
+   Before: plates 6.98 deep at z 157.51 / 138.53 / 119.55 / 100.57, columns 7.00 deep at the same centres (flush), Column_4 12.00 at
+   z 80.06. **Use a lip wherever a jump is meant to be "very hard but doable" at the edge of reach.**
 2. **Wrap-around** (`level.2`): three 12-stud-high walls fill the whole 16-stud width of a 40-stud floor; you get past each
    one by jumping out around its side over the void.
-3. **Tightrope** (21 → 22): a zig-zag of **0.1-stud wires** (10 segments, 14–40 studs long, right-angle turns) with ten tiny
-   kill nubs (1 × 0.2 studs) on the wire to hop over.
+3. **Tightrope** (21 → 22): a zig-zag of five beams (right-angle turns) with four red kill nubs to hop over. **Widened 2026-11-01**
+   (K1, kid playtest: the 0.1-stud wires were too hard on a touch stick): `Part_12` / `_15` / `_17` / `_04` / `_07` are **2 × 0.4** beams
+   (12-42 long, top at y 82.71 as before); the north-south ones cover the corner squares and the east-west ones end against their sides
+   (no shared faces); the nubs `Part_08` / `_06` / `_14` / `_09` are 2 wide (the full beam) × 0.2 × 1, so they are hopped, not walked
+   around. Before: 0.1 × 0.05 wires (14-40 long) and 0.1 × 0.2 × 1 nubs (old CFrames in the commit message of this change).
+   Playtest: a bot walked plate 21 → checkpoint 22 hopping every nub without a fall; a missed hop still kills; tightrope audit clean.
 
 The difficulty is pure precision and nerve, which is why it stays doable without talents (Double Jump would trivialise
 sections 1 and 2 and help on the wire). A death costs about 30 s of replay (about 8 s on Stage 1).

@@ -4,6 +4,9 @@
 --     the Tutorial's hub portal) in the hub or the garden (unless a ready egg's marker is shown there), above the portal
 --     back to the hub in any other courtyard or the Tutorial. When every open stage has a medal and a world's star bar shuts
 --     the next stage: the same marker on the stage of that world with the lowest medal, labelled with the medal to reach.
+--     Stuck (K1): after STUCK_RUNS failed runs or STUCK_DEATHS deaths (Quick Respawn fall resets included) on the next stage
+--     in this session, the marker moves to the stage of the same world with the lowest medal instead (the stars that can
+--     still open the next world); never to another world, so a player with World 2 open is still sent there.
 --   Skills: a dot on the Skills icon when a talent level became affordable that was not affordable while the panel was open.
 --   Ready egg: a dot on the Pets icon and "Go to my garden", a "Ready!" marker above the incubator while in the garden, and a
 --     toast once per egg.
@@ -26,6 +29,10 @@ local WORLD_MARKER_HEIGHT = 11 -- studs above a hub world gate's portal
 local INCUBATOR_MARKER_GAP = 5 -- studs above the top of an incubator model
 local AREA_MARGIN = 15 -- studs around an area's parts that still count as inside
 local TUTORIAL_RADIUS = 60 -- studs (horizontal) from the Tutorial's start gate
+local STUCK_RUNS = 3 -- runs of a stage ended without a medal (given up or too slow) ...
+local STUCK_DEATHS = 12 -- ... or deaths (and Quick Respawn fall resets) during its runs, after which the next-stage marker
+-- suggests another stage
+local MIN_ATTEMPT = 10 -- seconds a run must last to count (walking out through a gate starts and ends a ghost run)
 
 -- Areas -------------------------------------------------------------------------------------------------------------------
 
@@ -141,23 +148,83 @@ local function medalOf(stage): number
 	return player:GetAttribute(StageConfig.MedalAttribute(stage)) or 0
 end
 
+-- The open stage of `world` with the lowest medal below Gold (ties: the earliest), skipping `except`; returns the stage and
+-- the medal index to reach.
+local function lowestMedalStage(world: number, except)
+	local best, bestMedal = nil, #StageConfig.Medals
+	for _, stage in StageConfig.Stages do
+		if stage.world == world and stage ~= except and isOpen(stage) and medalOf(stage) < bestMedal then
+			best, bestMedal = stage, medalOf(stage)
+		end
+	end
+	return best, if best then bestMedal + 1 else nil
+end
+
 -- The stage to raise a medal on when a world opener's star bar is all that blocks progress: the first shut opener in game
--- order, then the open stage of the world it counts stars in with the lowest medal (ties: the earliest). Returns the stage
--- and the medal index to reach.
+-- order, then the lowest-medal stage of the world it counts stars in.
 local function starBarStage()
 	for _, opener in StageConfig.Stages do
 		local rule = opener.unlock
 		if rule and rule.world and not isOpen(opener) then
-			local best, bestMedal = nil, #StageConfig.Medals
-			for _, stage in StageConfig.Stages do
-				if stage.world == rule.world and isOpen(stage) and medalOf(stage) < bestMedal then
-					best, bestMedal = stage, medalOf(stage)
-				end
-			end
-			return best, if best then bestMedal + 1 else nil
+			return lowestMedalStage(rule.world)
 		end
 	end
 	return nil, nil
+end
+
+-- Failed attempts per stage key this session (K1): runs that ended without a medal, deaths and fall resets during runs.
+local failedRuns, runDeaths = {}, {}
+local runStage, runStartedAt = nil, 0 -- key of the stage whose run is active, os.clock() at its start
+
+local function endRun(medal: number)
+	local stage = runStage and StageConfig.ByKey[runStage]
+	local lasted = os.clock() - runStartedAt
+	runStage = nil
+	if stage and lasted >= MIN_ATTEMPT and medal == 0 then
+		failedRuns[stage.key] = (failedRuns[stage.key] or 0) + 1
+	end
+end
+
+-- the server sends (elapsed >= 0, stageKey) when a run starts (the client counts on), (-1, final, result) when it finishes
+-- (result.medal: this run's medal), (-1) when it is cancelled; a run started while another is going ends the other one
+ReplicatedStorage:WaitForChild("StageTimerUpdate").OnClientEvent:Connect(function(elapsed, stageKeyOrFinal, result)
+	if elapsed >= 0 then
+		if runStage and runStage ~= stageKeyOrFinal then
+			endRun(0)
+		end
+		runStage, runStartedAt = stageKeyOrFinal, os.clock() - elapsed
+		return
+	end
+	endRun(if type(result) == "table" then result.medal or 0 else 0)
+end)
+
+local function countDeath()
+	if runStage then
+		runDeaths[runStage] = (runDeaths[runStage] or 0) + 1
+	end
+end
+
+local function watchDeaths(character: Model)
+	local humanoid = character:WaitForChild("Humanoid", 10)
+	if humanoid then
+		humanoid.Died:Connect(countDeath)
+	end
+end
+player.CharacterAdded:Connect(watchDeaths)
+if player.Character then
+	task.spawn(watchDeaths, player.Character)
+end
+-- a Quick Respawn fall reset puts the character back without dying: it counts as a death here
+task.spawn(function()
+	local quickRespawn = script.Parent:WaitForChild("QuickRespawnClient", 10)
+	local respawned = quickRespawn and quickRespawn:WaitForChild("Respawned", 10)
+	if respawned then
+		respawned.Event:Connect(countDeath)
+	end
+end)
+
+local function stuckOn(stage): boolean
+	return (failedRuns[stage.key] or 0) >= STUCK_RUNS or (runDeaths[stage.key] or 0) >= STUCK_DEATHS
 end
 
 -- The latest open stage (highest game order) without a medal: players are pushed forwards, not back to an older stage they
@@ -174,6 +241,12 @@ local function nextStage()
 		end
 	end
 	if latest then
+		if stuckOn(latest) then
+			local other, goal = lowestMedalStage(latest.world, latest)
+			if other then
+				return other, goal
+			end
+		end
 		return latest, nil
 	end
 	return starBarStage()

@@ -81,9 +81,11 @@ always has a next step for the first hour; World 1 and the garden are tuned for 
 - **Stage 5 is a wall:** 12-stud gaps at the limit of a single jump, 0.1-stud wires (on a touch stick), about 30 s of replay per death,
   while GDD says World 1 needs no talent. G1 makes it worse: the next-stage marker keeps pointing at the latest open stage without a medal,
   i.e. at Stage 5. And World 2's bar (10 of 15 stars) without Stage 5 means 10 of the 12 stars of Stages 1-4.
-  *Proposed:* gaps down to about 9-10 studs, wires to 1-2 stud beams, a checkpoint inside the tightrope (the hard lines can stay as
-  challenge-coin routes); G1: after several failed runs on a stage, the marker switches to the alternative (the medal elsewhere that
-  raises the star bar, or the world price).
+  *Done 2026-11-01:* the tightrope wires are 2-stud beams, the nubs as wide (STAGES §1, Stage 5); the G1 stuck fallback (GDD §11:
+  3 failed runs or 12 deaths, fall resets included → the lowest-medal stage of the same world, never another world; playtest: after 3 given-up Stage 5
+  runs the marker read "Stage 1: Silver"; after the review fixes, faked run events: 3 medal finishes did not count, 2 medal-less finishes + 1 run switch and 12 Quick Respawn fall resets each gave "Stage 1: Bronze"); section 1 rebuilt so it is clearable without talents (the user found it was not): five
+  10.5 gaps with a 1-stud climbable lip on every landing plate (STAGES §1, Stage 5), checked by bot without talents. World 2's star bar stays at 10 until the wider test (user, 2026-11-01). A checkpoint
+  inside the tightrope: not now (telemetry first). Stage 4 is clearable without talents (user's hand run, 2026-11-01): unchanged.
 - **Double Jump can be missed:** World 2 needs it, but nothing makes the player save for it. **Decided 2026-11-01:** a world reward,
   granted by the server when World 2 opens (star bar or bought), with a "new skill" popup; never sold, the Skills row says it comes
   with World 2 (GDD §6). Open: the same for Triple Jump / Dash and World 3. *Implemented and Studio-validated 2026-11-01* (`TalentConfig`

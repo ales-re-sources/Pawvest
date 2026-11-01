@@ -556,6 +556,13 @@ incubator models) and never ask the server for anything.
   entrance (the world's hub gate, the Tutorial's hub portal) while the player is in the hub or the garden (in the garden a
   ready egg's marker wins), and above the portal back to the hub while the player is in another courtyard or the Tutorial. It hides within 25 studs of its target, so the player who lands
   in front of a gate after a finish without a medal is not pointed at the gate behind them.
+- **Stuck fallback** (K1, 2026-11-01, after a young player kept retrying Stage 5 because the marker kept sending him there):
+  after 3 runs of the next stage that ended without a medal (given up or too slow; runs under 10 s do not count, walking out
+  through a gate starts and ends a ghost run; a run of another stage started without ending this one also counts) or 12 deaths
+  during its runs (Quick Respawn fall resets count as deaths), in this session, the marker moves to the open stage
+  of the **same world** with the lowest medal (ties: the earliest), labelled with the medal to reach ("Stage 1: Silver"): the
+  stars that can still open the next world. It never points into another world, so a player with World 2 open is still sent
+  there (the next stage is then a World 2 stage). No other stage to improve: the marker stays.
 - **Skills:** a dot on the Skills icon when a talent level became affordable that the player has not seen affordable with the
   panel open (the panel's green Buy brick already marks the row).
 - **Ready egg:** a dot on the Pets icon and on its "Go to my garden" button while an egg on the player's plot is ready to
