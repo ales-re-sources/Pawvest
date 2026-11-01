@@ -6,7 +6,8 @@
 --   Hints.SetMarker(id, adornee, label, height)  world marker: an orange arrow with the text `label()` (re-read when the
 --                                           language changes), `height` studs above `adornee`; nil adornee removes it. Drawn
 --                                           in a ScreenGui (on top of everything, constant size). In view it bobs above the
---                                           target pointing down; off screen it sits on the screen edge pointing at it (a
+--                                           target pointing down; off screen (also a far target above the top of the screen,
+--                                           as seen from a steep top-down camera) it sits on the screen edge pointing at it (a
 --                                           target behind the camera: the left / right edge of the shorter turn), the label
 --                                           on the side towards the screen centre. Hidden during a run and within
 --                                           HIDE_DISTANCE studs of its target.
@@ -262,12 +263,16 @@ local function placeMarkers(dt: number)
 		local aimPoint = camera:WorldToViewportPoint(aim)
 		local left, right = EDGE_INSET, view.X - EDGE_INSET
 		local top, bottom = EDGE_TOP, view.Y * (1 - EDGE_BOTTOM)
-		local ahead = aimPoint.Z > 0 and aimPoint.X >= left and aimPoint.X <= right
+		-- the target at the player's height must lie below the free area's top: a far target seen from a steep top-down
+		-- camera projects above the screen, and an arrow pinned under the top pointing down would point at unrelated
+		-- ground; it goes to the edge pointing towards the target instead
+		local ahead = aimPoint.Z > 0 and aimPoint.X >= left and aimPoint.X <= right and aimPoint.Y >= top
 		local labelSize = marker.label.AbsoluteSize
 		local angle, arrowAt, labelAt
 		if ahead then
-			-- above the target pointing down at it, the label above the arrow; kept inside the free area (when the hover
-			-- point is above the screen the arrow stays pinned under its top, still pointing down at the target)
+			-- above the target pointing down at it, the label above the arrow; kept inside the free area (when only the
+			-- hover point is above the screen, a gate close by seen from below, the arrow stays pinned under its top,
+			-- still pointing down at the target)
 			local x = if point.Z > 0 then math.clamp(point.X, left, right) else aimPoint.X
 			local y = if point.Z > 0 then point.Y else top
 			y = math.clamp(y, top + ARROW_HEIGHT, math.max(top + ARROW_HEIGHT, bottom))
