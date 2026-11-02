@@ -43,6 +43,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E1a2 | Crop field behind admin access (CropConfig, GardenField, Garden panel) | ✔ | ✔ | – |
 | E1b1 | Field pets, server: aptitudes, Tending, field pet slots, pen conversion (behind field access) | ✔ | ✔ | – |
 | E1b2 | Field pets, client: pets on squares, place / move prompt, Pets section, conversion popup | ✔ | ✔ | – |
+| P3a / P3b | Pet detail panel, pet names (decisions taken) | – | – | – |
 | E1a3–E5 | Garden MVP (see "Next") | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
@@ -104,6 +105,46 @@ always has a next step for the first hour; World 1 and the garden are tuned for 
 - **Hatching text:** the empty incubator lists every egg with a line of percentages. *Proposed:* two egg cards (picture, price,
   time), odds behind a small "?", the hatch result as a pet reveal (portrait, name in the rarity colour, one line).
 - **Measure it:** in M6a, T1a fails per segment on Stage 5, quits per stage and session length of new players.
+
+### P3 — Pet detail panel and pet names (proposed 2026-11-02, decisions taken the same day)
+*Why:* aptitudes (E1b) made pets differ in ways the Pets list cannot show: which jobs a pet has, how far each can grow, what to do next.
+A pet the player has named is a pet they keep. *Audience:* K1's 8-10 year olds on a phone, so the panel uses bars, stars and icons and as little
+text as possible.
+
+**P3a — Detail panel (client; PetsChanged already carries `Apt` / `Spec`).** Opened by an info button on a Pets list row (decided: a tap on the
+row still equips / unequips); one screen, scrolls on a phone:
+1. **Header:** a large slowly turning portrait (PetLook in a ViewportFrame), the name (kind name until named), rarity in its colour, tier stars,
+   where the pet is (with you / square n / pen / resting).
+2. **Growth:** pet level n / 20 with the XP bar; how it grows (walking with you, food from the garden food shop); the next look (★ at Lv 5 / 10 / 15 /
+   20, `PetConfig.TierOf`); the Coin bonus, which counts only while the pet is with you.
+3. **Aptitudes:** one card per rolled aptitude that works today (decided: only the ids in `PetConfig.Shown`, now Tending; the others appear when
+   their system ships, E2 / E4-thin): icon, level / the rarity's cap (`AptitudeCap`), the effect bar (`Strength`), XP to the next level
+   in hours of field time (offline at a third), reach (1 / 5 / 9 squares, the next step at level 4 / 7) and the speciality for Pest control.
+   At the cap: "Max for a Rare" (rarity gives breadth, not height, EXPANSION §4).
+4. **Actions:** Equip / Unequip, Sell (with the confirm step), Rename (P3b).
+
+**P3b — Names (server).**
+- `PetRemotes.Rename(uid, text)`: 1-20 characters after trimming, letters / digits / spaces only (no rich text, no line breaks), one rename per
+  10 s; an empty text removes the name (free).
+- **Price (decided):** the first name is free, every later one costs 250 Coins (`PetConfig.RenamePrice`, server-side, `PlayerProfile.AddCoins`;
+  `Pets[uid].Renamed = true` after the first, so clearing a name does not make the next one free); pinned in `economy.py`.
+- **Filtering is a Roblox rule, not a choice:** the server filters with `TextService:FilterStringAsync` (owner's user id, `PublicChat` context)
+  and shows `GetNonChatStringForBroadcastAsync`. The raw text is stored as `Pets[uid].Name` and filtered again on every join (filters change);
+  clients only ever receive the filtered text. A failed filter call shows no name (the kind name), never the raw one.
+- **Shown to others (decided)** through a player attribute `PetNames` (JSON `{ [uid] = filtered }` for the equipped and field pets), read by `PetFollow`
+  and `PlotView`; the plot feed and `EquippedPets` keep their formats (a name can hold no `:` / `,` there).
+- **Display:** "Mochi" as the title, "Cat Lv 6" under it (list, detail, field picker, food shop); labels over pets "Mochi · Lv 6". A name is
+  user data: never localized, `AutoLocalize = false` (already the rule for code-built GUIs).
+- New pets also store `Born` (server `os.time`) and `Egg` for a "hatched on … from a Basic egg" line; older pets show nothing there.
+
+**Acceptance checks (P3).**
+1. Every pet in the list opens its panel; the numbers match `PetConfig` (level, XP, aptitude levels / caps, reach, bonus); a Legendary with three
+   aptitudes and a Common with one both fit on a 374 px phone panel in Czech.
+2. Equip / Unequip / Sell from the panel behave as from the list (field / pen rejections included).
+3. Rename: a forged uid, 21 characters, a newline, `<b>` and two renames within 10 s are refused; a name that the filter changes shows as `####`
+   on both clients; a re-join keeps the name; the other client sees it over a following pet and a field pet. The first name costs nothing, the
+   second 250 Coins, a rename with 249 Coins is refused (`coins`), clearing is free.
+4. `loc.py check` 0 errors, lint within the baseline.
 
 ### E1a — Plots for real + the field (scope 2026-10-30, decisions taken)
 **Goal.** The garden is drawn by the client for everyone, on the new ring layout, with today's gameplay unchanged (**E1a1**, published on its
