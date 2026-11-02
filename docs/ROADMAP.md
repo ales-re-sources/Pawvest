@@ -41,6 +41,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | MU | Mobile UX check | – | – | – |
 | E1a1 | Plots drawn by the client, new ring layout (garden moved) | ✔ | ✔ | – |
 | E1a2 | Crop field behind admin access (CropConfig, GardenField, Garden panel) | ✔ | ✔ | – |
+| E1b1 | Field pets, server: aptitudes, Tending, field pet slots, pen conversion (behind field access) | ✔ | ✔ | – |
+| E1b2 | Field pets, client: pets on squares, place / move prompt, Pets section, conversion popup | – | – | – |
 | E1a3–E5 | Garden MVP (see "Next") | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
@@ -294,6 +296,24 @@ not shown. Quirks and bond stay out (D7). Field pets can be placed only at the o
 5. **Conversion popup:** a one-time "Your pens became field pet slots (+N Coins)". Strings go in the CSV (en + cs).
 
 *Studio-only:* nothing (the field and pets are drawn by the client).
+
+**E1b1 implemented and Studio-validated (2026-11-02)**, by remotes from a playtest client and fixtures in the developer's live profile (snapshot
+`TestSnapshots` `profile_9892673032_e1b`, restored afterwards):
+- Check 1: 100 uids rolled twice give the same sets; the forced Tending roll gives Tending; live pets got their aptitudes on join at
+  ceil(level / 4) (Lv 4 → 1, Lv 8 → 2) and kept them on re-join. Check 2: Tending share 0.201 / 0.214 / 0.397 / 0.499 / 0.599 over 10 000 uids
+  per kind; counts 1 / 1 (9.9 % two) / 2 / 2–3 (50.7 % three) / 3; Owl's Pest control always against raccoons; a Dog's lean gives Pest control 34 %.
+- Check 3 (6 pens, 1 penned pet): 3 slots, +21 000 Coins (4 111 → 25 121 with the last 10 Coins of pen income), the pet back in the inventory,
+  Place / BuyPen answer `field`; a re-join converts nothing.
+- Check 4 (server): rejected a pet without Tending (`aptitude`), an equipped pet, square 9 of 4, over the slots, an occupied square, a stale slot
+  purchase, a 4th slot (`maxed`), a far player; a forged call gets no answer; Equip / SellPet of a field pet answer `field`; move, lift and slot
+  purchase (9 000) work.
+- Check 5: two absences (3 h on 4 squares, 1 h on 12 squares) gave exactly the field an independent replay of the rolls predicts, square by
+  square (planting numbers, leftover growth, seeds, Renown); the barn stopped the pets at 40 crops; a re-join did not reroll the Tried plantings.
+- Check 6 (server part): reach 1 / 5 / 9 squares at levels 1 / 4 / 7 and the strongest pet on an overlap match the replay. Check 7: XP 10 h /
+  15.6 h for levels 2 / 3, the Common cap stops at 6 (a PetConfig test); field time adds XP (3 569 s after the 3 h absence + online seconds).
+- Decision 3: with no Tending pet owned, a hatched Basic egg gave a Bunny with Tending.
+- Not covered by a playtest: a player without field access (code path: GardenField returns before converting; PetService rolls aptitudes for
+  everyone, data only). Checks 6 (drawing), 8 and 9 come with E1b2.
 
 **Acceptance checks (E1b).**
 1. A new pet gets `Apt` (and `Spec` with Pest control) at hatch, and reloading keeps it. The same uid always rolls the same set (100 uids rolled twice).

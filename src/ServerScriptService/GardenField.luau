@@ -194,6 +194,9 @@ local function settle(player: Player, profile, field, absence: boolean): (boolea
 	for key in field.Squares do
 		table.insert(keys, key)
 	end
+	table.sort(keys, function(a, b) -- square order: replants take planting numbers in a fixed order
+		return tonumber(a) < tonumber(b)
+	end)
 	for _, key in keys do
 		local square = field.Squares[key]
 		local crop = CropConfig.ById[square.Crop]
