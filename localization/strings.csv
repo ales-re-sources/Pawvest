@@ -478,3 +478,15 @@ petDetail.reject.name,Pet detail page: the typed name is not allowed; {max} = 20
 petDetail.reject.same,Pet detail page: the pet already has this name,That is already its name,Tak už se jmenuje,new,h9e4bcdba
 petDetail.reject.cooldown,Pet detail page: renamed too quickly (10 s between names),Wait a few seconds before the next name,Před dalším jménem chvíli počkej,new,h27743d89
 petDetail.reject.filter,Pet detail page: Roblox's text check could not be reached; nothing was charged,"The name could not be checked, try again later","Jméno se nepodařilo zkontrolovat, zkus to později",new,h7bb6af51
+field.section.upgrades,"Garden panel: heading of the field upgrades (Growth, Barn)",Upgrades,Vylepšení,new,ha26b87eb
+field.upgrade.level,"Garden panel, upgrade row title; {name} = icon + upgrade name (""🌱 Growth""), {level} = level bought, {max} = top level",{name} · {level} / {max},{name} · {level} / {max},new,h59780255
+field.upgrade.growth,"Name of the field upgrade that makes crops grow faster (row title, toast)",Growth,Růst,new,h6f82fbe9
+field.upgrade.growth.effect,"Growth upgrade row, second line; {now} = % shorter grow times now, {next} = % at the next level (0-20)",Grow times −{now} % → −{next} %,Doba růstu −{now} % → −{next} %,new,hf1c5a382
+field.upgrade.growth.max,Growth upgrade row at the top level; {now} = % shorter grow times (20),Grow times −{now} %,Doba růstu −{now} %,new,hccbb4638
+field.upgrade.barn,"Name of the field upgrade that makes the barn bigger (row title, toast)",Barn,Stodola,new,h737b3f38
+field.upgrade.barn.effect,"Barn upgrade row, second line; {now} = seeds / crops the barn holds now, {next} = at the next level (40-140; Czech genitive plural)",Holds {now} → {next} seeds and crops,Pojme {now} → {next} semínek i plodin,new,h2d80a19d
+field.upgrade.barn.max,Barn upgrade row at the top level; {now} = seeds / crops the barn holds (140),Holds {now} seeds and crops,Pojme {now} semínek i plodin,new,h610b5b8c
+field.upgrade.price,"Upgrade buy button (narrow, ~104 px); {count} = price in Coins (1,500-60,000)",💰 {count},💰 {count},new,h5b33c8c5
+field.upgrade.maxed,Upgrade button at the top level (greyed),Max,Max,new,h1ab2ab83
+field.toast.upgrade,"Toast after buying an upgrade level; {name} = upgrade name (Growth / Barn), {level} = new level",{name}: level {level}!,{name}: úroveň {level}!,new,hb5c08e2f
+field.reason.upgradeMaxed,Refused: the upgrade is already at its top level,Already at the top level,Už je na nejvyšší úrovni,new,hae9da8d5

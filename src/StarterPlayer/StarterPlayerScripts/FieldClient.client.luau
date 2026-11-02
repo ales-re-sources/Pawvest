@@ -15,7 +15,7 @@
 -- Test hooks (ScreenGui FieldGui attributes, cleared after use): OpenField = true opens the panel, OpenPicker = square opens the picker,
 -- OpenPetPicker = square opens the pet picker.
 -- Buttons by path (all under PlayerGui.FieldGui): Panel.Content.Seeds.<CropId>.Buy1 / .Buy10, Panel.Content.Crops.<CropId>.Sell,
--- Panel.Content.Expand.Buy, Panel.Content.Pets.Pet<square>.Lift, Panel.Content.Pets.Slot.BuySlot, Picker.<CropId>,
+-- Panel.Content.Expand.Buy, Panel.Content.Upgrades.<UpgradeId>.Buy, Panel.Content.Pets.Pet<square>.Lift, Panel.Content.Pets.Slot.BuySlot, Picker.<CropId>,
 -- Picker.Pet_<uid> / Picker.Lift (pet picker), Open (the HUD button).
 
 local Players = game:GetService("Players")
@@ -44,6 +44,7 @@ local buySquareEvent = remotes:WaitForChild("BuySquare")
 local placePetEvent = remotes:WaitForChild("PlacePet")
 local liftPetEvent = remotes:WaitForChild("LiftPet")
 local buyPetSlotEvent = remotes:WaitForChild("BuyPetSlot")
+local buyUpgradeEvent = remotes:WaitForChild("BuyUpgrade")
 local requestStateEvent = remotes:WaitForChild("RequestState")
 
 local SHOW_DISTANCE = 45 -- studs from the plot centre: the Field button is visible within this
@@ -58,6 +59,7 @@ local SELL_WIDTH = 116
 local LOCK_WIDTH = 112
 local LIFT_WIDTH = 76
 local SLOT_WIDTH = 96
+local UPGRADE_WIDTH = 104
 local REACH_SECONDS = 3 -- the reach of a pet just placed stays tinted this long
 local NOTICE_SECONDS = 8
 
@@ -100,6 +102,11 @@ local PET_REJECT_KEYS = {
 	maxed = "field.reason.slotsMaxed",
 }
 local PET_ACTIONS = { PlacePet = true, LiftPet = true, BuyPetSlot = true }
+-- the field upgrades' texts (E1c1): name, effect now → next level, effect at the top level
+local UPGRADE_KEYS = {
+	Growth = { name = "field.upgrade.growth", effect = "field.upgrade.growth.effect", max = "field.upgrade.growth.max" },
+	Barn = { name = "field.upgrade.barn", effect = "field.upgrade.barn.effect", max = "field.upgrade.barn.max" },
+}
 
 local function create(className: string, props, children)
 	local instance = Instance.new(className)
@@ -167,9 +174,20 @@ local function cropTitle(crop): string
 	return crop.icon .. " " .. Locale.CropName(crop)
 end
 
+-- The crop's grow time on `field` (shortened by the Growth upgrade), whole seconds.
+local function growSecondsOn(field, crop): number
+	local level = CropConfig.UpgradeLevel(field and field.upgrades, "Growth")
+	return math.ceil(crop.growSeconds / CropConfig.GrowthSpeed(level) - 1e-6)
+end
+
+-- Seeds the barn of `field` holds (the Barn upgrade).
+local function barnOf(field): number
+	return CropConfig.BarnFor(CropConfig.UpgradeLevel(field and field.upgrades, "Barn"))
+end
+
 -- State -------------------------------------------------------------------------------------------------------------------
 
-local fieldState = nil -- GardenRemotes.State.field: { count, squares, seeds, items, renown, level, pets, slots, slotPrice, notice }
+local fieldState = nil -- GardenRemotes.State.field: { count, squares, seeds, items, renown, level, pets, slots, slotPrice, upgrades, barn, notice }
 local panelPoint: Vector3? = nil -- where the Garden panel was opened (nil = closed)
 local pickerPoint: Vector3? = nil
 local pickerSquare: number? = nil
@@ -219,6 +237,7 @@ local petsSection = newSection("Pets", 3)
 local seedsSection = newSection("Seeds", 4)
 local cropsSection = newSection("Crops", 5)
 local expandSection = newSection("Expand", 6)
+local upgradesSection = newSection("Upgrades", 7)
 
 local content = create("ScrollingFrame", {
 	Name = "Content",
@@ -238,6 +257,7 @@ local content = create("ScrollingFrame", {
 	seedsSection,
 	cropsSection,
 	expandSection,
+	upgradesSection,
 })
 
 local panel = create("Frame", {
@@ -513,6 +533,7 @@ local function renderSeeds(field)
 	clearSection(seedsSection)
 	heading(seedsSection, 1, Locale.T("field.section.seeds"))
 	local total = CropConfig.SeedTotal(field.seeds)
+	local capacity = barnOf(field)
 	for index, crop in CropConfig.Crops do
 		local locked = field.level < crop.renown
 		local stock = field.seeds[crop.id] or 0
@@ -522,7 +543,7 @@ local function renderSeeds(field)
 			row,
 			reserved,
 			cropTitle(crop),
-			Locale.T("field.seed.info", { time = growTime(crop.growSeconds), sale = crop.sale, seed = crop.seed, stock = stock })
+			Locale.T("field.seed.info", { time = growTime(growSecondsOn(field, crop)), sale = crop.sale, seed = crop.seed, stock = stock })
 		)
 		if locked then
 			local lock = paragraph("Locked", {
@@ -537,7 +558,7 @@ local function renderSeeds(field)
 			lock.Parent = row
 		else
 			for slot, option in { { name = "Buy1", amount = 1, width = BUY1_WIDTH }, { name = "Buy10", amount = 10, width = BUY10_WIDTH } } do
-				local affordable = coinsNow() >= crop.seed * option.amount and total + option.amount <= CropConfig.BarnCapacity
+				local affordable = coinsNow() >= crop.seed * option.amount and total + option.amount <= capacity
 				local buy = button(option.name, {
 					LayoutOrder = slot + 1,
 					Size = UDim2.fromOffset(option.width, 36),
@@ -556,8 +577,8 @@ local function renderSeeds(field)
 		LayoutOrder = #CropConfig.Crops + 2,
 		Font = StudStyle.Font,
 		TextSize = 15,
-		TextColor3 = if total >= CropConfig.BarnCapacity then COLOR_ERROR else Color3.new(1, 1, 1),
-		Text = Locale.T("field.barn", { total = total, capacity = CropConfig.BarnCapacity }),
+		TextColor3 = if total >= capacity then COLOR_ERROR else Color3.new(1, 1, 1),
+		Text = Locale.T("field.barn", { total = total, capacity = capacity }),
 	}).Parent = seedsSection
 	paragraph("Note", { LayoutOrder = #CropConfig.Crops + 3, TextSize = 12, TextColor3 = COLOR_DIM, Text = Locale.T("field.seed.note") }).Parent =
 		seedsSection
@@ -632,6 +653,46 @@ local function renderExpand(field)
 	end)
 end
 
+-- The field upgrades (E1c1): level, what it does now and at the next level, and the price.
+local function renderUpgrades(field)
+	clearSection(upgradesSection)
+	heading(upgradesSection, 1, Locale.T("field.section.upgrades"))
+	for index, upgrade in CropConfig.Upgrades do
+		local keys = UPGRADE_KEYS[upgrade.id]
+		local level = CropConfig.UpgradeLevel(field.upgrades, upgrade.id)
+		local top = #upgrade.prices
+		local price = upgrade.prices[level + 1]
+		local function effect(at: number): number
+			return if upgrade.id == "Growth" then math.floor(upgrade.step * at * 100 + 0.5) else CropConfig.BarnFor(at)
+		end
+		local info = if price
+			then Locale.T(keys.effect, { now = effect(level), next = effect(level + 1) })
+			else Locale.T(keys.max, { now = effect(level) })
+		local row = newRow(upgradesSection, upgrade.id, index + 1)
+		textColumn(
+			row,
+			UPGRADE_WIDTH + GAP,
+			Locale.T("field.upgrade.level", { name = upgrade.icon .. " " .. Locale.T(keys.name), level = level, max = top }),
+			info
+		)
+		local affordable = price ~= nil and coinsNow() >= price
+		local buy = button("Buy", {
+			LayoutOrder = 2,
+			Size = UDim2.fromOffset(UPGRADE_WIDTH, 40),
+			BackgroundColor3 = if affordable then COLOR_BUY else COLOR_LOCKED,
+			TextSize = 15,
+			TextWrapped = true,
+			Text = if price then Locale.T("field.upgrade.price", { count = price }) else Locale.T("field.upgrade.maxed"),
+			Parent = row,
+		}, 2)
+		if price then
+			buy.Activated:Connect(function()
+				buyUpgradeEvent:FireServer(upgrade.id, level)
+			end)
+		end
+	end
+end
+
 local function renderPanel()
 	titleLabel.Text = Locale.T("field.title")
 	if not panelPoint then
@@ -646,6 +707,7 @@ local function renderPanel()
 		clearSection(seedsSection)
 		clearSection(cropsSection)
 		clearSection(expandSection)
+		clearSection(upgradesSection)
 		return
 	end
 	renderHeader(field)
@@ -654,6 +716,7 @@ local function renderPanel()
 	renderSeeds(field)
 	renderCrops(field)
 	renderExpand(field)
+	renderUpgrades(field)
 end
 
 -- Picker rendering ----------------------------------------------------------------------------------------------------------
@@ -841,7 +904,7 @@ local function renderPicker()
 						TextSize = 13,
 						TextColor3 = COLOR_INFO,
 						TextTruncate = Enum.TextTruncate.AtEnd,
-						Text = Locale.T("field.picker.info", { stock = stock, time = growTime(crop.growSeconds) }),
+						Text = Locale.T("field.picker.info", { stock = stock, time = growTime(growSecondsOn(fieldState, crop)) }),
 					}),
 				})
 				table.insert(pickerItems, row)
@@ -1023,6 +1086,15 @@ end
 remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail)
 	if PET_ACTIONS[action] then
 		return petResult(action, ok, detail)
+	end
+	if action == "BuyUpgrade" then
+		if not ok then
+			local key = if detail == "maxed" then "field.reason.upgradeMaxed" else REJECT_KEYS[detail]
+			showToast(Locale.T(key or "common.reject.failed"), COLOR_ERROR)
+		elseif type(detail) == "table" and UPGRADE_KEYS[detail.id] then
+			showToast(Locale.T("field.toast.upgrade", { name = Locale.T(UPGRADE_KEYS[detail.id].name), level = detail.level }), COLOR_OK)
+		end
+		return
 	end
 	if action ~= "Plant" and action ~= "Harvest" and action ~= "BuySeeds" and action ~= "Sell" and action ~= "BuySquare" then
 		return -- pens, incubators and the food stand answer on the same remote

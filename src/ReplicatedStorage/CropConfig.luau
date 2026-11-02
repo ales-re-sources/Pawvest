@@ -41,7 +41,19 @@ CropConfig.Expansions = {
 CropConfig.RenownPoints = { 1, 3, 6, 12 } -- points per harvest by crop tier (4 = rare crops, E2)
 CropConfig.RenownK = 3 -- level L needs RenownK * L ^ RenownP points in total
 CropConfig.RenownP = 1.6
-CropConfig.BarnCapacity = 40 -- seeds of all crops together (fixed until the barn upgrade, E1c)
+CropConfig.BarnCapacity = 40 -- seeds of all crops together, and the crops a Tending pet may store, before the Barn upgrade
+
+-- Field upgrades (E1c1, docs/ECONOMY.md → upgrades): prices[n] = Coins for level n. Growth: each level -step of every grow time
+-- (earned growth runs 1 / (1 - step × level) as fast); Barn: each level +step capacity. Ids are stored
+-- (Garden.Field.Upgrades[id] = level): never rename one.
+CropConfig.Upgrades = {
+	{ id = "Growth", icon = "🌱", step = 0.05, prices = { 3000, 8000, 20000, 45000 } },
+	{ id = "Barn", icon = "🏠", step = 20, prices = { 1500, 4000, 10000, 25000, 60000 } },
+}
+CropConfig.UpgradeById = {}
+for _, upgrade in CropConfig.Upgrades do
+	CropConfig.UpgradeById[upgrade.id] = upgrade
+end
 
 -- Field pets (E1b, docs/ECONOMY.md → "Field-pet re-run"): PetSlotPrices[n] = price of the n-th field pet slot (slot 1 is free).
 -- A player's pens convert once: PetSlotsFromPens[pens bought] slots, the Coins paid for pens beyond those slots' prices refunded.
@@ -81,6 +93,26 @@ end
 -- Growth seconds earned over `online` seconds with the owner present and an absence of `offline` seconds (capped).
 function CropConfig.Growth(online: number, offline: number): number
 	return math.max(0, online) * CropConfig.OnlineRate + math.min(math.max(0, offline), CropConfig.OfflineCapSeconds) * CropConfig.OfflineRate
+end
+
+-- Level 0..max of upgrade `id` in `upgrades` (Garden.Field.Upgrades or the panel state's field.upgrades).
+function CropConfig.UpgradeLevel(upgrades, id: string): number
+	local upgrade = CropConfig.UpgradeById[id]
+	local level = type(upgrades) == "table" and upgrades[id]
+	if not upgrade or type(level) ~= "number" or level ~= level then
+		return 0
+	end
+	return math.clamp(math.floor(level), 0, #upgrade.prices)
+end
+
+-- How much faster crops grow at Growth level `level` (earned growth seconds are multiplied by this).
+function CropConfig.GrowthSpeed(level: number): number
+	return 1 / (1 - CropConfig.UpgradeById.Growth.step * level)
+end
+
+-- Seeds the stock holds (and crops a Tending pet may store) at Barn level `level`.
+function CropConfig.BarnFor(level: number): number
+	return CropConfig.BarnCapacity + CropConfig.UpgradeById.Barn.step * level
 end
 
 -- Look stage 1..3 of a planted crop (3 = ripe), from its growth seconds.

@@ -258,6 +258,7 @@ def apply_crop_config(P):
         "expansions": [[e["price"], e["renown"]] for e in exps],
         "renown": [points, luau(f, "CropConfig.RenownK"), luau(f, "CropConfig.RenownP")],
         "barn_capacity": luau(f, "CropConfig.BarnCapacity"),
+        "upgrades": [[u["id"], u["step"], list(u["prices"])] for u in luau(f, "CropConfig.Upgrades")],  # E1c1: [id, step, prices]
         "rates": [luau(f, "CropConfig.OnlineRate"), luau(f, "CropConfig.OfflineRate"), luau(f, "CropConfig.OfflineCapSeconds") / 3600],  # hours
         # field pets (E1b): slot prices, slots from pens; PetConfig's aptitude numbers
         "pet_slots": luau(f, "CropConfig.PetSlotPrices"),
@@ -280,6 +281,11 @@ def apply_crop_config(P):
     F["tier_gate"] = gate
     F["renown"].update({"k": cfg["renown"][1], "p": cfg["renown"][2], "weight": {t + 1: w for t, w in enumerate(points)}})
     F["capacity"] = cfg["barn_capacity"]
+    for uid, step, prices in cfg["upgrades"]:
+        name = uid.lower()
+        if name not in F["upgrades"]:
+            raise ValueError(f"CropConfig.Upgrades: {uid} has no FIELD upgrade the model simulates")
+        F["upgrades"][name].update({"step": step, "prices": list(prices)})
     F["online_rate"], F["offline_rate"], F["offline_cap_h"] = cfg["rates"]
     FP = F["pets"]
     FP["slots"] = list(cfg["pet_slots"])
@@ -387,6 +393,7 @@ def pin_values(P):
         "crop_field_expansions": P["crop_cfg"]["expansions"],  # [price, renown level] per extra square
         "crop_field_renown": P["crop_cfg"]["renown"],  # [points per harvest by tier, RenownK, RenownP]
         "crop_field_barn_capacity": P["crop_cfg"]["barn_capacity"],
+        "crop_field_upgrades": P["crop_cfg"]["upgrades"],  # [id, step, prices] (E1c1)
         "crop_field_rates": P["crop_cfg"]["rates"],  # [online rate, offline rate, offline cap in hours]
         "field_pet_slots": P["crop_cfg"]["pet_slots"],  # CropConfig.PetSlotPrices
         "field_pets_from_pens": P["crop_cfg"]["pets_from_pens"],  # CropConfig.PetSlotsFromPens
@@ -551,8 +558,8 @@ FIELD = {
     "capacity": None,  # (CropConfig.BarnCapacity) seeds the stock holds and crops the barn holds between two visits (limits the Gardener's cycles)
     # upgrades: levels cost `prices`; growth = grow time x (1 - step x level); barn = capacity + step x level; gardener = squares + step x level
     "upgrades": {
-        "growth": {"step": 0.05, "prices": [3000, 8000, 20000, 45000]},
-        "barn": {"step": 20, "prices": [1500, 4000, 10000, 25000, 60000]},
+        "growth": {"step": None, "prices": None},  # (CropConfig.Upgrades Growth; was 0.05, 3000 / 8000 / 20000 / 45000)
+        "barn": {"step": None, "prices": None},  # (CropConfig.Upgrades Barn; was 20, 1500 / 4000 / 10000 / 25000 / 60000)
         "gardener": {"step": 1, "prices": []},  # no coverage level: on 12 squares one more square per Gardener would cover the whole field (A 1.06x)
     },
     "rare": {"per_first_gold": 1, "daily": 1, "sale_share": 0.5},  # rare seeds from the obby; the rest of the harvest is kept for landmarks (placeholder)

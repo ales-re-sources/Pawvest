@@ -46,7 +46,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | P3a | Pet detail panel (Pets list "i" badge → `PetDetail`) | ✔ | ✔ | – |
 | P3b | Pet names (filtered, shown to everyone; first free, renames 250) | ✔ | ✔ | – |
 | E1a3 | Crops as pet food (pet detail page; XP = half the sale value) — scoped 2026-11-02 | – | – | – |
-| E1c–E5 | Garden MVP (see "Next") | – | – | – |
+| E1c1 | Field upgrades (growth, barn) | ✔ | ✔ | – |
+| E1c2–E5 | Garden MVP (see "Next"; E1c2–E1c4 scoped in outline) | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
 
@@ -209,6 +210,57 @@ route later. Only for `GardenConfig.HasFieldAccess` (nobody else holds crops).
    field show the new reach.
 5. `economy.py check` passes with the new pins; `loc.py check` 0 errors, lint within the baseline; the card fits a 340 px panel in Czech.
 6. All of it once through the real UI (clicks), no console errors; live profile snapshotted right before and restored after.
+
+### E1c — Size roll, tools, field upgrades, market cart (scope 2026-11-02, the user's decisions)
+Split into four steps, each validated and committed on its own (decided 2026-11-02):
+- **E1c1 Field upgrades** (growth, barn): numbers from ECONOMY, already in the model. Scope below.
+- **E1c2 Size roll** (EXPANSION §5.3, without variants): every harvest rolls a size factor from `(UserId, square, planting)`, expected value 1.0;
+  labels normal / Big / Giant; a personal best per crop. **Storage decided:** the barn keeps per crop a count and the summed size factor
+  (`Items[crop]` + `ItemSize[crop]`), a sale pays the average; no per-item list (the Harvest Fair can add one). Scoped when it starts.
+- **E1c3 Tools tier 1** (Seed sorter, Cloches, Pruning shears, EXPANSION §6). **Decided:** `economy.py` first models the tools and the size roll
+  (the sensitivity run already fails A at +20 % income), then effect sizes and prices go to the user for approval, as the field-pet re-run did.
+- **E1c4 Market cart** (EXPANSION §5.2). **Decided:** seeds only for now (fertilisers and decor do not exist): 3-4 daily offers from the UTC day
+  (same on every server, per-player quantities), discounted seeds of unlocked crops plus a few seeds of one locked crop as a taste.
+
+**E1c1 — Field upgrades.** Inputs: ECONOMY → upgrades (no Renown gate in the model).
+- **Numbers (`CropConfig.Upgrades`, pinned):** Growth 4 levels, 3 000 / 8 000 / 20 000 / 45 000, each level -5 % grow time; Barn 5 levels,
+  1 500 / 4 000 / 10 000 / 25 000 / 60 000, each +20 capacity (40 → 140). Upgrade ids are stored: never rename one.
+- **Growth** works on earned growth: growth seconds are multiplied by `1 / (1 - 0.05 × level)` (the model's grow time x (1 - step x level)),
+  online, offline and for Tending pets; stored `Grown` and `growSeconds` stay as they are; a purchase settles the field first, so the faster
+  rate counts from then on. `readyAt` and the shown grow times follow the level.
+- **Barn** capacity = 40 + 20 × level, for both limits it sets today: the seed stock (BuySeeds) and the crops a Tending pet may store.
+- **Server (`GardenField`):** `GardenRemotes.BuyUpgrade(id, expectedLevel)`; field access only (`locked`); unknown id → no answer;
+  `expectedLevel` not the current level → `stale` (out-of-date panel, nothing bought); max level → `maxed`; too few Coins → `coins`.
+  Profile `Garden.Field.Upgrades = { Growth = n, Barn = n }`. `GardenRemotes.State` `field` gains `upgrades = { Growth, Barn }` and `barn` (capacity).
+- **Client (`FieldClient`):** an "Upgrades" section after Expand: per upgrade its level "2 / 4", what it does now and what the next level gives
+  ("Crops grow 10 % faster → 15 %", "Barn 60 → 80"), and a Buy button with the price (greyed without the Coins; "Max" at the top). The barn line
+  and the seed buttons use the new capacity; seed and picker grow times show the shortened time.
+
+**Acceptance checks (E1c1).**
+1. Growth level 1 bought with 3 000 Coins: Coins -3 000, level 1; a fresh Potato (300 s) ripens after 285 s online (300 × 0.95), not 300; a
+   square half grown before the purchase needs 142.5 s more instead of 150.
+2. Growth to level 4: the prices charged are 3 000 / 8 000 / 20 000 / 45 000; the fifth → `maxed`, no Coins taken. Barn the same with its
+   five prices; level 5 holds 140 seeds (buying the 141st → `barn`) and a Tending pet harvests until 140 crops are stored, not 40.
+3. Refused: a stale `expectedLevel` → `stale`; 2 999 Coins for Growth 1 → `coins`; a player without field access → `locked`; an unknown id → no
+   answer. A re-join keeps both levels.
+4. Offline: an absence of 1 h at Growth 4 gives 0.33 × 3 600 / 0.8 = 1 485 growth seconds (cap still 12 h of absence).
+5. The panel through clicks: levels, effects, prices, the Max state, the barn line and seed buttons at the new capacity; Czech fits.
+6. `economy.py check` passes with the upgrade prices read from `CropConfig` and pinned; `loc.py` check 0 errors, lint within the baseline.
+
+**E1c1 implemented and Studio-validated (2026-11-02)**, in playtests on fixtures in the developer's live profile (snapshot `TestSnapshots`
+`profile_9892673032_e1c1`, restored afterwards):
+- Offline: Growth 4 / Barn 5 and `SettledAt` one hour back gave a Giant melon 1 486 growth seconds on join (0.33 × ~3 602 s / 0.8) and a
+  countdown of 33 371 s ((43 200 − 1 486) / 1.25). A Tending pet (Tending 6, reach over squares 1–3) stored one crop, 139 → 140, replanted it
+  (seeds 7 → 6) and left the other two ripe; at the old limit of 40 it would have stored none. 134 seeds bought to 140, one more → `barn`.
+- Panel at the top levels (Czech): "Max" on grey buttons, "Doba růstu −20 %", "Pojme 140 semínek i plodin", barn line 140 / 140, grow times
+  Giant melon 9 h 36 min and Potato 4 min; English "Grow times −20 %" / "Holds 140 seeds and crops".
+- Buying from zero through the panel: 2 999 Coins → `coins` ("Nemáš dost mincí"), nothing charged; then Growth 1 for 3 000 (12 999 → 9 999),
+  toast "Růst: úroveň 1!", row "1 / 4 · −5 % → −10 %". A Potato with 99 growth seconds left now needed 93.9 s (99 × 0.95; check 1's 150 → 142.5
+  is the same formula); a fresh Potato is ready in 285 s.
+- By remote: Growth 2–4 charged 8 000 / 20 000 / 45 000, Barn 1–5 1 500 / 4 000 / 10 000 / 25 000 / 60 000, the next try of each → `maxed` with
+  nothing charged; a stale level → `stale`; an unknown id or a level of 1.5 → no answer. A re-join kept Growth 4 / Barn 5. No console errors.
+- Not run: `locked` for a player without field access (every account in Studio has access; it is the first check of the shared `usableField`,
+  validated with E1a2).
 
 ### E1a — Plots for real + the field (scope 2026-10-30, decisions taken)
 **Goal.** The garden is drawn by the client for everyone, on the new ring layout, with today's gameplay unchanged (**E1a1**, published on its
