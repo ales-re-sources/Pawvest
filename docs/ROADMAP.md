@@ -240,8 +240,9 @@ not shown. Quirks and bond stay out (D7). Field pets can be placed only at the o
 1. **Aptitudes.** `PetConfig.Aptitudes` holds the ids `Tending`, `Fertilising`, `PestControl`, `Weeding`, `Scouting` and `Crafting` (never renamed).
    `PetConfig.RollAptitudes(uid, kind)` rolls them deterministically from the uid (as PetLook's looks):
    - the count follows the rarity (1 / 1 or 2 / 2 / 2–3 / 3);
-   - the kind leans the draw (dog, owl → Pest control; bunny → Fertilising; fox → Scouting; cat → Tending…);
-   - Tending's overall chance per rarity is the model's 0.2 / 0.22 / 0.4 / 0.5 / 0.6;
+   - Tending's chance per rarity is the model's 0.2 / 0.22 / 0.4 / 0.5 / 0.6, independent of the kind (so the model holds);
+   - the kind leans the draw of the other aptitudes (cat, dog, owl → Pest control; bunny, dragon → Fertilising; fox, phoenix → Scouting;
+     panda → Weeding);
    - a pet with Pest control also gets a `Spec` (crows, moles, slugs, raccoons).
 
    They are stored as `Pets[uid].Apt = { [id] = { L, XP } }` and `Pets[uid].Spec` at hatch (`PetService.AddPet`). A pet without `Apt` gets them once
@@ -261,10 +262,10 @@ not shown. Quirks and bond stay out (D7). Field pets can be placed only at the o
 
    The same job does not stack: a square is tended by the strongest Tending pet that reaches it.
 4. **Tending in `GardenField.settle`.** For each tended square whose crop ripens during the settled span:
-   - The pet harvests it when a roll is below its strength for the level (20 / 35 / 48 / 59 / 68 / 76 / 83 / 89 / 95 / 100 %) and the barn has room. The crop goes into `Items` and gives Renown as a hand harvest does.
+   - The pet harvests it when a roll is below its strength for the level (20 / 35 / 48 / 59 / 68 / 76 / 83 / 89 / 95 / 100 %) and the barn has room (crops in `Items` below `BarnCapacity`). The crop goes into `Items` and gives Renown as a hand harvest does.
    - It then replants the same crop from `Seeds`, carrying over the leftover growth.
    - A failed roll or a full barn leaves the crop ripe. With no seed of that crop the square stays empty after the harvest.
-   - The roll is deterministic per square and planting (a new counter `Squares[n].N`), so settling in different steps gives the same result.
+   - The roll is deterministic per owner and planting (a new counter `Squares[n].N` from `Field.Plantings`); a failed roll marks the planting `Tried`, so a re-join never rerolls it.
    - Tending works **only while the owner is away** (the join settle), as the model assumes (decision 2).
 5. **Aptitude XP.** A placed pet earns XP in its job's aptitude per weighted field hour, as growth does (online 1.0, offline 0.33, capped at 12 h).
    Level L → L + 1 needs 10 × 1.56^(L−1) hours, up to the rarity cap. XP is settled with the field.
@@ -279,7 +280,7 @@ not shown. Quirks and bond stay out (D7). Field pets can be placed only at the o
    `Result`. Message changes:
    - `State.field` gains `pets = { [square] = { uid, job, level, xp, next } }` and `slots`;
    - the plot message's `field` gains `pets = "Kind:Level:uid:square:reach" × n`;
-   - `PetsChanged` gains `placed = { [uid] = "pen" | "field" }` and each pet's visible aptitudes.
+   - `PetsChanged` gains `field = { [uid] = square }` (pets already carry `Apt`).
 8. **Docs and checks:** AGENTS.md (remotes, profile), LAYOUT.md, and `economy.py check` with drift 0 for the new prices.
 
 **E1b2 — Client (~1 week).**
@@ -308,13 +309,16 @@ not shown. Quirks and bond stay out (D7). Field pets can be placed only at the o
 
    Equip / sell of a field pet is rejected too.
 5. Tending works offline (stored times moved back, with snapshot / restore). Crops that ripen during an absence are harvested and replanted by
-   the roll, seeds are used, the barn limit is respected and Renown is counted. The same absence settled in one step and in many gives the same field.
+   the roll, seeds are used, the barn limit is respected and Renown is counted. Re-joining does not reroll a failed planting, and the same profile
+   settled twice from the same snapshot gives the same field.
 6. Reach is 1 / 5 / 9 squares at levels 3 / 4 / 7, tested at a corner and the middle of the grid, and the drawn reach matches the server's.
 7. Aptitude XP and level-ups come at the expected hours and stop at the rarity cap.
 8. With two clients, the other player sees the pets on the plot. 24 full plots with fields and pets stay inside the E1a1 budget (`GardenViewFake`).
 9. `economy.py check` shows drift 0, `loc.py check` 0 errors and lint stays within the baseline. The new texts fit in Czech at phone size.
 
-**Decisions (the user, 2026-11-02: all six as recommended).** Recorded below with the options that were weighed.
+**Decisions (the user, 2026-11-02: all six as recommended).** Recorded below with the options that were weighed. Decision 3 is implemented as
+"a hatch while the owner has no Tending pet gets Tending" (covers the first garden hatch, and live players without a tender); decision 6 as
+`EDGE_TOL` = 1 % in `economy.py check` (B and O).
 1. **Gating:** E1b stays behind field access, and conversion runs only for players with access. Live players keep pens until E1 ships, when
    `FieldAccess = "all"` converts everyone on join. *Recommended.*
 2. **When Tending works:** either only during absences, as modelled (online play stays ahead, but Binge gets no extra cycle: finding B), or also

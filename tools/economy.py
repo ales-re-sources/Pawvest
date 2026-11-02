@@ -227,6 +227,11 @@ class Reader:
         return named if named else listed
 
 
+# B and O accept equality within this share (the user, 2026-11-02, E1b decision 6): Binge's week fits one crop cycle with or
+# without a Tending pet, and a fully tended field's online / offline ratio converges to the O bound itself.
+EDGE_TOL = 0.01
+
+
 def luau(file, name):
     return Reader((CFG / file).read_text(encoding="utf-8")).find(name)
 
@@ -254,6 +259,13 @@ def apply_crop_config(P):
         "renown": [points, luau(f, "CropConfig.RenownK"), luau(f, "CropConfig.RenownP")],
         "barn_capacity": luau(f, "CropConfig.BarnCapacity"),
         "rates": [luau(f, "CropConfig.OnlineRate"), luau(f, "CropConfig.OfflineRate"), luau(f, "CropConfig.OfflineCapSeconds") / 3600],  # hours
+        # field pets (E1b): slot prices, slots from pens; PetConfig's aptitude numbers
+        "pet_slots": luau(f, "CropConfig.PetSlotPrices"),
+        "pets_from_pens": luau(f, "CropConfig.PetSlotsFromPens"),
+        "tending": luau("PetConfig.luau", "PetConfig.TendingChance"),
+        "apt_caps": luau("PetConfig.luau", "PetConfig.AptitudeCaps"),
+        "apt_strength": luau("PetConfig.luau", "PetConfig.AptitudeStrength"),
+        "apt_xp": [luau("PetConfig.luau", "PetConfig.AptitudeXpFirst") / 3600, luau("PetConfig.luau", "PetConfig.AptitudeXpRatio")],  # hours, ratio
     }
     P["crop_cfg"] = cfg
 
@@ -269,6 +281,12 @@ def apply_crop_config(P):
     F["renown"].update({"k": cfg["renown"][1], "p": cfg["renown"][2], "weight": {t + 1: w for t, w in enumerate(points)}})
     F["capacity"] = cfg["barn_capacity"]
     F["online_rate"], F["offline_rate"], F["offline_cap_h"] = cfg["rates"]
+    FP = F["pets"]
+    FP["slots"] = list(cfg["pet_slots"])
+    FP["tending"] = dict(cfg["tending"])
+    FP["cap"] = dict(cfg["apt_caps"])
+    FP["strength"] = list(cfg["apt_strength"])
+    FP["xp_first"], FP["xp_ratio"] = cfg["apt_xp"]
 
     by_id = {c[0]: c for c in cfg["crops"]}
     for d in CROP_DEFS:
@@ -368,6 +386,9 @@ def pin_values(P):
         "crop_field_renown": P["crop_cfg"]["renown"],  # [points per harvest by tier, RenownK, RenownP]
         "crop_field_barn_capacity": P["crop_cfg"]["barn_capacity"],
         "crop_field_rates": P["crop_cfg"]["rates"],  # [online rate, offline rate, offline cap in hours]
+        "field_pet_slots": P["crop_cfg"]["pet_slots"],  # CropConfig.PetSlotPrices
+        "field_pets_from_pens": P["crop_cfg"]["pets_from_pens"],  # CropConfig.PetSlotsFromPens
+        "field_pet_aptitudes": [P["crop_cfg"]["tending"], P["crop_cfg"]["apt_caps"], P["crop_cfg"]["apt_strength"], P["crop_cfg"]["apt_xp"]],  # PetConfig
     }
     for s in P["stages"]:
         if s["built"]:
@@ -1528,7 +1549,7 @@ def field_checks(P, days=60, seeds=6):
     for arch in ARCHETYPES:
         nm = arch["name"]
         bad = [pol for pol in POLICIES if not (G[(nm, pol)]["b_struct"] and G[(nm, pol)]["pot_g"] > G[(nm, pol)]["pot_0"] + 1e-9
-                                                and G[(nm, pol)]["net_g"] > G[(nm, pol)]["net_0"])]
+                                                and G[(nm, pol)]["net_g"] >= G[(nm, pol)]["net_0"] * (1 - EDGE_TOL))]
         d = "; ".join(f"{pol}: 24 h potential {n(G[(nm, pol)]['pot_g'])} with / {n(G[(nm, pol)]['pot_0'])} without Tending pets, net/day {n(G[(nm, pol)]['net_g'])} / {n(G[(nm, pol)]['net_0'])}"
                       for pol in POLICIES)
         res.append((f"5 B Field with Tending pets beats the same field without them, {nm}", not bad, d))
@@ -1548,7 +1569,7 @@ def field_checks(P, days=60, seeds=6):
         ms = [G[(nm, pol)] for pol in POLICIES]
         r = min(m["oo_ratio"] for m in ms)
         res.append((f"O Online income per hour >= {need:.1f}x offline income per hour, {nm} (online_rate {FIELD['online_rate']}, offline_rate {FIELD['offline_rate']})",
-                    r >= need - 1e-6 and min(m["inc_off"] for m in ms) > 0,
+                    r >= need * (1 - EDGE_TOL) and min(m["inc_off"] for m in ms) > 0,
                     f"garden income earned in online hours {min(m['on_share'] for m in ms):.0%}-{max(m['on_share'] for m in ms):.0%} (online {ms[0]['on_hours']:.1f} h a day); "
                     f"per hour online {n(min(m['inc_h_on'] for m in ms))} vs offline {n(max(m['inc_h_off'] for m in ms))} = {r:.1f}x"))
     for arch in ARCHETYPES:

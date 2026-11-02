@@ -235,4 +235,152 @@ function PetConfig.SellValue(kind: string): number
 	return rarity and rarity.sellValue or 0
 end
 
+-- Aptitudes (E1b, docs/EXPANSION.md §4, numbers from docs/ECONOMY.md → "Field-pet re-run"): the jobs a pet is born with, each with
+-- its own level 1..cap raised by doing the job. Stored as Pets[uid].Apt = { [id] = { L, XP } } (XP = weighted field seconds
+-- towards the next level) and Pets[uid].Spec (Pest-control speciality). Ids are stored: never rename one. Rolled once (at hatch,
+-- or on load for pets from before E1b) and never rerolled. Only the ids in Shown do something yet (E1b: Tending).
+PetConfig.Aptitudes = { "Tending", "Fertilising", "PestControl", "Weeding", "Scouting", "Crafting" }
+PetConfig.Shown = { Tending = true }
+PetConfig.Specs = { "Crows", "Moles", "Slugs", "Raccoons" }
+-- chance of Tending by rarity (the model's: aptitudes at birth / 5), independent of the kind so the economy model holds
+PetConfig.TendingChance = { Common = 0.2, Uncommon = 0.22, Rare = 0.4, Epic = 0.5, Legendary = 0.6 }
+-- aptitudes at birth by rarity: { count, chance of one more }
+PetConfig.AptitudeCount = { Common = { 1, 0 }, Uncommon = { 1, 0.1 }, Rare = { 2, 0 }, Epic = { 2, 0.5 }, Legendary = { 3, 0 } }
+PetConfig.AptitudeCaps = { Common = 6, Uncommon = 7, Rare = 8, Epic = 9, Legendary = 10 }
+-- the kind leans the draw of the other aptitudes (weight LeanWeight against 1); Owl's Pest control is always against raccoons
+PetConfig.KindLean = { Cat = "PestControl", Dog = "PestControl", Bunny = "Fertilising", Fox = "Scouting", Owl = "PestControl",
+	Panda = "Weeding", Dragon = "Fertilising", Phoenix = "Scouting" }
+PetConfig.LeanWeight = 3
+PetConfig.KindSpec = { Owl = "Raccoons" }
+-- effect of an aptitude level in share of the maximum (Tending: the chance a ripe crop is harvested and replanted at once)
+PetConfig.AptitudeStrength = { 0.20, 0.35, 0.48, 0.59, 0.68, 0.76, 0.83, 0.89, 0.95, 1.00 }
+PetConfig.AptitudeXpFirst = 10 * 3600 -- weighted field seconds from level 1 to 2
+PetConfig.AptitudeXpRatio = 1.56 -- each next level takes this much longer
+PetConfig.LiveLevelStep = 4 -- a pet from before E1b starts its aptitudes at ceil(pet level / LiveLevelStep)
+
+-- pseudo-random generator seeded from `text` (deterministic: the same text always gives the same sequence)
+local function seeded(text: string): Random
+	local h = 0
+	for index = 1, #text do
+		h = (h * 31 + string.byte(text, index)) % 2147483647
+	end
+	return Random.new(h)
+end
+
+-- Rolls the aptitudes of a pet of `kind` from `seed` (owner and uid, "userId/uid"): a table { [id] = { L = level, XP = 0 } } and the
+-- speciality (or nil). `withTending` makes Tending one of them (decision 3: a hatch while the owner has no Tending pet).
+function PetConfig.RollAptitudes(seed: string, kind: string, withTending: boolean?, level: number?): ({ [string]: any }, string?)
+	local rarityId = PetConfig.Kinds[kind] or "Common"
+	local rng = seeded("apt:" .. seed .. ":" .. kind)
+	local count = PetConfig.AptitudeCount[rarityId]
+	local total = count[1] + (if rng:NextNumber() < count[2] then 1 else 0)
+	local start = math.clamp(level or 1, 1, PetConfig.AptitudeCaps[rarityId])
+	local apt = {}
+	local tendingRoll = rng:NextNumber()
+	if withTending or tendingRoll < PetConfig.TendingChance[rarityId] then
+		apt.Tending = { L = start, XP = 0 }
+		total -= 1
+	end
+	local pool = {}
+	for _, id in PetConfig.Aptitudes do
+		if id ~= "Tending" then
+			table.insert(pool, id)
+		end
+	end
+	while total > 0 and #pool > 0 do
+		local weights, sum = {}, 0
+		for index, id in pool do
+			weights[index] = if PetConfig.KindLean[kind] == id then PetConfig.LeanWeight else 1
+			sum += weights[index]
+		end
+		local pick = rng:NextNumber() * sum
+		local chosen = #pool
+		for index, weight in weights do
+			pick -= weight
+			if pick < 0 then
+				chosen = index
+				break
+			end
+		end
+		apt[pool[chosen]] = { L = start, XP = 0 }
+		table.remove(pool, chosen)
+		total -= 1
+	end
+	local spec = nil
+	if apt.PestControl then
+		spec = PetConfig.KindSpec[kind] or PetConfig.Specs[rng:NextInteger(1, #PetConfig.Specs)]
+	end
+	return apt, spec
+end
+
+-- Aptitude level cap of a pet of `kind`.
+function PetConfig.AptitudeCap(kind: string): number
+	return PetConfig.AptitudeCaps[PetConfig.Kinds[kind] or "Common"]
+end
+
+-- The pet's level in aptitude `id` (0 when it does not have it).
+function PetConfig.AptitudeLevel(pet, id: string): number
+	local entry = type(pet) == "table" and type(pet.Apt) == "table" and pet.Apt[id]
+	return if type(entry) == "table" and type(entry.L) == "number" then entry.L else 0
+end
+
+-- Effect share of aptitude `level` (0 for level 0).
+function PetConfig.Strength(level: number): number
+	return PetConfig.AptitudeStrength[math.clamp(math.floor(level), 0, #PetConfig.AptitudeStrength)] or 0
+end
+
+-- Weighted field seconds from aptitude `level` to level + 1.
+function PetConfig.AptitudeXpToNext(level: number): number
+	return math.floor(PetConfig.AptitudeXpFirst * PetConfig.AptitudeXpRatio ^ (level - 1) + 0.5)
+end
+
+-- Adds `seconds` of weighted field time to the pet's aptitude `id` (mutates it): levels up while the XP reaches the next step, up to
+-- the rarity cap (at the cap XP stays 0). Returns the levels gained (0 without that aptitude).
+function PetConfig.GainAptitudeXp(pet, id: string, seconds: number): number
+	local entry = type(pet.Apt) == "table" and pet.Apt[id]
+	if type(entry) ~= "table" then
+		return 0
+	end
+	local cap = PetConfig.AptitudeCap(pet.Kind)
+	local xp = entry.XP + math.max(0, seconds)
+	local gained = 0
+	while entry.L < cap and xp >= PetConfig.AptitudeXpToNext(entry.L) do
+		xp -= PetConfig.AptitudeXpToNext(entry.L)
+		entry.L += 1
+		gained += 1
+	end
+	entry.XP = if entry.L >= cap then 0 else xp
+	return gained
+end
+
+-- Cleans a stored Apt table in place for a pet of `kind` (unknown ids dropped, levels clamped to 1..cap, XP finite); true when it
+-- holds at least one aptitude.
+function PetConfig.CleanAptitudes(pet): boolean
+	if type(pet.Apt) ~= "table" then
+		return false
+	end
+	local cap = PetConfig.AptitudeCap(pet.Kind)
+	local clean, any = {}, false
+	for _, id in PetConfig.Aptitudes do
+		local entry = pet.Apt[id]
+		if type(entry) == "table" then
+			local level = if type(entry.L) == "number" and entry.L == entry.L then math.clamp(math.floor(entry.L), 1, cap) else 1
+			local xp = if type(entry.XP) == "number" and entry.XP == entry.XP and entry.XP < 1e12 then math.max(0, entry.XP) else 0
+			clean[id] = { L = level, XP = if level >= cap then 0 else xp }
+			any = true
+		end
+	end
+	pet.Apt = clean
+	if pet.Spec ~= nil and not (clean.PestControl and table.find(PetConfig.Specs, pet.Spec)) then
+		pet.Spec = nil
+	end
+	return any
+end
+
+-- Reach shape of aptitude `level` (docs/EXPANSION.md §3): 0 = the pet's own square (levels 1-3), 1 = plus the 4 next to it (4-6),
+-- 2 = the 3 x 3 block (7-10).
+function PetConfig.ReachShape(level: number): number
+	return if level >= 7 then 2 elseif level >= 4 then 1 else 0
+end
+
 return PetConfig

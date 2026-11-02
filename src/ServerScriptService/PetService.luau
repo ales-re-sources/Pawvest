@@ -8,8 +8,10 @@
 -- Result(action, ok, detailOrReason) (server → client). The equipped pets are mirrored to the EquippedPets player
 -- attribute ("Kind:Level:uid,…"). AddXP levels the equipped pets (stage finishes, coins, movement during a run). AddPet is the
 -- "new pet" step of every hatched egg; free eggs wait in FreeEggs until GardenIncubators places them (FreeEggsChanged).
--- A pet is either equipped or in a garden pen (P2a2), never both: Equip and SellPet reject a penned pet, and the garden
--- (GardenService) rejects an equipped one; PetsChanged.penned maps each penned uid to its pen index.
+-- A pet is either equipped, in a garden pen (P2a2) or on a field square (E1b), never two of them: Equip and SellPet reject a
+-- penned or field pet, and the garden (GardenService / GardenField) rejects an equipped one; PetsChanged.penned maps each penned
+-- uid to its pen index, PetsChanged.field each field pet's uid to its square. Every pet has aptitudes (Apt, Spec; PetConfig):
+-- rolled at hatch (AddPet) and, for pets from before E1b, once on join.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -88,6 +90,15 @@ local function publish(player: Player)
 			end
 		end
 	end
+	local field = {} -- [uid] = square (E1b)
+	local fieldPets = profile.Garden and profile.Garden.FieldPets
+	if type(fieldPets) == "table" then
+		for uid, entry in fieldPets do
+			if type(entry) == "table" and type(entry.Square) == "number" then
+				field[uid] = entry.Square
+			end
+		end
+	end
 	local equipped = {}
 	for _, uid in profile.EquippedPets do
 		local pet = profile.Pets[uid]
@@ -101,6 +112,7 @@ local function publish(player: Player)
 		freeEggs = profile.FreeEggs,
 		multiplier = PetConfig.Multiplier(equippedPets(profile)),
 		penned = penned,
+		field = field,
 	})
 end
 
@@ -133,7 +145,12 @@ function PetService.AddPet(player: Player, kind: string): (string?, boolean?)
 	end
 	local uid = tostring(profile.NextPetUid)
 	profile.NextPetUid += 1
-	profile.Pets[uid] = { Kind = kind, Level = 1, XP = 0 }
+	local hasTender = false -- E1b decision 3: a hatch while the owner has no Tending pet always gets Tending
+	for _, pet in profile.Pets do
+		hasTender = hasTender or PetConfig.AptitudeLevel(pet, "Tending") > 0
+	end
+	local apt, spec = PetConfig.RollAptitudes(player.UserId .. "/" .. uid, kind, not hasTender)
+	profile.Pets[uid] = { Kind = kind, Level = 1, XP = 0, Apt = apt, Spec = spec }
 	local equipped = #profile.EquippedPets < profile.PetSlots
 	if equipped then
 		table.insert(profile.EquippedPets, uid)
@@ -162,8 +179,18 @@ function PetService.AddXP(player: Player, amount: number): number
 	return gaining
 end
 
--- Drops equipped uids that no longer exist or exceed the slots (corrupt or hand-edited records).
-local function sanitize(profile)
+-- Drops equipped uids that no longer exist or exceed the slots (corrupt or hand-edited records). Pets without aptitudes (from before
+-- E1b) get them rolled once from the owner and uid, starting at ceil(pet level / LiveLevelStep).
+-- Returns true when aptitudes were rolled (the profile should be saved).
+local function sanitize(profile, player: Player): boolean
+	local rolled = false
+	for uid, pet in profile.Pets do
+		if not PetConfig.CleanAptitudes(pet) then
+			local level = math.ceil(PetConfig.ClampLevel(pet.Level) / PetConfig.LiveLevelStep)
+			pet.Apt, pet.Spec = PetConfig.RollAptitudes(player.UserId .. "/" .. uid, pet.Kind, false, level)
+			rolled = true
+		end
+	end
 	local kept = {}
 	for _, uid in profile.EquippedPets do
 		if
@@ -171,12 +198,14 @@ local function sanitize(profile)
 			and profile.Pets[uid]
 			and not table.find(kept, uid)
 			and not GardenConfig.IsPenned(profile, uid) -- equipped and penned never both (hand-edited records)
+			and not GardenConfig.FieldSquare(profile, uid) -- nor equipped and on the field
 			and #kept < profile.PetSlots
 		then
 			table.insert(kept, uid)
 		end
 	end
 	profile.EquippedPets = kept
+	return rolled
 end
 
 -- Join and admin reset: grants the launch egg once and publishes the state.
@@ -185,7 +214,9 @@ local function setup(player: Player)
 	if not profile then
 		return
 	end
-	sanitize(profile)
+	if sanitize(profile, player) then
+		task.spawn(PlayerProfile.Save, player)
+	end
 	if not profile.LaunchEgg then
 		profile.LaunchEgg = true
 		profile.FreeEggs[LAUNCH_EGG] = (profile.FreeEggs[LAUNCH_EGG] or 0) + 1
@@ -233,6 +264,9 @@ equipEvent.OnServerEvent:Connect(function(player, uid)
 	end
 	if GardenConfig.IsPenned(profile, uid) then
 		return reject(player, "Equip", "penned")
+	end
+	if GardenConfig.FieldSquare(profile, uid) then
+		return reject(player, "Equip", "field")
 	end
 	if #profile.EquippedPets >= profile.PetSlots then
 		return reject(player, "Equip", "slots")
@@ -293,6 +327,9 @@ sellEvent.OnServerEvent:Connect(function(player, uid)
 	end
 	if GardenConfig.IsPenned(profile, uid) then
 		return reject(player, "SellPet", "penned")
+	end
+	if GardenConfig.FieldSquare(profile, uid) then
+		return reject(player, "SellPet", "field")
 	end
 
 	local value = PetConfig.SellValue(pet.Kind)

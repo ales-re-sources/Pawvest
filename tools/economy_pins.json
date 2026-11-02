@@ -133,6 +133,51 @@
    }
   ]
  },
+ "field_pet_aptitudes": [
+  {
+   "Common": 0.2,
+   "Epic": 0.5,
+   "Legendary": 0.6,
+   "Rare": 0.4,
+   "Uncommon": 0.22
+  },
+  {
+   "Common": 6,
+   "Epic": 9,
+   "Legendary": 10,
+   "Rare": 8,
+   "Uncommon": 7
+  },
+  [
+   0.2,
+   0.35,
+   0.48,
+   0.59,
+   0.68,
+   0.76,
+   0.83,
+   0.89,
+   0.95,
+   1.0
+  ],
+  [
+   10.0,
+   1.56
+  ]
+ ],
+ "field_pet_slots": [
+  0,
+  2500,
+  9000
+ ],
+ "field_pets_from_pens": [
+  1,
+  2,
+  2,
+  3,
+  3,
+  3
+ ],
  "finish_base": 100,
  "foods": [
   [

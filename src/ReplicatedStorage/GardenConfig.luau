@@ -118,6 +118,13 @@ function GardenConfig.IsPenned(profile, uid: string): number?
 	return nil
 end
 
+-- Square (1..12) of the crop field where pet `uid` works (E1b: Garden.FieldPets[uid] = { Square, Job }), or nil.
+function GardenConfig.FieldSquare(profile, uid: string): number?
+	local garden = profile.Garden
+	local entry = type(garden) == "table" and type(garden.FieldPets) == "table" and garden.FieldPets[uid]
+	return if type(entry) == "table" and type(entry.Square) == "number" then entry.Square else nil
+end
+
 -- Incubators (P2b1, docs/GDD.md §7.6): garden eggs (PetConfig.Eggs with hatchSeconds) bought at an empty incubator hatch
 -- in real server time, also offline. Stored as profile.Garden.Incubators["1".."3"] = { Egg, StartedAt, ReadyAt } (server
 -- os.time()) and Garden.IncubatorCount (owned incubators, unlocked in order).

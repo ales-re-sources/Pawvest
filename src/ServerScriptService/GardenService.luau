@@ -8,7 +8,8 @@
 -- the last settle and the next join pays the rest (capped).
 -- Remotes (ReplicatedStorage.GardenRemotes): Place(penIndex, uid), Remove(penIndex), BuyPen(expectedPen), RequestState()
 -- (client → server); State(state), Result(action, ok, detailOrReason), Payout(info) (server → client).
--- Nothing is drawn here: every client draws the plots from GardenRemotes.Plot (GardenPlotFeed, E1a1), which follows every publish.
+-- A player whose pens were converted into field pet slots (Garden.Converted, E1b, GardenField) has no pens: Place and BuyPen
+-- reject them ("field"). Nothing is drawn here: every client draws the plots from GardenRemotes.Plot (GardenPlotFeed, E1a1), which follows every publish.
 -- Sibling modules (GardenIncubators, GardenFood, GardenPlotFeed) add remotes, State fields and publish hooks through the hooks below.
 
 local Players = game:GetService("Players")
@@ -244,6 +245,9 @@ placeEvent.OnServerEvent:Connect(function(player, penIndex, uid)
 		return
 	end
 	local garden = profile.Garden
+	if garden.Converted then
+		return reject(player, "Place", "field") -- pens became field pet slots (E1b, GardenField)
+	end
 	if penIndex < 1 or penIndex > garden.PenCount then
 		return reject(player, "Place", "locked")
 	end
@@ -296,6 +300,9 @@ buyPenEvent.OnServerEvent:Connect(function(player, expectedPen)
 		return
 	end
 	local garden = profile.Garden
+	if garden.Converted then
+		return reject(player, "BuyPen", "field")
+	end
 	if garden.PenCount >= GardenConfig.MaxPens then
 		return reject(player, "BuyPen", "maxed")
 	end

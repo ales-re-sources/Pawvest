@@ -43,6 +43,12 @@ CropConfig.RenownK = 3 -- level L needs RenownK * L ^ RenownP points in total
 CropConfig.RenownP = 1.6
 CropConfig.BarnCapacity = 40 -- seeds of all crops together (fixed until the barn upgrade, E1c)
 
+-- Field pets (E1b, docs/ECONOMY.md → "Field-pet re-run"): PetSlotPrices[n] = price of the n-th field pet slot (slot 1 is free).
+-- A player's pens convert once: PetSlotsFromPens[pens bought] slots, the Coins paid for pens beyond those slots' prices refunded.
+-- A Tending pet harvests only while the crops in the barn (Items) are fewer than BarnCapacity.
+CropConfig.PetSlotPrices = { 0, 2500, 9000 }
+CropConfig.PetSlotsFromPens = { 1, 2, 2, 3, 3, 3 }
+
 -- Passive rates (ECONOMY open decision 5: placeholders).
 CropConfig.OnlineRate = 1.0
 CropConfig.OfflineRate = 0.33
@@ -88,6 +94,24 @@ end
 -- Expansion that buys the next square of a field with `count` squares, or nil at MaxSquares.
 function CropConfig.NextExpansion(count: number)
 	return CropConfig.Expansions[count - CropConfig.StartSquares + 1]
+end
+
+-- Squares (1..count) a pet on `square` reaches with reach `shape` (PetConfig.ReachShape: 0 own, 1 plus the 4 next to it, 2 the
+-- 3 x 3 block), on the field grid of Columns squares per row.
+function CropConfig.Reach(square: number, shape: number, count: number): { number }
+	local col, row = (square - 1) % CropConfig.Columns, (square - 1) // CropConfig.Columns
+	local list = {}
+	for dy = -1, 1 do
+		for dx = -1, 1 do
+			local inShape = (dx == 0 and dy == 0) or (shape == 1 and (dx == 0 or dy == 0)) or shape >= 2
+			local c, r = col + dx, row + dy
+			local n = r * CropConfig.Columns + c + 1
+			if inShape and c >= 0 and c < CropConfig.Columns and r >= 0 and n <= count then
+				table.insert(list, n)
+			end
+		end
+	end
+	return list
 end
 
 -- Seeds of every crop in `seeds` together (the barn holds BarnCapacity).
