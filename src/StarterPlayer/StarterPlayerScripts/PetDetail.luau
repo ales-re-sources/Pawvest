@@ -199,12 +199,22 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 8) }),
 		create("UIPadding", { PaddingRight = UDim.new(0, 6), PaddingTop = UDim.new(0, 2), PaddingLeft = UDim.new(0, 2) }),
 	})
+	-- a Frame lets clicks through to the list's buttons under it: this empty button under the page's contents takes them
+	local blocker = create("TextButton", {
+		Name = "Blocker",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		Text = "",
+		AutoButtonColor = false,
+		Selectable = false,
+		ZIndex = 0,
+	})
 	local page = create("Frame", {
 		Name = "Detail",
 		Size = UDim2.fromScale(1, 1),
 		ZIndex = PAGE_Z,
 		Visible = false,
-	}, { titleLabel, backButton, closeButton, content })
+	}, { blocker, titleLabel, backButton, closeButton, content })
 	StudStyle.Panel(page, color)
 	-- PetsGui uses Global ZIndex (a ScreenGui made in code): everything on the page is lifted above the list under it
 	local function lift(instance: Instance)
