@@ -15,6 +15,7 @@ local FIELD_FRONT = 22
 local function fresh()
 	local folder = Instance.new("Folder")
 	ReplicatedStorage.PetConfig:Clone().Parent = folder
+	ReplicatedStorage.AdminConfig:Clone().Parent = folder
 	local copy = ReplicatedStorage.GardenConfig:Clone()
 	copy.Parent = folder
 	return require(copy)

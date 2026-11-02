@@ -1,0 +1,106 @@
+-- CropConfig: the crop field's shared numbers and pure helpers (E1a2, docs/EXPANSION.md §5, numbers from docs/ECONOMY.md →
+-- "Inputs ready for E1"). Shared: the server prices, grows and pays from this table only, the client renders it. Pure data +
+-- helpers, no side effects. Crop ids are stored in profiles (Garden.Field.Squares[n].Crop, Garden.Seeds, Garden.Items):
+-- never rename one. tools/economy.py reads this file and `check` pins it.
+-- Growth: a planted square earns growth seconds (`Grown`) at OnlineRate while its owner is online and at OfflineRate for
+-- at most OfflineCapSeconds of each absence; a crop is ripe at Grown >= growSeconds and waits (never rots).
+
+local CropConfig = {}
+
+-- Crops in catalogue order. letter: one character in the plot message (GardenRemotes.Plot field.crops); renown: Renown level
+-- that unlocks the crop; sale / seed in Coins (seed = 25 % of the sale); tier: Renown points per harvest (RenownPoints).
+CropConfig.Crops = {
+	{ id = "Potato", name = "Potato", icon = "🥔", letter = "a", tier = 1, growSeconds = 3 * 3600, sale = 24, seed = 6, renown = 0 }, -- loc: ignore
+	{ id = "Corn", name = "Corn", icon = "🌽", letter = "b", tier = 2, growSeconds = 6 * 3600, sale = 108, seed = 27, renown = 8 }, -- loc: ignore
+	{ id = "Pumpkin", name = "Pumpkin", icon = "🎃", letter = "c", tier = 2, growSeconds = 8 * 3600, sale = 144, seed = 36, renown = 8 }, -- loc: ignore
+	{ id = "GiantMelon", name = "Giant melon", icon = "🍉", letter = "d", tier = 3, growSeconds = 12 * 3600, sale = 432, seed = 108, renown = 25 }, -- loc: ignore
+}
+CropConfig.ById = {}
+CropConfig.ByLetter = {}
+for _, crop in CropConfig.Crops do
+	CropConfig.ById[crop.id] = crop
+	CropConfig.ByLetter[crop.letter] = crop
+end
+
+CropConfig.StartSquares = 4 -- a new field (E1a2 decision 3: with StartSeeds, so the first plant needs no shop)
+CropConfig.StartSeeds = { Potato = 4 }
+CropConfig.MaxSquares = 12
+CropConfig.Columns = 4 -- squares per field row (4 x 3 at 12 squares; PlotView draws row by row from the plot outwards)
+-- Expansions[n] buys square StartSquares + n: Coins and the Renown level it needs.
+CropConfig.Expansions = {
+	{ price = 600, renown = 1 },
+	{ price = 1500, renown = 2 },
+	{ price = 3500, renown = 4 },
+	{ price = 7500, renown = 7 },
+	{ price = 14000, renown = 10 },
+	{ price = 24000, renown = 14 },
+	{ price = 40000, renown = 19 },
+	{ price = 65000, renown = 25 },
+}
+
+CropConfig.RenownPoints = { 1, 3, 6, 12 } -- points per harvest by crop tier (4 = rare crops, E2)
+CropConfig.RenownK = 3 -- level L needs RenownK * L ^ RenownP points in total
+CropConfig.RenownP = 1.6
+CropConfig.BarnCapacity = 40 -- seeds of all crops together (fixed until the barn upgrade, E1c)
+
+-- Passive rates (ECONOMY open decision 5: placeholders).
+CropConfig.OnlineRate = 1.0
+CropConfig.OfflineRate = 0.33
+CropConfig.OfflineCapSeconds = 12 * 3600
+CropConfig.SettleSeconds = 60 -- online growth is settled at least this often (and before every field action, on join and leave)
+
+-- Points needed in total for Renown level `level` (0 for level 0).
+function CropConfig.PointsFor(level: number): number
+	if level <= 0 then
+		return 0
+	end
+	return math.ceil(CropConfig.RenownK * level ^ CropConfig.RenownP - 1e-9)
+end
+
+-- Renown level reached with `points` (the highest L with PointsFor(L) <= points).
+function CropConfig.RenownLevel(points: number): number
+	if type(points) ~= "number" or points ~= points or points < CropConfig.PointsFor(1) then
+		return 0
+	end
+	local level = math.floor((points / CropConfig.RenownK) ^ (1 / CropConfig.RenownP))
+	while CropConfig.PointsFor(level + 1) <= points do
+		level += 1
+	end
+	while level > 0 and CropConfig.PointsFor(level) > points do
+		level -= 1
+	end
+	return level
+end
+
+-- Growth seconds earned over `online` seconds with the owner present and an absence of `offline` seconds (capped).
+function CropConfig.Growth(online: number, offline: number): number
+	return math.max(0, online) * CropConfig.OnlineRate + math.min(math.max(0, offline), CropConfig.OfflineCapSeconds) * CropConfig.OfflineRate
+end
+
+-- Look stage 1..3 of a planted crop (3 = ripe), from its growth seconds.
+function CropConfig.Stage(crop, grown: number): number
+	if grown >= crop.growSeconds then
+		return 3
+	end
+	return if grown >= crop.growSeconds / 2 then 2 else 1
+end
+
+-- Expansion that buys the next square of a field with `count` squares, or nil at MaxSquares.
+function CropConfig.NextExpansion(count: number)
+	return CropConfig.Expansions[count - CropConfig.StartSquares + 1]
+end
+
+-- Seeds of every crop in `seeds` together (the barn holds BarnCapacity).
+function CropConfig.SeedTotal(seeds): number
+	local total = 0
+	if type(seeds) == "table" then
+		for _, count in seeds do
+			if type(count) == "number" then
+				total += count
+			end
+		end
+	end
+	return total
+end
+
+return CropConfig

@@ -223,6 +223,10 @@ function Locale.FoodName(food): string -- an entry of GardenConfig.Foods
 	return named("food.name." .. food.id, food.name)
 end
 
+function Locale.CropName(crop): string -- an entry of CropConfig.Crops
+	return named("crop.name." .. crop.id, crop.name)
+end
+
 -- What buying `level` of `talent` gives: the per-level text when the talent has one (talent.effect.<id>.<level>), else the
 -- talent's general effect (talent.effect.<id>); the config's English as the fallback
 function Locale.TalentEffect(talent, level: number): string

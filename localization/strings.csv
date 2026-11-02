@@ -319,3 +319,65 @@ sign.hubPortal,"Label of a portal that leads back to the hub (tutorial, worlds);
 sign.welcome,Welcome board in the tutorial,Welcome!,Vítej!,ok,h258fd7ce
 sign.giveUp.title,"Wooden sign on the checkpoint before the end of Stage 5 (title line, two short lines in big letters); hints that the stage is hard",Too tough?,Moc těžké?,new,hdd71c48b
 sign.giveUp.sub,"Same sign, second line; tells the player World 2 is open and can be tried first (World 2 is written out, no placeholder; Czech 2. svět)",Try World 2 first,Zkus nejdřív 2. svět,new,h49ad4ee9
+"# Crop field (E1a2: FieldClient, PlotView prompts)",,,,,
+field.button,HUD button near the own plot that opens the field panel (short; icon first),🌱 Field,🌱 Pole,new,h7f560217
+field.title,Title strip of the field panel,🌱 My field,🌱 Moje pole,new,h8630954b
+field.renown.level,Field panel header; {level} = Renown level (a garden level that grows with harvests; Czech: Pověst),Renown {level},Pověst {level},new,hea12a36b
+field.renown.next[one],"Field panel header; {count} = Renown points still missing for the next level, {level} = that next level. Form for 1",{count} more point to Renown {level},Do Pověsti {level} chybí {count} bod,new,hb55f2551
+field.renown.next[few],Form for 2-4 (Czech only),,Do Pověsti {level} chybí {count} body,new,hb55f2551
+field.renown.next[other],Form for 0 and 5+,{count} more points to Renown {level},Do Pověsti {level} chybí {count} bodů,new,hb55f2551
+field.renown.hint,Small hint under the Renown level,Harvest crops to earn Renown. A higher Renown unlocks new seeds and squares.,Sklízej plodiny a získávej Pověst. Vyšší Pověst odemyká nová semínka a políčka.,new,h8ded2086
+field.section.squares,Heading of the list of the field squares,Squares,Políčka,new,hf5039c4c
+field.square.ripe,"Square row, right aligned: the crop is ready to harvest (short)",Ripe!,Zralé!,new,hb1a0fa6a
+field.square.empty,"Square row, right aligned: nothing is planted (short)",Empty,Prázdné,new,hc1e47bd8
+field.square.note,Small note under the squares list: the countdowns,Times count while you stay online.,"Čas se počítá, jen když jsi ve hře.",new,hd0d3e42c
+field.section.seeds,Heading of the seed list (shop at the own plot),Seeds,Semínka,new,h8fa20aac
+field.seed.info,"Seed row, second and third line (\n = line break); {time} = grow time (""3 hours""), {sale} = Coins one harvested crop sells for, {seed} = Coins one seed costs, {stock} = seeds the player has",Grows in {time}\nSells for {sale} · Seed {seed} · You have {stock},Zraje {time}\nProdej {sale} · Semínko {seed} · Máš {stock},new,hefac51aa
+field.seed.locked,"Seed row of a crop above the player's Renown level, replaces the buy buttons; {level} = Renown level needed",🔒 Renown {level},🔒 Pověst {level},new,hb6e44305
+field.barn,"Line under the seed list; {total} = seeds held, {capacity} = what the barn holds",Barn: {total} / {capacity} seeds,Stodola: {total} / {capacity} semínek,new,hdfd10ae1
+field.seed.note,Small note under the seed list,Prices are in Coins.,Ceny jsou v mincích.,new,hd2ae55c1
+field.section.crops,Heading of the list of harvested crops that can be sold,Harvest,Sklizeň,new,h2c69834b
+field.crop.sell,Button on a harvested crop row: sell all of it; {coins} = Coins it is worth before the pet bonus (button is narrow: keep it short),Sell all · {coins},Prodat vše · {coins},new,hc18a15c3
+field.crops.note,Small note under the harvested crops,"Prices are in Coins, before the pet bonus.","Ceny jsou v mincích, před bonusem od mazlíčků.",new,hd4037cb5
+field.crops.empty,Harvested crops list when the player has none,Nothing to sell yet. Harvest ripe crops on your field.,Zatím nemáš co prodat. Sklidit můžeš zralé plodiny na poli.,new,hd1354325
+field.section.expand,Heading of the next-square offer,Bigger field,Větší pole,new,h7378b91b
+field.expand.info[one],"Offer for the next square; {n} = its number, {count} = price in Coins, {renown} = Renown level it needs. Form for 1",Square {n}: {count} Coin · Renown {renown},Políčko {n}: {count} mince · Pověst {renown},new,h50a038b9
+field.expand.info[few],Form for 2-4 (Czech only),,Políčko {n}: {count} mince · Pověst {renown},new,h50a038b9
+field.expand.info[other],Form for 0 and 5+,Square {n}: {count} Coins · Renown {renown},Políčko {n}: {count} mincí · Pověst {renown},new,h50a038b9
+field.expand.needRenown,Red line under the square offer when Renown is too low; {level} = Renown level needed,You need Renown {level},Potřebuješ Pověst {level},new,hd1d6d1fb
+field.expand.buy,Button: buy the next square,Buy,Koupit,new,h89aeaade
+field.expand.done,Shown when all 12 squares are bought,Your field is complete!,Tvoje pole je kompletní!,new,hb4aad4ae
+field.picker.title,Seed picker title; {n} = square number 1-12,Plant on square {n},Zasadit na políčko {n},new,h23b6b005
+field.picker.info,"Crop row in the seed picker; {stock} = seeds the player has, {time} = grow time (""3 hours"")",You have {stock} · grows in {time},Máš {stock} · zraje {time},new,h757c2c37
+field.picker.none,Seed picker when the player has no seeds that can be planted,You have no seeds. Buy some in the field panel.,Nemáš žádná semínka. Kup si je v panelu pole.,new,h20730b2e
+field.picker.shop,Button in the seed picker without seeds: opens the field panel at the seeds,Buy seeds,Koupit semínka,new,h7a9eff42
+field.toast.harvest,Toast after a harvest; {crop} = crop name,\+1 {crop},\+1 {crop},new,he71ea0cd
+field.toast.harvestUp,"Toast after a harvest that raised the Renown level; {crop} = crop name, {level} = new Renown level",\+1 {crop} · Renown {level}!,\+1 {crop} · Pověst {level}!,new,hb7ff6c60
+field.toast.sell[one],Toast after selling crops; {count} = Coins paid (pet bonus included). Form for 1,\+{count} Coin,\+{count} mince,new,h1befc8cc
+field.toast.sell[few],Form for 2-4 (Czech only),,\+{count} mince,new,h1befc8cc
+field.toast.sell[other],Form for 0 and 5+,\+{count} Coins,\+{count} mincí,new,h1befc8cc
+field.toast.seeds,"Toast after buying seeds; {crop} = crop name, {count} = how many seeds",Seeds: {crop} +{count},Semínka: {crop} +{count},new,h2341f01e
+field.toast.square,Toast after buying a square; {n} = its number,Square {n} bought!,Políčko {n} je tvoje!,new,h3dcc928c
+field.toast.plant,Toast after planting; {crop} = crop name,Planted: {crop},Zasazeno: {crop},new,h16c26af5
+field.prompt.plant,Prompt action text on an empty field square (short verb),Plant,Zasadit,new,h56269bbe
+field.prompt.harvest,Prompt action text on a ripe crop (short verb),Harvest,Sklidit,new,h2c69834b
+field.prompt.square,Prompt object text of an empty field square; {n} = square number 1-12,Square {n},Políčko {n},new,ha8b1cc41
+crop.name.Potato,"Crop name (singular, shown with its icon)",Potato,Brambora,new,ha65a72dc
+crop.name.Corn,"Crop name (singular, shown with its icon)",Corn,Kukuřice,new,hd0c37a5e
+crop.name.Pumpkin,"Crop name (singular, shown with its icon)",Pumpkin,Dýně,new,hdddc7a54
+crop.name.GiantMelon,"Crop name (singular, shown with its icon)",Giant melon,Obří meloun,new,h92fe756d
+field.reason.locked,The field is not open for this player yet (access),The field is not open for you yet,Pole ti zatím není k dispozici,new,h1c490ede
+field.reason.far,Refused: the player is not at their own plot,Walk to your plot first,Nejdřív dojdi ke své zahrádce,new,h876a55dc
+field.reason.loading,Refused: the player's data is still loading,Still loading...,Ještě se načítá…,new,hefd53ef6
+field.reason.noplot,Refused: no garden plot was free on this server,You have no plot on this server,Na tomhle serveru nemáš zahrádku,new,h089bd3d2
+field.reason.square,Refused: the square number does not exist,That square does not exist,Takové políčko není,new,h301a7d89
+field.reason.occupied,Refused: something already grows on the square,Something is already growing there,Tady už něco roste,new,h516d50f4
+field.reason.renown,Refused: Renown level too low for the crop or square,Your Renown is too low for that,Máš na to málo Pověsti,new,hcaccd9dd
+field.reason.seeds,Refused: no seeds of that crop,You have no seeds of that crop,Nemáš semínka téhle plodiny,new,h2fa0eaea
+field.reason.empty,Refused: nothing is planted on the square,Nothing is growing there,Tady nic neroste,new,hc2718b15
+field.reason.notripe,Refused: the crop is not ripe yet,It is not ripe yet,Ještě to není zralé,new,h63d6b782
+field.reason.barn,Refused: the barn would hold too many seeds,The barn is full,Stodola je plná,new,h2e5c9c0a
+field.reason.coins,Refused: too few Coins,Not enough Coins,Nemáš dost mincí,new,h35fbd693
+field.reason.items,Refused: the player has fewer crops than asked to sell,You do not have that many,Tolik jich nemáš,new,h7ce6df01
+field.reason.maxed,Refused: all squares are bought,Your field is complete,Tvoje pole je kompletní,new,hda4eabde
+field.reason.stale,"Refused: the panel showed old data (double click, lag)","Out of date, try again","Údaje se mezitím změnily, zkus to znovu",new,ha5b6c678

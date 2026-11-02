@@ -16,7 +16,9 @@ and reports the Coin economy.
   python tools/economy.py pin      # accept the current config values as the reviewed state (rewrites the pins)
 
 Drift workflow: when a price or rate changes in a config, `check` fails with the differing value. Re-run `report`, decide
-whether the model still holds, then `pin`. New numbers (crop field, Renown, expansion and upgrade prices, reserved sinks) live in the FIELD block below, provisional until E1.
+whether the model still holds, then `pin`. The crop field's numbers that E1a2 copied into src/ReplicatedStorage/CropConfig.luau (crops, squares, expansions, Renown, barn, online / offline
+rates) are read from that file and pinned like every other config. What CropConfig does not hold yet (upgrade prices, reserved sinks, the Gardener,
+rare crops, the optional Radish / Carrot / Trophy pumpkin, guardrail bands) stays in the FIELD / CROP_DEFS blocks below, provisional.
 All values are Coins before the pet multiplier unless a column says otherwise. Python 3.9+, standard library only.
 """
 import argparse
@@ -235,6 +237,48 @@ def lua_round(x):
     return math.floor(x + 0.5)
 
 
+def apply_crop_config(P):
+    """CropConfig.luau -> P["crop_cfg"] (what `pin` stores), the FIELD values marked (CropConfig) and the config crops of CROP_DEFS."""
+    f = "CropConfig.luau"
+    crops = luau(f, "CropConfig.Crops")
+    start, top = luau(f, "CropConfig.StartSquares"), luau(f, "CropConfig.MaxSquares")
+    exps = luau(f, "CropConfig.Expansions")
+    if start + len(exps) != top:
+        raise ValueError(f"CropConfig: StartSquares {start} + {len(exps)} Expansions != MaxSquares {top}")
+    points = luau(f, "CropConfig.RenownPoints")
+    cfg = {
+        "crops": [[c["id"], c["tier"], c["growSeconds"] / 3600, c["sale"], c["seed"], c["renown"]] for c in crops],  # grow time in hours
+        "squares": [start, top],
+        "expansions": [[e["price"], e["renown"]] for e in exps],
+        "renown": [points, luau(f, "CropConfig.RenownK"), luau(f, "CropConfig.RenownP")],
+        "barn_capacity": luau(f, "CropConfig.BarnCapacity"),
+        "rates": [luau(f, "CropConfig.OnlineRate"), luau(f, "CropConfig.OfflineRate"), luau(f, "CropConfig.OfflineCapSeconds") / 3600],  # hours
+    }
+    P["crop_cfg"] = cfg
+
+    gate = {}
+    for _, tier, _, _, _, renown in cfg["crops"]:
+        if gate.setdefault(tier, renown) != renown:
+            raise ValueError(f"CropConfig: crops of tier {tier} have different renown levels; the model gates per tier")
+    gate.setdefault(1, 0)
+    F = FIELD
+    F["start_squares"], F["max_squares"] = start, top
+    F["expansions"] = [(start + k + 1, price, renown) for k, (price, renown) in enumerate(cfg["expansions"])]
+    F["tier_gate"] = gate
+    F["renown"].update({"k": cfg["renown"][1], "p": cfg["renown"][2], "weight": {t + 1: w for t, w in enumerate(points)}})
+    F["capacity"] = cfg["barn_capacity"]
+    F["online_rate"], F["offline_rate"], F["offline_cap_h"] = cfg["rates"]
+
+    by_id = {c[0]: c for c in cfg["crops"]}
+    for d in CROP_DEFS:
+        if "cfg" in d:
+            _, tier, hours, sale, seed, renown = by_id[d["cfg"]]
+            d.update({"tier": tier, "h": int(hours) if float(hours).is_integer() else hours, "sale": sale, "seed": seed, "gate": renown})
+    missing = [i for i in by_id if i not in {d.get("cfg") for d in CROP_DEFS}]
+    if missing:
+        raise ValueError(f'CropConfig crops without a CROP_DEFS entry (add one with "cfg"): {missing}')
+
+
 def load():
     P = {}
     medals = luau("StageConfig.luau", "StageConfig.Medals")
@@ -291,6 +335,7 @@ def load():
         coins.setdefault(c["stage"], []).append(tiers[c["tier"]])
     P["coin_tiers"] = tiers
     P["coins_by_stage"] = coins
+    apply_crop_config(P)
     return P
 
 
@@ -315,6 +360,13 @@ def pin_values(P):
         "foods": [[f["id"], f["price"], f["xp"]] for f in P["foods"]],
         "coin_tiers": P["coin_tiers"],
         "coin_counts": {k: len(c) for k, c in sorted(P["coins_by_stage"].items())},
+        # CropConfig (E1a2), the crop field; grow time and offline cap in hours; read at load, so --offline-rate / --offline-cap do not show up as drift
+        "crop_field_crops": P["crop_cfg"]["crops"],  # [id, tier, grow hours, sale, seed, renown level]
+        "crop_field_squares": P["crop_cfg"]["squares"],  # [StartSquares, MaxSquares]
+        "crop_field_expansions": P["crop_cfg"]["expansions"],  # [price, renown level] per extra square
+        "crop_field_renown": P["crop_cfg"]["renown"],  # [points per harvest by tier, RenownK, RenownP]
+        "crop_field_barn_capacity": P["crop_cfg"]["barn_capacity"],
+        "crop_field_rates": P["crop_cfg"]["rates"],  # [online rate, offline rate, offline cap in hours]
     }
     for s in P["stages"]:
         if s["built"]:
@@ -446,17 +498,20 @@ SIM = {
 MULT_REF = 1.48  # pet multiplier of a developed player (cap +50 %), used by the static field tables
 
 FIELD = {
-    "scale": 0.3,  # global factor on the ladder below: the 20 / 45 / 90 / 150 of EXPANSION §5 break the 24-hour rule on a field of tens of squares
-    "ladder": {1: 20, 2: 45, 3: 90, 4: 150},  # net Coins per square-hour at scale 1, tier 4 = rare (obby-unlocked only)
+    # Values marked (CropConfig) are None here: apply_crop_config() fills them from src/ReplicatedStorage/CropConfig.luau in load(). Edit them there.
+    "scale": 0.3,  # global factor on the ladder below: the 20 / 45 / 90 / 150 of EXPANSION §5 break the 24-hour rule on a field of tens of squares.
+    #                The CropConfig crops keep their config sale / seed at this scale; other scales (--scale, the sweeps) derive prices from the ladder.
+    "ladder": {1: 20, 2: 45, 3: 90, 4: 150},  # net Coins per square-hour at scale 1, tier 4 = rare (obby-unlocked only); derives the model-only crops
     "seed_frac": 0.25,  # seed cost / sale price (EXPANSION §5: 20-30 %)
-    "max_squares": 12,  # the field the plot rework must draw (decided 2026-10-25: 12 squares at ladder scale ~0.3; the original ceiling was 150)
-    "start_squares": 4,
+    "max_squares": None,  # (CropConfig.MaxSquares) the field the plot draws (decided 2026-10-25: 12 squares at ladder scale ~0.3)
+    "start_squares": None,  # (CropConfig.StartSquares)
     # expansion tiers: (squares after the purchase, price in Coins, Renown gate); the free start field is `start_squares`
-    "expansions": [(5, 600, 1), (6, 1500, 2), (7, 3500, 4), (8, 7500, 7), (9, 14000, 10), (10, 24000, 14), (11, 40000, 19), (12, 65000, 25)],
-    "tier_gate": {1: 0, 2: 8, 3: 25},  # Renown needed to plant a tier (rare crops: seeds from the obby, no gate)
-    "renown": {"k": 3.0, "p": 1.6, "weight": {1: 1, 2: 3, 3: 6, 4: 12}, "requests_per_day": 0.0},  # points for level L = k x L^p; request board = placeholder
+    "expansions": None,  # (CropConfig.Expansions)
+    "tier_gate": None,  # (CropConfig.Crops[].renown, per tier) Renown needed to plant a tier (rare crops: seeds from the obby, no gate)
+    # points for level L = k x L^p; request board = placeholder
+    "renown": {"k": None, "p": None, "weight": None, "requests_per_day": 0.0},  # (CropConfig.RenownK / RenownP / RenownPoints)
     "gardener": {"share": 0.35, "squares": 1, "max_tier": 3},  # share of hatched pets with Green thumb; squares each Gardener replants; best tier it may plant
-    "capacity": 40,  # seeds the stock holds and crops the barn holds between two visits (limits the Gardener's cycles)
+    "capacity": None,  # (CropConfig.BarnCapacity) seeds the stock holds and crops the barn holds between two visits (limits the Gardener's cycles)
     # upgrades: levels cost `prices`; growth = grow time x (1 - step x level); barn = capacity + step x level; gardener = squares + step x level
     "upgrades": {
         "growth": {"step": 0.05, "prices": [3000, 8000, 20000, 45000]},
@@ -472,15 +527,24 @@ FIELD = {
     "garden_share_max_obby": 0.5,  # the garden must not be a majority of Obby main's income
     # Online vs offline (user rule 2026-10-24): everything passive (crop growth, Gardener replanting, pen production) runs at `online_rate` while the player is
     # in the experience and at `offline_rate` while away, for at most `offline_cap_h` hours after a session. Provisional: the user gave no number (open decision).
-    "online_rate": 1.0, "offline_rate": 0.33, "offline_cap_h": 12.0,  # pens keep GardenConfig.OfflineCapSeconds (8 h)
+    "online_rate": None, "offline_rate": None, "offline_cap_h": None,  # (CropConfig.OnlineRate / OfflineRate / OfflineCapSeconds); pens keep GardenConfig.OfflineCapSeconds (8 h)
 }
 
 # Crop catalogue: tier 1-3 by Renown gate, tier 4 = rare (one signature crop per world 1-3). `h` = grow time in hours. `size` = 2 means a 2 x 2 crop.
+# Entries with "cfg" are in CropConfig.Crops (that id): apply_crop_config() fills their tier, h (growSeconds / 3600), sale, seed and gate from it.
+# The other entries are MODEL-ONLY, NOT YET IN CropConfig: the optional crops of `--crops full` (Radish, Carrot, 2 x 2 Trophy pumpkin) and the rare
+# crops Rare W1 / W2 / W3 (come with milestone E2); their numbers are model parameters (sale / seed derive from the ladder x scale).
 CROP_DEFS = [
-    {"id": "Radish", "tier": 1, "h": 1 / 3}, {"id": "Carrot", "tier": 1, "h": 1}, {"id": "Potato", "tier": 1, "h": 3},
-    {"id": "Corn", "tier": 2, "h": 6}, {"id": "Pumpkin", "tier": 2, "h": 8},
-    {"id": "Giant melon", "tier": 3, "h": 12}, {"id": "Trophy pumpkin", "tier": 3, "h": 12, "size": 2},
-    {"id": "Rare W1", "tier": 4, "h": 6, "world": 1}, {"id": "Rare W2", "tier": 4, "h": 8, "world": 2}, {"id": "Rare W3", "tier": 4, "h": 10, "world": 3},
+    {"id": "Radish", "tier": 1, "h": 1 / 3},  # model-only, not in CropConfig
+    {"id": "Carrot", "tier": 1, "h": 1},  # model-only, not in CropConfig
+    {"id": "Potato", "cfg": "Potato"},
+    {"id": "Corn", "cfg": "Corn"},
+    {"id": "Pumpkin", "cfg": "Pumpkin"},
+    {"id": "Giant melon", "cfg": "GiantMelon"},  # the CropConfig id is GiantMelon
+    {"id": "Trophy pumpkin", "tier": 3, "h": 12, "size": 2},  # model-only, not in CropConfig
+    {"id": "Rare W1", "tier": 4, "h": 6, "world": 1},  # model-only, rare crops come with E2 (not in CropConfig)
+    {"id": "Rare W2", "tier": 4, "h": 8, "world": 2},  # model-only (E2)
+    {"id": "Rare W3", "tier": 4, "h": 10, "world": 3},  # model-only (E2)
 ]
 CATALOGUES = {
     "min": ["Potato", "Pumpkin", "Giant melon", "Rare W1", "Rare W2", "Rare W3"],  # one per tier + one rare per world
@@ -510,8 +574,10 @@ def make_crops(scale, catalogue):
         net_h = F["ladder"][c["tier"]] * scale
         sale = max(2, round(net_h * c["h"] * size / (1 - F["seed_frac"])))
         seed = max(1, round(sale * F["seed_frac"]))
+        if "cfg" in c and scale == F["scale"]:  # a CropConfig crop at the model's own scale: the config's prices, not the ladder's
+            sale, seed = c["sale"], c["seed"]
         crops[c["id"]] = {"id": c["id"], "tier": c["tier"], "h": c["h"], "size": size, "sale": sale, "seed": seed, "net": sale - seed,
-                          "rare": c["tier"] == 4, "world": c.get("world"), "gate": F["tier_gate"].get(c["tier"], 0)}
+                          "rare": c["tier"] == 4, "world": c.get("world"), "gate": c.get("gate", F["tier_gate"].get(c["tier"], 0))}
     return crops
 
 

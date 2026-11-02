@@ -7,7 +7,8 @@
 --     GardenViewField = squares (0 = none) adds a stand-in field to every plot (budget checks, ROADMAP E1a1 check 5).
 -- Detail by horizontal distance from the character to the plot centre: full ≤ 60 studs, mid ≤ 120 (pets as blocks), low ≤ 300,
 -- nothing beyond (10 studs of hysteresis). Builds run on Heartbeat within BUDGET seconds per frame, the own plot first, then the
--- nearest. The own plot's pads and incubators carry prompts that call the handlers registered with OnPen / OnIncubator.
+-- nearest. The own plot's pads, incubators and field squares carry prompts that call the handlers registered with OnPen /
+-- OnIncubator / OnSquare.
 -- In Studio the folder carries the attributes Instances and Pending (tests).
 
 local Players = game:GetService("Players")
@@ -37,7 +38,7 @@ folder.Parent = workspace
 local views = {} -- [slot] = PlotView
 local real = {} -- [userId] = state from the server
 local order = {} -- slots in build order (own first, then by distance)
-local handlers = { pen = nil, incubator = nil, levelUp = nil }
+local handlers = { pen = nil, incubator = nil, square = nil, levelUp = nil }
 
 local GardenView = {}
 
@@ -51,6 +52,11 @@ end
 -- fn(incubator, base) when an incubator prompt of the own plot is triggered.
 function GardenView.OnIncubator(fn: (number, BasePart) -> ())
 	handlers.incubator = fn
+end
+
+-- fn(square, action, soil) when a field square prompt of the own plot is triggered: action "plant" (empty) / "harvest" (ripe).
+function GardenView.OnSquare(fn: (number, string, BasePart) -> ())
+	handlers.square = fn
 end
 
 -- fn(model, kind, level) when a penned pet levelled up and its new model is drawn (any plot in full detail).
@@ -193,6 +199,11 @@ local function refresh()
 					onIncubator = function(n, base)
 						if handlers.incubator then
 							handlers.incubator(n, base)
+						end
+					end,
+					onSquare = function(square, action, soil)
+						if handlers.square then
+							handlers.square(square, action, soil)
 						end
 					end,
 					onLevelUp = function(model, kind, level)

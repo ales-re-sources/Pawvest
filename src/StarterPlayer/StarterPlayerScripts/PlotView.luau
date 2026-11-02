@@ -6,7 +6,8 @@
 -- A plot is split into pieces (base, pen1..6, inc1..3, row1..n of the field). SetState / SetDetail / Relabel only mark the
 -- pieces whose look changed; Step builds marked pieces until a deadline, so a build is spread over frames by the caller.
 -- State: { name, penCount, pens = { [1..6] = "Kind:Level:uid" or "" }, incCount, eggs = { [1..3] = "EggId:readyAt" or "" },
--- field = { cols, rows, crops = two characters per square: crop letter a-f (or "." for none) + stage 0-3 } } or { free = true }
+-- field = { cols, rows, crops = two characters per square: crop letter (CropConfig, a-f in synthetic plots) + stage 1-3
+-- (3 = ripe), ".0" an empty square, "#0" a square not bought yet } } or { free = true }
 -- (a slot nobody holds: floor, sign "Free plot", grey pads and incubators).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -15,6 +16,7 @@ local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local PetLook = require(ReplicatedStorage:WaitForChild("PetLook"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
+local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 
 local PetModels = ReplicatedStorage:WaitForChild("PetModels")
 
@@ -44,11 +46,12 @@ local COLORS = {
 	nest = Color3.fromRGB(225, 195, 110),
 	soil = Color3.fromRGB(105, 70, 45),
 }
-local CROP_COLORS = {
-	a = Color3.fromRGB(230, 200, 90),
-	b = Color3.fromRGB(240, 120, 40),
-	c = Color3.fromRGB(220, 60, 60),
-	d = Color3.fromRGB(140, 210, 80),
+local SPROUT = Color3.fromRGB(110, 190, 80) -- unripe crops (stage 1-2)
+local CROP_COLORS = { -- ripe crops, by letter (CropConfig: a Potato, b Corn, c Pumpkin, d Giant melon; e, f synthetic only)
+	a = Color3.fromRGB(196, 150, 90),
+	b = Color3.fromRGB(245, 210, 60),
+	c = Color3.fromRGB(240, 130, 40),
+	d = Color3.fromRGB(80, 170, 70),
 	e = Color3.fromRGB(150, 90, 200),
 	f = Color3.fromRGB(90, 200, 140),
 }
@@ -140,7 +143,8 @@ end
 PlotView.ParseEgg = parseEgg
 
 -- New view of plot slot `slot` under `parent`. options: { own = boolean, onPen = fn(pen, pad), onIncubator = fn(n, base),
--- onLevelUp = fn(model, kind, level) } (prompts on the own plot only; onLevelUp for a pet that levelled up in its pen).
+-- onSquare = fn(square, action "plant" / "harvest", soil), onLevelUp = fn(model, kind, level) } (prompts on the own plot only;
+-- onLevelUp for a pet that levelled up in its pen).
 function PlotView.new(slot: number, parent: Instance, options)
 	local self = setmetatable({}, PlotView)
 	self.slot = slot
@@ -148,6 +152,7 @@ function PlotView.new(slot: number, parent: Instance, options)
 	self.own = options and options.own or false
 	self.onPen = options and options.onPen
 	self.onIncubator = options and options.onIncubator
+	self.onSquare = options and options.onSquare
 	self.onLevelUp = options and options.onLevelUp
 	self.detail = "none"
 	self.state = nil
@@ -208,7 +213,8 @@ function PlotView:signature(key: string): string
 	if detail == "low" then
 		return if n == 1 then string.format("low|%dx%d", field.cols, field.rows) else "none"
 	end
-	return string.format("full|%d|%s", field.cols, string.sub(field.crops, (n - 1) * field.cols * 2 + 1, n * field.cols * 2))
+	local prompts = self.own and detail == "full"
+	return string.format("%s|%d|%s|%s", if prompts then "own" else "full", field.cols, string.sub(field.crops, (n - 1) * field.cols * 2 + 1, n * field.cols * 2), if prompts then self.lang else "")
 end
 
 function PlotView:mark()
@@ -469,16 +475,36 @@ function PlotView:buildRow(model: Model, r: number)
 		return
 	end
 	local z = FIELD_FRONT + (r - 0.5) * pitch
+	local prompts = self.own and self.onSquare and self.detail == "full"
 	for c = 1, field.cols do
 		local x = (c - 0.5 - field.cols / 2) * pitch
-		part({ Name = "Soil", Size = Vector3.new(size, 0.4, size), CFrame = self:at(Vector3.new(x, 0.05, z)), Color = COLORS.soil, Material = Enum.Material.Ground }).Parent = model
-		local index = ((r - 1) * field.cols + c - 1) * 2 + 1
-		local crop = string.sub(field.crops, index, index)
+		local square = (r - 1) * field.cols + c
+		local index = (square - 1) * 2 + 1
+		local letter = string.sub(field.crops, index, index)
 		local stage = tonumber(string.sub(field.crops, index + 1, index + 1)) or 0
-		if CROP_COLORS[crop] and stage > 0 then
+		if letter == "#" then
+			continue -- not bought yet
+		end
+		local soil = part({ Name = "Soil" .. square, Size = Vector3.new(size, 0.4, size), CFrame = self:at(Vector3.new(x, 0.05, z)), Color = COLORS.soil, Material = Enum.Material.Ground })
+		soil.Parent = model
+		if CROP_COLORS[letter] and stage > 0 then
 			local height = 0.6 + stage * 0.7
 			local width = size * (0.3 + stage * 0.15)
-			part({ Name = "Crop", Size = Vector3.new(width, height, width), CFrame = self:at(Vector3.new(x, 0.25 + height / 2, z)), Color = CROP_COLORS[crop] }).Parent = model
+			local color = if stage >= 3 then CROP_COLORS[letter] else SPROUT
+			part({ Name = "Crop", Size = Vector3.new(width, height, width), CFrame = self:at(Vector3.new(x, 0.25 + height / 2, z)), Color = color }).Parent = model
+		end
+		local crop = CropConfig.ByLetter[letter]
+		if prompts and (letter == "." or (crop and stage >= 3)) then
+			local action = if letter == "." then "plant" else "harvest"
+			prompt(
+				soil,
+				Locale.T(if action == "plant" then "field.prompt.plant" else "field.prompt.harvest"),
+				if crop then Locale.CropName(crop) else Locale.T("field.prompt.square", { n = square }),
+				6,
+				function()
+					self.onSquare(square, action, soil)
+				end
+			)
 		end
 	end
 end

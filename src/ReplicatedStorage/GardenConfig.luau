@@ -8,6 +8,20 @@ GardenConfig.PlotSize = 40 -- studs, square
 GardenConfig.PlotAttribute = "GardenPlot" -- player attribute: slot of the borrowed plot (absent when none)
 GardenConfig.ShownFreeSlots = 12 -- slots 1..12 (ring 1, Max Players = 12) are drawn as "Free plot" while nobody holds them
 
+-- Crop field access (E1a2, docs/ROADMAP.md): "admins" = admins (AdminConfig) and Studio test users (UserIds < 0) only, "all"
+-- once E1 ships. A code constant, switched in git and live by publishing. Without access no Field data is written to the
+-- profile, every field remote is rejected and the plot messages carry no field.
+GardenConfig.FieldAccess = "admins"
+
+local AdminConfig = require(script.Parent:WaitForChild("AdminConfig"))
+
+function GardenConfig.HasFieldAccess(userId: number): boolean
+	if GardenConfig.FieldAccess == "all" then
+		return true
+	end
+	return AdminConfig.IsAdmin(userId) or (game:GetService("RunService"):IsStudio() and userId < 0)
+end
+
 -- Plot positions (E1.0, docs/EXPANSION.md §16): a pure formula slot → floor CFrame, shared by server and client, so no
 -- system needs a plot model to know where a plot is. Slots fill rings round the garden centre, ring by ring; each plot's
 -- front (LookVector, the sign side) faces the centre. Ring 1 has 12 plots at radius 112 (slot 1 on +X, counted towards

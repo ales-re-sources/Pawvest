@@ -3,8 +3,9 @@
 -- GardenRemotes.Plot (server → client): (userId, state) after every publish of that player's garden (only when the state
 -- changed) and (userId, nil) when the player leaves. GardenRemotes.RequestPlots (client → server, no arguments) re-sends every
 -- plot to the caller (a client that was still loading missed the broadcasts); 1 s cooldown.
--- State: { slot, name, penCount, pens = { [1..6] = "Kind:Level:uid" or "" }, incCount, eggs = { [1..3] = "EggId:readyAt" or "" } }
--- (readyAt in server os.time(), for the countdowns only).
+-- State: { slot, name, penCount, pens = { [1..6] = "Kind:Level:uid" or "" }, incCount, eggs = { [1..3] = "EggId:readyAt" or "" },
+-- field = GardenField.PlotField or nil } (readyAt in server os.time(), for the countdowns only). The field is sent only to
+-- viewers with field access (GardenConfig.HasFieldAccess, E1a2): everyone else gets the state without it.
 
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
@@ -16,6 +17,7 @@ local PetConfig = require(ReplicatedStorage.PetConfig)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local GardenPlots = require(ServerScriptService.GardenPlots)
 local GardenService = require(ServerScriptService.GardenService)
+local GardenField = require(ServerScriptService.GardenField)
 
 local REQUEST_COOLDOWN = 1 -- seconds per player
 
@@ -53,9 +55,19 @@ local function plotState(player: Player)
 		pens = pens,
 		incCount = garden.IncubatorCount or 1,
 		eggs = eggs,
+		field = GardenField.PlotField(player),
 	}
 end
 GardenPlotFeed.PlotState = plotState
+
+-- Sends `state` of `owner` to `viewer`, without the field for a viewer without field access.
+local function send(viewer: Player, owner: Player, state)
+	if state.field and not GardenConfig.HasFieldAccess(viewer.UserId) then
+		state = table.clone(state)
+		state.field = nil
+	end
+	plotEvent:FireClient(viewer, owner.UserId, state)
+end
 
 -- Sends `player`'s state to every client if it changed since the last broadcast.
 local function broadcast(player: Player)
@@ -71,7 +83,9 @@ local function broadcast(player: Player)
 		return
 	end
 	sent[player] = json
-	plotEvent:FireAllClients(player.UserId, state)
+	for _, viewer in Players:GetPlayers() do
+		send(viewer, player, state)
+	end
 end
 
 GardenService.AddPublishHook(function(player)
@@ -93,7 +107,7 @@ requestEvent.OnServerEvent:Connect(function(caller)
 	for _, player in Players:GetPlayers() do
 		local state = plotState(player)
 		if state then
-			plotEvent:FireClient(caller, player.UserId, state)
+			send(caller, player, state)
 		end
 	end
 end)

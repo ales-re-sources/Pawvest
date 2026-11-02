@@ -18,7 +18,8 @@ python tools/economy.py check --offline-rate 0.5 --offline-cap 24     # try othe
 ```
 
 To change a new number edit the `FIELD` / `CROP_DEFS` / `CATALOGUES` block in `tools/economy.py` and re-run `check`; existing game values are never
-edited there (a changed config makes `check` fail until `pin`).
+edited there (a changed config makes `check` fail until `pin`). The crop field's numbers that live in `src/ReplicatedStorage/CropConfig.luau` (crops, squares,
+expansions, Renown, barn, online / offline rates) are read from it and pinned (`crop_field_*`); Radish / Carrot / Trophy pumpkin and the rare crops stay model-only.
 
 ## The rules as simulated
 

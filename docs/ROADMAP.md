@@ -40,7 +40,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | M6a | Soft launch + World 1 balancing — World 1 balanced by feel (2026-10-30); live test open | – | – | – |
 | MU | Mobile UX check | – | – | – |
 | E1a1 | Plots drawn by the client, new ring layout (garden moved) | ✔ | ✔ | – |
-| E1a2–E5 | Garden MVP (see "Next"); E1a2 scoped | – | – | – |
+| E1a2 | Crop field behind admin access (CropConfig, GardenField, Garden panel) — second-client check open | ✔ | partial | – |
+| E1a3–E5 | Garden MVP (see "Next") | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
 
@@ -166,6 +167,22 @@ published with the new scene.
   owned square, shown within about 6 studs: Plant (seed picker over the stock) or Harvest; a **Garden panel** (button on the own plot): squares
   with crop and time left (`readyAt` sent as "ripe at, if you stay online"), seed catalogue with Renown locks, items and Sell, the next square
   with price and Renown, the Renown level. New texts through `strings.csv`.
+
+*Implemented 2026-11-02* (`CropConfig`, `GardenField`, `FieldClient`; `GardenPlotFeed` adds `field` per viewer, `PlotView` / `GardenView` draw it
+with square prompts and `OnSquare`; `tools/economy.py` reads `CropConfig`, pins `crop_field_*`). Studio, solo playtests on `Lekzdrh` (profile
+snapshotted and restored, stored profile edited between playtests): checks 7–14 and 16 and the one-client half of 15 pass. 7: with `Lekzdrh`
+taken out of `AdminConfig` in Studio only, `Plant` → `locked`, no `FieldGui`, no field drawn, the saved profile has no `Field` / `Seeds` /
+`Items` / `Renown`. 8: new field `Count` 4, `Seeds.Potato` 4, nothing planted; Plant with 0 seeds / on square 5 / on an occupied square / Corn at
+Renown 0 → `seeds` / `square` / `occupied` / `renown`, nothing changed. 9: the real prompt (E) opened the picker, Potato planted on square 1
+(`Seeds.Potato` 3, `Grown` 0, 61 after a minute online); at `Grown` 10 740 Harvest → `notripe`, a minute later the prompt said Harvest and E
+harvested it (`Items.Potato` +1, square empty, Renown 2 → 3, level 1, level-up toast). 10: `SettledAt` 3 h back → `Grown` 3 569 on join (3 564 +
+≈ 15 s between the write and the join at 0.33); 24 h back → 14 256 (capped). 11: Sell all 3 Potatoes, no pet equipped: Coins 3 → 75 (+72);
+Sell 5 with 0 owned → `items`. 12: three +10 clicks −60 each (4 231 → 4 051), the fourth → `barn` (33 + 10 > 40); +1 with 3 Coins → `coins`.
+13: Buy at Renown 0 → `renown`; at level 1 with 599 Coins → `coins`; with 10 075 → `Count` 5, Coins −600, a fifth soil drawn; `BuySquare(4)`
+afterwards → `stale`; at 12 squares → `maxed`. 14: Renown 3 / 84 / 518 points for L 1 / 8 / 25, monotonic to 2 000. 15: 30 synthetic plots with
+12-square fields 1 716 instances at most (limit 5 000); a full plot message 310 bytes. 16: `economy.py check` drift 0 (42 / 43, the known 5 B
+fail); `loc.py check` 0 errors, `lint` 0; Czech at a 374 px panel (phone portrait): 53 visible texts, every one fits (StudStyle glyphs measured).
+No console errors or warnings on server or client. **Open:** check 15's second client (a test user sees another test user's crops within 2 s).
 
 **Acceptance checks.** E1a1:
 1. `Workspace.Garden.Plots` is gone and a join adds **0** instances under server `Workspace`; a non-admin client draws its own plot with one pet
