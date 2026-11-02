@@ -1,7 +1,6 @@
--- StarBoard: "most stars" rankings (GDD §8). Server-only. The global board (hub; StarBoard.Top / Refresh / Changed) and one board
--- per built world (StarBoard.World(n), S5: the stars earned in that world, on the world's plaza) work the same way:
--- An OrderedDataStore keyed by UserId holds each player's stars (global: StageConfig.TotalStars of their medals; a world:
--- StageConfig.WorldStars).
+-- StarBoard: the hub's "most stars" ranking (GDD §8). Server-only (StarBoard.Top / Refresh / Changed). The per-world boards of S5
+-- were removed (2026-11-02); their `WorldStars_<n>` stores are orphaned.
+-- An OrderedDataStore keyed by UserId holds each player's stars (StageConfig.TotalStars of their medals).
 -- The entry is written only when the total changes: after a new medal (StageResults calls Sync), after an admin
 -- reset (removed) and once on join when the stored value differs from the profile. The profile stays the source of
 -- truth; the store is only a ranking. Entries with 0 stars do not exist.
@@ -52,8 +51,7 @@ local function resolveName(userId: number): string
 	return names[userId] or ("Player " .. userId) -- not cached, so a failed lookup is retried on the next read
 end
 
--- One ranking: an OrderedDataStore `storeName` keyed by UserId whose value is `starsOf(profile)`. Every board has its own
--- cache and write state.
+-- One ranking: an OrderedDataStore `storeName` keyed by UserId whose value is `starsOf(profile)`.
 local function newBoard(storeName: string, starsOf)
 	local store = DataStoreService:GetOrderedDataStore(storeName)
 
@@ -214,68 +212,24 @@ end
 local globalBoard = newBoard("MostStars", function(profile)
 	return StageConfig.TotalStars(profile.Medals)
 end)
-local worldBoards = {} -- [world index] = board; only worlds whose stages are built (a `soon` world has no stars to rank)
-for index, world in StageConfig.Worlds do
-	if not world.soon then
-		worldBoards[index] = newBoard("WorldStars_" .. index, function(profile)
-			return StageConfig.WorldStars(profile.Medals, index)
-		end)
-	end
-end
 
--- Global board (the hub's "most stars"): same API as before the world boards existed.
+-- The hub's "most stars" board; same API as before the (since removed) per-world boards.
 StarBoard.Changed = globalBoard.Changed
 StarBoard.Top = globalBoard.Top
 StarBoard.Refresh = globalBoard.Refresh
 
--- The board of the stars earned in world `index`. A world that is not built yet (`soon`) gets an always-empty stand-in, so its
--- plaza board can already be drawn.
-local empty = {}
-function StarBoard.World(index: number)
-	local board = worldBoards[index]
-	if board then
-		return board
-	end
-	if not empty[index] then
-		local never = Instance.new("BindableEvent")
-		empty[index] = {
-			Changed = never.Event,
-			Top = function()
-				return {}
-			end,
-			Refresh = function()
-				return {}
-			end,
-		}
-	end
-	return empty[index]
-end
-
-local function eachBoard(fn)
-	fn(globalBoard)
-	for _, board in worldBoards do
-		fn(board)
-	end
-end
-
--- Brings the player's entries on every board in line with their profile medals (no-op where it already matches).
+-- Brings the player's entry in line with their profile medals (no-op when it already matches).
 -- Safe to call at any time and from several threads; also called on join, after a new medal and after an admin reset.
 function StarBoard.Sync(player: Player)
-	eachBoard(function(board)
-		task.spawn(board.Sync, player)
-	end)
+	task.spawn(globalBoard.Sync, player)
 end
 
 local function onJoin(player: Player)
 	if not PlayerProfile.WaitFor(player) then
 		return
 	end
-	eachBoard(function(board)
-		task.spawn(function()
-			board.Learn(player)
-			board.Sync(player)
-		end)
-	end)
+	globalBoard.Learn(player)
+	globalBoard.Sync(player)
 end
 
 PlayerProfile.ProfileReset:Connect(StarBoard.Sync)
@@ -286,9 +240,7 @@ for _, player in Players:GetPlayers() do
 end
 
 Players.PlayerRemoving:Connect(function(player)
-	eachBoard(function(board)
-		board.Forget(player)
-	end)
+	globalBoard.Forget(player)
 end)
 
 return StarBoard

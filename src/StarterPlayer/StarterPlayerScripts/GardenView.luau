@@ -54,7 +54,8 @@ function GardenView.OnIncubator(fn: (number, BasePart) -> ())
 	handlers.incubator = fn
 end
 
--- fn(square, action, soil) when a field square prompt of the own plot is triggered: action "plant" (empty) / "harvest" (ripe).
+-- fn(square, action, soil) when a field square prompt of the own plot is triggered: action "plant" (empty) / "harvest" (ripe) /
+-- "pet" (the square's pet prompt: place or move a field pet, E1b).
 function GardenView.OnSquare(fn: (number, string, BasePart) -> ())
 	handlers.square = fn
 end
@@ -80,6 +81,15 @@ function GardenView.OwnPiece(key: string): Model?
 	local slot = ownSlot()
 	local view = slot and views[slot]
 	return view and view:Piece(key)
+end
+
+-- Tints the own field's `squares` (the reach of a pet being placed, E1b); nil clears.
+function GardenView.ShowReach(squares: { number }?)
+	local slot = ownSlot()
+	local view = slot and views[slot]
+	if view then
+		view:ShowReach(squares)
+	end
 end
 
 -- Every drawn pen pet model (full detail) of every plot.
@@ -124,7 +134,12 @@ local function syntheticField(slot: number, squares: number)
 			crops[i] = string.char(string.byte("a") + math.floor(r * 6)) .. tostring(math.floor(noise(i, slot) * 4))
 		end
 	end
-	return { cols = cols, rows = rows, crops = table.concat(crops), squares = squares }
+	local pets = {} -- a field pet on every fourth square (E1b budget checks)
+	for i = 2, squares, 4 do
+		local kind = KINDS[(slot + i) % #KINDS + 1]
+		table.insert(pets, string.format("%s:%d:f%d_s%d:%d:%d", kind, 1 + math.floor(noise(slot, i + 90) * 20), slot, i, i, 1 + math.floor(noise(i, slot + 7) * 9)))
+	end
+	return { cols = cols, rows = rows, crops = table.concat(crops), squares = squares, pets = pets }
 end
 
 local function syntheticPlot(slot: number)
@@ -139,7 +154,9 @@ local function syntheticPlot(slot: number)
 	for n = 1, GardenConfig.MaxIncubators do
 		eggs[n] = string.format("%s:%d", if n == 3 then "Golden" else "Basic", now + 60 * slot + 20 * n)
 	end
-	return { name = "#" .. slot, penCount = 6, pens = pens, incCount = 3, eggs = eggs }
+	-- with a stand-in field (GardenViewField) the plot is drawn as converted: field pets, no pens (E1b)
+	local converted = (tonumber(workspace:GetAttribute("GardenViewField")) or 0) > 0
+	return { name = "#" .. slot, penCount = 6, pens = pens, incCount = 3, eggs = eggs, converted = converted }
 end
 
 local FREE = table.freeze({ free = true })

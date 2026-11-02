@@ -23,6 +23,7 @@ local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
 
 local remotes = PetClient.Remotes
 local player = Players.LocalPlayer
+local fieldAccess = require(ReplicatedStorage:WaitForChild("GardenConfig")).HasFieldAccess(player.UserId) -- E1b: the Tending level
 
 local WIDTH = 340
 -- Short screens (a phone in landscape): the panel is scaled down (PanelFit) and shortened to what fits; the slot bricks
@@ -65,6 +66,7 @@ local REJECT_KEYS = {
 	slots = "pets.reject.slots",
 	equipped = "pets.reject.equipped",
 	penned = "pets.reject.penned",
+	field = "pets.reject.field",
 	stale = "common.reject.stale",
 	maxed = "pets.reject.maxed",
 	loading = "common.reject.loading",
@@ -455,6 +457,8 @@ local function onRowClicked(pet)
 	clearPending()
 	if pet.penned then
 		flash(rejectText("penned"), COLOR_ERROR)
+	elseif pet.field then
+		flash(rejectText("field"), COLOR_ERROR)
 	elseif pet.equipped then
 		remotes.Unequip:FireServer(pet.uid)
 	elseif PetClient.State and equippedCount() >= PetClient.State.slots then
@@ -473,14 +477,17 @@ local function buildRow(index: number, pet)
 		AnchorPoint = Vector2.new(1, 1),
 		Position = UDim2.new(1, -6, 1, -6),
 		Size = UDim2.fromOffset(84, 24),
-		BackgroundColor3 = if pet.equipped or pet.penned then COLOR_LOCKED elseif confirming then COLOR_SELL else COLOR_SELL_IDLE,
+		BackgroundColor3 = if pet.equipped or pet.penned or pet.field then COLOR_LOCKED elseif confirming then COLOR_SELL else COLOR_SELL_IDLE,
 		TextSize = 13,
 		Text = Locale.T(if confirming then "pets.sellSure" else "pets.sell", { price = pet.sellValue }),
 	})
 	local tagText = if pet.penned
 		then Locale.T("pets.tag.pen", { pen = pet.penned })
+		elseif pet.field then Locale.T("pets.tag.field", { n = pet.field })
 		elseif pet.equipped then Locale.T("pets.tag.equipped")
 		else ""
+	-- the Tending level (E1b), shown only to players who have the field
+	local tending = if pet.tending > 0 and fieldAccess then " · " .. Locale.T("pets.tending", { level = pet.tending }) else ""
 	local portraitHolder = create("Frame", {
 		Name = "PortraitHolder",
 		Position = UDim2.fromOffset(12, 6),
@@ -534,7 +541,8 @@ local function buildRow(index: number, pet)
 			TextYAlignment = Enum.TextYAlignment.Top,
 			Text = Locale.T("pets.detail", { rarity = Locale.RarityName(pet.rarity.id), bonus = bonusText(pet.bonus) })
 				.. "\n"
-				.. if pet.xpNext then Locale.T("pet.xp", { xp = pet.xp, next = pet.xpNext }) else Locale.T("pet.maxLevel"),
+				.. (if pet.xpNext then Locale.T("pet.xp", { xp = pet.xp, next = pet.xpNext }) else Locale.T("pet.maxLevel"))
+				.. tending,
 		}),
 		label("Tag", {
 			AnchorPoint = Vector2.new(1, 0),
@@ -560,6 +568,10 @@ local function buildRow(index: number, pet)
 	sellButton.Activated:Connect(function()
 		if pet.penned then
 			flash(rejectText("penned"), COLOR_ERROR)
+			return
+		end
+		if pet.field then
+			flash(rejectText("field"), COLOR_ERROR)
 			return
 		end
 		if pet.equipped then

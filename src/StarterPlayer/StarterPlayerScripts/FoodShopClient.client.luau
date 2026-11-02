@@ -319,6 +319,8 @@ local function where(entry): string
 		return Locale.T("food.where.equipped")
 	elseif entry.penned then
 		return Locale.T("food.where.pen", { pen = entry.penned })
+	elseif entry.field then
+		return Locale.T("food.where.field", { n = entry.field })
 	end
 	return Locale.T("food.where.resting")
 end

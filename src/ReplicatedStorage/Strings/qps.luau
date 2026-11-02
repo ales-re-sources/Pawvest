@@ -240,7 +240,6 @@ return {
 	["food.reject.maxed"] = "[!! Ťhíš pěť íš álřěáďý lěvěl {max} ~~~~~~~~~~ !!]",
 	["food.reject.far"] = "[!! Ťöö fář fřöm ťhě fööď šťáňď ~~~~~~~~~~~ !!]",
 	["board.top10"] = "[!! {stage} - ťöp {rows}! ~~~ !!]",
-	["board.worldStars"] = "[!! {world} šťářš - ťöp {rows}! ~~~~~~ !!]",
 	["board.hubStars"] = "[!! Möšť šťářš - ťöp {rows}! ~~~~~~~ !!]",
 	["garden.sign.plotFree"] = "[!! Fřěě plöť ~~~~ !!]",
 	["garden.sign.pen.locked"] = "[!! 🔒 Pěň {n} ~~ !!]",

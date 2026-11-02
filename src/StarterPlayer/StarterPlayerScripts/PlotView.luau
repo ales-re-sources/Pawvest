@@ -7,8 +7,11 @@
 -- pieces whose look changed; Step builds marked pieces until a deadline, so a build is spread over frames by the caller.
 -- State: { name, penCount, pens = { [1..6] = "Kind:Level:uid" or "" }, incCount, eggs = { [1..3] = "EggId:readyAt" or "" },
 -- field = { cols, rows, crops = two characters per square: crop letter (CropConfig, a-f in synthetic plots) + stage 1-3
--- (3 = ripe), ".0" an empty square, "#0" a square not bought yet } } or { free = true }
+-- (3 = ripe), ".0" an empty square, "#0" a square not bought yet, pets = { "Kind:Level:uid:square:apt" } (E1b field pets, apt =
+-- Tending level) }, converted (E1b: the pens became field pet slots, no pens are drawn) } or { free = true }
 -- (a slot nobody holds: floor, sign "Free plot", grey pads and incubators).
+-- Field pets stand on their squares (full: the PetLook model, mid: a block); the own plot's squares also get a pet prompt
+-- (onSquare(square, "pet", soil), key F) and ShowReach tints the squares a pet would work.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -48,6 +51,7 @@ local COLORS = {
 	soil = Color3.fromRGB(105, 70, 45),
 }
 local SPROUT = Color3.fromRGB(110, 190, 80) -- unripe crops (stage 1-2)
+local REACH = Color3.fromRGB(255, 230, 120) -- ShowReach tint
 local CROP_COLORS = { -- ripe crops, by letter (CropConfig: a Potato, b Corn, c Pumpkin, d Giant melon; e, f synthetic only)
 	a = Color3.fromRGB(196, 150, 90),
 	b = Color3.fromRGB(245, 210, 60),
@@ -113,6 +117,7 @@ local function prompt(parentPart: BasePart, action: string, object: string, dist
 	p.RequiresLineOfSight = false
 	p.Triggered:Connect(onTriggered)
 	p.Parent = parentPart
+	return p
 end
 
 local function countdown(seconds: number): string
@@ -142,6 +147,21 @@ local function parseEgg(text: string?): (string?, number?)
 	return egg, tonumber(readyAt)
 end
 PlotView.ParseEgg = parseEgg
+
+-- field.pets ("Kind:Level:uid:square:apt") → [square] = { kind, level, uid, apt, text }
+local function fieldPets(field): { [number]: { kind: string, level: number, uid: string, apt: number, text: string } }
+	local map = {}
+	if type(field) == "table" and type(field.pets) == "table" then
+		for _, text in field.pets do
+			local kind, level, uid, square, apt = string.match(text, "^([^:]+):(%d+):([^:]*):(%d+):(%d+)$")
+			if kind then
+				map[tonumber(square) :: number] = { kind = kind, level = tonumber(level) :: number, uid = uid, apt = tonumber(apt) :: number, text = text }
+			end
+		end
+	end
+	return map
+end
+PlotView.FieldPets = fieldPets
 
 -- New view of plot slot `slot` under `parent`. options: { own = boolean, onPen = fn(pen, pad), onIncubator = fn(n, base),
 -- onSquare = fn(square, action "plant" / "harvest", soil), onLevelUp = fn(model, kind, level) } (prompts on the own plot only;
@@ -203,6 +223,9 @@ function PlotView:signature(key: string): string
 		return if kind == "row" or detail == "low" then "none" else detail .. "|free"
 	end
 	if kind == "pen" then
+		if state.converted then
+			return "none" -- the pens became field pet slots (E1b)
+		end
 		return table.concat({ detail, state.pens[n] or "", tostring(n <= state.penCount), tostring(self.own), self.lang }, "|")
 	elseif kind == "inc" then
 		return table.concat({ detail, state.eggs[n] or "", tostring(n <= state.incCount), tostring(self.own), self.lang }, "|")
@@ -215,7 +238,22 @@ function PlotView:signature(key: string): string
 		return if n == 1 then string.format("low|%dx%d", field.cols, field.rows) else "none"
 	end
 	local prompts = self.own and detail == "full"
-	return string.format("%s|%d|%s|%s", if prompts then "own" else "full", field.cols, string.sub(field.crops, (n - 1) * field.cols * 2 + 1, n * field.cols * 2), if prompts then self.lang else "")
+	local pets, onRow = fieldPets(field), {}
+	for c = 1, field.cols do
+		local pet = pets[(n - 1) * field.cols + c]
+		if pet then
+			table.insert(onRow, c .. "=" .. pet.text)
+		end
+	end
+	return string.format(
+		"%s|%s|%d|%s|%s|%s",
+		if prompts then "own" else "full",
+		detail,
+		field.cols,
+		string.sub(field.crops, (n - 1) * field.cols * 2 + 1, n * field.cols * 2),
+		table.concat(onRow, ","),
+		self.lang
+	)
 end
 
 function PlotView:mark()
@@ -328,15 +366,16 @@ local function penLabel(kind: string, level: number): string
 	})
 end
 
--- Pet model standing on `pad` (full detail): a PetModels clone dressed by PetLook like the followers.
-local function penPet(kind: string, level: number, uid: string, pad: BasePart): Model?
+-- Pet model standing at `at` (its pivot's horizontal position) on a surface whose top is at height `top` (full detail): a PetModels
+-- clone dressed by PetLook like the followers, with `text` over it.
+local function standingPet(kind: string, level: number, uid: string, at: CFrame, top: number, text: string): Model?
 	local template = PetModels:FindFirstChild(kind)
 	if not (template and template:IsA("Model") and template.PrimaryPart) then
 		return nil
 	end
 	local model = template:Clone()
 	local metrics = PetLook.Apply(model, kind, level, uid, {
-		text = penLabel(kind, level),
+		text = text,
 		richText = true,
 		size = UDim2.new(6, 0, 1.4, 0),
 		maxDistance = INFO_DISTANCE + 30,
@@ -346,12 +385,22 @@ local function penPet(kind: string, level: number, uid: string, pad: BasePart): 
 		model:Destroy()
 		return nil
 	end
-	model:PivotTo(pad.CFrame * CFrame.new(0, pad.Size.Y / 2 + 1, 0))
-	-- stand the model on the pad: move it so the lowest point of its bounding box touches the pad top
+	model:PivotTo(at + Vector3.new(0, 1, 0))
+	-- stand the model on the surface: move it so the lowest point of its bounding box touches the top
 	local boxCFrame, boxSize = model:GetBoundingBox()
 	local bottom = boxCFrame.Position.Y - boxSize.Y / 2
-	model:PivotTo(model:GetPivot() + Vector3.new(0, pad.Position.Y + pad.Size.Y / 2 - bottom, 0))
+	model:PivotTo(model:GetPivot() + Vector3.new(0, top - bottom, 0))
 	return model
+end
+
+-- Pet model standing on `pad` (full detail).
+local function penPet(kind: string, level: number, uid: string, pad: BasePart): Model?
+	return standingPet(kind, level, uid, pad.CFrame, pad.Position.Y + pad.Size.Y / 2, penLabel(kind, level))
+end
+
+-- Label over a field pet: name, level, tier stars and its Tending level.
+local function fieldPetLabel(kind: string, level: number, apt: number): string
+	return Locale.T("field.pet.label", { pet = Locale.PetName(kind, level), stars = PetLook.TierStars(level), level = apt })
 end
 
 function PlotView:buildPen(model: Model, n: number)
@@ -477,6 +526,7 @@ function PlotView:buildRow(model: Model, r: number)
 	end
 	local z = FIELD_FRONT + (r - 0.5) * pitch
 	local prompts = self.own and self.onSquare and self.detail == "full"
+	local pets = fieldPets(field)
 	for c = 1, field.cols do
 		local x = (c - 0.5 - field.cols / 2) * pitch
 		local square = (r - 1) * field.cols + c
@@ -493,6 +543,38 @@ function PlotView:buildRow(model: Model, r: number)
 			local width = size * (0.3 + stage * 0.15)
 			local color = if stage >= 3 then CROP_COLORS[letter] else SPROUT
 			part({ Name = "Crop", Size = Vector3.new(width, height, width), CFrame = self:at(Vector3.new(x, 0.25 + height / 2, z)), Color = color }).Parent = model
+		end
+		local pet = pets[square]
+		local rarity = pet and PetConfig.RarityOf(pet.kind)
+		if pet and rarity then
+			-- the pet stands on the square's front corner, beside the crop
+			local spot = Vector3.new(x + size * 0.28, 0, z - size * 0.28)
+			if self.detail == "mid" then
+				local cube = 1.4 * PetConfig.ScaleOf(pet.level)
+				part({ Name = "Pet" .. square, Size = Vector3.new(cube, cube, cube), CFrame = self:at(spot + Vector3.new(0, 0.25 + cube / 2, 0)), Color = rarity.color }).Parent =
+					model
+			else
+				local petModel = standingPet(pet.kind, pet.level, pet.uid, self:at(spot), soil.Position.Y + soil.Size.Y / 2, fieldPetLabel(pet.kind, pet.level, pet.apt))
+				if petModel then
+					petModel.Name = "Pet" .. square
+					petModel.Parent = model
+				end
+			end
+		end
+		if prompts then
+			local petPrompt = prompt(
+				soil,
+				Locale.T(if pet then "field.prompt.movePet" else "field.prompt.placePet"),
+				if pet then Locale.PetName(pet.kind, pet.level) else Locale.T("field.prompt.square", { n = square }),
+				6,
+				function()
+					self.onSquare(square, "pet", soil)
+				end
+			)
+			petPrompt.Name = "PetPrompt"
+			petPrompt.KeyboardKeyCode = Enum.KeyCode.F
+			petPrompt.GamepadKeyCode = Enum.KeyCode.ButtonY
+			petPrompt.UIOffset = Vector2.new(0, 72) -- below the plant / harvest prompt of the same square
 		end
 		local crop = CropConfig.ByLetter[letter]
 		if prompts and (letter == "." or (crop and stage >= 3)) then
@@ -560,6 +642,36 @@ function PlotView:Step(deadline: number): boolean
 		self:Tick(self.tickNow)
 	end
 	return #self.pending > 0
+end
+
+-- Tints `squares` of the field (the squares a pet would work, E1b) until called again; nil clears.
+function PlotView:ShowReach(squares: { number }?)
+	if self.reach then
+		self.reach:Destroy()
+		self.reach = nil
+	end
+	local field = self.state and self.state.field
+	if not (squares and field and (self.detail == "full" or self.detail == "mid")) then
+		return
+	end
+	local pitch = math.min(5.5, FIELD_WIDTH / field.cols)
+	local tint = Instance.new("Model")
+	tint.Name = "Reach"
+	for _, square in squares do
+		local c, r = (square - 1) % field.cols + 1, (square - 1) // field.cols + 1
+		local x, z = (c - 0.5 - field.cols / 2) * pitch, FIELD_FRONT + (r - 0.5) * pitch
+		part({
+			Name = "Reach" .. square,
+			Size = Vector3.new(pitch - 0.2, 0.1, pitch - 0.2),
+			CFrame = self:at(Vector3.new(x, 0.33, z)), -- just above the soil top (0.25): no shared face
+			Color = REACH,
+			Material = Enum.Material.Neon,
+			Transparency = 0.6,
+			CanCollide = false,
+		}).Parent = tint
+	end
+	tint.Parent = self.root
+	self.reach = tint
 end
 
 -- Updates the countdowns of the drawn eggs (server time `now`, workspace:GetServerTimeNow()).

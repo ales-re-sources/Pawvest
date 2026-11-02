@@ -296,8 +296,8 @@ GardenService.AddStateField("field", function(profile)
 end)
 
 -- The field part of `player`'s plot message ({ cols, rows, crops = 2 characters per square: crop letter + stage 1-3,
--- ".0" for an empty owned square, "#0" for a square not bought yet in the last row; pets = { "Kind:Level:uid:square:reach" } },
--- reach = PetConfig.ReachShape), or nil without a field.
+-- ".0" for an empty owned square, "#0" for a square not bought yet in the last row; pets = { "Kind:Level:uid:square:apt" } },
+-- apt = the level of the pet's job aptitude, its reach PetConfig.ReachShape(apt)), or nil without a field.
 function GardenField.PlotField(player: Player)
 	local profile = PlayerProfile.Get(player)
 	local field = profile and fieldOf(player, profile)
@@ -312,11 +312,11 @@ function GardenField.PlotField(player: Player)
 		local crop = square and CropConfig.ById[square.Crop]
 		cells[n] = if n > field.Count then "#0" elseif crop then crop.letter .. CropConfig.Stage(crop, square.Grown) else ".0"
 	end
-	local pets = {} -- "Kind:Level:uid:square:reach" per field pet, by square
+	local pets = {} -- "Kind:Level:uid:square:aptitude level" per field pet, by square
 	for uid, entry in profile.Garden.FieldPets do
 		local pet = profile.Pets[uid]
-		local reach = PetConfig.ReachShape(PetConfig.AptitudeLevel(pet, entry.Job))
-		table.insert(pets, string.format("%s:%d:%s:%d:%d", pet.Kind, PetConfig.ClampLevel(pet.Level), uid, entry.Square, reach))
+		local level = PetConfig.AptitudeLevel(pet, entry.Job)
+		table.insert(pets, string.format("%s:%d:%s:%d:%d", pet.Kind, PetConfig.ClampLevel(pet.Level), uid, entry.Square, level))
 	end
 	table.sort(pets, function(a, b)
 		return tonumber(string.match(a, ":(%d+):%d+$")) < tonumber(string.match(b, ":(%d+):%d+$"))

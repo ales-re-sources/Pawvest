@@ -4,7 +4,7 @@
 -- changed) and (userId, nil) when the player leaves. GardenRemotes.RequestPlots (client → server, no arguments) re-sends every
 -- plot to the caller (a client that was still loading missed the broadcasts); 1 s cooldown.
 -- State: { slot, name, penCount, pens = { [1..6] = "Kind:Level:uid" or "" }, incCount, eggs = { [1..3] = "EggId:readyAt" or "" },
--- field = GardenField.PlotField or nil } (readyAt in server os.time(), for the countdowns only). The field is sent only to
+-- converted (E1b: the pens became field pet slots), field = GardenField.PlotField or nil } (readyAt in server os.time(), for the countdowns only). The field is sent only to
 -- viewers with field access (GardenConfig.HasFieldAccess, E1a2): everyone else gets the state without it.
 
 local HttpService = game:GetService("HttpService")
@@ -55,6 +55,7 @@ local function plotState(player: Player)
 		pens = pens,
 		incCount = garden.IncubatorCount or 1,
 		eggs = eggs,
+		converted = garden.Converted == true, -- pens became field pet slots (E1b): no pens drawn
 		field = GardenField.PlotField(player),
 	}
 end

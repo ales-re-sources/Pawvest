@@ -240,7 +240,6 @@ return {
 	["food.reject.maxed"] = "This pet is already level {max}",
 	["food.reject.far"] = "Too far from the food stand",
 	["board.top10"] = "{stage} - top {rows}!",
-	["board.worldStars"] = "{world} stars - top {rows}!",
 	["board.hubStars"] = "Most stars - top {rows}!",
 	["garden.sign.plotFree"] = "Free plot",
 	["garden.sign.pen.locked"] = "🔒 Pen {n}",

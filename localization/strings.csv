@@ -2,13 +2,13 @@
 # Settings panel,,,,,
 settings.title,Title of the Settings panel (⚙ icon); the text is set by LanguageSettings,Settings,Nastavení,ok,h453d7fe8
 settings.music,"Settings panel, Music row; {state} = common.on / common.off",Music: {state},Hudba: {state},ok,h7e079ff8
-common.on,State of a setting that is on (Music row),On,Zapnuto,new,h88870f51
-common.off,State of a setting that is off (Music row),Off,Vypnuto,new,h23ccb8cc
+common.on,State of a setting that is on (Music row),On,Zapnuto,ok,h88870f51
+common.off,State of a setting that is off (Music row),Off,Vypnuto,ok,h23ccb8cc
 settings.language,"Settings panel, Language row; {name} = a language name in its own language (English, Čeština) or settings.language.auto",Language: {name},Jazyk: {name},ok,hd53397e5
 settings.language.auto,Language row while the language follows the player's Roblox locale; {name} = that language,Automatic ({name}),Automaticky ({name}),ok,h5f0769cc
 "# Names: hub, worlds, stages",,,,,
-hub.name,The central hub island (score panel title),Central Island,Centrální ostrov,new,h7b457675
-stage.name.Tutorial,"Name of the tutorial stage (score panel, results title, gate prompt). Feminine in Czech, like Úroveň",Tutorial,Výuka,new,h9863aa84
+hub.name,The central hub island (score panel title),Central Island,Centrální ostrov,ok,h7b457675
+stage.name.Tutorial,"Name of the tutorial stage (score panel, results title, gate prompt). Feminine in Czech, like Úroveň",Tutorial,Na zkoušku,ok,h9863aa84
 world.name.1,Name of world 1 (a courtyard of 5 stages). Masculine in Czech (Svět),World 1,1. svět,ok,hdb38aa1f
 world.name.2,Name of world 2 (a courtyard of 5 stages). Masculine in Czech (Svět),World 2,2. svět,ok,h4f021973
 world.name.3,Name of world 3 (a courtyard of 5 stages). Masculine in Czech (Svět),World 3,3. svět,ok,hfd5f162e
@@ -46,7 +46,7 @@ talent.name.JumpHeight,"Talent (skill) name: Skills panel, ""Needs:"" lines of t
 talent.name.QuickRespawn,"Talent (skill) name: Skills panel, ""Needs:"" lines of the arrival popup",Quick Respawn,Rychlé oživení,ok,h4ca75c6f
 talent.name.DoubleJump.2,"Name of Double Jump level 2 (two jumps in the air): the Skills row once Double Jump is owned, ""Needs:"" lines",Triple Jump,Trojitý skok,ok,hd4bc2346
 talent.name.Dash,"Talent (skill) name: Skills panel, ""Needs:"" lines of the arrival popup",Dash,Výpad,ok,h76f645c2
-talent.name.Dash.2,"Name of Dash level 2 (a longer burst in the air): the Skills row once Dash is owned, ""Needs:"" lines",Long Dash,Dlouhý výpad,new,h3fb79f5f
+talent.name.Dash.2,"Name of Dash level 2 (a longer burst in the air): the Skills row once Dash is owned, ""Needs:"" lines",Long Dash,Dlouhý výpad,ok,h3fb79f5f
 pet.egg.Basic,"Egg name (cheap egg, 5 min to hatch); results popup free egg line, incubators",Basic egg,Obyčejné vejce,ok,h34aaec11
 pet.egg.Golden,"Egg name (expensive egg, 1 h to hatch)",Golden egg,Zlaté vejce,ok,hf543d666
 # Score panel (top right),,,,,
@@ -66,10 +66,10 @@ results.noMedal,Medal line when the run earned no medal,No medal,Bez medaile,ok,
 results.coins[one],Medal payout line; {count} = Coins. Form for 1,+{count} Coin,+{count} mince,ok,h1befc8cc
 results.coins[few],Form for 2-4 (Czech only),,+{count} mince,ok,h1befc8cc
 results.coins[other],Form for 0 and 5+,+{count} Coins,+{count} mincí,ok,h1befc8cc
-results.firstFinish[one],One-time payout for the first finish of a stage; {count} = Coins. Form for 1,First finish +{count} coin,První dokončení +{count} mince,new,h004fe6ae
-results.firstFinish[few],Form for 2-4 (Czech only),,První dokončení +{count} mince,new,h004fe6ae
-results.firstFinish[other],Form for 0 and 5+,First finish +{count} coins,První dokončení +{count} mincí,new,h004fe6ae
-results.runReward,"Daily repeat reward; {count} = Coins, {run} = how many runs of this stage today (1, 2, …)",Run reward +{count} coins\n(run {run} today),Odměna za dokončení +{count} mincí\n(dnes {run}. Pokus),new,h0dfb4a09
+results.firstFinish[one],One-time payout for the first finish of a stage; {count} = Coins. Form for 1,First finish +{count} coin,Za první dokončení +{count} mince,ok,h004fe6ae
+results.firstFinish[few],Form for 2-4 (Czech only),,Za první dokončení +{count} mince,ok,h004fe6ae
+results.firstFinish[other],Form for 0 and 5+,First finish +{count} coins,Za první dokončení +{count} mincí,ok,h004fe6ae
+results.runReward,"Daily repeat reward; {count} = Coins, {run} = how many runs of this stage today (1, 2, …)",Run reward +{count} coins\n(run {run} today),Odměna za dokončení +{count} mincí\n(dnes {run}. pokus),ok,h0dfb4a09
 results.petXp,"Pet experience; {xp} = total XP, {move} = the part earned by moving during the run",Pets +{xp} XP ({move} from moving),Mazlíčci +{xp} XP ({move} za pohyb),ok,h18e0efed
 results.freeEgg,"First Gold on a stage gives a free egg, which waits in the garden incubator; {egg} = egg name",🎁 Free {egg} → your incubator,🎁 {egg} zdarma → do tvého inkubátoru,ok,h656d5bad
 results.next,"Next goal; {medal} = medal tier (medal.name.*), {time} = its time limit",Next: {medal} under {time},Další cíl: {medal} pod {time},ok,hfa6bbb41
@@ -94,9 +94,9 @@ hud.arrival.body,"Popup text under the ""Needs:"" line","You can still enter, bu
 hud.arrival.openSkills,Popup button: opens the Skills panel,Open Skills,Otevřít dovednosti,ok,ha5865bf5
 hud.arrival.continue,Popup button: closes it,Continue,Pokračovat,ok,hae7250da
 # Hints (G1: world markers and toasts),,,,,
-hints.ready,Label under the orange bobbing arrow marker above an incubator whose egg can hatch now (the player's own garden); one short word,Ready!,Hotovo!,new,h92676a43
-hints.eggReady,"Toast at the bottom of the screen, shown once when an egg in the player's incubator becomes ready to hatch (wherever the player is)",Your egg is ready! Hatch it in your garden.,Tvoje vejce je připravené! Vylíhni ho na své zahradě.,new,hda8587b9
-hints.raiseMedal,"Label under the orange arrow marker above a stage gate when the next world is shut by its star requirement and every open stage already has a medal: the player should replay {stage} (stage name, e.g. ""Stage 2"") for a better medal; {medal} = the medal tier to reach (Bronze / Silver / Gold, nominative as in medal.name.*). Keep it short (shown on screen over the 3D view)",{stage}: {medal},{stage}: {medal},new,h195788f1
+hints.ready,Label under the orange bobbing arrow marker above an incubator whose egg can hatch now (the player's own garden); one short word,Ready!,Hotovo!,ok,h92676a43
+hints.eggReady,"Toast at the bottom of the screen, shown once when an egg in the player's incubator becomes ready to hatch (wherever the player is)",Your egg is ready! Hatch it in your garden.,Tvoje vejce je připravené! Vylíhni si ho na své zahradě.,ok,hda8587b9
+hints.raiseMedal,"Label under the orange arrow marker above a stage gate when the next world is shut by its star requirement and every open stage already has a medal: the player should replay {stage} (stage name, e.g. ""Stage 2"") for a better medal; {medal} = the medal tier to reach (Bronze / Silver / Gold, nominative as in medal.name.*). Keep it short (shown on screen over the 3D view)",{stage}: {medal},{stage}: {medal},ok,h195788f1
 # Shared (L2),,,,,
 common.loading,A panel whose data has not arrived yet,Loading...,Načítám…,ok,h75bf472a
 common.reject.coins,A purchase was refused: the player has too few Coins,Not enough Coins,Nemáš dost mincí,ok,h35fbd693
@@ -143,10 +143,10 @@ skills.buy,Skills panel button (70 px wide: keep it short); {price} = Coins,Buy 
 skills.max,Skills panel button of a talent at its highest level,MAX,MAX,ok,h693fda0e
 skills.reject.maxed,"Skills panel: refused, the talent is at its highest level",Already maxed,Už je na maximu,ok,h91cd8ee8
 skills.reject.failed,Skills panel: any other refused purchase,Purchase failed,Nákup se nepovedl,ok,hdf3992a8
-skills.reward,"Skills panel, second line of a talent level that is never sold but given free when a world opens (Double Jump); {world} = world name, e.g. ""World 2"" (Czech: nominative ""Svět 2"")",Free when {world} opens,"Zdarma, až se otevře {world}",new,hebb7c9eb
-talent.granted.title,"Big title of the popup when the game gives the player a new skill for free (opening World 2 gives Double Jump); {talent} = skill name, e.g. ""Double Jump"". Read by young children: short",New skill: {talent}!,Nová dovednost: {talent}!,new,h01e81a96
+skills.reward,"Skills panel, second line of a talent level that is never sold but given free when a world opens (Double Jump); {world} = world name, e.g. ""World 2"" (Czech: nominative ""Svět 2"")",Free when {world} opens,"Zdarma, až otevřeš {world}",ok,hebb7c9eb
+talent.granted.title,"Big title of the popup when the game gives the player a new skill for free (opening World 2 gives Double Jump); {talent} = skill name, e.g. ""Double Jump"". Read by young children: short",New skill: {talent}!,Nová dovednost: {talent}!,ok,h01e81a96
 talent.granted.how.DoubleJump,"Popup line under ""New skill: Double Jump!"": how to use it, for a young child on phone or PC (press jump once more while in the air)",Jump again while you are in the air!,"Až budeš ve vzduchu, skoč ještě jednou!",new,h7a2afc65
-talent.granted.ok,"Button that closes the ""New skill"" popup",Let's go!,Jdeme na to!,new,h0316cc15
+talent.granted.ok,"Button that closes the ""New skill"" popup",Let's go!,Jdeme na to!,ok,h0316cc15
 # Hub gate and portal faces,,,,,
 faces.comingSoon,Face of a hub world gate whose world is not built yet,🔒 Coming soon,🔒 Už brzy,ok,h909c77ff
 faces.orCoins[one],"Face of a shut gate, under the requirement: the price instead; {count} = Coins. Form for 1",or {count} Coin,nebo za {count} mince,ok,hfdcbc5fc
@@ -294,7 +294,6 @@ food.reject.maxed,Refused: the pet is at the last level; {max} = 20,This pet is 
 food.reject.far,Refused: the player walked away from the food stand,Too far from the food stand,Jsi moc daleko od stánku s krmením,new,hf190d1fe
 # Server-written signs and boards (L3),,,,,
 board.top10,"Title of a stage's Top-10 board (SurfaceGui, server-written, tagged Loc); {stage} = stage name (feminine in Czech), {rows} = 10",{stage} - top {rows}!,{stage} – top {rows}!,new,h813379d2
-board.worldStars,"Title of a world's most-stars board in its courtyard; {world} = world name (""Svět 1""), {rows} = 10",{world} stars - top {rows}!,Hvězdy: {world} – top {rows}!,new,hfb8a5a28
 board.hubStars,Title of the hub's most-stars board; {rows} = 10,Most stars - top {rows}!,Nejvíc hvězd – top {rows}!,new,h1e3851bd
 garden.sign.plotFree,Sign of a garden plot nobody owns right now (an owned plot shows the owner's name),Free plot,Volný pozemek,new,h456835a7
 garden.sign.pen.locked,Billboard on a pen pad that is not bought yet; {n} = pen number 1-6,🔒 Pen {n},🔒 Ohrada {n},new,h66c82e4e

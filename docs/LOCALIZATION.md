@@ -96,7 +96,7 @@ Against the code, the design holds with these decisions:
   pen pet label built on the server by `PetLook.LabelText` is English there until L3.
 
 ## L3 notes (2026-10-24)
-- Server texts use `Locale.SetKey` / `SetText`: board titles (`board.top10`, `board.worldStars`, `board.hubStars`), gate signs
+- Server texts use `Locale.SetKey` / `SetText`: board titles (`board.top10`, `board.hubStars`), gate signs
   (`GateSign` -> `stage.name.<key>`), plot sign (`garden.sign.plotFree`; an owner's name is a literal), pen / incubator
   billboards (`garden.sign.pen.*`, `garden.sign.incubator.*`; an incubating egg's label is written by `IncubatorClient`).
 - `PetLook.Apply`'s label takes `locKey` / `locArgs` (pen pets are built on the server); `PetLook.TierStars` is the badge.
