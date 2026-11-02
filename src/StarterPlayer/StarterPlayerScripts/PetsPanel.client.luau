@@ -8,7 +8,8 @@
 -- bricks at the bottom (#PetConfig.SlotPrices): a slot shows its equipped pet (click = unequip), "Empty", or a lock;
 -- the next slot to buy takes two clicks ("Sure?"), and hovering any slot shows a tooltip (price, whether it is
 -- affordable). Equipped pets fill the slots in PetsChanged.equipped order. Pet portraits come from PetPortrait (one
--- cache for the rows, one for the slots).
+-- cache for the rows, one for the slots). The "i" badge on a row's portrait opens the pet's detail page (PetDetail, P3a), drawn
+-- over this panel.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -18,6 +19,7 @@ local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
+local PetDetail = require(script.Parent:WaitForChild("PetDetail"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
 
@@ -224,6 +226,10 @@ StudStyle.Panel(panel, COLOR_PANEL)
 if FIT_SCALE < 1 then
 	create("UIScale", { Scale = FIT_SCALE, Parent = panel })
 end
+local setOpen -- defined below; the detail page's X closes the whole panel
+local detail = PetDetail.Mount(panel, COLOR_PANEL, function()
+	setOpen(false)
+end)
 
 local setOpenEvent = create("BindableEvent", { Name = "SetOpen" })
 local screenGui = create("ScreenGui", {
@@ -498,6 +504,33 @@ local function buildRow(index: number, pet)
 	if portrait then
 		portrait.Parent = portraitHolder
 	end
+	-- the portrait opens the detail page (P3a); its "i" badge shows that it does
+	local infoButton = create("TextButton", {
+		Name = "Info",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		Text = "",
+		Parent = portraitHolder,
+	}, {
+		label("Badge", {
+			AnchorPoint = Vector2.new(1, 1),
+			Position = UDim2.new(1, 3, 1, 3),
+			Size = UDim2.fromOffset(18, 18),
+			BackgroundTransparency = 0,
+			BackgroundColor3 = COLOR_EQUIPPED,
+			TextColor3 = Color3.fromRGB(40, 40, 40),
+			TextSize = 14,
+			TextXAlignment = Enum.TextXAlignment.Center,
+			Text = "i",
+		}),
+	})
+	local badge = infoButton:FindFirstChild("Badge") :: TextLabel
+	badge.BackgroundTransparency = 0 -- label() makes labels transparent
+	create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = badge })
+	infoButton.Activated:Connect(function()
+		clearPending()
+		detail.Open(pet.uid)
+	end)
 
 	local row = create("TextButton", {
 		Name = "Pet_" .. pet.uid,
@@ -654,7 +687,7 @@ Locale.Changed:Connect(function()
 end)
 
 -- Open / close (driven by the 🐾 button through SetOpen)
-local function setOpen(open: boolean)
+function setOpen(open: boolean)
 	if screenGui:GetAttribute("Open") == open then
 		return
 	end
@@ -665,6 +698,7 @@ local function setOpen(open: boolean)
 	else
 		clearPending()
 		hoveredSlot = nil
+		detail.Close()
 		local tween = TweenService:Create(panel, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Position = POS_CLOSED })
 		tween.Completed:Connect(function()
 			if screenGui:GetAttribute("Open") ~= true then

@@ -43,7 +43,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E1a2 | Crop field behind admin access (CropConfig, GardenField, Garden panel) | ✔ | ✔ | – |
 | E1b1 | Field pets, server: aptitudes, Tending, field pet slots, pen conversion (behind field access) | ✔ | ✔ | – |
 | E1b2 | Field pets, client: pets on squares, place / move prompt, Pets section, conversion popup | ✔ | ✔ | – |
-| P3a / P3b | Pet detail panel, pet names (decisions taken) | – | – | – |
+| P3a | Pet detail panel (Pets list "i" badge → `PetDetail`) | ✔ | ✔ | – |
+| P3b | Pet names (filtered, shown to everyone; first free, renames 250) | – | – | – |
 | E1a3–E5 | Garden MVP (see "Next") | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
@@ -145,6 +146,20 @@ row still equips / unequips); one screen, scrolls on a phone:
    on both clients; a re-join keeps the name; the other client sees it over a following pet and a field pet. The first name costs nothing, the
    second 250 Coins, a rename with 249 Coins is refused (`coins`), clearing is free.
 4. `loc.py check` 0 errors, lint within the baseline.
+
+**P3a implemented and Studio-validated (2026-11-02)**, by clicks in a playtest on a fixture in the developer's live profile (Phoenix Lv 12 with
+Tending 7, Cat Lv 6 with Tending 4 on square 1, Dog Lv 20 with Tending 6; restored afterwards to the state before the test, snapshot
+`TestSnapshots` `profile_9892673032_p3a`):
+- The "i" badge on a row's portrait opens the page without equipping; a tap on the row still equips / unequips; Back returns to the list, the
+  page's X closes the panel. Numbers match `PetConfig`: Phoenix "Level 12 / 20", 40 / 416 XP, next look ★★★ at 15, +20.5 %; Tending 7 / 10,
+  effect 83 %, 5.6 / 144.1 h, 9 squares; Cat on the field "Works square 1", Tending 4 / 6, 5 squares and no next step (7 is above its cap);
+  Dog "Top level!", "Every look unlocked", "Max for its rarity (Common)"; a pet without Tending shows the no-job line.
+- Actions: Equip with the only slot taken → `slots`; Sell of the equipped Cat → "Unequip it before selling"; Unequip / Equip from the page;
+  Equip of the field pet → `field`; Sell takes a second tap within 3 s, the page closes and the list says "Sold for 100 Coins".
+- Czech: the 21 texts of the Phoenix page and every list row fit (the panel is 340 px wide at every screen size, scaled by PanelFit).
+- Found and fixed: the page drew empty (a ScreenGui made in code has Global ZIndex, its children sat under the page: they are lifted now);
+  🪙 has no glyph (now 💰). No console errors. Once, in a fast scripted click sequence, the Cat ended up equipped and the same sequence
+  did not repeat it; nothing in the code equips except the Equip button and a row tap.
 
 ### E1a — Plots for real + the field (scope 2026-10-30, decisions taken)
 **Goal.** The garden is drawn by the client for everyone, on the new ring layout, with today's gameplay unchanged (**E1a1**, published on its
