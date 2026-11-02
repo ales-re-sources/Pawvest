@@ -23,6 +23,7 @@ local LINE_SIZE = UDim2.fromScale(0.7, 0.11)
 local function addGate(world)
 	local portal = StageConfig.WorldGatePortal(world)
 	local nameLabel = portal:FindFirstChildOfClass("SurfaceGui")
+	PortalFaceStyle.OutlineName(nameLabel)
 
 	local surface = Instance.new("SurfaceGui")
 	surface.Name = "GateFace_" .. world.folder

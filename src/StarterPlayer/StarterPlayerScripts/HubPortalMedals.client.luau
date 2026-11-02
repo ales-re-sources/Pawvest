@@ -52,6 +52,7 @@ end
 -- `portal` is the part whose face shows the lines; `suffix` keeps the SurfaceGui names apart when a stage has two faces.
 local function addPortalMedal(stage, portal: BasePart, suffix: string)
 	local portalLabel = portal:FindFirstChildOfClass("SurfaceGui")
+	PortalFaceStyle.OutlineName(portalLabel)
 	-- a door has no stage-name label (the gate's sign carries it), so its lines start higher than on a portal face
 	local shift = if portalLabel then 0 else DOOR_SHIFT
 
@@ -169,8 +170,12 @@ local function addPortalMedal(stage, portal: BasePart, suffix: string)
 			for _, child in surface:GetChildren() do
 				if child:IsA("TextLabel") then
 					child.TextColor3 = if closed then Color3.new(1, 1, 1) else Color3.new(0, 0, 0)
-					child.TextStrokeColor3 = if closed then Color3.new(0, 0, 0) else Color3.new(1, 1, 1)
-					child.TextStrokeTransparency = if closed then 0.2 else 0.5
+					PortalFaceStyle.Outline(
+						child,
+						if closed then Color3.new(0, 0, 0) else Color3.new(1, 1, 1),
+						if closed then 0.2 else 0.5,
+						PortalFaceStyle.StrokeThickness
+					)
 				end
 			end
 		end

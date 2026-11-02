@@ -17,6 +17,7 @@ local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local PetLook = require(ReplicatedStorage:WaitForChild("PetLook"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
+local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 
 local PetModels = ReplicatedStorage:WaitForChild("PetModels")
 
@@ -460,7 +461,7 @@ function PlotView:buildIncubator(model: Model, n: number)
 	gui.Size = UDim2.new(6, 0, 1.6, 0)
 	gui.StudsOffset = Vector3.new(0, 2.6, 0)
 	gui.MaxDistance = INFO_DISTANCE + 30
-	local label = textLabel(gui, { Font = Enum.Font.FredokaOne })
+	local label = textLabel(gui, { Font = StudStyle.Font })
 	gui.Parent = ball
 	self.labels[n] = { label = label, egg = egg, readyAt = readyAt }
 end

@@ -41,7 +41,8 @@ function StudStyle.PetRowColor(panelColor: Color3): Color3
 	return StudStyle.Shade(panelColor, 0.28)
 end
 
-StudStyle.Font = Enum.Font.FredokaOne
+-- BuilderSansBold has Latin Extended-A (Czech) and Cyrillic; FredokaOne has neither (docs/LOCALIZATION.md → Font check)
+StudStyle.Font = Enum.Font.BuilderSansBold
 
 local LIP = 5 -- pixels of brick side under the face
 local LIFT_HOVER = -2

@@ -59,7 +59,7 @@ prints every event. The limits that shape this design (create.roblox.com, checke
 | `RunEnd` | `LogCustomEvent`, value = run seconds | CF01 stage · CF02 segment · CF03 reason (`finish` / `exit` / `home` / `quit` / `reset` / `switch`) | every run end |
 | `Quit` | `LogCustomEvent`, value = seconds since the last checkpoint | CF01 stage (or `hub` / `garden` / world name) · CF02 segment · CF03 `run` / `idle` | player leaves |
 | `Return` | `LogCustomEvent`, value = days away | CF01 / CF02 = the stored quit | next join of a player whose profile has a `LastQuit` |
-| `Session` | `LogCustomEvent` | CF01 locale (`player.LocaleId`) · CF02 platform (touch / gamepad / keyboard, reported by the client) · CF03 `new` / `returning` | join |
+| `Session` | `LogCustomEvent` | CF01 locales as `<account LocaleId>/<device SystemLocaleId>` (`en-us/cs-cz`; `?` when the device locale had not arrived) · CF02 platform (touch / gamepad / keyboard, reported by the client) · CF03 `new` / `returning` | join |
 
 Deaths outside a run (hub, garden, exploring a stage without timer) are counted with stage `none` / the stage folder and
 segment `#-`, so they do not mix with run data. Deaths bucket: `0`, `1-2`, `3-5`, `6-10`, `11+` (deaths + fall resets in the

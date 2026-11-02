@@ -418,7 +418,7 @@ areas, Czech text length, touch controls for the kit and talents (the Dash butto
   at once (boards and `MostStars`); gate prompts on a locked stage; a real 1-hour Golden egg and the inventory cap with free eggs waiting; every
   telemetry event type visible on the Creator Dashboard (only then T1 is live-validated).
 - **The user's checks:** World 3 sign-off (S8); G1 hints in play.
-- **Localization:** the FredokaOne font with Czech carons, Czech overflow screenshots of the panels, the Stage 9 exit-door label.
+- **Localization:** Czech overflow screenshots of the panels (the font is now BuilderSansBold, so re-check widths in Czech and the pseudo-language), the Stage 9 exit-door label.
 - **E1.0 leftovers** (go to E1a / MU): a real-phone measurement, a 12-client join.
 - **Housekeeping (Studio):** delete `ReplicatedStorage.StageTimerStopped` (unused). (`ServerStorage.Stage9_OldBigMaze` was deleted on 2026-11-01.)
 

@@ -3,7 +3,7 @@
 Status: design agreed 2026-10-23; L1 implemented and Studio-validated 2026-10-23 (see "Design check (L1)" below); L1.1
 (strings workflow: CSV source, `tools/loc.py`, pseudo-language) 2026-10-24, see "Strings workflow". The Czech texts await
 the user's review. L2 (client panels) implemented and Studio-validated 2026-10-24, see "Design check (L2)". L3 (server + Studio
-texts) implemented 2026-10-24, see "L3 notes"; font check and Czech overflow pass still open. Milestones **L1–L3** (L4 later) in [ROADMAP.md](ROADMAP.md),
+texts) implemented 2026-10-24, see "L3 notes"; font decided 2026-11-02 (BuilderSansBold, see "Font decision"); Czech overflow pass still open. Milestones **L1–L3** (L4 later) in [ROADMAP.md](ROADMAP.md),
 after telemetry (T1a / T1b, [TELEMETRY.md](TELEMETRY.md)).
 
 ## Goal
@@ -28,7 +28,10 @@ Top-10 / stars board titles, garden plot signs, pen labels, incubator lock text)
   side), compiled into `ReplicatedStorage/Strings/<lang>.luau`; see "Strings workflow" below. (L1 had hand-written
   modules per area with `{ en = …, cs = … }` entries.)
 - **Language choice:**
-  - first join: `player.LocaleId` (`cs-cz` → `cs`), unsupported → `en`;
+  - first join ("automatic", `Locale.Resolve`, 2026-11-02): the Roblox account language `player.LocaleId` (`cs-cz` → `cs`) when it
+    is a supported language other than English, else the **device** language `LocalizationService.SystemLocaleId`, which only a
+    client can read (`LanguageSettings.client` sends it once to `LanguageRemotes.SystemLocale`; attribute `SystemLocale`), else `en`.
+    Why: Czech is not a Roblox account language, a Czech player's account says `en-us` (found on the first Android / Windows tests);
   - override: a **"Language: English / Čeština"** row in the Settings panel (same pattern as `MusicSettings.client.luau`,
     next LayoutOrder), sent with a `SetLanguage` remote; the server validates it against `Locale.Supported`;
   - stored in the profile as `Language` (`""` = automatic), mirrored as the player attribute `Language`; clients follow
@@ -61,7 +64,7 @@ Against the code, the design holds with these decisions:
 - **Language setting = three states:** the Settings row cycles **Automatic → English → Čeština → Automatic** and reads
   "Language: Automatic (English)" / "Jazyk: Čeština" in the current language. Profile `Language` (`""` = automatic),
   player attributes `LanguageSetting` (the stored choice) and `Language` (the resolved code the clients render in).
-  Until the attribute arrives a client uses its own `LocaleId`.
+  Until the attribute arrives a client uses `Locale.Resolve` of its own `LocaleId` and `SystemLocaleId`.
 - **Server labels:** `Locale.SetKey(label, key, args)` sets `LocKey` / `LocArgs` (JSON) / tag `Loc` and the English text
   as a fallback; `Locale.SetText(label, text)` writes a literal (times, star lines) and clears the key. `LocalizedText`
   re-applies the translation when the language, the attributes or the label's `Text` change (the server's English
@@ -104,8 +107,14 @@ Against the code, the design holds with these decisions:
 
 - **Font check (2026-10-24, width heuristic, no render):** a letter with a caron/ring should be as wide as its base letter.
   FredokaOne differs for č ě ř ů ň (and ť ď, which many fonts widen); GothamBold, Nunito and Bangers match everywhere, BuilderSansBold
-  and SourceSansBold only differ for ť ď. So FredokaOne mixes in a fallback font for Czech; GothamBold is the safe stud-style
-  substitute (`StudStyle.Font`), decision pending with the user.
+  and SourceSansBold only differ for ť ď. So FredokaOne mixes in a fallback font for Czech.
+- **Font decision (2026-11-02, from a render in Studio, nine fonts, Czech + Russian lines):** FredokaOne and Bangers draw
+  Czech carons / rings and all Cyrillic in a thin fallback font; GothamBold, BuilderSansBold, SourceSansBold, Nunito and Arimo
+  have both (Latin Extended-A and Cyrillic, bold ones look bold), so Russian needs no font change. **`StudStyle.Font` is now
+  `BuilderSansBold`** (the user's pick: width and face closest to FredokaOne). The 447 Studio-authored labels that used
+  FredokaOne (leaderboard titles / names / scores, hub and garden signs, the `StageKit.Top10Leaderboard` template) were set to
+  BuilderSansBold in the place file; `PlotView`'s incubator label uses `StudStyle.Font`. New Studio labels: BuilderSansBold,
+  never FredokaOne. Not checked: Greek, Turkish, Arabic, CJK (Roblox falls back to a system font for those).
 
 ## Strings workflow (L1.1, 2026-10-24)
 **Source:** `localization/strings.csv`, the one table people edit: `key`, `context` (where the text appears, what goes
@@ -159,7 +168,7 @@ A new language later (L4): add the code to `TRANSLATIONS` and `PLURAL_FORMS` in 
 | **L1** — infrastructure | `Locale`, `Strings/Common` + `Hud`, profile field, `SetLanguage` remote, Settings row, `LocalizedText` client; HUD essentials converted: ScorePanel, timer, results popup, gate prompts, explore / arrival warnings. Czech complete for these |
 | **L1.1** — strings workflow | `localization/strings.csv` as the source, `tools/loc.py` build / check / lint / review, generated `Strings/<lang>.luau`, pseudo-language `qps`, lint baseline |
 | **L2** — client panels | Pets, Skills (`TalentRows`), Garden, Incubator, Food shop, Arena HUD, hub portal / gate faces, `MedalText`, config display names |
-| **L3** — server + Studio texts | gate signs, Top-10 / stars boards, garden plot signs / pens / incubators; MCP pass over Studio-authored `TextLabel` / `TextButton` literals in StarterGui and Workspace (tag + key); overflow check of every panel in Czech; **font check**: FredokaOne (the stud style's font) has no č ě ň ř š ť ď ž ů, Roblox draws them in a thinner fallback font (seen in the pseudo-language, 2026-10-24): pick a font that covers Latin Extended-A or accept the mix |
+| **L3** — server + Studio texts | gate signs, Top-10 / stars boards, garden plot signs / pens / incubators; MCP pass over Studio-authored `TextLabel` / `TextButton` literals in StarterGui and Workspace (tag + key); overflow check of every panel in Czech; **font check** done 2026-11-02: StudStyle.Font = BuilderSansBold (see "Font decision") |
 | **L4** — more languages (later) | chosen from the telemetry locale data; only new string fields + `Supported` entries |
 
 ## Rules (copied to AGENTS.md with L1, updated with L1.1)

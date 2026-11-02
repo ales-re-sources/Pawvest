@@ -16,6 +16,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
+local Locale = require(ReplicatedStorage.Locale)
 local StageConfig = require(ReplicatedStorage.StageConfig)
 local TalentConfig = require(ReplicatedStorage.TalentConfig)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
@@ -541,7 +542,7 @@ local function onJoin(player: Player)
 		task.wait(0.5)
 	end
 	if player.Parent then
-		send("LogCustomEvent", player, "Session", 1, fields(player.LocaleId, s.platform or "unknown", if isNew then "new" else "returning"))
+		send("LogCustomEvent", player, "Session", 1, fields(player.LocaleId .. "/" .. tostring(player:GetAttribute(Locale.SystemAttribute) or "?"), s.platform or "unknown", if isNew then "new" else "returning"))
 	end
 end
 
