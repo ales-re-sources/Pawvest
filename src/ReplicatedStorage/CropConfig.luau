@@ -8,12 +8,13 @@
 local CropConfig = {}
 
 -- Crops in catalogue order. letter: one character in the plot message (GardenRemotes.Plot field.crops); renown: Renown level
--- that unlocks the crop; sale / seed in Coins (seed = 25 % of the sale); tier: Renown points per harvest (RenownPoints).
+-- that unlocks the crop; sale / seed in Coins (seed = 25 % of the sale); tier: Renown points per harvest (RenownPoints);
+-- kg: the weight shown at size factor 1 (E1c2).
 CropConfig.Crops = {
-	{ id = "Potato", name = "Potato", icon = "🥔", letter = "a", tier = 1, growSeconds = 5 * 60, sale = 2, seed = 1, renown = 0 }, -- loc: ignore
-	{ id = "Corn", name = "Corn", icon = "🌽", letter = "b", tier = 2, growSeconds = 6 * 3600, sale = 108, seed = 27, renown = 8 }, -- loc: ignore
-	{ id = "Pumpkin", name = "Pumpkin", icon = "🎃", letter = "c", tier = 2, growSeconds = 8 * 3600, sale = 144, seed = 36, renown = 8 }, -- loc: ignore
-	{ id = "GiantMelon", name = "Giant melon", icon = "🍉", letter = "d", tier = 3, growSeconds = 12 * 3600, sale = 432, seed = 108, renown = 25 }, -- loc: ignore
+	{ id = "Potato", name = "Potato", icon = "🥔", letter = "a", tier = 1, growSeconds = 5 * 60, sale = 2, seed = 1, renown = 0, kg = 0.25 }, -- loc: ignore
+	{ id = "Corn", name = "Corn", icon = "🌽", letter = "b", tier = 2, growSeconds = 6 * 3600, sale = 108, seed = 27, renown = 8, kg = 0.5 }, -- loc: ignore
+	{ id = "Pumpkin", name = "Pumpkin", icon = "🎃", letter = "c", tier = 2, growSeconds = 8 * 3600, sale = 144, seed = 36, renown = 8, kg = 6 }, -- loc: ignore
+	{ id = "GiantMelon", name = "Giant melon", icon = "🍉", letter = "d", tier = 3, growSeconds = 12 * 3600, sale = 432, seed = 108, renown = 25, kg = 15 }, -- loc: ignore
 }
 CropConfig.ById = {}
 CropConfig.ByLetter = {}
@@ -60,6 +61,14 @@ end
 -- A Tending pet harvests only while the crops in the barn (Items) are fewer than BarnCapacity.
 CropConfig.PetSlotPrices = { 0, 2500, 9000 }
 CropConfig.PetSlotsFromPens = { 1, 2, 2, 3, 3, 3 }
+
+-- Size roll (E1c2, docs/EXPANSION.md §5.3): every harvest's size factor = exp(SizeSigma × z - SizeSigma² / 2), mean exactly 1
+-- (the ladder holds), z standard normal from the planting's own seed, capped at ±SizeZCap. Big from z >= SizeBigZ (top 20 %),
+-- Giant from z >= SizeGiantZ (top 3 %). A sale pays sale × factor. tools/economy.py pins these and checks the mean.
+CropConfig.SizeSigma = 0.25
+CropConfig.SizeZCap = 4
+CropConfig.SizeBigZ = 0.8416
+CropConfig.SizeGiantZ = 1.8808
 
 -- Passive rates (ECONOMY open decision 5: placeholders).
 CropConfig.OnlineRate = 1.0
@@ -113,6 +122,39 @@ end
 -- Seeds the stock holds (and crops a Tending pet may store) at Barn level `level`.
 function CropConfig.BarnFor(level: number): number
 	return CropConfig.BarnCapacity + CropConfig.UpgradeById.Barn.step * level
+end
+
+local function sizeOf(z: number): number
+	local sigma = CropConfig.SizeSigma
+	return math.exp(sigma * z - sigma * sigma / 2)
+end
+
+-- The size factor of `userId`'s planting number `planting` (Field.Squares[n].N): the same planting always rolls the same,
+-- whether the owner or a Tending pet harvests it.
+function CropConfig.SizeFactor(userId: number, planting: number): number
+	local random = Random.new(userId * 6007 + planting * 1000003 + 17) -- not the Tending roll's seed
+	local u1 = 1 - random:NextNumber() -- (0, 1]
+	local u2 = random:NextNumber()
+	local z = math.sqrt(-2 * math.log(u1)) * math.cos(2 * math.pi * u2)
+	return sizeOf(math.clamp(z, -CropConfig.SizeZCap, CropConfig.SizeZCap))
+end
+
+-- The smallest and the largest size factor the roll can give.
+function CropConfig.SizeBounds(): (number, number)
+	return sizeOf(-CropConfig.SizeZCap), sizeOf(CropConfig.SizeZCap)
+end
+
+-- "Giant", "Big" or nil for a size factor.
+function CropConfig.SizeLabel(factor: number): string?
+	if factor >= sizeOf(CropConfig.SizeGiantZ) then
+		return "Giant"
+	end
+	return if factor >= sizeOf(CropConfig.SizeBigZ) then "Big" else nil
+end
+
+-- Coins (before the pet bonus) for crops of `crop` whose size factors add up to `sizeSum`: the one rounding rule.
+function CropConfig.SaleValue(crop, sizeSum: number): number
+	return math.floor(crop.sale * sizeSum + 0.5)
 end
 
 -- Look stage 1..3 of a planted crop (3 = ripe), from its growth seconds.

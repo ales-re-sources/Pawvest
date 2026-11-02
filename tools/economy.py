@@ -259,6 +259,7 @@ def apply_crop_config(P):
         "renown": [points, luau(f, "CropConfig.RenownK"), luau(f, "CropConfig.RenownP")],
         "barn_capacity": luau(f, "CropConfig.BarnCapacity"),
         "upgrades": [[u["id"], u["step"], list(u["prices"])] for u in luau(f, "CropConfig.Upgrades")],  # E1c1: [id, step, prices]
+        "size": [luau(f, "CropConfig.SizeSigma"), luau(f, "CropConfig.SizeZCap"), luau(f, "CropConfig.SizeBigZ"), luau(f, "CropConfig.SizeGiantZ")],  # E1c2
         "rates": [luau(f, "CropConfig.OnlineRate"), luau(f, "CropConfig.OfflineRate"), luau(f, "CropConfig.OfflineCapSeconds") / 3600],  # hours
         # field pets (E1b): slot prices, slots from pens; PetConfig's aptitude numbers
         "pet_slots": luau(f, "CropConfig.PetSlotPrices"),
@@ -394,6 +395,7 @@ def pin_values(P):
         "crop_field_renown": P["crop_cfg"]["renown"],  # [points per harvest by tier, RenownK, RenownP]
         "crop_field_barn_capacity": P["crop_cfg"]["barn_capacity"],
         "crop_field_upgrades": P["crop_cfg"]["upgrades"],  # [id, step, prices] (E1c1)
+        "crop_field_size": P["crop_cfg"]["size"],  # [sigma, z cap, Big z, Giant z] of the size roll (E1c2)
         "crop_field_rates": P["crop_cfg"]["rates"],  # [online rate, offline rate, offline cap in hours]
         "field_pet_slots": P["crop_cfg"]["pet_slots"],  # CropConfig.PetSlotPrices
         "field_pets_from_pens": P["crop_cfg"]["pets_from_pens"],  # CropConfig.PetSlotsFromPens
@@ -1429,7 +1431,31 @@ def run_checks(P, days=60, seeds=6):
     mismatched = [f"{k} config {cfg_first[k]} vs plan {v}" for k, v in PLANNED["required_at"].items() if k in cfg_first and cfg_first[k] != v]
     results.append(("3 Required talents of built stages match the planned table", not mismatched, "; ".join(mismatched)))
     results.extend(field_checks(P, days, seeds))
+    results.extend(size_checks(P))
     return results
+
+
+def size_stats(sigma, cap, big_z, giant_z, steps=16000):
+    """Expected size factor and the Big / Giant shares of CropConfig.SizeFactor: exp(sigma z - sigma^2 / 2), z normal capped at +-cap."""
+    lo, hi = -8.0, 8.0
+    h = (hi - lo) / steps
+    mean = 0.0
+    for k in range(steps + 1):
+        z = lo + k * h
+        w = (0.5 if k in (0, steps) else 1.0) * h * math.exp(-z * z / 2) / math.sqrt(2 * math.pi)
+        mean += w * math.exp(sigma * max(-cap, min(cap, z)) - sigma * sigma / 2)
+    tail = lambda z0: 0.5 * math.erfc(z0 / math.sqrt(2))
+    return mean, tail(big_z), tail(giant_z)
+
+
+def size_checks(P):
+    """E1c2: the size roll must not change income (expected factor 1, the ladder holds) and its labels keep their shares."""
+    sigma, cap, big_z, giant_z = P["crop_cfg"]["size"]
+    mean, big, giant = size_stats(sigma, cap, big_z, giant_z)
+    return [
+        ("12 Size roll: expected factor 1 +- 0.005 (sale x factor keeps the ladder)", abs(mean - 1) <= 0.005, f"mean {mean:.4f} (sigma {sigma}, cap +-{cap})"),
+        ("12 Size roll: Big about 20 %, Giant about 3 %", abs(big - 0.20) <= 0.015 and abs(giant - 0.03) <= 0.005, f"Big {big:.1%}, Giant {giant:.1%}"),
+    ]
 
 
 # --------------------------------------------------------------------------------------------------------------------

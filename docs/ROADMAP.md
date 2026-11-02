@@ -47,7 +47,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | P3b | Pet names (filtered, shown to everyone; first free, renames 250) | ✔ | ✔ | – |
 | E1a3 | Crops as pet food (pet detail page; XP = half the sale value) — scoped 2026-11-02 | – | – | – |
 | E1c1 | Field upgrades (growth, barn) | ✔ | ✔ | – |
-| E1c2–E5 | Garden MVP (see "Next"; E1c2–E1c4 scoped in outline) | – | – | – |
+| E1c2 | Size roll (lognormal, Big / Giant, best per crop, sizes in the barn) | ✔ | ✔ | – |
+| E1c3–E5 | Garden MVP (see "Next"; E1c3–E1c4 scoped in outline) | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
 
@@ -189,7 +190,8 @@ route later. Only for `GardenConfig.HasFieldAccess` (nobody else holds crops).
   `xp <= sale × Berry.xp / Berry.price` for every crop (a new crop or a sale-price change then has to pass the guardrail).
 - **Server (`GardenField`, it owns `Items` and settles the field):** `GardenRemotes.FeedCrop(uid, cropId, count)`, count an integer 1..held.
   Settle the field first (Tending harvests count); clamp the count to `ceil(GardenConfig.XpToMax(pet) / xp)` (the last crop may go past level 20, the XP
-  over it is lost; the crops after it stay in the barn); `Items[crop] -= used`; `PetConfig.GainXp`; a penned pet's production is settled at the old level first (as `GardenFood`
+  over it is lost; the crops after it stay in the barn); `Items[crop] -= used` and `ItemSize[crop] -= used × ItemSize / held` (the average
+  size leaves, as in a sale, E1c2); `PetConfig.GainXp`; a penned pet's production is settled at the old level first (as `GardenFood`
   does); publish pets and garden; answer on `GardenRemotes.Result` `("FeedCrop", ok, { uid, crop, used, xp, level, levels } or reason)`.
   Rejects: no field access `locked`, crop not held `items`, a level-20 pet `maxed` (nothing used), bad uid / crop / count → no answer.
   Any owned pet can be fed (equipped, penned, resting or on the field, the same rule as food); a field pet's reach follows its new level.
@@ -214,13 +216,55 @@ route later. Only for `GardenConfig.HasFieldAccess` (nobody else holds crops).
 ### E1c — Size roll, tools, field upgrades, market cart (scope 2026-11-02, the user's decisions)
 Split into four steps, each validated and committed on its own (decided 2026-11-02):
 - **E1c1 Field upgrades** (growth, barn): numbers from ECONOMY, already in the model. Scope below.
-- **E1c2 Size roll** (EXPANSION §5.3, without variants): every harvest rolls a size factor from `(UserId, square, planting)`, expected value 1.0;
-  labels normal / Big / Giant; a personal best per crop. **Storage decided:** the barn keeps per crop a count and the summed size factor
-  (`Items[crop]` + `ItemSize[crop]`), a sale pays the average; no per-item list (the Harvest Fair can add one). Scoped when it starts.
+- **E1c2 Size roll** (EXPANSION §5.3, without variants): scope below.
 - **E1c3 Tools tier 1** (Seed sorter, Cloches, Pruning shears, EXPANSION §6). **Decided:** `economy.py` first models the tools and the size roll
   (the sensitivity run already fails A at +20 % income), then effect sizes and prices go to the user for approval, as the field-pet re-run did.
 - **E1c4 Market cart** (EXPANSION §5.2). **Decided:** seeds only for now (fertilisers and decor do not exist): 3-4 daily offers from the UTC day
   (same on every server, per-player quantities), discounted seeds of unlocked crops plus a few seeds of one locked crop as a taste.
+
+**E1c2 — Size roll.** Design check: EXPANSION §5.3 (a continuous roll with a long tail, sale value × size, expected value 1.0 without
+tools so the ladder holds, labels normal / Big / Giant, a personal best per crop, the roll fixed per planting so a re-join cannot reroll it,
+Tending pets' harvests roll too). Variants, the Harvest Fair and the ledger stay out.
+- **The roll (`CropConfig.SizeFactor(userId, planting)`):** lognormal, `exp(σ·z − σ²/2)` with `σ = 0.25` (mean exactly 1), `z` from
+  Box-Muller on `Random.new(seed)` with a seed from the owner and the square's planting number `N` (not the Tending roll's seed), `z` capped at
+  ±4 (factor 0.36–2.64). **Big** from z ≥ 0.84 (top 20 %, factor ≥ 1.20), **Giant** from z ≥ 1.88 (top 3 %, factor ≥ 1.55). The owner's
+  harvest and a Tending pet's harvest of the same planting roll the same.
+- **Weight shown:** `CropConfig.Crops[].kg` = the weight at factor 1 (Potato 0.25, Corn 0.5, Pumpkin 6, Giant melon 15), shown as kg × factor
+  to 0.1 kg ("Pumpkin, 7.4 kg").
+- **Barn (decided):** per crop a count and the summed factor, `Garden.Items[crop]` + `Garden.ItemSize[crop]`; selling k of n pays
+  `round(sale × k × ItemSize / n)` (then the pet bonus, `CoinRewards.Grant`) and removes `k × ItemSize / n`. Crops stored before E1c2 count as
+  factor 1 (no ItemSize → ItemSize = count). `Garden.BestSize[crop]` = the highest factor harvested. Stored ids: never rename them.
+- **Server (`GardenField`):** Harvest rolls and answers `{ ..., size = factor, best = true? }`; the absence settle rolls each pet harvest into
+  ItemSize / BestSize (the join notice keeps its counts). State `field` gains `sizes = ItemSize` and `best = BestSize`.
+- **Client (`FieldClient`):** harvest toast "+1 Pumpkin · 7.4 kg" + "Big one!" / "Giant!" + "New record!" (+ "Renown 4!" on a level-up); a
+  Harvest row shows the count, the best weight ("Record 8.1 kg") and the sale value of the stored sizes on its button.
+  `CropConfig.SaleValue(crop, sizeSum)` is the one rounding rule.
+- **Economy:** `economy.py` pins σ and the two thresholds and checks the factor's expected value (1 ± 0.005, numerically, with the cap) and the
+  Big / Giant shares, so a change to the roll cannot raise income unseen. E1a3's crop XP stays per crop, not per size.
+
+**Acceptance checks (E1c2).**
+1. 10 000 rolls of `SizeFactor` in Studio: mean 1 ± 0.01, Big 20 ± 1.5 %, Giant 3 ± 0.5 %, all within 0.36–2.64; the same (user, planting)
+   always gives the same factor.
+2. A harvested Pumpkin: Items +1, ItemSize + the factor `SizeFactor` gives for its planting, the toast shows 6 × factor kg and the label its
+   threshold gives; BestSize changes (and "New record!" shows) only when the factor beats the old best.
+3. Selling: three Pumpkins with ItemSize 3.42 pay `round(144 × 3.42)` = 492 before the pet bonus, and ItemSize goes; one of three (remote)
+   pays `round(144 × 1.14)` = 164 and leaves 2.28. Crops from before E1c2 (Items 6 Potato, no ItemSize) sell for 12.
+4. A Tending pet's harvests while away add their factors to ItemSize; a re-join does not reroll a planting.
+5. `economy.py check` passes with the size pins and the expected-value check; `loc.py` check 0 errors, lint within the baseline; the toast and
+   the Harvest rows fit in Czech; all of it once through the real UI, no console errors, the live profile snapshotted and restored.
+
+**E1c2 implemented and Studio-validated (2026-11-02)**, in playtests on fixtures in the developer's live profile (snapshot `TestSnapshots`
+`profile_9892673032_e1c2`, restored afterwards):
+- 10 000 rolls: mean 1.001, Big 20.25 %, Giant 2.96 %, range 0.379–2.635; the same (user, planting) gave the same factor every time.
+- Three ripe Giant melons (plantings 200 / 204 / 224, best before 1.5) harvested through the panel: factors 1.161 / 1.623 / 1.332, ItemSize
+  4.1154 (their sum); toasts "+1 Obří meloun · 17,4 kg / Pověst 3!", "… 24,3 kg / Obří kus! Nový rekord! / Pověst 4!", "… 20,0 kg / Pořádný
+  kus!"; only the Giant moved BestSize. Crops from before E1c2 (6 Potatoes, no ItemSize) were read as size 6.
+- Pumpkins with ItemSize 3.42: one sold by remote paid 164 and left 2.28, the other two through the panel paid 328 (492 in all); the 6 old
+  Potatoes paid 12; sold-out crops lost their ItemSize. Rows in Czech: "Prodat vše · 328", "Rekord 24,3 kg · 1778"; everything fits.
+- Tending 1 (strength 0.2), 4 h away, a ripe Potato on the pet's square: planting 300's Tending roll missed → left for the owner, nothing
+  stored. Plantings chosen to hit: the pet harvested 303 and the replants 416 / 417, 418 missed and waits; ItemSize 3.1386 = the three rolls'
+  sum, BestSize 1.334 = the largest, seeds 4 → 1, notice `tended = { Potato = 3 }`. A re-join changed no size, record or square.
+- `economy.py check` 45 / 45 (check 12: size mean and shares); no console errors on client or server.
 
 **E1c1 — Field upgrades.** Inputs: ECONOMY → upgrades (no Renown gate in the model).
 - **Numbers (`CropConfig.Upgrades`, pinned):** Growth 4 levels, 3 000 / 8 000 / 20 000 / 45 000, each level -5 % grow time; Barn 5 levels,

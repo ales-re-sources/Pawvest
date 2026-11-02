@@ -14,6 +14,9 @@
 -- Placed pets earn aptitude XP in their job by the weighted field time (the same seconds as growth).
 -- Pens convert once (Garden.Converted) on the join of a player with field access: penned pets back to the inventory,
 -- CropConfig.PetSlotsFromPens slots, the rest of the pen prices refunded; GardenService then rejects the pen remotes.
+-- Size roll (E1c2): every harvest (the owner's or a Tending pet's) rolls CropConfig.SizeFactor from the planting number; the
+-- barn keeps per crop the count (Items) and the summed factors (ItemSize; crops from before E1c2 count as 1 each), BestSize[crop]
+-- = the best factor harvested. A sale of k of n pays CropConfig.SaleValue for k × ItemSize / n.
 -- Field upgrades (E1c1): Field.Upgrades = { Growth, Barn } levels (CropConfig.Upgrades): Growth multiplies the growth crops
 -- earn (CropConfig.GrowthSpeed; pets' aptitude XP keeps the plain seconds), Barn raises the seed stock and the crops a Tending
 -- pet may store (CropConfig.BarnFor).
@@ -83,6 +86,7 @@ local function fieldOf(player: Player, profile)
 		garden.Field = field
 		garden.Seeds = table.clone(CropConfig.StartSeeds)
 		garden.Items = {}
+		garden.ItemSize = {}
 		garden.Renown = 0
 	end
 	field.Count = math.clamp(count(field.Count), CropConfig.StartSquares, CropConfig.MaxSquares)
@@ -120,6 +124,22 @@ local function fieldOf(player: Player, profile)
 	end
 	garden.Seeds = cleanStock(garden.Seeds)
 	garden.Items = cleanStock(garden.Items)
+	-- sizes: one summed factor per stored crop, within what its count can hold (missing = factor 1 each, from before E1c2)
+	local low, high = CropConfig.SizeBounds()
+	local sizes, best = {}, {}
+	for id, n in garden.Items do
+		local stored = type(garden.ItemSize) == "table" and garden.ItemSize[id]
+		sizes[id] = if finite(stored) and stored > 0 then math.clamp(stored, n * low, n * high) else n
+	end
+	if type(garden.BestSize) == "table" then
+		for id, factor in garden.BestSize do
+			if CropConfig.ById[id] and finite(factor) and factor > 0 then
+				best[id] = math.clamp(factor, low, high)
+			end
+		end
+	end
+	garden.ItemSize = sizes
+	garden.BestSize = best
 	garden.Renown = count(garden.Renown)
 	local upgrades = {}
 	for _, upgrade in CropConfig.Upgrades do
@@ -165,6 +185,19 @@ local function fieldOf(player: Player, profile)
 	return field
 end
 GardenField.FieldOf = fieldOf
+
+-- Puts one harvested crop of planting `planting` into the barn with its rolled size. Returns the factor and whether it is the
+-- player's best of that crop so far.
+local function store(player: Player, garden, crop, planting: number): (number, boolean)
+	local factor = CropConfig.SizeFactor(player.UserId, planting)
+	garden.Items[crop.id] = (garden.Items[crop.id] or 0) + 1
+	garden.ItemSize[crop.id] = (garden.ItemSize[crop.id] or 0) + factor
+	local record = factor > (garden.BestSize[crop.id] or 0)
+	if record then
+		garden.BestSize[crop.id] = factor
+	end
+	return factor, record
+end
 
 -- [square] = Tending strength on that square: the strongest Tending pet that reaches it (the same job does not stack).
 local function tendingStrength(profile, field)
@@ -227,7 +260,7 @@ local function settle(player: Player, profile, field, absence: boolean): (boolea
 				entry.Tried = true -- the pet did not get to it: it waits for the owner
 				break
 			end
-			garden.Items[crop.id] = (garden.Items[crop.id] or 0) + 1
+			store(player, garden, crop, entry.N)
 			garden.Renown += CropConfig.RenownPoints[crop.tier] or 0
 			tended = tended or {}
 			tended[crop.id] = (tended[crop.id] or 0) + 1
@@ -299,6 +332,8 @@ GardenService.AddStateField("field", function(profile)
 		squares = squares,
 		seeds = garden.Seeds,
 		items = garden.Items,
+		sizes = garden.ItemSize,
+		best = garden.BestSize,
 		renown = garden.Renown,
 		level = CropConfig.RenownLevel(garden.Renown),
 		pets = pets,
@@ -417,11 +452,11 @@ harvestEvent.OnServerEvent:Connect(function(player, square)
 
 	local garden = profile.Garden
 	field.Squares[tostring(square)] = nil
-	garden.Items[crop.id] = (garden.Items[crop.id] or 0) + 1
+	local size, record = store(player, garden, crop, entry.N)
 	local before = CropConfig.RenownLevel(garden.Renown)
 	garden.Renown += CropConfig.RenownPoints[crop.tier] or 0
 	local level = CropConfig.RenownLevel(garden.Renown)
-	done(player, "Harvest", { square = square, crop = crop.id, level = level, levelUp = level > before })
+	done(player, "Harvest", { square = square, crop = crop.id, level = level, levelUp = level > before, size = size, best = record or nil })
 end)
 
 buySeedsEvent.OnServerEvent:Connect(function(player, cropId, amount)
@@ -464,11 +499,15 @@ sellEvent.OnServerEvent:Connect(function(player, cropId, amount)
 		return reject(player, "Sell", "items")
 	end
 
-	garden.Items[crop.id] -= amount
+	local held = garden.Items[crop.id]
+	local part = garden.ItemSize[crop.id] * amount / held -- the average size of what is stored
+	garden.Items[crop.id] = held - amount
+	garden.ItemSize[crop.id] -= part
 	if garden.Items[crop.id] == 0 then
 		garden.Items[crop.id] = nil
+		garden.ItemSize[crop.id] = nil
 	end
-	local paid = CoinRewards.Grant(player, crop.sale * amount, "crop") or 0 -- the pet bonus at sale time
+	local paid = CoinRewards.Grant(player, CropConfig.SaleValue(crop, part), "crop") or 0 -- the pet bonus at sale time
 	done(player, "Sell", { crop = crop.id, count = amount, paid = paid })
 end)
 

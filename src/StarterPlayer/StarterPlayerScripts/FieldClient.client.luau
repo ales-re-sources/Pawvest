@@ -180,6 +180,11 @@ local function growSecondsOn(field, crop): number
 	return math.ceil(crop.growSeconds / CropConfig.GrowthSpeed(level) - 1e-6)
 end
 
+-- "7.4" (Czech "7,4"): the weight of a crop of size `factor`, to 0.1 kg (E1c2).
+local function kgText(crop, factor: number): string
+	return Locale.Decimal(string.format("%.1f", crop.kg * factor))
+end
+
 -- Seeds the barn of `field` holds (the Barn upgrade).
 local function barnOf(field): number
 	return CropConfig.BarnFor(CropConfig.UpgradeLevel(field and field.upgrades, "Barn"))
@@ -187,7 +192,7 @@ end
 
 -- State -------------------------------------------------------------------------------------------------------------------
 
-local fieldState = nil -- GardenRemotes.State.field: { count, squares, seeds, items, renown, level, pets, slots, slotPrice, upgrades, barn, notice }
+local fieldState = nil -- GardenRemotes.State.field: { count, squares, seeds, items, sizes, best, renown, level, pets, slots, slotPrice, upgrades, barn, notice }
 local panelPoint: Vector3? = nil -- where the Garden panel was opened (nil = closed)
 local pickerPoint: Vector3? = nil
 local pickerSquare: number? = nil
@@ -593,14 +598,21 @@ local function renderCrops(field)
 		if owned > 0 then
 			any = true
 			local row = newRow(cropsSection, crop.id, index + 1)
-			textColumn(row, SELL_WIDTH + GAP, string.format("%s × %s", cropTitle(crop), Locale.Number(owned)), nil)
+			local best = field.best and field.best[crop.id]
+			textColumn(
+				row,
+				SELL_WIDTH + GAP,
+				string.format("%s × %s", cropTitle(crop), Locale.Number(owned)),
+				if best then Locale.T("field.crop.best", { kg = kgText(crop, best) }) else nil
+			)
+			local value = CropConfig.SaleValue(crop, field.sizes and field.sizes[crop.id] or owned)
 			local sell = button("Sell", {
 				LayoutOrder = 2,
 				Size = UDim2.fromOffset(SELL_WIDTH, 40),
 				BackgroundColor3 = COLOR_SELL,
 				TextSize = 14,
 				TextWrapped = true,
-				Text = Locale.T("field.crop.sell", { coins = crop.sale * owned }),
+				Text = Locale.T("field.crop.sell", { coins = value }),
 				Parent = row,
 			}, 2)
 			sell.Activated:Connect(function()
@@ -1106,11 +1118,23 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 	local crop = type(detail) == "table" and detail.crop and cropOf(detail.crop)
 	local name = if crop then Locale.CropName(crop) else ""
 	if action == "Harvest" then
-		if detail.levelUp then
-			showToast(Locale.T("field.toast.harvestUp", { crop = name, level = detail.level }), COLOR_OK)
-		else
-			showToast(Locale.T("field.toast.harvest", { crop = name }), COLOR_OK)
+		local size = if type(detail.size) == "number" then detail.size else 1
+		local lines = { Locale.T("field.toast.harvestSize", { crop = name, kg = kgText(crop, size) }) }
+		local tag = CropConfig.SizeLabel(size)
+		local extra = {}
+		if tag then
+			table.insert(extra, Locale.T(if tag == "Giant" then "field.size.giant" else "field.size.big"))
 		end
+		if detail.best then
+			table.insert(extra, Locale.T("field.size.record"))
+		end
+		if #extra > 0 then
+			table.insert(lines, table.concat(extra, " "))
+		end
+		if detail.levelUp then
+			table.insert(lines, Locale.T("field.toast.renownUp", { level = detail.level }))
+		end
+		showToast(table.concat(lines, "\n"), COLOR_OK)
 	elseif action == "Sell" then
 		showToast(Locale.T("field.toast.sell", { count = detail.paid }), COLOR_OK)
 	elseif action == "BuySeeds" then

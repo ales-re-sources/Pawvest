@@ -350,8 +350,6 @@ field.picker.title,Seed picker title; {n} = square number 1-12,Plant on square {
 field.picker.info,"Crop row in the seed picker; {stock} = seeds the player has, {time} = grow time (""3 hours"")",You have {stock} · grows in {time},Máš {stock} · zraje {time},new,h757c2c37
 field.picker.none,Seed picker when the player has no seeds that can be planted,You have no seeds. Buy some in the field panel.,Nemáš žádná semínka. Kup si je v panelu pole.,new,h20730b2e
 field.picker.shop,Button in the seed picker without seeds: opens the field panel at the seeds,Buy seeds,Koupit semínka,new,h7a9eff42
-field.toast.harvest,Toast after a harvest; {crop} = crop name,\+1 {crop},\+1 {crop},new,he71ea0cd
-field.toast.harvestUp,"Toast after a harvest that raised the Renown level; {crop} = crop name, {level} = new Renown level",\+1 {crop} · Renown {level}!,\+1 {crop} · Pověst {level}!,new,hb7ff6c60
 field.toast.sell[one],Toast after selling crops; {count} = Coins paid (pet bonus included). Form for 1,\+{count} Coin,\+{count} mince,new,h1befc8cc
 field.toast.sell[few],Form for 2-4 (Czech only),,\+{count} mince,new,h1befc8cc
 field.toast.sell[other],Form for 0 and 5+,\+{count} Coins,\+{count} mincí,new,h1befc8cc
@@ -490,3 +488,9 @@ field.upgrade.price,"Upgrade buy button (narrow, ~104 px); {count} = price in Co
 field.upgrade.maxed,Upgrade button at the top level (greyed),Max,Max,new,h1ab2ab83
 field.toast.upgrade,"Toast after buying an upgrade level; {name} = upgrade name (Growth / Barn), {level} = new level",{name}: level {level}!,{name}: úroveň {level}!,new,hb5c08e2f
 field.reason.upgradeMaxed,Refused: the upgrade is already at its top level,Already at the top level,Už je na nejvyšší úrovni,new,hae9da8d5
+field.toast.harvestSize,"Toast after a harvest, first line; {crop} = crop name, {kg} = its weight with one decimal (""7.4"", Czech ""7,4"")",\+1 {crop} · {kg} kg,\+1 {crop} · {kg} kg,new,h767121e7
+field.size.big,"Harvest toast, second line: the crop rolled big (top 20 %); any crop, so keep it gender-neutral in Czech",Big one!,Pořádný kus!,new,h5fa3da2c
+field.size.giant,"Harvest toast, second line: the crop rolled giant (top 3 %); any crop, so keep it gender-neutral in Czech",Giant!,Obří kus!,new,hb84dd1bc
+field.size.record,"Harvest toast, after Big / Giant or alone: the heaviest crop of this kind the player has harvested",New record!,Nový rekord!,new,h14ead05b
+field.toast.renownUp,"Harvest toast, last line when the harvest raised the Renown level; {level} = new Renown level",Renown {level}!,Pověst {level}!,new,h03742e78
+field.crop.best,"Harvested crop row, second line; {kg} = weight of the heaviest crop of this kind harvested so far (""8.1"")",Record {kg} kg,Rekord {kg} kg,new,h9ad902fe
