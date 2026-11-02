@@ -182,7 +182,8 @@ function PlotView.new(slot: number, parent: Instance, options)
 	self.pieces = {} -- [key] = Model
 	self.pending = {} -- ordered keys whose signature changed
 	self.marked = {} -- [key] = true while pending
-	self.rows = 0 -- most field rows ever drawn (rows beyond the current field are cleared)
+	self.squares = 0 -- most field squares ever drawn (squares beyond the current field are cleared)
+	self.petMap = {} -- [square] = field pet of the current state (fieldPets)
 	self.labels = {} -- [incubator] = { label, egg, readyAt } of drawn countdowns
 	self.levelUps = {} -- [pen] = level the pet in that pen just reached (played when the pen is next drawn in full)
 	self.root = Instance.new("Model")
@@ -199,10 +200,10 @@ function PlotView:keys(): { string }
 	for n = 1, GardenConfig.MaxIncubators do
 		table.insert(keys, "inc" .. n)
 	end
-	local rows = self.state and self.state.field and self.state.field.rows or 0
-	self.rows = math.max(self.rows, rows)
-	for n = 1, self.rows do
-		table.insert(keys, "row" .. n)
+	local field = self.state and self.state.field
+	self.squares = math.max(self.squares, if field then field.cols * field.rows else 0)
+	for n = 1, self.squares do
+		table.insert(keys, "sq" .. n)
 	end
 	return keys
 end
@@ -220,7 +221,7 @@ function PlotView:signature(key: string): string
 	local kind, number = string.match(key, "^(%a+)(%d+)$")
 	local n = tonumber(number) :: number
 	if state.free then
-		return if kind == "row" or detail == "low" then "none" else detail .. "|free"
+		return if kind == "sq" or detail == "low" then "none" else detail .. "|free"
 	end
 	if kind == "pen" then
 		if state.converted then
@@ -231,27 +232,20 @@ function PlotView:signature(key: string): string
 		return table.concat({ detail, state.eggs[n] or "", tostring(n <= state.incCount), tostring(self.own), self.lang }, "|")
 	end
 	local field = state.field
-	if not field or n > field.rows then
+	if not field or n > field.cols * field.rows then
 		return "none"
 	end
 	if detail == "low" then
 		return if n == 1 then string.format("low|%dx%d", field.cols, field.rows) else "none"
 	end
-	local prompts = self.own and detail == "full"
-	local pets, onRow = fieldPets(field), {}
-	for c = 1, field.cols do
-		local pet = pets[(n - 1) * field.cols + c]
-		if pet then
-			table.insert(onRow, c .. "=" .. pet.text)
-		end
-	end
+	local pet = self.petMap[n]
 	return string.format(
 		"%s|%s|%d|%s|%s|%s",
-		if prompts then "own" else "full",
+		if self.own and detail == "full" then "own" else "full",
 		detail,
 		field.cols,
-		string.sub(field.crops, (n - 1) * field.cols * 2 + 1, n * field.cols * 2),
-		table.concat(onRow, ","),
+		string.sub(field.crops, (n - 1) * 2 + 1, n * 2),
+		if pet then pet.text else "",
 		self.lang
 	)
 end
@@ -278,6 +272,7 @@ function PlotView:SetState(state)
 		end
 	end
 	self.state = state
+	self.petMap = fieldPets(state.field)
 	self:mark()
 end
 
@@ -515,7 +510,7 @@ function PlotView:buildIncubator(model: Model, n: number)
 	self.labels[n] = { label = label, egg = egg, readyAt = readyAt }
 end
 
-function PlotView:buildRow(model: Model, r: number)
+function PlotView:buildSquare(model: Model, square: number)
 	local field = self.state.field
 	local pitch = math.min(5.5, FIELD_WIDTH / field.cols)
 	local size = pitch - 0.4
@@ -524,71 +519,69 @@ function PlotView:buildRow(model: Model, r: number)
 		part({ Name = "Field", Size = Vector3.new(pitch * field.cols, 0.4, depth), CFrame = self:at(Vector3.new(0, 0.05, FIELD_FRONT + depth / 2)), Color = COLORS.soil }).Parent = model
 		return
 	end
+	local r, c = (square - 1) // field.cols + 1, (square - 1) % field.cols + 1
 	local z = FIELD_FRONT + (r - 0.5) * pitch
 	local prompts = self.own and self.onSquare and self.detail == "full"
-	local pets = fieldPets(field)
-	for c = 1, field.cols do
-		local x = (c - 0.5 - field.cols / 2) * pitch
-		local square = (r - 1) * field.cols + c
-		local index = (square - 1) * 2 + 1
-		local letter = string.sub(field.crops, index, index)
-		local stage = tonumber(string.sub(field.crops, index + 1, index + 1)) or 0
-		if letter == "#" then
-			continue -- not bought yet
-		end
-		local soil = part({ Name = "Soil" .. square, Size = Vector3.new(size, 0.4, size), CFrame = self:at(Vector3.new(x, 0.05, z)), Color = COLORS.soil, Material = Enum.Material.Ground })
-		soil.Parent = model
-		if CROP_COLORS[letter] and stage > 0 then
-			local height = 0.6 + stage * 0.7
-			local width = size * (0.3 + stage * 0.15)
-			local color = if stage >= 3 then CROP_COLORS[letter] else SPROUT
-			part({ Name = "Crop", Size = Vector3.new(width, height, width), CFrame = self:at(Vector3.new(x, 0.25 + height / 2, z)), Color = color }).Parent = model
-		end
-		local pet = pets[square]
-		local rarity = pet and PetConfig.RarityOf(pet.kind)
-		if pet and rarity then
-			-- the pet stands on the square's front corner, beside the crop
-			local spot = Vector3.new(x + size * 0.28, 0, z - size * 0.28)
-			if self.detail == "mid" then
-				local cube = 1.4 * PetConfig.ScaleOf(pet.level)
-				part({ Name = "Pet" .. square, Size = Vector3.new(cube, cube, cube), CFrame = self:at(spot + Vector3.new(0, 0.25 + cube / 2, 0)), Color = rarity.color }).Parent =
-					model
-			else
-				local petModel = standingPet(pet.kind, pet.level, pet.uid, self:at(spot), soil.Position.Y + soil.Size.Y / 2, fieldPetLabel(pet.kind, pet.level, pet.apt))
-				if petModel then
-					petModel.Name = "Pet" .. square
-					petModel.Parent = model
-				end
+	local pets = self.petMap
+	local x = (c - 0.5 - field.cols / 2) * pitch
+	local index = (square - 1) * 2 + 1
+	local letter = string.sub(field.crops, index, index)
+	local stage = tonumber(string.sub(field.crops, index + 1, index + 1)) or 0
+	if letter == "#" then
+		return -- not bought yet
+	end
+	local soil = part({ Name = "Soil" .. square, Size = Vector3.new(size, 0.4, size), CFrame = self:at(Vector3.new(x, 0.05, z)), Color = COLORS.soil, Material = Enum.Material.Ground })
+	soil.Parent = model
+	if CROP_COLORS[letter] and stage > 0 then
+		local height = 0.6 + stage * 0.7
+		local width = size * (0.3 + stage * 0.15)
+		local color = if stage >= 3 then CROP_COLORS[letter] else SPROUT
+		part({ Name = "Crop", Size = Vector3.new(width, height, width), CFrame = self:at(Vector3.new(x, 0.25 + height / 2, z)), Color = color }).Parent = model
+	end
+	local pet = pets[square]
+	local rarity = pet and PetConfig.RarityOf(pet.kind)
+	if pet and rarity then
+		-- the pet stands on the square's front corner, beside the crop
+		local spot = Vector3.new(x + size * 0.28, 0, z - size * 0.28)
+		if self.detail == "mid" then
+			local cube = 1.4 * PetConfig.ScaleOf(pet.level)
+			part({ Name = "Pet" .. square, Size = Vector3.new(cube, cube, cube), CFrame = self:at(spot + Vector3.new(0, 0.25 + cube / 2, 0)), Color = rarity.color }).Parent =
+				model
+		else
+			local petModel = standingPet(pet.kind, pet.level, pet.uid, self:at(spot), soil.Position.Y + soil.Size.Y / 2, fieldPetLabel(pet.kind, pet.level, pet.apt))
+			if petModel then
+				petModel.Name = "Pet" .. square
+				petModel.Parent = model
 			end
 		end
-		if prompts then
-			local petPrompt = prompt(
-				soil,
-				Locale.T(if pet then "field.prompt.movePet" else "field.prompt.placePet"),
-				if pet then Locale.PetName(pet.kind, pet.level) else Locale.T("field.prompt.square", { n = square }),
-				6,
-				function()
-					self.onSquare(square, "pet", soil)
-				end
-			)
-			petPrompt.Name = "PetPrompt"
-			petPrompt.KeyboardKeyCode = Enum.KeyCode.F
-			petPrompt.GamepadKeyCode = Enum.KeyCode.ButtonY
-			petPrompt.UIOffset = Vector2.new(0, 72) -- below the plant / harvest prompt of the same square
-		end
-		local crop = CropConfig.ByLetter[letter]
-		if prompts and (letter == "." or (crop and stage >= 3)) then
-			local action = if letter == "." then "plant" else "harvest"
-			prompt(
-				soil,
-				Locale.T(if action == "plant" then "field.prompt.plant" else "field.prompt.harvest"),
-				if crop then Locale.CropName(crop) else Locale.T("field.prompt.square", { n = square }),
-				6,
-				function()
-					self.onSquare(square, action, soil)
-				end
-			)
-		end
+	end
+	if prompts then
+		local petPrompt = prompt(
+			soil,
+			Locale.T(if pet then "field.prompt.movePet" else "field.prompt.placePet"),
+			if pet then Locale.PetName(pet.kind, pet.level) else Locale.T("field.prompt.square", { n = square }),
+			6,
+			function()
+				self.onSquare(square, "pet", soil)
+			end
+		)
+		petPrompt.Name = "PetPrompt"
+		petPrompt.KeyboardKeyCode = Enum.KeyCode.F
+		petPrompt.GamepadKeyCode = Enum.KeyCode.ButtonY
+		petPrompt.UIOffset = Vector2.new(0, 72) -- below the plant / harvest prompt of the same square
+	end
+	local crop = CropConfig.ByLetter[letter]
+	if prompts and (letter == "." or (crop and stage >= 3)) then
+		local action = if letter == "." then "plant" else "harvest"
+		prompt(
+			soil,
+			Locale.T(if action == "plant" then "field.prompt.plant" else "field.prompt.harvest"),
+			if crop then Locale.CropName(crop) else Locale.T("field.prompt.square", { n = square }),
+			6,
+			function()
+				self.onSquare(square, action, soil)
+			end
+		)
 	end
 end
 
@@ -608,7 +601,7 @@ function PlotView:build(key: string): Model?
 		elseif kind == "inc" then
 			self:buildIncubator(model, n)
 		else
-			self:buildRow(model, n)
+			self:buildSquare(model, n)
 		end
 	end
 	return model
