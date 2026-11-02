@@ -40,7 +40,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | M6a | Soft launch + World 1 balancing — World 1 balanced by feel (2026-10-30); live test open | – | – | – |
 | MU | Mobile UX check | – | – | – |
 | E1a1 | Plots drawn by the client, new ring layout (garden moved) | ✔ | ✔ | – |
-| E1a2 | Crop field behind admin access (CropConfig, GardenField, Garden panel) — second-client check open | ✔ | partial | – |
+| E1a2 | Crop field behind admin access (CropConfig, GardenField, Garden panel) | ✔ | ✔ | – |
 | E1a3–E5 | Garden MVP (see "Next") | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
@@ -182,7 +182,10 @@ Sell 5 with 0 owned → `items`. 12: three +10 clicks −60 each (4 231 → 4 05
 afterwards → `stale`; at 12 squares → `maxed`. 14: Renown 3 / 84 / 518 points for L 1 / 8 / 25, monotonic to 2 000. 15: 30 synthetic plots with
 12-square fields 1 716 instances at most (limit 5 000); a full plot message 310 bytes. 16: `economy.py check` drift 0 (42 / 43, the known 5 B
 fail); `loc.py check` 0 errors, `lint` 0; Czech at a 374 px panel (phone portrait): 53 visible texts, every one fits (StudStyle glyphs measured).
-No console errors or warnings on server or client. **Open:** check 15's second client (a test user sees another test user's crops within 2 s).
+No console errors or warnings on server or client.
+Second client (2026-11-02, Server and Clients, test users −1 / −2, both with field access in Studio): Player1 planted a Potato on its square 1
+through the real prompt and picker; Player2, 22 studs in front of plot 1, received the plot (`crops` `a1.0.0.0`) 0.001 s and drew the crop 0.017 s
+(server time) after Player1's `Result`; no errors or warnings on server or clients.
 
 **Acceptance checks.** E1a1:
 1. `Workspace.Garden.Plots` is gone and a join adds **0** instances under server `Workspace`; a non-admin client draws its own plot with one pet
