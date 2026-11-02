@@ -199,22 +199,12 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 8) }),
 		create("UIPadding", { PaddingRight = UDim.new(0, 6), PaddingTop = UDim.new(0, 2), PaddingLeft = UDim.new(0, 2) }),
 	})
-	-- a Frame lets clicks through to the list's buttons under it: this empty button under the page's contents takes them
-	local blocker = create("TextButton", {
-		Name = "Blocker",
-		Size = UDim2.fromScale(1, 1),
-		BackgroundTransparency = 1,
-		Text = "",
-		AutoButtonColor = false,
-		Selectable = false,
-		ZIndex = 0,
-	})
 	local page = create("Frame", {
 		Name = "Detail",
 		Size = UDim2.fromScale(1, 1),
 		ZIndex = PAGE_Z,
 		Visible = false,
-	}, { blocker, titleLabel, backButton, closeButton, content })
+	}, { titleLabel, backButton, closeButton, content })
 	StudStyle.Panel(page, color)
 	-- PetsGui uses Global ZIndex (a ScreenGui made in code): everything on the page is lifted above the list under it
 	local function lift(instance: Instance)
@@ -557,10 +547,29 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		return currentUid ~= nil
 	end
 
+	-- A Frame lets clicks through to the buttons under it (and a button over them would show the hand cursor everywhere): while the
+	-- page is open, the panel's own controls under it are hidden.
+	local hidden: { GuiObject } = {}
+	local function hideList()
+		for _, child in panel:GetChildren() do
+			if child ~= page and child:IsA("GuiObject") and child.Visible then
+				child.Visible = false
+				table.insert(hidden, child)
+			end
+		end
+	end
+	local function showList()
+		for _, child in hidden do
+			child.Visible = true
+		end
+		table.clear(hidden)
+	end
+
 	function api.Close()
 		currentUid = nil
 		sellArmed = false
 		page.Visible = false
+		showList()
 		stopSpin()
 	end
 
@@ -573,6 +582,9 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		nameBox.Text = PetClient.NameOf(uid) or ""
 		if render() then
 			content.CanvasPosition = Vector2.zero
+			if not page.Visible then
+				hideList()
+			end
 			page.Visible = true
 			startSpin()
 		else
