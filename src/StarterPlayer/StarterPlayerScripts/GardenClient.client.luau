@@ -322,7 +322,7 @@ local function petRow(index: number, pet)
 			TextColor3 = pet.rarity.color,
 			TextStrokeTransparency = 0.4,
 			TextTruncate = Enum.TextTruncate.AtEnd,
-			Text = Locale.PetName(pet.kind, pet.level),
+			Text = Locale.PetName(pet.kind, pet.level, pet.name),
 		}),
 		label("Detail", {
 			Position = UDim2.new(0, 70, 0, 31),
@@ -395,7 +395,7 @@ refresh = function()
 		penCard.Visible = true
 		if not flashing then
 			showInfo(
-				Locale.T("garden.info.penned", { name = Locale.PetName(data.Kind, level), rate = rate(GardenConfig.RatePerHour(data)) }),
+				Locale.T("garden.info.penned", { name = Locale.PetName(data.Kind, level, PetClient.NameOf(uid)), rate = rate(GardenConfig.RatePerHour(data)) }),
 				rarity.color
 			)
 		end

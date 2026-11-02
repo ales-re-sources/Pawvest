@@ -375,7 +375,7 @@ local function petRow(order: number, entry)
 			TextColor3 = entry.rarity.color,
 			TextStrokeTransparency = 0.4,
 			TextTruncate = Enum.TextTruncate.AtEnd,
-			Text = Locale.PetName(entry.kind, entry.level),
+			Text = Locale.PetName(entry.kind, entry.level, entry.name),
 		}),
 		label("Detail", {
 			Position = UDim2.new(0, TEXT_LEFT, 0, 29),

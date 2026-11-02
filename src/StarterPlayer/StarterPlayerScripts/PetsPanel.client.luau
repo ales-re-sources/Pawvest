@@ -317,7 +317,7 @@ local function slotTooltip(index: number): string?
 	if slot.kind == "pet" then
 		local pet = slot.pet
 		return Locale.T("pets.slot.pet", {
-			name = string.format("<font color='#%s'>%s</font>", pet.rarity.color:ToHex(), Locale.PetName(pet.kind, pet.level)),
+			name = string.format("<font color='#%s'>%s</font>", pet.rarity.color:ToHex(), Locale.PetName(pet.kind, pet.level, pet.name)),
 			bonus = bonusText(pet.bonus),
 		})
 	elseif slot.kind == "empty" then
@@ -432,7 +432,7 @@ local function refreshSlots(inventory)
 		if slot.kind == "pet" then
 			b.BackgroundColor3 = COLOR_SLOT
 			b.Text = ""
-			slot.caption.Text = Locale.PetName(pet.kind, pet.level)
+			slot.caption.Text = Locale.PetName(pet.kind, pet.level, pet.name)
 			slot.caption.TextColor3 = Color3.new(1, 1, 1) -- rarity colours (Common grey) are too faint on the sand plate
 			local portrait = slotPortrait(pet)
 			if portrait then
@@ -562,7 +562,7 @@ local function buildRow(index: number, pet)
 			TextColor3 = rarityColor,
 			TextStrokeTransparency = 0.4,
 			TextTruncate = Enum.TextTruncate.AtEnd,
-			Text = Locale.PetName(pet.kind, pet.level),
+			Text = Locale.PetName(pet.kind, pet.level, pet.name),
 		}),
 		label("Detail", {
 			Position = UDim2.new(0, 74, 0, 30),

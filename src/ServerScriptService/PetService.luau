@@ -12,10 +12,16 @@
 -- penned or field pet, and the garden (GardenService / GardenField) rejects an equipped one; PetsChanged.penned maps each penned
 -- uid to its pen index, PetsChanged.field each field pet's uid to its square. Every pet has aptitudes (Apt, Spec; PetConfig):
 -- rolled at hatch (AddPet) and, for pets from before E1b, once on join.
+-- Names (P3b): Rename(uid, text) stores the cleaned raw text as Pets[uid].Name; the server filters it (TextService, broadcast) at the
+-- rename and again on every join and keeps only the filtered text for display: PetsChanged carries the filtered name, never the raw
+-- one, and the player attribute PetConfig.NamesAttribute holds { [uid] = filtered } of the equipped, penned and field pets (PetFollow,
+-- GardenView). A failed filter call shows no name. The first name is free, later ones cost PetConfig.RenamePrice.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
+local TextService = game:GetService("TextService")
+local HttpService = game:GetService("HttpService")
 
 local PetConfig = require(ReplicatedStorage.PetConfig)
 local GardenConfig = require(ReplicatedStorage.GardenConfig)
@@ -36,12 +42,15 @@ local equipEvent = remote("Equip") -- client → server: (uid: string)
 local unequipEvent = remote("Unequip") -- client → server: (uid: string)
 local buySlotEvent = remote("BuySlot") -- client → server: (expectedSlot: number)
 local sellEvent = remote("SellPet") -- client → server: (uid: string)
+local renameEvent = remote("Rename") -- client → server: (uid: string, text: string); "" clears the name
 local requestStateEvent = remote("RequestState") -- client → server, no arguments: resend the state (join publish may be missed)
 local changedEvent = remote("PetsChanged") -- server → client: (state)
 local resultEvent = remote("Result") -- server → client: (action, ok: boolean, detailOrReason)
 remotes.Parent = ReplicatedStorage
 
 local lastRequest = {} -- [Player] = os.clock() of the last accepted request
+local lastRename = {} -- [Player] = os.clock() of the last rename that reached the filter
+local filtered = {} -- [Player] = { [uid] = filtered name } (P3b; never the raw text)
 
 local PetService = {}
 
@@ -105,8 +114,21 @@ local function publish(player: Player)
 		table.insert(equipped, { Kind = pet.Kind, Level = pet.Level, uid = uid })
 	end
 	player:SetAttribute(PetConfig.AttributeName, PetConfig.EncodeEquipped(equipped))
+	-- names (P3b): the client gets the filtered name in place of the stored one; others see those of the pets they can see
+	local names = filtered[player] or {}
+	local pets, shown, anyShown = {}, {}, false
+	for uid, pet in profile.Pets do
+		local copy = table.clone(pet)
+		copy.Name = names[uid]
+		pets[uid] = copy
+		if names[uid] and (isEquipped(profile, uid) or penned[uid] or field[uid]) then
+			shown[uid] = names[uid]
+			anyShown = true
+		end
+	end
+	player:SetAttribute(PetConfig.NamesAttribute, if anyShown then HttpService:JSONEncode(shown) else "")
 	changedEvent:FireClient(player, {
-		pets = profile.Pets,
+		pets = pets,
 		equipped = profile.EquippedPets,
 		slots = profile.PetSlots,
 		freeEggs = profile.FreeEggs,
@@ -191,6 +213,10 @@ local function sanitize(profile, player: Player): boolean
 			rolled = true
 		end
 	end
+	for _, pet in profile.Pets do
+		local name = PetConfig.CleanName(pet.Name)
+		pet.Name = if name and name ~= "" then name else nil -- hand-edited or corrupt names are dropped
+	end
 	local kept = {}
 	for _, uid in profile.EquippedPets do
 		if
@@ -208,6 +234,44 @@ local function sanitize(profile, player: Player): boolean
 	return rolled
 end
 
+-- The broadcast-filtered form of `text` written by `player`, or nil when the filter call fails (then no name is shown).
+local function filterName(player: Player, text: string): string?
+	local ok, result = pcall(function()
+		local filterResult = TextService:FilterStringAsync(text, player.UserId, Enum.TextFilterContext.PublicChat)
+		return filterResult:GetNonChatStringForBroadcastAsync()
+	end)
+	if ok and type(result) == "string" then
+		return result
+	end
+	warn("[PetService] name filter failed: " .. tostring(result))
+	return nil
+end
+
+-- Filters every stored name again (filters change over time) and publishes; runs after the join publish.
+local function refilter(player: Player)
+	local profile = PlayerProfile.Get(player)
+	if not profile then
+		return
+	end
+	local results = {} -- { uid, raw, shown }
+	for uid, pet in profile.Pets do
+		if type(pet.Name) == "string" then
+			table.insert(results, { uid, pet.Name, filterName(player, pet.Name) })
+		end
+	end
+	local names = filtered[player]
+	if #results == 0 or not names or PlayerProfile.Get(player) ~= profile then
+		return
+	end
+	for _, result in results do
+		local pet = profile.Pets[result[1]]
+		if pet and pet.Name == result[2] then -- a rename during the calls keeps its own result
+			names[result[1]] = result[3]
+		end
+	end
+	publish(player)
+end
+
 -- Join and admin reset: grants the launch egg once and publishes the state.
 local function setup(player: Player)
 	local profile = PlayerProfile.WaitFor(player)
@@ -222,8 +286,10 @@ local function setup(player: Player)
 		profile.FreeEggs[LAUNCH_EGG] = (profile.FreeEggs[LAUNCH_EGG] or 0) + 1
 		task.spawn(PlayerProfile.Save, player)
 	end
+	filtered[player] = {}
 	publish(player)
 	freeEggsChanged:Fire(player)
+	task.spawn(refilter, player)
 end
 
 -- Per-player rate limit shared by all pet remotes; true if the request may proceed.
@@ -339,6 +405,61 @@ sellEvent.OnServerEvent:Connect(function(player, uid)
 	task.spawn(PlayerProfile.Save, player)
 end)
 
+renameEvent.OnServerEvent:Connect(function(player, uid, text)
+	if type(uid) ~= "string" or type(text) ~= "string" or not allow(player) then
+		return
+	end
+	local profile = PlayerProfile.Get(player)
+	local pet = profile and profile.Pets[uid]
+	if not pet then
+		return
+	end
+	local name = PetConfig.CleanName(text)
+	if not name then
+		return reject(player, "Rename", "name")
+	end
+	if name == (pet.Name or "") then
+		return reject(player, "Rename", "same")
+	end
+	local names = filtered[player] or {}
+	filtered[player] = names
+	if name == "" then
+		pet.Name = nil -- clearing is free and needs no filter
+		names[uid] = nil
+		succeed(player, "Rename", { uid = uid, price = 0 })
+		task.spawn(PlayerProfile.Save, player)
+		return
+	end
+	local now = os.clock()
+	if lastRename[player] and now - lastRename[player] < PetConfig.RenameCooldown then
+		return reject(player, "Rename", "cooldown")
+	end
+	local price = if pet.Renamed then PetConfig.RenamePrice else 0
+	if profile.Coins < price then
+		return reject(player, "Rename", "coins")
+	end
+	lastRename[player] = now
+	local shown = filterName(player, name) -- yields
+	if not shown then
+		return reject(player, "Rename", "filter")
+	end
+	-- the profile may have changed during the filter call (sale, purchase, leave)
+	if PlayerProfile.Get(player) ~= profile or profile.Pets[uid] ~= pet then
+		return
+	end
+	if profile.Coins < price then
+		return reject(player, "Rename", "coins")
+	end
+	if price > 0 then
+		PlayerProfile.AddCoins(player, -price)
+	end
+	pet.Name = name
+	pet.Renamed = true
+	names[uid] = shown
+	succeed(player, "Rename", { uid = uid, name = shown, price = price })
+	task.spawn(PlayerProfile.Save, player)
+end)
+
 PlayerProfile.ProfileReset:Connect(setup)
 
 Players.PlayerAdded:Connect(setup)
@@ -348,6 +469,8 @@ end
 
 Players.PlayerRemoving:Connect(function(player)
 	lastRequest[player] = nil
+	lastRename[player] = nil
+	filtered[player] = nil
 end)
 
 return PetService

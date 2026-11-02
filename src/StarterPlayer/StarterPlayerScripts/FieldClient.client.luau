@@ -469,7 +469,7 @@ local function renderPets(field)
 			then Locale.T("field.pet.xp", { xp = hours(pet.xp), next = hours(pet.next) })
 			else Locale.T("field.pet.capped")
 		local row = newRow(petsSection, "Pet" .. entry.square, index + 1)
-		textColumn(row, LIFT_WIDTH + GAP, Locale.PetName(pet.kind, pet.level), Locale.T("field.pet.info", { n = entry.square, level = pet.apt, count = reach }) .. "\n" .. xp)
+		textColumn(row, LIFT_WIDTH + GAP, Locale.PetName(pet.kind, pet.level, PetClient.NameOf(pet.uid)), Locale.T("field.pet.info", { n = entry.square, level = pet.apt, count = reach }) .. "\n" .. xp)
 		local lift = button("Lift", {
 			LayoutOrder = 2,
 			Size = UDim2.fromOffset(LIFT_WIDTH, 34),
@@ -736,7 +736,7 @@ local function renderPetPicker(square: number)
 	end
 	local y = 42
 	if here then
-		local row = pickerRow("Lift", y, Locale.T("field.petPicker.lift", { pet = Locale.PetName(here.kind, here.level) }), Locale.T("field.petPicker.liftInfo"), true)
+		local row = pickerRow("Lift", y, Locale.T("field.petPicker.lift", { pet = Locale.PetName(here.kind, here.level, PetClient.NameOf(here.uid)) }), Locale.T("field.petPicker.liftInfo"), true)
 		row.Activated:Connect(function()
 			liftPetEvent:FireServer(here.uid)
 			closePicker()
@@ -765,7 +765,7 @@ local function renderPetPicker(square: number)
 			elseif not enabled then Locale.T("field.petPicker.noSlot")
 			elseif pet.field then Locale.T("field.petPicker.move", { level = pet.tending, count = #reach, n = pet.field })
 			else Locale.T("field.petPicker.info", { level = pet.tending, count = #reach })
-		local row = pickerRow("Pet_" .. pet.uid, y, Locale.PetName(pet.kind, pet.level), info, enabled)
+		local row = pickerRow("Pet_" .. pet.uid, y, Locale.PetName(pet.kind, pet.level, pet.name), info, enabled)
 		y += PICKER_ROW + GAP
 		row.MouseEnter:Connect(function()
 			GardenView.ShowReach(reach)
@@ -990,7 +990,7 @@ end)
 -- "Cat Lv 4" for a uid in the pet state ("" when unknown)
 local function petNameOf(uid: string?): string
 	local pet = uid and PetClient.State and PetClient.State.pets[uid]
-	return if pet then Locale.PetName(pet.Kind, PetConfig.ClampLevel(pet.Level)) else ""
+	return if pet then Locale.PetName(pet.Kind, PetConfig.ClampLevel(pet.Level), PetClient.NameOf(uid)) else ""
 end
 
 -- Answers of the field pet actions (E1b): toasts; a placed pet's reach stays tinted for REACH_SECONDS.

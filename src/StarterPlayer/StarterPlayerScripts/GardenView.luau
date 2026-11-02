@@ -36,7 +36,8 @@ folder.Name = "GardenView"
 folder.Parent = workspace
 
 local views = {} -- [slot] = PlotView
-local real = {} -- [userId] = state from the server
+local received = {} -- [userId] = state from the server
+local real = {} -- [userId] = that state with `names` = the owner's pet names (P3b, PetConfig.NamesAttribute)
 local order = {} -- slots in build order (own first, then by distance)
 local handlers = { pen = nil, incubator = nil, square = nil, levelUp = nil }
 
@@ -300,8 +301,35 @@ local function step()
 end
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
+-- the owner's filtered pet names go into a copy of the plot state, so a new name redraws the labels (PlotView signatures)
+local function withNames(userId: number)
+	local state = received[userId]
+	if type(state) ~= "table" or state.free then
+		real[userId] = state
+		return
+	end
+	local owner = Players:GetPlayerByUserId(userId)
+	local copy = table.clone(state)
+	copy.names = PetConfig.DecodeNames(owner and owner:GetAttribute(PetConfig.NamesAttribute))
+	real[userId] = copy
+end
+
+local function watchNames(owner: Player)
+	owner:GetAttributeChangedSignal(PetConfig.NamesAttribute):Connect(function()
+		if received[owner.UserId] then
+			withNames(owner.UserId)
+			refresh()
+		end
+	end)
+end
+Players.PlayerAdded:Connect(watchNames)
+for _, owner in Players:GetPlayers() do
+	watchNames(owner)
+end
+
 remotes:WaitForChild("Plot").OnClientEvent:Connect(function(userId, state)
-	real[userId] = state
+	received[userId] = state
+	withNames(userId)
 	refresh()
 end)
 player:GetAttributeChangedSignal(GardenConfig.PlotAttribute):Connect(refresh)

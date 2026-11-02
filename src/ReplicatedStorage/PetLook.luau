@@ -120,11 +120,11 @@ function PetLook.TierStars(level: number): string
 	return if tier > 0 then " " .. string.rep("★", tier) else ""
 end
 
--- Label text of a pet: "Cat Lv 12 ★★", so the tier shows on the label too. In the caller's language (the server, which
--- has none, writes English and tags its labels with the key + args of the same text instead, see GardenService).
-function PetLook.LabelText(kind: string, level: number): string
+-- Label text of a pet: "Cat Lv 12 ★★" ("Mochi Lv 12 ★★" with a name, P3b), so the tier shows on the label too. In the caller's
+-- language (the server, which has none, writes English and tags its labels with the key + args of the same text instead, see GardenService).
+function PetLook.LabelText(kind: string, level: number, name: string?): string
 	level = PetConfig.ClampLevel(level)
-	return Locale.PetName(kind, level) .. PetLook.TierStars(level)
+	return Locale.PetName(kind, level, name) .. PetLook.TierStars(level)
 end
 
 -- Accent tint (P1e3): parts of the model with the Studio attribute Accent = true (stripes, ear insides, tail tip, belly...)

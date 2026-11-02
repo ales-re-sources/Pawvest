@@ -58,7 +58,7 @@ folder.Parent = workspace
 local followers = {} -- [Player] = { pets = { { key, model, metrics, parts, fade, offset, phase } }, anchor = CFrame? }
 local warned = {}
 
-local function makePet(entry): any?
+local function makePet(entry, name: string?): any?
 	local template = PetModels:FindFirstChild(entry.kind)
 	if not (template and template:IsA("Model") and template.PrimaryPart) then
 		if not warned[entry.kind] then
@@ -69,7 +69,7 @@ local function makePet(entry): any?
 	end
 	local model = template:Clone()
 	local metrics = PetLook.Apply(model, entry.kind, entry.level, entry.uid, {
-		text = PetLook.LabelText(entry.kind, entry.level),
+		text = PetLook.LabelText(entry.kind, entry.level, name),
 		size = UDim2.new(6, 0, 0.6, 0),
 		maxDistance = LABEL_MAX_DISTANCE,
 		gap = 0.5,
@@ -130,6 +130,7 @@ local function refresh(player: Player)
 		end
 	end
 	local wanted = PetConfig.DecodeEquipped(player:GetAttribute(PetConfig.AttributeName))
+	local names = PetConfig.DecodeNames(player:GetAttribute(PetConfig.NamesAttribute)) -- P3b
 	local pets, metrics = {}, {}
 	for index, entry in wanted do
 		if index > MAX_PETS then
@@ -143,7 +144,7 @@ local function refresh(player: Player)
 			end
 		end
 		if not pet then
-			pet = makePet(entry)
+			pet = makePet(entry, entry.uid and names[entry.uid])
 			local previous = entry.uid and before[entry.uid]
 			if pet and previous and entry.level > previous.level then
 				pet.levelUpUntil = os.clock() + LEVEL_UP_WINDOW
@@ -177,6 +178,23 @@ local function refresh(player: Player)
 	state.pets = pets
 end
 
+-- Writes the labels of a player's pets again: language or names changed ("Mochi Lv 12 ★", P3b; the names come from the owner's
+-- PetConfig.NamesAttribute, filtered by the server).
+local function relabel(player: Player)
+	local follower = followers[player]
+	if not follower then
+		return
+	end
+	local names = PetConfig.DecodeNames(player:GetAttribute(PetConfig.NamesAttribute))
+	for _, pet in follower.pets do
+		local gui = pet.model and pet.model:FindFirstChild("Label")
+		local text = gui and gui:FindFirstChildOfClass("TextLabel")
+		if text then
+			text.Text = PetLook.LabelText(pet.kind, pet.level, pet.uid and names[pet.uid])
+		end
+	end
+end
+
 local function track(player: Player)
 	if followers[player] then
 		return
@@ -184,6 +202,9 @@ local function track(player: Player)
 	followers[player] = { pets = {}, anchor = nil }
 	player:GetAttributeChangedSignal(PetConfig.AttributeName):Connect(function()
 		refresh(player)
+	end)
+	player:GetAttributeChangedSignal(PetConfig.NamesAttribute):Connect(function()
+		relabel(player)
 	end)
 	refresh(player)
 end
@@ -203,14 +224,8 @@ Players.PlayerRemoving:Connect(untrack)
 
 -- the labels ("Cat Lv 12 ★") follow the player's language (L2)
 Locale.Changed:Connect(function()
-	for _, follower in followers do
-		for _, pet in follower.pets do
-			local gui = pet.model and pet.model:FindFirstChild("Label")
-			local text = gui and gui:FindFirstChildOfClass("TextLabel")
-			if text then
-				text.Text = PetLook.LabelText(pet.kind, pet.level)
-			end
-		end
+	for player in followers do
+		relabel(player)
 	end
 end)
 for _, player in Players:GetPlayers() do

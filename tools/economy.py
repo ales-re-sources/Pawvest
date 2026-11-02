@@ -332,6 +332,7 @@ def load():
     P["eggs"] = {k: {"price": e["price"], "hatch_s": e["hatchSeconds"], "weights": e["weights"]}
                  for k, e in luau("PetConfig.luau", "PetConfig.Eggs").items()}
     P["slot_prices"] = luau("PetConfig.luau", "PetConfig.SlotPrices")
+    P["rename_price"] = luau("PetConfig.luau", "PetConfig.RenamePrice")  # P3b: every pet name after the first
     P["max_level"] = luau("PetConfig.luau", "PetConfig.MaxLevel")
     P["level_bonus"] = luau("PetConfig.luau", "PetConfig.LevelBonus")
     P["max_bonus"] = luau("PetConfig.luau", "PetConfig.MaxBonus")
@@ -369,6 +370,7 @@ def pin_values(P):
         "rarities": {k: [r["bonus"], r["sell"]] for k, r in P["rarities"].items()},
         "eggs": {k: [e["price"], e["hatch_s"], e["weights"]] for k, e in P["eggs"].items()},
         "slot_prices": P["slot_prices"],
+        "rename_price": P["rename_price"],
         "pet_levels": [P["max_level"], P["level_bonus"], P["max_bonus"]],
         "pet_xp": [P["medal_xp"], P["finish_xp"], P["coin_xp"], P["studs_per_xp"], P["max_move_xp"]],
         "pen_prices": P["pen_prices"],

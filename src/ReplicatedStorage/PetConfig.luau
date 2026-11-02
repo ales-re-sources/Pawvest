@@ -377,6 +377,65 @@ function PetConfig.CleanAptitudes(pet): boolean
 	return any
 end
 
+-- Pet names (P3b, docs/ROADMAP.md → P3): stored raw as Pets[uid].Name, filtered by the server (TextService, broadcast) on every join and
+-- rename; clients only ever get the filtered text (PetsChanged pets[uid].Name, the NamesAttribute of the owner). The first name is free,
+-- every later one costs RenamePrice (Pets[uid].Renamed = true after the first); clearing a name is free.
+PetConfig.RenamePrice = 250
+PetConfig.NameMaxLength = 20 -- characters (UTF-8 code points)
+PetConfig.RenameCooldown = 10 -- seconds between renames per player
+PetConfig.NamesAttribute = "PetNames" -- player attribute: JSON { [uid] = filtered name } of the pets others can see
+
+-- allowed characters: ASCII letters and digits, the space, and the Latin-1 / Latin Extended-A and -B letters (Czech and other Latin
+-- scripts; × and ÷ excluded)
+local function nameCharacter(code: number): boolean
+	return (code >= 48 and code <= 57)
+		or (code >= 65 and code <= 90)
+		or (code >= 97 and code <= 122)
+		or code == 32
+		or (code >= 0xC0 and code <= 0x24F and code ~= 0xD7 and code ~= 0xF7)
+end
+
+-- The name a player typed, cleaned: spaces trimmed and collapsed. "" = no name; nil when the text is not allowed (bad characters,
+-- invalid UTF-8, longer than NameMaxLength).
+function PetConfig.CleanName(text: any): string?
+	if type(text) ~= "string" or #text > PetConfig.NameMaxLength * 4 then
+		return nil
+	end
+	if not utf8.len(text) then
+		return nil
+	end
+	for _, code in utf8.codes(text) do
+		if not nameCharacter(code) then
+			return nil
+		end
+	end
+	local clean = string.gsub(string.gsub(text, "^ +", ""), " +$", "")
+	clean = string.gsub(clean, "  +", " ")
+	if (utf8.len(clean) :: number) > PetConfig.NameMaxLength then
+		return nil
+	end
+	return clean
+end
+
+-- The NamesAttribute value → { [uid] = name } (empty for a missing or malformed value).
+function PetConfig.DecodeNames(value: any): { [string]: string }
+	local names = {}
+	if type(value) ~= "string" or value == "" then
+		return names
+	end
+	local ok, decoded = pcall(function()
+		return game:GetService("HttpService"):JSONDecode(value)
+	end)
+	if ok and type(decoded) == "table" then
+		for uid, name in decoded do
+			if type(uid) == "string" and type(name) == "string" and name ~= "" then
+				names[uid] = name
+			end
+		end
+	end
+	return names
+end
+
 -- Reach shape of aptitude `level` (docs/EXPANSION.md §3): 0 = the pet's own square (levels 1-3), 1 = plus the 4 next to it (4-6),
 -- 2 = the 3 x 3 block (7-10).
 function PetConfig.ReachShape(level: number): number

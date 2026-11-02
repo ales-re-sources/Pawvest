@@ -258,22 +258,22 @@ incubator.freeEggs[few],Form for 2-4 (Czech only),,🎁 Vejce zdarma čekající
 incubator.freeEggs[other],Form for 0 and 5+,🎁 {count} free eggs will start in the next empty incubators,🎁 Vejce zdarma čekající na volný inkubátor: {count},new,h5f21d558
 incubator.unlocked,Message after buying an incubator,Incubator {n} unlocked,Inkubátor {n} odemčen,new,h071ed29e
 incubator.started,Message after putting an egg in,The egg is warming up. Come back when it is ready!,"Vejce se zahřívá. Vrať se, až bude připravené!",new,h0ea3ff6d
-incubator.hatched.follows,"Message after hatching when the pet was equipped at once; {pet} = coloured ""Cat (Common)""",You got a {pet}! It follows you now.,Máš nového mazlíčka: {pet}! Teď tě následuje.,new,h1b5f17fb
-incubator.hatched.panel,Message after hatching when no equip slot was free,You got a {pet}! It is in your Pets panel.,Máš nového mazlíčka: {pet}! Najdeš ho v panelu Mazlíčci.,new,hce032885
-incubator.label.ready,Text over an egg in a plot's incubator once it can hatch,✨ Ready!,✨ Hotovo!,new,hd37ff7a0
-incubator.reject.maxed,Refused: every incubator is bought,All incubators unlocked,Všechny inkubátory jsou odemčené,new,h30705bfa
-incubator.reject.locked,Refused: the incubator is not bought,Unlock this incubator first,Nejdřív tenhle inkubátor odemkni,new,h1ea71739
-incubator.reject.occupied,Refused: the incubator holds an egg,This incubator already holds an egg,V tomhle inkubátoru už vejce je,new,h2ab4834e
-incubator.reject.full,Refused: the pet inventory is full; {max} = 50,Your inventory is full ({max} pets). Sell a pet first.,Máš plný inventář ({max} mazlíčků). Nejdřív nějakého prodej.,new,hb427b029
+incubator.hatched.follows,"Message after hatching when the pet was equipped at once; {pet} = coloured ""Cat (Common)""",You got a {pet}! It follows you now.,Máš nového mazlíčka: {pet}! Teď půjde všude s tebou.,ok,h1b5f17fb
+incubator.hatched.panel,Message after hatching when no equip slot was free,You got a {pet}! It is in your Pets panel.,Máš nového mazlíčka: {pet}! Najdeš ho v panelu Mazlíčci.,ok,hce032885
+incubator.label.ready,Text over an egg in a plot's incubator once it can hatch,✨ Ready!,✨ Hotovo!,ok,hd37ff7a0
+incubator.reject.maxed,Refused: every incubator is bought,All incubators unlocked,Všechny inkubátory jsou odemčené,ok,h30705bfa
+incubator.reject.locked,Refused: the incubator is not bought,Unlock this incubator first,Nejdřív tenhle inkubátor odemkni,ok,h1ea71739
+incubator.reject.occupied,Refused: the incubator holds an egg,This incubator already holds an egg,V tomhle inkubátoru už vejce je,ok,h2ab4834e
+incubator.reject.full,Refused: the pet inventory is full; {max} = 50,Your inventory is full ({max} pets). Sell a pet first.,Máš plný inventář ({max} mazlíčků). Nejdřív nějakého prodej.,ok,hb427b029
 incubator.reject.empty,Refused: nothing to hatch,There is no egg in this incubator,V tomhle inkubátoru žádné vejce není,new,h20ff33bb
-incubator.reject.notready,Refused: the egg needs more time,Not ready yet,Ještě není připravené,new,h16f18a63
+incubator.reject.notready,Refused: the egg needs more time,Not ready yet,Ještě není připravené,ok,h16f18a63
 # Food stand panel,,,,,
-food.title,Food stand panel title,🍓 Pet food,🍓 Krmení pro mazlíčky,new,h10d5bce0
-food.status,Default status line,Feed a pet to give it XP. Only the fed pet gets it.,Nakrm mazlíčka ať získá XP. Dostane je jen ten nakrmený.,new,hde20b086
-food.empty,Shown instead of the list while the player has no pet,You have no pets yet. Hatch one in your incubator.,Zatím nemáš žádného mazlíčka. Vylíhni si ho v inkubátoru.,new,h4301e9df
+food.title,Food stand panel title,🍓 Pet food,🍓 Krmení pro mazlíčky,ok,h10d5bce0
+food.status,Default status line,Feed a pet to give it XP. Only the fed pet gets it.,"Nakrm mazlíčka ať získá XP. Dostane je jen ten, kterému koupíš jídlo.",ok,hde20b086
+food.empty,Shown instead of the list while the player has no pet,You have no pets yet. Hatch one in your incubator.,Zatím nemáš žádného mazlíčka. Vylíhni si ho v inkubátoru.,ok,h4301e9df
 food.where.equipped,Pet row: where the pet is now (lower case),equipped,nasazený,new,h10431f5d
 food.where.pen,Pet row: the pet is in pen {pen},in pen {pen},v ohradě {pen},new,h848096e3
-food.where.resting,Pet row: the pet is neither equipped nor penned,resting,odpočívá,new,hd8509054
+food.where.resting,Pet row: the pet is neither equipped nor penned,resting,odpočívá,ok,hd8509054
 food.detail,"Pet row details; {xp}/{next} XP, {where} = food.where.*, {toMax} = XP to the last level {max}",XP {xp}/{next} · {where}\n{toMax} XP to Lv {max},XP {xp}/{next} · {where}\n{toMax} XP do Lv {max},new,heb53a5fd
 food.detail.max,Pet row details of a pet at the last level; {where} = food.where.*,Max level\n{where},Max. Lv\n{where},new,h8e7e437a
 food.maxTag,Shown instead of the food buttons for a pet at the last level,★ Max level,★ Max. Lv,new,h5a7b36ca
@@ -442,13 +442,13 @@ petDetail.where.pen,"Pet detail page, header: the pet is in garden pen {pen}",In
 petDetail.where.resting,"Pet detail page, header: the pet is neither equipped nor working",💤 Resting,💤 Odpočívá,new,hf1d011c8
 petDetail.level,"Pet detail page, growth card heading; {level} = pet level, {max} = 20",Level {level} / {max},Úroveň {level} / {max},new,h62faaccb
 petDetail.levelMax,Pet detail page: text on the full XP bar at level 20,Top level!,Nejvyšší úroveň!,new,h4e2f641e
-petDetail.grow,"Pet detail page, under the XP bar: how a pet gains levels",🏃 Grows on stage runs with you and from food in the garden,🏃 Roste při bězích s tebou a z jídla v zahradě,new,hd1e2651e
+petDetail.grow,"Pet detail page, under the XP bar: how a pet gains levels",🏃 Grows when with you on your adventures. And from food in the garden,🏃 Roste když je s tebou na tvých dobrodružstvích a nebo z jídla v zahradě.,new,h2e7a59e0
 petDetail.nextLook,"Pet detail page: the pet's next look; {stars} = ★★, {level} = the level it comes at",Next look {stars} at level {level},Nový vzhled {stars} na úrovni {level},new,h36c8f257
 petDetail.allLooks,Pet detail page: the pet has every look (level 20),Every look unlocked,Má všechny vzhledy,new,h2b3645ee
 petDetail.bonus,"Pet detail page: the pet's Coin bonus; {bonus} = ""+4.5%""",💰 {bonus} Coins while it is with you,"💰 {bonus} mincí, když je s tebou",new,hdb7b1faf
 pet.apt.Tending,Aptitude name (a pet's field job: harvests and replants while the owner is away),Tending,Péče,new,h4e5b0ea1
 petDetail.aptLevel,"Pet detail page, aptitude card heading; {name} = aptitude name, {level} = its level, {cap} = the rarity's highest level",{name} {level} / {cap},{name} {level} / {cap},new,h5c6f690b
-petDetail.aptDesc.Tending,"Pet detail page, Tending card: what the job does",Harvests ripe crops and replants them while you are away,"Když jsi pryč, sklízí zralou úrodu a znovu zasazuje",new,hb33ace15
+petDetail.aptDesc.Tending,"Pet detail page, Tending card: what the job does",Harvests ripe crops and replants them while you are away,"Když jsi pryč, sklízí zralou úrodu a znovu sází",ok,hb33ace15
 petDetail.effect,"Pet detail page, text on the effect bar; {pct} = whole percent 20-100 (Tending: chance a ripe crop is harvested at once)",Effect {pct}%,Účinek {pct} %,new,h0f2c4827
 petDetail.aptXp,"Pet detail page, text on the aptitude XP bar; {xp} / {next} = hours of field time (decimal, ""3.5"")",{xp} / {next} h on the field,{xp} / {next} h na poli,new,habc95980
 petDetail.aptGrow,"Pet detail page, under the aptitude XP bar: how the aptitude levels up",Grows while it works on the field (a third as fast while you are away),"Roste, když pracuje na poli (když jsi pryč, třikrát pomaleji)",new,hddb15404
@@ -459,6 +459,22 @@ petDetail.reach[other],Form for 0 and 5+,Works {count} squares,Stará se o {coun
 petDetail.reachNext[one],"Pet detail page, after the reach and "" · "": the next reach step; {count} = 5 or 9 squares, {level} = 4 or 7. Form for 1",{count} square from level {level},od úrovně {level}: {count} políčko,new,h2c9a236b
 petDetail.reachNext[few],Form for 2-4 (Czech only),,od úrovně {level}: {count} políčka,new,h2c9a236b
 petDetail.reachNext[other],Form for 0 and 5+,{count} squares from level {level},od úrovně {level}: {count} políček,new,h2c9a236b
-petDetail.noJob,"Pet detail page, instead of the aptitude cards: the pet has no field job",No field job: only pets with Tending work the field,Žádná práce na poli: na poli pracují jen mazlíčci s péčí,new,h8ce4d538
+petDetail.noJob,"Pet detail page, instead of the aptitude cards: the pet has no field job",No field job: only pets with Tending work the field,Žádná práce na poli: na poli pracují jen mazlíčci s Péčí,new,h8ce4d538
 petDetail.equip,"Pet detail page button: take the pet with you (it follows you, raises Coin rewards)",Equip,Nasadit,new,h98ab728c
 petDetail.unequip,Pet detail page button: stop taking the pet with you,Unequip,Sundat,new,h57c39dc9
+pet.nameLevel.named,"A named pet with its level, e.g. ""Mochi Lv 12"" (lists, slots, labels over pets); {name} = the name the player gave it (never translated). Czech keeps ""Lv"" like pet.nameLevel",{name} Lv {level},{name} Lv {level},new,h12a796fd
+petDetail.name.placeholder,Pet detail page: grey hint in the empty name box,Name your pet,Pojmenuj mazlíčka,new,h97a4d2d5
+petDetail.name.save,"Pet detail page: name button when there is nothing new to save (greyed; short, ~10 characters)",Save,Uložit,new,hedb4f825
+petDetail.name.free,"Pet detail page: name button for a pet's first name (short, ~12 characters)",Save · free,Uložit · zdarma,new,h87a5a4ec
+petDetail.name.buy,"Pet detail page: name button for a new name; {price} = Coins it costs (short, ~12 characters)",Save · {price},Uložit · {price},new,hc5037fe4
+petDetail.name.clear,Pet detail page: name button when the box is emptied: removes the name (short),Remove,Odebrat,new,h81803e43
+petDetail.name.freeNote,"Pet detail page, small line under the name box: the first name costs nothing",Naming is free the first time,Poprvé je pojmenování zdarma,new,h494de7e0
+petDetail.name.priceNote,"Pet detail page, small line under the name box: a new name costs {price} Coins (250; Czech genitive plural)",A new name costs {price} Coins,Nové jméno stojí {price} mincí,new,hce040021
+petDetail.name.clearNote,"Pet detail page, small line under the name box when it is empty: removing the name costs nothing",Removing the name is free,Odebrání jména je zdarma,new,h4fa7b5f5
+petDetail.name.checking,Pet detail page: the name was sent and the server is checking it (filter),Checking the name…,Kontroluji jméno…,new,h162cb86b
+petDetail.name.done,Pet detail page: the pet got its name; {name} = the name as shown to everyone (may contain #### where the filter hid words),Its name is now {name},Teď se jmenuje {name},new,ha4f9cd93
+petDetail.name.removed,Pet detail page: the pet's name was removed,Name removed,Jméno odebráno,new,h864e4154
+petDetail.reject.name,Pet detail page: the typed name is not allowed; {max} = 20,"Use up to {max} letters, digits and spaces","Použij nejvýš {max} písmen, číslic a mezer",new,h240c0d33
+petDetail.reject.same,Pet detail page: the pet already has this name,That is already its name,Tak už se jmenuje,new,h9e4bcdba
+petDetail.reject.cooldown,Pet detail page: renamed too quickly (10 s between names),Wait a few seconds before the next name,Před dalším jménem chvíli počkej,new,h27743d89
+petDetail.reject.filter,Pet detail page: Roblox's text check could not be reached; nothing was charged,"The name could not be checked, try again later","Jméno se nepodařilo zkontrolovat, zkus to později",new,h7bb6af51

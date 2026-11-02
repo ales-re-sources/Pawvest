@@ -5,7 +5,9 @@
 --                                 { Open(uid), Close(), IsOpen() }; onClose() closes the whole Pets panel (the X)
 -- Sections: header (turning portrait, kind, rarity + tier stars, where the pet is), growth (level, XP bar, how it grows, the next
 -- look, the Coin bonus), one card per working aptitude (PetConfig.Shown; only for players with the field: level / rarity cap,
--- effect bar, field hours to the next level, reach), actions (Equip / Unequip, Sell with a second tap). The page re-renders on
+-- effect bar, field hours to the next level, reach), actions (Equip / Unequip, Sell with a second tap). Under the header the name row
+-- (P3b): a text box and a button that names (free the first time), renames (PetConfig.RenamePrice) or removes the name; the server
+-- cleans, filters and prices it (PetRemotes.Rename), the page shows only the filtered name it sends back. The page re-renders on
 -- PetsChanged and Locale.Changed and closes itself when the pet is gone (sold).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -48,6 +50,14 @@ local REJECT_KEYS = {
 	penned = "pets.reject.penned",
 	field = "pets.reject.field",
 	loading = "common.reject.loading",
+}
+-- answers to PetRemotes.Rename (P3b)
+local RENAME_REJECT_KEYS = {
+	name = "petDetail.reject.name",
+	same = "petDetail.reject.same",
+	cooldown = "petDetail.reject.cooldown",
+	filter = "petDetail.reject.filter",
+	coins = "common.reject.coins",
 }
 
 local function create(className: string, props, children)
@@ -242,6 +252,40 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 	})
 	header.Parent = content
 
+	-- name row (P3b)
+	local nameBox = create("TextBox", {
+		Name = "NameBox",
+		Size = UDim2.new(1, -112, 1, 0),
+		BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+		TextColor3 = Color3.new(1, 1, 1),
+		PlaceholderColor3 = COLOR_DIM,
+		Font = StudStyle.Font,
+		TextSize = 16,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextTruncate = Enum.TextTruncate.AtEnd,
+		ClearTextOnFocus = false,
+		Text = "",
+	}, {
+		create("UICorner", { CornerRadius = UDim.new(0, 6) }),
+		create("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8) }),
+	})
+	local nameButton = button("NameSave", {
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, 0, 0, 0),
+		Size = UDim2.new(0, 104, 1, 0),
+		TextSize = 14,
+	}, 2)
+	local nameRow = create("Frame", {
+		Name = "NameRow",
+		LayoutOrder = 2,
+		Size = UDim2.new(1, -2, 0, 34),
+		BackgroundTransparency = 1,
+	}, { nameBox, nameButton })
+	nameRow.Parent = content
+	local nameNote = line("NameNote", 3, { TextSize = 12, Text = "" })
+	nameNote.Parent = content
+	local nameNoteToken = 0 -- while a result note shows (non-zero), the hint waits until it lapses
+
 	local equipButton = button("Equip", {
 		Size = UDim2.new(0.5, -4, 0, 36),
 		TextSize = 15,
@@ -330,7 +374,7 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 	end
 
 	local function growthCard(owned)
-		local growth = card("Growth", 2, color)
+		local growth = card("Growth", 4, color)
 		label("Level", {
 			LayoutOrder = 1,
 			Size = UDim2.new(1, 0, 0, 22),
@@ -398,12 +442,59 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		return apt
 	end
 
+	-- The name button and its hint for the text in the box (P3b): Save · free / Save · price / Remove, or greyed when there is
+	-- nothing to save.
+	local function updateName()
+		local owned = pet()
+		if not owned then
+			return
+		end
+		nameBox.PlaceholderText = Locale.T("petDetail.name.placeholder")
+		local clean = PetConfig.CleanName(nameBox.Text)
+		local price = if owned.renamed then PetConfig.RenamePrice else 0
+		local hint, hintColor = nil, COLOR_DIM
+		if clean == nil then
+			nameButton.Text = Locale.T("petDetail.name.save")
+			nameButton.BackgroundColor3 = COLOR_LOCKED
+			hint, hintColor = Locale.T("petDetail.reject.name", { max = PetConfig.NameMaxLength }), COLOR_ERROR
+		elseif clean == (owned.name or "") then
+			nameButton.Text = Locale.T("petDetail.name.save")
+			nameButton.BackgroundColor3 = COLOR_LOCKED
+			hint = if price > 0 then Locale.T("petDetail.name.priceNote", { price = price }) else Locale.T("petDetail.name.freeNote")
+		elseif clean == "" then
+			nameButton.Text = Locale.T("petDetail.name.clear")
+			nameButton.BackgroundColor3 = COLOR_SELL_IDLE
+			hint = Locale.T("petDetail.name.clearNote")
+		else
+			nameButton.Text = if price > 0 then Locale.T("petDetail.name.buy", { price = price }) else Locale.T("petDetail.name.free")
+			nameButton.BackgroundColor3 = COLOR_EQUIP
+			hint = if price > 0 then Locale.T("petDetail.name.priceNote", { price = price }) else Locale.T("petDetail.name.freeNote")
+		end
+		if nameNoteToken == 0 then
+			nameNote.Text = hint
+			nameNote.TextColor3 = hintColor
+		end
+	end
+
+	local function nameResult(text: string, colour: Color3)
+		nameNoteToken += 1
+		local mine = nameNoteToken
+		nameNote.Text = text
+		nameNote.TextColor3 = colour
+		task.delay(4, function()
+			if nameNoteToken == mine then
+				nameNoteToken = 0
+				updateName()
+			end
+		end)
+	end
+
 	local function render()
 		local owned, stored = pet()
 		if not owned then
 			return false
 		end
-		titleLabel.Text = Locale.PetName(owned.kind, owned.level)
+		titleLabel.Text = Locale.PetName(owned.kind, owned.level, owned.name)
 		setPortrait(owned)
 		kindLabel.Text = Locale.PetKindName(owned.kind)
 		kindLabel.TextColor3 = owned.rarity.color
@@ -446,6 +537,7 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		equipButton.BackgroundColor3 = if busy then COLOR_LOCKED elseif owned.equipped then COLOR_SELL_IDLE else COLOR_EQUIP
 		sellButton.Text = Locale.T(if sellArmed then "pets.sellSure" else "pets.sell", { price = owned.sellValue })
 		sellButton.BackgroundColor3 = if busy or owned.equipped then COLOR_LOCKED elseif sellArmed then COLOR_SELL else COLOR_SELL_IDLE
+		updateName()
 		return true
 	end
 
@@ -467,6 +559,8 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		sellArmed = false
 		messageLabel.Text = ""
 		portraitKey = nil
+		nameNoteToken = 0
+		nameBox.Text = PetClient.NameOf(uid) or ""
 		if render() then
 			content.CanvasPosition = Vector2.zero
 			page.Visible = true
@@ -524,6 +618,41 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		render()
 	end)
 
+	-- at most NameMaxLength characters in the box (the server checks again)
+	nameBox:GetPropertyChangedSignal("Text"):Connect(function()
+		local text = nameBox.Text
+		local length = utf8.len(text)
+		if length and length > PetConfig.NameMaxLength then
+			nameBox.Text = string.sub(text, 1, (utf8.offset(text, PetConfig.NameMaxLength + 1) :: number) - 1)
+			return
+		end
+		if currentUid then
+			updateName()
+		end
+	end)
+
+	nameButton.Activated:Connect(function()
+		local owned = pet()
+		if not owned then
+			return
+		end
+		local clean = PetConfig.CleanName(nameBox.Text)
+		if clean == nil then
+			nameResult(Locale.T("petDetail.reject.name", { max = PetConfig.NameMaxLength }), COLOR_ERROR)
+			return
+		end
+		if clean == (owned.name or "") then
+			return
+		end
+		local price = if clean ~= "" and owned.renamed then PetConfig.RenamePrice else 0
+		if PetClient.Coins < price then
+			nameResult(Locale.T("common.reject.coins"), COLOR_ERROR)
+			return
+		end
+		nameResult(Locale.T("petDetail.name.checking"), COLOR_INFO)
+		remotes.Rename:FireServer(owned.uid, clean)
+	end)
+
 	backButton.Activated:Connect(api.Close)
 	closeButton.Activated:Connect(function()
 		api.Close()
@@ -536,6 +665,15 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		end
 	end)
 	PetClient.Result:Connect(function(action, ok, detail)
+		if currentUid and action == "Rename" then
+			if ok and type(detail) == "table" and detail.uid == currentUid then
+				nameBox.Text = detail.name or ""
+				nameResult(if detail.name then Locale.T("petDetail.name.done", { name = detail.name }) else Locale.T("petDetail.name.removed"), COLOR_OK)
+			elseif not ok then
+				nameResult(Locale.T(RENAME_REJECT_KEYS[detail] or "common.reject.failed", { max = PetConfig.NameMaxLength }), COLOR_ERROR)
+			end
+			return
+		end
 		if currentUid and not ok and (action == "Equip" or action == "Unequip" or action == "SellPet") then
 			message(Locale.T(REJECT_KEYS[detail] or "common.reject.failed"), COLOR_ERROR)
 		end

@@ -33,6 +33,8 @@ export type OwnedPet = {
 	penned: number?, -- garden pen index (P2a2), nil when not in a pen
 	field: number?, -- field square the pet works (E1b), nil when not on the field
 	tending: number, -- Tending aptitude level (E1b), 0 without it
+	name: string?, -- the filtered name (P3b), nil when the pet has none
+	renamed: boolean, -- the pet has been named before: the next name costs PetConfig.RenamePrice
 	bonus: number, -- permille
 	sellValue: number,
 }
@@ -59,6 +61,8 @@ function PetClient.Inventory(): { OwnedPet }
 				penned = state.penned and state.penned[uid] or nil,
 				field = state.field and state.field[uid] or nil,
 				tending = PetConfig.AptitudeLevel(pet, "Tending"),
+				name = if type(pet.Name) == "string" and pet.Name ~= "" then pet.Name else nil,
+				renamed = pet.Renamed == true,
 				bonus = PetConfig.PetBonus(pet),
 				sellValue = PetConfig.SellValue(pet.Kind),
 			})
@@ -77,6 +81,13 @@ function PetClient.Inventory(): { OwnedPet }
 		return (tonumber(a.uid) or 0) < (tonumber(b.uid) or 0)
 	end)
 	return list
+end
+
+-- The filtered name of the player's pet `uid` (P3b), or nil.
+function PetClient.NameOf(uid: string?): string?
+	local pet = uid and PetClient.State and PetClient.State.pets[uid]
+	local name = pet and pet.Name
+	return if type(name) == "string" and name ~= "" then name else nil
 end
 
 function PetClient.PetCount(): number

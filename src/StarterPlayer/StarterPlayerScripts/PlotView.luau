@@ -138,6 +138,12 @@ local function parsePet(text: string?): (string?, number?, string?)
 end
 PlotView.ParsePet = parsePet
 
+-- The filtered name of the owner's pet `uid` (P3b): GardenView puts the owner's PetConfig.NamesAttribute into state.names.
+local function nameOf(state, uid: string?): string?
+	local names = state and state.names
+	return if names and uid then names[uid] else nil
+end
+
 -- "EggId:readyAt" → egg id, readyAt (nil for "")
 local function parseEgg(text: string?): (string?, number?)
 	if type(text) ~= "string" or text == "" then
@@ -227,7 +233,8 @@ function PlotView:signature(key: string): string
 		if state.converted then
 			return "none" -- the pens became field pet slots (E1b)
 		end
-		return table.concat({ detail, state.pens[n] or "", tostring(n <= state.penCount), tostring(self.own), self.lang }, "|")
+		local _, _, uid = parsePet(state.pens[n])
+		return table.concat({ detail, state.pens[n] or "", nameOf(state, uid) or "", tostring(n <= state.penCount), tostring(self.own), self.lang }, "|")
 	elseif kind == "inc" then
 		return table.concat({ detail, state.eggs[n] or "", tostring(n <= state.incCount), tostring(self.own), self.lang }, "|")
 	end
@@ -240,12 +247,13 @@ function PlotView:signature(key: string): string
 	end
 	local pet = self.petMap[n]
 	return string.format(
-		"%s|%s|%d|%s|%s|%s",
+		"%s|%s|%d|%s|%s|%s|%s",
 		if self.own and detail == "full" then "own" else "full",
 		detail,
 		field.cols,
 		string.sub(field.crops, (n - 1) * 2 + 1, n * 2),
 		if pet then pet.text else "",
+		if pet then nameOf(state, pet.uid) or "" else "",
 		self.lang
 	)
 end
@@ -352,10 +360,10 @@ function PlotView:buildBase(model: Model)
 end
 
 -- Label over a penned pet: name, level, tier stars and its Coins per hour (before the pet bonus).
-local function penLabel(kind: string, level: number): string
+local function penLabel(kind: string, level: number, name: string?): string
 	local rate = GardenConfig.RatePerHour({ Kind = kind, Level = level })
 	return Locale.T("garden.penPet.label", {
-		pet = Locale.PetName(kind, level),
+		pet = Locale.PetName(kind, level, name),
 		stars = PetLook.TierStars(level),
 		rate = { key = "garden.rate", args = { rate = { decimal = string.format("%g", rate) } } },
 	})
@@ -389,13 +397,13 @@ local function standingPet(kind: string, level: number, uid: string, at: CFrame,
 end
 
 -- Pet model standing on `pad` (full detail).
-local function penPet(kind: string, level: number, uid: string, pad: BasePart): Model?
-	return standingPet(kind, level, uid, pad.CFrame, pad.Position.Y + pad.Size.Y / 2, penLabel(kind, level))
+local function penPet(kind: string, level: number, uid: string, pad: BasePart, name: string?): Model?
+	return standingPet(kind, level, uid, pad.CFrame, pad.Position.Y + pad.Size.Y / 2, penLabel(kind, level, name))
 end
 
 -- Label over a field pet: name, level, tier stars and its Tending level.
-local function fieldPetLabel(kind: string, level: number, apt: number): string
-	return Locale.T("field.pet.label", { pet = Locale.PetName(kind, level), stars = PetLook.TierStars(level), level = apt })
+local function fieldPetLabel(kind: string, level: number, apt: number, name: string?): string
+	return Locale.T("field.pet.label", { pet = Locale.PetName(kind, level, name), stars = PetLook.TierStars(level), level = apt })
 end
 
 function PlotView:buildPen(model: Model, n: number)
@@ -425,7 +433,7 @@ function PlotView:buildPen(model: Model, n: number)
 			local size = 2 * PetConfig.ScaleOf(level :: number)
 			part({ Name = "Pet", Size = Vector3.new(size, size, size), CFrame = self:at(spot + Vector3.new(0, 0.15 + size / 2, 0)), Color = rarity.color }).Parent = model
 		else
-			local pet = penPet(kind, level :: number, uid :: string, pad)
+			local pet = penPet(kind, level :: number, uid :: string, pad, nameOf(state, uid))
 			if pet then
 				pet.Name = "Pet"
 				pet.Parent = model
@@ -548,7 +556,7 @@ function PlotView:buildSquare(model: Model, square: number)
 			part({ Name = "Pet" .. square, Size = Vector3.new(cube, cube, cube), CFrame = self:at(spot + Vector3.new(0, 0.25 + cube / 2, 0)), Color = rarity.color }).Parent =
 				model
 		else
-			local petModel = standingPet(pet.kind, pet.level, pet.uid, self:at(spot), soil.Position.Y + soil.Size.Y / 2, fieldPetLabel(pet.kind, pet.level, pet.apt))
+			local petModel = standingPet(pet.kind, pet.level, pet.uid, self:at(spot), soil.Position.Y + soil.Size.Y / 2, fieldPetLabel(pet.kind, pet.level, pet.apt, nameOf(self.state, pet.uid)))
 			if petModel then
 				petModel.Name = "Pet" .. square
 				petModel.Parent = model
@@ -559,7 +567,7 @@ function PlotView:buildSquare(model: Model, square: number)
 		local petPrompt = prompt(
 			soil,
 			Locale.T(if pet then "field.prompt.movePet" else "field.prompt.placePet"),
-			if pet then Locale.PetName(pet.kind, pet.level) else Locale.T("field.prompt.square", { n = square }),
+			if pet then Locale.PetName(pet.kind, pet.level, nameOf(self.state, pet.uid)) else Locale.T("field.prompt.square", { n = square }),
 			6,
 			function()
 				self.onSquare(square, "pet", soil)

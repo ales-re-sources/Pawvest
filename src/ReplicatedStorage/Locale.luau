@@ -261,8 +261,12 @@ function Locale.Duration(seconds: number): string
 	return Locale.T("common.duration.s", { s = seconds })
 end
 
--- "Cat Lv 12": a pet's name with its level, the way every pet list and label shows it
-function Locale.PetName(kind: string, level: number): string
+-- "Cat Lv 12": a pet's name with its level, the way every pet list and label shows it; a named pet (P3b, `name` = the filtered
+-- name) shows "Mochi Lv 12" (a name is user data: never translated)
+function Locale.PetName(kind: string, level: number, name: string?): string
+	if type(name) == "string" and name ~= "" then
+		return Locale.T("pet.nameLevel.named", { name = name, level = level })
+	end
 	return Locale.T("pet.nameLevel", { kind = Locale.PetKindName(kind), level = level })
 end
 

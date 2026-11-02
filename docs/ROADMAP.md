@@ -44,7 +44,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E1b1 | Field pets, server: aptitudes, Tending, field pet slots, pen conversion (behind field access) | ✔ | ✔ | – |
 | E1b2 | Field pets, client: pets on squares, place / move prompt, Pets section, conversion popup | ✔ | ✔ | – |
 | P3a | Pet detail panel (Pets list "i" badge → `PetDetail`) | ✔ | ✔ | – |
-| P3b | Pet names (filtered, shown to everyone; first free, renames 250) | – | – | – |
+| P3b | Pet names (filtered, shown to everyone; first free, renames 250) | ✔ | ✔ | – |
 | E1a3–E5 | Garden MVP (see "Next") | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
@@ -160,6 +160,22 @@ Tending 7, Cat Lv 6 with Tending 4 on square 1, Dog Lv 20 with Tending 6; restor
 - Found and fixed: the page drew empty (a ScreenGui made in code has Global ZIndex, its children sat under the page: they are lifted now);
   🪙 has no glyph (now 💰). No console errors. Once, in a fast scripted click sequence, the Cat ended up equipped and the same sequence
   did not repeat it; nothing in the code equips except the Equip button and a row tap.
+
+**P3b implemented and Studio-validated (2026-11-02)**, in playtests on a fixture in the developer's live profile (restored afterwards, snapshot
+`TestSnapshots` `profile_9892673032_p3b`) and with two clients (`user_-1` a copy of that profile, removed afterwards). Differences from the plan:
+the title and the labels read "Mochi Lv 6" (`pet.nameLevel.named`; the kind stays on the page's second line); `PetNames` also lists penned
+pets (pens show labels too); the "hatched on … from a Basic egg" line (`Born` / `Egg`) is not built (left for later).
+- Server (remote calls): a forged uid gets no answer; 21 characters, a newline, `<b>` → `name`; "  Mochi  " → "Mochi", free; a second rename
+  within 10 s → `cooldown`; the same name → `same`; the next name cost 250 (499 → 249), one more with 249 Coins → `coins`; clearing is free.
+- UI (clicks): the button reads "Save · free" / "Save · 250" / "Remove" / greyed "Save" for the box's text and the note gives the price; the
+  result line shows for 4 s; 249 Coins → "Not enough Coins" without a request. The name shows on the page title, the list row, the slot caption,
+  the follower ("Blaze Lv 12 ★★"), the field pet ("Tiger Lv 6 ★ / Tending 4") and its prompt; a re-join keeps it. Czech: the row fits
+  ("Uložit · zdarma" is the longest).
+- Two clients: Player2 saw Player1's field pet "Tiger" and follower "Phoenix"; renames on Player1 ("Blaze", "Stripes") reached both of
+  Player2's labels at once.
+- **Live-only:** Studio does not filter text ("Fox 5551234567" came back unchanged), so the `####` part of check 3 waits for a live test.
+- Found and fixed: Argon left Studio's copy of `PetDetail` without its last edit (the name box / button handlers) although it was connected;
+  the block was pasted into Studio's copy (byte-identical to the file). If an edit does not show in Studio, reconnect the plugin.
 
 ### E1a — Plots for real + the field (scope 2026-10-30, decisions taken)
 **Goal.** The garden is drawn by the client for everyone, on the new ring layout, with today's gameplay unchanged (**E1a1**, published on its
