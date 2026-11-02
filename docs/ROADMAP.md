@@ -39,7 +39,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E0 | Economy model — partial (baseline, simulation, field); field-pet re-run, repricing and the rest open | partial | – | – |
 | M6a | Soft launch + World 1 balancing — World 1 balanced by feel (2026-10-30); live test open | – | – | – |
 | MU | Mobile UX check | – | – | – |
-| E1a1 | Plots drawn by the client, new ring layout (garden moved) | ✔ | ✔ except the 2-client check | – |
+| E1a1 | Plots drawn by the client, new ring layout (garden moved) | ✔ | ✔ | – |
 | E1a2–E5 | Garden MVP (see "Next"); E1a2 scoped | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
@@ -142,8 +142,10 @@ started at incubator 1 (countdown 298 s vs `ReadyAt − now` 297.1 s), `ReadyAt`
 8.99 / 13.33 (with field) / 17.91, bridge path 0.49 from slot 3's corner; `GoGarden` lands 10 studs in front of the own plot facing it (dot 0.97); a
 `MoveTo` walk from the hub's bridge path over the bridge ends on the plaza. 5: 30 synthetic plots with 12-square fields: 1 183 instances at the
 centre, 1 771 at most elsewhere (limit 5 000); a full plot at 90 studs 63 (limit 80), at 30 studs 345. No new console errors.
-**Open:** the second client's drawing within 2 s (needs Test → Server and Clients, the user); the Studio plots backups
-(`ServerStorage.E1a1_PlotsStash`, `E1a1_GardenBackup`) are deleted after that check; the place must be saved / published with the new scene.
+Second client (2026-11-02, Server and Clients, test users −1 / −2, both non-admins): through Player1's pen panel, Remove and Place of
+pen 1 showed on Player2's client 0.012 s / 0.006 s (server time) after Player1's `Result`, the Bunny with its "20 Coins/h" label; no errors on
+server or clients. The Studio backups (`ServerStorage.E1a1_PlotsStash`, `E1a1_GardenBackup`) are deleted. **Open:** the place must be saved /
+published with the new scene.
 
 **E1a2 — The field (behind access; ~1–2 weeks).**
 - **Access:** `GardenConfig.FieldAccess = "admins"` (admins + Studio test users; `"all"` when E1 ships). Every field remote checks it on the
