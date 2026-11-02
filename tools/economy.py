@@ -564,12 +564,23 @@ FIELD = {
         "barn": {"step": None, "prices": None},  # (CropConfig.Upgrades Barn; was 20, 1500 / 4000 / 10000 / 25000 / 60000)
         "gardener": {"step": 1, "prices": []},  # no coverage level: on 12 squares one more square per Gardener would cover the whole field (A 1.06x)
     },
+    # Garden tools (E1c3, EXPANSION §6): per level the effect, the price and the Renown gate. Empty = not built; `tools` sweeps candidates.
+    # sorter: expected size factor x (1 + effect) (best-seed picking); cloches: growth while the owner is online x (1 + effect), nothing offline;
+    # shears: chance of a second item per harvest (sale x (1 + effect); no extra Renown, no extra seed).
+    "tools": {
+        "sorter": {"effect": [], "prices": [], "renown": []},
+        "cloches": {"effect": [], "prices": [], "renown": []},
+        "shears": {"effect": [], "prices": [], "renown": []},
+    },
     "rare": {"per_first_gold": 1, "daily": 1, "sale_share": 0.5},  # rare seeds from the obby; the rest of the harvest is kept for landmarks (placeholder)
     # sinks the model does not design yet (landmark Coins parts, estate tiers, decor, stations; EXPANSION §12): a geometric ladder, bought last
     "reserved": {"first": 8000, "ratio": 1.3, "count": 20},
     "bias": {"talent-first": 1.5, "pets-first": 0.7},  # field price x bias when merged into a policy's buying order
     "sink_share": {30: 0.60, 60: 0.80},  # OPEN decision 1 (proposal): sinks / cumulative faucet by day 30 and day 60
-    "a_band": (0.8, 1.0),  # guardrail A: the best-developed archetype's 24 h field / first obby hour must land inside this band
+    "a_band": (0.8, 1.0),  # guardrail A (reported only since 2026-11-02): the best-developed archetype's 24 h field / first obby hour
+    # Farming is the main game (user, 2026-11-02): realised field net per day / obby Coins per day. Parity: at most `parity` over the total of the
+    # first `parity_days` days (decided 2026-11-02: the obby's first-clear payouts are too lumpy for a per-day cap); lead: at least lead[day] over the 3 days ending on that day, for the `lead_archetypes`; Obby main at least obby_main[1] by day obby_main[0].
+    "targets": {"parity_days": 3, "parity": 1.0, "lead": {7: 3.0, 30: 10.0}, "lead_archetypes": ("Casual", "Garden main"), "obby_main": (14, 1.0)},
     "garden_share_max_obby": 0.5,  # the garden must not be a majority of Obby main's income
     # Online vs offline (user rule 2026-10-24): everything passive (crop growth, Gardener replanting, pen production) runs at `online_rate` while the player is
     # in the experience and at `offline_rate` while away, for at most `offline_cap_h` hours after a session. Provisional: the user gave no number (open decision).
@@ -635,6 +646,8 @@ def build_field(P, mode="field", catalogue="mvp", scale=None):
     prices = {"exp": [p for _, p, _ in F["expansions"]], "res": [round(F["reserved"]["first"] * F["reserved"]["ratio"] ** k, -2) for k in range(F["reserved"]["count"])]}
     for name, u in F["upgrades"].items():
         prices[name] = list(u["prices"])
+    for name, t in F["tools"].items():
+        prices[name] = list(t["prices"])
     P["field"] = {"mode": mode, "catalogue": catalogue, "scale": scale, "crops": crops, "prices": prices,
                   "exp_squares": [s for s, _, _ in F["expansions"]], "exp_gate": [g for _, _, g in F["expansions"]],
                   "on": mode in ("field", "both"), "pens_pay": mode in ("pens", "both")}
@@ -680,9 +693,9 @@ def manual_day_ceiling(sched, period_days, options):
     return _ceil_cache[key]
 
 
-def eff_time(gap, length):
-    """Growth hours a passive process gets between two visits: full speed while online, offline_rate for the capped time away."""
-    return min(length, gap) * FIELD["online_rate"] + min(max(gap - length, 0.0), FIELD["offline_cap_h"]) * FIELD["offline_rate"]
+def eff_time(gap, length, cloche=1.0):
+    """Growth hours a passive process gets between two visits: full speed (x the Cloches) while online, offline_rate for the capped time away."""
+    return min(length, gap) * FIELD["online_rate"] * cloche + min(max(gap - length, 0.0), FIELD["offline_cap_h"]) * FIELD["offline_rate"]
 
 
 _cover_cache = {}
@@ -732,7 +745,7 @@ def apt_xp_next(level):
     return FP["xp_first"] * FP["xp_ratio"] ** (level - 1)
 
 
-FAMILIES = ("exp", "growth", "barn", "gardener", "res")
+FAMILIES = ("exp", "growth", "barn", "gardener", "sorter", "cloches", "shears", "res")
 
 
 def policy_items(P, name):
@@ -753,7 +766,7 @@ def policy_items(P, name):
     items = [it for it in items if it is not None]
     if not P["field"]["on"]:
         return items
-    field = [(fam, k + 1) for fam in FAMILIES[:4] for k in range(len(P["field"]["prices"][fam]))]
+    field = [(fam, k + 1) for fam in FAMILIES if fam != "res" for k in range(len(P["field"]["prices"][fam]))]
     field.sort(key=lambda it: item_price(P, it))
     out, i, j, bias = [], 0, 0, FIELD["bias"][name]
     while i < len(items) or j < len(field):  # merge two ordered lists by price, the field's price x the policy's bias
@@ -779,7 +792,7 @@ def item_name(it):
     if it[0] == "talent":
         return f"{it[1]} L{it[2]}"
     return {"slot": "Pet slot", "pen": "Pen / field pet slot", "inc": "Incubator", "exp": "Field tier", "growth": "Growth", "barn": "Barn",
-            "gardener": "Gardener coverage", "res": "Reserved sink"}[it[0]] + f" {it[1]}"
+            "gardener": "Gardener coverage", "sorter": "Seed sorter", "cloches": "Cloches", "shears": "Pruning shears", "res": "Reserved sink"}[it[0]] + f" {it[1]}"
 
 
 class Player:
@@ -968,6 +981,17 @@ class Player:
     def capacity(self):
         return FIELD["capacity"] + FIELD["upgrades"]["barn"]["step"] * self.lvl["barn"]
 
+    def tool(self, name):
+        level = self.lvl[name]
+        return FIELD["tools"][name]["effect"][level - 1] if level else 0.0
+
+    def sale_mult(self):
+        """Expected Coins per harvest / the crop's sale price: the Seed sorter's size and the Pruning shears' second item."""
+        return (1 + self.tool("sorter")) * (1 + self.tool("shears"))
+
+    def cloche(self):
+        return 1 + self.tool("cloches")
+
     def per_gardener(self):
         return FIELD["gardener"]["squares"] + FIELD["upgrades"]["gardener"]["step"] * self.lvl["gardener"]
 
@@ -977,13 +1001,14 @@ class Player:
     def square_values(self):
         """(Coins per day of one square cycling continuously, Coins per day of one square harvested by hand at the visits), net of seeds,
         with the best unlocked crops (before the multiplier)."""
-        lvl, gs = self.renown_level(), self.growth()
-        key = ("sqv", lvl, gs)
+        lvl, gs, vm, cl = self.renown_level(), self.growth(), self.sale_mult(), self.cloche()
+        key = ("sqv", lvl, gs, vm, cl)
         if key not in self.cache:
             common = [c for c in self.F["crops"].values() if not c["rare"] and c["gate"] <= lvl]
             gard = [c for c in common if c["size"] == 1 and c["tier"] <= FIELD["gardener"]["max_tier"]]
-            auto = max((24 / (c["h"] * gs) * c["net"] for c in gard), default=0.0)
-            manual = manual_day_ceiling(self.sched, self.arch["period_days"], [(c["net"] / c["size"], c["h"] * gs) for c in common])
+            net = lambda c: c["sale"] * vm - c["seed"]
+            auto = max((24 / (c["h"] * gs / cl) * net(c) for c in gard), default=0.0)
+            manual = manual_day_ceiling(self.sched, self.arch["period_days"], [(net(c) / c["size"], c["h"] * gs / cl) for c in common])
             self.cache[key] = (auto, manual)
         return self.cache[key]
 
@@ -1003,7 +1028,7 @@ class Player:
         if items <= 0:
             return
         share = FIELD["rare"]["sale_share"] if crop["rare"] else 1.0
-        gross = items * share * crop["sale"] * self.mult
+        gross = items * share * crop["sale"] * self.sale_mult() * self.mult
         self.coins += gross
         self.cum["field"] += gross
         row["field"] += gross
@@ -1025,7 +1050,7 @@ class Player:
         acc = wall = 0.0
         for k in range(120):
             _, gap, length = self.sched[(idx + k) % len(self.sched)]
-            acc += eff_time(gap, length)
+            acc += eff_time(gap, length, self.cloche())
             wall += gap
             if acc >= g - 1e-9:
                 return wall
@@ -1037,7 +1062,7 @@ class Player:
         F, cat, gs = self.F, self.F["crops"], self.growth()
         _, gap, length = self.sched[idx]
         T = 0.0 if self.last_t is None else t - self.last_t
-        d_on = min(self.last_len, T) * FIELD["online_rate"]
+        d_on = min(self.last_len, T) * FIELD["online_rate"] * self.cloche()
         d_off = min(max(T - self.last_len, 0.0), FIELD["offline_cap_h"]) * FIELD["offline_rate"]
         # 1. Gardener squares cycled by themselves since the last visit (limited by the seed stock and the barn)
         if self.cov_n and self.cov_crop:
@@ -1077,7 +1102,7 @@ class Player:
         lvl = self.renown_level()
         common = [c for c in cat.values() if not c["rare"] and c["size"] == 1 and c["gate"] <= lvl]
         big = [c for c in cat.values() if not c["rare"] and c["size"] > 1 and c["gate"] <= lvl]
-        eff = eff_time(gap, length)
+        eff = eff_time(gap, length, self.cloche())
         if self.cov_n and common:
             best, best_v = None, -1.0
             for c in common:
@@ -1124,7 +1149,7 @@ class Player:
     def potential(self, ignore_gardeners=False):
         """Guardrail A: Coins per day (before the multiplier) of the current field if every square is planted and replanted at every
         opportunity with the best unlocked crop: Gardener squares cycle 24 h a day, the others give one harvest per visit."""
-        F, gs = self.F, self.growth()
+        F, gs, vm = self.F, self.growth() / self.cloche(), self.sale_mult()  # the online ceiling: Cloches count in full
         lvl = self.renown_level()
         common = [c for c in F["crops"].values() if not c["rare"] and c["gate"] <= lvl]
         if not F["on"]:
@@ -1132,7 +1157,7 @@ class Player:
         cov, strength = (0, 0.0) if ignore_gardeners else self.tended()
         gard = [c for c in common if c["size"] == 1 and c["tier"] <= FIELD["gardener"]["max_tier"]]
         m = self.mult  # sales are multiplied at sale time, seeds are not: the multiplier counts on this side as on the hour-1 side
-        value = lambda c: m * c["sale"] - c["seed"]
+        value = lambda c: m * c["sale"] * vm - c["seed"]
         # online ceiling: the player is present for the whole gap (offline can only be lower)
         per_day = manual_day_ceiling(self.sched, self.arch["period_days"], [(value(c) / c["size"], c["h"] * gs) for c in common])
         # a tended square: the visits' harvests plus `strength` of what continuous cycling adds on top (strength = replant-at-once chance)
@@ -1158,6 +1183,8 @@ class Player:
         return self.level_of(it[0]) == it[1] - 1
 
     def gate_ok(self, it):
+        if it[0] in FIELD["tools"]:
+            return self.renown_level() >= FIELD["tools"][it[0]]["renown"][it[1] - 1]
         return it[0] != "exp" or self.renown_level() >= self.F["exp_gate"][it[1] - 1]
 
     def buy(self, it, day):
@@ -1255,6 +1282,11 @@ class Player:
         auto, manual = self.potential()
         pot0 = sum(self.potential(True))
         h1 = hour1(self.P, self.done)
+        owned = dict(self.lvl)  # the same field with every tool level the player's Renown allows, Coins aside (EXPANSION §5.5: "with tools maxed")
+        for name, t in FIELD["tools"].items():
+            self.lvl[name] = sum(1 for g in t["renown"] if g <= self.renown_level())
+        pot_max = sum(self.potential())
+        self.lvl = owned
         row.update({
             "stage": len(self.done), "mult": self.mult, "bank": self.coins, "pets": len(self.pets),
             "eq_lvl": sum(p["lvl"] for p in self.eq) / len(self.eq) if self.eq else 0, "pen_h": pen_rate_after,
@@ -1262,6 +1294,7 @@ class Player:
             "sq": self.sq, "cov": self.covered(), "post_g": self.post_g, "renown": self.renown_level(),
             "apt": max((p["apt"] for p in self.pets if p["where"] == "pen" and p["g"]), default=0),
             "f24_auto": auto, "f24_man": manual, "f24_0": pot0, "ratio": (auto + manual) / (h1 * self.mult) if h1 else 0.0,
+            "ratio_max": pot_max / (h1 * self.mult) if h1 else 0.0,
             "faucet": sum(self.cum.values()), "sink": sum(self.spend.values()), "spend": dict(self.spend),
             "field_net": row["field"] - row["seeds"],
         })
@@ -1311,6 +1344,18 @@ def guardrails(P, days=60, seeds=6):
                     if r["hour1"] and r["ratio"] > worst[0]:
                         worst = (r["ratio"], d + 1, si)
             m["a_max"], m["a_day"], m["a_seed"] = worst
+            T = FIELD["targets"]
+            obby = lambda r: r["repeat"] + r["onetime"]
+            first = [(sum(r["field_net"] for r in rows[:T["parity_days"]]), sum(obby(r) for r in rows[:T["parity_days"]])) for rows, _ in runs]
+            m["parity"] = max((f / o for f, o in first if o > 0), default=0.0)
+            m["lead"] = {}
+            for dd in sorted(set(T["lead"]) | {T["obby_main"][0]}):
+                if dd <= days:
+                    w3 = slice(dd - 3, dd)
+                    m["lead"][dd] = mean(sum(r["field_net"] for r in rows[w3]) / max(1.0, sum(obby(r) for r in rows[w3])) for rows, _ in runs)
+            m["a_tools"], m["a_tools_day"] = max(((r["ratio_max"], d + 1) for rows, _ in runs for d, r in enumerate(rows) if r["hour1"]), default=(0.0, 0))
+            m["tool_days"] = {name: mean(next((d + 1 for d, r in enumerate(rows) if pl.bought.get((name, len(t["prices"])), 99) <= d + 1), days + 1)
+                                         for rows, pl in runs) if t["prices"] else None for name, t in FIELD["tools"].items()}
             last = [rows[-1] for rows, _ in runs]
             m["a_final"] = mean(r["ratio"] for r in last)
             m["a_auto"] = mean(r["f24_auto"] / (r["hour1"] * r["mult"]) for r in last)
@@ -1569,18 +1614,35 @@ def field_checks(P, days=60, seeds=6):
     if not P["field"]["on"]:
         return [("4-6 Field guardrails A, B, C", True, "skipped: --garden pens has no field")]
     G = guardrails(P, days, seeds)
-    res, lo, hi = [], *FIELD["a_band"]
+    res, T = [], FIELD["targets"]
+    for arch in ARCHETYPES:
+        nm = arch["name"]
+        ms = {pol: G[(nm, pol)] for pol in POLICIES}
+        w = max(m["parity"] for m in ms.values())
+        res.append((f"4 P Parity, {nm}: field net <= {T['parity']:.1f}x obby Coins over days 1-{T['parity_days']} together", w <= T["parity"],
+                    f"worst seed {w:.2f}x"))
+    for arch in ARCHETYPES:
+        nm = arch["name"]
+        ms = {pol: G[(nm, pol)] for pol in POLICIES}
+        have = lambda dd: min(m["lead"].get(dd, 0.0) for m in ms.values())
+        got = "; ".join(f"day {dd}: {min(m['lead'][dd] for m in ms.values()):.2f}x" for dd in sorted(ms["talent-first"]["lead"]))
+        if nm in T["lead_archetypes"]:
+            need = {dd: v for dd, v in T["lead"].items() if dd <= days}
+            res.append((f"4 L Lead, {nm}: field net >= " + ", ".join(f"{v:g}x obby by day {dd}" for dd, v in need.items()) + " (3-day windows, worst policy)",
+                        all(have(dd) >= v for dd, v in need.items()), got))
+        elif nm == "Obby main":
+            dd, v = T["obby_main"]
+            res.append((f"4 L Lead, {nm}: field net >= {v:g}x obby by day {dd}", dd > days or have(dd) >= v, got))
+        else:
+            res.append((f"4 L Lead reported, {nm}", True, got))
+    lo, hi = FIELD["a_band"]
     for arch in ARCHETYPES:
         nm = arch["name"]
         ms = {pol: G[(nm, pol)] for pol in POLICIES}
         w = max(ms.values(), key=lambda m: m["a_max"])
         fin = " / ".join(f"{ms[p]['a_final']:.2f}x" for p in POLICIES)
-        res.append((f"4 A 24-hour rule, {nm}: field over 24 h <= first obby hour, every day", w["a_max"] <= 1.0,
+        res.append((f"4 A reported (24-hour rule replaced 2026-11-02), {nm}: field 24 h ceiling / first obby hour", True,
                     f"worst {w['a_max']:.2f}x on day {w['a_day']}; day {days}: {fin} (talent-first / pets-first)"))
-    for pol in POLICIES:
-        best = max(ARCHETYPES, key=lambda a: G[(a["name"], pol)]["a_final"])
-        v = G[(best["name"], pol)]["a_final"]
-        res.append((f"4 A target band {lo}-{hi}x at day {days}, best-developed archetype, {pol}", lo <= v <= hi, f"{v:.2f}x ({best['name']})"))
     for arch in ARCHETYPES:
         nm = arch["name"]
         bad = [pol for pol in POLICIES if not (G[(nm, pol)]["b_struct"] and G[(nm, pol)]["pot_g"] > G[(nm, pol)]["pot_0"] + 1e-9
@@ -1611,10 +1673,7 @@ def field_checks(P, days=60, seeds=6):
         nm = arch["name"]
         sh = [G[(nm, pol)]["garden_share"] for pol in POLICIES]
         txt = f"garden share of income, last 7 days: {sh[0]:.0%} / {sh[1]:.0%}"
-        if nm == "Obby main":
-            res.append(("6 Garden income is not a majority for Obby main", max(sh) <= FIELD["garden_share_max_obby"], txt))
-        else:
-            res.append((f"6 Garden share reported, {nm}", True, txt))
+        res.append((f"6 Garden share reported, {nm}", True, txt))  # the Obby-main cap (50 %) was dropped 2026-11-02: farming is the main game
     return res
 
 
@@ -1707,6 +1766,68 @@ def cmd_field(P, days, seeds):
             rows.append((sc, arch["name"], f"{m['a_max']:.2f}x", f"{m['a_final']:.2f}x", n(m["net_g"]), f"{m['garden_share']:.0%}", f"{m['sink60']:.0%}"))
     print(table(["Scale", "Archetype", "A worst", "A day 60", "Field net/d", "Garden share", "Sink day 60"], rows, right_from=2))
     build_field(P, saved[2], saved[0], saved[1])
+
+
+# Tool candidates for E1c3. TOOL_CANDIDATE = the EXPANSION §6 sizes (Seed sorter about +15 %, Cloches about +20 % online; Pruning shears not given);
+# `tools` also scales it. TOOL_PROPOSAL = what fits guardrail A on today's ladder (2026-11-02): the Seed sorter only widens the size roll (sigma
+# 0.30 / 0.35 / 0.40, mean 1, so no income: effect 0, a pure sink), Cloches +3 / 5 / 7 % online growth, Pruning shears 2 / 3 / 5 % second item.
+# Prices / Renown gates are a first proposal in the band of the Growth upgrade (3 000-45 000).
+TOOL_CANDIDATE = {
+    "sorter": {"effect": [0.05, 0.10, 0.15], "prices": [5000, 15000, 40000], "renown": [10, 18, 28]},
+    "cloches": {"effect": [0.07, 0.14, 0.20], "prices": [4000, 12000, 30000], "renown": [6, 14, 24]},
+    "shears": {"effect": [0.05, 0.10, 0.15], "prices": [6000, 18000, 45000], "renown": [12, 20, 30]},
+}
+TOOL_PROPOSAL = {
+    "sorter": {"effect": [0.0, 0.0, 0.0], "prices": [5000, 15000, 40000], "renown": [10, 18, 28]},
+    "cloches": {"effect": [0.03, 0.05, 0.07], "prices": [4000, 12000, 30000], "renown": [6, 14, 24]},
+    "shears": {"effect": [0.02, 0.03, 0.05], "prices": [6000, 18000, 45000], "renown": [12, 20, 30]},
+}
+
+
+def cmd_tools(P, days, seeds):
+    """E1c3: how the garden tools move guardrail A (the online ceiling), with the purchases as simulated and with every tool maxed."""
+    import copy
+    saved_tools, saved_scale = copy.deepcopy(FIELD["tools"]), P["field"]["scale"]
+
+    def run(label, tools, scale=None):
+        FIELD["tools"] = tools
+        build_field(P, P["field"]["mode"], P["field"]["catalogue"], saved_scale if scale is None else scale)
+        G = guardrails(P, days, seeds)
+        worst = lambda key: max(((G[(a["name"], pol)][key], a["name"]) for a in ARCHETYPES for pol in POLICIES))
+        a, a_nm = worst("a_max")
+        t, t_nm = worst("a_tools")
+        om = mean(G[("Obby main", pol)]["net_g"] for pol in POLICIES)
+        gm = mean(G[("Garden main", pol)]["net_g"] for pol in POLICIES)
+        s60 = min(G[(ar["name"], pol)]["sink60"] for ar in ARCHETYPES for pol in POLICIES)
+        bought = []
+        for name in tools:
+            ds = [G[(ar["name"], "talent-first")]["tool_days"][name] for ar in ARCHETYPES]
+            if ds[0] is not None:
+                bought.append(name[:2] + " " + "/".join("-" if d > days else str(round(d)) for d in ds))
+        return (label, f"{a:.2f}x {a_nm}", f"{t:.2f}x {t_nm}", n(om), n(gm), f"{s60:.0%}", ", ".join(bought) or "-")
+
+    def scaled(k, only=None):
+        out = copy.deepcopy(saved_tools)
+        for name, c in TOOL_CANDIDATE.items():
+            if only is None or name in only:
+                out[name] = {"effect": [e * k for e in c["effect"]], "prices": list(c["prices"]), "renown": list(c["renown"])}
+        return out
+
+    head = ["Candidate", "A worst (bought)", "A worst (tools maxed)", "Obby main net/d", "Garden main net/d", "Sink d60", "Top level bought (day: OM/Ca/GM/Bi)"]
+    rows = [run("no tools (today)", copy.deepcopy(saved_tools))]
+    for name in TOOL_CANDIDATE:
+        rows.append(run(f"{name} alone, full", scaled(1.0, [name])))
+    for k in (0.2, 0.25, 0.33, 0.5, 1.0):
+        rows.append(run(f"all three x {k}", scaled(k)))
+    for sc in (0.23, 0.21, 0.19):
+        rows.append(run(f"all three x 1.0, ladder {sc}", scaled(1.0), sc))
+    rows.append(run("PROPOSAL (sorter spread only)", copy.deepcopy(TOOL_PROPOSAL)))
+    print(f"GARDEN TOOLS (E1c3): guardrail A = worst 24 h field / first obby hour over {days} days, every archetype and policy, {seeds} seeds")
+    print("full set: " + "; ".join(f"{k} {'/'.join(f'{e:.0%}' for e in c['effect'])} for {'/'.join(n(p) for p in c['prices'])}, Renown {'/'.join(map(str, c['renown']))}"
+                                  for k, c in TOOL_CANDIDATE.items()))
+    print(table(head, rows))
+    FIELD["tools"] = saved_tools
+    build_field(P, P["field"]["mode"], P["field"]["catalogue"], saved_scale)
 
 
 def cmd_pets(P, days, seeds):
@@ -1852,7 +1973,7 @@ def main():
     except Exception:
         pass
     ap = argparse.ArgumentParser(description="Pawvest economy model (ROADMAP E0)")
-    ap.add_argument("command", choices=["report", "sim", "field", "pets", "check", "drift", "pin"])
+    ap.add_argument("command", choices=["report", "sim", "field", "pets", "tools", "check", "drift", "pin"])
     ap.add_argument("--garden", choices=GARDEN_MODES, default="field")
     ap.add_argument("--crops", choices=list(CATALOGUES), default="mvp")
     ap.add_argument("--scale", type=float, default=None)
@@ -1880,6 +2001,9 @@ def main():
         return 0
     if args.command == "pets":
         cmd_pets(P, args.days, args.seeds)
+        return 0
+    if args.command == "tools":
+        cmd_tools(P, args.days, args.seeds)
         return 0
     if args.command == "drift":
         d = drift(P)

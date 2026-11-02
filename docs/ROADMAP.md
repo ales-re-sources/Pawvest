@@ -219,6 +219,9 @@ Split into four steps, each validated and committed on its own (decided 2026-11-
 - **E1c2 Size roll** (EXPANSION §5.3, without variants): scope below.
 - **E1c3 Tools tier 1** (Seed sorter, Cloches, Pruning shears, EXPANSION §6). **Decided:** `economy.py` first models the tools and the size roll
   (the sensitivity run already fails A at +20 % income), then effect sizes and prices go to the user for approval, as the field-pet re-run did.
+  **On hold since 2026-11-02:** the user made farming the main game. The 24-hour rule is replaced by parity over days 1-3 and a lead of 3x by day 7 and 10x by day 30.
+  The field's economy is being re-tuned first (ECONOMY.md → "Direction change", candidate F1: crop prices × 9.7, 36 squares, early gates); under it the
+  tools fit at their EXPANSION sizes.
 - **E1c4 Market cart** (EXPANSION §5.2). **Decided:** seeds only for now (fertilisers and decor do not exist): 3-4 daily offers from the UTC day
   (same on every server, per-player quantities), discounted seeds of unlocked crops plus a few seeds of one locked crop as a taste.
 

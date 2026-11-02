@@ -170,6 +170,118 @@ expansion prices +-20 %, barn capacity, Green-thumb share and the rare sale shar
   1 / offline_rate more per hour online, so the ratio converges to the rule's own bound; the 0.2 % gap is the online / offline attribution of growth
   in progress. Options: accept equality within 1 % in the check, or keep online play clearly ahead (e.g. Tending only while the owner is away).
 
+## Garden tools re-run (2026-11-02, gates E1c3; `python tools/economy.py tools`)
+
+**Superseded by the direction change below (2026-11-02):** these sizes assume the 24-hour rule (A), which the user wants replaced. The model now has the three tier-1 tools (EXPANSION §6) as field sinks with levels, prices and Renown gates.
+- **Seed sorter:** expected size factor × (1 + effect).
+- **Cloches:** online growth × (1 + effect), nothing offline.
+- **Pruning shears:** chance of a second item, sale × (1 + effect), with no extra Renown or seed.
+
+Two A figures are reported. "Bought" is A with the purchases as simulated. "Maxed" is A with every tool level the player's Renown allows, on every day, Coins aside (EXPANSION §5.5).
+
+| Candidate | A worst (bought / maxed) | Field net per day, Obby main / Garden main |
+|---|---|---|
+| No tools (today) | 0.94x / 0.94x | 6 333 / 4 943 |
+| EXPANSION sizes (sorter +5/10/15 %, Cloches +7/14/20 %, shears 5/10/15 %) | **1.43x / 1.57x** | 10 004 / 5 363 |
+| The same × 0.2 / × 0.25 / × 0.33 | 0.97x / 0.99x · 1.00x / 1.01x · 1.04x / 1.04x | about 7 300-7 600 / 4 400-4 550 |
+| EXPANSION sizes, crop ladder cut 0.3 → 0.21 / 0.19 | 1.00x / 1.07x · 0.91x / 0.97x | 6 964 / 3 504 · 6 341 / 3 126 |
+| **Proposal:** sorter spread only, Cloches +3/5/7 %, shears 2/3/5 % | 0.99x / 1.00x | 6 889 / 4 617 |
+
+**Findings.**
+- **Only about +8-10 % of field income fits.** Today's field already uses 0.87x (Obby main) to 0.94x (Garden main) of the first obby hour, and A is an online ceiling that every income tool raises directly.
+- **Gains are uneven.** The net gain is larger than the effect, because seeds are not multiplied and faster online growth makes some crops ripen before a visit instead of after it.
+- **The EXPANSION sizes need the base crops cut by about a third.** That is ladder 0.19, and Garden main's field would fall from 4 943 to 3 126 a day.
+- **A Seed sorter that only widens the roll costs no income.** It keeps the mean at 1 and the Big / Giant factor thresholds at 1.20 / 1.55, so it fits beside the other two. Sigma per level and what it gives:
+
+  | Sigma | Big | Giant | Factor at 1 in 1 000 | Cap (z ±4) |
+  |---|---|---|---|---|
+  | 0.25 (today) | 20 % | 3.0 % | 2.10 | 2.63 |
+  | 0.30 | 22 % | 5.4 % | 2.42 | 3.17 |
+  | 0.35 | 24 % | 7.7 % | 2.77 | 3.81 |
+  | 0.40 | 26 % | 9.8 % | 3.18 | 4.57 |
+
+  It is the collector's tool: records now, the Harvest Fair later.
+- **Tools compete with expansions for Garden main's Coins** (4 943 → 4 617 a day with the proposal). It still finishes the top tool levels late or not at all within 60 days.
+- **Purchase timing.** Obby main buys every tool's top level by day 17-33 and Casual by day 28-38. Prices are a first proposal in the band of the Growth upgrade: sorter 5 000 / 15 000 / 40 000 (Renown 10 / 18 / 28), Cloches 4 000 / 12 000 / 30 000 (6 / 14 / 24), shears 6 000 / 18 000 / 45 000 (12 / 20 / 30).
+
+## Direction change: farming is the main game (user, 2026-11-02; numbers open)
+The user's words: on day one (one day, less or more, to discuss) farming income is limited to about the obby's; on the following days it should
+surpass the obby by far. The obby is complementary at the beginning (more mini-games later), farming is the main game.
+This replaces the 24-hour rule (A: the field's 24 h online ceiling at most the first obby hour, every day) and the Obby-main garden share cap (at most 50 %).
+The model today does the opposite. Realised field net per day / obby Coins per day (talent-first, mean of 6 seeds):
+
+| Day | Obby main | Casual | Garden main |
+|---|---|---|---|
+| 1 | 0 / 12 904 | 0 / 6 034 | 8 / 846 |
+| 7 | 1 954 / 10 352 | 1 116 / 6 713 | 749 / 3 305 |
+| 14 | 5 543 / 26 441 | 1 529 / 8 766 | 908 / 0 |
+| 30 | 6 173 / 26 807 | 4 819 / 13 850 | 2 351 / 9 157 |
+
+**Decided by the user 2026-11-02:**
+- **Measure:** realised field net per day (sales − seeds) against obby Coins per day (medals, repeat runs, first finishes).
+- **Parity (days 1-3):** the field earns at most 1.0x the obby's Coins over the first three days together (a cap only). It is a total, not a cap
+  per day (decided after the lever search): the obby's first-clear payouts are too lumpy for a per-day cap.
+- **Lead:** at least **3x by day 7** and **10x by day 30**, for Casual and Garden main. Obby main (2 h of obby a day by choice) only needs field ≥ obby by
+  day 14; Binge is reported only.
+- Unchanged: online ≥ 3x offline per hour (O), sink share (C), required talents per stage.
+
+`economy.py check` now has the checks `4 P` (parity) and `4 L` (lead). The old A and the garden share are only reported.
+
+**First sweeps (2026-11-02, 6 seeds, worst policy).** Each cell is parity (worst of days 1-3) / lead at day 7 / lead at day 30.
+
+| Setting | Obby main | Casual | Garden main |
+|---|---|---|---|
+| Today (ladder 0.3) | 0.07 / 0.10 / 0.22 | 0.22 / 0.13 / 0.29 | 0.18 / 0.33 / 0.56 |
+| Crop prices × 3 (ladder 0.9) | 0.21 / 0.29 / 0.69 | 0.65 / 0.41 / 0.93 | 0.53 / 1.01 / 3.66 |
+| **Crop prices × 4.5 (ladder 1.35): parity binds** | 0.31 / 0.41 / 1.00 | **0.98** / 0.62 / 1.53 | 0.79 / 1.66 / 6.62 |
+| × 4.5 + EXPANSION-size tools | 0.31 / 0.49 / 1.44 | 0.98 / 0.63 / 2.35 | 0.79 / 1.66 / 7.22 |
+| × 4.5 + tools + obby repeat runs × 0.2 | 0.39 / 0.69 / 6.68 | 0.98 / 0.69 / 8.18 | 0.79 / 1.66 / 6.57 |
+
+Findings:
+- **Prices can rise about 4.5x before parity binds** (Casual on day 2). That alone gives Garden main 6.6x at day 30, but leaves Casual at 1.5x.
+- **The day-7 lead is a ramp problem, not a price problem.** Parity caps day 2-3 at about 1.0x, so the field must triple relative to the obby within four days. Today's early field is flat: 4-6 Potato squares, Corn behind Renown 8, expansions that cost Coins.
+  Casual's obby Coins in week 1 are first-clear medals, so cutting repeat-run rewards does not move day 7 (0.62 → 0.69).
+- **The day-30 lead runs out of field.** Garden main has only 8 of 12 squares at day 30, and a 12-square cap leaves little room to grow after it.
+  Cutting repeat runs helps Casual and Obby main at day 30, because their obby income by then is mostly repeats.
+- The levers left are structural:
+  - an early field ramp (cheaper or Renown-free first expansions, a mid crop early, faster first tiers);
+  - a larger field or more growth axes (squares beyond 12, tools at full size, more crop tiers);
+  - smaller obby Coin payouts once the first clears are done (obby rewards shift to seeds, talents and mini-games).
+
+### Lever search (2026-11-02): a candidate that meets the targets (waiting for the user)
+A grid over the three levers (sweep scripts in the session scratchpad; the overrides are model-only) found **candidate F1**.
+
+| Lever | Today | F1 |
+|---|---|---|
+| Crop prices | ladder 0.3 | **× 9.7 (ladder 2.9):** Potato 6 / 2, Corn 1 044 / 261, Pumpkin 1 392 / 348, Giant melon 4 176 / 1 044 (sale / seed); rare crops the same factor |
+| Crop gates | Corn and Pumpkin Renown 8, Giant melon 25 | Corn and Pumpkin **Renown 1**, Giant melon **Renown 5** |
+| Field size | 12 squares, expansions 600 → 65 000 | **36 squares:** expansions from 1 400, about × 1.31 per square up to about 970 000 (5.1 M in all); squares 5-6 need no Renown, then Renown rises to 60 |
+| Tools | none | EXPANSION §6 sizes (Seed sorter +5 / 10 / 15 %, Cloches +7 / 14 / 20 % online, shears 5 / 10 / 15 %) |
+| Other field sinks | upgrades, pet slots as in CropConfig | the same × 9.7 |
+| Obby Coins | as built | **repeat runs × 0.5** (first clears unchanged) |
+
+Results (6 seeds, worst policy):
+
+| Archetype | Parity, days 1-3 total | Lead day 7 / 14 / 30 | Field net per day, days 54-60 | Obby per day | Garden share |
+|---|---|---|---|---|---|
+| Obby main | 0.71x | 2.0 / 6.9 / 14.1 (target ≥ 1 by day 14) | 270 800 | 13 500 | 96 % |
+| Casual | 0.84x | **2.96** / 7.4 / 14.6 | 189 600 | 7 000 | 97 % |
+| Garden main | **1.02x** | 8.6 / 25.8 / 41.5 | 247 900 | 3 300 | 99 % |
+
+O (online ≥ 3x offline per hour) holds at 3.66-4.15x, and C at 93-95 %. With the other sinks scaled the result barely moves: Casual 2.95x at day 7 and 10.2x at day 30, Garden main parity 1.02x.
+
+**What F1 needs decided:**
+1. ~~Parity as the total of days 1-3, not each day.~~ **Decided 2026-11-02: the 3-day total.** The obby's first-clear payouts are lumpy: Casual clears one stage on day 2, and Garden main has obby days with 0 Coins.
+   Capped per day, the field is limited by the obby's weakest day, and no lever set meets the day-7 lead. With F1 the field earns 1.3-2.1x the obby on its single best day of the three.
+2. **The targets sit on the edge.** Casual's day-7 lead (3x) and Garden main's parity trade against each other: ladder 2.85 → 2.91x / 1.00x, ladder 3.0 → 3.06x / 1.05x.
+3. **Coins inflate about 40x.** A developed field pays about 200 000 a day (today about 6 000). Talents (44 300 in all), eggs, incubators and stage unlocks become trivial, and every archetype buys every talent.
+   Either the obby-side prices scale too, or farming pays in its own currency.
+   **Parked idea (user, 2026-11-02):** separate the two incomes. Skills / talents are bought with **stars**, and a cleared obby run rewards
+   seeds (or similar) instead of Coins. Not decided: how it would work with the other mini-games planned later.
+4. **Sinks:** 1.5-3 M Coins per player by day 60 must go into the still-undesigned reserved ladder (estate, landmarks, decor, stations).
+5. **36 squares:** the plot draws 12 today (`GardenView` / `PlotView`, the ring layout). Bigger plots, or a field that grows in another direction (a second field, terraces).
+6. **Live game:** the field is admin-only, so its prices can change freely. The repeat-run cut reaches every live obby player.
+
 ## Open decisions for the user
 
 1. **Sink share:** keep 60 % by day 30 / 80 % by day 60 (needs about 0.8 M Coins of landmark / estate / decor sinks for an Obby-main player), or lower it.
