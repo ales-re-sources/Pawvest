@@ -142,7 +142,7 @@ expansion prices +-20 %, barn capacity, Green-thumb share and the rare sale shar
 
 ## Field-pet re-run (2026-11-02, gates E1b; `python tools/economy.py pets`)
 
-Proposals for the user's approval (provisional until E1b):
+**Approved by the user 2026-11-02** as the E1b inputs (the two edge findings below stay open):
 
 1. **Field pet slots: 3** (1 free + 2 bought at **2 500 / 9 000** Coins). Simulation (60 days): 1 slot -> A worst 0.88x, 2 -> 0.93x, 3 -> 0.93x,
    **4 -> 1.09x (breaks the 24-hour rule)**. Two pets at level 7+ already cover all 12 squares; the third slot matters while pets are at levels

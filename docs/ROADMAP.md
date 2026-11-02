@@ -36,7 +36,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | G1 | Player guidance hints — awaits the user's check in play | ✔ | ✔ | – |
 | K1 | First-hour fixes from the kid playtest (2026-11-01) — Double Jump world reward done; Stage 5, G1 fallback, hatch panel proposed | partial | partial | – |
 | E1.0 | Client-drawn plots spike: **GO** | ✔ | ✔ | – |
-| E0 | Economy model — partial (baseline, simulation, field, field-pet re-run awaiting approval); repricing and the rest open | partial | – | – |
+| E0 | Economy model — partial (baseline, simulation, field, field-pet re-run approved); repricing and the rest open | partial | – | – |
 | M6a | Soft launch + World 1 balancing — World 1 balanced by feel (2026-10-30); live test open | – | – | – |
 | MU | Mobile UX check | – | – | – |
 | E1a1 | Plots drawn by the client, new ring layout (garden moved) | ✔ | ✔ | – |
@@ -224,6 +224,111 @@ the day-60 band and the online / offline ratio). Checks 9-12 above were run with
 Side effect the model does not cover (it replants only on visits): a player who stays at a 4-square field earns about 48 Renown points an hour,
 so Renown 8 (Corn, Pumpkin) takes under 2 hours of field time instead of days.
 
+### E1b — Field pets (design check 2026-11-02, decisions taken)
+**Goal.** Pets stop working in pens and work the field instead: a pet stands on a square, a **Tending** pet harvests and replants the squares in
+its reach while the owner is away, and its Tending level rises with field time. Pens convert into field pet slots once, with a refund. Like E1a2 it
+is **behind `GardenConfig.HasFieldAccess`**: players without access keep their pens and the Coins-per-hour production unchanged (EXPANSION §3:
+pen income is removed only when crops ship), so E1b can be published without touching live players. Inputs: ECONOMY → "Field-pet re-run"
+(approved 2026-11-02).
+
+**Design check.** Matches EXPANSION §3 (field pets, reach, one job per pet, data `Garden.FieldPets`), §4 (aptitudes rolled from the uid, levels
+1–10, rarity caps, XP from field time) and §16 item 4 (full aptitude data stored from the first hatch, only the working ones shown). Only
+**Tending** does something in E1b. Fertilising, Pest control (E4-thin), Weeding, Scouting (E2 seed pouch) and Crafting are rolled and stored but
+not shown. Quirks and bond stay out (D7). Field pets can be placed only at the own plot (the "move from far away" question of §16 stays open).
+
+**E1b1 — Data, aptitudes, conversion, Tending (server; ~1 week).**
+1. **Aptitudes.** `PetConfig.Aptitudes` holds the ids `Tending`, `Fertilising`, `PestControl`, `Weeding`, `Scouting` and `Crafting` (never renamed).
+   `PetConfig.RollAptitudes(uid, kind)` rolls them deterministically from the uid (as PetLook's looks):
+   - the count follows the rarity (1 / 1 or 2 / 2 / 2–3 / 3);
+   - the kind leans the draw (dog, owl → Pest control; bunny → Fertilising; fox → Scouting; cat → Tending…);
+   - Tending's overall chance per rarity is the model's 0.2 / 0.22 / 0.4 / 0.5 / 0.6;
+   - a pet with Pest control also gets a `Spec` (crows, moles, slugs, raccoons).
+
+   They are stored as `Pets[uid].Apt = { [id] = { L, XP } }` and `Pets[uid].Spec` at hatch (`PetService.AddPet`). A pet without `Apt` gets them once
+   on load, at level ceil(pet level / 4) and at most the rarity cap. Stored aptitudes are never rerolled.
+2. **Field pets.** The data is `Garden.FieldPets[uid] = { Square, Job }` (Job = `"Tending"` in E1b) and `Garden.FieldPetSlots` (1 free, +1 at 2 500,
+   +1 at 9 000; `CropConfig.FieldPetSlotPrices`). The server checks:
+   - the caller is at the own plot (within 45 studs);
+   - the square is owned and holds no other pet;
+   - the slot count allows another pet;
+   - the pet has the job's aptitude and is not equipped.
+
+   `PetService` rejects Equip / SellPet of a field pet (`"field"`), as it does for penned pets today (`GardenConfig.IsPenned` → `IsPlaced`: pen or field).
+3. **Reach.** On the 4-column grid (`CropConfig.Reach(square, level, count)`):
+   - levels 1–3: the pet's own square;
+   - levels 4–6: that square plus its 4 neighbours;
+   - levels 7–10: the 3 × 3 block.
+
+   The same job does not stack: a square is tended by the strongest Tending pet that reaches it.
+4. **Tending in `GardenField.settle`.** For each tended square whose crop ripens during the settled span:
+   - The pet harvests it when a roll is below its strength for the level (20 / 35 / 48 / 59 / 68 / 76 / 83 / 89 / 95 / 100 %) and the barn has room. The crop goes into `Items` and gives Renown as a hand harvest does.
+   - It then replants the same crop from `Seeds`, carrying over the leftover growth.
+   - A failed roll or a full barn leaves the crop ripe. With no seed of that crop the square stays empty after the harvest.
+   - The roll is deterministic per square and planting (a new counter `Squares[n].N`), so settling in different steps gives the same result.
+   - Tending works **only while the owner is away** (the join settle), as the model assumes (decision 2).
+5. **Aptitude XP.** A placed pet earns XP in its job's aptitude per weighted field hour, as growth does (online 1.0, offline 0.33, capped at 12 h).
+   Level L → L + 1 needs 10 × 1.56^(L−1) hours, up to the rarity cap. XP is settled with the field.
+6. **Conversion.** It runs once, for a player with field access, on join (flag `Garden.Converted`):
+   1. pays the pending pen production (`settle` as today);
+   2. returns penned pets to the inventory;
+   3. sets `FieldPetSlots` by the pens bought (1 → 1, 2–3 → 2, 4–6 → 3);
+   4. refunds the pens beyond that (`PlayerProfile.AddCoins`: 3 pens → 1 000, 5 → 6 000, 6 → 21 000).
+
+   After that `Pens` / `PenCount` / `Carry` stay empty and pen production is 0. The Place / Remove / BuyPen remotes reject a converted player (`"field"`).
+7. **Remotes** (in `GardenRemotes`): `PlacePet(square, uid)` (also moves a placed pet), `LiftPet(uid)` and `BuyPetSlot(expectedSlots)`, answered on
+   `Result`. Message changes:
+   - `State.field` gains `pets = { [square] = { uid, job, level, xp, next } }` and `slots`;
+   - the plot message's `field` gains `pets = "Kind:Level:uid:square:reach" × n`;
+   - `PetsChanged` gains `placed = { [uid] = "pen" | "field" }` and each pet's visible aptitudes.
+8. **Docs and checks:** AGENTS.md (remotes, profile), LAYOUT.md, and `economy.py check` with drift 0 for the new prices.
+
+**E1b2 — Client (~1 week).**
+1. **`PlotView`:** a converted plot draws no pens. Pets stand on their squares (full detail: the PetLook model; mid detail: a block). On the own
+   plot, the squares in reach of the pet being placed or moved are tinted.
+2. **Square prompt "Place pet" / "Move pet"** next to Plant / Harvest. It opens a pet picker listing pets that have Tending and are not equipped,
+   with name, Tending level, reach, and "on square n" for placed ones. A placed pet also gets "Lift".
+3. **Garden panel:** a **Pets** section shows who works where, the Tending level with an XP bar and slots used / total, and buys the next slot.
+   The pen panel (`GardenClient`) hides for converted players.
+4. **Pets panel:** pets that have Tending show a Tending line. A field pet shows "On the field" instead of the Equip button.
+5. **Conversion popup:** a one-time "Your pens became field pet slots (+N Coins)". Strings go in the CSV (en + cs).
+
+*Studio-only:* nothing (the field and pets are drawn by the client).
+
+**Acceptance checks (E1b).**
+1. A new pet gets `Apt` (and `Spec` with Pest control) at hatch, and reloading keeps it. The same uid always rolls the same set (100 uids rolled twice).
+2. Roll statistics over 10 000 synthetic uids per rarity match the targets: Tending share 0.2 / 0.22 / 0.4 / 0.5 / 0.6 (± 0.02), aptitude counts as in §4.
+3. A live profile with 6 pens and 3 penned pets converts once: pending production paid, pets back in the inventory, 3 slots, +21 000 Coins.
+   A second join changes nothing. A player without access keeps pens and production unchanged.
+4. Place, move and lift work through the real UI. The server rejects:
+   - an equipped pet or a pet without Tending;
+   - an occupied or unbought square;
+   - a 4th pet over the slots;
+   - a far player;
+   - forged arguments.
+
+   Equip / sell of a field pet is rejected too.
+5. Tending works offline (stored times moved back, with snapshot / restore). Crops that ripen during an absence are harvested and replanted by
+   the roll, seeds are used, the barn limit is respected and Renown is counted. The same absence settled in one step and in many gives the same field.
+6. Reach is 1 / 5 / 9 squares at levels 3 / 4 / 7, tested at a corner and the middle of the grid, and the drawn reach matches the server's.
+7. Aptitude XP and level-ups come at the expected hours and stop at the rarity cap.
+8. With two clients, the other player sees the pets on the plot. 24 full plots with fields and pets stay inside the E1a1 budget (`GardenViewFake`).
+9. `economy.py check` shows drift 0, `loc.py check` 0 errors and lint stays within the baseline. The new texts fit in Czech at phone size.
+
+**Decisions (the user, 2026-11-02: all six as recommended).** Recorded below with the options that were weighed.
+1. **Gating:** E1b stays behind field access, and conversion runs only for players with access. Live players keep pens until E1 ships, when
+   `FieldAccess = "all"` converts everyone on join. *Recommended.*
+2. **When Tending works:** either only during absences, as modelled (online play stays ahead, but Binge gets no extra cycle: finding B), or also
+   while the owner is online but away from the field (in the obby). The second helps Binge and long sessions but needs an `economy.py` re-run first,
+   and the O finding moves too. *Recommended: absences only for E1b, revisit with telemetry.*
+3. **A Tending pet for a new player:** a Common has Tending only 20 % of the time, so most players hatch no Tending pet for a while and the free
+   slot sits idle. Proposal: the first pet hatched in the garden always has Tending (as its first aptitude). *Recommended.*
+4. **Penned pets on conversion:** either back to the inventory (the player places them), or placed on the field automatically (fewer surprises,
+   but on an arbitrary square). *Recommended: inventory, plus the popup.*
+5. **Max Players 24:** this is a place setting changed at publish. Field pets stay admin-only, so 24 can wait until E1 ships; E1b checks the
+   24-plot budget with the fake plots. *Recommended: keep 12 until E1 ships.*
+6. **The two E0 edge findings** (B equal for Binge, O at its bound for Garden main): either accept them as equality within 1 % in `check`, or
+   follow decision 2's alternative. *Recommended: accept for now.*
+
 ### E0 — Economy model
 **Goal.** One reproducible model of the Coin economy (`tools/economy.py`, Python stdlib) that fixes the numbers E1 needs, proves GDD §6 and the
 EXPANSION §5 guardrails with crops added, and re-prices every Coin sink. No game code in E0; approved prices are applied in **E0b** (GDD first,
@@ -247,8 +352,8 @@ pouch and rare-seed meter** with Scouting (§8.1), seed stock, Renown gates, sta
 **Still to do.**
 - **Field-pet re-run** (before E1b): *modelled 2026-11-02* (`economy.py pets`, ECONOMY.md → "Field-pet re-run"): 3 field pet slots (1 free +
   2 500 / 9 000), Tending strength = replant-at-once chance (L10 = continuous), aptitude steps 10 x 1.56^(L-1) weighted hours, pens -> slots with a
-  refund (6 pens -> 3 slots + 21 000), seed pouch 0.1 seeds per finish + a 100-finish rare-seed meter. **Awaiting the user's approval** of these
-  numbers and of two edge results (B equal for Binge, O at its bound for Garden main); `check` 41 / 43.
+  refund (6 pens -> 3 slots + 21 000), seed pouch 0.1 seeds per finish + a 100-finish rare-seed meter. **Approved by the user 2026-11-02**
+  (E1b inputs). Open: the two edge results (B equal for Binge, O at its bound for Garden main); `check` 41 / 43.
 - Repricing (a proposal table old → new price with time-to-afford per archetype, for the user's approval), dead end, rare supply, sensitivity;
   later the EXPANSION pieces (harvest rolls, fertilisers, tools, the Spender archetype).
 
