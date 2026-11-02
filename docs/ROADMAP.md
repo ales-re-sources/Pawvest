@@ -39,7 +39,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E0 | Economy model — partial (baseline, simulation, field); field-pet re-run, repricing and the rest open | partial | – | – |
 | M6a | Soft launch + World 1 balancing — World 1 balanced by feel (2026-10-30); live test open | – | – | – |
 | MU | Mobile UX check | – | – | – |
-| E1a–E5 | Garden MVP (see "Next"); E1a scoped | – | – | – |
+| E1a1 | Plots drawn by the client, new ring layout (garden moved) | ✔ | ✔ except the 2-client check | – |
+| E1a2–E5 | Garden MVP (see "Next"); E1a2 scoped | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
 
@@ -120,11 +121,29 @@ the market cart stay in E1c; rare crops and seed pouches in E2.
 3. Client: `GardenClient` / `IncubatorClient` prompts and countdowns come from `PlotView` (no scan of `Workspace.Garden.Plots`, no `OpenPen`
    hook); `PetPenFx` / `PetPenLevelUp` follow the drawn pens; `HintSources`' ready-egg marker targets the drawn incubator.
 4. **Mid pet detail:** a pet beyond about 60 studs is one block.
-5. **Layout:** `PlotRings` → radius 112 / 185; the island grows to about radius 215 (Studio: Island, Hedge + Barrier ring, Decor, BridgePath,
-   the bridge end); `HintSources`' Garden rectangle follows; `tools/plot_formula_test.luau` re-pointed at the new layout.
+5. **Layout:** `PlotRings` → radius 112 / 185; `HintSources`' Garden rectangle follows; `tools/plot_formula_test.luau` re-pointed at the
+   new layout. *Design check 2026-11-02:* growing the island in place would overlap the hub (its hedge is 207 studs from today's garden
+   centre), and ring 2's fields (E1a2, behind the plots) reach radius 224. So the **whole garden moves 87 studs away from the hub** along the
+   bridge axis (`PlotCentre` −1222.517, 16.25, −834.035; the bridge stays as it is and still lands in the gate), the hedge + barrier ring sits
+   at radius 230 (island 235), and **ring 2 is turned by 5°** (`offset`) so the bridge path (75°, 8 studs wide) runs between plots on both
+   rings (4.5 studs of clearance to ring 1's inner corners). Decor moves between the rings (radius 150, between ring 1's fields).
+   Free slots of ring 1 are drawn as empty "Free plot" plots (as today); ring 2 is drawn only where someone owns a slot.
+   Prompt texts of pens and incubators become strings (`garden.prompt.*`; the Studio prompts were literals).
 6. Remove `PlotViewSpike.*` and `PlotViewRemotes`; stash `Workspace.Garden.Plots` in `ServerStorage` until E1a1 is Studio-validated, then delete.
 
 *Studio-only:* the island, hedge, barrier, decor and bridge changes; the plots stash and deletion.
+
+*Implemented 2026-11-02* (`GardenPlotFeed`, `GardenView`, `PlotView`; `GardenService` / `GardenIncubators` / `GardenPlots` draw nothing;
+`PlotViewSpike.*` removed). Studio, solo playtests on `Lekzdrh` (profile snapshotted and restored): checks 1, 3, 4, 5 and 6 and the one-client
+half of check 2 pass. 1: `Workspace.Garden` holds 595 descendants on the server, as in Edit (no `Plots`, no server-drawn instance). 2: through the
+real prompt (E) and buttons: Place the Cat in pen 1 (the drawn pen shows its model and "10 Coins/h" label), Remove, Place again; Basic egg
+started at incubator 1 (countdown 298 s vs `ReadyAt − now` 297.1 s), `ReadyAt` moved back → the ready-egg marker targets
+`Workspace.GardenView.Slot_01.inc1.Base`, Hatch through the panel empties the incubator and removes the marker. 3: `LastSeen` 1 h back → join payout 10 Coins = `Settle(10 000, carry 230 000, 3 609 s)`. 4: `plot_formula_test` 0 of 240 island rays miss, gaps
+8.99 / 13.33 (with field) / 17.91, bridge path 0.49 from slot 3's corner; `GoGarden` lands 10 studs in front of the own plot facing it (dot 0.97); a
+`MoveTo` walk from the hub's bridge path over the bridge ends on the plaza. 5: 30 synthetic plots with 12-square fields: 1 183 instances at the
+centre, 1 771 at most elsewhere (limit 5 000); a full plot at 90 studs 63 (limit 80), at 30 studs 345. No new console errors.
+**Open:** the second client's drawing within 2 s (needs Test → Server and Clients, the user); the Studio plots backups
+(`ServerStorage.E1a1_PlotsStash`, `E1a1_GardenBackup`) are deleted after that check; the place must be saved / published with the new scene.
 
 **E1a2 — The field (behind access; ~1–2 weeks).**
 - **Access:** `GardenConfig.FieldAccess = "admins"` (admins + Studio test users; `"all"` when E1 ships). Every field remote checks it on the

@@ -1,11 +1,13 @@
--- PlotView (E1.0 spike, docs/ROADMAP.md → E1.0, docs/EXPANSION.md §16): draws one garden plot on the client from a plain
--- state table, at its slot's position (GardenConfig.PlotCFrame), in one of three details: "full" (floor, edges, sign, pens
--- with pet models, incubators with a live countdown, field squares with crop stand-ins), "low" (floor, one block per pet
--- and egg, the field as one patch) or "none". Stand-in blocks only (no art pass).
--- A plot is split into pieces (base, pen1..6, inc1..3, row1..n of the field). SetState / SetDetail only mark the pieces
--- whose look changed; Step builds marked pieces until a deadline, so a build is spread over frames by the caller.
+-- PlotView (E1a1, docs/EXPANSION.md §16): draws one garden plot on the client from a plain state table (GardenRemotes.Plot,
+-- GardenPlotFeed), at its slot's position (GardenConfig.PlotCFrame), in one of four details: "full" (floor, edges, sign, pens
+-- with pet models and labels, incubators with egg and live countdown, pad / incubator billboards, prompts on the own plot),
+-- "mid" (the same without billboards and prompts, each pet one block in its rarity colour), "low" (floor, one block per pet and
+-- egg, the field as one patch) or "none". Stand-in blocks only (no art pass). Used by GardenView, which picks the detail.
+-- A plot is split into pieces (base, pen1..6, inc1..3, row1..n of the field). SetState / SetDetail / Relabel only mark the
+-- pieces whose look changed; Step builds marked pieces until a deadline, so a build is spread over frames by the caller.
 -- State: { name, penCount, pens = { [1..6] = "Kind:Level:uid" or "" }, incCount, eggs = { [1..3] = "EggId:readyAt" or "" },
--- field = { cols, rows, crops = two characters per square: crop letter a-f (or "." for none) + stage 0-3 } }.
+-- field = { cols, rows, crops = two characters per square: crop letter a-f (or "." for none) + stage 0-3 } } or { free = true }
+-- (a slot nobody holds: floor, sign "Free plot", grey pads and incubators).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -16,7 +18,7 @@ local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 
 local PetModels = ReplicatedStorage:WaitForChild("PetModels")
 
--- floor-space layout, copied from the Studio plots (Workspace.Garden.Plots.Plot_NN)
+-- floor-space layout, copied from the former Studio plots (Workspace.Garden.Plots.Plot_NN, deleted in E1a1)
 local PEN_SPOTS = {
 	Vector3.new(-12, 0.4, 4),
 	Vector3.new(0, 0.4, 4),
@@ -28,11 +30,14 @@ local PEN_SPOTS = {
 local INCUBATOR_SPOTS = { Vector3.new(-12, 0, -10), Vector3.new(0, 0, -10), Vector3.new(12, 0, -10) }
 local FIELD_FRONT = 22 -- the field lies behind the plot (floor +Z), from this far behind the centre
 local FIELD_WIDTH = 40
+local INFO_DISTANCE = 60 -- studs: pad / incubator billboards and pet labels
 
 local COLORS = {
 	floor = Color3.fromRGB(126, 186, 96),
 	edge = Color3.fromRGB(120, 85, 50),
 	sign = Color3.fromRGB(60, 42, 28),
+	signNumber = Color3.fromRGB(230, 200, 140),
+	padFree = Color3.fromRGB(150, 150, 150),
 	padEmpty = Color3.fromRGB(110, 190, 110),
 	padLocked = Color3.fromRGB(80, 80, 80),
 	base = Color3.fromRGB(150, 100, 60),
@@ -65,6 +70,47 @@ local function part(props): Part
 	return p
 end
 
+local function textLabel(parent: Instance, props): TextLabel
+	local label = Instance.new("TextLabel")
+	label.Name = "Label"
+	label.Size = UDim2.fromScale(1, 1)
+	label.BackgroundTransparency = 1
+	label.TextScaled = true
+	label.Font = Enum.Font.GothamBold
+	label.TextColor3 = Color3.new(1, 1, 1)
+	label.TextStrokeTransparency = 0.3
+	for key, value in props do
+		(label :: any)[key] = value
+	end
+	label.Parent = parent
+	return label
+end
+
+-- "Info" billboard over `adornee`'s part with one line of text (pads and incubators that hold nothing).
+local function info(parentPart: BasePart, size: UDim2, offset: number, text: string): TextLabel
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "Info"
+	gui.AutoLocalize = false
+	gui.Size = size
+	gui.StudsOffset = Vector3.new(0, offset, 0)
+	gui.MaxDistance = INFO_DISTANCE
+	local label = textLabel(gui, { Text = text })
+	gui.Parent = parentPart
+	return label
+end
+
+local function prompt(parentPart: BasePart, action: string, object: string, distance: number, onTriggered: () -> ())
+	local p = Instance.new("ProximityPrompt")
+	p.Name = "Prompt"
+	p.ActionText = action
+	p.ObjectText = object
+	p.HoldDuration = 0
+	p.MaxActivationDistance = distance
+	p.RequiresLineOfSight = false
+	p.Triggered:Connect(onTriggered)
+	p.Parent = parentPart
+end
+
 local function countdown(seconds: number): string
 	seconds = math.max(0, math.ceil(seconds))
 	if seconds >= 3600 then
@@ -81,6 +127,7 @@ local function parsePet(text: string?): (string?, number?, string?)
 	local kind, level, uid = string.match(text, "^([^:]+):(%d+):(.*)$")
 	return kind, tonumber(level), uid
 end
+PlotView.ParsePet = parsePet
 
 -- "EggId:readyAt" → egg id, readyAt (nil for "")
 local function parseEgg(text: string?): (string?, number?)
@@ -90,22 +137,28 @@ local function parseEgg(text: string?): (string?, number?)
 	local egg, readyAt = string.match(text, "^([^:]+):(%d+)$")
 	return egg, tonumber(readyAt)
 end
+PlotView.ParseEgg = parseEgg
 
--- New view of plot slot `slot` under `parent`. options: { own = boolean, onPen = fn(pen) } (prompts on the own plot only).
+-- New view of plot slot `slot` under `parent`. options: { own = boolean, onPen = fn(pen, pad), onIncubator = fn(n, base),
+-- onLevelUp = fn(model, kind, level) } (prompts on the own plot only; onLevelUp for a pet that levelled up in its pen).
 function PlotView.new(slot: number, parent: Instance, options)
 	local self = setmetatable({}, PlotView)
 	self.slot = slot
 	self.floor = GardenConfig.PlotCFrame(slot) :: CFrame
 	self.own = options and options.own or false
 	self.onPen = options and options.onPen
+	self.onIncubator = options and options.onIncubator
+	self.onLevelUp = options and options.onLevelUp
 	self.detail = "none"
 	self.state = nil
+	self.lang = Locale.Current()
 	self.built = {} -- [key] = signature of the drawn piece
 	self.pieces = {} -- [key] = Model
 	self.pending = {} -- ordered keys whose signature changed
 	self.marked = {} -- [key] = true while pending
 	self.rows = 0 -- most field rows ever drawn (rows beyond the current field are cleared)
 	self.labels = {} -- [incubator] = { label, egg, readyAt } of drawn countdowns
+	self.levelUps = {} -- [pen] = level the pet in that pen just reached (played when the pen is next drawn in full)
 	self.root = Instance.new("Model")
 	self.root.Name = string.format("Slot_%02d", slot)
 	self.root.Parent = parent
@@ -136,14 +189,17 @@ function PlotView:signature(key: string): string
 		return "none"
 	end
 	if key == "base" then
-		return detail .. "|" .. tostring(state.name)
+		return table.concat({ detail, if state.free then "" else tostring(state.name), self.lang }, "|")
 	end
 	local kind, number = string.match(key, "^(%a+)(%d+)$")
 	local n = tonumber(number) :: number
+	if state.free then
+		return if kind == "row" or detail == "low" then "none" else detail .. "|free"
+	end
 	if kind == "pen" then
-		return table.concat({ detail, state.pens[n] or "", tostring(n <= state.penCount), tostring(self.own) }, "|")
+		return table.concat({ detail, state.pens[n] or "", tostring(n <= state.penCount), tostring(self.own), self.lang }, "|")
 	elseif kind == "inc" then
-		return table.concat({ detail, state.eggs[n] or "", tostring(n <= state.incCount) }, "|")
+		return table.concat({ detail, state.eggs[n] or "", tostring(n <= state.incCount), tostring(self.own), self.lang }, "|")
 	end
 	local field = state.field
 	if not field or n > field.rows then
@@ -165,6 +221,17 @@ function PlotView:mark()
 end
 
 function PlotView:SetState(state)
+	local old = self.state
+	if old and not old.free and not state.free then
+		-- the same pet in the same pen at a higher level: a level-up (placing, removing and first sight never count)
+		for n = 1, GardenConfig.MaxPens do
+			local _, oldLevel, oldUid = parsePet(old.pens[n])
+			local _, level, uid = parsePet(state.pens[n])
+			if uid and uid == oldUid and level and oldLevel and level > oldLevel then
+				self.levelUps[n] = level
+			end
+		end
+	end
 	self.state = state
 	self:mark()
 end
@@ -176,8 +243,19 @@ function PlotView:SetDetail(detail: string)
 	end
 end
 
+-- Redraws the texts in the current language (Locale.Changed).
+function PlotView:Relabel()
+	self.lang = Locale.Current()
+	self:mark()
+end
+
 function PlotView:Pending(): number
 	return #self.pending
+end
+
+-- The drawn piece `key` ("pen1", "inc2", ...), or nil.
+function PlotView:Piece(key: string): Model?
+	return self.pieces[key]
 end
 
 -- Piece builders: each returns the filled Model (not parented yet) -------------------------------------------------------
@@ -190,41 +268,60 @@ function PlotView:buildBase(model: Model)
 	local floor = part({ Name = "Floor", Size = Vector3.new(40, 0.5, 40), CFrame = self.floor, Color = COLORS.floor, Material = Enum.Material.Grass })
 	floor.CanQuery = true -- something to stand on and to raycast
 	floor.Parent = model
-	if self.detail ~= "full" then
+	if self.detail == "low" then
 		return
 	end
 	for _, edge in {
-		{ Vector3.new(-20.4, 0.6, 0), Vector3.new(0.8, 1, 40.8) },
-		{ Vector3.new(20.4, 0.6, 0), Vector3.new(0.8, 1, 40.8) },
-		{ Vector3.new(0, 0.6, 20.4), Vector3.new(40.8, 1, 0.8) },
-		{ Vector3.new(0, 0.6, -20.4), Vector3.new(40.8, 1, 0.8) },
+		{ Vector3.new(-20.4, 0.65, 0), Vector3.new(0.8, 1, 40.8) },
+		{ Vector3.new(20.4, 0.65, 0), Vector3.new(0.8, 1, 40.8) },
+		{ Vector3.new(0, 0.65, 20.4), Vector3.new(40.8, 1, 0.8) },
+		{ Vector3.new(0, 0.65, -20.4), Vector3.new(40.8, 1, 0.8) },
 	} do
 		part({ Name = "Edge", Size = edge[2], CFrame = self:at(edge[1]), Color = COLORS.edge, Material = Enum.Material.Wood }).Parent = model
 	end
 	for _, x in { -6, 6 } do
-		part({ Name = "Post", Size = Vector3.new(0.8, 5, 0.8), CFrame = self:at(Vector3.new(x, 2.8, -22)), Color = COLORS.edge }).Parent = model
+		part({ Name = "Post", Size = Vector3.new(0.8, 5, 0.8), CFrame = self:at(Vector3.new(x, 2.75, -22)), Color = COLORS.edge, Material = Enum.Material.Wood }).Parent = model
 	end
-	local sign = part({ Name = "Sign", Size = Vector3.new(14, 4, 0.6), CFrame = self:at(Vector3.new(0, 6.2, -22)), Color = COLORS.sign, Material = Enum.Material.Wood })
+	local sign = part({ Name = "Sign", Size = Vector3.new(14, 4, 0.6), CFrame = self:at(Vector3.new(0, 6.25, -22)), Color = COLORS.sign, Material = Enum.Material.Wood })
 	local gui = Instance.new("SurfaceGui")
 	gui.Name = "Gui"
 	gui.Face = Enum.NormalId.Front
 	gui.AutoLocalize = false
 	gui.PixelsPerStud = 25
 	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	local label = Instance.new("TextLabel")
-	label.Name = "Label"
-	label.Size = UDim2.fromScale(1, 1)
-	label.BackgroundTransparency = 1
-	label.TextScaled = true
-	label.Font = Enum.Font.FredokaOne
-	label.TextColor3 = Color3.new(1, 1, 1)
-	label.Text = tostring(self.state.name) -- a player name (no translation)
-	label.Parent = gui
+	textLabel(gui, {
+		Name = "Number",
+		Size = UDim2.new(1, 0, 0, 44),
+		TextScaled = false,
+		TextSize = 36,
+		Font = Enum.Font.Gotham,
+		TextColor3 = COLORS.signNumber,
+		TextStrokeTransparency = 1,
+		Text = Locale.T("sign.plot", { n = self.slot }),
+	})
+	textLabel(gui, {
+		Name = "Name",
+		Position = UDim2.new(0, 10, 0, 44),
+		Size = UDim2.new(1, -20, 1, -50),
+		TextStrokeTransparency = 1,
+		-- a player name (no translation)
+		Text = if self.state.free then Locale.T("garden.sign.plotFree") else tostring(self.state.name),
+	})
 	gui.Parent = sign
 	sign.Parent = model
 end
 
--- Pet model standing on `pad` (full detail): a PetModels clone dressed by PetLook like the server's pen pets.
+-- Label over a penned pet: name, level, tier stars and its Coins per hour (before the pet bonus).
+local function penLabel(kind: string, level: number): string
+	local rate = GardenConfig.RatePerHour({ Kind = kind, Level = level })
+	return Locale.T("garden.penPet.label", {
+		pet = Locale.PetName(kind, level),
+		stars = PetLook.TierStars(level),
+		rate = { key = "garden.rate", args = { rate = { decimal = string.format("%g", rate) } } },
+	})
+end
+
+-- Pet model standing on `pad` (full detail): a PetModels clone dressed by PetLook like the followers.
 local function penPet(kind: string, level: number, uid: string, pad: BasePart): Model?
 	local template = PetModels:FindFirstChild(kind)
 	if not (template and template:IsA("Model") and template.PrimaryPart) then
@@ -232,9 +329,10 @@ local function penPet(kind: string, level: number, uid: string, pad: BasePart): 
 	end
 	local model = template:Clone()
 	local metrics = PetLook.Apply(model, kind, level, uid, {
-		text = PetLook.LabelText(kind, level),
+		text = penLabel(kind, level),
+		richText = true,
 		size = UDim2.new(6, 0, 1.4, 0),
-		maxDistance = 90,
+		maxDistance = INFO_DISTANCE + 30,
 		gap = 1,
 	})
 	if not metrics then
@@ -242,6 +340,7 @@ local function penPet(kind: string, level: number, uid: string, pad: BasePart): 
 		return nil
 	end
 	model:PivotTo(pad.CFrame * CFrame.new(0, pad.Size.Y / 2 + 1, 0))
+	-- stand the model on the pad: move it so the lowest point of its bounding box touches the pad top
 	local boxCFrame, boxSize = model:GetBoundingBox()
 	local bottom = boxCFrame.Position.Y - boxSize.Y / 2
 	model:PivotTo(model:GetPivot() + Vector3.new(0, pad.Position.Y + pad.Size.Y / 2 - bottom, 0))
@@ -250,9 +349,15 @@ end
 
 function PlotView:buildPen(model: Model, n: number)
 	local state = self.state
+	local spot = PEN_SPOTS[n]
+	local levelUp = self.levelUps[n]
+	self.levelUps[n] = nil
+	if state.free then
+		part({ Name = "Pad", Size = Vector3.new(9, 0.3, 9), CFrame = self:at(spot), Color = COLORS.padFree, Material = Enum.Material.SmoothPlastic }).Parent = model
+		return
+	end
 	local kind, level, uid = parsePet(state.pens[n])
 	local rarity = kind and PetConfig.RarityOf(kind)
-	local spot = PEN_SPOTS[n]
 	if self.detail == "low" then
 		if kind and rarity then
 			local size = 2 * PetConfig.ScaleOf(level :: number)
@@ -260,67 +365,97 @@ function PlotView:buildPen(model: Model, n: number)
 		end
 		return
 	end
-	local color = if n > state.penCount then COLORS.padLocked elseif rarity then COLORS.padEmpty:Lerp(rarity.color, 0.45) else COLORS.padEmpty
+	local locked = n > state.penCount
+	local color = if locked then COLORS.padLocked elseif rarity then COLORS.padEmpty:Lerp(rarity.color, 0.45) else COLORS.padEmpty
 	local pad = part({ Name = "Pad", Size = Vector3.new(9, 0.3, 9), CFrame = self:at(spot), Color = color, Material = Enum.Material.SmoothPlastic })
 	pad.Parent = model
 	if kind and rarity then
-		local pet = penPet(kind, level :: number, uid :: string, pad)
-		if pet then
-			pet.Name = "Pet"
-			pet.Parent = model
+		if self.detail == "mid" then
+			local size = 2 * PetConfig.ScaleOf(level :: number)
+			part({ Name = "Pet", Size = Vector3.new(size, size, size), CFrame = self:at(spot + Vector3.new(0, 0.15 + size / 2, 0)), Color = rarity.color }).Parent = model
+		else
+			local pet = penPet(kind, level :: number, uid :: string, pad)
+			if pet then
+				pet.Name = "Pet"
+				pet.Parent = model
+				if levelUp == level and self.onLevelUp then
+					task.defer(self.onLevelUp, pet, kind, level)
+				end
+			end
 		end
+	elseif self.detail == "full" then
+		info(pad, UDim2.new(5, 0, 1.6, 0), 2.5, Locale.T(if locked then "garden.sign.pen.locked" else "garden.sign.pen.empty", { n = n }))
 	end
-	if self.own and self.onPen then
-		local prompt = Instance.new("ProximityPrompt")
-		prompt.Name = "Prompt"
-		prompt.ObjectText = Locale.T("garden.title", { pen = n })
-		prompt.HoldDuration = 0
-		prompt.MaxActivationDistance = 12
-		prompt.RequiresLineOfSight = false
-		prompt.Triggered:Connect(function()
-			self.onPen(n)
+	if self.own and self.onPen and self.detail == "full" then
+		prompt(pad, Locale.T("garden.prompt.openPen"), Locale.T("garden.prompt.pen", { n = n }), 12, function()
+			self.onPen(n, pad)
 		end)
-		prompt.Parent = pad
 	end
 end
 
 function PlotView:buildIncubator(model: Model, n: number)
 	local state = self.state
-	local eggId, readyAt = parseEgg(state.eggs[n])
-	local egg = eggId and PetConfig.Eggs[eggId]
-	local eggColor = if egg and egg.look then egg.look.color else Color3.fromRGB(236, 228, 208)
 	local spot = INCUBATOR_SPOTS[n]
 	self.labels[n] = nil
+	local baseCFrame = self:at(spot + Vector3.new(0, 0.85, 0))
+	local nestCFrame = self:at(spot + Vector3.new(0, 1.65, 0))
+	if state.free then
+		part({ Name = "Base", Size = Vector3.new(6, 1.2, 6), CFrame = baseCFrame, Color = COLORS.base, Material = Enum.Material.WoodPlanks }).Parent = model
+		part({ Name = "Nest", Size = Vector3.new(4.4, 0.4, 4.4), CFrame = nestCFrame, Color = COLORS.nest, Material = Enum.Material.Fabric }).Parent = model
+		return
+	end
+	local eggId, readyAt = parseEgg(state.eggs[n])
+	local egg = eggId and PetConfig.Eggs[eggId]
+	local look = egg and egg.look
+	local eggColor = if look then look.color else Color3.fromRGB(236, 228, 208)
 	if self.detail == "low" then
 		if eggId then
-			part({ Name = "Egg", Shape = Enum.PartType.Ball, Size = Vector3.new(2.8, 2.8, 2.8), CFrame = self:at(spot + Vector3.new(0, 1.65, 0)), Color = eggColor }).Parent = model
+			part({ Name = "Egg", Shape = Enum.PartType.Ball, Size = Vector3.new(2.8, 2.8, 2.8), CFrame = nestCFrame, Color = eggColor }).Parent = model
 		end
 		return
 	end
 	local locked = n > state.incCount
-	part({ Name = "Base", Size = Vector3.new(6, 1.2, 6), CFrame = self:at(spot + Vector3.new(0, 0.85, 0)), Color = if locked then COLORS.padLocked else COLORS.base, Material = Enum.Material.WoodPlanks }).Parent = model
-	part({ Name = "Nest", Size = Vector3.new(4.4, 0.4, 4.4), CFrame = self:at(spot + Vector3.new(0, 1.65, 0)), Color = COLORS.nest, Material = Enum.Material.Fabric }).Parent = model
+	local base = part({ Name = "Base", Size = Vector3.new(6, 1.2, 6), CFrame = baseCFrame, Color = if locked then COLORS.padLocked else COLORS.base, Material = Enum.Material.WoodPlanks })
+	base.Parent = model
+	part({ Name = "Nest", Size = Vector3.new(4.4, 0.4, 4.4), CFrame = nestCFrame, Color = COLORS.nest, Material = Enum.Material.Fabric }).Parent = model
+	if self.own and self.onIncubator and self.detail == "full" then
+		prompt(base, Locale.T("garden.prompt.openIncubator"), Locale.T("garden.prompt.incubator", { n = n }), 10, function()
+			self.onIncubator(n, base)
+		end)
+	end
 	if not eggId then
+		if self.detail == "full" then
+			info(base, UDim2.new(6, 0, 2.2, 0), 3, Locale.T(if locked then "garden.sign.incubator.locked" else "garden.sign.incubator.empty", { n = n }))
+		end
 		return
 	end
-	local ball = part({ Name = "Egg", Shape = Enum.PartType.Ball, Size = Vector3.new(2.8, 2.8, 2.8), CFrame = self:at(spot + Vector3.new(0, 3.2, 0)), Color = eggColor })
-	local info = Instance.new("BillboardGui")
-	info.Name = "Info"
-	info.AutoLocalize = false
-	info.Size = UDim2.new(6, 0, 1.6, 0)
-	info.StudsOffset = Vector3.new(0, 2.6, 0)
-	info.MaxDistance = 90
-	local label = Instance.new("TextLabel")
-	label.Name = "Label"
-	label.Size = UDim2.fromScale(1, 1)
-	label.BackgroundTransparency = 1
-	label.TextScaled = true
-	label.Font = Enum.Font.FredokaOne
-	label.TextColor3 = Color3.new(1, 1, 1)
-	label.TextStrokeTransparency = 0.3
-	label.Parent = info
-	info.Parent = ball
+	local ball = part({
+		Name = "Egg",
+		Shape = Enum.PartType.Ball,
+		Size = Vector3.new(2.8, 2.8, 2.8),
+		CFrame = self:at(spot + Vector3.new(0, 3.25, 0)),
+		Color = eggColor,
+		Material = if look and look.material then look.material else Enum.Material.SmoothPlastic,
+	})
 	ball.Parent = model
+	if self.detail ~= "full" then
+		return
+	end
+	if look and look.glow then
+		local light = Instance.new("PointLight")
+		light.Color = look.color
+		light.Range = 8
+		light.Brightness = 1.5
+		light.Parent = ball
+	end
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "Info"
+	gui.AutoLocalize = false
+	gui.Size = UDim2.new(6, 0, 1.6, 0)
+	gui.StudsOffset = Vector3.new(0, 2.6, 0)
+	gui.MaxDistance = INFO_DISTANCE + 30
+	local label = textLabel(gui, { Font = Enum.Font.FredokaOne })
+	gui.Parent = ball
 	self.labels[n] = { label = label, egg = egg, readyAt = readyAt }
 end
 

@@ -1,7 +1,7 @@
--- Plot-position formula test (E1.0, docs/ROADMAP.md → E1.0 check 2). Run through the Studio MCP `execute_luau`:
---   * Edit: compares GardenConfig.PlotCFrame(1..12) with the Studio plots (Workspace.Garden.Plots.Plot_NN.Floor) and
---     checks today's rings and the E1 proposal for overlap and the gap between plots (floor alone, and floor + the 12-square field
---     PlotView draws behind it);
+-- Plot-position formula test (E1.0 check 2, E1a1 check 4, docs/ROADMAP.md). Run through the Studio MCP `execute_luau`:
+--   * Edit: rays down from the corners of every plot floor and field (GardenConfig.PlotCFrame, the 12-square field PlotView
+--     draws behind it) must hit Workspace.Garden.Island; the rings are checked for overlap and the gap between plots (floor
+--     alone, and floor + field) and against the path from the bridge (Workspace.Garden.BridgePath);
 --   * Server and Client of one playtest: run it in both and compare the `hash` lines (same formula on both sides).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -82,25 +82,46 @@ local function distance(a: { Vector2 }, b: { Vector2 }): number
 	return best
 end
 
--- 1. formula = Studio plots
-local plots = workspace:FindFirstChild("Garden") and workspace.Garden:FindFirstChild("Plots")
-if plots and not RunService:IsRunning() then
-	local worstPos, worstRot = 0, 0
-	for slot = 1, 12 do
-		local floor = plots[GardenConfig.PlotName(slot)].Floor
+-- 1. every floor and field corner lies on the island; the bridge path crosses no plot or field
+local garden = workspace:FindFirstChild("Garden")
+local island = garden and garden:FindFirstChild("Island")
+if island and not RunService:IsRunning() then
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Include
+	params.FilterDescendantsInstances = { island }
+	local misses, rays = 0, 0
+	for slot = 1, GardenConfig.PlotSlots do
 		local cf = GardenConfig.PlotCFrame(slot) :: CFrame
-		worstPos = math.max(worstPos, (cf.Position - floor.Position).Magnitude)
-		local rot = math.min(cf.LookVector:Dot(floor.CFrame.LookVector), cf.UpVector:Dot(floor.CFrame.UpVector))
-		worstRot = math.max(worstRot, 1 - rot)
+		for _, quad in { corners(cf, 40, -20, 20), corners(cf, 22, FIELD_FRONT, FIELD_FRONT + FIELD_DEPTH) } do
+			for _, p in quad do
+				rays += 1
+				if not workspace:Raycast(Vector3.new(p.X, cf.Y + 30, p.Y), Vector3.new(0, -80, 0), params) then
+					misses += 1
+				end
+			end
+		end
 	end
-	line(string.format("studio match: worst position error %.4f studs, worst rotation 1-dot %.6f -> %s", worstPos, worstRot,
-		if worstPos < 0.01 and worstRot < 1e-5 then "PASS" else "FAIL"))
+	line(string.format("island: %d of %d corner rays miss -> %s", misses, rays, if misses == 0 then "PASS" else "FAIL"))
+	local path = garden:FindFirstChild("BridgePath")
+	if path and path:IsA("BasePart") then
+		local quad = corners(path.CFrame, path.Size.X, -path.Size.Z / 2, path.Size.Z / 2)
+		local worst, at = math.huge, 0
+		for slot = 1, GardenConfig.PlotSlots do
+			local cf = GardenConfig.PlotCFrame(slot) :: CFrame
+			for _, plot in { corners(cf, 40, -20, 20), corners(cf, 22, FIELD_FRONT, FIELD_FRONT + FIELD_DEPTH) } do
+				local d = distance(quad, plot)
+				if d < worst then
+					worst, at = d, slot
+				end
+			end
+		end
+		line(string.format("bridge path: smallest gap to a plot or field %.2f (slot %d) -> %s", worst, at, if worst > 0 then "PASS" else "FAIL"))
+	end
 end
 
--- 2. no overlap, gap >= MIN_GAP: today's rings (GardenConfig.PlotRings) and the E1 proposal (ring 1 moved out to 112)
+-- 2. no overlap, gap >= MIN_GAP (GardenConfig.PlotRings)
 local LAYOUTS = {
-	{ "today", GardenConfig.PlotRings },
-	{ "E1 proposal", { { count = 12, radius = 112 }, { count = 18, radius = 185 } } },
+	{ "rings", GardenConfig.PlotRings },
 }
 for _, layout in LAYOUTS do
 	local rings = layout[2]

@@ -438,8 +438,9 @@ collecting and caring over obby runs.
 - **Where.** A separate island in the same place (not a separate place), joined to the central island by a wooden
   bridge (no portals since H1). Both islands share one look (part-built grass islands on a rock base, cobblestone
   plazas, hedge rings, blocky trees and flowers) and stand in one sea that is also the world's kill floor.
-- **Layout.** A central plaza (food shop) surrounded by a ring of **12 plots**, about
-  40 × 40 studs each, with an owner name sign, pens and incubators. Servers hold **12 players** (one plot per slot).
+- **Layout.** A central plaza (food shop) surrounded by a ring of **12 plots** (a second ring of 18 is ready for bigger servers), about
+  40 × 40 studs each, with an owner name sign, pens and incubators. Servers hold **12 players** (one plot per slot). Each player's
+  client draws the plots from the server's data (E1a1); free plots of the inner ring show "Free plot".
 - **Personal plot.** A player borrows a free plot while online: it is assigned on join, built from the profile, and
   released on leave. The plot's contents are saved in the profile and restored on any server. Production runs on server
   time, so it does not need the plot to exist while the player is offline.

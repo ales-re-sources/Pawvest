@@ -20,6 +20,8 @@ local TalentConfig = require(ReplicatedStorage:WaitForChild("TalentConfig"))
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local Hints = require(script.Parent:WaitForChild("Hints"))
+local GardenView = require(script.Parent:WaitForChild("GardenView"))
+local PlotView = require(script.Parent:WaitForChild("PlotView"))
 
 local player = Players.LocalPlayer
 
@@ -336,22 +338,15 @@ local function readyLabel(): string
 	return Locale.T("hints.ready")
 end
 
-local function ownPlot(): Instance?
-	local index = player:GetAttribute(GardenConfig.PlotAttribute)
-	local garden = workspace:FindFirstChild("Garden")
-	local plots = garden and garden:FindFirstChild("Plots")
-	return if index and plots then plots:FindFirstChild(GardenConfig.PlotName(index)) else nil
-end
-
+-- Ready eggs of the own plot as GardenView last received it (the server's GardenRemotes.Plot, readyAt in server time).
 local function updateEggs(area: string?)
-	local plot = ownPlot()
+	local state = GardenView.OwnState()
 	local now = workspace:GetServerTimeNow()
-	local first: Model? = nil
+	local first: number? = nil
 	for number = 1, GardenConfig.MaxIncubators do
-		local model = plot and plot:FindFirstChild(GardenConfig.IncubatorNamePrefix .. number)
-		local readyAt = model and model:GetAttribute("ReadyAt")
-		if model and model:GetAttribute("State") == "egg" and type(readyAt) == "number" and readyAt <= now then
-			first = first or model
+		local eggId, readyAt = PlotView.ParseEgg(state and state.eggs[number])
+		if eggId and readyAt and readyAt <= now then
+			first = first or number
 			local key = number .. ":" .. readyAt
 			if not toastedEggs[key] then
 				toastedEggs[key] = true
@@ -362,9 +357,10 @@ local function updateEggs(area: string?)
 	Hints.SetDot("PetsButton", "egg", first ~= nil)
 	Hints.SetDot("PetsGarden", "egg", first ~= nil)
 
-	local base = first and first:FindFirstChild("Base")
-	if base and base:IsA("BasePart") and area == "garden" then
-		local cframe, size = first:GetBoundingBox()
+	local piece = first and GardenView.OwnPiece("inc" .. first) -- the drawn incubator (nil while not drawn)
+	local base = piece and piece:FindFirstChild("Base")
+	if piece and base and base:IsA("BasePart") and area == "garden" then
+		local cframe, size = piece:GetBoundingBox()
 		local top = cframe.Position.Y + size.Y / 2
 		Hints.SetMarker("egg", base, readyLabel, top - base.Position.Y + INCUBATOR_MARKER_GAP)
 		return true

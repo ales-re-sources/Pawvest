@@ -1,6 +1,6 @@
 -- Incubator client (docs/GDD.md §7.2, §7.6, P2b1, P2b3): incubator prompts on the player's own plot, the incubator panel
--- (unlock an incubator, start a Basic or Golden egg, countdown, Hatch with the pet reveal) and the countdown text above
--- every plot's eggs. Free eggs are started by the server on their own; the panel only says how many still wait.
+-- (unlock an incubator, start a Basic or Golden egg, countdown, Hatch with the pet reveal); GardenView draws the prompts and
+-- the countdowns above every plot's eggs (E1a1). Free eggs are started by the server on their own; the panel only says how many still wait.
 -- Display only: a click just names an incubator; GardenIncubators validates ownership, price, the inventory cap and the
 -- hatch time against the server's os.time(). The countdown uses workspace:GetServerTimeNow() (synced to the server, not
 -- the device clock), so a wrong device clock only changes what is shown. The GUI is built here (no Studio GUI).
@@ -14,6 +14,7 @@ local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
+local GardenView = require(script.Parent:WaitForChild("GardenView"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
@@ -392,76 +393,24 @@ Locale.Changed:Connect(function()
 	end
 end)
 
--- Prompts and countdowns -------------------------------------------------------------------------------------------------
+-- Prompts (drawn by GardenView on the own plot, which also draws the countdowns) ---------------------------------------------
 
-local wired = {} -- [Base] = true
-local function wirePrompts()
-	local plots = workspace:WaitForChild("Garden"):WaitForChild("Plots")
-	local own = player:GetAttribute(GardenConfig.PlotAttribute)
-	for _, plot in plots:GetChildren() do
-		local mine = own ~= nil and plot:GetAttribute("PlotIndex") == own
-		for number = 1, GardenConfig.MaxIncubators do
-			local model = plot:FindFirstChild(GardenConfig.IncubatorNamePrefix .. number)
-			local base = model and model:FindFirstChild("Base")
-			local prompt = base and base:FindFirstChild("Prompt")
-			if prompt and prompt:IsA("ProximityPrompt") then
-				prompt.Enabled = mine
-				if not wired[base] then
-					wired[base] = true
-					prompt.Triggered:Connect(function(who)
-						if who == player then
-							openPanel(number, base)
-						end
-					end)
-				end
-			end
-		end
-	end
-end
-
-player:GetAttributeChangedSignal(GardenConfig.PlotAttribute):Connect(wirePrompts)
-task.spawn(wirePrompts)
+GardenView.OnIncubator(openPanel)
 
 -- Opens incubator N of the player's own plot when the ScreenGui attribute OpenIncubator is set (same effect as the prompt;
 -- a test hook). Display only: the server validates every action anyway.
 screenGui:GetAttributeChangedSignal("OpenIncubator"):Connect(function()
 	local number = screenGui:GetAttribute("OpenIncubator")
-	local own = player:GetAttribute(GardenConfig.PlotAttribute)
-	if type(number) ~= "number" or not own then
+	if type(number) ~= "number" then
 		return
 	end
-	local plot = workspace:FindFirstChild("Garden") and workspace.Garden.Plots:FindFirstChild(GardenConfig.PlotName(own))
-	local model = plot and plot:FindFirstChild(GardenConfig.IncubatorNamePrefix .. number)
-	local base = model and model:FindFirstChild("Base")
-	if base then
+	local piece = GardenView.OwnPiece("inc" .. number)
+	local base = piece and piece:FindFirstChild("Base")
+	if base and base:IsA("BasePart") then
 		openPanel(number, base)
 	end
 	screenGui:SetAttribute("OpenIncubator", nil)
 end)
-
--- Every plot's incubating eggs: "Golden egg" + countdown, "Ready!" once due (local text; the server draws the rest).
-local function drawCountdowns()
-	local garden = workspace:FindFirstChild("Garden")
-	local plots = garden and garden:FindFirstChild("Plots")
-	if not plots then
-		return
-	end
-	local now = workspace:GetServerTimeNow()
-	for _, plot in plots:GetChildren() do
-		for number = 1, GardenConfig.MaxIncubators do
-			local model = plot:FindFirstChild(GardenConfig.IncubatorNamePrefix .. number)
-			local readyAt = model and model:GetAttribute("ReadyAt")
-			local eggId = model and model:GetAttribute("Egg")
-			local base = model and model:FindFirstChild("Base")
-			local info = base and base:FindFirstChild("Info")
-			local text = info and info:FindFirstChildOfClass("TextLabel")
-			if text and model:GetAttribute("State") == "egg" and type(readyAt) == "number" then
-				local remaining = readyAt - now
-				text.Text = eggName(tostring(eggId)) .. "\n" .. (if remaining > 0 then countdown(remaining) else Locale.T("incubator.label.ready"))
-			end
-		end
-	end
-end
 
 local elapsed = 0
 RunService.Heartbeat:Connect(function(dt)
@@ -470,7 +419,6 @@ RunService.Heartbeat:Connect(function(dt)
 		return
 	end
 	elapsed = 0
-	drawCountdowns()
 	if openBase then
 		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 		if not root or (root.Position - openBase.Position).Magnitude > CLOSE_DISTANCE then

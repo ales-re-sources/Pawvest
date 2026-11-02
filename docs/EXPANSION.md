@@ -544,8 +544,9 @@ At the stated pace D1–D10 is about 3–5 months after the MVP.
     drops from about 370 to about 70 instances), which also makes fields larger than 12 squares affordable (the 150-square stress field reached 7 779).
   - **Layout: compact neighbourhood + teleports, no walkable city.** Rings round the garden plaza, reached over the bridge and by `GoGarden`; the
     instance cost depends on how many plots are within 120 studs, and a city only adds walking. Today's ring 1 has **2.77 studs** between neighbouring
-    plots (fails the 8-stud rule): E1 moves ring 1 to radius 112 and ring 2 to 185 (gaps 8.99 / 31.5 / 17.9 studs, 13.3 with the field), so the island
-    grows from radius 145 to about 215 and the hedge, barrier and decor ring move out.
+    plots (fails the 8-stud rule): E1 moves ring 1 to radius 112 and ring 2 to 185 (gaps 8.99 / 31.8 / 17.9 studs, 13.3 with the field). *Built in
+    E1a1 (2026-11-02):* the island grows from radius 145 to 235 and, so as not to overlap the hub, the whole garden moved 87 studs away from it along
+    the bridge axis (the bridge is unchanged); ring 2 is turned by 5° so the path from the bridge runs between plots; the hedge ring sits at 230.
   - **E1 migration list.** (1) Scene: grow the island and move the plaza ring for the new radii; delete `Workspace.Garden.Plots` (12 Studio plots)
     once `PlotView` draws by default; `PlotCount` → `PlotSlots`, Max Players 24. (2) `GardenPlots` keeps the slot assigner and the `GardenPlot`
     attribute, drops the plot-model writes (sign text and owner attributes come from the message). (3) Pens: `GardenService.renderPlot` / `makePenPet` go;

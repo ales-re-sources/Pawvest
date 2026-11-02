@@ -8,17 +8,14 @@
 -- the last settle and the next join pays the rest (capped).
 -- Remotes (ReplicatedStorage.GardenRemotes): Place(penIndex, uid), Remove(penIndex), BuyPen(expectedPen), RequestState()
 -- (client → server); State(state), Result(action, ok, detailOrReason), Payout(info) (server → client).
--- The plots are drawn here from the profile: pad colour, "Info" text and the pet models of Workspace.Garden.Plots.Plot_NN.Pen_n.
--- Sibling modules (GardenIncubators, GardenFood) add remotes, State fields and plot drawing through the hooks below.
+-- Nothing is drawn here: every client draws the plots from GardenRemotes.Plot (GardenPlotFeed, E1a1), which follows every publish.
+-- Sibling modules (GardenIncubators, GardenFood, GardenPlotFeed) add remotes, State fields and publish hooks through the hooks below.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local GardenConfig = require(ReplicatedStorage.GardenConfig)
-local PetConfig = require(ReplicatedStorage.PetConfig)
-local PetLook = require(ReplicatedStorage.PetLook)
-local Locale = require(ReplicatedStorage.Locale)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local CoinRewards = require(ServerScriptService.CoinRewards)
 local PetService = require(ServerScriptService.PetService)
@@ -27,12 +24,6 @@ local GardenPlots = require(ServerScriptService.GardenPlots)
 local COOLDOWN = 0.2 -- seconds between garden requests per player
 local MAX_DISTANCE = 45 -- studs from the middle of the caller's own plot
 local TICK_SECONDS = 30 -- how often online players are checked for a due payout
-
-local PAD_COLORS = {
-	free = Color3.fromRGB(150, 150, 150),
-	locked = Color3.fromRGB(80, 80, 80),
-	empty = Color3.fromRGB(110, 190, 110),
-}
 
 local remotes = Instance.new("Folder")
 remotes.Name = "GardenRemotes"
@@ -55,12 +46,12 @@ local lastRequest = {} -- [Player] = os.clock() of the last accepted request
 local pendingPayout = {} -- [Player] = join payout waiting for the client popup
 local payoutId = 0
 local stateFields = {} -- { { name, fn(profile) } }: extra fields of the State payload (sibling modules)
-local renderers = {} -- { fn(index, plot, profile?) }: extra drawing of a plot (sibling modules)
+local publishHooks = {} -- { fn(player) }: called after every publish (sibling modules)
 
 local GardenService = {}
 
--- Hooks for the sibling garden modules (GardenIncubators, GardenFood): they add their remotes to GardenRemotes, share the
--- request rate limit and the plot checks, and extend the State payload and the plot drawing.
+-- Hooks for the sibling garden modules (GardenIncubators, GardenFood, GardenPlotFeed): they add their remotes to GardenRemotes,
+-- share the request rate limit and the plot checks, extend the State payload and follow every publish.
 GardenService.Remote = remote
 
 -- Adds field `name` = fn(profile) to every GardenRemotes.State payload.
@@ -68,9 +59,9 @@ function GardenService.AddStateField(name: string, fn: (any) -> any)
 	table.insert(stateFields, { name = name, fn = fn })
 end
 
--- Calls fn(index, plot, profile or nil) whenever plot `index` is drawn.
-function GardenService.AddRenderer(fn: (number, Model, any) -> ())
-	table.insert(renderers, fn)
+-- Calls fn(player) after every publish of the player's garden (join, admin reset and every change).
+function GardenService.AddPublishHook(fn: (Player) -> ())
+	table.insert(publishHooks, fn)
 end
 
 -- Calls fn(player) once the garden of a joining player (or a reset profile) is cleaned and published.
@@ -173,125 +164,16 @@ local function publishState(player: Player)
 end
 GardenService.PublishState = publishState
 
--- Pet model for a pen: a clone of ReplicatedStorage.PetModels dressed by PetLook exactly like the follower (size by level,
--- anchored, no collision / touch / query, Epic / Legendary glow), with a two-line label in the rarity colour.
-local function makePenPet(pet, uid: string, pad: BasePart): Model?
-	local template = ReplicatedStorage:FindFirstChild("PetModels") and ReplicatedStorage.PetModels:FindFirstChild(pet.Kind)
-	if not (template and template:IsA("Model") and template.PrimaryPart) then
-		return nil
-	end
-	local model = template:Clone()
-	local level = PetConfig.ClampLevel(pet.Level)
-	local metrics = PetLook.Apply(model, pet.Kind, level, uid, {
-		text = string.format(
-			"%s\n<font color='#a8e6a0'>%s Coins/h</font>",
-			PetLook.LabelText(pet.Kind, level),
-			string.format("%g", GardenConfig.RatePerHour(pet))
-		),
-		richText = true,
-		locKey = "garden.penPet.label",
-		locArgs = {
-			pet = { key = "pet.nameLevel", args = { kind = { key = "pet.kind." .. pet.Kind }, level = level } },
-			stars = PetLook.TierStars(level),
-			rate = { key = "garden.rate", args = { rate = { decimal = string.format("%g", GardenConfig.RatePerHour(pet)) } } },
-		},
-		size = UDim2.new(6, 0, 1.4, 0),
-		maxDistance = 90,
-		gap = 1,
-	})
-	if not metrics then
-		model:Destroy()
-		return nil
-	end
-	model:SetAttribute("Level", level) -- lets the client match the new model of a levelled pet (PetPenLevelUp)
-	model:PivotTo(pad.CFrame * CFrame.new(0, pad.Size.Y / 2 + 1, 0))
-	-- stand the model on the pad: move it so the lowest point of its bounding box touches the pad top
-	local boxCFrame, boxSize = model:GetBoundingBox()
-	local bottom = boxCFrame.Position.Y - boxSize.Y / 2
-	model:PivotTo(model:GetPivot() + Vector3.new(0, pad.Position.Y + pad.Size.Y / 2 - bottom, 0))
-	return model
-end
-
--- Draws plot `index` from its owner's profile (a free plot, or an owner whose profile is still loading, shows neutral pens).
--- Each pen model gets attributes State ("free" / "locked" / "empty" / "pet"), Uid, Kind, Level for the client and for tests.
-local function renderPlot(index: number)
-	local plot = GardenPlots.Model(index)
-	if not plot then
-		return
-	end
-	local owner = GardenPlots.OwnerOf(index)
-	local profile = owner and PlayerProfile.Get(owner)
-	local pets = plot:FindFirstChild("PenPets")
-	if not pets then
-		pets = Instance.new("Folder")
-		pets.Name = "PenPets"
-		pets.Parent = plot
-	end
-	pets:ClearAllChildren()
-
-	for number = 1, GardenConfig.MaxPens do
-		local pen = plot:FindFirstChild(GardenConfig.PenNamePrefix .. number)
-		local pad = pen and pen:FindFirstChild("Pad")
-		if not (pad and pad:IsA("BasePart")) then
-			continue
-		end
-		local info = pad:FindFirstChild("Info")
-		local text = info and info:FindFirstChildOfClass("TextLabel")
-		local uid = profile and profile.Garden.Pens[tostring(number)]
-		local pet = uid and profile.Pets[uid]
-
-		local state = "free"
-		if profile then
-			state = if pet then "pet" elseif number > profile.Garden.PenCount then "locked" else "empty"
-		end
-		pen:SetAttribute("State", state)
-		pen:SetAttribute("Uid", if pet then uid else nil)
-		pen:SetAttribute("Kind", if pet then pet.Kind else nil)
-		pen:SetAttribute("Level", if pet then PetConfig.ClampLevel(pet.Level) else nil)
-
-		local color = PAD_COLORS[state]
-		local model = nil
-		if pet then
-			local rarity = PetConfig.RarityOf(pet.Kind)
-			color = PAD_COLORS.empty:Lerp(rarity.color, 0.45)
-			model = makePenPet(pet, uid, pad)
-			if model then
-				model.Name = GardenConfig.PenNamePrefix .. number .. "_" .. pet.Kind
-				model.Parent = pets
-			end
-		end
-		pad.Color = color
-		if info and info:IsA("BillboardGui") then
-			info.Enabled = state == "locked" or state == "empty"
-		end
-		if text then
-			if state == "locked" then
-				Locale.SetKey(text, "garden.sign.pen.locked", { n = number })
-			elseif state == "empty" then
-				Locale.SetKey(text, "garden.sign.pen.empty", { n = number })
-			else
-				Locale.SetText(text, "")
-			end
-		end
-	end
-
-	for _, render in renderers do
-		render(index, plot, profile)
-	end
-end
-GardenService.RenderPlot = renderPlot
-
-local function renderPlayer(player: Player)
-	local index = GardenPlots.PlotOf(player)
-	if index then
-		renderPlot(index)
+local function runPublishHooks(player: Player)
+	for _, fn in publishHooks do
+		fn(player)
 	end
 end
 
 local function publishAll(player: Player)
 	publishState(player)
 	PetService.Publish(player) -- the Pets panel marks penned pets
-	renderPlayer(player)
+	runPublishHooks(player)
 end
 
 -- Per-player rate limit shared by the garden remotes; true if the request may proceed.
@@ -455,7 +337,7 @@ local function setup(player: Player)
 		sendPayout(player, info, true)
 	end
 	publishState(player)
-	renderPlayer(player)
+	runPublishHooks(player)
 	for _, fn in setupHooks do
 		fn(player)
 	end
@@ -473,10 +355,6 @@ PlayerProfile.ProfileReset:Connect(function(player)
 			fn(player)
 		end
 	end
-end)
-
-GardenPlots.PlotChanged:Connect(function(index)
-	renderPlot(index)
 end)
 
 Players.PlayerAdded:Connect(setup)

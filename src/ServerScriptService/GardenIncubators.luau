@@ -12,15 +12,13 @@
 -- reset) does not wait for the first pet.
 -- Remotes (in GardenRemotes): StartEgg(incubator, eggId), Hatch(incubator), BuyIncubator(expectedIncubator) (client → server);
 -- answers through GardenRemotes.Result; GardenRemotes.State.incubators = { count, eggs = { ["n"] = { egg, readyAt } } }.
--- Drawing: Workspace.Garden.Plots.Plot_NN.Incubator_n (Studio-only: Base with Prompt + Info, Egg) gets attributes State
--- ("free" / "locked" / "empty" / "egg"), Egg and ReadyAt; every client draws the countdown from ReadyAt.
+-- Drawing: every client draws the incubators and their countdowns from GardenRemotes.Plot (GardenPlotFeed, E1a1).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local GardenConfig = require(ReplicatedStorage.GardenConfig)
 local PetConfig = require(ReplicatedStorage.PetConfig)
-local Locale = require(ReplicatedStorage.Locale)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local PetService = require(ServerScriptService.PetService)
 local GardenService = require(ServerScriptService.GardenService)
@@ -80,56 +78,6 @@ GardenService.AddStateField("incubators", function(profile)
 		end
 	end
 	return { count = garden and garden.IncubatorCount or 1, eggs = eggs }
-end)
-
-GardenService.AddRenderer(function(_index, plot, profile)
-	local garden = profile and gardenOf(profile)
-	for number = 1, GardenConfig.MaxIncubators do
-		local model = plot:FindFirstChild(GardenConfig.IncubatorNamePrefix .. number)
-		if not model then
-			continue
-		end
-		local entry = garden and garden.Incubators[tostring(number)]
-		local state = "free"
-		if garden then
-			state = if entry then "egg" elseif number > garden.IncubatorCount then "locked" else "empty"
-		end
-		model:SetAttribute("State", state)
-		model:SetAttribute("Egg", if entry then entry.Egg else nil)
-		model:SetAttribute("ReadyAt", if entry then entry.ReadyAt else nil)
-
-		local egg = model:FindFirstChild("Egg")
-		if egg and egg:IsA("BasePart") then
-			egg.Transparency = if entry then 0 else 1
-			local look = entry and PetConfig.Eggs[entry.Egg].look
-			if look then
-				egg.Color, egg.Material = look.color, look.material
-			end
-			local light = egg:FindFirstChildOfClass("PointLight")
-			if light then
-				light.Enabled = look ~= nil and look.glow
-				if look then
-					light.Color = look.color
-				end
-			end
-		end
-		local base = model:FindFirstChild("Base")
-		local info = base and base:FindFirstChild("Info")
-		local text = info and info:FindFirstChildOfClass("TextLabel")
-		if info and info:IsA("BillboardGui") then
-			info.Enabled = state ~= "free"
-		end
-		if text then
-			if state == "locked" then
-				Locale.SetKey(text, "garden.sign.incubator.locked", { n = number })
-			elseif state == "empty" then
-				Locale.SetKey(text, "garden.sign.incubator.empty", { n = number })
-			else
-				-- an egg: clients write the egg name and the countdown themselves (IncubatorClient.drawCountdowns)
-				Locale.SetText(text, if entry then PetConfig.Eggs[entry.Egg].name else "")
-			end
-		end
-	end
 end)
 
 -- Starts waiting free eggs (PetConfig.EggOrder) in the lowest empty incubators while the inventory cap allows; the caller

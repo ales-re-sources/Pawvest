@@ -1,12 +1,13 @@
--- Tier effects of penned pets (P1e3): GardenService dresses the pen models with PetLook.Apply (accent tint, trail, aura, glow disc,
--- halo and motes are built there, on the server, and replicate); what needs a client is the orbit animation of the motes and the
--- distance LOD, exactly as PetFollow does it for followers: PetLook.UpdateFx every frame, emitters and lights off for pens
--- farther than PetLook.LodDistance from the camera. Display only, never sends anything.
+-- Tier effects of penned pets (P1e3): GardenView / PlotView dress the pen models drawn on this client with PetLook.Apply (accent
+-- tint, trail, aura, glow disc, halo and motes); this script runs the orbit animation of the motes and the distance LOD, exactly
+-- as PetFollow does it for followers: PetLook.UpdateFx every frame, emitters and lights off for pens farther than
+-- PetLook.LodDistance from the camera. Display only, never sends anything.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local PetLook = require(ReplicatedStorage:WaitForChild("PetLook"))
+local GardenView = require(script.Parent:WaitForChild("GardenView"))
 
 local LOD_HYSTERESIS = 5 -- studs: a far pen's effects come back this much inside PetLook.LodDistance
 
@@ -30,29 +31,21 @@ end
 
 RunService.Heartbeat:Connect(function()
 	local camera = workspace.CurrentCamera
-	local garden = workspace:FindFirstChild("Garden")
-	local plots = garden and garden:FindFirstChild("Plots")
-	if not (camera and plots) then
+	if not camera then
 		return
 	end
 	local cameraPosition = camera.CFrame.Position
 	local now = os.clock()
-	for _, plot in plots:GetChildren() do
-		local pets = plot:FindFirstChild("PenPets")
-		if not pets then
+	for _, model in GardenView.PenPets() do
+		if model:GetAttribute("FxCount") == 0 then
 			continue
 		end
-		for _, model in pets:GetChildren() do
-			if not model:IsA("Model") or model:GetAttribute("FxCount") == 0 then
-				continue
-			end
-			local entry = entryOf(model)
-			if entry then
-				local distance = (cameraPosition - entry.fx.root.Position).Magnitude
-				local far = distance > PetLook.LodDistance - (if entry.far then LOD_HYSTERESIS else 0)
-				entry.far = far
-				PetLook.UpdateFx(entry.fx, now, far, false)
-			end
+		local entry = entryOf(model)
+		if entry then
+			local distance = (cameraPosition - entry.fx.root.Position).Magnitude
+			local far = distance > PetLook.LodDistance - (if entry.far then LOD_HYSTERESIS else 0)
+			entry.far = far
+			PetLook.UpdateFx(entry.fx, now, far, false)
 		end
 	end
 end)

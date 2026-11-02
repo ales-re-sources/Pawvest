@@ -4,32 +4,26 @@
 
 local GardenConfig = {}
 
-GardenConfig.PlotCount = 12 -- one plot per player slot (Max Players = 12)
 GardenConfig.PlotSize = 40 -- studs, square
-GardenConfig.PlotAttribute = "GardenPlot" -- player attribute: index of the borrowed plot (absent when none)
-GardenConfig.OwnerIdAttribute = "OwnerUserId" -- plot model attribute: UserId of the current owner (absent when free)
-GardenConfig.OwnerNameAttribute = "OwnerName" -- plot model attribute: name of the current owner (absent when free)
-
--- Name of the Workspace.Garden.Plots model of plot `index` ("Plot_01" … "Plot_12").
-function GardenConfig.PlotName(index: number): string
-	return string.format("Plot_%02d", index)
-end
+GardenConfig.PlotAttribute = "GardenPlot" -- player attribute: slot of the borrowed plot (absent when none)
+GardenConfig.ShownFreeSlots = 12 -- slots 1..12 (ring 1, Max Players = 12) are drawn as "Free plot" while nobody holds them
 
 -- Plot positions (E1.0, docs/EXPANSION.md §16): a pure formula slot → floor CFrame, shared by server and client, so no
 -- system needs a plot model to know where a plot is. Slots fill rings round the garden centre, ring by ring; each plot's
--- front (LookVector, the sign side) faces the centre. Ring 1 is exactly today's 12 Studio plots (radius 100, 30° apart,
--- slot 1 on +X, counted towards +Z); ring 2 (18 more) exists only in the formula so far (off today's island, r 145).
-GardenConfig.PlotCentre = Vector3.new(-1200, 16.25, -750) -- garden centre at the height of the plot floors' centre
+-- front (LookVector, the sign side) faces the centre. Ring 1 has 12 plots at radius 112 (slot 1 on +X, counted towards
+-- +Z; 9 studs between neighbours), ring 2 18 plots at radius 185, turned by 5° so the path from the bridge (75°) runs
+-- between plots on both rings (E1a1, docs/ROADMAP.md). A plot's field lies behind it (away from the centre).
+GardenConfig.PlotCentre = Vector3.new(-1222.517, 16.25, -834.035) -- garden centre at the height of the plot floors' centre
 GardenConfig.PlotRings = {
-	{ count = 12, radius = 100 },
-	{ count = 18, radius = 170 },
+	{ count = 12, radius = 112 },
+	{ count = 18, radius = 185, offset = 5 },
 }
 GardenConfig.PlotSlots = 0 -- every slot the rings hold (30)
 for _, ring in GardenConfig.PlotRings do
 	GardenConfig.PlotSlots += ring.count
 end
 
-export type PlotRing = { count: number, radius: number }
+export type PlotRing = { count: number, radius: number, offset: number? } -- offset in degrees
 
 -- Ring (1 = inner) and position on it (1..count) of plot slot `slot`, or nil outside the rings. `rings` defaults to
 -- PlotRings (tests pass another layout).
@@ -47,8 +41,7 @@ function GardenConfig.PlotRing(slot: number, rings: { PlotRing }?): (number?, nu
 	return nil, nil
 end
 
--- Floor CFrame of plot slot `slot` (centre of the 40 x 40 floor, front towards the garden centre), or nil. Ring 1 keeps
--- today's plots, whose inner corners are only 2.8 studs apart (E1.0 test); a ring of 12 needs a radius of 111+ for 8.
+-- Floor CFrame of plot slot `slot` (centre of the 40 x 40 floor, front towards the garden centre), or nil.
 function GardenConfig.PlotCFrame(slot: number, rings: { PlotRing }?): CFrame?
 	rings = rings or GardenConfig.PlotRings
 	local ringIndex, position = GardenConfig.PlotRing(slot, rings)
@@ -56,7 +49,7 @@ function GardenConfig.PlotCFrame(slot: number, rings: { PlotRing }?): CFrame?
 		return nil
 	end
 	local ring = (rings :: { PlotRing })[ringIndex]
-	local angle = (position - 1) * 2 * math.pi / ring.count
+	local angle = math.rad(ring.offset or 0) + (position - 1) * 2 * math.pi / ring.count
 	local centre = GardenConfig.PlotCentre
 	local at = centre + Vector3.new(math.cos(angle), 0, math.sin(angle)) * ring.radius
 	return CFrame.lookAt(at, Vector3.new(centre.X, at.Y, centre.Z))
@@ -73,7 +66,6 @@ GardenConfig.LevelRate = 40 -- permille of the base rate per level above 1 (Lv 2
 GardenConfig.OfflineCapSeconds = 8 * 3600 -- production counted at most this long since LastSeen
 GardenConfig.PayoutSeconds = 300 -- online payout interval
 GardenConfig.MinAwaySeconds = 60 -- shorter absences do not show the "welcome back" announcement
-GardenConfig.PenNamePrefix = "Pen_" -- Workspace.Garden.Plots.Plot_NN.Pen_1..6 (Studio-only models)
 
 local UNITS_PER_COIN_SECOND = 3600 * 1000
 
@@ -117,7 +109,6 @@ end
 -- os.time()) and Garden.IncubatorCount (owned incubators, unlocked in order).
 GardenConfig.MaxIncubators = 3
 GardenConfig.IncubatorPrices = { 0, 5000, 12000 } -- IncubatorPrices[n] = price of the n-th incubator (incubator 1 is free)
-GardenConfig.IncubatorNamePrefix = "Incubator_" -- Workspace.Garden.Plots.Plot_NN.Incubator_1..3 (Studio-only models)
 
 -- True when the incubator entry's egg may hatch at server time `now`.
 function GardenConfig.EggReady(entry, now: number): boolean

@@ -105,6 +105,7 @@ RemoteEvents (in `ReplicatedStorage`; first three exist only in Studio, not in f
 | `GardenRemotes.Place` / `.Remove` / `.BuyPen` / `.RequestState` | client → server `(penIndex, uid)` / `(penIndex)` / `(expectedPen)` / no arguments | created at runtime by `GardenService`; the plot is derived from the caller (must stand within 45 studs of it); prices from `GardenConfig.PenPrices`; no remote carries a time |
 | `GardenRemotes.StartEgg` / `.Hatch` / `.BuyIncubator` / `.Feed` | client → server `(incubator, eggId)` / `(incubator)` / `(expectedIncubator)` / `(uid, foodId)` | created at runtime by `GardenIncubators` / `GardenFood`; prices from `PetConfig.Eggs` / `GardenConfig.IncubatorPrices` / `GardenConfig.Foods`; hatch time checked against server `os.time()`; answers on `GardenRemotes.Result` |
 | `GardenRemotes.State` / `.Result` / `.Payout` | server → client `({ pens, penCount, rate, incubators = { count, eggs = { ["n"] = { egg, readyAt } } } })` / `(action, ok, detail or reason)` / `({ id, seconds, base, paid, capped, away })` | `away = true` is the join payout (popup, re-sent on `RequestState`, shown once per `id`), otherwise a toast |
+| `GardenRemotes.Plot` / `.RequestPlots` | server → client `(userId, { slot, name, penCount, pens = { "Kind:Level:uid" or "" × 6 }, incCount, eggs = { "EggId:readyAt" or "" × 3 } })` or `(userId, nil)` on leave / client → server, no arguments | created at runtime by `GardenPlotFeed` (E1a1); sent to everyone after every publish whose plot changed; `RequestPlots` (1 s cooldown) re-sends every plot to the caller; clients draw the plots from it (`GardenView`) |
 
 DataStores:
 
@@ -128,8 +129,9 @@ Player attributes `Medal_<stage folder>` (0–3) mirror `PlayerProfile.Medals` f
 `EquippedPets` (`"Kind:Level:uid,…"`, empty when none; `PetConfig.DecodeEquipped` also reads the old `Kind:Level` form) mirrors the equipped pets; `PetFollow` renders them on every client.
 `Garden.LastSeen` is the server time up to which pen production was paid (never from a client); production since then is capped at 8 h.
 A pet is either equipped or penned: `PetService` rejects Equip / SellPet of a penned pet, `GardenService` rejects Place of an equipped one.
-Player attribute `GardenPlot` = index of the borrowed plot; pen models carry attributes `State` / `Uid` / `Kind` / `Level` (tests, client);
-incubator models carry `State` (`free` / `locked` / `empty` / `egg`) / `Egg` / `ReadyAt` (server time; clients only display the countdown).
+Player attribute `GardenPlot` = slot of the borrowed plot (`GardenConfig.PlotCFrame(slot)`). The plots exist only on the clients (E1a1):
+`GardenView` draws them into the client folder `Workspace.GardenView` (`Slot_NN` > pieces `base`, `pen1..6`, `inc1..3`) from
+`GardenRemotes.Plot`; the server adds no instance to Workspace. Incubator countdowns come from `readyAt` (server time; display only).
 Incubator eggs are stored with server `os.time()` only and checked at `Hatch`; to test hatching without waiting, move `StartedAt` / `ReadyAt`
 back in the stored profile between playtests (snapshot and restore it).
 `CollectedCoins` (sorted ids, comma-separated, `""` when none) mirrors `PlayerProfile.CollectedCoins[id] = true`;

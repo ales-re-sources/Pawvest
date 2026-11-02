@@ -1,8 +1,8 @@
 -- Garden client (docs/GDD.md §7.6): pen prompts on the player's own plot, the pen panel (unlock a pen, place a pet, remove it),
 -- the "welcome back" announcement after the join payout (top centre, fades out after 5 s, nothing to close) and a small
 -- toast for online payouts.
--- Display only: a click just names a pen and a pet; GardenService validates ownership, price and time. The prompts of other
--- players' plots are switched off locally (the server rejects them anyway). The GUI is built here (no Studio GUI).
+-- Display only: a click just names a pen and a pet; GardenService validates ownership, price and time. The prompts exist only on
+-- the own plot (GardenView draws them, E1a1). The GUI is built here (no Studio GUI).
 -- Stud-brick look (StudStyle, wood): brick buttons, pet rows with a PetPortrait, the penned pet as a large portrait;
 -- the toast and the "welcome back" card are wooden plates too.
 
@@ -15,6 +15,7 @@ local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
+local GardenView = require(script.Parent:WaitForChild("GardenView"))
 local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 
@@ -544,49 +545,20 @@ remotes:WaitForChild("Payout").OnClientEvent:Connect(function(info)
 	end
 end)
 
--- Pen prompts ---------------------------------------------------------------------------------------------------------------
+-- Pen prompts (drawn by GardenView on the own plot) ------------------------------------------------------------------------
 
-local wired = {} -- [Pad] = true
-local function wirePrompts()
-	local garden = workspace:WaitForChild("Garden")
-	local plots = garden:WaitForChild("Plots")
-	local own = player:GetAttribute(GardenConfig.PlotAttribute)
-	for _, plot in plots:GetChildren() do
-		local mine = own ~= nil and plot:GetAttribute("PlotIndex") == own
-		for number = 1, GardenConfig.MaxPens do
-			local pen = plot:FindFirstChild(GardenConfig.PenNamePrefix .. number)
-			local pad = pen and pen:FindFirstChild("Pad")
-			local prompt = pad and pad:FindFirstChild("Prompt")
-			if prompt and prompt:IsA("ProximityPrompt") then
-				prompt.Enabled = mine
-				if not wired[pad] then
-					wired[pad] = true
-					prompt.Triggered:Connect(function(who)
-						if who == player then
-							openPanel(number, pad)
-						end
-					end)
-				end
-			end
-		end
-	end
-end
-
-player:GetAttributeChangedSignal(GardenConfig.PlotAttribute):Connect(wirePrompts)
-task.spawn(wirePrompts)
+GardenView.OnPen(openPanel)
 
 -- Opens the panel for pen N of the player's own plot when the ScreenGui attribute OpenPen is set (same effect as the
--- prompt; lets tests and other UI open a pen). Display only: the server validates every action anyway.
+-- prompt; a test hook). Display only: the server validates every action anyway.
 screenGui:GetAttributeChangedSignal("OpenPen"):Connect(function()
 	local number = screenGui:GetAttribute("OpenPen")
-	local own = player:GetAttribute(GardenConfig.PlotAttribute)
-	if type(number) ~= "number" or not own then
+	if type(number) ~= "number" then
 		return
 	end
-	local plot = workspace:FindFirstChild("Garden") and workspace.Garden.Plots:FindFirstChild(GardenConfig.PlotName(own))
-	local pen = plot and plot:FindFirstChild(GardenConfig.PenNamePrefix .. number)
-	local pad = pen and pen:FindFirstChild("Pad")
-	if pad then
+	local piece = GardenView.OwnPiece("pen" .. number)
+	local pad = piece and piece:FindFirstChild("Pad")
+	if pad and pad:IsA("BasePart") then
 		openPanel(number, pad)
 	end
 	screenGui:SetAttribute("OpenPen", nil)
