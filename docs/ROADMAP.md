@@ -45,7 +45,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E1b2 | Field pets, client: pets on squares, place / move prompt, Pets section, conversion popup | ✔ | ✔ | – |
 | P3a | Pet detail panel (Pets list "i" badge → `PetDetail`) | ✔ | ✔ | – |
 | P3b | Pet names (filtered, shown to everyone; first free, renames 250) | ✔ | ✔ | – |
-| E1a3–E5 | Garden MVP (see "Next") | – | – | – |
+| E1a3 | Crops as pet food (pet detail page; XP = half the sale value) — scoped 2026-11-02 | – | – | – |
+| E1c–E5 | Garden MVP (see "Next") | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
 
@@ -65,6 +66,7 @@ architecture and the pet design decided 2026-10-30 (EXPANSION §3–§4, §8.1).
    |---|---|---|
    | **E1a** | Plots for real: `PlotView` draws the garden by default, the ring layout for 8-stud gaps (radius 112 / 185, the island grows), the mid pet detail, `GardenRemotes.Plot` replaces the spike feed (EXPANSION §16 migration list). The field: 4 → 12 squares, first crops, seed catalogue and seed stock, selling, light Renown, square prompts and a Garden panel | E1.0 |
    | **E1b** | Field pets: pets placed on squares with reach by level, aptitudes rolled at hatch (live pets once from their uid), Tending auto-replant, pens converted to field pet slots and the Coins-per-hour production removed; garden servers of 24 | E0 field-pet re-run |
+   | **E1a3** | Crops as pet food: feed held crops to a pet from its detail page (scope below) | E1a2, P3a |
    | **E1c** | Size roll, tools tier 1 (Seed sorter, Cloches, Pruning shears), field upgrades (growth, barn), the daily market cart | E1a |
    | **E2** | Seed pouch for medal finishes, rare-seed meter per stage, rare crops of Worlds 1–3 | E1a |
    | **E4-thin** | Crows, Pest-control pets on the field, the forecast line | E1b |
@@ -176,6 +178,37 @@ pets (pens show labels too); the "hatched on … from a Basic egg" line (`Born` 
 - **Live-only:** Studio does not filter text ("Fox 5551234567" came back unchanged), so the `####` part of check 3 waits for a live test.
 - Found and fixed: Argon left Studio's copy of `PetDetail` without its last edit (the name box / button handlers) although it was connected;
   the block was pasted into Studio's copy (byte-identical to the file). If an edit does not show in Studio, reconnect the plugin.
+
+### E1a3 — Crops as pet food (scope 2026-11-02, the user's idea; defaults accepted)
+A harvested crop can be **sold or fed to a pet** for XP. Design check: EXPANSION plans the Kitchen (D5) as "crops → pet food, a cheaper route to
+levels than Berry / Cake / Feast"; feeding a raw crop is therefore **no cheaper than selling it and buying food**, so the Kitchen stays the better
+route later. Only for `GardenConfig.HasFieldAccess` (nobody else holds crops).
+- **Numbers:** `CropConfig` gets `xp` per crop = half its sale value (at least 1): Potato 1, Corn 54, Pumpkin 72, Giant melon 216. Berry, the
+  weakest food, gives 0.5 XP per Coin, so a crop is worth what its Coins would buy. `economy.py` pins the values and checks
+  `xp <= sale × Berry.xp / Berry.price` for every crop (a new crop or a sale-price change then has to pass the guardrail).
+- **Server (`GardenField`, it owns `Items` and settles the field):** `GardenRemotes.FeedCrop(uid, cropId, count)`, count an integer 1..held.
+  Settle the field first (Tending harvests count); clamp the count to `ceil(GardenConfig.XpToMax(pet) / xp)` (the last crop may go past level 20, the XP
+  over it is lost; the crops after it stay in the barn); `Items[crop] -= used`; `PetConfig.GainXp`; a penned pet's production is settled at the old level first (as `GardenFood`
+  does); publish pets and garden; answer on `GardenRemotes.Result` `("FeedCrop", ok, { uid, crop, used, xp, level, levels } or reason)`.
+  Rejects: no field access `locked`, crop not held `items`, a level-20 pet `maxed` (nothing used), bad uid / crop / count → no answer.
+  Any owned pet can be fed (equipped, penned, resting or on the field, the same rule as food); a field pet's reach follows its new level.
+  Renown is earned at harvest, so feeding takes none away. No position check: the page works anywhere (the food stand's distance rule exists
+  because food is bought there).
+- **Client (`PetDetail`):** a "Feed" card under Growth, shown with field access while the player holds crops: one row per held crop (icon, count,
+  "+54 XP"), buttons **Feed** (one) and **All** (as many as the pet can take; the label says how many). The Growth card's bar moves with the answer;
+  level-up shows the usual level-up moment on a following pet. Strings: `petDetail.feed.*` (title, per-crop XP, buttons, done line, rejects).
+- **Known effect, accepted:** Tending pets harvest crops that can level pets, Tending pets included: a slow loop at these rates.
+
+**Acceptance checks (E1a3).**
+1. One Corn fed to a Lv 4 pet: `Items.Corn` −1, XP +54, Coins and Renown unchanged; the Growth card and the list show the new XP.
+2. "All" on a pet 100 XP below level 20 with 5 Corn: 2 Corn used (108 XP), the pet is level 20, 3 Corn stay; a level-20 pet → `maxed`,
+   nothing used.
+3. Refused: crop not held → `items`; count 0, 1.5, −1 or more than held → no change; a forged uid → no answer; a player without field
+   access → `locked` and no card.
+4. A penned pet fed to a new level: production up to the feeding is paid at the old level. A field pet fed past a reach step: its card and the
+   field show the new reach.
+5. `economy.py check` passes with the new pins; `loc.py check` 0 errors, lint within the baseline; the card fits a 340 px panel in Czech.
+6. All of it once through the real UI (clicks), no console errors; live profile snapshotted right before and restored after.
 
 ### E1a — Plots for real + the field (scope 2026-10-30, decisions taken)
 **Goal.** The garden is drawn by the client for everyone, on the new ring layout, with today's gameplay unchanged (**E1a1**, published on its

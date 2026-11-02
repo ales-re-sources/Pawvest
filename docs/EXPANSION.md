@@ -245,7 +245,7 @@ To hold after every rebalance, like GDD §6 (checked by `tools/economy.py check`
 **Renown** is a derived garden level (harvests, requests, restorations, fair entries); it gates seed tiers, squares, tools and stations and is never spent.
 **Request board:** three requests a day ("6 carrots + 2 flour"; sometimes "a Big pumpkin" or "a Frosted carrot"), paying Coins, a rare item and Renown.
 **Stations** (queues with timers; Crafting pets run them faster): Compost (fertilisers for growth and variants, §5.3; the first station, with the variants),
-Mill (grain → flour), Kitchen (crops → pet food, a cheaper route to levels than Berry / Cake / Feast), Workshop (decor, plot upgrades),
+Mill (grain → flour), Kitchen (crops → pet food, a cheaper route to levels than Berry / Cake / Feast; a raw crop can be fed since E1a3, worth only what its Coins would buy), Workshop (decor, plot upgrades),
 Apothecary (tonics, mastery items).
 
 ## 6. Garden tools
