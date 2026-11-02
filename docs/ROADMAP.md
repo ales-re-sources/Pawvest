@@ -36,7 +36,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | G1 | Player guidance hints — awaits the user's check in play | ✔ | ✔ | – |
 | K1 | First-hour fixes from the kid playtest (2026-11-01) — Double Jump world reward done; Stage 5, G1 fallback, hatch panel proposed | partial | partial | – |
 | E1.0 | Client-drawn plots spike: **GO** | ✔ | ✔ | – |
-| E0 | Economy model — partial (baseline, simulation, field); field-pet re-run, repricing and the rest open | partial | – | – |
+| E0 | Economy model — partial (baseline, simulation, field, field-pet re-run awaiting approval); repricing and the rest open | partial | – | – |
 | M6a | Soft launch + World 1 balancing — World 1 balanced by feel (2026-10-30); live test open | – | – | – |
 | MU | Mobile UX check | – | – | – |
 | E1a1 | Plots drawn by the client, new ring layout (garden moved) | ✔ | ✔ | – |
@@ -245,9 +245,10 @@ field pet slots, reach by aptitude level, Tending strength, the aptitude XP curv
 pouch and rare-seed meter** with Scouting (§8.1), seed stock, Renown gates, stations, request board, the first landmark bundle.
 
 **Still to do.**
-- **Field-pet re-run** (before E1b): with reach up to 3 × 3 one Tending pet covers 9 of 12 squares; the value of tended squares, not their count,
-  must fit the 24-hour rule. Output: slots, reach and strength numbers, the pen-slot conversion, the seed income per obby hour and rare seeds per
-  week at maximum Scouting.
+- **Field-pet re-run** (before E1b): *modelled 2026-11-02* (`economy.py pets`, ECONOMY.md → "Field-pet re-run"): 3 field pet slots (1 free +
+  2 500 / 9 000), Tending strength = replant-at-once chance (L10 = continuous), aptitude steps 10 x 1.56^(L-1) weighted hours, pens -> slots with a
+  refund (6 pens -> 3 slots + 21 000), seed pouch 0.1 seeds per finish + a 100-finish rare-seed meter. **Awaiting the user's approval** of these
+  numbers and of two edge results (B equal for Binge, O at its bound for Garden main); `check` 41 / 43.
 - Repricing (a proposal table old → new price with time-to-afford per archetype, for the user's approval), dead end, rare supply, sensitivity;
   later the EXPANSION pieces (harvest rolls, fertilisers, tools, the Spender archetype).
 

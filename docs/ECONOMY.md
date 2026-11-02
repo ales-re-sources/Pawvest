@@ -34,11 +34,13 @@ expansions, Renown, barn, online / offline rates) are read from it and pinned (`
 - **Visits.** A visit is a session start. At a visit: harvest what is ripe (one harvest per square, then the square is empty), sell it (pet multiplier at
   sale time, like `CoinRewards.Grant`), buy seeds (a real cost), replant. Ripe crops wait and never rot. A crop grows `online_rate` hours per online hour
   and `offline_rate` hours per offline hour (capped), so a long crop may span several visits; the player plants the crop with the best net per square and wall-clock hour.
-- *Superseded 2026-10-30 (EXPANSION §3–§4), model not updated yet:* pets stand on field squares with a reach that grows with the aptitude level
-  (own square, then 5, then 3 × 3), a few field pet slots instead of 6 posts, Tending as an aptitude with levels 1–10; stage finishes drop a seed
-  pouch and fill a rare-seed meter (Scouting). The E0 re-run must model reach, Tending strength, slots and the seed pouch (ROADMAP → E0 inputs).
-- **Gardener.** A Green-thumb pet (35 % of hatched pets) on a Field post replants and re-harvests `squares` squares (1; no coverage upgrade, see below)
-  by itself from the seed stock, up to the barn capacity (40 + 20 per barn level), at the same online / offline rates. Posts are the existing pens (same prices).
+- **Field pets** (E0 re-run 2026-11-02, replaces the Gardener on a post): a Tending pet stands on a square and works its reach, counted on the
+  4-column grid: levels 1-3 its own square, 4-6 plus the 4 next to it, 7-10 the 3 x 3 block; one pet per square; the same job does not stack.
+  **Tending strength** s (20 / 35 / 48 / 59 / 68 / 76 / 83 / 89 / 95 / 100 % by level) is the chance the pet harvests and replants a ripe crop
+  at once; otherwise the crop waits for the visit. So a tended square pays the visits' harvests plus s x what continuous cycling adds (s = 0 is
+  a manual square, s = 100 % the old continuous Gardener); seeds come from the seed stock, crops go to the barn (40). Crops grow at the same
+  online / offline rates whoever plants them. Tending is rolled at hatch (20 / 22 / 40 / 50 / 60 % by rarity, aptitudes at birth / 5),
+  levels rise with weighted field time (online + capped offline x 0.33) up to the rarity cap (6-10). Field pet slots replace the pens.
 - **Renown** = derived level from harvests (points per harvest 1 / 3 / 6 / 12 by tier, level L needs 3 x L^1.6 points); gates tier-2 crops (8), tier-3 (25)
   and the expansion tiers. The request board and stations are placeholders (`requests_per_day = 0`).
 - **Rare crops** come only from the obby: 1 seed for the first Gold of a stage, 1 daily seed for the first run of a day. Half of a rare harvest is sold.
@@ -137,6 +139,36 @@ Time to buy (median day, Obby main / Casual / Garden main / Binge, talent-first)
 **Sensitivity of A (one-off, worst archetype on any day; not yet a `check` item):** ladder scale +20 % -> 1.14x (FAIL), -20 % -> 0.77x; squares per Gardener 1 -> 2 -> 1.06x (FAIL);
 growth step 5 -> 7 % -> 1.01x (FAIL); tier-3 gate 25 -> 12 or 15 -> 1.28x (FAIL: the gate keeps the early field below the first obby hour); seed share 25 -> 30 % -> 0.98x; Renown k 3 -> 2.4 -> 0.99x;
 expansion prices +-20 %, barn capacity, Green-thumb share and the rare sale share do not move A. Flag scale, Gardener coverage, growth speed and the tier-3 gate for telemetry in M6a.
+
+## Field-pet re-run (2026-11-02, gates E1b; `python tools/economy.py pets`)
+
+Proposals for the user's approval (provisional until E1b):
+
+1. **Field pet slots: 3** (1 free + 2 bought at **2 500 / 9 000** Coins). Simulation (60 days): 1 slot -> A worst 0.88x, 2 -> 0.93x, 3 -> 0.93x,
+   **4 -> 1.09x (breaks the 24-hour rule)**. Two pets at level 7+ already cover all 12 squares; the third slot matters while pets are at levels
+   4-6 (reach 5: two cover 8, three 10 squares). Statically, a fully developed field (12 squares tended at 100 %) is 0.86x of the first obby
+   hour for every archetype, against 0.58x with no pet (Obby main).
+2. **Tending at level 10 = continuous cycling** (`tend_max` 1.0): A stays inside the rule with 3 slots; 80 % changes A by 0.03 only.
+3. **Aptitude XP:** level L -> L + 1 takes 10 x 1.56^(L-1) weighted field hours (10 / 16 / 24 / 38 / 59 / 92 / 144 / 225 / 351). With the pet on the
+   field every day: a Common reaches its cap (L6) in 14 days (Obby main) to 17 (Casual), level 10 takes 93-113 days; Binge (one session a week)
+   needs 103 days for L6.
+4. **Live pens -> slots:** 1 pen = 1 slot, 2-3 pens = 2 slots, 4-6 pens = 3 slots; the rest is refunded: 3 pens -> 1 000, 5 pens -> 6 000,
+   6 pens -> 21 000 Coins (pens up to 6 cost 32 500). Live pets: Tending rolled once from the uid with the hatch chances, starting aptitude level
+   ceil(pet level / 4) (level 20 -> 5), at most the rarity cap.
+5. **Seed pouch (E2 input):** 0.1 common seeds per medal finish (about 4 per obby hour, 8 at Scouting L10) and a rare-seed meter of 100 finishes
+   per rare seed, on top of the daily first-run rare seed: 12.9 / 9.3 / 7.8 / 3.3 rare seeds a week (Obby main / Casual / Garden main / Binge;
+   today 8.8 / 7.4 / 2.9 / 3.3), 18.9 for Obby main at Scouting L10.
+
+**Findings.**
+- Realised field net per day at day 60 (6 seeds, with / without Tending pets): Obby main 6 333 / 6 171 (+3 %, it visits often), Casual
+  5 376 / 4 406 (+22 %), Garden main 4 982 / 4 139 (+20 %); the 24 h potential of Obby main 15 411 vs 12 666. The tender's value is the long
+  gaps. Guardrail B passes for 6 of 8 archetype x policy cells.
+- **B fails for Binge (equal, not more):** one session a week leaves about 10 growth hours (6 online + 12 h cap x 0.33), so one cycle fits
+  either way and a tender cannot add a second one. Options: accept (B as `>=` for archetypes whose week fits one cycle), or let Tending work
+  during the session's online hours too (the model counts visits only at session starts, which undervalues a 6-hour session).
+- **O sits on its limit for Garden main (3.023x vs 3.03x):** a fully tended field is all passive income, and passive income runs at exactly
+  1 / offline_rate more per hour online, so the ratio converges to the rule's own bound; the 0.2 % gap is the online / offline attribution of growth
+  in progress. Options: accept equality within 1 % in the check, or keep online play clearly ahead (e.g. Tending only while the owner is away).
 
 ## Open decisions for the user
 
