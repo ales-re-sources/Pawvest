@@ -380,3 +380,59 @@ field.reason.coins,Refused: too few Coins,Not enough Coins,Nemáš dost mincí,n
 field.reason.items,Refused: the player has fewer crops than asked to sell,You do not have that many,Tolik jich nemáš,new,h7ce6df01
 field.reason.maxed,Refused: all squares are bought,Your field is complete,Tvoje pole je kompletní,new,hda4eabde
 field.reason.stale,"Refused: the panel showed old data (double click, lag)","Out of date, try again","Údaje se mezitím změnily, zkus to znovu",new,ha5b6c678
+field.pet.label,"Label over a pet working on a field square (rich text, green second line). {pet} = ""Cat Lv 12"", {stars} = tier badge with a leading space ("" ★★"") or empty, {level} = the pet's Tending level 1-10",{pet}{stars}\n<font color='#a8e6a0'>Tending {level}</font>,{pet}{stars}\n<font color='#a8e6a0'>Péče {level}</font>,new,h59bcfbd3
+field.prompt.placePet,Prompt action on a field square without a pet (short; key F): put a pet with Tending here,Place pet,Umístit mazlíčka,new,haa61e2b4
+field.prompt.movePet,Prompt action on a field square where a pet works (short; key F): move it or take it off,Move / lift,Přesunout / odebrat,new,heaa65b74
+field.section.pets,"Heading of the field panel's pet section; {used} = pets on the field, {slots} = field pet slots owned",Field pets {used} / {slots},Mazlíčci na poli {used} / {slots},new,ha5e701a6
+field.pet.xp,"Field pet row, second line; {xp} / {next} = Tending experience and the amount for the next level, in hours of field time (decimal, ""3.5"")",Tending XP: {xp} / {next} h,Zkušenost v péči: {xp} / {next} h,new,h4221ff81
+field.pet.capped,"Field pet row, second line: its Tending level is at the cap of its rarity",Tending is at this pet's maximum,Péče je u tohoto mazlíčka na maximu,new,hc4db414a
+field.pet.info[one],"Field pet row, first line; {n} = its square, {level} = Tending level, {count} = squares it works (1, 5 or 9). Form for 1",Square {n} · Tending {level} · works {count} square,Políčko {n} · Péče {level} · stará se o {count} políčko,new,h5ded8f19
+field.pet.info[few],Form for 2-4 (Czech only),,Políčko {n} · Péče {level} · stará se o {count} políčka,new,h5ded8f19
+field.pet.info[other],Form for 0 and 5+,Square {n} · Tending {level} · works {count} squares,Políčko {n} · Péče {level} · stará se o {count} políček,new,h5ded8f19
+field.pet.lift,Button on a field pet row: take the pet off the field (back to the inventory),Lift,Odebrat,new,hcf198044
+field.pets.empty,"Field panel, pet section when no pet works the field",No pet works the field yet. Use the pet prompt at a square to place a pet with Tending.,Na poli zatím nepracuje žádný mazlíček. Mazlíčka s péčí umístíš výzvou u políčka.,new,h1dd9dd44
+field.slot.title,Field panel: the next field pet slot to buy; {n} = its number (2-3),Field pet slot {n},Místo pro mazlíčka {n},new,h10124662
+field.slot.info[one],Price of the next field pet slot; {count} = Coins. Form for 1,{count} Coin,{count} mince,new,h96db4654
+field.slot.info[few],Form for 2-4 (Czech only),,{count} mince,new,h96db4654
+field.slot.info[other],Form for 0 and 5+,{count} Coins,{count} mincí,new,h96db4654
+field.slot.buy,Button: buy the next field pet slot,Buy,Koupit,new,h89aeaade
+field.slot.done,Field panel: every field pet slot is bought,All field pet slots bought.,Máš všechna místa pro mazlíčky na poli.,new,hadffe186
+field.pets.note,Small note under the field pet section: what Tending does,"While you are away, a pet with Tending harvests the ripe crops in its reach and replants them from your seeds. A higher level does it more often and reaches more squares. Pets stop when the barn is full.","Když jsi pryč, mazlíček s péčí sklidí zralou úrodu ve svém dosahu a znovu ji zasadí z tvých semínek. Čím vyšší úroveň, tím častěji a na víc políčkách. Když je stodola plná, mazlíčci přestanou.",new,h07abb1e3
+field.petPicker.title,Title of the pet picker opened at a field square; {n} = square number,Pet for square {n},Mazlíček na políčko {n},new,hb5233c8c
+field.petPicker.lift,"Pet picker row: take the pet that works this square off the field; {pet} = ""Cat Lv 12""",Lift {pet},Odebrat: {pet},new,hc01b5fb8
+field.petPicker.liftInfo,"Pet picker, second line of the Lift row",Back to your pets; the crop stays,"Vrátí se k mazlíčkům, úroda zůstane",new,hfc16287c
+field.petPicker.equipped,"Pet picker, disabled row: the pet follows the player (equipped)",Equipped: unequip it in the Pets panel first,Je nasazený: nejdřív ho sundej v panelu Mazlíčci,new,h66466e79
+field.petPicker.penned,"Pet picker, disabled row: the pet is in a garden pen",In a pen,Je v ohradě,new,h865865d8
+field.petPicker.noSlot,"Pet picker, disabled row: every field pet slot is used",No free slot: buy one in the field panel,Žádné volné místo: další koupíš v panelu pole,new,h0d88e986
+field.petPicker.info[one],"Pet picker row, second line; {level} = Tending level, {count} = squares it would work here. Form for 1",Tending {level} · works {count} square,Péče {level} · stará se o {count} políčko,new,h17c4074f
+field.petPicker.info[few],Form for 2-4 (Czech only),,Péče {level} · stará se o {count} políčka,new,h17c4074f
+field.petPicker.info[other],Form for 0 and 5+,Tending {level} · works {count} squares,Péče {level} · stará se o {count} políček,new,h17c4074f
+field.petPicker.move[one],"Pet picker row for a pet already on another square; {level} = Tending level, {count} = squares it would work here, {n} = its current square. Form for 1",Tending {level} · {count} square · now on square {n},Péče {level} · {count} políčko · teď na políčku {n},new,hec4497cf
+field.petPicker.move[few],Form for 2-4 (Czech only),,Péče {level} · {count} políčka · teď na políčku {n},new,hec4497cf
+field.petPicker.move[other],Form for 0 and 5+,Tending {level} · {count} squares · now on square {n},Péče {level} · {count} políček · teď na políčku {n},new,hec4497cf
+field.petPicker.none,Pet picker when no pet has Tending (the next hatched pet is sure to get it),None of your pets has Tending yet. The next pet you hatch will have it.,"Žádný tvůj mazlíček zatím neumí péči. Další mazlíček, kterého vylíhneš, ji mít bude.",new,h489b8ce4
+field.notice.converted[one],Toast once after the pens were converted into field pet slots; {count} = slots now owned. Form for 1,Pens are gone: pets now work on the field. You have {count} field pet slot.,Ohrady skončily: mazlíčci teď pracují na poli. Máš {count} místo pro mazlíčky.,new,h0d9b36b4
+field.notice.converted[few],Form for 2-4 (Czech only),,Ohrady skončily: mazlíčci teď pracují na poli. Máš {count} místa pro mazlíčky.,new,h0d9b36b4
+field.notice.converted[other],Form for 0 and 5+,Pens are gone: pets now work on the field. You have {count} field pet slots.,Ohrady skončily: mazlíčci teď pracují na poli. Máš {count} míst pro mazlíčky.,new,h0d9b36b4
+field.notice.refund[one],Second line of the conversion toast; {count} = Coins refunded for pens beyond the slots. Form for 1 (Czech accusative),{count} Coin refunded for the extra pens.,Za ohrady navíc ti vracíme {count} minci.,new,hf5b33b97
+field.notice.refund[few],Form for 2-4 (Czech only),,Za ohrady navíc ti vracíme {count} mince.,new,hf5b33b97
+field.notice.refund[other],Form for 0 and 5+,{count} Coins refunded for the extra pens.,Za ohrady navíc ti vracíme {count} mincí.,new,hf5b33b97
+field.notice.returned[one],Line of the conversion toast; {count} = pets that were in pens. Form for 1,Your penned pet is back with your pets.,Mazlíček z ohrady je zpátky mezi tvými mazlíčky.,new,h3b52c94c
+field.notice.returned[few],Form for 2-4 (Czech only),,{count} mazlíčci z ohrad jsou zpátky mezi tvými mazlíčky.,new,h3b52c94c
+field.notice.returned[other],Form for 0 and 5+,Your {count} penned pets are back with your pets.,{count} mazlíčků z ohrad je zpátky mezi tvými mazlíčky.,new,h3b52c94c
+field.notice.item,"One entry of the ""pets harvested"" list; {count} = how many, {crop} = crop name",{count}× {crop},{count}× {crop},new,h05bc8cea
+field.notice.tended,"Toast once after a join: what the Tending pets harvested during the absence; {items} = list like ""5× Potato, 2× Corn""","While you were away, your pets harvested {items}.",Během tvé nepřítomnosti mazlíčci sklidili: {items}.,new,heb5accc4
+field.toast.petPlaced,"Toast: a pet was placed on a field square; {pet} = ""Cat Lv 12"", {n} = square (no gendered verb in Czech)",{pet} works square {n},{pet}: pracuje na políčku {n},new,ha01ba46b
+field.toast.petMoved,"Toast: a field pet moved to another square; {pet} = ""Cat Lv 12"", {n} = square",{pet} moved to square {n},{pet}: přesun na políčko {n},new,h17bba563
+field.toast.petLifted,"Toast: a pet was taken off the field; {pet} = ""Cat Lv 12""",{pet} is back with your pets,{pet}: zpátky mezi mazlíčky,new,hcdce9ef8
+field.toast.slot,Toast: a field pet slot was bought; {n} = its number,Field pet slot {n} bought,Koupeno místo pro mazlíčka {n},new,h8d666912
+field.reason.petOccupied,Refused: another pet already works that square,Another pet already works this square,Na tomhle políčku už pracuje jiný mazlíček,new,h3303faa7
+field.reason.equipped,Refused: the pet is equipped (follows the player),Unequip this pet first (Pets panel),Nejdřív mazlíčka sundej (panel Mazlíčci),new,h75a7614c
+field.reason.penned,Refused: the pet is in a garden pen,This pet is in a pen,Tenhle mazlíček je v ohradě,new,h31a79166
+field.reason.aptitude,Refused: the pet does not have the Tending aptitude,This pet has no Tending,Tenhle mazlíček neumí péči,new,h0996890f
+field.reason.slots,Refused: every field pet slot is used,All field pet slots are in use,Všechna místa pro mazlíčky jsou obsazená,new,hd52f20d6
+field.reason.slotsMaxed,Refused: every field pet slot is already bought,You have every field pet slot already,Už máš všechna místa pro mazlíčky,new,h34ec9412
+pets.reject.field,Refused in the Pets panel: the pet works on a field square,Works on the field: lift it in the field panel first,Pracuje na poli: nejdřív ho odeber v panelu pole,new,he50063c4
+pets.tag.field,Tag on a pet row: the pet works field square {n},Square {n},Políčko {n},new,ha8b1cc41
+pets.tending,"Pet row, appended to the XP line after "" · "": the pet's Tending level",Tending {level},Péče {level},new,h1a2f6b4a
+food.where.field,Pet row in the food shop: the pet works field square {n},on square {n},na políčku {n},new,hb6133e19

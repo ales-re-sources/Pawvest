@@ -42,7 +42,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E1a1 | Plots drawn by the client, new ring layout (garden moved) | ✔ | ✔ | – |
 | E1a2 | Crop field behind admin access (CropConfig, GardenField, Garden panel) | ✔ | ✔ | – |
 | E1b1 | Field pets, server: aptitudes, Tending, field pet slots, pen conversion (behind field access) | ✔ | ✔ | – |
-| E1b2 | Field pets, client: pets on squares, place / move prompt, Pets section, conversion popup | – | – | – |
+| E1b2 | Field pets, client: pets on squares, place / move prompt, Pets section, conversion popup | ✔ | – | – |
 | E1a3–E5 | Garden MVP (see "Next") | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
@@ -314,6 +314,22 @@ not shown. Quirks and bond stay out (D7). Field pets can be placed only at the o
 - Decision 3: with no Tending pet owned, a hatched Basic egg gave a Bunny with Tending.
 - Not covered by a playtest: a player without field access (code path: GardenField returns before converting; PetService rolls aptitudes for
   everyone, data only). Checks 6 (drawing), 8 and 9 come with E1b2.
+
+**E1b2 implemented (2026-11-02); Studio-validated except the two-client view**, through the real UI (clicks, the F key) of a playtest client on a
+converted fixture in the developer's live profile (same snapshot, restored afterwards):
+- Plot: a converted plot draws no pens (so the pen panel, opened only from pen prompts, cannot open) and the pet on its square with the label
+  "Cat Lv 6 ★ / Tending 4"; every square has the prompt "Place pet" / "Move / lift" on F; pressing F at square 7 opened "Pet for square 7".
+- Picker at square 6: Phoenix "Tending 7 · works 6 squares", Cat Lv 6 "… · now on square 1", Cat Lv 2 "works 1 square"; hovering a row tints its
+  reach (the Phoenix's squares 1-3 and 5-7, as `CropConfig.Reach` gives on 8 squares); a click placed it (toast, pet drawn, tint gone after 3 s).
+- Field panel Pets section: one row per pet (square, Tending, reach, "Tending XP: 0.7 / 38.0 h"), Lift (pet back, "Field pets 1 / 2"), Buy of
+  slot 3 (9 000 Coins, "Field pets 1 / 3", "All field pet slots bought."). Pets panel: the field pet's tag "Square 1", " · Tending n" on every pet with
+  Tending. Conversion and absence toast: "Pens are gone … 2 field pet slots. / 1,000 Coins refunded … / Your penned pet is back … / While you were
+  away, your pets harvested 6× Potato."
+- Czech: 52 visible texts in the field panel and 9 in the picker, every one fits (stud-brick glyphs measured). Phone portrait gives the same
+  result: the panel's texts wrap and grow, its buttons have fixed widths, and the picker is capped at 340 px.
+- Budget: 30 synthetic plots with 12-square fields and pets (`GardenViewFake = 30`, `GardenViewField = 12`), the character walked past every plot:
+  1 322 client instances at most (limit 5 000). No console errors or warnings.
+- Open: check 8's two-client view (the other player sees the pets); a player without field access.
 
 **Acceptance checks (E1b).**
 1. A new pet gets `Apt` (and `Spec` with Pest control) at hatch, and reloading keeps it. The same uid always rolls the same set (100 uids rolled twice).
