@@ -218,6 +218,11 @@ E1a2:
 **Decisions (the user, 2026-10-30).** (1) Light Renown is in E1a2. (2) Seeds, selling and squares are bought from the Garden panel at the own
 plot (fewer walks on mobile), no seed stand on the plaza. (3) A new field starts with 4 free Potato seeds, so the first plant needs no shop.
 (4) `offline_rate` 0.33 / 12 h cap stay placeholders until ECONOMY open decision 5 is taken.
+**Tuning (the user, 2026-11-02, after validation).** Potato grows in **5 minutes** (was 3 h) so the first harvest comes in the first session; its
+price drops to sale 2 / seed 1 to keep the field inside guardrail A (at 24 / 6 the 5-minute Potato failed the 24-hour rule for every archetype,
+the day-60 band and the online / offline ratio). Checks 9-12 above were run with the old Potato (3 h, 24 / 6); the code paths are unchanged.
+Side effect the model does not cover (it replants only on visits): a player who stays at a 4-square field earns about 48 Renown points an hour,
+so Renown 8 (Corn, Pumpkin) takes under 2 hours of field time instead of days.
 
 ### E0 — Economy model
 **Goal.** One reproducible model of the Coin economy (`tools/economy.py`, Python stdlib) that fixes the numbers E1 needs, proves GDD §6 and the

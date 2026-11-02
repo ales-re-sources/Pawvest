@@ -88,7 +88,7 @@ instead of 20 / 45 / 90 / 150. Seed = 25 % of the sale. **The plot rework needs 
 
 | Crop (MVP, 7) | Tier | Grow | Sale | Seed | Net | Unlock |
 |---|---|---|---|---|---|---|
-| Potato | 1 | 3 h | 24 | 6 | 18 | start |
+| Potato | 1 | 5 min | 2 | 1 | 1 | start (was 3 h / 24 / 6 until 2026-11-02: the user wants a quick first harvest; at 24 / 6 a 5-minute Potato failed six A / O checks, at 2 / 1 everything but the known 5 B passes) |
 | Corn | 2 | 6 h | 108 | 27 | 81 | Renown 8 |
 | Pumpkin | 2 | 8 h | 144 | 36 | 108 | Renown 8 |
 | Giant melon | 3 | 12 h | 432 | 108 | 324 | Renown 25 |

@@ -10,7 +10,7 @@ local CropConfig = {}
 -- Crops in catalogue order. letter: one character in the plot message (GardenRemotes.Plot field.crops); renown: Renown level
 -- that unlocks the crop; sale / seed in Coins (seed = 25 % of the sale); tier: Renown points per harvest (RenownPoints).
 CropConfig.Crops = {
-	{ id = "Potato", name = "Potato", icon = "🥔", letter = "a", tier = 1, growSeconds = 3 * 3600, sale = 24, seed = 6, renown = 0 }, -- loc: ignore
+	{ id = "Potato", name = "Potato", icon = "🥔", letter = "a", tier = 1, growSeconds = 5 * 60, sale = 2, seed = 1, renown = 0 }, -- loc: ignore
 	{ id = "Corn", name = "Corn", icon = "🌽", letter = "b", tier = 2, growSeconds = 6 * 3600, sale = 108, seed = 27, renown = 8 }, -- loc: ignore
 	{ id = "Pumpkin", name = "Pumpkin", icon = "🎃", letter = "c", tier = 2, growSeconds = 8 * 3600, sale = 144, seed = 36, renown = 8 }, -- loc: ignore
 	{ id = "GiantMelon", name = "Giant melon", icon = "🍉", letter = "d", tier = 3, growSeconds = 12 * 3600, sale = 432, seed = 108, renown = 25 }, -- loc: ignore
