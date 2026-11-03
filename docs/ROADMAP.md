@@ -48,7 +48,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E1a3 | Crops as pet food (pet detail page; XP = half the sale value) — scoped 2026-11-02 | – | – | – |
 | E1c1 | Field upgrades (growth, barn) | ✔ | ✔ | – |
 | E1c2 | Size roll (lognormal, Big / Giant, best per crop, sizes in the barn) | ✔ | ✔ | – |
-| E1d | Farming-first rebalance (F2: crop prices × 9.3, 36 squares chosen freely, five field pet slots) — numbers approved 2026-11-03 | – | – | – |
+| E1d1 | Farming-first numbers (F2: crop prices × 9.3, new square / upgrade prices, five field pet slots) | ✔ | ✔ | – |
+| E1d2 | 36-square field, squares chosen freely, price by the number open | – | – | – |
 | E1c3–E5 | Garden MVP (see "Next"; E1c3–E1c4 scoped in outline; E1c3 waits for E1d) | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
@@ -231,6 +232,35 @@ Proposed split into two steps, each validated and committed on its own:
 - **Obby:** repeat runs stay as they are (user, 2026-11-03). Talents stay Coins until the parked stars idea is decided.
 - **`economy.py`** reads the new configs. `check` then passes the P / L checks, and `pin` accepts the numbers. A migration is not needed:
   stored Coins stay as they are.
+
+**Implemented (2026-11-03).** `CropConfig` carries F2's numbers. The Expansions list keeps 8 entries (squares 5-12, F2's first 8) until E1d2.
+`economy.py` now runs at ladder scale 2.8 and was pinned. The fixes found on the way:
+- Tending pets fall back to a crop whose seeds the player can afford.
+- The shop keeps one replant of every square in reserve. Without it, a field pet slot could take the last Coins, and the tended squares stayed empty
+  at Giant melon seed prices, which failed B for Garden main.
+
+`check` 50 / 51: only Casual's day-30 lead fails (4.6x on 12 squares without tools), as expected until E1d2 and E1c3. Pens convert into slots with
+no refund any more: slots are now worth more than any pen set cost (6 pens 32 500, their 3 slots 107 300).
+
+**Acceptance checks (E1d1).**
+1. Panel with field access, Renown ≥ 1: Corn and Pumpkin seeds buyable (252 / 336), Giant melon locked below Renown 5 and buyable from it (1 008);
+   the next square on a 4-square field costs 1 400 with no Renown; Growth 1 costs 28 000, Barn 1 14 000; the next field pet slot shows its new price.
+2. Remotes charge exactly those prices: BuySeeds, BuySquare, BuyUpgrade, BuyPetSlot up to slot 5 (280 000 / 746 700). A 6th slot has no price.
+3. Selling pays the new sale × size: two Pumpkins of summed size 2.0 pay 2 688 before the pet bonus.
+4. No console errors. The live profile is snapshotted right before and restored after.
+
+**Studio-validated (2026-11-03).** Fixture: 1 200 000 Coins, 4 squares (square 1 ripe Corn), Renown 37 points (level 4), 3 field pet slots,
+no equipped or placed pets, two Pumpkins of summed size 2.0. All four checks passed:
+- The panel in Czech showed every price in check 1. Giant melon showed "Pověst 5".
+- The remotes charged exactly: BuySeeds Corn 252, BuySquare 1 400, Growth 1 28 000, Barn 1 14 000, slot 4 280 000, slot 5 746 700; a 6th slot → `maxed`.
+- Giant melon seeds → `renown` until the Corn harvest reached level 5, then 1 008.
+- The sale paid 2 688. Coins went 1 200 000 → 131 328 as computed.
+- No warnings or errors on the server or the client.
+
+Studio Edit mode was refused DataStore access ("Access forbidden") even with API access on, while the playtest server had it. The snapshot, fixture
+and restore therefore ran in the playtest server: kick the player (the leave write runs, then PlayerProfile forgets them and shutdown saves nobody),
+wait 3 s, write the store, stop. The restore was read back in a fresh playtest.
+Noticed: the next-square line says "Renown 0" when a square has no gate (squares 5 and 6); E1d2 rebuilds that section and should leave it out.
 
 **E1d2 — The 36-square field.**
 - **Grid:** `MaxSquares = 36`, `Columns = 6` (6 x 6). All squares are drawn; the locked ones look different and carry a buy prompt with the price.

@@ -1,5 +1,5 @@
--- CropConfig: the crop field's shared numbers and pure helpers (E1a2, docs/EXPANSION.md §5, numbers from docs/ECONOMY.md →
--- "Inputs ready for E1"). Shared: the server prices, grows and pays from this table only, the client renders it. Pure data +
+-- CropConfig: the crop field's shared numbers and pure helpers (E1a2, docs/EXPANSION.md §5; numbers since E1d1 from docs/ECONOMY.md →
+-- "Direction change", candidate F2: farming is the main game). Shared: the server prices, grows and pays from this table only, the client renders it. Pure data +
 -- helpers, no side effects. Crop ids are stored in profiles (Garden.Field.Squares[n].Crop, Garden.Seeds, Garden.Items):
 -- never rename one. tools/economy.py reads this file and `check` pins it.
 -- Growth: a planted square earns growth seconds (`Grown`) at OnlineRate while its owner is online and at OfflineRate for
@@ -11,10 +11,10 @@ local CropConfig = {}
 -- that unlocks the crop; sale / seed in Coins (seed = 25 % of the sale); tier: Renown points per harvest (RenownPoints);
 -- kg: the weight shown at size factor 1 (E1c2).
 CropConfig.Crops = {
-	{ id = "Potato", name = "Potato", icon = "🥔", letter = "a", tier = 1, growSeconds = 5 * 60, sale = 2, seed = 1, renown = 0, kg = 0.25 }, -- loc: ignore
-	{ id = "Corn", name = "Corn", icon = "🌽", letter = "b", tier = 2, growSeconds = 6 * 3600, sale = 108, seed = 27, renown = 8, kg = 0.5 }, -- loc: ignore
-	{ id = "Pumpkin", name = "Pumpkin", icon = "🎃", letter = "c", tier = 2, growSeconds = 8 * 3600, sale = 144, seed = 36, renown = 8, kg = 6 }, -- loc: ignore
-	{ id = "GiantMelon", name = "Giant melon", icon = "🍉", letter = "d", tier = 3, growSeconds = 12 * 3600, sale = 432, seed = 108, renown = 25, kg = 15 }, -- loc: ignore
+	{ id = "Potato", name = "Potato", icon = "🥔", letter = "a", tier = 1, growSeconds = 5 * 60, sale = 6, seed = 2, renown = 0, kg = 0.25 }, -- loc: ignore
+	{ id = "Corn", name = "Corn", icon = "🌽", letter = "b", tier = 2, growSeconds = 6 * 3600, sale = 1008, seed = 252, renown = 1, kg = 0.5 }, -- loc: ignore
+	{ id = "Pumpkin", name = "Pumpkin", icon = "🎃", letter = "c", tier = 2, growSeconds = 8 * 3600, sale = 1344, seed = 336, renown = 1, kg = 6 }, -- loc: ignore
+	{ id = "GiantMelon", name = "Giant melon", icon = "🍉", letter = "d", tier = 3, growSeconds = 12 * 3600, sale = 4032, seed = 1008, renown = 5, kg = 15 }, -- loc: ignore
 }
 CropConfig.ById = {}
 CropConfig.ByLetter = {}
@@ -27,16 +27,16 @@ CropConfig.StartSquares = 4 -- a new field (E1a2 decision 3: with StartSeeds, so
 CropConfig.StartSeeds = { Potato = 4 }
 CropConfig.MaxSquares = 12
 CropConfig.Columns = 4 -- squares per field row (4 x 3 at 12 squares; PlotView draws row by row from the plot outwards)
--- Expansions[n] buys square StartSquares + n: Coins and the Renown level it needs.
+-- Expansions[n] buys square StartSquares + n: Coins and the Renown level it needs (F2: about x 1.23 per square; E1d2 extends the list to 36).
 CropConfig.Expansions = {
-	{ price = 600, renown = 1 },
-	{ price = 1500, renown = 2 },
-	{ price = 3500, renown = 4 },
-	{ price = 7500, renown = 7 },
-	{ price = 14000, renown = 10 },
-	{ price = 24000, renown = 14 },
-	{ price = 40000, renown = 19 },
-	{ price = 65000, renown = 25 },
+	{ price = 1400, renown = 0 },
+	{ price = 1700, renown = 0 },
+	{ price = 2100, renown = 5 },
+	{ price = 2600, renown = 6 },
+	{ price = 3200, renown = 7 },
+	{ price = 4000, renown = 8 },
+	{ price = 4900, renown = 10 },
+	{ price = 6000, renown = 11 },
 }
 
 CropConfig.RenownPoints = { 1, 3, 6, 12 } -- points per harvest by crop tier (4 = rare crops, E2)
@@ -48,18 +48,18 @@ CropConfig.BarnCapacity = 40 -- seeds of all crops together, and the crops a Ten
 -- (earned growth runs 1 / (1 - step × level) as fast); Barn: each level +step capacity. Ids are stored
 -- (Garden.Field.Upgrades[id] = level): never rename one.
 CropConfig.Upgrades = {
-	{ id = "Growth", icon = "🌱", step = 0.05, prices = { 3000, 8000, 20000, 45000 } },
-	{ id = "Barn", icon = "🏠", step = 20, prices = { 1500, 4000, 10000, 25000, 60000 } },
+	{ id = "Growth", icon = "🌱", step = 0.05, prices = { 28000, 74700, 186700, 420000 } },
+	{ id = "Barn", icon = "🏠", step = 20, prices = { 14000, 37300, 93300, 233300, 560000 } },
 }
 CropConfig.UpgradeById = {}
 for _, upgrade in CropConfig.Upgrades do
 	CropConfig.UpgradeById[upgrade.id] = upgrade
 end
 
--- Field pets (E1b, docs/ECONOMY.md → "Field-pet re-run"): PetSlotPrices[n] = price of the n-th field pet slot (slot 1 is free).
+-- Field pets (E1b, docs/ECONOMY.md → "Field-pet re-run"; five slots since E1d1): PetSlotPrices[n] = price of the n-th field pet slot (slot 1 is free).
 -- A player's pens convert once: PetSlotsFromPens[pens bought] slots, the Coins paid for pens beyond those slots' prices refunded.
 -- A Tending pet harvests only while the crops in the barn (Items) are fewer than BarnCapacity.
-CropConfig.PetSlotPrices = { 0, 2500, 9000 }
+CropConfig.PetSlotPrices = { 0, 23300, 84000, 280000, 746700 }
 CropConfig.PetSlotsFromPens = { 1, 2, 2, 3, 3, 3 }
 
 -- Size roll (E1c2, docs/EXPANSION.md §5.3): every harvest's size factor = exp(SizeSigma × z - SizeSigma² / 2), mean exactly 1

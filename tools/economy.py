@@ -532,7 +532,7 @@ MULT_REF = 1.48  # pet multiplier of a developed player (cap +50 %), used by the
 
 FIELD = {
     # Values marked (CropConfig) are None here: apply_crop_config() fills them from src/ReplicatedStorage/CropConfig.luau in load(). Edit them there.
-    "scale": 0.3,  # global factor on the ladder below: the 20 / 45 / 90 / 150 of EXPANSION §5 break the 24-hour rule on a field of tens of squares.
+    "scale": 2.8,  # global factor on the ladder below (E1d1, candidate F2 2026-11-03: was 0.3 under the 24-hour rule; farming is the main game now).
     #                The CropConfig crops keep their config sale / seed at this scale; other scales (--scale, the sweeps) derive prices from the ladder.
     "ladder": {1: 20, 2: 45, 3: 90, 4: 150},  # net Coins per square-hour at scale 1, tier 4 = rare (obby-unlocked only); derives the model-only crops
     "seed_frac": 0.25,  # seed cost / sale price (EXPANSION §5: 20-30 %)
@@ -981,6 +981,13 @@ class Player:
     def capacity(self):
         return FIELD["capacity"] + FIELD["upgrades"]["barn"]["step"] * self.lvl["barn"]
 
+    def seed_reserve(self):
+        """Coins a player keeps back from shopping: one replant of every square with the Tending pets' crop (2026-11-03: at the F2 seed
+        prices a field pet slot could take the last Coins and leave the tended squares without seeds)."""
+        if not self.F["on"] or not self.cov_crop:
+            return 0
+        return self.sq * self.F["crops"][self.cov_crop]["seed"]
+
     def tool(self, name):
         level = self.lvl[name]
         return FIELD["tools"][name]["effect"][level - 1] if level else 0.0
@@ -1105,9 +1112,12 @@ class Player:
         eff = eff_time(gap, length, self.cloche())
         if self.cov_n and common:
             best, best_v = None, -1.0
-            for c in common:
-                if c["tier"] > FIELD["gardener"]["max_tier"]:
-                    continue
+            # a crop whose seeds the player cannot afford for every tended square is skipped while a cheaper one can be planted: a player
+            # who spent their Coins plants Potatoes, not an empty field (found 2026-11-03 at the F2 seed prices)
+            afford = lambda c: (self.seed_stock if c["id"] == self.cov_crop else 0) + max(self.coins, 0) // c["seed"] >= self.cov_n
+            options = [c for c in common if c["tier"] <= FIELD["gardener"]["max_tier"]]
+            options = [c for c in options if afford(c)] or options[:1]
+            for c in options:
                 g = c["h"] * gs
                 prog = self.cov_on + self.cov_off if c["id"] == self.cov_crop else 0.0  # switching crop loses the growth in progress
                 raw = (prog + eff) / g
@@ -1225,7 +1235,7 @@ class Player:
                 saving = True
                 break
             cand = [it for it in self.items if not self.owned(it) and self.prereq_ok(it) and self.gate_ok(it)][: SIM["window"]]
-            hit = next((it for it in cand if self.coins >= item_price(P, it)), None)
+            hit = next((it for it in cand if self.coins - self.seed_reserve() >= item_price(P, it)), None)
             if hit is None:
                 break
             self.buy(hit, day)
