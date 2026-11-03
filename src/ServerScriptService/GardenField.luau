@@ -20,12 +20,16 @@
 -- Field upgrades (E1c1): Field.Upgrades = { Growth, Barn } levels (CropConfig.Upgrades): Growth multiplies the growth crops
 -- earn (CropConfig.GrowthSpeed; pets' aptitude XP keeps the plain seconds), Barn raises the seed stock and the crops a Tending
 -- pet may store (CropConfig.BarnFor).
+-- Garden tools (E1c3): Garden.Tools = { Sorter, Cloches, Shears } levels (CropConfig.Tools), each level gated by a Renown level.
+-- Sorter multiplies every harvest's size factor; Cloches multiply the growth earned while the owner is online (not the absence,
+-- not the pets' aptitude XP); Shears give a second crop of the same size with their chance, rolled per planting number like
+-- Tending (no Renown or seed for it; a Tending pet's second crop needs room in the barn).
 -- The field's shape is CropConfig.RowWidths (E1d2: 36 squares on a grid); the player opens any locked square (BuySquare), the price
 -- and Renown gate come from the number already open (CropConfig.NextExpansion). Fields from before E1d2 (Count = the first squares
 -- of a 4 x 3 field) move onto rows 1-3 (CropConfig.FromOldSquare), with their crops and field pets.
 -- Remotes (in GardenRemotes): Plant(square, crop), Harvest(square), BuySeeds(crop, count), Sell(crop, count),
 -- BuySquare(square, expectedOpen), PlacePet(square, uid) (also moves a placed pet), LiftPet(uid), BuyPetSlot(expectedSlots),
--- BuyUpgrade(id, expectedLevel) (client → server); answers on GardenRemotes.Result; GardenRemotes.State.field (the owner's panel).
+-- BuyUpgrade(id, expectedLevel), BuyTool(id, expectedLevel) (client → server); answers on GardenRemotes.Result; GardenRemotes.State.field (the owner's panel).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -47,6 +51,7 @@ local placePetEvent = GardenService.Remote("PlacePet") -- client → server: (sq
 local liftPetEvent = GardenService.Remote("LiftPet") -- client → server: (uid: string)
 local buyPetSlotEvent = GardenService.Remote("BuyPetSlot") -- client → server: (expectedSlots: number)
 local buyUpgradeEvent = GardenService.Remote("BuyUpgrade") -- client → server: (id: string, expectedLevel: number)
+local buyToolEvent = GardenService.Remote("BuyTool") -- client → server: (id: string, expectedLevel: number)
 
 local reject = GardenService.Reject
 
@@ -192,6 +197,12 @@ local function fieldOf(player: Player, profile)
 		upgrades[upgrade.id] = if level > 0 then level else nil
 	end
 	field.Upgrades = upgrades
+	local tools = {}
+	for _, tool in CropConfig.Tools do
+		local level = CropConfig.ToolLevel(garden.Tools, tool.id)
+		tools[tool.id] = if level > 0 then level else nil
+	end
+	garden.Tools = tools
 
 	-- field pets: an owned pet with the job's aptitude, not penned, on an owned square of its own, within the slots (in uid order);
 	-- PetService unequips a field pet (equipped and on the field never both)
@@ -232,12 +243,19 @@ local function fieldOf(player: Player, profile)
 end
 GardenField.FieldOf = fieldOf
 
--- Puts one harvested crop of planting `planting` into the barn with its rolled size. Returns the factor and whether it is the
--- player's best of that crop so far.
-local function store(player: Player, garden, crop, planting: number): (number, boolean)
-	local factor = CropConfig.SizeFactor(player.UserId, planting)
-	garden.Items[crop.id] = (garden.Items[crop.id] or 0) + 1
-	garden.ItemSize[crop.id] = (garden.ItemSize[crop.id] or 0) + factor
+-- Whether the Shears give planting number `n` of `player` a second crop: the same planting always rolls the same.
+local function shearsExtra(player: Player, garden, n: number): boolean
+	local chance = CropConfig.ToolEffect(garden.Tools, "Shears")
+	return chance > 0 and Random.new(player.UserId * 6271 + n * 15485863):NextNumber() < chance
+end
+
+-- Puts one harvested crop of planting `planting` into the barn with its rolled size (× the Seed sorter), and a second one of the
+-- same size when `extra`. Returns the factor and whether it is the player's best of that crop so far.
+local function store(player: Player, garden, crop, planting: number, extra: boolean?): (number, boolean)
+	local factor = CropConfig.SizeFactor(player.UserId, planting) * (1 + CropConfig.ToolEffect(garden.Tools, "Sorter"))
+	local n = if extra then 2 else 1
+	garden.Items[crop.id] = (garden.Items[crop.id] or 0) + n
+	garden.ItemSize[crop.id] = (garden.ItemSize[crop.id] or 0) + factor * n
 	local record = factor > (garden.BestSize[crop.id] or 0)
 	if record then
 		garden.BestSize[crop.id] = factor
@@ -277,7 +295,8 @@ local function settle(player: Player, profile, field, open, absence: boolean): (
 		return false, nil
 	end
 	local garden = profile.Garden
-	local cropGrowth = growth * CropConfig.GrowthSpeed(CropConfig.UpgradeLevel(field.Upgrades, "Growth"))
+	local cloches = if absence then 1 else 1 + CropConfig.ToolEffect(garden.Tools, "Cloches") -- online growth only
+	local cropGrowth = growth * cloches * CropConfig.GrowthSpeed(CropConfig.UpgradeLevel(field.Upgrades, "Growth"))
 	local barn = CropConfig.BarnFor(CropConfig.UpgradeLevel(field.Upgrades, "Barn"))
 	local strength = if absence then tendingStrength(profile, open) else {}
 	local changed, tended = false, nil
@@ -306,10 +325,11 @@ local function settle(player: Player, profile, field, open, absence: boolean): (
 				entry.Tried = true -- the pet did not get to it: it waits for the owner
 				break
 			end
-			store(player, garden, crop, entry.N)
+			local extra = shearsExtra(player, garden, entry.N) and CropConfig.SeedTotal(garden.Items) + 1 < barn
+			store(player, garden, crop, entry.N, extra)
 			garden.Renown += CropConfig.RenownPoints[crop.tier] or 0
 			tended = tended or {}
-			tended[crop.id] = (tended[crop.id] or 0) + 1
+			tended[crop.id] = (tended[crop.id] or 0) + (if extra then 2 else 1)
 			local leftover = math.min(entry.Grown - crop.growSeconds, cropGrowth) -- growth from before this absence does not carry over
 			if (garden.Seeds[crop.id] or 0) > 0 then
 				garden.Seeds[crop.id] -= 1
@@ -356,7 +376,9 @@ GardenService.AddStateField("field", function(profile)
 	end
 	table.sort(list)
 	local now = os.time()
-	local speed = CropConfig.OnlineRate * CropConfig.GrowthSpeed(CropConfig.UpgradeLevel(field.Upgrades, "Growth"))
+	local speed = CropConfig.OnlineRate
+		* (1 + CropConfig.ToolEffect(profile.Garden.Tools, "Cloches"))
+		* CropConfig.GrowthSpeed(CropConfig.UpgradeLevel(field.Upgrades, "Growth"))
 	local squares = {}
 	for key, square in field.Squares do
 		local crop = CropConfig.ById[square.Crop]
@@ -395,6 +417,7 @@ GardenService.AddStateField("field", function(profile)
 		slotPrice = CropConfig.PetSlotPrices[garden.FieldPetSlots + 1],
 		upgrades = table.clone(field.Upgrades),
 		barn = CropConfig.BarnFor(CropConfig.UpgradeLevel(field.Upgrades, "Barn")),
+		tools = table.clone(garden.Tools),
 		notice = notices[owner],
 	}
 end)
@@ -510,11 +533,20 @@ harvestEvent.OnServerEvent:Connect(function(player, square)
 
 	local garden = profile.Garden
 	field.Squares[tostring(square)] = nil
-	local size, record = store(player, garden, crop, entry.N)
+	local extra = shearsExtra(player, garden, entry.N)
+	local size, record = store(player, garden, crop, entry.N, extra)
 	local before = CropConfig.RenownLevel(garden.Renown)
 	garden.Renown += CropConfig.RenownPoints[crop.tier] or 0
 	local level = CropConfig.RenownLevel(garden.Renown)
-	done(player, "Harvest", { square = square, crop = crop.id, level = level, levelUp = level > before, size = size, best = record or nil })
+	done(player, "Harvest", {
+		square = square,
+		crop = crop.id,
+		level = level,
+		levelUp = level > before,
+		size = size,
+		best = record or nil,
+		extra = extra or nil,
+	})
 end)
 
 buySeedsEvent.OnServerEvent:Connect(function(player, cropId, amount)
@@ -627,6 +659,36 @@ buyUpgradeEvent.OnServerEvent:Connect(function(player, id, expected)
 	PlayerProfile.AddCoins(player, -price) -- the field was settled at the old rate just now (usableField)
 	field.Upgrades[upgrade.id] = level + 1
 	done(player, "BuyUpgrade", { id = upgrade.id, level = level + 1, price = price })
+end)
+
+buyToolEvent.OnServerEvent:Connect(function(player, id, expected)
+	local tool = type(id) == "string" and CropConfig.ToolById[id]
+	if not (tool and GardenService.WholeNumber(expected)) or not GardenService.Allow(player) then
+		return
+	end
+	local profile, field = usableField(player, "BuyTool")
+	if not field then
+		return
+	end
+	local garden = profile.Garden
+	local level = CropConfig.ToolLevel(garden.Tools, tool.id)
+	local price = tool.prices[level + 1]
+	if not price then
+		return reject(player, "BuyTool", "maxed")
+	end
+	if expected ~= level then
+		return reject(player, "BuyTool", "stale") -- out-of-date panel, double click or forged request
+	end
+	if CropConfig.RenownLevel(garden.Renown) < tool.renown[level + 1] then
+		return reject(player, "BuyTool", "renown")
+	end
+	if profile.Coins < price then
+		return reject(player, "BuyTool", "coins")
+	end
+
+	PlayerProfile.AddCoins(player, -price) -- the field was settled at the old rate just now (usableField)
+	garden.Tools[tool.id] = level + 1
+	done(player, "BuyTool", { id = tool.id, level = level + 1, price = price })
 end)
 
 local function placedCount(garden): number

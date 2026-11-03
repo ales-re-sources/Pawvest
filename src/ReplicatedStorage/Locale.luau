@@ -134,7 +134,8 @@ function Locale.Number(n: number, lang: string?): string
 	if #digits <= 3 or (lang == "cs" and #digits <= 4) then
 		return text -- Czech groups from five digits on ("1500", "12 500")
 	end
-	local grouped = string.reverse((string.gsub(string.reverse(digits), "(%d%d%d)", "%1" .. separator)))
+	-- the separator goes in reversed: the whole string is reversed back byte by byte (Czech's no-break space is 2 bytes in UTF-8)
+	local grouped = string.reverse((string.gsub(string.reverse(digits), "(%d%d%d)", "%1" .. string.reverse(separator))))
 	if string.sub(grouped, 1, #separator) == separator then
 		grouped = string.sub(grouped, #separator + 1)
 	end

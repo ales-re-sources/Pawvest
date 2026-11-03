@@ -340,7 +340,7 @@ field.crop.sell,Button on a harvested crop row: sell all of it; {coins} = Coins 
 field.crops.note,Small note under the harvested crops,"Prices are in Coins, before the pet bonus.","Ceny jsou v mincích, před bonusem od mazlíčků.",new,hd4037cb5
 field.crops.empty,Harvested crops list when the player has none,Nothing to sell yet. Harvest ripe crops on your field.,Zatím nemáš co prodat. Sklidit můžeš zralé plodiny na poli.,new,hd1354325
 field.section.expand,Heading of the next-square offer,Bigger field,Větší pole,new,h7378b91b
-field.expand.needRenown,Red line under the square offer when Renown is too low; {level} = Renown level needed,You need Renown {level},Potřebuješ Pověst {level},new,hd1d6d1fb
+field.expand.needRenown,Red line under the square offer or a tool row when Renown is too low; {level} = Renown level needed,You need Renown {level},Potřebuješ Pověst {level},new,hd1d6d1fb
 field.expand.done,Shown when all 36 squares are bought,Your field is complete!,Tvoje pole je kompletní!,new,hb4aad4ae
 field.picker.title,Seed picker title; {n} = square number 1-36,Plant on square {n},Zasadit na políčko {n},new,h23b6b005
 field.picker.info,"Crop row in the seed picker; {stock} = seeds the player has, {time} = grow time (""3 hours"")",You have {stock} · grows in {time},Máš {stock} · zraje {time},new,h757c2c37
@@ -473,17 +473,28 @@ petDetail.reject.same,Pet detail page: the pet already has this name,That is alr
 petDetail.reject.cooldown,Pet detail page: renamed too quickly (10 s between names),Wait a few seconds before the next name,Před dalším jménem chvíli počkej,new,h27743d89
 petDetail.reject.filter,Pet detail page: Roblox's text check could not be reached; nothing was charged,"The name could not be checked, try again later","Jméno se nepodařilo zkontrolovat, zkus to později",new,h7bb6af51
 field.section.upgrades,"Garden panel: heading of the field upgrades (Growth, Barn)",Upgrades,Vylepšení,new,ha26b87eb
-field.upgrade.level,"Garden panel, upgrade row title; {name} = icon + upgrade name (""🌱 Growth""), {level} = level bought, {max} = top level",{name} · {level} / {max},{name} · {level} / {max},new,h59780255
+field.upgrade.level,"Garden panel, upgrade and tool row title; {name} = icon + name (""🌱 Growth"", ""✂️ Pruning shears""), {level} = level bought, {max} = top level",{name} · {level} / {max},{name} · {level} / {max},new,h59780255
 field.upgrade.growth,"Name of the field upgrade that makes crops grow faster (row title, toast)",Growth,Růst,new,h6f82fbe9
 field.upgrade.growth.effect,"Growth upgrade row, second line; {now} = % shorter grow times now, {next} = % at the next level (0-20)",Grow times −{now} % → −{next} %,Doba růstu −{now} % → −{next} %,new,hf1c5a382
 field.upgrade.growth.max,Growth upgrade row at the top level; {now} = % shorter grow times (20),Grow times −{now} %,Doba růstu −{now} %,new,hccbb4638
 field.upgrade.barn,"Name of the field upgrade that makes the barn bigger (row title, toast)",Barn,Stodola,new,h737b3f38
 field.upgrade.barn.effect,"Barn upgrade row, second line; {now} = seeds / crops the barn holds now, {next} = at the next level (40-140; Czech genitive plural)",Holds {now} → {next} seeds and crops,Pojme {now} → {next} semínek i plodin,new,h2d80a19d
 field.upgrade.barn.max,Barn upgrade row at the top level; {now} = seeds / crops the barn holds (140),Holds {now} seeds and crops,Pojme {now} semínek i plodin,new,h610b5b8c
-field.upgrade.price,"Upgrade buy button (narrow, ~104 px); {count} = price in Coins (1,500-60,000)",💰 {count},💰 {count},new,h5b33c8c5
+field.upgrade.price,"Upgrade and tool buy button (narrow, ~104 px); {count} = price in Coins (1,500-420,000)",💰 {count},💰 {count},new,h5b33c8c5
 field.upgrade.maxed,Upgrade button at the top level (greyed),Max,Max,new,h1ab2ab83
-field.toast.upgrade,"Toast after buying an upgrade level; {name} = upgrade name (Growth / Barn), {level} = new level",{name}: level {level}!,{name}: úroveň {level}!,new,hb5c08e2f
-field.reason.upgradeMaxed,Refused: the upgrade is already at its top level,Already at the top level,Už je na nejvyšší úrovni,new,hae9da8d5
+field.toast.upgrade,"Toast after buying an upgrade or tool level; {name} = upgrade / tool name (Growth, Barn, Seed sorter, Cloches, Pruning shears), {level} = new level",{name}: level {level}!,{name}: úroveň {level}!,new,hb5c08e2f
+field.reason.upgradeMaxed,Refused: the upgrade or tool is already at its top level,Already at the top level,Už je na nejvyšší úrovni,new,hae9da8d5
+field.section.tools,"Garden panel: heading of the garden tools (Seed sorter, Cloches, Pruning shears), below the upgrades",Tools,Nářadí,new,h0991921d
+field.tool.sorter,"Name of the garden tool that makes harvested crops bigger (row title, toast; it picks the best seeds)",Seed sorter,Třídička semínek,new,hecc00193
+field.tool.sorter.effect,"Seed sorter row, second line; {now} = % bigger crops now, {next} = % at the next level (0-15)",Crops {now} % bigger → {next} %,Plodiny o {now} % větší → o {next} %,new,hb7394619
+field.tool.sorter.max,Seed sorter row at the top level; {now} = % bigger crops (15),Crops {now} % bigger,Plodiny o {now} % větší,new,hb15180c8
+field.tool.cloches,"Name of the garden tool (glass bell covers over the crops) that makes crops grow faster while the player is in the game (row title, toast)",Cloches,Skleněné poklopy,new,h7f019ae3
+field.tool.cloches.effect,"Cloches row, second line; {now} = % faster growth while the player is online now, {next} = at the next level (0-20)",Crops grow {now} % faster while you play → {next} %,"Když hraješ, plodiny rostou o {now} % rychleji → o {next} %",new,h4839ed2c
+field.tool.cloches.max,Cloches row at the top level; {now} = % faster growth while online (20),Crops grow {now} % faster while you play,"Když hraješ, plodiny rostou o {now} % rychleji",new,h01752fd6
+field.tool.shears,"Name of the garden tool that sometimes gives a second crop per harvest (row title, toast)",Pruning shears,Zahradnické nůžky,new,hb5b46ab1
+field.tool.shears.effect,"Pruning shears row, second line; {now} = % chance of a second crop per harvest now, {next} = at the next level (0-15)",{now} % chance of a second crop → {next} %,Šance na druhou plodinu {now} % → {next} %,new,h479e57c4
+field.tool.shears.max,Pruning shears row at the top level; {now} = % chance of a second crop (15),{now} % chance of a second crop,Šance na druhou plodinu {now} %,new,h3c835d77
+field.toast.shears,Extra line of the harvest toast when the pruning shears gave a second crop of the same size,The shears got you a second one!,Nůžky ti daly ještě jednu!,new,h864aa450
 field.toast.harvestSize,"Toast after a harvest, first line; {crop} = crop name, {kg} = its weight with one decimal (""7.4"", Czech ""7,4"")",\+1 {crop} · {kg} kg,\+1 {crop} · {kg} kg,new,h767121e7
 field.size.big,"Harvest toast, second line: the crop rolled big (top 20 %); any crop, so keep it gender-neutral in Czech",Big one!,Pořádný kus!,new,h5fa3da2c
 field.size.giant,"Harvest toast, second line: the crop rolled giant (top 3 %); any crop, so keep it gender-neutral in Czech",Giant!,Obří kus!,new,hb84dd1bc

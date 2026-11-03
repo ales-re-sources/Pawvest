@@ -251,18 +251,19 @@ def apply_crop_config(P):
     exps = luau(f, "CropConfig.Expansions")
     if start + len(exps) != top:
         raise ValueError(f"CropConfig: StartSquares {start} + {len(exps)} Expansions != MaxSquares {top}")
-    rows, grid = luau(f, "CropConfig.RowWidths"), luau(f, "CropConfig.GridColumns")
+    rows, grid, start_open = luau(f, "CropConfig.RowWidths"), luau(f, "CropConfig.GridColumns"), luau(f, "CropConfig.StartOpen")
     if sum(rows) != top or max(rows) > grid:
         raise ValueError(f"CropConfig: RowWidths {rows} must add up to MaxSquares {top} and fit GridColumns {grid}")
     points = luau(f, "CropConfig.RenownPoints")
     cfg = {
         "crops": [[c["id"], c["tier"], c["growSeconds"] / 3600, c["sale"], c["seed"], c["renown"]] for c in crops],  # grow time in hours
         "squares": [start, top],
-        "rows": [list(rows), grid],  # E1d2: the field's shape
+        "rows": [list(rows), grid, list(start_open)],  # E1d2: the field's shape and the start block
         "expansions": [[e["price"], e["renown"]] for e in exps],
         "renown": [points, luau(f, "CropConfig.RenownK"), luau(f, "CropConfig.RenownP")],
         "barn_capacity": luau(f, "CropConfig.BarnCapacity"),
         "upgrades": [[u["id"], u["step"], list(u["prices"])] for u in luau(f, "CropConfig.Upgrades")],  # E1c1: [id, step, prices]
+        "tools": [[t["id"], list(t["effect"]), list(t["prices"]), list(t["renown"])] for t in luau(f, "CropConfig.Tools")],  # E1c3
         "size": [luau(f, "CropConfig.SizeSigma"), luau(f, "CropConfig.SizeZCap"), luau(f, "CropConfig.SizeBigZ"), luau(f, "CropConfig.SizeGiantZ")],  # E1c2
         "rates": [luau(f, "CropConfig.OnlineRate"), luau(f, "CropConfig.OfflineRate"), luau(f, "CropConfig.OfflineCapSeconds") / 3600],  # hours
         # field pets (E1b): slot prices, slots from pens; PetConfig's aptitude numbers
@@ -282,7 +283,7 @@ def apply_crop_config(P):
     gate.setdefault(1, 0)
     F = FIELD
     F["start_squares"], F["max_squares"] = start, top
-    F["pets"]["rows"], F["pets"]["grid"] = list(rows), grid
+    F["pets"]["rows"], F["pets"]["grid"], F["pets"]["start_open"] = list(rows), grid, list(start_open)
     F["expansions"] = [(start + k + 1, price, renown) for k, (price, renown) in enumerate(cfg["expansions"])]
     F["tier_gate"] = gate
     F["renown"].update({"k": cfg["renown"][1], "p": cfg["renown"][2], "weight": {t + 1: w for t, w in enumerate(points)}})
@@ -292,6 +293,13 @@ def apply_crop_config(P):
         if name not in F["upgrades"]:
             raise ValueError(f"CropConfig.Upgrades: {uid} has no FIELD upgrade the model simulates")
         F["upgrades"][name].update({"step": step, "prices": list(prices)})
+    for tid, effect, prices, renown in cfg["tools"]:
+        name = tid.lower()
+        if name not in F["tools"]:
+            raise ValueError(f"CropConfig.Tools: {tid} has no FIELD tool the model simulates")
+        if not len(effect) == len(prices) == len(renown):
+            raise ValueError(f"CropConfig.Tools: {tid} needs one effect, price and Renown level per level")
+        F["tools"][name].update({"effect": list(effect), "prices": list(prices), "renown": list(renown)})
     F["online_rate"], F["offline_rate"], F["offline_cap_h"] = cfg["rates"]
     FP = F["pets"]
     FP["slots"] = list(cfg["pet_slots"])
@@ -400,6 +408,7 @@ def pin_values(P):
         "crop_field_renown": P["crop_cfg"]["renown"],  # [points per harvest by tier, RenownK, RenownP]
         "crop_field_barn_capacity": P["crop_cfg"]["barn_capacity"],
         "crop_field_upgrades": P["crop_cfg"]["upgrades"],  # [id, step, prices] (E1c1)
+        "crop_field_tools": P["crop_cfg"]["tools"],  # [id, effect, prices, renown levels] (E1c3)
         "crop_field_size": P["crop_cfg"]["size"],  # [sigma, z cap, Big z, Giant z] of the size roll (E1c2)
         "crop_field_rates": P["crop_cfg"]["rates"],  # [online rate, offline rate, offline cap in hours]
         "field_pet_slots": P["crop_cfg"]["pet_slots"],  # CropConfig.PetSlotPrices
@@ -561,6 +570,7 @@ FIELD = {
         "xp_first": 10.0, "xp_ratio": 1.56,  # weighted field hours from level L to L + 1 = first x ratio^(L-1): Common cap ~2 weeks, level 10 ~3 months (Obby main)
         "rows": None,  # (CropConfig.RowWidths) the field's rows from the plot outwards, centred on "grid" columns (E1d2): reach is counted on it
         "grid": None,  # (CropConfig.GridColumns)
+        "start_open": None,  # (CropConfig.StartOpen) a new field's squares; the model opens the rest around them (open_order)
         "pouch": {"seeds": 0.1, "meter": 100},  # seed pouch: common seeds per medal finish; rare-seed meter: finishes per rare seed; both x (1 + Scouting effect); the daily first-run rare seed stays
     },
     "capacity": None,  # (CropConfig.BarnCapacity) seeds the stock holds and crops the barn holds between two visits (limits the Gardener's cycles)
@@ -572,7 +582,7 @@ FIELD = {
     },
     # Garden tools (E1c3, EXPANSION §6): per level the effect, the price and the Renown gate. Empty = not built; `tools` sweeps candidates.
     # sorter: expected size factor x (1 + effect) (best-seed picking); cloches: growth while the owner is online x (1 + effect), nothing offline;
-    # shears: chance of a second item per harvest (sale x (1 + effect); no extra Renown, no extra seed).
+    # shears: chance of a second item per harvest (sale x (1 + effect); no extra Renown, no extra seed). (CropConfig.Tools since E1c3)
     "tools": {
         "sorter": {"effect": [], "prices": [], "renown": []},
         "cloches": {"effect": [], "prices": [], "renown": []},
@@ -707,17 +717,27 @@ def eff_time(gap, length, cloche=1.0):
 _cover_cache = {}
 
 
+def open_order():
+    """(row, grid column) of every square in the order the model opens them (E1d2: the player picks any square): CropConfig.StartOpen
+    first, then the rest nearest to the start block's centre first (a compact field around the pets), ties row by row."""
+    grid, rows, start = FIELD["pets"]["grid"], FIELD["pets"]["rows"], FIELD["pets"]["start_open"]
+    cells = []  # square n (1-based) = cells[n - 1]: row by row from the plot, each row centred on the grid (CropConfig.Cell)
+    for r, width in enumerate(rows):
+        cells += [(r, (grid - width) // 2 + c) for c in range(width)]
+    first = [cells[n - 1] for n in start]
+    cr = sum(r for r, _ in first) / len(first)
+    cc = sum(c for _, c in first) / len(first)
+    rest = sorted((c for c in cells if c not in first), key=lambda rc: ((rc[0] - cr) ** 2 + (rc[1] - cc) ** 2, rc))
+    return first + rest
+
+
 def cover(squares, pets):
-    """Strength per square of a field of `squares` (rows of FIELD pets columns, the last row partial) worked by Tending pets
+    """Strength per square of a field of `squares` open squares (CropConfig's shape, opened as `open_order` gives) worked by Tending pets
     [(reach, strength)], placed greedily (strongest first, each where it adds the most); the same job does not stack (max counts)."""
     key = (squares, tuple(pets))
     if key in _cover_cache:
         return _cover_cache[key]
-    grid = FIELD["pets"]["grid"]
-    cells = []  # row-major from the plot, each row centred on the grid (CropConfig.Cell); the model opens squares in this order
-    for r, width in enumerate(FIELD["pets"]["rows"]):
-        cells += [(r, (grid - width) // 2 + c) for c in range(width)]
-    cells = cells[:squares]
+    cells = open_order()[:squares]
     best = [0.0] * squares
     taken = set()
     for reach, s in sorted(pets, key=lambda p: (-p[1], -p[0])):

@@ -45,6 +45,7 @@ local placePetEvent = remotes:WaitForChild("PlacePet")
 local liftPetEvent = remotes:WaitForChild("LiftPet")
 local buyPetSlotEvent = remotes:WaitForChild("BuyPetSlot")
 local buyUpgradeEvent = remotes:WaitForChild("BuyUpgrade")
+local buyToolEvent = remotes:WaitForChild("BuyTool")
 local requestStateEvent = remotes:WaitForChild("RequestState")
 
 local SHOW_DISTANCE = 45 -- studs from the plot centre: the Field button is visible within this
@@ -107,6 +108,12 @@ local PET_ACTIONS = { PlacePet = true, LiftPet = true, BuyPetSlot = true }
 local UPGRADE_KEYS = {
 	Growth = { name = "field.upgrade.growth", effect = "field.upgrade.growth.effect", max = "field.upgrade.growth.max" },
 	Barn = { name = "field.upgrade.barn", effect = "field.upgrade.barn.effect", max = "field.upgrade.barn.max" },
+}
+-- the garden tools' texts (E1c3), the same shape; every effect is shown in %
+local TOOL_KEYS = {
+	Sorter = { name = "field.tool.sorter", effect = "field.tool.sorter.effect", max = "field.tool.sorter.max" },
+	Cloches = { name = "field.tool.cloches", effect = "field.tool.cloches.effect", max = "field.tool.cloches.max" },
+	Shears = { name = "field.tool.shears", effect = "field.tool.shears.effect", max = "field.tool.shears.max" },
 }
 
 local function create(className: string, props, children)
@@ -244,6 +251,7 @@ local seedsSection = newSection("Seeds", 4)
 local cropsSection = newSection("Crops", 5)
 local expandSection = newSection("Expand", 6)
 local upgradesSection = newSection("Upgrades", 7)
+local toolsSection = newSection("Tools", 8)
 
 local content = create("ScrollingFrame", {
 	Name = "Content",
@@ -264,6 +272,7 @@ local content = create("ScrollingFrame", {
 	cropsSection,
 	expandSection,
 	upgradesSection,
+	toolsSection,
 })
 
 local panel = create("Frame", {
@@ -702,6 +711,55 @@ local function renderUpgrades(field)
 	end
 end
 
+-- The garden tools (E1c3): like the upgrades, and each level needs a Renown level (a red line while it is too low).
+local function renderTools(field)
+	clearSection(toolsSection)
+	heading(toolsSection, 1, Locale.T("field.section.tools"))
+	for index, tool in CropConfig.Tools do
+		local keys = TOOL_KEYS[tool.id]
+		local level = CropConfig.ToolLevel(field.tools, tool.id)
+		local price = tool.prices[level + 1]
+		local function percent(at: number): number
+			return if at > 0 then math.floor(tool.effect[at] * 100 + 0.5) else 0
+		end
+		local info = if price
+			then Locale.T(keys.effect, { now = percent(level), next = percent(level + 1) })
+			else Locale.T(keys.max, { now = percent(level) })
+		local row = newRow(toolsSection, tool.id, index + 1)
+		local column = textColumn(
+			row,
+			UPGRADE_WIDTH + GAP,
+			Locale.T("field.upgrade.level", { name = tool.icon .. " " .. Locale.T(keys.name), level = level, max = #tool.prices }),
+			info
+		)
+		local renownOk = not price or field.level >= tool.renown[level + 1]
+		if not renownOk then
+			paragraph("Renown", {
+				LayoutOrder = 3,
+				TextSize = 13,
+				TextColor3 = COLOR_ERROR,
+				Text = Locale.T("field.expand.needRenown", { level = tool.renown[level + 1] }),
+			}).Parent =
+				column
+		end
+		local affordable = price ~= nil and renownOk and coinsNow() >= price
+		local buy = button("Buy", {
+			LayoutOrder = 2,
+			Size = UDim2.fromOffset(UPGRADE_WIDTH, 40),
+			BackgroundColor3 = if affordable then COLOR_BUY else COLOR_LOCKED,
+			TextSize = 15,
+			TextWrapped = true,
+			Text = if price then Locale.T("field.upgrade.price", { count = price }) else Locale.T("field.upgrade.maxed"),
+			Parent = row,
+		}, 2)
+		if price then
+			buy.Activated:Connect(function()
+				buyToolEvent:FireServer(tool.id, level)
+			end)
+		end
+	end
+end
+
 local function renderPanel()
 	titleLabel.Text = Locale.T("field.title")
 	if not panelPoint then
@@ -717,6 +775,7 @@ local function renderPanel()
 		clearSection(cropsSection)
 		clearSection(expandSection)
 		clearSection(upgradesSection)
+		clearSection(toolsSection)
 		return
 	end
 	renderHeader(field)
@@ -726,6 +785,7 @@ local function renderPanel()
 	renderCrops(field)
 	renderExpand(field)
 	renderUpgrades(field)
+	renderTools(field)
 end
 
 -- Picker rendering ----------------------------------------------------------------------------------------------------------
@@ -1096,12 +1156,13 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 	if PET_ACTIONS[action] then
 		return petResult(action, ok, detail)
 	end
-	if action == "BuyUpgrade" then
+	if action == "BuyUpgrade" or action == "BuyTool" then
+		local names = if action == "BuyTool" then TOOL_KEYS else UPGRADE_KEYS
 		if not ok then
 			local key = if detail == "maxed" then "field.reason.upgradeMaxed" else REJECT_KEYS[detail]
 			showToast(Locale.T(key or "common.reject.failed"), COLOR_ERROR)
-		elseif type(detail) == "table" and UPGRADE_KEYS[detail.id] then
-			showToast(Locale.T("field.toast.upgrade", { name = Locale.T(UPGRADE_KEYS[detail.id].name), level = detail.level }), COLOR_OK)
+		elseif type(detail) == "table" and names[detail.id] then
+			showToast(Locale.T("field.toast.upgrade", { name = Locale.T(names[detail.id].name), level = detail.level }), COLOR_OK)
 		end
 		return
 	end
@@ -1117,6 +1178,9 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 	if action == "Harvest" then
 		local size = if type(detail.size) == "number" then detail.size else 1
 		local lines = { Locale.T("field.toast.harvestSize", { crop = name, kg = kgText(crop, size) }) }
+		if detail.extra then
+			table.insert(lines, Locale.T("field.toast.shears"))
+		end
 		local tag = CropConfig.SizeLabel(size)
 		local extra = {}
 		if tag then

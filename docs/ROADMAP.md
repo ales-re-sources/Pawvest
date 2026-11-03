@@ -50,7 +50,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E1c2 | Size roll (lognormal, Big / Giant, best per crop, sizes in the barn) | ✔ | ✔ | – |
 | E1d1 | Farming-first numbers (F2: crop prices × 9.3, new square / upgrade prices, five field pet slots) | ✔ | ✔ | – |
 | E1d2 | 36-square field (rows 6-6-8-8-8 behind an incubator strip), squares chosen freely, price by the number open | ✔ | ✔ | – |
-| E1c3–E5 | Garden MVP (see "Next"; E1c3–E1c4 scoped in outline; E1c3 next: tool numbers to approve) | – | – | – |
+| E1c3 | Garden tools tier 1 (Seed sorter, Cloches, Pruning shears; Renown-gated levels) | ✔ | ✔ | – |
+| E1c4–E5 | Garden MVP (see "Next"; E1c4 scoped in outline) | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
 
@@ -326,8 +327,55 @@ next join migrates it as in check 1.
 Not covered: a second client watching the purchase, phone layout, a player without field access.
 - **Later (parked):** rubble / weeds on locked squares, cleared with tools (EXPANSION §6).
 
-**F2 approved by the user (2026-11-03).** F2's model also has the tools at EXPANSION sizes (E1c3's numbers, still to approve).
-Until E1c3 (tools) is built, `economy.py check` keeps failing Casual's lead (with 36 squares and no tools: 2.93x day 7, 9.93x day 30).
+**F2 approved by the user (2026-11-03).** F2's model also has the tools at EXPANSION sizes (built in E1c3).
+
+**E1c3 — Garden tools tier 1.** Numbers approved by the user (2026-11-03, "approve with gate tweak"): the EXPANSION §6 effect sizes, prices × 9.33 like
+F2, and squares 7-11 one Renown level lower (4, 5, 6, 7, 9 instead of 5, 6, 7, 8, 10). With the tools at F2's numbers alone, Casual's day-7 lead was
+2.93x; the reach of the open squares was not the cause (opening them compactly changed nothing by day 7), the gates were.
+| Tool | Effect per level | Prices | Renown |
+|---|---|---|---|
+| 🔍 Seed sorter | size factor × 1.05 / 1.10 / 1.15 | 46 700 / 140 000 / 373 300 | 10 / 18 / 28 |
+| 🔔 Cloches | online growth × 1.07 / 1.14 / 1.20 (nothing offline) | 37 300 / 112 000 / 280 000 | 6 / 14 / 24 |
+| ✂️ Pruning shears | 5 / 10 / 15 % chance of a second crop of the same size | 56 000 / 168 000 / 420 000 | 12 / 20 / 30 |
+- **Data:** `Garden.Tools = { Sorter, Cloches, Shears }` (levels; ids stored, never renamed), cleaned on load.
+- **Server (`GardenField`):** `BuyTool(id, expectedLevel)` → `maxed` / `stale` / `renown` / `coins`, else `{ id, level, price }`.
+  - Sorter: every harvest (owner and Tending) stores `SizeFactor × (1 + effect)`; `SizeBounds` widens with the top level.
+  - Cloches: the online settle's crop growth × (1 + effect), and the State countdown uses the same speed; the absence settle and the pets' aptitude XP do not change.
+  - Shears: a roll from the owner and the planting number (its own seed, like Tending's), so a re-join never rerolls. The second crop adds to Items /
+    ItemSize, gives no Renown or seed. A Tending pet takes it only while the barn has room; the join notice counts it.
+  - The harvest answer carries `extra = true`; State `field.tools`.
+- **Client (`FieldClient`):** a Tools section under the upgrades: level, effect now → next in %, the Renown needed in red, price / Max; the BuyTool
+  toast reuses the upgrade toast; the harvest toast adds "The shears got you a second one!".
+- **Model:** `economy.py` reads `CropConfig.Tools` (pinned as `crop_field_tools`). `check` passes 51 / 51: Casual 3.03x / 7.7x / 12.6x on days
+  7 / 14 / 30, Garden main's parity 0.99x, Obby main 3.22x by day 7.
+
+**Implemented (2026-11-03).** `CropConfig`, `GardenField`, `FieldClient`, the `Locale.Number` fix; strings: 11 rows (`field.section.tools`, `field.tool.*`, `field.toast.shears`),
+5 contexts widened to tools; `economy.py` and its pins.
+
+**Acceptance checks (E1c3).**
+1. Purchases at Renown level 12 with 50 000 Coins: Cloches 1 (37 300) works; Sorter 1 → `coins`, then after +Coins it works; Cloches 2 → `renown`
+   (14); Shears at level 3 → `maxed`; a stale level → `stale`.
+2. Sorter: the harvest answer's size = `SizeFactor(user, N) × 1.05`.
+3. Shears (level 3): planting 101 (roll < 0.15) gives 2 crops and `extra`, planting 100 gives 1.
+4. Tending + Shears in the join settle: the Fox on square 30 harvests planting 183 → 2 Potatoes, the notice says 2.
+5. Cloches: a fresh Potato's countdown (300 s) is 300 s before the purchase and 281 s after it.
+6. The panel in Czech: the Tools rows, the red Renown line, the toasts; no console errors; the live profile snapshotted before and restored after.
+
+**Studio-validated (2026-11-03).** All six checks passed. Fixture: Coins 50 000, Renown 160 points (level 12), Shears 3, open 3, 4, 9, 10, 30.
+1. Cloches 1 bought for 37 300. Sorter 1 → `coins`, Cloches 2 → `renown`, Shears → `maxed`, Cloches at level 0 → `stale`; an unknown id is ignored.
+   After 4 × +Coins the Sorter cost 46 700 (Coins 16 000 left, as the HUD showed).
+2. With the Sorter, planting 201's harvest answered size 0.8201 = `SizeFactor(201)` 0.7811 × 1.05.
+3. Planting 101: `extra = true`, Items 3 → 5; planting 100: no extra, 5 → 6. Both without the Sorter at the time, sizes equal to `SizeFactor`.
+4. The join settle: the Fox harvested planting 183 → Potato 2, ItemSize 1.5017 (2 × 0.7508), notice `tended = { Potato = 2 }`, replanted from Seeds (7 → 6).
+5. A fresh Potato's countdown: 299 s before Cloches 1, 279 s after ((300 − 1) / 1.07).
+6. The Czech panel: "Nářadí", "Třídička semínek · 1 / 3", "Plodiny o 5 % větší → o 10 %", "Potřebuješ Pověst 18", "Skleněné poklopy",
+   "Zahradnické nůžky · 3 / 3", "Max"; every button glyph fits. No warnings or errors on the server or the client.
+   **Found and fixed:** `Locale.Number` wrote the Czech thousands separator (no-break space, 2 bytes) with its bytes swapped, because it groups the
+   reversed string. Every Czech number from 10 000 up had shown "��" since L1, and six-digit numbers also had a stray leading separator. It now
+   writes "112 000", "1 234 567" and "1500"; English is unchanged. The tools' "%" now sits behind a no-break space.
+Snapshot, fixture and restore ran through `BindToClose` writes (AGENTS.md → Testing; the kick recipe ends the playtest now). The restore wrote the old-format
+profile back (Count 5): the user's next join migrates it as in E1d2.
+Not covered: a phone layout, a Tending pet's second crop against a full barn, a second client.
 
 ### E1c — Size roll, tools, field upgrades, market cart (scope 2026-11-02, the user's decisions)
 Split into four steps, each validated and committed on its own (decided 2026-11-02):
@@ -335,7 +383,7 @@ Split into four steps, each validated and committed on its own (decided 2026-11-
 - **E1c2 Size roll** (EXPANSION §5.3, without variants): scope below.
 - **E1c3 Tools tier 1** (Seed sorter, Cloches, Pruning shears, EXPANSION §6). **Decided:** `economy.py` first models the tools and the size roll
   (the sensitivity run already fails A at +20 % income), then effect sizes and prices go to the user for approval, as the field-pet re-run did.
-  **On hold since 2026-11-02:** the user made farming the main game. The 24-hour rule is replaced by parity over days 1-3 and a lead of 3x by day 7 and 10x by day 30.
+  **Built 2026-11-03 (above).** It was on hold from 2026-11-02: the user made farming the main game. The 24-hour rule is replaced by parity over days 1-3 and a lead of 3x by day 7 and 10x by day 30.
   The field's economy is being re-tuned first (ECONOMY.md → "Direction change", candidate F1: crop prices × 9.7, 36 squares, early gates); under it the
   tools fit at their EXPANSION sizes.
 - **E1c4 Market cart** (EXPANSION §5.2). **Decided:** seeds only for now (fertilisers and decor do not exist): 3-4 daily offers from the UTC day

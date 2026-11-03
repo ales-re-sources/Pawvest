@@ -37,11 +37,11 @@ CropConfig.StartSeeds = { Potato = 4 }
 CropConfig.Expansions = {
 	{ price = 1400, renown = 0 },
 	{ price = 1700, renown = 0 },
-	{ price = 2100, renown = 5 },
-	{ price = 2600, renown = 6 },
-	{ price = 3200, renown = 7 },
-	{ price = 4000, renown = 8 },
-	{ price = 4900, renown = 10 },
+	{ price = 2100, renown = 4 }, -- squares 7-11 one Renown level below F2 (E1c3, user 2026-11-03: Casual's day-7 lead)
+	{ price = 2600, renown = 5 },
+	{ price = 3200, renown = 6 },
+	{ price = 4000, renown = 7 },
+	{ price = 4900, renown = 9 },
 	{ price = 6000, renown = 11 },
 	{ price = 7400, renown = 12 },
 	{ price = 9200, renown = 13 },
@@ -84,6 +84,20 @@ CropConfig.Upgrades = {
 CropConfig.UpgradeById = {}
 for _, upgrade in CropConfig.Upgrades do
 	CropConfig.UpgradeById[upgrade.id] = upgrade
+end
+
+-- Garden tools (E1c3, docs/EXPANSION.md §6; numbers approved 2026-11-03, docs/ECONOMY.md → "Garden tools at F2"): levels bought with
+-- Coins, each level gated by a Renown level; Garden.Tools[id] = level. effect[n] at level n: Sorter = a harvest's size factor x (1 + effect)
+-- (owner and Tending pets alike); Cloches = growth while the owner is online x (1 + effect), nothing offline; Shears = the chance of a second
+-- crop of the same size per harvest (no extra Renown, no seed). Ids are stored: never rename one.
+CropConfig.Tools = {
+	{ id = "Sorter", icon = "🔍", effect = { 0.05, 0.10, 0.15 }, prices = { 46700, 140000, 373300 }, renown = { 10, 18, 28 } },
+	{ id = "Cloches", icon = "🔔", effect = { 0.07, 0.14, 0.20 }, prices = { 37300, 112000, 280000 }, renown = { 6, 14, 24 } },
+	{ id = "Shears", icon = "✂️", effect = { 0.05, 0.10, 0.15 }, prices = { 56000, 168000, 420000 }, renown = { 12, 20, 30 } },
+}
+CropConfig.ToolById = {}
+for _, tool in CropConfig.Tools do
+	CropConfig.ToolById[tool.id] = tool
 end
 
 -- Field pets (E1b, docs/ECONOMY.md → "Field-pet re-run"; five slots since E1d1): PetSlotPrices[n] = price of the n-th field pet slot (slot 1 is free).
@@ -144,6 +158,22 @@ function CropConfig.UpgradeLevel(upgrades, id: string): number
 	return math.clamp(math.floor(level), 0, #upgrade.prices)
 end
 
+-- Level 0..max of tool `id` in `tools` (Garden.Tools or the panel state's field.tools).
+function CropConfig.ToolLevel(tools, id: string): number
+	local tool = CropConfig.ToolById[id]
+	local level = type(tools) == "table" and tools[id]
+	if not tool or type(level) ~= "number" or level ~= level then
+		return 0
+	end
+	return math.clamp(math.floor(level), 0, #tool.prices)
+end
+
+-- The effect of tool `id` at its level in `tools` (0 without the tool).
+function CropConfig.ToolEffect(tools, id: string): number
+	local level = CropConfig.ToolLevel(tools, id)
+	return if level > 0 then CropConfig.ToolById[id].effect[level] else 0
+end
+
 -- How much faster crops grow at Growth level `level` (earned growth seconds are multiplied by this).
 function CropConfig.GrowthSpeed(level: number): number
 	return 1 / (1 - CropConfig.UpgradeById.Growth.step * level)
@@ -169,9 +199,10 @@ function CropConfig.SizeFactor(userId: number, planting: number): number
 	return sizeOf(math.clamp(z, -CropConfig.SizeZCap, CropConfig.SizeZCap))
 end
 
--- The smallest and the largest size factor the roll can give.
+-- The smallest and the largest size factor a harvest can give (the largest with the top Seed sorter level).
 function CropConfig.SizeBounds(): (number, number)
-	return sizeOf(-CropConfig.SizeZCap), sizeOf(CropConfig.SizeZCap)
+	local sorter = CropConfig.ToolById.Sorter
+	return sizeOf(-CropConfig.SizeZCap), sizeOf(CropConfig.SizeZCap) * (1 + sorter.effect[#sorter.effect])
 end
 
 -- "Giant", "Big" or nil for a size factor.
