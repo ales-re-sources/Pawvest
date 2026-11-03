@@ -52,7 +52,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E1d2 | 36-square field (rows 6-6-8-8-8 behind an incubator strip), squares chosen freely, price by the number open | ✔ | ✔ | – |
 | E1c3 | Garden tools tier 1 (Seed sorter, Cloches, Pruning shears; Renown-gated levels) | ✔ | ✔ | – |
 | E1c4 | Daily market cart (two seed bargains, a taste of the next locked crop from Renown 3) | ✔ | ✔ | – |
-| E1d3–E5 | Garden MVP (see "Next") | – | – | – |
+| E2–E5 | Garden MVP (see "Next") | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
 
