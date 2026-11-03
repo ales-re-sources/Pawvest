@@ -351,6 +351,9 @@ local screenGui = create("ScreenGui", {
 	Name = "FieldGui",
 	ResetOnSpawn = false,
 	DisplayOrder = 6,
+	-- Sibling: the picker (a later sibling) draws above the whole panel. Global let the panel's stud-button glyphs (ZIndex 2) show through
+	-- the picker's rows when both were open (found in E1c4)
+	ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 	AutoLocalize = false, -- translated by Locale (L2)
 }, { openButton, panel, picker, toast })
 

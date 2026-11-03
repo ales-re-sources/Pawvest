@@ -443,8 +443,8 @@ Garden panel (a physical cart can come with the art pass).
 
 Snapshot, fixture and restore ran through `BindToClose` writes. Not covered: the panel's re-request at 00:00 UTC (the server's day change was tested
 with a stored day), a second client, phone layout.
-**Found, not fixed (older than E1c4):** with the Garden panel open, the seed picker opens under the panel's stud buttons (their glyphs draw over
-the picker's rows).
+**Found and fixed (older than E1c4):** with the Garden panel open, the seed picker opened under the panel's stud buttons (their glyphs, ZIndex 2,
+drew over the picker's rows). `FieldGui` now uses `ZIndexBehavior = Sibling`; checked in Studio with both open.
 
 **E1c2 — Size roll.** Design check: EXPANSION §5.3 (a continuous roll with a long tail, sale value × size, expected value 1.0 without
 tools so the ladder holds, labels normal / Big / Giant, a personal best per crop, the roll fixed per planting so a re-join cannot reroll it,
