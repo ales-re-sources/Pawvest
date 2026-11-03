@@ -23,6 +23,23 @@
   "Talent": 100
  },
  "crop_field_barn_capacity": 40,
+ "crop_field_cart": [
+  [
+   [
+    10,
+    0.3
+   ],
+   [
+    5,
+    0.5
+   ]
+  ],
+  [
+   2,
+   1,
+   3
+  ]
+ ],
  "crop_field_crops": [
   [
    "Potato",

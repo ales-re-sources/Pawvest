@@ -24,12 +24,16 @@
 -- Sorter multiplies every harvest's size factor; Cloches multiply the growth earned while the owner is online (not the absence,
 -- not the pets' aptitude XP); Shears give a second crop of the same size with their chance, rolled per planting number like
 -- Tending (no Renown or seed for it; a Tending pet's second crop needs room in the barn).
+-- Market cart (E1c4): CropConfig.CartOffers(today's UTC day, Renown level) are today's offers; Garden.Cart = { Day, Bought = { [key] = n } }
+-- counts what the player bought of each (key = crop id, + "*" for the taste), reset when the day changes. BuyCart(slot, crop, count) sells
+-- at the offer's price; the seeds join Seeds (within the barn). Plant needs only the seeds: a taste crop can be planted before its Renown
+-- gate (BuySeeds keeps the gate).
 -- The field's shape is CropConfig.RowWidths (E1d2: 36 squares on a grid); the player opens any locked square (BuySquare), the price
 -- and Renown gate come from the number already open (CropConfig.NextExpansion). Fields from before E1d2 (Count = the first squares
 -- of a 4 x 3 field) move onto rows 1-3 (CropConfig.FromOldSquare), with their crops and field pets.
 -- Remotes (in GardenRemotes): Plant(square, crop), Harvest(square), BuySeeds(crop, count), Sell(crop, count),
 -- BuySquare(square, expectedOpen), PlacePet(square, uid) (also moves a placed pet), LiftPet(uid), BuyPetSlot(expectedSlots),
--- BuyUpgrade(id, expectedLevel), BuyTool(id, expectedLevel) (client → server); answers on GardenRemotes.Result; GardenRemotes.State.field (the owner's panel).
+-- BuyUpgrade(id, expectedLevel), BuyTool(id, expectedLevel), BuyCart(slot, crop, count) (client → server); answers on GardenRemotes.Result; GardenRemotes.State.field (the owner's panel).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -52,6 +56,7 @@ local liftPetEvent = GardenService.Remote("LiftPet") -- client → server: (uid:
 local buyPetSlotEvent = GardenService.Remote("BuyPetSlot") -- client → server: (expectedSlots: number)
 local buyUpgradeEvent = GardenService.Remote("BuyUpgrade") -- client → server: (id: string, expectedLevel: number)
 local buyToolEvent = GardenService.Remote("BuyTool") -- client → server: (id: string, expectedLevel: number)
+local buyCartEvent = GardenService.Remote("BuyCart") -- client → server: (slot: number, crop: string, count: number)
 
 local reject = GardenService.Reject
 
@@ -203,6 +208,16 @@ local function fieldOf(player: Player, profile)
 		tools[tool.id] = if level > 0 then level else nil
 	end
 	garden.Tools = tools
+	local cart = type(garden.Cart) == "table" and garden.Cart
+	local bought = {}
+	if cart and type(cart.Day) == "number" and type(cart.Bought) == "table" then
+		for key, n in cart.Bought do
+			if type(key) == "string" and CropConfig.ById[(string.gsub(key, "%*$", ""))] and count(n) > 0 then
+				bought[key] = count(n)
+			end
+		end
+	end
+	garden.Cart = { Day = if cart and type(cart.Day) == "number" then cart.Day else 0, Bought = bought }
 
 	-- field pets: an owned pet with the job's aptitude, not penned, on an owned square of its own, within the slots (in uid order);
 	-- PetService unequips a field pet (equipped and on the field never both)
@@ -242,6 +257,18 @@ local function fieldOf(player: Player, profile)
 	return field, open
 end
 GardenField.FieldOf = fieldOf
+
+-- Garden.Cart for today (a new day starts with nothing bought), and the key under which offer `offer` counts.
+local function cartToday(garden)
+	local today = CropConfig.CartDay(os.time())
+	if garden.Cart.Day ~= today then
+		garden.Cart = { Day = today, Bought = {} }
+	end
+	return garden.Cart, today
+end
+local function cartKey(offer): string
+	return offer.crop.id .. (if offer.taste then "*" else "")
+end
 
 -- Whether the Shears give planting number `n` of `player` a second crop: the same planting always rolls the same.
 local function shearsExtra(player: Player, garden, n: number): boolean
@@ -355,6 +382,26 @@ local function settle(player: Player, profile, field, open, absence: boolean): (
 end
 GardenField.Settle = settle
 
+-- Today's market cart for the panel: { nextAt = server time of the next offers, offers = { { slot, crop, count, left, price, base,
+-- discount?, taste? } } }.
+local function cartState(garden)
+	local cart, today = cartToday(garden)
+	local offers = {}
+	for _, offer in CropConfig.CartOffers(today, CropConfig.RenownLevel(garden.Renown)) do
+		table.insert(offers, {
+			slot = offer.slot,
+			crop = offer.crop.id,
+			count = offer.count,
+			left = math.max(0, offer.count - (cart.Bought[cartKey(offer)] or 0)),
+			price = offer.price,
+			base = offer.crop.seed,
+			discount = offer.discount,
+			taste = offer.taste,
+		})
+	end
+	return { nextAt = (today + 1) * CropConfig.DaySeconds, offers = offers }
+end
+
 -- What GardenRemotes.State.field holds for the owner's panel, or nil without a field.
 GardenService.AddStateField("field", function(profile)
 	local owner = nil
@@ -418,6 +465,7 @@ GardenService.AddStateField("field", function(profile)
 		upgrades = table.clone(field.Upgrades),
 		barn = CropConfig.BarnFor(CropConfig.UpgradeLevel(field.Upgrades, "Barn")),
 		tools = table.clone(garden.Tools),
+		cart = cartState(garden),
 		notice = notices[owner],
 	}
 end)
@@ -498,10 +546,7 @@ plantEvent.OnServerEvent:Connect(function(player, square, cropId)
 	if field.Squares[tostring(square)] then
 		return reject(player, "Plant", "occupied")
 	end
-	if CropConfig.RenownLevel(garden.Renown) < crop.renown then
-		return reject(player, "Plant", "renown")
-	end
-	if (garden.Seeds[crop.id] or 0) < 1 then
+	if (garden.Seeds[crop.id] or 0) < 1 then -- no Renown gate: seeds held (the market cart's taste) can always be planted
 		return reject(player, "Plant", "seeds")
 	end
 
@@ -659,6 +704,45 @@ buyUpgradeEvent.OnServerEvent:Connect(function(player, id, expected)
 	PlayerProfile.AddCoins(player, -price) -- the field was settled at the old rate just now (usableField)
 	field.Upgrades[upgrade.id] = level + 1
 	done(player, "BuyUpgrade", { id = upgrade.id, level = level + 1, price = price })
+end)
+
+buyCartEvent.OnServerEvent:Connect(function(player, slot, cropId, amount)
+	if
+		not (GardenService.WholeNumber(slot) and type(cropId) == "string" and GardenService.WholeNumber(amount) and amount >= 1)
+		or not GardenService.Allow(player)
+	then
+		return
+	end
+	local profile, field = usableField(player, "BuyCart")
+	if not field then
+		return
+	end
+	local garden = profile.Garden
+	local cart, today = cartToday(garden)
+	local offer = CropConfig.CartOffers(today, CropConfig.RenownLevel(garden.Renown))[slot]
+	if not offer or offer.crop.id ~= cropId then
+		return reject(player, "BuyCart", "stale") -- a new day, a Renown level-up or an old panel
+	end
+	local key = cartKey(offer)
+	local left = offer.count - (cart.Bought[key] or 0)
+	if left < 1 then
+		return reject(player, "BuyCart", "soldout")
+	end
+	if amount > left then
+		return reject(player, "BuyCart", "stale")
+	end
+	if CropConfig.SeedTotal(garden.Seeds) + amount > CropConfig.BarnFor(CropConfig.UpgradeLevel(field.Upgrades, "Barn")) then
+		return reject(player, "BuyCart", "barn")
+	end
+	local price = offer.price * amount
+	if profile.Coins < price then
+		return reject(player, "BuyCart", "coins")
+	end
+
+	PlayerProfile.AddCoins(player, -price)
+	garden.Seeds[offer.crop.id] = (garden.Seeds[offer.crop.id] or 0) + amount
+	cart.Bought[key] = (cart.Bought[key] or 0) + amount
+	done(player, "BuyCart", { crop = offer.crop.id, count = amount, price = price, taste = offer.taste })
 end)
 
 buyToolEvent.OnServerEvent:Connect(function(player, id, expected)

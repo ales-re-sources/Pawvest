@@ -349,7 +349,7 @@ field.picker.shop,Button in the seed picker without seeds: opens the field panel
 field.toast.sell[one],Toast after selling crops; {count} = Coins paid (pet bonus included). Form for 1,\+{count} Coin,\+{count} mince,new,h1befc8cc
 field.toast.sell[few],Form for 2-4 (Czech only),,\+{count} mince,new,h1befc8cc
 field.toast.sell[other],Form for 0 and 5+,\+{count} Coins,\+{count} mincí,new,h1befc8cc
-field.toast.seeds,"Toast after buying seeds; {crop} = crop name, {count} = how many seeds",Seeds: {crop} +{count},Semínka: {crop} +{count},new,h2341f01e
+field.toast.seeds,"Toast after buying seeds (catalogue or market cart); {crop} = crop name, {count} = how many seeds",Seeds: {crop} +{count},Semínka: {crop} +{count},new,h2341f01e
 field.toast.square,Toast after buying a square; {n} = its number,Square {n} bought!,Políčko {n} je tvoje!,new,h3dcc928c
 field.toast.plant,Toast after planting; {crop} = crop name,Planted: {crop},Zasazeno: {crop},new,h16c26af5
 field.prompt.plant,Prompt action text on an empty field square (short verb),Plant,Zasadit,new,h56269bbe
@@ -495,6 +495,14 @@ field.tool.shears,"Name of the garden tool that sometimes gives a second crop pe
 field.tool.shears.effect,"Pruning shears row, second line; {now} = % chance of a second crop per harvest now, {next} = at the next level (0-15)",{now} % chance of a second crop → {next} %,Šance na druhou plodinu {now} % → {next} %,new,h479e57c4
 field.tool.shears.max,Pruning shears row at the top level; {now} = % chance of a second crop (15),{now} % chance of a second crop,Šance na druhou plodinu {now} %,new,h3c835d77
 field.toast.shears,Extra line of the harvest toast when the pruning shears gave a second crop of the same size,The shears got you a second one!,Nůžky ti daly ještě jednu!,new,h864aa450
+field.section.cart,"Garden panel: heading of the market cart (daily seed offers), below the seed list",Market cart,Tržní vozík,new,h106eea78
+field.cart.next,"Market cart, line under the heading; {time} = countdown to the next offers (""5:12:09"")",New offers in {time},Nové nabídky za {time},new,h204b4274
+field.cart.row,"Market cart offer row title; {crop} = icon + crop name, {left} = seeds still for sale today, {count} = seeds in the offer",{crop} · {left} / {count},{crop} · {left} / {count},new,h4b38380b
+field.cart.bargain,"Market cart bargain row, second line; {percent} = discount (30, 50), {price} = Coins per seed now, {base} = the usual price per seed",{percent} % off · {price} a seed instead of {base},Sleva {percent} % · {price} za semínko místo {base},new,he5cf2e59
+field.cart.taste,"Market cart taste row, second line: seeds of a crop the player has not unlocked yet; {level} = Renown level that unlocks it, {price} = Coins per seed",A taste before Renown {level} · {price} a seed,Ochutnávka před Pověstí {level} · {price} za semínko,new,h4471d2c6
+field.cart.soldOut,"Market cart button when the player bought the whole offer today (narrow, ~104 px)",Sold out,Vyprodáno,new,hb69f33b1
+field.cart.note,"Market cart, small note at the end of the section",Offers change every day at 00:00 UTC. Seeds from the cart can be planted before their Renown level.,Nabídky se mění každý den v 00:00 UTC. Semínka z vozíku zasadíš i před potřebnou Pověstí.,new,hb014e105
+field.reason.soldOut,Refused: the player already bought the whole market cart offer today,Sold out for today,Pro dnešek vyprodáno,new,ha4bd2066
 field.toast.harvestSize,"Toast after a harvest, first line; {crop} = crop name, {kg} = its weight with one decimal (""7.4"", Czech ""7,4"")",\+1 {crop} · {kg} kg,\+1 {crop} · {kg} kg,new,h767121e7
 field.size.big,"Harvest toast, second line: the crop rolled big (top 20 %); any crop, so keep it gender-neutral in Czech",Big one!,Pořádný kus!,new,h5fa3da2c
 field.size.giant,"Harvest toast, second line: the crop rolled giant (top 3 %); any crop, so keep it gender-neutral in Czech",Giant!,Obří kus!,new,hb84dd1bc

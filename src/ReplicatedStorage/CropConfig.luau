@@ -86,6 +86,16 @@ for _, upgrade in CropConfig.Upgrades do
 	CropConfig.UpgradeById[upgrade.id] = upgrade
 end
 
+-- Market cart (E1c4, docs/EXPANSION.md §5.2; approved 2026-11-03): daily offers from the UTC day. Each bargain sells `count` seeds of a
+-- different unlocked crop at (1 - discount) of the catalogue price; the taste sells `count` seeds of the next locked crop at the catalogue
+-- price × `price`, offered from Renown level `fromLevel` (earlier tastes broke the day 1-3 parity in economy.py). Quantities are per player
+-- and day (Garden.Cart). Seeds the player holds can be planted before their Renown gate; the catalogue keeps it.
+CropConfig.Cart = {
+	bargains = { { count = 10, discount = 0.3 }, { count = 5, discount = 0.5 } },
+	taste = { count = 2, price = 1, fromLevel = 3 },
+}
+CropConfig.DaySeconds = 86400
+
 -- Garden tools (E1c3, docs/EXPANSION.md §6; numbers approved 2026-11-03, docs/ECONOMY.md → "Garden tools at F2"): levels bought with
 -- Coins, each level gated by a Renown level; Garden.Tools[id] = level. effect[n] at level n: Sorter = a harvest's size factor x (1 + effect)
 -- (owner and Tending pets alike); Cloches = growth while the owner is online x (1 + effect), nothing offline; Shears = the chance of a second
@@ -302,6 +312,53 @@ function CropConfig.SeedTotal(seeds): number
 		end
 	end
 	return total
+end
+
+-- The market cart's day number for server time `now` (UTC days since the epoch).
+function CropConfig.CartDay(now: number): number
+	return math.floor(now / CropConfig.DaySeconds)
+end
+
+-- The market cart's offers on day `day` for a player at Renown level `level`, in slot order: { slot, crop, count, price (Coins per seed),
+-- discount?, taste? }. The same for every player with the same unlocked crops (the pick is seeded by the day only).
+function CropConfig.CartOffers(day: number, level: number)
+	local cart = CropConfig.Cart
+	local unlocked, locked = {}, nil
+	for _, crop in CropConfig.Crops do
+		if crop.renown <= level then
+			table.insert(unlocked, crop)
+		elseif not locked or crop.renown < locked.renown or (crop.renown == locked.renown and crop.seed < locked.seed) then
+			locked = crop
+		end
+	end
+	local rng = Random.new(day * 7919 + 17)
+	for i = #unlocked, 2, -1 do -- shuffle (Fisher-Yates), then the bargains take the first crops
+		local j = rng:NextInteger(1, i)
+		unlocked[i], unlocked[j] = unlocked[j], unlocked[i]
+	end
+	local offers = {}
+	for i, bargain in cart.bargains do
+		local crop = unlocked[i]
+		if crop then
+			table.insert(offers, {
+				slot = #offers + 1,
+				crop = crop,
+				count = bargain.count,
+				price = math.max(1, math.floor(crop.seed * (1 - bargain.discount) + 0.5)),
+				discount = bargain.discount,
+			})
+		end
+	end
+	if locked and level >= cart.taste.fromLevel then
+		table.insert(offers, {
+			slot = #offers + 1,
+			crop = locked,
+			count = cart.taste.count,
+			price = math.max(1, math.floor(locked.seed * cart.taste.price + 0.5)),
+			taste = true,
+		})
+	end
+	return offers
 end
 
 return CropConfig

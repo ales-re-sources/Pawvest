@@ -46,6 +46,7 @@ local liftPetEvent = remotes:WaitForChild("LiftPet")
 local buyPetSlotEvent = remotes:WaitForChild("BuyPetSlot")
 local buyUpgradeEvent = remotes:WaitForChild("BuyUpgrade")
 local buyToolEvent = remotes:WaitForChild("BuyTool")
+local buyCartEvent = remotes:WaitForChild("BuyCart")
 local requestStateEvent = remotes:WaitForChild("RequestState")
 
 local SHOW_DISTANCE = 45 -- studs from the plot centre: the Field button is visible within this
@@ -93,6 +94,7 @@ local REJECT_KEYS = {
 	maxed = "field.reason.maxed",
 	stale = "field.reason.stale",
 	open = "field.reason.open",
+	soldout = "field.reason.soldOut",
 }
 -- the field pet actions' own texts for some reasons (E1b)
 local PET_REJECT_KEYS = {
@@ -208,6 +210,7 @@ local pickerMode = "seed" -- "seed" (plant) or "pet" (place / move a field pet)
 local reachToken = 0
 local noticesShown = {} -- [kind] = true once this session's notice was shown
 local timers = {} -- ticking square rows: { label, readyAt, ripe }
+local cartTimer = nil -- the market cart's "new offers in" line: { label, at, asked }
 local toastToken = 0
 
 local function rootPosition(): Vector3?
@@ -248,10 +251,11 @@ local headerSection = newSection("Header", 1)
 local squaresSection = newSection("Field", 2)
 local petsSection = newSection("Pets", 3)
 local seedsSection = newSection("Seeds", 4)
-local cropsSection = newSection("Crops", 5)
-local expandSection = newSection("Expand", 6)
-local upgradesSection = newSection("Upgrades", 7)
-local toolsSection = newSection("Tools", 8)
+local cartSection = newSection("Cart", 5)
+local cropsSection = newSection("Crops", 6)
+local expandSection = newSection("Expand", 7)
+local upgradesSection = newSection("Upgrades", 8)
+local toolsSection = newSection("Tools", 9)
 
 local content = create("ScrollingFrame", {
 	Name = "Content",
@@ -269,6 +273,7 @@ local content = create("ScrollingFrame", {
 	squaresSection,
 	petsSection,
 	seedsSection,
+	cartSection,
 	cropsSection,
 	expandSection,
 	upgradesSection,
@@ -609,6 +614,53 @@ local function renderSeeds(field)
 		seedsSection
 end
 
+-- The market cart (E1c4): today's offers (bargains on unlocked crops, a taste of the next locked one); the button buys what is left.
+local function renderCart(field)
+	clearSection(cartSection)
+	cartTimer = nil
+	heading(cartSection, 1, Locale.T("field.section.cart"))
+	local cart = field.cart
+	if not cart then
+		return
+	end
+	local next = paragraph("Next", { LayoutOrder = 2, TextSize = 13, TextColor3 = COLOR_DIM, Text = "" })
+	next.Parent = cartSection
+	cartTimer = { label = next, at = cart.nextAt, asked = false }
+	cartTimer.label.Text = Locale.T("field.cart.next", { time = countdown(math.max(cart.nextAt - workspace:GetServerTimeNow(), 0)) })
+	local total, capacity = CropConfig.SeedTotal(field.seeds), barnOf(field)
+	for _, offer in cart.offers do
+		local crop = cropOf(offer.crop)
+		if crop then
+			local row = newRow(cartSection, "Offer" .. offer.slot, offer.slot + 2)
+			local info = if offer.taste
+				then Locale.T("field.cart.taste", { level = crop.renown, price = offer.price })
+				else Locale.T("field.cart.bargain", {
+					percent = math.floor((offer.discount or 0) * 100 + 0.5),
+					price = offer.price,
+					base = offer.base,
+				})
+			textColumn(row, UPGRADE_WIDTH + GAP, Locale.T("field.cart.row", { crop = cropTitle(crop), left = offer.left, count = offer.count }), info)
+			local cost = offer.price * offer.left
+			local affordable = offer.left > 0 and coinsNow() >= cost and total + offer.left <= capacity
+			local buy = button("Buy", {
+				LayoutOrder = 2,
+				Size = UDim2.fromOffset(UPGRADE_WIDTH, 40),
+				BackgroundColor3 = if affordable then COLOR_BUY else COLOR_LOCKED,
+				TextSize = 15,
+				TextWrapped = true,
+				Text = if offer.left > 0 then Locale.T("field.upgrade.price", { count = cost }) else Locale.T("field.cart.soldOut"),
+				Parent = row,
+			}, 2)
+			if offer.left > 0 then
+				buy.Activated:Connect(function()
+					buyCartEvent:FireServer(offer.slot, offer.crop, offer.left)
+				end)
+			end
+		end
+	end
+	paragraph("Note", { LayoutOrder = 50, TextSize = 12, TextColor3 = COLOR_DIM, Text = Locale.T("field.cart.note") }).Parent = cartSection
+end
+
 local function renderCrops(field)
 	clearSection(cropsSection)
 	heading(cropsSection, 1, Locale.T("field.section.crops"))
@@ -772,6 +824,8 @@ local function renderPanel()
 		clearSection(squaresSection)
 		clearSection(petsSection)
 		clearSection(seedsSection)
+		clearSection(cartSection)
+		cartTimer = nil
 		clearSection(cropsSection)
 		clearSection(expandSection)
 		clearSection(upgradesSection)
@@ -782,6 +836,7 @@ local function renderPanel()
 	renderSquares(field)
 	renderPets(field)
 	renderSeeds(field)
+	renderCart(field)
 	renderCrops(field)
 	renderExpand(field)
 	renderUpgrades(field)
@@ -945,7 +1000,7 @@ local function renderPicker()
 	if field then
 		for _, crop in CropConfig.Crops do
 			local stock = field.seeds[crop.id] or 0
-			if stock > 0 and field.level >= crop.renown then
+			if stock > 0 then -- seeds held can be planted before the Renown gate (the market cart's taste, E1c4)
 				local y = 42 + rows * (PICKER_ROW + GAP)
 				rows += 1
 				local row = create("TextButton", {
@@ -1166,7 +1221,14 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 		end
 		return
 	end
-	if action ~= "Plant" and action ~= "Harvest" and action ~= "BuySeeds" and action ~= "Sell" and action ~= "BuySquare" then
+	if
+		action ~= "Plant"
+		and action ~= "Harvest"
+		and action ~= "BuySeeds"
+		and action ~= "BuyCart"
+		and action ~= "Sell"
+		and action ~= "BuySquare"
+	then
 		return -- pens, incubators and the food stand answer on the same remote
 	end
 	if not ok then
@@ -1198,7 +1260,7 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 		showToast(table.concat(lines, "\n"), COLOR_OK)
 	elseif action == "Sell" then
 		showToast(Locale.T("field.toast.sell", { count = detail.paid }), COLOR_OK)
-	elseif action == "BuySeeds" then
+	elseif action == "BuySeeds" or action == "BuyCart" then
 		showToast(Locale.T("field.toast.seeds", { crop = name, count = detail.count }), COLOR_OK)
 	elseif action == "BuySquare" then
 		showToast(Locale.T("field.toast.square", { n = detail.square }), COLOR_OK)
@@ -1282,6 +1344,13 @@ RunService.Heartbeat:Connect(function(dt)
 		for _, timer in timers do
 			if not timer.ripe then
 				timer.label.Text = countdown(math.max(timer.readyAt - now, 1)) -- ripe only when the server says so (State)
+			end
+		end
+		if cartTimer then
+			cartTimer.label.Text = Locale.T("field.cart.next", { time = countdown(math.max(cartTimer.at - now, 0)) })
+			if now >= cartTimer.at and not cartTimer.asked then
+				cartTimer.asked = true -- the new day's offers come with the next State
+				requestStateEvent:FireServer()
 			end
 		end
 	end

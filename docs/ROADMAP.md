@@ -51,7 +51,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E1d1 | Farming-first numbers (F2: crop prices × 9.3, new square / upgrade prices, five field pet slots) | ✔ | ✔ | – |
 | E1d2 | 36-square field (rows 6-6-8-8-8 behind an incubator strip), squares chosen freely, price by the number open | ✔ | ✔ | – |
 | E1c3 | Garden tools tier 1 (Seed sorter, Cloches, Pruning shears; Renown-gated levels) | ✔ | ✔ | – |
-| E1c4–E5 | Garden MVP (see "Next"; E1c4 scoped in outline) | – | – | – |
+| E1c4 | Daily market cart (two seed bargains, a taste of the next locked crop from Renown 3) | ✔ | ✔ | – |
+| E1d3–E5 | Garden MVP (see "Next") | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
 
@@ -387,7 +388,63 @@ Split into four steps, each validated and committed on its own (decided 2026-11-
   The field's economy is being re-tuned first (ECONOMY.md → "Direction change", candidate F1: crop prices × 9.7, 36 squares, early gates); under it the
   tools fit at their EXPANSION sizes.
 - **E1c4 Market cart** (EXPANSION §5.2). **Decided:** seeds only for now (fertilisers and decor do not exist): 3-4 daily offers from the UTC day
-  (same on every server, per-player quantities), discounted seeds of unlocked crops plus a few seeds of one locked crop as a taste.
+  (same on every server, per-player quantities), discounted seeds of unlocked crops plus a few seeds of one locked crop as a taste. **Built 2026-11-03 (below).**
+
+**E1c4 — Market cart.** Numbers approved by the user (2026-11-03, after the model run, ECONOMY.md → "Market cart run"). The cart is a section of the
+Garden panel (a physical cart can come with the art pass).
+- **Offers (`CropConfig.Cart`, `CartOffers(day, level)`):** the day is the UTC day (`CartDay(os.time())`, new offers at 00:00 UTC).
+  - Bargain 1: 10 seeds of an unlocked crop at −30 %; bargain 2: 5 seeds of another unlocked crop at −50 % (only with 2+ crops unlocked). The crops
+    come from a shuffle seeded by the day, so every player with the same unlocked crops sees the same offers on every server.
+  - Taste: 2 seeds of the next locked crop (lowest Renown gate) at the catalogue price, from Renown level 3 (today: Giant melon at levels 3-4).
+    Earlier tastes (from level 0-2) put Garden main's parity at 1.14-2.3x; a 2x price put Casual's day-7 lead at 2.86x.
+- **Data:** `Garden.Cart = { Day, Bought = { [crop id, + "*" for the taste] = n } }`, cleaned on load, reset when the day changes.
+- **Server:** `BuyCart(slot, crop, count)` checks, in order:
+  - `stale`: the offer is no longer that crop, or `count` is more than what is left;
+  - `soldout`;
+  - `barn`: the seed stock limit, as in BuySeeds;
+  - `coins`.
+
+  It answers `{ crop, count, price, taste? }`. State `field.cart = { nextAt, offers }`.
+  **Plant lost its Renown gate:** seeds the player holds can always be planted (the taste); BuySeeds keeps the gate.
+- **Client:** a Market cart section under Seeds with:
+  - the countdown to the new offers;
+  - one row per offer: crop · left / count, then the discount and the price per seed, or the taste line;
+  - a button that buys what is left ("Sold out" once bought).
+
+  At 00:00 UTC the panel asks for a new State. The seed picker lists every crop the player has seeds of.
+- **Model:** `economy.py` buys the taste on active days and uses the bargains when it buys those seeds anyway (pinned as `crop_field_cart`).
+  `check` passes 51 / 51 (Casual 3.05x / 7.8x / 12.4x, Garden main's parity 0.99x).
+
+**Implemented (2026-11-03).** Files:
+- `CropConfig`, `GardenField`, `FieldClient`.
+- Strings: 8 rows (`field.section.cart`, `field.cart.*`, `field.reason.soldOut`).
+- `economy.py` and its pins.
+
+**Acceptance checks (E1c4).**
+1. Offers: the same call twice gives the same offers, and the next day gives other ones.
+   - Level 0: only a Potato bargain.
+   - Level 3: two bargains and the Giant melon taste.
+   - Level 5: melon as a bargain (706 a seed).
+2. A cart from the day before (Pumpkin 10 and the taste bought) shows every offer full today; `nextAt` = the next 00:00 UTC.
+3. Purchases at level 3 with 3 000 Coins and 28 Potato seeds:
+   - the wrong crop → `stale`, and 11 of 10 → `stale`;
+   - Pumpkin 10 for 2 350, then again → `soldout`;
+   - Potato 5 → `barn` (38 + 5 > 40);
+   - the taste → `coins`; after +Coins it works (2 016).
+4. The taste's Giant melon can be planted at Renown 3; BuySeeds of Giant melon is still refused (`renown`); the picker lists it.
+5. The panel in Czech; no console errors; the live profile snapshotted before and restored after.
+
+**Studio-validated (2026-11-03).** All five checks passed.
+- Day 20760 at level 3: Pumpkin 10 @ 235 (base 336), Potato 5 @ 1 (base 2), Giant melon 2 @ 1008 (taste). The next day: Corn, Potato, Giant melon.
+  The countdown read 2:13 to 00:00 UTC.
+- The panel read "Tržní vozík", "Nové nabídky za 2:11:27", "Dýně · 0 / 10", "Sleva 30 % · 235 za semínko místo 336", "Obří meloun · 0 / 2",
+  "Ochutnávka před Pověstí 5 · 1008 za semínko" and "Vyprodáno"; every text fits.
+- No warnings or errors on the server or the client.
+
+Snapshot, fixture and restore ran through `BindToClose` writes. Not covered: the panel's re-request at 00:00 UTC (the server's day change was tested
+with a stored day), a second client, phone layout.
+**Found, not fixed (older than E1c4):** with the Garden panel open, the seed picker opens under the panel's stud buttons (their glyphs draw over
+the picker's rows).
 
 **E1c2 — Size roll.** Design check: EXPANSION §5.3 (a continuous roll with a long tail, sale value × size, expected value 1.0 without
 tools so the ladder holds, labels normal / Big / Giant, a personal best per crop, the roll fixed per planting so a re-join cannot reroll it,

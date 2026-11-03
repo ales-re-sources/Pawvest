@@ -243,6 +243,11 @@ def lua_round(x):
     return math.floor(x + 0.5)
 
 
+def cart_cfg(cart):
+    t = cart["taste"]
+    return [[[b["count"], b["discount"]] for b in cart["bargains"]], [t["count"], t["price"], t["fromLevel"]]]
+
+
 def apply_crop_config(P):
     """CropConfig.luau -> P["crop_cfg"] (what `pin` stores), the FIELD values marked (CropConfig) and the config crops of CROP_DEFS."""
     f = "CropConfig.luau"
@@ -264,6 +269,7 @@ def apply_crop_config(P):
         "barn_capacity": luau(f, "CropConfig.BarnCapacity"),
         "upgrades": [[u["id"], u["step"], list(u["prices"])] for u in luau(f, "CropConfig.Upgrades")],  # E1c1: [id, step, prices]
         "tools": [[t["id"], list(t["effect"]), list(t["prices"]), list(t["renown"])] for t in luau(f, "CropConfig.Tools")],  # E1c3
+        "cart": cart_cfg(luau(f, "CropConfig.Cart")),  # E1c4: [[count, discount] per bargain, [taste count, price, fromLevel]]
         "size": [luau(f, "CropConfig.SizeSigma"), luau(f, "CropConfig.SizeZCap"), luau(f, "CropConfig.SizeBigZ"), luau(f, "CropConfig.SizeGiantZ")],  # E1c2
         "rates": [luau(f, "CropConfig.OnlineRate"), luau(f, "CropConfig.OfflineRate"), luau(f, "CropConfig.OfflineCapSeconds") / 3600],  # hours
         # field pets (E1b): slot prices, slots from pens; PetConfig's aptitude numbers
@@ -300,6 +306,8 @@ def apply_crop_config(P):
         if not len(effect) == len(prices) == len(renown):
             raise ValueError(f"CropConfig.Tools: {tid} needs one effect, price and Renown level per level")
         F["tools"][name].update({"effect": list(effect), "prices": list(prices), "renown": list(renown)})
+    bargains, (t_count, t_price, t_from) = cfg["cart"]
+    F["cart"] = {"bargains": [list(b) for b in bargains], "taste": {"count": t_count, "price": t_price, "from_level": t_from}}
     F["online_rate"], F["offline_rate"], F["offline_cap_h"] = cfg["rates"]
     FP = F["pets"]
     FP["slots"] = list(cfg["pet_slots"])
@@ -409,6 +417,7 @@ def pin_values(P):
         "crop_field_barn_capacity": P["crop_cfg"]["barn_capacity"],
         "crop_field_upgrades": P["crop_cfg"]["upgrades"],  # [id, step, prices] (E1c1)
         "crop_field_tools": P["crop_cfg"]["tools"],  # [id, effect, prices, renown levels] (E1c3)
+        "crop_field_cart": P["crop_cfg"]["cart"],  # [[count, discount] per bargain, [taste count, price, from level]] (E1c4)
         "crop_field_size": P["crop_cfg"]["size"],  # [sigma, z cap, Big z, Giant z] of the size roll (E1c2)
         "crop_field_rates": P["crop_cfg"]["rates"],  # [online rate, offline rate, offline cap in hours]
         "field_pet_slots": P["crop_cfg"]["pet_slots"],  # CropConfig.PetSlotPrices
@@ -583,6 +592,11 @@ FIELD = {
     # Garden tools (E1c3, EXPANSION §6): per level the effect, the price and the Renown gate. Empty = not built; `tools` sweeps candidates.
     # sorter: expected size factor x (1 + effect) (best-seed picking); cloches: growth while the owner is online x (1 + effect), nothing offline;
     # shears: chance of a second item per harvest (sale x (1 + effect); no extra Renown, no extra seed). (CropConfig.Tools since E1c3)
+    # Market cart (E1c4, EXPANSION §5.2): daily offers from the UTC day. bargains = [count, discount] per offer, each on a different unlocked crop
+    # (picked from the day); taste = count seeds of the next locked crop at price x the catalogue price, plantable before its Renown gate
+    # (only crops gated at min_gate or higher, offered from Renown level from_level on).
+    # Bought on active days; bargains only where the player buys those seeds anyway. Empty = not built. (CropConfig.Cart)
+    "cart": {"bargains": [], "taste": {"count": 0, "price": 1.0, "from_level": 0}},
     "tools": {
         "sorter": {"effect": [], "prices": [], "renown": []},
         "cloches": {"effect": [], "prices": [], "renown": []},
@@ -857,6 +871,8 @@ class Player:
         self.last_len = 0.0
         self.seed_stock = 0
         self.rare_seeds = {}  # world -> seeds
+        self.cart_left = {}  # crop id -> [bargain seeds left today, discount] (E1c4)
+        self.taste_seeds = {}  # crop id -> cart seeds of a crop above the Renown gate (E1c4)
         self.rare_kept = 0.0
         self.renown_pts = 0.0
         self.last_t = None
@@ -1075,6 +1091,37 @@ class Player:
         self.stat["harv"] += items
         self.renown_pts += items * FIELD["renown"]["weight"][crop["tier"]]
 
+    def cart_open(self, d):
+        """E1c4: today's market cart. Bargains on different unlocked crops (the same draw for every player with the same crops), and the taste
+        of the next locked crop, bought at once if the Coins allow."""
+        cart = FIELD["cart"]
+        self.cart_left = {}
+        lvl = self.renown_level()
+        common = [c for c in self.F["crops"].values() if not c["rare"] and c["size"] == 1]
+        unlocked = [c for c in common if c["gate"] <= lvl]
+        if cart["bargains"] and unlocked:
+            picks = random.Random(1000003 + d).sample(unlocked, min(len(unlocked), len(cart["bargains"])))
+            for c, (count, discount) in zip(picks, cart["bargains"]):
+                self.cart_left[c["id"]] = [count, discount]
+        t = cart["taste"]
+        locked = sorted((c for c in common if c["gate"] > lvl and c["gate"] >= t.get("min_gate", 0) and lvl >= t.get("from_level", 0)),
+                        key=lambda c: (c["gate"], c["seed"]))
+        if t["count"] and locked:
+            c = locked[0]
+            cost = t["count"] * c["seed"] * t["price"]
+            if self.coins >= cost:
+                self.pay("seeds", cost)
+                self.taste_seeds[c["id"]] = self.taste_seeds.get(c["id"], 0) + t["count"]
+
+    def seed_cost(self, c, count):
+        """Coins for `count` seeds of crop `c`, today's cart bargain first."""
+        left = self.cart_left.get(c["id"])
+        if not left or count <= 0:
+            return count * c["seed"]
+        k = min(count, left[0])
+        left[0] -= k
+        return k * c["seed"] * (1 - left[1]) + (count - k) * c["seed"]
+
     def pay(self, cat, amount, row=None):
         self.coins -= amount
         self.spend[cat] = self.spend.get(cat, 0.0) + amount
@@ -1160,7 +1207,7 @@ class Player:
                     self.cov_crop, self.cov_on, self.cov_off = best["id"], 0.0, 0.0
                 need = max(0, best_cyc * self.cov_n - self.seed_stock)
                 buy = min(need, int(max(self.coins, 0) // best["seed"]))
-                self.pay("seeds", buy * best["seed"], row)
+                self.pay("seeds", self.seed_cost(best, buy), row)
                 self.seed_stock += buy
         else:
             self.cov_crop = None
@@ -1171,6 +1218,12 @@ class Player:
                 self.rare_seeds[world] -= 1
                 self.manual.append([rc["id"], t, 1, 0.0, 0.0])
                 free -= 1
+        for cid in sorted(self.taste_seeds, key=lambda k: -cat[k]["net"]):  # the cart's taste seeds next (E1c4)
+            tc = cat[cid]
+            while self.taste_seeds[cid] > 0 and free >= 1 and self.wall_to_ripe(idx, tc["h"] * gs) is not None:
+                self.taste_seeds[cid] -= 1
+                self.manual.append([cid, t, 1, 0.0, 0.0])
+                free -= 1
         # the crop with the best net per square and wall-clock hour until it is ripe at a visit (it may span several visits)
         best, best_rate = None, 0.0
         for c in common + big:
@@ -1180,7 +1233,7 @@ class Player:
         if best and free >= 1:
             plants = min(int(free // best["size"]), int(max(self.coins, 0) // best["seed"]))
             if plants > 0:
-                self.pay("seeds", plants * best["seed"], row)
+                self.pay("seeds", self.seed_cost(best, plants), row)
                 self.manual.append([best["id"], t, plants, 0.0, 0.0])
                 self.stat["visit_sq"] += plants * best["size"]
         self.last_t, self.last_len = t, length
@@ -1302,6 +1355,7 @@ class Player:
         if self.F["on"]:
             self.renown_pts += FIELD["renown"]["requests_per_day"]
             if active:
+                self.cart_open(d)
                 for idx, (start, _gap, _length) in enumerate(self.sched):
                     self.visit(d * 24.0 + start, idx, row)
                 self.tending_xp(sum(eff_time(gap, length) for _, gap, length in self.sched))  # the period's field time (online + capped offline)

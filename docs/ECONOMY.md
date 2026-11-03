@@ -316,6 +316,23 @@ O (online ≥ 3x offline per hour) holds at 3.66-4.15x, and C at 93-95 %. With t
   crop prices. Field-pet slot 4 / 5 and the gentler gates are what lift day 14-30. Neither alone was enough: slots 4-5 alone 8.9x, gates alone 8.5x.
 - **Later (parked):** locked squares lie under rubble or weeds. Clearing them needs a tool upgrade or a bought tool (EXPANSION §6).
 
+## Market cart run (2026-11-03, gates E1c4; approved)
+The model buys the cart on active days: the bargains where it buys those seeds anyway, and the taste (planted ahead of its gate) whenever the Coins allow.
+6 seeds, worst policy, on F2 with the tools:
+
+| Candidate | Garden main parity | Casual lead day 7 / 14 / 30 |
+|---|---|---|
+| No cart | 0.99x | 3.03 / 7.7 / 12.6 |
+| 10 @ −30 % and 5 @ −50 % | 0.99x | 3.05 / 7.8 / 12.4 |
+| ... + taste 2 seeds from level 0 (Corn first) | **1.79x** | 3.24 / 7.9 / 13.3 |
+| ... + taste 2, only crops gated 2+ (melon) | **2.32x** | 3.36 / 8.1 / 13.9 |
+| ... + taste 1-2 from Renown level 2 | **1.14-1.29x** | 3.05 / 7.8 / 12.4 |
+| **... + taste 2 from Renown level 3 (approved)** | 0.99x | 3.05 / 7.8 / 12.4 |
+| ... + taste 2 from level 2-3 at 2x the price | 0.99x | **2.86** / 7.9 / 13.4 |
+
+The bargains are worth little (seeds are a quarter of the sale price). A taste is strong: one Giant melon sells for about as much as a day of early obby
+play, so before Renown 3 it breaks parity. From level 3 on it is safe at the catalogue price.
+
 ## Open decisions for the user
 
 1. **Sink share:** keep 60 % by day 30 / 80 % by day 60 (needs about 0.8 M Coins of landmark / estate / decor sinks for an Obby-main player), or lower it.
