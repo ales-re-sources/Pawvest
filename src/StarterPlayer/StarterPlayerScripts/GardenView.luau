@@ -4,7 +4,8 @@
 --   * owned plots: GardenRemotes.Plot (GardenPlotFeed), one state per player; RequestPlots on start;
 --   * free slots 1..GardenConfig.ShownFreeSlots nobody holds: an empty "Free plot";
 --   * Studio test hook: Workspace attribute GardenViewFake = N fills slots 1..N nobody holds with synthetic full plots, and
---     GardenViewField = squares (0 = none) adds a stand-in field to every plot (budget checks, ROADMAP E1a1 check 5).
+--     GardenViewField = open squares (0 = none, at most CropConfig.MaxSquares) adds a stand-in field to every plot (budget checks,
+--     ROADMAP E1a1 check 5).
 -- Detail by horizontal distance from the character to the plot centre: full ≤ 60 studs, mid ≤ 120 (pets as blocks), low ≤ 300,
 -- nothing beyond (10 studs of hysteresis). Builds run on Heartbeat within BUDGET seconds per frame, the own plot first, then the
 -- nearest. The own plot's pads, incubators and field squares carry prompts that call the handlers registered with OnPen /
@@ -17,6 +18,7 @@ local RunService = game:GetService("RunService")
 
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
+local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PlotView = require(script.Parent:WaitForChild("PlotView"))
 
@@ -56,7 +58,7 @@ function GardenView.OnIncubator(fn: (number, BasePart) -> ())
 end
 
 -- fn(square, action, soil) when a field square prompt of the own plot is triggered: action "plant" (empty) / "harvest" (ripe) /
--- "pet" (the square's pet prompt: place or move a field pet, E1b).
+-- "pet" (the square's pet prompt: place or move a field pet, E1b) / "buy" (a locked square, E1d2; soil = its prompt holder).
 function GardenView.OnSquare(fn: (number, string, BasePart) -> ())
 	handlers.square = fn
 end
@@ -123,13 +125,12 @@ for kind in PetConfig.Kinds do
 end
 table.sort(KINDS)
 
+-- a field with its first `squares` squares open (CropConfig's shape; the rest locked)
 local function syntheticField(slot: number, squares: number)
-	local cols = if squares <= 12 then 4 else math.ceil(math.sqrt(squares * 1.5))
-	local rows = math.ceil(squares / cols)
-	local crops = table.create(cols * rows)
-	for i = 1, cols * rows do
+	local crops = table.create(CropConfig.MaxSquares)
+	for i = 1, CropConfig.MaxSquares do
 		if i > squares then
-			crops[i] = ".0"
+			crops[i] = "#0"
 		else
 			local r = noise(slot, i)
 			crops[i] = string.char(string.byte("a") + math.floor(r * 6)) .. tostring(math.floor(noise(i, slot) * 4))
@@ -140,7 +141,7 @@ local function syntheticField(slot: number, squares: number)
 		local kind = KINDS[(slot + i) % #KINDS + 1]
 		table.insert(pets, string.format("%s:%d:f%d_s%d:%d:%d", kind, 1 + math.floor(noise(slot, i + 90) * 20), slot, i, i, 1 + math.floor(noise(i, slot + 7) * 9)))
 	end
-	return { cols = cols, rows = rows, crops = table.concat(crops), squares = squares, pets = pets }
+	return { crops = table.concat(crops), squares = squares, pets = pets }
 end
 
 local function syntheticPlot(slot: number)
@@ -179,7 +180,7 @@ local function states()
 				result[slot] = fakeCache[slot]
 			end
 		end
-		local squares = math.clamp(tonumber(workspace:GetAttribute("GardenViewField")) or 0, 0, 400)
+		local squares = math.clamp(tonumber(workspace:GetAttribute("GardenViewField")) or 0, 0, CropConfig.MaxSquares)
 		for slot, state in result do
 			if squares > 0 and not (state.field and state.field.squares == squares) then
 				state = table.clone(state)

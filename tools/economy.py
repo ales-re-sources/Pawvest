@@ -251,10 +251,14 @@ def apply_crop_config(P):
     exps = luau(f, "CropConfig.Expansions")
     if start + len(exps) != top:
         raise ValueError(f"CropConfig: StartSquares {start} + {len(exps)} Expansions != MaxSquares {top}")
+    rows, grid = luau(f, "CropConfig.RowWidths"), luau(f, "CropConfig.GridColumns")
+    if sum(rows) != top or max(rows) > grid:
+        raise ValueError(f"CropConfig: RowWidths {rows} must add up to MaxSquares {top} and fit GridColumns {grid}")
     points = luau(f, "CropConfig.RenownPoints")
     cfg = {
         "crops": [[c["id"], c["tier"], c["growSeconds"] / 3600, c["sale"], c["seed"], c["renown"]] for c in crops],  # grow time in hours
         "squares": [start, top],
+        "rows": [list(rows), grid],  # E1d2: the field's shape
         "expansions": [[e["price"], e["renown"]] for e in exps],
         "renown": [points, luau(f, "CropConfig.RenownK"), luau(f, "CropConfig.RenownP")],
         "barn_capacity": luau(f, "CropConfig.BarnCapacity"),
@@ -278,6 +282,7 @@ def apply_crop_config(P):
     gate.setdefault(1, 0)
     F = FIELD
     F["start_squares"], F["max_squares"] = start, top
+    F["pets"]["rows"], F["pets"]["grid"] = list(rows), grid
     F["expansions"] = [(start + k + 1, price, renown) for k, (price, renown) in enumerate(cfg["expansions"])]
     F["tier_gate"] = gate
     F["renown"].update({"k": cfg["renown"][1], "p": cfg["renown"][2], "weight": {t + 1: w for t, w in enumerate(points)}})
@@ -554,7 +559,8 @@ FIELD = {
         "reach": {1: 1, 2: 1, 3: 1, 4: 5, 5: 5, 6: 5, 7: 9, 8: 9, 9: 9, 10: 9},  # squares: own, + the 4 next to it, the 3 x 3 block
         "tend_max": 1.0,  # cycles of a Tending square at strength 100 % / continuous cycling (24 h a day at the growth rates)
         "xp_first": 10.0, "xp_ratio": 1.56,  # weighted field hours from level L to L + 1 = first x ratio^(L-1): Common cap ~2 weeks, level 10 ~3 months (Obby main)
-        "columns": 4,  # the field grid (CropConfig.Columns): reach is counted on it
+        "rows": None,  # (CropConfig.RowWidths) the field's rows from the plot outwards, centred on "grid" columns (E1d2): reach is counted on it
+        "grid": None,  # (CropConfig.GridColumns)
         "pouch": {"seeds": 0.1, "meter": 100},  # seed pouch: common seeds per medal finish; rare-seed meter: finishes per rare seed; both x (1 + Scouting effect); the daily first-run rare seed stays
     },
     "capacity": None,  # (CropConfig.BarnCapacity) seeds the stock holds and crops the barn holds between two visits (limits the Gardener's cycles)
@@ -707,8 +713,11 @@ def cover(squares, pets):
     key = (squares, tuple(pets))
     if key in _cover_cache:
         return _cover_cache[key]
-    cols = FIELD["pets"]["columns"]
-    cells = [(i // cols, i % cols) for i in range(squares)]
+    grid = FIELD["pets"]["grid"]
+    cells = []  # row-major from the plot, each row centred on the grid (CropConfig.Cell); the model opens squares in this order
+    for r, width in enumerate(FIELD["pets"]["rows"]):
+        cells += [(r, (grid - width) // 2 + c) for c in range(width)]
+    cells = cells[:squares]
     best = [0.0] * squares
     taken = set()
     for reach, s in sorted(pets, key=lambda p: (-p[1], -p[0])):
@@ -1853,7 +1862,7 @@ def cmd_pets(P, days, seeds):
     cont = max(24 / c["h"] * value(c) for c in gard)
     sq = FIELD["max_squares"]
 
-    print(f"FIELD PETS (E0 re-run for E1b; {sq} squares in {FP['columns']} columns, Renown max, multiplier {MULT_REF}; last stage's first obby hour {n(h1 * MULT_REF)})")
+    print(f"FIELD PETS (E0 re-run for E1b; {sq} squares in rows {FP['rows']}, Renown max, multiplier {MULT_REF}; last stage's first obby hour {n(h1 * MULT_REF)})")
     print("Tending strength s = the chance a pet harvests and replants a ripe crop at once (else it waits for the visit): a tended square pays the visits'")
     print("harvests plus s x what continuous cycling adds. Reach: levels 1-3 own square, 4-6 + the 4 next to it, 7-10 the 3 x 3 block; one pet per square.\n")
 

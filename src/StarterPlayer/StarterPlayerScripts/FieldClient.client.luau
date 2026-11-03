@@ -91,6 +91,7 @@ local REJECT_KEYS = {
 	items = "field.reason.items",
 	maxed = "field.reason.maxed",
 	stale = "field.reason.stale",
+	open = "field.reason.open",
 }
 -- the field pet actions' own texts for some reasons (E1b)
 local PET_REJECT_KEYS = {
@@ -192,7 +193,7 @@ end
 
 -- State -------------------------------------------------------------------------------------------------------------------
 
-local fieldState = nil -- GardenRemotes.State.field: { count, squares, seeds, items, sizes, best, renown, level, pets, slots, slotPrice, upgrades, barn, notice }
+local fieldState = nil -- GardenRemotes.State.field: { open (sorted square numbers), squares, seeds, items, sizes, best, renown, level, pets, slots, slotPrice, upgrades, barn, notice }
 local panelPoint: Vector3? = nil -- where the Garden panel was opened (nil = closed)
 local pickerPoint: Vector3? = nil
 local pickerSquare: number? = nil
@@ -404,6 +405,15 @@ local function textColumn(row: Instance, reserved: number, title: string, info: 
 	return column
 end
 
+-- { [square] = true } of the open squares of `field` (State.field.open), for CropConfig.Reach.
+local function openSet(field): { [number]: boolean }
+	local set = {}
+	for _, n in field.open or {} do
+		set[n] = true
+	end
+	return set
+end
+
 local function coinsNow(): number
 	return PetClient.Coins
 end
@@ -432,12 +442,13 @@ local function renderSquares(field)
 	table.clear(timers)
 	heading(squaresSection, 1, Locale.T("field.section.squares"))
 	local now = workspace:GetServerTimeNow()
-	for n = 1, field.count do
+	local open = field.open or {}
+	for index, n in open do
 		local square = field.squares[tostring(n)]
 		local crop = square and cropOf(square.crop)
 		local row = create("Frame", {
 			Name = "Square" .. n,
-			LayoutOrder = n + 1,
+			LayoutOrder = index + 1,
 			Size = UDim2.new(1, 0, 0, SQUARE_ROW),
 			BackgroundColor3 = COLOR_ROW,
 			Parent = squaresSection,
@@ -467,7 +478,7 @@ local function renderSquares(field)
 			table.insert(timers, { label = time, readyAt = square.readyAt, ripe = ripe })
 		end
 	end
-	paragraph("Note", { LayoutOrder = field.count + 2, TextSize = 12, TextColor3 = COLOR_DIM, Text = Locale.T("field.square.note") }).Parent =
+	paragraph("Note", { LayoutOrder = #open + 2, TextSize = 12, TextColor3 = COLOR_DIM, Text = Locale.T("field.square.note") }).Parent =
 		squaresSection
 end
 
@@ -489,7 +500,7 @@ local function renderPets(field)
 	heading(petsSection, 1, Locale.T("field.section.pets", { used = #placed, slots = field.slots or 1 }))
 	for index, entry in placed do
 		local pet = entry.pet
-		local reach = #CropConfig.Reach(entry.square, pet.reach, field.count)
+		local reach = #CropConfig.Reach(entry.square, pet.reach, openSet(field))
 		local xp = if pet.next
 			then Locale.T("field.pet.xp", { xp = hours(pet.xp), next = hours(pet.next) })
 			else Locale.T("field.pet.capped")
@@ -628,41 +639,27 @@ local function renderCrops(field)
 	end
 end
 
+-- The next square's price (E1d2: the player buys any locked square through its prompt on the field; the price depends only on
+-- how many are open).
 local function renderExpand(field)
 	clearSection(expandSection)
 	heading(expandSection, 1, Locale.T("field.section.expand"))
-	local expansion = CropConfig.NextExpansion(field.count)
+	local expansion = CropConfig.NextExpansion(#(field.open or {}))
 	if not expansion then
 		paragraph("Info", { LayoutOrder = 2, Font = StudStyle.Font, TextSize = 16, TextColor3 = COLOR_OK, Text = Locale.T("field.expand.done") }).Parent =
 			expandSection
 		return
 	end
-	local lines = { Locale.T("field.expand.info", { n = field.count + 1, count = expansion.price, renown = expansion.renown }) }
-	local enough = true
+	local lines = { Locale.T("field.expand.next", { count = expansion.price }) }
 	if field.level < expansion.renown then
-		enough = false
 		table.insert(lines, "<font color='#f06a5a'>" .. Locale.T("field.expand.needRenown", { level = expansion.renown }) .. "</font>")
 	end
 	if coinsNow() < expansion.price then
-		enough = false
 		table.insert(lines, Locale.T("common.needMoreCoins", { count = expansion.price - coinsNow() }))
 	end
 	paragraph("Info", { LayoutOrder = 2, TextSize = 15, TextColor3 = Color3.new(1, 1, 1), RichText = true, Text = table.concat(lines, "\n") }).Parent =
 		expandSection
-	local buy = button("Buy", {
-		LayoutOrder = 3,
-		Size = UDim2.new(1, 0, 0, 40),
-		BackgroundColor3 = if enough then COLOR_BUY else COLOR_LOCKED,
-		TextSize = 18,
-		Text = Locale.T("field.expand.buy"),
-		Parent = expandSection,
-	}, 6)
-	buy.Activated:Connect(function()
-		local state = fieldState
-		if state then
-			buySquareEvent:FireServer(state.count)
-		end
-	end)
+	paragraph("Hint", { LayoutOrder = 3, TextSize = 13, TextColor3 = COLOR_DIM, Text = Locale.T("field.expand.hint") }).Parent = expandSection
 end
 
 -- The field upgrades (E1c1): level, what it does now and at the next level, and the price.
@@ -762,7 +759,7 @@ end
 
 -- Squares a pet with Tending level `level` works from `square` on the current field.
 local function reachOf(square: number, level: number): { number }
-	return CropConfig.Reach(square, PetConfig.ReachShape(level), fieldState and fieldState.count or square)
+	return CropConfig.Reach(square, PetConfig.ReachShape(level), if fieldState then openSet(fieldState) else nil)
 end
 
 -- One row of the pet picker at height `y`: a title, an info line; enabled rows are green and clickable.
@@ -1140,7 +1137,7 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 	elseif action == "BuySeeds" then
 		showToast(Locale.T("field.toast.seeds", { crop = name, count = detail.count }), COLOR_OK)
 	elseif action == "BuySquare" then
-		showToast(Locale.T("field.toast.square", { n = detail }), COLOR_OK)
+		showToast(Locale.T("field.toast.square", { n = detail.square }), COLOR_OK)
 	else
 		showToast(Locale.T("field.toast.plant", { crop = name }), COLOR_OK)
 	end
@@ -1151,10 +1148,14 @@ Locale.Changed:Connect(function()
 	renderAll()
 end)
 
--- The prompts on the own plot's squares (GardenView): plant opens the picker, harvest fires at once
+-- The prompts on the own plot's squares (GardenView): plant opens the picker, harvest and buy fire at once
 GardenView.OnSquare(function(square, action, soil)
 	if action == "harvest" then
 		harvestEvent:FireServer(square)
+	elseif action == "buy" then
+		if fieldState then
+			buySquareEvent:FireServer(square, #(fieldState.open or {}))
+		end
 	elseif action == "plant" then
 		openPicker(square, soil and soil.Position)
 	elseif action == "pet" then

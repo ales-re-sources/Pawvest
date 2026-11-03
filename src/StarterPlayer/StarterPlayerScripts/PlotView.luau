@@ -2,16 +2,18 @@
 -- GardenPlotFeed), at its slot's position (GardenConfig.PlotCFrame), in one of four details: "full" (floor, edges, sign, pens
 -- with pet models and labels, incubators with egg and live countdown, pad / incubator billboards, prompts on the own plot),
 -- "mid" (the same without billboards and prompts, each pet one block in its rarity colour), "low" (floor, one block per pet and
--- egg, the field as one patch) or "none". Stand-in blocks only (no art pass). Used by GardenView, which picks the detail.
--- A plot is split into pieces (base, pen1..6, inc1..3, row1..n of the field). SetState / SetDetail / Relabel only mark the
--- pieces whose look changed; Step builds marked pieces until a deadline, so a build is spread over frames by the caller.
+-- egg, the field as its row plates) or "none". Stand-in blocks only (no art pass). Used by GardenView, which picks the detail.
+-- A plot is split into pieces (base, pen1..6, inc1..3, field = the row plates, sq1..36). SetState / SetDetail / Relabel only
+-- mark the pieces whose look changed; Step builds marked pieces until a deadline, so a build is spread over frames by the caller.
 -- State: { name, penCount, pens = { [1..6] = "Kind:Level:uid" or "" }, incCount, eggs = { [1..3] = "EggId:readyAt" or "" },
--- field = { cols, rows, crops = two characters per square: crop letter (CropConfig, a-f in synthetic plots) + stage 1-3
--- (3 = ripe), ".0" an empty square, "#0" a square not bought yet, pets = { "Kind:Level:uid:square:apt" } (E1b field pets, apt =
--- Tending level) }, converted (E1b: the pens became field pet slots, no pens are drawn) } or { free = true }
--- (a slot nobody holds: floor, sign "Free plot", grey pads and incubators).
+-- field = { crops = two characters per square 1..CropConfig.MaxSquares: crop letter (CropConfig, a-f in synthetic plots) +
+-- stage 1-3 (3 = ripe), ".0" an empty open square, "#0" a locked one, pets = { "Kind:Level:uid:square:apt" } (E1b field pets,
+-- apt = Tending level) }, converted (E1b: the pens became field pet slots: no pens, the floor shrinks to the incubator strip and
+-- the field starts behind it) } or { free = true } (a slot nobody holds: floor, sign "Free plot", grey pads and incubators).
+-- The field (E1d2) has the shape CropConfig.RowWidths: every row is a plate of overgrown grass, open squares are soil on it.
 -- Field pets stand on their squares (full: the PetLook model, mid: a block); the own plot's squares also get a pet prompt
--- (onSquare(square, "pet", soil), key F) and ShowReach tints the squares a pet would work.
+-- (onSquare(square, "pet", soil), key F), its locked squares a buy prompt (onSquare(square, "buy", holder)), and ShowReach
+-- tints the squares a pet would work.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -34,8 +36,10 @@ local PEN_SPOTS = {
 	Vector3.new(12, 0.4, 15),
 }
 local INCUBATOR_SPOTS = { Vector3.new(-12, 0, -10), Vector3.new(0, 0, -10), Vector3.new(12, 0, -10) }
-local FIELD_FRONT = 22 -- the field lies behind the plot (floor +Z), from this far behind the centre
-local FIELD_WIDTH = 40
+local STRIP_FRONT, STRIP_BACK = -20, -4 -- a converted plot's floor: the strip that holds the sign side and the incubators
+local FIELD_FRONT = -2 -- the field lies behind the strip (floor +Z), from this far behind the centre
+local FIELD_PITCH = 5.5 -- studs per square
+local BUY_HOLD = 0.5 -- seconds a buy prompt is held
 local INFO_DISTANCE = 60 -- studs: pad / incubator billboards and pet labels
 
 local COLORS = {
@@ -49,6 +53,7 @@ local COLORS = {
 	base = Color3.fromRGB(150, 100, 60),
 	nest = Color3.fromRGB(225, 195, 110),
 	soil = Color3.fromRGB(105, 70, 45),
+	overgrown = Color3.fromRGB(78, 120, 52), -- the field's row plates: locked squares and the paths between squares
 }
 local SPROUT = Color3.fromRGB(110, 190, 80) -- unripe crops (stage 1-2)
 local REACH = Color3.fromRGB(255, 230, 120) -- ShowReach tint
@@ -169,6 +174,18 @@ local function fieldPets(field): { [number]: { kind: string, level: number, uid:
 end
 PlotView.FieldPets = fieldPets
 
+-- Centre (local x, z) of field square `square` (CropConfig.Cell: rows outwards from FIELD_FRONT, centred on the grid).
+local function squareSpot(square: number): (number, number)
+	local row, col = CropConfig.Cell(square)
+	return ((col :: number) - 0.5 - CropConfig.GridColumns / 2) * FIELD_PITCH, FIELD_FRONT + ((row :: number) - 0.5) * FIELD_PITCH
+end
+
+-- Number of open squares in a field message ("#0" = locked).
+local function openOf(field): number
+	local _, locked = string.gsub(field.crops, "#", "")
+	return CropConfig.MaxSquares - locked
+end
+
 -- New view of plot slot `slot` under `parent`. options: { own = boolean, onPen = fn(pen, pad), onIncubator = fn(n, base),
 -- onSquare = fn(square, action "plant" / "harvest", soil), onLevelUp = fn(model, kind, level) } (prompts on the own plot only;
 -- onLevelUp for a pet that levelled up in its pen).
@@ -206,8 +223,9 @@ function PlotView:keys(): { string }
 	for n = 1, GardenConfig.MaxIncubators do
 		table.insert(keys, "inc" .. n)
 	end
+	table.insert(keys, "field")
 	local field = self.state and self.state.field
-	self.squares = math.max(self.squares, if field then field.cols * field.rows else 0)
+	self.squares = math.max(self.squares, if field then CropConfig.MaxSquares else 0)
 	for n = 1, self.squares do
 		table.insert(keys, "sq" .. n)
 	end
@@ -222,7 +240,10 @@ function PlotView:signature(key: string): string
 		return "none"
 	end
 	if key == "base" then
-		return table.concat({ detail, if state.free then "" else tostring(state.name), self.lang }, "|")
+		return table.concat({ detail, if state.free then "" else tostring(state.name), tostring(not state.free and state.converted == true), self.lang }, "|")
+	end
+	if key == "field" then
+		return if not state.free and state.field then detail else "none"
 	end
 	local kind, number = string.match(key, "^(%a+)(%d+)$")
 	local n = tonumber(number) :: number
@@ -239,19 +260,20 @@ function PlotView:signature(key: string): string
 		return table.concat({ detail, state.eggs[n] or "", tostring(n <= state.incCount), tostring(self.own), self.lang }, "|")
 	end
 	local field = state.field
-	if not field or n > field.cols * field.rows then
+	if not field or n > CropConfig.MaxSquares or detail == "low" then
 		return "none"
 	end
-	if detail == "low" then
-		return if n == 1 then string.format("low|%dx%d", field.cols, field.rows) else "none"
+	local cell = string.sub(field.crops, (n - 1) * 2 + 1, n * 2)
+	if string.sub(cell, 1, 1) == "#" then
+		-- a locked square is the row plate; only the own plot draws a buy prompt on it, with the price of the next square
+		return if self.own and detail == "full" then string.format("lock|%d|%s", openOf(field), self.lang) else "none"
 	end
 	local pet = self.petMap[n]
 	return string.format(
-		"%s|%s|%d|%s|%s|%s|%s",
+		"%s|%s|%s|%s|%s|%s",
 		if self.own and detail == "full" then "own" else "full",
 		detail,
-		field.cols,
-		string.sub(field.crops, (n - 1) * 2 + 1, n * 2),
+		cell,
 		if pet then pet.text else "",
 		if pet then nameOf(state, pet.uid) or "" else "",
 		self.lang
@@ -313,17 +335,23 @@ function PlotView:at(offset: Vector3): CFrame
 end
 
 function PlotView:buildBase(model: Model)
-	local floor = part({ Name = "Floor", Size = Vector3.new(40, 0.5, 40), CFrame = self.floor, Color = COLORS.floor, Material = Enum.Material.Grass })
+	-- a converted plot (E1b, E1d2) keeps only the incubator strip: the field starts right behind it
+	local front, back = -20, 20
+	if not self.state.free and self.state.converted then
+		front, back = STRIP_FRONT, STRIP_BACK
+	end
+	local depth, middle = back - front, (front + back) / 2
+	local floor = part({ Name = "Floor", Size = Vector3.new(40, 0.5, depth), CFrame = self:at(Vector3.new(0, 0, middle)), Color = COLORS.floor, Material = Enum.Material.Grass })
 	floor.CanQuery = true -- something to stand on and to raycast
 	floor.Parent = model
 	if self.detail == "low" then
 		return
 	end
 	for _, edge in {
-		{ Vector3.new(-20.4, 0.65, 0), Vector3.new(0.8, 1, 40.8) },
-		{ Vector3.new(20.4, 0.65, 0), Vector3.new(0.8, 1, 40.8) },
-		{ Vector3.new(0, 0.65, 20.4), Vector3.new(40.8, 1, 0.8) },
-		{ Vector3.new(0, 0.65, -20.4), Vector3.new(40.8, 1, 0.8) },
+		{ Vector3.new(-20.4, 0.65, middle), Vector3.new(0.8, 1, depth + 0.8) },
+		{ Vector3.new(20.4, 0.65, middle), Vector3.new(0.8, 1, depth + 0.8) },
+		{ Vector3.new(0, 0.65, back + 0.4), Vector3.new(40.8, 1, 0.8) },
+		{ Vector3.new(0, 0.65, front - 0.4), Vector3.new(40.8, 1, 0.8) },
 	} do
 		part({ Name = "Edge", Size = edge[2], CFrame = self:at(edge[1]), Color = COLORS.edge, Material = Enum.Material.Wood }).Parent = model
 	end
@@ -518,25 +546,54 @@ function PlotView:buildIncubator(model: Model, n: number)
 	self.labels[n] = { label = label, egg = egg, readyAt = readyAt }
 end
 
-function PlotView:buildSquare(model: Model, square: number)
-	local field = self.state.field
-	local pitch = math.min(5.5, FIELD_WIDTH / field.cols)
-	local size = pitch - 0.4
-	if self.detail == "low" then
-		local depth = pitch * field.rows
-		part({ Name = "Field", Size = Vector3.new(pitch * field.cols, 0.4, depth), CFrame = self:at(Vector3.new(0, 0.05, FIELD_FRONT + depth / 2)), Color = COLORS.soil }).Parent = model
+-- The field's row plates (every detail): overgrown grass under the whole shape, below the soil (no shared face).
+function PlotView:buildField(model: Model)
+	for row, width in CropConfig.RowWidths do
+		part({
+			Name = "Row" .. row,
+			Size = Vector3.new(width * FIELD_PITCH, 0.3, FIELD_PITCH),
+			CFrame = self:at(Vector3.new(0, -0.1, FIELD_FRONT + (row - 0.5) * FIELD_PITCH)),
+			Color = COLORS.overgrown,
+			Material = Enum.Material.Grass,
+		}).Parent = model
+	end
+end
+
+-- The own plot's buy prompt on locked square `square` (full detail): the price and Renown of the next square, whichever is picked.
+function PlotView:buildLock(model: Model, square: number)
+	local expansion = CropConfig.NextExpansion(openOf(self.state.field))
+	if not (expansion and self.onSquare) then
 		return
 	end
-	local r, c = (square - 1) // field.cols + 1, (square - 1) % field.cols + 1
-	local z = FIELD_FRONT + (r - 0.5) * pitch
+	local x, z = squareSpot(square)
+	local holder = part({
+		Name = "Lock" .. square,
+		Size = Vector3.new(FIELD_PITCH - 0.4, 0.2, FIELD_PITCH - 0.4),
+		CFrame = self:at(Vector3.new(x, 0.15, z)),
+		Transparency = 1,
+		CanCollide = false,
+	})
+	holder.Parent = model
+	local price = if expansion.renown > 0
+		then Locale.T("field.prompt.priceRenown", { count = expansion.price, level = expansion.renown })
+		else Locale.T("field.prompt.price", { count = expansion.price })
+	local buy = prompt(holder, Locale.T("field.prompt.buySquare"), price, 6, function()
+		self.onSquare(square, "buy", holder)
+	end)
+	buy.HoldDuration = BUY_HOLD
+end
+
+function PlotView:buildSquare(model: Model, square: number)
+	local field = self.state.field
+	local size = FIELD_PITCH - 0.4
+	local x, z = squareSpot(square)
 	local prompts = self.own and self.onSquare and self.detail == "full"
 	local pets = self.petMap
-	local x = (c - 0.5 - field.cols / 2) * pitch
 	local index = (square - 1) * 2 + 1
 	local letter = string.sub(field.crops, index, index)
 	local stage = tonumber(string.sub(field.crops, index + 1, index + 1)) or 0
 	if letter == "#" then
-		return -- not bought yet
+		return self:buildLock(model, square)
 	end
 	local soil = part({ Name = "Soil" .. square, Size = Vector3.new(size, 0.4, size), CFrame = self:at(Vector3.new(x, 0.05, z)), Color = COLORS.soil, Material = Enum.Material.Ground })
 	soil.Parent = model
@@ -601,6 +658,8 @@ function PlotView:build(key: string): Model?
 	model.Name = key
 	if key == "base" then
 		self:buildBase(model)
+	elseif key == "field" then
+		self:buildField(model)
 	else
 		local kind, number = string.match(key, "^(%a+)(%d+)$")
 		local n = tonumber(number) :: number
@@ -655,15 +714,13 @@ function PlotView:ShowReach(squares: { number }?)
 	if not (squares and field and (self.detail == "full" or self.detail == "mid")) then
 		return
 	end
-	local pitch = math.min(5.5, FIELD_WIDTH / field.cols)
 	local tint = Instance.new("Model")
 	tint.Name = "Reach"
 	for _, square in squares do
-		local c, r = (square - 1) % field.cols + 1, (square - 1) // field.cols + 1
-		local x, z = (c - 0.5 - field.cols / 2) * pitch, FIELD_FRONT + (r - 0.5) * pitch
+		local x, z = squareSpot(square)
 		part({
 			Name = "Reach" .. square,
-			Size = Vector3.new(pitch - 0.2, 0.1, pitch - 0.2),
+			Size = Vector3.new(FIELD_PITCH - 0.2, 0.1, FIELD_PITCH - 0.2),
 			CFrame = self:at(Vector3.new(x, 0.33, z)), -- just above the soil top (0.25): no shared face
 			Color = REACH,
 			Material = Enum.Material.Neon,

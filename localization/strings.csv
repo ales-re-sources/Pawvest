@@ -340,13 +340,9 @@ field.crop.sell,Button on a harvested crop row: sell all of it; {coins} = Coins 
 field.crops.note,Small note under the harvested crops,"Prices are in Coins, before the pet bonus.","Ceny jsou v mincích, před bonusem od mazlíčků.",new,hd4037cb5
 field.crops.empty,Harvested crops list when the player has none,Nothing to sell yet. Harvest ripe crops on your field.,Zatím nemáš co prodat. Sklidit můžeš zralé plodiny na poli.,new,hd1354325
 field.section.expand,Heading of the next-square offer,Bigger field,Větší pole,new,h7378b91b
-field.expand.info[one],"Offer for the next square; {n} = its number, {count} = price in Coins, {renown} = Renown level it needs. Form for 1",Square {n}: {count} Coin · Renown {renown},Políčko {n}: {count} mince · Pověst {renown},new,h50a038b9
-field.expand.info[few],Form for 2-4 (Czech only),,Políčko {n}: {count} mince · Pověst {renown},new,h50a038b9
-field.expand.info[other],Form for 0 and 5+,Square {n}: {count} Coins · Renown {renown},Políčko {n}: {count} mincí · Pověst {renown},new,h50a038b9
 field.expand.needRenown,Red line under the square offer when Renown is too low; {level} = Renown level needed,You need Renown {level},Potřebuješ Pověst {level},new,hd1d6d1fb
-field.expand.buy,Button: buy the next square,Buy,Koupit,new,h89aeaade
-field.expand.done,Shown when all 12 squares are bought,Your field is complete!,Tvoje pole je kompletní!,new,hb4aad4ae
-field.picker.title,Seed picker title; {n} = square number 1-12,Plant on square {n},Zasadit na políčko {n},new,h23b6b005
+field.expand.done,Shown when all 36 squares are bought,Your field is complete!,Tvoje pole je kompletní!,new,hb4aad4ae
+field.picker.title,Seed picker title; {n} = square number 1-36,Plant on square {n},Zasadit na políčko {n},new,h23b6b005
 field.picker.info,"Crop row in the seed picker; {stock} = seeds the player has, {time} = grow time (""3 hours"")",You have {stock} · grows in {time},Máš {stock} · zraje {time},new,h757c2c37
 field.picker.none,Seed picker when the player has no seeds that can be planted,You have no seeds. Buy some in the field panel.,Nemáš žádná semínka. Kup si je v panelu pole.,new,h20730b2e
 field.picker.shop,Button in the seed picker without seeds: opens the field panel at the seeds,Buy seeds,Koupit semínka,new,h7a9eff42
@@ -358,7 +354,7 @@ field.toast.square,Toast after buying a square; {n} = its number,Square {n} boug
 field.toast.plant,Toast after planting; {crop} = crop name,Planted: {crop},Zasazeno: {crop},new,h16c26af5
 field.prompt.plant,Prompt action text on an empty field square (short verb),Plant,Zasadit,new,h56269bbe
 field.prompt.harvest,Prompt action text on a ripe crop (short verb),Harvest,Sklidit,new,h2c69834b
-field.prompt.square,Prompt object text of an empty field square; {n} = square number 1-12,Square {n},Políčko {n},new,ha8b1cc41
+field.prompt.square,Prompt object text of an empty field square; {n} = square number 1-36,Square {n},Políčko {n},new,ha8b1cc41
 crop.name.Potato,"Crop name (singular, shown with its icon)",Potato,Brambora,new,ha65a72dc
 crop.name.Corn,"Crop name (singular, shown with its icon)",Corn,Kukuřice,new,hd0c37a5e
 crop.name.Pumpkin,"Crop name (singular, shown with its icon)",Pumpkin,Dýně,new,hdddc7a54
@@ -494,3 +490,15 @@ field.size.giant,"Harvest toast, second line: the crop rolled giant (top 3 %); a
 field.size.record,"Harvest toast, after Big / Giant or alone: the heaviest crop of this kind the player has harvested",New record!,Nový rekord!,new,h14ead05b
 field.toast.renownUp,"Harvest toast, last line when the harvest raised the Renown level; {level} = new Renown level",Renown {level}!,Pověst {level}!,new,h03742e78
 field.crop.best,"Harvested crop row, second line; {kg} = weight of the heaviest crop of this kind harvested so far (""8.1"")",Record {kg} kg,Rekord {kg} kg,new,h9ad902fe
+field.prompt.buySquare,Prompt action text on a locked (overgrown) field square of the player's own field (short verb phrase; hold to buy),Buy square,Koupit políčko,new,h712d511b
+field.prompt.price[one],Prompt object text under 'Buy square': the price of the next square; {count} = Coins. Form for 1,{count} Coin,{count} mince,new,h96db4654
+field.prompt.price[few],Form for 2-4 (Czech only),,{count} mince,new,h96db4654
+field.prompt.price[other],Form for 0 and 5+,{count} Coins,{count} mincí,new,h96db4654
+field.prompt.priceRenown[one],"Prompt object text under 'Buy square' when the next square needs Renown; {count} = Coins, {level} = Renown level. Form for 1",{count} Coin · Renown {level},{count} mince · Pověst {level},new,ha5dfda5a
+field.prompt.priceRenown[few],Form for 2-4 (Czech only),,{count} mince · Pověst {level},new,ha5dfda5a
+field.prompt.priceRenown[other],Form for 0 and 5+,{count} Coins · Renown {level},{count} mincí · Pověst {level},new,ha5dfda5a
+field.expand.next[one],"Garden panel, 'Bigger field' section: price of the next square (whichever the player picks); {count} = Coins. Form for 1",Next square: {count} Coin,Další políčko: {count} mince,new,h45995237
+field.expand.next[few],Form for 2-4 (Czech only),,Další políčko: {count} mince,new,h45995237
+field.expand.next[other],Form for 0 and 5+,Next square: {count} Coins,Další políčko: {count} mincí,new,h45995237
+field.expand.hint,"Garden panel, 'Bigger field' section, under the price: how to buy a square (any locked square, in any order)",Pick any overgrown square on your field and use its Buy square prompt. Each square costs more than the last.,Vyber si na poli kterékoli zarostlé políčko a kup ho přes nabídku Koupit políčko. Každé další políčko stojí víc.,new,h83fad8be
+field.reason.open,Refused: the square the player tried to buy is already open,That square is already yours,Tohle políčko už je tvoje,new,h02853080

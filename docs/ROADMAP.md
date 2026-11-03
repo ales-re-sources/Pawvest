@@ -49,8 +49,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E1c1 | Field upgrades (growth, barn) | ✔ | ✔ | – |
 | E1c2 | Size roll (lognormal, Big / Giant, best per crop, sizes in the barn) | ✔ | ✔ | – |
 | E1d1 | Farming-first numbers (F2: crop prices × 9.3, new square / upgrade prices, five field pet slots) | ✔ | ✔ | – |
-| E1d2 | 36-square field, squares chosen freely, price by the number open | – | – | – |
-| E1c3–E5 | Garden MVP (see "Next"; E1c3–E1c4 scoped in outline; E1c3 waits for E1d) | – | – | – |
+| E1d2 | 36-square field (rows 6-6-8-8-8 behind an incubator strip), squares chosen freely, price by the number open | ✔ | ✔ | – |
+| E1c3–E5 | Garden MVP (see "Next"; E1c3–E1c4 scoped in outline; E1c3 next: tool numbers to approve) | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
 
@@ -263,27 +263,71 @@ wait 3 s, write the store, stop. The restore was read back in a fresh playtest.
 Noticed: the next-square line says "Renown 0" when a square has no gate (squares 5 and 6); E1d2 rebuilds that section and should leave it out.
 
 **E1d2 — The 36-square field.**
-- **Grid:** `MaxSquares = 36`, `Columns = 6` (6 x 6). All squares are drawn; the locked ones look different and carry a buy prompt with the price.
-  The player opens any square they choose.
-  The price and Renown gate come from the number already open (`Expansions[open - StartSquares + 1]`, 32 entries from about 1 400 to 973 000).
-- **Data:** `Field.Count` is replaced by `Field.Open` (the set of open squares). The start opens a 2 x 2 block at the front centre.
-  Migration for existing fields (admins only): the old 4 x 3 squares move onto the new grid's front rows (columns 2-5), and so do their
-  `Squares` entries and the field pets' `Square`.
-  The remote becomes `BuySquare(square, expectedOpen)`.
+**Layout decided by the user (2026-11-03, option 1 of 2).** The square size stays (5.5 studs) and the ring layout stays.
+A converted plot's floor shrinks to a 40 x 16 strip holding the sign side and the 3 incubators, and the field starts right behind it.
+The field's rows are 6, 6, 8, 8, 8 squares (36), each row centred on an 8-column grid: 27.5 deep and 44 wide at the back.
+The whole plot reaches about as far as the old 4 x 3 field did: ring 1's field ends at radius 137 (ring 2 starts at 165), ring 2's at 210 (hedge 230).
+About 7 rows fit before ring 2 or the hedge, so more rows can come later without scene work.
+The rejected option 2: three rectangular garden islands off StartLocation. It was rejected because it is a scene job of its own, it would redo E1a1's island, and it
+would spread 12 players over 18-24 plots. It may come back with the social / estate milestones.
+- **Shape:** `CropConfig.RowWidths = { 6, 6, 8, 8, 8 }`, `GridColumns = 8`, `MaxSquares = 36`.
+  Squares are numbered row by row from the plot. The numbers are stored, so the rows are never reordered.
+  `Cell` / `SquareAt` give the grid position.
+- **Opening squares:** every square is drawn. The player opens any locked one through its hold-to-buy prompt (0.5 s).
+  The price and Renown gate come from the number already open: `Expansions[open - StartSquares + 1]`, 32 entries from 1 400 to 907 400, 4.81 M in all;
+  Renown 0, 0, 5, 6, 7, 8, 10, then +1 per square up to 35.
+  The panel's Bigger field section shows the next price, the missing Renown, and how to buy. The "Renown 0" line is gone.
+- **Data:** `Field.Open = { ["n"] = true }` replaces `Field.Count`. A new field opens `StartOpen = { 3, 4, 9, 10 }`, the 2 x 2 block at the front centre.
+  A field from before E1d2 (Count = its first squares of 4 x 3) moves onto rows 1-3, grid columns 3-6 (`CropConfig.FromOldSquare`), with its
+  `Squares` and the field pets' `Square`. This happens once, on load; `Count` is then dropped.
+- **Remote:** `BuySquare(square, expectedOpen)` answers `{ square, open, price }`. It rejects `square` (no such square), `open` (already open),
+  `stale`, `renown`, `coins` and `maxed`. Plant and PlacePet need an open square.
 - **Reach and feed:**
-  - `CropConfig.Reach` counts on 6 columns.
-  - The plot feed's `field` is `6 x 6` squares (`#0` = locked).
-  - Tending, the barn (40 seeds / crops before upgrades) and the panel's square list follow the open set.
-- **Plot geometry:** a 6 x 6 field at today's 5.5-stud squares is 33 x 33 and reaches ring 2's plots (ring 1's field would end 167 studs from the
-  centre, ring 2's plots start at 165). Two ways out:
-  - 4.5-stud squares (27 x 27, a 4-stud path);
-  - ring 2 moved out to about radius 200.
-  To be decided in Studio.
+  - `CropConfig.Reach(square, shape, open)` counts on the grid and keeps only open squares. Tending and the panel use it.
+  - The plot feed's `field` is `{ crops, pets }`: 36 two-character squares, `#0` = locked. `cols` / `rows` are gone (the shape is shared config).
+  - The panel's square list follows the open set.
+- **Drawing (PlotView):**
+  - Every row is a plate of overgrown grass, under the soil without a shared face. Open squares are soil on it.
+  - On the own plot, locked squares carry the buy prompt (an invisible holder part).
+  - Low detail draws the row plates only.
+- **Model:** `economy.py` reads `RowWidths` / `GridColumns`, and `cover()` counts reach on the same centred grid (squares opened row by row from the plot).
+  The model was re-pinned. `check` passes 50 / 51: Casual's lead (2.93x day 7, 9.93x day 30) waits for E1c3. F2's run with the tools gave 3.04x / 12.2x.
+
+**Implemented (2026-11-03).** Files:
+- `CropConfig`, `GardenField`, `PlotView`, `GardenView` (synthetic fields of up to 36 open squares) and `FieldClient`.
+- Strings: 12 rows added (`field.prompt.buySquare`, `field.prompt.price*`, `field.prompt.priceRenown*`, `field.expand.next*`, `field.expand.hint`,
+  `field.reason.open`), 4 removed (`field.expand.info*`, `field.expand.buy`).
+- `economy.py` and its pins.
+
+**Acceptance checks (E1d2).**
+1. Migration on the real (old-format) profile: Count 5 with Potatoes on 1-5 and a Tending pet on 3 → open 2, 3, 4, 5, 8, crops there, pet on 4.
+2. A new field opens 3, 4, 9, 10 with 4 Potato seeds. The own plot draws 5 row plates, 4 soil squares and 32 buy prompts. The feed holds 36 squares.
+3. Buying through the real prompt (hold): any square, 1 400 then 1 700. Then the rejections: Renown 5 for the 7th square (`renown`), a stale
+   count (`stale`), an open square (`open`), square 37 (`square`). Plant on a locked square → `square`; on a bought one it works.
+4. Reach on the grid: square 9 with the 3 x 3 reach covers 2, 3, 4, 8, 9, 10, 15, 16, 17; with only 3, 4, 9, 10 open → 3, 4, 9, 10.
+   Old squares 1-12 map to 2-5, 8-11, 15-18.
+5. The panel in Czech: the square list shows the open squares; Bigger field shows the next price, the missing Renown in red, and the hint.
+6. Budget: 30 synthetic plots with 36 open squares and pets ≤ 5 000 client instances. No console errors; the live profile is snapshotted right before and restored after.
+
+**Studio-validated (2026-11-03).** All six checks passed:
+1. Migration: open `[2,3,4,5,8]`, Potatoes on those squares, the Fox on square 4. The feed was `#0a3a3a3a3#0#0a3#0…`.
+2. New field: open `[3,4,9,10]`, Potato 4. Drawn: 5 rows, 4 soils, 32 locks. The prompt read "Koupit políčko / 1400 mincí", hold 0.5.
+3. The prompts on squares 36 and 1 bought them for 1 400 and 1 700 (Coins 1 200 000 → 1 196 900), and 30 locks were left. All four rejections and
+   both plants answered as expected.
+4. Reach as listed, and also 7 / plus → 1, 7, 8, 14 and 36 / 3 x 3 → 27, 28, 35, 36.
+5. Panel: squares 1, 3, 4, 9, 10, 36 ("36 Brambora 4:41"); "Další políčko: 2100 mincí", "Potřebuješ Pověst 5", the hint.
+6. Budget: 1 931 instances standing at the plaza and 2 131 next to slot 7. A full-detail plot is 711; a mid-detail plot with a full field is 137
+   (E1a1's 80 was for plots without a field).
+   E1b's 12-square run peaked at 1 322. No warnings or errors on the server or the client.
+
+The screenshot shows the strip, the stepped field outline and the crops. The overgrown plates are close to the island's grass (a stand-in colour, art pass later).
+Snapshot, fixture and restore ran in the playtest server (kick first, AGENTS.md → Testing). The restore wrote the old-format profile back: the user's
+next join migrates it as in check 1.
+Not covered: a second client watching the purchase, phone layout, a player without field access.
 - **Later (parked):** rubble / weeds on locked squares, cleared with tools (EXPANSION §6).
 
 **F2 approved by the user (2026-11-03).** F2's model also has the tools at EXPANSION sizes (E1c3's numbers, still to approve).
-Until E1d2 (36 squares) and E1c3 (tools) are built, `economy.py check` keeps failing the lead checks: with 12 squares and no tools the field
-cannot reach them.
+Until E1c3 (tools) is built, `economy.py check` keeps failing Casual's lead (with 36 squares and no tools: 2.93x day 7, 9.93x day 30).
 
 ### E1c — Size roll, tools, field upgrades, market cart (scope 2026-11-02, the user's decisions)
 Split into four steps, each validated and committed on its own (decided 2026-11-02):

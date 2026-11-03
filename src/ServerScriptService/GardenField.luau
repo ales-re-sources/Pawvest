@@ -1,7 +1,7 @@
 -- GardenField: the crop field behind the player's plot (E1a2, docs/ROADMAP.md → E1a2, docs/EXPANSION.md §5). Server-only.
 -- Open only to players with GardenConfig.HasFieldAccess (admins and Studio test users until E1 ships): for anyone else no
 -- Field data is written, every remote is rejected ("locked") and the plot messages carry no field (GardenPlotFeed).
--- State lives in PlayerProfile.Garden: Field = { Count, Squares["1".."12"] = { Crop, Grown }, SettledAt }, Seeds[crop],
+-- State lives in PlayerProfile.Garden: Field = { Open = { ["n"] = true }, Squares["n"] = { Crop, Grown }, SettledAt }, Seeds[crop],
 -- Items[crop], Renown (points; the level is derived, CropConfig.RenownLevel). Grown = growth seconds earned, SettledAt = the
 -- server os.time() up to which growth was counted. Growth is settled on join (the time since SettledAt is an absence:
 -- CropConfig.OfflineRate, capped), and while online (OnlineRate) every SettleSeconds, before every field action and on leave.
@@ -20,8 +20,11 @@
 -- Field upgrades (E1c1): Field.Upgrades = { Growth, Barn } levels (CropConfig.Upgrades): Growth multiplies the growth crops
 -- earn (CropConfig.GrowthSpeed; pets' aptitude XP keeps the plain seconds), Barn raises the seed stock and the crops a Tending
 -- pet may store (CropConfig.BarnFor).
+-- The field's shape is CropConfig.RowWidths (E1d2: 36 squares on a grid); the player opens any locked square (BuySquare), the price
+-- and Renown gate come from the number already open (CropConfig.NextExpansion). Fields from before E1d2 (Count = the first squares
+-- of a 4 x 3 field) move onto rows 1-3 (CropConfig.FromOldSquare), with their crops and field pets.
 -- Remotes (in GardenRemotes): Plant(square, crop), Harvest(square), BuySeeds(crop, count), Sell(crop, count),
--- BuySquare(expectedCount), PlacePet(square, uid) (also moves a placed pet), LiftPet(uid), BuyPetSlot(expectedSlots),
+-- BuySquare(square, expectedOpen), PlacePet(square, uid) (also moves a placed pet), LiftPet(uid), BuyPetSlot(expectedSlots),
 -- BuyUpgrade(id, expectedLevel) (client → server); answers on GardenRemotes.Result; GardenRemotes.State.field (the owner's panel).
 
 local Players = game:GetService("Players")
@@ -39,7 +42,7 @@ local plantEvent = GardenService.Remote("Plant") -- client → server: (square: 
 local harvestEvent = GardenService.Remote("Harvest") -- client → server: (square: number)
 local buySeedsEvent = GardenService.Remote("BuySeeds") -- client → server: (crop: string, count: number)
 local sellEvent = GardenService.Remote("Sell") -- client → server: (crop: string, count: number)
-local buySquareEvent = GardenService.Remote("BuySquare") -- client → server: (expectedCount: number)
+local buySquareEvent = GardenService.Remote("BuySquare") -- client → server: (square: number, expectedOpen: number)
 local placePetEvent = GardenService.Remote("PlacePet") -- client → server: (square: number, uid: string)
 local liftPetEvent = GardenService.Remote("LiftPet") -- client → server: (uid: string)
 local buyPetSlotEvent = GardenService.Remote("BuyPetSlot") -- client → server: (expectedSlots: number)
@@ -73,8 +76,44 @@ local function cleanStock(stock)
 	return clean
 end
 
--- The profile's field, cleaned (idempotent), or nil without access. A player with access gets a new field the first time:
--- StartSquares empty squares and StartSeeds.
+-- Number of squares in the set `open`.
+local function openCount(open): number
+	local n = 0
+	for _ in open do
+		n += 1
+	end
+	return n
+end
+
+-- { [square] = true } of the stored open set ({ ["n"] = true }) or, for a field from before E1d2, of its Count first squares
+-- moved onto the new grid; at least StartOpen. Returns the set and the old-to-new square map of a migrated field (nil otherwise).
+local function openSet(field): ({ [number]: boolean }, { [number]: number }?)
+	local open, moved = {}, nil
+	if type(field.Open) == "table" then
+		for key, value in field.Open do
+			local n = tonumber(key)
+			if value == true and n and CropConfig.Cell(n) then
+				open[n] = true
+			end
+		end
+	elseif field.Count ~= nil then
+		moved = {}
+		for old = 1, math.clamp(count(field.Count), CropConfig.StartSquares, 12) do
+			local n = CropConfig.FromOldSquare(old) :: number
+			open[n] = true
+			moved[old] = n
+		end
+	end
+	if openCount(open) < CropConfig.StartSquares then
+		for _, n in CropConfig.StartOpen do
+			open[n] = true
+		end
+	end
+	return open, moved
+end
+
+-- The profile's field, cleaned (idempotent), and its open set { [square] = true }, or nil without access. A player with access
+-- gets a new field the first time: the StartOpen squares, empty, and StartSeeds.
 local function fieldOf(player: Player, profile)
 	local garden = profile.Garden
 	if type(garden) ~= "table" or not GardenConfig.HasFieldAccess(player.UserId) then
@@ -82,14 +121,19 @@ local function fieldOf(player: Player, profile)
 	end
 	local field = garden.Field
 	if type(field) ~= "table" then
-		field = { Count = CropConfig.StartSquares, Squares = {}, SettledAt = os.time() }
+		field = { Squares = {}, SettledAt = os.time() }
 		garden.Field = field
 		garden.Seeds = table.clone(CropConfig.StartSeeds)
 		garden.Items = {}
 		garden.ItemSize = {}
 		garden.Renown = 0
 	end
-	field.Count = math.clamp(count(field.Count), CropConfig.StartSquares, CropConfig.MaxSquares)
+	local open, moved = openSet(field)
+	field.Open = {}
+	for n in open do
+		field.Open[tostring(n)] = true
+	end
+	field.Count = nil
 	if not finite(field.SettledAt) then
 		field.SettledAt = os.time()
 	end
@@ -97,11 +141,12 @@ local function fieldOf(player: Player, profile)
 	if type(field.Squares) == "table" then
 		for key, square in field.Squares do
 			local index = tonumber(key)
+			if moved and index then
+				index = moved[index]
+			end
 			if
 				index
-				and index == math.floor(index)
-				and index >= 1
-				and index <= field.Count
+				and open[index]
 				and type(square) == "table"
 				and CropConfig.ById[square.Crop]
 			then
@@ -163,11 +208,12 @@ local function fieldOf(player: Player, profile)
 		for _, uid in uids do
 			local entry = garden.FieldPets[uid]
 			local square = type(entry) == "table" and entry.Square
+			if moved and type(square) == "number" then
+				square = moved[square]
+			end
 			if
 				type(square) == "number"
-				and square == math.floor(square)
-				and square >= 1
-				and square <= field.Count
+				and open[square]
 				and not taken[square]
 				and entry.Job == "Tending"
 				and profile.Pets[uid]
@@ -182,7 +228,7 @@ local function fieldOf(player: Player, profile)
 		end
 	end
 	garden.FieldPets = pets
-	return field
+	return field, open
 end
 GardenField.FieldOf = fieldOf
 
@@ -200,12 +246,12 @@ local function store(player: Player, garden, crop, planting: number): (number, b
 end
 
 -- [square] = Tending strength on that square: the strongest Tending pet that reaches it (the same job does not stack).
-local function tendingStrength(profile, field)
+local function tendingStrength(profile, open)
 	local best = {}
 	for uid, entry in profile.Garden.FieldPets do
 		local level = PetConfig.AptitudeLevel(profile.Pets[uid], "Tending")
 		if entry.Job == "Tending" and level > 0 then
-			for _, n in CropConfig.Reach(entry.Square, PetConfig.ReachShape(level), field.Count) do
+			for _, n in CropConfig.Reach(entry.Square, PetConfig.ReachShape(level), open) do
 				best[n] = math.max(best[n] or 0, PetConfig.Strength(level))
 			end
 		end
@@ -222,7 +268,7 @@ end
 -- rate, anything else at the online rate. In an absence Tending pets harvest and replant the ripe crops in their reach.
 -- Placed pets gain aptitude XP by the same weighted seconds. Returns whether a square's look, a crop or a pet's aptitude
 -- level changed, and { [cropId] = harvests by pets } (nil when none).
-local function settle(player: Player, profile, field, absence: boolean): (boolean, { [string]: number }?)
+local function settle(player: Player, profile, field, open, absence: boolean): (boolean, { [string]: number }?)
 	local now = os.time()
 	local elapsed = if field.SettledAt <= now then now - field.SettledAt else 0
 	local growth = if absence then CropConfig.Growth(0, elapsed) else CropConfig.Growth(elapsed, 0)
@@ -233,7 +279,7 @@ local function settle(player: Player, profile, field, absence: boolean): (boolea
 	local garden = profile.Garden
 	local cropGrowth = growth * CropConfig.GrowthSpeed(CropConfig.UpgradeLevel(field.Upgrades, "Growth"))
 	local barn = CropConfig.BarnFor(CropConfig.UpgradeLevel(field.Upgrades, "Barn"))
-	local strength = if absence then tendingStrength(profile, field) else {}
+	local strength = if absence then tendingStrength(profile, open) else {}
 	local changed, tended = false, nil
 	local keys = {}
 	for key in field.Squares do
@@ -297,10 +343,18 @@ GardenService.AddStateField("field", function(profile)
 			owner = player
 		end
 	end
-	local field = owner and fieldOf(owner, profile)
+	local field, open
+	if owner then
+		field, open = fieldOf(owner, profile)
+	end
 	if not field then
 		return nil
 	end
+	local list = {} -- the open squares in order
+	for n in open do
+		table.insert(list, n)
+	end
+	table.sort(list)
 	local now = os.time()
 	local speed = CropConfig.OnlineRate * CropConfig.GrowthSpeed(CropConfig.UpgradeLevel(field.Upgrades, "Growth"))
 	local squares = {}
@@ -328,7 +382,7 @@ GardenService.AddStateField("field", function(profile)
 		}
 	end
 	return {
-		count = field.Count,
+		open = list,
 		squares = squares,
 		seeds = garden.Seeds,
 		items = garden.Items,
@@ -345,22 +399,23 @@ GardenService.AddStateField("field", function(profile)
 	}
 end)
 
--- The field part of `player`'s plot message ({ cols, rows, crops = 2 characters per square: crop letter + stage 1-3,
--- ".0" for an empty owned square, "#0" for a square not bought yet in the last row; pets = { "Kind:Level:uid:square:apt" } },
+-- The field part of `player`'s plot message ({ crops = 2 characters per square 1..MaxSquares: crop letter + stage 1-3, ".0" for
+-- an empty open square, "#0" for a locked one; pets = { "Kind:Level:uid:square:apt" } }; the shape is CropConfig.RowWidths),
 -- apt = the level of the pet's job aptitude, its reach PetConfig.ReachShape(apt)), or nil without a field.
 function GardenField.PlotField(player: Player)
 	local profile = PlayerProfile.Get(player)
-	local field = profile and fieldOf(player, profile)
+	local field, open
+	if profile then
+		field, open = fieldOf(player, profile)
+	end
 	if not field then
 		return nil
 	end
-	local cols = CropConfig.Columns
-	local rows = math.ceil(field.Count / cols)
-	local cells = table.create(cols * rows)
-	for n = 1, cols * rows do
+	local cells = table.create(CropConfig.MaxSquares)
+	for n = 1, CropConfig.MaxSquares do
 		local square = field.Squares[tostring(n)]
 		local crop = square and CropConfig.ById[square.Crop]
-		cells[n] = if n > field.Count then "#0" elseif crop then crop.letter .. CropConfig.Stage(crop, square.Grown) else ".0"
+		cells[n] = if not open[n] then "#0" elseif crop then crop.letter .. CropConfig.Stage(crop, square.Grown) else ".0"
 	end
 	local pets = {} -- "Kind:Level:uid:square:aptitude level" per field pet, by square
 	for uid, entry in profile.Garden.FieldPets do
@@ -371,28 +426,31 @@ function GardenField.PlotField(player: Player)
 	table.sort(pets, function(a, b)
 		return tonumber(string.match(a, ":(%d+):%d+$")) < tonumber(string.match(b, ":(%d+):%d+$"))
 	end)
-	return { cols = cols, rows = rows, crops = table.concat(cells), pets = pets }
+	return { crops = table.concat(cells), pets = pets }
 end
 
--- The caller's profile and field if they may use the field now (access, loaded, at their plot); otherwise rejects. The
--- field is settled (online) first, so every action sees the growth up to now.
+-- The caller's profile, field and open set if they may use the field now (access, loaded, at their plot); otherwise rejects.
+-- The field is settled (online) first, so every action sees the growth up to now.
 local function usableField(player: Player, action: string)
 	if not GardenConfig.HasFieldAccess(player.UserId) then
 		reject(player, action, "locked")
-		return nil, nil
+		return nil, nil, nil
 	end
 	local profile = GardenService.Usable(player, action)
-	local field = profile and fieldOf(player, profile)
-	if not field then
-		return nil, nil
+	local field, open
+	if profile then
+		field, open = fieldOf(player, profile)
 	end
-	local _, tended = settle(player, profile, field, not settledOnline[player])
+	if not field then
+		return nil, nil, nil
+	end
+	local _, tended = settle(player, profile, field, open, not settledOnline[player])
 	if tended then
 		notices[player] = notices[player] or {}
 		notices[player].tended = tended
 	end
 	settledOnline[player] = true
-	return profile, field
+	return profile, field, open
 end
 
 local function done(player: Player, action: string, detail: any)
@@ -406,12 +464,12 @@ plantEvent.OnServerEvent:Connect(function(player, square, cropId)
 	if not (GardenService.WholeNumber(square) and crop) or not GardenService.Allow(player) then
 		return
 	end
-	local profile, field = usableField(player, "Plant")
+	local profile, field, open = usableField(player, "Plant")
 	if not field then
 		return
 	end
 	local garden = profile.Garden
-	if square < 1 or square > field.Count then
+	if not open[square] then
 		return reject(player, "Plant", "square")
 	end
 	if field.Squares[tostring(square)] then
@@ -511,20 +569,27 @@ sellEvent.OnServerEvent:Connect(function(player, cropId, amount)
 	done(player, "Sell", { crop = crop.id, count = amount, paid = paid })
 end)
 
-buySquareEvent.OnServerEvent:Connect(function(player, expected)
-	if not GardenService.WholeNumber(expected) or not GardenService.Allow(player) then
+buySquareEvent.OnServerEvent:Connect(function(player, square, expected)
+	if not (GardenService.WholeNumber(square) and GardenService.WholeNumber(expected)) or not GardenService.Allow(player) then
 		return
 	end
-	local profile, field = usableField(player, "BuySquare")
+	local profile, field, open = usableField(player, "BuySquare")
 	if not field then
 		return
 	end
-	local expansion = CropConfig.NextExpansion(field.Count)
+	if not CropConfig.Cell(square) then
+		return reject(player, "BuySquare", "square")
+	end
+	if open[square] then
+		return reject(player, "BuySquare", "open")
+	end
+	local opened = openCount(open)
+	local expansion = CropConfig.NextExpansion(opened)
 	if not expansion then
 		return reject(player, "BuySquare", "maxed")
 	end
-	if expected ~= field.Count then
-		return reject(player, "BuySquare", "stale") -- out-of-date panel, double click or forged request
+	if expected ~= opened then
+		return reject(player, "BuySquare", "stale") -- out-of-date prompt, double click or forged request
 	end
 	if CropConfig.RenownLevel(profile.Garden.Renown) < expansion.renown then
 		return reject(player, "BuySquare", "renown")
@@ -534,8 +599,8 @@ buySquareEvent.OnServerEvent:Connect(function(player, expected)
 	end
 
 	PlayerProfile.AddCoins(player, -expansion.price)
-	field.Count += 1
-	done(player, "BuySquare", field.Count)
+	field.Open[tostring(square)] = true
+	done(player, "BuySquare", { square = square, open = opened + 1, price = expansion.price })
 end)
 
 buyUpgradeEvent.OnServerEvent:Connect(function(player, id, expected)
@@ -576,7 +641,7 @@ placePetEvent.OnServerEvent:Connect(function(player, square, uid)
 	if not (GardenService.WholeNumber(square) and type(uid) == "string") or not GardenService.Allow(player) then
 		return
 	end
-	local profile, field = usableField(player, "PlacePet")
+	local profile, field, open = usableField(player, "PlacePet")
 	if not field then
 		return
 	end
@@ -585,7 +650,7 @@ placePetEvent.OnServerEvent:Connect(function(player, square, uid)
 	if not pet then
 		return
 	end
-	if square < 1 or square > field.Count then
+	if not open[square] then
 		return reject(player, "PlacePet", "square")
 	end
 	if table.find(profile.EquippedPets, uid) then
@@ -689,12 +754,15 @@ end
 -- counts as offline time (Tending pets work it).
 GardenService.AddSetupHook(function(player)
 	local profile = PlayerProfile.Get(player)
-	local field = profile and fieldOf(player, profile)
+	local field, open
+	if profile then
+		field, open = fieldOf(player, profile)
+	end
 	if not field then
 		return
 	end
 	local converted = convert(player, profile)
-	local _, tended = settle(player, profile, field, not settledOnline[player])
+	local _, tended = settle(player, profile, field, open, not settledOnline[player])
 	settledOnline[player] = true
 	if converted or tended then
 		notices[player] = notices[player] or {}
@@ -709,9 +777,11 @@ end)
 
 -- Leave and shutdown: the time since the last settle was online.
 PlayerProfile.OnLeaving(function(player, profile)
-	local field = profile and settledOnline[player] and fieldOf(player, profile)
-	if field then
-		settle(player, profile, field, false)
+	if profile and settledOnline[player] then
+		local field, open = fieldOf(player, profile)
+		if field then
+			settle(player, profile, field, open, false)
+		end
 	end
 	settledOnline[player] = nil
 	notices[player] = nil
@@ -723,9 +793,11 @@ task.spawn(function()
 		task.wait(CropConfig.SettleSeconds)
 		for _, player in Players:GetPlayers() do
 			local profile = PlayerProfile.Get(player)
-			local field = profile and settledOnline[player] and fieldOf(player, profile)
-			if field and settle(player, profile, field, false) then
-				GardenService.PublishAll(player)
+			if profile and settledOnline[player] then
+				local field, open = fieldOf(player, profile)
+				if field and settle(player, profile, field, open, false) then
+					GardenService.PublishAll(player)
+				end
 			end
 		end
 	end

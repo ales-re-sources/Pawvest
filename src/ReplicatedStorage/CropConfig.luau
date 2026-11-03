@@ -23,11 +23,17 @@ for _, crop in CropConfig.Crops do
 	CropConfig.ByLetter[crop.letter] = crop
 end
 
+-- The field's shape (E1d2): rows of RowWidths squares from the plot outwards, each row centred on a grid of GridColumns
+-- columns (the widest row). Squares are numbered row by row from the plot, left to right as seen from the plot (1..MaxSquares);
+-- the numbers are stored (Field.Open, Field.Squares, FieldPets[uid].Square): never reorder the rows.
+CropConfig.RowWidths = { 6, 6, 8, 8, 8 }
+CropConfig.GridColumns = 8
+CropConfig.MaxSquares = 36
 CropConfig.StartSquares = 4 -- a new field (E1a2 decision 3: with StartSeeds, so the first plant needs no shop)
+CropConfig.StartOpen = { 3, 4, 9, 10 } -- the 2 x 2 block at the front centre
 CropConfig.StartSeeds = { Potato = 4 }
-CropConfig.MaxSquares = 12
-CropConfig.Columns = 4 -- squares per field row (4 x 3 at 12 squares; PlotView draws row by row from the plot outwards)
--- Expansions[n] buys square StartSquares + n: Coins and the Renown level it needs (F2: about x 1.23 per square; E1d2 extends the list to 36).
+-- Expansions[n] = the square bought when StartSquares + n - 1 are open (any locked square the player picks): Coins and the
+-- Renown level it needs (F2: about x 1.23 per square, 4.8 M in all).
 CropConfig.Expansions = {
 	{ price = 1400, renown = 0 },
 	{ price = 1700, renown = 0 },
@@ -37,6 +43,30 @@ CropConfig.Expansions = {
 	{ price = 4000, renown = 8 },
 	{ price = 4900, renown = 10 },
 	{ price = 6000, renown = 11 },
+	{ price = 7400, renown = 12 },
+	{ price = 9200, renown = 13 },
+	{ price = 11300, renown = 14 },
+	{ price = 13900, renown = 15 },
+	{ price = 17200, renown = 16 },
+	{ price = 21100, renown = 17 },
+	{ price = 26100, renown = 18 },
+	{ price = 32100, renown = 19 },
+	{ price = 39600, renown = 20 },
+	{ price = 48800, renown = 21 },
+	{ price = 60100, renown = 22 },
+	{ price = 74000, renown = 23 },
+	{ price = 91200, renown = 24 },
+	{ price = 112400, renown = 25 },
+	{ price = 138500, renown = 26 },
+	{ price = 170700, renown = 27 },
+	{ price = 210300, renown = 28 },
+	{ price = 259200, renown = 29 },
+	{ price = 319400, renown = 30 },
+	{ price = 393600, renown = 31 },
+	{ price = 485000, renown = 32 },
+	{ price = 597600, renown = 33 },
+	{ price = 736400, renown = 34 },
+	{ price = 907400, renown = 35 },
 }
 
 CropConfig.RenownPoints = { 1, 3, 6, 12 } -- points per harvest by crop tier (4 = rare crops, E2)
@@ -165,22 +195,64 @@ function CropConfig.Stage(crop, grown: number): number
 	return if grown >= crop.growSeconds / 2 then 2 else 1
 end
 
--- Expansion that buys the next square of a field with `count` squares, or nil at MaxSquares.
-function CropConfig.NextExpansion(count: number)
-	return CropConfig.Expansions[count - CropConfig.StartSquares + 1]
+-- Expansion that buys the next square of a field with `open` squares open, or nil at MaxSquares.
+function CropConfig.NextExpansion(open: number)
+	return CropConfig.Expansions[open - CropConfig.StartSquares + 1]
 end
 
--- Squares (1..count) a pet on `square` reaches with reach `shape` (PetConfig.ReachShape: 0 own, 1 plus the 4 next to it, 2 the
--- 3 x 3 block), on the field grid of Columns squares per row.
-function CropConfig.Reach(square: number, shape: number, count: number): { number }
-	local col, row = (square - 1) % CropConfig.Columns, (square - 1) // CropConfig.Columns
+-- Field grid (E1d2): cells[n] = { row, col } of square n (col 1..GridColumns), at[row][col] = square.
+local cells, at = {}, {}
+do
+	local n = 0
+	for row, width in CropConfig.RowWidths do
+		at[row] = {}
+		local offset = (CropConfig.GridColumns - width) // 2
+		for c = 1, width do
+			n += 1
+			cells[n] = { row = row, col = offset + c }
+			at[row][offset + c] = n
+		end
+	end
+	assert(n == CropConfig.MaxSquares, "CropConfig: RowWidths must add up to MaxSquares")
+	assert(#CropConfig.StartOpen == CropConfig.StartSquares, "CropConfig: StartOpen must hold StartSquares squares")
+end
+
+-- Row (1 = next to the plot) and grid column (1..GridColumns) of square `square`, or nil outside the field.
+function CropConfig.Cell(square: number): (number?, number?)
+	local cell = cells[square]
+	if not cell then
+		return nil, nil
+	end
+	return cell.row, cell.col
+end
+
+-- The square at `row` / grid column `col`, or nil.
+function CropConfig.SquareAt(row: number, col: number): number?
+	return at[row] and at[row][col]
+end
+
+-- The square that old square `old` of the 4 x 3 field (before E1d2: 4 per row, row by row) becomes: rows 1-3, grid
+-- columns 3-6 (the middle of every row).
+function CropConfig.FromOldSquare(old: number): number?
+	if old < 1 or old > 12 or old % 1 ~= 0 then
+		return nil
+	end
+	return CropConfig.SquareAt((old - 1) // 4 + 1, (old - 1) % 4 + 3)
+end
+
+-- Squares a pet on `square` reaches with reach `shape` (PetConfig.ReachShape: 0 own, 1 plus the 4 next to it, 2 the
+-- 3 x 3 block) on the field grid, only those in the set `open` ({ [square] = true }; nil = every square).
+function CropConfig.Reach(square: number, shape: number, open: { [number]: boolean }?): { number }
+	local row, col = CropConfig.Cell(square)
 	local list = {}
+	if not row then
+		return list
+	end
 	for dy = -1, 1 do
 		for dx = -1, 1 do
 			local inShape = (dx == 0 and dy == 0) or (shape == 1 and (dx == 0 or dy == 0)) or shape >= 2
-			local c, r = col + dx, row + dy
-			local n = r * CropConfig.Columns + c + 1
-			if inShape and c >= 0 and c < CropConfig.Columns and r >= 0 and n <= count then
+			local n = CropConfig.SquareAt(row + dy, col + dx)
+			if inShape and n and (open == nil or open[n]) then
 				table.insert(list, n)
 			end
 		end
