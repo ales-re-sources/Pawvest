@@ -255,7 +255,7 @@ A grid over the three levers (sweep scripts in the session scratchpad; the overr
 |---|---|---|
 | Crop prices | ladder 0.3 | **× 9.7 (ladder 2.9):** Potato 6 / 2, Corn 1 044 / 261, Pumpkin 1 392 / 348, Giant melon 4 176 / 1 044 (sale / seed); rare crops the same factor |
 | Crop gates | Corn and Pumpkin Renown 8, Giant melon 25 | Corn and Pumpkin **Renown 1**, Giant melon **Renown 5** |
-| Field size | 12 squares, expansions 600 → 65 000 | **36 squares:** expansions from 1 400, about × 1.31 per square up to about 970 000 (5.1 M in all); squares 5-6 need no Renown, then Renown rises to 60 |
+| Field size | 12 squares, expansions 600 → 65 000 | **36 squares:** expansions from 1 400, about × 1.23 per square up to about 970 000 (5.1 M in all); squares 5-6 need no Renown, then Renown rises to 60 |
 | Tools | none | EXPANSION §6 sizes (Seed sorter +5 / 10 / 15 %, Cloches +7 / 14 / 20 % online, shears 5 / 10 / 15 %) |
 | Other field sinks | upgrades, pet slots as in CropConfig | the same × 9.7 |
 | Obby Coins | as built | **repeat runs × 0.5** (first clears unchanged) |
@@ -281,6 +281,40 @@ O (online ≥ 3x offline per hour) holds at 3.66-4.15x, and C at 93-95 %. With t
 4. **Sinks:** 1.5-3 M Coins per player by day 60 must go into the still-undesigned reserved ladder (estate, landmarks, decor, stations).
 5. **36 squares:** the plot draws 12 today (`GardenView` / `PlotView`, the ring layout). Bigger plots, or a field that grows in another direction (a second field, terraces).
 6. **Live game:** the field is admin-only, so its prices can change freely. The repeat-run cut reaches every live obby player.
+
+### F1 decisions (user, 2026-11-03)
+- **Inflation accepted.** At 2 Coins a Potato is a bad use of a player's time. Crop prices and the field's own sinks (upgrades, tools, pet slots)
+  rise × 9.7, as in F1.
+- **The obby supplements.** It fills the money a player is missing and stops being the only income, so it pays less as the player progresses.
+  F1 modelled this as repeat runs × 0.5. **Repeat runs stay as they are for now (user, 2026-11-03).** A second or later run of a stage pays tens of
+  Coins, which feels right next to a first clear's 1 000+.
+  Why they mattered in the model: a Gold repeat pays 50 × the stage's reward factor × 2 × 0.8^(finishes today), so the first runs of a late stage (factor 4-5.25)
+  pay 400-525, and ten runs of it pay 1 800-2 300 a day. Once every stage is cleared, the model's Casual spends its 45 obby minutes on those
+  and earns about 14 100 a day at day 30 (Obby main about 26 900 in 2 h).
+  With repeats kept (F1 otherwise unchanged, 6 columns), Casual's lead is 5.3x at day 30 and reaches 10x only around day 60. Obby main is 5.5x at day 30 (target ≥ 1x by day 14),
+  Garden main 28.9x. Casual's 2.8x at day 7 is the same with or without the cut (its week-1 obby Coins are first clears).
+- **36 squares, all drawn.** The player unlocks **any** square they choose. The price rises with the number of squares already unlocked (F1's ladder by
+  count: about 1 400 → 973 000), not with the position. Tending reach counted on a 6-column grid changes no target (re-run 2026-11-03).
+- **Late field lever, candidate F2 (2026-11-03, after "find a field lever"; approved by the user 2026-11-03 as E1d's numbers).** With repeat runs kept, Casual stalled on the squares' Renown gates.
+  At day 30 it held 123 000 Coins, 19 squares and Renown 54, and the next square needed 56 (F1's gates reach 60 by square 21).
+  F2 changes F1 in three places:
+  - **Gentler square gates.** Renown by squares open: 5 → 6: 0; 7: 5, 8: 6, 9: 7, 10: 8, 11: 10, then +1 per square up to 35 for the 36th.
+  - **Two more field pet slots**, five in all: 0 / 23 300 / 84 000 / 280 000 / 746 700.
+  - **Crop prices × 9.3** (ladder 2.8) instead of × 9.7: Potato 6 / 2, Corn 1 008 / 252, Pumpkin 1 344 / 336, Giant melon 4 032 / 1 008. This brings
+    Garden main's parity back under 1.0.
+
+  Results (6 seeds, worst policy, 6 columns, tools at EXPANSION sizes):
+
+  | Archetype | Parity, days 1-3 | Lead day 7 / 14 / 30 | Field net per day / obby per day, days 54-60 | Squares, day 30 / 60 |
+  |---|---|---|---|---|
+  | Obby main | 0.52x | 3.1 / 6.8 / 11.8 | 251 500 / 26 900 | 31 / 35 |
+  | Casual | 0.76x | **3.04** / 7.7 / 12.2 | 182 400 / 7 500 | 29 / 33 |
+  | Garden main | **0.99x** | 8.8 / 30.5 / 30.7 | 209 000 / 2 800 | 28 / 33 |
+
+  O (online ≥ 3x offline per hour) holds at 3.65x and C at 94 %. The reserved sinks needed by day 60 drop to 259 000 (Obby main), because the squares
+  (4.8 M in all) absorb most of the income. The two thin edges remain: Casual's day 7 (3.04x) and Garden main's parity (0.99x) trade against each other via the
+  crop prices. Field-pet slot 4 / 5 and the gentler gates are what lift day 14-30. Neither alone was enough: slots 4-5 alone 8.9x, gates alone 8.5x.
+- **Later (parked):** locked squares lie under rubble or weeds. Clearing them needs a tool upgrade or a bought tool (EXPANSION §6).
 
 ## Open decisions for the user
 

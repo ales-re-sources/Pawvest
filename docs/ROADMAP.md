@@ -48,7 +48,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E1a3 | Crops as pet food (pet detail page; XP = half the sale value) — scoped 2026-11-02 | – | – | – |
 | E1c1 | Field upgrades (growth, barn) | ✔ | ✔ | – |
 | E1c2 | Size roll (lognormal, Big / Giant, best per crop, sizes in the barn) | ✔ | ✔ | – |
-| E1c3–E5 | Garden MVP (see "Next"; E1c3–E1c4 scoped in outline) | – | – | – |
+| E1d | Farming-first rebalance (F2: crop prices × 9.3, 36 squares chosen freely, five field pet slots) — numbers approved 2026-11-03 | – | – | – |
+| E1c3–E5 | Garden MVP (see "Next"; E1c3–E1c4 scoped in outline; E1c3 waits for E1d) | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
 
@@ -212,6 +213,47 @@ route later. Only for `GardenConfig.HasFieldAccess` (nobody else holds crops).
    field show the new reach.
 5. `economy.py check` passes with the new pins; `loc.py check` 0 errors, lint within the baseline; the card fits a 340 px panel in Czech.
 6. All of it once through the real UI (clicks), no console errors; live profile snapshotted right before and restored after.
+
+### E1d — Farming-first rebalance (scope draft 2026-11-03; numbers: ECONOMY.md → "Direction change", F1)
+**Goal.** Farming becomes the main game: over days 1-3 the field earns at most what the obby earns, then 3x by day 7 and 10x by day 30 (Casual,
+Garden main). The field is admin-only (`GardenConfig.FieldAccess`), so its numbers can change freely. The obby change reaches live players.
+Proposed split into two steps, each validated and committed on its own:
+
+**E1d1 — Numbers.**
+- **`CropConfig`, candidate F2 (ECONOMY.md), × 9.3:**
+  - Crops (sale / seed): Potato 6 / 2, Corn 1 008 / 252, Pumpkin 1 344 / 336, Giant melon 4 032 / 1 008.
+  - Gates: Corn and Pumpkin Renown 1, Giant melon 5.
+  - Field sinks: upgrades (Growth 28 000 / 74 700 / 186 700 / 420 000, Barn 14 000 / 37 300 / 93 300 / 233 300 / 560 000).
+  - **Five** field pet slots: 0 / 23 300 / 84 000 / 280 000 / 746 700.
+  - Squares by the number open: the price rises about × 1.23 per square, from 1 400 (5th) to 907 400 (36th); Renown 0 / 0 for the 5th / 6th, then
+    5, 6, 7, 8, 10 and +1 per square up to 35. Exact roundings come from the model.
+- **E1a3 crop XP** stays half the sale (Corn 504). The guardrail still holds: XP ≤ sale × Berry's XP per Coin.
+- **Obby:** repeat runs stay as they are (user, 2026-11-03). Talents stay Coins until the parked stars idea is decided.
+- **`economy.py`** reads the new configs. `check` then passes the P / L checks, and `pin` accepts the numbers. A migration is not needed:
+  stored Coins stay as they are.
+
+**E1d2 — The 36-square field.**
+- **Grid:** `MaxSquares = 36`, `Columns = 6` (6 x 6). All squares are drawn; the locked ones look different and carry a buy prompt with the price.
+  The player opens any square they choose.
+  The price and Renown gate come from the number already open (`Expansions[open - StartSquares + 1]`, 32 entries from about 1 400 to 973 000).
+- **Data:** `Field.Count` is replaced by `Field.Open` (the set of open squares). The start opens a 2 x 2 block at the front centre.
+  Migration for existing fields (admins only): the old 4 x 3 squares move onto the new grid's front rows (columns 2-5), and so do their
+  `Squares` entries and the field pets' `Square`.
+  The remote becomes `BuySquare(square, expectedOpen)`.
+- **Reach and feed:**
+  - `CropConfig.Reach` counts on 6 columns.
+  - The plot feed's `field` is `6 x 6` squares (`#0` = locked).
+  - Tending, the barn (40 seeds / crops before upgrades) and the panel's square list follow the open set.
+- **Plot geometry:** a 6 x 6 field at today's 5.5-stud squares is 33 x 33 and reaches ring 2's plots (ring 1's field would end 167 studs from the
+  centre, ring 2's plots start at 165). Two ways out:
+  - 4.5-stud squares (27 x 27, a 4-stud path);
+  - ring 2 moved out to about radius 200.
+  To be decided in Studio.
+- **Later (parked):** rubble / weeds on locked squares, cleared with tools (EXPANSION §6).
+
+**F2 approved by the user (2026-11-03).** F2's model also has the tools at EXPANSION sizes (E1c3's numbers, still to approve).
+Until E1d2 (36 squares) and E1c3 (tools) are built, `economy.py check` keeps failing the lead checks: with 12 squares and no tools the field
+cannot reach them.
 
 ### E1c — Size roll, tools, field upgrades, market cart (scope 2026-11-02, the user's decisions)
 Split into four steps, each validated and committed on its own (decided 2026-11-02):

@@ -261,6 +261,7 @@ the obby. Names are our own (no sprinklers or trowels, §1.1); effects are bound
 | Seed chest | seed stock and storage capacity (Tending pets replant longer) | Comfort | D1 |
 | Wheelbarrow | harvest every ripe square with one prompt | Comfort | D2 |
 | Scarecrow | raid defence on a few squares (§7), like a low-level Pest-control pet; takes no field pet slot | Defence | D1 |
+| Clearing tools (parked, user 2026-11-03) | locked squares lie under rubble or weeds; clearing a kind needs a tool level or a bought tool, on top of the square's price | Reach | later |
 
 - **No tool raises variant chance:** variants come from fertilisers and pets (§5.3). Growth beyond the Cloches comes from Fertilising pets (§4).
 - Data: `Garden.Tools[id] = level` in the profile.
