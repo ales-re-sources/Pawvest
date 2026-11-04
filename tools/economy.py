@@ -249,7 +249,7 @@ def cart_cfg(cart):
 
 
 def obby_cfg(o):
-    return [o["FirstGoldWorld"], o["FirstGold"], o["Daily"], o["MeterSize"], list(o["Points"]), o["FirstMult"]]
+    return [o["FirstGoldWorld"], o["FirstGold"], o["Daily"], o["MeterSize"], list(o["Points"]), o["FirstMult"], list(o.get("Pouch", []))]
 
 
 def apply_crop_config(P):
@@ -275,7 +275,7 @@ def apply_crop_config(P):
         "upgrades": [[u["id"], u["step"], list(u["prices"])] for u in luau(f, "CropConfig.Upgrades")],  # E1c1: [id, step, prices]
         "tools": [[t["id"], list(t["effect"]), list(t["prices"]), list(t["renown"])] for t in luau(f, "CropConfig.Tools")],  # E1c3
         "cart": cart_cfg(luau(f, "CropConfig.Cart")),
-        "obby_seeds": obby_cfg(luau(f, "CropConfig.ObbySeeds")),  # E2a: [first Gold from world, seeds per first Gold, daily seeds, meter size, points by medal, first-of-day factor]  # E1c4: [[count, discount] per bargain, [taste count, price, fromLevel]]
+        "obby_seeds": obby_cfg(luau(f, "CropConfig.ObbySeeds")),  # E2a: [first Gold from world, seeds per first Gold, daily seeds, meter size, points by medal, first-of-day factor, E2b pouch seeds by medal]  # E1c4: [[count, discount] per bargain, [taste count, price, fromLevel]]
         "size": [luau(f, "CropConfig.SizeSigma"), luau(f, "CropConfig.SizeZCap"), luau(f, "CropConfig.SizeBigZ"), luau(f, "CropConfig.SizeGiantZ")],  # E1c2
         "rates": [luau(f, "CropConfig.OnlineRate"), luau(f, "CropConfig.OfflineRate"), luau(f, "CropConfig.OfflineCapSeconds") / 3600],  # hours
         # field pets (E1b): slot prices, slots from pens; PetConfig's aptitude numbers
@@ -315,11 +315,12 @@ def apply_crop_config(P):
     bargains, (t_count, t_price, t_from) = cfg["cart"]
     F["cart"] = {"bargains": [list(b) for b in bargains], "taste": {"count": t_count, "price": t_price, "from_level": t_from}}
     F["online_rate"], F["offline_rate"], F["offline_cap_h"] = cfg["rates"]
-    fg_world, fg_seeds, daily, size, pts, first_mult = cfg["obby_seeds"]
+    fg_world, fg_seeds, daily, size, pts, first_mult, pouch = cfg["obby_seeds"]
     # E2a: rare seeds as CropConfig.ObbySeeds gives them; the daily seed is of the best world reached (the player picks the stage); rare harvests
     # are sold in full until something else uses them (landmarks)
     F["rare"].update({"per_first_gold": fg_seeds, "first_gold_world": fg_world, "daily": daily, "daily_best": True, "sale_share": 1.0})
     F["obby"]["meter"].update({"size": size, "pts": list(pts), "first_mult": first_mult})
+    F["obby"]["pouch"]["seeds"] = list(pouch)  # E2b: common seeds per day's first medal finish on a stage, by medal
     FP = F["pets"]
     FP["slots"] = list(cfg["pet_slots"])
     FP["tending"] = dict(cfg["tending"])
@@ -430,7 +431,7 @@ def pin_values(P):
         "crop_field_tools": P["crop_cfg"]["tools"],  # [id, effect, prices, renown levels] (E1c3)
         "crop_field_xp": P["crop_cfg"]["xp"],  # [id, pet XP per crop fed] (E1a3)
         "crop_field_cart": P["crop_cfg"]["cart"],
-        "crop_field_obby_seeds": P["crop_cfg"]["obby_seeds"],  # [first Gold from world, per first Gold, daily, meter size, points, first-of-day x] (E2a)  # [[count, discount] per bargain, [taste count, price, from level]] (E1c4)
+        "crop_field_obby_seeds": P["crop_cfg"]["obby_seeds"],  # [first Gold from world, per first Gold, daily, meter size, points, first-of-day x, pouch by medal] (E2a, E2b)  # [[count, discount] per bargain, [taste count, price, from level]] (E1c4)
         "crop_field_size": P["crop_cfg"]["size"],  # [sigma, z cap, Big z, Giant z] of the size roll (E1c2)
         "crop_field_rates": P["crop_cfg"]["rates"],  # [online rate, offline rate, offline cap in hours]
         "field_pet_slots": P["crop_cfg"]["pet_slots"],  # CropConfig.PetSlotPrices

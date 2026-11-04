@@ -34,6 +34,8 @@
 -- Rare seeds from the obby (E2a): StageResults calls GardenField.ObbyFinish for every finish; CropConfig.ObbySeeds gives the rare crop of
 -- the stage's world for a new Gold (World 2 on), the day's first medal finish (Garden.RareDay = that UTC day) and a full stage meter
 -- (Garden.Meters[stageKey] = points). Rare crops are never sold as seeds (BuySeeds: "obby").
+-- E2b seed pouch: the day's first medal finish on a stage also gives CropConfig.ObbySeeds.Pouch[medal] seeds of the common crop planted
+-- last (Garden.LastCrop, set by Plant), only up to the barn's limit.
 -- The field's shape is CropConfig.RowWidths (E1d2: 36 squares on a grid); the player opens any locked square (BuySquare), the price
 -- and Renown gate come from the number already open (CropConfig.NextExpansion). Fields from before E1d2 (Count = the first squares
 -- of a 4 x 3 field) move onto rows 1-3 (CropConfig.FromOldSquare), with their crops and field pets.
@@ -236,6 +238,8 @@ local function fieldOf(player: Player, profile)
 	end
 	garden.Meters = meters
 	garden.RareDay = if finite(garden.RareDay) then garden.RareDay else nil
+	local last = type(garden.LastCrop) == "string" and CropConfig.ById[garden.LastCrop]
+	garden.LastCrop = if last and not last.rare then last.id else nil
 
 	-- field pets: an owned pet with the job's aptitude, not penned, on an owned square of its own, within the slots (in uid order);
 	-- PetService unequips a field pet (equipped and on the field never both)
@@ -582,6 +586,9 @@ plantEvent.OnServerEvent:Connect(function(player, square, cropId)
 	end
 	field.Plantings += 1
 	field.Squares[tostring(square)] = { Crop = crop.id, Grown = 0, N = field.Plantings }
+	if not crop.rare then
+		garden.LastCrop = crop.id -- E2b: the seed pouch drops this crop
+	end
 	done(player, "Plant", { square = square, crop = crop.id })
 end)
 
@@ -1033,6 +1040,17 @@ function GardenField.ObbyFinish(player: Player, stage, medal: number, previousMe
 		return nil
 	end
 	local garden = profile.Garden
+	-- E2b seed pouch, before the rare seeds (they may go past the barn and would take its room)
+	local pouch
+	if firstOnStage then
+		local pouchCrop = CropConfig.ById[garden.LastCrop or ""] or CropConfig.ById[rules.PouchDefault]
+		local room = CropConfig.BarnFor(CropConfig.UpgradeLevel(field.Upgrades, "Barn")) - CropConfig.SeedTotal(garden.Seeds)
+		local count = math.clamp(room, 0, rules.Pouch[medal])
+		pouch = { crop = pouchCrop.id, count = count, full = count < rules.Pouch[medal] }
+		if count > 0 then
+			garden.Seeds[pouchCrop.id] = (garden.Seeds[pouchCrop.id] or 0) + count
+		end
+	end
 	local seeds = {}
 	local gold = StageConfig.MedalIndex.Gold
 	if medal == gold and previousMedal < gold and stage.world >= rules.FirstGoldWorld then
@@ -1054,10 +1072,10 @@ function GardenField.ObbyFinish(player: Player, stage, medal: number, previousMe
 		garden.Seeds[gain.crop] = (garden.Seeds[gain.crop] or 0) + gain.count
 	end
 	GardenService.PublishAll(player)
-	if #seeds > 0 then
+	if #seeds > 0 or (pouch and pouch.count > 0) then
 		task.spawn(PlayerProfile.Save, player)
 	end
-	return { seeds = seeds, meter = { crop = crop.id, points = points, size = rules.MeterSize } }
+	return { seeds = seeds, pouch = pouch, meter = { crop = crop.id, points = points, size = rules.MeterSize } }
 end
 
 return GardenField

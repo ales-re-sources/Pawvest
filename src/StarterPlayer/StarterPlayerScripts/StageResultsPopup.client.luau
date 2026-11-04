@@ -133,6 +133,14 @@ local function render(result)
 			}))
 		end
 	end
+	local pouch = type(obby) == "table" and obby.pouch
+	local pouchCrop = type(pouch) == "table" and CropConfig.ById[pouch.crop]
+	if pouchCrop and pouch.count > 0 then
+		table.insert(lines, Locale.T("results.pouch", { icon = pouchCrop.icon, crop = Locale.CropName(pouchCrop), count = pouch.count }))
+	end
+	if pouchCrop and pouch.full then
+		table.insert(lines, Locale.T("results.pouchFull"))
+	end
 	seedsLabel.Visible = #lines > 0
 	seedsLabel.Text = table.concat(lines, "\n")
 	local meter = type(obby) == "table" and obby.meter

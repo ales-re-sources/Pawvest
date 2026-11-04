@@ -69,6 +69,8 @@ return {
 	["results.rareWhy.daily"] = "first medal today",
 	["results.rareWhy.meter"] = "meter full",
 	["results.meter"] = "{icon} Rare seed meter: {pct}%",
+	["results.pouch"] = { "{icon} {crop}: +{count} seed from the seed pouch", "{icon} {crop}: +{count} seeds from the seed pouch" },
+	["results.pouchFull"] = "Barn full: the rest of the seed pouch did not fit",
 	["results.next"] = "Next: {medal} under {time}",
 	["results.allMedals"] = "All medals earned!",
 	["gate.prompt.unlock"] = { "Unlock · {count} Coin", "Unlock · {count} Coins" },

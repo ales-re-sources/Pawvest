@@ -69,6 +69,8 @@ return {
 	["results.rareWhy.daily"] = "[!! fířšť měďál ťöďáý ~~~~~~~ !!]",
 	["results.rareWhy.meter"] = "[!! měťěř fůll ~~~~ !!]",
 	["results.meter"] = "[!! {icon} Řářě šěěď měťěř: {pct}% ~~~~~~~~ !!]",
+	["results.pouch"] = { "[!! {icon} {crop}: +{count} šěěď fřöm ťhě šěěď pöůčh ~~~~~~~~~~~~ !!]", "[!! {icon} {crop}: +{count} šěěďš fřöm ťhě šěěď pöůčh ~~~~~~~~~~~~ !!]" },
+	["results.pouchFull"] = "[!! Bářň fůll: ťhě řěšť öf ťhě šěěď pöůčh ďíď ňöť fíť ~~~~~~~~~~~~~~~~~~~~ !!]",
 	["results.next"] = "[!! Ňěxť: {medal} ůňďěř {time} ~~~~~ !!]",
 	["results.allMedals"] = "[!! Áll měďálš ěářňěď! ~~~~~~~ !!]",
 	["gate.prompt.unlock"] = { "[!! Ůňlöčk · {count} Čöíň ~~~~~~ !!]", "[!! Ůňlöčk · {count} Čöíňš ~~~~~~ !!]" },

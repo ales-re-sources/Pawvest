@@ -91,6 +91,10 @@ CropConfig.ObbySeeds = {
 	MeterSize = 300,
 	Points = { 1, 2, 3 }, -- Bronze, Silver, Gold
 	FirstMult = 2,
+	-- E2b seed pouch: the day's first medal finish on a stage gives these seeds (Bronze, Silver, Gold) of the common crop the player
+	-- planted last (Garden.LastCrop; Potato before any), only up to the barn's limit
+	Pouch = { 1, 2, 3 },
+	PouchDefault = "Potato",
 }
 
 -- The rare crop of obby world `world` (nil for the Tutorial or a world without one).

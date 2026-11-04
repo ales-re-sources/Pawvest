@@ -79,6 +79,10 @@ results.rareWhy.gold,Why a rare seed was given: the first Gold on this stage (in
 results.rareWhy.daily,Why a rare seed was given: the day's first medal finish (inside results.rareSeed's brackets),first medal today,první medaile dne,new,hb497a0da
 results.rareWhy.meter,Why a rare seed was given: the stage's rare-seed meter filled up (inside results.rareSeed's brackets),meter full,ukazatel naplněn,new,ha9c8a069
 results.meter,"Results popup (players with the field, E2): how full this stage's rare-seed meter is; {icon} = the world's rare crop emoji, {pct} = 0-99",{icon} Rare seed meter: {pct}%,{icon} Ukazatel vzácného semínka: {pct} %,new,he6002eec
+results.pouch[one],"Results popup (players with the field, E2b): common seeds from the seed pouch (the day's first medal finish on this stage gives seeds of the crop planted last); {icon} = crop emoji, {crop} = crop name, {count} = seeds. Form for 1",{icon} {crop}: +{count} seed from the seed pouch,{icon} {crop}: +{count} semínko ze sáčku,new,hf2451e1d
+results.pouch[few],Form for 2-4 (Czech only),,{icon} {crop}: +{count} semínka ze sáčku,new,hf2451e1d
+results.pouch[other],Form for 0 and 5+,{icon} {crop}: +{count} seeds from the seed pouch,{icon} {crop}: +{count} semínek ze sáčku,new,hf2451e1d
+results.pouchFull,"Results popup (E2b): the seed stock is at the barn's limit, so some or all of the seed pouch did not fit (after results.pouch, or alone)",Barn full: the rest of the seed pouch did not fit,Stodola je plná: zbytek sáčku se nevešel,new,h482de2c1
 results.next,"Next goal; {medal} = medal tier (medal.name.*), {time} = its time limit",Next: {medal} under {time},Další cíl: {medal} pod {time},ok,hfa6bbb41
 results.allMedals,Last line when every medal of the stage is earned,All medals earned!,Všechny medaile získány!,ok,h91b54d74
 # Gates (unlock prompt and messages),,,,,

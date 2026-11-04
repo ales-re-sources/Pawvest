@@ -69,6 +69,8 @@ return {
 	["results.rareWhy.daily"] = "první medaile dne",
 	["results.rareWhy.meter"] = "ukazatel naplněn",
 	["results.meter"] = "{icon} Ukazatel vzácného semínka: {pct} %",
+	["results.pouch"] = { "{icon} {crop}: +{count} semínko ze sáčku", "{icon} {crop}: +{count} semínka ze sáčku", "{icon} {crop}: +{count} semínek ze sáčku" },
+	["results.pouchFull"] = "Stodola je plná: zbytek sáčku se nevešel",
 	["results.next"] = "Další cíl: {medal} pod {time}",
 	["results.allMedals"] = "Všechny medaile získány!",
 	["gate.prompt.unlock"] = { "Odemknout · {count} mince", "Odemknout · {count} mince", "Odemknout · {count} mincí" },

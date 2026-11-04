@@ -53,7 +53,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E1c3 | Garden tools tier 1 (Seed sorter, Cloches, Pruning shears; Renown-gated levels) | ✔ | ✔ | – |
 | E1c4 | Daily market cart (two seed bargains, a taste of the next locked crop from Renown 3) | ✔ | ✔ | – |
 | E2a | Rare crops of Worlds 1-3, rare seeds (first Gold from World 2, daily, per-stage meters), results popup lines | ✔ | ✔ | – |
-| E2b–E5 | Garden MVP (see "Next") | – | – | – |
+| E2b | Seed pouch (the day's first medal finish per stage: 1 / 2 / 3 seeds of the crop planted last, up to the barn) | ✔ | ✔ | – |
+| E2c–E5 | Garden MVP (see "Next") | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
 
@@ -309,6 +310,22 @@ the finish portal (0.9-1.1 s runs, Gold). Snapshot `TestSnapshots` `profile_9892
 
 Found and fixed: the popup script had a literal line break inside a string (`table.concat(lines, "\n")`), a syntax error that stopped the whole popup.
 Not covered: a ripe rare crop's colour, harvest and sale (the same code as the other crops); World 3 (same path as World 2); a player without field access (code only).
+
+**E2b implemented (2026-11-04).**
+- `CropConfig.ObbySeeds`: `Pouch = { 1, 2, 3 }` (Bronze, Silver, Gold), `PouchDefault = "Potato"`.
+- `GardenField`: Plant of a common crop stores `Garden.LastCrop` (rare plantings and Tending replants leave it). `ObbyFinish` drops the pouch on the day's
+  first medal finish on a stage (`firstOnStage`), before the rare seeds so they cannot take its room, clamped to the barn's room; the answer gains
+  `pouch = { crop, count, full }`. The Tutorial gives nothing (no rare crop, early return).
+- Results popup: "{icon} {crop}: +n seeds from the seed pouch" and, when some or all did not fit, "Barn full: the rest of the seed pouch did not fit".
+  Strings: `results.pouch` (plural forms), `results.pouchFull`.
+- `economy.py`: `obby_cfg` reads `Pouch` into the model's pouch; re-pinned `crop_field_obby_seeds`. `check` 52 / 52: with the pouch the Binge 5 B check passes
+  again (talent-first 8 433 with / 8 365 without Tending pets a day); parity 0.73 / 0.86 / 0.90 and Casual's day-7 lead 3.92 as in the approved run.
+
+**E2b Studio-validated (2026-11-04).** Same method as E2a; snapshot `TestSnapshots` `profile_9892673032_e2b` (+ stars, the Stage 1 / 2 / 3 boards), restored.
+1. No planting since E2b: Stage 3 Gold, the day's first finish there → "🥔 Brambora: +3 semínka ze sáčku" (with the daily Golden carrot). A repeat: no pouch.
+2. Fixture: square 10 empty, 40 seeds held (the barn's limit). Planting a Pumpkin (39 held), then Stage 1 Gold → "🎃 Dýně: +1 semínko ze sáčku" and
+   "Stodola je plná: zbytek sáčku se nevešel"; 40 held.
+3. Stage 2 Gold with the barn full → only the barn-full line, no seed. Czech lines fit; no warnings or errors on the server or the client.
 
 ### E1d — Farming-first rebalance (scope draft 2026-11-03; numbers: ECONOMY.md → "Direction change", F1)
 **Goal.** Farming becomes the main game: over days 1-3 the field earns at most what the obby earns, then 3x by day 7 and 10x by day 30 (Casual,
