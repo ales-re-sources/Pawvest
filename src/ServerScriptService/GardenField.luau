@@ -28,12 +28,15 @@
 -- counts what the player bought of each (key = crop id, + "*" for the taste), reset when the day changes. BuyCart(slot, crop, count) sells
 -- at the offer's price; the seeds join Seeds (within the barn). Plant needs only the seeds: a taste crop can be planted before its Renown
 -- gate (BuySeeds keeps the gate).
+-- Crops as pet food (E1a3): FeedCrop(uid, crop, count) feeds held crops to any owned pet for CropConfig xp each (half the sale), anywhere
+-- (no plot distance: the Pets panel's detail page); at most as many as the pet needs for the max level (the last one may go past it),
+-- the average size leaves the barn as in a sale. Renown stays (it is earned at harvest).
 -- The field's shape is CropConfig.RowWidths (E1d2: 36 squares on a grid); the player opens any locked square (BuySquare), the price
 -- and Renown gate come from the number already open (CropConfig.NextExpansion). Fields from before E1d2 (Count = the first squares
 -- of a 4 x 3 field) move onto rows 1-3 (CropConfig.FromOldSquare), with their crops and field pets.
 -- Remotes (in GardenRemotes): Plant(square, crop), Harvest(square), BuySeeds(crop, count), Sell(crop, count),
 -- BuySquare(square, expectedOpen), PlacePet(square, uid) (also moves a placed pet), LiftPet(uid), BuyPetSlot(expectedSlots),
--- BuyUpgrade(id, expectedLevel), BuyTool(id, expectedLevel), BuyCart(slot, crop, count) (client → server); answers on GardenRemotes.Result; GardenRemotes.State.field (the owner's panel).
+-- BuyUpgrade(id, expectedLevel), BuyTool(id, expectedLevel), BuyCart(slot, crop, count), FeedCrop(uid, crop, count) (client → server); answers on GardenRemotes.Result; GardenRemotes.State.field (the owner's panel).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -57,6 +60,7 @@ local buyPetSlotEvent = GardenService.Remote("BuyPetSlot") -- client → server:
 local buyUpgradeEvent = GardenService.Remote("BuyUpgrade") -- client → server: (id: string, expectedLevel: number)
 local buyToolEvent = GardenService.Remote("BuyTool") -- client → server: (id: string, expectedLevel: number)
 local buyCartEvent = GardenService.Remote("BuyCart") -- client → server: (slot: number, crop: string, count: number)
+local feedCropEvent = GardenService.Remote("FeedCrop") -- client → server: (uid: string, crop: string, count: number)
 
 local reject = GardenService.Reject
 
@@ -500,14 +504,22 @@ function GardenField.PlotField(player: Player)
 	return { crops = table.concat(cells), pets = pets }
 end
 
--- The caller's profile, field and open set if they may use the field now (access, loaded, at their plot); otherwise rejects.
--- The field is settled (online) first, so every action sees the growth up to now.
-local function usableField(player: Player, action: string)
+-- The caller's profile, field and open set if they may use the field now (access, loaded, at their plot unless `anywhere`);
+-- otherwise rejects. The field is settled (online) first, so every action sees the growth up to now.
+local function usableField(player: Player, action: string, anywhere: boolean?)
 	if not GardenConfig.HasFieldAccess(player.UserId) then
 		reject(player, action, "locked")
 		return nil, nil, nil
 	end
-	local profile = GardenService.Usable(player, action)
+	local profile
+	if anywhere then
+		profile = PlayerProfile.Get(player)
+		if not profile then
+			reject(player, action, "loading")
+		end
+	else
+		profile = GardenService.Usable(player, action)
+	end
 	local field, open
 	if profile then
 		field, open = fieldOf(player, profile)
@@ -644,6 +656,45 @@ sellEvent.OnServerEvent:Connect(function(player, cropId, amount)
 	end
 	local paid = CoinRewards.Grant(player, CropConfig.SaleValue(crop, part), "crop") or 0 -- the pet bonus at sale time
 	done(player, "Sell", { crop = crop.id, count = amount, paid = paid })
+end)
+
+-- E1a3: feeds `amount` held crops to one owned pet (equipped, penned, resting or on the field), clamped to what it needs for the max level.
+feedCropEvent.OnServerEvent:Connect(function(player, uid, cropId, amount)
+	local crop = type(cropId) == "string" and CropConfig.ById[cropId]
+	if not (type(uid) == "string" and crop and GardenService.WholeNumber(amount) and amount >= 1) or not GardenService.Allow(player) then
+		return
+	end
+	local profile, field = usableField(player, "FeedCrop", true)
+	if not field then
+		return
+	end
+	local pet = profile.Pets[uid]
+	if not pet then
+		return
+	end
+	local garden = profile.Garden
+	local held = garden.Items[crop.id] or 0
+	if held < amount then
+		return reject(player, "FeedCrop", "items")
+	end
+	local toMax = GardenConfig.XpToMax(pet)
+	if toMax <= 0 or PetConfig.ClampLevel(pet.Level) >= PetConfig.MaxLevel then
+		return reject(player, "FeedCrop", "maxed")
+	end
+
+	local used = math.min(amount, math.ceil(toMax / crop.xp)) -- the last crop may go past the max level (that XP is lost)
+	local part = garden.ItemSize[crop.id] * used / held -- the average size leaves, as in a sale
+	garden.Items[crop.id] = held - used
+	garden.ItemSize[crop.id] -= part
+	if garden.Items[crop.id] == 0 then
+		garden.Items[crop.id] = nil
+		garden.ItemSize[crop.id] = nil
+	end
+	if GardenConfig.IsPenned(profile, uid) then
+		GardenService.SettleAndNotify(player) -- pen production up to now is paid at the old level (no pens after the E1b conversion)
+	end
+	local levels = PetConfig.GainXp(pet, crop.xp * used)
+	done(player, "FeedCrop", { uid = uid, crop = crop.id, used = used, xp = crop.xp * used, level = pet.Level, levels = levels })
 end)
 
 buySquareEvent.OnServerEvent:Connect(function(player, square, expected)

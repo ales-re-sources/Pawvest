@@ -9,12 +9,13 @@ local CropConfig = {}
 
 -- Crops in catalogue order. letter: one character in the plot message (GardenRemotes.Plot field.crops); renown: Renown level
 -- that unlocks the crop; sale / seed in Coins (seed = 25 % of the sale); tier: Renown points per harvest (RenownPoints);
--- kg: the weight shown at size factor 1 (E1c2).
+-- kg: the weight shown at size factor 1 (E1c2); xp: pet XP of one crop fed to a pet (E1a3, half the sale, at least 1: no more than
+-- its Coins would buy as Berries; economy.py checks it).
 CropConfig.Crops = {
-	{ id = "Potato", name = "Potato", icon = "🥔", letter = "a", tier = 1, growSeconds = 5 * 60, sale = 6, seed = 2, renown = 0, kg = 0.25 }, -- loc: ignore
-	{ id = "Corn", name = "Corn", icon = "🌽", letter = "b", tier = 2, growSeconds = 6 * 3600, sale = 1008, seed = 252, renown = 1, kg = 0.5 }, -- loc: ignore
-	{ id = "Pumpkin", name = "Pumpkin", icon = "🎃", letter = "c", tier = 2, growSeconds = 8 * 3600, sale = 1344, seed = 336, renown = 1, kg = 6 }, -- loc: ignore
-	{ id = "GiantMelon", name = "Giant melon", icon = "🍉", letter = "d", tier = 3, growSeconds = 12 * 3600, sale = 4032, seed = 1008, renown = 5, kg = 15 }, -- loc: ignore
+	{ id = "Potato", name = "Potato", icon = "🥔", letter = "a", tier = 1, growSeconds = 5 * 60, sale = 6, seed = 2, renown = 0, kg = 0.25, xp = 3 }, -- loc: ignore
+	{ id = "Corn", name = "Corn", icon = "🌽", letter = "b", tier = 2, growSeconds = 6 * 3600, sale = 1008, seed = 252, renown = 1, kg = 0.5, xp = 504 }, -- loc: ignore
+	{ id = "Pumpkin", name = "Pumpkin", icon = "🎃", letter = "c", tier = 2, growSeconds = 8 * 3600, sale = 1344, seed = 336, renown = 1, kg = 6, xp = 672 }, -- loc: ignore
+	{ id = "GiantMelon", name = "Giant melon", icon = "🍉", letter = "d", tier = 3, growSeconds = 12 * 3600, sale = 4032, seed = 1008, renown = 5, kg = 15, xp = 2016 }, -- loc: ignore
 }
 CropConfig.ById = {}
 CropConfig.ByLetter = {}

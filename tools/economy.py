@@ -262,6 +262,7 @@ def apply_crop_config(P):
     points = luau(f, "CropConfig.RenownPoints")
     cfg = {
         "crops": [[c["id"], c["tier"], c["growSeconds"] / 3600, c["sale"], c["seed"], c["renown"]] for c in crops],  # grow time in hours
+        "xp": [[c["id"], c["xp"]] for c in crops],  # E1a3: pet XP of one crop fed to a pet
         "squares": [start, top],
         "rows": [list(rows), grid, list(start_open)],  # E1d2: the field's shape and the start block
         "expansions": [[e["price"], e["renown"]] for e in exps],
@@ -417,6 +418,7 @@ def pin_values(P):
         "crop_field_barn_capacity": P["crop_cfg"]["barn_capacity"],
         "crop_field_upgrades": P["crop_cfg"]["upgrades"],  # [id, step, prices] (E1c1)
         "crop_field_tools": P["crop_cfg"]["tools"],  # [id, effect, prices, renown levels] (E1c3)
+        "crop_field_xp": P["crop_cfg"]["xp"],  # [id, pet XP per crop fed] (E1a3)
         "crop_field_cart": P["crop_cfg"]["cart"],  # [[count, discount] per bargain, [taste count, price, from level]] (E1c4)
         "crop_field_size": P["crop_cfg"]["size"],  # [sigma, z cap, Big z, Giant z] of the size roll (E1c2)
         "crop_field_rates": P["crop_cfg"]["rates"],  # [online rate, offline rate, offline cap in hours]
@@ -1570,7 +1572,18 @@ def run_checks(P, days=60, seeds=6):
     results.append(("3 Required talents of built stages match the planned table", not mismatched, "; ".join(mismatched)))
     results.extend(field_checks(P, days, seeds))
     results.extend(size_checks(P))
+    results.extend(crop_xp_checks(P))
     return results
+
+
+def crop_xp_checks(P):
+    """E1a3: a crop fed to a pet gives no more XP than its sale Coins would buy as the weakest food (the Kitchen, D5, stays the cheaper route)."""
+    weakest = min(P["foods"], key=lambda f: f["xp"] / f["price"])
+    per_coin = weakest["xp"] / weakest["price"]
+    sale = {c[0]: c[3] for c in P["crop_cfg"]["crops"]}
+    over = [f"{cid} {xp} > {sale[cid] * per_coin:g}" for cid, xp in P["crop_cfg"]["xp"] if xp > sale[cid] * per_coin or xp < 1]
+    shown = ", ".join(f"{cid} {xp}" for cid, xp in P["crop_cfg"]["xp"])
+    return [(f"13 Crop XP: 1 <= XP <= sale x {weakest['id']}'s XP per Coin ({per_coin:g})", not over, "; ".join(over) or shown)]
 
 
 def size_stats(sigma, cap, big_z, giant_z, steps=16000):

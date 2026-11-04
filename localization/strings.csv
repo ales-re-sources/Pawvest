@@ -472,6 +472,14 @@ petDetail.reject.name,Pet detail page: the typed name is not allowed; {max} = 20
 petDetail.reject.same,Pet detail page: the pet already has this name,That is already its name,Tak už se jmenuje,new,h9e4bcdba
 petDetail.reject.cooldown,Pet detail page: renamed too quickly (10 s between names),Wait a few seconds before the next name,Před dalším jménem chvíli počkej,new,h27743d89
 petDetail.reject.filter,Pet detail page: Roblox's text check could not be reached; nothing was charged,"The name could not be checked, try again later","Jméno se nepodařilo zkontrolovat, zkus to později",new,h7bb6af51
+petDetail.feed.title,Pet detail page (players with the crop field): heading of the card that feeds harvested crops to this pet,🧺 Feed crops,🧺 Krmení z úrody,new,h45defe6b
+petDetail.feed.crop,"Pet detail page, feed card: one held crop; {icon} = crop emoji, {crop} = crop name, {count} = how many the player holds",{icon} {crop} · {count},{icon} {crop} · {count},new,h5ed5efa3
+petDetail.feed.xp,"Pet detail page, feed card, under the crop: pet XP one crop gives; {xp} = number",\+{xp} XP each,\+{xp} XP za kus,new,hbb265320
+petDetail.feed.one,"Pet detail page, feed card: button that feeds one crop (narrow button, keep it short)",Feed,Nakrmit,new,h1fd087e4
+petDetail.feed.all,"Pet detail page, feed card: button that feeds as many crops as the pet can take; {count} = how many (narrow button)",All · {count},Vše · {count},new,h98a7e6f5
+petDetail.feed.done,"Pet detail page, feed card: after feeding; {icon} = crop emoji, {count} = crops eaten, {xp} = XP gained",{icon} × {count} eaten: +{xp} XP,{icon} × {count} snězeno: +{xp} XP,new,ha0352ce6
+petDetail.feed.doneLevel,"Pet detail page, feed card: after feeding when the pet levelled up; {icon}, {count}, {xp} as in petDetail.feed.done, {level} = new level",{icon} × {count} eaten: +{xp} XP · Level up! Lv {level},{icon} × {count} snězeno: +{xp} XP · Postup! Lv {level},new,hc2272fac
+petDetail.feed.maxed,"Pet detail page, feed card: refused, the pet is already at level 20",This pet is at the top level,Tenhle mazlíček je na nejvyšší úrovni,new,h67b274da
 field.section.upgrades,"Garden panel: heading of the field upgrades (Growth, Barn)",Upgrades,Vylepšení,new,ha26b87eb
 field.upgrade.level,"Garden panel, upgrade and tool row title; {name} = icon + name (""🌱 Growth"", ""✂️ Pruning shears""), {level} = level bought, {max} = top level",{name} · {level} / {max},{name} · {level} / {max},new,h59780255
 field.upgrade.growth,"Name of the field upgrade that makes crops grow faster (row title, toast)",Growth,Růst,new,h6f82fbe9

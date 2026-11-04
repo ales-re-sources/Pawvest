@@ -308,6 +308,24 @@
    ]
   ]
  ],
+ "crop_field_xp": [
+  [
+   "Potato",
+   3
+  ],
+  [
+   "Corn",
+   504
+  ],
+  [
+   "Pumpkin",
+   672
+  ],
+  [
+   "GiantMelon",
+   2016
+  ]
+ ],
  "eggs": {
   "Basic": [
    500,

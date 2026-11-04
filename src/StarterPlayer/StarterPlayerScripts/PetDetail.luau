@@ -9,6 +9,9 @@
 -- (P3b): a text box and a button that names (free the first time), renames (PetConfig.RenamePrice) or removes the name; the server
 -- cleans, filters and prices it (PetRemotes.Rename), the page shows only the filtered name it sends back. The page re-renders on
 -- PetsChanged and Locale.Changed and closes itself when the pet is gone (sold).
+-- Feed card (E1a3, players with the field, under Growth while they hold crops and the pet is below the max level): one row per held
+-- crop with its XP, Feed (one) and All (as many as the pet can take); GardenRemotes.FeedCrop, the server clamps and answers on
+-- GardenRemotes.Result ("FeedCrop"). The held crops come from GardenRemotes.State.field.items.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -19,6 +22,7 @@ local PetLook = require(ReplicatedStorage:WaitForChild("PetLook"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
+local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
 
@@ -49,6 +53,13 @@ local REJECT_KEYS = {
 	equipped = "pets.reject.equipped",
 	penned = "pets.reject.penned",
 	field = "pets.reject.field",
+	loading = "common.reject.loading",
+}
+-- answers to GardenRemotes.FeedCrop (E1a3)
+local FEED_REJECT_KEYS = {
+	items = "field.reason.items",
+	maxed = "petDetail.feed.maxed",
+	locked = "field.reason.locked",
 	loading = "common.reject.loading",
 }
 -- answers to PetRemotes.Rename (P3b)
@@ -307,6 +318,11 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 	messageLabel.Parent = content
 
 	local cards = {}
+	local heldCrops: { [string]: number } = {} -- GardenRemotes.State.field.items (E1a3)
+	local feedEvent: RemoteEvent? = nil
+	local feedNote: { text: string, color: Color3 }? = nil
+	local feedToken = 0
+	local render: () -> boolean
 
 	local function pet()
 		local state = PetClient.State
@@ -442,6 +458,111 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		return apt
 	end
 
+	-- Crops the pet can still take: as many as reach the max level (the last one may go past it).
+	local function canTake(owned, crop): number
+		local stored = PetClient.State and PetClient.State.pets[owned.uid]
+		return if stored then math.ceil(GardenConfig.XpToMax(stored) / crop.xp) else 0
+	end
+
+	local function feedCard(owned)
+		if not fieldAccess then
+			return nil
+		end
+		local rows = {}
+		if owned.xpNext then -- no rows at the max level
+			for _, crop in CropConfig.Crops do
+				if (heldCrops[crop.id] or 0) > 0 then
+					table.insert(rows, crop)
+				end
+			end
+		end
+		if #rows == 0 and not feedNote then -- the result line stays while it shows (the pet may just have reached the max level)
+			return nil
+		end
+		local feed = card("Feed", 5, color)
+		label("Title", {
+			LayoutOrder = 1,
+			Size = UDim2.new(1, 0, 0, 22),
+			TextSize = 18,
+			Text = Locale.T("petDetail.feed.title"),
+		}).Parent = feed
+		for index, crop in rows do
+			local held = heldCrops[crop.id]
+			local all = math.min(held, canTake(owned, crop))
+			local oneButton = button("One", {
+				AnchorPoint = Vector2.new(1, 0.5),
+				Position = UDim2.new(1, if all > 1 then -76 else 0, 0.5, 0),
+				Size = UDim2.fromOffset(70, 32),
+				BackgroundColor3 = COLOR_EQUIP,
+				TextSize = 14,
+				Text = Locale.T("petDetail.feed.one"),
+			}, 2)
+			local allButton = button("All", {
+				AnchorPoint = Vector2.new(1, 0.5),
+				Position = UDim2.new(1, 0, 0.5, 0),
+				Size = UDim2.fromOffset(70, 32),
+				BackgroundColor3 = COLOR_EQUIP,
+				TextSize = 14,
+				Visible = all > 1,
+				Text = Locale.T("petDetail.feed.all", { count = all }),
+			}, 2)
+			local text = create("Frame", {
+				Name = "Text",
+				Size = UDim2.new(1, if all > 1 then -152 else -76, 0, 0),
+				AutomaticSize = Enum.AutomaticSize.Y,
+				BackgroundTransparency = 1,
+			}, {
+				create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder }),
+				line("Crop", 1, {
+					TextSize = 15,
+					TextColor3 = Color3.new(1, 1, 1),
+					Font = StudStyle.Font,
+					Text = Locale.T("petDetail.feed.crop", { icon = crop.icon, crop = Locale.CropName(crop), count = held }),
+				}),
+				line("Xp", 2, { TextSize = 12, TextColor3 = COLOR_XP, Text = Locale.T("petDetail.feed.xp", { xp = crop.xp }) }),
+			})
+			create("Frame", {
+				Name = "Row_" .. crop.id,
+				LayoutOrder = 1 + index,
+				Size = UDim2.new(1, 0, 0, 36),
+				AutomaticSize = Enum.AutomaticSize.Y,
+				BackgroundTransparency = 1,
+			}, { text, oneButton, allButton }).Parent = feed
+			local function send(count: number)
+				if feedEvent then
+					feedEvent:FireServer(owned.uid, crop.id, count)
+				end
+			end
+			oneButton.Activated:Connect(function()
+				send(1)
+			end)
+			allButton.Activated:Connect(function()
+				send(all)
+			end)
+		end
+		if feedNote then
+			line("Note", 50, { TextSize = 13, TextColor3 = feedNote.color, Text = feedNote.text }).Parent = feed
+		end
+		return feed
+	end
+
+	local function feedResult(text: string, colour: Color3)
+		feedToken += 1
+		local mine = feedToken
+		feedNote = { text = text, color = colour }
+		if currentUid then
+			render()
+		end
+		task.delay(4, function()
+			if feedToken == mine then
+				feedNote = nil
+				if currentUid then
+					render()
+				end
+			end
+		end)
+	end
+
 	-- The name button and its hint for the text in the box (P3b): Save · free / Save · price / Remove, or greyed when there is
 	-- nothing to save.
 	local function updateName()
@@ -489,7 +610,7 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		end)
 	end
 
-	local function render()
+	function render()
 		local owned, stored = pet()
 		if not owned then
 			return false
@@ -514,6 +635,11 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		local growth = growthCard(owned)
 		growth.Parent = content
 		table.insert(cards, growth)
+		local feed = feedCard(owned)
+		if feed then
+			feed.Parent = content
+			table.insert(cards, feed)
+		end
 		if fieldAccess then
 			local order, any = 10, false
 			for _, id in PetConfig.Aptitudes do
@@ -579,6 +705,8 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		messageLabel.Text = ""
 		portraitKey = nil
 		nameNoteToken = 0
+		feedToken += 1
+		feedNote = nil
 		nameBox.Text = PetClient.NameOf(uid) or ""
 		if render() then
 			content.CanvasPosition = Vector2.zero
@@ -705,6 +833,51 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 			render()
 		end
 	end)
+
+	if fieldAccess then
+		task.spawn(function()
+			local gardenRemotes = ReplicatedStorage:WaitForChild("GardenRemotes")
+			feedEvent = gardenRemotes:WaitForChild("FeedCrop") :: RemoteEvent
+			local gotState = false
+			gardenRemotes:WaitForChild("State").OnClientEvent:Connect(function(state)
+				gotState = true
+				local items = type(state) == "table" and type(state.field) == "table" and state.field.items
+				heldCrops = if type(items) == "table" then items else {}
+				if currentUid then
+					render()
+				end
+			end)
+			gardenRemotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail)
+				if action ~= "FeedCrop" or not currentUid then
+					return
+				end
+				if not ok then
+					feedResult(Locale.T(FEED_REJECT_KEYS[detail] or "common.reject.failed"), COLOR_ERROR)
+					return
+				end
+				if type(detail) ~= "table" or detail.uid ~= currentUid then
+					return
+				end
+				local crop = CropConfig.ById[detail.crop]
+				local args = {
+					icon = if crop then crop.icon else "",
+					count = detail.used,
+					xp = detail.xp,
+					level = detail.level,
+				}
+				feedResult(Locale.T(if (detail.levels or 0) > 0 then "petDetail.feed.doneLevel" else "petDetail.feed.done", args), COLOR_OK)
+			end)
+			-- the State sent at join may have arrived before this listener; a request at the same moment as another script's can be
+			-- dropped by the garden remotes' rate limit, so ask once more if nothing came
+			local requestState = gardenRemotes:WaitForChild("RequestState")
+			requestState:FireServer()
+			task.delay(2, function()
+				if not gotState then
+					requestState:FireServer()
+				end
+			end)
+		end)
+	end
 
 	return api
 end

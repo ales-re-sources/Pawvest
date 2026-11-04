@@ -45,7 +45,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E1b2 | Field pets, client: pets on squares, place / move prompt, Pets section, conversion popup | ✔ | ✔ | – |
 | P3a | Pet detail panel (Pets list "i" badge → `PetDetail`) | ✔ | ✔ | – |
 | P3b | Pet names (filtered, shown to everyone; first free, renames 250) | ✔ | ✔ | – |
-| E1a3 | Crops as pet food (pet detail page; XP = half the sale value) — scoped 2026-11-02 | – | – | – |
+| E1a3 | Crops as pet food (pet detail page; XP = half the sale value) | ✔ | ✔ | – |
 | E1c1 | Field upgrades (growth, barn) | ✔ | ✔ | – |
 | E1c2 | Size roll (lognormal, Big / Giant, best per crop, sizes in the barn) | ✔ | ✔ | – |
 | E1d1 | Farming-first numbers (F2: crop prices × 9.3, new square / upgrade prices, five field pet slots) | ✔ | ✔ | – |
@@ -216,6 +216,34 @@ route later. Only for `GardenConfig.HasFieldAccess` (nobody else holds crops).
    field show the new reach.
 5. `economy.py check` passes with the new pins; `loc.py check` 0 errors, lint within the baseline; the card fits a 340 px panel in Czech.
 6. All of it once through the real UI (clicks), no console errors; live profile snapshotted right before and restored after.
+
+**Design check (2026-11-04), corrections from the milestones built since the scope:**
+- Players with field access have no pens (E1b converts them on join), so check 4's penned pet cannot occur. The settle before feeding stays in the code as a guard.
+- A field pet's reach follows its Tending level, not its pet level: feeding moves the level on its field label, not its reach.
+- With E1d1's prices the XP is Potato 3, Corn 504, Pumpkin 672, Giant melon 2 016. Level 1 → 20 takes 6 714 XP (14 Corn).
+  That is what the same Coins buy as Berries; food prices were not scaled with F2, so pet levels are cheap against field income either way (for the balancing pass).
+
+**Implemented (2026-11-04).**
+- `CropConfig` `xp` per crop.
+- `GardenField`: remote `FeedCrop`; `usableField(…, anywhere)` skips the plot distance.
+- `PetDetail` Feed card: one row per held crop with "+N XP each", Feed and All · n (hidden when n is 1), and a result line that stays for 4 s, also after the pet reaches level 20.
+- Strings: 8 rows `petDetail.feed.*`.
+- `economy.py`: pin `crop_field_xp` and check 13 (1 ≤ XP ≤ sale × Berry's XP per Coin); `check` passes 52 / 52.
+
+**Studio-validated (2026-11-04).** By clicks in playtests on a fixture in the developer's live profile: 8 Corn of summed size 9.6, Cat #1 at Lv 18 1 000 XP below the top, Cat #2 at Lv 20.
+Snapshot `TestSnapshots` `profile_9892673032_e1a3`, restored afterwards through `BindToClose` writes.
+1. One Corn to the equipped Owl, Lv 4 66 XP: Lv 8 46 / 226 XP. The follower played the level-up moment, and the card read "🌽 × 1 snězeno: +504 XP · Postup! Lv 8".
+   Corn 7, the summed size 8.4 (the average 1.2 left); Coins 3 402 and Renown 32 unchanged.
+2. Cat #1 showed "Vše · 2" and went to Lv 20 with 2 Corn; 5 stayed. Rejected with `maxed`, nothing used: Cat #1 and Cat #2 at Lv 20.
+3. Pumpkin not held and 6 of 5 → `items`. Counts 0, 1.5 and −1, a forged uid and an unknown crop got no answer.
+4. The field pet Fox #3 on square 4, Lv 2: Lv 7 107 / 185 with Tending still 2. The plot feed sent `Fox:7:3:4:2` and the field label read "sklízečka Lv 7 ★ / Péče 2".
+5. Feeding survived a re-join. 10 Potatoes ("Vše · 10", Corn's All hidden at 1) took Cat #2 from Lv 19 to 20; the card kept only "🥔 × 10 snězeno: +30 XP · Postup! Lv 20" and left after 4 s.
+   The Czech card fits the 340 px panel. No warnings or errors on the server or the client.
+
+Found and fixed: the result line disappeared with the card when the pet reached level 20.
+Found in the test harness, not a bug: clicking a list row that is scrolled out of view lands on the slot bar under the list (it unequipped the Owl).
+That is probably the stray equip seen once in P3a. Scroll a row into view before clicking it.
+Not covered: a player without field access (`locked`; the card is not built without `HasFieldAccess`), checked in the code only; phone layout.
 
 ### E1d — Farming-first rebalance (scope draft 2026-11-03; numbers: ECONOMY.md → "Direction change", F1)
 **Goal.** Farming becomes the main game: over days 1-3 the field earns at most what the obby earns, then 3x by day 7 and 10x by day 30 (Casual,
