@@ -7,8 +7,8 @@
 -- mark the pieces whose look changed; Step builds marked pieces until a deadline, so a build is spread over frames by the caller.
 -- State: { name, penCount, pens = { [1..6] = "Kind:Level:uid" or "" }, incCount, eggs = { [1..3] = "EggId:readyAt" or "" },
 -- field = { crops = two characters per square 1..CropConfig.MaxSquares: crop letter (CropConfig, a-f in synthetic plots) +
--- stage 1-3 (3 = ripe), ".0" an empty open square, "#0" a locked one, pets = { "Kind:Level:uid:square:apt" } (E1b field pets,
--- apt = Tending level) }, converted (E1b: the pens became field pet slots: no pens, the floor shrinks to the incubator strip and
+-- stage 1-3 (3 = ripe), ".0" an empty open square, "#0" a locked one, pets = { "Kind:Level:uid:square:tending:guard" } (E1b field pets,
+-- tending / guard = Tending / Pest-control level, 0 without it; E4b; a feed without guard reads as 0) }, converted (E1b: the pens became field pet slots: no pens, the floor shrinks to the incubator strip and
 -- the field starts behind it) } or { free = true } (a slot nobody holds: floor, sign "Free plot", grey pads and incubators).
 -- The field (E1d2) has the shape CropConfig.RowWidths: every row is a plate of overgrown grass, open squares are soil on it.
 -- Field pets stand on their squares (full: the PetLook model, mid: a block); the own plot's squares also get a pet prompt
@@ -160,14 +160,21 @@ local function parseEgg(text: string?): (string?, number?)
 end
 PlotView.ParseEgg = parseEgg
 
--- field.pets ("Kind:Level:uid:square:apt") → [square] = { kind, level, uid, apt, text }
-local function fieldPets(field): { [number]: { kind: string, level: number, uid: string, apt: number, text: string } }
+-- field.pets ("Kind:Level:uid:square:tending:guard") → [square] = { kind, level, uid, apt (Tending level), guard, text }
+local function fieldPets(field): { [number]: { kind: string, level: number, uid: string, apt: number, guard: number, text: string } }
 	local map = {}
 	if type(field) == "table" and type(field.pets) == "table" then
 		for _, text in field.pets do
-			local kind, level, uid, square, apt = string.match(text, "^([^:]+):(%d+):([^:]*):(%d+):(%d+)$")
+			local kind, level, uid, square, apt, guard = string.match(text, "^([^:]+):(%d+):([^:]*):(%d+):(%d+):?(%d*)$")
 			if kind then
-				map[tonumber(square) :: number] = { kind = kind, level = tonumber(level) :: number, uid = uid, apt = tonumber(apt) :: number, text = text }
+				map[tonumber(square) :: number] = {
+					kind = kind,
+					level = tonumber(level) :: number,
+					uid = uid,
+					apt = tonumber(apt) :: number,
+					guard = tonumber(guard) or 0,
+					text = text,
+				}
 			end
 		end
 	end
@@ -430,9 +437,16 @@ local function penPet(kind: string, level: number, uid: string, pad: BasePart, n
 	return standingPet(kind, level, uid, pad.CFrame, pad.Position.Y + pad.Size.Y / 2, penLabel(kind, level, name))
 end
 
--- Label over a field pet: name, level, tier stars and its Tending level.
-local function fieldPetLabel(kind: string, level: number, apt: number, name: string?): string
-	return Locale.T("field.pet.label", { pet = Locale.PetName(kind, level, name), stars = PetLook.TierStars(level), level = apt })
+-- Label over a field pet: name, level, tier stars and its jobs' levels (Tending, Pest control; E4b).
+local function fieldPetLabel(kind: string, level: number, apt: number, guard: number, name: string?): string
+	local jobs = {}
+	if apt > 0 then
+		table.insert(jobs, Locale.T("pets.tending", { level = apt }))
+	end
+	if guard > 0 then
+		table.insert(jobs, Locale.T("pets.guard", { level = guard }))
+	end
+	return Locale.T("field.pet.label", { pet = Locale.PetName(kind, level, name), stars = PetLook.TierStars(level), jobs = table.concat(jobs, " · ") })
 end
 
 function PlotView:buildPen(model: Model, n: number)
@@ -614,7 +628,7 @@ function PlotView:buildSquare(model: Model, square: number)
 			part({ Name = "Pet" .. square, Size = Vector3.new(cube, cube, cube), CFrame = self:at(spot + Vector3.new(0, 0.25 + cube / 2, 0)), Color = rarity.color }).Parent =
 				model
 		else
-			local petModel = standingPet(pet.kind, pet.level, pet.uid, self:at(spot), soil.Position.Y + soil.Size.Y / 2, fieldPetLabel(pet.kind, pet.level, pet.apt, nameOf(self.state, pet.uid)))
+			local petModel = standingPet(pet.kind, pet.level, pet.uid, self:at(spot), soil.Position.Y + soil.Size.Y / 2, fieldPetLabel(pet.kind, pet.level, pet.apt, pet.guard, nameOf(self.state, pet.uid)))
 			if petModel then
 				petModel.Name = "Pet" .. square
 				petModel.Parent = model

@@ -5,7 +5,8 @@
 --                                 { Open(uid), Close(), IsOpen() }; onClose() closes the whole Pets panel (the X)
 -- Sections: header (turning portrait, kind, rarity + tier stars, where the pet is), growth (level, XP bar, how it grows, the next
 -- look, the Coin bonus), one card per working aptitude (PetConfig.Shown; only for players with the field: level / rarity cap,
--- effect bar, field hours to the next level, reach; E2c Scouting: meter bonus, medal finishes to the next level, the equipped scouts' total), actions (Equip / Unequip, Sell with a second tap). Under the header the name row
+-- effect bar, field hours to the next level, reach; E2c Scouting: meter bonus, medal finishes to the next level, the equipped scouts' total; E4b Pest control: the chance to chase
+-- crows off, the speciality, the squares it guards), actions (Equip / Unequip, Sell with a second tap). Under the header the name row
 -- (P3b): a text box and a button that names (free the first time), renames (PetConfig.RenamePrice) or removes the name; the server
 -- cleans, filters and prices it (PetRemotes.Rename), the page shows only the filtered name it sends back. The page re-renders on
 -- PetsChanged and Locale.Changed and closes itself when the pet is gone (sold).
@@ -437,10 +438,16 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		line("Desc", 2, { Text = Locale.T("petDetail.aptDesc." .. id) }).Parent = apt
 		local strength = PetConfig.Strength(level)
 		local scouting = id == "Scouting" -- E2c: a with-you aptitude, its XP counts medal finishes
+		local guarding = id == "PestControl" -- E4b: chases crows off on the field
 		local rules = PetConfig.Scouting
-		bar("Effect", 3, strength, COLOR_APT, if scouting
-			then Locale.T("petDetail.scoutEffect", { pct = math.round(rules.PerStrength * strength * 100) })
-			else Locale.T("petDetail.effect", { pct = math.round(strength * 100) })).Parent = apt
+		if guarding then
+			local chance = PetConfig.GuardChance(level, stored.Spec, "Crows")
+			bar("Effect", 3, chance, COLOR_APT, Locale.T("petDetail.guardEffect", { pct = math.round(chance * 100) })).Parent = apt
+		else
+			bar("Effect", 3, strength, COLOR_APT, if scouting
+				then Locale.T("petDetail.scoutEffect", { pct = math.round(rules.PerStrength * strength * 100) })
+				else Locale.T("petDetail.effect", { pct = math.round(strength * 100) })).Parent = apt
+		end
 		if level >= cap then
 			line("Xp", 4, { Text = Locale.T("petDetail.aptMax", { rarity = Locale.RarityName(owned.rarity.id) }) }).Parent = apt
 		else
@@ -463,10 +470,16 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 			}) }).Parent = apt
 			line("Pouch", 7, { Text = Locale.T("petDetail.scoutPouch", { pct = math.round(rules.PouchExtraAt * 100) }) }).Parent = apt
 		end
-		if id == "Tending" then
+		if guarding and type(stored.Spec) == "string" then
+			line("Spec", 7, { Text = Locale.T(if stored.Spec == "Crows" then "petDetail.guardSpec" else "petDetail.guardSpecLater", {
+				critter = Locale.T("pet.critter." .. stored.Spec),
+				mult = PetConfig.Guard.SpecMult,
+			}) }).Parent = apt
+		end
+		if id == "Tending" or guarding then
 			local shape = PetConfig.ReachShape(level)
 			local squares = ({ 1, 5, 9 })[shape + 1]
-			local reach = Locale.T("petDetail.reach", { count = squares })
+			local reach = Locale.T(if guarding then "petDetail.guardReach" else "petDetail.reach", { count = squares })
 			local nextLevel = if shape == 0 then 4 elseif shape == 1 then 7 else nil
 			if nextLevel and nextLevel <= cap then
 				reach ..= " · " .. Locale.T("petDetail.reachNext", { count = ({ 1, 5, 9 })[shape + 2], level = nextLevel })

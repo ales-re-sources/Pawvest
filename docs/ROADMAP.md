@@ -56,7 +56,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E2b | Seed pouch (the day's first medal finish per stage: 1 / 2 / 3 seeds of the crop planted last, up to the barn) | ✔ | ✔ | – |
 | E2c | Scouting (equipped pets: XP per medal finish, up to +50 % rare-seed meter points, +1 pouch seed at +50 %; pet detail card) | ✔ | ✔ | – |
 | E4a | Crows (UTC crow blocks, 1 crop per absence from Renown 3) and Pest-control guards on the field, both jobs per pet (server) | ✔ | ✔ | – |
-| E4b–E5 | Garden MVP (see "Next") | – | – | – |
+| E4b | Crows on the client: forecast line, both jobs in the pet picker / rows / plot labels, the Pest-control card, the crow notice | ✔ | ✔ | – |
+| E5 | Garden MVP (see "Next") | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
 
@@ -303,6 +304,39 @@ with both jobs, the Pest-control card, the notice text), each validated and comm
    `aptitude`; an equipped pet → `equipped`.
 3. Fixture 2: only `SettledAt` moved back again. The rolled squares 2 and 3 were not rolled again; square 8's new crop was eaten (`ate GiantMelon 1`).
 4. No warnings or errors on the server or the client.
+
+**E4b implemented (2026-11-04).**
+- `PetConfig.Shown.PestControl`. `PetClient` inventory rows carry `guard` (Pest-control level) and `spec`.
+- Garden panel (`FieldClient`):
+  - Under the Renown level, the crow forecast "Vrány přiletí za 7:49:26" / "Vrány jsou tu: ještě 1:05:00" / "Dalších 24 hodin žádné vrány",
+    ticking each frame. The client computes it from `CropConfig.NextCrows` and the server time; `State.field.crows.active` says whether crows
+    come yet (else "Vrány začnou chodit od pověsti 3"). A hint line says what crows do.
+  - Field pet rows: a line per job (Tending: level, reach, XP; Pest control: level, chase chance, reach, XP) and a Pest-control note.
+  - Pet picker: pets with Tending or Pest control; a both-job pet's line ends with "· Hlídání n", a guard-only pet shows "Hlídání n · hlídá k
+    políček"; the tinted reach is the wider job's.
+  - The join notice adds "Během tvé nepřítomnosti vrány sežraly: 1× Obří meloun." and "Mazlíček Kočička Lv 1 odehnal vrány." (the line waits for
+    the pet state so the guard has a name).
+- Pet page (`PetDetail`): the Pest-control card (level / cap, what it does, the bar "Odežene vrány: 60 %", field hours, the speciality "Specialita:
+  vrány, proti nim 2× větší šance" or "Specialita: krtci (zatím nechodí)", the squares it guards). Pets list rows add "· Hlídání n".
+- Plot feed (`GardenField.PlotField`): field pets are `Kind:Level:uid:square:tending:guard`; `PlotView` reads both levels (a five-field entry
+  reads as guard 0) and labels a field pet "Péče 2 · Hlídání 2".
+- Strings: 35 new rows (`pet.apt.PestControl`, `pet.critter.*` × 4, `pets.guard`, `petDetail.aptDesc.PestControl`, `petDetail.guard*`,
+  `field.pet.guard*`, `field.pets.guardNote`, `field.petPicker.guard` / `.now`, `field.crows.*` × 5, `field.notice.crowsAte` / `.chased`) and
+  3 changed (`field.pet.label` now takes `{jobs}`, `field.pets.empty`, `field.reason.aptitude`).
+
+**E4b Studio-validated (2026-11-04).** Playtests in the developer's live profile; snapshot `TestSnapshots` `profile_9892673032_e4b` (+ stars),
+restored and checked. Fixture: 3 field pet slots, Fox #3 (Tending 2, given Pest control 2 with the crow speciality for the test) on square 4,
+Cat #13 (Pest control 1, Moles) on square 2, ripe crops of plantings 1024 (square 2) and 1025 (square 8), `SettledAt` before the last crow block.
+1. Join toast: "Během tvé nepřítomnosti vrány sežraly: 1× Obří meloun." / "Mazlíček Kočička Lv 1 odehnal vrány." (A first fixture whose Giant melon
+   ripened after the crow block had ended correctly lost nothing.)
+2. Garden panel: the forecast "Vrány přiletí za 7:49:26" ticking, the hint; the Cat's row "Políčko 2 · Hlídání 1 · 60 % proti vránám · hlídá
+   1 políčko / Zkušenost v hlídání: 4,0 / 10,0 h"; the Fox's row with both jobs (four lines).
+3. Pet picker on square 3: the Fox "Péče 2 · 1 políčko · teď na políčku 4 · Hlídání 2", guard-only Dog / Cat rows, the equipped Owl disabled. A
+   click placed Dog #7 there (its row: Pest control, 100 %). Plot labels: "Hlídání 1" over the Cat and the Dog, "Péče 2 · Hlídání 2" over the Fox.
+4. Pet page: the Fox's Tending and Pest-control cards ("Odežene vrány: 100 %", "Specialita: vrány, proti nim 2× větší šance", "Hlídá 1 políčko ·
+   od úrovně 4: 5 políček"); the Cat's "Odežene vrány: 60 %", "Specialita: krtci (zatím nechodí)"; the Pets list row "… · Péče 2 · Hlídání 2".
+5. Every text fits (`TextFits`) in Czech and English; no warnings or errors on the server or the client.
+Not covered: the "Vrány jsou tu" and "no crows" forecast states (not current during the test; same code path with other keys).
 
 ### E2 — Obby seeds: rare crops, rare-seed meters, seed pouch, Scouting (scope 2026-11-04; numbers approved by the user the same day)
 **Decided by the user (2026-11-04):**

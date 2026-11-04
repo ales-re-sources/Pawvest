@@ -238,9 +238,10 @@ end
 -- Aptitudes (E1b, docs/EXPANSION.md §4, numbers from docs/ECONOMY.md → "Field-pet re-run"): the jobs a pet is born with, each with
 -- its own level 1..cap raised by doing the job. Stored as Pets[uid].Apt = { [id] = { L, XP } } (XP = weighted field seconds
 -- towards the next level) and Pets[uid].Spec (Pest-control speciality). Ids are stored: never rename one. Rolled once (at hatch,
--- or on load for pets from before E1b) and never rerolled. Only the ids in Shown do something yet (E1b: Tending, E2c: Scouting).
+-- or on load for pets from before E1b) and never rerolled. Only the ids in Shown do something yet (E1b: Tending, E2c: Scouting,
+-- E4-thin: Pest control).
 PetConfig.Aptitudes = { "Tending", "Fertilising", "PestControl", "Weeding", "Scouting", "Crafting" }
-PetConfig.Shown = { Tending = true, Scouting = true }
+PetConfig.Shown = { Tending = true, Scouting = true, PestControl = true }
 -- Scouting (E2c, a with-you aptitude): every medal finish on a world stage gives each equipped pet with Scouting XpPerFinish seconds of
 -- aptitude XP (same curve as Tending); the equipped scouts together add min(Cap, sum of PerStrength x Strength) to the stage's rare-seed
 -- meter points, and at PouchExtraAt or more the seed pouch drops 1 seed more

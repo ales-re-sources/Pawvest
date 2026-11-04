@@ -3,11 +3,14 @@
 --   * Garden panel: Renown level, one row per owned square (crop and time left or "Ripe!"), the seed catalogue (buy 1 / 10, Renown
 --     locks, barn), harvested crops (Sell all), the next square (price + Renown) -- closes when the player walks away;
 --   * seed picker: GardenView.OnSquare(square, "plant") lists the crops in stock; "harvest" fires Harvest straight away;
---   * pet picker (E1b): GardenView.OnSquare(square, "pet") lists the pets with Tending (place / move here, lift the one on the
---     square; hovering a pet tints the squares it would work); the panel's Pets section lists the field pets (square, Tending
---     level, XP), lifts them and buys the next field pet slot;
+--   * pet picker (E1b): GardenView.OnSquare(square, "pet") lists the pets with Tending or Pest control (E4b; place / move here,
+--     lift the one on the square; hovering a pet tints the squares it would work); the panel's Pets section lists the field pets
+--     (square, Tending and Pest-control levels, reach, XP), lifts them and buys the next field pet slot;
+--   * crow forecast (E4b): a line under the Renown level, "Crows in 3:20:00" / "Crows now, 1:05:00 left", computed on the client
+--     from CropConfig.NextCrows and the server time (the schedule is fixed); State.field.crows.active says whether crows come yet;
 --   * toasts for the answers of the field actions on GardenRemotes.Result (pens and eggs share that remote: ignored here), and
---     once per session the notices of State.field.notice (the pens' conversion, what the pets harvested while away).
+--     once per session the notices of State.field.notice (the pens' conversion, what the pets harvested while away, what the
+--     crows ate and which guards chased them off).
 -- Only for a player with GardenConfig.HasFieldAccess (admins and Studio test users until E1 ships): anyone else gets no GUI.
 -- Display only: a click just names a square, a crop or a count; GardenField validates access, place, prices, times and Renown.
 -- The countdowns use workspace:GetServerTimeNow() against `readyAt` ("ripe at, if you stay online"), never the device clock.
@@ -214,6 +217,7 @@ local reachToken = 0
 local noticesShown = {} -- [kind] = true once this session's notice was shown
 local timers = {} -- ticking square rows: { label, readyAt, ripe }
 local cartTimer = nil -- the market cart's "new offers in" line: { label, at, asked }
+local crowLabel = nil -- the crow forecast line (E4b), re-texted every frame while the panel is open
 local toastToken = 0
 
 local function rootPosition(): Vector3?
@@ -440,6 +444,26 @@ end
 
 -- Sections ----------------------------------------------------------------------------------------------------------------
 
+-- The crow forecast line's text and colour for the server time now (E4b).
+local function crowForecast()
+	local label = crowLabel
+	if not label then
+		return
+	end
+	local now = workspace:GetServerTimeNow()
+	local from, to = CropConfig.NextCrows(now, 24 * 3600)
+	if not from then
+		label.Text = Locale.T("field.crows.calm")
+		label.TextColor3 = COLOR_OK
+	elseif from <= now then
+		label.Text = Locale.T("field.crows.now", { time = countdown(to - now) })
+		label.TextColor3 = COLOR_ERROR
+	else
+		label.Text = Locale.T("field.crows.next", { time = countdown(from - now) })
+		label.TextColor3 = COLOR_INFO
+	end
+end
+
 local function renderHeader(field)
 	clearSection(headerSection)
 	paragraph("Level", {
@@ -455,6 +479,24 @@ local function renderHeader(field)
 		Text = Locale.T("field.renown.next", { count = math.max(0, CropConfig.PointsFor(field.level + 1) - field.renown), level = field.level + 1 }),
 	}).Parent = headerSection
 	paragraph("Hint", { LayoutOrder = 3, TextSize = 13, TextColor3 = COLOR_DIM, Text = Locale.T("field.renown.hint") }).Parent = headerSection
+	-- E4b crow forecast: from the fixed schedule (CropConfig.NextCrows) and the server time
+	crowLabel = nil
+	local crows = field.crows
+	if type(crows) == "table" then
+		if crows.active then
+			crowLabel = paragraph("Crows", { LayoutOrder = 4, Font = StudStyle.Font, TextSize = 16, Text = "" })
+			crowLabel.Parent = headerSection
+			crowForecast()
+			paragraph("CrowsHint", { LayoutOrder = 5, TextSize = 12, TextColor3 = COLOR_DIM, Text = Locale.T("field.crows.hint") }).Parent = headerSection
+		else
+			paragraph("Crows", {
+				LayoutOrder = 4,
+				TextSize = 13,
+				TextColor3 = COLOR_DIM,
+				Text = Locale.T("field.crows.later", { level = CropConfig.Crows.FromLevel }),
+			}).Parent = headerSection
+		end
+	end
 end
 
 local function renderSquares(field)
@@ -507,7 +549,33 @@ local function hours(seconds: number)
 	return { decimal = string.format("%.1f", seconds / 3600) }
 end
 
--- The field pets (E1b): one row per pet (square, Tending level, reach, XP; Lift), then the next slot.
+-- A field pet's lines for the panel row (E1b; E4b: each job it does, Tending and / or Pest control, with its reach and XP).
+local function fieldPetLines(field, square: number, pet): string
+	local lines = {}
+	local open = openSet(field)
+	if pet.job == "Tending" then
+		table.insert(lines, Locale.T("field.pet.info", { n = square, level = pet.apt, count = #CropConfig.Reach(square, pet.reach, open) }))
+		table.insert(lines, if pet.next
+			then Locale.T("field.pet.xp", { xp = hours(pet.xp), next = hours(pet.next) })
+			else Locale.T("field.pet.capped"))
+	end
+	local guard = pet.guard
+	if type(guard) == "table" then
+		local info = {
+			level = guard.level,
+			pct = math.round(guard.chance * 100),
+			count = #CropConfig.Reach(square, guard.reach, open),
+			n = square,
+		}
+		table.insert(lines, Locale.T(if pet.job == "Tending" then "field.pet.guard" else "field.pet.guardInfo", info))
+		table.insert(lines, if guard.next
+			then Locale.T("field.pet.guardXp", { xp = hours(guard.xp), next = hours(guard.next) })
+			else Locale.T("field.pet.guardCapped"))
+	end
+	return table.concat(lines, "\n")
+end
+
+-- The field pets (E1b): one row per pet (square, job levels, reach, XP; Lift), then the next slot.
 local function renderPets(field)
 	clearSection(petsSection)
 	local placed = {}
@@ -520,12 +588,8 @@ local function renderPets(field)
 	heading(petsSection, 1, Locale.T("field.section.pets", { used = #placed, slots = field.slots or 1 }))
 	for index, entry in placed do
 		local pet = entry.pet
-		local reach = #CropConfig.Reach(entry.square, pet.reach, openSet(field))
-		local xp = if pet.next
-			then Locale.T("field.pet.xp", { xp = hours(pet.xp), next = hours(pet.next) })
-			else Locale.T("field.pet.capped")
 		local row = newRow(petsSection, "Pet" .. entry.square, index + 1)
-		textColumn(row, LIFT_WIDTH + GAP, Locale.PetName(pet.kind, pet.level, PetClient.NameOf(pet.uid)), Locale.T("field.pet.info", { n = entry.square, level = pet.apt, count = reach }) .. "\n" .. xp)
+		textColumn(row, LIFT_WIDTH + GAP, Locale.PetName(pet.kind, pet.level, PetClient.NameOf(pet.uid)), fieldPetLines(field, entry.square, pet))
 		local lift = button("Lift", {
 			LayoutOrder = 2,
 			Size = UDim2.fromOffset(LIFT_WIDTH, 34),
@@ -563,6 +627,7 @@ local function renderPets(field)
 		paragraph("Slots", { LayoutOrder = 50, TextSize = 14, TextColor3 = COLOR_OK, Text = Locale.T("field.slot.done") }).Parent = petsSection
 	end
 	paragraph("Note", { LayoutOrder = 51, TextSize = 12, TextColor3 = COLOR_DIM, Text = Locale.T("field.pets.note") }).Parent = petsSection
+	paragraph("GuardNote", { LayoutOrder = 52, TextSize = 12, TextColor3 = COLOR_DIM, Text = Locale.T("field.pets.guardNote") }).Parent = petsSection
 end
 
 local function renderSeeds(field)
@@ -836,6 +901,7 @@ local function renderPanel()
 		clearSection(seedsSection)
 		clearSection(cartSection)
 		cartTimer = nil
+		crowLabel = nil
 		clearSection(cropsSection)
 		clearSection(expandSection)
 		clearSection(upgradesSection)
@@ -885,6 +951,12 @@ end
 -- Squares a pet with Tending level `level` works from `square` on the current field.
 local function reachOf(square: number, level: number): { number }
 	return CropConfig.Reach(square, PetConfig.ReachShape(level), if fieldState then openSet(fieldState) else nil)
+end
+
+-- The highest job level of a field pet in the State (Tending `apt` for a tender, and its Pest control): the widest reach (E4b).
+local function widestOf(pet): number
+	local guard = if type(pet.guard) == "table" then pet.guard.level else 0
+	return math.max(if pet.job == "Tending" then pet.apt else 0, guard)
 end
 
 -- One row of the pet picker at height `y`: a title, an info line; enabled rows are green and clickable.
@@ -939,11 +1011,11 @@ local function renderPetPicker(square: number)
 			closePicker()
 		end)
 		y += PICKER_ROW + GAP
-		GardenView.ShowReach(reachOf(square, here.apt))
+		GardenView.ShowReach(reachOf(square, widestOf(here)))
 	end
 	local candidates = {}
 	for _, pet in PetClient.Inventory() do
-		if pet.tending > 0 and not (here and pet.uid == here.uid) then
+		if (pet.tending > 0 or pet.guard > 0) and not (here and pet.uid == here.uid) then
 			table.insert(candidates, pet)
 		end
 	end
@@ -951,24 +1023,42 @@ local function renderPetPicker(square: number)
 		if a.tending ~= b.tending then
 			return a.tending > b.tending
 		end
+		if a.guard ~= b.guard then
+			return a.guard > b.guard
+		end
 		return (tonumber(a.uid) or 0) < (tonumber(b.uid) or 0)
 	end)
 	for _, pet in candidates do
-		local reach = reachOf(square, pet.tending)
+		local reach = reachOf(square, math.max(pet.tending, pet.guard))
 		local enabled = not pet.equipped and not pet.penned and (pet.field ~= nil or used < (field and field.slots or 1))
-		local info = if pet.equipped
-			then Locale.T("field.petPicker.equipped")
-			elseif pet.penned then Locale.T("field.petPicker.penned")
-			elseif not enabled then Locale.T("field.petPicker.noSlot")
-			elseif pet.field then Locale.T("field.petPicker.move", { level = pet.tending, count = #reach, n = pet.field })
-			else Locale.T("field.petPicker.info", { level = pet.tending, count = #reach })
+		local info
+		if pet.equipped then
+			info = Locale.T("field.petPicker.equipped")
+		elseif pet.penned then
+			info = Locale.T("field.petPicker.penned")
+		elseif not enabled then
+			info = Locale.T("field.petPicker.noSlot")
+		elseif pet.tending > 0 then
+			local count = #reachOf(square, pet.tending)
+			info = if pet.field
+				then Locale.T("field.petPicker.move", { level = pet.tending, count = count, n = pet.field })
+				else Locale.T("field.petPicker.info", { level = pet.tending, count = count })
+			if pet.guard > 0 then
+				info ..= " · " .. Locale.T("pets.guard", { level = pet.guard })
+			end
+		else
+			info = Locale.T("field.petPicker.guard", { level = pet.guard, count = #reach })
+			if pet.field then
+				info ..= " · " .. Locale.T("field.petPicker.now", { n = pet.field })
+			end
+		end
 		local row = pickerRow("Pet_" .. pet.uid, y, Locale.PetName(pet.kind, pet.level, pet.name), info, enabled)
 		y += PICKER_ROW + GAP
 		row.MouseEnter:Connect(function()
 			GardenView.ShowReach(reach)
 		end)
 		row.MouseLeave:Connect(function()
-			GardenView.ShowReach(if here then reachOf(square, here.apt) else nil)
+			GardenView.ShowReach(if here then reachOf(square, widestOf(here)) else nil)
 		end)
 		if enabled then
 			row.Activated:Connect(function()
@@ -1135,7 +1225,14 @@ openButton.Activated:Connect(function()
 	end
 end)
 
--- Once per session: the pens' conversion and what the pets harvested while the player was away (State.field.notice, E1b).
+-- "Cat Lv 4" for a uid in the pet state ("" when unknown)
+local function petNameOf(uid: string?): string
+	local pet = uid and PetClient.State and PetClient.State.pets[uid]
+	return if pet then Locale.PetName(pet.Kind, PetConfig.ClampLevel(pet.Level), PetClient.NameOf(uid)) else ""
+end
+
+-- Once per session: the pens' conversion, what the pets harvested while the player was away (State.field.notice, E1b) and the
+-- crows' raid (E4b: what they ate, which guards chased them off).
 local function showNotices(field)
 	local notice = field and field.notice
 	if type(notice) ~= "table" then
@@ -1164,6 +1261,25 @@ local function showNotices(field)
 		end
 		table.insert(lines, Locale.T("field.notice.tended", { items = table.concat(items, ", ") }))
 	end
+	local crows = notice.crows -- E4b: { ate = { [crop] = n }, chased = { [uid] = n } }
+	local chased = type(crows) == "table" and type(crows.chased) == "table" and crows.chased or {}
+	-- the guards' names need the pet state: wait for it (PetClient.Changed calls this again)
+	if type(crows) == "table" and not noticesShown.crows and (next(chased) == nil or PetClient.State ~= nil) then
+		noticesShown.crows = true
+		local items = {}
+		for _, crop in CropConfig.Crops do
+			local n = type(crows.ate) == "table" and crows.ate[crop.id]
+			if n then
+				table.insert(items, Locale.T("field.notice.item", { count = n, crop = Locale.CropName(crop) }))
+			end
+		end
+		if #items > 0 then
+			table.insert(lines, Locale.T("field.notice.crowsAte", { items = table.concat(items, ", ") }))
+		end
+		for uid, n in chased do
+			table.insert(lines, Locale.T("field.notice.chased", { pet = petNameOf(tostring(uid)), count = n }))
+		end
+	end
 	if #lines > 0 then
 		showToast(table.concat(lines, "\n"), COLOR_OK, NOTICE_SECONDS)
 	end
@@ -1182,13 +1298,8 @@ PetClient.Changed:Connect(function()
 	if pickerSquare and pickerMode == "pet" then
 		renderPicker() -- a pet was equipped, hatched or levelled
 	end
+	showNotices(fieldState) -- a crow notice waits for the guards' names (E4b)
 end)
-
--- "Cat Lv 4" for a uid in the pet state ("" when unknown)
-local function petNameOf(uid: string?): string
-	local pet = uid and PetClient.State and PetClient.State.pets[uid]
-	return if pet then Locale.PetName(pet.Kind, PetConfig.ClampLevel(pet.Level), PetClient.NameOf(uid)) else ""
-end
 
 -- Answers of the field pet actions (E1b): toasts; a placed pet's reach stays tinted for REACH_SECONDS.
 local function petResult(action: string, ok: boolean, detail)
@@ -1203,7 +1314,7 @@ local function petResult(action: string, ok: boolean, detail)
 		if pet then
 			reachToken += 1
 			local mine = reachToken
-			GardenView.ShowReach(reachOf(detail.square, PetConfig.AptitudeLevel(pet, "Tending")))
+			GardenView.ShowReach(reachOf(detail.square, math.max(PetConfig.AptitudeLevel(pet, "Tending"), PetConfig.AptitudeLevel(pet, "PestControl"))))
 			task.delay(REACH_SECONDS, function()
 				if reachToken == mine and not (pickerSquare and pickerMode == "pet") then
 					GardenView.ShowReach(nil)
@@ -1356,6 +1467,7 @@ RunService.Heartbeat:Connect(function(dt)
 				timer.label.Text = countdown(math.max(timer.readyAt - now, 1)) -- ripe only when the server says so (State)
 			end
 		end
+		crowForecast()
 		if cartTimer then
 			cartTimer.label.Text = Locale.T("field.cart.next", { time = countdown(math.max(cartTimer.at - now, 0)) })
 			if now >= cartTimer.at and not cartTimer.asked then

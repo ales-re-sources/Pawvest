@@ -492,8 +492,11 @@ local function buildRow(index: number, pet)
 		elseif pet.field then Locale.T("pets.tag.field", { n = pet.field })
 		elseif pet.equipped then Locale.T("pets.tag.equipped")
 		else ""
-	-- the Tending level (E1b), shown only to players who have the field
+	-- the field jobs' levels (E1b Tending, E4b Pest control), shown only to players who have the field
 	local tending = if pet.tending > 0 and fieldAccess then " · " .. Locale.T("pets.tending", { level = pet.tending }) else ""
+	if pet.guard > 0 and fieldAccess then
+		tending ..= " · " .. Locale.T("pets.guard", { level = pet.guard })
+	end
 	local portraitHolder = create("Frame", {
 		Name = "PortraitHolder",
 		Position = UDim2.fromOffset(12, 6),

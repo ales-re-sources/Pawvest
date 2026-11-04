@@ -338,6 +338,11 @@ field.renown.next[one],"Field panel header; {count} = Renown points still missin
 field.renown.next[few],Form for 2-4 (Czech only),,Do Pověsti {level} chybí {count} body,new,hb55f2551
 field.renown.next[other],Form for 0 and 5+,{count} more points to Renown {level},Do Pověsti {level} chybí {count} bodů,new,hb55f2551
 field.renown.hint,Small hint under the Renown level,Harvest crops to earn Renown. A higher Renown unlocks new seeds and squares.,Sklízej plodiny a získávej Pověst. Vyšší Pověst odemyká nová semínka a políčka.,new,h8ded2086
+field.crows.next,"Field panel header, crow forecast; {time} = countdown to the next crow time (""3:20:00"")",Crows in {time},Vrány přiletí za {time},new,h22a9f693
+field.crows.now,"Field panel header, crow forecast during a crow time; {time} = countdown to its end (""1:05:00"")",Crows now: {time} left,Vrány jsou tu: ještě {time},new,hadd87b2a
+field.crows.calm,"Field panel header, crow forecast: no crow time within the next 24 hours",No crows in the next 24 hours,Dalších 24 hodin žádné vrány,new,h9850ff5d
+field.crows.later,Field panel header: crows do not come to a young field yet; {level} = the Renown level they start at (3),Crows come from Renown {level},Vrány začnou chodit od pověsti {level},new,he28dc7b6
+field.crows.hint,"Field panel header, small line under the crow forecast: what crows do","If you are away in a crow time, crows may eat 1 ripe crop. Rare crops are safe, and a pet with Pest control chases them off.","Když jsi pryč v čase vran, můžou sežrat 1 zralou úrodu. Vzácné plodiny jsou v bezpečí a mazlíček s hlídáním je odežene.",new,h6b0bdad1
 field.section.squares,Heading of the list of the field squares,Squares,Políčka,new,hf5039c4c
 field.square.ripe,"Square row, right aligned: the crop is ready to harvest (short)",Ripe!,Zralé!,new,hb1a0fa6a
 field.square.empty,"Square row, right aligned: nothing is planted (short)",Empty,Prázdné,new,hc1e47bd8
@@ -394,17 +399,25 @@ field.reason.coins,Refused: too few Coins,Not enough Coins,Nemáš dost mincí,n
 field.reason.items,Refused: the player has fewer crops than asked to sell,You do not have that many,Tolik jich nemáš,new,h7ce6df01
 field.reason.maxed,Refused: all squares are bought,Your field is complete,Tvoje pole je kompletní,new,hda4eabde
 field.reason.stale,"Refused: the panel showed old data (double click, lag)","Out of date, try again","Údaje se mezitím změnily, zkus to znovu",new,ha5b6c678
-field.pet.label,"Label over a pet working on a field square (rich text, green second line). {pet} = ""Cat Lv 12"", {stars} = tier badge with a leading space ("" ★★"") or empty, {level} = the pet's Tending level 1-10",{pet}{stars}\n<font color='#a8e6a0'>Tending {level}</font>,{pet}{stars}\n<font color='#a8e6a0'>Péče {level}</font>,new,h59bcfbd3
+field.pet.label,"Label over a pet working on a field square (rich text, green second line). {pet} = ""Cat Lv 12"", {stars} = tier badge with a leading space ("" ★★"") or empty, {jobs} = its job levels, ""Tending 3 · Pest control 2"" (pets.tending / pets.guard)",{pet}{stars}\n<font color='#a8e6a0'>{jobs}</font>,{pet}{stars}\n<font color='#a8e6a0'>{jobs}</font>,new,h58c85e6d
 field.prompt.placePet,Prompt action on a field square without a pet (short; key F): put a pet with Tending here,Place pet,Umístit mazlíčka,new,haa61e2b4
 field.prompt.movePet,Prompt action on a field square where a pet works (short; key F): move it or take it off,Move / lift,Přesunout / odebrat,new,heaa65b74
 field.section.pets,"Heading of the field panel's pet section; {used} = pets on the field, {slots} = field pet slots owned",Field pets {used} / {slots},Mazlíčci na poli {used} / {slots},new,ha5e701a6
 field.pet.xp,"Field pet row, second line; {xp} / {next} = Tending experience and the amount for the next level, in hours of field time (decimal, ""3.5"")",Tending XP: {xp} / {next} h,Zkušenost v péči: {xp} / {next} h,new,h4221ff81
 field.pet.capped,"Field pet row, second line: its Tending level is at the cap of its rarity",Tending is at this pet's maximum,Péče je u tohoto mazlíčka na maximu,new,hc4db414a
+field.pet.guard[one],"Field pet row, line for a tending pet's second job; {level} = Pest-control level, {pct} = chance in whole percent to chase crows off, {count} = squares it guards (1, 5 or 9). Form for 1",Pest control {level} · {pct}% vs crows · guards {count} square,Hlídání {level} · {pct} % proti vránám · hlídá {count} políčko,new,h928c06c9
+field.pet.guard[few],Form for 2-4 (Czech only),,Hlídání {level} · {pct} % proti vránám · hlídá {count} políčka,new,h928c06c9
+field.pet.guard[other],Form for 0 and 5+,Pest control {level} · {pct}% vs crows · guards {count} squares,Hlídání {level} · {pct} % proti vránám · hlídá {count} políček,new,h928c06c9
+field.pet.guardInfo[one],"Field pet row, first line of a pet with Pest control only; {n} = its square, {level} = Pest-control level, {pct} = chance in whole percent to chase crows off, {count} = squares it guards. Form for 1",Square {n} · Pest control {level} · {pct}% vs crows · guards {count} square,Políčko {n} · Hlídání {level} · {pct} % proti vránám · hlídá {count} políčko,new,h1f95605b
+field.pet.guardInfo[few],Form for 2-4 (Czech only),,Políčko {n} · Hlídání {level} · {pct} % proti vránám · hlídá {count} políčka,new,h1f95605b
+field.pet.guardInfo[other],Form for 0 and 5+,Square {n} · Pest control {level} · {pct}% vs crows · guards {count} squares,Políčko {n} · Hlídání {level} · {pct} % proti vránám · hlídá {count} políček,new,h1f95605b
+field.pet.guardXp,"Field pet row, under the Pest-control line; {xp} / {next} = Pest-control experience and the amount for the next level, in hours of field time (decimal, ""3.5"")",Pest control XP: {xp} / {next} h,Zkušenost v hlídání: {xp} / {next} h,new,hc8a6b60e
+field.pet.guardCapped,"Field pet row, under the Pest-control line: its Pest-control level is at the cap of its rarity",Pest control is at this pet's maximum,Hlídání je u tohoto mazlíčka na maximu,new,he85be69d
 field.pet.info[one],"Field pet row, first line; {n} = its square, {level} = Tending level, {count} = squares it works (1, 5 or 9). Form for 1",Square {n} · Tending {level} · works {count} square,Políčko {n} · Péče {level} · stará se o {count} políčko,new,h5ded8f19
 field.pet.info[few],Form for 2-4 (Czech only),,Políčko {n} · Péče {level} · stará se o {count} políčka,new,h5ded8f19
 field.pet.info[other],Form for 0 and 5+,Square {n} · Tending {level} · works {count} squares,Políčko {n} · Péče {level} · stará se o {count} políček,new,h5ded8f19
 field.pet.lift,Button on a field pet row: take the pet off the field (back to the inventory),Lift,Odebrat,new,hcf198044
-field.pets.empty,"Field panel, pet section when no pet works the field",No pet works the field yet. Use the pet prompt at a square to place a pet with Tending.,Na poli zatím nepracuje žádný mazlíček. Mazlíčka s péčí umístíš výzvou u políčka.,new,h1dd9dd44
+field.pets.empty,"Field panel, pet section when no pet works the field",No pet works the field yet. Use the pet prompt at a square to place a pet with Tending or Pest control.,Na poli zatím nepracuje žádný mazlíček. Mazlíčka s péčí nebo hlídáním umístíš výzvou u políčka.,new,h22ff44f3
 field.slot.title,Field panel: the next field pet slot to buy; {n} = its number (2-3),Field pet slot {n},Místo pro mazlíčka {n},new,h10124662
 field.slot.info[one],Price of the next field pet slot; {count} = Coins. Form for 1,{count} Coin,{count} mince,new,h96db4654
 field.slot.info[few],Form for 2-4 (Czech only),,{count} mince,new,h96db4654
@@ -412,6 +425,7 @@ field.slot.info[other],Form for 0 and 5+,{count} Coins,{count} mincí,new,h96db4
 field.slot.buy,Button: buy the next field pet slot,Buy,Koupit,new,h89aeaade
 field.slot.done,Field panel: every field pet slot is bought,All field pet slots bought.,Máš všechna místa pro mazlíčky na poli.,new,hadffe186
 field.pets.note,Small note under the field pet section: what Tending does,"While you are away, a pet with Tending harvests the ripe crops in its reach and replants them from your seeds. A higher level does it more often and reaches more squares. Pets stop when the barn is full.","Když jsi pryč, mazlíček s péčí sklidí zralou úrodu ve svém dosahu a znovu ji zasadí z tvých semínek. Čím vyšší úroveň, tím častěji a na víc políčkách. Když je stodola plná, mazlíčci přestanou.",new,h07abb1e3
+field.pets.guardNote,"Small note under the field pet section, after the Tending note: what Pest control does","While you are away, a pet with Pest control chases crows off the squares in its reach. A pet with Tending and Pest control does both jobs.","Když jsi pryč, mazlíček s hlídáním odhání vrány z políček ve svém dosahu. Mazlíček, který umí péči i hlídání, dělá obojí.",new,h49769e09
 field.petPicker.title,Title of the pet picker opened at a field square; {n} = square number,Pet for square {n},Mazlíček na políčko {n},new,hb5233c8c
 field.petPicker.lift,"Pet picker row: take the pet that works this square off the field; {pet} = ""Cat Lv 12""",Lift {pet},Odebrat: {pet},new,hc01b5fb8
 field.petPicker.liftInfo,"Pet picker, second line of the Lift row",Back to your pets; the crop stays,"Vrátí se k mazlíčkům, úroda zůstane",new,hfc16287c
@@ -424,6 +438,10 @@ field.petPicker.info[other],Form for 0 and 5+,Tending {level} · works {count} s
 field.petPicker.move[one],"Pet picker row for a pet already on another square; {level} = Tending level, {count} = squares it would work here, {n} = its current square. Form for 1",Tending {level} · {count} square · now on square {n},Péče {level} · {count} políčko · teď na políčku {n},new,hec4497cf
 field.petPicker.move[few],Form for 2-4 (Czech only),,Péče {level} · {count} políčka · teď na políčku {n},new,hec4497cf
 field.petPicker.move[other],Form for 0 and 5+,Tending {level} · {count} squares · now on square {n},Péče {level} · {count} políček · teď na políčku {n},new,hec4497cf
+field.petPicker.guard[one],"Pet picker row, second line of a pet with Pest control only; {level} = Pest-control level, {count} = squares it would guard here. Form for 1",Pest control {level} · guards {count} square,Hlídání {level} · hlídá {count} políčko,new,h024696bb
+field.petPicker.guard[few],Form for 2-4 (Czech only),,Hlídání {level} · hlídá {count} políčka,new,h024696bb
+field.petPicker.guard[other],Form for 0 and 5+,Pest control {level} · guards {count} squares,Hlídání {level} · hlídá {count} políček,new,h024696bb
+field.petPicker.now,"Pet picker row, after "" · "": the pet already works on another square; {n} = that square",now on square {n},teď na políčku {n},new,h90968d29
 field.petPicker.none,Pet picker when no pet has Tending (the next hatched pet is sure to get it),None of your pets has Tending yet. The next pet you hatch will have it.,"Žádný tvůj mazlíček zatím neumí péči. Další mazlíček, kterého vylíhneš, ji mít bude.",new,h489b8ce4
 field.notice.converted[one],Toast once after the pens were converted into field pet slots; {count} = slots now owned. Form for 1,Pens are gone: pets now work on the field. You have {count} field pet slot.,Ohrady skončily: mazlíčci teď pracují na poli. Máš {count} místo pro mazlíčky.,new,h0d9b36b4
 field.notice.converted[few],Form for 2-4 (Czech only),,Ohrady skončily: mazlíčci teď pracují na poli. Máš {count} místa pro mazlíčky.,new,h0d9b36b4
@@ -436,6 +454,10 @@ field.notice.returned[few],Form for 2-4 (Czech only),,{count} mazlíčci z ohrad
 field.notice.returned[other],Form for 0 and 5+,Your {count} penned pets are back with your pets.,{count} mazlíčků z ohrad je zpátky mezi tvými mazlíčky.,new,h3b52c94c
 field.notice.item,"One entry of the ""pets harvested"" list; {count} = how many, {crop} = crop name",{count}× {crop},{count}× {crop},new,h05bc8cea
 field.notice.tended,"Toast once after a join: what the Tending pets harvested during the absence; {items} = list like ""5× Potato, 2× Corn""","While you were away, your pets harvested {items}.",Během tvé nepřítomnosti mazlíčci sklidili: {items}.,new,heb5accc4
+field.notice.crowsAte,"Toast once after a join: what crows ate during the absence; {items} = list like ""1× Giant melon""","While you were away, crows ate {items}.",Během tvé nepřítomnosti vrány sežraly: {items}.,new,hd3054463
+field.notice.chased[one],"Toast once after a join: a guard pet chased crows off; {pet} = ""Dog Lv 4"" (Czech: put ""Mazlíček"" first so the verb stays masculine), {count} = how many times. Form for 1",{pet} chased the crows off.,Mazlíček {pet} odehnal vrány.,new,h19f20e62
+field.notice.chased[few],Form for 2-4 (Czech only),,Mazlíček {pet} odehnal vrány {count}×.,new,h19f20e62
+field.notice.chased[other],Form for 0 and 5+,{pet} chased the crows off {count} times.,Mazlíček {pet} odehnal vrány {count}×.,new,h19f20e62
 field.toast.petPlaced,"Toast: a pet was placed on a field square; {pet} = ""Cat Lv 12"", {n} = square (no gendered verb in Czech)",{pet} works square {n},{pet}: pracuje na políčku {n},new,ha01ba46b
 field.toast.petMoved,"Toast: a field pet moved to another square; {pet} = ""Cat Lv 12"", {n} = square",{pet} moved to square {n},{pet}: přesun na políčko {n},new,h17bba563
 field.toast.petLifted,"Toast: a pet was taken off the field; {pet} = ""Cat Lv 12""",{pet} is back with your pets,{pet}: zpátky mezi mazlíčky,new,hcdce9ef8
@@ -443,12 +465,13 @@ field.toast.slot,Toast: a field pet slot was bought; {n} = its number,Field pet 
 field.reason.petOccupied,Refused: another pet already works that square,Another pet already works this square,Na tomhle políčku už pracuje jiný mazlíček,new,h3303faa7
 field.reason.equipped,Refused: the pet is equipped (follows the player),Unequip this pet first (Pets panel),Nejdřív mazlíčka sundej (panel Mazlíčci),new,h75a7614c
 field.reason.penned,Refused: the pet is in a garden pen,This pet is in a pen,Tenhle mazlíček je v ohradě,new,h31a79166
-field.reason.aptitude,Refused: the pet does not have the Tending aptitude,This pet has no Tending,Tenhle mazlíček neumí péči,new,h0996890f
+field.reason.aptitude,Refused: the pet has neither the Tending nor the Pest-control aptitude,This pet has neither Tending nor Pest control,Tenhle mazlíček neumí péči ani hlídání,new,h29ac567d
 field.reason.slots,Refused: every field pet slot is used,All field pet slots are in use,Všechna místa pro mazlíčky jsou obsazená,new,hd52f20d6
 field.reason.slotsMaxed,Refused: every field pet slot is already bought,You have every field pet slot already,Už máš všechna místa pro mazlíčky,new,h34ec9412
 pets.reject.field,Refused in the Pets panel: the pet works on a field square,Works on the field: lift it in the field panel first,Pracuje na poli: nejdřív ho odeber v panelu pole,new,he50063c4
 pets.tag.field,Tag on a pet row: the pet works field square {n},Square {n},Políčko {n},new,ha8b1cc41
-pets.tending,"Pet row, appended to the XP line after "" · "": the pet's Tending level",Tending {level},Péče {level},new,h1a2f6b4a
+pets.tending,"Pet row and field pet labels, after "" · "": the pet's Tending level",Tending {level},Péče {level},new,h1a2f6b4a
+pets.guard,"Pet row and field pet labels, after "" · "": the pet's Pest-control level",Pest control {level},Hlídání {level},new,h47c8fa98
 food.where.field,Pet row in the food shop: the pet works field square {n},on square {n},na políčku {n},new,hb6133e19
 petDetail.where.equipped,"Pet detail page, header: the pet is equipped (follows the player)",✔ With you,✔ Je s tebou,new,hc67d5235
 petDetail.where.field,"Pet detail page, header: the pet works field square {n}",🌱 Works square {n},🌱 Pracuje na políčku {n},new,h350939bd
@@ -462,9 +485,21 @@ petDetail.allLooks,Pet detail page: the pet has every look (level 20),Every look
 petDetail.bonus,"Pet detail page: the pet's Coin bonus; {bonus} = ""+4.5%""",💰 {bonus} Coins while it is with you,"💰 {bonus} mincí, když je s tebou",new,hdb7b1faf
 pet.apt.Tending,Aptitude name (a pet's field job: harvests and replants while the owner is away),Tending,Péče,new,h4e5b0ea1
 pet.apt.Scouting,Aptitude name (E2c: a pet's job while it follows the player on the stages: fills the rare-seed meters faster),Scouting,Průzkum,new,h12d307b3
+pet.apt.PestControl,"Aptitude name (E4-thin: a pet's field job: chases crows off the crops in its reach while the owner is away). Czech: hlídání (guarding), short",Pest control,Hlídání,new,hfc87f552
+pet.critter.Crows,"Critter name, plural, lower case: a Pest-control speciality shown in a sentence (pet detail page). Czech nominative plural",crows,vrány,new,h4acfac7c
+pet.critter.Moles,"Critter name, plural, lower case (a speciality; moles do not come yet)",moles,krtci,new,hdf107dba
+pet.critter.Slugs,"Critter name, plural, lower case (a speciality; slugs do not come yet)",slugs,slimáci,new,h45023075
+pet.critter.Raccoons,"Critter name, plural, lower case (a speciality; raccoons do not come yet)",raccoons,mývalové,new,h3575cee9
 petDetail.aptLevel,"Pet detail page, aptitude card heading; {name} = aptitude name, {level} = its level, {cap} = the rarity's highest level",{name} {level} / {cap},{name} {level} / {cap},new,h5c6f690b
 petDetail.aptDesc.Tending,"Pet detail page, Tending card: what the job does",Harvests ripe crops and replants them while you are away,"Když jsi pryč, sklízí zralou úrodu a znovu sází",ok,hb33ace15
 petDetail.aptDesc.Scouting,"Pet detail page, Scouting card: what the job does","While it follows you, it fills the stages' rare-seed meters faster","Když tě doprovází, plní ukazatele vzácných semínek v úrovních rychleji",new,he63c4715
+petDetail.aptDesc.PestControl,"Pet detail page, Pest-control card: what the job does","While you are away, it chases crows off the ripe crops in its reach","Když jsi pryč, odhání vrány od zralé úrody ve svém dosahu",new,h1a6a0b71
+petDetail.guardEffect,"Pet detail page, Pest-control card, text on the effect bar; {pct} = chance in whole percent (60-100) that the pet chases off crows coming for a crop in its reach",Chases crows off: {pct}%,Odežene vrány: {pct} %,new,had949599
+petDetail.guardSpec,"Pet detail page, Pest-control card: its speciality is crows; {critter} = ""crows"" (pet.critter.*), {mult} = 2","Speciality: {critter}, {mult}× the chance against them","Specialita: {critter}, proti nim {mult}× větší šance",new,h456df79d
+petDetail.guardSpecLater,"Pet detail page, Pest-control card: its speciality is a critter that does not come yet; {critter} = ""moles"" (pet.critter.*)",Speciality: {critter} (they do not come yet),Specialita: {critter} (zatím nechodí),new,h914ca0f0
+petDetail.guardReach[one],"Pet detail page, Pest-control card: squares the pet guards from its square; {count} = 1, 5 or 9. Form for 1",Guards {count} square,Hlídá {count} políčko,new,h2da5c26b
+petDetail.guardReach[few],Form for 2-4 (Czech only),,Hlídá {count} políčka,new,h2da5c26b
+petDetail.guardReach[other],Form for 0 and 5+,Guards {count} squares,Hlídá {count} políček,new,h2da5c26b
 petDetail.scoutEffect,"Pet detail page, Scouting card, text on the effect bar; {pct} = this pet's extra rare-seed meter points in whole percent (10-50)",\+{pct}% to the rare seed meter,\+{pct} % k ukazateli vzácného semínka,new,hd848cbf9
 petDetail.scoutXp,"Pet detail page, Scouting card, text on the XP bar; {done} / {need} = medal finishes made / needed for the next Scouting level",{done} / {need} medal finishes,{done} / {need} dokončení s medailí,new,h64eeccd0
 petDetail.scoutGrow,"Pet detail page, Scouting card, under the XP bar: how Scouting levels up",Grows with every stage you finish with a medal while it follows you,"Roste s každou úrovní, kterou dokončíš s medailí, když tě doprovází",new,hdea8c58b
