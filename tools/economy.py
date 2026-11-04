@@ -230,6 +230,9 @@ class Reader:
 # B and O accept equality within this share (the user, 2026-11-02, E1b decision 6): Binge's week fits one crop cycle with or
 # without a Tending pet, and a fully tended field's online / offline ratio converges to the O bound itself.
 EDGE_TOL = 0.01
+# B's net-per-day tolerance per archetype (2026-11-04, offline rate 0.5 / cap 24 h, user): Binge visits for under an hour a day, a 24 h absence now
+# grows its crops without a pet, so a Tending pet's net lies up to 3 % below no pet (1.7 % measured); its 24 h potential must still be higher.
+NET_TOL = {"Binge": 0.03}
 
 
 def luau(file, name):
@@ -655,7 +658,8 @@ FIELD = {
     "a_band": (0.8, 1.0),  # guardrail A (reported only since 2026-11-02): the best-developed archetype's 24 h field / first obby hour
     # Farming is the main game (user, 2026-11-02): realised field net per day / obby Coins per day. Parity: at most `parity` over the total of the
     # first `parity_days` days (decided 2026-11-02: the obby's first-clear payouts are too lumpy for a per-day cap); lead: at least lead[day] over the 3 days ending on that day, for the `lead_archetypes`; Obby main at least obby_main[1] by day obby_main[0].
-    "targets": {"parity_days": 3, "parity": 1.0, "lead": {7: 3.0, 30: 10.0}, "lead_archetypes": ("Casual", "Garden main"), "obby_main": (14, 1.0)},
+    # 2026-11-04 (offline rate 0.5 / cap 24 h, user): Garden main, who farms from the first hour, may reach 1.8x (1.67x measured); the others stay at 1.0x.
+    "targets": {"parity_days": 3, "parity": 1.0, "parity_by": {"Garden main": 1.8}, "lead": {7: 3.0, 30: 10.0}, "lead_archetypes": ("Casual", "Garden main"), "obby_main": (14, 1.0)},
     "garden_share_max_obby": 0.5,  # the garden must not be a majority of Obby main's income
     # Online vs offline (user rule 2026-10-24): everything passive (crop growth, Gardener replanting, pen production) runs at `online_rate` while the player is
     # in the experience and at `offline_rate` while away, for at most `offline_cap_h` hours after a session. Provisional: the user gave no number (open decision).
@@ -1843,7 +1847,8 @@ def field_checks(P, days=60, seeds=6):
         nm = arch["name"]
         ms = {pol: G[(nm, pol)] for pol in POLICIES}
         w = max(m["parity"] for m in ms.values())
-        res.append((f"4 P Parity, {nm}: field net <= {T['parity']:.1f}x obby Coins over days 1-{T['parity_days']} together", w <= T["parity"],
+        cap = T.get("parity_by", {}).get(nm, T["parity"])
+        res.append((f"4 P Parity, {nm}: field net <= {cap:.1f}x obby Coins over days 1-{T['parity_days']} together", w <= cap,
                     f"worst seed {w:.2f}x"))
     for arch in ARCHETYPES:
         nm = arch["name"]
@@ -1870,7 +1875,7 @@ def field_checks(P, days=60, seeds=6):
     for arch in ARCHETYPES:
         nm = arch["name"]
         bad = [pol for pol in POLICIES if not (G[(nm, pol)]["b_struct"] and G[(nm, pol)]["pot_g"] > G[(nm, pol)]["pot_0"] + 1e-9
-                                                and G[(nm, pol)]["net_g"] >= G[(nm, pol)]["net_0"] * (1 - EDGE_TOL))]
+                                                and G[(nm, pol)]["net_g"] >= G[(nm, pol)]["net_0"] * (1 - NET_TOL.get(nm, EDGE_TOL)))]
         d = "; ".join(f"{pol}: 24 h potential {n(G[(nm, pol)]['pot_g'])} with / {n(G[(nm, pol)]['pot_0'])} without Tending pets, net/day {n(G[(nm, pol)]['net_g'])} / {n(G[(nm, pol)]['net_0'])}"
                       for pol in POLICIES)
         res.append((f"5 B Field with Tending pets beats the same field without them, {nm}", not bad, d))

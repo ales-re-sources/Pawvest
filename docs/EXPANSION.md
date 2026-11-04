@@ -433,7 +433,7 @@ Decided 2026-10-25 (GDD §9 follows it):
 
 | Motive | Product | Kind |
 |---|---|---|
-| Idle comfort | **Night shift**: offline rate 0.33 → 0.5 and offline cap 12 → 24 h (provisional); never changes online income | game pass |
+| Idle comfort | **Night shift**: offline rate and cap above the free values (the free values became 0.5 / 24 h on 2026-11-04, so the Night shift numbers, say 0.75 / 36 h, are open and go through E0); never changes online income | game pass |
 | Impatience | Instant grow (one square, price by remaining time, daily cap); finish an incubator | developer product |
 | Capacity | +1 field pet slot, +1 incubator, the next field squares reached before their Renown / Coin gate (never beyond the earnable maximum) | game pass / product |
 | Status | Pet dyes and outfits, decor packs, plot themes, fair-stand decorations, trails, a VIP tag | game pass / product |

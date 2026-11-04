@@ -162,8 +162,8 @@ CropConfig.SizeGiantZ = 1.8808
 
 -- Passive rates (ECONOMY open decision 5: placeholders).
 CropConfig.OnlineRate = 1.0
-CropConfig.OfflineRate = 0.33
-CropConfig.OfflineCapSeconds = 12 * 3600
+CropConfig.OfflineRate = 0.5 -- 2026-11-04: was 0.33 (a day away was worth only ~4 h of growth)
+CropConfig.OfflineCapSeconds = 24 * 3600 -- was 12 h
 CropConfig.SettleSeconds = 60 -- online growth is settled at least this often (and before every field action, on join and leave)
 
 -- Points needed in total for Renown level `level` (0 for level 0).

@@ -338,6 +338,14 @@ Cat #13 (Pest control 1, Moles) on square 2, ripe crops of plantings 1024 (squar
 5. Every text fits (`TextFits`) in Czech and English; no warnings or errors on the server or the client.
 Not covered: the "Vrány jsou tu" and "no crows" forecast states (not current during the test; same code path with other keys).
 
+### Offline growth 0.5 / 24 h (2026-11-04, the user)
+Crops (and the field pets' aptitude XP) already grew while the owner was away, computed on join from the stored `SettledAt` (server `os.time()`), at
+`CropConfig.OfflineRate` 0.33 for at most 12 h per absence. The user found a day away too weak (a pumpkin planted 24 h ago still had 5 h 47 min left), so
+`CropConfig.OfflineRate` = **0.5** and `OfflineCapSeconds` = **24 h** (a full day away now grows 12 h). Pens keep their 8 h cap. `economy.py`: pins
+re-accepted, `check` 52 / 52 after two relaxed rules (Parity for Garden main 1.8x, B for Binge net tolerance 3 %; ECONOMY open decision 5).
+Implemented. Studio validation pending (a 24 h-back `SettledAt` should give `Grown` = 43 200 for a pumpkin, ripe at 28 800); the 5 h 47 min pumpkin is unexplained
+(expected at most about 4 h left under the old rules) and is checked in the same test.
+
 ### E2 — Obby seeds: rare crops, rare-seed meters, seed pouch, Scouting (scope 2026-11-04; numbers approved by the user the same day)
 **Decided by the user (2026-11-04):**
 - E2 includes everything: rare crops, the meters, the common-seed pouch and the Scouting aptitude.

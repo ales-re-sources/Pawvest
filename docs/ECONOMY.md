@@ -24,9 +24,9 @@ expansions, Renown, barn, online / offline rates) are read from it and pinned (`
 ## The rules as simulated
 
 - **Online beats offline (user rule 2026-10-24).** Offline income must exist, online income (even passive) must be much higher, as a reason to keep Roblox open.
-  Two parameters, not constants: `online_rate = 1.0` and `offline_rate = 0.33` (online roughly 3x; **the user gave no number, open decision 5**). They apply
+  Two parameters, not constants: `online_rate = 1.0` and `offline_rate = 0.5` (online 2x; **decided by the user 2026-11-04, open decision 5**, was 0.33). They apply
   to everything passive: crop growth, Gardener replanting and the old pen production (`--garden pens|both`). Offline time is capped after each session:
-  `offline_cap_h = 12` for the field (provisional, open decision 5), 8 h for pens (GardenConfig). Roblox does not pay for uptime any more (Engagement-Based
+  `offline_cap_h = 24` for the field (decided 2026-11-04, was 12 h), 8 h for pens (GardenConfig). Roblox does not pay for uptime any more (Engagement-Based
   Payouts ended 2025-07-24; Creator Rewards pays per Active Spender), so this is a retention / monetization design choice: **the model pays nothing for pure AFK**,
   growth only counts as "online" during the archetype's session hours, and the 24-hour rule is checked for the online case only.
 - **One field of squares.** The player plants any unlocked crop on any square. Squares: 4 free at the start, 8 expansion tiers up to 12
@@ -40,7 +40,7 @@ expansions, Renown, barn, online / offline rates) are read from it and pinned (`
   at once; otherwise the crop waits for the visit. So a tended square pays the visits' harvests plus s x what continuous cycling adds (s = 0 is
   a manual square, s = 100 % the old continuous Gardener); seeds come from the seed stock, crops go to the barn (40). Crops grow at the same
   online / offline rates whoever plants them. Tending is rolled at hatch (20 / 22 / 40 / 50 / 60 % by rarity, aptitudes at birth / 5),
-  levels rise with weighted field time (online + capped offline x 0.33) up to the rarity cap (6-10). Field pet slots replace the pens.
+  levels rise with weighted field time (online + capped offline x `offline_rate`, 0.5 since 2026-11-04) up to the rarity cap (6-10). Field pet slots replace the pens.
 - **Renown** = derived level from harvests (points per harvest 1 / 3 / 6 / 12 by tier, level L needs 3 x L^1.6 points); gates tier-2 crops (8), tier-3 (25)
   and the expansion tiers. The request board and stations are placeholders (`requests_per_day = 0`).
 - **Rare crops** come only from the obby: 1 seed for the first Gold of a stage, 1 daily seed for the first run of a day. Half of a rare harvest is sold.
@@ -386,8 +386,10 @@ play, so before Renown 3 it breaks parity. From level 3 on it is safe at the cat
 2. **Time-to-afford bands for repricing** (E0b): the field timeline above is available to propose them against; not started.
 3. **Live players / pen migration:** replace the Coins-per-hour pens (the model's recommendation), with or without a one-time payout.
 4. ~~Field size and scale~~ **Decided 2026-10-25:** 12 squares at ladder scale about 0.3.
-5. **Online / offline numbers:** `offline_rate` 0.33 and a field offline cap of 12 h are placeholders (the user gave no number). At 0.33 the active archetypes lose half of their field income and earn only 13-36 % of it online;
-   Binge is almost cut off. Choose the rate (0.2 = stronger reason to stay, 0.5 = gentler, A reaches 1.00x) and the cap (24 h helps only Binge, a little).
+5. ~~Online / offline numbers~~ **Decided by the user 2026-11-04: `offline_rate` 0.5, field offline cap 24 h** (was 0.33 / 12 h; a day away earned only about 4 h of growth and the field felt
+   unplayable). Consequences, measured with `economy.py check` (rest of this section is the history that led here): online income per hour is still 2.5-2.6x offline (O needs 1 / `offline_rate` = 2.0x now, derived from the rate, passing); two guardrails were relaxed with the change: **Parity (days 1-3) for Garden main 1.0x → 1.8x** (1.67x measured; Obby main 0.79x and Casual 0.78x keep 1.0x) and
+   **B for Binge: net per day may lie up to 3 % (was 1 %) below the field without Tending pets** (1.7 % measured: a 24 h absence now grows Binge's crops without a pet; its 24 h potential must still be higher).
+   Sweep at the time: 0.33 / 24 h fails only Binge B; 0.36-0.4 at either cap fails Parity (1.35-1.52x); 0.5 at 12 h, 16 h or 24 h fails both.
 
 ## Inputs ready for E1 (copy into `CropConfig` after the decisions above)
 

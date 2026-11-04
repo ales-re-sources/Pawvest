@@ -254,8 +254,8 @@
  ],
  "crop_field_rates": [
   1.0,
-  0.33,
-  12.0
+  0.5,
+  24.0
  ],
  "crop_field_renown": [
   [
