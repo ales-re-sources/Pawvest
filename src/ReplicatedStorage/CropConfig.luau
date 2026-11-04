@@ -11,11 +11,16 @@ local CropConfig = {}
 -- that unlocks the crop; sale / seed in Coins (seed = 25 % of the sale); tier: Renown points per harvest (RenownPoints);
 -- kg: the weight shown at size factor 1 (E1c2); xp: pet XP of one crop fed to a pet (E1a3, half the sale, at least 1: no more than
 -- its Coins would buy as Berries; economy.py checks it).
+-- Rare crops (E2, `rare = true`, tier 4): one per obby world (`world`), seeds only from the obby (CropConfig.ObbySeeds), never sold as seeds
+-- (seed = 0: BuySeeds and the market cart skip them), no Renown gate.
 CropConfig.Crops = {
 	{ id = "Potato", name = "Potato", icon = "🥔", letter = "a", tier = 1, growSeconds = 5 * 60, sale = 6, seed = 2, renown = 0, kg = 0.25, xp = 3 }, -- loc: ignore
 	{ id = "Corn", name = "Corn", icon = "🌽", letter = "b", tier = 2, growSeconds = 6 * 3600, sale = 1008, seed = 252, renown = 1, kg = 0.5, xp = 504 }, -- loc: ignore
 	{ id = "Pumpkin", name = "Pumpkin", icon = "🎃", letter = "c", tier = 2, growSeconds = 8 * 3600, sale = 1344, seed = 336, renown = 1, kg = 6, xp = 672 }, -- loc: ignore
 	{ id = "GiantMelon", name = "Giant melon", icon = "🍉", letter = "d", tier = 3, growSeconds = 12 * 3600, sale = 4032, seed = 1008, renown = 5, kg = 15, xp = 2016 }, -- loc: ignore
+	{ id = "GoldenCarrot", name = "Golden carrot", icon = "🥕", letter = "e", tier = 4, growSeconds = 6 * 3600, sale = 3360, seed = 0, renown = 0, kg = 0.3, xp = 1680, rare = true, world = 1 }, -- loc: ignore
+	{ id = "FrostGrape", name = "Frost grape", icon = "🍇", letter = "f", tier = 4, growSeconds = 8 * 3600, sale = 4480, seed = 0, renown = 0, kg = 0.5, xp = 2240, rare = true, world = 2 }, -- loc: ignore
+	{ id = "GlowMushroom", name = "Glow mushroom", icon = "🍄", letter = "g", tier = 4, growSeconds = 10 * 3600, sale = 5600, seed = 0, renown = 0, kg = 0.2, xp = 2800, rare = true, world = 3 }, -- loc: ignore
 }
 CropConfig.ById = {}
 CropConfig.ByLetter = {}
@@ -71,6 +76,32 @@ CropConfig.Expansions = {
 }
 
 CropConfig.RenownPoints = { 1, 3, 6, 12 } -- points per harvest by crop tier (4 = rare crops, E2)
+
+-- Rare seeds from the obby (E2a, docs/ROADMAP.md → E2; numbers from docs/ECONOMY.md → "Obby seeds run"), for players with the field:
+-- * the first Gold on a stage of world FirstGoldWorld or later: FirstGold seeds of that world's rare crop (World 1's would put the field
+--   above the obby on days 1-3);
+-- * the day's first medal finish (UTC day, any stage of a world): Daily seeds of that stage's world;
+-- * every stage's meter: a medal finish adds Points[medal] (x FirstMult for the day's first medal finish on that stage); MeterSize points
+--   give one seed of the stage's world and the meter keeps the rest (Garden.Meters[stageKey]).
+-- Rare seeds join Garden.Seeds even past the seed stock's limit (an earned seed is never lost).
+CropConfig.ObbySeeds = {
+	FirstGoldWorld = 2,
+	FirstGold = 1,
+	Daily = 1,
+	MeterSize = 300,
+	Points = { 1, 2, 3 }, -- Bronze, Silver, Gold
+	FirstMult = 2,
+}
+
+-- The rare crop of obby world `world` (nil for the Tutorial or a world without one).
+function CropConfig.RareOfWorld(world: number?)
+	for _, crop in CropConfig.Crops do
+		if crop.rare and crop.world == world then
+			return crop
+		end
+	end
+	return nil
+end
 CropConfig.RenownK = 3 -- level L needs RenownK * L ^ RenownP points in total
 CropConfig.RenownP = 1.6
 CropConfig.BarnCapacity = 40 -- seeds of all crops together, and the crops a Tending pet may store, before the Barn upgrade
@@ -326,7 +357,9 @@ function CropConfig.CartOffers(day: number, level: number)
 	local cart = CropConfig.Cart
 	local unlocked, locked = {}, nil
 	for _, crop in CropConfig.Crops do
-		if crop.renown <= level then
+		if crop.rare then
+			continue -- rare seeds come only from the obby
+		elseif crop.renown <= level then
 			table.insert(unlocked, crop)
 		elseif not locked or crop.renown < locked.renown or (crop.renown == locked.renown and crop.seed < locked.seed) then
 			locked = crop

@@ -52,7 +52,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E1d2 | 36-square field (rows 6-6-8-8-8 behind an incubator strip), squares chosen freely, price by the number open | ✔ | ✔ | – |
 | E1c3 | Garden tools tier 1 (Seed sorter, Cloches, Pruning shears; Renown-gated levels) | ✔ | ✔ | – |
 | E1c4 | Daily market cart (two seed bargains, a taste of the next locked crop from Renown 3) | ✔ | ✔ | – |
-| E2–E5 | Garden MVP (see "Next") | – | – | – |
+| E2a | Rare crops of Worlds 1-3, rare seeds (first Gold from World 2, daily, per-stage meters), results popup lines | ✔ | ✔ | – |
+| E2b–E5 | Garden MVP (see "Next") | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
 
@@ -244,6 +245,70 @@ Found and fixed: the result line disappeared with the card when the pet reached 
 Found in the test harness, not a bug: clicking a list row that is scrolled out of view lands on the slot bar under the list (it unequipped the Owl).
 That is probably the stray equip seen once in P3a. Scroll a row into view before clicking it.
 Not covered: a player without field access (`locked`; the card is not built without `HasFieldAccess`), checked in the code only; phone layout.
+
+### E2 — Obby seeds: rare crops, rare-seed meters, seed pouch, Scouting (scope 2026-11-04; numbers approved by the user the same day)
+**Decided by the user (2026-11-04):**
+- E2 includes everything: rare crops, the meters, the common-seed pouch and the Scouting aptitude.
+- The daily rare seed stays, next to the meters.
+- Three rare crops, one per World 1-3.
+- Only Golds won after E2 give a seed: Golds from before give nothing.
+
+Like the rest of the field, everything is for `GardenConfig.HasFieldAccess` players only; the Tutorial (no world) gives nothing.
+
+**Approved design (model run: ECONOMY.md → "Obby seeds run").**
+- **Rare crops (`CropConfig.Crops`, `rare = true`, `world`, tier 4 = 12 Renown points a harvest):**
+  - World 1 🥕 Golden carrot: 6 h, sale 3 360.
+  - World 2 🍇 Frost grape: 8 h, sale 4 480.
+  - World 3 🍄 Glow mushroom: 10 h, sale 5 600.
+
+  They earn 420 Coins per square-hour (Giant melon: 252). Never sold as seeds: BuySeeds and the market cart refuse them, the Garden panel shows "from the obby".
+  They are planted, harvested, size-rolled, sold and fed like any crop. A Tending pet replants them only from rare seeds the player holds.
+- **Rare seeds:**
+  - The first Gold on a stage of World 2 or 3 gives 1 seed of that world's crop. World 1 gives none: new players clear it in the first days, and its
+    seeds put the field above the obby on days 1-3 (1.33x Casual, 1.56x Garden main).
+  - The day's first medal finish gives 1 seed of that stage's world (a UTC day, the player's choice of world).
+  - **Rare-seed meter per stage:** Bronze 1 / Silver 2 / Gold 3 points, doubled for the day's first medal finish on that stage. 300 points give a seed
+    of the stage's world and the meter starts again. It is shown as a percentage on the results popup (the stage's gate does not show it yet: not in E2a).
+- **Seed pouch:** the day's first medal finish on each stage drops Bronze 1 / Silver 2 / Gold 3 seeds of **the crop the player planted last**
+  (Potato before any planting). It fills only up to the seed stock's limit (the barn); repeats that day drop none.
+- **Scouting (with-you aptitude, `PetConfig.Shown`):**
+  - XP: an equipped pet with Scouting gains 15 minutes of aptitude XP per medal finish, on the same curve as Tending.
+  - Bonus: min(+50 %, the sum of 0.5 x Strength(level) over the equipped scouts).
+  - Effect: the meter fills x (1 + bonus); the pouch gets +1 seed at +50 %.
+  - Display: shown on the pet's detail page like Tending.
+
+**Proposed steps, each validated and committed on its own:**
+- **E2a:** rare crops and rare seeds (first Gold, daily, meters, results popup).
+- **E2b:** the seed pouch.
+- **E2c:** Scouting.
+
+**E2a implemented (2026-11-04).**
+- `CropConfig`: the three rare crops (letters e / f / g, `seed = 0`, `xp` half the sale), `ObbySeeds` (FirstGoldWorld 2, FirstGold 1, Daily 1, MeterSize 300,
+  Points 1 / 2 / 3, FirstMult 2), `RareOfWorld(world)`; `CartOffers` skips rare crops.
+- `GardenField.ObbyFinish(player, stage, medal, previousMedal, firstOnStage)`, called by `StageResults` after the run payout; its answer goes into the result
+  as `obbySeeds = { seeds = { { crop, count, why } }, meter = { crop, points, size } }` (`why` = `gold` / `daily` / `meter`).
+  Profile: `Garden.Meters[stageKey]` (points) and `Garden.RareDay` (UTC day of the last daily seed). Rare seeds may go past the barn limit.
+  BuySeeds of a rare crop answers `obby`.
+- Results popup: one line per seed gained and the meter's percentage. Garden panel: the rare rows show growth, sale and stock, and "⭐ Medals in World n"
+  instead of the buy buttons. `PlotView`: ripe colours for e / f / g.
+- Strings: 13 rows (`crop.name.*` × 3, `field.seed.rareInfo`, `field.seed.fromWorld`, `field.reason.obby`, `results.rareSeed`, `results.rareWhy.*` × 3,
+  `results.meter`).
+- `economy.py`: reads `CropConfig.ObbySeeds` and the rare crops, pin `crop_field_obby_seeds`; `check` 51 / 52. The red check is 5 B for Binge (talent-first):
+  the field with Tending pets earns 1.7-2.4 % less a day than the same field without them (pets-first Binge gains 12-19 %). Rare harvests sold in full tip this
+  known Binge edge; left for the user to decide.
+
+**E2a Studio-validated (2026-11-04).** Playtests in the developer's live profile, finishes driven by moving the character through the gate's `TimerStart` and
+the finish portal (0.9-1.1 s runs, Gold). Snapshot `TestSnapshots` `profile_9892673032_e2a` (+ stars and the Stage 1 / 9 boards), restored afterwards through
+`BindToClose` writes; the Stage 2 board was rebuilt from the snapshot's best time.
+1. Stage 1 (World 1, Gold held): the day's first medal finish gave 1 Golden carrot (`daily`); stored `Meters.Stage1` = 6 (Gold 3 doubled), `RareDay` = today.
+2. Stage 9 (World 2, Silver held) to Gold: "🍇 Mrazivý hrozen: +1 semínko (první zlatá)", no second daily seed, the meter at 2 %. A repeat: no seed, 3 %.
+3. Fixture `Meters.Stage9` = 298: the next Gold gave a Frost grape ("ukazatel naplněn") and the meter restarted (1 point, 0 %).
+4. Fixture Stage 2 (World 1) at Silver: the new Gold gave no seed, only the meter (🥕 2 %).
+5. BuySeeds of Golden carrot / Frost grape → `obby` (away from the plot → `far`, the distance is checked first). The Garden panel's rare rows in Czech fit;
+   a Frost grape planted on an emptied square ripens in 8 h and the plot feed sends `f1`. No warnings or errors on the server or the client.
+
+Found and fixed: the popup script had a literal line break inside a string (`table.concat(lines, "\n")`), a syntax error that stopped the whole popup.
+Not covered: a ripe rare crop's colour, harvest and sale (the same code as the other crops); World 3 (same path as World 2); a player without field access (code only).
 
 ### E1d — Farming-first rebalance (scope draft 2026-11-03; numbers: ECONOMY.md → "Direction change", F1)
 **Goal.** Farming becomes the main game: over days 1-3 the field earns at most what the obby earns, then 3x by day 7 and 10x by day 30 (Casual,

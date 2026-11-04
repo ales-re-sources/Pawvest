@@ -316,6 +316,31 @@ O (online ≥ 3x offline per hour) holds at 3.66-4.15x, and C at 93-95 %. With t
   crop prices. Field-pet slot 4 / 5 and the gentler gates are what lift day 14-30. Neither alone was enough: slots 4-5 alone 8.9x, gates alone 8.5x.
 - **Later (parked):** locked squares lie under rubble or weeds. Clearing them needs a tool upgrade or a bought tool (EXPANSION §6).
 
+## Obby seeds run (2026-11-04, gates E2; approved: meter 300)
+The simulation has rare-seed meters, the seed pouch and Scouting (`FIELD["obby"]`, off until the config carries them).
+- The daily rare seed is the best world reached.
+- The pouch is free seeds of the crop the player buys anyway, at most the seed stock.
+- Rare harvests are sold in full (`sale_share` 1.0): nothing else uses them before the landmarks.
+
+6 seeds, worst policy for the parity and leads; rare seeds a week and pouch seeds a day at days 47-60.
+
+| Candidate | Parity days 1-3 (Obby main / Casual / Garden main) | Casual lead day 7 / 14 / 30 | Rare / week (Obby main / Casual / Garden main / Binge) | Pouch / day (Obby main / Casual) |
+|---|---|---|---|---|
+| Today's model (1 per first Gold, 1 daily, half kept) | 0.48 / 0.81 / 0.99 | 3.05 / 7.8 / 12.4 | 7.0 / 5.7 / 3.2 / 1.0 | – |
+| Rare sold in full | 0.99 / **1.33** / **1.56** | 3.99 / 9.2 / 13.9 | 7.0 / 5.3 / 2.5 / 1.0 | – |
+| ... first Gold from World 2 | 0.68 / 0.75 / 0.90 | 3.37 / 8.3 / 13.1 | 7.0 / 5.5 / 2.8 / 1.0 | – |
+| ... + meter 200, pouch 1 / 2 / 3, Scouting | 0.73 / 0.86 / 0.90 | 3.92 / 9.9 / 16.8 | 18.3 / 6.2 / 2.0 / 2.5 | 34 / 14 |
+| **... + meter 300 (proposed)** | 0.73 / 0.86 / 0.90 | 3.92 / 9.9 / 16.8 | 14.7 / 5.7 / 2.2 / 5.5 | 35 / 14 |
+| ... + meter 400 | 0.73 / 0.86 / 0.90 | 3.92 / 9.9 / 16.7 | 12.2 / 6.2 / 2.2 / 2.5 | 35 / 13 |
+| ... meter 300 without Scouting | 0.73 / 0.86 / 0.90 | 3.92 / 9.9 / 16.7 | 13.8 / 5.8 / 2.2 / 5.0 | 35 / 13 |
+
+- **First-Gold seeds of World 1 break the days-1-3 parity:** a new player clears World 1 in the first days, and each seed is a crop worth about
+  two early obby runs.
+- **The meter matters mostly for Obby main** (about 85 finishes a day). The other archetypes get most of their rare seeds from the daily seed.
+- **The pouch is small money:** seeds are a quarter of the sale. It counts in the first days and keeps the field planted for obby players.
+- Scouting adds about 1 rare seed a week at these pet rolls. Binge's numbers are noisy (one session a week).
+- Obby main's day-14 lead is 8.4 (≥ 1x needed); Garden main's day-7 lead is 5.05 in every row.
+
 ## Market cart run (2026-11-03, gates E1c4; approved)
 The model buys the cart on active days: the bargains where it buys those seeds anyway, and the taste (planted ahead of its gate) whenever the Coins allow.
 6 seeds, worst policy, on F2 with the tools:

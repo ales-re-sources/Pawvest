@@ -13,6 +13,7 @@ local CoinRewards = require(ServerScriptService.CoinRewards)
 local PetService = require(ServerScriptService.PetService)
 local StarBoard = require(ServerScriptService.StarBoard)
 local PetConfig = require(ReplicatedStorage.PetConfig)
+local GardenField = require(ServerScriptService.GardenField)
 
 local GOLD = StageConfig.MedalIndex.Gold
 local GOLD_EGG = "Basic" -- free egg for the first Gold on each stage (GDD §7.2)
@@ -46,7 +47,8 @@ end
 --   (first-finish payout), runCoins (repeat reward), runsToday (medal finishes of this stage today, this one included),
 --   freeEgg? (egg id granted for the first Gold), petXp (XP each equipped pet received: medal or finish + movement),
 --   moveXp, petsLeveled (pets that
---   gained it; 0 = none equipped or all maxed), nextMedal?, nextThreshold? }
+--   gained it; 0 = none equipped or all maxed), nextMedal?, nextThreshold?, obbySeeds? (E2a: GardenField.ObbyFinish, the rare seeds
+--   and the stage's meter; only with the field) }
 function StageResults.RecordFinish(player: Player, stageKey: string, elapsed: number, studs: number?)
 	local profile = PlayerProfile.Get(player)
 	local stage = StageConfig.ByKey[stageKey]
@@ -89,6 +91,7 @@ function StageResults.RecordFinish(player: Player, stageKey: string, elapsed: nu
 		runs[stageKey] = earlierFinishes + 1
 	end
 	local runCoins = CoinRewards.Grant(player, StageConfig.RunReward(stage, medal, earlierFinishes), "run") or 0
+	local obbySeeds = GardenField.ObbyFinish(player, stage, medal, previousMedal, earlierFinishes == 0)
 	-- pet XP: the run's medal (not only a new one; FinishXp without one) plus movement during the run
 	local moveXp = PetConfig.MoveXp(studs or 0)
 	local petXp = (PetConfig.MedalXp[medal] or PetConfig.FinishXp) + moveXp
@@ -122,6 +125,7 @@ function StageResults.RecordFinish(player: Player, stageKey: string, elapsed: nu
 		petsLeveled = petsLeveled,
 		nextMedal = nextMedal,
 		nextThreshold = nextMedal and StageConfig.Threshold(stage, nextMedal),
+		obbySeeds = obbySeeds,
 	}
 end
 

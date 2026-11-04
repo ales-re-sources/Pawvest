@@ -31,6 +31,9 @@
 -- Crops as pet food (E1a3): FeedCrop(uid, crop, count) feeds held crops to any owned pet for CropConfig xp each (half the sale), anywhere
 -- (no plot distance: the Pets panel's detail page); at most as many as the pet needs for the max level (the last one may go past it),
 -- the average size leaves the barn as in a sale. Renown stays (it is earned at harvest).
+-- Rare seeds from the obby (E2a): StageResults calls GardenField.ObbyFinish for every finish; CropConfig.ObbySeeds gives the rare crop of
+-- the stage's world for a new Gold (World 2 on), the day's first medal finish (Garden.RareDay = that UTC day) and a full stage meter
+-- (Garden.Meters[stageKey] = points). Rare crops are never sold as seeds (BuySeeds: "obby").
 -- The field's shape is CropConfig.RowWidths (E1d2: 36 squares on a grid); the player opens any locked square (BuySquare), the price
 -- and Renown gate come from the number already open (CropConfig.NextExpansion). Fields from before E1d2 (Count = the first squares
 -- of a 4 x 3 field) move onto rows 1-3 (CropConfig.FromOldSquare), with their crops and field pets.
@@ -48,6 +51,7 @@ local PetConfig = require(ReplicatedStorage.PetConfig)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local CoinRewards = require(ServerScriptService.CoinRewards)
 local GardenService = require(ServerScriptService.GardenService)
+local StageConfig = require(ReplicatedStorage.StageConfig)
 
 local plantEvent = GardenService.Remote("Plant") -- client → server: (square: number, crop: string)
 local harvestEvent = GardenService.Remote("Harvest") -- client → server: (square: number)
@@ -222,6 +226,16 @@ local function fieldOf(player: Player, profile)
 		end
 	end
 	garden.Cart = { Day = if cart and type(cart.Day) == "number" then cart.Day else 0, Bought = bought }
+	local meters = {}
+	if type(garden.Meters) == "table" then
+		for key, points in garden.Meters do
+			if StageConfig.ByKey[key] and finite(points) and points > 0 then
+				meters[key] = math.min(points, CropConfig.ObbySeeds.MeterSize)
+			end
+		end
+	end
+	garden.Meters = meters
+	garden.RareDay = if finite(garden.RareDay) then garden.RareDay else nil
 
 	-- field pets: an owned pet with the job's aptitude, not penned, on an owned square of its own, within the slots (in uid order);
 	-- PetService unequips a field pet (equipped and on the field never both)
@@ -616,6 +630,9 @@ buySeedsEvent.OnServerEvent:Connect(function(player, cropId, amount)
 		return
 	end
 	local garden = profile.Garden
+	if crop.rare then
+		return reject(player, "BuySeeds", "obby") -- rare seeds come only from the obby (E2)
+	end
 	if CropConfig.RenownLevel(garden.Renown) < crop.renown then
 		return reject(player, "BuySeeds", "renown")
 	end
@@ -999,5 +1016,48 @@ task.spawn(function()
 		end
 	end
 end)
+
+-- E2a: the rare seeds a finished run on `stage` earns. `medal` = the run's medal (0 = none), `previousMedal` = the best before it,
+-- `firstOnStage` = the day's first medal finish on this stage. Adds the seeds to Garden.Seeds (past the stock's limit: an earned seed is
+-- never lost) and publishes the garden. Returns, for the results popup, { seeds = { { crop, count, why = "gold" | "daily" | "meter" } },
+-- meter = { crop, points, size } } or nil (no medal, no field access, a stage without a rare crop).
+function GardenField.ObbyFinish(player: Player, stage, medal: number, previousMedal: number, firstOnStage: boolean)
+	local rules = CropConfig.ObbySeeds
+	local crop = CropConfig.RareOfWorld(stage.world)
+	if medal < 1 or not crop or not GardenConfig.HasFieldAccess(player.UserId) then
+		return nil
+	end
+	local profile = PlayerProfile.Get(player)
+	local field = profile and fieldOf(player, profile)
+	if not field then
+		return nil
+	end
+	local garden = profile.Garden
+	local seeds = {}
+	local gold = StageConfig.MedalIndex.Gold
+	if medal == gold and previousMedal < gold and stage.world >= rules.FirstGoldWorld then
+		table.insert(seeds, { crop = crop.id, count = rules.FirstGold, why = "gold" })
+	end
+	local today = CropConfig.CartDay(os.time())
+	if garden.RareDay ~= today then
+		garden.RareDay = today
+		table.insert(seeds, { crop = crop.id, count = rules.Daily, why = "daily" })
+	end
+	local points = (garden.Meters[stage.key] or 0) + rules.Points[medal] * (if firstOnStage then rules.FirstMult else 1)
+	local full = math.floor(points / rules.MeterSize)
+	points -= full * rules.MeterSize
+	garden.Meters[stage.key] = if points > 0 then points else nil
+	if full > 0 then
+		table.insert(seeds, { crop = crop.id, count = full, why = "meter" })
+	end
+	for _, gain in seeds do
+		garden.Seeds[gain.crop] = (garden.Seeds[gain.crop] or 0) + gain.count
+	end
+	GardenService.PublishAll(player)
+	if #seeds > 0 then
+		task.spawn(PlayerProfile.Save, player)
+	end
+	return { seeds = seeds, meter = { crop = crop.id, points = points, size = rules.MeterSize } }
+end
 
 return GardenField

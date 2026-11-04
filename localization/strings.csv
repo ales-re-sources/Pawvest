@@ -72,6 +72,13 @@ results.firstFinish[other],Form for 0 and 5+,First finish +{count} coins,Za prvn
 results.runReward,"Daily repeat reward; {count} = Coins, {run} = how many runs of this stage today (1, 2, …)",Run reward +{count} coins\n(run {run} today),Odměna za dokončení +{count} mincí\n(dnes {run}. pokus),ok,h0dfb4a09
 results.petXp,"Pet experience; {xp} = total XP, {move} = the part earned by moving during the run",Pets +{xp} XP ({move} from moving),Mazlíčci +{xp} XP ({move} za pohyb),ok,h18e0efed
 results.freeEgg,"First Gold on a stage gives a free egg, which waits in the garden incubator; {egg} = egg name",🎁 Free {egg} → your incubator,🎁 {egg} zdarma → do tvého inkubátoru,ok,h656d5bad
+results.rareSeed[one],"Results popup (players with the field, E2): rare seeds earned by the run; {icon} = crop emoji, {crop} = crop name, {count} = seeds, {why} = results.rareWhy.*. Form for 1",{icon} {crop}: +{count} seed ({why}),{icon} {crop}: +{count} semínko ({why}),new,hebccd3c2
+results.rareSeed[few],Form for 2-4 (Czech only),,{icon} {crop}: +{count} semínka ({why}),new,hebccd3c2
+results.rareSeed[other],Form for 0 and 5+,{icon} {crop}: +{count} seeds ({why}),{icon} {crop}: +{count} semínek ({why}),new,hebccd3c2
+results.rareWhy.gold,Why a rare seed was given: the first Gold on this stage (inside results.rareSeed's brackets),first Gold,první zlatá,new,h58930a7c
+results.rareWhy.daily,Why a rare seed was given: the day's first medal finish (inside results.rareSeed's brackets),first medal today,první medaile dne,new,hb497a0da
+results.rareWhy.meter,Why a rare seed was given: the stage's rare-seed meter filled up (inside results.rareSeed's brackets),meter full,ukazatel naplněn,new,ha9c8a069
+results.meter,"Results popup (players with the field, E2): how full this stage's rare-seed meter is; {icon} = the world's rare crop emoji, {pct} = 0-99",{icon} Rare seed meter: {pct}%,{icon} Ukazatel vzácného semínka: {pct} %,new,he6002eec
 results.next,"Next goal; {medal} = medal tier (medal.name.*), {time} = its time limit",Next: {medal} under {time},Další cíl: {medal} pod {time},ok,hfa6bbb41
 results.allMedals,Last line when every medal of the stage is earned,All medals earned!,Všechny medaile získány!,ok,h91b54d74
 # Gates (unlock prompt and messages),,,,,
@@ -333,6 +340,11 @@ field.square.note,Small note under the squares list: the countdowns,Times count 
 field.section.seeds,Heading of the seed list (shop at the own plot),Seeds,Semínka,new,h8fa20aac
 field.seed.info,"Seed row, second and third line (\n = line break); {time} = grow time (""3 hours""), {sale} = Coins one harvested crop sells for, {seed} = Coins one seed costs, {stock} = seeds the player has",Grows in {time}\nSells for {sale} · Seed {seed} · You have {stock},Zraje {time}\nProdej {sale} · Semínko {seed} · Máš {stock},new,hefac51aa
 field.seed.locked,"Seed row of a crop above the player's Renown level, replaces the buy buttons; {level} = Renown level needed",🔒 Renown {level},🔒 Pověst {level},new,hb6e44305
+field.seed.rareInfo,"Seed row of a rare crop (E2: seeds only from obby medals), second and third line (
+ = line break); {time} = grow time, {sale} = Coins one crop sells for, {stock} = seeds the player has","Grows in {time}
+Sells for {sale} · You have {stock}","Zraje {time}
+Prodej {sale} · Máš {stock}",new,h7f8b071a
+field.seed.fromWorld,"Seed row of a rare crop, replaces the buy buttons (narrow, wraps): its seeds are earned with medals on the stages of {world} (world.name.*, Czech: nominative ""1. svět"")",⭐ Medals in {world},⭐ Za medaile: {world},new,h52450e9e
 field.barn,"Line under the seed list; {total} = seeds held, {capacity} = what the barn holds",Barn: {total} / {capacity} seeds,Stodola: {total} / {capacity} semínek,new,hdfd10ae1
 field.seed.note,Small note under the seed list,Prices are in Coins.,Ceny jsou v mincích.,new,hd2ae55c1
 field.section.crops,Heading of the list of harvested crops that can be sold,Harvest,Sklizeň,new,h2c69834b
@@ -359,6 +371,9 @@ crop.name.Potato,"Crop name (singular, shown with its icon)",Potato,Brambora,new
 crop.name.Corn,"Crop name (singular, shown with its icon)",Corn,Kukuřice,new,hd0c37a5e
 crop.name.Pumpkin,"Crop name (singular, shown with its icon)",Pumpkin,Dýně,new,hdddc7a54
 crop.name.GiantMelon,"Crop name (singular, shown with its icon)",Giant melon,Obří meloun,new,h92fe756d
+crop.name.GoldenCarrot,"Rare crop of World 1 (E2): name, singular, shown with its icon 🥕",Golden carrot,Zlatá mrkev,new,h6faddec3
+crop.name.FrostGrape,"Rare crop of World 2 (E2): name, singular (one bunch), shown with its icon 🍇",Frost grape,Mrazivý hrozen,new,h19ec990f
+crop.name.GlowMushroom,"Rare crop of World 3 (E2): name, singular, shown with its icon 🍄",Glow mushroom,Zářivá houba,new,h76c7daca
 field.reason.locked,The field is not open for this player yet (access),The field is not open for you yet,Pole ti zatím není k dispozici,new,h1c490ede
 field.reason.far,Refused: the player is not at their own plot,Walk to your plot first,Nejdřív dojdi ke své zahrádce,new,h876a55dc
 field.reason.loading,Refused: the player's data is still loading,Still loading...,Ještě se načítá…,new,hefd53ef6
@@ -511,6 +526,7 @@ field.cart.taste,"Market cart taste row, second line: seeds of a crop the player
 field.cart.soldOut,"Market cart button when the player bought the whole offer today (narrow, ~104 px)",Sold out,Vyprodáno,new,hb69f33b1
 field.cart.note,"Market cart, small note at the end of the section",Offers change every day at 00:00 UTC. Seeds from the cart can be planted before their Renown level.,Nabídky se mění každý den v 00:00 UTC. Semínka z vozíku zasadíš i před potřebnou Pověstí.,new,hb014e105
 field.reason.soldOut,Refused: the player already bought the whole market cart offer today,Sold out for today,Pro dnešek vyprodáno,new,ha4bd2066
+field.reason.obby,"Refused: rare seeds cannot be bought, they come only from obby medals (E2)",These seeds come only from obby medals,Tato semínka získáš jen za medaile v úrovních,new,h32f95673
 field.toast.harvestSize,"Toast after a harvest, first line; {crop} = crop name, {kg} = its weight with one decimal (""7.4"", Czech ""7,4"")",\+1 {crop} · {kg} kg,\+1 {crop} · {kg} kg,new,h767121e7
 field.size.big,"Harvest toast, second line: the crop rolled big (top 20 %); any crop, so keep it gender-neutral in Czech",Big one!,Pořádný kus!,new,h5fa3da2c
 field.size.giant,"Harvest toast, second line: the crop rolled giant (top 3 %); any crop, so keep it gender-neutral in Czech",Giant!,Obří kus!,new,hb84dd1bc

@@ -29,6 +29,7 @@ if not GardenConfig.HasFieldAccess(player.UserId) then
 end
 
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
+local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
@@ -75,9 +76,11 @@ local COLOR_INFO = Color3.fromRGB(235, 222, 190)
 local COLOR_DIM = Color3.fromRGB(190, 178, 150)
 local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
 local COLOR_OK = Color3.fromRGB(120, 230, 120)
+local COLOR_RARE = Color3.fromRGB(255, 205, 90) -- rare crops' "from World n" (E2a)
 
 -- the reasons GardenField answers with (texts: field.reason.<reason>)
 local REJECT_KEYS = {
+	obby = "field.reason.obby",
 	locked = "field.reason.locked",
 	far = "field.reason.far",
 	loading = "field.reason.loading",
@@ -570,23 +573,27 @@ local function renderSeeds(field)
 	for index, crop in CropConfig.Crops do
 		local locked = field.level < crop.renown
 		local stock = field.seeds[crop.id] or 0
-		local reserved = if locked then LOCK_WIDTH + GAP else BUY1_WIDTH + BUY10_WIDTH + GAP * 2
+		local reserved = if locked or crop.rare then LOCK_WIDTH + GAP else BUY1_WIDTH + BUY10_WIDTH + GAP * 2
 		local row = newRow(seedsSection, crop.id, index + 1)
 		textColumn(
 			row,
 			reserved,
 			cropTitle(crop),
-			Locale.T("field.seed.info", { time = growTime(growSecondsOn(field, crop)), sale = crop.sale, seed = crop.seed, stock = stock })
+			if crop.rare
+				then Locale.T("field.seed.rareInfo", { time = growTime(growSecondsOn(field, crop)), sale = crop.sale, stock = stock })
+				else Locale.T("field.seed.info", { time = growTime(growSecondsOn(field, crop)), sale = crop.sale, seed = crop.seed, stock = stock })
 		)
-		if locked then
+		if locked or crop.rare then -- rare seeds come only from the obby (E2a): the row says from which world
 			local lock = paragraph("Locked", {
 				LayoutOrder = 2,
 				Size = UDim2.new(0, LOCK_WIDTH, 0, 0),
 				Font = StudStyle.Font,
 				TextSize = 15,
-				TextColor3 = COLOR_DIM,
+				TextColor3 = if crop.rare then COLOR_RARE else COLOR_DIM,
 				TextXAlignment = Enum.TextXAlignment.Center,
-				Text = Locale.T("field.seed.locked", { level = crop.renown }),
+				Text = if crop.rare
+					then Locale.T("field.seed.fromWorld", { world = Locale.WorldName(StageConfig.Worlds[crop.world]) })
+					else Locale.T("field.seed.locked", { level = crop.renown }),
 			})
 			lock.Parent = row
 		else

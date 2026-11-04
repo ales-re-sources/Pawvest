@@ -57,13 +57,14 @@ local COLORS = {
 }
 local SPROUT = Color3.fromRGB(110, 190, 80) -- unripe crops (stage 1-2)
 local REACH = Color3.fromRGB(255, 230, 120) -- ShowReach tint
-local CROP_COLORS = { -- ripe crops, by letter (CropConfig: a Potato, b Corn, c Pumpkin, d Giant melon; e, f synthetic only)
+local CROP_COLORS = { -- ripe crops, by letter (CropConfig: a Potato, b Corn, c Pumpkin, d Giant melon, E2a rare: e Golden carrot, f Frost grape, g Glow mushroom)
 	a = Color3.fromRGB(196, 150, 90),
 	b = Color3.fromRGB(245, 210, 60),
 	c = Color3.fromRGB(240, 130, 40),
 	d = Color3.fromRGB(80, 170, 70),
-	e = Color3.fromRGB(150, 90, 200),
-	f = Color3.fromRGB(90, 200, 140),
+	e = Color3.fromRGB(255, 190, 40),
+	f = Color3.fromRGB(150, 120, 230),
+	g = Color3.fromRGB(110, 230, 220),
 }
 
 local PlotView = {}

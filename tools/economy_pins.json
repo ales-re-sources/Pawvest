@@ -72,6 +72,30 @@
    4032,
    1008,
    5
+  ],
+  [
+   "GoldenCarrot",
+   4,
+   6.0,
+   3360,
+   0,
+   0
+  ],
+  [
+   "FrostGrape",
+   4,
+   8.0,
+   4480,
+   0,
+   0
+  ],
+  [
+   "GlowMushroom",
+   4,
+   10.0,
+   5600,
+   0,
+   0
   ]
  ],
  "crop_field_expansions": [
@@ -204,6 +228,18 @@
    35
   ]
  ],
+ "crop_field_obby_seeds": [
+  2,
+  1,
+  1,
+  300,
+  [
+   1,
+   2,
+   3
+  ],
+  2
+ ],
  "crop_field_rates": [
   1.0,
   0.33,
@@ -324,6 +360,18 @@
   [
    "GiantMelon",
    2016
+  ],
+  [
+   "GoldenCarrot",
+   1680
+  ],
+  [
+   "FrostGrape",
+   2240
+  ],
+  [
+   "GlowMushroom",
+   2800
   ]
  ],
  "eggs": {

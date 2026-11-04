@@ -248,6 +248,10 @@ def cart_cfg(cart):
     return [[[b["count"], b["discount"]] for b in cart["bargains"]], [t["count"], t["price"], t["fromLevel"]]]
 
 
+def obby_cfg(o):
+    return [o["FirstGoldWorld"], o["FirstGold"], o["Daily"], o["MeterSize"], list(o["Points"]), o["FirstMult"]]
+
+
 def apply_crop_config(P):
     """CropConfig.luau -> P["crop_cfg"] (what `pin` stores), the FIELD values marked (CropConfig) and the config crops of CROP_DEFS."""
     f = "CropConfig.luau"
@@ -270,7 +274,8 @@ def apply_crop_config(P):
         "barn_capacity": luau(f, "CropConfig.BarnCapacity"),
         "upgrades": [[u["id"], u["step"], list(u["prices"])] for u in luau(f, "CropConfig.Upgrades")],  # E1c1: [id, step, prices]
         "tools": [[t["id"], list(t["effect"]), list(t["prices"]), list(t["renown"])] for t in luau(f, "CropConfig.Tools")],  # E1c3
-        "cart": cart_cfg(luau(f, "CropConfig.Cart")),  # E1c4: [[count, discount] per bargain, [taste count, price, fromLevel]]
+        "cart": cart_cfg(luau(f, "CropConfig.Cart")),
+        "obby_seeds": obby_cfg(luau(f, "CropConfig.ObbySeeds")),  # E2a: [first Gold from world, seeds per first Gold, daily seeds, meter size, points by medal, first-of-day factor]  # E1c4: [[count, discount] per bargain, [taste count, price, fromLevel]]
         "size": [luau(f, "CropConfig.SizeSigma"), luau(f, "CropConfig.SizeZCap"), luau(f, "CropConfig.SizeBigZ"), luau(f, "CropConfig.SizeGiantZ")],  # E1c2
         "rates": [luau(f, "CropConfig.OnlineRate"), luau(f, "CropConfig.OfflineRate"), luau(f, "CropConfig.OfflineCapSeconds") / 3600],  # hours
         # field pets (E1b): slot prices, slots from pens; PetConfig's aptitude numbers
@@ -310,6 +315,11 @@ def apply_crop_config(P):
     bargains, (t_count, t_price, t_from) = cfg["cart"]
     F["cart"] = {"bargains": [list(b) for b in bargains], "taste": {"count": t_count, "price": t_price, "from_level": t_from}}
     F["online_rate"], F["offline_rate"], F["offline_cap_h"] = cfg["rates"]
+    fg_world, fg_seeds, daily, size, pts, first_mult = cfg["obby_seeds"]
+    # E2a: rare seeds as CropConfig.ObbySeeds gives them; the daily seed is of the best world reached (the player picks the stage); rare harvests
+    # are sold in full until something else uses them (landmarks)
+    F["rare"].update({"per_first_gold": fg_seeds, "first_gold_world": fg_world, "daily": daily, "daily_best": True, "sale_share": 1.0})
+    F["obby"]["meter"].update({"size": size, "pts": list(pts), "first_mult": first_mult})
     FP = F["pets"]
     FP["slots"] = list(cfg["pet_slots"])
     FP["tending"] = dict(cfg["tending"])
@@ -419,7 +429,8 @@ def pin_values(P):
         "crop_field_upgrades": P["crop_cfg"]["upgrades"],  # [id, step, prices] (E1c1)
         "crop_field_tools": P["crop_cfg"]["tools"],  # [id, effect, prices, renown levels] (E1c3)
         "crop_field_xp": P["crop_cfg"]["xp"],  # [id, pet XP per crop fed] (E1a3)
-        "crop_field_cart": P["crop_cfg"]["cart"],  # [[count, discount] per bargain, [taste count, price, from level]] (E1c4)
+        "crop_field_cart": P["crop_cfg"]["cart"],
+        "crop_field_obby_seeds": P["crop_cfg"]["obby_seeds"],  # [first Gold from world, per first Gold, daily, meter size, points, first-of-day x] (E2a)  # [[count, discount] per bargain, [taste count, price, from level]] (E1c4)
         "crop_field_size": P["crop_cfg"]["size"],  # [sigma, z cap, Big z, Giant z] of the size roll (E1c2)
         "crop_field_rates": P["crop_cfg"]["rates"],  # [online rate, offline rate, offline cap in hours]
         "field_pet_slots": P["crop_cfg"]["pet_slots"],  # CropConfig.PetSlotPrices
@@ -604,7 +615,18 @@ FIELD = {
         "cloches": {"effect": [], "prices": [], "renown": []},
         "shears": {"effect": [], "prices": [], "renown": []},
     },
-    "rare": {"per_first_gold": 1, "daily": 1, "sale_share": 0.5},  # rare seeds from the obby; the rest of the harvest is kept for landmarks (placeholder)
+    "rare": {"per_first_gold": 1, "first_gold_world": 1, "daily": 1, "sale_share": 0.5},  # rare seeds from the obby (first Gold from world first_gold_world on); the rest of the harvest is kept for landmarks (placeholder)
+    # E2 obby links (EXPANSION §8.1). meter: each stage's rare-seed meter; a medal finish adds pts[medal - 1] (x first_mult for the day's first
+    # finish on that stage), a full meter (size) gives one rare seed of the stage's world. pouch: the day's first medal finish on a stage drops
+    # seeds[medal - 1] free seeds of the best common crop the player has unlocked (kept within the barn). scout: equipped pets with Scouting;
+    # bonus = min(cap, sum of per_level x strength(level)); the meter fills x (1 + bonus), the pouch gets floor(bonus x extra_per_bonus) more;
+    # a pet gains xp_per_finish weighted hours of Scouting XP per medal finish while equipped. size 0 / empty seeds = not built.
+    "obby": {
+        "meter": {"pts": [1, 2, 3], "first_mult": 2, "size": 0},
+        "pouch": {"seeds": []},
+        "scout": {"chance": {"Common": 0.16, "Uncommon": 0.18, "Rare": 0.45, "Epic": 0.6, "Legendary": 0.75}, "per_level": 0.5, "cap": 0.5,
+                  "extra_per_bonus": 2, "xp_per_finish": 0.0},
+    },
     # sinks the model does not design yet (landmark Coins parts, estate tiers, decor, stations; EXPANSION §12): a geometric ladder, bought last
     "reserved": {"first": 8000, "ratio": 1.3, "count": 20},
     "bias": {"talent-first": 1.5, "pets-first": 0.7},  # field price x bias when merged into a policy's buying order
@@ -621,8 +643,8 @@ FIELD = {
 
 # Crop catalogue: tier 1-3 by Renown gate, tier 4 = rare (one signature crop per world 1-3). `h` = grow time in hours. `size` = 2 means a 2 x 2 crop.
 # Entries with "cfg" are in CropConfig.Crops (that id): apply_crop_config() fills their tier, h (growSeconds / 3600), sale, seed and gate from it.
-# The other entries are MODEL-ONLY, NOT YET IN CropConfig: the optional crops of `--crops full` (Radish, Carrot, 2 x 2 Trophy pumpkin) and the rare
-# crops Rare W1 / W2 / W3 (come with milestone E2); their numbers are model parameters (sale / seed derive from the ladder x scale).
+# The other entries are MODEL-ONLY, NOT YET IN CropConfig: the optional crops of `--crops full` (Radish, Carrot, 2 x 2 Trophy pumpkin); their
+# numbers are model parameters (sale / seed derive from the ladder x scale). The rare crops Rare W1 / W2 / W3 are CropConfig's since E2a.
 CROP_DEFS = [
     {"id": "Radish", "tier": 1, "h": 1 / 3},  # model-only, not in CropConfig
     {"id": "Carrot", "tier": 1, "h": 1},  # model-only, not in CropConfig
@@ -631,9 +653,9 @@ CROP_DEFS = [
     {"id": "Pumpkin", "cfg": "Pumpkin"},
     {"id": "Giant melon", "cfg": "GiantMelon"},  # the CropConfig id is GiantMelon
     {"id": "Trophy pumpkin", "tier": 3, "h": 12, "size": 2},  # model-only, not in CropConfig
-    {"id": "Rare W1", "tier": 4, "h": 6, "world": 1},  # model-only, rare crops come with E2 (not in CropConfig)
-    {"id": "Rare W2", "tier": 4, "h": 8, "world": 2},  # model-only (E2)
-    {"id": "Rare W3", "tier": 4, "h": 10, "world": 3},  # model-only (E2)
+    {"id": "Rare W1", "cfg": "GoldenCarrot", "world": 1},  # E2a: the rare crops are in CropConfig (seed 0: never sold as seeds)
+    {"id": "Rare W2", "cfg": "FrostGrape", "world": 2},
+    {"id": "Rare W3", "cfg": "GlowMushroom", "world": 3},
 ]
 CATALOGUES = {
     "min": ["Potato", "Pumpkin", "Giant melon", "Rare W1", "Rare W2", "Rare W3"],  # one per tier + one rare per world
@@ -844,6 +866,7 @@ class Player:
     def __init__(self, P, arch, policy, rng, gardeners=True):
         self.P, self.arch, self.policy, self.rng = P, arch, policy, rng
         self.grng = random.Random(7919 + rng.getstate()[1][0] % 100000)  # separate stream: Green-thumb rolls must not shift the egg rolls
+        self.srng = random.Random(104729 + rng.getstate()[1][0] % 100000)  # E2 Scouting rolls: their own stream, the others stay as they were
         self.stages = sorted(P["stages"], key=lambda s: s["order"])
         self.coins = 0.0
         self.done = []  # cleared stages
@@ -874,7 +897,9 @@ class Player:
         self.seed_stock = 0
         self.rare_seeds = {}  # world -> seeds
         self.cart_left = {}  # crop id -> [bargain seeds left today, discount] (E1c4)
-        self.taste_seeds = {}  # crop id -> cart seeds of a crop above the Renown gate (E1c4)
+        self.taste_seeds = {}  # crop id -> cart seeds of a crop above the Renown gate (E1c4); also the E2 seed pouch's free seeds
+        self.meter = {}  # stage key -> rare-seed meter points (E2)
+        self.pouch_free = 0  # E2 seed pouch: free seeds of the crop the player plants (the game: the crop planted last), used before buying
         self.rare_kept = 0.0
         self.renown_pts = 0.0
         self.last_t = None
@@ -938,7 +963,8 @@ class Player:
     def new_pet(self, egg):
         w = self.P["eggs"][egg]["weights"]
         r = self.rng.choices(list(w), weights=list(w.values()))[0]
-        self.pets.append({"r": r, "lvl": 1, "xp": 0, "g": self.grng.random() < FIELD["pets"]["tending"][r], "apt": 1, "axp": 0.0, "where": "spare"})
+        self.pets.append({"r": r, "lvl": 1, "xp": 0, "g": self.grng.random() < FIELD["pets"]["tending"][r], "apt": 1, "axp": 0.0, "where": "spare",
+                          "sc": self.srng.random() < FIELD["obby"]["scout"]["chance"][r], "slv": 1, "sxp": 0.0})
 
     def tending_xp(self, hours):
         """Placed Tending pets gain aptitude XP from field time (hours already weighted by the online / offline rate), up to their rarity's cap."""
@@ -973,6 +999,39 @@ class Player:
             self.stat["rare_given"] += count
             row["rare"] += count
 
+    def scout_bonus(self):
+        sc = FIELD["obby"]["scout"]
+        return min(sc["cap"], sum(sc["per_level"] * FIELD["pets"]["strength"][p["slv"] - 1] for p in self.eq if p.get("sc")))
+
+    def obby_links(self, s, medal, first_today, day_row):
+        """E2: one medal finish on stage s fills its rare-seed meter, the day's first one also drops the seed pouch; equipped scouts learn."""
+        O = FIELD["obby"]
+        if not self.F["on"] or s["world"] < 1:
+            return
+        bonus = self.scout_bonus()
+        m = O["meter"]
+        if m["size"]:
+            pts = m["pts"][medal - 1] * (m["first_mult"] if first_today else 1) * (1 + bonus)
+            self.meter[s["key"]] = self.meter.get(s["key"], 0.0) + pts
+            while self.meter[s["key"]] >= m["size"]:
+                self.meter[s["key"]] -= m["size"]
+                self.give_rare(s["world"], 1, day_row)
+        if first_today and O["pouch"]["seeds"]:
+            n = O["pouch"]["seeds"][medal - 1] + int(bonus * O["scout"]["extra_per_bonus"] + 1e-9)
+            n = min(n, max(0, self.capacity() - self.seed_stock - self.pouch_free))  # the seed stock's limit (the barn)
+            if n > 0:
+                self.pouch_free += n
+                day_row["pouch"] = day_row.get("pouch", 0) + n
+        if O["scout"]["xp_per_finish"]:
+            for p in self.eq:
+                if not p.get("sc"):
+                    continue
+                cap = FIELD["pets"]["cap"][p["r"]]
+                p["sxp"] += O["scout"]["xp_per_finish"]
+                while p["slv"] < cap and p["sxp"] >= apt_xp_next(p["slv"]):
+                    p["sxp"] -= apt_xp_next(p["slv"])
+                    p["slv"] += 1
+
     def play(self, minutes, day_row):
         budget = minutes * 60.0
         P = self.P
@@ -996,7 +1055,8 @@ class Player:
             day_row["onetime"] += pay
             self.add_xp(learn_runs(s) * self.run_xp(s, P["medal_xp"][0]) + int(coin_val / 40) * P["coin_xp"])
             self.free_eggs += 1  # first Gold of a stage gives a free Basic egg
-            self.give_rare(s["world"], FIELD["rare"]["per_first_gold"], day_row)
+            if s["world"] >= FIELD["rare"].get("first_gold_world", 1):
+                self.give_rare(s["world"], FIELD["rare"]["per_first_gold"], day_row)
             self.done.append(s)
         # 2. farm Gold runs on cleared stages (greedy by Coins per second, daily decay per stage)
         counts = {s["key"]: 0 for s in self.done}
@@ -1008,6 +1068,7 @@ class Player:
                 break
             budget -= self.dt[best["key"]]
             pay = self.reward(best, counts[best["key"]]) * self.mult
+            self.obby_links(best, 3, counts[best["key"]] == 0, day_row)
             counts[best["key"]] += 1
             self.coins += pay
             day_row["repeat"] += pay
@@ -1016,7 +1077,8 @@ class Player:
         if ran and self.F["on"]:  # the daily first-run seed: a rare seed of one of the worlds reached
             worlds = sorted({min(s["world"], 3) for s in self.done if s["world"] >= 1})
             if worlds:
-                self.give_rare(self.grng.choice(worlds), FIELD["rare"]["daily"], day_row)
+                pick = max(worlds) if FIELD["rare"].get("daily_best") else self.grng.choice(worlds)  # E2: the player picks the world (best reached)
+                self.give_rare(pick, FIELD["rare"]["daily"], day_row)
 
     # ---- the field --------------------------------------------------------------------------------------------
     def renown_level(self):
@@ -1116,7 +1178,10 @@ class Player:
                 self.taste_seeds[c["id"]] = self.taste_seeds.get(c["id"], 0) + t["count"]
 
     def seed_cost(self, c, count):
-        """Coins for `count` seeds of crop `c`, today's cart bargain first."""
+        """Coins for `count` seeds of crop `c`: the seed pouch's free seeds first (E2), then today's cart bargain."""
+        free = min(count, self.pouch_free) if count > 0 else 0
+        self.pouch_free -= free
+        count -= free
         left = self.cart_left.get(c["id"])
         if not left or count <= 0:
             return count * c["seed"]

@@ -1,6 +1,6 @@
 -- Results popup after a finished run (docs/GDD.md §4–5): time, record, medal of the run, medal payout, first-finish
 -- payout, repeat reward,
--- pet XP (§7.4), free egg of the first Gold (§7.2), next goal.
+-- pet XP (§7.4), free egg of the first Gold (§7.2), rare seeds and the stage's rare-seed meter (E2a, players with the field), next goal.
 -- Driven by the finish message StageTimerUpdate(-1, final, result); the GUI is built here, not in Studio.
 
 local Players = game:GetService("Players")
@@ -11,6 +11,7 @@ local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
 local MedalText = require(ReplicatedStorage:WaitForChild("MedalText"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
+local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 
 local SHOW_SECONDS = 7
 local DIM = "#5A5A5A"
@@ -74,12 +75,16 @@ local finishLabel = addLine("FirstFinish", 7, 18)
 local runLabel = addLine("RunReward", 8, 18)
 local petLabel = addLine("PetXp", 9, 16)
 local eggLabel = addLine("FreeEgg", 10, 16)
-local nextLabel = addLine("Next", 11, 16)
+local seedsLabel = addLine("RareSeeds", 11, 16)
+local meterLabel = addLine("Meter", 12, 14)
+local nextLabel = addLine("Next", 13, 16)
 coinsLabel.TextColor3 = Color3.fromRGB(120, 230, 120)
 finishLabel.TextColor3 = Color3.fromRGB(120, 230, 120)
 runLabel.TextColor3 = Color3.fromRGB(120, 230, 120)
 petLabel.TextColor3 = Color3.fromRGB(180, 150, 255)
 eggLabel.TextColor3 = Color3.fromRGB(255, 215, 90)
+seedsLabel.TextColor3 = Color3.fromRGB(255, 205, 90)
+meterLabel.TextColor3 = Color3.fromRGB(230, 200, 140)
 nextLabel.TextColor3 = Color3.fromRGB(190, 190, 190)
 
 local showGeneration = 0
@@ -115,6 +120,27 @@ local function render(result)
 	local freeEgg = PetConfig.Eggs[result.freeEgg or ""]
 	eggLabel.Visible = freeEgg ~= nil
 	eggLabel.Text = if freeEgg then Locale.T("results.freeEgg", { egg = Locale.EggName(freeEgg) }) else ""
+	local obby = result.obbySeeds
+	local lines = {}
+	for _, gain in (if type(obby) == "table" and type(obby.seeds) == "table" then obby.seeds else {}) do
+		local crop = CropConfig.ById[gain.crop]
+		if crop then
+			table.insert(lines, Locale.T("results.rareSeed", {
+				icon = crop.icon,
+				crop = Locale.CropName(crop),
+				count = gain.count,
+				why = Locale.T("results.rareWhy." .. tostring(gain.why)),
+			}))
+		end
+	end
+	seedsLabel.Visible = #lines > 0
+	seedsLabel.Text = table.concat(lines, "\n")
+	local meter = type(obby) == "table" and obby.meter
+	local meterCrop = meter and CropConfig.ById[meter.crop]
+	meterLabel.Visible = meterCrop ~= nil
+	meterLabel.Text = if meterCrop
+		then Locale.T("results.meter", { icon = meterCrop.icon, pct = math.floor(meter.points / meter.size * 100) })
+		else ""
 	if result.nextMedal and result.nextThreshold then
 		nextLabel.Text = Locale.T("results.next", {
 			medal = Locale.MedalName(StageConfig.Medals[result.nextMedal]),
