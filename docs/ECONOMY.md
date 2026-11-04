@@ -316,6 +316,28 @@ O (online ≥ 3x offline per hour) holds at 3.66-4.15x, and C at 93-95 %. With t
   crop prices. Field-pet slot 4 / 5 and the gentler gates are what lift day 14-30. Neither alone was enough: slots 4-5 alone 8.9x, gates alone 8.5x.
 - **Later (parked):** locked squares lie under rubble or weeds. Clearing them needs a tool upgrade or a bought tool (EXPANSION §6).
 
+## Crow run (2026-11-04, gates E4-thin; approved: 0.25 / 0.3 / 1 / level 3)
+The simulation has crows (`FIELD["crows"]`, from `CropConfig.Crows`): the UTC day has four 6-hour blocks, a fixed share of them crow blocks
+(the same `Random` schedule as the game). A crop on a manual square that is ripe during an absence overlapping a crow block is eaten with the
+chance, at most `cap` a absence, from Renown level `lvl`; the model has no guards (the worst case, an unguarded field). Loss = the eaten crops'
+sale as a share of field income.
+
+| Candidate (share / chance / cap / from level) | Parity days 1-3 (Obby main / Casual / Garden main) | Casual lead day 7 / 14 / 30 | Garden main lead day 7 | Loss days 1-7 (Obby main / Casual / Garden main) | Loss days 30-60 (Obby main / Casual / Garden main / Binge) |
+|---|---|---|---|---|---|
+| No crows | 0.73 / 0.86 / 0.90 | 3.92 / 9.9 / 16.8 | 5.05 | – | – |
+| 0.4 / 0.5 / 3 / – | 0.73 / 0.55 / 0.90 | 2.14 / 6.5 / 14.7 | 2.49 | 22 / 29 / 29 % | 6.2 / 8.1 / 7.5 / 39 % |
+| 0.33 / 0.5 / 2 / – | 0.73 / 0.55 / 0.90 | 2.38 / 7.3 / 16.9 | 2.49 | 18 / 23 / 29 % | 5.3 / 6.2 / 5.6 / 26 % |
+| 0.33 / 0.3 / 1 / – | 0.73 / 0.64 / 0.90 | 3.39 / 8.8 / 16.4 | 3.69 | 10 / 8.5 / 15 % | 2.7 / 3.4 / 2.9 / 12.5 % |
+| 0.33 / 0.3 / 1 / 3 | 0.73 / 0.75 / 0.90 | 3.61 / 8.8 / 17.6 | 3.69 | 10 / 7.6 / 15 % | 2.7 / 3.2 / 2.9 / 12.0 % |
+| 0.25 / 0.3 / 1 / 3, rare crops eaten too | 0.73 / 0.75 / 0.90 | 3.61 / 9.2 / 17.7 | 4.23 | 6.8 / 7.6 / 9.0 % | 2.4 / 2.7 / 2.3 / 12.0 % |
+| **0.25 / 0.3 / 1 / 3, rare crops safe (approved)** | 0.73 / 0.75 / 0.90 | 3.71 / 9.3 / 16.6 | 4.23 | 3.8 / 6.4 / 9.0 % | 1.6 / 2.1 / 1.9 / 10.9 % |
+
+- **A cap above 1 hurts new players most:** Casual's day-7 lead falls to 2.4 (≥ 3 needed) and its parity to 0.55.
+- **The Renown gate** keeps the first days calm (Casual parity 0.64 → 0.75) without changing the later losses.
+- **Rare crops safe:** a rare crop is worth 13-22 common ones; eating it would feel like a theft of an obby reward.
+- Binge loses most (one long absence a week through every crow block): about 1 crop a week, which a guard covers.
+- The model has no guards: with a Pest-control pet the losses on the squares it reaches fall by 60-100 %.
+
 ## Obby seeds run (2026-11-04, gates E2; approved: meter 300)
 The simulation has rare-seed meters, the seed pouch and Scouting (`FIELD["obby"]`, off until the config carries them).
 - The daily rare seed is the best world reached.

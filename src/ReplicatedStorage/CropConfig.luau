@@ -189,6 +189,48 @@ function CropConfig.RenownLevel(points: number): number
 	return level
 end
 
+-- E4-thin crows (docs/ROADMAP.md → E4-thin, numbers approved 2026-11-04): the UTC day has blocks of BlockSeconds; block k (counted from
+-- the Unix epoch) is a crow block when its seeded roll is below Share, the same schedule on every server. An absence that overlaps a crow
+-- block while a common crop is ripe brings a raid: each such crop is rolled once per planting (Chance), at most Cap eaten per absence,
+-- only from Renown level FromLevel. Rare crops are never eaten. Guards: PetConfig.GuardChance.
+CropConfig.Crows = { BlockSeconds = 6 * 3600, Share = 0.25, Chance = 0.3, Cap = 1, FromLevel = 3 }
+
+-- Whether block k is a crow block.
+function CropConfig.IsCrowBlock(k: number): boolean
+	return Random.new(7000003 + k):NextNumber() < CropConfig.Crows.Share
+end
+
+-- Whether a crow block overlaps the server times [a, b).
+function CropConfig.CrowsBetween(a: number, b: number): boolean
+	local size = CropConfig.Crows.BlockSeconds
+	local k = math.floor(a / size)
+	while k * size < b do
+		if CropConfig.IsCrowBlock(k) then
+			return true
+		end
+		k += 1
+	end
+	return false
+end
+
+-- The first crow block that has not ended at server time `now` and starts within `horizon` seconds: its start and end (nil when none;
+-- neighbouring crow blocks join into one).
+function CropConfig.NextCrows(now: number, horizon: number): (number?, number?)
+	local size = CropConfig.Crows.BlockSeconds
+	local k = math.floor(now / size)
+	while k * size < now + horizon do
+		if CropConfig.IsCrowBlock(k) then
+			local last = k
+			while CropConfig.IsCrowBlock(last + 1) do
+				last += 1
+			end
+			return k * size, (last + 1) * size
+		end
+		k += 1
+	end
+	return nil, nil
+end
+
 -- Growth seconds earned over `online` seconds with the owner present and an absence of `offline` seconds (capped).
 function CropConfig.Growth(online: number, offline: number): number
 	return math.max(0, online) * CropConfig.OnlineRate + math.min(math.max(0, offline), CropConfig.OfflineCapSeconds) * CropConfig.OfflineRate

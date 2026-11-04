@@ -55,7 +55,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E2a | Rare crops of Worlds 1-3, rare seeds (first Gold from World 2, daily, per-stage meters), results popup lines | ✔ | ✔ | – |
 | E2b | Seed pouch (the day's first medal finish per stage: 1 / 2 / 3 seeds of the crop planted last, up to the barn) | ✔ | ✔ | – |
 | E2c | Scouting (equipped pets: XP per medal finish, up to +50 % rare-seed meter points, +1 pouch seed at +50 %; pet detail card) | ✔ | ✔ | – |
-| E3–E5 | Garden MVP (see "Next") | – | – | – |
+| E4a | Crows (UTC crow blocks, 1 crop per absence from Renown 3) and Pest-control guards on the field, both jobs per pet (server) | ✔ | ✔ | – |
+| E4b–E5 | Garden MVP (see "Next") | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
 
@@ -247,6 +248,61 @@ Found and fixed: the result line disappeared with the card when the pet reached 
 Found in the test harness, not a bug: clicking a list row that is scrolled out of view lands on the slot bar under the list (it unequipped the Owl).
 That is probably the stray equip seen once in P3a. Scroll a row into view before clicking it.
 Not covered: a player without field access (`locked`; the card is not built without `HasFieldAccess`), checked in the code only; phone layout.
+
+### E4-thin — Crows and Pest-control guards (scope 2026-11-04; numbers and the E4a / E4b steps approved by the user the same day)
+E3's MVP part (aptitudes rolled at hatch, the working ones shown) shipped with E1b / P3a / E2c; the rest of E3 (quirks, field guide) is D7. So E4-thin
+follows E2 (the user, 2026-11-04).
+
+**Decided by the user (2026-11-04):**
+- Crows eat a ripe crop whole (the square is emptied), with a cap per absence.
+- Crows come in **crow blocks**: the UTC day has four 6-hour blocks, each a crow block or calm by a fixed schedule; only an absence that overlaps
+  a crow block brings a raid. A forecast line in the Garden panel says when ("Crows in 3 h", "Crows now, 2 h left").
+- A guard chases crows off with 50 % + half the Pest-control effect (60 % at level 1, 100 % at 10), doubled for the crow speciality (so a crow
+  specialist always chases them off).
+- A pet with Tending and Pest control does **both jobs** on its square (replaces EXPANSION §3's "one active job per pet"); each job has its reach
+  from its own level, and both aptitudes gain field XP.
+
+**Approved numbers (model: ECONOMY.md → "Crow run"):** crow blocks 25 % of the blocks; a ripe untended crop in a crow block is eaten with 30 %;
+at most 1 crop per absence; crows start at Renown level 3 (new fields first learn to plant); rare crops are never eaten. Unguarded losses:
+1.6-2.1 % of field income from day 30, 3.8-9.0 % in week 1 (Binge 10.9 %); parity 0.73 / 0.75 / 0.90, day-7 leads 3.85 / 3.71 / 4.23.
+
+**Rules (proposed).**
+- Resolution on the join settle, after Tending: each ripe common crop on the field that became ripe (or was ripe) during the absence, in a crow
+  block, is rolled once per planting (`Squares[n].Crow`, seeded by `(UserId, planting)`), so a rejoin cannot reroll it. In square order, the
+  first one that loses its roll is eaten unless a guard covers the square and wins its own roll (then "chased off"). At most 1 eaten per absence.
+- Only absences: crops ripe while the owner plays are safe.
+- The join notice (the ledger seed, E5 grows it) adds "Crows ate 1 Corn" / "Rex chased off the crows".
+- Pest control shown on the pet page (`PetConfig.Shown`), with its speciality and chase chance.
+
+**Proposed steps:** **E4a** server (schedule, raids, guards, both jobs, notice data, model pins) and **E4b** client (forecast line, picker and labels
+with both jobs, the Pest-control card, the notice text), each validated and committed on its own.
+
+**E4a implemented (2026-11-04).**
+- `CropConfig.Crows = { BlockSeconds = 6 h, Share = 0.25, Chance = 0.3, Cap = 1, FromLevel = 3 }`, `IsCrowBlock(k)` (fixed schedule,
+  `Random.new(7000003 + k)`), `CrowsBetween(a, b)`, `NextCrows(now, horizon)` (the next crow block, neighbouring blocks joined).
+- `PetConfig.Guard = { Base = 0.5, PerStrength = 0.5, SpecMult = 2 }`, `GuardChance(level, spec, critter)`.
+- `GardenField`:
+  - Field pets: `PlacePet` accepts a pet with Tending or Pest control (`Job` = Tending when it has it, else `PestControl`).
+  - Tending counts every placed pet with Tending; both aptitudes gain the field XP.
+  - In the join settle after Tending (absences only, Renown level 3+), in square order, every ripe common crop whose ripe time overlaps a crow block
+    is rolled once per planting (`Squares[n].Crow = true`, seeded by user and planting number):
+    - lost roll → the strongest guard reaching the square rolls its chance; on a win the crows are chased off, otherwise the square is emptied;
+    - at most 1 crop eaten per absence.
+  - State: `field.crows = { from, to, active }` (the forecast within a day), `field.notice.crows = { ate = { [crop] = n }, chased = { [uid] = n } }`,
+    `field.pets[n].guard = { level, xp, next, reach, chance, spec }`.
+- `economy.py`: crows in the visit model (pin `crop_field_crows`), `check` 52 / 52; parity 0.73 / 0.75 / 0.90, day-7 leads 3.85 / 3.71 / 4.23.
+- No client change and no new strings (E4b); the plot feed is unchanged (`PlotView`'s parser reads exactly five fields).
+
+**E4a Studio-validated (2026-11-04).** Playtests in the developer's live profile (Renown level 4); snapshot `TestSnapshots` `profile_9892673032_e4a`
+(+ stars), restored and checked.
+1. Fixture: 6 ripe or growing crops, `SettledAt` 16 h back (a crow block 15.8 h ago), 2 field pet slots, Cat #13 (Pest control 1, Moles
+   speciality, 60 %) on square 2. Join: the notice `crows = { ate = { GiantMelon = 1 }, chased = { ["13"] = 1 } }`. Square 2 (crow roll lost, guard
+   roll 0.548 < 0.6) was kept and the Cat chased the crows. Square 8 (crow roll lost, no guard) was emptied. The other rolled squares were kept,
+   the rare Frost grape was never rolled. The Cat's Pest control gained 14 256 XP; the forecast was `{ from = +8.2 h, to = +20.2 h, active = true }`.
+2. Remotes: `LiftPet` of the Cat ok; `PlacePet(2, Dog #7)` ok (Job `PestControl`, crow speciality → chance 1); a pet without either aptitude →
+   `aptitude`; an equipped pet → `equipped`.
+3. Fixture 2: only `SettledAt` moved back again. The rolled squares 2 and 3 were not rolled again; square 8's new crop was eaten (`ate GiantMelon 1`).
+4. No warnings or errors on the server or the client.
 
 ### E2 — Obby seeds: rare crops, rare-seed meters, seed pouch, Scouting (scope 2026-11-04; numbers approved by the user the same day)
 **Decided by the user (2026-11-04):**

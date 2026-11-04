@@ -6,12 +6,19 @@
 -- server os.time() up to which growth was counted. Growth is settled on join (the time since SettledAt is an absence:
 -- CropConfig.OfflineRate, capped), and while online (OnlineRate) every SettleSeconds, before every field action and on leave.
 -- Ripe crops wait. The client only names a square, a crop or a count: prices, times and Renown come from here.
--- Field pets (E1b): Garden.FieldPets[uid] = { Square, Job } (Job "Tending"), Garden.FieldPetSlots. A Tending pet works the squares
+-- Field pets (E1b): Garden.FieldPets[uid] = { Square, Job } (Job = "Tending", or "PestControl" for a pet without Tending: the stored
+-- primary job), Garden.FieldPetSlots. E4-thin: a pet does every field job it has (Tending and Pest control), each with the reach of its
+-- own level, and gains XP in both. A Tending pet works the squares
 -- in its reach (PetConfig.ReachShape, CropConfig.Reach; the strongest pet counts): during an absence (the join settle) a ripe crop
 -- that was not tried yet is harvested by the pet with the chance PetConfig.Strength(level) (Items, Renown; only while the barn
 -- has room) and replanted from Seeds with the leftover growth; a failed roll marks the planting Tried (it waits for the owner).
 -- The roll is deterministic per owner and planting number (Squares[n].N from Field.Plantings), so a re-join never rerolls.
 -- Placed pets earn aptitude XP in their job by the weighted field time (the same seconds as growth).
+-- Crows (E4-thin, CropConfig.Crows): after Tending in the join settle, every common crop that was ripe during the absence while a crow
+-- block overlapped it is rolled once per planting (Squares[n].Crow); one that loses the roll is eaten (the square is emptied) unless a
+-- guard reaching the square wins its own roll (PetConfig.GuardChance; the strongest guard counts). At most Cap eaten per absence, only
+-- from Renown level FromLevel; rare crops are never eaten. State.field.notice.crows = { ate = { [crop] = n }, chased = { [uid] = n } },
+-- State.field.crows = { from, to, active } is the forecast (the next crow block within a day, server times).
 -- Pens convert once (Garden.Converted) on the join of a player with field access: penned pets back to the inventory,
 -- CropConfig.PetSlotsFromPens slots, the rest of the pen prices refunded; GardenService then rejects the pen remotes.
 -- Size roll (E1c2): every harvest (the owner's or a Tending pet's) rolls CropConfig.SizeFactor from the planting number; the
@@ -178,6 +185,7 @@ local function fieldOf(player: Player, profile)
 					Grown = if finite(square.Grown) then math.max(0, square.Grown) else 0,
 					N = count(square.N),
 					Tried = if square.Tried == true then true else nil,
+					Crow = if square.Crow == true then true else nil,
 				}
 			end
 		end
@@ -266,7 +274,7 @@ local function fieldOf(player: Player, profile)
 				type(square) == "number"
 				and open[square]
 				and not taken[square]
-				and entry.Job == "Tending"
+				and (entry.Job == "Tending" or entry.Job == "PestControl")
 				and profile.Pets[uid]
 				and PetConfig.AptitudeLevel(profile.Pets[uid], entry.Job) > 0
 				and not GardenConfig.IsPenned(profile, uid)
@@ -319,14 +327,40 @@ end
 local function tendingStrength(profile, open)
 	local best = {}
 	for uid, entry in profile.Garden.FieldPets do
-		local level = PetConfig.AptitudeLevel(profile.Pets[uid], "Tending")
-		if entry.Job == "Tending" and level > 0 then
+		local level = PetConfig.AptitudeLevel(profile.Pets[uid], "Tending") -- every placed pet with Tending tends (E4-thin)
+		if level > 0 then
 			for _, n in CropConfig.Reach(entry.Square, PetConfig.ReachShape(level), open) do
 				best[n] = math.max(best[n] or 0, PetConfig.Strength(level))
 			end
 		end
 	end
 	return best
+end
+
+-- [square] = { chance, uid } of the strongest guard against crows that reaches it (E4-thin).
+local function guardStrength(profile, open)
+	local best = {}
+	for uid, entry in profile.Garden.FieldPets do
+		local pet = profile.Pets[uid]
+		local level = PetConfig.AptitudeLevel(pet, "PestControl")
+		if level > 0 then
+			local chance = PetConfig.GuardChance(level, pet.Spec, "Crows")
+			for _, n in CropConfig.Reach(entry.Square, PetConfig.ReachShape(level), open) do
+				if not best[n] or chance > best[n].chance then
+					best[n] = { chance = chance, uid = uid }
+				end
+			end
+		end
+	end
+	return best
+end
+
+-- The crow roll and the guard roll of `player`'s planting number `n` (E4-thin), uniform in [0, 1), deterministic like tendRoll.
+local function crowRoll(player: Player, n: number): number
+	return Random.new(player.UserId * 6997 + n * 130003 + 17):NextNumber()
+end
+local function guardRoll(player: Player, n: number): number
+	return Random.new(player.UserId * 5003 + n * 150001 + 29):NextNumber()
 end
 
 -- The Tending roll of `player`'s planting number `n`, uniform in [0, 1): the same planting always rolls the same.
@@ -336,10 +370,12 @@ end
 
 -- Adds the growth since SettledAt to every planted square and moves SettledAt to now: an absence (the join) at the offline
 -- rate, anything else at the online rate. In an absence Tending pets harvest and replant the ripe crops in their reach.
--- Placed pets gain aptitude XP by the same weighted seconds. Returns whether a square's look, a crop or a pet's aptitude
--- level changed, and { [cropId] = harvests by pets } (nil when none).
-local function settle(player: Player, profile, field, open, absence: boolean): (boolean, { [string]: number }?)
+-- Placed pets gain aptitude XP by the same weighted seconds. In an absence crows raid afterwards (E4-thin). Returns whether a
+-- square's look, a crop or a pet's aptitude level changed, { [cropId] = harvests by pets } (nil when none) and the raid
+-- ({ ate = { [cropId] = n }, chased = { [uid] = n } }, nil when nothing happened).
+local function settle(player: Player, profile, field, open, absence: boolean): (boolean, { [string]: number }?, any)
 	local now = os.time()
+	local start = field.SettledAt
 	local elapsed = if field.SettledAt <= now then now - field.SettledAt else 0
 	local growth = if absence then CropConfig.Growth(0, elapsed) else CropConfig.Growth(elapsed, 0)
 	field.SettledAt = now
@@ -397,13 +433,49 @@ local function settle(player: Player, profile, field, open, absence: boolean): (
 		end
 		changed = changed or entry ~= square or CropConfig.Stage(crop, square.Grown) ~= before
 	end
-	for uid, entry in garden.FieldPets do
+	for uid in garden.FieldPets do
 		local pet = profile.Pets[uid]
-		if pet and PetConfig.GainAptitudeXp(pet, entry.Job, growth) > 0 then
-			changed = true
+		if pet then -- both field jobs learn (E4-thin); GainAptitudeXp ignores an aptitude the pet lacks
+			local levels = PetConfig.GainAptitudeXp(pet, "Tending", growth) + PetConfig.GainAptitudeXp(pet, "PestControl", growth)
+			changed = changed or levels > 0
 		end
 	end
-	return changed, tended
+
+	-- E4-thin crows: the crops that were ripe while a crow block overlapped the absence, in square order
+	local raid = nil
+	local rules = CropConfig.Crows
+	if absence and CropConfig.RenownLevel(garden.Renown) >= rules.FromLevel then
+		local rate = CropConfig.OfflineRate * CropConfig.GrowthSpeed(CropConfig.UpgradeLevel(field.Upgrades, "Growth"))
+		local grownUntil = start + math.min(elapsed, CropConfig.OfflineCapSeconds) -- offline growth stops at the cap
+		local guards = guardStrength(profile, open)
+		local eaten = 0
+		for _, key in keys do
+			local entry = field.Squares[key]
+			local crop = entry and CropConfig.ById[entry.Crop]
+			if crop and not crop.rare and not entry.Crow and entry.Grown >= crop.growSeconds then
+				local ripeAt = math.max(start, grownUntil - (entry.Grown - crop.growSeconds) / rate)
+				if ripeAt < now and CropConfig.CrowsBetween(ripeAt, now) then
+					entry.Crow = true -- rolled: this planting faces crows only once
+					if crowRoll(player, entry.N) < rules.Chance then
+						raid = raid or { ate = {}, chased = {} }
+						local guard = guards[tonumber(key)]
+						if guard and guardRoll(player, entry.N) < guard.chance then
+							raid.chased[guard.uid] = (raid.chased[guard.uid] or 0) + 1
+						else
+							field.Squares[key] = nil
+							raid.ate[crop.id] = (raid.ate[crop.id] or 0) + 1
+							changed = true
+							eaten += 1
+							if eaten >= rules.Cap then
+								break
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+	return changed, tended, raid
 end
 GardenField.Settle = settle
 
@@ -463,7 +535,9 @@ GardenService.AddStateField("field", function(profile)
 	for uid, entry in garden.FieldPets do
 		local pet = profile.Pets[uid]
 		local apt = pet.Apt[entry.Job]
-		local need = if apt.L < PetConfig.AptitudeCap(pet.Kind) then PetConfig.AptitudeXpToNext(apt.L) else nil
+		local cap = PetConfig.AptitudeCap(pet.Kind)
+		local need = if apt.L < cap then PetConfig.AptitudeXpToNext(apt.L) else nil
+		local guard = pet.Apt.PestControl -- E4-thin: the guard job, also for a pet whose primary job is Tending
 		pets[tostring(entry.Square)] = {
 			uid = uid,
 			kind = pet.Kind,
@@ -473,8 +547,19 @@ GardenService.AddStateField("field", function(profile)
 			xp = math.floor(apt.XP),
 			next = need,
 			reach = PetConfig.ReachShape(apt.L),
+			guard = if guard
+				then {
+					level = guard.L,
+					xp = math.floor(guard.XP),
+					next = if guard.L < cap then PetConfig.AptitudeXpToNext(guard.L) else nil,
+					reach = PetConfig.ReachShape(guard.L),
+					chance = PetConfig.GuardChance(guard.L, pet.Spec, "Crows"),
+					spec = pet.Spec,
+				}
+				else nil,
 		}
 	end
+	local crowsFrom, crowsTo = CropConfig.NextCrows(now, 24 * 3600)
 	return {
 		open = list,
 		squares = squares,
@@ -492,6 +577,11 @@ GardenService.AddStateField("field", function(profile)
 		tools = table.clone(garden.Tools),
 		cart = cartState(garden),
 		notice = notices[owner],
+		crows = {
+			from = crowsFrom,
+			to = crowsTo,
+			active = CropConfig.RenownLevel(garden.Renown) >= CropConfig.Crows.FromLevel,
+		},
 	}
 end)
 
@@ -548,10 +638,11 @@ local function usableField(player: Player, action: string, anywhere: boolean?)
 	if not field then
 		return nil, nil, nil
 	end
-	local _, tended = settle(player, profile, field, open, not settledOnline[player])
-	if tended then
+	local _, tended, raid = settle(player, profile, field, open, not settledOnline[player])
+	if tended or raid then
 		notices[player] = notices[player] or {}
-		notices[player].tended = tended
+		notices[player].tended = tended or notices[player].tended
+		notices[player].crows = raid or notices[player].crows
 	end
 	settledOnline[player] = true
 	return profile, field, open
@@ -883,7 +974,8 @@ placePetEvent.OnServerEvent:Connect(function(player, square, uid)
 	if GardenConfig.IsPenned(profile, uid) then
 		return reject(player, "PlacePet", "penned")
 	end
-	if PetConfig.AptitudeLevel(pet, "Tending") < 1 then
+	local tending = PetConfig.AptitudeLevel(pet, "Tending") > 0
+	if not tending and PetConfig.AptitudeLevel(pet, "PestControl") < 1 then -- a field job: Tending or Pest control (E4-thin)
 		return reject(player, "PlacePet", "aptitude")
 	end
 	for other, entry in garden.FieldPets do
@@ -896,7 +988,7 @@ placePetEvent.OnServerEvent:Connect(function(player, square, uid)
 	end
 
 	local moved = garden.FieldPets[uid] ~= nil
-	garden.FieldPets[uid] = { Square = square, Job = "Tending" }
+	garden.FieldPets[uid] = { Square = square, Job = if tending then "Tending" else "PestControl" }
 	done(player, "PlacePet", { square = square, uid = uid, moved = moved })
 end)
 
@@ -986,12 +1078,13 @@ GardenService.AddSetupHook(function(player)
 		return
 	end
 	local converted = convert(player, profile)
-	local _, tended = settle(player, profile, field, open, not settledOnline[player])
+	local _, tended, raid = settle(player, profile, field, open, not settledOnline[player])
 	settledOnline[player] = true
-	if converted or tended then
+	if converted or tended or raid then
 		notices[player] = notices[player] or {}
 		notices[player].converted = converted or notices[player].converted
 		notices[player].tended = tended or notices[player].tended
+		notices[player].crows = raid or notices[player].crows
 	end
 	GardenService.PublishAll(player)
 	if converted then

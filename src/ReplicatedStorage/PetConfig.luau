@@ -333,6 +333,23 @@ function PetConfig.Strength(level: number): number
 	return PetConfig.AptitudeStrength[math.clamp(math.floor(level), 0, #PetConfig.AptitudeStrength)] or 0
 end
 
+-- Pest control (E4-thin): a guard on the field chases the critters off the squares in its reach with Base + PerStrength x Strength(level),
+-- x SpecMult against the critter of its speciality (Spec), at most 1. Crows are the only critter yet ("Crows").
+PetConfig.Guard = { Base = 0.5, PerStrength = 0.5, SpecMult = 2 }
+
+-- Chance that a guard with Pest-control `level` and speciality `spec` chases `critter` off (0 without the aptitude).
+function PetConfig.GuardChance(level: number, spec: string?, critter: string): number
+	if level < 1 then
+		return 0
+	end
+	local rules = PetConfig.Guard
+	local chance = rules.Base + rules.PerStrength * PetConfig.Strength(level)
+	if spec == critter then
+		chance *= rules.SpecMult
+	end
+	return math.min(1, chance)
+end
+
 -- Scouting bonus of the pets in `pets` (the equipped ones): min(Cap, sum of PerStrength x Strength(Scouting level)), 0 without scouts.
 function PetConfig.ScoutBonus(pets: { any }): number
 	local rules = PetConfig.Scouting

@@ -248,6 +248,10 @@ def cart_cfg(cart):
     return [[[b["count"], b["discount"]] for b in cart["bargains"]], [t["count"], t["price"], t["fromLevel"]]]
 
 
+def crow_cfg(o):
+    return [o["Share"], o["Chance"], o["Cap"], o["BlockSeconds"] / 3600, o["FromLevel"]]
+
+
 def scout_cfg(o):
     return [o["XpPerFinish"] / 3600, o["PerStrength"], o["Cap"], o["PouchExtraAt"]]
 
@@ -289,6 +293,7 @@ def apply_crop_config(P):
         "apt_caps": luau("PetConfig.luau", "PetConfig.AptitudeCaps"),
         "apt_strength": luau("PetConfig.luau", "PetConfig.AptitudeStrength"),
         "apt_xp": [luau("PetConfig.luau", "PetConfig.AptitudeXpFirst") / 3600, luau("PetConfig.luau", "PetConfig.AptitudeXpRatio")],  # hours, ratio
+        "crows": crow_cfg(luau(f, "CropConfig.Crows")),  # E4-thin: [block share, chance per ripe crop, cap per absence, block hours, from Renown level]
         "scouting": scout_cfg(luau("PetConfig.luau", "PetConfig.Scouting")),  # E2c: [XP hours per medal finish, per strength, cap, pouch +1 from]
     }
     P["crop_cfg"] = cfg
@@ -326,6 +331,8 @@ def apply_crop_config(P):
     F["rare"].update({"per_first_gold": fg_seeds, "first_gold_world": fg_world, "daily": daily, "daily_best": True, "sale_share": 1.0})
     F["obby"]["meter"].update({"size": size, "pts": list(pts), "first_mult": first_mult})
     F["obby"]["pouch"]["seeds"] = list(pouch)  # E2b
+    share, chance, crow_cap, block_h, from_level = cfg["crows"]  # E4-thin crows as CropConfig.Crows gives them (the schedule is the model's own draw)
+    F["crows"].update({"share": share, "chance": chance, "cap": crow_cap, "block_h": block_h, "from_level": from_level})
     xp_h, per, cap, extra_at = cfg["scouting"]  # E2c: Scouting as PetConfig.Scouting gives it (the chance of the aptitude stays the model's)
     F["obby"]["scout"].update({"xp_per_finish": xp_h, "per_level": per, "cap": cap, "extra_per_bonus": 1 / extra_at})
     FP = F["pets"]
@@ -438,6 +445,7 @@ def pin_values(P):
         "crop_field_tools": P["crop_cfg"]["tools"],  # [id, effect, prices, renown levels] (E1c3)
         "crop_field_xp": P["crop_cfg"]["xp"],  # [id, pet XP per crop fed] (E1a3)
         "crop_field_cart": P["crop_cfg"]["cart"],
+        "crop_field_crows": P["crop_cfg"]["crows"],  # [block share, chance, cap per absence, block hours, from Renown level] (E4-thin)
         "pet_scouting": P["crop_cfg"]["scouting"],  # [XP hours per medal finish, per strength, cap, pouch +1 from] (E2c)
         "crop_field_obby_seeds": P["crop_cfg"]["obby_seeds"],  # [first Gold from world, per first Gold, daily, meter size, points, first-of-day x, pouch by medal] (E2a, E2b)  # [[count, discount] per bargain, [taste count, price, from level]] (E1c4)
         "crop_field_size": P["crop_cfg"]["size"],  # [sigma, z cap, Big z, Giant z] of the size roll (E1c2)
@@ -636,6 +644,10 @@ FIELD = {
         "scout": {"chance": {"Common": 0.16, "Uncommon": 0.18, "Rare": 0.45, "Epic": 0.6, "Legendary": 0.75}, "per_level": 0.5, "cap": 0.5,
                   "extra_per_bonus": 2, "xp_per_finish": 0.0},
     },
+    # E4-thin crows (EXPANSION §7, the user's decisions 2026-11-04): the UTC day has 6-hour blocks, a share of them "crow" blocks (a fixed schedule).
+    # A crop ripe during an absence that overlaps a crow block (from the moment it is ripe) is eaten with `chance`, at most `cap` crops per absence.
+    # Rare crops are never eaten. Guards (Pest control) are not modelled: the guardrails hold for an unguarded field. share 0 = not built.
+    "crows": {"share": 0.0, "chance": 0.0, "cap": 0, "block_h": 6, "from_level": 0},  # from_level: Renown level crows start at (a grace for new fields)
     # sinks the model does not design yet (landmark Coins parts, estate tiers, decor, stations; EXPANSION §12): a geometric ladder, bought last
     "reserved": {"first": 8000, "ratio": 1.3, "count": 20},
     "bias": {"talent-first": 1.5, "pets-first": 0.7},  # field price x bias when merged into a policy's buying order
@@ -754,6 +766,23 @@ def manual_day_ceiling(sched, period_days, options):
             best = max(best, f[0] / sum(gaps) * 24.0)
         _ceil_cache[key] = best
     return _ceil_cache[key]
+
+
+def crow_block(k):
+    """E4-thin: whether 6-hour block k (counted from day 0, 00:00 UTC) is a crow block; the same fixed schedule for every player."""
+    share = FIELD["crows"]["share"]
+    return share > 0 and random.Random(7000003 + k).random() < share
+
+
+def crow_overlap(a, b):
+    """Whether a crow block lies within the hours [a, b)."""
+    h = FIELD["crows"]["block_h"]
+    k = int(a // h)
+    while k * h < b:
+        if crow_block(k):
+            return True
+        k += 1
+    return False
 
 
 def eff_time(gap, length, cloche=1.0):
@@ -913,7 +942,7 @@ class Player:
         self.renown_pts = 0.0
         self.last_t = None
         self.spend, self.cum = {}, {"repeat": 0.0, "onetime": 0.0, "pen": 0.0, "field": 0.0, "sell": 0.0}
-        self.stat = {"harv": 0.0, "man_harv": 0.0, "visit_sq": 0.0, "rare_given": 0.0}
+        self.stat = {"harv": 0.0, "man_harv": 0.0, "visit_sq": 0.0, "rare_given": 0.0, "crow_crops": 0.0, "crow_value": 0.0}
         self.sold = 0.0
         self.manage()
 
@@ -1243,15 +1272,30 @@ class Player:
                 self.cov_on = self.cov_off = 0.0
             self.seed_stock -= n * self.cov_n
             self.sell(c, n * self.cov_n, row, on_share)
-        # 2. manual squares: one harvest per square, if ripe
+        # 2. manual squares: one harvest per square, if ripe; E4-thin crows eat crops that were ripe during the absence in a crow block
         keep = []
+        CR = FIELD["crows"]
+        leave = None if self.last_t is None else self.last_t + self.last_len
+        crow_left = CR["cap"]
         for grp in self.manual:
             c = cat[grp[0]]
             g = c["h"] * gs
             grp[3] += d_on
+            before = grp[3] + grp[4]  # growth when the player left
             grp[4] += d_off
             if grp[3] + grp[4] >= g - 1e-9:
-                self.sell(c, grp[2], row, min(grp[3], g) / g)
+                n = grp[2]
+                if CR["share"] > 0 and not c["rare"] and leave is not None and t > leave and crow_left > 0 and self.renown_level() >= CR["from_level"]:
+                    ripe_at = leave if before >= g - 1e-9 else leave + (g - before) / FIELD["offline_rate"]
+                    if ripe_at < t and crow_overlap(ripe_at, t):
+                        eaten = min(crow_left, n * CR["chance"])
+                        crow_left -= eaten
+                        n -= eaten
+                        value = eaten * (FIELD["rare"]["sale_share"] if c["rare"] else 1.0) * c["sale"] * self.sale_mult() * self.mult
+                        row["crow"] += value
+                        self.stat["crow_crops"] += eaten
+                        self.stat["crow_value"] += value
+                self.sell(c, n, row, min(grp[3], g) / g)
                 self.stat["man_harv"] += grp[2]
             else:
                 keep.append(grp)
@@ -1422,7 +1466,7 @@ class Player:
 
     def day(self, d):
         a = self.arch
-        row = {"repeat": 0.0, "onetime": 0.0, "pen": 0.0, "field": 0.0, "seeds": 0.0, "harv": 0.0, "rare": 0, "blocked": 0,
+        row = {"repeat": 0.0, "onetime": 0.0, "pen": 0.0, "field": 0.0, "seeds": 0.0, "harv": 0.0, "rare": 0, "blocked": 0, "crow": 0.0,
                "field_on": 0.0, "field_off": 0.0, "pen_on": 0.0, "pen_off": 0.0}
         sold0 = self.sold
         active = d % a["period_days"] == 0

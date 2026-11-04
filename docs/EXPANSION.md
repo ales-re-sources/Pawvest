@@ -100,6 +100,8 @@ exactly one place at a time; allocation is the game.
 - **Overlap:** different jobs on one square all apply; the same job does not stack (the strongest pet's effect counts).
 - **One active job per pet**, chosen when it is placed. A pet with several aptitudes changes job by being placed again: extra aptitudes give
   flexibility (Tending today, Pest control when the forecast says crows), never several jobs at once.
+  **Replaced for Tending + Pest control (user, 2026-11-04, E4-thin):** a pet with both does both jobs on its square, each with the reach of its
+  own level, and both gain field XP (ROADMAP → E4-thin). Whether this extends to Fertilising / Weeding is open.
 - **Placement is the end-of-session decision:** guards go to the side the forecast names (§7), tenders to the long crops, the middle covers more
   than a corner.
 - **Controls (settled 2026-10-30 in the E1a design check, ROADMAP → E1a):** a prompt at each square plants (seed picker over the seed stock), harvests (shows the
