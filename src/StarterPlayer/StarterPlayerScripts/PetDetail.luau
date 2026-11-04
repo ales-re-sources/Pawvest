@@ -5,7 +5,7 @@
 --                                 { Open(uid), Close(), IsOpen() }; onClose() closes the whole Pets panel (the X)
 -- Sections: header (turning portrait, kind, rarity + tier stars, where the pet is), growth (level, XP bar, how it grows, the next
 -- look, the Coin bonus), one card per working aptitude (PetConfig.Shown; only for players with the field: level / rarity cap,
--- effect bar, field hours to the next level, reach), actions (Equip / Unequip, Sell with a second tap). Under the header the name row
+-- effect bar, field hours to the next level, reach; E2c Scouting: meter bonus, medal finishes to the next level, the equipped scouts' total), actions (Equip / Unequip, Sell with a second tap). Under the header the name row
 -- (P3b): a text box and a button that names (free the first time), renames (PetConfig.RenamePrice) or removes the name; the server
 -- cleans, filters and prices it (PetRemotes.Rename), the page shows only the filtered name it sends back. The page re-renders on
 -- PetsChanged and Locale.Changed and closes itself when the pet is gone (sold).
@@ -436,14 +436,32 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		}).Parent = apt
 		line("Desc", 2, { Text = Locale.T("petDetail.aptDesc." .. id) }).Parent = apt
 		local strength = PetConfig.Strength(level)
-		bar("Effect", 3, strength, COLOR_APT, Locale.T("petDetail.effect", { pct = math.round(strength * 100) })).Parent = apt
+		local scouting = id == "Scouting" -- E2c: a with-you aptitude, its XP counts medal finishes
+		local rules = PetConfig.Scouting
+		bar("Effect", 3, strength, COLOR_APT, if scouting
+			then Locale.T("petDetail.scoutEffect", { pct = math.round(rules.PerStrength * strength * 100) })
+			else Locale.T("petDetail.effect", { pct = math.round(strength * 100) })).Parent = apt
 		if level >= cap then
 			line("Xp", 4, { Text = Locale.T("petDetail.aptMax", { rarity = Locale.RarityName(owned.rarity.id) }) }).Parent = apt
 		else
 			local need = PetConfig.AptitudeXpToNext(level)
 			local xp = stored.Apt[id].XP or 0
-			bar("Xp", 4, xp / need, COLOR_XP, Locale.T("petDetail.aptXp", { xp = hours(xp), next = hours(need) })).Parent = apt
-			line("Grow", 5, { Text = Locale.T("petDetail.aptGrow") }).Parent = apt
+			bar("Xp", 4, xp / need, COLOR_XP, if scouting
+				then Locale.T("petDetail.scoutXp", { done = math.floor(xp / rules.XpPerFinish), need = math.ceil(need / rules.XpPerFinish) })
+				else Locale.T("petDetail.aptXp", { xp = hours(xp), next = hours(need) })).Parent = apt
+			line("Grow", 5, { Text = Locale.T(if scouting then "petDetail.scoutGrow" else "petDetail.aptGrow") }).Parent = apt
+		end
+		if scouting then
+			local state = PetClient.State
+			local team = {}
+			for _, uid in (state and state.equipped or {}) do
+				table.insert(team, state.pets[uid])
+			end
+			line("Team", 6, { Text = Locale.T("petDetail.scoutTeam", {
+				pct = math.round(PetConfig.ScoutBonus(team) * 100),
+				cap = math.round(rules.Cap * 100),
+			}) }).Parent = apt
+			line("Pouch", 7, { Text = Locale.T("petDetail.scoutPouch", { pct = math.round(rules.PouchExtraAt * 100) }) }).Parent = apt
 		end
 		if id == "Tending" then
 			local shape = PetConfig.ReachShape(level)

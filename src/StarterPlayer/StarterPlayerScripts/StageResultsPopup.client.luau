@@ -146,8 +146,13 @@ local function render(result)
 	local meter = type(obby) == "table" and obby.meter
 	local meterCrop = meter and CropConfig.ById[meter.crop]
 	meterLabel.Visible = meterCrop ~= nil
+	local scout = type(obby) == "table" and type(obby.scout) == "number" and obby.scout or 0
 	meterLabel.Text = if meterCrop
-		then Locale.T("results.meter", { icon = meterCrop.icon, pct = math.floor(meter.points / meter.size * 100) })
+		then Locale.T(if scout > 0 then "results.meterScout" else "results.meter", {
+			icon = meterCrop.icon,
+			pct = math.floor(meter.points / meter.size * 100),
+			bonus = math.round(scout * 100),
+		})
 		else ""
 	if result.nextMedal and result.nextThreshold then
 		nextLabel.Text = Locale.T("results.next", {

@@ -138,7 +138,7 @@ Player attributes `Medal_<stage folder>` (0–3) mirror `PlayerProfile.Medals` f
 `PetNames` (JSON `{ [uid] = filtered name }` of the named equipped, penned and field pets, `""` when none; `PetConfig.DecodeNames`) carries pet names to every client (`PetFollow`, `GardenView` / `PlotView`); `EquippedPets` and the plot feed hold no names. The raw name is filtered again on every join.
 `Garden.LastSeen` is the server time up to which pen production was paid (never from a client); production since then is capped at 8 h.
 A pet is either equipped, penned or on a field square (E1b): `PetService` rejects Equip / SellPet of a penned or field pet, `GardenService` / `GardenField` reject placing an equipped one.
-Aptitudes (`PetConfig.Aptitudes`, E1b) are rolled once from `userId/uid` (at hatch, or on join for pets from before E1b) and never rerolled; aptitude ids are stored: never rename one.
+Aptitudes (`PetConfig.Aptitudes`, E1b) are rolled once from `userId/uid` (at hatch, or on join for pets from before E1b) and never rerolled; aptitude ids are stored: never rename one. Tending works on the field (E1b), Scouting while equipped (E2c: medal finishes give it XP; the equipped scouts' `PetConfig.ScoutBonus` raises the rare-seed meter points and, at +50 %, the seed pouch).
 Pens convert into field pet slots once (`Garden.Converted`) on the join of a player with field access; the Tending roll is deterministic per planting (`Squares[n].N`), a failed one marks it `Tried`.
 Player attribute `GardenPlot` = slot of the borrowed plot (`GardenConfig.PlotCFrame(slot)`). The plots exist only on the clients (E1a1):
 `GardenView` draws them into the client folder `Workspace.GardenView` (`Slot_NN` > pieces `base`, `pen1..6`, `inc1..3`) from

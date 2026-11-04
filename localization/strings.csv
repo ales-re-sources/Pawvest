@@ -83,6 +83,7 @@ results.pouch[one],"Results popup (players with the field, E2b): common seeds fr
 results.pouch[few],Form for 2-4 (Czech only),,{icon} {crop}: +{count} semínka ze sáčku,new,hf2451e1d
 results.pouch[other],Form for 0 and 5+,{icon} {crop}: +{count} seeds from the seed pouch,{icon} {crop}: +{count} semínek ze sáčku,new,hf2451e1d
 results.pouchFull,"Results popup (E2b): the seed stock is at the barn's limit, so some or all of the seed pouch did not fit (after results.pouch, or alone)",Barn full: the rest of the seed pouch did not fit,Stodola je plná: zbytek sáčku se nevešel,new,h482de2c1
+results.meterScout,"Results popup (E2c): results.meter when equipped scouts helped; {icon} = the world's rare crop emoji, {pct} = 0-99 how full, {bonus} = the scouts' extra points in whole percent (10-50)",{icon} Rare seed meter: {pct}% (scouting +{bonus}%),{icon} Ukazatel vzácného semínka: {pct} % (průzkum +{bonus} %),new,hd8019531
 results.next,"Next goal; {medal} = medal tier (medal.name.*), {time} = its time limit",Next: {medal} under {time},Další cíl: {medal} pod {time},ok,hfa6bbb41
 results.allMedals,Last line when every medal of the stage is earned,All medals earned!,Všechny medaile získány!,ok,h91b54d74
 # Gates (unlock prompt and messages),,,,,
@@ -460,8 +461,15 @@ petDetail.nextLook,"Pet detail page: the pet's next look; {stars} = ★★, {lev
 petDetail.allLooks,Pet detail page: the pet has every look (level 20),Every look unlocked,Má všechny vzhledy,new,h2b3645ee
 petDetail.bonus,"Pet detail page: the pet's Coin bonus; {bonus} = ""+4.5%""",💰 {bonus} Coins while it is with you,"💰 {bonus} mincí, když je s tebou",new,hdb7b1faf
 pet.apt.Tending,Aptitude name (a pet's field job: harvests and replants while the owner is away),Tending,Péče,new,h4e5b0ea1
+pet.apt.Scouting,Aptitude name (E2c: a pet's job while it follows the player on the stages: fills the rare-seed meters faster),Scouting,Průzkum,new,h12d307b3
 petDetail.aptLevel,"Pet detail page, aptitude card heading; {name} = aptitude name, {level} = its level, {cap} = the rarity's highest level",{name} {level} / {cap},{name} {level} / {cap},new,h5c6f690b
 petDetail.aptDesc.Tending,"Pet detail page, Tending card: what the job does",Harvests ripe crops and replants them while you are away,"Když jsi pryč, sklízí zralou úrodu a znovu sází",ok,hb33ace15
+petDetail.aptDesc.Scouting,"Pet detail page, Scouting card: what the job does","While it follows you, it fills the stages' rare-seed meters faster","Když tě doprovází, plní ukazatele vzácných semínek v úrovních rychleji",new,he63c4715
+petDetail.scoutEffect,"Pet detail page, Scouting card, text on the effect bar; {pct} = this pet's extra rare-seed meter points in whole percent (10-50)",\+{pct}% to the rare seed meter,\+{pct} % k ukazateli vzácného semínka,new,hd848cbf9
+petDetail.scoutXp,"Pet detail page, Scouting card, text on the XP bar; {done} / {need} = medal finishes made / needed for the next Scouting level",{done} / {need} medal finishes,{done} / {need} dokončení s medailí,new,h64eeccd0
+petDetail.scoutGrow,"Pet detail page, Scouting card, under the XP bar: how Scouting levels up",Grows with every stage you finish with a medal while it follows you,"Roste s každou úrovní, kterou dokončíš s medailí, když tě doprovází",new,hdea8c58b
+petDetail.scoutTeam,"Pet detail page, Scouting card: the bonus of all equipped scouts together; {pct} = whole percent now (0-50), {cap} = the maximum (50)",All scouts with you: +{pct}% (at most {cap}%),Všichni průzkumníci s tebou: +{pct} % (nejvýš {cap} %),new,hdefc959b
+petDetail.scoutPouch,"Pet detail page, Scouting card, last line; {pct} = the scouts' total that adds a seed (50)","At {pct}%, the seed pouch gives 1 seed more",Při {pct} % dá sáček semínek o 1 semínko víc,new,h8993b291
 petDetail.effect,"Pet detail page, text on the effect bar; {pct} = whole percent 20-100 (Tending: chance a ripe crop is harvested at once)",Effect {pct}%,Účinek {pct} %,new,h0f2c4827
 petDetail.aptXp,"Pet detail page, text on the aptitude XP bar; {xp} / {next} = hours of field time (decimal, ""3.5"")",{xp} / {next} h on the field,{xp} / {next} h na poli,new,habc95980
 petDetail.aptGrow,"Pet detail page, under the aptitude XP bar: how the aptitude levels up",Grows while it works on the field (a third as fast while you are away),"Roste, když pracuje na poli (když jsi pryč, třikrát pomaleji)",new,hddb15404

@@ -54,7 +54,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E1c4 | Daily market cart (two seed bargains, a taste of the next locked crop from Renown 3) | ✔ | ✔ | – |
 | E2a | Rare crops of Worlds 1-3, rare seeds (first Gold from World 2, daily, per-stage meters), results popup lines | ✔ | ✔ | – |
 | E2b | Seed pouch (the day's first medal finish per stage: 1 / 2 / 3 seeds of the crop planted last, up to the barn) | ✔ | ✔ | – |
-| E2c–E5 | Garden MVP (see "Next") | – | – | – |
+| E2c | Scouting (equipped pets: XP per medal finish, up to +50 % rare-seed meter points, +1 pouch seed at +50 %; pet detail card) | ✔ | ✔ | – |
+| E3–E5 | Garden MVP (see "Next") | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, P3, M7 | Final balancing, bonus stages, trading, monetization (drop D2) | – | – | – |
 
@@ -326,6 +327,26 @@ Not covered: a ripe rare crop's colour, harvest and sale (the same code as the o
 2. Fixture: square 10 empty, 40 seeds held (the barn's limit). Planting a Pumpkin (39 held), then Stage 1 Gold → "🎃 Dýně: +1 semínko ze sáčku" and
    "Stodola je plná: zbytek sáčku se nevešel"; 40 held.
 3. Stage 2 Gold with the barn full → only the barn-full line, no seed. Czech lines fit; no warnings or errors on the server or the client.
+
+**E2c implemented (2026-11-04).**
+- `PetConfig`: `Shown.Scouting`, `Scouting = { XpPerFinish = 900 s, PerStrength = 0.5, Cap = 0.5, PouchExtraAt = 0.5 }`, `ScoutBonus(pets)`.
+- `GardenField.ObbyFinish` (every medal finish on a world stage, field access): the equipped scouts' bonus multiplies the meter points (stored as a
+  fraction) and adds 1 pouch seed at +50 %; then every equipped pet with Scouting gains 15 min of aptitude XP (rarity cap as Tending) and
+  `PetService.Publish` sends it. The answer gains `scout` (the bonus, when above 0).
+- Results popup: `results.meterScout` ("… 3 % (průzkum +50 %)"). Pet detail page, Scouting card: level / cap, what it does, the bar "+n % k ukazateli",
+  medal finishes made / needed for the next level (1 → 2 takes 40), the equipped scouts' total and the pouch note.
+- Strings: 8 rows (`pet.apt.Scouting`, `petDetail.aptDesc.Scouting`, `petDetail.scout*` × 5, `results.meterScout`).
+- `economy.py`: reads `PetConfig.Scouting` (pin `pet_scouting`; the chance a pet has Scouting stays the model's estimate); `check` 52 / 52, parity
+  0.73 / 0.86 / 0.90, Casual day 7 3.92x.
+
+**E2c Studio-validated (2026-11-04).** Same method; snapshot `TestSnapshots` `profile_9892673032_e2c` (+ stars, Stage 1 / 3 boards), restored.
+1. Equipped Fox #5 with Scouting 1 (+10 %): Stage 3 Gold → "🥕 Ukazatel vzácného semínka: 2 % (průzkum +10 %)" (6.6 points), pouch 3 Potatoes;
+   the Fox's Scouting XP 0 → 900. Its card (clicked open from the Pets list): "Průzkum 1 / 7", "+10 % k ukazateli vzácného semínka", "1 / 40 dokončení
+   s medailí", "Všichni průzkumníci s tebou: +10 % (nejvýš 50 %)"; everything fits.
+2. Fixture: Cat #1 (Scouting 5, 900 s short of 6) equipped with Fox #5 at its cap 7: the bonus capped at +50 %. Stage 1 Gold → "🥔 Brambora: +4 semínka
+   ze sáčku" (3 + 1), meter 9 points "3 % (průzkum +50 %)"; Cat #1 reached Scouting 6 (its cap, XP 0), the Owl (no Scouting) unchanged; stored.
+3. No warnings or errors on the server or the client.
+Not covered: a scout's level-up shown on the detail page while it is open (the page re-renders on `PetsChanged`, as for Tending).
 
 ### E1d — Farming-first rebalance (scope draft 2026-11-03; numbers: ECONOMY.md → "Direction change", F1)
 **Goal.** Farming becomes the main game: over days 1-3 the field earns at most what the obby earns, then 3x by day 7 and 10x by day 30 (Casual,
@@ -770,7 +791,7 @@ pen income is removed only when crops ship), so E1b can be published without tou
 
 **Design check.** Matches EXPANSION §3 (field pets, reach, one job per pet, data `Garden.FieldPets`), §4 (aptitudes rolled from the uid, levels
 1–10, rarity caps, XP from field time) and §16 item 4 (full aptitude data stored from the first hatch, only the working ones shown). Only
-**Tending** does something in E1b. Fertilising, Pest control (E4-thin), Weeding, Scouting (E2 seed pouch) and Crafting are rolled and stored but
+**Tending** does something in E1b, **Scouting** in E2c. Fertilising, Pest control (E4-thin), Weeding and Crafting are rolled and stored but
 not shown. Quirks and bond stay out (D7). Field pets can be placed only at the own plot (the "move from far away" question of §16 stays open).
 
 **E1b1 — Data, aptitudes, conversion, Tending (server; ~1 week).**

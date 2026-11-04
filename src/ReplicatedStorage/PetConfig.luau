@@ -238,9 +238,13 @@ end
 -- Aptitudes (E1b, docs/EXPANSION.md §4, numbers from docs/ECONOMY.md → "Field-pet re-run"): the jobs a pet is born with, each with
 -- its own level 1..cap raised by doing the job. Stored as Pets[uid].Apt = { [id] = { L, XP } } (XP = weighted field seconds
 -- towards the next level) and Pets[uid].Spec (Pest-control speciality). Ids are stored: never rename one. Rolled once (at hatch,
--- or on load for pets from before E1b) and never rerolled. Only the ids in Shown do something yet (E1b: Tending).
+-- or on load for pets from before E1b) and never rerolled. Only the ids in Shown do something yet (E1b: Tending, E2c: Scouting).
 PetConfig.Aptitudes = { "Tending", "Fertilising", "PestControl", "Weeding", "Scouting", "Crafting" }
-PetConfig.Shown = { Tending = true }
+PetConfig.Shown = { Tending = true, Scouting = true }
+-- Scouting (E2c, a with-you aptitude): every medal finish on a world stage gives each equipped pet with Scouting XpPerFinish seconds of
+-- aptitude XP (same curve as Tending); the equipped scouts together add min(Cap, sum of PerStrength x Strength) to the stage's rare-seed
+-- meter points, and at PouchExtraAt or more the seed pouch drops 1 seed more
+PetConfig.Scouting = { XpPerFinish = 15 * 60, PerStrength = 0.5, Cap = 0.5, PouchExtraAt = 0.5 }
 PetConfig.Specs = { "Crows", "Moles", "Slugs", "Raccoons" }
 -- chance of Tending by rarity (the model's: aptitudes at birth / 5), independent of the kind so the economy model holds
 PetConfig.TendingChance = { Common = 0.2, Uncommon = 0.22, Rare = 0.4, Epic = 0.5, Legendary = 0.6 }
@@ -327,6 +331,16 @@ end
 -- Effect share of aptitude `level` (0 for level 0).
 function PetConfig.Strength(level: number): number
 	return PetConfig.AptitudeStrength[math.clamp(math.floor(level), 0, #PetConfig.AptitudeStrength)] or 0
+end
+
+-- Scouting bonus of the pets in `pets` (the equipped ones): min(Cap, sum of PerStrength x Strength(Scouting level)), 0 without scouts.
+function PetConfig.ScoutBonus(pets: { any }): number
+	local rules = PetConfig.Scouting
+	local sum = 0
+	for _, pet in pets do
+		sum += rules.PerStrength * PetConfig.Strength(PetConfig.AptitudeLevel(pet, "Scouting"))
+	end
+	return math.min(rules.Cap, sum)
 end
 
 -- Weighted field seconds from aptitude `level` to level + 1.

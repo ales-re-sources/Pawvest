@@ -36,6 +36,8 @@
 -- (Garden.Meters[stageKey] = points). Rare crops are never sold as seeds (BuySeeds: "obby").
 -- E2b seed pouch: the day's first medal finish on a stage also gives CropConfig.ObbySeeds.Pouch[medal] seeds of the common crop planted
 -- last (Garden.LastCrop, set by Plant), only up to the barn's limit.
+-- E2c Scouting: the equipped scouts' bonus (PetConfig.ScoutBonus) multiplies the meter points and adds a pouch seed at PouchExtraAt; each
+-- medal finish gives every equipped pet with Scouting PetConfig.Scouting.XpPerFinish of aptitude XP (after the bonus is taken).
 -- The field's shape is CropConfig.RowWidths (E1d2: 36 squares on a grid); the player opens any locked square (BuySquare), the price
 -- and Renown gate come from the number already open (CropConfig.NextExpansion). Fields from before E1d2 (Count = the first squares
 -- of a 4 x 3 field) move onto rows 1-3 (CropConfig.FromOldSquare), with their crops and field pets.
@@ -54,6 +56,7 @@ local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local CoinRewards = require(ServerScriptService.CoinRewards)
 local GardenService = require(ServerScriptService.GardenService)
 local StageConfig = require(ReplicatedStorage.StageConfig)
+local PetService = require(ServerScriptService.PetService)
 
 local plantEvent = GardenService.Remote("Plant") -- client → server: (square: number, crop: string)
 local harvestEvent = GardenService.Remote("Harvest") -- client → server: (square: number)
@@ -1040,13 +1043,22 @@ function GardenField.ObbyFinish(player: Player, stage, medal: number, previousMe
 		return nil
 	end
 	local garden = profile.Garden
+	local scouts = {}
+	for _, uid in profile.EquippedPets do
+		local pet = profile.Pets[uid]
+		if pet and PetConfig.AptitudeLevel(pet, "Scouting") > 0 then
+			table.insert(scouts, pet)
+		end
+	end
+	local bonus = PetConfig.ScoutBonus(scouts)
 	-- E2b seed pouch, before the rare seeds (they may go past the barn and would take its room)
 	local pouch
 	if firstOnStage then
 		local pouchCrop = CropConfig.ById[garden.LastCrop or ""] or CropConfig.ById[rules.PouchDefault]
 		local room = CropConfig.BarnFor(CropConfig.UpgradeLevel(field.Upgrades, "Barn")) - CropConfig.SeedTotal(garden.Seeds)
-		local count = math.clamp(room, 0, rules.Pouch[medal])
-		pouch = { crop = pouchCrop.id, count = count, full = count < rules.Pouch[medal] }
+		local drop = rules.Pouch[medal] + (if bonus >= PetConfig.Scouting.PouchExtraAt - 1e-9 then 1 else 0)
+		local count = math.clamp(room, 0, drop)
+		pouch = { crop = pouchCrop.id, count = count, full = count < drop }
 		if count > 0 then
 			garden.Seeds[pouchCrop.id] = (garden.Seeds[pouchCrop.id] or 0) + count
 		end
@@ -1061,7 +1073,7 @@ function GardenField.ObbyFinish(player: Player, stage, medal: number, previousMe
 		garden.RareDay = today
 		table.insert(seeds, { crop = crop.id, count = rules.Daily, why = "daily" })
 	end
-	local points = (garden.Meters[stage.key] or 0) + rules.Points[medal] * (if firstOnStage then rules.FirstMult else 1)
+	local points = (garden.Meters[stage.key] or 0) + rules.Points[medal] * (if firstOnStage then rules.FirstMult else 1) * (1 + bonus)
 	local full = math.floor(points / rules.MeterSize)
 	points -= full * rules.MeterSize
 	garden.Meters[stage.key] = if points > 0 then points else nil
@@ -1072,10 +1084,22 @@ function GardenField.ObbyFinish(player: Player, stage, medal: number, previousMe
 		garden.Seeds[gain.crop] = (garden.Seeds[gain.crop] or 0) + gain.count
 	end
 	GardenService.PublishAll(player)
-	if #seeds > 0 or (pouch and pouch.count > 0) then
+	local scoutLevels = 0
+	for _, pet in scouts do
+		scoutLevels += PetConfig.GainAptitudeXp(pet, "Scouting", PetConfig.Scouting.XpPerFinish)
+	end
+	if #scouts > 0 then
+		PetService.Publish(player) -- the pet detail page shows the Scouting XP
+	end
+	if #seeds > 0 or (pouch and pouch.count > 0) or scoutLevels > 0 then
 		task.spawn(PlayerProfile.Save, player)
 	end
-	return { seeds = seeds, pouch = pouch, meter = { crop = crop.id, points = points, size = rules.MeterSize } }
+	return {
+		seeds = seeds,
+		pouch = pouch,
+		meter = { crop = crop.id, points = points, size = rules.MeterSize },
+		scout = if bonus > 0 then bonus else nil,
+	}
 end
 
 return GardenField

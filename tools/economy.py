@@ -248,6 +248,10 @@ def cart_cfg(cart):
     return [[[b["count"], b["discount"]] for b in cart["bargains"]], [t["count"], t["price"], t["fromLevel"]]]
 
 
+def scout_cfg(o):
+    return [o["XpPerFinish"] / 3600, o["PerStrength"], o["Cap"], o["PouchExtraAt"]]
+
+
 def obby_cfg(o):
     return [o["FirstGoldWorld"], o["FirstGold"], o["Daily"], o["MeterSize"], list(o["Points"]), o["FirstMult"], list(o.get("Pouch", []))]
 
@@ -285,6 +289,7 @@ def apply_crop_config(P):
         "apt_caps": luau("PetConfig.luau", "PetConfig.AptitudeCaps"),
         "apt_strength": luau("PetConfig.luau", "PetConfig.AptitudeStrength"),
         "apt_xp": [luau("PetConfig.luau", "PetConfig.AptitudeXpFirst") / 3600, luau("PetConfig.luau", "PetConfig.AptitudeXpRatio")],  # hours, ratio
+        "scouting": scout_cfg(luau("PetConfig.luau", "PetConfig.Scouting")),  # E2c: [XP hours per medal finish, per strength, cap, pouch +1 from]
     }
     P["crop_cfg"] = cfg
 
@@ -320,7 +325,9 @@ def apply_crop_config(P):
     # are sold in full until something else uses them (landmarks)
     F["rare"].update({"per_first_gold": fg_seeds, "first_gold_world": fg_world, "daily": daily, "daily_best": True, "sale_share": 1.0})
     F["obby"]["meter"].update({"size": size, "pts": list(pts), "first_mult": first_mult})
-    F["obby"]["pouch"]["seeds"] = list(pouch)  # E2b: common seeds per day's first medal finish on a stage, by medal
+    F["obby"]["pouch"]["seeds"] = list(pouch)  # E2b
+    xp_h, per, cap, extra_at = cfg["scouting"]  # E2c: Scouting as PetConfig.Scouting gives it (the chance of the aptitude stays the model's)
+    F["obby"]["scout"].update({"xp_per_finish": xp_h, "per_level": per, "cap": cap, "extra_per_bonus": 1 / extra_at})
     FP = F["pets"]
     FP["slots"] = list(cfg["pet_slots"])
     FP["tending"] = dict(cfg["tending"])
@@ -431,6 +438,7 @@ def pin_values(P):
         "crop_field_tools": P["crop_cfg"]["tools"],  # [id, effect, prices, renown levels] (E1c3)
         "crop_field_xp": P["crop_cfg"]["xp"],  # [id, pet XP per crop fed] (E1a3)
         "crop_field_cart": P["crop_cfg"]["cart"],
+        "pet_scouting": P["crop_cfg"]["scouting"],  # [XP hours per medal finish, per strength, cap, pouch +1 from] (E2c)
         "crop_field_obby_seeds": P["crop_cfg"]["obby_seeds"],  # [first Gold from world, per first Gold, daily, meter size, points, first-of-day x, pouch by medal] (E2a, E2b)  # [[count, discount] per bargain, [taste count, price, from level]] (E1c4)
         "crop_field_size": P["crop_cfg"]["size"],  # [sigma, z cap, Big z, Giant z] of the size roll (E1c2)
         "crop_field_rates": P["crop_cfg"]["rates"],  # [online rate, offline rate, offline cap in hours]
