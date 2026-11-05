@@ -8,7 +8,7 @@ settings.language,"Settings panel, Language row; {name} = a language name in its
 settings.language.auto,Language row while the language follows the player's Roblox locale; {name} = that language,Automatic ({name}),Automaticky ({name}),ok,h5f0769cc
 "# Names: hub, worlds, stages",,,,,
 hub.name,The central hub island (score panel title),Central Island,Centrální ostrov,ok,h7b457675
-stage.name.Tutorial,"Name of the tutorial stage (score panel, results title, gate prompt). Feminine in Czech, like Úroveň",Tutorial,Na zkoušku,ok,h9863aa84
+stage.name.Tutorial,"Name of the tutorial stage (score panel, results title, gate prompt). Feminine in Czech, like Úroveň",Tutorial,Výuka,ok,h9863aa84
 world.name.1,Name of world 1 (a courtyard of 5 stages). Masculine in Czech (Svět),World 1,1. svět,ok,hdb38aa1f
 world.name.2,Name of world 2 (a courtyard of 5 stages). Masculine in Czech (Svět),World 2,2. svět,ok,h4f021973
 world.name.3,Name of world 3 (a courtyard of 5 stages). Masculine in Czech (Svět),World 3,3. svět,ok,hfd5f162e

@@ -8,7 +8,7 @@ return {
 	["settings.language"] = "Jazyk: {name}",
 	["settings.language.auto"] = "Automaticky ({name})",
 	["hub.name"] = "Centrální ostrov",
-	["stage.name.Tutorial"] = "Na zkoušku",
+	["stage.name.Tutorial"] = "Výuka",
 	["world.name.1"] = "1. svět",
 	["world.name.2"] = "2. svět",
 	["world.name.3"] = "3. svět",
