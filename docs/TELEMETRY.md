@@ -1,6 +1,6 @@
 # Pawvest — Telemetry (design)
 
-Status: design agreed 2026-10-23; design check against the API limits done 2026-10-23 (see "Design check" below), T1a and T1b implemented and Studio-validated (2026-10-23). Milestones **T1a** (core) and **T1b** (skills) in [ROADMAP.md](ROADMAP.md).
+Status: T1a (core) and T1b (skills) implemented and Studio-validated 2026-10-23; Live-validated only once every event type shows on the Creator Dashboard (M6a). Where each piece sits in code: "Implementation outline" below.
 
 ## Goal
 Data for rebalancing (M6a / M6b), answering a few questions only:
@@ -46,7 +46,7 @@ prints every event. The limits that shape this design (create.roblox.com, checke
   - `other` — anything unexplained (reset by the player, unknown kill).
 - **Loadout** (T1b): compact talent levels at the run's start, e.g. `RS3 DJ1 JH3 QR2` (Run Speed, Double Jump, Jump
   Height, Quick Respawn; the code is the capitals of the talent id, so later talents get their own: `TJ`, `D`, `WJ`, `G`)
-  from the `Talent_<id>` attributes, in `TalentConfig.List` order. Today 6 × 2 × 4 × 3 = 144 loadouts at most.
+  from the `Talent_<id>` attributes, in `TalentConfig.List` order, with Run Speed and Jump Height bucketed (see "Combination limits").
 
 ## Events
 
@@ -77,7 +77,7 @@ run). Times and counts never go into custom fields (cardinality); they are event
 ## Reading the questions on the dashboard
 | Question | Where |
 |---|---|
-| Where are runs abandoned? | Funnels → `Run_<stage>`: drop-off between steps |
+| Where are runs abandoned? | Funnels → `StageRun`, broken down by CF01 (stage): drop-off between steps |
 | Hardest segment of a stage | Custom events → `Fail`, filter CF01 = stage, break down by CF02 |
 | Deadliest obstacle | `Fail`, filter CF01 / CF02, break down by CF03 |
 | Gave up for good | `Quit` minus `Return` per CF01 / CF02, read **after a 7-day window** (a quit younger than 7 days may still return); overall D1 / D7 retention from the dashboard's built-in retention |
@@ -129,25 +129,19 @@ run). Times and counts never go into custom fields (cardinality); they are event
   content changes on disk (never move or rename the folders), with the usual copy discipline (docs/LAYOUT.md → Reusable
   script variants) and the `ServerStorage.StageKit` copies if any.
 
-## Design check (2026-10-23)
-Changes against the first draft, from the API limits above: one `StageRun` funnel instead of one per stage (11 stages
-today, about 21 planned, 10 funnels allowed); progression custom fields bucketed (exact time and death counts would
-exhaust the 8 000 combinations; the time is `RunEnd`'s value); CF03 of the progression events kept free for T1b's
-loadout; a rate guard; `checkpointOrder` exceptions checked in Studio; `ResetTimer`'s default reason; kill marks as a
-function call; `Died` hooked in the module; `PlayerProfile.OnLeaving` also on shutdown. The debug switch is the
-`ServerScriptService` attribute `TelemetryDebug = true` (read on every event, so it can be toggled during a playtest):
-every event is printed as `[Telemetry] …`; without it the module is silent.
+## Combination limits (keep under 8 000 values per event)
+- One `StageRun` funnel for every stage (10 funnels allowed, about 21 stages planned); progression custom fields are bucketed (exact times and
+  death counts are event values, never fields); CF03 of the progression events carries the loadout.
+- The progression fail event carries the end reason instead of the segment (the segment stays in `RunEnd` and `Quit`).
+- Loadout buckets: Run Speed `RS0` / `RS2` (1-3) / `RS5` (4-5), Jump Height `JH0` / `JH2` (1-2) / `JH3`, Double Jump 0-2, Quick Respawn 0-2,
+  Dash 0-2: 243 loadouts, fails 5 × 5 × 243 = 6 075, completes 4 × 5 × 243 = 4 860. **Wall Jump and Glide (S9) multiply this by 4: another
+  bucket cut is needed then.**
+- Debug switch: the `ServerScriptService` attribute `TelemetryDebug = true` (read on every event, so it can be toggled during a playtest) prints
+  every event as `[Telemetry] …`; without it the module is silent.
+- Only talent purchases are logged as economy events; the other Coin sources and sinks (medals, unlocks, eggs, pens, food, the field) are left
+  for M6 (garden telemetry: E5).
 
-**T1b (2026-10-23):** with the loadout in CF03, a progression fail of segment × deaths bucket × loadout could reach about
-200 × 5 × 144 combinations, far over 8 000. The fail event therefore drops the segment (it stays in `RunEnd` and `Quit`)
-and carries the end reason instead: 5 reasons × 5 buckets × 144 loadouts = 3 600; complete: 4 medals × 5 × 144 = 2 880.
-New talents (S7, S9) multiply the loadouts. **S7 (2026-10-24):** Double Jump 0-2 and Dash 0-1 would make 432 loadouts (fails
-10 800), so the loadout buckets Run Speed (level 0 → `RS0`, 1-3 → `RS2`, 4-5 → `RS5`; e.g. "RS2 DJ2 JH3 QR2 D1"): 216 loadouts,
-fails 5 400, completes 4 320. **S8.2 (2026-10-26):** Long Dash makes Dash 0-2 (324 loadouts, fails 8 100), so Jump Height is bucketed
-too (0 → `JH0`, 1-2 → `JH2`, 3 → `JH3`): 3 x 3 x 3 x 3 x 3 = 243 loadouts, fails 6 075, completes 4 860. S9 (Wall Jump, Glide: x 4) will need another cut. Only talent purchases are
-logged as economy events; the other Coin sources and sinks (medals, unlocks, eggs, pens, food) are left for M6.
-
-## Acceptance checks (Studio, debug switch on)
+## Regression checks after a telemetry change (Studio, debug switch on)
 - T1a: a run start → checkpoints → finish logs funnel steps 1..n in order exactly once, also when a checkpoint is touched
   twice or an earlier one again.
 - A death on a server kill part, on a kit beam (client kill), in the sea without Quick Respawn and a fall reset with Quick
