@@ -282,6 +282,11 @@ plane with it (rims 0.03 in from the edge, frames standing wholly in front of th
 - **Moving plates** (`KitMover`): LEGO yellow `#FFD54A` `Studs` with amber rim bars `RimN/S/W/E`, an amber `Hub` on discs. A gear is one union that
   *is* the mover (the kit carries a rider only on the exact `KitMover` part). Flips (Stage 10) the same, rims on both faces (Stage 8's flips are
   still teal; the warning tint is close to the yellow).
+- **Conveyors** (`KitConveyor`, 2026-11-05): a charcoal `(44, 44, 52)` `Studs` belt slab (1-1.2 thick) with stone grey `Roller1/2`
+  cylinders across both ends (none at an end another part touches within 0.5 studs) and amber `#E29314` `Studs` chevrons (`Chevron<n>L/R`,
+  arms 0.6 x 0.1 x 3.2 at 40 deg, 0.06 proud) pointing the way the belt pushes (`-Speed` points them backwards). A conveyor over the sea stands
+  on its own stud pillar (`ConveyorBase<n>`, 0.1 inset), so only the top pushes. Template `StageKit.Obstacles.Conveyor_Belt`; a changed
+  `Speed` sign needs the chevrons turned.
 - **Tilt plates** (`KitTilt`): green `(58, 165, 92)` `Studs`, dark green rims, a charcoal hinge pin (`Axle`, `AxleCapW/E`) on the tilt axis.
 - **Disappearing plates** (`KitPlate`): opaque `(0.75, 0.67, 0.55)` `Studs`, no decoration (the flicker is the cue). **Crumbling plates**
   (`KitCrumble`): sandstone `(222, 170, 100)` `Studs` with dark brown `Crack_n` lines. The kit fades a plate's decoration with it.
@@ -642,7 +647,8 @@ LAYOUT.md "Adding a world stage" plus the `StageConfig` entry (`world`, `require
   period 6 s, 1 stud from each bank at the ends) across a 22-stud gap to plate `105`; (E) six pillars rising 8 studs, a 16 x 16
   finish island with the finish portal, entered along the course.
 - **Conveyors are a new tiny component** (`KitConveyors.server.luau`): parts tagged `KitConveyor` with attribute `Speed` (studs/s along the
-  part's front; negative = backwards); the server sets the anchored part's `AssemblyLinearVelocity` once.
+  part's front; negative = backwards); the server sets the anchored part's `AssemblyLinearVelocity` once. Since 2026-11-05 each is a stud
+  belt (§2.5) 1.2 thick on its own pillar `ConveyorBase1/2` (top still at y 79.5, 8 x 18).
 - **Reach limits (§1.0)** hold for Bronze without talents: every gap on the main line is at most 6.1 studs edge to edge, every rise at most
   +1.5, landings at least 3 x 3. A baseline bot (Run Speed 0, Jump Height 0, no Double Jump) crossed every leg, most on the
   first attempt; the tightest legs (3 x 3 pillars with 5-5.6 stud gaps and a sideways stagger) needed up to three tries, which
