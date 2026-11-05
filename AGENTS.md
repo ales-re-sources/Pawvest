@@ -14,6 +14,7 @@ boards, challenge coins, talents), pets, and a garden island with plots, incubat
 | [docs/ROADMAP.md](docs/ROADMAP.md) | status, what next, open items, done log. Answer "what next?" from here |
 | [docs/GDD.md](docs/GDD.md) | the game as built: loop, stages, time tiers, rewards, talents, pets, garden, crop field (§7.9), hints |
 | [docs/EXPANSION.md](docs/EXPANSION.md) | the pet-garden direction not yet built: MVP and drop plan (E5–E11, D1–D10), monetization rules |
+| [docs/UI_GARDEN_PETS.md](docs/UI_GARDEN_PETS.md) | garden / pet UI redesign U1–U5 (decided, not built): field rings, square card, hand bar, panel split, pets list |
 | [docs/ECONOMY.md](docs/ECONOMY.md) | economy parameters and decisions, how to run `tools/economy.py` |
 | [docs/STAGES.md](docs/STAGES.md) | stage building: components, build rules, reach table, difficulty curve, per-stage as-built notes |
 | [docs/LAYOUT.md](docs/LAYOUT.md) | every script and scene folder, stage anatomy, **adding a world stage**, copied-script table |

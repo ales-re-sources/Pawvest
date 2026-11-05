@@ -280,8 +280,8 @@ plane with it (rims 0.03 in from the edge, frames standing wholly in front of th
 - **Lava-like floors:** the kill part in dark red `Studs` covered by `LavaTile_n` children (2 x 4, palette dark red / red / orange, ~1 in 5 Neon
   orange) and a `LavaSmoke` emitter on large parts (low rates for phones).
 - **Moving plates** (`KitMover`): LEGO yellow `#FFD54A` `Studs` with amber rim bars `RimN/S/W/E`, an amber `Hub` on discs. A gear is one union that
-  *is* the mover (the kit carries a rider only on the exact `KitMover` part). Flips (Stage 10) the same, rims on both faces (Stage 8's flips are
-  still teal; the warning tint is close to the yellow).
+  *is* the mover (the kit carries a rider only on the exact `KitMover` part). Flips (Stage 10, and Stage 8's `Flip1-5` / `FlipB1-4` since 2026-11-05) the same: `Axle` bar with `AxleCapE/W` through the hinge, rims on both
+  faces (the warning tint is close to the yellow). Cloned from `Stage10.Movers.Flip_1`; the Stage 8 flips keep their own `FlipN_Axle` pillars below.
 - **Conveyors** (`KitConveyor`, 2026-11-05): a charcoal `(44, 44, 52)` `Studs` belt slab (1-1.2 thick) with stone grey `Roller1/2`
   cylinders across both ends (none at an end another part touches within 0.5 studs) and amber `#E29314` `Studs` chevrons (`Chevron<n>L/R`,
   arms 0.6 x 0.1 x 3.2 at 40 deg, 0.06 proud) pointing the way the belt pushes (`-Speed` points them backwards). A conveyor over the sea stands

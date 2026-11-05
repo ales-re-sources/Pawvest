@@ -46,6 +46,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E5 | Garden MVP rest: request board, ledger on join, onboarding, garden telemetry | – | – | – |
 | M6a | Soft launch + World 1 balancing — World 1 balanced by feel (2026-10-30); live test open | – | – | – |
 | MU | Mobile UX check | – | – | – |
+| U1–U5 | Garden and pet UI redesign ([UI_GARDEN_PETS.md](UI_GARDEN_PETS.md)) — design decided 2026-11-05 | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
@@ -66,7 +67,11 @@ field access and ships after it. World 4 waits until after the MVP.
    launch without it.
 5. **E0 in parallel:** repricing and the remaining checks (section below).
 6. **MU** before anything goes public.
-7. **Drops D1–D10** after the MVP (EXPANSION §14), one every 1–2 weeks: Critters, Comfort shop (M7), Weekly, Variants, Kitchen (the first
+7. **U1–U5 garden and pet UI** (design decided 2026-11-05, [UI_GARDEN_PETS.md](UI_GARDEN_PETS.md) §11–12; scope each when it starts):
+   **U1** (Pets panel rows with trait chips, Equip / Details, Sell to the pet page, wider panel, filters; food stand rows) next, before M6a,
+   with P4's open pseudo-language and multi-client checks; **U2–U5** (Garden button, field rings + square card + hand bar, Skills Garden tab,
+   barn, seed stall, plot layout) before E5's onboarding, which teaches the new controls, and before E1 ships.
+8. **Drops D1–D10** after the MVP (EXPANSION §14), one every 1–2 weeks: Critters, Comfort shop (M7), Weekly, Variants, Kitchen (the first
    restoration landmark), Neighbours, Mastery, World 4 (S9 / S10), the Estate, Season 1. Restoration bundles (E6, D5) and estate tiers / decor /
    cottage (E7, D9) are the long-term Coin sinks; E0 holds a placeholder for their size until they are designed.
 
