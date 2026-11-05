@@ -41,7 +41,7 @@ local function plotState(player: Player)
 	for n = 1, GardenConfig.MaxPens do
 		local uid = garden.Pens[tostring(n)]
 		local pet = uid and profile.Pets[uid]
-		pens[n] = if pet then string.format("%s:%d:%s", pet.Kind, PetConfig.ClampLevel(pet.Level), uid) else ""
+		pens[n] = if pet then string.format("%s:%d:%s", pet.Kind, PetConfig.PetLevel(pet), uid) else ""
 	end
 	local eggs = {}
 	for n = 1, GardenConfig.MaxIncubators do

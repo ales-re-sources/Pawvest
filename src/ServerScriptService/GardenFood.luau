@@ -1,8 +1,9 @@
 -- GardenFood: the food stand on the garden plaza (docs/GDD.md §7.4, §7.6; P2b2). Server-only.
 -- Food is bought and fed at once to one owned pet (equipped, penned or resting; no food inventory). The client only names
--- the pet uid and the food id; price and XP come from GardenConfig.Foods. Only the fed pet gains the XP (PetConfig.GainXp,
--- level-ups keep the remainder); a level-20 pet is rejected before any Coins are taken. A penned pet's production is
--- settled first, so the new level only counts from the feeding on.
+-- the pet uid and the food id; price and XP come from GardenConfig.Foods. Only the fed pet gains the XP, as care XP
+-- (PetConfig.GainCareXp, P4: Cuteness first, else the lowest working trait below the care cap); a pet with nothing left to train
+-- is rejected ("maxed") before any Coins are taken. A penned pet's production is settled first, so the new level only counts from
+-- the feeding on.
 -- Remote (in GardenRemotes): Feed(uid, foodId) (client → server); answers through GardenRemotes.Result ("Feed").
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -47,7 +48,7 @@ feedEvent.OnServerEvent:Connect(function(player, uid, foodId)
 	if not nearStand(player) then
 		return reject(player, "Feed", "far")
 	end
-	if PetConfig.ClampLevel(pet.Level) >= PetConfig.MaxLevel then
+	if not PetConfig.CareTarget(pet) then
 		return reject(player, "Feed", "maxed")
 	end
 	if profile.Coins < food.price then
@@ -58,14 +59,14 @@ feedEvent.OnServerEvent:Connect(function(player, uid, foodId)
 		GardenService.SettleAndNotify(player) -- production up to now is paid at the old level
 	end
 	PlayerProfile.AddCoins(player, -food.price)
-	local levels = PetConfig.GainXp(pet, food.xp)
+	local trained, wasted = PetConfig.GainCareXp(pet, food.xp)
 	GardenService.PublishAll(player) -- Pets panel, Coin bonus, EquippedPets labels, pen label and garden rate
 	GardenService.Succeed(player, "Feed", {
 		uid = uid,
 		food = food.id,
-		xp = food.xp,
-		level = pet.Level,
-		levels = levels,
+		xp = food.xp - wasted,
+		level = PetConfig.PetLevel(pet),
+		trained = trained, -- { { id, levels, level } } in order (P4)
 	})
 	task.spawn(PlayerProfile.Save, player)
 end)

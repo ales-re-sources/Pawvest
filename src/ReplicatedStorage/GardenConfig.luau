@@ -69,14 +69,15 @@ function GardenConfig.PlotCFrame(slot: number, rings: { PlotRing }?): CFrame?
 	return CFrame.lookAt(at, Vector3.new(centre.X, at.Y, centre.Z))
 end
 
--- Pens and production (docs/GDD.md §7.6). Rates are Coins per hour at level 1; each level above 1 adds LevelRate permille.
--- All production maths is integer: a pet's "units" are rate × (1000 + LevelRate × (level − 1)), i.e. thousandths of a
+-- Pens and production (docs/GDD.md §7.6). Rates are Coins per hour at level 1 (the pet level, PetConfig.PetLevel); the max level
+-- adds MaxLevelRate permille, linear in between. All production maths is integer: a pet's "units" are
+-- rate × (1000 + MaxLevelRate × (level − 1) // (MaxLevel − 1)), i.e. thousandths of a
 -- Coin per hour, so production over `seconds` is units × seconds / UNITS_PER_COIN_SECOND whole Coins and the remainder
 -- (the carry) is kept, which makes the total identical however the time is split into payouts.
 GardenConfig.MaxPens = 6
 GardenConfig.PenPrices = { 0, 1000, 2500, 5000, 9000, 15000 } -- PenPrices[n] = price of the n-th pen (pen 1 is free)
 GardenConfig.BaseRates = { Common = 10, Uncommon = 20, Rare = 40, Epic = 70, Legendary = 120 } -- by rarity id
-GardenConfig.LevelRate = 40 -- permille of the base rate per level above 1 (Lv 20 = ×1.76)
+GardenConfig.MaxLevelRate = 760 -- permille of the base rate added at the max level (Lv 10 = ×1.76, as Lv 20 before P4)
 GardenConfig.OfflineCapSeconds = 8 * 3600 -- production counted at most this long since LastSeen
 GardenConfig.PayoutSeconds = 300 -- online payout interval
 GardenConfig.MinAwaySeconds = 60 -- shorter absences do not show the "welcome back" announcement
@@ -89,7 +90,7 @@ local PetConfig = require(script.Parent:WaitForChild("PetConfig"))
 function GardenConfig.Units(pet): number
 	local rarity = PetConfig.RarityOf(pet.Kind)
 	local rate = rarity and GardenConfig.BaseRates[rarity.id] or 0
-	return rate * (1000 + GardenConfig.LevelRate * (PetConfig.ClampLevel(pet.Level) - 1))
+	return rate * (1000 + GardenConfig.MaxLevelRate * (PetConfig.PetLevel(pet) - 1) // (PetConfig.MaxLevel - 1))
 end
 
 -- Coins per hour of one pet, for display (before the pet bonus).
@@ -160,15 +161,9 @@ end
 GardenConfig.FoodStandName = "FoodStand" -- Workspace.Garden.FoodStand (Studio-only model, PrimaryPart "Counter")
 GardenConfig.FoodStandDistance = 20 -- studs from the stand's PrimaryPart within which Feed is accepted
 
--- XP a pet still needs to reach the max level (0 at the max level).
+-- Care XP (food, crops) a pet can still use before the rest is wasted (0: nothing left to train; PetConfig.CareXpLeft, P4).
 function GardenConfig.XpToMax(pet): number
-	local level = PetConfig.ClampLevel(pet.Level)
-	local xp = if type(pet.XP) == "number" and pet.XP == pet.XP then math.max(0, math.floor(pet.XP)) else 0
-	local need = 0
-	for current = level, PetConfig.MaxLevel - 1 do
-		need += PetConfig.XpToNext(current)
-	end
-	return math.max(0, need - xp)
+	return PetConfig.CareXpLeft(pet)
 end
 
 export type Assigner = {

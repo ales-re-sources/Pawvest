@@ -190,7 +190,13 @@ hatchEvent.OnServerEvent:Connect(function(player, index)
 	local uid, equipped = PetService.AddPet(player, kind)
 	startFreeEggs(profile, garden) -- a waiting free egg takes the incubator at once
 	GardenService.PublishAll(player)
-	GardenService.Succeed(player, "Hatch", { incubator = index, uid = uid, kind = kind, rarity = rarityId, equipped = equipped })
+	local traits = {} -- P4: the working traits it was born with, in display order (the reveal lists them)
+	for _, id in PetConfig.Aptitudes do
+		if PetConfig.Shown[id] and PetConfig.AptitudeLevel(profile.Pets[uid], id) > 0 then
+			table.insert(traits, id)
+		end
+	end
+	GardenService.Succeed(player, "Hatch", { incubator = index, uid = uid, kind = kind, rarity = rarityId, equipped = equipped, traits = traits })
 	task.spawn(PlayerProfile.Save, player)
 end)
 

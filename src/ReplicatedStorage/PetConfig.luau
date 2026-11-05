@@ -81,12 +81,16 @@ PetConfig.EggOrder = { "Basic", "Golden" } -- incubator panel order (cheapest fi
 
 PetConfig.SlotPrices = { 0, 2000, 5000 } -- SlotPrices[n] = price of the n-th equip slot; #SlotPrices = max slots
 PetConfig.MaxPets = 50 -- inventory cap
-PetConfig.MaxLevel = 20
-PetConfig.LevelBonus = 5 -- permille per level above 1
+-- P4: a pet has no level of its own any more. Its level (PetLevel) is the highest level of its working traits (aptitudes in Shown),
+-- 1..MaxLevel; it drives the label, size, look tiers and pen output. The stored Pets[uid].Level / XP (1..LegacyMaxLevel, before P4) are
+-- frozen and read only by the profile migration (MigrateLegacyPet).
+PetConfig.MaxLevel = 10
+PetConfig.LegacyMaxLevel = 20
+PetConfig.CuteStep = 19 -- Cuteness: permille per level above 1, on top of the rarity's base bonus (P4)
 PetConfig.MaxBonus = 500 -- cap on the summed bonus of equipped pets (+50 %)
-PetConfig.AttributeName = "EquippedPets" -- player attribute "Kind:Level:uid,…" of the equipped pets (P1c, uid since P1e1)
+PetConfig.AttributeName = "EquippedPets" -- player attribute "Kind:Level:uid,…" of the equipped pets (P1c, uid since P1e1; level = PetLevel)
 PetConfig.MaxScale = 1.6 -- model size at MaxLevel relative to Lv 1 (PetLook.Scale, P1e1)
-PetConfig.Tiers = { 5, 10, 15, 20 } -- first level of look tiers 1..4 (PetLook.Tier)
+PetConfig.Tiers = { 3, 5, 8, 10 } -- first level of look tiers 1..4 (PetLook.Tier); P4: the 5 / 10 / 15 / 20 of the 20-level look, scaled
 
 function PetConfig.RarityOf(kind: string): Rarity?
 	local rarityId = PetConfig.Kinds[kind]
@@ -170,13 +174,15 @@ function PetConfig.Roll(eggId: string, rng: Random): (string?, string?)
 	return nil, nil -- unreachable while the weights are positive
 end
 
--- Coin bonus of one pet in permille: rarity base + LevelBonus per level above 1 (0 for an unknown kind).
+-- Coin bonus of one pet in permille (P4: only a pet with Cuteness has one): rarity base + CuteStep per Cuteness level above 1; 0 for
+-- a pet without Cuteness or of an unknown kind.
 function PetConfig.PetBonus(pet): number
 	local rarity = PetConfig.RarityOf(pet.Kind)
-	if not rarity then
+	local level = PetConfig.AptitudeLevel(pet, "Cuteness")
+	if not rarity or level < 1 then
 		return 0
 	end
-	return rarity.bonus + PetConfig.LevelBonus * (PetConfig.ClampLevel(pet.Level) - 1)
+	return rarity.bonus + PetConfig.CuteStep * (level - 1)
 end
 
 -- Coin multiplier of a list of equipped pets: 1 + min(+50 %, sum of their bonuses).
@@ -188,15 +194,17 @@ function PetConfig.Multiplier(pets: { any }): number
 	return 1 + math.min(PetConfig.MaxBonus, sum) / 1000
 end
 
--- XP needed to go from `level` to level + 1: round(10 × L^1.5); nil at the max level.
-function PetConfig.XpToNext(level: number): number?
+-- Cuteness XP needed to go from `level` to level + 1: round(CuteXpFactor × L^1.5); nil at the max level (the rarity cap may stop it
+-- earlier: AptitudeCap).
+PetConfig.CuteXpFactor = 100
+function PetConfig.CuteXpToNext(level: number): number?
 	if level >= PetConfig.MaxLevel then
 		return nil
 	end
-	return math.floor(10 * level ^ 1.5 + 0.5)
+	return math.floor(PetConfig.CuteXpFactor * level ^ 1.5 + 0.5)
 end
 
--- XP sources (GDD §7.4); every equipped pet receives the full amount of each event
+-- Care XP sources (GDD §7.4): every equipped pet receives the full amount of each event, trained by GainCareXp
 PetConfig.MedalXp = { 5, 10, 20 } -- MedalXp[medal] for the run's medal (Bronze / Silver / Gold); no medal: FinishXp
 PetConfig.FinishXp = 2 -- a finish without a medal
 PetConfig.CoinXp = 1 -- per collected coin
@@ -206,27 +214,6 @@ PetConfig.MaxMoveXp = 30 -- per run
 -- Movement XP of a run that covered `studs` horizontal studs.
 function PetConfig.MoveXp(studs: number): number
 	return math.min(PetConfig.MaxMoveXp, math.floor(studs / PetConfig.StudsPerXp))
-end
-
--- Adds `amount` XP to `pet` (mutates it): levels up while the XP reaches XpToNext, keeping the remainder; a pet at
--- the max level gains nothing (its XP stays 0). Returns the levels gained, or nil if the pet was already maxed.
-function PetConfig.GainXp(pet, amount: number): number?
-	local level = PetConfig.ClampLevel(pet.Level)
-	if level >= PetConfig.MaxLevel then
-		pet.Level, pet.XP = PetConfig.MaxLevel, 0
-		return nil
-	end
-	local xp = (if type(pet.XP) == "number" and pet.XP == pet.XP then math.max(0, math.floor(pet.XP)) else 0) + amount
-	local gained = 0
-	local need = PetConfig.XpToNext(level)
-	while need and xp >= need do
-		xp -= need
-		level += 1
-		gained += 1
-		need = PetConfig.XpToNext(level)
-	end
-	pet.Level, pet.XP = level, if need then xp else 0
-	return gained
 end
 
 -- Sell value of a pet of `kind` (0 for an unknown kind).
@@ -239,9 +226,17 @@ end
 -- its own level 1..cap raised by doing the job. Stored as Pets[uid].Apt = { [id] = { L, XP } } (XP = weighted field seconds
 -- towards the next level) and Pets[uid].Spec (Pest-control speciality). Ids are stored: never rename one. Rolled once (at hatch,
 -- or on load for pets from before E1b) and never rerolled. Only the ids in Shown do something yet (E1b: Tending, E2c: Scouting,
--- E4-thin: Pest control).
-PetConfig.Aptitudes = { "Tending", "Fertilising", "PestControl", "Weeding", "Scouting", "Crafting" }
-PetConfig.Shown = { Tending = true, Scouting = true, PestControl = true }
+-- E4-thin: Pest control, P4: Cuteness, the Coin bonus; P4 calls them "traits" in the UI). The list order is the display order.
+PetConfig.Aptitudes = { "Cuteness", "Tending", "Fertilising", "PestControl", "Weeding", "Scouting", "Crafting" }
+PetConfig.Shown = { Cuteness = true, Tending = true, Scouting = true, PestControl = true }
+-- P4: hatches roll only working traits; Fertilising / Weeding / Crafting join when they are built (pets that have them keep them)
+PetConfig.HatchPool = { "Cuteness", "Tending", "PestControl", "Scouting" }
+-- P4: chance of Cuteness by rarity when a trait slot is left after Tending (so the field model's Tending rates hold)
+PetConfig.CuteChance = { Common = 0.35, Uncommon = 0.4, Rare = 0.5, Epic = 0.6, Legendary = 0.7 }
+-- P4 care XP (obby XP, food, crops): goes to Cuteness while it is below its cap, otherwise to the lowest working trait below
+-- CareLevelCap, as CareSecondsPerXp weighted field seconds per XP (so Coins cannot buy the top work levels)
+PetConfig.CareLevelCap = 5
+PetConfig.CareSecondsPerXp = 36
 -- Scouting (E2c, a with-you aptitude): every medal finish on a world stage gives each equipped pet with Scouting XpPerFinish seconds of
 -- aptitude XP (same curve as Tending); the equipped scouts together add min(Cap, sum of PerStrength x Strength) to the stage's rare-seed
 -- meter points, and at PouchExtraAt or more the seed pouch drops 1 seed more
@@ -273,7 +268,9 @@ local function seeded(text: string): Random
 end
 
 -- Rolls the aptitudes of a pet of `kind` from `seed` (owner and uid, "userId/uid"): a table { [id] = { L = level, XP = 0 } } and the
--- speciality (or nil). `withTending` makes Tending one of them (decision 3: a hatch while the owner has no Tending pet).
+-- speciality (or nil). `withTending` makes Tending one of them (decision 3: a hatch while an owner with field access has no Tending pet).
+-- P4: from HatchPool only; Tending first (forced or by TendingChance), then Cuteness by CuteChance while a slot is left, the rest from
+-- the other pool traits with the kind's lean; slots the pool cannot fill take Cuteness, then Tending.
 function PetConfig.RollAptitudes(seed: string, kind: string, withTending: boolean?, level: number?): ({ [string]: any }, string?)
 	local rarityId = PetConfig.Kinds[kind] or "Common"
 	local rng = seeded("apt:" .. seed .. ":" .. kind)
@@ -286,9 +283,14 @@ function PetConfig.RollAptitudes(seed: string, kind: string, withTending: boolea
 		apt.Tending = { L = start, XP = 0 }
 		total -= 1
 	end
+	local cuteRoll = rng:NextNumber()
+	if total > 0 and cuteRoll < PetConfig.CuteChance[rarityId] then
+		apt.Cuteness = { L = start, XP = 0 }
+		total -= 1
+	end
 	local pool = {}
-	for _, id in PetConfig.Aptitudes do
-		if id ~= "Tending" then
+	for _, id in PetConfig.HatchPool do
+		if id ~= "Tending" and id ~= "Cuteness" then
 			table.insert(pool, id)
 		end
 	end
@@ -310,6 +312,12 @@ function PetConfig.RollAptitudes(seed: string, kind: string, withTending: boolea
 		apt[pool[chosen]] = { L = start, XP = 0 }
 		table.remove(pool, chosen)
 		total -= 1
+	end
+	for _, id in { "Cuteness", "Tending" } do
+		if total > 0 and not apt[id] then
+			apt[id] = { L = start, XP = 0 }
+			total -= 1
+		end
 	end
 	local spec = nil
 	if apt.PestControl then
@@ -407,6 +415,152 @@ function PetConfig.CleanAptitudes(pet): boolean
 		pet.Spec = nil
 	end
 	return any
+end
+
+-- P4: the pet's level, the highest level of its working traits (Shown), 1..MaxLevel (1 without one).
+function PetConfig.PetLevel(pet): number
+	local best = 1
+	for id in PetConfig.Shown do
+		best = math.max(best, PetConfig.AptitudeLevel(pet, id))
+	end
+	return math.clamp(math.floor(best), 1, PetConfig.MaxLevel)
+end
+
+-- Level up to which care XP raises trait `id` of a pet of `kind`: the rarity cap for Cuteness, CareLevelCap (at most the cap) otherwise.
+function PetConfig.CareLimit(kind: string, id: string): number
+	local cap = PetConfig.AptitudeCap(kind)
+	return if id == "Cuteness" then cap else math.min(cap, PetConfig.CareLevelCap)
+end
+
+-- The trait care XP trains now: Cuteness while below its cap, otherwise the lowest working trait below its care limit (ties in list
+-- order); nil when nothing can train.
+function PetConfig.CareTarget(pet): string?
+	local cute = PetConfig.AptitudeLevel(pet, "Cuteness")
+	if cute >= 1 and cute < PetConfig.CareLimit(pet.Kind, "Cuteness") then
+		return "Cuteness"
+	end
+	local best, bestLevel = nil, math.huge
+	for _, id in PetConfig.Aptitudes do
+		if PetConfig.Shown[id] and id ~= "Cuteness" then
+			local level = PetConfig.AptitudeLevel(pet, id)
+			if level >= 1 and level < PetConfig.CareLimit(pet.Kind, id) and level < bestLevel then
+				best, bestLevel = id, level
+			end
+		end
+	end
+	return best
+end
+
+-- Care XP trait `id` still takes to reach its care limit (Cuteness XP points; a work trait's field seconds / CareSecondsPerXp, rounded up).
+function PetConfig.CareNeed(pet, id: string): number
+	local level = PetConfig.AptitudeLevel(pet, id)
+	if level < 1 then
+		return 0
+	end
+	local entry = pet.Apt[id]
+	local limit = PetConfig.CareLimit(pet.Kind, id)
+	local need = 0
+	for current = level, limit - 1 do
+		need += if id == "Cuteness" then PetConfig.CuteXpToNext(current) or 0 else PetConfig.AptitudeXpToNext(current)
+	end
+	need = math.max(0, need - entry.XP)
+	return if id == "Cuteness" then need else math.ceil(need / PetConfig.CareSecondsPerXp)
+end
+
+-- The trait care XP trains now and its progress in care XP (Cuteness XP points; a work trait's field seconds / CareSecondsPerXp):
+-- id, xp, next; nil, 0, 0 when nothing can train (the UI's XP bars and the food stand).
+function PetConfig.CareProgress(pet): (string?, number, number)
+	local id = PetConfig.CareTarget(pet)
+	if not id then
+		return nil, 0, 0
+	end
+	local entry = pet.Apt[id]
+	if id == "Cuteness" then
+		return id, math.floor(entry.XP), PetConfig.CuteXpToNext(entry.L) or 0
+	end
+	local rate = PetConfig.CareSecondsPerXp
+	return id, math.floor(entry.XP / rate), math.ceil(PetConfig.AptitudeXpToNext(entry.L) / rate)
+end
+
+-- Copy of `pet` with its own Apt table (to preview GainCareXp without changing the state).
+function PetConfig.CopyForCare(pet)
+	local copy = table.clone(pet)
+	copy.Apt = {}
+	if type(pet.Apt) == "table" then
+		for id, entry in pet.Apt do
+			copy.Apt[id] = table.clone(entry)
+		end
+	end
+	return copy
+end
+
+-- Care XP the pet can still take in total (what GainCareXp would use before wasting the rest).
+function PetConfig.CareXpLeft(pet): number
+	local total = 0
+	for id in PetConfig.Shown do
+		total += PetConfig.CareNeed(pet, id)
+	end
+	return total
+end
+
+-- Adds `amount` care XP (obby XP, food, crops) to the pet (mutates its Apt): CareTarget gets it up to its care limit, the rest goes on
+-- to the next target. Returns the traits trained in order { { id, levels, level } } (empty when nothing could train) and the XP wasted.
+function PetConfig.GainCareXp(pet, amount: number): ({ { id: string, levels: number, level: number } }, number)
+	local trained = {}
+	local left = math.max(0, math.floor(amount))
+	while left > 0 do
+		local id = PetConfig.CareTarget(pet)
+		if not id then
+			break
+		end
+		local entry = pet.Apt[id]
+		local before = entry.L
+		local need = PetConfig.CareNeed(pet, id)
+		if left >= need then
+			entry.L, entry.XP = PetConfig.CareLimit(pet.Kind, id), 0
+			left -= need
+		else
+			if id == "Cuteness" then
+				entry.XP += left
+				while entry.XP >= (PetConfig.CuteXpToNext(entry.L) or math.huge) do
+					entry.XP -= PetConfig.CuteXpToNext(entry.L) :: number
+					entry.L += 1
+				end
+			else
+				entry.XP += left * PetConfig.CareSecondsPerXp
+				while entry.XP >= PetConfig.AptitudeXpToNext(entry.L) do
+					entry.XP -= PetConfig.AptitudeXpToNext(entry.L)
+					entry.L += 1
+				end
+			end
+			left = 0
+		end
+		table.insert(trained, { id = id, levels = entry.L - before, level = entry.L })
+	end
+	return trained, left
+end
+
+-- P4 profile migration (PlayerProfile Version 4): a pet from before P4 gets Cuteness once, at its old level (1..LegacyMaxLevel) scaled
+-- to 1..MaxLevel and rounded up (so its Coin bonus never drops), clamped to its cap, on top of its traits. A pet from before E1b (no
+-- aptitudes) first gets them rolled (starting at ceil(old level / LiveLevelStep)). Level / XP stay as stored. False for a bad record.
+function PetConfig.MigrateLegacyPet(pet, seed: string): boolean
+	if type(pet) ~= "table" or not PetConfig.Kinds[pet.Kind] then
+		return false
+	end
+	local old = if type(pet.Level) == "number" and pet.Level == pet.Level
+		then math.clamp(math.floor(pet.Level), 1, PetConfig.LegacyMaxLevel)
+		else 1
+	if not PetConfig.CleanAptitudes(pet) then
+		pet.Apt, pet.Spec = PetConfig.RollAptitudes(seed, pet.Kind, false, math.ceil(old / PetConfig.LiveLevelStep))
+	end
+	local cap = PetConfig.AptitudeCap(pet.Kind)
+	local level = math.min(cap, 1 + math.ceil((old - 1) * (PetConfig.MaxLevel - 1) / (PetConfig.LegacyMaxLevel - 1)))
+	local entry = pet.Apt.Cuteness
+	if entry and entry.L >= level then
+		return true
+	end
+	pet.Apt.Cuteness = { L = level, XP = 0 }
+	return true
 end
 
 -- Pet names (P3b, docs/ROADMAP.md → P3): stored raw as Pets[uid].Name, filtered by the server (TextService, broadcast) on every join and

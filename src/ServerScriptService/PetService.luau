@@ -6,12 +6,13 @@
 -- Remotes are created here in ReplicatedStorage.PetRemotes: Equip(uid), Unequip(uid),
 -- BuySlot(expectedSlot), SellPet(uid), RequestState() (client → server); PetsChanged(state) and
 -- Result(action, ok, detailOrReason) (server → client). The equipped pets are mirrored to the EquippedPets player
--- attribute ("Kind:Level:uid,…"). AddXP levels the equipped pets (stage finishes, coins, movement during a run). AddPet is the
+-- attribute ("Kind:Level:uid,…", level = PetConfig.PetLevel). AddXP gives care XP to the equipped pets (stage finishes, coins,
+-- movement during a run; P4: PetConfig.GainCareXp, Cuteness first, else the lowest working trait). AddPet is the
 -- "new pet" step of every hatched egg; free eggs wait in FreeEggs until GardenIncubators places them (FreeEggsChanged).
 -- A pet is either equipped, in a garden pen (P2a2) or on a field square (E1b), never two of them: Equip and SellPet reject a
 -- penned or field pet, and the garden (GardenService / GardenField) rejects an equipped one; PetsChanged.penned maps each penned
 -- uid to its pen index, PetsChanged.field each field pet's uid to its square. Every pet has aptitudes (Apt, Spec; PetConfig):
--- rolled at hatch (AddPet) and, for pets from before E1b, once on join.
+-- rolled at hatch (AddPet); pets from before P4 got Cuteness once in the profile migration (PlayerProfile, Version 4).
 -- Names (P3b): Rename(uid, text) stores the cleaned raw text as Pets[uid].Name; the server filters it (TextService, broadcast) at the
 -- rename and again on every join and keeps only the filtered text for display: PetsChanged carries the filtered name, never the raw
 -- one, and the player attribute PetConfig.NamesAttribute holds { [uid] = filtered } of the equipped, penned and field pets (PetFollow,
@@ -111,7 +112,7 @@ local function publish(player: Player)
 	local equipped = {}
 	for _, uid in profile.EquippedPets do
 		local pet = profile.Pets[uid]
-		table.insert(equipped, { Kind = pet.Kind, Level = pet.Level, uid = uid })
+		table.insert(equipped, { Kind = pet.Kind, Level = PetConfig.PetLevel(pet), uid = uid })
 	end
 	player:SetAttribute(PetConfig.AttributeName, PetConfig.EncodeEquipped(equipped))
 	-- names (P3b): the client gets the filtered name in place of the stored one; others see those of the pets they can see
@@ -167,12 +168,13 @@ function PetService.AddPet(player: Player, kind: string): (string?, boolean?)
 	end
 	local uid = tostring(profile.NextPetUid)
 	profile.NextPetUid += 1
-	local hasTender = false -- E1b decision 3: a hatch while the owner has no Tending pet always gets Tending
+	-- E1b decision 3: a hatch while the owner has no Tending pet always gets Tending (P4: only with field access, where it works)
+	local hasTender = not GardenConfig.HasFieldAccess(player.UserId)
 	for _, pet in profile.Pets do
 		hasTender = hasTender or PetConfig.AptitudeLevel(pet, "Tending") > 0
 	end
 	local apt, spec = PetConfig.RollAptitudes(player.UserId .. "/" .. uid, kind, not hasTender)
-	profile.Pets[uid] = { Kind = kind, Level = 1, XP = 0, Apt = apt, Spec = spec }
+	profile.Pets[uid] = { Kind = kind, Apt = apt, Spec = spec }
 	local equipped = #profile.EquippedPets < profile.PetSlots
 	if equipped then
 		table.insert(profile.EquippedPets, uid)
@@ -180,9 +182,9 @@ function PetService.AddPet(player: Player, kind: string): (string?, boolean?)
 	return uid, equipped
 end
 
--- Gives `amount` XP to every equipped pet (GDD §7.4: each gets the full amount; level-ups keep the remainder, a
--- level-20 pet gains nothing). Saved by the autosave and on leave. Returns how many pets gained XP (0 while the
--- profile is not loaded or nothing is equipped).
+-- Gives `amount` care XP to every equipped pet (GDD §7.4: each gets the full amount, PetConfig.GainCareXp; a pet with nothing left
+-- to train gains nothing). Saved by the autosave and on leave. Returns how many pets gained XP (0 while the profile is not loaded or
+-- nothing is equipped).
 function PetService.AddXP(player: Player, amount: number): number
 	local profile = PlayerProfile.Get(player)
 	if not profile or type(amount) ~= "number" or amount < 1 then
@@ -191,7 +193,7 @@ function PetService.AddXP(player: Player, amount: number): number
 	amount = math.floor(amount)
 	local gaining = 0
 	for _, pet in equippedPets(profile) do
-		if PetConfig.GainXp(pet, amount) then
+		if #PetConfig.GainCareXp(pet, amount) > 0 then
 			gaining += 1
 		end
 	end
@@ -201,15 +203,14 @@ function PetService.AddXP(player: Player, amount: number): number
 	return gaining
 end
 
--- Drops equipped uids that no longer exist or exceed the slots (corrupt or hand-edited records). Pets without aptitudes (from before
--- E1b) get them rolled once from the owner and uid, starting at ceil(pet level / LiveLevelStep).
+-- Drops equipped uids that no longer exist or exceed the slots (corrupt or hand-edited records). A pet whose aptitudes are missing or
+-- corrupt (the profile migration rolls them for pets from before E1b) gets a fresh set rolled from the owner and uid.
 -- Returns true when aptitudes were rolled (the profile should be saved).
 local function sanitize(profile, player: Player): boolean
 	local rolled = false
 	for uid, pet in profile.Pets do
 		if not PetConfig.CleanAptitudes(pet) then
-			local level = math.ceil(PetConfig.ClampLevel(pet.Level) / PetConfig.LiveLevelStep)
-			pet.Apt, pet.Spec = PetConfig.RollAptitudes(player.UserId .. "/" .. uid, pet.Kind, false, level)
+			pet.Apt, pet.Spec = PetConfig.RollAptitudes(player.UserId .. "/" .. uid, pet.Kind, false, 1)
 			rolled = true
 		end
 	end

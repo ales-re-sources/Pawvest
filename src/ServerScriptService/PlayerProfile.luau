@@ -7,8 +7,9 @@
 
 local Players = game:GetService("Players")
 local DataStoreService = game:GetService("DataStoreService")
+local PetConfig = require(game:GetService("ReplicatedStorage"):WaitForChild("PetConfig"))
 
-local PROFILE_VERSION = 3 -- 2: pets (P1a); 3: Coin scale ×10 (R2)
+local PROFILE_VERSION = 4 -- 2: pets (P1a); 3: Coin scale ×10 (R2); 4: pet traits, Cuteness for every older pet (P4)
 local COIN_SCALE = 10 -- R2: Coins stored before version 3 (and legacy PlayerCoins) are multiplied once
 local AUTOSAVE_INTERVAL = 60
 local MAX_ATTEMPTS = 3
@@ -50,7 +51,7 @@ local function newProfile()
 		CollectedCoins = {}, -- [coinId] = true (M4)
 		Talents = {}, -- [talentId] = level (M2)
 		RunsToday = {}, -- { Day = UTC day number, [stageKey] = finishes that day } (R1)
-		Pets = {}, -- [uid string] = { Kind, Level, XP } (P1a)
+		Pets = {}, -- [uid string] = { Kind, Apt, Spec, Name, Renamed } (P1a; Level / XP only on pets from before P4, frozen)
 		EquippedPets = {}, -- { uid, … } in equip order, at most PetSlots (P1a)
 		PetSlots = 1, -- equip slots owned (P1a)
 		NextPetUid = 1, -- next uid to hand out, never reused (P1a)
@@ -67,10 +68,16 @@ end
 
 -- Fills fields added after the record was written and upgrades older versions (each step runs once:
 -- the record is stamped with PROFILE_VERSION afterwards).
-local function reconcile(data)
+local function reconcile(data, userId: number)
 	local version = type(data.Version) == "number" and data.Version or 1
 	if version < 3 and type(data.Coins) == "number" then
 		data.Coins *= COIN_SCALE
+	end
+	if version < 4 and type(data.Pets) == "table" then
+		-- P4: every pet from before the traits rework gets Cuteness (the Coin bonus) at its old level, scaled to 1..10
+		for uid, pet in data.Pets do
+			PetConfig.MigrateLegacyPet(pet, userId .. "/" .. tostring(uid))
+		end
 	end
 	for field, default in newProfile() do
 		if data[field] == nil then
@@ -169,7 +176,7 @@ local function load(player)
 		migrated = ok
 		fresh[player] = ok and profile.Coins == 0 and next(profile.BestTimes) == nil or nil
 	elseif ok and type(data) == "table" then
-		profile = reconcile(data)
+		profile = reconcile(data, player.UserId)
 	elseif ok then
 		ok, data = false, "record is not a table" -- loc: ignore (log message)
 	end

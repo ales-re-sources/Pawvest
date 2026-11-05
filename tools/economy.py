@@ -71,9 +71,9 @@ ARCHETYPES = [
 PEN_SETS = [
     ("1 Common Lv1", [("Common", 1, 1)]),
     ("3 starter Lv1", [("Common", 1, 2), ("Uncommon", 1, 1)]),
-    ("6 mixed Lv5 (GDD)", [("Common", 5, 2), ("Uncommon", 5, 2), ("Rare", 5, 1), ("Epic", 5, 1)]),
-    ("strong Lv10 (GDD)", [("Legendary", 10, 2), ("Epic", 10, 2), ("Rare", 10, 2)]),
-    ("6 Legendary Lv20", [("Legendary", 20, 6)]),
+    ("6 mixed Lv3 (GDD)", [("Common", 3, 2), ("Uncommon", 3, 2), ("Rare", 3, 1), ("Epic", 3, 1)]),  # P4: pet levels 1-10 (were Lv5 / 10 / 20)
+    ("strong Lv5 (GDD)", [("Legendary", 5, 2), ("Epic", 5, 2), ("Rare", 5, 2)]),
+    ("6 Legendary Lv10", [("Legendary", 10, 6)]),
 ]
 
 # Formulas of the Luau code that the model re-implements: the snippet must still be in the file (whitespace-insensitive).
@@ -83,8 +83,9 @@ FORMULAS = [
     ("StageConfig.luau", "* StageConfig.RunRewardDecay ^ finishesToday"),
     ("StageConfig.luau", "math.max(StageConfig.RunRewardFloor, math.floor(raw + 0.5 + 1e-9))"),
     ("StageConfig.luau", "coins += StageConfig.Medals[medal].basePayout * stage.rewardFactor"),
-    ("PetConfig.luau", "math.floor(10 * level ^ 1.5 + 0.5)"),
-    ("GardenConfig.luau", "rate * (1000 + GardenConfig.LevelRate * (PetConfig.ClampLevel(pet.Level) - 1))"),
+    ("PetConfig.luau", "math.floor(PetConfig.CuteXpFactor * level ^ 1.5 + 0.5)"),
+    ("PetConfig.luau", "return rarity.bonus + PetConfig.CuteStep * (level - 1)"),
+    ("GardenConfig.luau", "rate * (1000 + GardenConfig.MaxLevelRate * (PetConfig.PetLevel(pet) - 1) // (PetConfig.MaxLevel - 1))"),
 ]
 
 
@@ -391,7 +392,11 @@ def load():
     P["slot_prices"] = luau("PetConfig.luau", "PetConfig.SlotPrices")
     P["rename_price"] = luau("PetConfig.luau", "PetConfig.RenamePrice")  # P3b: every pet name after the first
     P["max_level"] = luau("PetConfig.luau", "PetConfig.MaxLevel")
-    P["level_bonus"] = luau("PetConfig.luau", "PetConfig.LevelBonus")
+    P["cute_step"] = luau("PetConfig.luau", "PetConfig.CuteStep")  # P4: Cuteness carries the Coin bonus
+    P["cute_xp_factor"] = luau("PetConfig.luau", "PetConfig.CuteXpFactor")
+    P["cute_chance"] = luau("PetConfig.luau", "PetConfig.CuteChance")
+    P["apt_count"] = luau("PetConfig.luau", "PetConfig.AptitudeCount")
+    P["care"] = [luau("PetConfig.luau", "PetConfig.CareLevelCap"), luau("PetConfig.luau", "PetConfig.CareSecondsPerXp")]
     P["max_bonus"] = luau("PetConfig.luau", "PetConfig.MaxBonus")
     P["medal_xp"] = luau("PetConfig.luau", "PetConfig.MedalXp")
     P["finish_xp"] = luau("PetConfig.luau", "PetConfig.FinishXp")
@@ -401,7 +406,7 @@ def load():
 
     P["pen_prices"] = luau("GardenConfig.luau", "GardenConfig.PenPrices")
     P["pen_rates"] = luau("GardenConfig.luau", "GardenConfig.BaseRates")
-    P["pen_level_rate"] = luau("GardenConfig.luau", "GardenConfig.LevelRate")
+    P["pen_level_rate"] = luau("GardenConfig.luau", "GardenConfig.MaxLevelRate")  # P4: permille added at the max level
     P["offline_cap_h"] = luau("GardenConfig.luau", "GardenConfig.OfflineCapSeconds") / 3600
     P["incubator_prices"] = luau("GardenConfig.luau", "GardenConfig.IncubatorPrices")
     P["foods"] = [{"id": f["id"], "price": f["price"], "xp": f["xp"]} for f in luau("GardenConfig.luau", "GardenConfig.Foods")]
@@ -428,7 +433,8 @@ def pin_values(P):
         "eggs": {k: [e["price"], e["hatch_s"], e["weights"]] for k, e in P["eggs"].items()},
         "slot_prices": P["slot_prices"],
         "rename_price": P["rename_price"],
-        "pet_levels": [P["max_level"], P["level_bonus"], P["max_bonus"]],
+        "pet_levels": [P["max_level"], P["cute_step"], P["max_bonus"]],
+        "cuteness": [P["cute_chance"], P["cute_xp_factor"], P["apt_count"], P["care"]],  # P4
         "pet_xp": [P["medal_xp"], P["finish_xp"], P["coin_xp"], P["studs_per_xp"], P["max_move_xp"]],
         "pen_prices": P["pen_prices"],
         "pen_rates": P["pen_rates"],
@@ -531,7 +537,7 @@ def obby_sim(P, stages, minutes):
 
 
 def pen_rate(P, rarity, level):
-    return P["pen_rates"][rarity] * (1000 + P["pen_level_rate"] * (level - 1)) / 1000
+    return P["pen_rates"][rarity] * (1000 + P["pen_level_rate"] * (level - 1) // (P["max_level"] - 1)) / 1000
 
 
 def pen_set_rate(P, entries):
@@ -558,8 +564,28 @@ def pen_hours(P, arch, weighted=True):
     return on * wo / arch["period_days"], off * wf / arch["period_days"]
 
 
-def pet_bonus(P, kind_rarity, level):
-    return P["rarities"][kind_rarity]["bonus"] + P["level_bonus"] * (level - 1)
+def pet_bonus(P, kind_rarity, cute_level):
+    """P4: Coin bonus (permille) of a pet with Cuteness at `cute_level` (0 = no Cuteness)."""
+    return P["rarities"][kind_rarity]["bonus"] + P["cute_step"] * (cute_level - 1) if cute_level >= 1 else 0
+
+
+def roll_shares(P, rarity):
+    """P4: shares of hatched pets of `rarity` with Tending and with Cuteness under PetConfig.RollAptitudes (unforced): Tending first by
+    TendingChance, Cuteness by CuteChance while a slot is left, Pest control and Scouting fill, slots left over take Cuteness, then Tending."""
+    base, extra = P["apt_count"][rarity]
+    t, c = P["crop_cfg"]["tending"][rarity], P["cute_chance"][rarity]
+    tend = cute = 0.0
+    for n, pn in ((base, 1 - extra), (base + 1, extra)):
+        for has_t, pt in ((True, t), (False, 1 - t)):
+            m = n - (1 if has_t else 0)
+            for has_c, pc in ((True, c if m > 0 else 0.0), (False, 1 - c if m > 0 else 1.0)):
+                left = m - (1 if has_c else 0) - 2  # the pool has two traits
+                c2 = has_c or left > 0
+                t2 = has_t or left > 1
+                w = pn * pt * pc
+                tend += w * t2
+                cute += w * c2
+    return tend, cute
 
 
 # --------------------------------------------------------------------------------------------------------------------
@@ -695,8 +721,9 @@ def learn_runs(stage):
     return SIM["learn_base"] + SIM["learn_per_order"] * stage["order"]
 
 
-def xp_next(level):
-    return lua_round(10 * level ** 1.5)
+def xp_next(P, level):
+    """P4: Cuteness XP from `level` to level + 1."""
+    return lua_round(P["cute_xp_factor"] * level ** 1.5)
 
 
 def make_crops(scale, catalogue):
@@ -916,7 +943,8 @@ class Player:
         self.talents = {t: 0 for t in P["talents"]}
         self.slots, self.pens, self.incs = 1, 1, 1
         self.lvl = {fam: 0 for fam in FAMILIES}  # owned levels of the field sinks
-        self.pets = []  # {"r": rarity, "lvl": n, "xp": n, "g": Green thumb, "where": "eq" | "pen" | "spare"}
+        self.pets = []  # {"r": rarity, "c": Cuteness, "lvl"/"xp": Cuteness level / XP, "g": Tending ("apt"/"axp"), "sc": Scouting, "where"}
+        self.crng = random.Random(15485863 + rng.getstate()[1][0] % 100000)  # P4 Cuteness rolls: own stream, the others stay as they were
         self.free_eggs = 1  # the launch egg
         self.mult = 1.0
         self.afford, self.bought = {}, {}
@@ -952,10 +980,50 @@ class Player:
 
     # ---- pets -------------------------------------------------------------------------------------------------
     def bonus(self, p):
-        return self.P["rarities"][p["r"]]["bonus"] + self.P["level_bonus"] * (p["lvl"] - 1)
+        return pet_bonus(self.P, p["r"], p["lvl"] if p["c"] else 0)
+
+    def plevel(self, p):
+        """P4: the pet level, its highest working trait."""
+        return max(p["lvl"] if p["c"] else 1, p["apt"] if p["g"] else 1, p["slv"] if p.get("sc") else 1)
 
     def rate(self, p):
-        return pen_rate(self.P, p["r"], p["lvl"])
+        return pen_rate(self.P, p["r"], self.plevel(p))
+
+    def can_train(self, p):
+        cap = FIELD["pets"]["cap"][p["r"]]
+        if p["c"] and p["lvl"] < cap:
+            return True
+        lim = min(cap, self.P["care"][0])
+        return bool((p["g"] and p["apt"] < lim) or (p.get("sc") and p["slv"] < lim))
+
+    def care(self, p, xp):
+        """P4 care XP (PetConfig.GainCareXp): Cuteness up to its cap, then the lowest working trait up to the care cap, as field hours."""
+        cap = FIELD["pets"]["cap"][p["r"]]
+        if p["c"] and p["lvl"] < cap:
+            p["xp"] += xp
+            xp = 0
+            while p["lvl"] < cap and p["xp"] >= xp_next(self.P, p["lvl"]):
+                p["xp"] -= xp_next(self.P, p["lvl"])
+                p["lvl"] += 1
+            if p["lvl"] >= cap:
+                xp, p["xp"] = p["xp"], 0
+        lim = min(cap, self.P["care"][0])
+        while xp > 0:
+            work = []
+            if p["g"] and p["apt"] < lim:
+                work.append(("apt", "axp"))
+            if p.get("sc") and p["slv"] < lim:
+                work.append(("slv", "sxp"))
+            if not work:
+                return
+            lv, xk = min(work, key=lambda k: p[k[0]])
+            p[xk] += xp * self.P["care"][1] / 3600
+            xp = 0
+            while p[lv] < lim and p[xk] >= apt_xp_next(p[lv]):
+                p[xk] -= apt_xp_next(p[lv])
+                p[lv] += 1
+            if p[lv] >= lim:
+                xp, p[xk] = p[xk] * 3600 / self.P["care"][1], 0.0
 
     def manage(self):
         """Equip the best pets by bonus; pen / post the best of the rest; sell weak spares."""
@@ -982,17 +1050,9 @@ class Player:
         self.mult = 1 + min(P["max_bonus"], sum(self.bonus(p) for p in self.eq)) / 1000
 
     def add_xp(self, amount):
-        levelled = False
         for p in self.eq:
-            if p["lvl"] >= self.P["max_level"]:
-                continue
-            p["xp"] += amount
-            while p["lvl"] < self.P["max_level"] and p["xp"] >= xp_next(p["lvl"]):
-                p["xp"] -= xp_next(p["lvl"])
-                p["lvl"] += 1
-                levelled = True
-        if levelled:
-            self.mult = 1 + min(self.P["max_bonus"], sum(self.bonus(p) for p in self.eq)) / 1000
+            self.care(p, amount)
+        self.mult = 1 + min(self.P["max_bonus"], sum(self.bonus(p) for p in self.eq)) / 1000
 
     def hatch(self, limit):
         """Start up to `limit` free eggs (bought eggs are hatched where they are bought); returns hatched count."""
@@ -1006,6 +1066,7 @@ class Player:
         w = self.P["eggs"][egg]["weights"]
         r = self.rng.choices(list(w), weights=list(w.values()))[0]
         self.pets.append({"r": r, "lvl": 1, "xp": 0, "g": self.grng.random() < FIELD["pets"]["tending"][r], "apt": 1, "axp": 0.0, "where": "spare",
+                          "c": self.crng.random() < roll_shares(self.P, r)[1],
                           "sc": self.srng.random() < FIELD["obby"]["scout"]["chance"][r], "slv": 1, "sxp": 0.0})
 
     def tending_xp(self, hours):
@@ -1458,14 +1519,12 @@ class Player:
                 self.manage()
             budget = self.coins * SIM["food_share"][self.policy]
             for food in sorted(P["foods"], key=lambda f: -f["xp"]):
-                while budget >= food["price"] and any(p["where"] == "eq" and p["lvl"] < P["max_level"] for p in self.pets):
-                    tgt = min((p for p in self.pets if p["where"] == "eq" and p["lvl"] < P["max_level"]), key=lambda p: p["lvl"])
+                while budget >= food["price"] and any(p["where"] == "eq" and self.can_train(p) for p in self.pets):
+                    # P4: cute pets first (the bonus), the lowest Cuteness level first
+                    tgt = min((p for p in self.pets if p["where"] == "eq" and self.can_train(p)), key=lambda p: (not p["c"], p["lvl"]))
                     budget -= food["price"]
                     self.pay("food", food["price"])
-                    tgt["xp"] += food["xp"]
-                    while tgt["lvl"] < P["max_level"] and tgt["xp"] >= xp_next(tgt["lvl"]):
-                        tgt["xp"] -= xp_next(tgt["lvl"])
-                        tgt["lvl"] += 1
+                    self.care(tgt, food["xp"])
                     self.manage()
 
     def day(self, d):
@@ -1506,7 +1565,7 @@ class Player:
         self.lvl = owned
         row.update({
             "stage": len(self.done), "mult": self.mult, "bank": self.coins, "pets": len(self.pets),
-            "eq_lvl": sum(p["lvl"] for p in self.eq) / len(self.eq) if self.eq else 0, "pen_h": pen_rate_after,
+            "eq_lvl": sum(self.plevel(p) for p in self.eq) / len(self.eq) if self.eq else 0, "pen_h": pen_rate_after,
             "talents": sum(self.talents.values()), "pens": self.pens, "hour1": h1,
             "sq": self.sq, "cov": self.covered(), "post_g": self.post_g, "renown": self.renown_level(),
             "apt": max((p["apt"] for p in self.pets if p["where"] == "pen" and p["g"]), default=0),
@@ -1654,9 +1713,9 @@ def reproduction(P):
         ("Gold runs, first 10 of a day, factor 1.5", 668, gold_day(by_factor[1.5])),
         ("Gold runs, first 10 of a day, factor 1.0", 446, gold_day(by_factor[1.0])),
         ("Gold runs, first 10 of a day, factor 0.5 (Tutorial)", 227, gold_day(by_factor[0.5])),
-        ("Pen income, 6 mixed Lv5 pens, Coins/h", 197, round(pen_set_rate(P, mixed))),
-        ("Pen income, strong set Lv10, Coins/h", 626, round(pen_set_rate(P, [e for nme, e in PEN_SETS if nme.startswith("strong")][0]))),
-        ("Pen income, 6 Legendary Lv20, Coins/h", 1267, round(pen_set_rate(P, [("Legendary", 20, 6)]))),
+        ("Pen income, 6 mixed Lv3 pens, Coins/h", 199, round(pen_set_rate(P, mixed))),  # P4 levels 1-10 (Lv5 / 10 / 20 gave 197 / 626)
+        ("Pen income, strong set Lv5, Coins/h", 615, round(pen_set_rate(P, [e for nme, e in PEN_SETS if nme.startswith("strong")][0]))),
+        ("Pen income, 6 Legendary Lv10, Coins/h", 1267, round(pen_set_rate(P, [("Legendary", 10, 6)]))),
         ("Stage unlocks of stages 1-5 (GDD §6 'today')", 6700, sum(s["unlock_price"] for s in S if 1 <= s["order"] <= 5)),
         ("Pens (all 6)", 32500, sum(P["pen_prices"])),
         ("Incubators (all 3)", 17000, sum(P["incubator_prices"])),
@@ -1770,16 +1829,18 @@ def cmd_report(P):
     add("Pens", "/".join(n(c) for c in P["pen_prices"]), sum(P["pen_prices"]))
     add("Incubators", "/".join(n(c) for c in P["incubator_prices"]), sum(P["incubator_prices"]))
     print(table(["Group", "Item", "Total"], sink_rows, right_from=2))
-    xp = sum(round(10 * lv ** 1.5) for lv in range(1, P["max_level"]))
+    xp = sum(xp_next(P, lv) for lv in range(1, P["max_level"]))
     feast = max(P["foods"], key=lambda f: f["xp"])
     print(f"\n  One-time sinks total {n(sink_total)} vs one-time faucet {n(one_time)}: {sink_total / one_time:.2f}x. "
-          f"Open-ended sinks: eggs, food (Lv1 -> {P['max_level']} = {n(xp)} XP = {n(math.ceil(xp / feast['xp']) * feast['price'])} Coins in {feast['id']}s per pet).")
+          f"Open-ended sinks: eggs, food (Cuteness Lv1 -> {P['max_level']} = {n(xp)} XP = {n(math.ceil(xp / feast['xp']) * feast['price'])} Coins in {feast['id']}s per pet).")
     for k, e in P["eggs"].items():
         w = e["weights"]
         tw = sum(w.values())
         resale = sum(w[r] / tw * P["rarities"][r]["sell"] for r in w)
-        bonus = sum(w[r] / tw * P["rarities"][r]["bonus"] for r in w) / 10
-        print(f"  {k} egg {n(e['price'])}: expected resale {n(resale)} ({resale / e['price']:.0%} of the price), expected base bonus +{bonus:.1f} %")
+        cute = sum(w[r] / tw * roll_shares(P, r)[1] for r in w)
+        bonus = sum(w[r] / tw * roll_shares(P, r)[1] * P["rarities"][r]["bonus"] for r in w) / 10
+        print(f"  {k} egg {n(e['price'])}: expected resale {n(resale)} ({resale / e['price']:.0%} of the price), Cuteness {cute:.0%}, "
+              f"expected base bonus +{bonus:.1f} %")
 
     print("\n3. Required talent sets vs medals earned before (GDD §6, garden income off; share must be <= 65 %)")
     rows = [(f"stage {st}", n(c), n(m), f"{sh:.0%}", tick(sh <= PLANNED["required_share_max"])) for st, c, m, sh in required_sets(P)]

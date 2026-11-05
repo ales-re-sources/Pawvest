@@ -541,7 +541,7 @@ GardenService.AddStateField("field", function(profile)
 		pets[tostring(entry.Square)] = {
 			uid = uid,
 			kind = pet.Kind,
-			level = PetConfig.ClampLevel(pet.Level),
+			level = PetConfig.PetLevel(pet),
 			job = entry.Job,
 			apt = apt.L,
 			xp = math.floor(apt.XP),
@@ -609,7 +609,7 @@ function GardenField.PlotField(player: Player)
 		local pet = profile.Pets[uid]
 		local tending = PetConfig.AptitudeLevel(pet, "Tending")
 		local guard = PetConfig.AptitudeLevel(pet, "PestControl")
-		table.insert(pets, string.format("%s:%d:%s:%d:%d:%d", pet.Kind, PetConfig.ClampLevel(pet.Level), uid, entry.Square, tending, guard))
+		table.insert(pets, string.format("%s:%d:%s:%d:%d:%d", pet.Kind, PetConfig.PetLevel(pet), uid, entry.Square, tending, guard))
 	end
 	table.sort(pets, function(a, b)
 		return tonumber(string.match(a, ":(%d+):%d+$")) < tonumber(string.match(b, ":(%d+):%d+$"))
@@ -778,7 +778,8 @@ sellEvent.OnServerEvent:Connect(function(player, cropId, amount)
 	done(player, "Sell", { crop = crop.id, count = amount, paid = paid })
 end)
 
--- E1a3: feeds `amount` held crops to one owned pet (equipped, penned, resting or on the field), clamped to what it needs for the max level.
+-- E1a3: feeds `amount` held crops to one owned pet (equipped, penned, resting or on the field), clamped to the care XP it can still use
+-- (P4: PetConfig.GainCareXp, Cuteness first, else the lowest working trait below the care cap).
 feedCropEvent.OnServerEvent:Connect(function(player, uid, cropId, amount)
 	local crop = type(cropId) == "string" and CropConfig.ById[cropId]
 	if not (type(uid) == "string" and crop and GardenService.WholeNumber(amount) and amount >= 1) or not GardenService.Allow(player) then
@@ -798,11 +799,11 @@ feedCropEvent.OnServerEvent:Connect(function(player, uid, cropId, amount)
 		return reject(player, "FeedCrop", "items")
 	end
 	local toMax = GardenConfig.XpToMax(pet)
-	if toMax <= 0 or PetConfig.ClampLevel(pet.Level) >= PetConfig.MaxLevel then
+	if toMax <= 0 then
 		return reject(player, "FeedCrop", "maxed")
 	end
 
-	local used = math.min(amount, math.ceil(toMax / crop.xp)) -- the last crop may go past the max level (that XP is lost)
+	local used = math.min(amount, math.ceil(toMax / crop.xp)) -- the last crop may go past what the pet can use (that XP is lost)
 	local part = garden.ItemSize[crop.id] * used / held -- the average size leaves, as in a sale
 	garden.Items[crop.id] = held - used
 	garden.ItemSize[crop.id] -= part
@@ -813,8 +814,15 @@ feedCropEvent.OnServerEvent:Connect(function(player, uid, cropId, amount)
 	if GardenConfig.IsPenned(profile, uid) then
 		GardenService.SettleAndNotify(player) -- pen production up to now is paid at the old level (no pens after the E1b conversion)
 	end
-	local levels = PetConfig.GainXp(pet, crop.xp * used)
-	done(player, "FeedCrop", { uid = uid, crop = crop.id, used = used, xp = crop.xp * used, level = pet.Level, levels = levels })
+	local trained, wasted = PetConfig.GainCareXp(pet, crop.xp * used)
+	done(player, "FeedCrop", {
+		uid = uid,
+		crop = crop.id,
+		used = used,
+		xp = crop.xp * used - wasted,
+		level = PetConfig.PetLevel(pet),
+		trained = trained, -- { { id, levels, level } } in order (P4)
+	})
 end)
 
 buySquareEvent.OnServerEvent:Connect(function(player, square, expected)
