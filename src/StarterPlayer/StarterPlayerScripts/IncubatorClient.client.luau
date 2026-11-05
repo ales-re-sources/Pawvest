@@ -383,7 +383,17 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 			Locale.PetKindName(tostring(detail.kind)),
 			Locale.RarityName(tostring(detail.rarity))
 		)
-		flash(Locale.T(if detail.equipped then "incubator.hatched.follows" else "incubator.hatched.panel", { pet = pet }), COLOR_OK)
+		local text = Locale.T(if detail.equipped then "incubator.hatched.follows" else "incubator.hatched.panel", { pet = pet })
+		local names = {} -- P4: the traits it was born with
+		for _, id in (if type(detail.traits) == "table" then detail.traits else {}) do
+			if PetConfig.Shown[id] then
+				table.insert(names, Locale.T("pet.apt." .. id))
+			end
+		end
+		if #names > 0 then
+			text ..= "\n" .. Locale.T("incubator.hatched.traits", { traits = table.concat(names, " · ") })
+		end
+		flash(text, COLOR_OK)
 	end
 end)
 

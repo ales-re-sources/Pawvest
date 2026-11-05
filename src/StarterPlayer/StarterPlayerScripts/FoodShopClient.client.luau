@@ -1,9 +1,10 @@
 -- Food shop client (docs/GDD.md §7.6, P2b2): the prompt on the garden plaza's food stand opens the food panel: every owned
--- pet with its level, XP and the XP still needed for level 20, and one feed button per food. Display only: a click just
--- names a pet and a food; GardenFood validates the distance, the price and the level. The GUI is built here (no Studio GUI).
+-- pet with its level, the trait food trains now and its XP (P4: PetConfig.CareProgress), the care XP it can still use, and one
+-- feed button per food. Display only: a click just names a pet and a food; GardenFood validates the distance, the price and that
+-- something can train. The GUI is built here (no Studio GUI).
 -- Stud-brick look (StudStyle, red): title strip, pet rows with a PetPortrait, the foods as brick buttons that say what
--- they give and cost ("🍓 +25 XP" over "50 Coins"; a pet at the max level shows a "Max level" tag instead).
--- Tooltip above a food button: food and price, what it does to that pet ("Owl Lv 6 → Lv 8", XP wasted past Lv 20) and
+-- they give and cost ("🍓 +25 XP" over "50 Coins"; a pet with nothing left to train shows a "Max level" / "Trained" tag instead).
+-- Tooltip above a food button: food and price, what it does to that pet ("Owl Lv 6 · Cuteness → Lv 8", XP wasted) and
 -- the Coins still missing. With a mouse it shows on hover and one click feeds; after a touch the first tap selects the
 -- button (white outline + tooltip, "Tap again to feed") and a second tap on it within ARM_SECONDS feeds; a tap anywhere
 -- else or the timeout cancels. Touch vs mouse is taken from the last input type, not from the device.
@@ -49,7 +50,7 @@ local REJECT_KEYS = {
 }
 
 local function rejectText(reason: string?): string
-	return Locale.T(reason and REJECT_KEYS[reason] or "common.reject.failed", { max = PetConfig.MaxLevel })
+	return Locale.T(reason and REJECT_KEYS[reason] or "common.reject.failed")
 end
 
 local function create(className: string, props, children)
@@ -216,22 +217,35 @@ local function hex(color: Color3): string
 	return "#" .. color:ToHex()
 end
 
--- What `food` does to the pet: "Owl Lv 6 → Lv 8", "Owl Lv 6 · XP 23 → 48/147", "… · 600 XP wasted"
+-- What `food` does to the pet (P4: care XP, PetConfig.GainCareXp): "Owl Lv 6 · Cuteness → Lv 8", "Owl Lv 6 · Cuteness XP 23 → 48/147",
+-- "… · 600 XP wasted"
 local function outcome(entry, food): string
 	local pet = PetClient.State.pets[entry.uid]
-	local copy = { Level = entry.level, XP = entry.xp }
-	local gained = PetConfig.GainXp(copy, food.xp) or 0
+	local copy = PetConfig.CopyForCare(pet)
+	local trained, wasted = PetConfig.GainCareXp(copy, food.xp)
 	local kind = string.format("<font color='%s'>%s</font>", hex(entry.rarity.color), Locale.PetKindName(entry.kind))
 	local name = Locale.T("pet.nameLevel", { kind = kind, level = entry.level })
-	local text
-	if gained > 0 then
-		text = Locale.T("food.outcome.levelUp", { name = name, level = copy.Level })
-	else
-		text = Locale.T("food.outcome.xp", { name = name, from = entry.xp, to = copy.XP, next = entry.xpNext })
+	local leveled = nil -- the last trait that gains a level
+	for _, step in trained do
+		if step.levels > 0 then
+			leveled = step
+		end
 	end
-	local wasted = food.xp - GardenConfig.XpToMax(pet)
+	local text
+	if leveled then
+		text = Locale.T("food.outcome.levelUp", { name = name, trait = Locale.T("pet.apt." .. leveled.id), level = leveled.level })
+	else
+		local _, to = PetConfig.CareProgress(copy)
+		text = Locale.T("food.outcome.xp", {
+			name = name,
+			trait = Locale.T("pet.apt." .. (entry.care or "Cuteness")),
+			from = entry.xp,
+			to = to,
+			next = entry.xpNext,
+		})
+	end
 	if wasted > 0 then
-		text ..= "\n" .. Locale.T("food.wasted", { xp = wasted, max = PetConfig.MaxLevel })
+		text ..= "\n" .. Locale.T("food.wasted", { xp = wasted })
 	end
 	return text
 end
@@ -328,16 +342,17 @@ end
 local function petRow(order: number, entry)
 	local pet = PetClient.State.pets[entry.uid]
 	local toMax = GardenConfig.XpToMax(pet)
-	local maxed = entry.level >= PetConfig.MaxLevel
-	local detail = if maxed
-		then Locale.T("food.detail.max", { where = where(entry) })
-		else Locale.T("food.detail", {
+	local maxed = entry.care == nil -- P4: nothing left that food can train
+	local detail = if not maxed
+		then Locale.T("food.detail", {
+			trait = Locale.T("pet.apt." .. entry.care),
 			xp = entry.xp,
 			next = entry.xpNext,
 			where = where(entry),
 			toMax = toMax,
-			max = PetConfig.MaxLevel,
 		})
+		elseif entry.level >= PetConfig.MaxLevel then Locale.T("food.detail.max", { where = where(entry) })
+		else Locale.T("food.detail.done", { where = where(entry) })
 	local textWidth = -(TEXT_LEFT + 6 + #GardenConfig.Foods * (FOOD_BUTTON_WIDTH + 4))
 	local maxTag = maxed
 		and label("MaxTag", {
@@ -347,7 +362,7 @@ local function petRow(order: number, entry)
 			TextSize = 16,
 			TextColor3 = Color3.fromRGB(255, 205, 60),
 			TextXAlignment = Enum.TextXAlignment.Center,
-			Text = Locale.T("food.maxTag"),
+			Text = Locale.T(if entry.level >= PetConfig.MaxLevel then "food.maxTag" else "food.doneTag"),
 		})
 	local row = create("Frame", {
 		Name = "Pet_" .. entry.uid,
@@ -526,13 +541,19 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 	end
 	local food = GardenConfig.FoodById[detail.food]
 	local pet = PetClient.State and PetClient.State.pets[detail.uid]
-	local leveled = type(detail.levels) == "number" and detail.levels > 0
+	local leveled = nil -- P4: the last trait that gained a level
+	for _, step in (if type(detail.trained) == "table" then detail.trained else {}) do
+		if type(step) == "table" and (step.levels or 0) > 0 and PetConfig.Shown[step.id] then
+			leveled = step
+		end
+	end
 	flash(
 		Locale.T(if leveled then "food.fedLevelUp" else "food.fed", {
 			icon = food and food.icon or "",
 			kind = if pet then Locale.PetKindName(pet.Kind) else Locale.T("food.yourPet"),
 			xp = detail.xp,
-			level = detail.level,
+			trait = if leveled then Locale.T("pet.apt." .. leveled.id) else "",
+			level = if leveled then leveled.level else detail.level,
 		}),
 		COLOR_OK
 	)

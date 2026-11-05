@@ -1228,7 +1228,7 @@ end)
 -- "Cat Lv 4" for a uid in the pet state ("" when unknown)
 local function petNameOf(uid: string?): string
 	local pet = uid and PetClient.State and PetClient.State.pets[uid]
-	return if pet then Locale.PetName(pet.Kind, PetConfig.ClampLevel(pet.Level), PetClient.NameOf(uid)) else ""
+	return if pet then Locale.PetName(pet.Kind, PetConfig.PetLevel(pet), PetClient.NameOf(uid)) else ""
 end
 
 -- Once per session: the pens' conversion, what the pets harvested while the player was away (State.field.notice, E1b) and the

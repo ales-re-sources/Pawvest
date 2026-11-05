@@ -383,7 +383,7 @@ refresh = function()
 	elseif uid and PetClient.State and PetClient.State.pets[uid] then
 		local data = PetClient.State.pets[uid]
 		local rarity = PetConfig.RarityOf(data.Kind)
-		local level = PetConfig.ClampLevel(data.Level)
+		local level = PetConfig.PetLevel(data)
 		actionButton.Visible = true
 		actionButton.Text = Locale.T("garden.takeOut", { kind = Locale.PetKindName(data.Kind) })
 		actionButton.BackgroundColor3 = COLOR_SELL

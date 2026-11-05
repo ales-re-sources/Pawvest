@@ -39,12 +39,12 @@ export type Label = {
 -- model's underside stays where it is at Lv 1 (models grow around their root).
 export type Metrics = { scale: number, size: Vector3, center: Vector3, lift: number }
 
--- Size factor of a level: 1.0 at Lv 1 growing linearly to PetConfig.MaxScale at Lv 20.
+-- Size factor of a level: 1.0 at Lv 1 growing linearly to PetConfig.MaxScale at Lv 10 (the max level since P4; was Lv 20).
 function PetLook.Scale(level: number): number
 	return PetConfig.ScaleOf(level)
 end
 
--- Look tier of a level (0 below Lv 5, then 1 / 2 / 3 / 4 at Lv 5 / 10 / 15 / 20).
+-- Look tier of a level (0 below Lv 3, then 1 / 2 / 3 / 4 at Lv 3 / 5 / 8 / 10; P4, were Lv 5 / 10 / 15 / 20).
 function PetLook.Tier(level: number): number
 	return PetConfig.TierOf(level)
 end
@@ -114,13 +114,13 @@ local function addLabel(model: Model, root: BasePart, rarity: PetConfig.Rarity, 
 	text.Parent = gui
 end
 
--- The tier badge appended to a label: " ★★", one star per look tier (none below Lv 5)
+-- The tier badge appended to a label: " ★★", one star per look tier (none below Lv 3)
 function PetLook.TierStars(level: number): string
 	local tier = PetLook.Tier(PetConfig.ClampLevel(level))
 	return if tier > 0 then " " .. string.rep("★", tier) else ""
 end
 
--- Label text of a pet: "Cat Lv 12 ★★" ("Mochi Lv 12 ★★" with a name, P3b), so the tier shows on the label too. In the caller's
+-- Label text of a pet: "Cat Lv 6 ★★" ("Mochi Lv 6 ★★" with a name, P3b; the level is PetConfig.PetLevel), so the tier shows on the label too. In the caller's
 -- language (the server, which has none, writes English and tags its labels with the key + args of the same text instead, see GardenService).
 function PetLook.LabelText(kind: string, level: number, name: string?): string
 	level = PetConfig.ClampLevel(level)
@@ -350,10 +350,10 @@ end
 -- Accessory kit (P1f): small pieces built in code from the model's own Head / Body / Tail* parts (positions and sizes are read from
 -- them, scaled with the pet; a missing part falls back to the bounding box), so no Studio assets are needed and real art with the
 -- same part names keeps working. Which pieces a pet wears is a pure function of (kind, level, uid):
---   how many   0 below Lv 10 (tier 2), 1 at Lv 10-19, 2 at Lv 20 (tier 4)           AccessoryCount
+--   how many   0 below Lv 5 (tier 2), 1 at Lv 5-9, 2 at Lv 10 (tier 4)              AccessoryCount
 --   which      the allowed pieces of the kind (skip rules) in the order of the variant's accessory seed, greedy, never two forbidden
---              pieces together: the first pick of Lv 10 stays at Lv 20 and the second is added (growth, not reshuffle)   AccessoriesOf
--- No uid (old attribute form) -> no accessories. The tier halo of P1e3 (Lv 20) is the only halo: the kit has no halo piece of its own.
+--              pieces together: the first pick of Lv 5 stays at Lv 10 and the second is added (growth, not reshuffle)   AccessoriesOf
+-- No uid (old attribute form) -> no accessories. The tier halo of P1e3 (Lv 10) is the only halo: the kit has no halo piece of its own.
 -- Pieces are plain Parts / WedgeParts in a Folder "Accessories" of the model (Apply invariants: anchored, no collide / touch /
 -- query, massless), coloured from the pet's FxColor, scaled by `u`; the flame tail adds one emitter, which CollectFx / UpdateFx
 -- treat like the tier effects (distance LOD, off while the pet is faded).
@@ -496,7 +496,7 @@ local function accessoryForbidden(a: string, b: string): boolean
 	return false
 end
 
--- Accessory ids a pet wears, in pick order (the first one is worn from Lv 10, the second added at Lv 20). nil variant -> none.
+-- Accessory ids a pet wears, in pick order (the first one is worn from Lv 5, the second added at Lv 10). nil variant -> none.
 function PetLook.AccessoriesOf(kind: string, level: number, variant: Variant?): { string }
 	local picked = {}
 	local count = PetLook.AccessoryCount(level)
@@ -586,10 +586,10 @@ function PetLook.Bob(level: number): (number, number)
 end
 
 -- Tier effects (P1e3), cumulative, all in the pet's effect colour (FxColor: rarity colour shifted by the seed), built in code (no lights besides the Epic / Legendary one):
---   T1 (Lv 5)  sparkle trail behind the pet (world-space particles)
---   T2 (Lv 10) soft aura (low-rate puffs around the body) + an updraft of small sparks rising from under the pet
---   T3 (Lv 15) three tiny neon motes orbiting the body (moved by UpdateFx)
---   T4 (Lv 20) hexagonal neon halo above the head, stronger aura (label moves up by HALO_LIFT to clear it)
+--   T1 (Lv 3)  sparkle trail behind the pet (world-space particles)
+--   T2 (Lv 5)  soft aura (low-rate puffs around the body) + an updraft of small sparks rising from under the pet
+--   T3 (Lv 8)  three tiny neon motes orbiting the body (moved by UpdateFx)
+--   T4 (Lv 10) hexagonal neon halo above the head, stronger aura (label moves up by HALO_LIFT to clear it)
 -- Everything lives in a Folder "Fx" in the model (parts) or on Root attachments (emitters), so it is cloned, moved and destroyed
 -- with the model. The server builds it for the garden pens too; only the orbit animation and the distance LOD need a client
 -- (PetFollow for followers, PetPenFx for pens).
@@ -767,7 +767,7 @@ function PetLook.UpdateFx(fx: Fx, now: number, far: boolean, faded: boolean)
 	end
 end
 
-local EYE_GROWTH = 0.5 -- share of the body's growth the eyes keep (Lv 20: body x1.6, eyes x1.3; big eyes looked intense)
+local EYE_GROWTH = 0.5 -- share of the body's growth the eyes keep (Lv 10: body x1.6, eyes x1.3; big eyes looked intense)
 
 -- Eyes grow slower than the pet: the parts with the Studio attribute Eye = true (eye, rim, pupil, shine, patch) are shrunk
 -- back after ScaleTo as one group, around the point between the eyes on the face, so the pair keeps its Lv 1 layout

@@ -3,9 +3,10 @@
 -- from PetClient.State (PetsChanged) and PetConfig, every action is a request the server validates (PetService).
 --   Mount(panel, color, onClose)  builds the page as a child of `panel` (covers it, same size and UIScale) and returns
 --                                 { Open(uid), Close(), IsOpen() }; onClose() closes the whole Pets panel (the X)
--- Sections: header (turning portrait, kind, rarity + tier stars, where the pet is), growth (level, XP bar, how it grows, the next
--- look, the Coin bonus), one card per working aptitude (PetConfig.Shown; only for players with the field: level / rarity cap,
--- effect bar, field hours to the next level, reach; E2c Scouting: meter bonus, medal finishes to the next level, the equipped scouts' total; E4b Pest control: the chance to chase
+-- Sections: header (turning portrait, kind, rarity + tier stars, where the pet is), growth (P4: the level = the best working trait,
+-- which trait food and obby XP train now, the next look), one card per working trait (PetConfig.Shown, for every player since P4;
+-- Cuteness: the Coin bonus and its XP; the work traits for players without the field: "for later" and their care XP up to the care
+-- cap; with the field: level / rarity cap, effect bar, field hours to the next level, reach; E2c Scouting: meter bonus, medal finishes to the next level, the equipped scouts' total; E4b Pest control: the chance to chase
 -- crows off, the speciality, the squares it guards), actions (Equip / Unequip, Sell with a second tap). Under the header the name row
 -- (P3b): a text box and a button that names (free the first time), renames (PetConfig.RenamePrice) or removes the name; the server
 -- cleans, filters and prices it (PetRemotes.Rename), the page shows only the filtered name it sends back. The page re-renders on
@@ -398,12 +399,15 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 			TextSize = 18,
 			Text = Locale.T("petDetail.level", { level = owned.level, max = PetConfig.MaxLevel }),
 		}).Parent = growth
-		if owned.xpNext then
-			bar("Xp", 2, owned.xp / owned.xpNext, COLOR_XP, Locale.T("pet.xp", { xp = owned.xp, next = owned.xpNext })).Parent = growth
-			line("Grow", 3, { Text = Locale.T("petDetail.grow") }).Parent = growth
-		else
-			bar("Xp", 2, 1, COLOR_XP, Locale.T("petDetail.levelMax")).Parent = growth
-		end
+		-- P4: the level is the best working trait's; food and obby XP train owned.care (its bar is on the trait's card)
+		bar("Xp", 2, owned.level / PetConfig.MaxLevel, COLOR_XP, if owned.level >= PetConfig.MaxLevel
+			then Locale.T("petDetail.levelMax")
+			else Locale.T("petDetail.levelNote")).Parent = growth
+		line("Grow", 3, {
+			Text = if owned.care
+				then Locale.T("petDetail.care", { trait = Locale.T("pet.apt." .. owned.care) })
+				else Locale.T("petDetail.careDone"),
+		}).Parent = growth
 		local nextTier = nil
 		for _, level in PetConfig.Tiers do
 			if owned.level < level then
@@ -415,10 +419,6 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 			Text = if nextTier
 				then Locale.T("petDetail.nextLook", { stars = string.rep("★", PetLook.Tier(nextTier)), level = nextTier })
 				else Locale.T("petDetail.allLooks"),
-		}).Parent = growth
-		line("Bonus", 5, {
-			TextColor3 = if owned.equipped then COLOR_OK else COLOR_INFO,
-			Text = Locale.T("petDetail.bonus", { bonus = Locale.T("common.percentBonus", { pct = Locale.Decimal(PetClient.Percent(owned.bonus)) }) }),
 		}).Parent = growth
 		return growth
 	end
@@ -435,7 +435,35 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 			TextTruncate = Enum.TextTruncate.AtEnd,
 			Text = Locale.T("petDetail.aptLevel", { name = Locale.T("pet.apt." .. id), level = level, cap = cap }),
 		}).Parent = apt
-		line("Desc", 2, { Text = Locale.T("petDetail.aptDesc." .. id) }).Parent = apt
+		-- P4: every player sees the traits; the work traits do something only on the crop field (Scouting fills its seed meters)
+		local later = id ~= "Cuteness" and not fieldAccess
+		line("Desc", 2, { Text = Locale.T(if later then "petDetail.aptDesc.later" else "petDetail.aptDesc." .. id) }).Parent = apt
+		local limit = PetConfig.CareLimit(owned.kind, id)
+		if id == "Cuteness" then
+			local bonus = Locale.T("common.percentBonus", { pct = Locale.Decimal(PetClient.Percent(owned.bonus)) })
+			bar("Effect", 3, level / cap, COLOR_APT, Locale.T("petDetail.bonus", { bonus = bonus })).Parent = apt
+			if level >= cap then
+				line("Xp", 4, { Text = Locale.T("petDetail.aptMax", { rarity = Locale.RarityName(owned.rarity.id) }) }).Parent = apt
+			else
+				local need = PetConfig.CuteXpToNext(level) or 1
+				local xp = math.floor(stored.Apt.Cuteness.XP or 0)
+				bar("Xp", 4, xp / need, COLOR_XP, Locale.T("pet.xp", { xp = xp, next = need })).Parent = apt
+				line("Grow", 5, { Text = Locale.T("petDetail.cuteGrow") }).Parent = apt
+			end
+			return apt
+		elseif later then
+			if level < limit then
+				local rate = PetConfig.CareSecondsPerXp
+				local need = math.ceil(PetConfig.AptitudeXpToNext(level) / rate)
+				local xp = math.floor((stored.Apt[id].XP or 0) / rate)
+				bar("Xp", 4, xp / need, COLOR_XP, Locale.T("pet.xp", { xp = xp, next = need })).Parent = apt
+			end
+			line("Grow", 5, { Text = Locale.T("petDetail.careNote", { cap = limit }) }).Parent = apt
+			return apt
+		end
+		if level < limit then
+			line("Care", 8, { Text = Locale.T("petDetail.careNote", { cap = limit }) }).Parent = apt
+		end
 		local strength = PetConfig.Strength(level)
 		local scouting = id == "Scouting" -- E2c: a with-you aptitude, its XP counts medal finishes
 		local guarding = id == "PestControl" -- E4b: chases crows off on the field
@@ -671,22 +699,20 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 			feed.Parent = content
 			table.insert(cards, feed)
 		end
-		if fieldAccess then
-			local order, any = 10, false
-			for _, id in PetConfig.Aptitudes do
-				if PetConfig.Shown[id] and PetConfig.AptitudeLevel(stored, id) > 0 then
-					local apt = aptitudeCard(order, owned, stored, id)
-					apt.Parent = content
-					table.insert(cards, apt)
-					order += 1
-					any = true
-				end
+		-- P4: the trait cards for every player (Cuteness first); "no field job" only for players with the field
+		local order = 10
+		for _, id in PetConfig.Aptitudes do
+			if PetConfig.Shown[id] and PetConfig.AptitudeLevel(stored, id) > 0 then
+				local apt = aptitudeCard(order, owned, stored, id)
+				apt.Parent = content
+				table.insert(cards, apt)
+				order += 1
 			end
-			if not any then
-				local none = line("NoJob", order, { TextColor3 = COLOR_DIM, Text = Locale.T("petDetail.noJob") })
-				none.Parent = content
-				table.insert(cards, none)
-			end
+		end
+		if fieldAccess and owned.tending == 0 and owned.guard == 0 then
+			local none = line("NoJob", order, { TextColor3 = COLOR_DIM, Text = Locale.T("petDetail.noJob") })
+			none.Parent = content
+			table.insert(cards, none)
 		end
 
 		local busy = owned.penned ~= nil or owned.field ~= nil
@@ -890,13 +916,20 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 					return
 				end
 				local crop = CropConfig.ById[detail.crop]
+				local leveled = nil -- P4: the last trait that gained a level
+				for _, step in (if type(detail.trained) == "table" then detail.trained else {}) do
+					if type(step) == "table" and (step.levels or 0) > 0 and PetConfig.Shown[step.id] then
+						leveled = step
+					end
+				end
 				local args = {
 					icon = if crop then crop.icon else "",
 					count = detail.used,
 					xp = detail.xp,
-					level = detail.level,
+					trait = if leveled then Locale.T("pet.apt." .. leveled.id) else "",
+					level = if leveled then leveled.level else detail.level,
 				}
-				feedResult(Locale.T(if (detail.levels or 0) > 0 then "petDetail.feed.doneLevel" else "petDetail.feed.done", args), COLOR_OK)
+				feedResult(Locale.T(if leveled then "petDetail.feed.doneLevel" else "petDetail.feed.done", args), COLOR_OK)
 			end)
 			-- the State sent at join may have arrived before this listener; a request at the same moment as another script's can be
 			-- dropped by the garden remotes' rate limit, so ask once more if nothing came

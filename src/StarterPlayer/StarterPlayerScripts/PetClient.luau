@@ -25,9 +25,11 @@ local PetClient = {
 export type OwnedPet = {
 	uid: string,
 	kind: string,
-	level: number,
-	xp: number, -- towards the next level (0 at the max level)
-	xpNext: number?, -- XP needed for the next level; nil at the max level
+	level: number, -- P4: PetConfig.PetLevel, the highest working trait
+	care: string?, -- P4: the trait food and obby XP train now (PetConfig.CareTarget), nil when nothing trains
+	xp: number, -- that trait's progress in care XP (0 when nothing trains)
+	xpNext: number?, -- care XP for that trait's next level; nil when nothing trains
+	cute: number, -- Cuteness level (P4), 0 without it
 	rarity: PetConfig.Rarity,
 	equipped: boolean,
 	penned: number?, -- garden pen index (P2a2), nil when not in a pen
@@ -52,12 +54,15 @@ function PetClient.Inventory(): { OwnedPet }
 	for uid, pet in state.pets do
 		local rarity = PetConfig.RarityOf(pet.Kind)
 		if rarity then
+			local care, careXp, careNext = PetConfig.CareProgress(pet)
 			table.insert(list, {
 				uid = uid,
 				kind = pet.Kind,
-				level = PetConfig.ClampLevel(pet.Level),
-				xp = if type(pet.XP) == "number" then pet.XP else 0,
-				xpNext = PetConfig.XpToNext(PetConfig.ClampLevel(pet.Level)),
+				level = PetConfig.PetLevel(pet),
+				care = care,
+				xp = careXp,
+				xpNext = if care then careNext else nil,
+				cute = PetConfig.AptitudeLevel(pet, "Cuteness"),
 				rarity = rarity,
 				equipped = table.find(state.equipped, uid) ~= nil,
 				penned = state.penned and state.penned[uid] or nil,

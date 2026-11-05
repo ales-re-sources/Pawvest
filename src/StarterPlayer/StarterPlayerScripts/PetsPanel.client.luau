@@ -316,10 +316,11 @@ local function slotTooltip(index: number): string?
 	end
 	if slot.kind == "pet" then
 		local pet = slot.pet
-		return Locale.T("pets.slot.pet", {
-			name = string.format("<font color='#%s'>%s</font>", pet.rarity.color:ToHex(), Locale.PetName(pet.kind, pet.level, pet.name)),
-			bonus = bonusText(pet.bonus),
-		})
+		local name = string.format("<font color='#%s'>%s</font>", pet.rarity.color:ToHex(), Locale.PetName(pet.kind, pet.level, pet.name))
+		if pet.cute == 0 then -- P4: only a pet with Cuteness raises the Coins
+			return Locale.T("pets.slot.petNoBonus", { name = name })
+		end
+		return Locale.T("pets.slot.pet", { name = name, bonus = bonusText(pet.bonus) })
 	elseif slot.kind == "empty" then
 		return Locale.T("pets.slot.free")
 	end
@@ -575,9 +576,14 @@ local function buildRow(index: number, pet)
 			TextColor3 = COLOR_INFO,
 			TextWrapped = true,
 			TextYAlignment = Enum.TextYAlignment.Top,
-			Text = Locale.T("pets.detail", { rarity = Locale.RarityName(pet.rarity.id), bonus = bonusText(pet.bonus) })
+			Text = (if pet.cute > 0
+					then Locale.T("pets.detail", { rarity = Locale.RarityName(pet.rarity.id), bonus = bonusText(pet.bonus) })
+					else Locale.RarityName(pet.rarity.id))
 				.. "\n"
-				.. (if pet.xpNext then Locale.T("pet.xp", { xp = pet.xp, next = pet.xpNext }) else Locale.T("pet.maxLevel"))
+				.. (if pet.care
+					then Locale.T("pet.xpTrait", { trait = Locale.T("pet.apt." .. pet.care), xp = pet.xp, next = pet.xpNext })
+					elseif pet.level >= PetConfig.MaxLevel then Locale.T("pet.maxLevel")
+					else Locale.T("pet.careDone"))
 				.. tending,
 		}),
 		label("Tag", {
