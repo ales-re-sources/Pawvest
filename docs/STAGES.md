@@ -285,8 +285,9 @@ plane with it (rims 0.03 in from the edge, frames standing wholly in front of th
 - **Conveyors** (`KitConveyor`, 2026-11-05): a charcoal `(44, 44, 52)` `Studs` belt slab (1-1.2 thick) with stone grey `Roller1/2`
   cylinders across both ends (none at an end another part touches within 0.5 studs) and amber `#E29314` `Studs` chevrons (`Chevron<n>L/R`,
   arms 0.6 x 0.1 x 3.2 at 40 deg, 0.06 proud) pointing the way the belt pushes (`-Speed` points them backwards). A conveyor over the sea stands
-  on its own stud pillar (`ConveyorBase<n>`, 0.1 inset), so only the top pushes. Template `StageKit.Obstacles.Conveyor_Belt`; a changed
-  `Speed` sign needs the chevrons turned.
+  on its own stud pillar (`ConveyorBase<n>`, 0.1 inset), so only the top pushes. In play `KitConveyorsClient` slides the chevrons along the
+  belt at `Speed` and turns them if the sign changes; space them evenly (belt length / count) so the wrap looks even. Template
+  `StageKit.Obstacles.Conveyor_Belt`.
 - **Tilt plates** (`KitTilt`): green `(58, 165, 92)` `Studs`, dark green rims, a charcoal hinge pin (`Axle`, `AxleCapW/E`) on the tilt axis.
 - **Disappearing plates** (`KitPlate`): opaque `(0.75, 0.67, 0.55)` `Studs`, no decoration (the flicker is the cue). **Crumbling plates**
   (`KitCrumble`): sandstone `(222, 170, 100)` `Studs` with dark brown `Crack_n` lines. The kit fades a plate's decoration with it.
