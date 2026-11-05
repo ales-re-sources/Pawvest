@@ -430,8 +430,8 @@ effect, not an accessory). Which pieces comes from the pet id and the kind (no w
 no flame tail on Owl / Panda, no crown together with horns); the Lv 10 piece stays and the second one is added at Lv 20. Details: [PET_GROWTH.md](PET_GROWTH.md).
 
 ### 7.6 Pet garden (minigame, P2)
-*Direction (2026-10-24): this section describes the garden as built; [EXPANSION.md](EXPANSION.md) replaces the pen production with
-crops, pets placed on field squares (§3, 2026-10-30) and raids once E1 is designed in detail. Not rewritten yet.*
+*The garden as live players have it. With field access the pens are replaced by the crop field and field pets (§7.9); the rest
+(plots, incubators, feeding) stays.*
 
 A free area reached on foot from the central island, where pets are raised. Aimed at players who prefer
 collecting and caring over obby runs.
@@ -492,6 +492,65 @@ Players on the same server can trade pets and Coins. Both players confirm the fi
 everything at once, saves both profiles immediately and logs the trade. Pets in an open trade are locked, and a short
 cooldown applies after each trade. Trading requires profile session locking (a profile is open on at most one server),
 otherwise items could be duplicated across servers.
+
+### 7.8 Pet page and names (P3)
+- **Pet page.** An "i" badge on a Pets list row opens the pet's page (a tap on the row still equips / unequips): a turning portrait, name,
+  rarity, tier stars and where the pet is; growth (level, XP, next look, Coin bonus); one card per working aptitude (`PetConfig.Shown`:
+  Tending, Scouting, Pest control) with level / rarity cap, effect, field hours to the next level and reach; the Feed card (crops, §7.9);
+  Equip / Unequip, Sell (second tap confirms), Rename. Built for 8-10 year olds on a phone: bars, stars and icons over text.
+- **Names.** 1-20 letters, digits and spaces; clearing is free, the first name is free and every later one costs 250 Coins
+  (`PetConfig.RenamePrice`); 10 s cooldown. Filtering is a Roblox rule: the server filters with `TextService` (owner, `PublicChat`), stores
+  the raw text, filters again on every join, and only the filtered text leaves the server; a failed filter shows the kind name. Names show to
+  everyone ("Mochi Lv 6") through the `PetNames` attribute and are never localized.
+
+### 7.9 Crop field (E1-E4; behind field access)
+*Built and Studio-validated 2026-10-30 – 11-04, open only to `GardenConfig.HasFieldAccess` (admins and Studio test users) until E1 ships
+(`FieldAccess = "all"`). Everyone else keeps the pens of §7.6. Exact numbers live in `CropConfig` / `PetConfig` and are pinned by
+`tools/economy.py`; why they are what they are: [ECONOMY.md](ECONOMY.md); what comes next: [EXPANSION.md](EXPANSION.md).*
+
+- **Goal (2026-11-02, the user).** Farming is the main game: over days 1-3 the field earns about what the obby earns, then 3x by day 7 and
+  10x by day 30 (Casual, Garden main), checked by `economy.py check`.
+- **Field.** Behind each plot (a 40 x 16 strip in front holds the sign and the 3 incubators): 36 squares in rows 6-6-8-8-8 centred on an
+  8-column grid, numbered row by row from the plot (the numbers are stored: never reorder the rows). A new field opens the 2 x 2 block at the
+  front centre (squares 3, 4, 9, 10) with 4 free Potato seeds. Any locked square opens through its hold prompt; its price and Renown gate depend
+  on how many are open (1 400 for the 5th up to 907 400 for the 36th). Controls: a prompt per square (Plant, Harvest, Place / move pet, buy)
+  and one Garden panel at the own plot (seeds, selling, squares, upgrades, tools, market cart, field pets, crow forecast).
+- **Crops.** Potato (5 min, so the first harvest comes in the first session), Corn, Pumpkin and Giant melon from the seed shop behind Renown
+  gates; three rare crops, one per world (Golden carrot, Frost grape, Glow mushroom), only from the obby (below), never sold as seeds, never
+  eaten by crows. Growth runs on server time only: online x 1.0, offline x 0.5 for at most 24 h per absence, settled on join, on leave, every
+  60 s and before every action; ripe crops wait. The barn holds 40 seeds and 40 stored crops (+20 per Barn level). Seeds held can always be
+  planted; the shop keeps the Renown gate.
+- **Selling and feeding.** A crop is sold (sale x its size, through `CoinRewards.Grant`) or fed to any pet from its page for XP = half the
+  sale, so feeding is never better than selling and buying food (the Kitchen, D5, stays the better route later).
+- **Size roll.** Every planting rolls a size factor (lognormal, mean exactly 1, 0.36-2.64), fixed by owner and planting number so a re-join
+  cannot reroll it; Big = top 20 %, Giant = top 3 %, a record per crop, weight shown as kg x factor. The barn keeps a count and the summed size
+  per crop; selling k of n pays the average size.
+- **Renown.** Points per harvest by tier (1 / 3 / 6 / 12 for rare crops), level L at 3 x L^1.6 points; gates seeds in the shop, squares and
+  tool levels.
+- **Upgrades and tools.** Growth (4 levels, -5 % grow time each) and Barn (5 levels, +20 each). Tools with Renown-gated levels: Seed sorter
+  (sizes x 1.05 / 1.10 / 1.15), Cloches (online growth +7 / 14 / 20 %), Pruning shears (5 / 10 / 15 % chance of a second crop of the same size,
+  rolled per planting).
+- **Market cart.** Offers per UTC day, the same on every server, counts per player: 10 seeds of an unlocked crop at -30 %, 5 of another at -50 %,
+  and from Renown 3 a taste of 2 seeds of the next locked crop at the catalogue price.
+- **Field pets.** Every pet has aptitudes (Tending, Fertilising, Pest control, Weeding, Scouting, Crafting; levels 1-10 up to its rarity's
+  cap), rolled once from its uid (the count by rarity, the kind leans the draw) and never rerolled; a hatch while the owner has no Tending pet
+  gets Tending. A pet with Tending or Pest control can stand on a square (one per square, not equipped; 1 free field pet slot + 4 bought). Reach
+  by the job's level: its square (1-3), plus its 4 neighbours (4-6), the 3 x 3 block (7-10); on overlaps the strongest pet of a job counts.
+  **Tending** works only during absences: a crop that ripens in reach is harvested with the pet's strength (20 % at level 1 to 100 % at 10)
+  while the barn has room, then replanted from the seeds held (rolled once per planting). Placed pets gain aptitude XP per weighted field hour
+  (level L -> L + 1 takes 10 x 1.56^(L-1) h). On the first join with field access the pens convert once into field pet slots (penned pets go
+  back to the inventory).
+- **Obby seeds (E2, world stages only).** The first Gold on a World 2 or 3 stage gives 1 rare seed of that world; the day's first medal finish
+  gives 1 (once per UTC day); a rare-seed meter per stage (Bronze 1 / Silver 2 / Gold 3 points, doubled for the day's first finish there; 300
+  points = a seed). The **seed pouch**: the day's first medal finish on each stage gives 1 / 2 / 3 seeds of the common crop planted last, up to
+  the barn. **Scouting** (equipped pets): 15 min of aptitude XP per medal finish; the scouts' bonus (up to +50 %) multiplies the meter points
+  and at +50 % adds 1 pouch seed. The results popup lists every seed and the meter.
+- **Crows (E4-thin).** From Renown 3. The UTC day has four 6-hour blocks, a quarter of them crow blocks on a fixed schedule, shown as a
+  forecast in the Garden panel. On the join settle, after Tending, every ripe common crop whose ripe time overlaps a crow block is rolled once
+  (30 %); a lost roll eats it unless the strongest guard reaching the square wins its chance (50 % + half the Pest-control strength, doubled
+  for the crow speciality). At most 1 crop is eaten per absence; crops ripe while the owner plays are safe. A pet with Tending and Pest control
+  does both jobs.
+- **Join notice.** What the pets harvested (and the shears' extras), what the crows ate and who chased them off, the pen conversion.
 
 ## 8. Leaderboards
 - **Per stage:** Top-10 fastest times (exists for Stage 1 and 2; add Stage 3 and Tutorial).
