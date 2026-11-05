@@ -61,6 +61,12 @@ Not yet built (ROADMAP → E0): 7 no dead end, 8 rare supply vs the first landma
   1 per absence, from Renown 3, rare crops safe. The model has no guards (the worst case).
 
 ## Decisions (dated; the numbers live in the configs)
+- **2026-11-05 P4 pet traits** (pending the user's review and `pin`): the Coin bonus is the **Cuteness** trait, levels 1-10; bonus = rarity
+  base + `CuteStep` 19 ‰ per level above 1 (no migrated pet loses bonus), XP `100 × L^1.5` (11 100 to level 10, about today's ramp);
+  `CuteChance` 0.35 / 0.4 / 0.5 / 0.6 / 0.7 by rarity after Tending gives Cuteness on 28 / 32 / 50 / 70 / 82 % of hatches (Tending shares
+  unchanged); care XP trains work traits up to level 5 at 36 s per XP; pens by pet level, `MaxLevelRate` 760 (Lv 10 = ×1.76). The equipped
+  multiplier saturates at 1.49 (was 1.47). Check C (Obby main's sink share by day 60) drops to 79 % (bar 80 %): the field earns about 5 %
+  more; open for the user (accept, or size the reserved sinks up).
 - **2026-10-24 Online beats offline** (above). **2026-11-04:** `offline_rate` 0.33 → 0.5 and the field cap 12 → 24 h (a day away grew only about
   4 h and the field felt unplayable); Garden main's parity relaxed to 1.8x (1.67x measured) and Binge's B to 3 % (1.7 % measured) with it.
 - **2026-11-02 Field pets (E1b inputs):** Tending at level 10 = continuous cycling; aptitude level L → L + 1 in 10 × 1.56^(L−1) weighted field

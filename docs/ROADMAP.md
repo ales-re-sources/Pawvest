@@ -29,6 +29,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | P1, P1e, P1g | Pets, growth visuals, stud restyle | ✔ | ✔ | – |
 | P2 | Pet garden: plots, pens, incubators, food | ✔ | ✔ | – |
 | P3a, P3b | Pet page, pet names | ✔ | ✔ | – |
+| P4 | Pet traits: Cuteness carries the Coin bonus, per-trait levels 1–10, look from the highest trait — economy `pin` awaits the user | ✔ | partial | – |
 | H1, H2 | Hub island, stud checkpoints | ✔ | ✔ | – |
 | S1–S7 | Stage framework, Quick Respawn, obstacle kit, World 1, worlds hub, World 2, Triple Jump + Dash | ✔ | ✔ | – |
 | S8 | World 3 (Stages 11–15) — awaits the user's sign-off | ✔ | S8.1 ✔; S8.2–S8.3 bot-checked, run by the user | – |
@@ -81,6 +82,46 @@ the first hour; World 1 and the garden are tuned for 8–10 year olds on a phone
 - **World 2's star bar** stays at 10 of 15 until the wider test (the user, 2026-11-01); a checkpoint inside Stage 5's tightrope: not now
   (telemetry first).
 - **Measure it in M6a:** T1a fails per segment on Stage 5, quits per stage, session length of new players.
+
+### P4 — Pet traits (decided 2026-11-05, implemented; Studio checks partial)
+**Goal.** The Coin bonus becomes a trait, **Cuteness**, that only some pets roll at hatch; the single pet level (1–20) goes away: every trait
+(aptitude) has its own level 1–10 (rarity cap 6–10), and the pet's level, size and look follow its highest working trait. Goes before U1, so
+U1's trait chips include Cuteness.
+
+**Decisions (the user).** Effect = Coin multiplier only (cap +50 %; "discounts" is flavour). Cuteness levels from today's pet XP sources
+(obby XP, food, crop feeding); Tending / Pest control from field hours, Scouting from medal finishes, as built. Look: today's 20-level look
+downscaled to 10 (size 1.0 → 1.6 at Lv 10, tiers at 3 / 5 / 8 / 10, Neon accents at 10), same level = same look on every pet. Counts by
+rarity as today (1 / 1+10 % / 2 / 2+50 % / 3). Cuteness by a chance per rarity, no guarantee. Hatches roll only working traits (Cuteness,
+Tending, Pest control, Scouting); stored Fertilising / Weeding / Crafting stay, hidden, not counted. A pet without Cuteness (or with it at its
+cap) gets food and obby XP on its lowest working trait below level 5, as field time; nothing to train → food refused, obby XP lost. Every pet
+from before P4 gets Cuteness once (at `1 + ceil((Level − 1) × 9 / 19)`, clamped to its cap; with `CuteStep` 19 ‰ no bonus drops), on top of
+its traits.
+
+**Inputs / outputs.** `PetConfig` (new id `Cuteness`, `PetLevel`, `GainCareXp`, `MaxLevel` 10, `Tiers`, `CuteChance`, `CuteStep`,
+`CuteXpToNext`, `CareLevelCap`, `CareSecondsPerXp`), `GardenConfig` (pen rate by `PetLevel`, `LevelRate` so Lv 10 = ×1.76), profile
+`Version = 4` migration in `PlayerProfile` (`Level` / `XP` stay stored, frozen), `PetService`, `GardenFood`, `GardenField` (FeedCrop, feeds),
+`GardenPlotFeed`, `PetLook`, the pet UI (Pets panel minimal, pet page trait cards for everyone, food stand, hatch reveal), `economy.py`
+(model + tuning + pin), docs. No Studio-only changes expected.
+
+**Acceptance checks.**
+1. 1 000 seeded hatches per rarity: only hatch-pool traits, count by rarity and ≤ 3, Tending and Cuteness shares within ±4 points of the
+   shares `economy.py` computes from `TendingChance` / `CuteChance` (Cuteness is rolled after Tending, while a slot is left); forced Tending
+   only for an owner with field access.
+2. The multiplier counts only cute equipped pets: one non-cute equipped pet → multiplier exactly 1; the +50 % cap holds.
+3. A medal finish: an equipped cute pet's Cuteness XP rises by the run's XP; an equipped non-cute pet's lowest working trait gains
+   XP × `CareSecondsPerXp` seconds; a pet with Cuteness at cap and every work trait ≥ 5 gains nothing.
+4. Food stand and crop feeding through the real UI follow rule 3; a pet with nothing to train is refused with its text and no Coins taken.
+5. Migration on a copy of a live profile: every old pet has Cuteness at the mapped level, its bonus ≥ the old one (side by side), other
+   traits unchanged, `Level` / `XP` unchanged; a second load changes nothing.
+6. Look: Lv 10 = today's Lv 20 (scale 1.6, halo, 2 accessories, Neon accents), Lv 5 = today's Lv 10 (2 stars, 1 accessory); the level-up
+   moment plays when the highest trait rises (follower and pen).
+7. Pets panel, pet page, food stand and hatch reveal in English and Czech without cut-off text; the pseudo-language finds no literal.
+8. `economy.py check` passes after the reviewed `pin`; pen output at Lv 10 equals today's at Lv 20.
+
+**Studio (2026-11-05):** 1–6 passed (6 by the look numbers and a level-up moment on a follower; pens are gone for field-access players, so
+the pen moment was not seen); 7 in Czech through the real UI (pets panel, pet page, food stand, hatch reveal: 48 of 50 px with three traits).
+Open: 8 (the model fails check C, Obby main's sink share 79 % by day 60 against 80 %: the user decides, then `pin`), the pseudo-language
+pass, a multi-client look check, and the pet page of a player without field access ("a garden job for later", untestable as an admin).
 
 ### E0 — Economy model
 **Goal.** One reproducible model of the Coin economy (`tools/economy.py`, Python stdlib; how to run it: ECONOMY.md) that fixes the numbers the

@@ -335,19 +335,27 @@ Notes:
 - Gold at 0.8 × T_base with only Run Speed 2 (+12 %) on Stage 1 needs a near-perfect route — verify in M6.
 
 ## 7. Pets
-Pets follow the player, multiply Coin income and level up. They never affect movement, jumping or stage times.
+Pets follow the player, are born with **traits** (aptitudes, §7.9) and level them up; a pet with **Cuteness** multiplies Coin income.
+They never affect movement, jumping or stage times.
 
 ### 7.1 Rarities and kinds
-| Rarity | Base bonus | Sell value | Example kinds (prov.) |
-|---|---|---|---|
-| Common | +2 % | 100 | Cat, Dog |
-| Uncommon | +4 % | 200 | Bunny, Fox |
-| Rare | +7 % | 500 | Owl, Panda |
-| Epic | +10 % | 1 500 | Dragon |
-| Legendary | +15 % | 5 000 | Phoenix |
+| Rarity | Cuteness base bonus | Sell value | Traits at birth | Trait cap | Example kinds (prov.) |
+|---|---|---|---|---|---|
+| Common | +2 % | 100 | 1 | 6 | Cat, Dog |
+| Uncommon | +4 % | 200 | 1 (10 %: 2) | 7 | Bunny, Fox |
+| Rare | +7 % | 500 | 2 | 8 | Owl, Panda |
+| Epic | +10 % | 1 500 | 2 (50 %: 3) | 9 | Dragon |
+| Legendary | +15 % | 5 000 | 3 | 10 | Phoenix |
 
-Every pet is an individual (own level and XP), identified by a unique id per player. Inventory holds up to **50** pets.
+Every pet is an individual (own traits with their levels), identified by a unique id per player. Inventory holds up to **50** pets.
 A pet can be **sold** back for its sell value (irreversible).
+
+**Traits (P4, 2026-11-05).** Rolled once at hatch from the pet's id, never rerolled, from the working traits only: **Cuteness** (the Coin
+bonus), Tending, Pest control, Scouting (§7.9). Tending comes first (`TendingChance`; always for an owner with field access who has no
+Tending pet yet), then Cuteness by `CuteChance` while a slot is left, the rest from Pest control / Scouting (the kind leans the draw); slots
+the pool cannot fill take Cuteness, then Tending. Share of hatches with Cuteness: Common 28 %, Uncommon 32 %, Rare 50 %, Epic 70 %,
+Legendary 82 %. Fertilising, Weeding and Crafting stay stored on pets that have them (hidden, not counted) and rejoin the pool when built.
+Every pet from before P4 got Cuteness once, on top of its traits (profile `Version = 4`, below §7.4).
 
 ### 7.2 Eggs
 Every egg hatches in an **incubator** of the player's garden plot (§7.6) in real time, also while the player is offline.
@@ -380,15 +388,20 @@ automatically when a slot is free.
 | 3 | 5 000 |
 
 ```
-pet bonus  = base bonus (rarity) + 0.5 % × (level − 1)
+pet bonus  = base bonus (rarity) + 1.9 % × (Cuteness level − 1)     (0 without Cuteness)
 multiplier = 1 + min(50 %, sum of the bonuses of equipped pets)
 paid       = round(base Coins × multiplier)
 ```
-A level-20 Legendary gives +24.5 %; three strong pets hit the +50 % cap.
+A Cuteness-10 Legendary gives +32.1 %, a capped Common (6) +11.5 %; two strong cute pets hit the +50 % cap. Equipping a pet without
+Cuteness raises nothing, so the slots are a choice between income and Scouting.
 
 ### 7.4 Levels and XP
-Max level **20**. XP to go from level L to L+1: `round(10 × L^1.5)` (L1→2: 10, L5→6: 112, L10→11: 316,
-L19→20: 828; ~6 700 XP from 1 to 20). Every **equipped** pet receives the full XP of each event:
+**Pet level (P4)** = the highest level of its working traits, 1–**10** (max level and max look, §7.5); traits cap by rarity (§7.1). Food and
+obby XP are **care XP**: they train **Cuteness** while it is below its cap, otherwise the pet's lowest working trait below **level 5**, as
+36 s of field time per XP (so Coins never buy the top work levels); with nothing left to train the XP is lost and food is refused.
+Tending / Pest control also level from field hours, Scouting from medal finishes (§7.9). Cuteness XP from level L to L+1:
+`round(100 × L^1.5)` (L1→2: 100, L5→6: 1 118, L9→10: 2 700; 11 100 XP from 1 to 10). Every **equipped** pet receives the full XP of
+each event:
 
 | Source | XP |
 |---|---|
@@ -401,7 +414,10 @@ L19→20: 828; ~6 700 XP from 1 to 20). Every **equipped** pet receives the full
 Movement is measured on the server (horizontal distance of the character); jumps faster than walking speed allows
 (teleports, respawns) do not count, and nothing is earned outside a running timer, so AFK walking earns nothing.
 Movement XP is paid at the finish, together with the medal XP; a run that is cancelled (back to the hub) earns none.
-Levels are permanent. A pet at level 20 stops gaining XP.
+Levels are permanent.
+
+**Migration (P4, profile `Version = 4`):** a pet from before P4 got Cuteness at `1 + ceil((old level − 1) × 9 / 19)`, clamped to its cap
+(old Lv 20 → 10, Lv 10 → 6, Lv 2 → 2); no pet's bonus dropped. Its old `Level` / `XP` stay stored, unused.
 
 ### 7.5 Display
 Equipped pets float behind their owner and are visible to all players, with rarity colour and level on a small label.
@@ -411,6 +427,7 @@ The pets panel (top-left **🐶 Pets** button) lists the inventory, equipped pet
 shows as label colour and a glow (Epic, Legendary). Models live in `ReplicatedStorage.PetModels`, so real art can
 replace them later without code changes.
 
+*P4 downscaled the look from 20 levels to 10: read Lv 5 / 10 / 15 / 20 below as Lv 3 / 5 / 8 / 10 (`PetConfig.Tiers`), size 1.6× at Lv 10.*
 **Growth (P1e1):** a pet's size follows its level, 1.0× at Lv 1 up to 1.6× at Lv 20 (linear), for followers and garden
 pens alike. The follower formation widens with the pets so they never overlap, and while the owner's stage timer runs
 their pets drop 4 studs further back and turn ghostly so the course stays visible; pets close to the camera fade out.
@@ -455,11 +472,11 @@ collecting and caring over obby runs.
   |---|---|---|---|---|---|
   | Coins / hour at Lv 1 | 10 | 20 | 40 | 70 | 120 |
 
-  Production per pet = rate × (1 + 0.04 × (level − 1)) per hour (Lv 20 = ×1.76). Pens: 6, prices
+  Production per pet = rate × (1 + 0.76 × (level − 1) / 9) per hour (pet level 1–10, P4; Lv 10 = ×1.76). Pens: 6, prices
   0 / 1 000 / 2 500 / 5 000 / 9 000 / 15 000 (pen 1 free; 32 500 in total). Example sets (before the pet bonus):
-  3 pens of Common/Common/Uncommon Lv 1 = 40 / h; 6 mixed pets (2 Common, 2 Uncommon, Rare, Epic) at Lv 5 ≈ 197 / h;
-  2 Legendary + 2 Epic + 2 Rare at Lv 10 ≈ 626 / h (≈ 939 / h with the +50 % pet bonus); the theoretical maximum
-  (6 Legendary Lv 20) is ≈ 1 267 / h.
+  3 pens of Common/Common/Uncommon Lv 1 = 40 / h; 6 mixed pets (2 Common, 2 Uncommon, Rare, Epic) at Lv 3 ≈ 199 / h;
+  2 Legendary + 2 Epic + 2 Rare at Lv 5 ≈ 615 / h (≈ 923 / h with the +50 % pet bonus); the theoretical maximum
+  (6 Legendary Lv 10) is ≈ 1 267 / h.
 - **Payout.** Production is paid through `CoinRewards.Grant` (the pet bonus applies) on server time only: every
   5 minutes while the owner is online, whenever the pens change (placing, removing, buying a pen settles first, so a
   pen never earns for time it was empty) and on join. Fractions of a Coin carry over, so the total over any split of
@@ -474,9 +491,10 @@ collecting and caring over obby runs.
   countdown but cannot use them.
 - **Feeding.** Food bought for Coins gives a pet XP: an alternative to leveling by playing the obby, and a Coin sink.
   Food is sold at the **food stand** in the middle of the plaza (a four-sided stud kiosk, readable from every plot, a big strawberry on top) and fed at once to one chosen pet (equipped, penned or resting in the
-  inventory); there is no food inventory. Only the fed pet gains the XP. A level-20 pet cannot be fed (no Coins taken);
-  XP beyond level 20 is lost, so the panel shows how much a pet still needs. Feeding a penned pet settles its production
-  first, so the new level only counts from then on.
+  inventory); there is no food inventory. Only the fed pet gains the XP, as care XP (§7.4: Cuteness first). A pet with nothing left
+  to train cannot be fed (no Coins taken; the row shows "Trained" or "Max level"); XP it cannot use is lost, so the panel shows which
+  trait trains and how much XP the pet can still use. Feeding a penned pet settles its production first, so the new level only counts
+  from then on.
 
   | Food | Price | XP | Coins per XP |
   |---|---|---|---|
@@ -484,7 +502,7 @@ collecting and caring over obby runs.
   | Cake | 400 | 250 | 1.6 |
   | Feast | 1 500 | 1 000 | 1.5 |
 
-  Level 1 → 20 (~6 700 XP) costs about 10 000 Coins in Feasts.
+  Cuteness 1 → 10 (11 100 XP) costs about 17 000 Coins in Feasts.
 - **Offline income.** On join, production since the last visit is paid, capped at 8 hours, and shown in a
   "welcome back" announcement at the top of the screen that fades out after 5 seconds (nothing to close).
 
@@ -496,8 +514,10 @@ otherwise items could be duplicated across servers.
 
 ### 7.8 Pet page and names (P3)
 - **Pet page.** An "i" badge on a Pets list row opens the pet's page (a tap on the row still equips / unequips): a turning portrait, name,
-  rarity, tier stars and where the pet is; growth (level, XP, next look, Coin bonus); one card per working aptitude (`PetConfig.Shown`:
-  Tending, Scouting, Pest control) with level / rarity cap, effect, field hours to the next level and reach; the Feed card (crops, §7.9);
+  rarity, tier stars and where the pet is; growth (P4: level = best trait, what food and runs train now, next look); one card per working
+  trait (`PetConfig.Shown`, for every player): Cuteness (level / cap, Coin bonus, XP), Tending, Scouting, Pest control (with the field:
+  level / rarity cap, effect, field hours to the next level, reach, the care cap; without it: "a garden job for later" and its care XP);
+  the Feed card (crops, §7.9);
   Equip / Unequip, Sell (second tap confirms), Rename. Built for 8-10 year olds on a phone: bars, stars and icons over text.
 - **Names.** 1-20 letters, digits and spaces; clearing is free, the first name is free and every later one costs 250 Coins
   (`PetConfig.RenamePrice`); 10 s cooldown. Filtering is a Roblox rule: the server filters with `TextService` (owner, `PublicChat`), stores
@@ -533,9 +553,9 @@ otherwise items could be duplicated across servers.
   rolled per planting).
 - **Market cart.** Offers per UTC day, the same on every server, counts per player: 10 seeds of an unlocked crop at -30 %, 5 of another at -50 %,
   and from Renown 3 a taste of 2 seeds of the next locked crop at the catalogue price.
-- **Field pets.** Every pet has aptitudes (Tending, Fertilising, Pest control, Weeding, Scouting, Crafting; levels 1-10 up to its rarity's
-  cap), rolled once from its uid (the count by rarity, the kind leans the draw) and never rerolled; a hatch while the owner has no Tending pet
-  gets Tending. A pet with Tending or Pest control can stand on a square (one per square, not equipped; 1 free field pet slot + 4 bought). Reach
+- **Field pets.** Every pet has aptitudes (traits, §7.1: Cuteness, Tending, Pest control, Scouting; stored but not yet rolled: Fertilising,
+  Weeding, Crafting; levels 1-10 up to its rarity's cap), rolled once from its uid (the count by rarity, the kind leans the draw) and never
+  rerolled; a hatch while the owner has no Tending pet gets Tending. Food and obby XP also train the work traits up to level 5 (§7.4). A pet with Tending or Pest control can stand on a square (one per square, not equipped; 1 free field pet slot + 4 bought). Reach
   by the job's level: its square (1-3), plus its 4 neighbours (4-6), the 3 x 3 block (7-10); on overlaps the strongest pet of a job counts.
   **Tending** works only during absences: a crop that ripens in reach is harvested with the pet's strength (20 % at level 1 to 100 % at 10)
   while the barn has room, then replanted from the seeds held (rolled once per planting). Placed pets gain aptitude XP per weighted field hour

@@ -95,7 +95,9 @@ Not built / open:
 *Built (GDD §7.9, `PetConfig`): the six aptitude ids (Tending, Fertilising, Pest control with a speciality, Weeding, Scouting, Crafting),
 levels 1–10 with diminishing effect (20 % at 1 to 100 % at 10), counts and caps by rarity, rolled once from the uid with the kind leaning the
 draw, XP per weighted field hour. Only Tending, Pest control and Scouting do something yet; Fertilising arrives with D4, Weeding with D1,
-Crafting with the stations.*
+Crafting with the stations. P4 (2026-11-05) added **Cuteness** (the Coin bonus as a trait, rolled by rarity chance), rolls new pets only from
+the working traits (Fertilising / Weeding / Crafting rejoin the hatch pool when built), and made the pet level the highest trait level (1–10,
+size and look follow it); food and obby XP train Cuteness, else work traits up to level 5 (GDD §7.4).*
 
 **Rule: rarity gives breadth and a higher cap, time gives height.** A maxed Uncommon (level 7) equals an Epic at level 7; the rarer pet is more
 flexible, not stronger at a job. New aptitudes get new ids (stored ids never change).
@@ -108,7 +110,7 @@ flexible, not stronger at a job. New aptitudes get new ids (stored ids never cha
 | **Crafting** | Runs station queues faster (§5.6) |
 
 - **Tonics (provisional):** every aptitude level from 7 up also needs a tonic brewed from a rare crop (Apothecary, §5.6), tying the best pets to
-  the obby. Open: an aptitude may not exceed half the pet level, so feeding and obby runs still matter for field pets (§16).
+  the obby. (P4 settled the old question of a pet level next to the aptitudes: there is none, the pet level is the best aptitude.)
 - **Quirks** are qualitative and carry a cost; target about 30, rolled from the uid (`Pets[uid].Quirks`). Examples:
 
 | Quirk | Effect | Cost |
@@ -124,8 +126,8 @@ flexible, not stronger at a job. New aptitudes get new ids (stored ids never cha
 | Brave | Holds the line alone | Ignores forecasts |
 | Friendly | Bond grows fast | Distracted from work |
 
-- **Looks follow the work:** the accessories and tier effects (PET_GROWTH.md) reflect the pet's highest aptitude (a veteran guard gets the
-  scarf, a tender the straw hat).
+- **Looks follow the work:** size and tier effects follow the pet's highest aptitude (built, P4); still to build: the accessories pick by
+  that aptitude (a veteran guard gets the scarf, a tender the straw hat).
 - **Bond** (`Pets[uid].Bond`): favourite food, mood and affection. Mood gives only bonuses, never penalties (no guilt-driven check-ins).
 - Personal spending: dyes, outfits and a den furnished to the pet's preferences (a fox wants a burrow). Names are built (P3b).
 
@@ -397,7 +399,7 @@ stations, landmarks, estate / decor / cottage, strays, seasons, trading, World 4
 4. **Numbers:** variant chances and fertiliser recipes, Night shift values, weather cadence, friend bonus; all go through E0.
 5. **Field pets from far away:** place / move field pets from the Pets panel anywhere (recommended; the "who guards tonight" choice often comes
    during an obby session), planting and harvesting stay on the plot.
-6. **Aptitudes:** whether an aptitude may not exceed half the pet level; whether levels 7+ need tonics; several field jobs at once (§3).
+6. **Aptitudes:** whether levels 7+ need tonics; several field jobs at once (§3). (The pet level question was settled by P4: pet level = best aptitude.)
 
 **Plot architecture (decided 2026-10-30, built in E1a).** The server keeps only data; each client draws the plots it needs from one
 `GardenRemotes.Plot` message per plot (full / mid / low detail by distance, `GardenView`); plot positions come from `GardenConfig.PlotCFrame`
