@@ -259,8 +259,8 @@ the lintel the moment it slides up into it.
   plates, green = switches and checkpoints, pastel violet = low gravity, **pink (`#FF46B4`) = bounce** (stud trampolines,
   the KeyArena orb). A new component takes a colour not on this list.
 - **Visuals are deferred (user decision 2026-10-21):** every kit component is deliberately plain (grey / coloured boxes); wind
-  and updraft particles, plate looks, beam glow etc. come in a later visual pass together with the world style decision
-  ([STYLE_PREVIEW.md](STYLE_PREVIEW.md)), as presets on the `StageKit.Obstacles` templates. Only the functionality (attributes
+  and updraft particles, plate looks, beam glow etc. come in a later visual pass in the stud style (decided 2026-11-05;
+  look rules §2.5), as presets on the `StageKit.Obstacles` templates. Only the functionality (attributes
   and behaviour in the script headers) is fixed.
 - **S3.1 spike result (2026-10-21):** carry by frame delta is exact (no drift) and needs a short air-carry (0.5 s) after
   jumping off; tilt plates need an explicit slide-off (freefall + downhill velocity) because `MaxSlopeAngle` is 89; the client
@@ -729,7 +729,7 @@ LAYOUT.md "Adding a world stage" plus the `StageConfig` entry (`world`, `require
 
   (`407` / `408` / `507` / `508` were added when the courses were lengthened, so numbers are not in course order: Stage 7's `506` (6 studs before the finish, after the `Fin` climb) was deleted 2026-10-29 and its plate kept as `Pillars.EndPlate`, so `508` is its last; Stage 6's `406` was deleted 2026-10-26, `408` is its last checkpoint.)
 - **World 2 opens with stage 6** (user decision, 2026-10-22): the `soon` flag was removed with Stage 6, so the hub gate follows the normal world rule (10 of 15 World 1 stars, or buy Stage 6); the unbuilt openings
-  carried closed "Coming soon" doors (`SoonGate8..10`, replaced by the real gates). **Look:** the Island Hop look (stud columns from the sea) until the style decision (STYLE_PREVIEW.md).
+  carried closed "Coming soon" doors (`SoonGate8..10`, replaced by the real gates). **Look:** the Island Hop look (stud columns from the sea) (the world style stays stud, decided 2026-11-05).
 - **Reach rules for Double Jump stages** (measured with a baseline bot, Run Speed 0 / Jump Height 0, one air jump; it jumps 0.6 studs before the edge and double-jumps at 0.24 s): a Double Jump crosses a **12-12.5 stud gap
   with 1.6-2.4 studs to spare** and an **11 stud ledge with 4.6-4.9** (12 has none, so ledges stay at 11); a single jump with **Run Speed 5 + Jump Height 3 still crosses 12 by 0 studs**, so the real gate is the 11 stud ledge
   (single rise with every soft talent is 9.0). Rules used: Double Jump gaps 12-12.5 (never over 13), ledges 11, landings at least 6 × 6, **single-jump gaps at most 6.5** (a baseline single jump reaches 8.3), 4-5 when the next plate
@@ -965,7 +965,7 @@ M6); two answers differ from the recommendation (marked ≠).
 
 | Question | Decision |
 |---|---|
-| World themes and names (sky, factory, storm, summit…)? | pick with the style decision ([STYLE_PREVIEW.md](STYLE_PREVIEW.md)); stud style for now |
+| World themes and names (sky, factory, storm, summit…)? | open; the style is stud (decided 2026-11-05: voxel / pixel-art previews dropped) |
 | World gate bar: Silver on the previous finale, or "N stars in the previous world" (needs code)? | **≠ N stars in the previous world: 10 of 15** (Silver everywhere; N provisional); new unlock rule type in S1.1 |
 | Scale challenge-coin values with the stage factor? | **≠ no, flat 20 / 50 / 100** |
 | Semantic keys for new stages (`Blink`) instead of `"Stage N"`? | was yes; replaced 2026-10-22 by key = folder = position (`Stage3`) |

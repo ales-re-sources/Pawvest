@@ -21,7 +21,6 @@ boards, challenge coins, talents), pets, and a garden island with plots, incubat
 | [docs/LOCALIZATION.md](docs/LOCALIZATION.md) | localization design and the strings workflow |
 | [docs/TELEMETRY.md](docs/TELEMETRY.md) | telemetry events and how to read them on the Creator Dashboard |
 | [docs/PET_GROWTH.md](docs/PET_GROWTH.md) | how PetLook derives a pet's look, how pet models are authored |
-| [docs/STYLE_PREVIEW.md](docs/STYLE_PREVIEW.md) | parked voxel / pixel-art style previews (decision pending) |
 
 Tools: `tools/economy.py` (economy model: run `check` after changing any price, rate or reward in a config, `pin` to accept reviewed values),
 `tools/loc.py` (strings, below), `tools/vault_reach.py` + `tools/vault_right_checks.sh` (Stage 14's Key Vault reachability; re-run after moving

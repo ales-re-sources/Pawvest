@@ -237,6 +237,9 @@ loadout per run and every purchase.
 **H2 — Stud checkpoints.** *Why:* clearer checkpoints that show progress. *What:* a stud plate whose tile and light column glow only for the
 player who reached it; respawns face along the course; a `StageKit.Checkpoint` template.
 
+**Art style: stud, final** (2026-11-05, the user). The voxel / pixel-art previews of 2026-10-20 were dropped (doc and screenshots:
+`git show 87b1d3c:docs/STYLE_PREVIEW.md`).
+
 **H1 — Hub island redesign.** *Why:* one look for hub and garden. *What:* the hub as a stud-style island joined to the garden by a bridge, one sea
 as the kill floor, stud portals, decor from `ServerStorage.DecorKit`, the camera turned along the course after a teleport.
 
