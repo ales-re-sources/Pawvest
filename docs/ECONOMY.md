@@ -70,7 +70,7 @@ Not yet built (ROADMAP → E0): 7 no dead end, 8 rare supply vs the first landma
   - Repeat obby runs stay as they are (the user: tens of Coins next to a first clear's 1 000+ feels right), so Casual's day-30 lead reaches 10x
     only with F2's gentler square gates and the 4th / 5th field pet slot.
   - 36 squares, any square opened by choice, the price by the number already open (1 400 → 907 400, 4.8 M in all).
-  - Tools at the EXPANSION §6 effect sizes, prices × 9.33, squares 7-11 one Renown level lower (Casual's day-7 lead was 2.93x).
+  - Tools at the planned effect sizes (GDD §7.9), prices × 9.33, squares 7-11 one Renown level lower (Casual's day-7 lead was 2.93x).
   - Pens convert into field pet slots without a refund (slots are worth more than any pen set cost).
 - **2026-11-03 Market cart:** bargains 10 @ −30 % and 5 @ −50 % (worth little: seeds are a quarter of the sale); the taste of 2 seeds from Renown 3
   at the catalogue price (earlier, one Giant melon is worth a day of early obby play and breaks parity).

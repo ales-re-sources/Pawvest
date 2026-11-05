@@ -10,7 +10,8 @@ were multiplied by 10 once. Percentages, odds and times are unchanged.
 ## 1. Pillars
 1. **Short, readable stages** — each stage is a 1–3 minute run with a clear finish.
 2. **Mastery pays most** — medals and fast times pay the most Coins. Repeating a stage still pays, but less with every
-   run; slow or idle sources (pet garden) are a steady trickle, never the fastest route.
+   run. *Changed 2026-11-02 (farming first, §7.9):* within the obby mastery pays most, but the crop field becomes the main income
+   once it ships to everyone; the pens (§7.6) stay a trickle.
 3. **Fair leaderboards** — nothing that affects a leaderboard time can be bought with Robux. Pets never change
    movement or stage times; talents do, but are earned with Coins only (provisional, see §9).
 4. **One hall, many games** — the central island hosts several minigames (obby first, pet garden next, more later).
@@ -572,7 +573,7 @@ Decided 2026-10-25. The product list and offer rules are in [EXPANSION.md](EXPAN
   neither earnable nor capped.
 - Rule: everything purchasable that changes the economy must also be earnable through play and capped, so money only
   speeds progress up.
-- Leaderboard fairness (§1.3): nothing bought affects a stage time; a skipped stage gives no time, no medal and no payout.
+- Leaderboard fairness (§1, pillar 3): nothing bought affects a stage time; a skipped stage gives no time, no medal and no payout.
 
 ## 10. Balancing & telemetry
 - **Measuring `T_base`:** developer runs each stage clean, no talents, 3 attempts, take the median.
