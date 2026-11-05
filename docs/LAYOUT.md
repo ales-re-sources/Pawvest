@@ -157,6 +157,23 @@ src/
 
 **Kit obstacles:** `ServerStorage.StageKit.Obstacles` (Studio-only, S3.3b) holds one preconfigured template per kit component (movers, hazards, plates, switches, zones, camera zones, ghost zone, run-seeded samples, `Bounce_Trampoline` = a bounce brick with tag + `LaunchSpeed` instead of a script; `Hazard_PendulumRig` is a model with its frame): clone, `PivotTo` the spot, adjust attributes (listed in the header of `ObstacleKit.client.luau` / `KitZones` / `StageCamera`). The tags and attributes come with the clone.
 
+**Studio-only details of the stage parts:**
+- `FallResetDepth` attributes (QuickRespawnClient's default is 30): `World1.Stage4` = 70 (Level 12's bounce bricks lie 46-61 studs below the
+  plates), `World2.Stage6` = 55 (the pillar descent after `408` ends 42 below the plate), `World3.Stage11` = 75 (the descent ends 65 below `905`),
+  `World3.Stage13` = 40 (catch floors `Catch1` / `Catch2` 32 below the plates, a truss leads back up).
+- Checkpoint `Core` / `Beam` are authored in the "not reached" look; `CheckpointClient` reads that look once per pad and tweens to and from it,
+  so restyle them in Studio in that state. `CheckpointTouchHandler`'s `Sound` / `Orig` children exist only in Studio (`CheckpointClient` clones
+  `Sound` on the client).
+- `Workspace/World1/Stage5/level.2` is a Model literally named `level.2` (dot in the name); its checkpoint `level.2/26` was rebuilt by hand after
+  a rename on disk (plate 16 x 1 x 12 at z 80.1).
+
+## Adding a world stage
+Clone the Studio-only templates `ServerStorage.StageKit.Gate` (door gate with its scripts), `StageKit.Top10Leaderboard` and `StageKit.Arrival` into the new stage folder, `PivotTo` / rotate them as a group onto a free gate position of the courtyard wall (the templates are laid out for a course running north from the gate line at z 187; the first checkpoint plate sits 7 studs behind the gate line), then add the `StageConfig` entry. Checkpoints: clone `ServerStorage.StageKit.Checkpoint` (plate + `Core` + `Beam` + the C Script; pivot = centre of the plate's top), rename it to the next free number and put its upstream edge against the previous obstacle, its front (LookVector, -Z) pointing along the course (the respawn faces that way). Scripts resolve the stage from the folder, so nothing else needs editing;
+**Argon does not write the script files of instances created through the Studio MCP** (clones, `execute_luau`; changes to a synced script's `Source` made that way do not reach the disk either). For a new stage, copy the script directories from an existing stage on disk (`Gate`, `Top10Leaderboard`, `TeleportBackToStageStart`, one `<number>` per checkpoint; a plain directory is a Folder, the `init.meta.json` files hold the class), keep the old Studio folder, let Argon create the bare scripted instances from the copied files, then move the Studio-only children and the scripted parts' properties from the old folder into them (match by name; **children with duplicate names, like the three `Step` parts of a ChoiceStage, must be moved without matching** — a name match overwrites the first one), check that the descendant counts agree, and only then delete the old directories on disk (S4.1, S4.2 and the 2026-10-22 renaming did this). The templates' scripts are copies: when a stage script changes, change the template's copy too.
+A cloned stage's gate sign (`Gate.Sign.Gui.Title`) keeps the source stage's literal text in the place file: set the Studio text of every new
+stage's sign (the `GateSign` script writes the localized name at runtime; the literal is what Edit mode shows). Then add the stage to
+`StageConfig`, give a course with a deep catch surface its `FallResetDepth`, and run the coplanar audit (AGENTS.md → Gotchas).
+
 ## Reusable script variants (copy-pasted, not modules)
 
 Most of the 119 scripts are identical copies. Edit them consistently (grep by content or md5):
