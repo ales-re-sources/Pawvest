@@ -680,7 +680,7 @@ FIELD = {
     # sinks the model does not design yet (landmark Coins parts, estate tiers, decor, stations; EXPANSION §12): a geometric ladder, bought last
     "reserved": {"first": 8000, "ratio": 1.3, "count": 20},
     "bias": {"talent-first": 1.5, "pets-first": 0.7},  # field price x bias when merged into a policy's buying order
-    "sink_share": {30: 0.60, 60: 0.80},  # OPEN decision 1 (proposal): sinks / cumulative faucet by day 30 and day 60
+    "sink_share": {30: 0.60, 60: 0.78},  # OPEN decision 1 (proposal): sinks / cumulative faucet by day 30 and day 60; day 60 0.80 -> 0.78 2026-11-05 (the user accepted Obby main's 79 % after P4)
     "a_band": (0.8, 1.0),  # guardrail A (reported only since 2026-11-02): the best-developed archetype's 24 h field / first obby hour
     # Farming is the main game (user, 2026-11-02): realised field net per day / obby Coins per day. Parity: at most `parity` over the total of the
     # first `parity_days` days (decided 2026-11-02: the obby's first-clear payouts are too lumpy for a per-day cap); lead: at least lead[day] over the 3 days ending on that day, for the `lead_archetypes`; Obby main at least obby_main[1] by day obby_main[0].

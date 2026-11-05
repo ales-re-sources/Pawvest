@@ -29,7 +29,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | P1, P1e, P1g | Pets, growth visuals, stud restyle | ✔ | ✔ | – |
 | P2 | Pet garden: plots, pens, incubators, food | ✔ | ✔ | – |
 | P3a, P3b | Pet page, pet names | ✔ | ✔ | – |
-| P4 | Pet traits: Cuteness carries the Coin bonus, per-trait levels 1–10, look from the highest trait — economy `pin` awaits the user | ✔ | partial | – |
+| P4 | Pet traits: Cuteness carries the Coin bonus, per-trait levels 1–10, look from the highest trait | ✔ | partial | – |
 | H1, H2 | Hub island, stud checkpoints | ✔ | ✔ | – |
 | S1–S7 | Stage framework, Quick Respawn, obstacle kit, World 1, worlds hub, World 2, Triple Jump + Dash | ✔ | ✔ | – |
 | S8 | World 3 (Stages 11–15) — awaits the user's sign-off | ✔ | S8.1 ✔; S8.2–S8.3 bot-checked, run by the user | – |
@@ -120,8 +120,8 @@ its traits.
 
 **Studio (2026-11-05):** 1–6 passed (6 by the look numbers and a level-up moment on a follower; pens are gone for field-access players, so
 the pen moment was not seen); 7 in Czech through the real UI (pets panel, pet page, food stand, hatch reveal: 48 of 50 px with three traits).
-Open: 8 (the model fails check C, Obby main's sink share 79 % by day 60 against 80 %: the user decides, then `pin`), the pseudo-language
-pass, a multi-client look check, and the pet page of a player without field access ("a garden job for later", untestable as an admin).
+8 passed after the user accepted Obby main's 79 % sink share by day 60 (bar 80 → 78 %) and the `pin`. Open: the pseudo-language pass, a multi-client look
+check, and the pet page of a player without field access ("a garden job for later", untestable as an admin).
 
 ### E0 — Economy model
 **Goal.** One reproducible model of the Coin economy (`tools/economy.py`, Python stdlib; how to run it: ECONOMY.md) that fixes the numbers the

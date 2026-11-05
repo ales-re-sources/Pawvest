@@ -386,6 +386,42 @@
    2800
   ]
  ],
+ "cuteness": [
+  {
+   "Common": 0.35,
+   "Epic": 0.6,
+   "Legendary": 0.7,
+   "Rare": 0.5,
+   "Uncommon": 0.4
+  },
+  100,
+  {
+   "Common": [
+    1,
+    0
+   ],
+   "Epic": [
+    2,
+    0.5
+   ],
+   "Legendary": [
+    3,
+    0
+   ],
+   "Rare": [
+    2,
+    0
+   ],
+   "Uncommon": [
+    1,
+    0.1
+   ]
+  },
+  [
+   5,
+   36
+  ]
+ ],
  "eggs": {
   "Basic": [
    500,
@@ -494,7 +530,7 @@
   ]
  ],
  "offline_cap_h": 8.0,
- "pen_level_rate": 40,
+ "pen_level_rate": 760,
  "pen_prices": [
   0,
   1000,
@@ -511,8 +547,8 @@
   "Uncommon": 20
  },
  "pet_levels": [
-  20,
-  5,
+  10,
+  19,
   500
  ],
  "pet_scouting": [

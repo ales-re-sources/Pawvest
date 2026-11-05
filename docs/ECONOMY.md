@@ -34,7 +34,7 @@ Since the user's direction change (2026-11-02) **farming is the main game** and 
 | 4 P parity | the field earns ≤ 1.0x the obby's Coins over days 1-3 together (a total: first-clear payouts are too lumpy for a daily cap); Garden main ≤ 1.8x since the offline change |
 | 4 L lead | field ≥ 3x the obby by day 7 and ≥ 10x by day 30 for Casual and Garden main; Obby main ≥ 1x by day 14; Binge reported only |
 | 5 B | a field with Tending pets earns more than the same field without them (Binge within 3 %) |
-| 6 C | sinks ≥ 60 % of the cumulative faucet by day 30 and ≥ 80 % by day 60 (with the reserved sink ladder, open decision 1) |
+| 6 C | sinks ≥ 60 % of the cumulative faucet by day 30 and ≥ 78 % by day 60 (with the reserved sink ladder, open decision 1) |
 | O | garden income per online hour ≥ 1 / `offline_rate` × per offline hour, and offline income exists |
 | 12 | size roll: mean factor 1 ± 0.005 with the cap, Big / Giant shares |
 | 13 | crop XP ≤ sale × Berry's XP per Coin (feeding never beats selling and buying food) |
@@ -61,12 +61,12 @@ Not yet built (ROADMAP → E0): 7 no dead end, 8 rare supply vs the first landma
   1 per absence, from Renown 3, rare crops safe. The model has no guards (the worst case).
 
 ## Decisions (dated; the numbers live in the configs)
-- **2026-11-05 P4 pet traits** (pending the user's review and `pin`): the Coin bonus is the **Cuteness** trait, levels 1-10; bonus = rarity
+- **2026-11-05 P4 pet traits** (reviewed and pinned): the Coin bonus is the **Cuteness** trait, levels 1-10; bonus = rarity
   base + `CuteStep` 19 ‰ per level above 1 (no migrated pet loses bonus), XP `100 × L^1.5` (11 100 to level 10, about today's ramp);
   `CuteChance` 0.35 / 0.4 / 0.5 / 0.6 / 0.7 by rarity after Tending gives Cuteness on 28 / 32 / 50 / 70 / 82 % of hatches (Tending shares
   unchanged); care XP trains work traits up to level 5 at 36 s per XP; pens by pet level, `MaxLevelRate` 760 (Lv 10 = ×1.76). The equipped
   multiplier saturates at 1.49 (was 1.47). Check C (Obby main's sink share by day 60) drops to 79 % (bar 80 %): the field earns about 5 %
-  more; open for the user (accept, or size the reserved sinks up).
+  more; the user accepted it, the day-60 bar is now 78 %.
 - **2026-10-24 Online beats offline** (above). **2026-11-04:** `offline_rate` 0.33 → 0.5 and the field cap 12 → 24 h (a day away grew only about
   4 h and the field felt unplayable); Garden main's parity relaxed to 1.8x (1.67x measured) and Binge's B to 3 % (1.7 % measured) with it.
 - **2026-11-02 Field pets (E1b inputs):** Tending at level 10 = continuous cycling; aptitude level L → L + 1 in 10 × 1.56^(L−1) weighted field
@@ -100,7 +100,7 @@ Not yet built (ROADMAP → E0): 7 no dead end, 8 rare supply vs the first landma
 - **Biggest unknowns** are the visit schedules and learning speed of real players: M6a telemetry.
 
 ## Open decisions for the user
-1. **Sink share:** keep 60 % by day 30 / 80 % by day 60 or lower it; it sizes the landmark / estate / decor sinks.
+1. **Sink share:** keep 60 % by day 30 / 78 % by day 60 (80 % until P4) or lower it; it sizes the landmark / estate / decor sinks.
 2. **Time-to-afford bands** for the repricing (E0b); not started.
 3. **Placeholder sinks:** their size until E6 / E7 are designed.
 4. **Stars for talents** (the parked idea above).
