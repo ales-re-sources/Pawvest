@@ -440,7 +440,7 @@ collecting and caring over obby runs.
   bridge (no portals since H1). Both islands share one look (part-built grass islands on a rock base, cobblestone
   plazas, hedge rings, blocky trees and flowers) and stand in one sea that is also the world's kill floor.
 - **Layout.** A central plaza (food shop) surrounded by a ring of **12 plots** (a second ring of 18 is ready for bigger servers), about
-  40 × 40 studs each, with an owner name sign, pens and incubators. Servers hold **12 players** (one plot per slot). Each player's
+  40 × 40 studs each, with an owner name sign (stud look, raised on two posts so players walk under it and see the plot past it), pens and incubators. Servers hold **12 players** (one plot per slot). Each player's
   client draws the plots from the server's data (E1a1); free plots of the inner ring show "Free plot".
 - **Personal plot.** A player borrows a free plot while online: it is assigned on join, built from the profile, and
   released on leave. The plot's contents are saved in the profile and restored on any server. Production runs on server
@@ -473,7 +473,7 @@ collecting and caring over obby runs.
   inventory cap (50), and a ready egg does not hatch into a full inventory (it waits). Other players see the eggs and their
   countdown but cannot use them.
 - **Feeding.** Food bought for Coins gives a pet XP: an alternative to leveling by playing the obby, and a Coin sink.
-  Food is sold at the **food stand** on the plaza and fed at once to one chosen pet (equipped, penned or resting in the
+  Food is sold at the **food stand** in the middle of the plaza (a four-sided stud kiosk, readable from every plot, a big strawberry on top) and fed at once to one chosen pet (equipped, penned or resting in the
   inventory); there is no food inventory. Only the fed pet gains the XP. A level-20 pet cannot be fed (no Coins taken);
   XP beyond level 20 is lost, so the panel shows how much a pet still needs. Feeding a penned pet settles its production
   first, so the new level only counts from then on.

@@ -140,6 +140,12 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
 
+**Stud food stand and plot signs** (2026-11-05; GDD §7.6, LAYOUT Garden). *Why:* the stand and the plot signs were the last plain-wood
+pieces in the garden; the stand read from one side only, and the low plot sign blocked the way and the view into a plot. *What:* the food
+stand rebuilt as a four-sided stud kiosk at the plaza centre (sign on every side, strawberry on top; `Counter` + prompt kept); the plot
+sign (`PlotView:buildSign`) in the hub sign's stud palette, 1.5x taller, its board 7.5 studs over the ground. Studio-validated: a
+character walked under the sign, the prompt opened the food panel with E, the stand's coplanar audit shows only hidden faces.
+
 **Stud conveyors** (2026-11-05; STAGES §2.5). *Why:* Stage 1's two conveyors were smooth slate columns that hid their direction. *What:*
 charcoal stud belts with rollers and amber chevrons on their own stud pillars (Stage 1), Stage 10's `Conveyor_9` restyled the same way,
 template `Conveyor_Belt`; in play the chevrons slide along the belt at its speed (`KitConveyorsClient`). Studio-validated: coplanar audit

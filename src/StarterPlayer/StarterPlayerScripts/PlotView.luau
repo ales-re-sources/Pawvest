@@ -41,12 +41,19 @@ local FIELD_FRONT = -2 -- the field lies behind the strip (floor +Z), from this 
 local FIELD_PITCH = 5.5 -- studs per square
 local BUY_HOLD = 0.5 -- seconds a buy prompt is held
 local INFO_DISTANCE = 60 -- studs: pad / incubator billboards and pet labels
+local SIGN_CLEAR = 8 -- name sign: height of the lower frame bar's centre over the floor centre (a player walks under it)
+local SIGN_TOP = 12.4 -- name sign: height of the upper frame bar's centre (1.5x the old 8.25-stud sign)
 
 local COLORS = {
 	floor = Color3.fromRGB(126, 186, 96),
 	edge = Color3.fromRGB(120, 85, 50),
-	sign = Color3.fromRGB(60, 42, 28),
-	signNumber = Color3.fromRGB(230, 200, 140),
+	-- name sign: the stud palette of Workspace.Garden.HubSign
+	sign = Color3.fromRGB(117, 77, 50),
+	signPost = Color3.fromRGB(255, 151, 90),
+	signFrame = Color3.fromRGB(157, 84, 45),
+	signCollar = Color3.fromRGB(100, 133, 147),
+	signText = Color3.fromRGB(255, 240, 210),
+	signNumber = Color3.fromRGB(255, 205, 150),
 	padFree = Color3.fromRGB(150, 150, 150),
 	padEmpty = Color3.fromRGB(110, 190, 110),
 	padLocked = Color3.fromRGB(80, 80, 80),
@@ -363,10 +370,39 @@ function PlotView:buildBase(model: Model)
 	} do
 		part({ Name = "Edge", Size = edge[2], CFrame = self:at(edge[1]), Color = COLORS.edge, Material = Enum.Material.Wood }).Parent = model
 	end
-	for _, x in { -6, 6 } do
-		part({ Name = "Post", Size = Vector3.new(0.8, 5, 0.8), CFrame = self:at(Vector3.new(x, 2.75, -22)), Color = COLORS.edge, Material = Enum.Material.Wood }).Parent = model
+	self:buildSign(model)
+end
+
+-- The name sign in front of the plot, in the stud look of the garden's hub sign (Inlets texture): two posts high enough to
+-- walk between and under (the board's lowest edge is SIGN_CLEAR above the floor) and a board with tan frame bars and steel
+-- collars. No two parts share a face plane (z-fighting).
+function PlotView:buildSign(model: Model)
+	local z = -22
+	local function stud(name: string, size: Vector3, offset: Vector3, color: Color3, solid: boolean)
+		local p = part({
+			Name = name,
+			Size = size,
+			CFrame = self:at(Vector3.new(offset.X, offset.Y, z + offset.Z)),
+			Color = color,
+			Material = Enum.Material.Plastic,
+			MaterialVariant = "Inlets",
+			CanCollide = solid,
+		})
+		p.Parent = model
+		return p
 	end
-	local sign = part({ Name = "Sign", Size = Vector3.new(14, 4, 0.6), CFrame = self:at(Vector3.new(0, 6.25, -22)), Color = COLORS.sign, Material = Enum.Material.Wood })
+	local boardLow, boardHigh = SIGN_CLEAR + 0.3, SIGN_TOP - 0.3 -- the board between the frame bars
+	local boardMid = (boardLow + boardHigh) / 2
+	for _, x in { -7.6, 7.6 } do
+		stud("Post", Vector3.new(1.1, SIGN_TOP + 0.15, 1.1), Vector3.new(x, (SIGN_TOP + 0.4) / 2, 0), COLORS.signPost, true)
+		stud("Cap", Vector3.new(1.4, 0.7, 1.4), Vector3.new(x, SIGN_TOP + 0.6, 0), COLORS.signFrame, false)
+		stud("Collar", Vector3.new(1.4, 0.6, 1.4), Vector3.new(x, 0.55, 0), COLORS.signCollar, false)
+		stud("Collar", Vector3.new(1.4, 0.9, 1.4), Vector3.new(x, SIGN_CLEAR, 0), COLORS.signCollar, false)
+	end
+	for _, y in { SIGN_CLEAR, SIGN_TOP } do
+		stud("Bar", Vector3.new(15.2, 0.6, 0.8), Vector3.new(0, y, 0), COLORS.signPost, false)
+	end
+	local sign = stud("Sign", Vector3.new(14, boardHigh - boardLow, 0.5), Vector3.new(0, boardMid, 0), COLORS.sign, false)
 	local gui = Instance.new("SurfaceGui")
 	gui.Name = "Gui"
 	gui.Face = Enum.NormalId.Front
@@ -375,24 +411,28 @@ function PlotView:buildBase(model: Model)
 	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 	textLabel(gui, {
 		Name = "Number",
-		Size = UDim2.new(1, 0, 0, 44),
+		Position = UDim2.new(0, 10, 0, 6),
+		Size = UDim2.new(1, -20, 0, 30),
 		TextScaled = false,
-		TextSize = 36,
-		Font = Enum.Font.Gotham,
+		TextSize = 28,
+		Font = StudStyle.Font,
 		TextColor3 = COLORS.signNumber,
-		TextStrokeTransparency = 1,
+		TextStrokeColor3 = Color3.new(0, 0, 0),
+		TextStrokeTransparency = 0.6,
 		Text = Locale.T("sign.plot", { n = self.slot }),
 	})
 	textLabel(gui, {
 		Name = "Name",
-		Position = UDim2.new(0, 10, 0, 44),
-		Size = UDim2.new(1, -20, 1, -50),
-		TextStrokeTransparency = 1,
+		Position = UDim2.new(0, 14, 0, 36),
+		Size = UDim2.new(1, -28, 1, -44),
+		Font = StudStyle.Font,
+		TextColor3 = COLORS.signText,
+		TextStrokeColor3 = Color3.new(0, 0, 0),
+		TextStrokeTransparency = 0.5,
 		-- a player name (no translation)
 		Text = if self.state.free then Locale.T("garden.sign.plotFree") else tostring(self.state.name),
 	})
 	gui.Parent = sign
-	sign.Parent = model
 end
 
 -- Label over a penned pet: name, level, tier stars and its Coins per hour (before the pet bonus).
