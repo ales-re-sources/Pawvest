@@ -705,7 +705,7 @@ AGENTS.md "Adding a stage" plus the `StageConfig` entry (`world`, `requires`, ke
   sides, 1 at the far end) come with S6; the plaza reserves the two bonus portal slots beside the return gate (S11), no portals yet. The kill floor already covers the
   area (baseplate to z 923); lanes of the later stages run east / west like World 1's. Both courtyards also get a **world sign** ("World N" on two wooden posts, 27 studs
   in front of the arrival pad) and their stars board.
-- **World stars boards (decided, REMOVED 2026-11-02: not useful; only the hub's `MostStars` board remains, the `WorldStars_<n>` stores are orphaned):** each world plaza gets a board of the players with the most stars earned in that world (not the total):
+- **World stars boards (decided, REMOVED 2026-11-02: not useful; only the hub's `MostStars` board remains, the `WorldStars_<n>` stores were emptied the same day):** each world plaza gets a board of the players with the most stars earned in that world (not the total):
   `StarBoard` is generalised to boards (`MostStars` stays the global one; `WorldStars_<n>` one OrderedDataStore per world with stages, written when
   that world's stars change, next to the global write), a board model (clone of `StartLocation.StarsLeaderboard`) and a `WorldStarsBoard`
   script per world folder. World 1's board stands beside the south return gate; World 2's board stays empty until S6.

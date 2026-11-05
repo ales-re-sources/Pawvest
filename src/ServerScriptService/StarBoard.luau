@@ -1,5 +1,5 @@
 -- StarBoard: the hub's "most stars" ranking (GDD §8). Server-only (StarBoard.Top / Refresh / Changed). The per-world boards of S5
--- were removed (2026-11-02); their `WorldStars_<n>` stores are orphaned.
+-- were removed (2026-11-02); their `WorldStars_<n>` stores were emptied.
 -- An OrderedDataStore keyed by UserId holds each player's stars (StageConfig.TotalStars of their medals).
 -- The entry is written only when the total changes: after a new medal (StageResults calls Sync), after an admin
 -- reset (removed) and once on join when the stored value differs from the profile. The profile stays the source of
