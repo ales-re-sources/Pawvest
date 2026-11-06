@@ -31,7 +31,7 @@ StudStyle.PanelColors = {
 	SettingsPanel = StudStyle.Colors.Blue,
 	AdminPanel = StudStyle.Colors.Purple,
 	PetsPanel = StudStyle.Colors.Green, -- PetsGui.Panel (PetsPanel.client)
-	GardenPen = StudStyle.Colors.Wood, -- GardenGui.Panel (GardenClient), also its toast and the "welcome back" card
+	Field = StudStyle.Colors.Wood, -- FieldGui.Panel (FieldClient)
 	Incubator = StudStyle.Colors.Yellow, -- IncubatorGui.Panel (IncubatorClient)
 	FoodShop = StudStyle.Colors.Red, -- FoodShopGui.Panel (FoodShopClient)
 }

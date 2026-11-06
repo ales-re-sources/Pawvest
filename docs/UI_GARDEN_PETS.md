@@ -113,11 +113,11 @@ food stand's counters stay reachable and readable from the plots on that side.
 |---|---|---|
 | U1 | Pets panel, pet page and the food stand panel (§9, §9.1): **built 2026-11-06** | P4 |
 | U2 | Garden HUD button + badge, summary bubble over the own sign (§3 Far, §8) | – |
-| U3 | Field interaction: rings, tap-select, square card, hand bar, pet reach borders, prompts removed (§3 Near, §4, §5) | field access |
+| U3 | Field interaction: rings, tap-select, square card, hand bar, pet reach borders, prompts removed (§3 Near, §4, §5) | every player |
 | U4 | Panel split: Skills → Garden tab, Barn panel, Seed stall; Garden panel removed (§6) | U3 |
 | U5 | Plot layout: hatchery left, barn right, path; K1 egg cards (§7) | U4 (barn) |
 
-Order proposed: U1 before M6a; U2–U5 before E5's onboarding (it teaches the new controls) and before E1 ships.
+Order proposed: U1 before M6a; U2–U5 before E5's onboarding (it teaches the new controls).
 
 ## 12. Decisions (the user, 2026-11-05)
 1. ~~Square interaction~~ — decided 2026-11-05: tap + square card + hand bar (§4).

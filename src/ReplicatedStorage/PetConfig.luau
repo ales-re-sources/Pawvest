@@ -82,7 +82,7 @@ PetConfig.EggOrder = { "Basic", "Golden" } -- incubator panel order (cheapest fi
 PetConfig.SlotPrices = { 0, 2000, 5000 } -- SlotPrices[n] = price of the n-th equip slot; #SlotPrices = max slots
 PetConfig.MaxPets = 50 -- inventory cap
 -- P4: a pet has no level of its own any more. Its level (PetLevel) is the highest level of its working traits (aptitudes in Shown),
--- 1..MaxLevel; it drives the label, size, look tiers and pen output. The stored Pets[uid].Level / XP (1..LegacyMaxLevel, before P4) are
+-- 1..MaxLevel; it drives the label, size and look tiers. The stored Pets[uid].Level / XP (1..LegacyMaxLevel, before P4) are
 -- frozen and read only by the profile migration (MigrateLegacyPet).
 PetConfig.MaxLevel = 10
 PetConfig.LegacyMaxLevel = 20

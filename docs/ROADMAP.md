@@ -27,7 +27,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 |---|---|---|---|---|
 | M0–M5, R | Foundations, medals, talents, economy, unlocks, challenge coins, boards | ✔ | ✔ | – |
 | P1, P1e, P1g | Pets, growth visuals, stud restyle | ✔ | ✔ | – |
-| P2 | Pet garden: plots, pens, incubators, food | ✔ | ✔ | – |
+| P2 | Pet garden: plots, incubators, food (the pens were removed in FA) | ✔ | ✔ | – |
 | P3a, P3b | Pet page, pet names | ✔ | ✔ | – |
 | P4 | Pet traits: Cuteness carries the Coin bonus, per-trait levels 1–10, look from the highest trait | ✔ | partial | – |
 | H1, H2 | Hub island, stud checkpoints | ✔ | ✔ | – |
@@ -39,7 +39,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | K1 | First-hour fixes (kid playtest 2026-11-01): Stage 5, G1 fallback, Double Jump world reward done; hatch panel proposed | partial | partial | – |
 | E0 | Economy model: baseline, simulation, field and every E1–E4 re-run done; repricing and the remaining checks open | partial | – | – |
 | E1.0 | Client-drawn plots spike: **GO** | ✔ | ✔ | – |
-| E1a–E1d | Crop field behind field access: client-drawn plots, field, field pets, crops as pet food, size roll, upgrades, tools, market cart, farming-first numbers, 36 squares | ✔ | ✔ | – |
+| E1a–E1d | Crop field (every player's since FA): client-drawn plots, field, field pets, crops as pet food, size roll, upgrades, tools, market cart, farming-first numbers, 36 squares | ✔ | ✔ | – |
 | E2 | Obby seeds: rare crops, rare-seed meters, seed pouch, Scouting | ✔ | ✔ | – |
 | E4-thin | Crows and Pest-control guards (E4a server, E4b client) | ✔ | ✔ | – |
 | OG | Offline crop growth 0.5 / 24 h | ✔ | pending | – |
@@ -47,30 +47,32 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | M6a | Soft launch + World 1 balancing — World 1 balanced by feel (2026-10-30); live test open | – | – | – |
 | MU | Mobile UX check | – | – | – |
 | U1 | Pets panel rows with trait chips, filters, pet page Sell under More, food stand rows | ✔ | partial (multi-client look open) | – |
+| FA | The field for everyone, pens removed | ✔ | ✔ | – |
 | U2–U5 | Garden and pet UI redesign, rest ([UI_GARDEN_PETS.md](UI_GARDEN_PETS.md)) — design decided 2026-11-05 | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
-**Order (2026-10-30, updated 2026-11-05).** The obby (15 stages) goes out first as a soft launch; the garden MVP (EXPANSION §14) is built behind
-field access and ships after it. World 4 waits until after the MVP.
+**Order (2026-10-30, updated 2026-11-06).** The soft launch takes the obby (15 stages) and the garden as built: since FA (2026-11-06) every
+player has the crop field, so the rest of the garden MVP (EXPANSION §14) is built in the open game. World 4 waits until after the MVP.
 
 1. **Close World 3:** the user's sign-off of Stages 11–15 with the new medal times. Stage 10's times stay (decided 2026-10-30: the fast
    test-account times there need every talent, the Long Dash included).
-2. **M6a soft launch** (friends, then unlisted) with 15 stages and today's pets and garden: real finish times, T1a / T1b on the Creator
-   Dashboard and a **retention baseline of the obby alone**, to measure later what the garden adds. Includes the live-test checks below.
+2. **M6a soft launch** (friends, then unlisted) with 15 stages, pets and the garden with the crop field: real finish times, T1a / T1b on the
+   Creator Dashboard and a first retention baseline. The planned obby-only baseline is dropped (the garden is in from the start since FA);
+   what later drops add is measured against this one. Includes the live-test checks below.
 3. **Offline growth (OG) validation:** a 24 h-back `SettledAt` must give `Grown` = 43 200 for a pumpkin (ripe at 28 800). The same test
    explains the user's pumpkin that still had 5 h 47 min left after 24 h away (at most about 4 h was expected under the old 0.33 / 12 h rules).
 4. **E5 + rest of the garden MVP** (scope when it starts; EXPANSION §14): request board, the ledger on join (the join notice grows into it),
-   onboarding for the first ten minutes, garden telemetry. Then **E1 ships**: `GardenConfig.FieldAccess = "all"` converts every live player's
-   pens on join, Max Players goes to 24 (a place setting), and the open items "When E1 ships" below are checked.
+   onboarding for the first ten minutes, garden telemetry. Before going public Max Players goes to 24 (a place setting) and the open item
+   "Before Max Players 24" below is checked.
    Gates before going public: M6a, the balancing pass, the Czech review of the new texts, MU, and the comfort shop (D2) or a decision to
    launch without it.
 5. **E0 in parallel:** repricing and the remaining checks (section below).
 6. **MU** before anything goes public.
 7. **U1–U5 garden and pet UI** (design decided 2026-11-05, [UI_GARDEN_PETS.md](UI_GARDEN_PETS.md) §11–12; scope each when it starts):
    **U1** built and Studio-checked (2026-11-06) except the multi-client look check (F7, the user); **U2–U5** (Garden button, field rings + square card + hand bar, Skills Garden tab,
-   barn, seed stall, plot layout) before E5's onboarding, which teaches the new controls, and before E1 ships.
+   barn, seed stall, plot layout) before E5's onboarding, which teaches the new controls.
 8. **Drops D1–D10** after the MVP (EXPANSION §14), one every 1–2 weeks: Critters, Comfort shop (M7), Weekly, Variants, Kitchen (the first
    restoration landmark), Neighbours, Mastery, World 4 (S9 / S10), the Estate, Season 1. Restoration bundles (E6, D5) and estate tiers / decor /
    cottage (E7, D9) are the long-term Coin sinks; E0 holds a placeholder for their size until they are designed.
@@ -190,6 +192,57 @@ during the check); the panel's left edge stays on the icons' line (x 10) like th
 prompt; Cake feed moved the outlined Cuteness chip 0 → 0.17. 8: Czech and English all fit (food status line made two lines); pseudo finds
 no literal (only the user's pet name), only pseudo-inflated texts overflow. Open: 9 (the user's multi-client test).
 
+### FA — The field for everyone, pens removed (the user, 2026-11-06; scope 2026-11-06)
+**Goal.** The game is not public and both players are admins, so the crop field goes to everyone and the old no-field / pen concept goes:
+one garden (incubator strip + field + field pets), no second code path. Runs after U1 is committed (U1 drops the no-field branches of
+`PetsPanel`, `PetDetail`, `FoodShopClient` itself; this task does not touch those three files and shares `strings.csv` with it).
+
+**Build.**
+- **Access:** `GardenConfig.FieldAccess` and `HasFieldAccess` are removed with every branch on them (`GardenField` "locked" rejects and
+  `ObbyFinish`'s gate, `GardenPlotFeed`'s field-less state, `PetService.AddPet`'s Tending rule now always applies, `FieldClient`'s gate).
+- **Pens, server:** `GardenService` keeps only the shared garden plumbing (hooks, rate limit, `Usable`, `State`, `RequestState`); the
+  `Place` / `Remove` / `BuyPen` / `Payout` remotes, pen production, the online payout loop and the welcome-back payout go. `GardenConfig`
+  loses `MaxPens`, `PenPrices`, `BaseRates`, `MaxLevelRate`, `OfflineCapSeconds`, `PayoutSeconds`, `MinAwaySeconds`, `Units`,
+  `RatePerHour`, `Settle`, `IsPenned`; `PetsChanged.penned` and every "penned" reject go (`PetService`, `GardenField`, `GardenFood`);
+  `GardenPlotFeed` drops `pens`, `penCount`, `converted`.
+- **Live profiles:** the E1b conversion in `GardenField` stays as the one-time migration on join for a profile without `Garden.Converted`
+  (penned pets back to the inventory, `CropConfig.PetSlotsFromPens` slots, the pen prices beyond the slots' value refunded, the "converted"
+  line in the field notice). Its pen prices move to `CropConfig.LegacyPenPrices` (read only there). Pen production since the last payout is
+  not paid any more (≤ 8 h of pen Coins, and only for a profile not converted yet). After the migration every profile's `Garden.Pens`,
+  `PenCount`, `Carry`, `LastSeen` are cleared; a new profile starts without them.
+- **Pens, client:** `GardenClient` (pen panel, welcome-back card, payout toast), `PetPenFx`, `PetPenLevelUp` are deleted on disk;
+  `GardenView` loses `OnPen` / `OnPenLevelUp` / `PenPets` and the synthetic plots' pens; `PlotView` loses the pen pieces and labels and draws
+  every plot (a free one too) as the incubator strip; `PetClient` drops `penned`. No Studio-only pen parts exist (plots are client-drawn).
+- **Tools / texts:** `tools/economy.py` drops the pen rates (`--garden pens|both`, the pen table, check 2's pen figures) and reads
+  `CropConfig.LegacyPenPrices` for the conversion; field-mode results stay as pinned. Pen texts (`garden.*` pen panel, payout, pen signs and
+  prompts, `pets.tag.pen`, `pets.reject.penned`, `food.where.pen`, the field "locked" reject) leave `strings.csv` once nothing uses them.
+- Max Players stays 12 (24 and the 24-plot check wait for going public).
+
+**Acceptance checks** (Studio; live profiles snapshotted before any fixture, restored after).
+1. Code: `grep -E "HasFieldAccess|FieldAccess|IsPenned|PenPrices|MaxPens|penned|OnPen"` over `src/` finds nothing (except
+   `LegacyPenPrices` in CropConfig and the conversion); the three deleted scripts are gone in Studio too, no duplicate or empty scripts.
+2. A playtest boots without errors or warnings from garden / pet scripts (server and client); `GardenRemotes` holds no `Place`, `Remove`,
+   `BuyPen`, `Payout`.
+3. Both live profiles (Lekzdrh, AhojRupert) are `Converted` before the change; after a join the Lekzdrh profile has no `Pens` / `PenCount` /
+   `Carry` / `LastSeen` and the same Coins, pets, field, field pets, incubators and eggs as the snapshot (apart from the field's own growth).
+4. Migration fixture (own profile, snapshotted): `Converted` = nil, two pets in `Pens`, `PenCount` 3 → after the join both pets rest in
+   the inventory (Pets panel), `FieldPetSlots` = max(2, before), Coins unchanged (pens 1–3 cost 3 500, under slot 2's 23 300: no
+   refund), the field notice shows the converted line once; a second join converts nothing.
+5. Plots: the own plot, another occupied plot and a free plot all draw as the incubator strip with the field behind (free: "Free plot", grey
+   incubators, no pads); the synthetic-plots budget run (`GardenViewPlots`) draws without errors.
+6. Through the real UI: plant and harvest a square, place and lift a field pet, feed a crop to a pet, open an incubator, feed a resting pet
+   at the food stand, equip and sell a resting pet.
+7. A medal finish on a stage with a rare crop still gives its seeds; a hatch with no Tending pet owned gives Tending.
+8. `loc.py build` / `check` (0 errors) / `lint` (within baseline), the removed keys gone; `economy.py check` passes after a `pin` that only
+   drops the pen keys (`pen_rates`, `pen_level_rate`, `offline_cap_h`); every other check result equals the run before FA.
+
+**Studio (2026-11-06, before U1):** 1, 2, 3, 4, 5 passed (both live profiles were safe: Lekzdrh converted, AhojRupert 0 penned pets);
+6 field part passed through the real UI (harvest, plant, move and lift a field pet, incubator panel); `economy.py check`: only the drift
+check differs (the three pen keys). **After U1 (2026-11-06):** 1 and 2 again (no errors on server or client, no pen remotes or scripts);
+8 passed (`loc.py check` 0 errors, lint 0; `economy.py check` 48 / 48 after the pin); 6's rest through the real UI (Feed on a resting
+pet's page, a Berry at the food stand, Unequip / Equip, Sell with two taps); the profile restored from `profile_9892673032_FA_3` and
+checked equal. 7 is code-only (the same path admins always took).
+
 ### E0 — Economy model
 **Goal.** One reproducible model of the Coin economy (`tools/economy.py`, Python stdlib; how to run it: ECONOMY.md) that fixes the numbers the
 garden needs, proves GDD §6 and the EXPANSION §5 guardrails with crops, and re-prices every Coin sink. No game code in E0; approved prices are
@@ -236,9 +289,8 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
   at once (boards and `MostStars`); gate prompts on a locked stage; a real 1-hour Golden egg and the inventory cap with free eggs waiting; every
   telemetry event type on the Creator Dashboard (only then T1 is live-validated); a pet name the filter changes shows as `####` (Studio does
   not filter text).
-- **When E1 ships (FieldAccess "all"):** the paths for a player without field access were checked in code only (`locked`, no field drawn, no
-  Feed card); the live pen conversion; 24 plots with fields at once (the budget was checked with synthetic plots only); a second client
-  watching a square purchase.
+- **Before Max Players 24 (going public):** 24 plots with fields at once (the budget was checked with synthetic plots only); a second client
+  watching a square purchase. (The no-field paths and the live pen conversion went with FA.)
 - **The user's checks:** World 3 sign-off (S8); G1 hints in play.
 - **Localization:** Czech overflow screenshots of the panels (the font is BuilderSansBold, so re-check widths in Czech and the
   pseudo-language), the Stage 9 exit-door label.

@@ -59,7 +59,6 @@ local REJECT_KEYS = {
 	coins = "common.reject.coins",
 	slots = "pets.reject.slots",
 	equipped = "pets.reject.equipped",
-	penned = "pets.reject.penned",
 	field = "pets.reject.field",
 	loading = "common.reject.loading",
 }
@@ -67,7 +66,6 @@ local REJECT_KEYS = {
 local FEED_REJECT_KEYS = {
 	items = "field.reason.items",
 	maxed = "petDetail.feed.maxed",
-	locked = "field.reason.locked",
 	loading = "common.reject.loading",
 }
 -- answers to PetRemotes.Rename (P3b)
@@ -691,7 +689,6 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		whereLabel.Text = if owned.equipped
 			then Locale.T("petDetail.where.equipped")
 			elseif owned.field then Locale.T("petDetail.where.field", { n = owned.field })
-			elseif owned.penned then Locale.T("petDetail.where.pen", { pen = owned.penned })
 			else Locale.T("petDetail.where.resting")
 		whereLabel.TextColor3 = if owned.equipped then COLOR_EQUIPPED else COLOR_INFO
 
@@ -723,7 +720,7 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 			table.insert(cards, none)
 		end
 
-		local busy = owned.penned ~= nil or owned.field ~= nil
+		local busy = owned.field ~= nil
 		equipButton.Text = Locale.T(if owned.equipped then "petDetail.unequip" else "petDetail.equip")
 		equipButton.BackgroundColor3 = if busy then COLOR_LOCKED elseif owned.equipped then COLOR_SELL_IDLE else COLOR_EQUIP
 		moreLabel.Text = Locale.T("petDetail.more")
@@ -791,9 +788,7 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		if not owned then
 			return
 		end
-		if owned.penned then
-			message(Locale.T(REJECT_KEYS.penned), COLOR_ERROR)
-		elseif owned.field then
+		if owned.field then
 			message(Locale.T(REJECT_KEYS.field), COLOR_ERROR)
 		elseif owned.equipped then
 			remotes.Unequip:FireServer(owned.uid)
@@ -809,7 +804,7 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		if not owned then
 			return
 		end
-		local reason = if owned.penned then "penned" elseif owned.field then "field" elseif owned.equipped then "equipped" else nil
+		local reason = if owned.field then "field" elseif owned.equipped then "equipped" else nil
 		if reason then
 			message(Locale.T(REJECT_KEYS[reason]), COLOR_ERROR)
 			return

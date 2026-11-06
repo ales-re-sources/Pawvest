@@ -1,5 +1,5 @@
 -- PetLook: how a pet looks, as a pure function of (kind, level, uid) applied to a clone of ReplicatedStorage.PetModels
--- (docs/PET_GROWTH.md). Shared, so the followers (PetFollow, client) and the garden pens (GardenService, server) are drawn by
+-- (docs/PET_GROWTH.md). Shared, so the followers (PetFollow) and the field pets on the plots (PlotView) are drawn by
 -- the same code and always match. Nothing is stored or replicated: every viewer derives the look from the same numbers.
 -- P1e1: size by level, label, Epic / Legendary glow, formation slots.
 -- P1e4: individuality - Seed(uid) variant (hue / value shift of the body parts, accessory pick seed).
@@ -156,7 +156,7 @@ end
 
 -- Individuality (P1e4): a deterministic variant record per pet id, so two pets of the same kind and level differ but keep their
 -- rarity identity. Pure: the uid string is hashed (FNV-1a, then an avalanche mix so neighbouring ids "7" / "8" do not look alike),
--- no math.random state, so the server (pens) and every client (followers) derive the same record.
+-- no math.random state, so every client (followers, field pets) derives the same record.
 --   hue / saturation / value   colour shifts of the body parts: hue as a fraction of the circle in +-HUE_JITTER, saturation and
 --                              value as factors (1 + shift) with shifts in +-SAT_JITTER / +-VALUE_JITTER
 --   tintHue / tintAmount       near-white and grey parts have no hue to shift, so they are tinted toward this hue instead
@@ -591,8 +591,7 @@ end
 --   T3 (Lv 8)  three tiny neon motes orbiting the body (moved by UpdateFx)
 --   T4 (Lv 10) hexagonal neon halo above the head, stronger aura (label moves up by HALO_LIFT to clear it)
 -- Everything lives in a Folder "Fx" in the model (parts) or on Root attachments (emitters), so it is cloned, moved and destroyed
--- with the model. The server builds it for the garden pens too; only the orbit animation and the distance LOD need a client
--- (PetFollow for followers, PetPenFx for pens).
+-- with the model. Only the orbit animation and the distance LOD need the per-frame owner (PetFollow for followers).
 local HALO_LIFT = 0.7 -- studs the label rises at tier 4
 local MOTE_COUNT = 3
 local MOTE_SPEED = 1.8 -- rad/s
@@ -707,7 +706,7 @@ export type Fx = {
 	on: boolean, -- emitters and lights are currently enabled
 }
 
--- Gathers the effects of a dressed model (follower or pen, any side) for UpdateFx. Call once per model, again if
+-- Gathers the effects of a dressed model (follower or field pet) for UpdateFx. Call once per model, again if
 -- `fx.count ~= model:GetAttribute("FxCount")` (children still arriving).
 function PetLook.CollectFx(model: Model): Fx?
 	local root = model.PrimaryPart
@@ -870,7 +869,7 @@ end
 --   0         optional sound (ReplicatedStorage.PetLevelUpSound, SOUND_AT)
 --   1.2       burst of sparks, expanding ring on the ground, floating "Level N!"
 --   1.4 - 2.0 the pet drops back to its place
--- The owner of the pet's position (PetFollow every frame, PetPenLevelUp for pens) calls `moment:Pose(base)` with the pose the
+-- The owner of the pet's position (PetFollow every frame) calls `moment:Pose(base)` with the pose the
 -- pet would have anyway and uses the returned CFrame (spin + rise on top) and fade (LocalTransparencyModifier of the new model,
 -- 1 -> 0; combine with max). Pose also drives the ghost, flash and sparks, so it must be called every frame until `moment.done`.
 -- Everything extra lives in one Folder "LevelUpFx" in the workspace, removed by Debris after FX_LIFETIME, by `Cancel()` or when
@@ -915,7 +914,7 @@ local function spinAndRise(t: number): (number, number)
 end
 
 -- Starts the moment for `model` (the dressed, parented model of the new level). `ghost` = the model of the old level (taken
--- over and destroyed by the moment) with its current LocalTransparencyModifier `ghostFade`; nil for pens (no old model).
+-- over and destroyed by the moment) with its current LocalTransparencyModifier `ghostFade`; nil when there is no old model.
 -- Returns the moment, or nil if the model cannot play it (no PrimaryPart / not in the workspace; the ghost is destroyed then).
 function PetLook.LevelUp(model: Model, kind: string, level: number, ghost: Model?, ghostFade: number?): Moment?
 	local root = model.PrimaryPart

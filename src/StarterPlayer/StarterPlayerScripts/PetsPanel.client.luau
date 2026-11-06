@@ -78,7 +78,6 @@ local REJECT_KEYS = {
 	full = "pets.reject.full",
 	slots = "pets.reject.slots",
 	equipped = "pets.reject.equipped",
-	penned = "pets.reject.penned",
 	field = "pets.reject.field",
 	stale = "common.reject.stale",
 	maxed = "pets.reject.maxed",
@@ -620,9 +619,7 @@ end
 local function onEquipClicked(pet)
 	clearPending()
 	bestMenu.Visible = false
-	if pet.penned then
-		flash(rejectText("penned"), COLOR_ERROR)
-	elseif pet.field then
+	if pet.field then
 		flash(rejectText("field"), COLOR_ERROR)
 	elseif pet.equipped then
 		remotes.Unequip:FireServer(pet.uid)
@@ -634,7 +631,7 @@ local function onEquipClicked(pet)
 end
 
 local function buildRow(index: number, pet)
-	local busy = pet.penned ~= nil or pet.field ~= nil
+	local busy = pet.field ~= nil
 	local row = create("Frame", {
 		Name = "Pet_" .. pet.uid,
 		LayoutOrder = index,

@@ -10,8 +10,8 @@ were multiplied by 10 once. Percentages, odds and times are unchanged.
 ## 1. Pillars
 1. **Short, readable stages** — each stage is a 1–3 minute run with a clear finish.
 2. **Mastery pays most** — medals and fast times pay the most Coins. Repeating a stage still pays, but less with every
-   run. *Changed 2026-11-02 (farming first, §7.9):* within the obby mastery pays most, but the crop field becomes the main income
-   once it ships to everyone; the pens (§7.6) stay a trickle.
+   run. *Changed 2026-11-02 (farming first, §7.9):* within the obby mastery pays most, but the crop field is the main income
+   (everyone has it since FA, 2026-11-06; the P2 pens are gone).
 3. **Fair leaderboards** — nothing that affects a leaderboard time can be bought with Robux. Pets never change
    movement or stage times; talents do, but are earned with Coins only (provisional, see §9).
 4. **One hall, many games** — the central island hosts several minigames (obby first, pet garden next, more later).
@@ -171,7 +171,7 @@ Limits are visible before and during a run:
 - **Hub portals**: earned stars are drawn on the portal face itself (part of the gate, not camera-facing).
 
 ## 5. Rewards
-All Coins earned by playing (medal payouts, repeat rewards, challenge coins, garden production, future minigames)
+All Coins earned by playing (medal payouts, repeat rewards, challenge coins, crop sales, future minigames)
 are paid through one server function and multiplied by the player's pet bonus (§7.3). Purchases are not.
 
 ### Medal payouts (one-time per tier, per player)
@@ -245,7 +245,7 @@ Talent-gated coins need Double Jump (placed out of reach of a Jump Height 3 jump
 (M4 first batch: Tutorial + Stage 1; M4.1: Stage 2 + Stage 3; S4.1: Island Hop; S4.2: Blink).
 
 **One-time total of the six built stages (Tutorial and Stages 1-5): 9 450 (medals) + 1 840 (coins) = 11 290 Coins** (all 21 planned stages:
-88 200 medals + roughly 8 000 coins at about 400 per stage), plus repeat rewards, garden production and the pet bonus,
+88 200 medals + roughly 8 000 coins at about 400 per stage), plus repeat rewards, the crop field and the pet bonus,
 which have no fixed cap.
 
 ## 6. Talents
@@ -283,8 +283,8 @@ and Jump Height stay soft, never required). Only talents that are hard gates can
 | Glide (P, S9) | `Glide` | hold jump while falling: fall speed capped at about 8 studs/s | 1 | 12 000 | 12 000 | stage 17 |
 
 **Full planned tree: 44 300** (Run Speed 3 400 + Jump Height 1 900 + Double Jump 0 (world reward) + Triple Jump 5 000 + Quick Respawn
-4 000 + Dash 5 000 + Long Dash 3 000 + Wall Jump 10 000 + Glide 12 000). Talents compete with pets, pens and incubators (about 56 500
-together) for the same Coins.
+4 000 + Dash 5 000 + Long Dash 3 000 + Wall Jump 10 000 + Glide 12 000). Talents compete with pets, incubators and the field (§7.9) for the
+same Coins.
 
 ### Economy constraints (must hold after every rebalance)
 The economy is open (repeat rewards, garden, pet bonus), so "earnable" is no longer a cap. The constraint is about
@@ -322,10 +322,10 @@ levels later if Gold on Worlds 3–4 needs them (M6b).
 |---|---|---|
 | Obby, first hour of a day (Gold runs, all stages) | ~2 230 | first 10 Gold runs of each of the four stages (~40 runs), then the 10-Coin floor |
 | Obby, later the same day | ~500 | 10 Coins per run at ~70 s per run (a ~25 s Tutorial loop pays ~1 400 / h; open, see M6) |
-| Pet garden (§7.6) | target 200–1 000 | 6 mixed pets at Lv 5 ≈ 200 / h, a strong set ≈ 630 / h (≈ 940 with the pet bonus); offline production capped at 8 h (a strong set: ≈ 5 000 per 8 h) |
+| Crop field (§7.9) | see ECONOMY.md | the main income from day 1-3 on (`economy.py check`: field ≈ obby over days 1-3, 3x by day 7, 10x by day 30) |
 | Pet bonus | × 1.0–1.5 | on all of the above |
 
-Sinks: talents (8 300 today, 47 300 planned), stage unlocks (6 700 today, 80 700 planned), eggs (§7.2), pet slots (7 000), garden pens (32 500), incubators (17 000)
+Sinks: talents (8 300 today, 47 300 planned), stage unlocks (6 700 today, 80 700 planned), eggs (§7.2), pet slots (7 000), incubators (17 000), the crop field (§7.9)
 and feeding (§7.6).
 
 Notes:
@@ -351,8 +351,7 @@ Every pet is an individual (own traits with their levels), identified by a uniqu
 A pet can be **sold** back for its sell value (irreversible).
 
 **Traits (P4, 2026-11-05).** Rolled once at hatch from the pet's id, never rerolled, from the working traits only: **Cuteness** (the Coin
-bonus), Tending, Pest control, Scouting (§7.9). Tending comes first (`TendingChance`; always for an owner with field access who has no
-Tending pet yet), then Cuteness by `CuteChance` while a slot is left, the rest from Pest control / Scouting (the kind leans the draw); slots
+bonus), Tending, Pest control, Scouting (§7.9). Tending comes first (`TendingChance`; always for an owner who has no Tending pet yet), then Cuteness by `CuteChance` while a slot is left, the rest from Pest control / Scouting (the kind leans the draw); slots
 the pool cannot fill take Cuteness, then Tending. Share of hatches with Cuteness: Common 28 %, Uncommon 32 %, Rare 50 %, Epic 70 %,
 Legendary 82 %. Fertilising, Weeding and Crafting stay stored on pets that have them (hidden, not counted) and rejoin the pool when built.
 Every pet from before P4 got Cuteness once, on top of its traits (profile `Version = 4`, below §7.4).
@@ -435,12 +434,12 @@ shows as label colour and a glow (Epic, Legendary). Models live in `ReplicatedSt
 replace them later without code changes.
 
 *P4 downscaled the look from 20 levels to 10: read Lv 5 / 10 / 15 / 20 below as Lv 3 / 5 / 8 / 10 (`PetConfig.Tiers`), size 1.6× at Lv 10.*
-**Growth (P1e1):** a pet's size follows its level, 1.0× at Lv 1 up to 1.6× at Lv 20 (linear), for followers and garden
-pens alike. The follower formation widens with the pets so they never overlap, and while the owner's stage timer runs
+**Growth (P1e1):** a pet's size follows its level, 1.0× at Lv 1 up to 1.6× at Lv 20 (linear), for followers and field
+pets alike. The follower formation widens with the pets so they never overlap, and while the owner's stage timer runs
 their pets drop 4 studs further back and turn ghostly so the course stays visible; pets close to the camera fade out.
 **Level-up moment (P1e2):** when a pet gains a level it spins faster and faster and rises, a bright flash covers the change from
 the old look to the new one, then a burst of sparks, an expanding ring and a floating "Level N!" play and the pet drops back
-(about 2 seconds), for everyone nearby (followers and, after feeding, garden pens); the label shows one ★ per look tier
+(about 2 seconds), for everyone nearby (followers); the label shows one ★ per look tier
 (Lv 5 / 10 / 15 / 20).
 **Tier effects (P1e3):** in the rarity colour, cumulative: Lv 5 sparkle trail, Lv 10 soft aura and rising sparks, Lv 15 three
 orbiting motes, Lv 20 a hexagonal halo and a stronger aura; accent parts of the model (stripes, tail tip, belly...) drift toward the
@@ -455,8 +454,8 @@ effect, not an accessory). Which pieces comes from the pet id and the kind (no w
 no flame tail on Owl / Panda, no crown together with horns); the Lv 10 piece stays and the second one is added at Lv 20. Details: [PET_GROWTH.md](PET_GROWTH.md).
 
 ### 7.6 Pet garden (minigame, P2)
-*The garden as live players have it. With field access the pens are replaced by the crop field and field pets (§7.9); the rest
-(plots, incubators, feeding) stays.*
+*Plots, incubators and feeding; every plot also has the crop field and field pets (§7.9). The P2 pens (Coins per hour from penned
+pets) were removed in FA (2026-11-06): a profile from before the field converts once on join (§7.9).*
 
 A free area reached on foot from the central island, where pets are raised. Aimed at players who prefer
 collecting and caring over obby runs.
@@ -464,30 +463,14 @@ collecting and caring over obby runs.
   bridge (no portals since H1). Both islands share one look (part-built grass islands on a rock base, cobblestone
   plazas, hedge rings, blocky trees and flowers) and stand in one sea that is also the world's kill floor.
 - **Layout.** A central plaza (food shop) surrounded by a ring of **12 plots** (a second ring of 18 is ready for bigger servers), about
-  40 × 40 studs each, with an owner name sign (stud look, raised on two posts so players walk under it and see the plot past it), pens and incubators. Servers hold **12 players** (one plot per slot). Each player's
+  40 × 40 studs each, with an owner name sign (stud look, raised on two posts so players walk under it and see the plot past it) and incubators on a
+  40 × 16 strip, the field behind it. Servers hold **12 players** (one plot per slot). Each player's
   client draws the plots from the server's data (E1a1); free plots of the inner ring show "Free plot".
 - **Personal plot.** A player borrows a free plot while online: it is assigned on join, built from the profile, and
-  released on leave. The plot's contents are saved in the profile and restored on any server. Production runs on server
-  time, so it does not need the plot to exist while the player is offline.
+  released on leave. The plot's contents are saved in the profile and restored on any server. Growth and hatching run on
+  server time, so they do not need the plot to exist while the player is offline.
 - **Other players.** Everyone can walk through the garden and look at all plots and pets; only the owner can use their
-  own plot (no stealing, no shared pens).
-- **Pens.** A pet is either equipped or placed in a pen, never both. Pets in pens produce Coins over time by rarity
-  and level. Pens unlock for Coins, in order. A penned pet gains no XP and does not count for the pet bonus (only
-  equipped pets do); it cannot be sold while penned.
-
-  | Rarity | Common | Uncommon | Rare | Epic | Legendary |
-  |---|---|---|---|---|---|
-  | Coins / hour at Lv 1 | 10 | 20 | 40 | 70 | 120 |
-
-  Production per pet = rate × (1 + 0.76 × (level − 1) / 9) per hour (pet level 1–10, P4; Lv 10 = ×1.76). Pens: 6, prices
-  0 / 1 000 / 2 500 / 5 000 / 9 000 / 15 000 (pen 1 free; 32 500 in total). Example sets (before the pet bonus):
-  3 pens of Common/Common/Uncommon Lv 1 = 40 / h; 6 mixed pets (2 Common, 2 Uncommon, Rare, Epic) at Lv 3 ≈ 199 / h;
-  2 Legendary + 2 Epic + 2 Rare at Lv 5 ≈ 615 / h (≈ 923 / h with the +50 % pet bonus); the theoretical maximum
-  (6 Legendary Lv 10) is ≈ 1 267 / h.
-- **Payout.** Production is paid through `CoinRewards.Grant` (the pet bonus applies) on server time only: every
-  5 minutes while the owner is online, whenever the pens change (placing, removing, buying a pen settles first, so a
-  pen never earns for time it was empty) and on join. Fractions of a Coin carry over, so the total over any split of
-  time equals the exact production. The bonus is rounded per payout, which is why payouts are batched.
+  own plot (no stealing, no shared fields).
 - **Incubators.** Every egg hatches here, in real time, and keeps hatching offline. Each plot has
   **3 incubators**, unlocked in order for 0 / 5 000 / 12 000 Coins (incubator 1 free; 17 000 in total). An egg is
   bought at an empty incubator of the player's own plot (Basic 500 Coins, ready **5 minutes** later; Golden 4 000 Coins,
@@ -497,12 +480,11 @@ collecting and caring over obby runs.
   inventory cap (50), and a ready egg does not hatch into a full inventory (it waits). Other players see the eggs and their
   countdown but cannot use them.
 - **Feeding.** Food bought for Coins gives a pet XP: an alternative to leveling by playing the obby, and a Coin sink.
-  Food is sold at the **food stand** in the middle of the plaza (a four-sided stud kiosk, readable from every plot, a big strawberry on top) and fed at once to one chosen pet (equipped, penned or resting in the
+  Food is sold at the **food stand** in the middle of the plaza (a four-sided stud kiosk, readable from every plot, a big strawberry on top) and fed at once to one chosen pet (equipped, on the field or resting in the
   inventory); there is no food inventory. Only the fed pet gains the XP, as care XP (§7.4: Cuteness first). A pet with nothing left
   to train cannot be fed (no Coins taken; the row shows "Trained" or "Max level"); XP it cannot use is lost, which the food button's
   tooltip says. The panel (U1) shows the Pets panel's row with the chip the food will train outlined; pets with you first, then those
-  that can still grow, the trained ones greyed at the bottom; it is scaled down to fit a phone screen. Feeding a penned pet settles its
-  production first, so the new level only counts from then on.
+  that can still grow, the trained ones greyed at the bottom; it is scaled down to fit a phone screen.
 
   | Food | Price | XP | Coins per XP |
   |---|---|---|---|
@@ -511,8 +493,6 @@ collecting and caring over obby runs.
   | Feast | 1 500 | 1 000 | 1.5 |
 
   Cuteness 1 → 10 (11 100 XP) costs about 17 000 Coins in Feasts.
-- **Offline income.** On join, production since the last visit is paid, capped at 8 hours, and shown in a
-  "welcome back" announcement at the top of the screen that fades out after 5 seconds (nothing to close).
 
 ### 7.7 Trading (P3)
 Players on the same server can trade pets and Coins. Both players confirm the final offer; the server swaps
@@ -532,9 +512,8 @@ otherwise items could be duplicated across servers.
   the raw text, filters again on every join, and only the filtered text leaves the server; a failed filter shows the kind name. Names show to
   everyone ("Mochi Lv 6") through the `PetNames` attribute and are never localized.
 
-### 7.9 Crop field (E1-E4; behind field access)
-*Built and Studio-validated 2026-10-30 – 11-04, open only to `GardenConfig.HasFieldAccess` (admins and Studio test users) until E1 ships
-(`FieldAccess = "all"`). Everyone else keeps the pens of §7.6. Exact numbers live in `CropConfig` / `PetConfig` and are pinned by
+### 7.9 Crop field (E1-E4)
+*Built and Studio-validated 2026-10-30 – 11-04; every player has it since FA (2026-11-06; until then admins only). Exact numbers live in `CropConfig` / `PetConfig` and are pinned by
 `tools/economy.py`; why they are what they are: [ECONOMY.md](ECONOMY.md); what comes next: [EXPANSION.md](EXPANSION.md).*
 
 - **Goal (2026-11-02, the user).** Farming is the main game: over days 1-3 the field earns about what the obby earns, then 3x by day 7 and
@@ -567,8 +546,8 @@ otherwise items could be duplicated across servers.
   by the job's level: its square (1-3), plus its 4 neighbours (4-6), the 3 x 3 block (7-10); on overlaps the strongest pet of a job counts.
   **Tending** works only during absences: a crop that ripens in reach is harvested with the pet's strength (20 % at level 1 to 100 % at 10)
   while the barn has room, then replanted from the seeds held (rolled once per planting). Placed pets gain aptitude XP per weighted field hour
-  (level L -> L + 1 takes 10 x 1.56^(L-1) h). On the first join with field access the pens convert once into field pet slots (penned pets go
-  back to the inventory).
+  (level L -> L + 1 takes 10 x 1.56^(L-1) h). A profile from before the field converts once on join (`Garden.Converted`): the P2 pens become
+  field pet slots (1 pen = 1, 2-3 = 2, 4-6 = 3; pen prices beyond the slots' value refunded), penned pets go back to the inventory.
 - **Obby seeds (E2, world stages only).** The first Gold on a World 2 or 3 stage gives 1 rare seed of that world; the day's first medal finish
   gives 1 (once per UTC day); a rare-seed meter per stage (Bronze 1 / Silver 2 / Gold 3 points, doubled for the day's first finish there; 300
   points = a seed). The **seed pouch**: the day's first medal finish on each stage gives 1 / 2 / 3 seeds of the common crop planted last, up to
@@ -579,7 +558,7 @@ otherwise items could be duplicated across servers.
   (30 %); a lost roll eats it unless the strongest guard reaching the square wins its chance (50 % + half the Pest-control strength, doubled
   for the crow speciality). At most 1 crop is eaten per absence; crops ripe while the owner plays are safe. A pet with Tending and Pest control
   does both jobs.
-- **Join notice.** What the pets harvested (and the shears' extras), what the crows ate and who chased them off, the pen conversion.
+- **Join notice.** What the pets harvested (and the shears' extras), what the crows ate and who chased them off, an old profile's pen conversion.
 
 ## 8. Leaderboards
 - **Per stage:** Top-10 fastest times (exists for Stage 1 and 2; add Stage 3 and Tutorial).
@@ -658,5 +637,5 @@ incubator models) and never ask the server for anything.
   hatch; a marker ("Ready!") above that incubator while the player is in the garden; a toast "Your egg is ready!" once per egg
   (also on joining with an egg already ready).
 
-**Later, if playtests ask for it:** pen production close to its 8 h cap, an affordable gate unlock (the gate prompt covers it up
+**Later, if playtests ask for it:** an affordable gate unlock (the gate prompt covers it up
 close), a short ground trail from the Arrival to the next gate after a finish, a "Next: <stage>" line in the results popup.

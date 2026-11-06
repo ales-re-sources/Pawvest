@@ -8,13 +8,12 @@
 --     (square, Tending and Pest-control levels, reach, XP), lifts them and buys the next field pet slot;
 --   * crow forecast (E4b): a line under the Renown level, "Crows in 3:20:00" / "Crows now, 1:05:00 left", computed on the client
 --     from CropConfig.NextCrows and the server time (the schedule is fixed); State.field.crows.active says whether crows come yet;
---   * toasts for the answers of the field actions on GardenRemotes.Result (pens and eggs share that remote: ignored here), and
---     once per session the notices of State.field.notice (the pens' conversion, what the pets harvested while away, what the
---     crows ate and which guards chased them off).
--- Only for a player with GardenConfig.HasFieldAccess (admins and Studio test users until E1 ships): anyone else gets no GUI.
--- Display only: a click just names a square, a crop or a count; GardenField validates access, place, prices, times and Renown.
+--   * toasts for the answers of the field actions on GardenRemotes.Result (eggs and food share that remote: ignored here), and
+--     once per session the notices of State.field.notice (an old profile's pen conversion, what the pets harvested while away,
+--     what the crows ate and which guards chased them off).
+-- Display only: a click just names a square, a crop or a count; GardenField validates place, prices, times and Renown.
 -- The countdowns use workspace:GetServerTimeNow() against `readyAt` ("ripe at, if you stay online"), never the device clock.
--- The GUI is built here (no Studio GUI), stud-brick wood look like the pen panel (StudStyle).
+-- The GUI is built here (no Studio GUI), stud-brick wood look (StudStyle).
 -- Test hooks (ScreenGui FieldGui attributes, cleared after use): OpenField = true opens the panel, OpenPicker = square opens the picker,
 -- OpenPetPicker = square opens the pet picker.
 -- Buttons by path (all under PlayerGui.FieldGui): Panel.Content.Seeds.<CropId>.Buy1 / .Buy10, Panel.Content.Crops.<CropId>.Sell,
@@ -25,12 +24,9 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
-local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local player = Players.LocalPlayer
-if not GardenConfig.HasFieldAccess(player.UserId) then
-	return
-end
 
+local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
@@ -69,7 +65,7 @@ local UPGRADE_WIDTH = 104
 local REACH_SECONDS = 3 -- the reach of a pet just placed stays tinted this long
 local NOTICE_SECONDS = 8
 
-local COLOR_PANEL = StudStyle.PanelColors.GardenPen
+local COLOR_PANEL = StudStyle.PanelColors.Field
 local COLOR_ROW = StudStyle.PetRowColor(COLOR_PANEL)
 local COLOR_BUY = StudStyle.Colors.Green
 local COLOR_SELL = StudStyle.Colors.Blue
@@ -84,7 +80,6 @@ local COLOR_RARE = Color3.fromRGB(255, 205, 90) -- rare crops' "from World n" (E
 -- the reasons GardenField answers with (texts: field.reason.<reason>)
 local REJECT_KEYS = {
 	obby = "field.reason.obby",
-	locked = "field.reason.locked",
 	far = "field.reason.far",
 	loading = "field.reason.loading",
 	noplot = "field.reason.noplot",
@@ -106,7 +101,6 @@ local REJECT_KEYS = {
 local PET_REJECT_KEYS = {
 	occupied = "field.reason.petOccupied",
 	equipped = "field.reason.equipped",
-	penned = "field.reason.penned",
 	aptitude = "field.reason.aptitude",
 	slots = "field.reason.slots",
 	maxed = "field.reason.slotsMaxed",
@@ -1030,12 +1024,10 @@ local function renderPetPicker(square: number)
 	end)
 	for _, pet in candidates do
 		local reach = reachOf(square, math.max(pet.tending, pet.guard))
-		local enabled = not pet.equipped and not pet.penned and (pet.field ~= nil or used < (field and field.slots or 1))
+		local enabled = not pet.equipped and (pet.field ~= nil or used < (field and field.slots or 1))
 		local info
 		if pet.equipped then
 			info = Locale.T("field.petPicker.equipped")
-		elseif pet.penned then
-			info = Locale.T("field.petPicker.penned")
 		elseif not enabled then
 			info = Locale.T("field.petPicker.noSlot")
 		elseif pet.tending > 0 then
@@ -1231,7 +1223,7 @@ local function petNameOf(uid: string?): string
 	return if pet then Locale.PetName(pet.Kind, PetConfig.PetLevel(pet), PetClient.NameOf(uid)) else ""
 end
 
--- Once per session: the pens' conversion, what the pets harvested while the player was away (State.field.notice, E1b) and the
+-- Once per session: an old profile's pen conversion (FA), what the pets harvested while the player was away (State.field.notice, E1b) and the
 -- crows' raid (E4b: what they ate, which guards chased them off).
 local function showNotices(field)
 	local notice = field and field.notice
@@ -1350,7 +1342,7 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 		and action ~= "Sell"
 		and action ~= "BuySquare"
 	then
-		return -- pens, incubators and the food stand answer on the same remote
+		return -- incubators and the food stand answer on the same remote
 	end
 	if not ok then
 		showToast(Locale.T(REJECT_KEYS[detail] or "common.reject.failed"), COLOR_ERROR)

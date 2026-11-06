@@ -1,6 +1,5 @@
 -- GardenField: the crop field behind the player's plot (E1a2, docs/ROADMAP.md → E1a2, docs/EXPANSION.md §5). Server-only.
--- Open only to players with GardenConfig.HasFieldAccess (admins and Studio test users until E1 ships): for anyone else no
--- Field data is written, every remote is rejected ("locked") and the plot messages carry no field (GardenPlotFeed).
+-- Every player has a field (FA, 2026-11-06: the field access gate and the P2 pens are gone).
 -- State lives in PlayerProfile.Garden: Field = { Open = { ["n"] = true }, Squares["n"] = { Crop, Grown }, SettledAt }, Seeds[crop],
 -- Items[crop], Renown (points; the level is derived, CropConfig.RenownLevel). Grown = growth seconds earned, SettledAt = the
 -- server os.time() up to which growth was counted. Growth is settled on join (the time since SettledAt is an absence:
@@ -19,8 +18,9 @@
 -- guard reaching the square wins its own roll (PetConfig.GuardChance; the strongest guard counts). At most Cap eaten per absence, only
 -- from Renown level FromLevel; rare crops are never eaten. State.field.notice.crows = { ate = { [crop] = n }, chased = { [uid] = n } },
 -- State.field.crows = { from, to, active } is the forecast (the next crow block within a day, server times).
--- Pens convert once (Garden.Converted) on the join of a player with field access: penned pets back to the inventory,
--- CropConfig.PetSlotsFromPens slots, the rest of the pen prices refunded; GardenService then rejects the pen remotes.
+-- A profile from before the field converts once on join (Garden.Converted; E1b, kept by FA as the migration): the pets it had in
+-- the P2 pens back to the inventory, CropConfig.PetSlotsFromPens slots, the rest of the pen prices (LegacyPenPrices) refunded; the
+-- legacy pen fields (Pens, PenCount, Carry, LastSeen) are cleared on every join.
 -- Size roll (E1c2): every harvest (the owner's or a Tending pet's) rolls CropConfig.SizeFactor from the planting number; the
 -- barn keeps per crop the count (Items) and the summed factors (ItemSize; crops from before E1c2 count as 1 each), BestSize[crop]
 -- = the best factor harvested. A sale of k of n pays CropConfig.SaleValue for k × ItemSize / n.
@@ -142,11 +142,11 @@ local function openSet(field): ({ [number]: boolean }, { [number]: number }?)
 	return open, moved
 end
 
--- The profile's field, cleaned (idempotent), and its open set { [square] = true }, or nil without access. A player with access
--- gets a new field the first time: the StartOpen squares, empty, and StartSeeds.
+-- The profile's field, cleaned (idempotent), and its open set { [square] = true }, or nil without a garden table. A player gets
+-- a new field the first time: the StartOpen squares, empty, and StartSeeds.
 local function fieldOf(player: Player, profile)
 	local garden = profile.Garden
-	if type(garden) ~= "table" or not GardenConfig.HasFieldAccess(player.UserId) then
+	if type(garden) ~= "table" then
 		return nil
 	end
 	local field = garden.Field
@@ -252,7 +252,7 @@ local function fieldOf(player: Player, profile)
 	local last = type(garden.LastCrop) == "string" and CropConfig.ById[garden.LastCrop]
 	garden.LastCrop = if last and not last.rare then last.id else nil
 
-	-- field pets: an owned pet with the job's aptitude, not penned, on an owned square of its own, within the slots (in uid order);
+	-- field pets: an owned pet with the job's aptitude, on an owned square of its own, within the slots (in uid order);
 	-- PetService unequips a field pet (equipped and on the field never both)
 	garden.FieldPetSlots = math.clamp(count(garden.FieldPetSlots), 1, #CropConfig.PetSlotPrices)
 	local pets, taken, placed = {}, {}, 0
@@ -277,7 +277,6 @@ local function fieldOf(player: Player, profile)
 				and (entry.Job == "Tending" or entry.Job == "PestControl")
 				and profile.Pets[uid]
 				and PetConfig.AptitudeLevel(profile.Pets[uid], entry.Job) > 0
-				and not GardenConfig.IsPenned(profile, uid)
 				and placed < garden.FieldPetSlots
 			then
 				pets[uid] = { Square = square, Job = entry.Job }
@@ -617,13 +616,9 @@ function GardenField.PlotField(player: Player)
 	return { crops = table.concat(cells), pets = pets }
 end
 
--- The caller's profile, field and open set if they may use the field now (access, loaded, at their plot unless `anywhere`);
+-- The caller's profile, field and open set if they may use the field now (loaded, at their plot unless `anywhere`);
 -- otherwise rejects. The field is settled (online) first, so every action sees the growth up to now.
 local function usableField(player: Player, action: string, anywhere: boolean?)
-	if not GardenConfig.HasFieldAccess(player.UserId) then
-		reject(player, action, "locked")
-		return nil, nil, nil
-	end
 	local profile
 	if anywhere then
 		profile = PlayerProfile.Get(player)
@@ -778,7 +773,7 @@ sellEvent.OnServerEvent:Connect(function(player, cropId, amount)
 	done(player, "Sell", { crop = crop.id, count = amount, paid = paid })
 end)
 
--- E1a3: feeds `amount` held crops to one owned pet (equipped, penned, resting or on the field), clamped to the care XP it can still use
+-- E1a3: feeds `amount` held crops to one owned pet (equipped, resting or on the field), clamped to the care XP it can still use
 -- (P4: PetConfig.GainCareXp, Cuteness first, else the lowest working trait below the care cap).
 feedCropEvent.OnServerEvent:Connect(function(player, uid, cropId, amount)
 	local crop = type(cropId) == "string" and CropConfig.ById[cropId]
@@ -810,9 +805,6 @@ feedCropEvent.OnServerEvent:Connect(function(player, uid, cropId, amount)
 	if garden.Items[crop.id] == 0 then
 		garden.Items[crop.id] = nil
 		garden.ItemSize[crop.id] = nil
-	end
-	if GardenConfig.IsPenned(profile, uid) then
-		GardenService.SettleAndNotify(player) -- pen production up to now is paid at the old level (no pens after the E1b conversion)
 	end
 	local trained, wasted = PetConfig.GainCareXp(pet, crop.xp * used)
 	done(player, "FeedCrop", {
@@ -981,9 +973,6 @@ placePetEvent.OnServerEvent:Connect(function(player, square, uid)
 	if table.find(profile.EquippedPets, uid) then
 		return reject(player, "PlacePet", "equipped")
 	end
-	if GardenConfig.IsPenned(profile, uid) then
-		return reject(player, "PlacePet", "penned")
-	end
 	local tending = PetConfig.AptitudeLevel(pet, "Tending") > 0
 	if not tending and PetConfig.AptitudeLevel(pet, "PestControl") < 1 then -- a field job: Tending or Pest control (E4-thin)
 		return reject(player, "PlacePet", "aptitude")
@@ -1044,39 +1033,41 @@ buyPetSlotEvent.OnServerEvent:Connect(function(player, expected)
 	done(player, "BuyPetSlot", expected)
 end)
 
--- Pens -> field pet slots, once (E1b; ECONOMY → "Field-pet re-run" proposal 4). Runs after GardenService paid the pens'
--- production up to now (its join settle). Returns { pens, slots, refund, returned } or nil when already converted.
+-- The P2 pens -> field pet slots, once (E1b; ECONOMY → "Field-pet re-run" proposal 4; FA keeps it as the migration of a profile
+-- from before the field). Pen production since the last payout is not paid (FA). Clears the legacy pen fields on every call.
+-- Returns { pens, slots, refund, returned } or nil when already converted.
 local function convert(player: Player, profile)
 	local garden = profile.Garden
-	if garden.Converted then
-		return nil
+	local result = nil
+	if not garden.Converted then
+		local pens = math.clamp(count(garden.PenCount), 1, #CropConfig.LegacyPenPrices)
+		local slots = CropConfig.PetSlotsFromPens[pens]
+		local paid, value = 0, 0
+		for n = 1, pens do
+			paid += CropConfig.LegacyPenPrices[n]
+		end
+		for n = 1, slots do
+			value += CropConfig.PetSlotPrices[n]
+		end
+		local refund = math.max(0, paid - value)
+		local returned = 0
+		if type(garden.Pens) == "table" then
+			for _ in garden.Pens do
+				returned += 1
+			end
+		end
+		garden.FieldPetSlots = math.max(slots, count(garden.FieldPetSlots))
+		garden.Converted = true
+		if refund > 0 then
+			PlayerProfile.AddCoins(player, refund) -- money back for pens, not a reward: no pet multiplier
+		end
+		result = { pens = pens, slots = slots, refund = refund, returned = returned }
 	end
-	local pens = math.clamp(count(garden.PenCount), 1, GardenConfig.MaxPens)
-	local slots = CropConfig.PetSlotsFromPens[pens]
-	local paid, value = 0, 0
-	for n = 1, pens do
-		paid += GardenConfig.PenPrices[n]
-	end
-	for n = 1, slots do
-		value += CropConfig.PetSlotPrices[n]
-	end
-	local refund = math.max(0, paid - value)
-	local returned = 0
-	for _ in garden.Pens do
-		returned += 1
-	end
-	garden.Pens = {}
-	garden.PenCount = 1
-	garden.Carry = 0
-	garden.FieldPetSlots = math.max(slots, count(garden.FieldPetSlots))
-	garden.Converted = true
-	if refund > 0 then
-		PlayerProfile.AddCoins(player, refund) -- money back for pens, not a reward: no pet multiplier
-	end
-	return { pens = pens, slots = slots, refund = refund, returned = returned }
+	garden.Pens, garden.PenCount, garden.Carry, garden.LastSeen = nil, nil, nil, nil -- the penned pets rest in the inventory
+	return result
 end
 
--- Join (and admin reset): a new field for a player with access, the pens converted once, then the absence since SettledAt
+-- Join (and admin reset): a new field the first time, an old profile converted once, then the absence since SettledAt
 -- counts as offline time (Tending pets work it).
 GardenService.AddSetupHook(function(player)
 	local profile = PlayerProfile.Get(player)
@@ -1133,11 +1124,11 @@ end)
 -- E2a: the rare seeds a finished run on `stage` earns. `medal` = the run's medal (0 = none), `previousMedal` = the best before it,
 -- `firstOnStage` = the day's first medal finish on this stage. Adds the seeds to Garden.Seeds (past the stock's limit: an earned seed is
 -- never lost) and publishes the garden. Returns, for the results popup, { seeds = { { crop, count, why = "gold" | "daily" | "meter" } },
--- meter = { crop, points, size } } or nil (no medal, no field access, a stage without a rare crop).
+-- meter = { crop, points, size } } or nil (no medal, a stage without a rare crop).
 function GardenField.ObbyFinish(player: Player, stage, medal: number, previousMedal: number, firstOnStage: boolean)
 	local rules = CropConfig.ObbySeeds
 	local crop = CropConfig.RareOfWorld(stage.world)
-	if medal < 1 or not crop or not GardenConfig.HasFieldAccess(player.UserId) then
+	if medal < 1 or not crop then
 		return nil
 	end
 	local profile = PlayerProfile.Get(player)

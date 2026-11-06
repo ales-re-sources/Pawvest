@@ -147,10 +147,12 @@ for _, tool in CropConfig.Tools do
 end
 
 -- Field pets (E1b, docs/ECONOMY.md → "Field-pet re-run"; five slots since E1d1): PetSlotPrices[n] = price of the n-th field pet slot (slot 1 is free).
--- A player's pens convert once: PetSlotsFromPens[pens bought] slots, the Coins paid for pens beyond those slots' prices refunded.
+-- A profile from before the field (the P2 pens, removed in FA) converts once on join: PetSlotsFromPens[pens bought] slots, the
+-- Coins paid for pens (LegacyPenPrices[n] = what the n-th pen cost) beyond those slots' prices refunded (GardenField).
 -- A Tending pet harvests only while the crops in the barn (Items) are fewer than BarnCapacity.
 CropConfig.PetSlotPrices = { 0, 23300, 84000, 280000, 746700 }
 CropConfig.PetSlotsFromPens = { 1, 2, 2, 3, 3, 3 }
+CropConfig.LegacyPenPrices = { 0, 1000, 2500, 5000, 9000, 15000 }
 
 -- Size roll (E1c2, docs/EXPANSION.md §5.3): every harvest's size factor = exp(SizeSigma × z - SizeSigma² / 2), mean exactly 1
 -- (the ladder holds), z standard normal from the planting's own seed, capped at ±SizeZCap. Big from z >= SizeBigZ (top 20 %),

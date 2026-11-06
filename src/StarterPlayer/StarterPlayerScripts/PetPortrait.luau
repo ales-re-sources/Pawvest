@@ -1,4 +1,4 @@
--- PetPortrait: small 3D pictures of pets for the GUI (Pets panel, garden pen panel, food stand). A portrait is a
+-- PetPortrait: small 3D pictures of pets for the GUI (Pets panel, pet page, food stand, field panel). A portrait is a
 -- ViewportFrame named "Portrait" with a clone of ReplicatedStorage.PetModels[kind] dressed by PetLook.Apply, seen from the
 -- front (the model's front is -Z, its LookVector), slightly from the side and above.
 --   Make(kind, level, uid)   a new portrait, or nil when the model is missing

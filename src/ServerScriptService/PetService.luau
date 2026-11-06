@@ -9,13 +9,12 @@
 -- attribute ("Kind:Level:uid,…", level = PetConfig.PetLevel). AddXP gives care XP to the equipped pets (stage finishes, coins,
 -- movement during a run; P4: PetConfig.GainCareXp, Cuteness first, else the lowest working trait). AddPet is the
 -- "new pet" step of every hatched egg; free eggs wait in FreeEggs until GardenIncubators places them (FreeEggsChanged).
--- A pet is either equipped, in a garden pen (P2a2) or on a field square (E1b), never two of them: Equip and SellPet reject a
--- penned or field pet, and the garden (GardenService / GardenField) rejects an equipped one; PetsChanged.penned maps each penned
--- uid to its pen index, PetsChanged.field each field pet's uid to its square. Every pet has aptitudes (Apt, Spec; PetConfig):
+-- A pet is either equipped, on a field square (E1b) or resting, never two of them: Equip and SellPet reject a field pet, and
+-- GardenField rejects an equipped one; PetsChanged.field maps each field pet's uid to its square (the P2 pens are gone since FA). Every pet has aptitudes (Apt, Spec; PetConfig):
 -- rolled at hatch (AddPet); pets from before P4 got Cuteness once in the profile migration (PlayerProfile, Version 4).
 -- Names (P3b): Rename(uid, text) stores the cleaned raw text as Pets[uid].Name; the server filters it (TextService, broadcast) at the
 -- rename and again on every join and keeps only the filtered text for display: PetsChanged carries the filtered name, never the raw
--- one, and the player attribute PetConfig.NamesAttribute holds { [uid] = filtered } of the equipped, penned and field pets (PetFollow,
+-- one, and the player attribute PetConfig.NamesAttribute holds { [uid] = filtered } of the equipped and field pets (PetFollow,
 -- GardenView). A failed filter call shows no name. The first name is free, later ones cost PetConfig.RenamePrice.
 
 local Players = game:GetService("Players")
@@ -91,15 +90,6 @@ local function publish(player: Player)
 	if not profile then
 		return
 	end
-	local penned = {} -- [uid] = pen index
-	local pens = profile.Garden and profile.Garden.Pens
-	if type(pens) == "table" then
-		for key, uid in pens do
-			if type(uid) == "string" and tonumber(key) then
-				penned[uid] = tonumber(key)
-			end
-		end
-	end
 	local field = {} -- [uid] = square (E1b)
 	local fieldPets = profile.Garden and profile.Garden.FieldPets
 	if type(fieldPets) == "table" then
@@ -122,7 +112,7 @@ local function publish(player: Player)
 		local copy = table.clone(pet)
 		copy.Name = names[uid]
 		pets[uid] = copy
-		if names[uid] and (isEquipped(profile, uid) or penned[uid] or field[uid]) then
+		if names[uid] and (isEquipped(profile, uid) or field[uid]) then
 			shown[uid] = names[uid]
 			anyShown = true
 		end
@@ -134,12 +124,11 @@ local function publish(player: Player)
 		slots = profile.PetSlots,
 		freeEggs = profile.FreeEggs,
 		multiplier = PetConfig.Multiplier(equippedPets(profile)),
-		penned = penned,
 		field = field,
 	})
 end
 
--- Re-sends the state after another system (the garden) changed which pets are penned.
+-- Re-sends the state after another system (the garden) changed a pet or which pets are on the field.
 PetService.Publish = publish
 
 -- Fires (player) when a free egg was added to FreeEggs; GardenIncubators moves waiting free eggs into empty incubators.
@@ -168,8 +157,8 @@ function PetService.AddPet(player: Player, kind: string): (string?, boolean?)
 	end
 	local uid = tostring(profile.NextPetUid)
 	profile.NextPetUid += 1
-	-- E1b decision 3: a hatch while the owner has no Tending pet always gets Tending (P4: only with field access, where it works)
-	local hasTender = not GardenConfig.HasFieldAccess(player.UserId)
+	-- E1b decision 3: a hatch while the owner has no Tending pet always gets Tending
+	local hasTender = false
 	for _, pet in profile.Pets do
 		hasTender = hasTender or PetConfig.AptitudeLevel(pet, "Tending") > 0
 	end
@@ -224,8 +213,7 @@ local function sanitize(profile, player: Player): boolean
 			type(uid) == "string"
 			and profile.Pets[uid]
 			and not table.find(kept, uid)
-			and not GardenConfig.IsPenned(profile, uid) -- equipped and penned never both (hand-edited records)
-			and not GardenConfig.FieldSquare(profile, uid) -- nor equipped and on the field
+			and not GardenConfig.FieldSquare(profile, uid) -- equipped and on the field never both (hand-edited records)
 			and #kept < profile.PetSlots
 		then
 			table.insert(kept, uid)
@@ -329,9 +317,6 @@ equipEvent.OnServerEvent:Connect(function(player, uid)
 	if isEquipped(profile, uid) then
 		return reject(player, "Equip", "equipped")
 	end
-	if GardenConfig.IsPenned(profile, uid) then
-		return reject(player, "Equip", "penned")
-	end
 	if GardenConfig.FieldSquare(profile, uid) then
 		return reject(player, "Equip", "field")
 	end
@@ -391,9 +376,6 @@ sellEvent.OnServerEvent:Connect(function(player, uid)
 	end
 	if isEquipped(profile, uid) then
 		return reject(player, "SellPet", "equipped")
-	end
-	if GardenConfig.IsPenned(profile, uid) then
-		return reject(player, "SellPet", "penned")
 	end
 	if GardenConfig.FieldSquare(profile, uid) then
 		return reject(player, "SellPet", "field")

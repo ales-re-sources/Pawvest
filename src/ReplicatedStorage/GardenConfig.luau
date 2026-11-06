@@ -8,20 +8,6 @@ GardenConfig.PlotSize = 40 -- studs, square
 GardenConfig.PlotAttribute = "GardenPlot" -- player attribute: slot of the borrowed plot (absent when none)
 GardenConfig.ShownFreeSlots = 12 -- slots 1..12 (ring 1, Max Players = 12) are drawn as "Free plot" while nobody holds them
 
--- Crop field access (E1a2, docs/ROADMAP.md): "admins" = admins (AdminConfig) and Studio test users (UserIds < 0) only, "all"
--- once E1 ships. A code constant, switched in git and live by publishing. Without access no Field data is written to the
--- profile, every field remote is rejected and the plot messages carry no field.
-GardenConfig.FieldAccess = "admins"
-
-local AdminConfig = require(script.Parent:WaitForChild("AdminConfig"))
-
-function GardenConfig.HasFieldAccess(userId: number): boolean
-	if GardenConfig.FieldAccess == "all" then
-		return true
-	end
-	return AdminConfig.IsAdmin(userId) or (game:GetService("RunService"):IsStudio() and userId < 0)
-end
-
 -- Plot positions (E1.0, docs/EXPANSION.md §16): a pure formula slot → floor CFrame, shared by server and client, so no
 -- system needs a plot model to know where a plot is. Slots fill rings round the garden centre, ring by ring; each plot's
 -- front (LookVector, the sign side) faces the centre. Ring 1 has 12 plots at radius 112 (slot 1 on +X, counted towards
@@ -69,55 +55,7 @@ function GardenConfig.PlotCFrame(slot: number, rings: { PlotRing }?): CFrame?
 	return CFrame.lookAt(at, Vector3.new(centre.X, at.Y, centre.Z))
 end
 
--- Pens and production (docs/GDD.md §7.6). Rates are Coins per hour at level 1 (the pet level, PetConfig.PetLevel); the max level
--- adds MaxLevelRate permille, linear in between. All production maths is integer: a pet's "units" are
--- rate × (1000 + MaxLevelRate × (level − 1) // (MaxLevel − 1)), i.e. thousandths of a
--- Coin per hour, so production over `seconds` is units × seconds / UNITS_PER_COIN_SECOND whole Coins and the remainder
--- (the carry) is kept, which makes the total identical however the time is split into payouts.
-GardenConfig.MaxPens = 6
-GardenConfig.PenPrices = { 0, 1000, 2500, 5000, 9000, 15000 } -- PenPrices[n] = price of the n-th pen (pen 1 is free)
-GardenConfig.BaseRates = { Common = 10, Uncommon = 20, Rare = 40, Epic = 70, Legendary = 120 } -- by rarity id
-GardenConfig.MaxLevelRate = 760 -- permille of the base rate added at the max level (Lv 10 = ×1.76, as Lv 20 before P4)
-GardenConfig.OfflineCapSeconds = 8 * 3600 -- production counted at most this long since LastSeen
-GardenConfig.PayoutSeconds = 300 -- online payout interval
-GardenConfig.MinAwaySeconds = 60 -- shorter absences do not show the "welcome back" announcement
-
-local UNITS_PER_COIN_SECOND = 3600 * 1000
-
 local PetConfig = require(script.Parent:WaitForChild("PetConfig"))
-
--- Units of one pet (0 for an unknown kind or rarity).
-function GardenConfig.Units(pet): number
-	local rarity = PetConfig.RarityOf(pet.Kind)
-	local rate = rarity and GardenConfig.BaseRates[rarity.id] or 0
-	return rate * (1000 + GardenConfig.MaxLevelRate * (PetConfig.PetLevel(pet) - 1) // (PetConfig.MaxLevel - 1))
-end
-
--- Coins per hour of one pet, for display (before the pet bonus).
-function GardenConfig.RatePerHour(pet): number
-	return GardenConfig.Units(pet) / 1000
-end
-
--- Whole Coins produced by `units` over `seconds` on top of `carry`, and the new carry (units × seconds left over).
-function GardenConfig.Settle(units: number, carry: number, seconds: number): (number, number)
-	local total = carry + units * seconds
-	local coins = total // UNITS_PER_COIN_SECOND
-	return coins, total - coins * UNITS_PER_COIN_SECOND
-end
-
--- Pen index (1..MaxPens) that holds pet `uid` in `profile.Garden`, or nil.
-function GardenConfig.IsPenned(profile, uid: string): number?
-	local garden = profile.Garden
-	if type(garden) ~= "table" or type(garden.Pens) ~= "table" then
-		return nil
-	end
-	for key, penned in garden.Pens do
-		if penned == uid then
-			return tonumber(key)
-		end
-	end
-	return nil
-end
 
 -- Square (1..12) of the crop field where pet `uid` works (E1b: Garden.FieldPets[uid] = { Square, Job }), or nil.
 function GardenConfig.FieldSquare(profile, uid: string): number?

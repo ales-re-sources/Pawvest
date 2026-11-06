@@ -1,7 +1,7 @@
 -- Pet followers (docs/GDD.md §7.5): every player's equipped pets float behind them, for everyone to see.
 -- Display only, on each client: the list comes from the EquippedPets player attribute ("Kind:Level:uid,…", PetService),
--- models are clones of ReplicatedStorage.PetModels dressed by PetLook (size by level, label, glow; the garden pens use the
--- same code), moved locally every frame (no server parts, no physics).
+-- models are clones of ReplicatedStorage.PetModels dressed by PetLook (size by level, label, glow; the field pets on the
+-- plots use the same code), moved locally every frame (no server parts, no physics).
 -- Every pet part is anchored with CanCollide / CanTouch / CanQuery off (PetLook.Apply), so pets never push the owner, never
 -- fire touch parts (kill parts, coins, portals) and are ignored by raycasts and the camera.
 -- The pets of one player hang on one smoothed anchor behind the owner, so they keep their formation (never overlap, spacing

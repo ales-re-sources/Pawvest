@@ -529,8 +529,6 @@
    2
   ]
  ],
- "offline_cap_h": 8.0,
- "pen_level_rate": 760,
  "pen_prices": [
   0,
   1000,
@@ -539,13 +537,6 @@
   9000,
   15000
  ],
- "pen_rates": {
-  "Common": 10,
-  "Epic": 70,
-  "Legendary": 120,
-  "Rare": 40,
-  "Uncommon": 20
- },
  "pet_levels": [
   10,
   19,

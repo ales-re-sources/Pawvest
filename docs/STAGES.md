@@ -535,7 +535,7 @@ The no-grind constraint (GDD §6) for required talents, against all medals on th
 
 With Run Speed and Jump Height (5 300) and Quick Respawn (4 000) the whole tree costs **44 300**. Double Jump is a world reward since
 2026-11-01 (granted when World 2 opens, GDD §6, ROADMAP K1; it cost 3 000 from 2026-10-23, 1 500 before). Talents stay a real investment that competes with
-pets, pens and incubators (≈ 56 500 together), without blocking the no-grind path. Run Speed / Jump Height could get more
+pets, incubators and the field, without blocking the no-grind path. Run Speed / Jump Height could get more
 levels later if Gold on Worlds 3–4 needs them (M6).
 
 ## 7. Practical side

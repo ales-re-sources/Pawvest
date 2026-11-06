@@ -3,9 +3,8 @@
 -- GardenRemotes.Plot (server → client): (userId, state) after every publish of that player's garden (only when the state
 -- changed) and (userId, nil) when the player leaves. GardenRemotes.RequestPlots (client → server, no arguments) re-sends every
 -- plot to the caller (a client that was still loading missed the broadcasts); 1 s cooldown.
--- State: { slot, name, penCount, pens = { [1..6] = "Kind:Level:uid" or "" }, incCount, eggs = { [1..3] = "EggId:readyAt" or "" },
--- converted (E1b: the pens became field pet slots), field = GardenField.PlotField or nil } (readyAt in server os.time(), for the countdowns only). The field is sent only to
--- viewers with field access (GardenConfig.HasFieldAccess, E1a2): everyone else gets the state without it.
+-- State: { slot, name, incCount, eggs = { [1..3] = "EggId:readyAt" or "" }, field = GardenField.PlotField or nil } (readyAt in
+-- server os.time(), for the countdowns only).
 
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
@@ -13,7 +12,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local GardenConfig = require(ReplicatedStorage.GardenConfig)
-local PetConfig = require(ReplicatedStorage.PetConfig)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local GardenPlots = require(ServerScriptService.GardenPlots)
 local GardenService = require(ServerScriptService.GardenService)
@@ -34,14 +32,8 @@ local function plotState(player: Player)
 	local profile = PlayerProfile.Get(player)
 	local slot = GardenPlots.PlotOf(player)
 	local garden = profile and profile.Garden
-	if not (slot and type(garden) == "table" and type(garden.Pens) == "table") then
+	if not (slot and type(garden) == "table") then
 		return nil
-	end
-	local pens = {}
-	for n = 1, GardenConfig.MaxPens do
-		local uid = garden.Pens[tostring(n)]
-		local pet = uid and profile.Pets[uid]
-		pens[n] = if pet then string.format("%s:%d:%s", pet.Kind, PetConfig.PetLevel(pet), uid) else ""
 	end
 	local eggs = {}
 	for n = 1, GardenConfig.MaxIncubators do
@@ -51,22 +43,15 @@ local function plotState(player: Player)
 	return {
 		slot = slot,
 		name = player.Name,
-		penCount = garden.PenCount or 1,
-		pens = pens,
 		incCount = garden.IncubatorCount or 1,
 		eggs = eggs,
-		converted = garden.Converted == true, -- pens became field pet slots (E1b): no pens drawn
 		field = GardenField.PlotField(player),
 	}
 end
 GardenPlotFeed.PlotState = plotState
 
--- Sends `state` of `owner` to `viewer`, without the field for a viewer without field access.
+-- Sends `state` of `owner` to `viewer`.
 local function send(viewer: Player, owner: Player, state)
-	if state.field and not GardenConfig.HasFieldAccess(viewer.UserId) then
-		state = table.clone(state)
-		state.field = nil
-	end
 	plotEvent:FireClient(viewer, owner.UserId, state)
 end
 

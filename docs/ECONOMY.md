@@ -11,10 +11,9 @@ Compacted 2026-11-05; the run-by-run history (candidate tables, sweeps, supersed
 python tools/economy.py check                 # every pin + acceptance check (52), about 3 s, exit 1 on a failure
 python tools/economy.py pin                   # accept the reviewed config values as the new pins
 python tools/economy.py sim                   # 60-day simulation per archetype x policy, field tables, guardrail lines
-python tools/economy.py report                # baseline tables (medals, talents, pens, crops, tiers)
+python tools/economy.py report                # baseline tables (medals, talents, crops, tiers)
 python tools/economy.py pets                  # field-pet run (slots, reach, Tending, aptitude pacing, pen conversion, seed pouch)
 python tools/economy.py tools                 # garden tools run
-python tools/economy.py sim --garden pens     # today's live game (pens, no field); --garden both = grandfathered pens
 python tools/economy.py check --offline-rate 0.5 --offline-cap 24     # try other passive rules
 ```
 
@@ -29,7 +28,7 @@ Since the user's direction change (2026-11-02) **farming is the main game** and 
 | Check | Rule |
 |---|---|
 | 1 drift | every config number equals its pin |
-| 2 reproduction | the GDD figures (medal totals, talent tree, a day of Gold runs, pen rates) |
+| 2 reproduction | the GDD figures (medal totals, talent tree, a day of Gold runs) |
 | 3 required set | GDD §6: each required talent set ≤ 65 % of the Coins earned up to its stage, garden income off |
 | 4 P parity | the field earns ≤ 1.0x the obby's Coins over days 1-3 together (a total: first-clear payouts are too lumpy for a daily cap); Garden main ≤ 1.8x since the offline change |
 | 4 L lead | field ≥ 3x the obby by day 7 and ≥ 10x by day 30 for Casual and Garden main; Obby main ≥ 1x by day 14; Binge reported only |
@@ -45,8 +44,8 @@ Not yet built (ROADMAP → E0): 7 no dead end, 8 rare supply vs the first landma
 ## The rules as simulated
 - **Archetypes:** Obby main (2 h of obby, visits 7:00 / 12:30 / 18:00, 3.5 h online a day), Casual (45 min, 8:00 / 19:00, 1 h), Garden main
   (15 min, 7 / 12 / 17 / 21, 2 h), Binge (one 6 h day a week, 0.9 h a day); two purchase policies (talent-first, pets-first), 6 seeds each.
-- **Online beats offline** (user rule 2026-10-24): every passive gain (crop growth, Tending, aptitude XP, pens) runs at `online_rate` 1.0 while the
-  player is in a session and `offline_rate` 0.5 while away, capped at 24 h per absence for the field (8 h for pens). Roblox no longer pays for
+- **Online beats offline** (user rule 2026-10-24): every passive gain (crop growth, Tending, aptitude XP) runs at `online_rate` 1.0 while the
+  player is in a session and `offline_rate` 0.5 while away, capped at 24 h per absence. Roblox no longer pays for
   uptime, so the model pays nothing for pure AFK: online growth counts only during session hours.
 - **Visits:** at a session start the player harvests what is ripe, sells, buys seeds and replants the crop with the best net per square and
   wall-clock hour; ripe crops wait. Field items are bought in price order (× 1.5 for talent-first, × 0.7 for pets-first), the reserved sink ladder
@@ -61,10 +60,13 @@ Not yet built (ROADMAP → E0): 7 no dead end, 8 rare supply vs the first landma
   1 per absence, from Renown 3, rare crops safe. The model has no guards (the worst case).
 
 ## Decisions (dated; the numbers live in the configs)
+- **2026-11-06 FA, the field for everyone:** the P2 pens and their production are gone (`GardenConfig` pen rates, offline cap, level
+  rate); the model keeps only `CropConfig.LegacyPenPrices` for the one-time conversion. `pin` dropped `offline_cap_h`, `pen_level_rate`
+  and `pen_rates` (the user accepted it); no other value changed.
 - **2026-11-05 P4 pet traits** (reviewed and pinned): the Coin bonus is the **Cuteness** trait, levels 1-10; bonus = rarity
   base + `CuteStep` 19 ‰ per level above 1 (no migrated pet loses bonus), XP `100 × L^1.5` (11 100 to level 10, about today's ramp);
   `CuteChance` 0.35 / 0.4 / 0.5 / 0.6 / 0.7 by rarity after Tending gives Cuteness on 28 / 32 / 50 / 70 / 82 % of hatches (Tending shares
-  unchanged); care XP trains work traits up to level 5 at 36 s per XP; pens by pet level, `MaxLevelRate` 760 (Lv 10 = ×1.76). The equipped
+  unchanged); care XP trains work traits up to level 5 at 36 s per XP. The equipped
   multiplier saturates at 1.49 (was 1.47). Check C (Obby main's sink share by day 60) drops to 79 % (bar 80 %): the field earns about 5 %
   more; the user accepted it, the day-60 bar is now 78 %.
 - **2026-10-24 Online beats offline** (above). **2026-11-04:** `offline_rate` 0.33 → 0.5 and the field cap 12 → 24 h (a day away grew only about

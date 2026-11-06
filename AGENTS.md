@@ -58,7 +58,7 @@ Per-file and per-scene-folder descriptions live in [docs/LAYOUT.md](docs/LAYOUT.
 src/ReplicatedStorage/        shared modules: configs (Stage / Pet / Garden / Crop / Talent / ChallengeCoin / Arena / Admin),
                               Locale + generated Strings/, KitMath, StudStyle, PetLook, TimeFormat, MedalText
 src/ServerScriptService/      services: PlayerProfile (DataStore), CoinRewards, StageResults, StageUnlocks, PetService,
-                              Garden* (plots, pens, incubators, food, field, plot feed), RespawnService, TalentService, Telemetry,
+                              Garden* (plots, incubators, food, field, plot feed), RespawnService, TalentService, Telemetry,
                               LanguageService, admin remotes
 src/StarterPlayer/StarterPlayerScripts/  client: obstacle kit (ObstacleKit, KitZones, KitMaze, KitGhosts), StageCamera, checkpoints,
                               gates / portals, pets (PetClient, PetFollow, PetsPanel, PetDetail), garden (GardenView, PlotView,
@@ -89,8 +89,8 @@ src/Workspace/                StartLocation (hub), Tutorial, World1 (Stage1-5), 
   were scaled ×10 once by the `Version = 3` migration: never multiply stored Coins by hand.
 - Stored ids are never renamed or reused: stage keys, challenge coin ids (`<stage folder>_<n>`), aptitude ids, upgrade / tool ids, crop ids,
   field square numbers.
-- The crop field and everything on it exist only for `GardenConfig.HasFieldAccess` players (`FieldAccess = "admins"` until E1 ships); other
-  players get no field data written.
+- Every player has the crop field (FA, 2026-11-06; there is no no-field path). A profile from before it converts once on join
+  (`GardenField` `convert`: pens → field pet slots, legacy pen fields cleared).
 
 ## Localization rules (docs/LOCALIZATION.md → Strings workflow)
 - Never set player-visible text as a literal: use `Locale.T(key)` on the client or `Locale.SetKey(label, key, args)` from the server
@@ -153,14 +153,20 @@ src/Workspace/                StartLocation (hub), Tutorial, World1 (Stage1-5), 
   but don't mass-rewrite without asking.
 
 ## Testing
-No automated tests. Verify in Studio: playtest (MCP `start_stop_play`), read the console, check DataStore behaviour only with Studio API access.
-Every acceptance check runs through the real UI at least once (firing remotes alone once missed a broken button).
+No automated tests. Validate by risk; scope acceptance checks to the tier a change needs, not more:
+- **Always:** grep for leftovers of what changed; the tool checks that apply (`economy.py check`, `loc.py check` / `lint`, a smoke run of
+  any tool command a change touches); one playtest boot (MCP `start_stop_play`) reading server and client errors / warnings.
+- **UI or input changed:** each changed control through the real UI at least once (firing remotes alone once missed a broken button).
+  A pure removal only needs a look at the affected screens.
+- **Stored data migrated or rewritten:** first read the live profiles (one playtest, read-only). Test the path with a fixture
+  (snapshot / restore below) only if a live profile actually needs it; otherwise review the path in code and say so.
+- **Never skipped:** a snapshot right before any write to a live profile.
 
 **Keep tool output small** (it all stays in the context):
 - Console: not `get_console_output` (it returns the whole log). Use `execute_luau` (`Server` / `Client` during a playtest, `Edit` otherwise):
   `game:GetService("LogService"):GetLogHistory()`, keep entries matching a pattern (`"%[Telemetry%]"`, `"error"`, your own prefix) or after the
   test's start, last ~30, each cut to ~200 chars.
-- Big files (PetLook, ObstacleKit, PetsPanel, PetDetail, Telemetry, FoodShopClient, FieldClient, GardenField, GardenClient, GardenService,
+- Big files (PetLook, ObstacleKit, PetsPanel, PetDetail, Telemetry, FoodShopClient, FieldClient, GardenField,
   StageConfig, IncubatorClient: 17-50 kB): Grep for the function / text, then Read with `offset` / `limit`.
 - `python tools/loc.py check` prints errors and a summary; `loc.py review` lists the waiting texts.
 

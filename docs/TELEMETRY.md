@@ -138,7 +138,7 @@ run). Times and counts never go into custom fields (cardinality); they are event
   bucket cut is needed then.**
 - Debug switch: the `ServerScriptService` attribute `TelemetryDebug = true` (read on every event, so it can be toggled during a playtest) prints
   every event as `[Telemetry] …`; without it the module is silent.
-- Only talent purchases are logged as economy events; the other Coin sources and sinks (medals, unlocks, eggs, pens, food, the field) are left
+- Only talent purchases are logged as economy events; the other Coin sources and sinks (medals, unlocks, eggs, food, the field) are left
   for M6 (garden telemetry: E5).
 
 ## Regression checks after a telemetry change (Studio, debug switch on)

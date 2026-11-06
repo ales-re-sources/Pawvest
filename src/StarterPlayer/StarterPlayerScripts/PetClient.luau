@@ -16,7 +16,7 @@ local resultEvent = Instance.new("BindableEvent")
 
 local PetClient = {
 	Remotes = remotes,
-	State = nil, -- last PetsChanged payload: { pets, equipped, slots, freeEggs, multiplier, penned, field }
+	State = nil, -- last PetsChanged payload: { pets, equipped, slots, freeEggs, multiplier, field }
 	Coins = 0,
 	Changed = changedEvent.Event, -- fires (state?) after the pet state or the Coins changed
 	Result = resultEvent.Event, -- fires (action, ok, detailOrReason) for each answer from the server
@@ -32,7 +32,6 @@ export type OwnedPet = {
 	cute: number, -- Cuteness level (P4), 0 without it
 	rarity: PetConfig.Rarity,
 	equipped: boolean,
-	penned: number?, -- garden pen index (P2a2), nil when not in a pen
 	field: number?, -- field square the pet works (E1b), nil when not on the field
 	tending: number, -- Tending aptitude level (E1b), 0 without it
 	guard: number, -- Pest-control aptitude level (E4b), 0 without it
@@ -65,7 +64,6 @@ function PetClient.Inventory(): { OwnedPet }
 				cute = PetConfig.AptitudeLevel(pet, "Cuteness"),
 				rarity = rarity,
 				equipped = table.find(state.equipped, uid) ~= nil,
-				penned = state.penned and state.penned[uid] or nil,
 				field = state.field and state.field[uid] or nil,
 				tending = PetConfig.AptitudeLevel(pet, "Tending"),
 				guard = PetConfig.AptitudeLevel(pet, "PestControl"),

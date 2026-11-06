@@ -220,7 +220,6 @@ pets.gardenNotReady,Message: the garden plot is not assigned yet (just joined),Y
 pets.reject.full,Refused: the pet inventory is full (50),Pet inventory is full,Inventář mazlíčků je plný,new,h0264530e
 pets.reject.slots,Refused: every slot holds a pet,All slots in use: click a slot below to unequip a pet,Všechny sloty jsou obsazené: klikni dole na slot a mazlíčka sundej,new,h02961e7d
 pets.reject.equipped,Refused: an equipped pet cannot be sold,Unequip it before selling,Před prodejem ho sundej,new,hce22c2df
-pets.reject.penned,Refused: the pet is in a garden pen,In a garden pen: remove it there first,Je v ohradě v zahradě: nejdřív ho tam vyndej,new,hef0cb2c3
 pets.reject.maxed,Refused: every slot is bought,All slots unlocked,Všechny sloty jsou odemčené,new,h480c3a6c
 # Durations,,,,,
 common.duration.hm,"A time span of hours and minutes, e.g. ""7 h 59 min""",{h} h {m} min,{h} h {m} min,new,hdc897d78
@@ -229,40 +228,6 @@ common.duration.s,"A time span in seconds, e.g. ""45 s""",{s} s,{s} s,new,h130ff
 common.hours[one],"A whole number of hours, e.g. an egg's hatch time ""1 hour""; {count} = hours. Form for 1",{count} hour,{count} hodina,new,h8c6097ee
 common.hours[few],Form for 2-4 (Czech only),,{count} hodiny,new,h8c6097ee
 common.hours[other],Form for 0 and 5+,{count} hours,{count} hodin,new,h8c6097ee
-# Garden pen panel,,,,,
-garden.title,Pen panel title; {pen} = pen number 1-6,🌱 Pen {pen},🌱 Ohrada {pen},new,hc4abf29d
-garden.footer,"Pen panel footer; {rate} = Coins per hour of the whole plot (may be a decimal), {minutes} = payout interval",Garden income: <font color='#a8e6a0'>{rate} Coins/h</font> (before the pet bonus) · paid every {minutes} min,Příjem zahrádky: <font color='#a8e6a0'>{rate} mincí/h</font> (bez bonusu mazlíčků) · vyplácí se každých {minutes} min,new,hb9da9830
-garden.unlockPen[one],"Button: buy the next pen; {pen} = its number, {count} = price. Form for 1",Unlock pen {pen}: {count} Coin,Odemknout ohradu {pen}: {count} mince,new,h72afa625
-garden.unlockPen[few],Form for 2-4 (Czech only),,Odemknout ohradu {pen}: {count} mince,new,h72afa625
-garden.unlockPen[other],Form for 0 and 5+,Unlock pen {pen}: {count} Coins,Odemknout ohradu {pen}: {count} mincí,new,h72afa625
-garden.info.unlock,Info above the unlock button,"Pets in pens produce Coins, even while you are away.","Mazlíčci v ohradách vyrábějí mince, i když nejsi ve hře.",new,he43d5834
-garden.unlockFirst,Button of a pen after the next one (grey); {pen} = the next pen to buy,Unlock pen {pen} first,Nejdřív odemkni ohradu {pen},new,h36acd651
-garden.info.order,Info for a pen after the next one,Pens are unlocked in order.,Ohrady se odemykají postupně.,new,h035d174a
-garden.takeOut,Button on a pen holding a pet; {kind} = pet kind,Take {kind} out of the pen,Vyndat z ohrady: {kind},new,h42f88bbc
-garden.info.penned,"Info on a pen holding a pet; {name} = ""Cat Lv 3"", {rate} = its Coins per hour",{name} · <font color='#a8e6a0'>{rate} Coins/h</font>. A penned pet gains no XP and gives no pet bonus.,{name} · <font color='#a8e6a0'>{rate} mincí/h</font>. Mazlíček v ohradě nezískává XP a nedává bonus.,new,h150810e7
-garden.info.choose,Info on an empty pen above the list of free pets,Choose a pet for this pen. It produces Coins while it stays here.,"Vyber mazlíčka do ohrady. Dokud tu zůstane, vyrábí mince.",new,hc6e08c59
-garden.place,Button on a pet row: put it in this pen (short),Place,Umístit,new,h8ae77f96
-garden.rate,Pet row: Coins per hour that pet would produce; {rate} may be a decimal,{rate} Coins/h,{rate} mincí/h,new,hc220fa84
-garden.empty,"Empty pen, no free pet to place","No free pets. Hatch one in an incubator, or unequip one in the Pets panel.","Žádný volný mazlíček. Vylíhni si ho v inkubátoru, nebo ho sundej v panelu Mazlíčci.",new,h3a3101df
-garden.welcome,"Title of the ""welcome back"" card (offline pen production paid on join)",🌱 Welcome back!,🌱 Vítej zpátky!,new,h58a94374
-garden.away[one],"Welcome back card text; {count} = Coins paid, {duration} = time away (""7 h 59 min""). Form for 1",Your pens produced <font color='#78e678'>{count} Coin</font> in {duration}.,Tvoje ohrady vyrobily za {duration} <font color='#78e678'>{count} minci</font>.,new,h7f2afbea
-garden.away[few],Form for 2-4 (Czech only),,Tvoje ohrady vyrobily za {duration} <font color='#78e678'>{count} mince</font>.,new,h7f2afbea
-garden.away[other],Form for 0 and 5+,Your pens produced <font color='#78e678'>{count} Coins</font> in {duration}.,Tvoje ohrady vyrobily za {duration} <font color='#78e678'>{count} mincí</font>.,new,h7f2afbea
-garden.awayBase,Welcome back card: when the pet bonus added to the payout; {base} = Coins without the bonus,({base} base + your pet bonus),({base} základ + bonus tvých mazlíčků),new,hfad86214
-garden.awayCapped[one],Welcome back card: production while away is limited; {count} = hours. Form for 1,Production while away is capped at {count} hour.,Výroba bez tebe je omezená na {count} hodinu.,new,h9ad39b31
-garden.awayCapped[few],Form for 2-4 (Czech only),,Výroba bez tebe je omezená na {count} hodiny.,new,h9ad39b31
-garden.awayCapped[other],Form for 0 and 5+,Production while away is capped at {count} hours.,Výroba bez tebe je omezená na {count} hodin.,new,h9ad39b31
-garden.toast[one],Short toast for a payout while playing; {count} = Coins. Form for 1,🌱 Garden +{count} Coin,🌱 Zahrádka +{count} mince,new,hb18743f6
-garden.toast[few],Form for 2-4 (Czech only),,🌱 Zahrádka +{count} mince,new,hb18743f6
-garden.toast[other],Form for 0 and 5+,🌱 Garden +{count} Coins,🌱 Zahrádka +{count} mincí,new,hb18743f6
-garden.penUnlocked,Message after buying a pen,Pen {pen} unlocked,Ohrada {pen} odemčena,new,hdefaa454
-garden.placed,Message after placing a pet,Placed. It produces Coins from now on.,Umístěno. Od teď vyrábí mince.,new,h88210982
-garden.removed,Message after taking a pet out,Back in your inventory.,Zpátky v inventáři.,new,h59de7abc
-garden.reject.maxed,Refused: every pen is bought,All pens unlocked,Všechny ohrady jsou odemčené,new,h27abc176
-garden.reject.locked,Refused: the pen is not bought,Unlock this pen first,Nejdřív tuhle ohradu odemkni,new,h2756943b
-garden.reject.occupied,Refused: the pen holds a pet,This pen already holds a pet,V téhle ohradě už mazlíček je,new,h8d911d34
-garden.reject.equipped,Refused: an equipped pet cannot go into a pen,Unequip the pet first (Pets panel),Nejdřív mazlíčka sundej (panel Mazlíčci),new,h488bb4c0
-garden.reject.penned,Refused: the pet is in another pen,That pet is already in a pen,Ten mazlíček už je v ohradě,new,h3803ee16
 # Incubator panel,,,,,
 incubator.title,Incubator panel title; {n} = incubator number 1-3,🥚 Incubator {n},🥚 Inkubátor {n},new,hd5e8d5be
 incubator.body.locked,Text of an incubator not bought yet,"Incubators hatch eggs in real time, even while you are away.","Inkubátory líhnou vejce ve skutečném čase, i když nejsi ve hře.",new,h480d0efc
@@ -316,15 +281,10 @@ food.reject.far,Refused: the player walked away from the food stand,Too far from
 board.top10,"Title of a stage's Top-10 board (SurfaceGui, server-written, tagged Loc); {stage} = stage name (feminine in Czech), {rows} = 10",{stage} - top {rows}!,{stage} – top {rows}!,new,h813379d2
 board.hubStars,Title of the hub's most-stars board; {rows} = 10,Most stars - top {rows}!,Nejvíc hvězd – top {rows}!,new,h1e3851bd
 garden.sign.plotFree,Sign of a garden plot nobody owns right now (an owned plot shows the owner's name),Free plot,Volný pozemek,new,h456835a7
-garden.sign.pen.locked,Billboard on a pen pad that is not bought yet; {n} = pen number 1-6,🔒 Pen {n},🔒 Ohrada {n},new,h66c82e4e
-garden.sign.pen.empty,Billboard on a bought pen with no pet; {n} = pen number; second line after the line break,Pen {n}\nempty,Ohrada {n}\nprázdná,new,h0cbb3486
 garden.sign.incubator.locked,Billboard on an incubator that is not bought yet; {n} = incubator number 1-3,🔒 Incubator {n},🔒 Inkubátor {n},new,h4af320b7
 garden.sign.incubator.empty,Billboard on a bought incubator without an egg; {n} = incubator number; second line after the line break,Incubator {n}\nempty,Inkubátor {n}\nprázdný,new,haa069ea7
-garden.prompt.openPen,Action text of the prompt on a pen pad of the own garden plot (opens the pen panel),Open pen,Otevřít ohradu,new,h6ac2644c
-garden.prompt.pen,Object text of that prompt; {n} = pen number 1-6,Pen {n},Ohrada {n},new,h1e078e19
 garden.prompt.openIncubator,Action text of the prompt on an incubator of the own garden plot (opens the incubator panel),Open incubator,Otevřít inkubátor,new,h882cf717
 garden.prompt.incubator,Object text of that prompt; {n} = incubator number 1-3,Incubator {n},Inkubátor {n},new,h47892dc1
-garden.penPet.label,"Label over a pet standing in a garden pen (rich text, green second line). {pet} = ""Cat Lv 12"", {stars} = tier badge with a leading space ("" ★★"") or empty, {rate} = ""4.5 Coins/h""",{pet}{stars}\n<font color='#a8e6a0'>{rate}</font>,{pet}{stars}\n<font color='#a8e6a0'>{rate}</font>,new,hca8d2d56
 # Studio-authored signs (L3; tagged Loc with LocKey in the place file),,,,,
 sign.plot,Number on a garden plot's sign (drawn by the client); {n} = plot slot number 1-30,Plot {n},Pozemek {n},new,h1927be07
 sign.foodStand,"Sign over the pet food stand in the garden (capitals, big letters; keep it short)",🍓 PET FOOD,🍓 KRMENÍ,new,hfe6570f5
@@ -392,7 +352,6 @@ crop.name.GiantMelon,"Crop name (singular, shown with its icon)",Giant melon,Ob�
 crop.name.GoldenCarrot,"Rare crop of World 1 (E2): name, singular, shown with its icon 🥕",Golden carrot,Zlatá mrkev,new,h6faddec3
 crop.name.FrostGrape,"Rare crop of World 2 (E2): name, singular (one bunch), shown with its icon 🍇",Frost grape,Mrazivý hrozen,new,h19ec990f
 crop.name.GlowMushroom,"Rare crop of World 3 (E2): name, singular, shown with its icon 🍄",Glow mushroom,Zářivá houba,new,h76c7daca
-field.reason.locked,The field is not open for this player yet (access),The field is not open for you yet,Pole ti zatím není k dispozici,new,h1c490ede
 field.reason.far,Refused: the player is not at their own plot,Walk to your plot first,Nejdřív dojdi ke své zahrádce,new,h876a55dc
 field.reason.loading,Refused: the player's data is still loading,Still loading...,Ještě se načítá…,new,hefd53ef6
 field.reason.noplot,Refused: no garden plot was free on this server,You have no plot on this server,Na tomhle serveru nemáš zahrádku,new,h089bd3d2
@@ -438,7 +397,6 @@ field.petPicker.title,Title of the pet picker opened at a field square; {n} = sq
 field.petPicker.lift,"Pet picker row: take the pet that works this square off the field; {pet} = ""Cat Lv 12""",Lift {pet},Odebrat: {pet},new,hc01b5fb8
 field.petPicker.liftInfo,"Pet picker, second line of the Lift row",Back to your pets; the crop stays,"Vrátí se k mazlíčkům, úroda zůstane",new,hfc16287c
 field.petPicker.equipped,"Pet picker, disabled row: the pet follows the player (equipped)",Equipped: unequip it in the Pets panel first,Je nasazený: nejdřív ho sundej v panelu Mazlíčci,new,h66466e79
-field.petPicker.penned,"Pet picker, disabled row: the pet is in a garden pen",In a pen,Je v ohradě,new,h865865d8
 field.petPicker.noSlot,"Pet picker, disabled row: every field pet slot is used",No free slot: buy one in the field panel,Žádné volné místo: další koupíš v panelu pole,new,h0d88e986
 field.petPicker.info[one],"Pet picker row, second line; {level} = Tending level, {count} = squares it would work here. Form for 1",Tending {level} · works {count} square,Péče {level} · stará se o {count} políčko,new,h17c4074f
 field.petPicker.info[few],Form for 2-4 (Czech only),,Péče {level} · stará se o {count} políčka,new,h17c4074f
@@ -472,7 +430,6 @@ field.toast.petLifted,"Toast: a pet was taken off the field; {pet} = ""Cat Lv 12
 field.toast.slot,Toast: a field pet slot was bought; {n} = its number,Field pet slot {n} bought,Koupeno místo pro mazlíčka {n},new,h8d666912
 field.reason.petOccupied,Refused: another pet already works that square,Another pet already works this square,Na tomhle políčku už pracuje jiný mazlíček,new,h3303faa7
 field.reason.equipped,Refused: the pet is equipped (follows the player),Unequip this pet first (Pets panel),Nejdřív mazlíčka sundej (panel Mazlíčci),new,h75a7614c
-field.reason.penned,Refused: the pet is in a garden pen,This pet is in a pen,Tenhle mazlíček je v ohradě,new,h31a79166
 field.reason.aptitude,Refused: the pet has neither the Tending nor the Pest-control aptitude,This pet has neither Tending nor Pest control,Tenhle mazlíček neumí péči ani hlídání,new,h29ac567d
 field.reason.slots,Refused: every field pet slot is used,All field pet slots are in use,Všechna místa pro mazlíčky jsou obsazená,new,hd52f20d6
 field.reason.slotsMaxed,Refused: every field pet slot is already bought,You have every field pet slot already,Už máš všechna místa pro mazlíčky,new,h34ec9412
@@ -481,7 +438,6 @@ pets.tending,"Pet row and field pet labels, after "" · "": the pet's Tending le
 pets.guard,"Pet row and field pet labels, after "" · "": the pet's Pest-control level",Pest control {level},Hlídání {level},new,h47c8fa98
 petDetail.where.equipped,"Pet detail page, header: the pet is equipped (follows the player)",✔ With you,✔ Je s tebou,new,hc67d5235
 petDetail.where.field,"Pet detail page, header: the pet works field square {n}",🌱 Works square {n},🌱 Pracuje na políčku {n},new,h350939bd
-petDetail.where.pen,"Pet detail page, header: the pet is in garden pen {pen}",In pen {pen},V ohradě {pen},new,h86bfbe40
 petDetail.where.resting,"Pet detail page, header: the pet is neither equipped nor working",💤 Resting,💤 Odpočívá,new,hf1d011c8
 petDetail.level,"Pet detail page, growth card heading; {level} = pet level (its best trait, P4), {max} = 10",Level {level} / {max},Úroveň {level} / {max},new,h62faaccb
 petDetail.levelNote,"Pet detail page, text on the level bar: a pet's level is the level of its best trait (P4)",Its level is its best trait's,Jeho úroveň je úroveň nejlepší vlastnosti,new,hed0bb863

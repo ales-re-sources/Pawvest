@@ -1,4 +1,4 @@
--- Garden: boot script of the pet garden (docs/GDD.md §7.6). Starts the plot assignment, the pens / production
+-- Garden: boot script of the pet garden (docs/GDD.md §7.6). Starts the plot assignment, the shared garden plumbing
 -- (GardenService), the incubators (GardenIncubators), the food stand (GardenFood), the crop field (GardenField, E1a2) and the plot feed the clients draw from
 -- (GardenPlotFeed).
 -- The garden island is reached on foot over Workspace.GardenBridge from the central island (H1); no portals.

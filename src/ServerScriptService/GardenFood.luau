@@ -1,9 +1,8 @@
 -- GardenFood: the food stand on the garden plaza (docs/GDD.md §7.4, §7.6; P2b2). Server-only.
--- Food is bought and fed at once to one owned pet (equipped, penned or resting; no food inventory). The client only names
+-- Food is bought and fed at once to one owned pet (equipped, resting or on the field; no food inventory). The client only names
 -- the pet uid and the food id; price and XP come from GardenConfig.Foods. Only the fed pet gains the XP, as care XP
 -- (PetConfig.GainCareXp, P4: Cuteness first, else the lowest working trait below the care cap); a pet with nothing left to train
--- is rejected ("maxed") before any Coins are taken. A penned pet's production is settled first, so the new level only counts from
--- the feeding on.
+-- is rejected ("maxed") before any Coins are taken.
 -- Remote (in GardenRemotes): Feed(uid, foodId) (client → server); answers through GardenRemotes.Result ("Feed").
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -55,12 +54,9 @@ feedEvent.OnServerEvent:Connect(function(player, uid, foodId)
 		return reject(player, "Feed", "coins")
 	end
 
-	if GardenConfig.IsPenned(profile, uid) then
-		GardenService.SettleAndNotify(player) -- production up to now is paid at the old level
-	end
 	PlayerProfile.AddCoins(player, -food.price)
 	local trained, wasted = PetConfig.GainCareXp(pet, food.xp)
-	GardenService.PublishAll(player) -- Pets panel, Coin bonus, EquippedPets labels, pen label and garden rate
+	GardenService.PublishAll(player) -- Pets panel, Coin bonus, EquippedPets labels, field pet labels
 	GardenService.Succeed(player, "Feed", {
 		uid = uid,
 		food = food.id,

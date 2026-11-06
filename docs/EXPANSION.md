@@ -1,7 +1,7 @@
 # Pawvest — pet-garden expansion design (E1–E11, drops D1–D10)
 
 **Status (2026-11-05).** The direction was decided 2026-10-24 / 25 and reworked 2026-10-30 (pets on field squares, aptitudes, seed pouch and
-rare-seed meter) and 2026-11-02 (farming is the main game). **Built behind field access** (admins only until E1 ships, ROADMAP → Next): the
+rare-seed meter) and 2026-11-02 (farming is the main game). **Built and open to every player since FA** (2026-11-06; the P2 pens are gone): the
 field, crops, size roll, Renown, upgrades and tier-1 tools, the market cart, field pets with aptitudes and Tending, obby seeds, crows and
 Pest-control guards. The as-built rules are in **GDD §7.9** and the numbers in `CropConfig` / `PetConfig` (pinned by `tools/economy.py`). This
 document keeps the **design not built yet** plus the rules every drop must follow (§1.1, §13); each section says what of it is built.
@@ -65,7 +65,7 @@ rules out. Rules (reviewed 2026-10-25), **checked for every drop before it ships
 | Decoration | Free placement **outside only**, per-tier limit, validated on the server; the cottage is fixed |
 | Field | One field of squares planted freely; **36 squares**, any square opened by choice at a price by the number open (2026-11-03, F2; built) |
 | Garden vs obby | **Farming first** (2026-11-02): the 24-hour rule of 2026-10-24 is only reported now; the targets are in ECONOMY.md |
-| Online vs offline | Offline income exists, online is higher: every passive gain runs at 1.0 online and **0.5 offline, capped at 24 h** per absence (2026-11-04; pens 8 h). Never pure AFK (Roblox no longer pays for uptime) |
+| Online vs offline | Offline income exists, online is higher: every passive gain runs at 1.0 online and **0.5 offline, capped at 24 h** per absence (2026-11-04). Never pure AFK (Roblox no longer pays for uptime) |
 | Prices | E0 re-prices every sink; applied after the user's approval (E0b) |
 | Seed shop | A fixed **catalogue** gated by Renown (and obby unlocks, §8.1) plus a daily **market cart** (same on every server, per-player counts; built); a weekly visitor later. Rare seeds are never sold |
 | Harvest rolls | Every harvest rolls a **size** (built). **Variants** are **earned**: fertilisers from rare crops and pet aptitudes / quirks give the chance, weather only adds a bonus (§5.3) |
@@ -75,7 +75,7 @@ rules out. Rules (reviewed 2026-10-25), **checked for every drop before it ships
 | Mini-game gates | Mini-games may gate content only by **completion**, never by time or skill ceiling (§8.3) |
 | Monetization | No paid random items, luck and weather are never sold; Robux buys comfort (§13) |
 | Live ops | A drop every **1–2 weeks**; systemic content (forecast, market cart, weekly challenge, fair) before authored seasons (§9, §14) |
-| Field pets | A pet on a square works the squares in its reach; 1 free + 4 bought field pet slots; pens convert into slots without a refund (built) |
+| Field pets | A pet on a square works the squares in its reach; 1 free + 4 bought field pet slots; a pre-field profile's pens converted into slots without a refund (built; pens removed in FA) |
 | Aptitudes | Born with jobs, each with its own level 1–10 raised by doing it; rarity gives more aptitudes and a higher cap (6–10); the same level does the same on every pet (built: data, Tending, Pest control, Scouting) |
 | Stage seed rewards | Seed pouch + per-stage rare-seed meter (no drop chance); Scouting adds packets and meter speed, capped; pets never touch times (built) |
 
@@ -346,8 +346,8 @@ rare seed, come back to a ledger of harvests and chased-off crows, upgrade a too
 | MVP piece | State |
 |---|---|
 | Obby Worlds 1–3, pets, incubators, food, talents, telemetry, English / Czech | built (holding World 3 back as a first content drop is an option) |
-| E1 field and crops, catalogue, market cart, size roll, Renown, field pets with Tending, tier-1 tools | built behind field access |
-| E4-thin crows, Pest-control guards, the forecast line | built behind field access |
+| E1 field and crops, catalogue, market cart, size roll, Renown, field pets with Tending, tier-1 tools | built, every player (FA) |
+| E4-thin crows, Pest-control guards, the forecast line | built, every player (FA) |
 | E2 seed pouch, rare-seed meters, rare crops per world, Scouting | built |
 | Aptitude data for every pet, only working aptitudes shown | built |
 | E5 request board, ledger on join (the join notice grows into it), onboarding for the first ten minutes, garden funnel telemetry | **to build** (ROADMAP → Next) |
@@ -403,11 +403,11 @@ stations, landmarks, estate / decor / cottage, strays, seasons, trading, World 4
 
 **Plot architecture (decided 2026-10-30, built in E1a).** The server keeps only data; each client draws the plots it needs from one
 `GardenRemotes.Plot` message per plot (full / mid / low detail by distance, `GardenView`); plot positions come from `GardenConfig.PlotCFrame`
-(30 slots on two rings), so the player cap is not tied to built plots. Garden servers start at **24** players when E1 ships (the instance
+(30 slots on two rings), so the player cap is not tied to built plots. Garden servers start at **24** players for the soft launch (the instance
 budget had about 4 % headroom at 30; raise to 30 after a fresh budget test with the 36-square field). Still open: a real-phone measurement and
 a 12-client join.
 - **Offline visit (designed, not built):** a store `GardenSnapshots`, key `garden_<UserId>`, written on leave and at most once per 5 min while
-  the garden changes (its own key, outside the profile's write gap); one compact JSON object (name, pens / field pets, eggs as `Egg:readyAt`, the
+  the garden changes (its own key, outside the profile's write gap); one compact JSON object (name, field pets, eggs as `Egg:readyAt`, the
   field as one string of 4 characters per square: crop, minutes until ready in two base-64 characters, size / variant), under 1 KB. A visit
   costs one `GetAsync`; an owner online on another server is shown from the same snapshot (at most 5 min old); no MessagingService.
 

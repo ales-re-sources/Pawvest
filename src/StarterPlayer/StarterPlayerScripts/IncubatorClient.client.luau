@@ -440,7 +440,7 @@ RunService.Heartbeat:Connect(function(dt)
 end)
 
 -- The server publishes the garden state on join (which a loading client may miss) and answers RequestState, but shares one
--- rate limit with GardenClient's request: ask again until the incubator state has arrived.
+-- rate limit with the other garden requests: ask again until the incubator state has arrived.
 task.spawn(function()
 	local requestStateEvent = remotes:WaitForChild("RequestState")
 	for _ = 1, 10 do

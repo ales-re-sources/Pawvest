@@ -1,6 +1,5 @@
 -- GardenView (E1a1, docs/EXPANSION.md §16): draws the garden's plots on this client, into the client-local folder
--- Workspace.GardenView (the server keeps only data). Starts when first required (GardenClient, IncubatorClient, HintSources,
--- PetPenFx, PetPenLevelUp all do).
+-- Workspace.GardenView (the server keeps only data). Starts when first required (IncubatorClient, FieldClient, HintSources).
 --   * owned plots: GardenRemotes.Plot (GardenPlotFeed), one state per player; RequestPlots on start;
 --   * free slots 1..GardenConfig.ShownFreeSlots nobody holds: an empty "Free plot";
 --   * Studio test hook: Workspace attribute GardenViewFake = N fills slots 1..N nobody holds with synthetic full plots, and
@@ -8,8 +7,8 @@
 --     ROADMAP E1a1 check 5).
 -- Detail by horizontal distance from the character to the plot centre: full ≤ 60 studs, mid ≤ 120 (pets as blocks), low ≤ 300,
 -- nothing beyond (10 studs of hysteresis). Builds run on Heartbeat within BUDGET seconds per frame, the own plot first, then the
--- nearest. The own plot's pads, incubators and field squares carry prompts that call the handlers registered with OnPen /
--- OnIncubator / OnSquare.
+-- nearest. The own plot's incubators and field squares carry prompts that call the handlers registered with OnIncubator /
+-- OnSquare.
 -- In Studio the folder carries the attributes Instances and Pending (tests).
 
 local Players = game:GetService("Players")
@@ -41,16 +40,11 @@ local views = {} -- [slot] = PlotView
 local received = {} -- [userId] = state from the server
 local real = {} -- [userId] = that state with `names` = the owner's pet names (P3b, PetConfig.NamesAttribute)
 local order = {} -- slots in build order (own first, then by distance)
-local handlers = { pen = nil, incubator = nil, square = nil, levelUp = nil }
+local handlers = { incubator = nil, square = nil }
 
 local GardenView = {}
 
 GardenView.Folder = folder
-
--- fn(pen, pad) when a pen prompt of the own plot is triggered.
-function GardenView.OnPen(fn: (number, BasePart) -> ())
-	handlers.pen = fn
-end
 
 -- fn(incubator, base) when an incubator prompt of the own plot is triggered.
 function GardenView.OnIncubator(fn: (number, BasePart) -> ())
@@ -63,23 +57,18 @@ function GardenView.OnSquare(fn: (number, string, BasePart) -> ())
 	handlers.square = fn
 end
 
--- fn(model, kind, level) when a penned pet levelled up and its new model is drawn (any plot in full detail).
-function GardenView.OnPenLevelUp(fn: (Model, string, number) -> ())
-	handlers.levelUp = fn
-end
-
 local function ownSlot(): number?
 	return player:GetAttribute(GardenConfig.PlotAttribute)
 end
 
--- The state of the own plot as last received ({ pens, eggs, penCount, incCount, ... }), or nil.
+-- The state of the own plot as last received ({ eggs, incCount, field, ... }), or nil.
 function GardenView.OwnState()
 	local slot = ownSlot()
 	local view = slot and views[slot]
 	return if view and view.state and not view.state.free then view.state else nil
 end
 
--- The drawn piece of the own plot: "pen<n>" / "inc<n>" (a Model with Pad / Base, Pet / Egg), or nil while not drawn.
+-- The drawn piece of the own plot: "inc<n>" (a Model with Base, Egg), or nil while not drawn.
 function GardenView.OwnPiece(key: string): Model?
 	local slot = ownSlot()
 	local view = slot and views[slot]
@@ -93,21 +82,6 @@ function GardenView.ShowReach(squares: { number }?)
 	if view then
 		view:ShowReach(squares)
 	end
-end
-
--- Every drawn pen pet model (full detail) of every plot.
-function GardenView.PenPets(): { Model }
-	local list = {}
-	for _, view in views do
-		for n = 1, GardenConfig.MaxPens do
-			local piece = view:Piece("pen" .. n)
-			local pet = piece and piece:FindFirstChild("Pet")
-			if pet and pet:IsA("Model") then
-				table.insert(list, pet)
-			end
-		end
-	end
-	return list
 end
 
 -- Data ---------------------------------------------------------------------------------------------------------------------
@@ -145,20 +119,12 @@ local function syntheticField(slot: number, squares: number)
 end
 
 local function syntheticPlot(slot: number)
-	local pens = {}
-	for n = 1, GardenConfig.MaxPens do
-		local kind = KINDS[(slot + n) % #KINDS + 1]
-		local level = 1 + math.floor(noise(slot, n + 50) * 20)
-		pens[n] = if noise(slot, n + 20) < 0.85 then string.format("%s:%d:f%d_%d", kind, level, slot, n) else ""
-	end
 	local eggs = {}
 	local now = math.floor(workspace:GetServerTimeNow())
 	for n = 1, GardenConfig.MaxIncubators do
 		eggs[n] = string.format("%s:%d", if n == 3 then "Golden" else "Basic", now + 60 * slot + 20 * n)
 	end
-	-- with a stand-in field (GardenViewField) the plot is drawn as converted: field pets, no pens (E1b)
-	local converted = (tonumber(workspace:GetAttribute("GardenViewField")) or 0) > 0
-	return { name = "#" .. slot, penCount = 6, pens = pens, incCount = 3, eggs = eggs, converted = converted }
+	return { name = "#" .. slot, incCount = 3, eggs = eggs }
 end
 
 local FREE = table.freeze({ free = true })
@@ -210,11 +176,6 @@ local function refresh()
 			if not view then
 				view = PlotView.new(slot, folder, {
 					own = slot == own,
-					onPen = function(pen, pad)
-						if handlers.pen then
-							handlers.pen(pen, pad)
-						end
-					end,
 					onIncubator = function(n, base)
 						if handlers.incubator then
 							handlers.incubator(n, base)
@@ -223,11 +184,6 @@ local function refresh()
 					onSquare = function(square, action, soil)
 						if handlers.square then
 							handlers.square(square, action, soil)
-						end
-					end,
-					onLevelUp = function(model, kind, level)
-						if handlers.levelUp then
-							handlers.levelUp(model, kind, level)
 						end
 					end,
 				})
