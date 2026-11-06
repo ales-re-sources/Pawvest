@@ -134,9 +134,6 @@ pet.rarity.Epic,"Rarity of a pet, after its name (""Rare · +7%""); Czech mascul
 pet.rarity.Legendary,"Rarity of a pet, after its name (""Rare · +7%""); Czech masculine (mazlíček)",Legendary,Legendární,ok,h6dfca44d
 pet.nameLevel,"A pet with its level, e.g. ""Cat Lv 12"" (lists, slots, labels over pets). Czech keeps ""Lv"": ""úroveň"" is the stage name",{kind} Lv {level},{kind} Lv {level},ok,h26ab2b28
 pet.xp,Pet experience towards the next level,{xp}/{next} XP,{xp}/{next} XP,ok,h1984ac76
-pet.xpTrait,"Pet row, second line: the trait food and stage runs train now; {trait} = trait name (pet.apt.*), {xp}/{next} = its XP",{trait} {xp}/{next} XP,{trait} {xp}/{next} XP,new,hd0c61ce3
-pet.maxLevel,Instead of the XP line when the pet is at the top level (10) and nothing is left to train,max level,max. Lv,ok,h04ed8881
-pet.careDone,"Pet row, instead of the XP line: food and stage runs can no longer train the pet (its traits are at their limits; field work still can)",grows by working now,teď roste jen prací,new,h8e64e9c9
 pet.levelUp,Floating text over a pet that just levelled up,Level {level}!,Lv {level}!,ok,h46b2b999
 food.name.Berry,Pet food at the food stand in the garden (cheap / medium / big),Berry,Bobule,ok,hba69c030
 food.name.Cake,Pet food at the food stand in the garden (cheap / medium / big),Cake,Dort,ok,h0de9cd25
@@ -179,13 +176,28 @@ pets.title,Panel title,🐶 Pets,🐶 Mazlíčci,new,h92496bfc
 pets.garden,Button: teleports the player in front of their garden plot,🌱 Go to my garden,🌱 Do mé zahrádky,new,h3e5af0fb
 pets.empty,Shown instead of the list while the player has no pet,No pets yet. Hatch one in an incubator in the pet garden!,Zatím nemáš žádného mazlíčka. Vylíhni si ho v inkubátoru v zahradě mazlíčků!,new,h2f4ed2fb
 pets.slotsTitle,"Heading above the three equip slots at the bottom (""equip"" = take a pet with you; it follows you and raises Coin rewards)",Equipped pets,Nasazení mazlíčci,new,h502b0f88
+pets.summaryCute[one],"Line under the Pets panel title (U1); {bonus} = total Coin bonus ('+12%'), {count} = equipped pets with Cuteness (only they raise the Coins). Form for 1",Coin bonus <font color='#78e678'>{bonus}</font>  ·  {count} cute pet with you,Bonus mincí <font color='#78e678'>{bonus}</font>  ·  {count} roztomilý mazlíček s tebou,new,hced7925b
+pets.summaryCute[few],Form for 2-4 (Czech only),,Bonus mincí <font color='#78e678'>{bonus}</font>  ·  {count} roztomilí mazlíčci s tebou,new,hced7925b
+pets.summaryCute[other],Form for 0 and 5+,Coin bonus <font color='#78e678'>{bonus}</font>  ·  {count} cute pets with you,Bonus mincí <font color='#78e678'>{bonus}</font>  ·  {count} roztomilých mazlíčků s tebou,new,hced7925b
+pets.details,Button on a Pets panel row: opens the pet's page (U1). Short: a 84 px brick,Details ›,Detail ›,new,h267d7ee1
+pets.trained,Tag in a pet row after the trait chips: treats and stage runs can no longer train the pet (U1). Short,✔ Trained,✔ Vytrénovaný,new,hf0b4053c
+pets.filter.all,Filter button over the pet list: every pet; {count}/{max} = pets owned / the most a player can own (50). Short: a ~100 px brick,All {count}/{max},Vše {count}/{max},new,h2b4100af
+pets.filter.withMe,Filter button over the pet list: the pets that follow the player (equipped). Short: a ~100 px brick,With me,Se mnou,new,h62cf4d5d
+pets.filter.field,Filter button over the pet list: the pets working on the crop field. Short: a ~100 px brick,On the field,Na poli,new,hbf957d93
+pets.filter.best,"Filter button over the pet list: opens a list of traits (Coins, Tending, Pest control, Scouting) to show the pets best at one. Short: a ~100 px brick",Best for ▼,Nejlepší na ▼,new,h04da7468
+pets.filter.bestTrait,"The same filter button once a trait is picked; {icon} = trait emoji, {trait} = pets.filter.coins or the trait name (pet.apt.*). Short",{icon} {trait} ▼,{icon} {trait} ▼,new,hb3fdb462
+pets.filter.coins,"In the ""Best for"" list: Cuteness, named by what it does (raises the Coins)",Coins,Mince,new,hcff467b1
+pets.filter.none,Shown instead of the pet list when the chosen filter matches no pet,No pet here yet.,Tady zatím žádný mazlíček není.,new,h8a134888
+petRow.chip.head,"Tooltip of a trait chip in a pet row (hover / hold), first line; {icon} = trait emoji, {trait} = trait name (pet.apt.*), {level} = its level, {cap} = the rarity's highest level. Czech keeps ""Lv""",<b>{icon} {trait} · Lv {level} / {cap}</b>,<b>{icon} {trait} · Lv {level} / {cap}</b>,new,h732a5920
+petRow.chip.care,"Tooltip of a trait chip, last line (yellow): food and stage runs with the player train this trait now (the ▲ on the chip)",▲ Treats and adventures train this now,▲ Jídlo a dobrodružství teď trénují tohle,new,h296d5c6c
+petDetail.more,"Pet detail page: small grey heading at the bottom, over the Sell button (U1)",More,Další,new,hf2ad7075
 pets.freeEggs[one],Info line while free eggs wait for an empty garden incubator; {count} = eggs. Form for 1,🎁 {count} free egg waiting for an empty incubator,🎁 {count} vejce zdarma čeká na volný inkubátor,new,h92639edf
 pets.freeEggs[few],Form for 2-4 (Czech only),,🎁 {count} vejce zdarma čekají na volný inkubátor,new,h92639edf
 pets.freeEggs[other],Form for 0 and 5+,🎁 {count} free eggs waiting for an empty incubator,🎁 {count} vajec zdarma čeká na volný inkubátor,new,h92639edf
-pets.hint,Info line by default,Click a pet to equip it: equipped pets raise every Coin reward,Kliknutím mazlíčka nasadíš: nasazení mazlíčci zvyšují každou odměnu v mincích,new,h9553538d
+pets.hint,Info line by default,Equip a pet to take it along: cute pets raise Coin rewards,Nasaď mazlíčka a vezmi ho s sebou: roztomilí zvyšují odměny,new,h62e01c59
 pets.slot.pet,"Tooltip of a slot holding a pet; {name} = coloured ""Cat Lv 3"", {bonus} = ""+4.5%""",{name} · {bonus} Coins\nClick to unequip,{name} · {bonus} mincí\nKliknutím ho sundáš,new,h2f9c6240
 pets.slot.petNoBonus,"Tooltip of a slot holding a pet without Cuteness (no Coin bonus, P4); {name} = coloured ""Cat Lv 3""",{name}\nClick to unequip,{name}\nKliknutím ho sundáš,new,hbfb90d59
-pets.slot.free,Tooltip of an owned empty slot,Free slot\nClick a pet above to equip it,Volný slot\nKlikni nahoře na mazlíčka a nasaď ho,new,h4bb7054f
+pets.slot.free,Tooltip of an owned empty slot,Free slot\nTap Equip on a pet above,Volný slot\nKlepni nahoře u mazlíčka na Nasadit,new,he763c502
 pets.slot.price[one],"Tooltip of a slot not bought yet: first line; {slot} = 2 or 3, {count} = price in Coins. Form for 1",Slot {slot} · {count} Coin,Slot {slot} · {count} mince,new,h2f471277
 pets.slot.price[few],Form for 2-4 (Czech only),,Slot {slot} · {count} mince,new,h2f471277
 pets.slot.price[other],Form for 0 and 5+,Slot {slot} · {count} Coins,Slot {slot} · {count} mincí,new,h2f471277
@@ -197,13 +209,9 @@ common.needMoreCoins[other],Form for 0 and 5+,<font color='#f06a5a'>{count} more
 pets.slot.empty,Text on an owned slot without a pet (short: a square button),Empty,Prázdný,new,hc1e47bd8
 pets.slot.sure,The next slot after the first click: click again to buy (short),Sure?,Opravdu?,new,h993adf4d
 pets.slot.buy,"The next slot to buy (short, under a lock icon)",🔒\nBuy,🔒\nKoupit,new,ha1832e3e
-pets.slot.equipHint,Message after clicking an empty slot,Click a pet above to equip it,Klikni nahoře na mazlíčka a nasaď ho,new,h79990b38
-pets.sell,Button on a pet row; {price} = Coins it sells for,Sell {price},Prodat {price},new,hd59c366f
-pets.sellSure,The same button after the first click (click again to sell),Sure? +{price},Opravdu? +{price},new,hd972c14b
-pets.tag.pen,Tag on a pet row: the pet is in garden pen {pen},In pen {pen},V ohradě {pen},new,h86bfbe40
-pets.tag.equipped,Tag on a pet row: the pet is equipped,✔ Equipped,✔ Nasazen,new,h54da571e
-pets.detail,"Second line of a pet row for a pet with Cuteness (P4); {rarity} = rarity name, {bonus} = its Coin bonus ""+4.5%""",{rarity} · 💖 {bonus},{rarity} · 💖 {bonus},new,he4b3d1cc
-pets.summary,"Line under the title; {bonus} = total Coin bonus ('+12%'), {equipped}/{slots} equipped, {pets}/{max} owned",Coin bonus <font color='#78e678'>{bonus}</font>  ·  Equipped {equipped}/{slots}  ·  Pets {pets}/{max},Bonus mincí <font color='#78e678'>{bonus}</font>  ·  Nasazeno {equipped}/{slots}  ·  Mazlíčci {pets}/{max},new,h1d121492
+pets.slot.equipHint,Message after clicking an empty slot,Tap Equip on a pet above,Klepni nahoře u mazlíčka na Nasadit,new,h7c3da708
+pets.sell,"Small grey button at the bottom of the pet page, under ""More"" (U1); {price} = Coins it sells for",Sell {price},Prodat {price},new,hd59c366f
+pets.sellSure,"The same button after the first tap, orange (tap again within 3 s to sell)",Sure? +{price},Opravdu? +{price},new,hd972c14b
 pets.sold[one],Message after a sale; {count} = Coins received. Form for 1,Sold for {count} Coin,Prodáno za {count} minci,new,hf1bfe328
 pets.sold[few],Form for 2-4 (Czech only),,Prodáno za {count} mince,new,hf1bfe328
 pets.sold[other],Form for 0 and 5+,Sold for {count} Coins,Prodáno za {count} mincí,new,hf1bfe328
@@ -287,12 +295,6 @@ incubator.reject.notready,Refused: the egg needs more time,Not ready yet,Ještě
 food.title,Food stand panel title,🍓 Pet food,🍓 Krmení pro mazlíčky,ok,h10d5bce0
 food.status,Default status line of the food stand (P4: food trains Cuteness first),Feed a pet to train it: treats train Cuteness first. Only the fed pet gets the XP.,"Nakrm mazlíčka a vytrénuj ho: jídlo trénuje hlavně Roztomilost. XP dostane jen ten, koho nakrmíš.",new,h667b25f1
 food.empty,Shown instead of the list while the player has no pet,You have no pets yet. Hatch one in your incubator.,Zatím nemáš žádného mazlíčka. Vylíhni si ho v inkubátoru.,ok,h4301e9df
-food.where.equipped,Pet row: where the pet is now (lower case),equipped,nasazený,new,h10431f5d
-food.where.pen,Pet row: the pet is in pen {pen},in pen {pen},v ohradě {pen},new,h848096e3
-food.where.resting,Pet row: the pet is neither equipped nor penned,resting,odpočívá,ok,hd8509054
-food.detail,"Pet row details; {trait} = the trait food trains now (pet.apt.*), {xp}/{next} = its XP, {where} = food.where.*, {toMax} = XP the pet can still use in total",{trait} {xp}/{next} XP\n{where} · {toMax} XP more,{trait} {xp}/{next} XP\n{where} · ještě {toMax} XP,new,h5dd379a3
-food.detail.max,Pet row details of a pet at the top level (10) with nothing left to train; {where} = food.where.*,Max level\n{where},Max. Lv\n{where},new,h8e7e437a
-food.detail.done,Pet row details: food can no longer train the pet (its traits are at their limits); {where} = food.where.*,Grows by working now\n{where},Teď roste jen prací\n{where},new,h252366c1
 food.maxTag,Shown instead of the food buttons for a pet at the top level (10),★ Max level,★ Max. Lv,new,h5a7b36ca
 food.doneTag,Shown instead of the food buttons for a pet food can no longer train (below the top level),✔ Trained,✔ Vytrénovaný,new,hf0b4053c
 food.button[one],"Food button: XP it gives over its price; {icon} = food emoji, {xp} = XP, {count} = price. Form for 1",{icon} +{xp} XP\n<font size='12'>{count} Coin</font>,{icon} +{xp} XP\n<font size='12'>{count} mince</font>,new,hdfb0e729
@@ -475,10 +477,8 @@ field.reason.aptitude,Refused: the pet has neither the Tending nor the Pest-cont
 field.reason.slots,Refused: every field pet slot is used,All field pet slots are in use,Všechna místa pro mazlíčky jsou obsazená,new,hd52f20d6
 field.reason.slotsMaxed,Refused: every field pet slot is already bought,You have every field pet slot already,Už máš všechna místa pro mazlíčky,new,h34ec9412
 pets.reject.field,Refused in the Pets panel: the pet works on a field square,Works on the field: lift it in the field panel first,Pracuje na poli: nejdřív ho odeber v panelu pole,new,he50063c4
-pets.tag.field,Tag on a pet row: the pet works field square {n},Square {n},Políčko {n},new,ha8b1cc41
 pets.tending,"Pet row and field pet labels, after "" · "": the pet's Tending level",Tending {level},Péče {level},new,h1a2f6b4a
 pets.guard,"Pet row and field pet labels, after "" · "": the pet's Pest-control level",Pest control {level},Hlídání {level},new,h47c8fa98
-food.where.field,Pet row in the food shop: the pet works field square {n},on square {n},na políčku {n},new,hb6133e19
 petDetail.where.equipped,"Pet detail page, header: the pet is equipped (follows the player)",✔ With you,✔ Je s tebou,new,hc67d5235
 petDetail.where.field,"Pet detail page, header: the pet works field square {n}",🌱 Works square {n},🌱 Pracuje na políčku {n},new,h350939bd
 petDetail.where.pen,"Pet detail page, header: the pet is in garden pen {pen}",In pen {pen},V ohradě {pen},new,h86bfbe40
@@ -486,7 +486,7 @@ petDetail.where.resting,"Pet detail page, header: the pet is neither equipped no
 petDetail.level,"Pet detail page, growth card heading; {level} = pet level (its best trait, P4), {max} = 10",Level {level} / {max},Úroveň {level} / {max},new,h62faaccb
 petDetail.levelNote,"Pet detail page, text on the level bar: a pet's level is the level of its best trait (P4)",Its level is its best trait's,Jeho úroveň je úroveň nejlepší vlastnosti,new,hed0bb863
 petDetail.care,"Pet detail page, under the level bar: what food and stage runs with you train now; {trait} = trait name (pet.apt.*, nominative)",🏃🍓 Adventures with you and treats train: {trait},🏃🍓 Dobrodružství s tebou a jídlo trénují: {trait},new,hc19d84e4
-petDetail.careDone,"Pet detail page, under the level bar: food and stage runs can no longer train the pet (its traits are at their limits)",Treats can't teach it more: it grows by working,Jídlo ho už nic nenaučí: roste prací,new,h61c8cc71
+petDetail.careDone,"Pet detail page, under the level bar: food and stage runs can no longer train the pet (its traits are at their limits)","✔ Trained: treats can't teach it more, it grows by working","✔ Vytrénovaný: jídlo ho už nic nenaučí, roste prací",new,h3caf463a
 petDetail.levelMax,Pet detail page: text on the full level bar at level 10,Top level!,Nejvyšší úroveň!,new,h4e2f641e
 petDetail.nextLook,"Pet detail page: the pet's next look; {stars} = ★★, {level} = the level it comes at",Next look {stars} at level {level},Nový vzhled {stars} na úrovni {level},new,h36c8f257
 petDetail.allLooks,Pet detail page: the pet has every look (level 10),Every look unlocked,Má všechny vzhledy,new,h2b3645ee
@@ -502,7 +502,6 @@ pet.critter.Raccoons,"Critter name, plural, lower case (a speciality; raccoons d
 petDetail.aptLevel,"Pet detail page, aptitude card heading; {name} = aptitude name, {level} = its level, {cap} = the rarity's highest level",{name} {level} / {cap},{name} {level} / {cap},new,h5c6f690b
 petDetail.aptDesc.Tending,"Pet detail page, Tending card: what the job does",Harvests ripe crops and replants them while you are away,"Když jsi pryč, sklízí zralou úrodu a znovu sází",ok,hb33ace15
 petDetail.aptDesc.Cuteness,"Pet detail page, Cuteness card: what the trait does (the Coin bonus while the pet follows the player)",So cute that everyone pays you more while it is with you,"Je tak roztomilý, že ti všichni víc zaplatí, když je s tebou",new,hb3cf6648
-petDetail.aptDesc.later,"Pet detail page, card of a garden job for a player who cannot use it yet (Tending, Pest control, Scouting before the crop field opens)",A garden job for later,"Práce na zahradě, na později",new,he48f75f9
 petDetail.aptDesc.Scouting,"Pet detail page, Scouting card: what the job does","While it follows you, it fills the stages' rare-seed meters faster","Když tě doprovází, plní ukazatele vzácných semínek v úrovních rychleji",new,he63c4715
 petDetail.aptDesc.PestControl,"Pet detail page, Pest-control card: what the job does","While you are away, it chases crows off the ripe crops in its reach","Když jsi pryč, odhání vrány od zralé úrody ve svém dosahu",new,h1a6a0b71
 petDetail.guardEffect,"Pet detail page, Pest-control card, text on the effect bar; {pct} = chance in whole percent (60-100) that the pet chases off crows coming for a crop in its reach",Chases crows off: {pct}%,Odežene vrány: {pct} %,new,had949599
@@ -529,8 +528,8 @@ petDetail.reachNext[one],"Pet detail page, after the reach and "" · "": the nex
 petDetail.reachNext[few],Form for 2-4 (Czech only),,od úrovně {level}: {count} políčka,new,h2c9a236b
 petDetail.reachNext[other],Form for 0 and 5+,{count} squares from level {level},od úrovně {level}: {count} políček,new,h2c9a236b
 petDetail.noJob,"Pet detail page, instead of the aptitude cards: the pet has no field job",No field job: only pets with Tending work the field,Žádná práce na poli: na poli pracují jen mazlíčci s Péčí,new,h8ce4d538
-petDetail.equip,"Pet detail page button: take the pet with you (it follows you, raises Coin rewards)",Equip,Nasadit,new,h98ab728c
-petDetail.unequip,Pet detail page button: stop taking the pet with you,Unequip,Sundat,new,h57c39dc9
+petDetail.equip,"Button on a Pets panel row and on the pet page: take the pet with you (it follows you, raises Coin rewards). Short: a 84 px brick",Equip,Nasadit,new,h98ab728c
+petDetail.unequip,Button on a Pets panel row and on the pet page: stop taking the pet with you. Short: a 84 px brick,Unequip,Sundat,new,h57c39dc9
 pet.nameLevel.named,"A named pet with its level, e.g. ""Mochi Lv 12"" (lists, slots, labels over pets); {name} = the name the player gave it (never translated). Czech keeps ""Lv"" like pet.nameLevel",{name} Lv {level},{name} Lv {level},new,h12a796fd
 petDetail.name.placeholder,Pet detail page: grey hint in the empty name box,Name your pet,Pojmenuj mazlíčka,new,h97a4d2d5
 petDetail.name.save,"Pet detail page: name button when there is nothing new to save (greyed; short, ~10 characters)",Save,Uložit,new,hedb4f825

@@ -90,36 +90,13 @@ plaza.
 - In the hub, a signpost at the bridge already points to the garden; G1's markers can point at the own plot when something is ready.
 
 ## 9. Pets panel and pet page
-*Builds on P4 (pet traits, built 2026-11-05, GDD §7.3–7.4): no single pet XP any more; every trait has its own level 1–10, the pet's level =
-its highest working trait, food and obby XP go to Cuteness (or, without it / at its cap, the lowest working trait below 5). P4 already
-built: a trait card per working trait on the pet page (for every player; work traits are "for later" without the field), the row's text
-line "Cuteness XP 23 / 147", no bonus line for a pet without Cuteness, the food stand per trait (§9.1), the traits in the hatch reveal.*
-
-**Row** (left → right): portrait with a **level badge** (`6` = the pet level) and status corner icon (✓ with you, 🌾 on the field, 🏠 pen) ·
-name in the rarity colour · **trait chips**, one per working trait: icon + level in the trait's colour (💗 Cuteness, 🌱 Tending, 🛡 Pest
-control, 🔭 Scouting) with a thin **progress fill** along the chip's bottom edge (XP / time to the next level on hover / hold, as on the pet
-page; work-trait chips greyed for players without the field, as the pet page's "for later") · **Equip toggle** brick · **Details ›** brick.
-- No separate XP bar: with P4 the pet level only moves when its highest trait does, so one bar would sit still while food raises another trait.
-- The chip that food and obby XP train now gets a small ▲ marker; a pet with nothing left to train shows P4's "✔ Trained" tag instead (food refused).
-- The summary line names where the Coin bonus comes from: "Coin bonus +12 % · 2 cute pets with you"; a non-cute pet in a slot adds nothing
-  (Scouting may still be why it is there).
-- Tapping the row no longer equips (kids toggled pets by accident while scrolling); Equip is its own brick (decided 2026-11-05).
-- **Sell leaves the row**: only on the pet page, at the bottom, a small grey brick with the two-tap confirm.
-- **Width** 340 → 460, capped to the screen (viewport width − 2 × 16 − the icon column), and still scaled by `PanelFit` on short screens.
-- **Filter chips** over the list: All · With me · On the field · Best for… (Coins = Cuteness / Tending / Pest control / Scouting); 50 pets do
-  not fit one scroll.
-- Pet page: Sell moves down under "More"; adds "Show on field" / "Place on field" (§5); P4's trait cards stay, the trained one marked as in
-  the row.
+**Built in U1 (2026-11-06)**: as built in GDD §7.5 (rows, filters, summary) and §7.8 (pet page); the design history is in
+`git show a514b94:docs/UI_GARDEN_PETS.md`. Left for U3: "Show on field" / "Place on field" on the pet page (§5).
 
 ### 9.1 Food stand (plaza)
-The kiosk itself stays (four-sided, readable from every plot, built 2026-11-05). **Built in P4:** each row names the trait food trains now
-and its XP, the food tooltip previews the result ("Owl Lv 6 · Cuteness → Lv 8", XP wasted), a pet with nothing to train shows "✔ Trained"
-instead of the food buttons. **Left for U1:**
-- The same row as the Pets panel (portrait, level badge, trait chips with fills); the **chip the food will train is highlighted** instead of
-  the text line.
-- Order: pets with you first, then the rest that can still grow; "Trained" pets at the bottom, greyed.
-- The seed stall (§6) stands beside the food stand (decided 2026-11-05) as its own stall, not part of the kiosk; Studio check: the food
-  stand's counters stay reachable and readable from the plots on that side.
+**Built in U1**: the Pets panel's row with the trained chip outlined, pets with you first, trained ones greyed at the bottom (GDD §7.6).
+Left for U4: the seed stall (§6) stands beside the food stand (decided 2026-11-05) as its own stall, not part of the kiosk; Studio check: the
+food stand's counters stay reachable and readable from the plots on that side.
 
 ## 10. Other improvements
 - **Feedback for every action:** a pop where it happened (crop to the barn, Coins to the counter, XP to the pet), not only a toast.
@@ -134,7 +111,7 @@ instead of the food buttons. **Left for U1:**
 ## 11. Milestones (each ships alone; scope with acceptance checks when it starts)
 | Id | Content | Depends on |
 |---|---|---|
-| U1 | Pets panel, pet page and the food stand panel (§9, §9.1) | P4 (built; its open pseudo-language / multi-client checks can run with U1's, same files) |
+| U1 | Pets panel, pet page and the food stand panel (§9, §9.1): **built 2026-11-06** | P4 |
 | U2 | Garden HUD button + badge, summary bubble over the own sign (§3 Far, §8) | – |
 | U3 | Field interaction: rings, tap-select, square card, hand bar, pet reach borders, prompts removed (§3 Near, §4, §5) | field access |
 | U4 | Panel split: Skills → Garden tab, Barn panel, Seed stall; Garden panel removed (§6) | U3 |

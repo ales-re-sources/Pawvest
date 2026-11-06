@@ -1,23 +1,24 @@
 -- PetDetail (P3a, docs/ROADMAP.md → P3): the detail page of one pet, drawn over the Pets panel (PetsPanel mounts it and opens it
--- from the "i" badge on a row's portrait; a tap on the row itself still equips). Display only, like the Pets panel: the numbers come
--- from PetClient.State (PetsChanged) and PetConfig, every action is a request the server validates (PetService).
+-- from a row's Details › brick, U1). Display only, like the Pets panel: the numbers come from PetClient.State (PetsChanged) and
+-- PetConfig, every action is a request the server validates (PetService).
 --   Mount(panel, color, onClose)  builds the page as a child of `panel` (covers it, same size and UIScale) and returns
 --                                 { Open(uid), Close(), IsOpen() }; onClose() closes the whole Pets panel (the X)
 -- Sections: header (turning portrait, kind, rarity + tier stars, where the pet is), growth (P4: the level = the best working trait,
--- which trait food and obby XP train now, the next look), one card per working trait (PetConfig.Shown, for every player since P4;
--- Cuteness: the Coin bonus and its XP; the work traits for players without the field: "for later" and their care XP up to the care
--- cap; with the field: level / rarity cap, effect bar, field hours to the next level, reach; E2c Scouting: meter bonus, medal finishes to the next level, the equipped scouts' total; E4b Pest control: the chance to chase
--- crows off, the speciality, the squares it guards), actions (Equip / Unequip, Sell with a second tap). Under the header the name row
+-- which trait food and obby XP train now or "✔ Trained", the next look), one card per working trait (PetConfig.Shown; the one food
+-- and obby XP train now marked ▲ like the row's chip, U1; title in the trait's colour (PetRow.Traits); Cuteness: the Coin bonus and its
+-- XP; the work traits: level / rarity cap, effect bar, field hours to the next level, reach; E2c Scouting: meter bonus, medal finishes
+-- to the next level, the equipped scouts' total; E4b Pest control: the chance to chase crows off, the speciality, the squares it
+-- guards), Equip / Unequip, and at the bottom under "More" a small grey Sell brick (U1: two taps, orange "Sure? +N"). Every player has
+-- the crop field (the user, 2026-11-06): no "for later" cards any more. Under the header the name row
 -- (P3b): a text box and a button that names (free the first time), renames (PetConfig.RenamePrice) or removes the name; the server
 -- cleans, filters and prices it (PetRemotes.Rename), the page shows only the filtered name it sends back. The page re-renders on
 -- PetsChanged and Locale.Changed and closes itself when the pet is gone (sold).
--- Feed card (E1a3, players with the field, under Growth while they hold crops and the pet is below the max level): one row per held
+-- Feed card (E1a3, under Growth while they hold crops and the pet is below the max level): one row per held
 -- crop with its XP, Feed (one) and All (as many as the pet can take); GardenRemotes.FeedCrop, the server clamps and answers on
 -- GardenRemotes.Result ("FeedCrop"). The held crops come from GardenRemotes.State.field.items.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
 
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local PetLook = require(ReplicatedStorage:WaitForChild("PetLook"))
@@ -27,15 +28,18 @@ local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
+local PetRow = require(script.Parent:WaitForChild("PetRow"))
+local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
 
 local remotes = PetClient.Remotes
-local fieldAccess = GardenConfig.HasFieldAccess(Players.LocalPlayer.UserId)
 
 local PORTRAIT = 104
 local BAR_HEIGHT = 16
 local SPIN_SPEED = 0.6 -- radians per second
 local CONFIRM_SECONDS = 3
 local PAGE_Z = 20 -- the page's ZIndex; its contents are lifted by as much
+-- a tap target stays at least 36 px on screen when the Pets panel is scaled down (PanelFit; 44 at scale 1)
+local BRICK = math.max(44, math.ceil(36 / PanelFit.Scale()))
 
 local COLOR_INFO = Color3.fromRGB(190, 190, 190)
 local COLOR_DIM = Color3.fromRGB(150, 150, 150)
@@ -46,8 +50,10 @@ local COLOR_XP = Color3.fromRGB(120, 200, 255)
 local COLOR_APT = Color3.fromRGB(140, 220, 120)
 local COLOR_EQUIP = StudStyle.Colors.Yellow
 local COLOR_LOCKED = StudStyle.Colors.Grey
-local COLOR_SELL = StudStyle.Colors.Red
+local COLOR_SELL = StudStyle.Colors.Red -- the X
 local COLOR_SELL_IDLE = StudStyle.Colors.Wood
+local COLOR_SELL_ARMED = Color3.fromRGB(240, 140, 40) -- the one confirm pattern (UI_GARDEN_PETS §10): orange on the first tap
+local COLOR_CARE = Color3.fromRGB(255, 205, 60) -- ▲, as on the row's chip
 
 local REJECT_KEYS = {
 	coins = "common.reject.coins",
@@ -219,7 +225,7 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		Visible = false,
 	}, { titleLabel, backButton, closeButton, content })
 	StudStyle.Panel(page, color)
-	-- PetsGui uses Global ZIndex (a ScreenGui made in code): everything on the page is lifted above the list under it
+	-- everything on the page is lifted above the list under it (needed while PetsGui used Global ZIndex; harmless with Sibling)
 	local function lift(instance: Instance)
 		if instance:IsA("GuiObject") then
 			instance.ZIndex += PAGE_Z
@@ -300,24 +306,31 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 	local nameNoteToken = 0 -- while a result note shows (non-zero), the hint waits until it lapses
 
 	local equipButton = button("Equip", {
-		Size = UDim2.new(0.5, -4, 0, 36),
-		TextSize = 15,
-	}, 3)
-	local sellButton = button("Sell", {
-		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, 0, 0, 0),
-		Size = UDim2.new(0.5, -4, 0, 36),
-		TextSize = 15,
-	}, 3)
+		Size = UDim2.new(1, 0, 0, BRICK),
+		TextSize = 16,
+	}, 6)
 	local actions = create("Frame", {
 		Name = "Actions",
 		LayoutOrder = 90,
-		Size = UDim2.new(1, -2, 0, 40),
+		Size = UDim2.new(1, -2, 0, BRICK + 4),
 		BackgroundTransparency = 1,
-	}, { equipButton, sellButton })
+	}, { equipButton })
 	actions.Parent = content
 	local messageLabel = line("Message", 91, { TextSize = 14, Text = "" })
 	messageLabel.Parent = content
+	-- U1: Sell is the last thing on the page, small and grey
+	local moreLabel = line("More", 95, { TextSize = 13, TextColor3 = COLOR_DIM, Text = "" })
+	moreLabel.Parent = content
+	local sellButton = button("Sell", {
+		Size = UDim2.fromOffset(150, BRICK),
+		TextSize = 14,
+	}, 2)
+	create("Frame", {
+		Name = "SellRow",
+		LayoutOrder = 96,
+		Size = UDim2.new(1, -2, 0, BRICK + 4),
+		BackgroundTransparency = 1,
+	}, { sellButton }).Parent = content
 
 	local cards = {}
 	local heldCrops: { [string]: number } = {} -- GardenRemotes.State.field.items (E1a3)
@@ -407,6 +420,7 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 			Text = if owned.care
 				then Locale.T("petDetail.care", { trait = Locale.T("pet.apt." .. owned.care) })
 				else Locale.T("petDetail.careDone"),
+			TextColor3 = if owned.care then COLOR_INFO else COLOR_OK,
 		}).Parent = growth
 		local nextTier = nil
 		for _, level in PetConfig.Tiers do
@@ -427,17 +441,23 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		local level = PetConfig.AptitudeLevel(stored, id)
 		local cap = PetConfig.AptitudeCap(owned.kind)
 		local apt = card("Apt_" .. id, order, color)
+		local trait = PetRow.ByTrait[id]
+		local training = owned.care == id -- U1: food and obby XP train this one now (▲, as the row's chip)
 		label("Name", {
 			LayoutOrder = 1,
 			Size = UDim2.new(1, 0, 0, 22),
 			TextSize = 18,
-			TextColor3 = COLOR_APT,
+			TextColor3 = if trait then trait.color else COLOR_APT,
 			TextTruncate = Enum.TextTruncate.AtEnd,
-			Text = Locale.T("petDetail.aptLevel", { name = Locale.T("pet.apt." .. id), level = level, cap = cap }),
+			RichText = true,
+			Text = (if trait then trait.icon .. " " else "")
+				.. Locale.T("petDetail.aptLevel", { name = Locale.T("pet.apt." .. id), level = level, cap = cap })
+				.. (if training then string.format("  <font color='#%s'>▲</font>", COLOR_CARE:ToHex()) else ""),
 		}).Parent = apt
-		-- P4: every player sees the traits; the work traits do something only on the crop field (Scouting fills its seed meters)
-		local later = id ~= "Cuteness" and not fieldAccess
-		line("Desc", 2, { Text = Locale.T(if later then "petDetail.aptDesc.later" else "petDetail.aptDesc." .. id) }).Parent = apt
+		if training then
+			create("UIStroke", { ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = COLOR_CARE, Thickness = 2, Parent = apt })
+		end
+		line("Desc", 2, { Text = Locale.T("petDetail.aptDesc." .. id) }).Parent = apt
 		local limit = PetConfig.CareLimit(owned.kind, id)
 		if id == "Cuteness" then
 			local bonus = Locale.T("common.percentBonus", { pct = Locale.Decimal(PetClient.Percent(owned.bonus)) })
@@ -450,15 +470,6 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 				bar("Xp", 4, xp / need, COLOR_XP, Locale.T("pet.xp", { xp = xp, next = need })).Parent = apt
 				line("Grow", 5, { Text = Locale.T("petDetail.cuteGrow") }).Parent = apt
 			end
-			return apt
-		elseif later then
-			if level < limit then
-				local rate = PetConfig.CareSecondsPerXp
-				local need = math.ceil(PetConfig.AptitudeXpToNext(level) / rate)
-				local xp = math.floor((stored.Apt[id].XP or 0) / rate)
-				bar("Xp", 4, xp / need, COLOR_XP, Locale.T("pet.xp", { xp = xp, next = need })).Parent = apt
-			end
-			line("Grow", 5, { Text = Locale.T("petDetail.careNote", { cap = limit }) }).Parent = apt
 			return apt
 		end
 		if level < limit then
@@ -524,9 +535,6 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 	end
 
 	local function feedCard(owned)
-		if not fieldAccess then
-			return nil
-		end
 		local rows = {}
 		if owned.xpNext then -- no rows at the max level
 			for _, crop in CropConfig.Crops do
@@ -709,7 +717,7 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 				order += 1
 			end
 		end
-		if fieldAccess and owned.tending == 0 and owned.guard == 0 then
+		if owned.tending == 0 and owned.guard == 0 then
 			local none = line("NoJob", order, { TextColor3 = COLOR_DIM, Text = Locale.T("petDetail.noJob") })
 			none.Parent = content
 			table.insert(cards, none)
@@ -718,8 +726,9 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		local busy = owned.penned ~= nil or owned.field ~= nil
 		equipButton.Text = Locale.T(if owned.equipped then "petDetail.unequip" else "petDetail.equip")
 		equipButton.BackgroundColor3 = if busy then COLOR_LOCKED elseif owned.equipped then COLOR_SELL_IDLE else COLOR_EQUIP
+		moreLabel.Text = Locale.T("petDetail.more")
 		sellButton.Text = Locale.T(if sellArmed then "pets.sellSure" else "pets.sell", { price = owned.sellValue })
-		sellButton.BackgroundColor3 = if busy or owned.equipped then COLOR_LOCKED elseif sellArmed then COLOR_SELL else COLOR_SELL_IDLE
+		sellButton.BackgroundColor3 = if sellArmed then COLOR_SELL_ARMED else COLOR_LOCKED
 		updateName()
 		return true
 	end
@@ -891,7 +900,7 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		end
 	end)
 
-	if fieldAccess then
+	do
 		task.spawn(function()
 			local gardenRemotes = ReplicatedStorage:WaitForChild("GardenRemotes")
 			feedEvent = gardenRemotes:WaitForChild("FeedCrop") :: RemoteEvent

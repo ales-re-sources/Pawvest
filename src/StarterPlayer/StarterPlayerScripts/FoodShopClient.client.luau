@@ -1,9 +1,11 @@
 -- Food shop client (docs/GDD.md §7.6, P2b2): the prompt on the garden plaza's food stand opens the food panel: every owned
--- pet with its level, the trait food trains now and its XP (P4: PetConfig.CareProgress), the care XP it can still use, and one
--- feed button per food. Display only: a click just names a pet and a food; GardenFood validates the distance, the price and that
--- something can train. The GUI is built here (no Studio GUI).
--- Stud-brick look (StudStyle, red): title strip, pet rows with a PetPortrait, the foods as brick buttons that say what
--- they give and cost ("🍓 +25 XP" over "50 Coins"; a pet with nothing left to train shows a "Max level" / "Trained" tag instead).
+-- pet as the Pets panel shows it (U1: PetRow: portrait with level badge and status icon, name, trait chips with fills; the chip
+-- the food will train, PetConfig.CareTarget, is outlined) and one feed button per food. Order: pets with you, then the others
+-- that can still grow, then the ones with nothing left to train (greyed). Display only: a click just names a pet and a food;
+-- GardenFood validates the distance, the price and that something can train. The GUI is built here (no Studio GUI).
+-- Stud-brick look (StudStyle, red): title strip, pet rows, the foods as brick buttons that say what they give and cost
+-- ("🍓 +25 XP" over "50 Coins"; a pet with nothing left to train shows a "Max level" / "Trained" tag instead). On a small
+-- screen the panel is scaled down to fit (UIScale) and the food buttons grow so they stay at least 36 px tall on screen.
 -- Tooltip above a food button: food and price, what it does to that pet ("Owl Lv 6 · Cuteness → Lv 8", XP wasted) and
 -- the Coins still missing. With a mouse it shows on hover and one click feeds; after a touch the first tap selects the
 -- button (white outline + tooltip, "Tap again to feed") and a second tap on it within ARM_SECONDS feeds; a tap anywhere
@@ -20,6 +22,8 @@ local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
+local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
+local PetRow = require(script.Parent:WaitForChild("PetRow"))
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
 local feedEvent = remotes:WaitForChild("Feed") -- looked up by name, never `remotes.X`
@@ -27,11 +31,10 @@ local player = Players.LocalPlayer
 
 local WIDTH = 540
 local HEIGHT = 480
-local ROW_HEIGHT = 62
 local FOOD_BUTTON_WIDTH = 86
 local ARM_SECONDS = 3 -- touch: how long a selected food button waits for the second tap
 local TOOLTIP_ROOM = 130 -- a button closer than this to the panel's top gets its tooltip below it
-local TEXT_LEFT = 74 -- name and detail start right of the portrait
+local MARGIN = 16 -- screen margin around the panel on a small screen
 local CLOSE_DISTANCE = GardenConfig.FoodStandDistance -- walking further from the stand closes the panel (the server rejects it too)
 
 local COLOR_PANEL = StudStyle.PanelColors.FoodShop
@@ -102,17 +105,18 @@ local closeButton = button("Close", {
 	Text = "X",
 }, 1)
 local statusLabel = label("Status", {
-	Position = UDim2.new(0, 12, 0, 42),
-	Size = UDim2.new(1, -24, 0, 22),
-	TextSize = 15,
+	Position = UDim2.new(0, 12, 0, 38),
+	Size = UDim2.new(1, -24, 0, 34),
+	TextSize = 14,
 	TextColor3 = COLOR_INFO,
-	TextTruncate = Enum.TextTruncate.AtEnd,
+	TextWrapped = true, -- two lines (Czech is longer)
+	TextYAlignment = Enum.TextYAlignment.Center,
 	RichText = true,
 })
 local list = create("ScrollingFrame", {
 	Name = "Pets",
-	Position = UDim2.new(0, 8, 0, 68),
-	Size = UDim2.new(1, -16, 1, -76),
+	Position = UDim2.new(0, 8, 0, 74),
+	Size = UDim2.new(1, -16, 1, -82),
 	BackgroundTransparency = 1,
 	BorderSizePixel = 0,
 	ScrollBarThickness = 5,
@@ -123,7 +127,7 @@ local list = create("ScrollingFrame", {
 	create("UIPadding", { PaddingRight = UDim.new(0, 6), PaddingTop = UDim.new(0, 2) }),
 })
 local emptyLabel = label("Empty", {
-	Position = UDim2.new(0, 12, 0, 74),
+	Position = UDim2.new(0, 12, 0, 80),
 	Size = UDim2.new(1, -24, 0, 40),
 	Font = Enum.Font.Gotham,
 	TextSize = 15,
@@ -156,6 +160,7 @@ create("UIPadding", {
 	Parent = tooltip,
 })
 
+local fit = create("UIScale", { Scale = 1 })
 local panel = create("Frame", {
 	Name = "Panel",
 	AnchorPoint = Vector2.new(0.5, 0.5),
@@ -169,15 +174,33 @@ local panel = create("Frame", {
 	list,
 	emptyLabel,
 	tooltip,
+	fit,
 })
 StudStyle.Panel(panel, COLOR_PANEL)
+local chipTooltip = PetRow.Tooltip(panel, COLOR_PANEL)
 
 local screenGui = create("ScreenGui", {
 	Name = "FoodShopGui",
 	ResetOnSpawn = false,
 	DisplayOrder = 5,
+	ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 	AutoLocalize = false, -- translated by Locale (L2)
 }, { panel })
+
+-- U1: a phone screen (e.g. 844 x 390) is smaller than the panel: scale it to fit; the food buttons then grow so a finger still hits
+-- them (≥ 36 px on screen)
+local buttonHeight = 46
+local rowHeight = 62
+local function fitToScreen()
+	local camera = workspace.CurrentCamera
+	local viewport = camera.ViewportSize
+	local inset = math.max(game:GetService("GuiService").TopbarInset.Height, 58)
+	local scale = math.min(1, (PanelFit.ViewportHeight() - inset - MARGIN) / HEIGHT, (viewport.X - 2 * MARGIN) / WIDTH)
+	scale = math.max(scale, 0.5)
+	fit.Scale = scale
+	buttonHeight = math.min(60, math.max(46, math.ceil(36 / scale)))
+	rowHeight = math.max(62, buttonHeight + 10)
+end
 
 -- texts that do not depend on the state (set again when the language changes)
 local function staticTexts()
@@ -288,12 +311,13 @@ local function updateTooltip()
 	-- above the button; below it near the top of the list (it would cover the title and the close button), and kept
 	-- inside the panel's width
 	local b = info.button
-	local top = b.AbsolutePosition.Y - panel.AbsolutePosition.Y
+	local scale = fit.Scale -- panel pixels: the panel may be scaled down (fitToScreen)
+	local top = (b.AbsolutePosition.Y - panel.AbsolutePosition.Y) / scale
 	local half = tooltip.Size.X.Offset / 2
-	local x = math.clamp(b.AbsolutePosition.X - panel.AbsolutePosition.X + b.AbsoluteSize.X / 2, half + 4, WIDTH - half - 4)
+	local x = math.clamp((b.AbsolutePosition.X - panel.AbsolutePosition.X + b.AbsoluteSize.X / 2) / scale, half + 4, WIDTH - half - 4)
 	if top < TOOLTIP_ROOM then
 		tooltip.AnchorPoint = Vector2.new(0.5, 0)
-		tooltip.Position = UDim2.fromOffset(x, top + b.AbsoluteSize.Y + 8)
+		tooltip.Position = UDim2.fromOffset(x, top + b.AbsoluteSize.Y / scale + 8)
 	else
 		tooltip.AnchorPoint = Vector2.new(0.5, 1)
 		tooltip.Position = UDim2.fromOffset(x, top - 8)
@@ -328,83 +352,38 @@ local function lastInputWasTouch(): boolean
 	return UserInputService:GetLastInputType() == Enum.UserInputType.Touch
 end
 
-local function where(entry): string
-	if entry.equipped then
-		return Locale.T("food.where.equipped")
-	elseif entry.penned then
-		return Locale.T("food.where.pen", { pen = entry.penned })
-	elseif entry.field then
-		return Locale.T("food.where.field", { n = entry.field })
-	end
-	return Locale.T("food.where.resting")
-end
-
 local function petRow(order: number, entry)
-	local pet = PetClient.State.pets[entry.uid]
-	local toMax = GardenConfig.XpToMax(pet)
 	local maxed = entry.care == nil -- P4: nothing left that food can train
-	local detail = if not maxed
-		then Locale.T("food.detail", {
-			trait = Locale.T("pet.apt." .. entry.care),
-			xp = entry.xp,
-			next = entry.xpNext,
-			where = where(entry),
-			toMax = toMax,
-		})
-		elseif entry.level >= PetConfig.MaxLevel then Locale.T("food.detail.max", { where = where(entry) })
-		else Locale.T("food.detail.done", { where = where(entry) })
-	local textWidth = -(TEXT_LEFT + 6 + #GardenConfig.Foods * (FOOD_BUTTON_WIDTH + 4))
-	local maxTag = maxed
-		and label("MaxTag", {
+	local foodsWidth = #GardenConfig.Foods * (FOOD_BUTTON_WIDTH + 4)
+	local row = create("Frame", {
+		Name = "Pet_" .. entry.uid,
+		LayoutOrder = order,
+		Size = UDim2.new(1, 0, 0, rowHeight),
+		BackgroundColor3 = COLOR_ROW,
+		BackgroundTransparency = if maxed then 0.35 else 0,
+	}, {
+		create("UICorner", { CornerRadius = UDim.new(0, 8) }),
+	})
+	PetRow.Fill(row, entry, {
+		portrait = rowPortrait,
+		panelColor = COLOR_PANEL,
+		right = foodsWidth + 6,
+		highlight = entry.care, -- U1: the chip this food trains
+		trainedTag = false, -- the tag stands where the food buttons would
+		dim = maxed,
+		tooltip = chipTooltip,
+	})
+	if maxed then
+		label("MaxTag", {
 			AnchorPoint = Vector2.new(1, 0.5),
 			Position = UDim2.new(1, -10, 0.5, 0),
-			Size = UDim2.fromOffset(#GardenConfig.Foods * (FOOD_BUTTON_WIDTH + 4) - 4, 30),
+			Size = UDim2.fromOffset(foodsWidth - 4, 30),
 			TextSize = 16,
 			TextColor3 = Color3.fromRGB(255, 205, 60),
 			TextXAlignment = Enum.TextXAlignment.Center,
 			Text = Locale.T(if entry.level >= PetConfig.MaxLevel then "food.maxTag" else "food.doneTag"),
+			Parent = row,
 		})
-	local row = create("Frame", {
-		Name = "Pet_" .. entry.uid,
-		LayoutOrder = order,
-		Size = UDim2.new(1, 0, 0, ROW_HEIGHT),
-		BackgroundColor3 = COLOR_ROW,
-	}, {
-		create("UICorner", { CornerRadius = UDim.new(0, 8) }),
-		create("Frame", {
-			Name = "RarityBar",
-			Size = UDim2.new(0, 5, 1, -12),
-			Position = UDim2.new(0, 6, 0, 6),
-			BackgroundColor3 = entry.rarity.color,
-			BorderSizePixel = 0,
-		}, { create("UICorner", { CornerRadius = UDim.new(0, 3) }) }),
-		PetPortrait.Holder({
-			Position = UDim2.fromOffset(16, 6),
-			Size = UDim2.fromOffset(50, 50),
-			BackgroundColor3 = StudStyle.Shade(COLOR_PANEL, 0.18),
-		}, rowPortrait(entry)),
-		label("Name", {
-			Position = UDim2.new(0, TEXT_LEFT, 0, 6),
-			Size = UDim2.new(1, textWidth, 0, 22),
-			TextSize = 16,
-			TextColor3 = entry.rarity.color,
-			TextStrokeTransparency = 0.4,
-			TextTruncate = Enum.TextTruncate.AtEnd,
-			Text = Locale.PetName(entry.kind, entry.level, entry.name),
-		}),
-		label("Detail", {
-			Position = UDim2.new(0, TEXT_LEFT, 0, 29),
-			Size = UDim2.new(1, textWidth, 0, 30),
-			Font = Enum.Font.Gotham,
-			TextSize = 12,
-			TextColor3 = COLOR_INFO,
-			TextYAlignment = Enum.TextYAlignment.Top,
-			TextTruncate = Enum.TextTruncate.AtEnd,
-			Text = detail,
-		}),
-		maxTag or nil,
-	})
-	if maxed then
 		return row
 	end
 	for index, food in GardenConfig.Foods do
@@ -412,7 +391,7 @@ local function petRow(order: number, entry)
 		local feedButton = button("Feed_" .. food.id, {
 			AnchorPoint = Vector2.new(1, 0.5),
 			Position = UDim2.new(1, -6 - (#GardenConfig.Foods - index) * (FOOD_BUTTON_WIDTH + 4), 0.5, 2),
-			Size = UDim2.fromOffset(FOOD_BUTTON_WIDTH, 46),
+			Size = UDim2.fromOffset(FOOD_BUTTON_WIDTH, buttonHeight),
 			BackgroundColor3 = if PetClient.Coins >= food.price then COLOR_BUY else COLOR_LOCKED,
 			TextSize = 14,
 			RichText = true,
@@ -463,12 +442,22 @@ local function refresh()
 		tooltip.Visible = false
 		return
 	end
+	chipTooltip.Hide()
+	-- U1: pets with you first, then the others that can still grow, then the ones food can't train (each group in inventory order)
+	local inventory = PetClient.Inventory()
+	local function group(entry): number
+		return if entry.care == nil then 3 elseif entry.equipped then 1 else 2
+	end
 	local count = 0
-	for _, entry in PetClient.Inventory() do
-		count += 1
-		local row = petRow(count, entry)
-		row.Parent = list
-		table.insert(rows, row)
+	for pass = 1, 3 do
+		for _, entry in inventory do
+			if group(entry) == pass then
+				count += 1
+				local row = petRow(count, entry)
+				row.Parent = list
+				table.insert(rows, row)
+			end
+		end
 	end
 	emptyLabel.Visible = count == 0
 	-- the rows are rebuilt on every state change (Coins too): keep the selection and the tooltip on the new buttons
@@ -493,6 +482,7 @@ end
 local function openPanel(stand: BasePart)
 	openStand = stand
 	armed, hovered = nil, nil
+	fitToScreen()
 	showDefaultStatus()
 	panel.Visible = true
 	refresh()
@@ -521,6 +511,7 @@ UserInputService.InputBegan:Connect(function(input)
 end)
 -- the tooltip sits above a button inside the scrolling list: scrolling would leave it behind
 list:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+	chipTooltip.Hide()
 	hovered = nil
 	disarm()
 	tooltip.Visible = false

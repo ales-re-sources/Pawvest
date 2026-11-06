@@ -46,7 +46,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E5 | Garden MVP rest: request board, ledger on join, onboarding, garden telemetry | – | – | – |
 | M6a | Soft launch + World 1 balancing — World 1 balanced by feel (2026-10-30); live test open | – | – | – |
 | MU | Mobile UX check | – | – | – |
-| U1–U5 | Garden and pet UI redesign ([UI_GARDEN_PETS.md](UI_GARDEN_PETS.md)) — design decided 2026-11-05 | – | – | – |
+| U1 | Pets panel rows with trait chips, filters, pet page Sell under More, food stand rows | ✔ | partial (multi-client look open) | – |
+| U2–U5 | Garden and pet UI redesign, rest ([UI_GARDEN_PETS.md](UI_GARDEN_PETS.md)) — design decided 2026-11-05 | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
@@ -68,8 +69,7 @@ field access and ships after it. World 4 waits until after the MVP.
 5. **E0 in parallel:** repricing and the remaining checks (section below).
 6. **MU** before anything goes public.
 7. **U1–U5 garden and pet UI** (design decided 2026-11-05, [UI_GARDEN_PETS.md](UI_GARDEN_PETS.md) §11–12; scope each when it starts):
-   **U1** (Pets panel rows with trait chips, Equip / Details, Sell to the pet page, wider panel, filters; food stand rows) next, before M6a,
-   with P4's open pseudo-language and multi-client checks; **U2–U5** (Garden button, field rings + square card + hand bar, Skills Garden tab,
+   **U1** built and Studio-checked (2026-11-06) except the multi-client look check (F7, the user); **U2–U5** (Garden button, field rings + square card + hand bar, Skills Garden tab,
    barn, seed stall, plot layout) before E5's onboarding, which teaches the new controls, and before E1 ships.
 8. **Drops D1–D10** after the MVP (EXPANSION §14), one every 1–2 weeks: Critters, Comfort shop (M7), Weekly, Variants, Kitchen (the first
    restoration landmark), Neighbours, Mastery, World 4 (S9 / S10), the Estate, Season 1. Restoration bundles (E6, D5) and estate tiers / decor /
@@ -125,8 +125,70 @@ its traits.
 
 **Studio (2026-11-05):** 1–6 passed (6 by the look numbers and a level-up moment on a follower; pens are gone for field-access players, so
 the pen moment was not seen); 7 in Czech through the real UI (pets panel, pet page, food stand, hatch reveal: 48 of 50 px with three traits).
-8 passed after the user accepted Obby main's 79 % sink share by day 60 (bar 80 → 78 %) and the `pin`. Open: the pseudo-language pass, a multi-client look
-check, and the pet page of a player without field access ("a garden job for later", untestable as an admin).
+8 passed after the user accepted Obby main's 79 % sink share by day 60 (bar 80 → 78 %) and the `pin`. Open: a multi-client look
+check (run with U1's check 9). The pseudo-language pass was done in U1 (check 8); the no-field pet page check was dropped with the no-field
+concept (2026-11-06).
+
+### U1 — Pets panel, pet page, food stand rows (design: [UI_GARDEN_PETS.md](UI_GARDEN_PETS.md) §9, §9.1; scope 2026-11-06)
+**Goal.** A kid on a phone reads a pet's traits from icons and fills instead of text, equips without accidental taps, and does not sell by
+mistake. Client UI only: no remote, profile or config change.
+
+**Build.**
+- **Shared row** (new ModuleScript `PetRow.luau` beside PetPortrait, used by the Pets panel and the food stand): portrait with a **level
+  badge** (`PetConfig.PetLevel`) and a **status corner icon** (✓ with you, 🌾 on the field, none when resting); name in the rarity
+  colour; one **trait chip** per working trait (`PetConfig.Shown`, list order): icon + level in the trait's colour (💗 Cuteness, 🌱 Tending,
+  🛡 Pest control, 🔭 Scouting) with a thin progress fill along its bottom edge (the same share as the pet page's bar for that trait; full at
+  the cap); a ▲ on the chip `PetConfig.CareTarget` names; "✔ Trained" instead when nothing can train. Mouse hover / touch hold on a chip
+  shows the exact numbers (as the pet page: XP, field hours, medal finishes, "max").
+- **Pets panel:** row = shared row + **Equip / Unequip** brick + **Details ›** brick (opens the pet page); the rest of the row does nothing; the
+  "i" badge, the Sell brick, the rarity / bonus / XP text lines and the tag go. Summary line: "Coin bonus +12 % · 2 cute pets with you".
+  **Filter chips** over the list: All (n/50) · With me · On the field · Best for ▾ (💗 Coins, 🌱 Tending, 🛡 Pest control, 🔭 Scouting: only pets
+  with that trait, highest level first). The filter holds
+  through state changes and reopening (per session). Width 340 → 460, capped to viewport width − 2 × 16 (the icons are a row above the
+  panel, no column to keep free), divided by the PanelFit scale; compact layout on short screens as today. "Go to my garden" stays.
+  Info line / slot hints say "Equip" instead of "click a pet".
+- **Pet page:** Equip / Unequip stays at the top of the actions; **Sell** moves to the bottom under a small "More" heading: a small grey
+  brick, first tap arms it (orange, "Sure? +N"), a second tap within 3 s sells. The trait card food trains now gets the ▲ (and the trait's
+  colour on its title); a pet with nothing to train shows "✔ Trained" in the growth card.
+- **Food stand:** the shared row; the chip the food will train is **highlighted** (outline) instead of the text line; order: pets with you,
+  then the rest that can still grow, then "Trained" / "Max level" pets greyed at the bottom; food buttons, tooltips and the two-tap touch
+  feed unchanged. The panel gets a UIScale so it fits a phone screen (today 540 × 480 fixed).
+- **Every player has the field** (the user, 2026-11-06: only two players, both admins; the old no-field / pen concept is dropped): U1's
+  files lose their `HasFieldAccess` branches (pet page "for later" cards, greyed chips, pen tags). Switching `FieldAccess` to everyone and
+  removing pens elsewhere is its own task, not U1.
+- Texts through `Locale` / `strings.csv` (English + Czech, `cs_status` new); keys no longer used are removed.
+
+**Acceptance checks** (Studio, through the real UI; live profile snapshotted before any fixture, restored after).
+1. Rows: for an equipped, a field and a resting pet the badge shows `PetLevel`, the corner icon is right, one chip per working trait with
+   the right level; each chip's fill matches the pet page's bar for that trait (±2 %); ▲ sits on the `CareTarget` chip only; a pet with
+   nothing to train shows "✔ Trained" and no ▲; hover (mouse) and hold (touch) show the exact numbers.
+2. Equip brick equips / unequips (the slot fills / frees, the row's mark changes); for a field or pen pet it refuses with the reason; Details
+   opens the pet page; a click on the row's name, chips or blank space changes nothing; no "i" badge and no Sell on any row.
+3. Pet page: Sell is the last item, grey; the first tap turns it orange "Sure? +N", it lapses after 3 s; the second tap sells (Coins +
+   sell value, the page closes, the row is gone); for an equipped / field pet it refuses with the reason. The ▲ card = the row's ▲ chip.
+4. Summary: the bonus equals the server multiplier, the count equals the equipped pets with Cuteness; equipping a non-cute pet changes
+   neither.
+5. Filters on a profile with ≥ 6 pets: each chip lists exactly the matching pets (With me = equipped, On the field = on a square, Best for
+   X = pets with X, highest X first); the choice survives an equip and a close / reopen.
+6. Size: 460 px wide at 1920 × 1080; on 844 × 390 and 667 × 375 viewports the Pets panel, the pet page and the food stand stay fully on
+   screen with ≥ 16 px side margins, at least two list rows show, every tap target (Equip, Details, filters, Sell, food buttons) is
+   ≥ 44 px at scale 1 and ≥ 36 px on screen when scaled.
+7. Food stand: rows as in check 1 with the food's chip highlighted; order with-you → can grow → trained (greyed, no food buttons); a feed
+   through the real UI moves the highlighted chip's fill / level; P4's tooltips still show the outcome.
+8. Texts: English and Czech without cut-off text (`TextFits`, brick `Glyph` labels) in the Pets panel, pet page, food stand and hatch
+   reveal; the pseudo-language finds no literal there (P4's open check). `loc.py build` / `check` (0 errors) / `lint` (within baseline).
+9. With the user's multi-client test (F7, P4's open look check): each client sees the other's equipped pets with their level look (size,
+   tier). P4's "pet page without field access" check is dropped with the no-field concept.
+
+**Studio (2026-11-06, live profile Lekzdrh, snapshot `profile_9892673032_U1_1`, restored and checked):** 1–8 passed. 1: 11 rows (badge,
+corner icon, chip levels, fills ±2 %, ▲ only on CareTarget), "✔ Trained" via a display-only PetsChanged fixture, mouse hover; touch hold
+untestable with the MCP (mouse only). 2: Equip / Unequip through the bricks, field pet and full slots refused, name / chips / portrait do
+nothing. 3: Sell grey → orange "Sure? +100" → lapsed after 3 s; two taps sold a pet (+100 Coins, page closed, row gone). 4: a non-cute pet
+equipped (fixture) left the summary unchanged. 5: each filter exact, held through an equip and close / reopen. 6: 460 wide at 1472 × 1005;
+on 845 × 390 and 667 × 375 all three panels on screen, ≥ 2 rows, every target ≥ 36 px on screen (pet page and food buttons raised to it
+during the check); the panel's left edge stays on the icons' line (x 10) like the other panels, right margin ≥ 16. 7: via the real
+prompt; Cake feed moved the outlined Cuteness chip 0 → 0.17. 8: Czech and English all fit (food status line made two lines); pseudo finds
+no literal (only the user's pet name), only pseudo-inflated texts overflow. Open: 9 (the user's multi-client test).
 
 ### E0 — Economy model
 **Goal.** One reproducible model of the Coin economy (`tools/economy.py`, Python stdlib; how to run it: ECONOMY.md) that fixes the numbers the

@@ -1,15 +1,18 @@
--- Pets panel (docs/GDD.md §7.3, §7.5): inventory, equip / unequip, buy slot, sell (two clicks), total Coin bonus.
+-- Pets panel (docs/GDD.md §7.3, §7.5; U1: docs/UI_GARDEN_PETS.md §9): inventory, equip / unequip, buy slot, total Coin bonus.
 -- Display only: the list comes from PetClient (PetRemotes.PetsChanged), so a hatch or a sale shows up while the panel
 -- is open. A click just names a pet or the next slot; the server validates, prices and pays. The GUI is built here.
 -- The 🐶 button (ButtonHandler) opens it through the SetOpen BindableEvent and reads the Open attribute.
 -- Stud-brick look (StudStyle, green like its icon); "Go to my garden" asks the server (GoGarden, HomeService) to put
--- the player in front of their garden plot.
--- Layout: pet list on top (click a row = equip it, click an equipped one = unequip it), the equip slots as three square
--- bricks at the bottom (#PetConfig.SlotPrices): a slot shows its equipped pet (click = unequip), "Empty", or a lock;
--- the next slot to buy takes two clicks ("Sure?"), and hovering any slot shows a tooltip (price, whether it is
--- affordable). Equipped pets fill the slots in PetsChanged.equipped order. Pet portraits come from PetPortrait (one
--- cache for the rows, one for the slots). The "i" badge on a row's portrait opens the pet's detail page (PetDetail, P3a), drawn
--- over this panel.
+-- the player in front of their garden plot (U2 moves it to a HUD button).
+-- Layout (U1): summary line ("Coin bonus +12 % · 2 cute pets with you"), filter chips (All n/50 · With me · On the field ·
+-- Best for ▼ → a trait: pets with it, highest first; the choice holds for the session), the pet list, the equip slots as three
+-- square bricks at the bottom (#PetConfig.SlotPrices): a slot shows its equipped pet (click = unequip), "Empty", or a lock; the
+-- next slot to buy takes two clicks ("Sure?"), and hovering any slot shows a tooltip (price, whether it is affordable).
+-- A row is PetRow's (portrait with level badge and status icon, name, trait chips with fills and ▲; hover / hold a chip for its
+-- numbers) plus an Equip / Unequip brick and a Details › brick that opens the pet page (PetDetail, drawn over this panel). The rest
+-- of the row does nothing (kids toggled pets while scrolling); selling is only on the pet page.
+-- Width 460, capped to the viewport (16 px margins), scaled by PanelFit on short screens; compact layout there (the garden button
+-- becomes a 🌱 brick at the end of the filter row, messages replace the summary line for a moment).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -20,44 +23,52 @@ local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
 local PetDetail = require(script.Parent:WaitForChild("PetDetail"))
+local PetRow = require(script.Parent:WaitForChild("PetRow"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
 
 local remotes = PetClient.Remotes
 local player = Players.LocalPlayer
-local fieldAccess = require(ReplicatedStorage:WaitForChild("GardenConfig")).HasFieldAccess(player.UserId) -- E1b: the Tending level
 
-local WIDTH = 340
 -- Short screens (a phone in landscape): the panel is scaled down (PanelFit) and shortened to what fits; the slot bricks
--- shrink and the list takes the rest (it scrolls).
+-- shrink and the list takes the rest (it scrolls). Tap targets stay at least 36 px on screen (44 at scale 1).
 local FIT_SCALE = PanelFit.Scale()
 local HEIGHT = math.clamp(PanelFit.MaxHeight(FIT_SCALE), 300, 560)
 local COMPACT = HEIGHT < 480
-local ROW_HEIGHT = 66
-local SLOT_SIZE = if COMPACT then 52 else 96
+local LEFT = 10 -- the panel's left edge, on the icons' line
+local MARGIN = 16
+local WIDTH = math.floor(math.min(460, (workspace.CurrentCamera.ViewportSize.X - LEFT - MARGIN) / FIT_SCALE))
+local BRICK = math.max(44, math.ceil(36 / FIT_SCALE)) -- height of a tap target in panel pixels
+local ROW_HEIGHT = math.max(64, BRICK + 12)
+local EQUIP_WIDTH = 84
+local DETAILS_WIDTH = 84
+local SLOT_SIZE = if COMPACT then BRICK else 96
 local SLOT_GAP = if COMPACT then 12 else 16
--- header rows (summary, garden button, info line) and the top of the list: packed tighter when compact
 local SUMMARY_TOP = if COMPACT then 38 else 42
-local GARDEN_TOP = if COMPACT then 58 else 70
-local GARDEN_HEIGHT = if COMPACT then 30 else 34
-local INFO_TOP = if COMPACT then 92 else 110
-local LIST_TOP = if COMPACT then 114 else 134
+local GARDEN_TOP = 68 -- not compact: its own row
+local GARDEN_HEIGHT = 34
+local FILTER_TOP = if COMPACT then 60 else 108
+local INFO_TOP = FILTER_TOP + BRICK + 6 -- not compact
+local LIST_TOP = if COMPACT then FILTER_TOP + BRICK + 6 else INFO_TOP + 24
 local CONFIRM_SECONDS = 3 -- how long "Sure?" waits for the second click
-local POS_OPEN = UDim2.new(0, 10, 0, 80.3)
-local POS_CLOSED = UDim2.new(0, -WIDTH - 20, 0, 80.3)
+local POS_OPEN = UDim2.new(0, LEFT, 0, 80.3)
+local POS_CLOSED = UDim2.new(0, -WIDTH * FIT_SCALE - 20, 0, 80.3)
 
 local COLOR_PANEL = StudStyle.PanelColors.PetsPanel
 -- pet rows stay very dark so the rarity colours (green, blue, purple, gold names) read on the green panel
 local COLOR_ROW = StudStyle.Shade(COLOR_PANEL, 0.28)
-local COLOR_ROW_HOVER = StudStyle.Shade(COLOR_PANEL, 0.38)
-local COLOR_EQUIPPED = Color3.fromRGB(255, 205, 60) -- outline of an equipped row and its tag
+local COLOR_EQUIPPED = Color3.fromRGB(255, 205, 60) -- outline of an equipped row
 local COLOR_BUY = StudStyle.Colors.Yellow
 local COLOR_LOCKED = StudStyle.Colors.Grey
 local COLOR_LOCKED_LATER = StudStyle.Shade(StudStyle.Colors.Grey, 0.7)
 local COLOR_SLOT = Color3.fromRGB(214, 196, 158) -- owned slot: a sand plate, neutral behind any pet
-local COLOR_SELL = StudStyle.Colors.Red
-local COLOR_SELL_IDLE = StudStyle.Colors.Wood
+local COLOR_CLOSE = StudStyle.Colors.Red
+local COLOR_EQUIP = StudStyle.Colors.Yellow
+local COLOR_UNEQUIP = StudStyle.Colors.Wood
+local COLOR_DETAILS = StudStyle.Colors.Blue
 local COLOR_GARDEN = StudStyle.Colors.Wood
+local COLOR_FILTER = StudStyle.Shade(COLOR_PANEL, 0.7)
+local COLOR_FILTER_ON = StudStyle.Colors.Yellow
 local COLOR_INFO = Color3.fromRGB(190, 190, 190)
 local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
 local COLOR_OK = Color3.fromRGB(120, 230, 120)
@@ -128,7 +139,7 @@ local closeButton = button("Close", {
 	Position = UDim2.new(1, -6, 0, 4),
 	Size = UDim2.fromOffset(30, 28),
 	ZIndex = 2,
-	BackgroundColor3 = COLOR_SELL,
+	BackgroundColor3 = COLOR_CLOSE,
 	TextSize = 16,
 	Text = "X",
 }, 1)
@@ -137,13 +148,14 @@ local summaryLabel = label("Summary", {
 	Size = UDim2.new(1, -24, 0, 20),
 	TextSize = 15,
 	RichText = true,
+	TextTruncate = Enum.TextTruncate.AtEnd,
 })
 local gardenButton = button("Garden", {
-	Position = UDim2.new(0, 10, 0, GARDEN_TOP),
-	Size = UDim2.new(1, -20, 0, GARDEN_HEIGHT),
+	Position = if COMPACT then UDim2.new(1, -10 - BRICK, 0, FILTER_TOP) else UDim2.new(0, 10, 0, GARDEN_TOP),
+	Size = if COMPACT then UDim2.fromOffset(BRICK, BRICK) else UDim2.new(1, -20, 0, GARDEN_HEIGHT),
 	BackgroundColor3 = COLOR_GARDEN,
-	TextSize = 16,
-}, 6)
+	TextSize = if COMPACT then 20 else 16,
+}, if COMPACT then 2 else 6)
 local infoLabel = label("Info", {
 	Position = UDim2.new(0, 12, 0, INFO_TOP),
 	Size = UDim2.new(1, -24, 0, 20),
@@ -151,6 +163,7 @@ local infoLabel = label("Info", {
 	TextSize = 13,
 	TextColor3 = COLOR_INFO,
 	TextTruncate = Enum.TextTruncate.AtEnd,
+	Visible = not COMPACT, -- compact: messages show on the summary line
 })
 local SLOTS_TOP = HEIGHT - 10 - SLOT_SIZE -- top of the slot bricks
 local list = create("ScrollingFrame", {
@@ -164,7 +177,7 @@ local list = create("ScrollingFrame", {
 	AutomaticCanvasSize = Enum.AutomaticSize.Y,
 }, {
 	create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 6) }),
-	create("UIPadding", { PaddingRight = UDim.new(0, 6), PaddingTop = UDim.new(0, 2), PaddingLeft = UDim.new(0, 2) }),
+	create("UIPadding", { PaddingRight = UDim.new(0, 6), PaddingTop = UDim.new(0, 8), PaddingLeft = UDim.new(0, 4) }),
 })
 local emptyLabel = label("Empty", {
 	Position = UDim2.new(0, 12, 0, LIST_TOP + 10),
@@ -173,6 +186,7 @@ local emptyLabel = label("Empty", {
 	TextSize = 15,
 	TextColor3 = COLOR_INFO,
 	TextWrapped = true,
+	TextYAlignment = Enum.TextYAlignment.Top,
 	Visible = false,
 })
 local slotsLabel = label("SlotsTitle", {
@@ -181,15 +195,6 @@ local slotsLabel = label("SlotsTitle", {
 	TextSize = 15,
 	Visible = not COMPACT,
 })
-
--- texts that do not depend on the pet state (set again when the language changes)
-local function staticTexts()
-	titleLabel.Text = Locale.T("pets.title")
-	gardenButton.Text = Locale.T("pets.garden")
-	emptyLabel.Text = Locale.T("pets.empty")
-	slotsLabel.Text = Locale.T("pets.slotsTitle")
-end
-staticTexts()
 local tooltip = label("Tooltip", {
 	AnchorPoint = Vector2.new(0.5, 1),
 	Size = UDim2.fromOffset(190, 44),
@@ -226,6 +231,7 @@ StudStyle.Panel(panel, COLOR_PANEL)
 if FIT_SCALE < 1 then
 	create("UIScale", { Scale = FIT_SCALE, Parent = panel })
 end
+local chipTooltip = PetRow.Tooltip(panel, COLOR_PANEL)
 local setOpen -- defined below; the detail page's X closes the whole panel
 local detail = PetDetail.Mount(panel, COLOR_PANEL, function()
 	setOpen(false)
@@ -236,24 +242,37 @@ local screenGui = create("ScreenGui", {
 	Name = "PetsGui",
 	ResetOnSpawn = false,
 	DisplayOrder = 4,
+	ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 	AutoLocalize = false, -- translated by Locale (L2)
 }, { panel, setOpenEvent })
 
-local pendingSell: string? = nil -- uid waiting for the second click
 local pendingSlot: number? = nil -- slot waiting for the second click
 local pendingToken = 0
 local flashToken = 0
 local flashing = false -- a message is showing: refresh leaves the info line alone
 local rows = {} -- [uid] = row frame (rebuilt on every state change)
+local filter = "all" -- "all" | "with" | "field" | "best" (kept for the session)
+local bestTrait = "Cuteness" -- the trait of "Best for"
 
 local refresh -- defined below; the confirmation timeouts and the state listener call it
+local summaryText = "" -- compact: the summary comes back after a message
 
 local function showInfo(text: string, color: Color3)
-	infoLabel.Text = text
-	infoLabel.TextColor3 = color
+	if COMPACT then
+		summaryLabel.Text = text
+		summaryLabel.TextColor3 = color
+	else
+		infoLabel.Text = text
+		infoLabel.TextColor3 = color
+	end
 end
 
 local function defaultInfo()
+	if COMPACT then
+		summaryLabel.Text = summaryText
+		summaryLabel.TextColor3 = Color3.new(1, 1, 1)
+		return
+	end
 	local state = PetClient.State
 	local waiting = 0
 	if state then
@@ -282,7 +301,6 @@ local function flash(text: string, color: Color3)
 end
 
 local function clearPending()
-	pendingSell = nil
 	pendingSlot = nil
 	pendingToken += 1
 end
@@ -301,6 +319,144 @@ end
 
 local function equippedCount(): number
 	return if PetClient.State then #PetClient.State.equipped else 0
+end
+
+-- Filter chips --------------------------------------------------------------------------------------------------------
+local FILTERS = { "all", "with", "field", "best" }
+local filterRight = if COMPACT then BRICK + 16 else 10 -- compact: the 🌱 brick ends the row
+local filterWidth = math.floor((WIDTH - 10 - filterRight - 6 * (#FILTERS - 1)) / #FILTERS)
+local filterButtons = {}
+for index, id in FILTERS do
+	local chip = button("Filter_" .. id, {
+		Position = UDim2.fromOffset(10 + (index - 1) * (filterWidth + 6), FILTER_TOP),
+		Size = UDim2.fromOffset(filterWidth, BRICK),
+		BackgroundColor3 = COLOR_FILTER,
+		TextSize = 14,
+		TextWrapped = true,
+	}, 2)
+	chip.Parent = panel
+	filterButtons[id] = chip
+end
+
+-- "Best for ▼" opens a list of the traits under its chip
+local bestMenu = create("Frame", {
+	Name = "BestMenu",
+	AnchorPoint = Vector2.new(1, 0),
+	Position = UDim2.fromOffset(WIDTH - filterRight, FILTER_TOP + BRICK + 4),
+	Size = UDim2.fromOffset(180, 0),
+	AutomaticSize = Enum.AutomaticSize.Y,
+	BackgroundColor3 = StudStyle.Shade(COLOR_PANEL, 0.2),
+	ZIndex = 12,
+	Visible = false,
+	Parent = panel,
+}, {
+	create("UICorner", { CornerRadius = UDim.new(0, 8) }),
+	create("UIStroke", { Color = COLOR_EQUIPPED, Thickness = 2 }),
+	create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 6) }),
+	create("UIPadding", {
+		PaddingTop = UDim.new(0, 6),
+		PaddingBottom = UDim.new(0, 8),
+		PaddingLeft = UDim.new(0, 6),
+		PaddingRight = UDim.new(0, 6),
+	}),
+})
+local bestOptions = {}
+for order, trait in PetRow.Traits do
+	local option = button("Best_" .. trait.id, {
+		LayoutOrder = order,
+		Size = UDim2.new(1, 0, 0, BRICK),
+		BackgroundColor3 = COLOR_FILTER,
+		TextSize = 15,
+		ZIndex = 13,
+	}, 3)
+	option.Parent = bestMenu
+	bestOptions[trait.id] = option
+end
+
+local function traitWord(id: string): string
+	return if id == "Cuteness" then Locale.T("pets.filter.coins") else Locale.T("pet.apt." .. id)
+end
+
+-- texts that do not depend on the pet state (set again when the language changes)
+local function staticTexts()
+	titleLabel.Text = Locale.T("pets.title")
+	gardenButton.Text = if COMPACT then "🌱" else Locale.T("pets.garden")
+	slotsLabel.Text = Locale.T("pets.slotsTitle")
+	filterButtons.with.Text = Locale.T("pets.filter.withMe")
+	filterButtons.field.Text = Locale.T("pets.filter.field")
+	for id, option in bestOptions do
+		option.Text = PetRow.ByTrait[id].icon .. " " .. traitWord(id)
+	end
+end
+staticTexts()
+
+local function setFilter(id: string)
+	filter = id
+	list.CanvasPosition = Vector2.zero
+	refresh()
+end
+
+for id, chip in filterButtons do
+	chip.Activated:Connect(function()
+		chipTooltip.Hide()
+		if id == "best" then
+			bestMenu.Visible = not bestMenu.Visible
+			return
+		end
+		bestMenu.Visible = false
+		setFilter(id)
+	end)
+end
+for id, option in bestOptions do
+	option.Activated:Connect(function()
+		bestMenu.Visible = false
+		bestTrait = id
+		setFilter("best")
+	end)
+end
+
+-- the pets the filter shows, in its order: inventory order, or (Best for) the trait's level, highest first
+local function filtered(inventory)
+	local state = PetClient.State
+	local shown = {}
+	for index, pet in inventory do
+		local keep = filter == "all"
+			or (filter == "with" and pet.equipped)
+			or (filter == "field" and pet.field ~= nil)
+			or (filter == "best" and PetConfig.AptitudeLevel(state.pets[pet.uid], bestTrait) > 0)
+		if keep then
+			table.insert(shown, { pet = pet, index = index })
+		end
+	end
+	if filter == "best" then
+		table.sort(shown, function(a, b)
+			local la = PetConfig.AptitudeLevel(state.pets[a.pet.uid], bestTrait)
+			local lb = PetConfig.AptitudeLevel(state.pets[b.pet.uid], bestTrait)
+			if la ~= lb then
+				return la > lb
+			end
+			return a.index < b.index
+		end)
+	end
+	local pets = {}
+	for _, item in shown do
+		table.insert(pets, item.pet)
+	end
+	return pets
+end
+
+local function refreshFilters(inventory)
+	filterButtons.all.Text = Locale.T("pets.filter.all", { count = #inventory, max = PetConfig.MaxPets })
+	local picked = filter == "best"
+	filterButtons.best.Text = if picked
+		then Locale.T("pets.filter.bestTrait", { icon = PetRow.ByTrait[bestTrait].icon, trait = traitWord(bestTrait) })
+		else Locale.T("pets.filter.best")
+	for id, chip in filterButtons do
+		chip.BackgroundColor3 = if filter == id then COLOR_FILTER_ON else COLOR_FILTER
+	end
+	for id, option in bestOptions do
+		option.BackgroundColor3 = if filter == "best" and bestTrait == id then COLOR_FILTER_ON else COLOR_FILTER
+	end
 end
 
 -- Equip slots ---------------------------------------------------------------------------------------------------------
@@ -381,6 +537,7 @@ for index = 1, slotCount do
 		if not state then
 			return
 		end
+		bestMenu.Visible = false
 		if slot.kind == "pet" then
 			clearPending()
 			remotes.Unequip:FireServer(slot.pet.uid)
@@ -460,8 +617,9 @@ local function refreshSlots(inventory)
 end
 
 -- Pet list ------------------------------------------------------------------------------------------------------------
-local function onRowClicked(pet)
+local function onEquipClicked(pet)
 	clearPending()
+	bestMenu.Visible = false
 	if pet.penned then
 		flash(rejectText("penned"), COLOR_ERROR)
 	elseif pet.field then
@@ -473,76 +631,15 @@ local function onRowClicked(pet)
 	else
 		remotes.Equip:FireServer(pet.uid)
 	end
-	refresh()
 end
 
 local function buildRow(index: number, pet)
-	local rarityColor = pet.rarity.color
-	local confirming = pendingSell == pet.uid
-
-	local sellButton = button("Sell", {
-		AnchorPoint = Vector2.new(1, 1),
-		Position = UDim2.new(1, -6, 1, -6),
-		Size = UDim2.fromOffset(84, 24),
-		BackgroundColor3 = if pet.equipped or pet.penned or pet.field then COLOR_LOCKED elseif confirming then COLOR_SELL else COLOR_SELL_IDLE,
-		TextSize = 13,
-		Text = Locale.T(if confirming then "pets.sellSure" else "pets.sell", { price = pet.sellValue }),
-	})
-	local tagText = if pet.penned
-		then Locale.T("pets.tag.pen", { pen = pet.penned })
-		elseif pet.field then Locale.T("pets.tag.field", { n = pet.field })
-		elseif pet.equipped then Locale.T("pets.tag.equipped")
-		else ""
-	-- the field jobs' levels (E1b Tending, E4b Pest control), shown only to players who have the field
-	local tending = if pet.tending > 0 and fieldAccess then " · " .. Locale.T("pets.tending", { level = pet.tending }) else ""
-	if pet.guard > 0 and fieldAccess then
-		tending ..= " · " .. Locale.T("pets.guard", { level = pet.guard })
-	end
-	local portraitHolder = create("Frame", {
-		Name = "PortraitHolder",
-		Position = UDim2.fromOffset(12, 6),
-		Size = UDim2.fromOffset(54, 54),
-		BackgroundColor3 = StudStyle.Shade(COLOR_PANEL, 0.18),
-	}, { create("UICorner", { CornerRadius = UDim.new(0, 8) }) })
-	local portrait = listPortrait(pet)
-	if portrait then
-		portrait.Parent = portraitHolder
-	end
-	-- the portrait opens the detail page (P3a); its "i" badge shows that it does
-	local infoButton = create("TextButton", {
-		Name = "Info",
-		Size = UDim2.fromScale(1, 1),
-		BackgroundTransparency = 1,
-		Text = "",
-		Parent = portraitHolder,
-	}, {
-		label("Badge", {
-			AnchorPoint = Vector2.new(1, 1),
-			Position = UDim2.new(1, 3, 1, 3),
-			Size = UDim2.fromOffset(18, 18),
-			BackgroundTransparency = 0,
-			BackgroundColor3 = COLOR_EQUIPPED,
-			TextColor3 = Color3.fromRGB(40, 40, 40),
-			TextSize = 14,
-			TextXAlignment = Enum.TextXAlignment.Center,
-			Text = "i",
-		}),
-	})
-	local badge = infoButton:FindFirstChild("Badge") :: TextLabel
-	badge.BackgroundTransparency = 0 -- label() makes labels transparent
-	create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = badge })
-	infoButton.Activated:Connect(function()
-		clearPending()
-		detail.Open(pet.uid)
-	end)
-
-	local row = create("TextButton", {
+	local busy = pet.penned ~= nil or pet.field ~= nil
+	local row = create("Frame", {
 		Name = "Pet_" .. pet.uid,
 		LayoutOrder = index,
 		Size = UDim2.new(1, -2, 0, ROW_HEIGHT),
 		BackgroundColor3 = COLOR_ROW,
-		AutoButtonColor = false,
-		Text = "",
 	}, {
 		create("UICorner", { CornerRadius = UDim.new(0, 8) }),
 		create("UIStroke", {
@@ -551,142 +648,106 @@ local function buildRow(index: number, pet)
 			Thickness = 2,
 			Enabled = pet.equipped,
 		}),
-		create("Frame", {
-			Name = "RarityBar",
-			Size = UDim2.new(0, 4, 1, -12),
-			Position = UDim2.new(0, 4, 0, 6),
-			BackgroundColor3 = rarityColor,
-			BorderSizePixel = 0,
-		}, { create("UICorner", { CornerRadius = UDim.new(0, 2) }) }),
-		portraitHolder,
-		label("Name", {
-			Position = UDim2.new(0, 74, 0, 7),
-			Size = UDim2.new(1, -170, 0, 22),
-			TextSize = 17,
-			TextColor3 = rarityColor,
-			TextStrokeTransparency = 0.4,
-			TextTruncate = Enum.TextTruncate.AtEnd,
-			Text = Locale.PetName(pet.kind, pet.level, pet.name),
-		}),
-		label("Detail", {
-			Position = UDim2.new(0, 74, 0, 30),
-			Size = UDim2.new(1, -170, 0, 30),
-			Font = Enum.Font.Gotham,
-			TextSize = 12,
-			TextColor3 = COLOR_INFO,
-			TextWrapped = true,
-			TextYAlignment = Enum.TextYAlignment.Top,
-			Text = (if pet.cute > 0
-					then Locale.T("pets.detail", { rarity = Locale.RarityName(pet.rarity.id), bonus = bonusText(pet.bonus) })
-					else Locale.RarityName(pet.rarity.id))
-				.. "\n"
-				.. (if pet.care
-					then Locale.T("pet.xpTrait", { trait = Locale.T("pet.apt." .. pet.care), xp = pet.xp, next = pet.xpNext })
-					elseif pet.level >= PetConfig.MaxLevel then Locale.T("pet.maxLevel")
-					else Locale.T("pet.careDone"))
-				.. tending,
-		}),
-		label("Tag", {
-			AnchorPoint = Vector2.new(1, 0),
-			Position = UDim2.new(1, -8, 0, 8),
-			Size = UDim2.fromOffset(84, 20),
-			TextSize = 13,
-			TextXAlignment = Enum.TextXAlignment.Center,
-			TextColor3 = if pet.equipped then COLOR_EQUIPPED else COLOR_INFO,
-			Text = tagText,
-		}),
-		sellButton,
 	})
-
-	row.MouseEnter:Connect(function()
-		row.BackgroundColor3 = COLOR_ROW_HOVER
+	PetRow.Fill(row, pet, {
+		portrait = listPortrait,
+		panelColor = COLOR_PANEL,
+		right = EQUIP_WIDTH + DETAILS_WIDTH + 18,
+		tooltip = chipTooltip,
+	})
+	local equipButton = button("Equip", {
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.new(1, -(DETAILS_WIDTH + 12), 0.5, 0),
+		Size = UDim2.fromOffset(EQUIP_WIDTH, BRICK),
+		BackgroundColor3 = if busy then COLOR_LOCKED elseif pet.equipped then COLOR_UNEQUIP else COLOR_EQUIP,
+		TextSize = 15,
+		TextWrapped = true,
+		Text = Locale.T(if pet.equipped then "petDetail.unequip" else "petDetail.equip"),
+	}, 2)
+	equipButton.Parent = row
+	local detailsButton = button("Details", {
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.new(1, -6, 0.5, 0),
+		Size = UDim2.fromOffset(DETAILS_WIDTH, BRICK),
+		BackgroundColor3 = COLOR_DETAILS,
+		TextSize = 15,
+		TextWrapped = true,
+		Text = Locale.T("pets.details"),
+	}, 2)
+	detailsButton.Parent = row
+	equipButton.Activated:Connect(function()
+		onEquipClicked(pet)
 	end)
-	row.MouseLeave:Connect(function()
-		row.BackgroundColor3 = COLOR_ROW
-	end)
-	row.Activated:Connect(function()
-		onRowClicked(pet)
-	end)
-	sellButton.Activated:Connect(function()
-		if pet.penned then
-			flash(rejectText("penned"), COLOR_ERROR)
-			return
-		end
-		if pet.field then
-			flash(rejectText("field"), COLOR_ERROR)
-			return
-		end
-		if pet.equipped then
-			flash(rejectText("equipped"), COLOR_ERROR)
-			return
-		end
-		if pendingSell == pet.uid then
-			clearPending()
-			remotes.SellPet:FireServer(pet.uid)
-			return
-		end
+	detailsButton.Activated:Connect(function()
 		clearPending()
-		pendingSell = pet.uid
-		armPending()
-		refresh()
+		bestMenu.Visible = false
+		chipTooltip.Hide()
+		detail.Open(pet.uid)
 	end)
-
 	return row
 end
 
 refresh = function()
 	local state = PetClient.State
 	if not state then
-		summaryLabel.Text = Locale.T("common.loading")
+		summaryText = Locale.T("common.loading")
+		summaryLabel.Text = summaryText
 		refreshSlots({})
 		return
 	end
 
 	local inventory = PetClient.Inventory()
-	if pendingSell and not state.pets[pendingSell] then
-		clearPending()
-	end
 	if pendingSlot and pendingSlot ~= state.slots + 1 then
 		clearPending()
 	end
 
-	summaryLabel.Text = Locale.T("pets.summary", {
-		bonus = bonusText(math.round((state.multiplier - 1) * 1000)),
-		equipped = #state.equipped,
-		slots = state.slots,
-		pets = #inventory,
-		max = PetConfig.MaxPets,
-	})
-
-	for _, row in rows do
-		local portrait = row:FindFirstChild("Portrait", true)
-		if portrait then
-			portrait.Parent = nil -- kept in the cache
+	-- P4: only cute pets raise the Coins: name how many of the pets with you do
+	local cute = 0
+	for _, uid in state.equipped do
+		local stored = state.pets[uid]
+		if stored and PetConfig.AptitudeLevel(stored, "Cuteness") > 0 then
+			cute += 1
 		end
+	end
+	summaryText = Locale.T("pets.summaryCute", { bonus = bonusText(math.round((state.multiplier - 1) * 1000)), count = cute })
+	if not (COMPACT and flashing) then
+		summaryLabel.Text = summaryText
+		summaryLabel.TextColor3 = Color3.new(1, 1, 1)
+	end
+	refreshFilters(inventory)
+
+	chipTooltip.Hide()
+	for _, row in rows do
+		PetPortrait.Release(row) -- the portraits stay cached
 		row:Destroy()
 	end
 	table.clear(rows)
-	for index, pet in inventory do
+	local shown = filtered(inventory)
+	for index, pet in shown do
 		local row = buildRow(index, pet)
 		row.Parent = list
 		rows[pet.uid] = row
 	end
-	emptyLabel.Visible = #inventory == 0
+	emptyLabel.Visible = #shown == 0
+	emptyLabel.Text = Locale.T(if #inventory == 0 then "pets.empty" else "pets.filter.none")
 	refreshSlots(inventory)
 	if not flashing then
 		defaultInfo()
 	end
 end
 
-PetClient.Result:Connect(function(action, ok, detail)
+-- the chip tooltip sits over a row inside the scrolling list: scrolling would leave it behind
+list:GetPropertyChangedSignal("CanvasPosition"):Connect(chipTooltip.Hide)
+
+PetClient.Result:Connect(function(action, ok, detailOrReason)
 	if ok then
 		if action == "SellPet" then
-			flash(Locale.T("pets.sold", { count = detail.coins }), COLOR_OK)
+			flash(Locale.T("pets.sold", { count = detailOrReason.coins }), COLOR_OK)
 		elseif action == "BuySlot" then
-			flash(Locale.T("pets.slotUnlocked", { slot = detail }), COLOR_OK)
+			flash(Locale.T("pets.slotUnlocked", { slot = detailOrReason }), COLOR_OK)
 		end
 	else
-		flash(rejectText(detail), COLOR_ERROR)
+		flash(rejectText(detailOrReason), COLOR_ERROR)
 	end
 end)
 
@@ -707,6 +768,8 @@ function setOpen(open: boolean)
 	else
 		clearPending()
 		hoveredSlot = nil
+		bestMenu.Visible = false
+		chipTooltip.Hide()
 		detail.Close()
 		local tween = TweenService:Create(panel, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Position = POS_CLOSED })
 		tween.Completed:Connect(function()

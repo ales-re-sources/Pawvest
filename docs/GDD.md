@@ -421,7 +421,14 @@ Levels are permanent.
 
 ### 7.5 Display
 Equipped pets float behind their owner and are visible to all players, with rarity colour and level on a small label.
-The pets panel (top-left **🐶 Pets** button) lists the inventory, equipped pets, slots, total bonus and XP bars.
+The pets panel (top-left **🐶 Pets** button, U1): a summary line naming where the Coin bonus comes from ("Coin bonus +12 % · 2 cute
+pets with you"), filter chips (All n/50 · With me · On the field · Best for ▼ Coins / Tending / Pest control / Scouting: the pets with that
+trait, highest first; kept for the session), the pet list and the three equip slots. A row: portrait with a **level badge** (the pet
+level) and a status corner icon (✓ with you, 🌾 on the field), the name in the rarity colour, one **trait chip** per working trait (icon +
+level in the trait's colour, a thin fill = progress to the next level, the same share as the pet page's bar; hover / hold shows the exact
+numbers), a ▲ on the chip food and runs train now or "✔ Trained" when nothing can train, then an **Equip / Unequip** brick and a
+**Details ›** brick. A tap on the rest of the row does nothing; selling is only on the pet page. 460 px wide, capped to the screen and
+scaled down on short screens, where the tap targets grow to stay ≥ 36 px (44 at full size). Shared row: `PetRow` (food stand too).
 
 **Art (first version):** simple, cute blocky models built from parts, one per kind, in one consistent style; rarity
 shows as label colour and a glow (Epic, Legendary). Models live in `ReplicatedStorage.PetModels`, so real art can
@@ -492,9 +499,10 @@ collecting and caring over obby runs.
 - **Feeding.** Food bought for Coins gives a pet XP: an alternative to leveling by playing the obby, and a Coin sink.
   Food is sold at the **food stand** in the middle of the plaza (a four-sided stud kiosk, readable from every plot, a big strawberry on top) and fed at once to one chosen pet (equipped, penned or resting in the
   inventory); there is no food inventory. Only the fed pet gains the XP, as care XP (§7.4: Cuteness first). A pet with nothing left
-  to train cannot be fed (no Coins taken; the row shows "Trained" or "Max level"); XP it cannot use is lost, so the panel shows which
-  trait trains and how much XP the pet can still use. Feeding a penned pet settles its production first, so the new level only counts
-  from then on.
+  to train cannot be fed (no Coins taken; the row shows "Trained" or "Max level"); XP it cannot use is lost, which the food button's
+  tooltip says. The panel (U1) shows the Pets panel's row with the chip the food will train outlined; pets with you first, then those
+  that can still grow, the trained ones greyed at the bottom; it is scaled down to fit a phone screen. Feeding a penned pet settles its
+  production first, so the new level only counts from then on.
 
   | Food | Price | XP | Coins per XP |
   |---|---|---|---|
@@ -513,12 +521,12 @@ cooldown applies after each trade. Trading requires profile session locking (a p
 otherwise items could be duplicated across servers.
 
 ### 7.8 Pet page and names (P3)
-- **Pet page.** An "i" badge on a Pets list row opens the pet's page (a tap on the row still equips / unequips): a turning portrait, name,
-  rarity, tier stars and where the pet is; growth (P4: level = best trait, what food and runs train now, next look); one card per working
-  trait (`PetConfig.Shown`, for every player): Cuteness (level / cap, Coin bonus, XP), Tending, Scouting, Pest control (with the field:
-  level / rarity cap, effect, field hours to the next level, reach, the care cap; without it: "a garden job for later" and its care XP);
-  the Feed card (crops, §7.9);
-  Equip / Unequip, Sell (second tap confirms), Rename. Built for 8-10 year olds on a phone: bars, stars and icons over text.
+- **Pet page.** A row's **Details ›** brick opens the pet's page: a turning portrait, name, rarity, tier stars and where the pet is;
+  growth (P4: level = best trait, what food and runs train now or "✔ Trained", next look); one card per working trait
+  (`PetConfig.Shown`), titled in the trait's colour and icon, the one food trains now outlined with a ▲ like the row's chip: Cuteness
+  (level / cap, Coin bonus, XP), Tending, Scouting, Pest control (level / rarity cap, effect, field hours to the next level, reach, the
+  care cap); the Feed card (crops, §7.9); Equip / Unequip; Rename; at the bottom under "More" a small grey **Sell** brick (first tap:
+  orange "Sure? +N", a second tap within 3 s sells). Built for 8-10 year olds on a phone: bars, stars and icons over text.
 - **Names.** 1-20 letters, digits and spaces; clearing is free, the first name is free and every later one costs 250 Coins
   (`PetConfig.RenamePrice`); 10 s cooldown. Filtering is a Roblox rule: the server filters with `TextService` (owner, `PublicChat`), stores
   the raw text, filters again on every join, and only the filtered text leaves the server; a failed filter shows the kind name. Names show to
