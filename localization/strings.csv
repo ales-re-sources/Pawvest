@@ -173,7 +173,6 @@ arena.keyCollected.Green,"Arena toast when this key is picked up (Czech: masculi
 arena.gateOpened.Green,"Arena toast when this key opens its gate (Czech: feminine, brána)",Green gate opened,Zelená brána otevřena,ok,h5cd7deeb
 # Pets panel (🐶),,,,,
 pets.title,Panel title,🐶 Pets,🐶 Mazlíčci,new,h92496bfc
-pets.garden,Button: teleports the player in front of their garden plot,🌱 Go to my garden,🌱 Do mé zahrádky,new,h3e5af0fb
 pets.empty,Shown instead of the list while the player has no pet,No pets yet. Hatch one in an incubator in the pet garden!,Zatím nemáš žádného mazlíčka. Vylíhni si ho v inkubátoru v zahradě mazlíčků!,new,h2f4ed2fb
 pets.slotsTitle,"Heading above the three equip slots at the bottom (""equip"" = take a pet with you; it follows you and raises Coin rewards)",Equipped pets,Nasazení mazlíčci,new,h502b0f88
 pets.summaryCute[one],"Line under the Pets panel title (U1); {bonus} = total Coin bonus ('+12%'), {count} = equipped pets with Cuteness (only they raise the Coins). Form for 1",Coin bonus <font color='#78e678'>{bonus}</font>  ·  {count} cute pet with you,Bonus mincí <font color='#78e678'>{bonus}</font>  ·  {count} roztomilý mazlíček s tebou,new,hced7925b
@@ -216,7 +215,6 @@ pets.sold[one],Message after a sale; {count} = Coins received. Form for 1,Sold f
 pets.sold[few],Form for 2-4 (Czech only),,Prodáno za {count} mince,new,hf1bfe328
 pets.sold[other],Form for 0 and 5+,Sold for {count} Coins,Prodáno za {count} mincí,new,hf1bfe328
 pets.slotUnlocked,Message after buying a slot,Slot {slot} unlocked,Slot {slot} odemčen,new,h08b459bb
-pets.gardenNotReady,Message: the garden plot is not assigned yet (just joined),Your garden plot is not ready yet,Tvoje zahrádka ještě není připravená,new,h1b30371e
 pets.reject.full,Refused: the pet inventory is full (50),Pet inventory is full,Inventář mazlíčků je plný,new,h0264530e
 pets.reject.slots,Refused: every slot holds a pet,All slots in use: click a slot below to unequip a pet,Všechny sloty jsou obsazené: klikni dole na slot a mazlíčka sundej,new,h02961e7d
 pets.reject.equipped,Refused: an equipped pet cannot be sold,Unequip it before selling,Před prodejem ho sundej,new,hce22c2df
@@ -285,6 +283,14 @@ garden.sign.incubator.locked,Billboard on an incubator that is not bought yet; {
 garden.sign.incubator.empty,Billboard on a bought incubator without an egg; {n} = incubator number; second line after the line break,Incubator {n}\nempty,Inkubátor {n}\nprázdný,new,haa069ea7
 garden.prompt.openIncubator,Action text of the prompt on an incubator of the own garden plot (opens the incubator panel),Open incubator,Otevřít inkubátor,new,h882cf717
 garden.prompt.incubator,Object text of that prompt; {n} = incubator number 1-3,Incubator {n},Inkubátor {n},new,h47892dc1
+# Garden icon and summary bubble (U2),,,,,
+garden.go.notReady,Toast at the bottom of the screen after a tap on the 🌱 Garden icon (top left) when the player's garden plot is not assigned yet (just joined),Your garden plot is not ready yet,Tvoje zahrádka ještě není připravená,new,h1b30371e
+garden.bubble.plant,Summary bubble over the player's own garden plot sign (seen from the garden plaza): nothing is planted on the field. Short; parts of the bubble are joined with · (e.g. 🌱 Plant seeds · 🥚 Ready!),🌱 Plant seeds,🌱 Zasaď semínka,new,h77b32ae7
+garden.bubble.ripe[one],"Summary bubble: {count} crops on the field are ripe to harvest (e.g. 🧺 4 ripe · ⏱ 2:14 · 🥚 Ready!). Czech: the adjective alone, agreeing with plodina (feminine). Form for 1",🧺 {count} ripe,🧺 {count} zralá,new,h7c81d3ec
+garden.bubble.ripe[few],Form for 2-4 (Czech only),,🧺 {count} zralé,new,h7c81d3ec
+garden.bubble.ripe[other],Form for 0 and 5+,🧺 {count} ripe,🧺 {count} zralých,new,h7c81d3ec
+garden.bubble.time,Summary bubble: time until the next crop on the field is ripe; {time} = m:ss or h:mm:ss (no words),⏱ {time},⏱ {time},new,ha39f96d6
+garden.bubble.egg,"Summary bubble: an egg in the player's incubator can hatch now; one short word after the egg, as the Ready! marker over the incubator (hints.ready)",🥚 Ready!,🥚 Hotovo!,new,h54fad9e3
 # Studio-authored signs (L3; tagged Loc with LocKey in the place file),,,,,
 sign.plot,Number on a garden plot's sign (drawn by the client); {n} = plot slot number 1-30,Plot {n},Pozemek {n},new,h1927be07
 sign.foodStand,"Sign over the pet food stand in the garden (capitals, big letters; keep it short)",🍓 PET FOOD,🍓 KRMENÍ,new,hfe6570f5

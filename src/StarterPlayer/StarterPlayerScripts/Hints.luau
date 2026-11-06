@@ -1,8 +1,9 @@
 -- Hints (docs/GDD.md §11, ROADMAP G1): the one place that draws "you can do something here" signals for the local player.
 --   Hints.SetDot(target, source, on)        red dot on a button while any source wants it; one pulse when it appears.
---                                           Targets: "SkillsButton", "PetsButton" (top-left icons), "PetsGarden" (the Pets
---                                           panel's "Go to my garden"). The icons' ScreenGui is re-created on every respawn,
---                                           so the dots are re-attached by the loop below.
+--   Hints.SetBadge(target, count)           red badge with a number on a button (none at 0); one pulse when it rises (U2).
+--                                           Targets: the top-left icons by name ("SkillsButton", "GardenButton"). The icons'
+--                                           ScreenGui is re-created on every respawn, so dots and badges are re-attached by
+--                                           the loop below.
 --   Hints.SetMarker(id, adornee, label, height)  world marker: an orange arrow with the text `label()` (re-read when the
 --                                           language changes), `height` studs above `adornee`; nil adornee removes it. Drawn
 --                                           in a ScreenGui (on top of everything, constant size). In view it bobs above the
@@ -36,6 +37,7 @@ local EDGE_TOP = 150 -- pixels: and below the top-left icons and the score panel
 local EDGE_BOTTOM = 0.3 -- share of the screen height kept free at the bottom (touch joystick and jump button)
 local DOT_RED = Color3.fromRGB(230, 55, 50)
 local DOT_SIZE = 16 -- pixels
+local BADGE_SIZE = 22 -- pixels: a badge's height and least width
 local TOAST_SECONDS = 4
 
 local Hints = {}
@@ -59,11 +61,6 @@ end)
 -- Dots --------------------------------------------------------------------------------------------------------------------
 
 local function findTarget(target: string): GuiObject?
-	if target == "PetsGarden" then
-		local petsGui = playerGui:FindFirstChild("PetsGui")
-		local button = petsGui and petsGui:FindFirstChild("Garden", true)
-		return if button and button:IsA("GuiObject") then button else nil
-	end
 	local screenGui = playerGui:FindFirstChild("ScreenGui")
 	local icons = screenGui and screenGui:FindFirstChild("TopLeftIcons")
 	local button = icons and icons:FindFirstChild(target)
@@ -111,6 +108,77 @@ function Hints.SetDot(target: string, source: string, on: boolean)
 	dotSources[target] = sources
 	sources[source] = if on then true else nil
 	applyDot(target)
+end
+
+-- Badges ------------------------------------------------------------------------------------------------------------------
+
+local badgeCounts = {} -- [target] = number shown (0 = none)
+
+local function applyBadge(target: string)
+	local button = findTarget(target)
+	if not button then
+		return
+	end
+	local count = badgeCounts[target] or 0
+	local badge = button:FindFirstChild("HintBadge")
+	if count <= 0 then
+		if badge then
+			badge:Destroy()
+		end
+		return
+	end
+	local pulse = false
+	if not badge then
+		badge = Instance.new("Frame")
+		badge.Name = "HintBadge"
+		badge.AnchorPoint = Vector2.new(0.5, 0.5)
+		badge.Position = UDim2.new(1, -5, 0, 5)
+		badge.Size = UDim2.fromOffset(BADGE_SIZE, BADGE_SIZE)
+		badge.AutomaticSize = Enum.AutomaticSize.X
+		badge.BackgroundColor3 = DOT_RED
+		badge.ZIndex = 10
+		Instance.new("UICorner", badge).CornerRadius = UDim.new(0.5, 0)
+		local stroke = Instance.new("UIStroke")
+		stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+		stroke.Color = Color3.new(1, 1, 1)
+		stroke.Thickness = 2
+		stroke.Parent = badge
+		local padding = Instance.new("UIPadding")
+		padding.PaddingLeft = UDim.new(0, 5)
+		padding.PaddingRight = UDim.new(0, 5)
+		padding.Parent = badge
+		local number = Instance.new("TextLabel")
+		number.Name = "Count"
+		number.AutomaticSize = Enum.AutomaticSize.X
+		number.Size = UDim2.new(0, BADGE_SIZE - 10, 1, 0)
+		number.BackgroundTransparency = 1
+		number.Font = StudStyle.Font
+		number.TextSize = 15
+		number.TextColor3 = Color3.new(1, 1, 1)
+		number.ZIndex = 11
+		number.Parent = badge
+		local scale = Instance.new("UIScale")
+		scale.Parent = badge
+		badge:SetAttribute("Count", 0)
+		badge.Parent = button
+	end
+	if (badge:GetAttribute("Count") or 0) < count then
+		pulse = true
+	end
+	badge:SetAttribute("Count", count)
+	local number = badge:FindFirstChild("Count") :: TextLabel
+	number.Text = Locale.Number(count)
+	if pulse then
+		local scale = badge:FindFirstChildOfClass("UIScale") :: UIScale
+		scale.Scale = 1.6
+		TweenService:Create(scale, TweenInfo.new(0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+	end
+end
+
+-- A red badge with `count` on a button (none at 0); one pulse when the number rises.
+function Hints.SetBadge(target: string, count: number)
+	badgeCounts[target] = math.max(0, math.floor(count))
+	applyBadge(target)
 end
 
 -- Markers -----------------------------------------------------------------------------------------------------------------
@@ -365,11 +433,14 @@ function Hints.Toast(text: string)
 	showNextToast()
 end
 
--- Loop: dots re-attached after a respawn re-created the icons.
+-- Loop: dots and badges re-attached after a respawn re-created the icons.
 task.spawn(function()
 	while true do
 		for target in dotSources do
 			applyDot(target)
+		end
+		for target in badgeCounts do
+			applyBadge(target)
 		end
 		task.wait(0.25)
 	end

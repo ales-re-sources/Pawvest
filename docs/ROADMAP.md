@@ -48,7 +48,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | MU | Mobile UX check | – | – | – |
 | U1 | Pets panel rows with trait chips, filters, pet page Sell under More, food stand rows | ✔ | partial (multi-client look open) | – |
 | FA | The field for everyone, pens removed | ✔ | ✔ | – |
-| U2–U5 | Garden and pet UI redesign, rest ([UI_GARDEN_PETS.md](UI_GARDEN_PETS.md)) — design decided 2026-11-05 | – | – | – |
+| U2 | Garden icon with a badge (ripe crops + ready eggs), summary bubble over the own plot sign | ✔ | ✔ | – |
+| U3–U5 | Garden and pet UI redesign, rest ([UI_GARDEN_PETS.md](UI_GARDEN_PETS.md)) — design decided 2026-11-05 | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
@@ -71,7 +72,7 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
 5. **E0 in parallel:** repricing and the remaining checks (section below).
 6. **MU** before anything goes public.
 7. **U1–U5 garden and pet UI** (design decided 2026-11-05, [UI_GARDEN_PETS.md](UI_GARDEN_PETS.md) §11–12; scope each when it starts):
-   **U1** built and Studio-checked (2026-11-06) except the multi-client look check (F7, the user); **U2–U5** (Garden button, field rings + square card + hand bar, Skills Garden tab,
+   **U1** built and Studio-checked (2026-11-06) except the multi-client look check (F7, the user); **U2** built and Studio-checked (2026-11-06); **U3–U5** (field rings + square card + hand bar, Skills Garden tab,
    barn, seed stall, plot layout) before E5's onboarding, which teaches the new controls.
 8. **Drops D1–D10** after the MVP (EXPANSION §14), one every 1–2 weeks: Critters, Comfort shop (M7), Weekly, Variants, Kitchen (the first
    restoration landmark), Neighbours, Mastery, World 4 (S9 / S10), the Estate, Season 1. Restoration bundles (E6, D5) and estate tiers / decor /
@@ -242,6 +243,61 @@ check differs (the three pen keys). **After U1 (2026-11-06):** 1 and 2 again (no
 8 passed (`loc.py check` 0 errors, lint 0; `economy.py check` 48 / 48 after the pin); 6's rest through the real UI (Feed on a resting
 pet's page, a Berry at the food stand, Unequip / Equip, Sell with two taps); the profile restored from `profile_9892673032_FA_3` and
 checked equal. 7 is code-only (the same path admins always took).
+
+### U2 — Garden button with badge, summary bubble over the own sign (design: [UI_GARDEN_PETS.md](UI_GARDEN_PETS.md) §3 Far, §8; scope approved by the user 2026-11-06)
+**Goal.** A kid anywhere in the game sees that something waits in the garden and gets there with one tap; at the garden they see what
+waits without opening a panel. Client only: no remote, profile or config change (`GoGarden` as today).
+
+**Build.**
+- **🌱 Garden button** (`GardenButton`) in the top-left icon row after Pets: Home, Skills, Pets, Garden, Settings, Admin. Made in
+  `ButtonHandler` as a clone of the Skills button like the Pets fallback (no Studio change), a wood brick (the garden's colour: Garden panel, plot signs; green is the Pets icon), the 🌱 glyph only.
+  A tap fires `GoGarden` (HomeService, as today); without a plot yet (`GardenPlot` attribute missing) a toast "Your garden plot is not ready
+  yet" and nothing is fired. The Pets panel loses its `Garden` button (wide layout and the compact 🌱 brick at the end of the filter row);
+  keys `pets.garden` / `pets.gardenNotReady` go, the toast gets a `garden.*` key.
+- **Badge** on the Garden button: a red pill with the number of ripe crops + ready eggs (none at 0), a pulse when the number rises.
+  `Hints.SetBadge(target, count)` beside `SetDot` (re-attached after a respawn like the dots). G1's egg dots go: `PetsGarden` (button gone)
+  and the egg dot on the Pets icon (the badge says it now; the Pets icon keeps no garden signal). The toast and the "Ready!" marker over the
+  incubator stay.
+- **Counting** (new ModuleScript `GardenSummary.luau`, used by the badge and the bubble): from the owner's field state (`GardenRemotes.State`
+  `field.squares`: crop, grown, readyAt), which `GardenView` now also keeps (`GardenView.OwnField()`), and the own plot's eggs
+  (`GardenView.OwnState()`). A square is ripe when `grown ≥ growSeconds` or `readyAt ≤ GetServerTimeNow()` (the server settles before a
+  harvest, so it can be picked); next = the smallest `readyAt` still ahead; an egg is ready when its `readyAt ≤ now`.
+- **Summary bubble** over the own plot's name sign (client-drawn, only the own plot, independent of GardenView's detail level): one pill
+  `🧺 4 ripe · ⏱ 2:14 · 🥚 Ready!` with only the parts that apply (ripe > 0; something growing → time to the next ripe crop; an egg ready);
+  nothing planted (no crop on any square) → `🌱 Plant seeds` (with `· 🥚 Ready!` if an egg is ready). Updated once a second from
+  `GetServerTimeNow`. Shown while the character is within 120 studs (horizontal) of the sign **or anywhere on the garden's central plaza**
+  (inside plot ring 1); a constant on-screen size (pixels, not studs), `AlwaysOnTop` (changed while building: without it the food
+  stand and the follower pets' labels hid it from the plaza; captures do not show it, so it is checked by its properties). Texts through `Locale` (plural for the ripe count), re-rendered on `Locale.Changed`.
+- Not in U2: the Near tier's rings, other players' bubbles, the crow forecast in the bubble (U4), G1 markers pointing at the own plot.
+
+**Acceptance checks** (Studio, through the real UI; live profile snapshotted before anything that changes it, restored after).
+1. Code: `grep -E "PetsGarden|gardenButton|pets\.garden"` over `src/` and `localization/` finds nothing; the Pets panel (wide and compact)
+   has no gap where the button was; no Studio-only change needed.
+2. Button: in the row after Pets, same size / look as the others, back after a respawn. A click on the real button from the hub puts the
+   character ≤ 10 studs from its plot's `GoGarden` arrival point (floor space (8, 0, −30)); with `GardenPlot` cleared on the client it shows
+   the toast and `GoGarden` is not fired.
+3. Badge against the real state: the number equals the server's count for the live profile (squares with `Grown ≥ growSeconds` after a
+   settle + incubators with `ReadyAt ≤ now`); display-only fixtures (a `State` / `Plot` message fired to the client) for 2 ripe + 1 ready egg
+   → "3", 0 → no badge, 12 ripe + 3 eggs → "15"; a harvest through the field prompt lowers it by 1 within 2 s; the Pets icon shows no egg dot.
+4. Bubble: over the own sign only (no other plot has one); fixtures: ripe + growing + ready egg → all three parts; only growing → only the
+   time, equal to the Garden panel's time of the soonest square (± 1 s) and ticking each second; nothing planted → "🌱 Plant seeds"; nothing
+   planted + ready egg → both. Shown at 110 studs from the sign, hidden at 130 studs off the plaza, shown at the plaza's centre and its far
+   edge, hidden in the hub; readable in a capture from the plaza.
+5. Phone: at 667 × 375 and 844 × 390 the six icons fit without overlapping the score panel or the coin counter; the Garden button is ≥ 44 px
+   at scale 1 and ≥ 36 px on screen; the badge does not cover the neighbouring icon.
+6. Texts: English, Czech and the pseudo-language: bubble and toast with `TextFits`, no literal; `loc.py build` / `check` (0 errors) / `lint`
+   (within baseline).
+7. A playtest boot without errors or warnings on server and client.
+
+**Studio (2026-11-06, live profile Lekzdrh; snapshots `profile_9892673032_U2_1` (unused) and `_U2_2`, restored after the harvest and
+checked equal):** 1–7 passed. 1: grep clean; Pets panel wide layout without a gap (compact reviewed in code). 2: the real icon from the
+hub → 0.0 studs from the arrival point; `GardenPlot` cleared → toast, no teleport. 3: live 9 ripe + 0 eggs = badge 9 (later 3 + 1 = 4);
+fixtures 3 / none / 15 / 1; a harvest at square 16 → 4 → 3 within 0.3 s (the prompt triggered with `InputHoldBegin/End`: the MCP's E key
+and a click on the prompt UI did not reach it, and at square 2 the E prompt shown was incubator 1's — the overlap U3 removes). 4: every
+part combination, ticking, = the Garden panel's time; shown at 110 studs and on the plaza's far (178) and side edges, hidden at 125 /
+130 off the plaza and in the hub; seen in a capture with `AlwaysOnTop` off. 5: by geometry (icons end at x 360; at 667 px the score
+panel starts at 405, the coins at 504; the badge stays 4 px clear of the next icon). 6: cs / en / qps, bounds = size (`TextFits`
+misreads AutomaticSize labels); no literal; loc check 0 errors, lint 0. 7: no warnings or errors (both boots).
 
 ### E0 — Economy model
 **Goal.** One reproducible model of the Coin economy (`tools/economy.py`, Python stdlib; how to run it: ECONOMY.md) that fixes the numbers the

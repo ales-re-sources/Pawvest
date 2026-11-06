@@ -1,6 +1,6 @@
 # Pawvest — garden and pet UI redesign (U1–U5)
 
-*Proposed 2026-11-05 from the user's notes, all open decisions settled the same day (§12); nothing built. Built UI as it is today: GDD §7.5–7.9, LAYOUT.md
+*Proposed 2026-11-05 from the user's notes, all open decisions settled the same day (§12); U1 and U2 built. Built UI as it is today: GDD §7.5–7.9, LAYOUT.md
 (PetsPanel, PetDetail, PlotView, FieldClient, IncubatorClient). When a piece ships, its as-built design moves to GDD and this file shrinks.*
 
 ## 1. Problems
@@ -26,7 +26,7 @@
 ## 3. Field: see without opening anything (distance tiers, own plot)
 | Tier | Distance from the own plot | Shows |
 |---|---|---|
-| Far | ≤ 120 studs (and from the plaza) | a **summary bubble** over the name sign: `🧺 4 ripe · ⏱ 2:14 · 🥚 Ready!` (only the parts that apply; nothing growing → `🌱 Plant seeds`) |
+| Far | ≤ 120 studs (and from the plaza) | the **summary bubble** over the name sign: **built in U2** (GDD §7.6) |
 | Near | ≤ 30 studs | a **ring over every planted square**: a pie that fills as the crop grows, crop icon inside; ripe = full ring that bounces with a ✓; the 4 squares nearest the player also print the time (`2:14`) |
 | Focus | the selected square (§4) | white outline + the square card |
 
@@ -85,9 +85,9 @@ plaza.
 - Studio check: plots stand 9 studs apart; the barn and hatchery stay inside the plot's 40-stud width.
 
 ## 8. Getting there
-- A **🌱 Garden** button in the top-left icon row (after Pets): teleports to the own plot (`GoGarden`, as today); removed from the Pets panel.
-- Its **badge** counts what waits: ripe crops + ready eggs (G1's `PetsGarden` dot moves here).
-- In the hub, a signpost at the bridge already points to the garden; G1's markers can point at the own plot when something is ready.
+**Built in U2 (2026-11-06)**: the 🌱 Garden icon with its badge (ripe crops + ready eggs) and the summary bubble, as built in GDD §7.6 and
+§11; the design text is in `git show e2f7a06:docs/UI_GARDEN_PETS.md`. Left open: G1's markers could point at the own plot when something
+is ready (the badge covers it for now); other players' bubbles (Renown, biggest crop) stay optional (§3).
 
 ## 9. Pets panel and pet page
 **Built in U1 (2026-11-06)**: as built in GDD §7.5 (rows, filters, summary) and §7.8 (pet page); the design history is in
@@ -112,7 +112,7 @@ food stand's counters stay reachable and readable from the plots on that side.
 | Id | Content | Depends on |
 |---|---|---|
 | U1 | Pets panel, pet page and the food stand panel (§9, §9.1): **built 2026-11-06** | P4 |
-| U2 | Garden HUD button + badge, summary bubble over the own sign (§3 Far, §8) | – |
+| U2 | Garden HUD button + badge, summary bubble over the own sign (§3 Far, §8): **built 2026-11-06** | – |
 | U3 | Field interaction: rings, tap-select, square card, hand bar, pet reach borders, prompts removed (§3 Near, §4, §5) | every player |
 | U4 | Panel split: Skills → Garden tab, Barn panel, Seed stall; Garden panel removed (§6) | U3 |
 | U5 | Plot layout: hatchery left, barn right, path; K1 egg cards (§7) | U4 (barn) |

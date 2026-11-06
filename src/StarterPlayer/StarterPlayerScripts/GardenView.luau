@@ -8,7 +8,7 @@
 -- Detail by horizontal distance from the character to the plot centre: full ≤ 60 studs, mid ≤ 120 (pets as blocks), low ≤ 300,
 -- nothing beyond (10 studs of hysteresis). Builds run on Heartbeat within BUDGET seconds per frame, the own plot first, then the
 -- nearest. The own plot's incubators and field squares carry prompts that call the handlers registered with OnIncubator /
--- OnSquare.
+-- OnSquare. OwnState / OwnField return the own plot and the owner's field state as last received (GardenSummary, U2).
 -- In Studio the folder carries the attributes Instances and Pending (tests).
 
 local Players = game:GetService("Players")
@@ -282,6 +282,16 @@ end
 Players.PlayerAdded:Connect(watchNames)
 for _, owner in Players:GetPlayers() do
 	watchNames(owner)
+end
+
+-- The owner's field as GardenRemotes.State last sent it ({ squares = { [n] = { crop, grown, readyAt } }, ... }; FieldClient
+-- asks for it), kept here because this module is required before anyone asks (GardenSummary reads it, U2).
+local ownField = nil
+remotes:WaitForChild("State").OnClientEvent:Connect(function(state)
+	ownField = if type(state) == "table" then state.field else nil
+end)
+function GardenView.OwnField()
+	return ownField
 end
 
 remotes:WaitForChild("Plot").OnClientEvent:Connect(function(userId, state)

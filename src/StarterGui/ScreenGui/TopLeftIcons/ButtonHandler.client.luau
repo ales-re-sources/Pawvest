@@ -40,12 +40,26 @@ if not petsButton then
 	petsButton.Text = "🐶"
 	petsButton.Parent = screenGui
 end
+-- 🌱 Garden button (U2): made here from the Skills button (no Studio placeholder); teleports to the own plot (GoGarden,
+-- HomeService). Its badge (ripe crops + ready eggs) is drawn by Hints / HintSources.
+local gardenIcon = screenGui:FindFirstChild("GardenButton")
+if not gardenIcon then
+	gardenIcon = skillsButton:Clone()
+	gardenIcon.Name = "GardenButton"
+	for _, child in gardenIcon:GetChildren() do
+		if child.Name == "HintDot" or child.Name == "HintBadge" then
+			child:Destroy()
+		end
+	end
+	gardenIcon.Text = "🌱"
+	gardenIcon.Parent = screenGui
+end
 local petsGui = playerGui:WaitForChild("PetsGui", 10)
 local petsSetOpen = petsGui and petsGui:WaitForChild("SetOpen", 10)
 
--- Icon order, left to right: Home, Skills, Pets, Settings, Admin (last, only visible to admins).
+-- Icon order, left to right: Home, Skills, Pets, Garden, Settings, Admin (last, only visible to admins).
 -- Positions are set here, so adding an icon never needs Studio edits.
-for index, icon in { homeButton, skillsButton, petsButton, settingsButton, adminButton } do
+for index, icon in { homeButton, skillsButton, petsButton, gardenIcon, settingsButton, adminButton } do
 	icon.Position = UDim2.new(0, 10 + (index - 1) * 60, 0, 20)
 end
 
@@ -60,10 +74,11 @@ local ICON_COLORS = {
 	HomeButton = StudStyle.Colors.Red,
 	SkillsButton = StudStyle.PanelColors.SkillsPanel,
 	PetsButton = StudStyle.Colors.Green,
+	GardenButton = StudStyle.Colors.Wood, -- the garden's wood (the Garden panel, the plot signs)
 	SettingsButton = StudStyle.PanelColors.SettingsPanel,
 	AdminButton = StudStyle.PanelColors.AdminPanel,
 }
-for _, icon in { homeButton, skillsButton, petsButton, settingsButton, adminButton } do
+for _, icon in { homeButton, skillsButton, petsButton, gardenIcon, settingsButton, adminButton } do
 	icon.BackgroundColor3 = ICON_COLORS[icon.Name]
 	StudStyle.Brick(icon, { socket = true })
 end
@@ -174,6 +189,19 @@ petsButton.MouseButton1Click:Connect(function()
 		end
 		petsSetOpen:Fire(true)
 	end
+end)
+
+-- Garden: to the own plot (the server checks the plot and the cooldown, cancels a running timer and teleports)
+local Hints = require(player:WaitForChild("PlayerScripts"):WaitForChild("Hints"))
+local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
+local goGardenEvent = ReplicatedStorage:WaitForChild("GoGarden")
+gardenIcon.MouseButton1Click:Connect(function()
+	if player:GetAttribute("GardenPlot") == nil then
+		Hints.Toast(Locale.T("garden.go.notReady"))
+		return
+	end
+	closePets()
+	goGardenEvent:FireServer()
 end)
 
 skillsButton.MouseButton1Click:Connect(function()

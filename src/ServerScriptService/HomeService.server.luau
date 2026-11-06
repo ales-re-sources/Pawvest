@@ -1,7 +1,7 @@
 -- HomeService: the Home button (top-left) sends the player one step back: from a stage of a world to the plaza in front of
 -- that stage's gate, from anywhere else (hub, the world's courtyard, Tutorial, garden) to the hub spawn. A running stage
 -- timer is cancelled and the score panel shows the new place. The remote carries no data; the server decides.
--- GoGarden (the Pets panel's "Go to my garden" button) works the same way: it lands the player on the grass in front
+-- GoGarden (the 🌱 Garden icon, top left) works the same way: it lands the player on the grass in front
 -- of their borrowed garden plot (GardenPlots; its position from GardenConfig.PlotCFrame, no plot model), looking at it.
 -- Both remotes share one cooldown.
 

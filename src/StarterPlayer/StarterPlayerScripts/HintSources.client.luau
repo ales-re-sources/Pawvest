@@ -8,8 +8,8 @@
 --     in this session, the marker moves to the stage of the same world with the lowest medal instead (the stars that can
 --     still open the next world); never to another world, so a player with World 2 open is still sent there.
 --   Skills: a dot on the Skills icon when a talent level became affordable that was not affordable while the panel was open.
---   Ready egg: a dot on the Pets icon and "Go to my garden", a "Ready!" marker above the incubator while in the garden, and a
---     toast once per egg.
+--   Ready egg: a "Ready!" marker above the incubator while in the garden, and a toast once per egg.
+--   Garden waiting (U2): the badge on the Garden icon counts ripe crops + ready eggs (GardenSummary).
 -- Display only: reads attributes, leaderstats and the own plot's incubator models.
 
 local Players = game:GetService("Players")
@@ -22,6 +22,7 @@ local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local Hints = require(script.Parent:WaitForChild("Hints"))
 local GardenView = require(script.Parent:WaitForChild("GardenView"))
 local PlotView = require(script.Parent:WaitForChild("PlotView"))
+local GardenSummary = require(script.Parent:WaitForChild("GardenSummary"))
 
 local player = Players.LocalPlayer
 
@@ -354,8 +355,8 @@ local function updateEggs(area: string?)
 			end
 		end
 	end
-	Hints.SetDot("PetsButton", "egg", first ~= nil)
-	Hints.SetDot("PetsGarden", "egg", first ~= nil)
+	local summary = GardenSummary.Get(now)
+	Hints.SetBadge("GardenButton", summary.ripe + summary.eggs)
 
 	local piece = first and GardenView.OwnPiece("inc" .. first) -- the drawn incubator (nil while not drawn)
 	local base = piece and piece:FindFirstChild("Base")

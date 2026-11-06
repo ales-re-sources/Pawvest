@@ -2,8 +2,7 @@
 -- Display only: the list comes from PetClient (PetRemotes.PetsChanged), so a hatch or a sale shows up while the panel
 -- is open. A click just names a pet or the next slot; the server validates, prices and pays. The GUI is built here.
 -- The 🐶 button (ButtonHandler) opens it through the SetOpen BindableEvent and reads the Open attribute.
--- Stud-brick look (StudStyle, green like its icon); "Go to my garden" asks the server (GoGarden, HomeService) to put
--- the player in front of their garden plot (U2 moves it to a HUD button).
+-- Stud-brick look (StudStyle, green like its icon). The way to the garden is the 🌱 HUD icon (U2, ButtonHandler).
 -- Layout (U1): summary line ("Coin bonus +12 % · 2 cute pets with you"), filter chips (All n/50 · With me · On the field ·
 -- Best for ▼ → a trait: pets with it, highest first; the choice holds for the session), the pet list, the equip slots as three
 -- square bricks at the bottom (#PetConfig.SlotPrices): a slot shows its equipped pet (click = unequip), "Empty", or a lock; the
@@ -11,8 +10,8 @@
 -- A row is PetRow's (portrait with level badge and status icon, name, trait chips with fills and ▲; hover / hold a chip for its
 -- numbers) plus an Equip / Unequip brick and a Details › brick that opens the pet page (PetDetail, drawn over this panel). The rest
 -- of the row does nothing (kids toggled pets while scrolling); selling is only on the pet page.
--- Width 460, capped to the viewport (16 px margins), scaled by PanelFit on short screens; compact layout there (the garden button
--- becomes a 🌱 brick at the end of the filter row, messages replace the summary line for a moment).
+-- Width 460, capped to the viewport (16 px margins), scaled by PanelFit on short screens; compact layout there (messages
+-- replace the summary line for a moment).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -45,9 +44,7 @@ local DETAILS_WIDTH = 84
 local SLOT_SIZE = if COMPACT then BRICK else 96
 local SLOT_GAP = if COMPACT then 12 else 16
 local SUMMARY_TOP = if COMPACT then 38 else 42
-local GARDEN_TOP = 68 -- not compact: its own row
-local GARDEN_HEIGHT = 34
-local FILTER_TOP = if COMPACT then 60 else 108
+local FILTER_TOP = if COMPACT then 60 else 68
 local INFO_TOP = FILTER_TOP + BRICK + 6 -- not compact
 local LIST_TOP = if COMPACT then FILTER_TOP + BRICK + 6 else INFO_TOP + 24
 local CONFIRM_SECONDS = 3 -- how long "Sure?" waits for the second click
@@ -66,7 +63,6 @@ local COLOR_CLOSE = StudStyle.Colors.Red
 local COLOR_EQUIP = StudStyle.Colors.Yellow
 local COLOR_UNEQUIP = StudStyle.Colors.Wood
 local COLOR_DETAILS = StudStyle.Colors.Blue
-local COLOR_GARDEN = StudStyle.Colors.Wood
 local COLOR_FILTER = StudStyle.Shade(COLOR_PANEL, 0.7)
 local COLOR_FILTER_ON = StudStyle.Colors.Yellow
 local COLOR_INFO = Color3.fromRGB(190, 190, 190)
@@ -149,12 +145,6 @@ local summaryLabel = label("Summary", {
 	RichText = true,
 	TextTruncate = Enum.TextTruncate.AtEnd,
 })
-local gardenButton = button("Garden", {
-	Position = if COMPACT then UDim2.new(1, -10 - BRICK, 0, FILTER_TOP) else UDim2.new(0, 10, 0, GARDEN_TOP),
-	Size = if COMPACT then UDim2.fromOffset(BRICK, BRICK) else UDim2.new(1, -20, 0, GARDEN_HEIGHT),
-	BackgroundColor3 = COLOR_GARDEN,
-	TextSize = if COMPACT then 20 else 16,
-}, if COMPACT then 2 else 6)
 local infoLabel = label("Info", {
 	Position = UDim2.new(0, 12, 0, INFO_TOP),
 	Size = UDim2.new(1, -24, 0, 20),
@@ -219,7 +209,6 @@ local panel = create("Frame", {
 	titleLabel,
 	closeButton,
 	summaryLabel,
-	gardenButton,
 	infoLabel,
 	list,
 	emptyLabel,
@@ -322,7 +311,7 @@ end
 
 -- Filter chips --------------------------------------------------------------------------------------------------------
 local FILTERS = { "all", "with", "field", "best" }
-local filterRight = if COMPACT then BRICK + 16 else 10 -- compact: the 🌱 brick ends the row
+local filterRight = 10
 local filterWidth = math.floor((WIDTH - 10 - filterRight - 6 * (#FILTERS - 1)) / #FILTERS)
 local filterButtons = {}
 for index, id in FILTERS do
@@ -379,7 +368,6 @@ end
 -- texts that do not depend on the pet state (set again when the language changes)
 local function staticTexts()
 	titleLabel.Text = Locale.T("pets.title")
-	gardenButton.Text = if COMPACT then "🌱" else Locale.T("pets.garden")
 	slotsLabel.Text = Locale.T("pets.slotsTitle")
 	filterButtons.with.Text = Locale.T("pets.filter.withMe")
 	filterButtons.field.Text = Locale.T("pets.filter.field")
@@ -782,18 +770,6 @@ screenGui:SetAttribute("Open", false)
 setOpenEvent.Event:Connect(setOpen)
 closeButton.Activated:Connect(function()
 	setOpen(false)
-end)
-
-gardenButton.Activated:Connect(function()
-	if player:GetAttribute("GardenPlot") == nil then
-		flash(Locale.T("pets.gardenNotReady"), COLOR_ERROR)
-		return
-	end
-	local goGarden = ReplicatedStorage:FindFirstChild("GoGarden")
-	if goGarden then
-		goGarden:FireServer()
-		setOpen(false)
-	end
 end)
 
 PetClient.Changed:Connect(refresh)
