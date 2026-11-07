@@ -46,6 +46,7 @@ local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
+local UiSounds = require(ReplicatedStorage:WaitForChild("UiSounds"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local GardenView = require(script.Parent:WaitForChild("GardenView"))
 local PlotView = require(script.Parent:WaitForChild("PlotView"))
@@ -79,7 +80,9 @@ local HAND_BUTTON = 52
 local HAND_GAP = 6
 local HAND_RAISE = 6 -- px the active mode's button is raised
 local HINT_GAP = 12 -- px between the hint line and the bar's top (the raised button)
-local POINTER = "rbxasset://SystemCursors/PointingHand"
+-- Roblox's own hover hand (ClickDetector / DragDetector), shipped with every client; "rbxasset://SystemCursors/PointingHand" was
+-- set but drawn as the arrow
+local POINTER = "rbxasset://textures/Cursors/DragDetector/HoverCursor.png"
 local LIST_MAX = 300 -- px: the pickers' list scrolls beyond this
 
 local COLOR_PANEL = StudStyle.PanelColors.Field
@@ -992,6 +995,7 @@ for index, name in MODES do
 		Parent = handBar,
 	})
 	StudStyle.Brick(button, { studs = 1, socket = true })
+	button:SetAttribute("UiSound", "Tab") -- switching the hand is a tab switch (UiSoundsClient)
 	-- the active mode's frame (a separate frame: the brick's own stroke is its face's)
 	create("Frame", {
 		Name = "Active",
@@ -1410,9 +1414,11 @@ local pointing = false
 local function updateStanding()
 	local want = nil
 	local overSquare = false
+	local byMouse = false
 	if handBar.Visible then
 		local square = if mouseAt then squareUnder(mouseAt) else nil
 		overSquare = square ~= nil
+		byMouse = overSquare
 		if not square then
 			local at = rootPosition()
 			square = at and GardenView.SquareAt(at)
@@ -1428,6 +1434,9 @@ local function updateStanding()
 	if want ~= standing then
 		standing = want
 		GardenView.ShowHover(want)
+		if want and byMouse then
+			UiSounds.Play("Hover") -- the mouse moved onto another square; not while walking over squares
+		end
 	end
 end
 
