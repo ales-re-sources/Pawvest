@@ -873,7 +873,7 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		end
 	end)
 
-	nameButton.Activated:Connect(function()
+	local function saveName()
 		local owned = pet()
 		if not owned then
 			return
@@ -893,6 +893,13 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		end
 		nameResult(Locale.T("petDetail.name.checking"), COLOR_INFO)
 		remotes.Rename:FireServer(owned.uid, clean)
+	end
+	nameButton.Activated:Connect(saveName)
+	-- Enter in the box counts as a click on the Save button
+	nameBox.FocusLost:Connect(function(enterPressed)
+		if enterPressed then
+			saveName()
+		end
 	end)
 
 	backButton.Activated:Connect(api.Close)

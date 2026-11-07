@@ -26,6 +26,7 @@ local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
 local PetDetail = require(script.Parent:WaitForChild("PetDetail"))
 local PetRow = require(script.Parent:WaitForChild("PetRow"))
+local PetFilterBar = require(script.Parent:WaitForChild("PetFilterBar"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
 local PanelFocus = require(ReplicatedStorage:WaitForChild("PanelFocus"))
@@ -69,8 +70,6 @@ local COLOR_CLOSE = StudStyle.Colors.Red
 local COLOR_EQUIP = StudStyle.Colors.Yellow
 local COLOR_UNEQUIP = StudStyle.Colors.Wood
 local COLOR_DETAILS = StudStyle.Colors.Blue
-local COLOR_FILTER = StudStyle.Shade(COLOR_PANEL, 0.7)
-local COLOR_FILTER_ON = StudStyle.Colors.Yellow
 local COLOR_INFO = Color3.fromRGB(190, 190, 190)
 local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
 local COLOR_OK = Color3.fromRGB(120, 230, 120)
@@ -246,8 +245,6 @@ local pendingToken = 0
 local flashToken = 0
 local flashing = false -- a message is showing: refresh leaves the info line alone
 local rows = {} -- [uid] = row frame (rebuilt on every state change)
-local filter = "all" -- "all" | "with" | "field" | "best" (kept for the session)
-local bestTrait = "Cuteness" -- the trait of "Best for"
 
 local refresh -- defined below; the confirmation timeouts and the state listener call it
 local summaryText = "" -- compact: the summary comes back after a message
@@ -316,144 +313,28 @@ local function equippedCount(): number
 	return if PetClient.State then #PetClient.State.equipped else 0
 end
 
--- Filter chips --------------------------------------------------------------------------------------------------------
-local FILTERS = { "all", "with", "field", "best" }
-local filterRight = 10
-local filterWidth = math.floor((WIDTH - 10 - filterRight - 6 * (#FILTERS - 1)) / #FILTERS)
-local filterButtons = {}
-for index, id in FILTERS do
-	local chip = button("Filter_" .. id, {
-		Position = UDim2.fromOffset(10 + (index - 1) * (filterWidth + 6), FILTER_TOP),
-		Size = UDim2.fromOffset(filterWidth, BRICK),
-		BackgroundColor3 = COLOR_FILTER,
-		TextSize = 14,
-		TextWrapped = true,
-	}, 2)
-	chip:SetAttribute("UiSound", "Tab") -- filters are tabs (UiSoundsClient)
-	chip.Parent = panel
-	filterButtons[id] = chip
-end
-
--- "Best for ▼" opens a list of the traits under its chip
-local bestMenu = create("Frame", {
-	Name = "BestMenu",
-	AnchorPoint = Vector2.new(1, 0),
-	Position = UDim2.fromOffset(WIDTH - filterRight, FILTER_TOP + BRICK + 4),
-	Size = UDim2.fromOffset(180, 0),
-	AutomaticSize = Enum.AutomaticSize.Y,
-	BackgroundColor3 = StudStyle.Shade(COLOR_PANEL, 0.2),
-	ZIndex = 12,
-	Visible = false,
-	Parent = panel,
-}, {
-	create("UICorner", { CornerRadius = UDim.new(0, 8) }),
-	create("UIStroke", { Color = COLOR_EQUIPPED, Thickness = 2 }),
-	create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 6) }),
-	create("UIPadding", {
-		PaddingTop = UDim.new(0, 6),
-		PaddingBottom = UDim.new(0, 8),
-		PaddingLeft = UDim.new(0, 6),
-		PaddingRight = UDim.new(0, 6),
-	}),
+-- Filter chips (PetFilterBar, shared with the Food Stand) -------------------------------------------------------------
+local filterBar = PetFilterBar.Mount(panel, {
+	color = COLOR_PANEL,
+	width = WIDTH,
+	top = FILTER_TOP,
+	height = BRICK,
+	onPress = function()
+		chipTooltip.Hide()
+	end,
+	onChange = function()
+		list.CanvasPosition = Vector2.zero
+		refresh()
+	end,
 })
-local bestOptions = {}
-for order, trait in PetRow.Traits do
-	local option = button("Best_" .. trait.id, {
-		LayoutOrder = order,
-		Size = UDim2.new(1, 0, 0, BRICK),
-		BackgroundColor3 = COLOR_FILTER,
-		TextSize = 15,
-		ZIndex = 13,
-	}, 3)
-	option:SetAttribute("UiSound", "Tab")
-	option.Parent = bestMenu
-	bestOptions[trait.id] = option
-end
-
-local function traitWord(id: string): string
-	return if id == "Cuteness" then Locale.T("pets.filter.coins") else Locale.T("pet.apt." .. id)
-end
 
 -- texts that do not depend on the pet state (set again when the language changes)
 local function staticTexts()
 	titleLabel.Text = Locale.T("pets.title")
 	slotsLabel.Text = Locale.T("pets.slotsTitle")
-	filterButtons.with.Text = Locale.T("pets.filter.withMe")
-	filterButtons.field.Text = Locale.T("pets.filter.field")
-	for id, option in bestOptions do
-		option.Text = PetRow.ByTrait[id].icon .. " " .. traitWord(id)
-	end
+	filterBar.SetTexts()
 end
 staticTexts()
-
-local function setFilter(id: string)
-	filter = id
-	list.CanvasPosition = Vector2.zero
-	refresh()
-end
-
-for id, chip in filterButtons do
-	chip.Activated:Connect(function()
-		chipTooltip.Hide()
-		if id == "best" then
-			bestMenu.Visible = not bestMenu.Visible
-			return
-		end
-		bestMenu.Visible = false
-		setFilter(id)
-	end)
-end
-for id, option in bestOptions do
-	option.Activated:Connect(function()
-		bestMenu.Visible = false
-		bestTrait = id
-		setFilter("best")
-	end)
-end
-
--- the pets the filter shows, in its order: inventory order, or (Best for) the trait's level, highest first
-local function filtered(inventory)
-	local state = PetClient.State
-	local shown = {}
-	for index, pet in inventory do
-		local keep = filter == "all"
-			or (filter == "with" and pet.equipped)
-			or (filter == "field" and pet.field ~= nil)
-			or (filter == "best" and PetConfig.AptitudeLevel(state.pets[pet.uid], bestTrait) > 0)
-		if keep then
-			table.insert(shown, { pet = pet, index = index })
-		end
-	end
-	if filter == "best" then
-		table.sort(shown, function(a, b)
-			local la = PetConfig.AptitudeLevel(state.pets[a.pet.uid], bestTrait)
-			local lb = PetConfig.AptitudeLevel(state.pets[b.pet.uid], bestTrait)
-			if la ~= lb then
-				return la > lb
-			end
-			return a.index < b.index
-		end)
-	end
-	local pets = {}
-	for _, item in shown do
-		table.insert(pets, item.pet)
-	end
-	return pets
-end
-
-local function refreshFilters(inventory)
-	filterButtons.all.Text = Locale.T("pets.filter.all", { count = #inventory, max = PetConfig.MaxPets })
-	local picked = filter == "best"
-	filterButtons.best.Text = if picked
-		then Locale.T("pets.filter.bestTrait", { icon = PetRow.ByTrait[bestTrait].icon, trait = traitWord(bestTrait) })
-		else Locale.T("pets.filter.best")
-	for id, chip in filterButtons do
-		chip.BackgroundColor3 = if filter == id then COLOR_FILTER_ON else COLOR_FILTER
-	end
-	for id, option in bestOptions do
-		option.BackgroundColor3 = if filter == "best" and bestTrait == id then COLOR_FILTER_ON else COLOR_FILTER
-	end
-end
 
 -- Equip slots ---------------------------------------------------------------------------------------------------------
 local slotCount = #PetConfig.SlotPrices
@@ -533,7 +414,7 @@ for index = 1, slotCount do
 		if not state then
 			return
 		end
-		bestMenu.Visible = false
+		filterBar.HideMenu()
 		if slot.kind == "pet" then
 			clearPending()
 			remotes.Unequip:FireServer(slot.pet.uid)
@@ -681,7 +562,7 @@ end
 -- Pet list ------------------------------------------------------------------------------------------------------------
 local function onEquipClicked(pet)
 	clearPending()
-	bestMenu.Visible = false
+	filterBar.HideMenu()
 	if pet.field then
 		flash(rejectText("field"), COLOR_ERROR)
 	elseif pet.equipped then
@@ -740,7 +621,7 @@ local function buildRow(index: number, pet)
 	end)
 	detailsButton.Activated:Connect(function()
 		clearPending()
-		bestMenu.Visible = false
+		filterBar.HideMenu()
 		chipTooltip.Hide()
 		detail.Open(pet.uid)
 	end)
@@ -775,7 +656,7 @@ refresh = function()
 		summaryLabel.Text = summaryText
 		summaryLabel.TextColor3 = Color3.new(1, 1, 1)
 	end
-	refreshFilters(inventory)
+	filterBar.Refresh(inventory)
 
 	chipTooltip.Hide()
 	for _, row in rows do
@@ -783,7 +664,7 @@ refresh = function()
 		row:Destroy()
 	end
 	table.clear(rows)
-	local shown = filtered(inventory)
+	local shown = filterBar.Filtered(inventory)
 	for index, pet in shown do
 		local row = buildRow(index, pet)
 		row.Parent = list
@@ -833,7 +714,7 @@ function setOpen(open: boolean)
 		PanelFocus.Closed("Pets")
 		clearPending()
 		hoveredSlot = nil
-		bestMenu.Visible = false
+		filterBar.HideMenu()
 		chipTooltip.Hide()
 		detail.Close()
 		local tween = TweenService:Create(panel, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Position = POS_CLOSED })

@@ -25,6 +25,7 @@ local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
 local PanelFocus = require(ReplicatedStorage:WaitForChild("PanelFocus"))
 local PetRow = require(script.Parent:WaitForChild("PetRow"))
+local PetFilterBar = require(script.Parent:WaitForChild("PetFilterBar"))
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
 local feedEvent = remotes:WaitForChild("Feed") -- looked up by name, never `remotes.X`
@@ -35,6 +36,7 @@ local HEIGHT = 480
 local FOOD_BUTTON_WIDTH = 86
 local ARM_SECONDS = 3 -- touch: how long a selected food button waits for the second tap
 local TOOLTIP_ROOM = 130 -- a button closer than this to the panel's top gets its tooltip below it
+local FILTER_TOP = 74 -- the filter chips (PetFilterBar, as in the Pets panel) sit above the pet list
 local MARGIN = 16 -- screen margin around the panel on a small screen
 local CLOSE_DISTANCE = GardenConfig.FoodStandDistance -- walking further from the stand closes the panel (the server rejects it too)
 
@@ -116,8 +118,8 @@ local statusLabel = label("Status", {
 })
 local list = create("ScrollingFrame", {
 	Name = "Pets",
-	Position = UDim2.new(0, 8, 0, 74),
-	Size = UDim2.new(1, -16, 1, -82),
+	Position = UDim2.new(0, 8, 0, 74 + 42), -- set again by layoutList
+	Size = UDim2.new(1, -16, 1, -82 - 42),
 	BackgroundTransparency = 1,
 	BorderSizePixel = 0,
 	ScrollBarThickness = 5,
@@ -128,7 +130,7 @@ local list = create("ScrollingFrame", {
 	create("UIPadding", { PaddingRight = UDim.new(0, 6), PaddingTop = UDim.new(0, 2) }),
 })
 local emptyLabel = label("Empty", {
-	Position = UDim2.new(0, 12, 0, 80),
+	Position = UDim2.new(0, 12, 0, 80 + 42),
 	Size = UDim2.new(1, -24, 0, 40),
 	Font = Enum.Font.Gotham,
 	TextSize = 15,
@@ -180,6 +182,32 @@ local panel = create("Frame", {
 StudStyle.Panel(panel, COLOR_PANEL)
 local chipTooltip = PetRow.Tooltip(panel, COLOR_PANEL)
 
+local refresh -- defined below; a filter pick calls it
+local chipHeight = 36
+local filterBar = PetFilterBar.Mount(panel, {
+	color = COLOR_PANEL,
+	width = WIDTH,
+	top = FILTER_TOP,
+	height = chipHeight,
+	onPress = function()
+		chipTooltip.Hide()
+	end,
+	onChange = function()
+		list.CanvasPosition = Vector2.zero
+		refresh()
+	end,
+})
+
+-- the chips take a row above the pet list; their height keeps a finger target of at least 36 px on screen
+local function layoutList()
+	local listTop = FILTER_TOP + chipHeight + 6
+	filterBar.SetLayout(FILTER_TOP, chipHeight)
+	list.Position = UDim2.new(0, 8, 0, listTop)
+	list.Size = UDim2.new(1, -16, 1, -listTop - 8)
+	emptyLabel.Position = UDim2.new(0, 12, 0, listTop + 6)
+end
+layoutList()
+
 local screenGui = create("ScreenGui", {
 	Name = "FoodShopGui",
 	ResetOnSpawn = false,
@@ -201,12 +229,14 @@ local function fitToScreen()
 	fit.Scale = scale
 	buttonHeight = math.min(60, math.max(46, math.ceil(36 / scale)))
 	rowHeight = math.max(62, buttonHeight + 10)
+	chipHeight = math.max(36, math.ceil(36 / scale))
+	layoutList()
 end
 
 -- texts that do not depend on the state (set again when the language changes)
 local function staticTexts()
 	titleLabel.Text = Locale.T("food.title")
-	emptyLabel.Text = Locale.T("food.empty")
+	filterBar.SetTexts()
 end
 staticTexts()
 
@@ -431,7 +461,7 @@ local function petRow(order: number, entry)
 	return row
 end
 
-local function refresh()
+refresh = function()
 	for _, row in rows do
 		PetPortrait.Release(row) -- the portraits stay cached
 		row:Destroy()
@@ -444,14 +474,21 @@ local function refresh()
 		return
 	end
 	chipTooltip.Hide()
-	-- U1: pets with you first, then the others that can still grow, then the ones food can't train (each group in inventory order)
 	local inventory = PetClient.Inventory()
+	filterBar.Refresh(inventory)
+	local shown = filterBar.Filtered(inventory)
+	-- U1: pets with you first, then the others that can still grow, then the ones food can't train (each group in inventory order);
+	-- "Best for" keeps its own order (the trait's level)
+	local grouped = filterBar.Filter() ~= "best"
 	local function group(entry): number
+		if not grouped then
+			return 1
+		end
 		return if entry.care == nil then 3 elseif entry.equipped then 1 else 2
 	end
 	local count = 0
 	for pass = 1, 3 do
-		for _, entry in inventory do
+		for _, entry in shown do
 			if group(entry) == pass then
 				count += 1
 				local row = petRow(count, entry)
@@ -461,6 +498,7 @@ local function refresh()
 		end
 	end
 	emptyLabel.Visible = count == 0
+	emptyLabel.Text = Locale.T(if #inventory == 0 then "food.empty" else "pets.filter.none")
 	-- the rows are rebuilt on every state change (Coins too): keep the selection and the tooltip on the new buttons
 	if armed and not buttons[armed] then
 		armed = nil
@@ -476,6 +514,7 @@ end
 
 local function closePanel()
 	PanelFocus.Closed("Food")
+	filterBar.HideMenu()
 	openStand = nil
 	panel.Visible = false
 	refresh()
