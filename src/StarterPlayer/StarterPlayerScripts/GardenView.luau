@@ -7,7 +7,8 @@
 --     ROADMAP E1a1 check 5).
 -- Detail by horizontal distance from the character to the plot centre: full ≤ 60 studs, mid ≤ 120 (pets as blocks), low ≤ 300,
 -- nothing beyond (10 studs of hysteresis). Builds run on Heartbeat within BUDGET seconds per frame, the own plot first, then the
--- nearest. The own plot's incubators carry prompts that call the handler registered with OnIncubator (the field has none since
+-- nearest. The own plot's incubators carry prompts that call the handler registered with OnIncubator, its barn one for OnBarn (U5a;
+-- the barn's sacks and crates come from the own field's State, SetBarn); the field has none since
 -- U3a: SquareAt / SquareCFrame / ShowSelect / OwnRoot serve FieldHand's tap and FieldRings; U3b: ShowBorders, ShowHover). OwnState / OwnField return the own
 -- plot and the owner's field state as last received (GardenSummary, U2).
 -- In Studio the folder carries the attributes Instances and Pending (tests).
@@ -41,7 +42,8 @@ local views = {} -- [slot] = PlotView
 local received = {} -- [userId] = state from the server
 local real = {} -- [userId] = that state with `names` = the owner's pet names (P3b, PetConfig.NamesAttribute)
 local order = {} -- slots in build order (own first, then by distance)
-local handlers = { incubator = nil }
+local handlers = { incubator = nil, barn = nil }
+local ownField = nil -- the owner's field as GardenRemotes.State last sent it (OwnField)
 
 local GardenView = {}
 
@@ -50,6 +52,28 @@ GardenView.Folder = folder
 -- fn(incubator, base) when an incubator prompt of the own plot is triggered.
 function GardenView.OnIncubator(fn: (number, BasePart) -> ())
 	handlers.incubator = fn
+end
+
+-- fn() when the own barn's prompt is triggered (U5a).
+function GardenView.OnBarn(fn: () -> ())
+	handlers.barn = fn
+end
+
+-- What the own barn shows (U5a): seed sacks for the share of the barn's capacity the seeds fill (none at 0, at least one above),
+-- a crate per crop kind held (crop letters in catalogue order). nil without a field.
+local function barnFill(field)
+	if type(field) ~= "table" then
+		return nil
+	end
+	local capacity = CropConfig.BarnFor(CropConfig.UpgradeLevel(field.upgrades, "Barn"))
+	local seeds = CropConfig.SeedTotal(field.seeds)
+	local crates = {}
+	for _, crop in CropConfig.Crops do
+		if type(field.items) == "table" and (field.items[crop.id] or 0) > 0 then
+			table.insert(crates, crop.letter)
+		end
+	end
+	return { sacks = math.min(PlotView.BarnSacks, math.ceil(PlotView.BarnSacks * seeds / math.max(capacity, 1))), crates = crates }
 end
 
 local function ownSlot(): number?
@@ -223,8 +247,16 @@ local function refresh()
 							handlers.incubator(n, base)
 						end
 					end,
+					onBarn = function()
+						if handlers.barn then
+							handlers.barn()
+						end
+					end,
 				})
 				views[slot] = view
+				if slot == own then
+					view:SetBarn(barnFill(ownField))
+				end
 			end
 			if view.state ~= state then
 				view:SetState(state)
@@ -323,9 +355,13 @@ end
 
 -- The owner's field as GardenRemotes.State last sent it ({ squares = { [n] = { crop, grown, readyAt } }, ... }; FieldClient
 -- asks for it), kept here because this module is required before anyone asks (GardenSummary reads it, U2).
-local ownField = nil
 remotes:WaitForChild("State").OnClientEvent:Connect(function(state)
 	ownField = if type(state) == "table" then state.field else nil
+	local slot = ownSlot()
+	local view = slot and views[slot]
+	if view and view.own then
+		view:SetBarn(barnFill(ownField))
+	end
 end)
 function GardenView.OwnField()
 	return ownField

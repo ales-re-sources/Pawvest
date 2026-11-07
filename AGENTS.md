@@ -184,6 +184,8 @@ No automated tests. Validate by risk; scope acceptance checks to the tier a chan
   through the landing; teleporting into a coin or trigger is flaky (walk onto it). A stage finish can be driven by moving the character
   through the gate's `TimerStart` and then the finish portal. Scroll a list row into view before clicking it (an off-screen row's click
   lands on what lies under it).
+- Never `require` a client module that starts itself (GardenView, PetClient …) from the MCP `Client` context: it runs a second copy
+  (a second Workspace.GardenView with every plot drawn twice). Read their drawn instances or GUIs instead.
 - `require` in the **Edit** context caches a ModuleScript across calls (may return the old version after a disk change): check `.Source`, or
   test in a playtest.
 

@@ -463,8 +463,10 @@ collecting and caring over obby runs.
   bridge (no portals since H1). Both islands share one look (part-built grass islands on a rock base, cobblestone
   plazas, hedge rings, blocky trees and flowers) and stand in one sea that is also the world's kill floor.
 - **Layout.** A central plaza (food shop) surrounded by a ring of **12 plots** (a second ring of 18 is ready for bigger servers), about
-  40 × 40 studs each, with an owner name sign (stud look, raised on two posts so players walk under it and see the plot past it) and incubators on a
-  40 × 16 strip, the field behind it. Servers hold **12 players** (one plot per slot). Each player's
+  40 × 40 studs each, with an owner name sign (stud look, raised on two posts so players walk under it and see the plot past it) over a
+  40 × 16 front strip, the field behind it. The strip (U5a) holds, as seen from the plaza, the **hatchery** on the left (the 3 incubators
+  as nests in a triangle under one stud roof on four posts), the **barn** on the right (a red plank shed open towards the plaza: shelves of
+  seed sacks, crates of crops) and a gravel **path** between them from the sign to the field, so the field shows from the plaza. Servers hold **12 players** (one plot per slot). Each player's
   client draws the plots from the server's data (E1a1); free plots of the inner ring show "Free plot".
 - **Getting there and seeing what waits (U2).** A **🌱 Garden** icon in the top-left row (after Pets, a wood brick) puts the player
   on the grass in front of their plot from anywhere (as the Home button does; a running timer is cancelled); without a plot yet
@@ -527,12 +529,15 @@ otherwise items could be duplicated across servers.
 
 - **Goal (2026-11-02, the user).** Farming is the main game: over days 1-3 the field earns about what the obby earns, then 3x by day 7 and
   10x by day 30 (Casual, Garden main), checked by `economy.py check`.
-- **Field.** Behind each plot (a 40 x 16 strip in front holds the sign and the 3 incubators): 36 squares in rows 6-6-8-8-8 centred on an
+- **Field.** Behind each plot (a 40 x 16 strip in front holds the sign, the hatchery, the barn and the path): 36 squares in rows 6-6-8-8-8 centred on an
   8-column grid, numbered row by row from the plot (the numbers are stored: never reorder the rows). A new field opens the 2 x 2 block at the
   front centre (squares 3, 4, 9, 10) with 4 free Potato seeds. Any locked square (overgrown: grass tufts, no price in the world) can be
   bought from its square card; its price and Renown gate depend on how many are open (1 400 for the 5th up to 907 400 for the 36th).
 - **Where the field's panels are (U4, 2026-11-07).** There is no Garden panel; each piece sits where it is used:
-  - **Barn** (own plot): the bottom-centre HUD brick "🧺 Barn" shows within 45 studs of the own plot and opens the barn panel: the crow
+  - **Barn** (own plot): the barn building on the front strip (U5a) shows the stock: 8 seed sacks on two shelves, as many as the seeds'
+    share of the barn's capacity (rounded up; none at 0), and a crate per crop kind held, topped in the crop's colour (drawn on the own
+    plot only, at full detail; other plots show an empty barn). Its "Open barn" prompt and the bottom-centre HUD brick "🧺 Barn" (shown
+    within 45 studs of the own plot) both open the barn panel: the crow
     forecast line (ticking), the seeds held with their grow time (Growth upgrade included) and the barn's fill ("18 / 40 seeds"), the crops
     held with count, average size and record, **Feed** (a page of the player's pets that can still learn from food, equipped first; a tap
     opens that pet's page at its harvest-feeding section) and **Sell all** (always two taps; the button shows the value before the pet

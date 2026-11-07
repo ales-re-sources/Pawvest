@@ -3,13 +3,16 @@
 -- incubators with egg and live countdown, incubator billboards, field pets with models and labels, incubator prompts on the own
 -- plot), "mid" (the same without billboards and prompts, each pet one block in its rarity colour), "low" (floor, one block per egg,
 -- the field as its row plates) or "none". Stand-in blocks only (no art pass). Used by GardenView, which picks the detail.
--- A plot is split into pieces (base, inc1..3, field = the row plates, sq1..36). SetState / SetDetail / Relabel only
+-- The front strip (U5a): the path in the middle (base), the hatchery on the plaza's left (hatch: posts and roof over the nests
+-- inc1..3), the barn on its right (barn: walls, roof, shelves; on the own plot the seed sacks and crop crates of SetBarn and the
+-- "Open barn" prompt, which calls options.onBarn).
+-- A plot is split into pieces (base, hatch, barn, inc1..3, field = the row plates, sq1..36). SetState / SetDetail / Relabel only
 -- mark the pieces whose look changed; Step builds marked pieces until a deadline, so a build is spread over frames by the caller.
 -- State: { name, incCount, eggs = { [1..3] = "EggId:readyAt" or "" },
 -- field = { crops = two characters per square 1..CropConfig.MaxSquares: crop letter (CropConfig, a-f in synthetic plots) +
 -- stage 1-3 (3 = ripe), ".0" an empty open square, "#0" a locked one, pets = { "Kind:Level:uid:square:tending:guard" } (E1b field pets,
 -- tending / guard = Tending / Pest-control level, 0 without it; E4b; a feed without guard reads as 0) } } or { free = true } (a slot
--- nobody holds: floor, sign "Free plot", grey incubators). Every plot's floor is the incubator strip; the field lies behind it
+-- nobody holds: floor, sign "Free plot", grey incubators, an empty barn). Every plot's floor is the front strip; the field lies behind it
 -- (the P2 pens are gone since FA).
 -- The field (E1d2) has the shape CropConfig.RowWidths: every row is a plate of overgrown grass, open squares are soil on it,
 -- locked squares carry grass tufts (U3a; full detail). Field pets stand on their squares (full: the PetLook model with a label of
@@ -29,9 +32,17 @@ local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 
 local PetModels = ReplicatedStorage:WaitForChild("PetModels")
 
--- floor-space layout, copied from the former Studio plots (Workspace.Garden.Plots.Plot_NN, deleted in E1a1)
-local INCUBATOR_SPOTS = { Vector3.new(-12, 0, -10), Vector3.new(0, 0, -10), Vector3.new(12, 0, -10) }
-local STRIP_FRONT, STRIP_BACK = -20, -4 -- a plot's floor: the strip that holds the sign side and the incubators
+-- Floor-space layout (U5a, docs/UI_GARDEN_PETS.md §7): −Z is the sign side (towards the plaza), so the plaza's left is +X. The
+-- strip holds the hatchery on +X (three nests in a triangle under one roof), the barn on −X and a path between them (x ±PATH_HALF).
+local INCUBATOR_SPOTS = { Vector3.new(8.5, 0, -15), Vector3.new(16.2, 0, -15), Vector3.new(12.35, 0, -8) }
+local PATH_HALF = 4.8 -- the gravel path: half its width (the strip's front and back edges leave a gap of EDGE_GAP each side of x = 0)
+local EDGE_GAP = 5
+local HATCH_X0, HATCH_X1, HATCH_Z0, HATCH_Z1 = 5.6, 19.3, -19.3, -4.7 -- hatchery: centres of its corner posts
+local HATCH_ROOF = 8 -- hatchery: height of the posts' tops (the roof's underside)
+local BARN_X0, BARN_X1, BARN_Z0, BARN_Z1 = -19, -6, -15, -5 -- barn: outer faces of its walls (open towards −Z, the plaza)
+local BARN_WALL, BARN_HEIGHT = 0.6, 6 -- barn: wall thickness, wall height over the floor
+local BARN_SACKS = 8 -- seed sacks on the barn's two shelves (SetBarn: how many show)
+local STRIP_FRONT, STRIP_BACK = -20, -4 -- a plot's floor: the strip that holds the sign side, the hatchery and the barn
 local FIELD_FRONT = -2 -- the field lies behind the strip (floor +Z), from this far behind the centre
 local FIELD_PITCH = 5.5 -- studs per square
 local INFO_DISTANCE = 60 -- studs: pad / incubator billboards and pet labels
@@ -49,6 +60,16 @@ local COLORS = {
 	signText = Color3.fromRGB(255, 240, 210),
 	signNumber = Color3.fromRGB(255, 205, 150),
 	padLocked = Color3.fromRGB(80, 80, 80),
+	path = Color3.fromRGB(196, 178, 140),
+	post = Color3.fromRGB(157, 84, 45),
+	roof = Color3.fromRGB(196, 72, 56),
+	roofTop = Color3.fromRGB(165, 55, 45),
+	barnWall = Color3.fromRGB(176, 60, 50),
+	barnTrim = Color3.fromRGB(245, 235, 215),
+	barnFloor = Color3.fromRGB(150, 105, 65),
+	shelf = Color3.fromRGB(120, 85, 50),
+	sack = Color3.fromRGB(214, 186, 130),
+	crate = Color3.fromRGB(165, 115, 65),
 	base = Color3.fromRGB(150, 100, 60),
 	nest = Color3.fromRGB(225, 195, 110),
 	soil = Color3.fromRGB(105, 70, 45),
@@ -183,13 +204,16 @@ local function squareSpot(square: number): (number, number)
 	return ((col :: number) - 0.5 - CropConfig.GridColumns / 2) * FIELD_PITCH, FIELD_FRONT + ((row :: number) - 0.5) * FIELD_PITCH
 end
 
--- New view of plot slot `slot` under `parent`. options: { own = boolean, onIncubator = fn(n, base) } (prompts on the own plot only).
+-- New view of plot slot `slot` under `parent`. options: { own = boolean, onIncubator = fn(n, base), onBarn = fn() } (prompts on
+-- the own plot only).
 function PlotView.new(slot: number, parent: Instance, options)
 	local self = setmetatable({}, PlotView)
 	self.slot = slot
 	self.floor = GardenConfig.PlotCFrame(slot) :: CFrame
 	self.own = options and options.own or false
 	self.onIncubator = options and options.onIncubator
+	self.onBarn = options and options.onBarn
+	self.barnFill = nil -- SetBarn: { sacks = 0..BARN_SACKS, crates = { crop letter, ... } } (the own plot only)
 	self.detail = "none"
 	self.state = nil
 	self.lang = Locale.Current()
@@ -207,7 +231,7 @@ function PlotView.new(slot: number, parent: Instance, options)
 end
 
 function PlotView:keys(): { string }
-	local keys = { "base" }
+	local keys = { "base", "hatch", "barn" }
 	for n = 1, GardenConfig.MaxIncubators do
 		table.insert(keys, "inc" .. n)
 	end
@@ -232,6 +256,16 @@ function PlotView:signature(key: string): string
 	end
 	if key == "field" then
 		return if not state.free and state.field then detail else "none"
+	end
+	if key == "hatch" then
+		return detail
+	end
+	if key == "barn" then
+		local fill = self.barnFill
+		if state.free or detail ~= "full" or not self.own or not fill then
+			return table.concat({ detail, tostring(self.own), self.lang }, "|")
+		end
+		return table.concat({ detail, "own", tostring(fill.sacks), table.concat(fill.crates, ""), self.lang }, "|")
 	end
 	local kind, number = string.match(key, "^(%a+)(%d+)$")
 	local n = tonumber(number) :: number
@@ -284,6 +318,15 @@ function PlotView:SetDetail(detail: string)
 	end
 end
 
+-- What the own plot's barn shows (U5a): `fill` = { sacks = 0..BARN_SACKS, crates = { crop letter, ... } } or nil (empty barn).
+-- Only a change of the sack count or the crop kinds redraws the barn.
+function PlotView:SetBarn(fill)
+	self.barnFill = fill
+	self:mark()
+end
+
+PlotView.BarnSacks = BARN_SACKS
+
 -- Redraws the texts in the current language (Locale.Changed).
 function PlotView:Relabel()
 	self.lang = Locale.Current()
@@ -315,14 +358,29 @@ function PlotView:buildBase(model: Model)
 	if self.detail == "low" then
 		return
 	end
-	for _, edge in {
-		{ Vector3.new(-20.4, 0.65, middle), Vector3.new(0.8, 1, depth + 0.8) },
-		{ Vector3.new(20.4, 0.65, middle), Vector3.new(0.8, 1, depth + 0.8) },
-		{ Vector3.new(0, 0.65, back + 0.4), Vector3.new(40.8, 1, 0.8) },
-		{ Vector3.new(0, 0.65, front - 0.4), Vector3.new(40.8, 1, 0.8) },
-	} do
+	-- the front and back edges leave a gap for the path (U5a)
+	-- each front / back piece runs from the gap to the side edges' inner face (x = ±20); the side edges reach the corners, so no two
+	-- edges overlap with a shared top face
+	local half = (20 - EDGE_GAP) / 2
+	local edges = {
+		{ Vector3.new(-20.4, 0.65, middle), Vector3.new(0.8, 1, depth + 1.6) },
+		{ Vector3.new(20.4, 0.65, middle), Vector3.new(0.8, 1, depth + 1.6) },
+	}
+	for _, z in { back + 0.4, front - 0.4 } do
+		for _, side in { -1, 1 } do
+			table.insert(edges, { Vector3.new(side * (EDGE_GAP + half), 0.65, z), Vector3.new(2 * half, 1, 0.8) })
+		end
+	end
+	for _, edge in edges do
 		part({ Name = "Edge", Size = edge[2], CFrame = self:at(edge[1]), Color = COLORS.edge, Material = Enum.Material.Wood }).Parent = model
 	end
+	part({
+		Name = "Path",
+		Size = Vector3.new(2 * PATH_HALF, 0.1, depth - 0.2),
+		CFrame = self:at(Vector3.new(0, 0.3, middle)),
+		Color = COLORS.path,
+		Material = Enum.Material.Pebble,
+	}).Parent = model
 	self:buildSign(model)
 end
 
@@ -390,6 +448,105 @@ end
 
 -- Pet model standing at `at` (its pivot's horizontal position) on a surface whose top is at height `top` (full detail): a PetModels
 -- clone dressed by PetLook like the followers, with `text` over it.
+-- The hatchery (U5a): an open shelter over the three nests (the nests are the inc1..3 pieces): four corner posts and a stepped
+-- roof. Low detail: the roof only. No two parts share a face plane.
+function PlotView:buildHatchery(model: Model)
+	local x0, x1, z0, z1 = HATCH_X0, HATCH_X1, HATCH_Z0, HATCH_Z1
+	local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
+	local w, d = x1 - x0, z1 - z0
+	local function add(name: string, size: Vector3, at: Vector3, color: Color3)
+		local p = part({ Name = name, Size = size, CFrame = self:at(at), Color = color, Material = Enum.Material.Plastic, MaterialVariant = "Inlets" })
+		p.Parent = model
+		return p
+	end
+	-- the roof: three steps, each smaller and higher (the lowest overhangs the posts by 0.6)
+	local roof = HATCH_ROOF
+	add("Roof", Vector3.new(w + 1.8, 0.6, d + 1.8), Vector3.new(cx, roof + 0.3, cz), COLORS.roof)
+	add("Roof", Vector3.new(w - 2.6, 0.6, d - 2.6), Vector3.new(cx, roof + 0.9, cz), COLORS.roofTop)
+	add("Roof", Vector3.new(w - 7, 0.6, d - 7), Vector3.new(cx, roof + 1.5, cz), COLORS.roof)
+	if self.detail == "low" then
+		return
+	end
+	local height = roof - 0.25 -- from the floor's top (0.25) to the roof's underside
+	for _, x in { x0, x1 } do
+		for _, z in { z0, z1 } do
+			add("Post", Vector3.new(1, height, 1), Vector3.new(x, 0.25 + height / 2, z), COLORS.post).CanCollide = true
+		end
+	end
+end
+
+-- The barn (U5a): walls on three sides (open towards the plaza), a plank floor, a stepped roof, two shelves for BARN_SACKS seed sacks
+-- and a row of crates, one per crop kind held (self.barnFill, the own plot only), topped in the crop's ripe colour. The own plot's
+-- barn carries the "Open barn" prompt (full detail). Low detail: one block. No two parts share a face plane.
+function PlotView:buildBarn(model: Model)
+	local x0, x1, z0, z1 = BARN_X0, BARN_X1, BARN_Z0, BARN_Z1
+	local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
+	local w, d, t = x1 - x0, z1 - z0, BARN_WALL
+	local top = 0.25 + BARN_HEIGHT -- the walls' top
+	if self.detail == "low" then
+		part({ Name = "Barn", Size = Vector3.new(w, BARN_HEIGHT, d), CFrame = self:at(Vector3.new(cx, 0.25 + BARN_HEIGHT / 2, cz)), Color = COLORS.barnWall }).Parent =
+			model
+		return
+	end
+	local function add(name: string, size: Vector3, at: Vector3, color: Color3, material: Enum.Material?)
+		local p = part({ Name = name, Size = size, CFrame = self:at(at), Color = color, Material = material or Enum.Material.Plastic })
+		p.Parent = model
+		return p
+	end
+	-- walls: the back one spans the full width, the sides stop at its front face
+	add("Wall", Vector3.new(w, BARN_HEIGHT, t), Vector3.new(cx, 0.25 + BARN_HEIGHT / 2, z1 - t / 2), COLORS.barnWall, Enum.Material.WoodPlanks).CanCollide =
+		true
+	for _, x in { x0 + t / 2, x1 - t / 2 } do
+		add("Wall", Vector3.new(t, BARN_HEIGHT, d - t), Vector3.new(x, 0.25 + BARN_HEIGHT / 2, z0 + (d - t) / 2), COLORS.barnWall, Enum.Material.WoodPlanks).CanCollide =
+			true
+	end
+	-- white trim: a lintel over the opening and corner strips on the front ends of the side walls (in front of them, no shared plane)
+	add("Trim", Vector3.new(w - 0.2, 0.6, 0.3), Vector3.new(cx, top - 0.4, z0 - 0.15), COLORS.barnTrim)
+	for _, x in { x0 + t / 2, x1 - t / 2 } do
+		add("Trim", Vector3.new(t + 0.2, BARN_HEIGHT - 0.7, 0.3), Vector3.new(x, 0.25 + (BARN_HEIGHT - 0.7) / 2, z0 - 0.15), COLORS.barnTrim)
+	end
+	-- the roof: two steps, overhanging the walls
+	add("Roof", Vector3.new(w + 1.2, 0.6, d + 1.0), Vector3.new(cx, top + 0.3, cz - 0.2), COLORS.roofTop)
+	add("Roof", Vector3.new(w - 4, 0.6, d + 0.6), Vector3.new(cx, top + 0.9, cz - 0.2), COLORS.roof)
+	add("Roof", Vector3.new(2.2, 0.4, d + 0.2), Vector3.new(cx, top + 1.4, cz - 0.2), COLORS.roofTop)
+	-- the floor inside the walls (its sides meet the walls' inner faces, which face the other way)
+	local inX0, inX1, inZ1 = x0 + t, x1 - t, z1 - t
+	local floor = add("BarnFloor", Vector3.new(inX1 - inX0, 0.2, inZ1 - z0), Vector3.new(cx, 0.35, (z0 + inZ1) / 2), COLORS.barnFloor, Enum.Material.WoodPlanks)
+	-- two shelves on the back wall
+	local shelfW, shelfD = inX1 - inX0 - 1, 1.6
+	local shelfZ = inZ1 - shelfD / 2
+	local shelves = { 2.2, 4.2 }
+	for _, y in shelves do
+		add("Shelf", Vector3.new(shelfW, 0.3, shelfD), Vector3.new(cx, y, shelfZ), COLORS.shelf, Enum.Material.Wood)
+	end
+	local fill = if self.own and self.detail == "full" and not self.state.free then self.barnFill else nil
+	if fill then
+		-- seed sacks: the lower shelf first, from the left as seen from the plaza (+X)
+		local perShelf = BARN_SACKS // #shelves
+		for i = 1, math.clamp(fill.sacks, 0, BARN_SACKS) do
+			local shelf = (i - 1) // perShelf + 1
+			local slot = (i - 1) % perShelf
+			local x = cx + (perShelf - 1) / 2 * 2.6 - slot * 2.6
+			add("Sack", Vector3.new(1.8, 1.5, 1.2), Vector3.new(x, shelves[shelf] + 0.15 + 0.75, shelfZ), COLORS.sack, Enum.Material.Fabric)
+		end
+		-- crates: one per crop kind held, in a row in front of the shelves
+		for i, letter in fill.crates do
+			local x = inX1 - 0.8 - (i - 1) * 1.55
+			if x - 0.7 < inX0 then
+				break
+			end
+			local crateZ = shelfZ - shelfD / 2 - 1.6
+			add("Crate", Vector3.new(1.4, 1.4, 1.4), Vector3.new(x, 0.45 + 0.7, crateZ), COLORS.crate, Enum.Material.WoodPlanks)
+			add("CropTop", Vector3.new(1.1, 0.25, 1.1), Vector3.new(x, 0.45 + 1.4 + 0.125, crateZ), CROP_COLORS[letter] or SPROUT)
+		end
+	end
+	if self.own and self.onBarn and self.detail == "full" and not self.state.free then
+		prompt(floor, Locale.T("barn.prompt.action"), Locale.T("barn.prompt.object"), 10, function()
+			self.onBarn()
+		end)
+	end
+end
+
 local function standingPet(kind: string, level: number, uid: string, at: CFrame, top: number, text: string): Model?
 	local template = PetModels:FindFirstChild(kind)
 	if not (template and template:IsA("Model") and template.PrimaryPart) then
@@ -581,6 +738,10 @@ function PlotView:build(key: string): Model?
 	model.Name = key
 	if key == "base" then
 		self:buildBase(model)
+	elseif key == "hatch" then
+		self:buildHatchery(model)
+	elseif key == "barn" then
+		self:buildBarn(model)
 	elseif key == "field" then
 		self:buildField(model)
 	else

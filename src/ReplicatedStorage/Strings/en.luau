@@ -256,6 +256,8 @@ return {
 	["seedStall.board.soldOut"] = "{crop} · sold out",
 	["barn.title"] = "🧺 Barn",
 	["barn.button"] = "🧺 Barn",
+	["barn.prompt.action"] = "Open barn",
+	["barn.prompt.object"] = "Barn",
 	["barn.seed.grow"] = "Grows in {time}",
 	["barn.seeds.empty"] = "No seeds. Buy some at the seed stall on the plaza.",
 	["barn.crops.empty"] = "Nothing harvested yet. Pick ripe crops with the 🧺 basket.",

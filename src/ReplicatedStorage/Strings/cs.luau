@@ -256,6 +256,8 @@ return {
 	["seedStall.board.soldOut"] = "{crop} · vyprodáno",
 	["barn.title"] = "🧺 Stodola",
 	["barn.button"] = "🧺 Stodola",
+	["barn.prompt.action"] = "Otevřít stodolu",
+	["barn.prompt.object"] = "Stodola",
 	["barn.seed.grow"] = "Doroste za {time}",
 	["barn.seeds.empty"] = "Žádná semínka. Kup si je ve stánku se semínky na náměstí.",
 	["barn.crops.empty"] = "Zatím nic sklizeno. Zralé plodiny sbírej košíkem 🧺.",

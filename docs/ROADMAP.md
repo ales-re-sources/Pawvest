@@ -51,7 +51,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | U2 | Garden icon with a badge (ripe crops + ready eggs), summary bubble over the own plot sign | ✔ | ✔ | – |
 | U3 | Field: rings, tap-select, square card, hand bar (Seeds / Basket / Pets / Look), reach borders, square prompts removed | ✔ | partial (phone touch, multi-client open) | – |
 | U4 | Panel split: Skills Garden tab, Pets field-slot line, Barn panel, seed stall, confirm + panel focus; Garden panel removed | ✔ | ✔ (phone by geometry; crow-on bubble by code review) | – |
-| U5 | Plot layout: hatchery left, barn right, path; K1 egg cards ([UI_GARDEN_PETS.md](UI_GARDEN_PETS.md)) | – | – | – |
+| U5 | Plot layout: hatchery left, barn right, path (U5a ✔); hatchery panel with K1 egg cards (U5b open) | U5a ✔ | U5a ✔ | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
@@ -609,6 +609,77 @@ only (`TapHeight` keeps bricks ≥ 44 px on screen; `Fit` scales the 420 × 470 
 barn, stall, both boards, the Pets slot line and the Skills tabs; the pseudo-language shows no literal on the barn, stall, boards and prompt
 (the board line fix above); `loc.py check` 478 keys, 0 errors; lint 0. 12 ✔ `economy.py check` 48 / 48; boot without errors or warnings on
 server and client (twice).
+
+### U5 — Plot layout: hatchery, barn, path; hatchery panel with egg cards (design: [UI_GARDEN_PETS.md](UI_GARDEN_PETS.md) §6, §7; K1 hatching text; scope 2026-11-07, approved by the user: split, one hatchery panel, Barn HUD button kept, barn fill on the own plot only)
+**Goal.** The front strip of every plot (40 × 16, in front of the field) gets a fixed layout: the **hatchery** (the 3 nests under one roof)
+on the left as seen from the plaza, the **barn** on the right, a **path** in the middle from the sign to the field, so the field stays
+visible from the plaza. The hatchery opens one panel with K1's egg cards and a pet reveal. **No server, protocol, stored-data or economy
+change**: the incubator remotes, the `inc1..3` piece keys and the Barn panel stay; every check stays on the server.
+
+**Split** (each ships alone):
+- **U5a — layout** (client drawing only): path, hatchery building, barn building with its fill and prompt. Each nest keeps its own prompt
+  and today's incubator panel until U5b.
+- **U5b — hatchery panel:** one prompt and one panel for the hatchery, egg cards, the reveal with trait chips.
+
+**Build (U5a).**
+- **PlotView** (floor space; −Z is the sign side, the plaza's left is +X — checked in Studio): the strip's front and back edges get a
+  10-stud gap at the path; a gravel **path** plate (x ±4.8, the strip's depth) just above the floor. **Hatchery** (new piece `hatch`): an
+  open shelter over x +5…+19.5 (4 corner posts, a stepped stud roof ≤ 10 studs high), the three nests (`inc1..3`, positions only) in a
+  triangle under it (two in front, one behind). **Barn** (new piece `barn`): a building over x −19…−6, at most 8 studs high, open towards
+  the plaza: back and side walls, a gable roof, two shelves with **8 seed sacks** that show `ceil(8 × seeds / capacity)` (none at 0) and a
+  row of **crates**, one per crop kind held, topped in that crop's ripe colour. The fill is drawn on the own plot only (other plots show an
+  empty barn: no protocol change). Free plots: the same buildings, nests grey, barn empty. Mid detail: buildings without fill, labels or
+  prompts; low: one block for the barn, the hatchery's roof only (eggs as today).
+- **Barn prompt** (own plot, full detail): "Open barn" at the barn's open front (10 studs) → the Barn panel (`GardenView.OnBarn`, BarnClient's
+  `openPanel`). The bottom-centre 🧺 Barn button stays (the user, 2026-11-07).
+- **Fill source:** GardenView keeps the own field (`State`); it hands `SetBarn({ sacks, crates })` to the own view on each `State`, so the
+  barn redraws only when the sack count or the crop kinds change.
+- No two parts share a face plane (z-fighting); every part Anchored, CanTouch off, CanQuery off except what a prompt or tap needs.
+
+**Build (U5b).**
+- **One hatchery prompt** "Open hatchery" (own plot, full detail) at the shelter's front replaces the three nest prompts; the panel joins
+  `PanelFocus` ("Hatchery", 32 studs).
+- **Hatchery panel** (rewrite of `IncubatorClient`, `GardenUi.Panel`): three **nest rows** (egg + countdown, Hatch when ready, the unlock
+  price for the next nest with two taps over 1 000 Coins via `ConfirmTap`, "unlock nest n first" for later ones); while a nest is empty,
+  **egg cards** (one per `PetConfig.EggOrder`: the egg drawn in its colour, name, price, hatch time; a "?" brick shows the odds) start that egg
+  in the first empty nest (`StartEgg(index, egg)` as today); waiting free eggs as today.
+- **Reveal** on a `Hatch` result: the pet's portrait (`PetPortrait`), its kind in the rarity colour and one line (follows you / in the Pets
+  panel); its shown traits appear as chips one by one (0.4 s apart, the Pets row chip look). The old odds lines and the text-only hatch
+  message go.
+
+**Acceptance checks** (real input where it says so; the live profile snapshotted right before anything that changes it and restored after;
+MostStars and `GlobalLeaderboardsStore` untouched).
+1. **Layout (U5a, Studio playtest):** on the own plot the hatchery stands on the plaza's left, the barn on its right, the path between
+   (capture from the plaza); all parts inside the plot's 40-stud width (no part of a plot within 9 studs' gap reaches the neighbour); the
+   coplanar audit over the own plot's drawn model (Client context): clean; the field visible from the plaza through the path (capture).
+2. **Details (U5a):** own, another (fake) plot and a free plot at full, mid and low: buildings as described, no errors; ready-egg marker
+   (HintSources) still finds the nest; the summary bubble and the badge unchanged.
+3. **Barn (U5a, real input):** E at the barn opens the Barn panel; the sacks equal `ceil(8 × seeds / capacity)`; buying seeds at the stall
+   and selling a crop change sacks / crates accordingly (snapshot first); the HUD button still opens the panel.
+4. **Hatchery panel (U5b, real clicks):** E at the hatchery opens it; the rows equal the profile; an egg card starts the egg in the first
+   empty nest (Coins −price once); "?" shows the odds; the unlock needs two taps over 1 000; opening it closes Pets / Barn (panel focus),
+   walking 33 studs away closes it.
+5. **Reveal (U5b):** a ready egg (fixture: a `ReadyAt` in the past, snapshot first) hatches once with portrait, name in the rarity colour
+   and the chips one by one.
+6. **Phone** (667 × 375, 844 × 390): the panel fits (`Fit`), bricks ≥ 44 px on screen (geometry).
+7. **Texts:** Czech `TextFits`, the pseudo-language shows no literal; `loc.py build` / `check` (0 errors) / `lint` (within the baseline); new
+   Czech texts listed for the user.
+8. `economy.py check` clean; a playtest boot without errors or warnings on server and client.
+
+**Changed while building U5a.** The strip's front / back edge pieces end at the side edges' inner face and the side edges run to the
+corners (the old full-width edges overlapped the side edges at the corners with a shared top face; same colour, so it never showed). The
+barn prompt's object text is its own key (`barn.prompt.object`, no emoji) beside `barn.prompt.action`.
+
+**Studio results U5a (2026-11-07; live profile snapshotted as `profile_9892673032_U5a_1`, Coins 24 032, MostStars 48; restored after and
+checked byte-identical; no stage finished, `GlobalLeaderboardsStore` untouched).** 1 ✔ capture from the plaza (U5a_plaza_1, U5a_wide_1):
+hatchery on the left, barn on the right, path between, the field seen through it; the strip's parts stay within x ±20.8 (the edges, as
+before); coplanar audit of the own plot's `base` / `hatch` / `barn` / `inc1..3` (50 parts) and a free plot (44): clean. 2 ✔ own plot
+full (barn 19 parts with fill and prompt), fake other plot at full and mid (barn 12 parts, no prompt), low (roof only, barn one block),
+free plot (empty barn); no errors or warnings on client or server; the ready-egg marker by code review (no egg in the nests;
+HintSources finds the nest by the unchanged key `inc1..3`). 3 ✔ a real E at the barn opens the Barn panel; 30 / 40 seeds → 6 sacks; +10
+Potato at the stall (real click, −20 Coins) → 40 / 40 → 8 sacks (redrawn when back at full detail); a harvested Potato → one crate topped in
+the potato colour; Sell all through the panel (opened with the HUD button, real clicks, two taps) → the crate gone. The nest prompt (real E)
+still opens incubator 1's panel. 7 (U5a part) ✔ `loc.py check` 480 keys, 0 errors; lint 0. 8 ✔ `economy.py check` 48 / 48.
 
 ### E0 — Economy model
 **Goal.** One reproducible model of the Coin economy (`tools/economy.py`, Python stdlib; how to run it: ECONOMY.md) that fixes the numbers the

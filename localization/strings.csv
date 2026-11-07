@@ -311,6 +311,8 @@ seedStall.board.taste,"Board over the seed stall: the offer of seeds the player 
 seedStall.board.soldOut,Board over the seed stall: an offer the player bought up today (greyed line); {crop} = icon + crop name,{crop} · sold out,{crop} · vyprodáno,new,ha12b1054
 barn.title,Title strip of the barn panel (seeds and harvested crops the player holds; Sell and Feed),🧺 Barn,🧺 Stodola,new,h3949e950
 barn.button,HUD button at the bottom of the screen near the own garden plot that opens the barn panel (112 px brick; icon first),🧺 Barn,🧺 Stodola,new,h3949e950
+barn.prompt.action,"Action text of the prompt at the open front of the barn building on the own garden plot (opens the barn panel); imperative, short",Open barn,Otevřít stodolu,new,hcd8a906b
+barn.prompt.object,"Object text of that prompt: the barn building (nominative, no emoji)",Barn,Stodola,new,h737b3f38
 barn.seed.grow,"Barn panel, seed row, second line; {time} = how long the crop grows (""3 hours"", ""45 min"")",Grows in {time},Doroste za {time},new,hb78bd88b
 barn.seeds.empty,"Barn panel, seeds section when the player holds no seeds",No seeds. Buy some at the seed stall on the plaza.,Žádná semínka. Kup si je ve stánku se semínky na náměstí.,new,he76c2e61
 barn.crops.empty,"Barn panel, harvest section when the player holds no crops (the 🧺 basket is the hand bar's harvest mode on the field)",Nothing harvested yet. Pick ripe crops with the 🧺 basket.,Zatím nic sklizeno. Zralé plodiny sbírej košíkem 🧺.,new,hc78335df

@@ -1,5 +1,5 @@
--- Barn (U4, docs/UI_GARDEN_PETS.md §6): what the player holds from the field. Until U5 builds the barn on the plot, the entry is the
--- bottom-centre HUD button "🧺 Barn" (shown within 45 studs of the own plot, where the Garden panel's "Field" button was).
+-- Barn (U4, docs/UI_GARDEN_PETS.md §6): what the player holds from the field. Two entries: the barn building's "Open barn" prompt on
+-- the own plot (U5a, PlotView via GardenView.OnBarn) and the bottom-centre HUD button "🧺 Barn" (shown within 45 studs of the own plot).
 --   * header: the crow forecast (E4b, from CropConfig.NextCrows and the server time; "crows come from Renown n" on a young field) and
 --     the barn's seed capacity;
 --   * Seeds: every seed held (icon, name × count, grow time with the Growth upgrade); nothing → a hint to the plaza's seed stall;
@@ -322,6 +322,13 @@ PetClient.Changed:Connect(function()
 	end
 end)
 Locale.Changed:Connect(render)
+
+-- the barn building's prompt on the own plot (U5a, PlotView)
+GardenView.OnBarn(function()
+	if not isOpen then
+		openPanel()
+	end
+end)
 
 ui.gui:GetAttributeChangedSignal("Open"):Connect(function()
 	if ui.gui:GetAttribute("Open") then

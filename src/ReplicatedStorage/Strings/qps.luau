@@ -256,6 +256,8 @@ return {
 	["seedStall.board.soldOut"] = "[!! {crop} · šölď öůť ~~~~ !!]",
 	["barn.title"] = "[!! 🧺 Bářň ~~ !!]",
 	["barn.button"] = "[!! 🧺 Bářň ~~ !!]",
+	["barn.prompt.action"] = "[!! Öpěň bářň ~~~~ !!]",
+	["barn.prompt.object"] = "[!! Bářň ~~ !!]",
 	["barn.seed.grow"] = "[!! Gřöwš íň {time} ~~~~ !!]",
 	["barn.seeds.empty"] = "[!! Ňö šěěďš. Bůý šömě áť ťhě šěěď šťáll öň ťhě plážá. ~~~~~~~~~~~~~~~~~~~~ !!]",
 	["barn.crops.empty"] = "[!! Ňöťhíňg hářvěšťěď ýěť. Píčk řípě čřöpš wíťh ťhě 🧺 báškěť. ~~~~~~~~~~~~~~~~~~~~~~~ !!]",
