@@ -3,7 +3,7 @@
 -- timer is cancelled and the score panel shows the new place. The remote carries no data; the server decides.
 -- GoGarden (the 🌱 Garden icon, top left) works the same way: it lands the player on the grass in front
 -- of their borrowed garden plot (GardenPlots; its position from GardenConfig.PlotCFrame, no plot model), looking at it.
--- Both remotes share one cooldown.
+-- Each remote has its own cooldown (a shared one swallowed Home right after Garden).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -13,7 +13,7 @@ local GardenConfig = require(ReplicatedStorage.GardenConfig)
 local GardenPlots = require(game:GetService("ServerScriptService").GardenPlots)
 local TimerHandler = require(workspace.Handlers.PlayerTimerHandler)
 
-local COOLDOWN = 3 -- seconds per player
+local COOLDOWN = 0.5 -- seconds per player and button: only stops double-click spam, chained hops (stage gate → hub) must feel instant
 -- garden arrival, in the plot floor's space: its front (-Z, LookVector) faces the garden plaza, the sign stands 22
 -- studs out on that side, so the player lands beside the sign's line and turns to the plot centre
 local GARDEN_ARRIVAL = Vector3.new(8, 0, -30)
@@ -26,7 +26,8 @@ local goGardenEvent = Instance.new("RemoteEvent")
 goGardenEvent.Name = "GoGarden"
 goGardenEvent.Parent = ReplicatedStorage
 
-local lastUse = {} -- [Player] = os.clock() of the last accepted request
+-- One cooldown per button: Garden followed by Home (or the reverse) must work at once, only a repeat of the same button waits.
+local lastUse = { home = {}, garden = {} } -- [button][Player] = os.clock() of the last accepted request
 
 -- True when `position` lies on the plaza of the stage's world (the courtyard: finishing a stage also lands there).
 local function onPlaza(stage, position: Vector3): boolean
@@ -41,7 +42,7 @@ local function onPlaza(stage, position: Vector3): boolean
 end
 
 -- The live character's root, or nil when it is dead / missing or the player is still cooling down (counts the use).
-local function acceptRequest(player: Player): (Model?, BasePart?)
+local function acceptRequest(player: Player, button: string): (Model?, BasePart?)
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	local root = character and character:FindFirstChild("HumanoidRootPart")
@@ -49,15 +50,16 @@ local function acceptRequest(player: Player): (Model?, BasePart?)
 		return nil, nil
 	end
 	local now = os.clock()
-	if lastUse[player] and now - lastUse[player] < COOLDOWN then
+	local uses = lastUse[button]
+	if uses[player] and now - uses[player] < COOLDOWN then
 		return nil, nil
 	end
-	lastUse[player] = now
+	uses[player] = now
 	return character, root :: BasePart
 end
 
 goHomeEvent.OnServerEvent:Connect(function(player)
-	local character, root = acceptRequest(player)
+	local character, root = acceptRequest(player, "home")
 	if not character or not root then
 		return
 	end
@@ -80,7 +82,7 @@ goGardenEvent.OnServerEvent:Connect(function(player)
 	if not floor then
 		return
 	end
-	local character = acceptRequest(player)
+	local character = acceptRequest(player, "garden")
 	if not character then
 		return
 	end
@@ -92,5 +94,6 @@ goGardenEvent.OnServerEvent:Connect(function(player)
 end)
 
 Players.PlayerRemoving:Connect(function(player)
-	lastUse[player] = nil
+	lastUse.home[player] = nil
+	lastUse.garden[player] = nil
 end)
