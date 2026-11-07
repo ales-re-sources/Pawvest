@@ -49,7 +49,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | U1 | Pets panel rows with trait chips, filters, pet page Sell under More, food stand rows | ✔ | partial (multi-client look open) | – |
 | FA | The field for everyone, pens removed | ✔ | ✔ | – |
 | U2 | Garden icon with a badge (ripe crops + ready eggs), summary bubble over the own plot sign | ✔ | ✔ | – |
-| U3–U5 | Garden and pet UI redesign, rest ([UI_GARDEN_PETS.md](UI_GARDEN_PETS.md)) — design decided 2026-11-05 | – | – | – |
+| U3a | Field: rings, tap-select, square card, square prompts removed, overgrown locked squares, pet job-icon labels | ✔ | partial (phone touch, multi-client open) | – |
+| U3b–U5 | Garden and pet UI redesign, rest ([UI_GARDEN_PETS.md](UI_GARDEN_PETS.md)) — design decided 2026-11-05 | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
@@ -72,7 +73,8 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
 5. **E0 in parallel:** repricing and the remaining checks (section below).
 6. **MU** before anything goes public.
 7. **U1–U5 garden and pet UI** (design decided 2026-11-05, [UI_GARDEN_PETS.md](UI_GARDEN_PETS.md) §11–12; scope each when it starts):
-   **U1** built and Studio-checked (2026-11-06) except the multi-client look check (F7, the user); **U2** built and Studio-checked (2026-11-06); **U3–U5** (field rings + square card + hand bar, Skills Garden tab,
+   **U1** built and Studio-checked (2026-11-06) except the multi-client look check (F7, the user); **U2** built and Studio-checked (2026-11-06); **U3a** (rings, tap-select, square card) built and Studio-checked (2026-11-07) except the
+   phone touch check and multi-client; **U3b–U5** (hand bar + reach borders, Skills Garden tab,
    barn, seed stall, plot layout) before E5's onboarding, which teaches the new controls.
 8. **Drops D1–D10** after the MVP (EXPANSION §14), one every 1–2 weeks: Critters, Comfort shop (M7), Weekly, Variants, Kitchen (the first
    restoration landmark), Neighbours, Mastery, World 4 (S9 / S10), the Estate, Season 1. Restoration bundles (E6, D5) and estate tiers / decor /
@@ -298,6 +300,126 @@ part combination, ticking, = the Garden panel's time; shown at 110 studs and on 
 130 off the plaza and in the hub; seen in a capture with `AlwaysOnTop` off. 5: by geometry (icons end at x 360; at 667 px the score
 panel starts at 405, the coins at 504; the badge stays 4 px clear of the next icon). 6: cs / en / qps, bounds = size (`TextFits`
 misreads AutomaticSize labels); no literal; loc check 0 errors, lint 0. 7: no warnings or errors (both boots).
+
+### U3 — Field interaction: rings, tap-select, square card, hand bar, pet reach (design: [UI_GARDEN_PETS.md](UI_GARDEN_PETS.md) §3 Near, §4, §5, §10; scope 2026-11-07, approved by the user with the split, U3a first; U3a built and Studio-checked 2026-11-07)
+**Goal.** On the own field a kid sees what grows and what is ripe without opening anything, and acts on exactly the square under their
+finger: no prompts competing at a 5.5-stud pitch. **No remote, profile or config change:** the client keeps firing `Plant(square, crop)`,
+`Harvest(square)`, `BuySquare(square, openCount)`, `PlacePet(square, uid)`, `LiftPet(uid)`; `GardenField` keeps every check (own plot from
+the caller, 45-stud distance, open / occupied / ripe / seeds / Renown / Coins, the 0.2 s rate limit).
+
+**Split** (approved; each ships alone; U3a first because removing the prompts needs the card to replace all of them):
+- **U3a — see and select:** rings, tap-select + outline, square card with every context button (it alone replaces the prompts), the
+  prompts removed, locked squares' look, the pet label with job icons.
+- **U3b — the hand:** hand bar (Seeds / Basket / Pets / Look), lifting a pet with its reach following the pointer, the pet reach borders in
+  rarity colours, the next-step hint on the bar, the pet page buttons (if they fit).
+
+**Build (U3a).**
+- **Code layout:** a new LocalScript `FieldHand.client.luau` owns the tap, the selection outline, the card (and in U3b the hand bar and its
+  pickers); a new LocalScript `FieldRings.client.luau` draws the rings. `GardenView` gains `SquareCFrame(square)` (centre of an own
+  square, world) and `SquareAt(position)` (world point → own square number or nil, by the plot's grid, locked squares included).
+  `FieldClient` keeps the HUD Field button, the Garden panel (U4 removes it), the toasts and the notices; it loses `GardenView.OnSquare`,
+  the seed / pet pickers (they move to `FieldHand`), the test hooks `OpenPicker` / `OpenPetPicker` and the 3 s reach tint after a place.
+  `PlotView` loses `prompt` use on squares (`PetPrompt`, plant / harvest, `buildLock`'s buy) and `onSquare`; incubators keep their prompts.
+- **Rings** (own plot only, ≤ 36 BillboardGuis, one per planted square, built once per square and only re-filled each second from
+  `GetServerTimeNow`): shown while the character is within 30 studs (horizontal) of the nearest field square, else hidden. A circular track,
+  a pie that fills with `grown / growSeconds` → `readyAt`, the crop icon in the middle. Ripe (`readyAt ≤ now` or `grown ≥ growSeconds`, as
+  GardenSummary): full green ring, a ✓ badge and a small bounce (a tween of the GUI, not of the billboard). The 4 **growing** squares nearest
+  the character also show the time left under the ring (`2:14`). Not `AlwaysOnTop` (crops / pets may hide them; captures must show them).
+  Size in studs so neighbouring rings do not cover each other from the default camera.
+- **Tap / click** (`TouchTapInWorld` on touch; `MouseButton1` press + release within 0.3 s and 8 px on a mouse, ignoring
+  `gameProcessed`): ray from the camera through the point, include-filtered to the own plot's view, else the plot floor's plane → `SquareAt`.
+  Only while the character is within 40 studs (horizontal) of the own plot centre (the server allows 45). A tap on a square selects it
+  (white outline: four thin strips just above the soil, no shared face), a tap on the same square again or off the field closes the card.
+- **Square card** (ScreenGui `FieldHandGui`, `ZIndexBehavior = Sibling`, slides up from the bottom, above the Field button, width
+  min(400, screen − 2 × 110) so it never reaches the thumbstick or the jump button on touch): crop icon + name (or "Empty soil" / "Locked
+  square"), a progress bar with the time left inside (ripe: full, "Ripe!"), the growth boosts that apply (Growth upgrade %, Cloches %),
+  chips for the field pets whose reach covers this square (portrait + 🌱 / 🛡 icon and level; a tap opens that pet's page through a new
+  `PetsGui` attribute `OpenPet` = uid) with one line per pet ("Mochi harvests ripe crops here while you are away: 48 %" from
+  `PetConfig.Strength`, "Rex chases crows here: 70 %" from the guard chance), and the context buttons (≥ 44 px):
+  - empty: **Plant** (seed picker: seeds held with count and grow time, ≥ 44 px rows; no seeds → hint + "Seed shop" opening the Garden
+    panel's seeds as today) and **Place pet** (pet picker as today's, Tending / Pest-control pets with job levels and reach count);
+  - growing: **Place pet** / **Move pet** (the pet picker); ripe: **Harvest** (+ the pet button);
+  - a square with a pet: **Move pet** (pet picker for this square) and **Take back** (`LiftPet`);
+  - locked: price + Renown of the next square (the server opens the tapped square), **Buy square**: green when affordable, two taps over
+    1 000 Coins ("Tap again", orange, 3 s, §10's confirm pattern), grey with the reason (Renown / Coins) when not.
+  The card re-renders on every `State`, on `PetClient.Changed` and `Locale.Changed`; closes when the character walks > 40 studs from the plot.
+- **Locked squares** (every plot, full / mid detail): overgrown, i.e. two or three grass tufts on the grass plate (anchored, CanCollide /
+  CanTouch / CanQuery off), no price in the world; the price shows only in the card.
+- **Field pet label** (every plot): the pet's given name (only if named) and the job icons `🌱4 🛡2`; no level, no tier stars, no kind
+  name. Pets without a name show only the icons.
+
+**Build (U3b).**
+- **Hand bar** (in `FieldGui`'s neighbour `FieldHandGui`, visible only while the tap range applies): four 52 px bricks `🌱` `🧺` `🐾` `✋`,
+  the active one raised and outlined; a 2 × 2 block right-aligned above the jump button on touch (`UserInputService.TouchEnabled` and
+  no keyboard), a row bottom-right on a mouse. Look is the default and is restored on leaving the range.
+  - **Seeds:** a tap on 🌱 opens the seed picker; the chosen seed shows on the button with its count; every tap on an empty open square
+    plants it (taps spaced ≥ 0.25 s on the client, so the 0.2 s server limit never drops one); out of seeds → back to the picker; a tap on
+    a non-empty square selects it as in Look.
+  - **Basket:** every tap on a ripe square fires one `Harvest`; a pop `+1 🌽` rises from the square for 1 s. Other squares: select. **No
+    harvest-all, no drag-to-harvest** (the paid Wheelbarrow, D2).
+  - **Pets:** a tap on a square with a pet lifts it into the hand (client only; the pet stays placed on the server until dropped); its reach
+    is tinted yellow on the square under the mouse (mouse) or on the last tapped square (touch); a tap on a free open square drops it there
+    (mouse: one click; touch: the first tap previews the reach, a second tap on the same square drops = `PlacePet`); a tap on 🐾 again or
+    on the pet's own square cancels. A tap on a free square with nothing in hand opens the pet picker for it.
+  - **Look:** a tap selects + card (U3a).
+- **Reach borders** (own plot, Near tier): every placed pet's reach as a soft border (thin strips along the outer edges of its region,
+  collinear edges merged, rarity colour, `Transparency` 0.3) where the region = the squares this pet counts for under the server's rule
+  (strongest Tending per square; strongest guard per square; ties to the lower uid). At most one border strip per square edge per pet.
+- **Next-step hint:** nothing planted and seeds held → the 🌱 button pulses; something ripe → 🧺 pulses (G1 style, stops on use).
+- **Pet page:** "Place on field" (a resting pet with Tending or Pest control while the hand bar is shown: closes the Pets panel, Pets mode
+  with this pet in hand) only if it fits the pet page's More menu cleanly; "Show on field" is not built (recorded as left over).
+
+**Acceptance checks** (Studio, through the real UI where it says so; the live profile snapshotted right before anything that changes it,
+restored after; display-only fixtures = a `State` / `Plot` message fired to the own client from the server context).
+1. **Code:** `grep -E "PetPrompt|onSquare|OnSquare|buildLock|field\.prompt\.|OpenPicker|OpenPetPicker"` over `src/` finds nothing; the
+   own plot's view holds no `ProximityPrompt` except the 3 incubators'; removed keys are gone from `strings.csv`.
+2. **Rings:** live field → one ring per planted square and none on empty / locked ones; fixture 36 planted (mixed ripe / growing) →
+   36 rings, the ripe ones full with ✓, exactly 4 time labels, on the 4 growing squares nearest the character, each equal to the card's time
+   (± 1 s) and ticking; rings hidden at 32 studs from the nearest square and shown at 28; no ring over another plot.
+3. **Performance:** with the 36-ring fixture the per-second ring update takes < 1 ms (os.clock around it, 10 samples) and builds no new
+   instances after the first second (`Instances` count stable for 10 s).
+4. **Tap and card (real clicks in the viewport):** a click on square A selects A (outline on A only), a click on its neighbour B moves the
+   outline, a click on B again closes the card; a click on another player's plot or beyond 40 studs selects nothing. Every card state
+   checked: empty, growing, ripe, with pet, locked (affordable / too few Coins / Renown short): title, bar, boosts, chips, buttons.
+5. **Every card button through the real UI** (live profile, snapshotted): Plant (picker → crop) plants that square; Harvest harvests it
+   (Garden badge −1); Place pet places the picked pet; Move pet moves it; Take back lifts it; Buy square with two taps opens the tapped
+   square and takes the price once; a pet chip opens the right pet page.
+6. **Server rejection** (remotes fired from the client context): `Plant` / `Harvest` / `BuySquare` / `PlacePet` with square 0, 37, −1,
+   1.5, a string, a locked or occupied square → rejected (the matching reason or ignored), profile unchanged; the same from 60 studs away →
+   `far`; a square id used while standing on a neighbouring plot acts only on the caller's own field.
+7. **Hand modes (U3b, real clicks):** Seeds: pick Corn, three quick taps on three empty squares → three plantings, count −3, none dropped;
+   tap on a growing square selects it. Basket: tap a ripe square → one harvest + pop; tap a growing one → card, no harvest. Pets: lift a
+   placed pet, its reach follows the mouse, drop on another square → moved there (server state); cancel restores; free square with nothing
+   in hand → pet picker. Look: back to the card. Leaving the range resets to Look and hides the bar.
+8. **Borders and labels:** two placed pets with overlapping reach → each border in its rarity colour around the squares it counts for
+   (equal to the server rule computed in the Server context); every plot's field pet label shows only name + job icons (no "Lv").
+9. **Phone** (Studio device emulator, 667 × 375 and 844 × 390, touch): hand bar buttons ≥ 44 px on screen, the bar does not overlap the
+   jump button, the thumbstick, the Field button or the card; the card's buttons ≥ 44 px; a tap in the world selects (TouchTapInWorld);
+   record whether squares are easy to hit from the default camera (the field camera button is built later only if not).
+10. **Texts:** English, Czech and the pseudo-language: card, pickers, hand bar, pop with `TextFits` (or bounds = size) in Czech, no
+   literal (no `[!!` missing in qps); `loc.py build` / `check` (0 errors) / `lint` (within baseline).
+11. **Multi-client** (only if the user starts F7 with 2 clients): neighbouring plots each show rings only over their own field; a tap on
+   the neighbour's field selects nothing.
+12. A playtest boot without errors or warnings on server and client.
+
+**Changed while building U3a.** "Move pet" arms a move: the next tap on a free open square places the pet there (U3b's Pets mode replaces
+it); the card's "Take back" replaces the old picker's Lift row. Rings sit 1.3 studs above the soil and 3 studs toward the camera
+(`StudsOffset` Z; at 4 studs up they read as one row further back), disc 2.3 studs. Locked squares carry three tufts on every plot
+(signature `lock|<own>`), `CanQuery` only on the own plot (as the row plates, soil and crops: the tap ray hits only the own field).
+`FieldHand` / `FieldRings` read `GardenView.OwnField()` at start (the first `State` may arrive before they connect). Test hooks: `FieldHandGui`
+attribute `Select` (square), `FieldRings` attributes `Rings` / `UpdateMs`. Removed keys: `field.prompt.*`, `field.petPicker.lift*`,
+`pets.tending`.
+
+**Studio results U3a (2026-11-07; live profile snapshotted as `profile_9892673032_U3a_1`, restored and checked equal after).**
+1 ✔ (grep clean, only incubator prompts, no duplicate scripts after the Argon sync). 2 ✔ live 9 rings; fixture 36 rings, 7 ripe with ✓,
+exactly 4 time labels on the 4 nearest growing squares, ring time = card time ± 1 s; shown at 28 / 29.5 studs, hidden at 30.5 / 32.
+3 ✔ update 0.13–0.15 ms, instances stable at 756 for 10 s. 4 ✔ real clicks: select, neighbour moves the outline, same square closes,
+60 studs away / neighbour plot select nothing; empty, growing, ripe, with pet and locked cards checked. 5 ✔ every button through the real
+UI: Harvest, Plant → Potato, Move (next tap), Take back, Place pet → picker, the pet row opens its page, Buy with two taps (9 136 → 5 136,
+charged once). 6 ✔ squares 0 / 37 / −1 / locked → `square`, 1.5 and "2" ignored, occupied / empty / notripe / open as expected, 60 studs →
+`far`. 7 / 8 U3b. 9 open: geometry only (the 400 px card at 667 wide spans x 133–533, clear of the jump button and thumbstick; buttons
+48 px); `TouchTapInWorld` and how easy squares are to hit on a phone are untested (no touch emulation through the MCP): the user or MU.
+10 ✔ en / cs / qps fit, no literals; `loc.py check` 0 errors, lint within baseline. 11 not run (F7). 12 ✔ no game errors.
 
 ### E0 — Economy model
 **Goal.** One reproducible model of the Coin economy (`tools/economy.py`, Python stdlib; how to run it: ECONOMY.md) that fixes the numbers the

@@ -1,7 +1,7 @@
 -- PlotView (E1a1, docs/EXPANSION.md §16): draws one garden plot on the client from a plain state table (GardenRemotes.Plot,
 -- GardenPlotFeed), at its slot's position (GardenConfig.PlotCFrame), in one of four details: "full" (floor, edges, sign,
--- incubators with egg and live countdown, incubator billboards, field pets with models and labels, prompts on the own plot),
--- "mid" (the same without billboards and prompts, each pet one block in its rarity colour), "low" (floor, one block per egg,
+-- incubators with egg and live countdown, incubator billboards, field pets with models and labels, incubator prompts on the own
+-- plot), "mid" (the same without billboards and prompts, each pet one block in its rarity colour), "low" (floor, one block per egg,
 -- the field as its row plates) or "none". Stand-in blocks only (no art pass). Used by GardenView, which picks the detail.
 -- A plot is split into pieces (base, inc1..3, field = the row plates, sq1..36). SetState / SetDetail / Relabel only
 -- mark the pieces whose look changed; Step builds marked pieces until a deadline, so a build is spread over frames by the caller.
@@ -11,10 +11,11 @@
 -- tending / guard = Tending / Pest-control level, 0 without it; E4b; a feed without guard reads as 0) } } or { free = true } (a slot
 -- nobody holds: floor, sign "Free plot", grey incubators). Every plot's floor is the incubator strip; the field lies behind it
 -- (the P2 pens are gone since FA).
--- The field (E1d2) has the shape CropConfig.RowWidths: every row is a plate of overgrown grass, open squares are soil on it.
--- Field pets stand on their squares (full: the PetLook model, mid: a block); the own plot's squares also get a pet prompt
--- (onSquare(square, "pet", soil), key F), its locked squares a buy prompt (onSquare(square, "buy", holder)), and ShowReach
--- tints the squares a pet would work.
+-- The field (E1d2) has the shape CropConfig.RowWidths: every row is a plate of overgrown grass, open squares are soil on it,
+-- locked squares carry grass tufts (U3a; full detail). Field pets stand on their squares (full: the PetLook model with a label of
+-- its name and job icons, never its level; mid: a block). The field has no prompts (U3a): the own plot's field parts are
+-- CanQuery so FieldHand's tap ray hits them, SquareAt maps a world point to a square, ShowSelect outlines the selected square
+-- and ShowReach tints the squares a pet would work.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -32,7 +33,6 @@ local INCUBATOR_SPOTS = { Vector3.new(-12, 0, -10), Vector3.new(0, 0, -10), Vect
 local STRIP_FRONT, STRIP_BACK = -20, -4 -- a plot's floor: the strip that holds the sign side and the incubators
 local FIELD_FRONT = -2 -- the field lies behind the strip (floor +Z), from this far behind the centre
 local FIELD_PITCH = 5.5 -- studs per square
-local BUY_HOLD = 0.5 -- seconds a buy prompt is held
 local INFO_DISTANCE = 60 -- studs: pad / incubator billboards and pet labels
 local SIGN_CLEAR = 8 -- name sign: height of the lower frame bar's centre over the floor centre (a player walks under it)
 local SIGN_TOP = 12.4 -- name sign: height of the upper frame bar's centre (1.5x the old 8.25-stud sign)
@@ -55,6 +55,11 @@ local COLORS = {
 }
 local SPROUT = Color3.fromRGB(110, 190, 80) -- unripe crops (stage 1-2)
 local REACH = Color3.fromRGB(255, 230, 120) -- ShowReach tint
+local TUFTS = { -- grass tufts on a locked square (U3a): local x, z (in squares), height, yaw, colour
+	{ -0.22, -0.18, 1.3, 20, Color3.fromRGB(96, 150, 62) },
+	{ 0.2, 0.05, 1.0, 55, Color3.fromRGB(70, 112, 46) },
+	{ -0.05, 0.25, 1.5, -30, Color3.fromRGB(110, 165, 70) },
+}
 local CROP_COLORS = { -- ripe crops, by letter (CropConfig: a Potato, b Corn, c Pumpkin, d Giant melon, E2a rare: e Golden carrot, f Frost grape, g Glow mushroom)
 	a = Color3.fromRGB(196, 150, 90),
 	b = Color3.fromRGB(245, 210, 60),
@@ -176,21 +181,13 @@ local function squareSpot(square: number): (number, number)
 	return ((col :: number) - 0.5 - CropConfig.GridColumns / 2) * FIELD_PITCH, FIELD_FRONT + ((row :: number) - 0.5) * FIELD_PITCH
 end
 
--- Number of open squares in a field message ("#0" = locked).
-local function openOf(field): number
-	local _, locked = string.gsub(field.crops, "#", "")
-	return CropConfig.MaxSquares - locked
-end
-
--- New view of plot slot `slot` under `parent`. options: { own = boolean, onIncubator = fn(n, base),
--- onSquare = fn(square, action "plant" / "harvest", soil) } (prompts on the own plot only).
+-- New view of plot slot `slot` under `parent`. options: { own = boolean, onIncubator = fn(n, base) } (prompts on the own plot only).
 function PlotView.new(slot: number, parent: Instance, options)
 	local self = setmetatable({}, PlotView)
 	self.slot = slot
 	self.floor = GardenConfig.PlotCFrame(slot) :: CFrame
 	self.own = options and options.own or false
 	self.onIncubator = options and options.onIncubator
-	self.onSquare = options and options.onSquare
 	self.detail = "none"
 	self.state = nil
 	self.lang = Locale.Current()
@@ -248,8 +245,8 @@ function PlotView:signature(key: string): string
 	end
 	local cell = string.sub(field.crops, (n - 1) * 2 + 1, n * 2)
 	if string.sub(cell, 1, 1) == "#" then
-		-- a locked square is the row plate; only the own plot draws a buy prompt on it, with the price of the next square
-		return if self.own and detail == "full" then string.format("lock|%d|%s", openOf(field), self.lang) else "none"
+		-- a locked square is the row plate with grass tufts (full detail); its price shows only in the square card (U3a)
+		return if detail == "full" then "lock|" .. tostring(self.own) else "none"
 	end
 	local pet = self.petMap[n]
 	return string.format(
@@ -416,16 +413,26 @@ local function standingPet(kind: string, level: number, uid: string, at: CFrame,
 	return model
 end
 
--- Label over a field pet: name, level, tier stars and its jobs' levels (Tending, Pest control; E4b).
-local function fieldPetLabel(kind: string, level: number, apt: number, guard: number, name: string?): string
+-- Job icons of a field pet: "🌱4 🛡2" (Tending, Pest control; U3a: never the level, which may come from Cuteness).
+local function jobIcons(apt: number, guard: number): string
 	local jobs = {}
 	if apt > 0 then
-		table.insert(jobs, Locale.T("pets.tending", { level = apt }))
+		table.insert(jobs, Locale.T("field.job.tending", { level = apt }))
 	end
 	if guard > 0 then
-		table.insert(jobs, Locale.T("pets.guard", { level = guard }))
+		table.insert(jobs, Locale.T("field.job.guard", { level = guard }))
 	end
-	return Locale.T("field.pet.label", { pet = Locale.PetName(kind, level, name), stars = PetLook.TierStars(level), jobs = table.concat(jobs, " · ") })
+	return table.concat(jobs, " ")
+end
+PlotView.JobIcons = jobIcons
+
+-- Label over a field pet: its given name (only if it has one) over the job icons.
+local function fieldPetLabel(apt: number, guard: number, name: string?): string
+	local jobs = jobIcons(apt, guard)
+	if type(name) == "string" and name ~= "" then
+		return Locale.T("field.pet.label", { name = name, jobs = jobs })
+	end
+	return jobs
 end
 
 function PlotView:buildIncubator(model: Model, n: number)
@@ -498,6 +505,7 @@ end
 function PlotView:buildField(model: Model)
 	for row, width in CropConfig.RowWidths do
 		part({
+			CanQuery = self.own, -- the tap ray (U3a)
 			Name = "Row" .. row,
 			Size = Vector3.new(width * FIELD_PITCH, 0.3, FIELD_PITCH),
 			CFrame = self:at(Vector3.new(0, -0.1, FIELD_FRONT + (row - 0.5) * FIELD_PITCH)),
@@ -507,49 +515,42 @@ function PlotView:buildField(model: Model)
 	end
 end
 
--- The own plot's buy prompt on locked square `square` (full detail): the price and Renown of the next square, whichever is picked.
-function PlotView:buildLock(model: Model, square: number)
-	local expansion = CropConfig.NextExpansion(openOf(self.state.field))
-	if not (expansion and self.onSquare) then
-		return
-	end
+-- Locked square `square` (full detail, U3a): grass tufts on the row plate, so it looks overgrown next to the soil of open squares.
+function PlotView:buildOvergrown(model: Model, square: number)
 	local x, z = squareSpot(square)
-	local holder = part({
-		Name = "Lock" .. square,
-		Size = Vector3.new(FIELD_PITCH - 0.4, 0.2, FIELD_PITCH - 0.4),
-		CFrame = self:at(Vector3.new(x, 0.15, z)),
-		Transparency = 1,
-		CanCollide = false,
-	})
-	holder.Parent = model
-	local price = if expansion.renown > 0
-		then Locale.T("field.prompt.priceRenown", { count = expansion.price, level = expansion.renown })
-		else Locale.T("field.prompt.price", { count = expansion.price })
-	local buy = prompt(holder, Locale.T("field.prompt.buySquare"), price, 6, function()
-		self.onSquare(square, "buy", holder)
-	end)
-	buy.HoldDuration = BUY_HOLD
+	for i, tuft in TUFTS do
+		local height = tuft[3]
+		part({
+			Name = "Tuft" .. i,
+			Size = Vector3.new(0.7, height, 0.7),
+			-- the plate's top is at 0.05: the tuft starts inside it (no shared face)
+			CFrame = self:at(Vector3.new(x + tuft[1] * FIELD_PITCH, height / 2, z + tuft[2] * FIELD_PITCH)) * CFrame.Angles(0, math.rad(tuft[4]), 0),
+			Color = tuft[5],
+			Material = Enum.Material.Grass,
+			CanCollide = false,
+			CanQuery = self.own,
+		}).Parent = model
+	end
 end
 
 function PlotView:buildSquare(model: Model, square: number)
 	local field = self.state.field
 	local size = FIELD_PITCH - 0.4
 	local x, z = squareSpot(square)
-	local prompts = self.own and self.onSquare and self.detail == "full"
 	local pets = self.petMap
 	local index = (square - 1) * 2 + 1
 	local letter = string.sub(field.crops, index, index)
 	local stage = tonumber(string.sub(field.crops, index + 1, index + 1)) or 0
 	if letter == "#" then
-		return self:buildLock(model, square)
+		return self:buildOvergrown(model, square)
 	end
-	local soil = part({ Name = "Soil" .. square, Size = Vector3.new(size, 0.4, size), CFrame = self:at(Vector3.new(x, 0.05, z)), Color = COLORS.soil, Material = Enum.Material.Ground })
+	local soil = part({ Name = "Soil" .. square, Size = Vector3.new(size, 0.4, size), CFrame = self:at(Vector3.new(x, 0.05, z)), Color = COLORS.soil, Material = Enum.Material.Ground, CanQuery = self.own })
 	soil.Parent = model
 	if CROP_COLORS[letter] and stage > 0 then
 		local height = 0.6 + stage * 0.7
 		local width = size * (0.3 + stage * 0.15)
 		local color = if stage >= 3 then CROP_COLORS[letter] else SPROUT
-		part({ Name = "Crop", Size = Vector3.new(width, height, width), CFrame = self:at(Vector3.new(x, 0.25 + height / 2, z)), Color = color }).Parent = model
+		part({ Name = "Crop", Size = Vector3.new(width, height, width), CFrame = self:at(Vector3.new(x, 0.25 + height / 2, z)), Color = color, CanQuery = self.own }).Parent = model
 	end
 	local pet = pets[square]
 	local rarity = pet and PetConfig.RarityOf(pet.kind)
@@ -561,40 +562,12 @@ function PlotView:buildSquare(model: Model, square: number)
 			part({ Name = "Pet" .. square, Size = Vector3.new(cube, cube, cube), CFrame = self:at(spot + Vector3.new(0, 0.25 + cube / 2, 0)), Color = rarity.color }).Parent =
 				model
 		else
-			local petModel = standingPet(pet.kind, pet.level, pet.uid, self:at(spot), soil.Position.Y + soil.Size.Y / 2, fieldPetLabel(pet.kind, pet.level, pet.apt, pet.guard, nameOf(self.state, pet.uid)))
+			local petModel = standingPet(pet.kind, pet.level, pet.uid, self:at(spot), soil.Position.Y + soil.Size.Y / 2, fieldPetLabel(pet.apt, pet.guard, nameOf(self.state, pet.uid)))
 			if petModel then
 				petModel.Name = "Pet" .. square
 				petModel.Parent = model
 			end
 		end
-	end
-	if prompts then
-		local petPrompt = prompt(
-			soil,
-			Locale.T(if pet then "field.prompt.movePet" else "field.prompt.placePet"),
-			if pet then Locale.PetName(pet.kind, pet.level, nameOf(self.state, pet.uid)) else Locale.T("field.prompt.square", { n = square }),
-			6,
-			function()
-				self.onSquare(square, "pet", soil)
-			end
-		)
-		petPrompt.Name = "PetPrompt"
-		petPrompt.KeyboardKeyCode = Enum.KeyCode.F
-		petPrompt.GamepadKeyCode = Enum.KeyCode.ButtonY
-		petPrompt.UIOffset = Vector2.new(0, 72) -- below the plant / harvest prompt of the same square
-	end
-	local crop = CropConfig.ByLetter[letter]
-	if prompts and (letter == "." or (crop and stage >= 3)) then
-		local action = if letter == "." then "plant" else "harvest"
-		prompt(
-			soil,
-			Locale.T(if action == "plant" then "field.prompt.plant" else "field.prompt.harvest"),
-			if crop then Locale.CropName(crop) else Locale.T("field.prompt.square", { n = square }),
-			6,
-			function()
-				self.onSquare(square, action, soil)
-			end
-		)
 	end
 end
 
@@ -676,6 +649,54 @@ function PlotView:ShowReach(squares: { number }?)
 	end
 	tint.Parent = self.root
 	self.reach = tint
+end
+
+-- The field square under world point `position` (its grid cell, locked squares and the paths between squares included), or nil
+-- off the field (U3a: FieldHand's tap).
+function PlotView:SquareAt(position: Vector3): number?
+	local offset = self.floor:PointToObjectSpace(position)
+	local col = math.floor(offset.X / FIELD_PITCH + CropConfig.GridColumns / 2) + 1
+	local row = math.floor((offset.Z - FIELD_FRONT) / FIELD_PITCH) + 1
+	return CropConfig.SquareAt(row, col)
+end
+
+-- World CFrame of the middle of field square `square` at the soil's top (rings, pops).
+function PlotView:SquareCFrame(square: number): CFrame
+	local x, z = squareSpot(square)
+	return self:at(Vector3.new(x, 0.25, z))
+end
+
+-- White outline around field square `square` (the selected square, U3a) until called again; nil clears.
+function PlotView:ShowSelect(square: number?)
+	if self.select then
+		self.select:Destroy()
+		self.select = nil
+	end
+	if not square or not CropConfig.Cell(square) then
+		return
+	end
+	local x, z = squareSpot(square)
+	local outline = Instance.new("Model")
+	outline.Name = "Select"
+	local half, thick = (FIELD_PITCH - 0.4) / 2 + 0.05, 0.3
+	for _, edge in {
+		{ Vector3.new(0, 0, -half), Vector3.new(2 * half + thick, 0.16, thick) },
+		{ Vector3.new(0, 0, half), Vector3.new(2 * half + thick, 0.16, thick) },
+		{ Vector3.new(-half, 0, 0), Vector3.new(thick, 0.16, 2 * half - thick) },
+		{ Vector3.new(half, 0, 0), Vector3.new(thick, 0.16, 2 * half - thick) },
+	} do
+		part({
+			Name = "Edge",
+			Size = edge[2],
+			-- 0.30-0.46 over the floor centre: above the soil top (0.25) and the reach tint (0.28-0.38), no shared face
+			CFrame = self:at(Vector3.new(x, 0.38, z) + edge[1]),
+			Color = Color3.new(1, 1, 1),
+			Material = Enum.Material.Neon,
+			CanCollide = false,
+		}).Parent = outline
+	end
+	outline.Parent = self.root
+	self.select = outline
 end
 
 -- Updates the countdowns of the drawn eggs (server time `now`, workspace:GetServerTimeNow()).

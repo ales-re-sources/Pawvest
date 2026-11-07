@@ -522,16 +522,33 @@ otherwise items could be duplicated across servers.
   everyone ("Mochi Lv 6") through the `PetNames` attribute and are never localized.
 
 ### 7.9 Crop field (E1-E4)
-*Built and Studio-validated 2026-10-30 – 11-04; every player has it since FA (2026-11-06; until then admins only). Exact numbers live in `CropConfig` / `PetConfig` and are pinned by
+*Built and Studio-validated 2026-10-30 – 11-04; every player has it since FA (2026-11-06; until then admins only); tap-and-card controls since U3a (2026-11-07). Exact numbers live in `CropConfig` / `PetConfig` and are pinned by
 `tools/economy.py`; why they are what they are: [ECONOMY.md](ECONOMY.md); what comes next: [EXPANSION.md](EXPANSION.md).*
 
 - **Goal (2026-11-02, the user).** Farming is the main game: over days 1-3 the field earns about what the obby earns, then 3x by day 7 and
   10x by day 30 (Casual, Garden main), checked by `economy.py check`.
 - **Field.** Behind each plot (a 40 x 16 strip in front holds the sign and the 3 incubators): 36 squares in rows 6-6-8-8-8 centred on an
   8-column grid, numbered row by row from the plot (the numbers are stored: never reorder the rows). A new field opens the 2 x 2 block at the
-  front centre (squares 3, 4, 9, 10) with 4 free Potato seeds. Any locked square opens through its hold prompt; its price and Renown gate depend
-  on how many are open (1 400 for the 5th up to 907 400 for the 36th). Controls: a prompt per square (Plant, Harvest, Place / move pet, buy)
-  and one Garden panel at the own plot (seeds, selling, squares, upgrades, tools, market cart, field pets, crow forecast).
+  front centre (squares 3, 4, 9, 10) with 4 free Potato seeds. Any locked square (overgrown: grass tufts, no price in the world) can be
+  bought from its square card; its price and Renown gate depend on how many are open (1 400 for the 5th up to 907 400 for the 36th). One
+  Garden panel at the own plot holds seeds, selling, the squares list, upgrades, tools, market cart, field pets and the crow forecast (U4
+  splits it up).
+- **Seeing the field (U3a, 2026-11-07).** Within 30 studs of the own field every planted square shows a ring (own plot only, ≤ 36): a dark
+  disc whose pie fills as the crop grows, the crop icon inside; a ripe crop gets a full green pie, a ✓ badge and a small bounce; the 4 growing
+  squares nearest the player also print the time left. The rings sit at crop height, drawn 3 studs toward the camera so the crop does not
+  hide them (higher rings looked a row further back from the default camera). Other plots show only their crops and pets. A field pet's
+  label is its given name (if any) over its job icons `🌱4 🛡2` (Tending, Pest control), never its level (with P4 the level can come
+  from Cuteness).
+- **Acting on a square (U3a).** No prompts on the field (the incubators keep theirs). A tap / click on a square of the own field (within 40
+  studs of the plot centre; the server allows 45) outlines it in white and slides the **square card** up from the bottom: crop icon and
+  name, a progress bar with the time left ("Ripe!" when ripe), the growth boosts that apply (Growth upgrade, Cloches), a row per field pet
+  whose reach covers the square (portrait, job icons, what it does there: "harvests ripe crops here while you are away: 35 %", "chases
+  crows away here: 70 %"; a tap opens its pet page) and context buttons: Plant (seed picker: seeds held, count, grow time; none → a way
+  to the seed shop), Harvest, Place pet (pet picker: Tending / Pest-control pets with job levels and squares reached; hovering a row tints
+  its reach), Move pet (the next tap on a free square moves it there), Take back, Buy square (price and Renown; grey with the reason when
+  not possible; over 1 000 Coins a second tap within 3 s confirms). The selected square again, a tap off the field or walking away closes it.
+  The card is at most 400 px wide and on a touch screen keeps 110 px free on each side (thumbstick, jump button). The client sends only the
+  square number (and a crop id or pet uid); `GardenField` checks everything as before.
 - **Crops.** Potato (5 min, so the first harvest comes in the first session), Corn, Pumpkin and Giant melon from the seed shop behind Renown
   gates; three rare crops, one per world (Golden carrot, Frost grape, Glow mushroom), only from the obby (below), never sold as seeds, never
   eaten by crows. Growth runs on server time only: online x 1.0, offline x 0.5 for at most 24 h per absence, settled on join, on leave, every

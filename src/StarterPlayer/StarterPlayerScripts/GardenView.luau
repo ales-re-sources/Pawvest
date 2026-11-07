@@ -7,8 +7,9 @@
 --     ROADMAP E1a1 check 5).
 -- Detail by horizontal distance from the character to the plot centre: full ≤ 60 studs, mid ≤ 120 (pets as blocks), low ≤ 300,
 -- nothing beyond (10 studs of hysteresis). Builds run on Heartbeat within BUDGET seconds per frame, the own plot first, then the
--- nearest. The own plot's incubators and field squares carry prompts that call the handlers registered with OnIncubator /
--- OnSquare. OwnState / OwnField return the own plot and the owner's field state as last received (GardenSummary, U2).
+-- nearest. The own plot's incubators carry prompts that call the handler registered with OnIncubator (the field has none since
+-- U3a: SquareAt / SquareCFrame / ShowSelect / OwnRoot serve FieldHand's tap and FieldRings). OwnState / OwnField return the own
+-- plot and the owner's field state as last received (GardenSummary, U2).
 -- In Studio the folder carries the attributes Instances and Pending (tests).
 
 local Players = game:GetService("Players")
@@ -40,7 +41,7 @@ local views = {} -- [slot] = PlotView
 local received = {} -- [userId] = state from the server
 local real = {} -- [userId] = that state with `names` = the owner's pet names (P3b, PetConfig.NamesAttribute)
 local order = {} -- slots in build order (own first, then by distance)
-local handlers = { incubator = nil, square = nil }
+local handlers = { incubator = nil }
 
 local GardenView = {}
 
@@ -49,12 +50,6 @@ GardenView.Folder = folder
 -- fn(incubator, base) when an incubator prompt of the own plot is triggered.
 function GardenView.OnIncubator(fn: (number, BasePart) -> ())
 	handlers.incubator = fn
-end
-
--- fn(square, action, soil) when a field square prompt of the own plot is triggered: action "plant" (empty) / "harvest" (ripe) /
--- "pet" (the square's pet prompt: place or move a field pet, E1b) / "buy" (a locked square, E1d2; soil = its prompt holder).
-function GardenView.OnSquare(fn: (number, string, BasePart) -> ())
-	handlers.square = fn
 end
 
 local function ownSlot(): number?
@@ -82,6 +77,37 @@ function GardenView.ShowReach(squares: { number }?)
 	if view then
 		view:ShowReach(squares)
 	end
+end
+
+local function ownView()
+	local slot = ownSlot()
+	return slot and views[slot]
+end
+
+-- Outlines the own field's square `square` (the selected one, U3a); nil clears.
+function GardenView.ShowSelect(square: number?)
+	local view = ownView()
+	if view then
+		view:ShowSelect(square)
+	end
+end
+
+-- The own field's square under world point `position` (locked ones included), or nil.
+function GardenView.SquareAt(position: Vector3): number?
+	local view = ownView()
+	return view and view:SquareAt(position)
+end
+
+-- World CFrame of the middle of the own field's square `square` at the soil's top, or nil without a plot.
+function GardenView.SquareCFrame(square: number): CFrame?
+	local view = ownView()
+	return view and view:SquareCFrame(square)
+end
+
+-- The own plot's drawn model (the tap ray's include list), or nil.
+function GardenView.OwnRoot(): Model?
+	local view = ownView()
+	return view and view.root
 end
 
 -- Data ---------------------------------------------------------------------------------------------------------------------
@@ -179,11 +205,6 @@ local function refresh()
 					onIncubator = function(n, base)
 						if handlers.incubator then
 							handlers.incubator(n, base)
-						end
-					end,
-					onSquare = function(square, action, soil)
-						if handlers.square then
-							handlers.square(square, action, soil)
 						end
 					end,
 				})

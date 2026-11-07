@@ -1,7 +1,8 @@
 -- Pets panel (docs/GDD.md §7.3, §7.5; U1: docs/UI_GARDEN_PETS.md §9): inventory, equip / unequip, buy slot, total Coin bonus.
 -- Display only: the list comes from PetClient (PetRemotes.PetsChanged), so a hatch or a sale shows up while the panel
 -- is open. A click just names a pet or the next slot; the server validates, prices and pays. The GUI is built here.
--- The 🐶 button (ButtonHandler) opens it through the SetOpen BindableEvent and reads the Open attribute.
+-- The 🐶 button (ButtonHandler) opens it through the SetOpen BindableEvent and reads the Open attribute; the ScreenGui attribute
+-- OpenPet = uid opens it at that pet's page (FieldHand's square card, U3a).
 -- Stud-brick look (StudStyle, green like its icon). The way to the garden is the 🌱 HUD icon (U2, ButtonHandler).
 -- Layout (U1): summary line ("Coin bonus +12 % · 2 cute pets with you"), filter chips (All n/50 · With me · On the field ·
 -- Best for ▼ → a trait: pets with it, highest first; the choice holds for the session), the pet list, the equip slots as three
@@ -768,6 +769,15 @@ function setOpen(open: boolean)
 end
 screenGui:SetAttribute("Open", false)
 setOpenEvent.Event:Connect(setOpen)
+-- OpenPet = uid (FieldHand's square card, U3a): opens the panel at that pet's page; cleared after use
+screenGui:GetAttributeChangedSignal("OpenPet"):Connect(function()
+	local uid = screenGui:GetAttribute("OpenPet")
+	if type(uid) == "string" then
+		screenGui:SetAttribute("OpenPet", nil)
+		setOpen(true)
+		detail.Open(uid)
+	end
+end)
 closeButton.Activated:Connect(function()
 	setOpen(false)
 end)

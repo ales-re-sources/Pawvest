@@ -348,9 +348,30 @@ field.toast.sell[other],Form for 0 and 5+,\+{count} Coins,\+{count} mincí,new,h
 field.toast.seeds,"Toast after buying seeds (catalogue or market cart); {crop} = crop name, {count} = how many seeds",Seeds: {crop} +{count},Semínka: {crop} +{count},new,h2341f01e
 field.toast.square,Toast after buying a square; {n} = its number,Square {n} bought!,Políčko {n} je tvoje!,new,h3dcc928c
 field.toast.plant,Toast after planting; {crop} = crop name,Planted: {crop},Zasazeno: {crop},new,h16c26af5
-field.prompt.plant,Prompt action text on an empty field square (short verb),Plant,Zasadit,new,h56269bbe
-field.prompt.harvest,Prompt action text on a ripe crop (short verb),Harvest,Sklidit,new,h2c69834b
-field.prompt.square,Prompt object text of an empty field square; {n} = square number 1-36,Square {n},Políčko {n},new,ha8b1cc41
+field.job.tending,"Job icon over a field pet and in the square card: Tending (looks after crops) with its level; {level} = 1-10. Keep the emoji, no space",🌱{level},🌱{level},new,h3daa5dad
+field.job.guard,"Job icon over a field pet and in the square card: Pest control (chases crows) with its level; {level} = 1-10. Keep the emoji, no space",🛡{level},🛡{level},new,h04454625
+field.card.empty,"Square card title (U3a, tap a square of your field): an open square with nothing planted",Empty soil,Prázdné políčko,new,ha098ccac
+field.card.locked,Square card title: a square not bought yet (overgrown with grass),Overgrown square,Zarostlé políčko,new,h45e20944
+field.card.emptyHint,"Square card of an empty square, under the title",Plant a seed here.,Zasaď sem semínko.,new,h59806b88
+field.card.ripe,Square card: text inside the full progress bar when the crop is ready to harvest (short),Ripe!,Zralé!,new,hb1a0fa6a
+field.card.boost,"Square card, a line of growth boosts; {icon} = emoji, {name} = field.upgrade.growth or field.tool.cloches, {pct} = whole percent faster. Several are joined with ' · '",{icon} {name} +{pct}%,{icon} {name} +{pct} %,new,h9789ad74
+field.card.petTend,"Square card, under a field pet's name: the pet (with Tending) reaches this square; {pct} = chance in whole percent that it harvests a ripe crop here while the player is offline",Harvests ripe crops here while you are away: {pct}%,"Když nejsi ve hře, sklízí tu zralou úrodu: {pct} %",new,hc39f738a
+field.card.petGuard,"Square card, under a field pet's name: the pet (with Pest control) guards this square; {pct} = chance in whole percent that it chases crows off",Chases crows away here: {pct}%,Odhání tu vrány: {pct} %,new,h00ce6454
+field.card.plant,"Square card button (brick, about 180 px): opens the seed picker for this square",Plant,Zasadit,new,h56269bbe
+field.card.harvest,Square card button: harvest the ripe crop,Harvest,Sklidit,new,h2c69834b
+field.card.placePet,Square card button: opens the pet picker to put a pet with Tending / Pest control on this square,Place pet,Umístit mazlíčka,new,haa61e2b4
+field.card.movePet,Square card button on a square with a pet: the next tap on a free square moves the pet there,Move pet,Přesunout,new,h93f87859
+field.card.takeBack,Square card button on a square with a pet: takes the pet off the field (back to the pets),Take back,Vzít zpět,new,h57881cb3
+field.card.buy,Square card button on an overgrown square: buy it,Buy square,Koupit políčko,new,h712d511b
+field.card.tapAgain,"Square card: the Buy square button after the first tap (orange, confirms a big spend)",Tap again,Klepni znovu,new,h28272940
+field.card.cancel,Square card button while a pet is being moved: stop moving it,Cancel,Zrušit,new,ha96c5cb1
+field.card.moving,Square card line while a pet is being moved (green); {pet} = the pet's name or kind (no gendered verb in Czech),Tap a free square for {pet},{pet}: klepni na volné políčko,new,h2a3abe32
+field.card.price[one],Square card of an overgrown square: its price; {count} = Coins. Form for 1,Price: {count} Coin,Cena: {count} mince,new,hb48ac67d
+field.card.price[few],Form for 2-4 (Czech only),,Cena: {count} mince,new,hb48ac67d
+field.card.price[other],Form for 0 and 5+,Price: {count} Coins,Cena: {count} mincí,new,hb48ac67d
+field.card.priceRenown[one],"Square card of an overgrown square that needs Renown; {count} = Coins, {level} = Renown level. Form for 1",Price: {count} Coin · Renown {level},Cena: {count} mince · Pověst {level},new,h1aef96bd
+field.card.priceRenown[few],Form for 2-4 (Czech only),,Cena: {count} mince · Pověst {level},new,h1aef96bd
+field.card.priceRenown[other],Form for 0 and 5+,Price: {count} Coins · Renown {level},Cena: {count} mincí · Pověst {level},new,h1aef96bd
 crop.name.Potato,"Crop name (singular, shown with its icon)",Potato,Brambora,new,ha65a72dc
 crop.name.Corn,"Crop name (singular, shown with its icon)",Corn,Kukuřice,new,hd0c37a5e
 crop.name.Pumpkin,"Crop name (singular, shown with its icon)",Pumpkin,Dýně,new,hdddc7a54
@@ -372,9 +393,9 @@ field.reason.coins,Refused: too few Coins,Not enough Coins,Nemáš dost mincí,n
 field.reason.items,Refused: the player has fewer crops than asked to sell,You do not have that many,Tolik jich nemáš,new,h7ce6df01
 field.reason.maxed,Refused: all squares are bought,Your field is complete,Tvoje pole je kompletní,new,hda4eabde
 field.reason.stale,"Refused: the panel showed old data (double click, lag)","Out of date, try again","Údaje se mezitím změnily, zkus to znovu",new,ha5b6c678
-field.pet.label,"Label over a pet working on a field square (rich text, green second line). {pet} = ""Cat Lv 12"", {stars} = tier badge with a leading space ("" ★★"") or empty, {jobs} = its job levels, ""Tending 3 · Pest control 2"" (pets.tending / pets.guard)",{pet}{stars}\n<font color='#a8e6a0'>{jobs}</font>,{pet}{stars}\n<font color='#a8e6a0'>{jobs}</font>,new,h58c85e6d
-field.prompt.placePet,Prompt action on a field square without a pet (short; key F): put a pet with Tending here,Place pet,Umístit mazlíčka,new,haa61e2b4
-field.prompt.movePet,Prompt action on a field square where a pet works (short; key F): move it or take it off,Move / lift,Přesunout / odebrat,new,heaa65b74
+field.pet.label,"Label over a pet working on a field square, only for a pet with a given name (rich text, green second line). {name} = the pet's name (user text), {jobs} = its job icons and levels, ""🌱4 🛡2"" (field.job.*). Never the pet's level (U3a)","{name}
+<font color='#a8e6a0'>{jobs}</font>","{name}
+<font color='#a8e6a0'>{jobs}</font>",new,hceea6416
 field.section.pets,"Heading of the field panel's pet section; {used} = pets on the field, {slots} = field pet slots owned",Field pets {used} / {slots},Mazlíčci na poli {used} / {slots},new,ha5e701a6
 field.pet.xp,"Field pet row, second line; {xp} / {next} = Tending experience and the amount for the next level, in hours of field time (decimal, ""3.5"")",Tending XP: {xp} / {next} h,Zkušenost v péči: {xp} / {next} h,new,h4221ff81
 field.pet.capped,"Field pet row, second line: its Tending level is at the cap of its rarity",Tending is at this pet's maximum,Péče je u tohoto mazlíčka na maximu,new,hc4db414a
@@ -400,8 +421,6 @@ field.slot.done,Field panel: every field pet slot is bought,All field pet slots 
 field.pets.note,Small note under the field pet section: what Tending does,"While you are away, a pet with Tending harvests the ripe crops in its reach and replants them from your seeds. A higher level does it more often and reaches more squares. Pets stop when the barn is full.","Když jsi pryč, mazlíček s péčí sklidí zralou úrodu ve svém dosahu a znovu ji zasadí z tvých semínek. Čím vyšší úroveň, tím častěji a na víc políčkách. Když je stodola plná, mazlíčci přestanou.",new,h07abb1e3
 field.pets.guardNote,"Small note under the field pet section, after the Tending note: what Pest control does","While you are away, a pet with Pest control chases crows off the squares in its reach. A pet with Tending and Pest control does both jobs.","Když jsi pryč, mazlíček s hlídáním odhání vrány z políček ve svém dosahu. Mazlíček, který umí péči i hlídání, dělá obojí.",new,h49769e09
 field.petPicker.title,Title of the pet picker opened at a field square; {n} = square number,Pet for square {n},Mazlíček na políčko {n},new,hb5233c8c
-field.petPicker.lift,"Pet picker row: take the pet that works this square off the field; {pet} = ""Cat Lv 12""",Lift {pet},Odebrat: {pet},new,hc01b5fb8
-field.petPicker.liftInfo,"Pet picker, second line of the Lift row",Back to your pets; the crop stays,"Vrátí se k mazlíčkům, úroda zůstane",new,hfc16287c
 field.petPicker.equipped,"Pet picker, disabled row: the pet follows the player (equipped)",Equipped: unequip it in the Pets panel first,Je nasazený: nejdřív ho sundej v panelu Mazlíčci,new,h66466e79
 field.petPicker.noSlot,"Pet picker, disabled row: every field pet slot is used",No free slot: buy one in the field panel,Žádné volné místo: další koupíš v panelu pole,new,h0d88e986
 field.petPicker.info[one],"Pet picker row, second line; {level} = Tending level, {count} = squares it would work here. Form for 1",Tending {level} · works {count} square,Péče {level} · stará se o {count} políčko,new,h17c4074f
@@ -440,7 +459,6 @@ field.reason.aptitude,Refused: the pet has neither the Tending nor the Pest-cont
 field.reason.slots,Refused: every field pet slot is used,All field pet slots are in use,Všechna místa pro mazlíčky jsou obsazená,new,hd52f20d6
 field.reason.slotsMaxed,Refused: every field pet slot is already bought,You have every field pet slot already,Už máš všechna místa pro mazlíčky,new,h34ec9412
 pets.reject.field,Refused in the Pets panel: the pet works on a field square,Works on the field: lift it in the field panel first,Pracuje na poli: nejdřív ho odeber v panelu pole,new,he50063c4
-pets.tending,"Pet row and field pet labels, after "" · "": the pet's Tending level",Tending {level},Péče {level},new,h1a2f6b4a
 pets.guard,"Pet row and field pet labels, after "" · "": the pet's Pest-control level",Pest control {level},Hlídání {level},new,h47c8fa98
 petDetail.where.equipped,"Pet detail page, header: the pet is equipped (follows the player)",✔ With you,✔ Je s tebou,new,hc67d5235
 petDetail.where.field,"Pet detail page, header: the pet works field square {n}",🌱 Works square {n},🌱 Pracuje na políčku {n},new,h350939bd
@@ -554,15 +572,8 @@ field.size.giant,"Harvest toast, second line: the crop rolled giant (top 3 %); a
 field.size.record,"Harvest toast, after Big / Giant or alone: the heaviest crop of this kind the player has harvested",New record!,Nový rekord!,new,h14ead05b
 field.toast.renownUp,"Harvest toast, last line when the harvest raised the Renown level; {level} = new Renown level",Renown {level}!,Pověst {level}!,new,h03742e78
 field.crop.best,"Harvested crop row, second line; {kg} = weight of the heaviest crop of this kind harvested so far (""8.1"")",Record {kg} kg,Rekord {kg} kg,new,h9ad902fe
-field.prompt.buySquare,Prompt action text on a locked (overgrown) field square of the player's own field (short verb phrase; hold to buy),Buy square,Koupit políčko,new,h712d511b
-field.prompt.price[one],Prompt object text under 'Buy square': the price of the next square; {count} = Coins. Form for 1,{count} Coin,{count} mince,new,h96db4654
-field.prompt.price[few],Form for 2-4 (Czech only),,{count} mince,new,h96db4654
-field.prompt.price[other],Form for 0 and 5+,{count} Coins,{count} mincí,new,h96db4654
-field.prompt.priceRenown[one],"Prompt object text under 'Buy square' when the next square needs Renown; {count} = Coins, {level} = Renown level. Form for 1",{count} Coin · Renown {level},{count} mince · Pověst {level},new,ha5dfda5a
-field.prompt.priceRenown[few],Form for 2-4 (Czech only),,{count} mince · Pověst {level},new,ha5dfda5a
-field.prompt.priceRenown[other],Form for 0 and 5+,{count} Coins · Renown {level},{count} mincí · Pověst {level},new,ha5dfda5a
 field.expand.next[one],"Garden panel, 'Bigger field' section: price of the next square (whichever the player picks); {count} = Coins. Form for 1",Next square: {count} Coin,Další políčko: {count} mince,new,h45995237
 field.expand.next[few],Form for 2-4 (Czech only),,Další políčko: {count} mince,new,h45995237
 field.expand.next[other],Form for 0 and 5+,Next square: {count} Coins,Další políčko: {count} mincí,new,h45995237
-field.expand.hint,"Garden panel, 'Bigger field' section, under the price: how to buy a square (any locked square, in any order)",Pick any overgrown square on your field and use its Buy square prompt. Each square costs more than the last.,Vyber si na poli kterékoli zarostlé políčko a kup ho přes nabídku Koupit políčko. Každé další políčko stojí víc.,new,h83fad8be
+field.expand.hint,"Garden panel, 'Bigger field' section, under the price: how to buy a square (any locked square, in any order)",Tap any overgrown square on your field and buy it in its card. Each square costs more than the last.,Klepni na poli na kterékoli zarostlé políčko a kup ho v jeho kartě. Každé další políčko stojí víc.,new,h4cbe5a32
 field.reason.open,Refused: the square the player tried to buy is already open,That square is already yours,Tohle políčko už je tvoje,new,h02853080

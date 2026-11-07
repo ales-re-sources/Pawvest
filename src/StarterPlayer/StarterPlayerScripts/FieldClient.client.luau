@@ -1,11 +1,9 @@
--- Field client (E1a2, docs/ROADMAP.md -> E1a2): the crop field's HUD button, the Garden panel and the seed picker.
+-- Field client (E1a2, docs/ROADMAP.md -> E1a2): the crop field's HUD button and the Garden panel (U4 splits it up).
 --   * "Field" button (own ScreenGui FieldGui): visible only while the character is near the own plot; opens / closes the panel;
 --   * Garden panel: Renown level, one row per owned square (crop and time left or "Ripe!"), the seed catalogue (buy 1 / 10, Renown
 --     locks, barn), harvested crops (Sell all), the next square (price + Renown) -- closes when the player walks away;
---   * seed picker: GardenView.OnSquare(square, "plant") lists the crops in stock; "harvest" fires Harvest straight away;
---   * pet picker (E1b): GardenView.OnSquare(square, "pet") lists the pets with Tending or Pest control (E4b; place / move here,
---     lift the one on the square; hovering a pet tints the squares it would work); the panel's Pets section lists the field pets
---     (square, Tending and Pest-control levels, reach, XP), lifts them and buys the next field pet slot;
+--   * the squares themselves are used through FieldHand (U3a: tap a square, square card, seed / pet pickers); the panel's Pets
+--     section lists the field pets (square, Tending and Pest-control levels, reach, XP), lifts them and buys the next field pet slot;
 --   * crow forecast (E4b): a line under the Renown level, "Crows in 3:20:00" / "Crows now, 1:05:00 left", computed on the client
 --     from CropConfig.NextCrows and the server time (the schedule is fixed); State.field.crows.active says whether crows come yet;
 --   * toasts for the answers of the field actions on GardenRemotes.Result (eggs and food share that remote: ignored here), and
@@ -14,11 +12,11 @@
 -- Display only: a click just names a square, a crop or a count; GardenField validates place, prices, times and Renown.
 -- The countdowns use workspace:GetServerTimeNow() against `readyAt` ("ripe at, if you stay online"), never the device clock.
 -- The GUI is built here (no Studio GUI), stud-brick wood look (StudStyle).
--- Test hooks (ScreenGui FieldGui attributes, cleared after use): OpenField = true opens the panel, OpenPicker = square opens the picker,
--- OpenPetPicker = square opens the pet picker.
+-- Hook (ScreenGui FieldGui attribute, cleared after use): OpenField = true opens the panel, "seeds" opens it at the seed shop
+-- (FieldHand's seed picker without seeds).
 -- Buttons by path (all under PlayerGui.FieldGui): Panel.Content.Seeds.<CropId>.Buy1 / .Buy10, Panel.Content.Crops.<CropId>.Sell,
--- Panel.Content.Expand.Buy, Panel.Content.Upgrades.<UpgradeId>.Buy, Panel.Content.Pets.Pet<square>.Lift, Panel.Content.Pets.Slot.BuySlot, Picker.<CropId>,
--- Picker.Pet_<uid> / Picker.Lift (pet picker), Open (the HUD button).
+-- Panel.Content.Expand.Buy, Panel.Content.Upgrades.<UpgradeId>.Buy, Panel.Content.Pets.Pet<square>.Lift, Panel.Content.Pets.Slot.BuySlot,
+-- Open (the HUD button).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -33,15 +31,10 @@ local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
-local GardenView = require(script.Parent:WaitForChild("GardenView"))
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
-local plantEvent = remotes:WaitForChild("Plant")
-local harvestEvent = remotes:WaitForChild("Harvest")
 local buySeedsEvent = remotes:WaitForChild("BuySeeds")
 local sellEvent = remotes:WaitForChild("Sell")
-local buySquareEvent = remotes:WaitForChild("BuySquare")
-local placePetEvent = remotes:WaitForChild("PlacePet")
 local liftPetEvent = remotes:WaitForChild("LiftPet")
 local buyPetSlotEvent = remotes:WaitForChild("BuyPetSlot")
 local buyUpgradeEvent = remotes:WaitForChild("BuyUpgrade")
@@ -54,7 +47,6 @@ local CLOSE_DISTANCE = 32 -- studs from where a panel was opened; walking furthe
 local TICK_SECONDS = 0.25
 local GAP = 6 -- between the items of a row
 local SQUARE_ROW = 30
-local PICKER_ROW = 54
 local BUY1_WIDTH = 50
 local BUY10_WIDTH = 56
 local SELL_WIDTH = 116
@@ -62,7 +54,6 @@ local LOCK_WIDTH = 112
 local LIFT_WIDTH = 76
 local SLOT_WIDTH = 96
 local UPGRADE_WIDTH = 104
-local REACH_SECONDS = 3 -- the reach of a pet just placed stays tinted this long
 local NOTICE_SECONDS = 8
 
 local COLOR_PANEL = StudStyle.PanelColors.Field
@@ -204,10 +195,6 @@ end
 
 local fieldState = nil -- GardenRemotes.State.field: { open (sorted square numbers), squares, seeds, items, sizes, best, renown, level, pets, slots, slotPrice, upgrades, barn, notice }
 local panelPoint: Vector3? = nil -- where the Garden panel was opened (nil = closed)
-local pickerPoint: Vector3? = nil
-local pickerSquare: number? = nil
-local pickerMode = "seed" -- "seed" (plant) or "pet" (place / move a field pet)
-local reachToken = 0
 local noticesShown = {} -- [kind] = true once this session's notice was shown
 local timers = {} -- ticking square rows: { label, readyAt, ripe }
 local cartTimer = nil -- the market cart's "new offers in" line: { label, at, asked }
@@ -295,35 +282,6 @@ local panel = create("Frame", {
 })
 StudStyle.Panel(panel, COLOR_PANEL)
 
--- Seed picker -------------------------------------------------------------------------------------------------------------
-
-local pickerTitle = label("TitleLabel", {
-	Size = UDim2.new(1, 0, 0, 34),
-	TextSize = 20,
-	TextXAlignment = Enum.TextXAlignment.Center,
-})
-local pickerClose = button("Close", {
-	AnchorPoint = Vector2.new(1, 0),
-	Position = UDim2.new(1, -6, 0, 4),
-	Size = UDim2.fromOffset(30, 28),
-	ZIndex = 2,
-	BackgroundColor3 = COLOR_CLOSE,
-	TextSize = 16,
-	Text = "X",
-}, 1)
-local picker = create("Frame", {
-	Name = "Picker",
-	AnchorPoint = Vector2.new(0.5, 0.5),
-	Position = UDim2.fromScale(0.5, 0.5),
-	Size = UDim2.new(1, -16, 0, 160),
-	Visible = false,
-}, {
-	create("UISizeConstraint", { MaxSize = Vector2.new(340, 600) }),
-	pickerTitle,
-	pickerClose,
-})
-StudStyle.Panel(picker, COLOR_PANEL)
-
 -- HUD button and toast
 local openButton = button("Open", {
 	AnchorPoint = Vector2.new(0.5, 1),
@@ -352,11 +310,11 @@ local screenGui = create("ScreenGui", {
 	Name = "FieldGui",
 	ResetOnSpawn = false,
 	DisplayOrder = 6,
-	-- Sibling: the picker (a later sibling) draws above the whole panel. Global let the panel's stud-button glyphs (ZIndex 2) show through
-	-- the picker's rows when both were open (found in E1c4)
+	-- Sibling: later siblings draw above the whole panel (with Global the panel's stud-button glyphs, ZIndex 2, showed through a
+	-- picker's rows, E1c4)
 	ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 	AutoLocalize = false, -- translated by Locale (L2)
-}, { openButton, panel, picker, toast })
+}, { openButton, panel, toast })
 
 -- Rows --------------------------------------------------------------------------------------------------------------------
 
@@ -913,18 +871,6 @@ local function renderPanel()
 	renderTools(field)
 end
 
--- Picker rendering ----------------------------------------------------------------------------------------------------------
-
-local pickerItems = {}
-
-local function closePicker()
-	pickerPoint, pickerSquare = nil, nil
-	picker.Visible = false
-	if pickerMode == "pet" then
-		GardenView.ShowReach(nil)
-	end
-end
-
 local function openPanel(scrollToSeeds: boolean?)
 	panelPoint = rootPosition() or Vector3.zero
 	panel.Visible = true
@@ -942,239 +888,6 @@ local function closePanel()
 	panel.Visible = false
 end
 
--- Squares a pet with Tending level `level` works from `square` on the current field.
-local function reachOf(square: number, level: number): { number }
-	return CropConfig.Reach(square, PetConfig.ReachShape(level), if fieldState then openSet(fieldState) else nil)
-end
-
--- The highest job level of a field pet in the State (Tending `apt` for a tender, and its Pest control): the widest reach (E4b).
-local function widestOf(pet): number
-	local guard = if type(pet.guard) == "table" then pet.guard.level else 0
-	return math.max(if pet.job == "Tending" then pet.apt else 0, guard)
-end
-
--- One row of the pet picker at height `y`: a title, an info line; enabled rows are green and clickable.
-local function pickerRow(name: string, y: number, title: string, info: string, enabled: boolean)
-	local color = if enabled then COLOR_BUY else COLOR_LOCKED
-	local row = create("TextButton", {
-		Name = name,
-		Position = UDim2.new(0, 8, 0, y),
-		Size = UDim2.new(1, -16, 0, PICKER_ROW),
-		BackgroundColor3 = StudStyle.Shade(color, 0.75),
-		AutoButtonColor = enabled,
-		Text = "",
-		Parent = picker,
-	}, {
-		create("UICorner", { CornerRadius = UDim.new(0, 8) }),
-		create("UIStroke", { ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = color, Thickness = 2 }),
-		label("Name", {
-			Position = UDim2.fromOffset(12, 6),
-			Size = UDim2.new(1, -24, 0, 24),
-			TextSize = 18,
-			TextTruncate = Enum.TextTruncate.AtEnd,
-			Text = title,
-		}),
-		label("Info", {
-			Position = UDim2.fromOffset(12, 30),
-			Size = UDim2.new(1, -24, 0, 18),
-			Font = Enum.Font.Gotham,
-			TextSize = 13,
-			TextColor3 = COLOR_INFO,
-			TextTruncate = Enum.TextTruncate.AtEnd,
-			Text = info,
-		}),
-	})
-	table.insert(pickerItems, row)
-	return row
-end
-
--- The pet picker (E1b): lift the pet on `square`, or place / move a pet with Tending there. Hovering a row tints its reach.
-local function renderPetPicker(square: number)
-	pickerTitle.Text = Locale.T("field.petPicker.title", { n = square })
-	local field = fieldState
-	local here = field and field.pets and field.pets[tostring(square)]
-	local used = 0
-	for _ in (field and field.pets) or {} do
-		used += 1
-	end
-	local y = 42
-	if here then
-		local row = pickerRow("Lift", y, Locale.T("field.petPicker.lift", { pet = Locale.PetName(here.kind, here.level, PetClient.NameOf(here.uid)) }), Locale.T("field.petPicker.liftInfo"), true)
-		row.Activated:Connect(function()
-			liftPetEvent:FireServer(here.uid)
-			closePicker()
-		end)
-		y += PICKER_ROW + GAP
-		GardenView.ShowReach(reachOf(square, widestOf(here)))
-	end
-	local candidates = {}
-	for _, pet in PetClient.Inventory() do
-		if (pet.tending > 0 or pet.guard > 0) and not (here and pet.uid == here.uid) then
-			table.insert(candidates, pet)
-		end
-	end
-	table.sort(candidates, function(a, b)
-		if a.tending ~= b.tending then
-			return a.tending > b.tending
-		end
-		if a.guard ~= b.guard then
-			return a.guard > b.guard
-		end
-		return (tonumber(a.uid) or 0) < (tonumber(b.uid) or 0)
-	end)
-	for _, pet in candidates do
-		local reach = reachOf(square, math.max(pet.tending, pet.guard))
-		local enabled = not pet.equipped and (pet.field ~= nil or used < (field and field.slots or 1))
-		local info
-		if pet.equipped then
-			info = Locale.T("field.petPicker.equipped")
-		elseif not enabled then
-			info = Locale.T("field.petPicker.noSlot")
-		elseif pet.tending > 0 then
-			local count = #reachOf(square, pet.tending)
-			info = if pet.field
-				then Locale.T("field.petPicker.move", { level = pet.tending, count = count, n = pet.field })
-				else Locale.T("field.petPicker.info", { level = pet.tending, count = count })
-			if pet.guard > 0 then
-				info ..= " · " .. Locale.T("pets.guard", { level = pet.guard })
-			end
-		else
-			info = Locale.T("field.petPicker.guard", { level = pet.guard, count = #reach })
-			if pet.field then
-				info ..= " · " .. Locale.T("field.petPicker.now", { n = pet.field })
-			end
-		end
-		local row = pickerRow("Pet_" .. pet.uid, y, Locale.PetName(pet.kind, pet.level, pet.name), info, enabled)
-		y += PICKER_ROW + GAP
-		row.MouseEnter:Connect(function()
-			GardenView.ShowReach(reach)
-		end)
-		row.MouseLeave:Connect(function()
-			GardenView.ShowReach(if here then reachOf(square, widestOf(here)) else nil)
-		end)
-		if enabled then
-			row.Activated:Connect(function()
-				placePetEvent:FireServer(square, pet.uid)
-				closePicker()
-			end)
-		end
-	end
-	if #candidates == 0 and not here then
-		local hint = paragraph("None", {
-			Position = UDim2.fromOffset(12, 44),
-			Size = UDim2.new(1, -24, 0, 0),
-			TextSize = 15,
-			Text = Locale.T("field.petPicker.none"),
-		})
-		hint.Parent = picker
-		table.insert(pickerItems, hint)
-		y = 150
-	end
-	picker.Size = UDim2.new(1, -16, 0, y + 6)
-end
-
-local function renderPicker()
-	for _, item in pickerItems do
-		item:Destroy()
-	end
-	table.clear(pickerItems)
-	local square = pickerSquare
-	if not square then
-		return
-	end
-	if pickerMode == "pet" then
-		renderPetPicker(square)
-		return
-	end
-	pickerTitle.Text = Locale.T("field.picker.title", { n = square })
-	local field = fieldState
-	local rows = 0
-	if field then
-		for _, crop in CropConfig.Crops do
-			local stock = field.seeds[crop.id] or 0
-			if stock > 0 then -- seeds held can be planted before the Renown gate (the market cart's taste, E1c4)
-				local y = 42 + rows * (PICKER_ROW + GAP)
-				rows += 1
-				local row = create("TextButton", {
-					Name = crop.id,
-					Position = UDim2.new(0, 8, 0, y),
-					Size = UDim2.new(1, -16, 0, PICKER_ROW),
-					BackgroundColor3 = StudStyle.Shade(COLOR_BUY, 0.75),
-					AutoButtonColor = true,
-					Text = "",
-					Parent = picker,
-				}, {
-					create("UICorner", { CornerRadius = UDim.new(0, 8) }),
-					create("UIStroke", { ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = COLOR_BUY, Thickness = 2 }),
-					label("Name", {
-						Position = UDim2.fromOffset(12, 6),
-						Size = UDim2.new(1, -24, 0, 24),
-						TextSize = 18,
-						TextTruncate = Enum.TextTruncate.AtEnd,
-						Text = cropTitle(crop),
-					}),
-					label("Info", {
-						Position = UDim2.fromOffset(12, 30),
-						Size = UDim2.new(1, -24, 0, 18),
-						Font = Enum.Font.Gotham,
-						TextSize = 13,
-						TextColor3 = COLOR_INFO,
-						TextTruncate = Enum.TextTruncate.AtEnd,
-						Text = Locale.T("field.picker.info", { stock = stock, time = growTime(growSecondsOn(fieldState, crop)) }),
-					}),
-				})
-				table.insert(pickerItems, row)
-				row.Activated:Connect(function()
-					local target = pickerSquare
-					if target then
-						plantEvent:FireServer(target, crop.id)
-					end
-					closePicker()
-				end)
-			end
-		end
-	end
-	if rows > 0 then
-		picker.Size = UDim2.new(1, -16, 0, 42 + rows * (PICKER_ROW + GAP) + 6)
-		return
-	end
-	-- no seeds in stock: a hint and a way to the seed shop (the Garden panel)
-	local hint = paragraph("None", {
-		Position = UDim2.fromOffset(12, 44),
-		Size = UDim2.new(1, -24, 0, 0),
-		TextSize = 15,
-		Text = Locale.T("field.picker.none"),
-	})
-	hint.Parent = picker
-	table.insert(pickerItems, hint)
-	local shop = button("Shop", {
-		AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.new(0.5, 0, 1, -12),
-		Size = UDim2.new(1, -24, 0, 40),
-		BackgroundColor3 = COLOR_BUY,
-		TextSize = 18,
-		Text = Locale.T("field.picker.shop"),
-		Parent = picker,
-	}, 6)
-	table.insert(pickerItems, shop)
-	shop.Activated:Connect(function()
-		closePicker()
-		openPanel(true)
-	end)
-	picker.Size = UDim2.new(1, -16, 0, 170)
-end
-
-local function openPicker(square: number, at: Vector3?, mode: string?)
-	if pickerMode == "pet" then
-		GardenView.ShowReach(nil)
-	end
-	pickerMode = mode or "seed"
-	pickerSquare = square
-	pickerPoint = at or rootPosition() or Vector3.zero
-	picker.Visible = true
-	renderPicker()
-end
-
 local function staticTexts()
 	openButton.Text = Locale.T("field.button")
 	titleLabel.Text = Locale.T("field.title")
@@ -1184,9 +897,6 @@ staticTexts()
 local function renderAll()
 	if panelPoint then
 		renderPanel()
-	end
-	if pickerSquare then
-		renderPicker()
 	end
 end
 
@@ -1208,7 +918,6 @@ end
 -- Events ------------------------------------------------------------------------------------------------------------------
 
 closeButton.Activated:Connect(closePanel)
-pickerClose.Activated:Connect(closePicker)
 openButton.Activated:Connect(function()
 	if panelPoint then
 		closePanel()
@@ -1287,13 +996,10 @@ PetClient.Changed:Connect(function()
 	if panelPoint then
 		renderPanel() -- the Coins changed: affordability colours
 	end
-	if pickerSquare and pickerMode == "pet" then
-		renderPicker() -- a pet was equipped, hatched or levelled
-	end
 	showNotices(fieldState) -- a crow notice waits for the guards' names (E4b)
 end)
 
--- Answers of the field pet actions (E1b): toasts; a placed pet's reach stays tinted for REACH_SECONDS.
+-- Answers of the field pet actions (E1b): toasts (FieldHand tints a placed pet's reach for a moment).
 local function petResult(action: string, ok: boolean, detail)
 	if not ok then
 		showToast(Locale.T(PET_REJECT_KEYS[detail] or REJECT_KEYS[detail] or "common.reject.failed"), COLOR_ERROR)
@@ -1302,17 +1008,6 @@ local function petResult(action: string, ok: boolean, detail)
 	if action == "PlacePet" then
 		local name = petNameOf(detail.uid)
 		showToast(Locale.T(if detail.moved then "field.toast.petMoved" else "field.toast.petPlaced", { pet = name, n = detail.square }), COLOR_OK)
-		local pet = PetClient.State and PetClient.State.pets[detail.uid]
-		if pet then
-			reachToken += 1
-			local mine = reachToken
-			GardenView.ShowReach(reachOf(detail.square, math.max(PetConfig.AptitudeLevel(pet, "Tending"), PetConfig.AptitudeLevel(pet, "PestControl"))))
-			task.delay(REACH_SECONDS, function()
-				if reachToken == mine and not (pickerSquare and pickerMode == "pet") then
-					GardenView.ShowReach(nil)
-				end
-			end)
-		end
 	elseif action == "LiftPet" then
 		showToast(Locale.T("field.toast.petLifted", { pet = petNameOf(detail.uid) }), COLOR_OK)
 	else
@@ -1387,40 +1082,12 @@ Locale.Changed:Connect(function()
 	renderAll()
 end)
 
--- The prompts on the own plot's squares (GardenView): plant opens the picker, harvest and buy fire at once
-GardenView.OnSquare(function(square, action, soil)
-	if action == "harvest" then
-		harvestEvent:FireServer(square)
-	elseif action == "buy" then
-		if fieldState then
-			buySquareEvent:FireServer(square, #(fieldState.open or {}))
-		end
-	elseif action == "plant" then
-		openPicker(square, soil and soil.Position)
-	elseif action == "pet" then
-		openPicker(square, soil and soil.Position, "pet")
-	end
-end)
-
--- Test hooks: OpenField = true opens the Garden panel, OpenPicker = square opens the seed picker (display only)
+-- Hook: OpenField = true opens the Garden panel, "seeds" at the seed shop (FieldHand's seed picker without seeds)
 screenGui:GetAttributeChangedSignal("OpenField"):Connect(function()
-	if screenGui:GetAttribute("OpenField") then
-		openPanel()
+	local value = screenGui:GetAttribute("OpenField")
+	if value then
 		screenGui:SetAttribute("OpenField", nil)
-	end
-end)
-screenGui:GetAttributeChangedSignal("OpenPetPicker"):Connect(function()
-	local square = screenGui:GetAttribute("OpenPetPicker")
-	if type(square) == "number" then
-		openPicker(square, nil, "pet")
-		screenGui:SetAttribute("OpenPetPicker", nil)
-	end
-end)
-screenGui:GetAttributeChangedSignal("OpenPicker"):Connect(function()
-	local square = screenGui:GetAttribute("OpenPicker")
-	if type(square) == "number" then
-		openPicker(square)
-		screenGui:SetAttribute("OpenPicker", nil)
+		openPanel(value == "seeds")
 	end
 end)
 
@@ -1446,9 +1113,6 @@ RunService.Heartbeat:Connect(function(dt)
 	if root then
 		if panelPoint and (root - panelPoint).Magnitude > CLOSE_DISTANCE then
 			closePanel()
-		end
-		if pickerPoint and (root - pickerPoint).Magnitude > CLOSE_DISTANCE then
-			closePicker()
 		end
 	end
 

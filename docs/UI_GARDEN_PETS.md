@@ -1,6 +1,6 @@
 # Pawvest — garden and pet UI redesign (U1–U5)
 
-*Proposed 2026-11-05 from the user's notes, all open decisions settled the same day (§12); U1 and U2 built. Built UI as it is today: GDD §7.5–7.9, LAYOUT.md
+*Proposed 2026-11-05 from the user's notes, all open decisions settled the same day (§12); U1, U2 and U3a built. Built UI as it is today: GDD §7.5–7.9, LAYOUT.md
 (PetsPanel, PetDetail, PlotView, FieldClient, IncubatorClient). When a piece ships, its as-built design moves to GDD and this file shrinks.*
 
 ## 1. Problems
@@ -27,39 +27,34 @@
 | Tier | Distance from the own plot | Shows |
 |---|---|---|
 | Far | ≤ 120 studs (and from the plaza) | the **summary bubble** over the name sign: **built in U2** (GDD §7.6) |
-| Near | ≤ 30 studs | a **ring over every planted square**: a pie that fills as the crop grows, crop icon inside; ripe = full ring that bounces with a ✓; the 4 squares nearest the player also print the time (`2:14`) |
-| Focus | the selected square (§4) | white outline + the square card |
+| Near | ≤ 30 studs | rings over the planted squares: **built in U3a** (GDD §7.9) |
+| Focus | the selected square (§4) | white outline + the square card: **built in U3a** |
 
-- Other players' plots show only the sign and the 3D crops (no rings): less clutter, cheaper. Their summary bubble could show Renown and the
-  biggest crop instead (social, optional).
-- Cost: at most 36 ring billboards, own plot only, updated once a second from `GetServerTimeNow` (the incubator countdowns already do this).
-- Rings work without reading and for colour-blind players (shape + icon, not only colour).
+- Other players' plots show only the sign and the 3D crops (no rings). Their summary bubble could show Renown and the biggest crop instead
+  (social, optional).
 
 ## 4. Field: acting on a square
 **Decided (the user, 2026-11-05): tap a square + a square card + hand modes** (a light version of Stardew-style tools; no Roblox `Tool` objects).
-- Tap / click a square of the own field (raycast, within 40 studs of the plot; the server keeps its distance check) → it gets an outline and a
-  **square card** slides up at the bottom: crop name and icon, a progress bar with the time left (exact time in the bar), growth boosts
-  (Growth upgrade, Cloches), **which pets reach it** (portrait chips with their job icon, tap → pet page), and context buttons: Plant / Harvest
-  / Place pet / Move pet / Buy square (with price and Renown).
+Tap-select, the square card with every context button and the removal of the square prompts are **built in U3a (2026-11-07)**, as built in
+GDD §7.9; the design text is in `git show 68b9c3b:docs/UI_GARDEN_PETS.md`. In U3a "Move pet" is the next tap on a free square; U3b's Pets
+mode replaces it with lifting the pet. Left for **U3b**:
 - **Hand bar** (only while in the own field, above the jump button on phones): `🌱 Seeds` · `🧺 Basket` · `🐾 Pets` · `✋ Look`.
   - Seeds: pick a seed once (the picker shows count held), then every tap on an empty square plants it; the bar shows the seed and the count.
   - Basket: every tap on a ripe square harvests it (one per tap; harvest-all stays the Wheelbarrow, D2). A pop `+1 Corn · Big!` flies to the
     barn.
   - Pets: tap a pet → it lifts, its reach follows the finger as a yellow tint, tap a square to drop it; tap a free square first → a pet
     picker (Tending / Pest-control pets, with job levels).
-  - Look (default): tap = select + square card.
-- The square prompts go away (`PetPrompt`, plant / harvest, locked-square buy); incubators keep theirs (3, well apart) until §7.
-- Later, only if U3's phone check shows players missing squares: a **field camera** button that tilts the camera down over the own field (easier to tap the right square on a phone).
+  - Look (default): tap = select + square card (U3a).
+- Later, only if the phone check shows players missing squares: a **field camera** button that tilts the camera down over the own field
+  (easier to tap the right square on a phone). U3a's check was on a desktop only (no touch emulation through the MCP): open.
 
 *Rejected:* prompts with `Exclusivity = OneGlobally` and the card on trigger (fixes density only, not the repeated planting).
 
 ## 5. Pets on the field
 - A placed pet's reach stays visible in the Near tier as a **soft border in the pet's rarity colour** around its squares (several pets: the
   strongest per job, as the rules count it).
-- The pet's label shows job icons, not text: `🌱4 🛡2` (Tending 4, Pest control 2), and on the field **never the pet level**: with P4 the
-  level (and size) can come from Cuteness, so a big pet may be a weak tender.
-- The square card says what the pet does there in one line: "Mochi harvests 60 % of ripe crops here while you are away", "Rex chases crows:
-  70 %"; the chip opens the pet page.
+- The job-icon label (`🌱4 🛡2`, never the level) and the square card's line per pet (its effect there; a tap opens its page) are **built in
+  U3a** (GDD §7.9).
 - The pet page gets **"Show on field"** (marker + camera hint to its square) and, in the garden, **"Place on field"** (opens Pets mode with this
   pet in hand). Moving field pets from far away stays open (EXPANSION §3).
 
@@ -91,7 +86,7 @@ is ready (the badge covers it for now); other players' bubbles (Renown, biggest 
 
 ## 9. Pets panel and pet page
 **Built in U1 (2026-11-06)**: as built in GDD §7.5 (rows, filters, summary) and §7.8 (pet page); the design history is in
-`git show a514b94:docs/UI_GARDEN_PETS.md`. Left for U3: "Show on field" / "Place on field" on the pet page (§5).
+`git show a514b94:docs/UI_GARDEN_PETS.md`. Left for U3b: "Show on field" / "Place on field" on the pet page (§5).
 
 ### 9.1 Food stand (plaza)
 **Built in U1**: the Pets panel's row with the trained chip outlined, pets with you first, trained ones greyed at the bottom (GDD §7.6).
@@ -103,7 +98,7 @@ food stand's counters stay reachable and readable from the plots on that side.
 - **One confirm pattern** for every spend over ~1 000 Coins and for Sell: two taps with the button turning orange ("Tap again"), as the food
   buttons do; hold prompts only in the world.
 - **Next-step hint in the garden** (G1 / E5 onboarding builds on §4, so §4 comes first): an empty field points at Seeds, a ripe one at the Basket.
-- **Locked squares** look different from empty soil (overgrown + a small price tag only when selected), no prompt per locked square.
+- **Locked squares** look different from empty soil (grass tufts; the price only in the square card): **built in U3a**.
 - **Panel focus:** opening one panel closes the others (Pets, Skills, Barn, Seed stall, Food); panels close when walking away (32 studs, today
   only the Garden panel).
 - **Phone check** of every new piece is part of its milestone (MU's checklist), Czech widths included.
@@ -113,8 +108,9 @@ food stand's counters stay reachable and readable from the plots on that side.
 |---|---|---|
 | U1 | Pets panel, pet page and the food stand panel (§9, §9.1): **built 2026-11-06** | P4 |
 | U2 | Garden HUD button + badge, summary bubble over the own sign (§3 Far, §8): **built 2026-11-06** | – |
-| U3 | Field interaction: rings, tap-select, square card, hand bar, pet reach borders, prompts removed (§3 Near, §4, §5) | every player |
-| U4 | Panel split: Skills → Garden tab, Barn panel, Seed stall; Garden panel removed (§6) | U3 |
+| U3a | Field: rings, tap-select, square card, prompts removed, locked look, pet job-icon labels (§3 Near, §4, §5): **built 2026-11-07** | every player |
+| U3b | Hand bar (Seeds / Basket / Pets / Look), pet reach borders, next-step hint on the bar, pet page buttons (§4, §5, §10) | U3a |
+| U4 | Panel split: Skills → Garden tab, Barn panel, Seed stall; Garden panel removed (§6) | U3b |
 | U5 | Plot layout: hatchery left, barn right, path; K1 egg cards (§7) | U4 (barn) |
 
 Order proposed: U1 before M6a; U2–U5 before E5's onboarding (it teaches the new controls).
