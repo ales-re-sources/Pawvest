@@ -50,7 +50,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | FA | The field for everyone, pens removed | ✔ | ✔ | – |
 | U2 | Garden icon with a badge (ripe crops + ready eggs), summary bubble over the own plot sign | ✔ | ✔ | – |
 | U3 | Field: rings, tap-select, square card, hand bar (Seeds / Basket / Pets / Look), reach borders, square prompts removed | ✔ | partial (phone touch, multi-client open) | – |
-| U4–U5 | Garden and pet UI redesign, rest ([UI_GARDEN_PETS.md](UI_GARDEN_PETS.md)) — design decided 2026-11-05 | – | – | – |
+| U4 | Panel split: U4a (Skills Garden tab, Pets field-slot line, anywhere buys, confirm + panel focus) done; U4b (seed stall, Barn panel, Garden panel removed) open | U4a ✔ | U4a ✔ (phone by geometry) | – |
+| U5 | Plot layout: hatchery left, barn right, path; K1 egg cards ([UI_GARDEN_PETS.md](UI_GARDEN_PETS.md)) | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
@@ -447,6 +448,138 @@ to the lower uid, borders side by side in lanes, inner corners closed (captures 
 jump button, card kept clear of it) is by geometry only; the two-tap drop on touch is untested. 10 ✔ every hint fits the box in en and cs
 (≤ 2 lines); "Dát na pole" fits its brick; `loc.py check` 0 errors, lint within baseline. 11 not run (F7). 12 ✔ no game errors on server
 or client.
+
+### U4 — Panel split: Skills Garden tab, Barn panel, Seed stall; Garden panel removed (design: [UI_GARDEN_PETS.md](UI_GARDEN_PETS.md) §6, §9.1, §10; scope 2026-11-07, approved by the user with the split and Barn entry B)
+**Goal.** Each thing the Garden panel holds moves to the place where it belongs (permanent upgrades → Skills, seeds → a plaza stall,
+crops → the barn, field pet slots → Pets), then the panel goes. **No price, rate or reward moves** (`economy.py check` stays clean);
+every price still comes from the configs and every check stays on the server.
+
+**Where each part of today's panel goes** (`FieldClient` sections):
+| Section today | U4 |
+|---|---|
+| Header: Renown level, points to next, hint | Skills → Garden tab header: level + a bar to the next level |
+| Header: crow forecast | Barn panel header (full line) + the summary bubble (`🐦 0:45` only while crows are on or < 1 h away) |
+| Field (one row per square, countdowns) | gone: the rings and the square card show it (U3) |
+| Pets (field pets, Lift, next slot) | Pets panel: one line under the equip slots ("Field pets 2 / 3", Buy slot 4 with its price); lifting = the card's Take back / the hand's Pets mode (U3); XP per job is on the pet page |
+| Seeds (catalogue, buy 1 / 10, barn capacity) | Seed stall panel |
+| Cart (today's offers, next offers in) | Seed stall panel (top) + the stall's board (the player's own offers, client-drawn) |
+| Crops (held, record, Sell) | Barn panel: Sell (two taps) and Feed (pick a pet → its pet page, which already feeds crops anywhere) |
+| Expand (next square price) | gone: the square card of a locked square shows it (U3a) |
+| Upgrades (Growth, Barn), Tools | Skills → Garden tab |
+| Toasts, join notices (`field.notice.*`) | stay in `FieldClient` (it shrinks to the toasts and notices) |
+
+**Barn entry in U4 (the user chose B, 2026-11-07).** U5 owns the plot layout (hatchery left, barn right, path); today the 3 incubators stand across the
+whole front strip (x = −12 / 0 / +12, z = −10 of a 40 × 16 strip), so a barn at its U5 place collides with the right incubator.
+- **B (proposed): the HUD button.** Today's bottom-centre `Field` button (shown within 45 studs of the own plot) becomes **🧺 Barn** and
+  opens the Barn panel. No scene or layout work; U5 adds the barn building with its own tap / prompt in the right place and then removes
+  or keeps the button. Nothing built in U4 is thrown away by U5. Downside: until U5 the barn is not a thing in the world (no visibly filling
+  crates).
+- **A: a minimal barn building now** (PlotView draws a small shed on the strip's right with a prompt "Barn"), which needs the right
+  incubator moved left now: that is half of U5's layout (the hatchery under one roof, the path, the sign) done early and redone in U5.
+- Either way Sell keeps the own-plot check on the server (the barn is on the plot).
+
+**Split** (proposed; each ships alone):
+- **U4a — anywhere buys and panel rules:** Skills Garden tab, the Pets panel's field-slot line, the server's plot check dropped for
+  `BuyUpgrade` / `BuyTool` / `BuyPetSlot`, the shared confirm and panel-focus helpers applied to Pets, Skills, Food and (while it lives) the
+  Garden panel. The Garden panel loses Upgrades, Tools and the Pets section.
+- **U4b — stall and barn:** the seed stall (scene, server check, panel, board), the Barn panel and its entry, the crow forecast, the Garden
+  panel removed.
+
+**Build (U4a).**
+- **Server** (`GardenField`): `BuyUpgrade`, `BuyTool` and `BuyPetSlot` call `usableField(player, action, true)` (loaded + settled, any
+  place; the field is still settled before a Growth level changes the rate). Every other check stays (expected level / slots, maxed,
+  Renown for tools, Coins). PROTOCOL.md updated.
+- **Skills panel** (`SkillsPanel`, Studio frame; rows built by `TalentRows`): two tab bricks under the title, **Obby** (today's talents,
+  default) and **Garden**, tab sound as the Pets filters. A new LocalScript `GardenSkills.client.luau` beside `TalentRows` builds the Garden
+  tab: Renown header (`field.renown.level` + a bar `renown / PointsFor(level+1)`, the "points to next" line), then Growth, Barn, Sorter,
+  Cloches, Shears rows (icon, name, level / max, effect now → next, Buy brick with the price; tools show the red Renown line while too low).
+  Field state from `GardenRemotes.State` (it fires `RequestState` on start: the script is re-created on every respawn); answers on
+  `Result` (`BuyUpgrade` / `BuyTool`) toast as today. Existing `field.upgrade.*` / `field.tool.*` / `field.renown.*` keys keep their names
+  (text unchanged, Czech review kept).
+- **Pets panel** line under the equip slots: "🌱 Field pets {used} / {slots}" and, while a slot can be bought, a **Buy slot** brick with
+  the price (two taps over 1 000 Coins) → `BuyPetSlot(slots + 1)`; at the top "All field slots bought". Works anywhere.
+- **Confirm helper** (new ModuleScript `ConfirmTap.luau` in ReplicatedStorage): `ConfirmTap.Wrap(button, needsConfirm, onConfirm)`: when
+  `needsConfirm()` the first tap turns the brick orange with "Tap again" (`common.tapAgain`) for 3 s, the second fires; otherwise one tap
+  fires. Used for every spend over 1 000 Coins (`ConfirmTap.THRESHOLD`) and for Sell; FieldHand's Buy square and the Pets panel's slot
+  "Sure?" switch to it.
+- **Panel focus** (new ModuleScript `PanelFocus.luau`): `PanelFocus.Open(name, closeFn, maxDistance?)` closes the panel open before (one
+  panel at a time among Pets, Skills, Barn, Seed stall, Food, and the Garden panel while it lives) and remembers where it was opened;
+  one Heartbeat closes it when the character is more than `maxDistance` (default 32 studs; the food stand and seed stall keep their 20-stud
+  stand distance) from that point. `PanelFocus.Closed(name)` on a manual close. The square card and the hand bar are not panels.
+
+**Build (U4b).**
+- **Seed stall** (Studio scene, via the MCP): `Workspace.Garden.SeedStall` model beside the food stand on the plaza, its own stall (not
+  part of the kiosk): `PrimaryPart` `Counter` with a ProximityPrompt `Prompt` (hold, text set by the client through `Locale`, as the food
+  stand's), a `Board` part facing the plaza, decoration cloned from `ServerStorage.DecorKit` (crates, sacks; Anchored, CanTouch /
+  CanQuery off). `GardenConfig.SeedStallName = "SeedStall"`, `SeedStallDistance = 20`.
+- **Server:** `BuySeeds` and `BuyCart` use `usableField(…, true)` plus a near-stall check (as `GardenFood`'s `nearStand`) → `far`; they no
+  longer accept the own plot. Every other check (rare → `obby`, Renown, barn capacity, Coins, cart day / slot / sold out / stale) stays.
+- **Seed stall panel** (new LocalScript `SeedStallClient.client.luau`; StudStyle, PanelFit as the food panel): the cart's offers on top
+  (row per offer, "new offers in 3:20:00", buy what is left), then the seed catalogue (+1 / +10 per unlocked crop, Renown lock or "from
+  World n" for rare crops), the barn capacity line ("Barn: 34 / 50 seeds"). **Board:** a client-drawn SurfaceGui on `Board` with the
+  local player's offers (crop icon, price, "−30 %" or "taste") and the time to the next offers; re-drawn on each `State` and `Locale.Changed`.
+- **Barn panel** (new LocalScript `BarnClient.client.luau`; entry per the user's choice, B = the bottom-centre button): header with the
+  crow forecast line; **Seeds** held (icon, name, count, grow time; capacity line); **Crops** held (icon, name × count, record kg, Sell brick
+  with the value, two taps; **Feed** brick → a small pet chooser of the pets that can still eat → opens that pet's page via `PetsGui`
+  `OpenPet`); empty states with a hint ("Harvest ripe crops with the 🧺 basket").
+- **Summary bubble** (`GardenBubble`): adds `🐦 0:45` while the next crows are less than 1 h away, `🐦 now` while they are on (only when
+  `crows.active`).
+- **FieldHand's seed picker** without seeds: the "Seed shop" button (which opened the Garden panel) becomes the hint "Buy seeds at the
+  seed stall on the plaza" (`OpenField` hook gone).
+- **Garden panel removed** from `FieldClient` (sections, `OpenField` hook, panel colour `StudStyle.PanelColors.Field` if unused, its keys:
+  `field.title`, `field.button`, `field.section.*`, `field.square.*`, `field.pets.*`, `field.slot.*` moved / removed, `field.expand.*`,
+  `field.crops.*` moved to `barn.*` only where the text changes). `FieldClient` keeps the toasts and the join notices.
+- **UI sounds:** every new brick and tab plays the click / tab cues the way 7a959e2 added them (`UiSounds`).
+
+**Acceptance checks** (Studio through the real UI where it says so; the live profile snapshotted right before anything that changes it and
+restored after; MostStars and `GlobalLeaderboardsStore` untouched).
+1. **Code (U4b):** `grep -E "OpenField|renderSeeds|renderCart|renderCrops|renderUpgrades|renderTools|renderPets|renderExpand|field\.section\.|FieldGui\.Panel"`
+   over `src/` finds nothing; no key in `strings.csv` that no script uses among the removed ones; the U2 Garden icon, the U3 square card, the
+   hand bar and the seed picker open no Garden panel (`FieldGui` holds only the toast and the barn button).
+2. **Skills Garden tab (U4a, real clicks, 80+ studs from the own plot, e.g. at the hub):** the tab shows Renown level and bar equal to the
+   profile; buying Growth (or the cheapest affordable upgrade) and one tool raises the level by exactly 1 and takes exactly the config price
+   once; a spend over 1 000 needs two taps (first tap: orange "Tap again", no Coins taken); Obby tab unchanged (a talent buy still works).
+3. **Server rejection (remotes from the client context):** `BuyUpgrade` with a stale level / unknown id / maxed, `BuyTool` with Renown too low
+   or too few Coins → rejected with the reason, profile unchanged; `BuySeeds` / `BuyCart` at the own plot and at the hub (outside 20 studs of
+   the stall) → `far`; `Sell` away from the own plot → `far`; a rare crop `BuySeeds` → `obby`; counts 0, −1, 1.5, 1e9 → ignored / rejected.
+4. **Field pet slot (U4a, real clicks in the Pets panel, away from the plot):** the line shows used / slots equal to the profile; Buy slot
+   adds exactly one slot and takes the config price once (two taps if over 1 000); at the top the line says all are bought.
+5. **Seed stall (U4b, real clicks):** walking to the stall shows the prompt; the panel buys +1 and +10 of an unlocked seed (count and Coins
+   change by exactly that), a locked crop shows its Renown level, a rare crop "from World n"; a cart offer bought takes `price × left` once and
+   shows sold out; the board shows the same offers as the panel; walking 25 studs away closes the panel.
+6. **Barn (U4b, real clicks):** the entry opens the Barn panel; seeds and crops equal the profile; Sell with two taps pays
+   `CropConfig.SaleValue` once and the crop leaves; Feed → pet chooser → the pet's page opens with that crop's feed row; the crow line
+   matches `CropConfig.NextCrows`.
+7. **Panel focus:** opening each of Pets, Skills, Barn, Seed stall, Food closes whichever other was open (5 × checked); Pets / Skills /
+   Barn close at 33 studs from where they were opened and stay open at 30.
+8. **Summary bubble:** with a crow window < 1 h away (fixture: the server time offset in the check, or a `State` fixture) the bubble shows
+   `🐦` with the time; with none soon, no crow part.
+9. **Studio scene:** the seed stall stands beside the food stand; the food stand's counters stay reachable (a bot walks to each counter's
+   prompt) and readable from the plots on that side (capture); `kit_coplanar_audit` with `STATIC_ROOT` = the stall: clean; decor Anchored,
+   CanTouch / CanQuery off.
+10. **Phone** (667 × 375 and 844 × 390): Skills tabs, Garden tab rows, the Pets slot line, Seed stall and Barn panels fit (PanelFit), every
+   brick ≥ 44 px on screen, nothing under the thumbstick / jump button.
+11. **Texts:** en, cs and the pseudo-language on every new screen: `TextFits` (or the Glyph's bounds) in Czech, no literals (no missing
+   `[!!` in qps); `loc.py build` / `check` (0 errors) / `lint` (within the baseline); new Czech texts listed for the user.
+12. `economy.py check` clean; a playtest boot without errors or warnings on server and client.
+
+**Studio-only changes (not in git):** `Workspace.Garden.SeedStall` (model, Counter + Prompt, Board, decor).
+
+**Changed while building U4a.** The Skills panel is 300 px wide (GardenSkills sets it; TalentRows' rows fill the width; ButtonHandler
+slides a closed panel to −(width + 20)). The tab choice survives a respawn (player attribute `SkillsTab`). FieldHand's Buy square keeps its
+own two-tap code: it already is the pattern (orange, "Tap again", 3 s). The Pets panel's equip slot keeps its short "Sure?" (a 44 px compact
+slot cannot hold "Tap again") but turns the confirm orange. Settings and Admin join the focus (opening one closes Pets or a stall panel)
+without the walk-away. The Field pet line reuses `field.section.pets` / `field.slot.done`; removed keys: `field.pet.*`, `field.pets.*`,
+`field.slot.title|info|buy`, `field.section.upgrades|tools`.
+
+**Studio results U4a (2026-11-07; live profile snapshotted as `profile_9892673032_U4a_1`, MostStars 48).** 2 ✔ at the hub (plot 1 far
+away), real clicks: Garden tab shows Renown 11 and its bar, Shears with the red "Renown 12" line; Barn: first tap orange "Klepni znovu", no
+Coins taken, second tap → Barn 0 → 1, 140 509 → 126 509 (14 000 once); Cloches 0 → 1, −37 300 once; toasts shown. 3 ✔ (U4a part)
+`BuyUpgrade` stale / Coins, `BuyTool` Renown / Coins, `BuyPetSlot` stale / Coins → the reason, unknown id, 1.5 and −1 ignored, Coins
+unchanged; `BuySeeds` / `BuyCart` / `Sell` at the hub → `far`. 4 ✔ Pets panel at the hub: "Mazlíčci na poli 2 / 2", two taps → 2 / 3,
+−84 000 once, next price shown. 7 (U4a part) ✔ Pets → Skills and Skills → Pets close each other (real clicks); Pets and Skills stay open at
+30 studs and close at 33.5. Respawn with Skills open: restored on the Garden tab, no errors. 10: geometry only (tabs and Buy bricks are
+`ceil(44 / PanelFit scale)` tall, the field line's brick `BRICK`). 12 ✔ no errors or warnings on server or client.
 
 ### E0 — Economy model
 **Goal.** One reproducible model of the Coin economy (`tools/economy.py`, Python stdlib; how to run it: ECONOMY.md) that fixes the numbers the

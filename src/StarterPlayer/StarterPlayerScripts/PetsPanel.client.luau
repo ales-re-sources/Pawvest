@@ -8,6 +8,8 @@
 -- Best for ▼ → a trait: pets with it, highest first; the choice holds for the session), the pet list, the equip slots as three
 -- square bricks at the bottom (#PetConfig.SlotPrices): a slot shows its equipped pet (click = unequip), "Empty", or a lock; the
 -- next slot to buy takes two clicks ("Sure?"), and hovering any slot shows a tooltip (price, whether it is affordable).
+-- Under them (U4) the field pet slot line: "🌱 Field pets 2 / 3" and a Buy brick for the next one (ConfirmTap; anywhere).
+-- Panel focus (U4, PanelFocus "Pets"): opening it closes the other panels; walking 32 studs away closes it.
 -- A row is PetRow's (portrait with level badge and status icon, name, trait chips with fills and ▲; hover / hold a chip for its
 -- numbers) plus an Equip / Unequip brick and a Details › brick that opens the pet page (PetDetail, drawn over this panel). The rest
 -- of the row does nothing (kids toggled pets while scrolling); selling is only on the pet page.
@@ -26,6 +28,9 @@ local PetDetail = require(script.Parent:WaitForChild("PetDetail"))
 local PetRow = require(script.Parent:WaitForChild("PetRow"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
+local PanelFocus = require(ReplicatedStorage:WaitForChild("PanelFocus"))
+local ConfirmTap = require(ReplicatedStorage:WaitForChild("ConfirmTap"))
+local GardenView = require(script.Parent:WaitForChild("GardenView"))
 
 local remotes = PetClient.Remotes
 local player = Players.LocalPlayer
@@ -155,7 +160,8 @@ local infoLabel = label("Info", {
 	TextTruncate = Enum.TextTruncate.AtEnd,
 	Visible = not COMPACT, -- compact: messages show on the summary line
 })
-local SLOTS_TOP = HEIGHT - 10 - SLOT_SIZE -- top of the slot bricks
+local FIELD_TOP = HEIGHT - 10 - BRICK -- U4: the field pet slot line under the equip slots
+local SLOTS_TOP = FIELD_TOP - 8 - SLOT_SIZE -- top of the slot bricks
 local list = create("ScrollingFrame", {
 	Name = "Inventory",
 	Position = UDim2.new(0, 8, 0, LIST_TOP),
@@ -594,6 +600,9 @@ local function refreshSlots(inventory)
 		elseif slot.kind == "buy" then
 			local price = PetConfig.SlotPrices[index]
 			b.BackgroundColor3 = if PetClient.Coins >= price then COLOR_BUY else COLOR_LOCKED
+			if pendingSlot == index then
+				b.BackgroundColor3 = ConfirmTap.COLOR -- U4: the one confirm colour (the slot keeps its short "Sure?")
+			end
 			b.Text = Locale.T(if pendingSlot == index then "pets.slot.sure" else "pets.slot.buy")
 			slot.caption.Text = if pendingSlot == index then Locale.Number(price) else ""
 			slot.caption.TextColor3 = Color3.new(1, 1, 1)
@@ -604,6 +613,69 @@ local function refreshSlots(inventory)
 		end
 	end
 	updateTooltip()
+end
+
+-- Field pet slots (U4, from the Garden panel): "🌱 Field pets 2 / 3" and the next slot's Buy brick (two taps over 1 000 Coins);
+-- bought anywhere (GardenField BuyPetSlot, answered on GardenRemotes.Result, toasted by FieldClient). From GardenRemotes.State.field.
+local FIELD_BUY_WIDTH = 150
+local fieldLine = create("Frame", {
+	Name = "FieldSlots",
+	Position = UDim2.fromOffset(10, FIELD_TOP),
+	Size = UDim2.new(1, -20, 0, BRICK),
+	BackgroundTransparency = 1,
+})
+local fieldLabel = label("Text", {
+	Size = UDim2.new(1, -(FIELD_BUY_WIDTH + 8), 1, 0),
+	TextSize = 15,
+	TextWrapped = true,
+})
+fieldLabel.Parent = fieldLine
+fieldLine.Parent = panel
+local fieldBuy: GuiButton? = nil
+
+local function refreshField()
+	local field = GardenView.OwnField()
+	if fieldBuy then
+		fieldBuy:Destroy()
+		fieldBuy = nil
+	end
+	if not field then
+		fieldLabel.Text = ""
+		return
+	end
+	local used = 0
+	for _ in field.pets or {} do
+		used += 1
+	end
+	local price = field.slotPrice
+	fieldLabel.Text = if price
+		then "🌱 " .. Locale.T("field.section.pets", { used = used, slots = field.slots or 1 })
+		else "🌱 " .. Locale.T("field.slot.done")
+	if not price then
+		return
+	end
+	local affordable = PetClient.Coins >= price
+	local buy = button("Buy", {
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, 0, 0, 0),
+		Size = UDim2.fromOffset(FIELD_BUY_WIDTH, BRICK),
+		BackgroundColor3 = if affordable then COLOR_BUY else COLOR_LOCKED,
+		TextSize = 15,
+		TextWrapped = true,
+		Text = Locale.T("pets.fieldSlot.buy", { count = price }),
+	}, 2)
+	buy.Parent = fieldLine
+	fieldBuy = buy
+	local slots = field.slots or 1
+	ConfirmTap.Wrap(buy, "FieldSlot", function()
+		return PetClient.Coins >= price and ConfirmTap.Over(price)
+	end, function()
+		if PetClient.Coins < price then
+			flash(rejectText("coins"), COLOR_ERROR)
+			return
+		end
+		ReplicatedStorage:WaitForChild("GardenRemotes"):WaitForChild("BuyPetSlot"):FireServer(slots + 1)
+	end)
 end
 
 -- Pet list ------------------------------------------------------------------------------------------------------------
@@ -676,6 +748,7 @@ local function buildRow(index: number, pet)
 end
 
 refresh = function()
+	refreshField()
 	local state = PetClient.State
 	if not state then
 		summaryText = Locale.T("common.loading")
@@ -751,9 +824,13 @@ function setOpen(open: boolean)
 	end
 	screenGui:SetAttribute("Open", open)
 	if open then
+		PanelFocus.Open("Pets", function()
+			setOpen(false)
+		end) -- U4: closes the panel open before; walking 32 studs away closes this one
 		panel.Visible = true
 		TweenService:Create(panel, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Position = POS_OPEN }):Play()
 	else
+		PanelFocus.Closed("Pets")
 		clearPending()
 		hoveredSlot = nil
 		bestMenu.Visible = false
@@ -785,5 +862,8 @@ closeButton.Activated:Connect(function()
 end)
 
 PetClient.Changed:Connect(refresh)
+ReplicatedStorage:WaitForChild("GardenRemotes"):WaitForChild("State").OnClientEvent:Connect(function()
+	task.defer(refreshField) -- after GardenView took the new field state
+end)
 refresh()
 screenGui.Parent = player:WaitForChild("PlayerGui")

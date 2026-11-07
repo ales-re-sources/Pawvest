@@ -51,6 +51,8 @@
 -- Remotes (in GardenRemotes): Plant(square, crop), Harvest(square), BuySeeds(crop, count), Sell(crop, count),
 -- BuySquare(square, expectedOpen), PlacePet(square, uid) (also moves a placed pet), LiftPet(uid), BuyPetSlot(expectedSlots),
 -- BuyUpgrade(id, expectedLevel), BuyTool(id, expectedLevel), BuyCart(slot, crop, count), FeedCrop(uid, crop, count) (client → server); answers on GardenRemotes.Result; GardenRemotes.State.field (the owner's panel).
+-- Where they are accepted: at the own plot (GardenService.Usable, 45 studs) for the field actions and Sell (the barn is on the plot);
+-- anywhere for BuyUpgrade, BuyTool, BuyPetSlot (U4: pure Coin + Renown buys from the Skills / Pets panels) and FeedCrop.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -856,7 +858,7 @@ buyUpgradeEvent.OnServerEvent:Connect(function(player, id, expected)
 	if not (upgrade and GardenService.WholeNumber(expected)) or not GardenService.Allow(player) then
 		return
 	end
-	local profile, field = usableField(player, "BuyUpgrade")
+	local profile, field = usableField(player, "BuyUpgrade", true)
 	if not field then
 		return
 	end
@@ -921,7 +923,7 @@ buyToolEvent.OnServerEvent:Connect(function(player, id, expected)
 	if not (tool and GardenService.WholeNumber(expected)) or not GardenService.Allow(player) then
 		return
 	end
-	local profile, field = usableField(player, "BuyTool")
+	local profile, field = usableField(player, "BuyTool", true)
 	if not field then
 		return
 	end
@@ -1012,7 +1014,7 @@ buyPetSlotEvent.OnServerEvent:Connect(function(player, expected)
 	if not GardenService.WholeNumber(expected) or not GardenService.Allow(player) then
 		return
 	end
-	local profile, field = usableField(player, "BuyPetSlot")
+	local profile, field = usableField(player, "BuyPetSlot", true)
 	if not field then
 		return
 	end

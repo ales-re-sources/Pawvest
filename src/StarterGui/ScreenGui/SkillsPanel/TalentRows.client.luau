@@ -167,7 +167,7 @@ for index, talent in TalentConfig.List do
 	local rowFrame = create("Frame", {
 		Name = "Talent_" .. talent.id,
 		LayoutOrder = index,
-		Size = UDim2.new(0, 240, 0, ROW_HEIGHT),
+		Size = UDim2.new(1, -10, 0, ROW_HEIGHT), -- the panel's width (GardenSkills widens it for the Garden tab)
 	}, { title, info, button })
 	StudStyle.Row(rowFrame, panel.Name)
 	rowFrame.Parent = rowList

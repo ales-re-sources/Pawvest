@@ -2,8 +2,8 @@
 --   * "Field" button (own ScreenGui FieldGui): visible only while the character is near the own plot; opens / closes the panel;
 --   * Garden panel: Renown level, one row per owned square (crop and time left or "Ripe!"), the seed catalogue (buy 1 / 10, Renown
 --     locks, barn), harvested crops (Sell all), the next square (price + Renown) -- closes when the player walks away;
---   * the squares themselves are used through FieldHand (U3a: tap a square, square card, seed / pet pickers); the panel's Pets
---     section lists the field pets (square, Tending and Pest-control levels, reach, XP), lifts them and buys the next field pet slot;
+--   * the squares themselves are used through FieldHand (U3a: tap a square, square card, seed / pet pickers); U4a moved the field
+--     pets' slot to the Pets panel and the upgrades / tools to the Skills panel's Garden tab (GardenSkills); toasts for them stay here;
 --   * crow forecast (E4b): a line under the Renown level, "Crows in 3:20:00" / "Crows now, 1:05:00 left", computed on the client
 --     from CropConfig.NextCrows and the server time (the schedule is fixed); State.field.crows.active says whether crows come yet;
 --   * toasts for the answers of the field actions on GardenRemotes.Result (eggs and food share that remote: ignored here), and
@@ -15,7 +15,6 @@
 -- Hook (ScreenGui FieldGui attribute, cleared after use): OpenField = true opens the panel, "seeds" opens it at the seed shop
 -- (FieldHand's seed picker without seeds).
 -- Buttons by path (all under PlayerGui.FieldGui): Panel.Content.Seeds.<CropId>.Buy1 / .Buy10, Panel.Content.Crops.<CropId>.Sell,
--- Panel.Content.Expand.Buy, Panel.Content.Upgrades.<UpgradeId>.Buy, Panel.Content.Pets.Pet<square>.Lift, Panel.Content.Pets.Slot.BuySlot,
 -- Open (the HUD button).
 
 local Players = game:GetService("Players")
@@ -31,19 +30,15 @@ local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
+local PanelFocus = require(ReplicatedStorage:WaitForChild("PanelFocus"))
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
 local buySeedsEvent = remotes:WaitForChild("BuySeeds")
 local sellEvent = remotes:WaitForChild("Sell")
-local liftPetEvent = remotes:WaitForChild("LiftPet")
-local buyPetSlotEvent = remotes:WaitForChild("BuyPetSlot")
-local buyUpgradeEvent = remotes:WaitForChild("BuyUpgrade")
-local buyToolEvent = remotes:WaitForChild("BuyTool")
 local buyCartEvent = remotes:WaitForChild("BuyCart")
 local requestStateEvent = remotes:WaitForChild("RequestState")
 
 local SHOW_DISTANCE = 45 -- studs from the plot centre: the Field button is visible within this
-local CLOSE_DISTANCE = 32 -- studs from where a panel was opened; walking further away closes it
 local TICK_SECONDS = 0.25
 local GAP = 6 -- between the items of a row
 local SQUARE_ROW = 30
@@ -51,8 +46,6 @@ local BUY1_WIDTH = 50
 local BUY10_WIDTH = 56
 local SELL_WIDTH = 116
 local LOCK_WIDTH = 112
-local LIFT_WIDTH = 76
-local SLOT_WIDTH = 96
 local UPGRADE_WIDTH = 104
 local NOTICE_SECONDS = 8
 
@@ -237,13 +230,10 @@ end
 
 local headerSection = newSection("Header", 1)
 local squaresSection = newSection("Field", 2)
-local petsSection = newSection("Pets", 3)
 local seedsSection = newSection("Seeds", 4)
 local cartSection = newSection("Cart", 5)
 local cropsSection = newSection("Crops", 6)
 local expandSection = newSection("Expand", 7)
-local upgradesSection = newSection("Upgrades", 8)
-local toolsSection = newSection("Tools", 9)
 
 local content = create("ScrollingFrame", {
 	Name = "Content",
@@ -259,13 +249,10 @@ local content = create("ScrollingFrame", {
 	create("UIPadding", { PaddingRight = UDim.new(0, 6), PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 6) }),
 	headerSection,
 	squaresSection,
-	petsSection,
 	seedsSection,
 	cartSection,
 	cropsSection,
 	expandSection,
-	upgradesSection,
-	toolsSection,
 })
 
 local panel = create("Frame", {
@@ -381,15 +368,6 @@ local function textColumn(row: Instance, reserved: number, title: string, info: 
 	return column
 end
 
--- { [square] = true } of the open squares of `field` (State.field.open), for CropConfig.Reach.
-local function openSet(field): { [number]: boolean }
-	local set = {}
-	for _, n in field.open or {} do
-		set[n] = true
-	end
-	return set
-end
-
 local function coinsNow(): number
 	return PetClient.Coins
 end
@@ -494,92 +472,6 @@ local function renderSquares(field)
 	end
 	paragraph("Note", { LayoutOrder = #open + 2, TextSize = 12, TextColor3 = COLOR_DIM, Text = Locale.T("field.square.note") }).Parent =
 		squaresSection
-end
-
--- weighted field seconds as hours with one decimal, in the viewer's decimal mark
-local function hours(seconds: number)
-	return { decimal = string.format("%.1f", seconds / 3600) }
-end
-
--- A field pet's lines for the panel row (E1b; E4b: each job it does, Tending and / or Pest control, with its reach and XP).
-local function fieldPetLines(field, square: number, pet): string
-	local lines = {}
-	local open = openSet(field)
-	if pet.job == "Tending" then
-		table.insert(lines, Locale.T("field.pet.info", { n = square, level = pet.apt, count = #CropConfig.Reach(square, pet.reach, open) }))
-		table.insert(lines, if pet.next
-			then Locale.T("field.pet.xp", { xp = hours(pet.xp), next = hours(pet.next) })
-			else Locale.T("field.pet.capped"))
-	end
-	local guard = pet.guard
-	if type(guard) == "table" then
-		local info = {
-			level = guard.level,
-			pct = math.round(guard.chance * 100),
-			count = #CropConfig.Reach(square, guard.reach, open),
-			n = square,
-		}
-		table.insert(lines, Locale.T(if pet.job == "Tending" then "field.pet.guard" else "field.pet.guardInfo", info))
-		table.insert(lines, if guard.next
-			then Locale.T("field.pet.guardXp", { xp = hours(guard.xp), next = hours(guard.next) })
-			else Locale.T("field.pet.guardCapped"))
-	end
-	return table.concat(lines, "\n")
-end
-
--- The field pets (E1b): one row per pet (square, job levels, reach, XP; Lift), then the next slot.
-local function renderPets(field)
-	clearSection(petsSection)
-	local placed = {}
-	for key, pet in field.pets or {} do
-		table.insert(placed, { square = tonumber(key) :: number, pet = pet })
-	end
-	table.sort(placed, function(a, b)
-		return a.square < b.square
-	end)
-	heading(petsSection, 1, Locale.T("field.section.pets", { used = #placed, slots = field.slots or 1 }))
-	for index, entry in placed do
-		local pet = entry.pet
-		local row = newRow(petsSection, "Pet" .. entry.square, index + 1)
-		textColumn(row, LIFT_WIDTH + GAP, Locale.PetName(pet.kind, pet.level, PetClient.NameOf(pet.uid)), fieldPetLines(field, entry.square, pet))
-		local lift = button("Lift", {
-			LayoutOrder = 2,
-			Size = UDim2.fromOffset(LIFT_WIDTH, 34),
-			BackgroundColor3 = COLOR_SELL,
-			TextSize = 15,
-			Text = Locale.T("field.pet.lift"),
-			Parent = row,
-		}, 2)
-		lift.Activated:Connect(function()
-			liftPetEvent:FireServer(pet.uid)
-		end)
-	end
-	if #placed == 0 then
-		paragraph("Empty", { LayoutOrder = 2, Text = Locale.T("field.pets.empty") }).Parent = petsSection
-	end
-	if field.slotPrice then
-		local enough = coinsNow() >= field.slotPrice
-		local row = newRow(petsSection, "Slot", 50)
-		textColumn(row, SLOT_WIDTH + GAP, Locale.T("field.slot.title", { n = field.slots + 1 }), Locale.T("field.slot.info", { count = field.slotPrice }))
-		local buy = button("BuySlot", {
-			LayoutOrder = 2,
-			Size = UDim2.fromOffset(SLOT_WIDTH, 34),
-			BackgroundColor3 = if enough then COLOR_BUY else COLOR_LOCKED,
-			TextSize = 15,
-			Text = Locale.T("field.slot.buy"),
-			Parent = row,
-		}, 2)
-		buy.Activated:Connect(function()
-			local state = fieldState
-			if state then
-				buyPetSlotEvent:FireServer(state.slots + 1)
-			end
-		end)
-	else
-		paragraph("Slots", { LayoutOrder = 50, TextSize = 14, TextColor3 = COLOR_OK, Text = Locale.T("field.slot.done") }).Parent = petsSection
-	end
-	paragraph("Note", { LayoutOrder = 51, TextSize = 12, TextColor3 = COLOR_DIM, Text = Locale.T("field.pets.note") }).Parent = petsSection
-	paragraph("GuardNote", { LayoutOrder = 52, TextSize = 12, TextColor3 = COLOR_DIM, Text = Locale.T("field.pets.guardNote") }).Parent = petsSection
 end
 
 local function renderSeeds(field)
@@ -750,95 +642,6 @@ local function renderExpand(field)
 	paragraph("Hint", { LayoutOrder = 3, TextSize = 13, TextColor3 = COLOR_DIM, Text = Locale.T("field.expand.hint") }).Parent = expandSection
 end
 
--- The field upgrades (E1c1): level, what it does now and at the next level, and the price.
-local function renderUpgrades(field)
-	clearSection(upgradesSection)
-	heading(upgradesSection, 1, Locale.T("field.section.upgrades"))
-	for index, upgrade in CropConfig.Upgrades do
-		local keys = UPGRADE_KEYS[upgrade.id]
-		local level = CropConfig.UpgradeLevel(field.upgrades, upgrade.id)
-		local top = #upgrade.prices
-		local price = upgrade.prices[level + 1]
-		local function effect(at: number): number
-			return if upgrade.id == "Growth" then math.floor(upgrade.step * at * 100 + 0.5) else CropConfig.BarnFor(at)
-		end
-		local info = if price
-			then Locale.T(keys.effect, { now = effect(level), next = effect(level + 1) })
-			else Locale.T(keys.max, { now = effect(level) })
-		local row = newRow(upgradesSection, upgrade.id, index + 1)
-		textColumn(
-			row,
-			UPGRADE_WIDTH + GAP,
-			Locale.T("field.upgrade.level", { name = upgrade.icon .. " " .. Locale.T(keys.name), level = level, max = top }),
-			info
-		)
-		local affordable = price ~= nil and coinsNow() >= price
-		local buy = button("Buy", {
-			LayoutOrder = 2,
-			Size = UDim2.fromOffset(UPGRADE_WIDTH, 40),
-			BackgroundColor3 = if affordable then COLOR_BUY else COLOR_LOCKED,
-			TextSize = 15,
-			TextWrapped = true,
-			Text = if price then Locale.T("field.upgrade.price", { count = price }) else Locale.T("field.upgrade.maxed"),
-			Parent = row,
-		}, 2)
-		if price then
-			buy.Activated:Connect(function()
-				buyUpgradeEvent:FireServer(upgrade.id, level)
-			end)
-		end
-	end
-end
-
--- The garden tools (E1c3): like the upgrades, and each level needs a Renown level (a red line while it is too low).
-local function renderTools(field)
-	clearSection(toolsSection)
-	heading(toolsSection, 1, Locale.T("field.section.tools"))
-	for index, tool in CropConfig.Tools do
-		local keys = TOOL_KEYS[tool.id]
-		local level = CropConfig.ToolLevel(field.tools, tool.id)
-		local price = tool.prices[level + 1]
-		local function percent(at: number): number
-			return if at > 0 then math.floor(tool.effect[at] * 100 + 0.5) else 0
-		end
-		local info = if price
-			then Locale.T(keys.effect, { now = percent(level), next = percent(level + 1) })
-			else Locale.T(keys.max, { now = percent(level) })
-		local row = newRow(toolsSection, tool.id, index + 1)
-		local column = textColumn(
-			row,
-			UPGRADE_WIDTH + GAP,
-			Locale.T("field.upgrade.level", { name = tool.icon .. " " .. Locale.T(keys.name), level = level, max = #tool.prices }),
-			info
-		)
-		local renownOk = not price or field.level >= tool.renown[level + 1]
-		if not renownOk then
-			paragraph("Renown", {
-				LayoutOrder = 3,
-				TextSize = 13,
-				TextColor3 = COLOR_ERROR,
-				Text = Locale.T("field.expand.needRenown", { level = tool.renown[level + 1] }),
-			}).Parent =
-				column
-		end
-		local affordable = price ~= nil and renownOk and coinsNow() >= price
-		local buy = button("Buy", {
-			LayoutOrder = 2,
-			Size = UDim2.fromOffset(UPGRADE_WIDTH, 40),
-			BackgroundColor3 = if affordable then COLOR_BUY else COLOR_LOCKED,
-			TextSize = 15,
-			TextWrapped = true,
-			Text = if price then Locale.T("field.upgrade.price", { count = price }) else Locale.T("field.upgrade.maxed"),
-			Parent = row,
-		}, 2)
-		if price then
-			buy.Activated:Connect(function()
-				buyToolEvent:FireServer(tool.id, level)
-			end)
-		end
-	end
-end
-
 local function renderPanel()
 	titleLabel.Text = Locale.T("field.title")
 	if not panelPoint then
@@ -849,29 +652,25 @@ local function renderPanel()
 		clearSection(headerSection)
 		paragraph("Level", { Text = Locale.T("common.loading") }).Parent = headerSection
 		clearSection(squaresSection)
-		clearSection(petsSection)
 		clearSection(seedsSection)
 		clearSection(cartSection)
 		cartTimer = nil
 		crowLabel = nil
 		clearSection(cropsSection)
 		clearSection(expandSection)
-		clearSection(upgradesSection)
-		clearSection(toolsSection)
 		return
 	end
 	renderHeader(field)
 	renderSquares(field)
-	renderPets(field)
 	renderSeeds(field)
 	renderCart(field)
 	renderCrops(field)
 	renderExpand(field)
-	renderUpgrades(field)
-	renderTools(field)
 end
 
+local closePanel
 local function openPanel(scrollToSeeds: boolean?)
+	PanelFocus.Open("Garden", closePanel) -- U4: one panel at a time; walking 32 studs away closes it
 	panelPoint = rootPosition() or Vector3.zero
 	panel.Visible = true
 	renderPanel()
@@ -883,7 +682,8 @@ local function openPanel(scrollToSeeds: boolean?)
 	end
 end
 
-local function closePanel()
+function closePanel()
+	PanelFocus.Closed("Garden")
 	panelPoint = nil
 	panel.Visible = false
 end
@@ -1109,12 +909,6 @@ RunService.Heartbeat:Connect(function(dt)
 		near = Vector3.new(offset.X, 0, offset.Z).Magnitude <= SHOW_DISTANCE
 	end
 	openButton.Visible = near
-
-	if root then
-		if panelPoint and (root - panelPoint).Magnitude > CLOSE_DISTANCE then
-			closePanel()
-		end
-	end
 
 	if panelPoint then
 		local now = workspace:GetServerTimeNow()

@@ -115,6 +115,7 @@ common.reject.coins,A purchase was refused: the player has too few Coins,Not eno
 common.reject.stale,"A request was refused because the panel showed old data (double click, lag)","Out of date, try again","Údaje se mezitím změnily, zkus to znovu",ok,ha5b6c678
 common.reject.loading,A request was refused while the player's data is still loading,Still loading...,Ještě se načítá…,ok,hefd53ef6
 common.reject.failed,Any other refused request,Request failed,Požadavek se nepovedl,ok,hde410c21
+common.tapAgain,"Any buy or sell button after the first tap: it turns orange and waits 3 s for a second tap that confirms (big spends over 1 000 Coins, selling crops). Short: fits a 90 px brick",Tap again,Klepni znovu,new,h28272940
 common.reject.far,A garden request was refused: the player is too far from their plot,Too far from your plot,Jsi moc daleko od své zahrádky,ok,ha9194174
 common.reject.noplot,A garden request was refused: no garden plot was free on this server,You have no plot on this server,Na tomhle serveru nemáš zahrádku,ok,h089bd3d2
 common.percentBonus,"A Coin bonus in percent; {pct} = number with the decimal mark of the language (4.5 / 4,5)",+{pct}%,+{pct} %,ok,h2fef22d6
@@ -140,6 +141,8 @@ food.name.Cake,Pet food at the food stand in the garden (cheap / medium / big),C
 food.name.Feast,Pet food at the food stand in the garden (cheap / medium / big),Feast,Hostina,ok,hbe3b8af3
 # Talents (Skills panel),,,,,
 skills.title,"Title of the Skills panel (⚡ icon); the panel is authored in Studio, the text set by TalentRows",Your skills,Dovednosti,ok,hf87da291
+skills.tab.obby,"Skills panel: tab brick (half the 300 px panel) that shows the talents for the obby (jumps, dash, speed); 🏃 is part of the text",🏃 Obby,🏃 Úrovně,new,h6e25283e
+skills.tab.garden,"Skills panel: tab brick that shows the garden upgrades and tools (Growth, Barn, Seed sorter, Cloches, Pruning shears) and the Renown level",🌱 Garden,🌱 Zahrada,new,h8115100d
 talent.effect.RunSpeed,Skills panel: what the next level of Run Speed gives,\+6% run speed,\+6 % k rychlosti běhu,ok,hc0e4b7b6
 talent.effect.DoubleJump,Skills panel: what Double Jump gives,1 extra jump in the air,1 skok navíc ve vzduchu,ok,habc671ca
 talent.effect.JumpHeight,Skills panel: what the next level of Jump Height gives,\+8% jump height,\+8 % k výšce skoku,ok,hda4d4692
@@ -175,6 +178,7 @@ arena.gateOpened.Green,"Arena toast when this key opens its gate (Czech: feminin
 pets.title,Panel title,🐶 Pets,🐶 Mazlíčci,ok,h92496bfc
 pets.empty,Shown instead of the list while the player has no pet,No pets yet. Hatch one in an incubator in the pet garden!,Zatím nemáš žádného mazlíčka. Vylíhni si ho v inkubátoru v zahradě mazlíčků!,ok,h2f4ed2fb
 pets.slotsTitle,"Heading above the three equip slots at the bottom (""equip"" = take a pet with you; it follows you and raises Coin rewards)",Equipped pets,Nasazení mazlíčci,new,h502b0f88
+pets.fieldSlot.buy,"Pets panel, the line under the equip slots: button (150 px) that buys one more field pet slot (a place for a pet that works on the crop field); {count} = price in Coins",\+1 slot 💰 {count},\+1 místo 💰 {count},new,h29b70add
 pets.summaryCute[one],"Line under the Pets panel title (U1); {bonus} = total Coin bonus ('+12%'), {count} = equipped pets with Cuteness (only they raise the Coins). Form for 1",Coin bonus <font color='#78e678'>{bonus}</font>  ·  {count} cute pet with you,Bonus mincí <font color='#78e678'>{bonus}</font>  ·  {count} roztomilý mazlíček s tebou,new,hced7925b
 pets.summaryCute[few],Form for 2-4 (Czech only),,Bonus mincí <font color='#78e678'>{bonus}</font>  ·  {count} roztomilí mazlíčci s tebou,new,hced7925b
 pets.summaryCute[other],Form for 0 and 5+,Coin bonus <font color='#78e678'>{bonus}</font>  ·  {count} cute pets with you,Bonus mincí <font color='#78e678'>{bonus}</font>  ·  {count} roztomilých mazlíčků s tebou,new,hced7925b
@@ -404,29 +408,7 @@ field.pet.label,"Label over a pet working on a field square, only for a pet with
 <font color='#a8e6a0'>{jobs}</font>","{name}
 <font color='#a8e6a0'>{jobs}</font>",new,hceea6416
 field.section.pets,"Heading of the field panel's pet section; {used} = pets on the field, {slots} = field pet slots owned",Field pets {used} / {slots},Mazlíčci na poli {used} / {slots},new,ha5e701a6
-field.pet.xp,"Field pet row, second line; {xp} / {next} = Tending experience and the amount for the next level, in hours of field time (decimal, ""3.5"")",Tending XP: {xp} / {next} h,Zkušenost v péči: {xp} / {next} h,new,h4221ff81
-field.pet.capped,"Field pet row, second line: its Tending level is at the cap of its rarity",Tending is at this pet's maximum,Péče je u tohoto mazlíčka na maximu,new,hc4db414a
-field.pet.guard[one],"Field pet row, line for a tending pet's second job; {level} = Pest-control level, {pct} = chance in whole percent to chase crows off, {count} = squares it guards (1, 5 or 9). Form for 1",Pest control {level} · {pct}% vs crows · guards {count} square,Hlídání {level} · {pct} % proti vránám · hlídá {count} políčko,new,h928c06c9
-field.pet.guard[few],Form for 2-4 (Czech only),,Hlídání {level} · {pct} % proti vránám · hlídá {count} políčka,new,h928c06c9
-field.pet.guard[other],Form for 0 and 5+,Pest control {level} · {pct}% vs crows · guards {count} squares,Hlídání {level} · {pct} % proti vránám · hlídá {count} políček,new,h928c06c9
-field.pet.guardInfo[one],"Field pet row, first line of a pet with Pest control only; {n} = its square, {level} = Pest-control level, {pct} = chance in whole percent to chase crows off, {count} = squares it guards. Form for 1",Square {n} · Pest control {level} · {pct}% vs crows · guards {count} square,Políčko {n} · Hlídání {level} · {pct} % proti vránám · hlídá {count} políčko,new,h1f95605b
-field.pet.guardInfo[few],Form for 2-4 (Czech only),,Políčko {n} · Hlídání {level} · {pct} % proti vránám · hlídá {count} políčka,new,h1f95605b
-field.pet.guardInfo[other],Form for 0 and 5+,Square {n} · Pest control {level} · {pct}% vs crows · guards {count} squares,Políčko {n} · Hlídání {level} · {pct} % proti vránám · hlídá {count} políček,new,h1f95605b
-field.pet.guardXp,"Field pet row, under the Pest-control line; {xp} / {next} = Pest-control experience and the amount for the next level, in hours of field time (decimal, ""3.5"")",Pest control XP: {xp} / {next} h,Zkušenost v hlídání: {xp} / {next} h,new,hc8a6b60e
-field.pet.guardCapped,"Field pet row, under the Pest-control line: its Pest-control level is at the cap of its rarity",Pest control is at this pet's maximum,Hlídání je u tohoto mazlíčka na maximu,new,he85be69d
-field.pet.info[one],"Field pet row, first line; {n} = its square, {level} = Tending level, {count} = squares it works (1, 5 or 9). Form for 1",Square {n} · Tending {level} · works {count} square,Políčko {n} · Péče {level} · stará se o {count} políčko,new,h5ded8f19
-field.pet.info[few],Form for 2-4 (Czech only),,Políčko {n} · Péče {level} · stará se o {count} políčka,new,h5ded8f19
-field.pet.info[other],Form for 0 and 5+,Square {n} · Tending {level} · works {count} squares,Políčko {n} · Péče {level} · stará se o {count} políček,new,h5ded8f19
-field.pet.lift,Button on a field pet row: take the pet off the field (back to the inventory),Lift,Odebrat,new,hcf198044
-field.pets.empty,"Field panel, pet section when no pet works the field",No pet works the field yet. Use the pet prompt at a square to place a pet with Tending or Pest control.,Na poli zatím nepracuje žádný mazlíček. Mazlíčka s péčí nebo hlídáním umístíš výzvou u políčka.,new,h22ff44f3
-field.slot.title,Field panel: the next field pet slot to buy; {n} = its number (2-3),Field pet slot {n},Místo pro mazlíčka {n},new,h10124662
-field.slot.info[one],Price of the next field pet slot; {count} = Coins. Form for 1,{count} Coin,{count} mince,new,h96db4654
-field.slot.info[few],Form for 2-4 (Czech only),,{count} mince,new,h96db4654
-field.slot.info[other],Form for 0 and 5+,{count} Coins,{count} mincí,new,h96db4654
-field.slot.buy,Button: buy the next field pet slot,Buy,Koupit,new,h89aeaade
 field.slot.done,Field panel: every field pet slot is bought,All field pet slots bought.,Máš všechna místa pro mazlíčky na poli.,new,hadffe186
-field.pets.note,Small note under the field pet section: what Tending does,"While you are away, a pet with Tending harvests the ripe crops in its reach and replants them from your seeds. A higher level does it more often and reaches more squares. Pets stop when the barn is full.","Když jsi pryč, mazlíček s péčí sklidí zralou úrodu ve svém dosahu a znovu ji zasadí z tvých semínek. Čím vyšší úroveň, tím častěji a na víc políčkách. Když je stodola plná, mazlíčci přestanou.",new,h07abb1e3
-field.pets.guardNote,"Small note under the field pet section, after the Tending note: what Pest control does","While you are away, a pet with Pest control chases crows off the squares in its reach. A pet with Tending and Pest control does both jobs.","Když jsi pryč, mazlíček s hlídáním odhání vrány z políček ve svém dosahu. Mazlíček, který umí péči i hlídání, dělá obojí.",new,h49769e09
 field.petPicker.title,Title of the pet picker opened at a field square; {n} = square number,Pet for square {n},Mazlíček na políčko {n},new,hb5233c8c
 field.petPicker.equipped,"Pet picker, disabled row: the pet follows the player (equipped)",Equipped: unequip it in the Pets panel first,Je nasazený: nejdřív ho sundej v panelu Mazlíčci,new,h66466e79
 field.petPicker.noSlot,"Pet picker, disabled row: every field pet slot is used",No free slot: buy one in the field panel,Žádné volné místo: další koupíš v panelu pole,new,h0d88e986
@@ -541,7 +523,6 @@ petDetail.feed.all,"Pet detail page, feed card: button that feeds as many crops 
 petDetail.feed.done,"Pet detail page, feed card: after feeding; {icon} = crop emoji, {count} = crops eaten, {xp} = XP gained",{icon} × {count} eaten: +{xp} XP,{icon} × {count} snězeno: +{xp} XP,new,ha0352ce6
 petDetail.feed.doneLevel,"Pet detail page, feed card: after feeding when a trait levelled up; {icon}, {count}, {xp} as in petDetail.feed.done, {trait} = trait name (pet.apt.*, nominative), {level} = its new level",{icon} × {count} eaten: +{xp} XP · Level up! {trait} Lv {level},{icon} × {count} snězeno: +{xp} XP · Postup! {trait} Lv {level},new,h37d7e098
 petDetail.feed.maxed,"Pet detail page, feed card: refused, food can no longer train any of the pet's traits (P4)",Food can't teach this pet anything more,Tenhle mazlíček se už z jídla nic nenaučí,new,h904b7ccb
-field.section.upgrades,"Garden panel: heading of the field upgrades (Growth, Barn)",Upgrades,Vylepšení,new,ha26b87eb
 field.upgrade.level,"Garden panel, upgrade and tool row title; {name} = icon + name (""🌱 Growth"", ""✂️ Pruning shears""), {level} = level bought, {max} = top level",{name} · {level} / {max},{name} · {level} / {max},new,h59780255
 field.upgrade.growth,"Name of the field upgrade that makes crops grow faster (row title, toast)",Growth,Růst,new,h6f82fbe9
 field.upgrade.growth.effect,"Growth upgrade row, second line; {now} = % shorter grow times now, {next} = % at the next level (0-20)",Grow times −{now} % → −{next} %,Doba růstu −{now} % → −{next} %,new,hf1c5a382
@@ -553,7 +534,6 @@ field.upgrade.price,"Upgrade and tool buy button (narrow, ~104 px); {count} = pr
 field.upgrade.maxed,Upgrade button at the top level (greyed),Max,Max,new,h1ab2ab83
 field.toast.upgrade,"Toast after buying an upgrade or tool level; {name} = upgrade / tool name (Growth, Barn, Seed sorter, Cloches, Pruning shears), {level} = new level",{name}: level {level}!,{name}: úroveň {level}!,new,hb5c08e2f
 field.reason.upgradeMaxed,Refused: the upgrade or tool is already at its top level,Already at the top level,Už je na nejvyšší úrovni,new,hae9da8d5
-field.section.tools,"Garden panel: heading of the garden tools (Seed sorter, Cloches, Pruning shears), below the upgrades",Tools,Nářadí,new,h0991921d
 field.tool.sorter,"Name of the garden tool that makes harvested crops bigger (row title, toast; it picks the best seeds)",Seed sorter,Třídička semínek,new,hecc00193
 field.tool.sorter.effect,"Seed sorter row, second line; {now} = % bigger crops now, {next} = % at the next level (0-15)",Crops {now} % bigger → {next} %,Plodiny o {now} % větší → o {next} %,new,hb7394619
 field.tool.sorter.max,Seed sorter row at the top level; {now} = % bigger crops (15),Crops {now} % bigger,Plodiny o {now} % větší,new,hb15180c8

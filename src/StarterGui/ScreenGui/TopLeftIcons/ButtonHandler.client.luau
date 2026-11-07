@@ -3,6 +3,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
 local AdminConfig = require(ReplicatedStorage:WaitForChild("AdminConfig"))
+local PanelFocus = require(ReplicatedStorage:WaitForChild("PanelFocus"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 
 local player = Players.LocalPlayer
@@ -115,7 +116,7 @@ if remembered ~= nil then
 	for _, panel in { skillsPanel, settingsPanel, adminPanel } do
 		local open = panel.Name == remembered and (panel ~= adminPanel or isAdminUser(player.UserId))
 		panel.Visible = open
-		panel.Position = UDim2.new(0, if open then 10 else -250, 0, 80.3)
+		panel.Position = UDim2.new(0, if open then 10 else -(panel.Size.X.Offset + 20), 0, 80.3)
 		if open then
 			lastOpenPanel = panel
 		end
@@ -133,11 +134,19 @@ local function closePets()
 	end
 end
 
+-- PanelFocus names (U4: one panel at a time across the HUD panels, Pets and the garden's stalls; Skills closes when walking away)
+local FOCUS = {
+	SkillsPanel = { name = "Skills", distance = nil },
+	SettingsPanel = { name = "Settings", distance = math.huge },
+	AdminPanel = { name = "Admin", distance = math.huge },
+}
+
 local function closePanel(panel)
 	if not lastOpenPanel then return end
+	PanelFocus.Closed(FOCUS[panel.Name].name)
 
 	local slideOut = TweenService:Create(panel, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-		Position = UDim2.new(0, -250, 0, 80.3)
+		Position = UDim2.new(0, -(panel.Size.X.Offset + 20), 0, 80.3) -- off screen (GardenSkills widens the Skills panel to 300)
 	})
 	slideOut:Play()
 	slideOut.Completed:Connect(function()
@@ -156,9 +165,11 @@ local function openPanel(panel)
 		closePanel(lastOpenPanel)
 	end
 	
-	closePets()
 	lastOpenPanel = panel
 	player:SetAttribute(OPEN_PANEL_ATTRIBUTE, panel.Name)
+	PanelFocus.Open(FOCUS[panel.Name].name, function()
+		closePanel(panel)
+	end, FOCUS[panel.Name].distance) -- closes Pets / a stall panel
 
 	panel.Visible = true
 	isPanelOpen = true
@@ -169,6 +180,14 @@ local function openPanel(panel)
 	slideIn:Play()
 end
 
+
+-- the panel open at start (authored visible on the first spawn, or restored through a death) takes the focus
+if lastOpenPanel then
+	local panel = lastOpenPanel
+	PanelFocus.Open(FOCUS[panel.Name].name, function()
+		closePanel(panel)
+	end, FOCUS[panel.Name].distance)
+end
 
 -- Button click handlers
 -- Home: back to the hub (the server validates, cancels a running timer and teleports)

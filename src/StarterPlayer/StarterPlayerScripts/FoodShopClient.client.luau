@@ -23,6 +23,7 @@ local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
+local PanelFocus = require(ReplicatedStorage:WaitForChild("PanelFocus"))
 local PetRow = require(script.Parent:WaitForChild("PetRow"))
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
@@ -474,12 +475,14 @@ local function refresh()
 end
 
 local function closePanel()
+	PanelFocus.Closed("Food")
 	openStand = nil
 	panel.Visible = false
 	refresh()
 end
 
 local function openPanel(stand: BasePart)
+	PanelFocus.Open("Food", closePanel, math.huge) -- U4: one panel at a time; the stand distance below closes it
 	openStand = stand
 	armed, hovered = nil, nil
 	fitToScreen()
