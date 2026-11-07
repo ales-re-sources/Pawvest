@@ -4,7 +4,8 @@
 --     the barn's seed capacity;
 --   * Seeds: every seed held (icon, name × count, grow time with the Growth upgrade); nothing → a hint to the plaza's seed stall;
 --   * Harvest: every crop held (name × count, record kg) with Feed (a chooser of the pets that can still eat → that pet's page, which
---     feeds crops: PetsGui attribute OpenPet) and Sell all (two taps, ConfirmTap; the value before the pet bonus);
+--     feeds crops: PetsGui attribute OpenPet) and Sell (two taps, ConfirmTap; "Sell 2 · 3 787": the count and what the sale pays with the
+--     pet bonus, PetClient.State.multiplier, rounded as CoinRewards.Grant rounds);
 --   * PanelFocus "Barn": opening it closes the other panels, walking 32 studs away closes it (Sell needs the own plot on the server).
 -- Display only: Sell names a crop and a count; GardenField checks the plot, the count and pays (answer toasted by FieldClient).
 -- Hook (ScreenGui BarnGui attribute, cleared after use): Open = true opens the panel. Buttons by path (under PlayerGui.BarnGui):
@@ -146,6 +147,12 @@ local function renderSeeds(field)
 	}).Parent = seedsSection
 end
 
+-- 1 + the equipped pets' bonus (what CoinRewards.Grant multiplies a sale by); 1 before the first pet state.
+local function petMultiplier(): number
+	local state = PetClient.State
+	return type(state) == "table" and tonumber(state.multiplier) or 1
+end
+
 local function renderCrops(field, tap: number)
 	GardenUi.Clear(cropsSection)
 	GardenUi.Heading(cropsSection, 1, Locale.T("field.section.crops"), COLOR_PANEL)
@@ -178,14 +185,16 @@ local function renderCrops(field, tap: number)
 				ui.content.Visible = false
 				renderChooser()
 			end)
-			local value = CropConfig.SaleValue(crop, field.sizes and field.sizes[crop.id] or owned)
+			-- what the server pays: SaleValue (sale × summed sizes), then × the pet multiplier, rounded as CoinRewards.Grant does
+			local base = CropConfig.SaleValue(crop, field.sizes and field.sizes[crop.id] or owned)
+			local value = math.floor(base * petMultiplier() + 0.5 + 1e-9)
 			local sell = GardenUi.Button("Sell", {
 				LayoutOrder = 3,
 				Size = UDim2.fromOffset(SELL_WIDTH, tap),
 				BackgroundColor3 = GardenUi.COLOR_SELL,
 				TextSize = 14,
 				TextWrapped = true,
-				Text = Locale.T("field.crop.sell", { coins = value }),
+				Text = Locale.T("field.crop.sellCount", { count = owned, coins = value }),
 				Parent = row,
 			}, 2)
 			ConfirmTap.Wrap(sell, "Sell" .. cropId .. owned, function()
@@ -195,10 +204,7 @@ local function renderCrops(field, tap: number)
 			end)
 		end
 	end
-	if any then
-		GardenUi.Paragraph("Note", { LayoutOrder = #CropConfig.Crops + 2, TextSize = 12, TextColor3 = GardenUi.COLOR_DIM, Text = Locale.T("field.crops.note") }).Parent =
-			cropsSection
-	else
+	if not any then
 		GardenUi.Paragraph("Empty", { LayoutOrder = 2, Text = Locale.T("barn.crops.empty") }).Parent = cropsSection
 	end
 end
@@ -316,10 +322,14 @@ end)
 remotes:WaitForChild("State").OnClientEvent:Connect(function()
 	task.defer(render) -- after GardenView took the new state
 end)
+local shownMultiplier = petMultiplier()
 PetClient.Changed:Connect(function()
 	if isOpen and chooser.Visible then
 		renderChooser()
+	elseif isOpen and petMultiplier() ~= shownMultiplier then
+		render() -- an equipped pet changed: the sale values on the Sell buttons follow
 	end
+	shownMultiplier = petMultiplier()
 end)
 Locale.Changed:Connect(render)
 

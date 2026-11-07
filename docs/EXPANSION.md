@@ -132,6 +132,9 @@ flexible, not stronger at a job. New aptitudes get new ids (stored ids never cha
 - Personal spending: dyes, outfits and a den furnished to the pet's preferences (a fox wants a burrow). Names are built (P3b).
 
 ## 5. Crop economy
+*Decided, not built (EV, the user, 2026-11-07; numbers in [ECONOMY.md](ECONOMY.md) → EV, applied in EV2a–e):* one crop ladder from 10 s to 24 h (16 annual crops, the 4 built ones re-timed, "Future plant 1…12"
+named later) and perennial fruit trees (a sapling, first growth 2–24 h, then a fruit every 5–60 min up to a cap of 4–6, forever).
+
 *Built (GDD §7.9): the field loop (one crop per square, ripe crops wait, Tending replants during absences), the catalogue gated by Renown, the
 daily market cart, the size roll with records, Renown as a derived level, selling through `CoinRewards.Grant`, crops as pet food. The value
 ladder and prices are in `CropConfig` (ECONOMY.md).*
@@ -170,6 +173,9 @@ comfort purchases (§13) speed progress up by a bounded factor and never change 
 ### 5.6 Requests and stations
 - **Request board** (E5, MVP): three requests a day ("6 carrots + 2 flour"; sometimes "a Big pumpkin" or "a Frosted carrot"), paying Coins, a
   rare item and Renown.
+  *Decided (EV, 2026-11-07):* semi-random per UTC day + user (crops of the unlocked set, never the same crop twice a day, sized to ~30 % of a
+  day's income, 1.75× the sale; on some days a **timed run** — a cleared obby stage under a time limit between the best time and Bronze,
+  later mini-games); one in three also drops Sunshine, a rare seed or an egg.
 - **Stations** (queues with timers; Crafting pets run them faster): Compost (fertilisers, the first station, with the variants, D4), Mill
   (grain → flour), Kitchen (crops → pet food, a cheaper route to levels than Berry / Cake / Feast; raw crops can already be fed), Workshop
   (decor, plot upgrades), Apothecary (tonics, mastery items).
@@ -213,6 +219,8 @@ Still to build (drop D1 unless noted):
 
 ## 8. Obby, farm stages and mini-games
 ### 8.1 Obby links
+*Decided, not built (EV, the user, 2026-11-07; numbers in [ECONOMY.md](ECONOMY.md) → EV, applied in EV2a–e):* repeat runs pay Sunshine instead of Coins; Scouting XP = seconds of a running stage timer.
+
 *Built (E2, GDD §7.9): the seed pouch, a rare-seed meter per stage (no drop chance), one rare crop per world (first Gold of a World 2 / 3
 stage, the day's first finish, the meter), Scouting from equipped pets (meter speed and a pouch seed, capped at +50 %).*
 
@@ -268,9 +276,13 @@ Each mini-game is 1–3 minutes (GDD pillar 1) and passes the mobile check (ROAD
 - Starts only after the forecast, the market cart, the weekly challenge and the fair run without attention.
 
 ### 9.5 Streak calendar
+*Decided, not built (EV, the user, 2026-11-07; numbers in [ECONOMY.md](ECONOMY.md) → EV, applied in EV2a–e):* days 1–6 Sunshine (10–30 min), **day 7 an Epic-or-better pet** (Epic 95 %, Legendary 5 %).
+
 A 7-day loop of small rewards; a missed day **pauses** the streak instead of resetting it (no guilt).
 
 ## 10. Social
+*Later (the user, 2026-11-07): gifts / buying something for a friend, a pet auction (needs trading's session locking).*
+
 - **Friend bonus:** a small bonus on harvest sales while a friend is on the same server (provisional +10 %, outside the pet multiplier cap; E0).
 - **Visits and likes:** the plot ring is walkable; a like feeds the other plot's garden score (once per plot per day).
 - **Help a neighbour:** one optional tap on another plot gives both a small growth boost (once per plot per day). Later: lend a guard pet to a
@@ -286,6 +298,9 @@ non-random route to pets (whether eggs stay is open, §16). Breeding is deferred
 mutate a quirk).
 
 ## 12. Long-term goals: what money and rare seeds are for
+*Decided, not built (EV, the user, 2026-11-07; numbers in [ECONOMY.md](ECONOMY.md) → EV, applied in EV2a–e):* until the landmarks / estate are designed, the model keeps a reserved sink ladder (×1.15 steps) so
+the late game never runs dry; rebirth is not planned for launch (a soft "Replant" only if the queue empties, ECONOMY.md → Findings).
+
 **Island restoration (the spine).** Overgrown landmarks on the garden island, restored by **bundles** of five kinds of input: Coins, common
 crops, one rare crop, a pet-skill requirement (e.g. a Weeding pet of level 4+), and for some an obby achievement or a mini-game (§8.3). Money is
 one input of five, so every play style feeds the goal. First sketch (finite; fix the first 6–8 before E6):

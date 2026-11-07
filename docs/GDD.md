@@ -171,6 +171,9 @@ Limits are visible before and during a run:
 - **Hub portals**: earned stars are drawn on the portal face itself (part of the gate, not camera-facing).
 
 ## 5. Rewards
+*Decided, not built (EV, the user, 2026-11-07; numbers in [ECONOMY.md](ECONOMY.md) → EV, applied in EV2a–e):* repeat medal finishes pay **Sunshine** (16 / 24 / 32 s per Bronze / Silver / Gold into a store, spent as one time skip for every growing square, tree and incubator, × 0.8^n per stage
+and day, stored up to 3 h), rare seeds and pet XP instead of Coins; one-time medal / first-clear Coins stay.
+
 All Coins earned by playing (medal payouts, repeat rewards, challenge coins, crop sales, future minigames)
 are paid through one server function and multiplied by the player's pet bonus (§7.3). Purchases are not.
 
@@ -249,18 +252,24 @@ Talent-gated coins need Double Jump (placed out of reach of a Jump Height 3 jump
 which have no fixed cap.
 
 ## 6. Talents
+Since **EV2b** (2026-11-07; numbers in [ECONOMY.md](ECONOMY.md) → EV) each bought level costs **Coins + a crop bundle** from the barn
+(`Garden.Items`): from level 2 common crops of the player's tier, and the levels a stage requires also a rare crop of the world before. The
+server takes the Coins and the crops together or not at all (`TalentService`, `GardenField.TakeCrops`; the average size leaves, as in a
+sale); the Skills panel shows a "Needs: Cucumber 5/20, Frost grape 0/2" line under each talent, a missing crop in red, and the buy brick is
+green only when everything is there. The built tree costs 94 900 Coins plus crops (5 300 Coins only before), so talents need the farm.
+Levels bought before EV2b stay; nothing was refunded or charged again.
+
 Bought in the skills panel (top-left), except **world rewards**: a level a world requires that the server grants when that world
 opens (Double Jump with World 2, K1). Permanent, server-owned, applied on every spawn.
 The current admin toggles (run speed 16↔64, 5 air jumps) remain debug tools only. The admin panel's **Reset Score**
 is a debug full reset of the admin's **own** progress (Coins, times, medals, unlocks, coins found, talents, own Top-10
 entries), confirmed by a second click; it never affects other players and the server ignores it from non-admins.
 
-| Talent | Levels | Effect per level | Cost per level | Total |
+| Talent | Levels | Effect per level | Cost per level (Coins + crops) | Coins total |
 |---|---|---|---|---|
-| Run Speed | 5 | +6 % WalkSpeed (16 → 20.8 at max) | 200 / 400 / 600 / 900 / 1 300 | 3 400 |
+| Run Speed | 5 | +6 % WalkSpeed (16 → 20.8 at max) | 800; 1 400 + 12 Garlic; 2 600 + 12 Cucumber; 4 500 + 15 Corn; 8 000 + 15 Pepper | 17 300 |
 | Double Jump | 1 | one extra jump in the air | free: granted when World 2 opens | 0 |
-| Jump Height | 3 | +8 % jump height | 300 / 600 / 1 000 | 1 900 |
-| **Today's tree** | | | | **5 300** |
+| Jump Height | 3 | +8 % jump height | 1 100; 1 900 + 12 Cucumber; 6 500 + 15 Pepper | 9 500 |
 
 Double Jump is a **world reward** (decided 2026-11-01 after the kid playtest, ROADMAP K1): the server grants level 1 when
 World 2 opens for the player (the star bar met or the world bought for Coins), with a "new skill" popup; it is never sold
@@ -275,47 +284,22 @@ and Jump Height stay soft, never required). Only talents that are hard gates can
 
 | Talent | Id | Effect | Levels | Cost (prov.) | Total | First required at |
 |---|---|---|---|---|---|---|
-| Quick Respawn (P, S2) | `QuickRespawn` | utility, **never required**: level 1 respawns after 1 s instead of 3 s, level 2 instantly and adds a fall reset to the checkpoint; the timer keeps running | 2 | 1 000 / 3 000 | 4 000 | – |
-| Triple Jump (S7, built 2026-10-24) | `DoubleJump` level 2 | 2 air jumps (reach about 19 studs) | +1 level | 5 000 | (DJ total 8 000) | stage 11 |
-| Dash (S7, built 2026-10-24) | `Dash` | in the air, a short horizontal burst (about 10 studs in 0.2 s), once per air time; key + mobile button | 1 | 5 000 (8 000 until S8.2) | 5 000 | – |
-| Long Dash (S8.2, 2026-10-26) | `Dash` level 2 | the burst lasts 0.32 s: about 16 studs (STAGES §1.0, §7.12) | +1 level | 3 000 | (Dash total 8 000) | stage 13 |
-| Wall Jump (P, S9) | `WallJump` | against a wall in the air, jump kicks up and away; does not refill air jumps | 1 | 10 000 | 10 000 | stage 16 |
-| Glide (P, S9) | `Glide` | hold jump while falling: fall speed capped at about 8 studs/s | 1 | 12 000 | 12 000 | stage 17 |
+| Quick Respawn (S2) | `QuickRespawn` | utility, **never required**: level 1 respawns after 1 s instead of 3 s, level 2 instantly and adds a fall reset to the checkpoint; the timer keeps running | 2 | 1 100 + 12 Tomato / 10 000 + 15 Broccoli | 11 100 | – |
+| Triple Jump (S7, built 2026-10-24) | `DoubleJump` level 2 | 2 air jumps (reach about 19 studs) | +1 level | 16 000 + 20 Cucumber + 2 Frost grapes (5 000 Coins until EV2b) | 16 000 | stage 11 |
+| Dash (S7, built 2026-10-24) | `Dash` | in the air, a short horizontal burst (about 10 studs in 0.2 s), once per air time; key + mobile button | 1 | 12 000 + 20 Corn (5 000 until EV2b) | 12 000 | – |
+| Long Dash (S8.2, 2026-10-26) | `Dash` level 2 | the burst lasts 0.32 s: about 16 studs (STAGES §1.0, §7.12) | +1 level | 29 000 + 20 Pepper + 1 Glow mushroom (3 000 until EV2b) | 29 000 | stage 13 |
+| Wall Jump (P, S9) | `WallJump` | against a wall in the air, jump kicks up and away; does not refill air jumps | 1 | 700 000 + 20 Blueberry + 3 Glow mushrooms | 700 000 | stage 16 |
+| Glide (P, S9) | `Glide` | hold jump while falling: fall speed capped at about 8 studs/s | 1 | 2 600 000 + 25 Blueberry + 4 Glow mushrooms | 2 600 000 | stage 17 |
 
-**Full planned tree: 44 300** (Run Speed 3 400 + Jump Height 1 900 + Double Jump 0 (world reward) + Triple Jump 5 000 + Quick Respawn
-4 000 + Dash 5 000 + Long Dash 3 000 + Wall Jump 10 000 + Glide 12 000). Talents compete with pets, incubators and the field (§7.9) for the
-same Coins.
+**Full planned tree: 3 394 900 Coins** plus the crops (44 300 Coins only until EV2b). Talents compete with squares, upgrades, pets and
+incubators (§7.9) for the same Coins.
 
 ### Economy constraints (must hold after every rebalance)
-The economy is open (repeat rewards, garden, pet bonus), so "earnable" is no longer a cap. The constraint is about
-the **no-grind path**: a player who only plays each stage until its medals are earned, with no pets.
-Gold on each stage is designed around a talent set; that set must be affordable from one-time income earned *before*
-that Gold (all medals on earlier stages + Bronze/Silver on this stage; challenge coins come on top).
-Repeat rewards and pets only add to this, so the tables are lower bounds.
-
-**World 1 Gold sets** (medal Coins only, new factors):
-
-| Gold on | Designed talent set | Cost | Earnable before | OK |
-|---|---|---|---|---|
-| 2 Stage 1 | Run Speed 2 | 600 | 700 + 1 050 + 600 = 2 350 | ✔ |
-| 4 Stage 2 | Run Speed 3 + Double Jump (world reward) | 1 200 | 700 + 1 050 + 1 400 + 1 750 + 900 = 5 800 | ✔ |
-| 5 Stage 3 | Run Speed 5 + Double Jump (world reward) + Jump Height 2 | 4 300 | 7 000 + 1 050 = 8 050 | ✔ |
-
-Since K1 the two Double Jump sets are reached only after World 2 opens (Gold on these stages is a revisit).
-
-**Required talents** (a player must be able to afford the required set before the stage that first needs it, from the
-medals of all stages before it):
-
-| First required at | Required set | Cost | One-time medals before | Share | OK |
-|---|---|---|---|---|---|
-| 6 | Double Jump (world reward) | 0 | 9 450 | 0 % | ✔ |
-| 11 | + Triple Jump | 5 000 | 26 950 | 19 % | ✔ |
-| 13 | + Dash + Long Dash | 13 000 | 36 400 | 36 % | ✔ |
-| 16 | + Wall Jump | 23 000 | 53 200 | 43 % | ✔ |
-| 17 | + Glide | 35 000 | 59 500 | 59 % | ✔ |
-
-Share ≤ 65 % keeps talents a real investment without blocking the no-grind path. Run Speed and Jump Height could get more
-levels later if Gold on Worlds 3–4 needs them (M6b).
+Since EV2b the old **no-grind rule** (the required set affordable from the medals of the stages before it, ≤ 65 %, garden off) no longer
+holds by design: talents need the farm. Its replacement is EV's check **G4** (ECONOMY.md → EV; `economy.py check`): obby-only Coins
+through World 2 cover at most 40 % of the World 1–2 tree, and every required level is affordable within 1 day (Obby main, Garden main)
+or 2 days (Casual) of reaching the stage that needs it, garden on. The old tables (World 1 Gold sets, required sets vs medals):
+`git show a128d26:docs/GDD.md`. Open (K1): whether Triple Jump / Long Dash become World 3 rewards, as Double Jump did for World 2.
 
 ### Coins per hour (open income, provisional)
 | Source | Estimate | Notes |
@@ -325,7 +309,7 @@ levels later if Gold on Worlds 3–4 needs them (M6b).
 | Crop field (§7.9) | see ECONOMY.md | the main income from day 1-3 on (`economy.py check`: field ≈ obby over days 1-3, 3x by day 7, 10x by day 30) |
 | Pet bonus | × 1.0–1.5 | on all of the above |
 
-Sinks: talents (8 300 today, 47 300 planned), stage unlocks (6 700 today, 80 700 planned), eggs (§7.2), pet slots (7 000), incubators (17 000), the crop field (§7.9)
+Sinks: talents (94 900 today, 3.4 M planned, plus crops; EV2b), stage unlocks (6 700 today, 80 700 planned), eggs (§7.2), pet slots (4 700), incubators (3 300; EV2a), the crop field (§7.9)
 and feeding (§7.6).
 
 Notes:
@@ -357,13 +341,16 @@ Legendary 82 %. Fertilising, Weeding and Crafting stay stored on pets that have 
 Every pet from before P4 got Cuteness once, on top of its traits (profile `Version = 4`, below §7.4).
 
 ### 7.2 Eggs
+*Decided, not built (EV, the user, 2026-11-07; numbers in [ECONOMY.md](ECONOMY.md) → EV, applied in EV2a–e):* the pet (kind and rarity) is **rolled at purchase**; its rarity sets the hatch time
+(Common 2 m, Uncommon 10 m, Rare 1 h, Epic 4 h, Legendary 12 h); aptitudes still roll at hatch. Basic 120, Golden 4 000.
+
 Every egg hatches in an **incubator** of the player's garden plot (§7.6) in real time, also while the player is offline.
 There is no egg stand on the central island (removed 2026-10-18). The odds are always shown before buying.
 
 | Egg | Price | Common | Uncommon | Rare | Epic | Legendary | Where |
 |---|---|---|---|---|---|---|---|
-| Basic egg | 500 | 60 % | 25 % | 11 % | 3.5 % | 0.5 % | garden incubator, hatches in 5 minutes |
-| Golden egg | 4 000 | – | 45 % | 35 % | 15 % | 5 % | garden incubator, hatches in 1 hour |
+| Basic egg | 120 | 60 % | 26.2 % | 11 % | 2.7 % | 0.1 % | garden incubator, hatches in 5 minutes |
+| Golden egg | 4 000 | – | 50 % | 37 % | 12.7 % | 0.3 % | garden incubator, hatches in 1 hour |
 
 Free eggs:
 - one Basic egg on the first join after pets launch (also for existing players, and again after an admin reset); a free
@@ -383,8 +370,8 @@ automatically when a slot is free.
 | Slot | Price |
 |---|---|
 | 1 | free |
-| 2 | 2 000 |
-| 3 | 5 000 |
+| 2 | 700 |
+| 3 | 4 000 |
 
 ```
 pet bonus  = base bonus (rarity) + 1.9 % × (Cuteness level − 1)     (0 without Cuteness)
@@ -483,8 +470,8 @@ collecting and caring over obby runs.
 - **Other players.** Everyone can walk through the garden and look at all plots and pets; only the owner can use their
   own plot (no stealing, no shared fields).
 - **Incubators.** Every egg hatches here, in real time, and keeps hatching offline. Each plot has
-  **3 incubators**, unlocked in order for 0 / 5 000 / 12 000 Coins (incubator 1 free; 17 000 in total). An egg is
-  bought for an empty incubator of the player's own plot (Basic 500 Coins, ready **5 minutes** later; Golden 4 000 Coins,
+  **3 incubators**, unlocked in order for 0 / 500 / 2 800 Coins (incubator 1 free; 3 300 in total; EV2a). An egg is
+  bought for an empty incubator of the player's own plot (Basic 120 Coins, ready **5 minutes** later; Golden 4 000 Coins,
   ready **1 hour** later, server time); free eggs start there by themselves (§7.2). A ready
   egg waits until the owner taps **Hatch**; the pet is rolled then and equipped automatically
   when a slot is free (§7.3).
@@ -531,6 +518,10 @@ otherwise items could be duplicated across servers.
   everyone ("Mochi Lv 6") through the `PetNames` attribute and are never localized.
 
 ### 7.9 Crop field (E1-E4)
+*Decided, not built (EV, the user, 2026-11-07; numbers in [ECONOMY.md](ECONOMY.md) → EV, applied in EV2a–e):* the parity goal below is replaced by engagement: the four crops move onto one ladder
+of 10 s … 24 h (Potato 10 s, Corn 30 m, Pumpkin 3 h, Giant melon 12 h; 12 more crops later), Renown 0.4 × L³, every sink priced on the
+square ladder (290 → 750 M), Tending as growth speed, guards make their squares safe from crows, Scouting XP from timer seconds.
+
 *Built and Studio-validated 2026-10-30 – 11-04; every player has it since FA (2026-11-06; until then admins only); tap-and-card controls since U3a, the hand bar since U3b, the Garden panel split up since U4 (all 2026-11-07). Exact numbers live in `CropConfig` / `PetConfig` and are pinned by
 `tools/economy.py`; why they are what they are: [ECONOMY.md](ECONOMY.md); what comes next: [EXPANSION.md](EXPANSION.md).*
 
@@ -547,8 +538,8 @@ otherwise items could be duplicated across servers.
     within 45 studs of the own plot) both open the barn panel: the crow
     forecast line (ticking), the seeds held with their grow time (Growth upgrade included) and the barn's fill ("18 / 40 seeds"), the crops
     held with count, average size and record, **Feed** (a page of the player's pets that can still learn from food, equipped first; a tap
-    opens that pet's page at its harvest-feeding section) and **Sell all** (always two taps; the button shows the value before the pet
-    bonus). Sell is accepted at the own plot only.
+    opens that pet's page at its harvest-feeding section) and **Sell** (all of that crop, always two taps; since 2026-11-08 the button
+    shows the count and what the sale pays with the pet bonus, "Sell 2 · 3 787"). Sell is accepted at the own plot only.
   - **Seed stall** (`Workspace.Garden.SeedStall`, Studio-only, on the plaza beside the food stand, facing it): a green-and-white striped
     market stall with sacks and crates; its counter prompt "Buy seeds" (E, 10 studs) opens the stall panel: the market cart's offers (one
     buy takes all that is left at the offer price) and the seed catalogue (+1 / +10 per crop; Renown-locked rows say from which level, the

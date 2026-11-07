@@ -1,5 +1,5 @@
--- TalentService: Coin-priced permanent talents (GDD §6). Server-owned.
--- The client only sends (talentId, expectedLevel); the price comes from TalentConfig and the new level is always
+-- TalentService: permanent talents bought with Coins and a crop bundle from the barn (GDD §6; bundles since EV2b). Server-owned.
+-- The client only sends (talentId, expectedLevel); the price and bundle come from TalentConfig and the new level is always
 -- current + 1, so a forged cost or level can never change what is charged or granted. Levels live in
 -- PlayerProfile.Talents, are mirrored to Talent_<id> player attributes (UI, double jump) and applied to the
 -- Humanoid (WalkSpeed, jump) on every spawn and right after a purchase.
@@ -10,6 +10,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
+local GardenField = require(ServerScriptService.GardenField)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local StageUnlocks = require(ServerScriptService.StageUnlocks)
 local Telemetry = require(ServerScriptService.Telemetry)
@@ -156,14 +157,20 @@ buyEvent.OnServerEvent:Connect(function(player, id, expectedLevel)
 	if profile.Coins < cost then
 		return reject(player, id, "coins")
 	end
+	local bundle = TalentConfig.NextCrops(id, current)
+	if not GardenField.HasCrops(player, bundle) then
+		return reject(player, id, "crops")
+	end
 
+	-- no yield since the checks: the Coins and the crops go together, or neither
 	PlayerProfile.AddCoins(player, -cost)
+	GardenField.TakeCrops(player, bundle)
 	profile.Talents[id] = current + 1
 	publish(player, profile)
 	apply(player, profile)
 	resultEvent:FireClient(player, id, true, current + 1)
-	Telemetry.TalentBought(player, id, current + 1, cost, profile.Coins)
-	task.spawn(PlayerProfile.Save, player) -- spent Coins and the level are saved together
+	Telemetry.TalentBought(player, id, current + 1, cost, profile.Coins) -- the bundle follows from id + level
+	task.spawn(PlayerProfile.Save, player) -- spent Coins, crops and the level are saved together
 end)
 
 PlayerProfile.ProfileReset:Connect(function(player)

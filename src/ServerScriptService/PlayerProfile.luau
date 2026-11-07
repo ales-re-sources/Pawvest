@@ -8,8 +8,10 @@
 local Players = game:GetService("Players")
 local DataStoreService = game:GetService("DataStoreService")
 local PetConfig = require(game:GetService("ReplicatedStorage"):WaitForChild("PetConfig"))
+local CropConfig = require(game:GetService("ReplicatedStorage"):WaitForChild("CropConfig"))
 
-local PROFILE_VERSION = 4 -- 2: pets (P1a); 3: Coin scale ×10 (R2); 4: pet traits, Cuteness for every older pet (P4)
+local PROFILE_VERSION = 5 -- 2: pets (P1a); 3: Coin scale ×10 (R2); 4: pet traits, Cuteness for every older pet (P4);
+-- 5: Renown points onto the EV2a curve, every player keeps the level
 local COIN_SCALE = 10 -- R2: Coins stored before version 3 (and legacy PlayerCoins) are multiplied once
 local AUTOSAVE_INTERVAL = 60
 local MAX_ATTEMPTS = 3
@@ -77,6 +79,11 @@ local function reconcile(data, userId: number)
 		for uid, pet in data.Pets do
 			PetConfig.MigrateLegacyPet(pet, userId .. "/" .. tostring(uid))
 		end
+	end
+	if version < 5 and type(data.Garden) == "table" and type(data.Garden.Renown) == "number" then
+		-- EV2a: the Renown curve changed (3 x L ^ 1.6 -> 0.4 x L ^ 3); the stored points rise to the new curve's points for the old level
+		local level = CropConfig.LegacyRenownLevel(data.Garden.Renown)
+		data.Garden.Renown = math.max(data.Garden.Renown, CropConfig.PointsFor(level))
 	end
 	for field, default in newProfile() do
 		if data[field] == nil then

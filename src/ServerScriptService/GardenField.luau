@@ -417,7 +417,7 @@ local function settle(player: Player, profile, field, open, absence: boolean): (
 			end
 			local extra = shearsExtra(player, garden, entry.N) and CropConfig.SeedTotal(garden.Items) + 1 < barn
 			store(player, garden, crop, entry.N, extra)
-			garden.Renown += CropConfig.RenownPoints[crop.tier] or 0
+			garden.Renown += crop.points or 0
 			tended = tended or {}
 			tended[crop.id] = (tended[crop.id] or 0) + (if extra then 2 else 1)
 			local leftover = math.min(entry.Grown - crop.growSeconds, cropGrowth) -- growth from before this absence does not carry over
@@ -666,6 +666,20 @@ local function done(player: Player, action: string, detail: any)
 	task.spawn(PlayerProfile.Save, player)
 end
 
+-- Removes `amount` held crops of `cropId` from the barn (the caller checked they are there); returns the summed size factor
+-- that leaves with them (their average size: a sale, a pet's meal and a talent bundle all take the average).
+local function removeItems(garden, cropId: string, amount: number): number
+	local held = garden.Items[cropId]
+	local part = (garden.ItemSize[cropId] or held) * amount / held
+	garden.Items[cropId] = held - amount
+	garden.ItemSize[cropId] = (garden.ItemSize[cropId] or held) - part
+	if garden.Items[cropId] == 0 then
+		garden.Items[cropId] = nil
+		garden.ItemSize[cropId] = nil
+	end
+	return part
+end
+
 plantEvent.OnServerEvent:Connect(function(player, square, cropId)
 	local crop = type(cropId) == "string" and CropConfig.ById[cropId]
 	if not (GardenService.WholeNumber(square) and crop) or not GardenService.Allow(player) then
@@ -720,7 +734,7 @@ harvestEvent.OnServerEvent:Connect(function(player, square)
 	local extra = shearsExtra(player, garden, entry.N)
 	local size, record = store(player, garden, crop, entry.N, extra)
 	local before = CropConfig.RenownLevel(garden.Renown)
-	garden.Renown += CropConfig.RenownPoints[crop.tier] or 0
+	garden.Renown += crop.points or 0
 	local level = CropConfig.RenownLevel(garden.Renown)
 	done(player, "Harvest", {
 		square = square,
@@ -779,14 +793,7 @@ sellEvent.OnServerEvent:Connect(function(player, cropId, amount)
 		return reject(player, "Sell", "items")
 	end
 
-	local held = garden.Items[crop.id]
-	local part = garden.ItemSize[crop.id] * amount / held -- the average size of what is stored
-	garden.Items[crop.id] = held - amount
-	garden.ItemSize[crop.id] -= part
-	if garden.Items[crop.id] == 0 then
-		garden.Items[crop.id] = nil
-		garden.ItemSize[crop.id] = nil
-	end
+	local part = removeItems(garden, crop.id, amount) -- the average size of what is stored
 	local paid = CoinRewards.Grant(player, CropConfig.SaleValue(crop, part), "crop") or 0 -- the pet bonus at sale time
 	done(player, "Sell", { crop = crop.id, count = amount, paid = paid })
 end)
@@ -817,13 +824,7 @@ feedCropEvent.OnServerEvent:Connect(function(player, uid, cropId, amount)
 	end
 
 	local used = math.min(amount, math.ceil(toMax / crop.xp)) -- the last crop may go past what the pet can use (that XP is lost)
-	local part = garden.ItemSize[crop.id] * used / held -- the average size leaves, as in a sale
-	garden.Items[crop.id] = held - used
-	garden.ItemSize[crop.id] -= part
-	if garden.Items[crop.id] == 0 then
-		garden.Items[crop.id] = nil
-		garden.ItemSize[crop.id] = nil
-	end
+	removeItems(garden, crop.id, used) -- the average size leaves, as in a sale
 	local trained, wasted = PetConfig.GainCareXp(pet, crop.xp * used)
 	done(player, "FeedCrop", {
 		uid = uid,
@@ -885,6 +886,9 @@ buyUpgradeEvent.OnServerEvent:Connect(function(player, id, expected)
 	end
 	if expected ~= level then
 		return reject(player, "BuyUpgrade", "stale") -- out-of-date panel, double click or forged request
+	end
+	if CropConfig.RenownLevel(profile.Garden.Renown) < (upgrade.renown[level + 1] or 0) then
+		return reject(player, "BuyUpgrade", "renown")
 	end
 	if profile.Coins < price then
 		return reject(player, "BuyUpgrade", "coins")
@@ -1215,6 +1219,44 @@ function GardenField.ObbyFinish(player: Player, stage, medal: number, previousMe
 		meter = { crop = crop.id, points = points, size = rules.MeterSize },
 		scout = if bonus > 0 then bonus else nil,
 	}
+end
+
+-- EV2b talent bundles ({ [cropId] = count }, TalentConfig.crops) from the barn. TalentService calls HasCrops and, with no yield in
+-- between, TakeCrops together with the Coins. The field is settled first (once the join settle ran: a Tending pet may have stored
+-- crops since), so the check sees what the panel shows.
+function GardenField.HasCrops(player: Player, bundle: { [string]: number }): boolean
+	if next(bundle) == nil then
+		return true
+	end
+	local profile = PlayerProfile.Get(player)
+	local field, open
+	if profile then
+		field, open = fieldOf(player, profile)
+	end
+	if not field then
+		return false
+	end
+	if settledOnline[player] then
+		settle(player, profile, field, open, false)
+	end
+	for cropId, count in bundle do
+		if (profile.Garden.Items[cropId] or 0) < count then
+			return false
+		end
+	end
+	return true
+end
+
+-- Takes a bundle HasCrops just accepted and publishes the garden (the barn count changed).
+function GardenField.TakeCrops(player: Player, bundle: { [string]: number })
+	if next(bundle) == nil then
+		return
+	end
+	local garden = PlayerProfile.Get(player).Garden
+	for cropId, count in bundle do
+		removeItems(garden, cropId, count)
+	end
+	GardenService.PublishAll(player)
 end
 
 return GardenField

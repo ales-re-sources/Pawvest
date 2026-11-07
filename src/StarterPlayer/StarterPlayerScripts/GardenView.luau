@@ -227,6 +227,58 @@ local function states()
 	return result
 end
 
+-- EV2a: a 10 s crop ripens long before the next Plot message (the server settles every 60 s), so the own plot shows a square ripe
+-- from its readyAt in GardenRemotes.State (as the hand bar's card does). The patched copy is kept while nothing changes, so
+-- view.state stays the same table and SetState only runs on a change.
+local ripened = { base = nil, crops = nil, state = nil }
+local function ripenOwn(state)
+	local squares = ownField and ownField.squares
+	local field = type(state) == "table" and state.field
+	if type(squares) ~= "table" or type(field) ~= "table" or type(field.crops) ~= "string" then
+		return state
+	end
+	local now = workspace:GetServerTimeNow()
+	local cells, changed = {}, false
+	for n = 1, #field.crops // 2 do
+		local cell = string.sub(field.crops, n * 2 - 1, n * 2)
+		local letter, stage = string.sub(cell, 1, 1), string.sub(cell, 2, 2)
+		local entry = squares[tostring(n)] or squares[n]
+		local crop = type(entry) == "table" and CropConfig.ById[entry.crop]
+		if crop and crop.letter == letter and (stage == "1" or stage == "2") and type(entry.readyAt) == "number" and entry.readyAt <= now then
+			cell = letter .. "3"
+			changed = true
+		end
+		cells[n] = cell
+	end
+	if not changed then
+		return state
+	end
+	local crops = table.concat(cells)
+	if ripened.base ~= state or ripened.crops ~= crops then
+		local copy = table.clone(state)
+		copy.field = table.clone(field)
+		copy.field.crops = crops
+		ripened.base, ripened.crops, ripened.state = state, crops, copy
+	end
+	return ripened.state
+end
+
+-- the next readyAt of the own field after `after` (server time), or nil
+local function nextRipe(after: number): number?
+	local squares = ownField and ownField.squares
+	local best = nil
+	if type(squares) == "table" then
+		for _, entry in squares do
+			local at = type(entry) == "table" and entry.readyAt
+			if type(at) == "number" and at > after and (best == nil or at < best) then
+				best = at
+			end
+		end
+	end
+	return best
+end
+local ripeCheck = 0 -- server time of the last ripeness check
+
 local function refresh()
 	local current = states()
 	local own = ownSlot()
@@ -237,6 +289,9 @@ local function refresh()
 			view:Destroy()
 			views[slot] = nil
 			view = nil
+		end
+		if state and slot == own then
+			state = ripenOwn(state)
 		end
 		if state then
 			if not view then
@@ -362,6 +417,7 @@ remotes:WaitForChild("State").OnClientEvent:Connect(function(state)
 	if view and view.own then
 		view:SetBarn(barnFill(ownField))
 	end
+	refresh() -- new readyAt times (a plant, a harvest)
 end)
 function GardenView.OwnField()
 	return ownField
@@ -402,6 +458,11 @@ RunService.Heartbeat:Connect(function(dt)
 		for _, view in views do
 			view:Tick(now)
 		end
+		local due = nextRipe(ripeCheck)
+		if due and due <= now then
+			refresh() -- an own square's crop is ripe by its readyAt
+		end
+		ripeCheck = now
 		if studio then
 			folder:SetAttribute("Instances", #folder:GetDescendants())
 			folder:SetAttribute("Pending", pendingCount())

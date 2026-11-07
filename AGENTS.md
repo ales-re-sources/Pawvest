@@ -23,7 +23,7 @@ boards, challenge coins, talents), pets, and a garden island with plots, incubat
 | [docs/TELEMETRY.md](docs/TELEMETRY.md) | telemetry events and how to read them on the Creator Dashboard |
 | [docs/PET_GROWTH.md](docs/PET_GROWTH.md) | how PetLook derives a pet's look, how pet models are authored |
 
-Tools: `tools/economy.py` (economy model: run `check` after changing any price, rate or reward in a config, `pin` to accept reviewed values),
+Tools: `tools/economy.py` (economy model: run `check` after changing any price, rate or reward in a config, `pin` to accept reviewed values; `tools/economy_ev.py`: the engagement-first EV proposal, `economy.py proposal`),
 `tools/loc.py` (strings, below), `tools/vault_reach.py` + `tools/vault_right_checks.sh` (Stage 14's Key Vault reachability; re-run after moving
 a vault part), `tools/kit_coplanar_audit.luau` (z-fighting audit, Gotchas).
 

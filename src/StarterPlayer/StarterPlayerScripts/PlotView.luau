@@ -9,7 +9,7 @@
 -- A plot is split into pieces (base, hatch, barn, inc1..3, field = the row plates, sq1..36). SetState / SetDetail / Relabel only
 -- mark the pieces whose look changed; Step builds marked pieces until a deadline, so a build is spread over frames by the caller.
 -- State: { name, incCount, eggs = { [1..3] = "EggId:readyAt" or "" },
--- field = { crops = two characters per square 1..CropConfig.MaxSquares: crop letter (CropConfig, a-f in synthetic plots) +
+-- field = { crops = two characters per square 1..CropConfig.MaxSquares: crop letter (CropConfig, a-s; a-f in synthetic plots) +
 -- stage 1-3 (3 = ripe), ".0" an empty open square, "#0" a locked one, pets = { "Kind:Level:uid:square:tending:guard" } (E1b field pets,
 -- tending / guard = Tending / Pest-control level, 0 without it; E4b; a feed without guard reads as 0) } } or { free = true } (a slot
 -- nobody holds: floor, sign "Free plot", grey incubators, an empty barn). Every plot's floor is the front strip; the field lies behind it
@@ -91,6 +91,20 @@ local CROP_COLORS = { -- ripe crops, by letter (CropConfig: a Potato, b Corn, c 
 	e = Color3.fromRGB(255, 190, 40),
 	f = Color3.fromRGB(150, 120, 230),
 	g = Color3.fromRGB(110, 230, 220),
+	-- EV2a ladder: h Lettuce, i Onion, j Garlic, k Tomato, l Cucumber, m Pepper, n Broccoli, o Eggplant, p Blueberry, q Sweet potato,
+	-- r Sunflower, s Pineapple
+	h = Color3.fromRGB(150, 220, 90),
+	i = Color3.fromRGB(205, 160, 200),
+	j = Color3.fromRGB(240, 235, 215),
+	k = Color3.fromRGB(225, 55, 45),
+	l = Color3.fromRGB(60, 140, 60),
+	m = Color3.fromRGB(235, 80, 50),
+	n = Color3.fromRGB(45, 120, 55),
+	o = Color3.fromRGB(110, 50, 140),
+	p = Color3.fromRGB(70, 90, 200),
+	q = Color3.fromRGB(200, 100, 70),
+	r = Color3.fromRGB(255, 205, 30),
+	s = Color3.fromRGB(230, 180, 50),
 }
 
 local PlotView = {}

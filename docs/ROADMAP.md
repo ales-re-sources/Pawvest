@@ -37,7 +37,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | L1–L3 | Localization (English + Czech) | ✔ | ✔ | – |
 | G1 | Player guidance hints — awaits the user's check in play | ✔ | ✔ | – |
 | K1 | First-hour fixes (kid playtest 2026-11-01): Stage 5, G1 fallback, Double Jump world reward, hatch panel (U5b) done | partial | partial | – |
-| E0 | Economy model: baseline, simulation, field and every E1–E4 re-run done; repricing and the remaining checks open | partial | – | – |
+| E0 | Economy model: baseline, simulation, field and every E1–E4 re-run done; repricing and the remaining checks open (continued as EV) | partial | – | – |
+| EV | Engagement-first economy (the user, 2026-11-07): EV1 model + proposal table; EV2a–e apply it | EV1 implemented (13 / 13 EV checks pass); EV2a (nice prices, pinned 2026-11-07) and EV2b (talent bundles) Studio-validated 2026-11-08 (boot, Renown migration, Barn and a square bought, 10 s Potato, seed stall and Skills panel in Czech; the user tested the bundle purchases); barn Sell shows count + pet bonus; next: EV2e / EV2c / EV2d | – | – |
 | E1.0 | Client-drawn plots spike: **GO** | ✔ | ✔ | – |
 | E1a–E1d | Crop field (every player's since FA): client-drawn plots, field, field pets, crops as pet food, size roll, upgrades, tools, market cart, farming-first numbers, 36 squares | ✔ | ✔ | – |
 | E2 | Obby seeds: rare crops, rare-seed meters, seed pouch, Scouting | ✔ | ✔ | – |
@@ -699,6 +700,83 @@ chip at once and "🛡 Hlídání 1" after the delay; "Super!" back to the rows 
 literal (it found the reveal's hidden labels still carrying Roblox's default "Label": they start empty now, checked after a reboot); the
 "?" brick's one-character text is cut only in the pseudo-language; `loc.py check` 487 keys, 0 errors; lint 0. 8 ✔ boot without errors or
 warnings on server and client (twice).
+
+### EV — Engagement-first economy (direction change by the user, 2026-11-07)
+**Why.** E0's targets were income ratios (field vs obby), which left a 5 min → 6 h gap in the crop ladder, a 4-Coin Potato, talents all
+bought before World 2 ends, repeat runs paying tens of Coins next to a 100 k+/day field, and Scouting effectively frozen (15 min of XP per
+medal finish against 10 h for level 2). New goal: **engagement** — always something growing, hatching or nearly affordable; farming is the
+core, the obby and mini-games are the distraction while things grow and the only source of rare drops.
+
+**Decided (the user, 2026-11-07):** talents cost Coins **+ a crop bundle**; the crop ladder runs from ~10 s to 24 h (model: "Future plant
+1…12"; in the game only the 4 existing crops are re-timed); repeat obby runs pay **drops** (Sunshine, rare seeds) instead of Coins; eggs are
+**rolled at purchase** and the rarity sets the hatch time; a semi-random request board (crops and, sometimes, a timed run), a 7-day streak
+with an Epic+ pet on day 7, perennials; free play scarce enough that later comfort products are worth buying (Spender archetype, headroom
+1.2–1.5×). Rebirth is evaluated by the model, not decided. Long term (recorded only): gifts / buying for a friend, a pet auction, quests.
+
+**EV1 (no game code):** `tools/economy_ev.py` (run through `economy.py evcheck | proposal | hour1`; `check` runs the EV checks too) simulates the new rules event by event and prints the
+proposal table (old → new for every crop, sink, talent, egg, reward) with time-to-afford per archetype; checks G1–G9, B, B2, C (ECONOMY.md).
+The user reviews the table, then `pin`. **EV2a–e** apply it, each part scoped when it starts: a numbers, b talent bundles, c Sunshine,
+d Scouting XP, e eggs rolled at purchase. The rules and targets: ECONOMY.md → "EV".
+
+**EV2a — numbers (scope approved 2026-11-07; implemented).** The configs move onto `economy_ev.CAND`; mechanics stay as built except where
+a number needs a small code change. Order: GDD / EXPANSION wording first, then the configs, then code, then loc, then Studio.
+1. **The crop ladder in the game:** the 4 crops re-timed (Potato 10 s, Corn 30 m, Pumpkin 3 h, Giant melon 12 h) **and the 12 "Future
+   plants" added as real crops** (with only the 4 the game would jump 10 s → 30 m → 3 h → 12 h, and the ladder's gates would be empty).
+   Proposed names: 30 s Lettuce 🥬, 1 m Onion 🧅, 3 m Garlic 🧄, 8 m Tomato 🍅, 15 m Cucumber 🥒, 1 h Pepper 🫑, 2 h Broccoli 🥦,
+   4 h Eggplant 🍆, 6 h Strawberry 🍓, 8 h Sweet potato 🍠, 18 h Sunflower 🌻, 24 h Pineapple 🍍 (new ids, letters h-s, a ripe colour
+   each in `PlotView.CROP_COLORS`, `crop.name.*` strings). Sale / seed / Renown gate / xp / kg from the proposal; rare crops re-priced.
+2. **Renown:** `RenownK` 0.4, `RenownP` 3, points per harvest per crop (`renownPoints`, 4 × minutes^0.5) instead of `RenownPoints[tier]`.
+   Stored points stay; a profile keeps its level once (Renown := max(points, new PointsFor(old level)), a `Version` step, after reading the
+   live profiles); a player below a crop's new gate keeps planting the seeds held (as built).
+3. **Prices:** `Expansions` (32 squares + gates), `Upgrades`, `Tools` (prices + gates), `PetSlotPrices`, `PetConfig` equip slots and egg
+   prices (Basic 120, Golden 4 000; weights as proposed), `GardenConfig.IncubatorPrices`; every price a "nice" number (`economy_ev.nice`). Unchanged here: talents (EV2b), repeat-run Coins
+   (EV2c), egg roll / hatch times (EV2e), stage unlock prices and food (not in the model; stay).
+4. **A 10 s crop on screen:** the plot drawing advances a square to ripe at its predicted time (the card already predicts), without waiting
+   for the 60 s settle; tapping a ripe-predicted square harvests (the server settles before every field action).
+5. **Big numbers:** prices up to ~800 M: a compact form (`Locale.Compact`, "12.5 M" / "12,5 mil.") on cards, buttons and the hand bar; the
+   Coin counter keeps full digits. Czech `TextFits` checked.
+6. **The model:** `economy.py check` drops parity / lead / A / O for the EV checks; drift pins the new config values and fails when
+   `CAND` and the configs disagree; `pin` after the user's review of the diff.
+- **Acceptance:** `economy.py check` exit 0 with drift 0; `loc.py build / check / lint`; a playtest boot without errors; in Studio a Potato
+  planted on a fresh test profile shows ripe after ~10 s and harvests on tap; the seed stall lists the 16 crops by gate (scrolls, Czech fits);
+  a square and an upgrade bought through the real UI at the new price; a live profile's Renown level unchanged after the migration
+  (snapshot first).
+- **Not in EV2a (own parts):** EV2b talent bundles + talent prices, EV2c Sunshine (and repeat Coins → 0), EV2d Scouting, EV2e eggs at
+  purchase, **EV2f field pets** (Tending as growth speed, guards make their squares safe, crows scale with the field: a mechanics change the
+  model assumes), trees, requests, streak.
+
+**EV2b — talent bundles (scope approved 2026-11-07; implemented).** Each bought talent level costs Coins **and** crops from the barn
+(`Garden.Items`), taken together on the server. Bought levels stay; nothing is refunded or charged again; the next level is bought at the
+new price. World rewards (Double Jump 1) stay free.
+1. **Numbers** (`economy_ev.CAND` → `TalentConfig`, every price already "nice"; the crops by name):
+   | Talent | Levels (Coins + crops) |
+   |---|---|
+   | Run Speed | 800; 1 400 + 12 Garlic; 2 600 + 12 Cucumber; 4 500 + 15 Corn; 8 000 + 15 Pepper |
+   | Jump Height | 1 100; 1 900 + 12 Cucumber; 6 500 + 15 Pepper |
+   | Quick Respawn | 1 100 + 12 Tomato; 10 000 + 15 Broccoli |
+   | Double Jump | 1: world reward (free); 2 (Triple Jump): 16 000 + 20 Cucumber + 2 Frost grapes |
+   | Dash | 1: 12 000 + 20 Corn; 2 (Long Dash): 29 000 + 20 Pepper + 1 Glow mushroom |
+   | Wall Jump / Glide (planned, not built) | 700 000 + 20 Blueberry + 3 Glow mushrooms / 2.6 M + 25 Blueberry + 4 Glow mushrooms (GDD §6 table only) |
+2. **Config:** `TalentConfig` gets `crops[n] = { [cropId] = count }` next to `costs[n]` and a helper `NextCrops(id, level)`.
+3. **Server:** `GardenField.TakeCrops(player, bundle)` checks every crop is held and removes them (average size leaves, as in a sale) and
+   sends the new field state; `TalentService` checks Coins and crops first, then takes both with no yield in between (all or nothing).
+   New reject reason `"crops"`. (`Telemetry.TalentBought` unchanged: the bundle follows from talent + level, and a custom field more
+   would hit the field-combination limit.)
+4. **Skills panel** (`TalentRows`): under the effect line a "needs" line per crop, `{crop} {have}/{need}` (red when short; crop names through
+   `Locale.CropName`), read from the own field state (`GardenView.OwnField().items`, refreshed on `GardenRemotes.State`); the buy button is
+   green only when Coins and every crop are there; a `"crops"` reject flashes "Not enough crops". Rows grow to fit (Czech `TextFits`).
+5. **Model:** EV0 also compares `TalentConfig` (Coins + crops) with `CAND`; `economy.py` reads the bundles, retires the old "required set
+   before stage N (garden off)" check (3: its 65 % no-grind rule is replaced by EV's G4, ECONOMY.md → EV) and the reproduction of the
+   planned tree takes the new total; `pin` after the user's review.
+6. **Docs:** GDD §6 (table, the bundles, the "Economy constraints" no-grind section replaced by a pointer to G4), PROTOCOL (`TalentRemotes`
+   reason `"crops"`), ECONOMY.md (EV2b built), loc strings with Czech.
+- **Risk to watch:** Triple Jump is World 3's hard gate and now needs the farm (Cucumber at Renown 5 and 2 Frost grapes from World 2's
+  rare seeds). The model's G4 finds it within 0.5–2 days of reaching Stage 11 for all archetypes, but a kid who ignores the garden is blocked
+  (the K1 story). The gate's "Needs" warning already links to the Skills panel; it now also shows what is missing there. Making Triple Jump /
+  Long Dash World 3 rewards stays the open K1 question, not part of EV2b.
+- **Acceptance:** `economy.py check` exit 0 (drift 0 after `pin`); `loc.py build / check / lint`; a playtest boot without errors or warnings;
+  in Studio (snapshot first) one level bought with a bundle through the real Skills panel (Coins and the crops leave, the level shows), one
+  refused for missing crops (the right message, nothing taken), the needs line in Czech fits.
 
 ### E0 — Economy model
 **Goal.** One reproducible model of the Coin economy (`tools/economy.py`, Python stdlib; how to run it: ECONOMY.md) that fixes the numbers the

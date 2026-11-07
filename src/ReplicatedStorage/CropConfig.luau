@@ -1,5 +1,5 @@
 -- CropConfig: the crop field's shared numbers and pure helpers (E1a2, docs/EXPANSION.md §5; numbers since E1d1 from docs/ECONOMY.md →
--- "Direction change", candidate F2: farming is the main game). Shared: the server prices, grows and pays from this table only, the client renders it. Pure data +
+-- "EV", the engagement-first economy, since EV2a). Shared: the server prices, grows and pays from this table only, the client renders it. Pure data +
 -- helpers, no side effects. Crop ids are stored in profiles (Garden.Field.Squares[n].Crop, Garden.Seeds, Garden.Items):
 -- never rename one. tools/economy.py reads this file and `check` pins it.
 -- Growth: a planted square earns growth seconds (`Grown`) at OnlineRate while its owner is online and at OfflineRate for
@@ -7,20 +7,33 @@
 
 local CropConfig = {}
 
--- Crops in catalogue order. letter: one character in the plot message (GardenRemotes.Plot field.crops); renown: Renown level
--- that unlocks the crop; sale / seed in Coins (seed = 25 % of the sale); tier: Renown points per harvest (RenownPoints);
+-- Crops in catalogue order (EV2a, docs/ECONOMY.md → "EV": one ladder of grow times from 10 s to 24 h, net Coins per square-hour x 1.2
+-- per step). letter: one character in the plot message (GardenRemotes.Plot field.crops); renown: Renown level that unlocks the crop;
+-- sale / seed in Coins (seed = 25 % of the sale); points: Renown points per harvest (4 x grow minutes ^ 0.5);
 -- kg: the weight shown at size factor 1 (E1c2); xp: pet XP of one crop fed to a pet (E1a3, half the sale, at least 1: no more than
 -- its Coins would buy as Berries; economy.py checks it).
--- Rare crops (E2, `rare = true`, tier 4): one per obby world (`world`), seeds only from the obby (CropConfig.ObbySeeds), never sold as seeds
+-- Rare crops (E2, `rare = true`, 2.5x the value of a common crop of their grow time): one per obby world (`world`), seeds only from the obby (CropConfig.ObbySeeds), never sold as seeds
 -- (seed = 0: BuySeeds and the market cart skip them), no Renown gate.
 CropConfig.Crops = {
-	{ id = "Potato", name = "Potato", icon = "🥔", letter = "a", tier = 1, growSeconds = 5 * 60, sale = 6, seed = 2, renown = 0, kg = 0.25, xp = 3 }, -- loc: ignore
-	{ id = "Corn", name = "Corn", icon = "🌽", letter = "b", tier = 2, growSeconds = 6 * 3600, sale = 1008, seed = 252, renown = 1, kg = 0.5, xp = 504 }, -- loc: ignore
-	{ id = "Pumpkin", name = "Pumpkin", icon = "🎃", letter = "c", tier = 2, growSeconds = 8 * 3600, sale = 1344, seed = 336, renown = 1, kg = 6, xp = 672 }, -- loc: ignore
-	{ id = "GiantMelon", name = "Giant melon", icon = "🍉", letter = "d", tier = 3, growSeconds = 12 * 3600, sale = 4032, seed = 1008, renown = 5, kg = 15, xp = 2016 }, -- loc: ignore
-	{ id = "GoldenCarrot", name = "Golden carrot", icon = "🥕", letter = "e", tier = 4, growSeconds = 6 * 3600, sale = 3360, seed = 0, renown = 0, kg = 0.3, xp = 1680, rare = true, world = 1 }, -- loc: ignore
-	{ id = "FrostGrape", name = "Frost grape", icon = "🍇", letter = "f", tier = 4, growSeconds = 8 * 3600, sale = 4480, seed = 0, renown = 0, kg = 0.5, xp = 2240, rare = true, world = 2 }, -- loc: ignore
-	{ id = "GlowMushroom", name = "Glow mushroom", icon = "🍄", letter = "g", tier = 4, growSeconds = 10 * 3600, sale = 5600, seed = 0, renown = 0, kg = 0.2, xp = 2800, rare = true, world = 3 }, -- loc: ignore
+	{ id = "Potato", name = "Potato", icon = "🥔", letter = "a", growSeconds = 10, sale = 9, seed = 2, renown = 0, points = 2, kg = 0.25, xp = 4 }, -- loc: ignore
+	{ id = "Lettuce", name = "Lettuce", icon = "🥬", letter = "h", growSeconds = 30, sale = 35, seed = 9, renown = 1, points = 3, kg = 0.4, xp = 17 }, -- loc: ignore
+	{ id = "Onion", name = "Onion", icon = "🧅", letter = "i", growSeconds = 1 * 60, sale = 80, seed = 20, renown = 2, points = 4, kg = 0.2, xp = 40 }, -- loc: ignore
+	{ id = "Garlic", name = "Garlic", icon = "🧄", letter = "j", growSeconds = 3 * 60, sale = 290, seed = 70, renown = 3, points = 7, kg = 0.1, xp = 145 }, -- loc: ignore
+	{ id = "Tomato", name = "Tomato", icon = "🍅", letter = "k", growSeconds = 8 * 60, sale = 900, seed = 220, renown = 4, points = 11, kg = 0.2, xp = 450 }, -- loc: ignore
+	{ id = "Cucumber", name = "Cucumber", icon = "🥒", letter = "l", growSeconds = 15 * 60, sale = 2100, seed = 500, renown = 5, points = 15, kg = 0.3, xp = 1050 }, -- loc: ignore
+	{ id = "Corn", name = "Corn", icon = "🌽", letter = "b", growSeconds = 30 * 60, sale = 5000, seed = 1200, renown = 6, points = 22, kg = 0.5, xp = 2500 }, -- loc: ignore
+	{ id = "Pepper", name = "Pepper", icon = "🫑", letter = "m", growSeconds = 1 * 3600, sale = 12000, seed = 3000, renown = 8, points = 31, kg = 0.2, xp = 6000 }, -- loc: ignore
+	{ id = "Broccoli", name = "Broccoli", icon = "🥦", letter = "n", growSeconds = 2 * 3600, sale = 29000, seed = 7000, renown = 11, points = 44, kg = 0.5, xp = 14500 }, -- loc: ignore
+	{ id = "Pumpkin", name = "Pumpkin", icon = "🎃", letter = "c", growSeconds = 3 * 3600, sale = 50000, seed = 12000, renown = 15, points = 54, kg = 6, xp = 25000 }, -- loc: ignore
+	{ id = "Eggplant", name = "Eggplant", icon = "🍆", letter = "o", growSeconds = 4 * 3600, sale = 85000, seed = 21000, renown = 20, points = 62, kg = 0.4, xp = 42500 }, -- loc: ignore
+	{ id = "Blueberry", name = "Blueberry", icon = "🫐", letter = "p", growSeconds = 6 * 3600, sale = 150000, seed = 40000, renown = 26, points = 76, kg = 0.2, xp = 75000 }, -- loc: ignore
+	{ id = "SweetPotato", name = "Sweet potato", icon = "🍠", letter = "q", growSeconds = 8 * 3600, sale = 240000, seed = 60000, renown = 33, points = 88, kg = 0.4, xp = 120000 }, -- loc: ignore
+	{ id = "GiantMelon", name = "Giant melon", icon = "🍉", letter = "d", growSeconds = 12 * 3600, sale = 450000, seed = 110000, renown = 42, points = 107, kg = 15, xp = 225000 }, -- loc: ignore
+	{ id = "Sunflower", name = "Sunflower", icon = "🌻", letter = "r", growSeconds = 18 * 3600, sale = 750000, seed = 190000, renown = 54, points = 131, kg = 1.5, xp = 375000 }, -- loc: ignore
+	{ id = "Pineapple", name = "Pineapple", icon = "🍍", letter = "s", growSeconds = 24 * 3600, sale = 1200000, seed = 300000, renown = 68, points = 152, kg = 1.5, xp = 600000 }, -- loc: ignore
+	{ id = "GoldenCarrot", name = "Golden carrot", icon = "🥕", letter = "e", growSeconds = 6 * 3600, sale = 350000, seed = 0, renown = 0, points = 152, kg = 0.3, xp = 175000, rare = true, world = 1 }, -- loc: ignore
+	{ id = "FrostGrape", name = "Frost grape", icon = "🍇", letter = "f", growSeconds = 8 * 3600, sale = 600000, seed = 0, renown = 0, points = 176, kg = 0.5, xp = 300000, rare = true, world = 2 }, -- loc: ignore
+	{ id = "GlowMushroom", name = "Glow mushroom", icon = "🍄", letter = "g", growSeconds = 10 * 3600, sale = 900000, seed = 0, renown = 0, points = 214, kg = 0.2, xp = 450000, rare = true, world = 3 }, -- loc: ignore
 }
 CropConfig.ById = {}
 CropConfig.ByLetter = {}
@@ -39,43 +52,41 @@ CropConfig.StartSquares = 4 -- a new field (E1a2 decision 3: with StartSeeds, so
 CropConfig.StartOpen = { 3, 4, 9, 10 } -- the 2 x 2 block at the front centre
 CropConfig.StartSeeds = { Potato = 4 }
 -- Expansions[n] = the square bought when StartSquares + n - 1 are open (any locked square the player picks): Coins and the
--- Renown level it needs (F2: about x 1.23 per square, 4.8 M in all).
+-- Renown level it needs (EV2a: x 1.33 per square up to the 16th, then x 1.93; 1.6 B in all; every field sink is priced on this ladder).
 CropConfig.Expansions = {
-	{ price = 1400, renown = 0 },
-	{ price = 1700, renown = 0 },
-	{ price = 2100, renown = 4 }, -- squares 7-11 one Renown level below F2 (E1c3, user 2026-11-03: Casual's day-7 lead)
-	{ price = 2600, renown = 5 },
-	{ price = 3200, renown = 6 },
-	{ price = 4000, renown = 7 },
-	{ price = 4900, renown = 9 },
-	{ price = 6000, renown = 11 },
-	{ price = 7400, renown = 12 },
-	{ price = 9200, renown = 13 },
-	{ price = 11300, renown = 14 },
-	{ price = 13900, renown = 15 },
-	{ price = 17200, renown = 16 },
-	{ price = 21100, renown = 17 },
-	{ price = 26100, renown = 18 },
-	{ price = 32100, renown = 19 },
-	{ price = 39600, renown = 20 },
-	{ price = 48800, renown = 21 },
-	{ price = 60100, renown = 22 },
-	{ price = 74000, renown = 23 },
-	{ price = 91200, renown = 24 },
-	{ price = 112400, renown = 25 },
-	{ price = 138500, renown = 26 },
-	{ price = 170700, renown = 27 },
-	{ price = 210300, renown = 28 },
-	{ price = 259200, renown = 29 },
-	{ price = 319400, renown = 30 },
-	{ price = 393600, renown = 31 },
-	{ price = 485000, renown = 32 },
-	{ price = 597600, renown = 33 },
-	{ price = 736400, renown = 34 },
-	{ price = 907400, renown = 35 },
+	{ price = 290, renown = 1 },
+	{ price = 400, renown = 2 },
+	{ price = 500, renown = 3 },
+	{ price = 700, renown = 4 },
+	{ price = 900, renown = 5 },
+	{ price = 1200, renown = 6 },
+	{ price = 1600, renown = 7 },
+	{ price = 2100, renown = 8 },
+	{ price = 2800, renown = 9 },
+	{ price = 4000, renown = 10 },
+	{ price = 5000, renown = 11 },
+	{ price = 6500, renown = 12 },
+	{ price = 9000, renown = 13 },
+	{ price = 12000, renown = 14 },
+	{ price = 16000, renown = 15 },
+	{ price = 21000, renown = 16 },
+	{ price = 40000, renown = 17 },
+	{ price = 80000, renown = 18 },
+	{ price = 150000, renown = 19 },
+	{ price = 290000, renown = 20 },
+	{ price = 550000, renown = 21 },
+	{ price = 1100000, renown = 23 },
+	{ price = 2100000, renown = 24 },
+	{ price = 4000000, renown = 25 },
+	{ price = 7500000, renown = 26 },
+	{ price = 15000000, renown = 27 },
+	{ price = 29000000, renown = 28 },
+	{ price = 55000000, renown = 29 },
+	{ price = 110000000, renown = 30 },
+	{ price = 210000000, renown = 32 },
+	{ price = 400000000, renown = 33 },
+	{ price = 750000000, renown = 34 },
 }
-
-CropConfig.RenownPoints = { 1, 3, 6, 12 } -- points per harvest by crop tier (4 = rare crops, E2)
 
 -- Rare seeds from the obby (E2a, docs/ROADMAP.md → E2; numbers from docs/ECONOMY.md → "Obby seeds run"), for players with the field:
 -- * the first Gold on a stage of world FirstGoldWorld or later: FirstGold seeds of that world's rare crop (World 1's would put the field
@@ -106,16 +117,16 @@ function CropConfig.RareOfWorld(world: number?)
 	end
 	return nil
 end
-CropConfig.RenownK = 3 -- level L needs RenownK * L ^ RenownP points in total
-CropConfig.RenownP = 1.6
+CropConfig.RenownK = 0.4 -- level L needs RenownK * L ^ RenownP points in total (EV2a; was 3 x L ^ 1.6)
+CropConfig.RenownP = 3
 CropConfig.BarnCapacity = 40 -- seeds of all crops together, and the crops a Tending pet may store, before the Barn upgrade
 
--- Field upgrades (E1c1, docs/ECONOMY.md → upgrades): prices[n] = Coins for level n. Growth: each level -step of every grow time
+-- Field upgrades (E1c1, docs/ECONOMY.md → upgrades): prices[n] = Coins for level n, renown[n] = the Renown level it needs (EV2a). Growth: each level -step of every grow time
 -- (earned growth runs 1 / (1 - step × level) as fast); Barn: each level +step capacity. Ids are stored
 -- (Garden.Field.Upgrades[id] = level): never rename one.
 CropConfig.Upgrades = {
-	{ id = "Growth", icon = "🌱", step = 0.05, prices = { 28000, 74700, 186700, 420000 } },
-	{ id = "Barn", icon = "🏠", step = 20, prices = { 14000, 37300, 93300, 233300, 560000 } },
+	{ id = "Growth", icon = "🌱", step = 0.05, prices = { 3000, 18000, 450000, 22000000 }, renown = { 8, 14, 20, 27 } },
+	{ id = "Barn", icon = "🏠", step = 20, prices = { 1200, 5000, 21000, 550000, 15000000 }, renown = { 6, 11, 16, 21, 27 } },
 }
 CropConfig.UpgradeById = {}
 for _, upgrade in CropConfig.Upgrades do
@@ -137,9 +148,9 @@ CropConfig.DaySeconds = 86400
 -- (owner and Tending pets alike); Cloches = growth while the owner is online x (1 + effect), nothing offline; Shears = the chance of a second
 -- crop of the same size per harvest (no extra Renown, no seed). Ids are stored: never rename one.
 CropConfig.Tools = {
-	{ id = "Sorter", icon = "🔍", effect = { 0.05, 0.10, 0.15 }, prices = { 46700, 140000, 373300 }, renown = { 10, 18, 28 } },
-	{ id = "Cloches", icon = "🔔", effect = { 0.07, 0.14, 0.20 }, prices = { 37300, 112000, 280000 }, renown = { 6, 14, 24 } },
-	{ id = "Shears", icon = "✂️", effect = { 0.05, 0.10, 0.15 }, prices = { 56000, 168000, 420000 }, renown = { 12, 20, 30 } },
+	{ id = "Sorter", icon = "🔍", effect = { 0.05, 0.10, 0.15 }, prices = { 10000, 220000, 45000000 }, renown = { 12, 19, 28 } },
+	{ id = "Cloches", icon = "🔔", effect = { 0.07, 0.14, 0.20 }, prices = { 4000, 30000, 6000000 }, renown = { 9, 16, 25 } },
+	{ id = "Shears", icon = "✂️", effect = { 0.05, 0.10, 0.15 }, prices = { 18000, 800000, 160000000 }, renown = { 14, 21, 30 } },
 }
 CropConfig.ToolById = {}
 for _, tool in CropConfig.Tools do
@@ -150,7 +161,7 @@ end
 -- A profile from before the field (the P2 pens, removed in FA) converts once on join: PetSlotsFromPens[pens bought] slots, the
 -- Coins paid for pens (LegacyPenPrices[n] = what the n-th pen cost) beyond those slots' prices refunded (GardenField).
 -- A Tending pet harvests only while the crops in the barn (Items) are fewer than BarnCapacity.
-CropConfig.PetSlotPrices = { 0, 23300, 84000, 280000, 746700 }
+CropConfig.PetSlotPrices = { 0, 2400, 14000, 220000, 11000000 }
 CropConfig.PetSlotsFromPens = { 1, 2, 2, 3, 3, 3 }
 CropConfig.LegacyPenPrices = { 0, 1000, 2500, 5000, 9000, 15000 }
 
@@ -174,6 +185,26 @@ function CropConfig.PointsFor(level: number): number
 		return 0
 	end
 	return math.ceil(CropConfig.RenownK * level ^ CropConfig.RenownP - 1e-9)
+end
+
+-- The Renown curve before EV2a (3 x L ^ 1.6): only PlayerProfile's Version 5 step uses it, to keep every player's level.
+CropConfig.LegacyRenown = { K = 3, P = 1.6 }
+function CropConfig.LegacyRenownLevel(points: number): number
+	local k, p = CropConfig.LegacyRenown.K, CropConfig.LegacyRenown.P
+	local function need(level: number): number
+		return if level <= 0 then 0 else math.ceil(k * level ^ p - 1e-9)
+	end
+	if type(points) ~= "number" or points ~= points or points < need(1) then
+		return 0
+	end
+	local level = math.floor((points / k) ^ (1 / p))
+	while need(level + 1) <= points do
+		level += 1
+	end
+	while level > 0 and need(level) > points do
+		level -= 1
+	end
+	return level
 end
 
 -- Renown level reached with `points` (the highest L with PointsFor(L) <= points).

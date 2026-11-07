@@ -142,6 +142,29 @@ function Locale.Number(n: number, lang: string?): string
 	return (if digits ~= text then "-" else "") .. grouped
 end
 
+-- A number from a million on in short form (EV2a: prices reach ~800 M), three significant digits: "1.23 M", "12.3 M", "123 M",
+-- "1.23 B" (Czech "1,23 mil.", "1,23 mld."; strings number.million / number.billion). Below a million: Locale.Number.
+function Locale.Compact(n: number, lang: string?): string
+	lang = lang or Locale.Current()
+	local size = math.abs(n)
+	if size < 1e6 then
+		return Locale.Number(n, lang)
+	end
+	local key, unit = "number.million", 1e6
+	if size >= 1e9 then
+		key, unit = "number.billion", 1e9
+	end
+	local value = n / unit
+	local decimals = if math.abs(value) < 10 then 2 elseif math.abs(value) < 100 then 1 else 0
+	local scale = 10 ^ decimals
+	value = (if value >= 0 then math.floor(value * scale) else math.ceil(value * scale)) / scale -- cut, not rounded: 1 239 999 -> "1.23 M"
+	local text = string.format("%." .. decimals .. "f", value)
+	if decimals > 0 then
+		text = string.gsub(string.gsub(text, "0+$", ""), "%.$", "") -- "1.50" -> "1.5", "2.00" -> "2"
+	end
+	return Locale.T(key, { n = { decimal = text } }, lang)
+end
+
 -- A decimal written as text ("4.5", e.g. PetClient.Percent) with the language's decimal mark ("4,5" in Czech)
 function Locale.Decimal(text: string, lang: string?): string
 	lang = lang or Locale.Current()
@@ -154,7 +177,7 @@ local function format(value: any, lang: string): string
 	elseif type(value) == "table" and type(value.decimal) == "string" then
 		return Locale.Decimal(value.decimal, lang) -- { decimal = "4.5" }: server-written, shown with the viewer's decimal mark
 	elseif type(value) == "number" and value == math.floor(value) and math.abs(value) < 1e15 then
-		return Locale.Number(value, lang)
+		return if math.abs(value) >= 1e6 then Locale.Compact(value, lang) else Locale.Number(value, lang)
 	end
 	return tostring(value)
 end

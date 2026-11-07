@@ -1,6 +1,7 @@
--- "Your skills" panel: one row per talent with its level, next effect and a buy button.
--- Display only: levels come from the Talent_<id> attributes the server maintains, Coins from leaderstats, and
--- a click just asks the server (talentId, expected next level). The server decides and prices everything.
+-- "Your skills" panel: one row per talent with its level, next effect, the crops the next level takes (EV2b) and a buy button.
+-- Display only: levels come from the Talent_<id> attributes the server maintains, Coins from leaderstats, the barn's crops from
+-- the own field state (GardenView.OwnField, refreshed on GardenRemotes.State), and a click just asks the server (talentId,
+-- expected next level). The server decides and prices everything.
 -- Rows are built in code; this script is re-created with the ScreenGui on every respawn.
 
 local Players = game:GetService("Players")
@@ -11,23 +12,28 @@ local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
+local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local remotes = ReplicatedStorage:WaitForChild("TalentRemotes")
 local buyEvent = remotes:WaitForChild("Buy")
 local resultEvent = remotes:WaitForChild("Result")
 
 local panel = script.Parent
 local player = Players.LocalPlayer
+local GardenView = require(player:WaitForChild("PlayerScripts"):WaitForChild("GardenView"))
 
 local ROW_HEIGHT = 54
+local NEEDS_ROOM = 20 -- a row with a needs line grows by about one line of it (two when it wraps)
 local COLOR_BUY = StudStyle.Colors.Green
 local COLOR_LOCKED = StudStyle.Colors.Grey
 local COLOR_INFO = Color3.fromRGB(235, 222, 190)
 local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
 local COLOR_REWARD = Color3.fromRGB(255, 214, 102)
+local HEX_SHORT = "#F0645A" -- a crop the player holds too few of (COLOR_ERROR, in the needs line's rich text)
 local REWARD_GLYPH = "🔒" -- button of a level that comes with a world (no words: not localized)
 
 local REJECT_KEYS = {
 	coins = "common.reject.coins",
+	crops = "skills.reject.crops",
 	maxed = "skills.reject.maxed",
 	stale = "common.reject.stale",
 	loading = "common.reject.loading",
@@ -51,6 +57,35 @@ end
 local coins = 0
 local rows = {}
 
+-- How many of a crop the own barn holds (0 before the first field state).
+local function held(cropId: string): number
+	local field = GardenView.OwnField()
+	local items = type(field) == "table" and field.items
+	return type(items) == "table" and tonumber(items[cropId]) or 0
+end
+
+-- The needs line of the next level ("Needs: Cucumber 5/20, Frost grape 0/2", a short crop in red) and whether every crop is held;
+-- nil text when the level takes no crops. Crops in catalogue order.
+local function needsLine(bundle): (string?, boolean)
+	local parts, enough = {}, true
+	for _, crop in CropConfig.Crops do
+		local need = bundle[crop.id]
+		if need then
+			local have = held(crop.id)
+			local text = Locale.T("skills.needs.item", { crop = Locale.CropName(crop), have = math.min(have, need), need = need })
+			if have < need then
+				enough = false
+				text = '<font color="' .. HEX_SHORT .. '">' .. text .. "</font>" -- loc: ignore (rich-text markup, no words)
+			end
+			table.insert(parts, text)
+		end
+	end
+	if #parts == 0 then
+		return nil, true
+	end
+	return Locale.T("skills.needs", { list = table.concat(parts, ", ") }), enough
+end
+
 -- "Free when World 2 opens" for a level that is a world reward (K1), else nil
 local function rewardText(talent, level: number): string?
 	local world = StageConfig.Worlds[TalentConfig.RewardWorld(talent.id, level) or 0]
@@ -63,6 +98,9 @@ local function refreshRow(row)
 	local max = #talent.costs
 	local cost = TalentConfig.NextCost(talent.id, level)
 	local reward = rewardText(talent, level + 1)
+	local needs, enough = needsLine(if cost then TalentConfig.NextCrops(talent.id, level) else {})
+	row.needs.Text = needs or ""
+	row.needs.Visible = needs ~= nil and not reward
 
 	-- a talent with per-level names shows the level it sells ("Triple Jump 1/2"), maxed the level it has
 	row.title.Text = Locale.TalentName(talent, math.min(level + 1, max)) .. "  " .. level .. "/" .. max
@@ -75,7 +113,7 @@ local function refreshRow(row)
 		row.button.BackgroundColor3 = COLOR_LOCKED
 	elseif cost then
 		row.button.Text = Locale.T("skills.buy", { price = cost })
-		row.button.BackgroundColor3 = coins >= cost and COLOR_BUY or COLOR_LOCKED
+		row.button.BackgroundColor3 = coins >= cost and enough and COLOR_BUY or COLOR_LOCKED
 	else
 		row.button.Text = Locale.T("skills.max")
 		row.button.BackgroundColor3 = COLOR_LOCKED
@@ -113,7 +151,7 @@ local fitScale = PanelFit.Scale()
 if fitScale < 1 then
 	create("UIScale", { Scale = fitScale, Parent = panel })
 end
-local listHeight = math.min(#TalentConfig.List * (ROW_HEIGHT + 10) - 10, PanelFit.MaxHeight(fitScale) - 55)
+local listHeight = math.min(#TalentConfig.List * (ROW_HEIGHT + NEEDS_ROOM + 10) - 10, PanelFit.MaxHeight(fitScale) - 55)
 local rowList = create("ScrollingFrame", {
 	Name = "Rows",
 	LayoutOrder = 1,
@@ -153,6 +191,21 @@ for index, talent in TalentConfig.List do
 		TextColor3 = COLOR_INFO,
 		TextXAlignment = Enum.TextXAlignment.Left,
 	})
+	local needs = create("TextLabel", {
+		Name = "Needs",
+		BackgroundTransparency = 1,
+		Position = UDim2.new(0, 10, 0, 48),
+		Size = UDim2.new(1, -90, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		Font = Enum.Font.SourceSans,
+		TextSize = 14,
+		TextColor3 = COLOR_INFO,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextWrapped = true,
+		RichText = true,
+		AutoLocalize = false,
+		Visible = false,
+	})
 	local button = create("TextButton", {
 		Name = "Buy",
 		AnchorPoint = Vector2.new(1, 0.5),
@@ -168,11 +221,12 @@ for index, talent in TalentConfig.List do
 		Name = "Talent_" .. talent.id,
 		LayoutOrder = index,
 		Size = UDim2.new(1, -10, 0, ROW_HEIGHT), -- the panel's width (GardenSkills widens it for the Garden tab)
-	}, { title, info, button })
+		AutomaticSize = Enum.AutomaticSize.Y, -- grows around the needs line (EV2b)
+	}, { title, info, needs, button, create("UIPadding", { PaddingBottom = UDim.new(0, 6) }) })
 	StudStyle.Row(rowFrame, panel.Name)
 	rowFrame.Parent = rowList
 
-	local row = { talent = talent, title = title, info = info, button = button, flash = 0 }
+	local row = { talent = talent, title = title, info = info, needs = needs, button = button, flash = 0 }
 	rows[talent.id] = row
 
 	button.Activated:Connect(function()
@@ -217,6 +271,11 @@ title()
 Locale.Changed:Connect(function()
 	title()
 	refreshAll()
+end)
+
+-- the barn's crops changed (a harvest, a sale, a bought level): after GardenView took the new state
+ReplicatedStorage:WaitForChild("GardenRemotes"):WaitForChild("State").OnClientEvent:Connect(function()
+	task.defer(refreshAll)
 end)
 
 task.spawn(function()

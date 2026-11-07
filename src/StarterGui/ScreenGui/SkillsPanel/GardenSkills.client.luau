@@ -264,6 +264,7 @@ local function render()
 		local function effect(at: number): number
 			return if upgrade.id == "Growth" then math.floor(upgrade.step * at * 100 + 0.5) else CropConfig.BarnFor(at)
 		end
+		local renownOk = not price or field.level >= (upgrade.renown[level + 1] or 0)
 		renderRow(
 			1 + index,
 			upgrade.id,
@@ -271,9 +272,9 @@ local function render()
 			if price
 				then Locale.T(keys.effect, { now = effect(level), next = effect(level + 1) })
 				else Locale.T(keys.max, { now = effect(level) }),
-			nil,
+			if renownOk then nil else Locale.T("field.expand.needRenown", { level = upgrade.renown[level + 1] }),
 			price,
-			price ~= nil and coins >= price,
+			price ~= nil and renownOk and coins >= price,
 			function()
 				buyUpgradeEvent:FireServer(upgrade.id, level)
 			end

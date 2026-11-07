@@ -41,7 +41,7 @@ PLANNED = {
     "t_base": {13: 120, 14: 135, 15: 145, 16: 120, 17: 110, 18: 135, 19: 150, 20: 180},  # midpoints of STAGES §3
     # extrapolated from the built prices (+500 every second stage); World 4 opener = StageConfig.Worlds[4].unlockPrice
     "unlock_price": {13: 5000, 14: 5000, 15: 5500, 16: 6000, 17: 6000, 18: 6500, 19: 6500, 20: 7000},
-    "talents": {"WallJump": [10000], "Glide": [12000]},  # GDD §6 planned talents
+    "talents": {"WallJump": [700000], "Glide": [2600000]},  # GDD §6 planned talents (EV2b; 10 000 / 12 000 before, Coins only)
     # first stage that needs a talent level (GDD §6 required-set table); checked against StageConfig `requires`
     "required_at": {("DoubleJump", 1): 6, ("DoubleJump", 2): 11, ("Dash", 2): 13, ("WallJump", 1): 16, ("Glide", 1): 17},
     "coins_per_planned_stage": 400,  # challenge coins, GDD §5 ("about 400 per stage")
@@ -253,6 +253,15 @@ def obby_cfg(o):
     return [o["FirstGoldWorld"], o["FirstGold"], o["Daily"], o["MeterSize"], list(o["Points"]), o["FirstMult"], list(o.get("Pouch", []))]
 
 
+# EV2a (2026-11-07): the configs carry the EV numbers (economy_ev.py); E0's field simulation (parity / lead / A / B / C / O and the
+# sim / field / pets / tools commands) modelled the old tier ladder and is retired. Its code stays for history (git show a128d26).
+E0_FIELD_RETIRED = True
+# EV2b (2026-11-07): talents cost Coins + a crop bundle, so the no-grind rule (check 3: the required set within 65 % of the medals
+# earned before, garden off) no longer holds by design; EV's G4 replaces it (obby-only Coins <= 40 % of the World 1-2 tree, each
+# required level within 1-2 days of reaching its stage with the garden on).
+E0_NO_GRIND_RETIRED = True
+
+
 def apply_crop_config(P):
     """CropConfig.luau -> P["crop_cfg"] (what `pin` stores), the FIELD values marked (CropConfig) and the config crops of CROP_DEFS."""
     f = "CropConfig.luau"
@@ -264,16 +273,16 @@ def apply_crop_config(P):
     rows, grid, start_open = luau(f, "CropConfig.RowWidths"), luau(f, "CropConfig.GridColumns"), luau(f, "CropConfig.StartOpen")
     if sum(rows) != top or max(rows) > grid:
         raise ValueError(f"CropConfig: RowWidths {rows} must add up to MaxSquares {top} and fit GridColumns {grid}")
-    points = luau(f, "CropConfig.RenownPoints")
     cfg = {
-        "crops": [[c["id"], c["tier"], c["growSeconds"] / 3600, c["sale"], c["seed"], c["renown"]] for c in crops],  # grow time in hours
+        # EV2a: [id, Renown points per harvest, grow hours, sale, seed, renown level] (was [id, tier, ...] with RenownPoints[tier])
+        "crops": [[c["id"], c["points"], c["growSeconds"] / 3600, c["sale"], c["seed"], c["renown"]] for c in crops],
         "xp": [[c["id"], c["xp"]] for c in crops],  # E1a3: pet XP of one crop fed to a pet
         "squares": [start, top],
         "rows": [list(rows), grid, list(start_open)],  # E1d2: the field's shape and the start block
         "expansions": [[e["price"], e["renown"]] for e in exps],
-        "renown": [points, luau(f, "CropConfig.RenownK"), luau(f, "CropConfig.RenownP")],
+        "renown": [luau(f, "CropConfig.RenownK"), luau(f, "CropConfig.RenownP")],
         "barn_capacity": luau(f, "CropConfig.BarnCapacity"),
-        "upgrades": [[u["id"], u["step"], list(u["prices"])] for u in luau(f, "CropConfig.Upgrades")],  # E1c1: [id, step, prices]
+        "upgrades": [[u["id"], u["step"], list(u["prices"]), list(u["renown"])] for u in luau(f, "CropConfig.Upgrades")],  # [id, step, prices, renown]
         "tools": [[t["id"], list(t["effect"]), list(t["prices"]), list(t["renown"])] for t in luau(f, "CropConfig.Tools")],  # E1c3
         "cart": cart_cfg(luau(f, "CropConfig.Cart")),
         "obby_seeds": obby_cfg(luau(f, "CropConfig.ObbySeeds")),  # E2a: [first Gold from world, seeds per first Gold, daily seeds, meter size, points by medal, first-of-day factor, E2b pouch seeds by medal]  # E1c4: [[count, discount] per bargain, [taste count, price, fromLevel]]
@@ -290,6 +299,8 @@ def apply_crop_config(P):
         "scouting": scout_cfg(luau("PetConfig.luau", "PetConfig.Scouting")),  # E2c: [XP hours per medal finish, per strength, cap, pouch +1 from]
     }
     P["crop_cfg"] = cfg
+    if E0_FIELD_RETIRED:
+        return  # EV2a: the configs follow economy_ev.CAND; E0's tier-based field model no longer describes them
 
     gate = {}
     for _, tier, _, _, _, renown in cfg["crops"]:
@@ -369,7 +380,8 @@ def load():
         })
     P["stages"] = stages
 
-    talents = {t["id"]: {"costs": t["costs"], "built": True} for t in luau("TalentConfig.luau", "TalentConfig.List")}
+    talents = {t["id"]: {"costs": t["costs"], "crops": {int(k): v for k, v in (t.get("crops") or {}).items()}, "built": True}
+               for t in luau("TalentConfig.luau", "TalentConfig.List")}
     for tid, costs in PLANNED["talents"].items():
         talents[tid] = {"costs": costs, "built": False}
     P["talents"] = talents
@@ -428,12 +440,12 @@ def pin_values(P):
         "coin_tiers": P["coin_tiers"],
         "coin_counts": {k: len(c) for k, c in sorted(P["coins_by_stage"].items())},
         # CropConfig (E1a2), the crop field; grow time and offline cap in hours; read at load, so --offline-rate / --offline-cap do not show up as drift
-        "crop_field_crops": P["crop_cfg"]["crops"],  # [id, tier, grow hours, sale, seed, renown level]
+        "crop_field_crops": P["crop_cfg"]["crops"],  # [id, Renown points, grow hours, sale, seed, renown level]
         "crop_field_squares": P["crop_cfg"]["squares"],  # [StartSquares, MaxSquares]
         "crop_field_expansions": P["crop_cfg"]["expansions"],  # [price, renown level] per extra square
-        "crop_field_renown": P["crop_cfg"]["renown"],  # [points per harvest by tier, RenownK, RenownP]
+        "crop_field_renown": P["crop_cfg"]["renown"],  # [RenownK, RenownP]
         "crop_field_barn_capacity": P["crop_cfg"]["barn_capacity"],
-        "crop_field_upgrades": P["crop_cfg"]["upgrades"],  # [id, step, prices] (E1c1)
+        "crop_field_upgrades": P["crop_cfg"]["upgrades"],  # [id, step, prices, renown levels] (E1c1, gates EV2a)
         "crop_field_tools": P["crop_cfg"]["tools"],  # [id, effect, prices, renown levels] (E1c3)
         "crop_field_xp": P["crop_cfg"]["xp"],  # [id, pet XP per crop fed] (E1a3)
         "crop_field_cart": P["crop_cfg"]["cart"],
@@ -1640,13 +1652,13 @@ def reproduction(P):
         ("Medals, Tutorial + stages 1-5 (GDD §5)", 9450, sum(stage_medal_total(P, s) for s in six)),
         ("Medals, all 21 stages", 88200, sum(stage_medal_total(P, s) for s in S)),
         ("First-finish payouts, all 21 stages", 6300, sum(first_finish(P, s) for s in S)),
-        ("Planned talent tree", 44300, full_tree),  # 47 300 until Double Jump became a world reward (K1, 2026-11-01)
+        ("Planned talent tree", 3394900, full_tree),  # Coins only; 44 300 until EV2b, 47 300 until Double Jump became a world reward (K1)
         ("Gold runs, first 10 of a day, factor 1.5", 668, gold_day(by_factor[1.5])),
         ("Gold runs, first 10 of a day, factor 1.0", 446, gold_day(by_factor[1.0])),
         ("Gold runs, first 10 of a day, factor 0.5 (Tutorial)", 227, gold_day(by_factor[0.5])),
         ("Stage unlocks of stages 1-5 (GDD §6 'today')", 6700, sum(s["unlock_price"] for s in S if 1 <= s["order"] <= 5)),
-        ("Incubators (all 3)", 17000, sum(P["incubator_prices"])),
-        ("Pet slots", 7000, sum(P["slot_prices"])),
+        ("Incubators (all 3)", 3300, sum(P["incubator_prices"])),
+        ("Pet slots", 4700, sum(P["slot_prices"])),
     ]
     return [(label, gdd, model, abs(gdd - model) <= 1) for label, gdd, model in rows]
 
@@ -1669,7 +1681,7 @@ def run_checks(P, days=60, seeds=6):
     results.append(("1 Drift: configs equal the reviewed pins, formulas unchanged", not d, "; ".join(d[:3]) + (" ..." if len(d) > 3 else "")))
     for label, gdd, model, ok in reproduction(P):
         results.append((f"2 Reproduction: {label}", ok, f"GDD {n(gdd)} / model {n(model)}"))
-    for stage, cost, medals, share in required_sets(P):
+    for stage, cost, medals, share in ([] if E0_NO_GRIND_RETIRED else required_sets(P)):
         results.append((f"3 Required set before stage {stage} (garden off)", share <= PLANNED["required_share_max"],
                         f"{n(cost)} of {n(medals)} = {share:.0%}"))
     cfg_first = {}
@@ -1678,7 +1690,8 @@ def run_checks(P, days=60, seeds=6):
             cfg_first[(tid, lv)] = min(cfg_first.get((tid, lv), 99), s["order"])
     mismatched = [f"{k} config {cfg_first[k]} vs plan {v}" for k, v in PLANNED["required_at"].items() if k in cfg_first and cfg_first[k] != v]
     results.append(("3 Required talents of built stages match the planned table", not mismatched, "; ".join(mismatched)))
-    results.extend(field_checks(P, days, seeds))
+    if not E0_FIELD_RETIRED:
+        results.extend(field_checks(P, days, seeds))
     results.extend(size_checks(P))
     results.extend(crop_xp_checks(P))
     return results
@@ -1768,9 +1781,10 @@ def cmd_report(P):
         print(f"  {k} egg {n(e['price'])}: expected resale {n(resale)} ({resale / e['price']:.0%} of the price), Cuteness {cute:.0%}, "
               f"expected base bonus +{bonus:.1f} %")
 
-    print("\n3. Required talent sets vs medals earned before (GDD §6, garden income off; share must be <= 65 %)")
-    rows = [(f"stage {st}", n(c), n(m), f"{sh:.0%}", tick(sh <= PLANNED["required_share_max"])) for st, c, m, sh in required_sets(P)]
-    print(table(["First required at", "Set cost", "Medals before", "Share", ""], rows))
+    if not E0_NO_GRIND_RETIRED:
+        print("\n3. Required talent sets vs medals earned before (GDD §6, garden income off; share must be <= 65 %)")
+        rows = [(f"stage {st}", n(c), n(m), f"{sh:.0%}", tick(sh <= PLANNED["required_share_max"])) for st, c, m, sh in required_sets(P)]
+        print(table(["First required at", "Set cost", "Medals before", "Share", ""], rows))
 
     print("\n4. Obby farming on a fresh day (Gold runs, greedy best Coins/s; model: Gold run = "
           f"{MODEL['gold_run_factor']:.0%} of T_base + {MODEL['run_overhead_s']:.0f} s overhead)")
@@ -1784,7 +1798,8 @@ def cmd_report(P):
     print(table(["Progress", "Stages", "Hour 1", "Hour 2", "Hour 3"], rows))
     print("  GDD §6 estimates ~2 230 for the first hour and ~500 later; the model is not tuned to them (run times are assumptions).")
 
-    field_report(P)
+    if not E0_FIELD_RETIRED:
+        field_report(P)
 
 
 def cmd_check(P, days, seeds):
@@ -1794,7 +1809,14 @@ def cmd_check(P, days, seeds):
     failed = [r for r in results if not r[1]]
     print(f"\n{len(results) - len(failed)} / {len(results)} checks pass" + ("" if not failed else f", {len(failed)} FAIL"))
     print("Not implemented yet (E0 continues): dead end (7), rare-crop supply (8), repricing (10), sensitivity (11).")
-    return 1 if failed else 0
+    # EV (2026-11-07): the engagement checks run on the proposed numbers (economy_ev.CAND). The checks above still describe the game as it
+    # is built (old parity targets) until EV2a moves the configs onto the proposal; then parity / lead go and drift pins the EV values.
+    import economy_ev
+    print()
+    print("EV proposal (economy_ev.py, not yet in the configs):")
+    ev = economy_ev.checks(economy_ev.build(), days)
+    ev_failed = [r for r in ev if not r[1]]
+    return 1 if failed or ev_failed else 0
 
 
 def field_checks(P, days=60, seeds=6):
@@ -2156,8 +2178,8 @@ def main():
         sys.stdout.reconfigure(encoding="utf-8")
     except Exception:
         pass
-    ap = argparse.ArgumentParser(description="Pawvest economy model (ROADMAP E0)")
-    ap.add_argument("command", choices=["report", "sim", "field", "pets", "tools", "check", "drift", "pin"])
+    ap = argparse.ArgumentParser(description="Pawvest economy model (ROADMAP E0; evcheck / proposal / hour1: EV, economy_ev.py)")
+    ap.add_argument("command", choices=["report", "sim", "field", "pets", "tools", "check", "drift", "pin", "evcheck", "proposal", "hour1"])
     ap.add_argument("--crops", choices=list(CATALOGUES), default="mvp")
     ap.add_argument("--scale", type=float, default=None)
     ap.add_argument("--offline-rate", type=float, default=None)
@@ -2165,12 +2187,20 @@ def main():
     ap.add_argument("--days", type=int, default=60)
     ap.add_argument("--seeds", type=int, default=6)
     args = ap.parse_args()
+    if args.command in ("evcheck", "proposal", "hour1"):  # the engagement-first model (EV1): tools/economy_ev.py
+        import economy_ev
+        return economy_ev.main([args.command, "--days", str(args.days)])
     P = load()
     if args.offline_rate is not None:
         FIELD["offline_rate"] = args.offline_rate
     if args.offline_cap is not None:
         FIELD["offline_cap_h"] = args.offline_cap
-    build_field(P, args.crops, args.scale)
+    if E0_FIELD_RETIRED:
+        if args.command in ("sim", "field", "pets", "tools"):
+            print(f"`{args.command}` modelled the field before EV2a and is retired; use `proposal` / `evcheck` / `hour1` (economy_ev.py).")
+            return 2
+    else:
+        build_field(P, args.crops, args.scale)
     if args.command == "report":
         cmd_report(P)
         return 0

@@ -68,7 +68,7 @@ end
 -- in real server time, also offline. Stored as profile.Garden.Incubators["1".."3"] = { Egg, StartedAt, ReadyAt } (server
 -- os.time()) and Garden.IncubatorCount (owned incubators, unlocked in order).
 GardenConfig.MaxIncubators = 3
-GardenConfig.IncubatorPrices = { 0, 5000, 12000 } -- IncubatorPrices[n] = price of the n-th incubator (incubator 1 is free)
+GardenConfig.IncubatorPrices = { 0, 500, 2800 } -- EV2a (was 5000 / 12000); IncubatorPrices[n] = price of the n-th incubator (incubator 1 is free)
 
 -- True when the incubator entry's egg may hatch at server time `now`.
 function GardenConfig.EggReady(entry, now: number): boolean

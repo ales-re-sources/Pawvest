@@ -1,4 +1,4 @@
--- TalentConfig: talents bought with Coins (GDD §6). Shared: the server validates and prices purchases from this
+-- TalentConfig: talents bought with Coins and a crop bundle from the barn (GDD §6; bundles since EV2b). Shared: the server validates and prices purchases from this
 -- table only (clients never send a price), the skills panel renders it. Pure data + helpers, no side effects.
 -- Talent ids are stored in PlayerProfile.Talents and as Talent_<id> player attributes: never rename them.
 
@@ -8,6 +8,7 @@ export type Talent = {
 	id: string,
 	name: string,
 	costs: { number }, -- costs[n] = price of level n; #costs = max level
+	crops: { [number]: { [string]: number } }?, -- crops[n] = { [cropId] = count } taken from the barn with costs[n] (EV2b)
 	perLevel: number, -- effect per level as a fraction
 	effect: string, -- panel text for one level
 	effects: { string }?, -- panel text per level when the levels differ (effects[n] = what buying level n gives)
@@ -16,22 +17,24 @@ export type Talent = {
 }
 
 TalentConfig.List = {
-	{ id = "RunSpeed", name = "Run Speed", costs = { 200, 400, 600, 900, 1300 }, perLevel = 0.06, effect = "+6% run speed" }, -- loc: ignore (English source and fallback; players see Locale)
+	{ id = "RunSpeed", name = "Run Speed", costs = { 800, 1400, 2600, 4500, 8000 }, crops = { [2] = { Garlic = 12 }, [3] = { Cucumber = 12 }, [4] = { Corn = 15 }, [5] = { Pepper = 15 } }, perLevel = 0.06, effect = "+6% run speed" }, -- loc: ignore (English source and fallback; players see Locale)
 	{
 		id = "DoubleJump",
 		name = "Double Jump", -- loc: ignore (English source and fallback; players see Locale)
-		costs = { 0, 5000 }, -- level 1 is a world reward (3 000 until 2026-11-01, 1 500 until 2026-10-23; GDD §6); level 2 = Triple Jump (S7)
+		costs = { 0, 16000 }, -- level 1 is a world reward (3 000 until 2026-11-01, 1 500 until 2026-10-23; GDD §6); level 2 = Triple Jump (S7; 5 000 until EV2b)
+		crops = { [2] = { Cucumber = 20, FrostGrape = 2 } },
 		rewards = { [1] = 2 }, -- granted when World 2 opens (K1)
 		perLevel = 1,
 		effect = "1 extra jump in the air", -- loc: ignore (English source and fallback; players see Locale)
 		effects = { "1 extra jump in the air", "A second extra jump in the air" }, -- loc: ignore (English source and fallback; players see Locale)
 		names = { "Double Jump", "Triple Jump" }, -- loc: ignore (English source and fallback; players see Locale)
 	},
-	{ id = "JumpHeight", name = "Jump Height", costs = { 300, 600, 1000 }, perLevel = 0.08, effect = "+8% jump height" }, -- loc: ignore (English source and fallback; players see Locale)
+	{ id = "JumpHeight", name = "Jump Height", costs = { 1100, 1900, 6500 }, crops = { [2] = { Cucumber = 12 }, [3] = { Pepper = 15 } }, perLevel = 0.08, effect = "+8% jump height" }, -- loc: ignore (English source and fallback; players see Locale)
 	{
 		id = "QuickRespawn",
 		name = "Quick Respawn", -- loc: ignore (English source and fallback; players see Locale)
-		costs = { 1000, 3000 },
+		costs = { 1100, 10000 },
+		crops = { [1] = { Tomato = 12 }, [2] = { Broccoli = 15 } },
 		perLevel = 1,
 		effect = "faster respawn", -- loc: ignore (English source and fallback; players see Locale)
 		effects = { "Respawn after 1 s", "Instant respawn + fall reset" }, -- loc: ignore (English source and fallback; players see Locale)
@@ -39,7 +42,8 @@ TalentConfig.List = {
 	{
 		id = "Dash",
 		name = "Dash", -- loc: ignore (English source and fallback; players see Locale)
-		costs = { 5000, 3000 }, -- S7 (STAGES §6.2 / §7.10): 8 000 for level 1 until S8.2 added Long Dash (§7.12); the sum stays 8 000 (GDD §6, 65 % share)
+		costs = { 12000, 29000 }, -- S7 (STAGES §6.2 / §7.10); 5 000 / 3 000 until EV2b (8 000 for level 1 until S8.2 added Long Dash, §7.12)
+		crops = { [1] = { Corn = 20 }, [2] = { Pepper = 20, GlowMushroom = 1 } },
 		perLevel = 1,
 		effect = "A burst forward in the air (Q)", -- loc: ignore (English source and fallback; players see Locale)
 		effects = { "A burst forward in the air (Q)", "The burst goes farther" }, -- loc: ignore (English source and fallback; players see Locale)
@@ -78,6 +82,12 @@ end
 -- Price of the next level, or nil when the talent is maxed (0 for a world reward: check RewardWorld first).
 function TalentConfig.NextCost(id: string, level: number): number?
 	return TalentConfig.ById[id].costs[level + 1]
+end
+
+-- Crops the next level takes from the barn ({ [cropId] = count }; empty when none or maxed).
+function TalentConfig.NextCrops(id: string, level: number): { [string]: number }
+	local crops = TalentConfig.ById[id].crops
+	return crops and crops[level + 1] or {}
 end
 
 -- Multiplier on the base WalkSpeed (16 → 20.8 at level 5).

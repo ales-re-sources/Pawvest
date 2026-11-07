@@ -63,23 +63,23 @@ PetConfig.Eggs = {
 	Basic = {
 		id = "Basic",
 		name = "Basic egg", -- loc: ignore (English source and fallback; players see Locale)
-		price = 500,
+		price = 120, -- EV2a (docs/ECONOMY.md → "EV"; was 500)
 		hatchSeconds = 300,
 		look = { color = Color3.fromRGB(236, 228, 208), material = Enum.Material.SmoothPlastic, glow = false }, -- plain cream
-		weights = { Common = 600, Uncommon = 250, Rare = 110, Epic = 35, Legendary = 5 },
+		weights = { Common = 600, Uncommon = 262, Rare = 110, Epic = 27, Legendary = 1 },
 	},
 	Golden = {
 		id = "Golden",
 		name = "Golden egg", -- loc: ignore (English source and fallback; players see Locale)
-		price = 4000,
+		price = 4000, -- EV2a (unchanged)
 		hatchSeconds = 3600,
 		look = { color = Color3.fromRGB(255, 200, 40), material = Enum.Material.SmoothPlastic, glow = true }, -- shiny gold
-		weights = { Uncommon = 450, Rare = 350, Epic = 150, Legendary = 50 },
+		weights = { Uncommon = 500, Rare = 370, Epic = 127, Legendary = 3 }, -- EV2a: Legendaries a multi-week goal (G9)
 	},
 } :: { [string]: Egg }
 PetConfig.EggOrder = { "Basic", "Golden" } -- incubator panel order (cheapest first)
 
-PetConfig.SlotPrices = { 0, 2000, 5000 } -- SlotPrices[n] = price of the n-th equip slot; #SlotPrices = max slots
+PetConfig.SlotPrices = { 0, 700, 4000 } -- EV2a (was 2000 / 5000); SlotPrices[n] = price of the n-th equip slot; #SlotPrices = max slots
 PetConfig.MaxPets = 50 -- inventory cap
 -- P4: a pet has no level of its own any more. Its level (PetLevel) is the highest level of its working traits (aptitudes in Shown),
 -- 1..MaxLevel; it drives the label, size and look tiers. The stored Pets[uid].Level / XP (1..LegacyMaxLevel, before P4) are

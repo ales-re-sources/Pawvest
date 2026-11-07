@@ -14,6 +14,10 @@ Data for rebalancing (M6a / M6b), answering a few questions only:
 
 Not a goal: per-player tracking, positions / heatmaps, per-frame data, our own backend.
 
+**Engagement targets (EV, 2026-11-07; the economy model assumes them, ECONOMY.md → EV checks; re-run `economy.py proposal` with the
+measured values after M6a):** sessions per day (model: 2–4), session length (30 min – 2.5 h), D1 / D7 retention, online minutes between
+collects (≤ 4 on day 1, ≤ 8 later), minutes to the first talent purchase, days to the first Legendary pet (≥ 14 for a casual player).
+
 ## Backend
 Roblox **AnalyticsService**, read in the Creator Dashboard (Analytics → Funnels, Progression, Economy, Custom events).
 No servers, no DataStore cost. Studio sessions are not recorded by the dashboard, so the module has a debug switch that
