@@ -7,6 +7,7 @@
 -- - ReplicatedStorage.CheckpointsReset (a new run) turns the lit pad back to "not reached".
 -- The pads are server-owned anchored parts; the changes here are local, so every player sees their own progress.
 -- The Studio state of Core / Beam is the "not reached" look; this script reads it once per pad and tweens to and from it.
+-- Optional attribute BeamHeight (studs) on a checkpoint's model overrides LOOK.beamHeight for that pad.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SoundService = game:GetService("SoundService")
@@ -68,6 +69,7 @@ local function padOf(part: BasePart)
 			},
 			tweens = {},
 			active = false,
+			beamHeight = model:GetAttribute("BeamHeight"), -- a pad under a low ceiling caps its column (Stage 15's chimney floor)
 		}
 		pads[core] = pad
 	end
@@ -114,7 +116,7 @@ local function activate(pad)
 	local flat = beamGoal(pad, 0.2)
 	pad.beam.Size = flat.Size
 	pad.beam.CFrame = flat.CFrame
-	local goal = beamGoal(pad, LOOK.beamHeight)
+	local goal = beamGoal(pad, pad.beamHeight or LOOK.beamHeight)
 	goal.Transparency = LOOK.beamTransparency
 	play(pad, pad.beam, soft, goal)
 end

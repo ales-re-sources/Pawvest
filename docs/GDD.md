@@ -145,7 +145,7 @@ much tighter than before while its Bronze stays close to the old limits. Worlds 
 | 12 Ice Rink | 50 (best 31.7 s) | ≤ 125 s | ≤ 55 s | ≤ 40 s |
 | 13 Dash Bridge | 45 (best 27.9 s) | ≤ 112.5 s | ≤ 49.5 s | ≤ 36 s |
 | 14 Laser Lab | 95 (best 60.4 s) | ≤ 237.5 s | ≤ 104.5 s | ≤ 76 s |
-| 15 Rising Tide | 55 (best 34.8 s) | ≤ 137.5 s | ≤ 60.5 s | ≤ 44 s |
+| 15 Rising Tide | 55 (best 34.8 s) | ≤ 137.5 s | ≤ 60.5 s | ≤ 46 s (+2 s on 2026-11-07, the stamper gate; own `tiers`) |
 | 16–20 (P) | 110–130, 90–130, 120–150, 130–170, 160–200 | 2.5 × | 1.1 × | 0.8 × |
 
 Every run stays within pillar 1 (1–3 minutes). Provisional `T_base` values (set in M1 so tiers can be evaluated) are

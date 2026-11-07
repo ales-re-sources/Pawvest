@@ -32,7 +32,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | P4 | Pet traits: Cuteness carries the Coin bonus, per-trait levels 1–10, look from the highest trait | ✔ | partial | – |
 | H1, H2 | Hub island, stud checkpoints | ✔ | ✔ | – |
 | S1–S7 | Stage framework, Quick Respawn, obstacle kit, World 1, worlds hub, World 2, Triple Jump + Dash | ✔ | ✔ | – |
-| S8 | World 3 (Stages 11–15) — awaits the user's sign-off | ✔ | S8.1 ✔; S8.2–S8.3 bot-checked, run by the user | – |
+| S8 | World 3 (Stages 11–15), signed off by the user 2026-11-07 | ✔ | ✔ | – |
 | T1a, T1b | Telemetry | ✔ | ✔ | – |
 | L1–L3 | Localization (English + Czech) | ✔ | ✔ | – |
 | G1 | Player guidance hints — awaits the user's check in play | ✔ | ✔ | – |
@@ -59,25 +59,23 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 **Order (2026-10-30, updated 2026-11-06).** The soft launch takes the obby (15 stages) and the garden as built: since FA (2026-11-06) every
 player has the crop field, so the rest of the garden MVP (EXPANSION §14) is built in the open game. World 4 waits until after the MVP.
 
-1. **Close World 3:** the user's sign-off of Stages 11–15 with the new medal times. Stage 10's times stay (decided 2026-10-30: the fast
-   test-account times there need every talent, the Long Dash included).
-2. **M6a soft launch** (friends, then unlisted) with 15 stages, pets and the garden with the crop field: real finish times, T1a / T1b on the
+1. **M6a soft launch** (friends, then unlisted) with 15 stages, pets and the garden with the crop field: real finish times, T1a / T1b on the
    Creator Dashboard and a first retention baseline. The planned obby-only baseline is dropped (the garden is in from the start since FA);
    what later drops add is measured against this one. Includes the live-test checks below.
-3. **Offline growth (OG) validation:** a 24 h-back `SettledAt` must give `Grown` = 43 200 for a pumpkin (ripe at 28 800). The same test
+2. **Offline growth (OG) validation:** a 24 h-back `SettledAt` must give `Grown` = 43 200 for a pumpkin (ripe at 28 800). The same test
    explains the user's pumpkin that still had 5 h 47 min left after 24 h away (at most about 4 h was expected under the old 0.33 / 12 h rules).
-4. **E5 + rest of the garden MVP** (scope when it starts; EXPANSION §14): request board, the ledger on join (the join notice grows into it),
+3. **E5 + rest of the garden MVP** (scope when it starts; EXPANSION §14): request board, the ledger on join (the join notice grows into it),
    onboarding for the first ten minutes, garden telemetry. Before going public Max Players goes to 24 (a place setting) and the open item
    "Before Max Players 24" below is checked.
    Gates before going public: M6a, the balancing pass, the Czech review of the new texts, MU, and the comfort shop (D2) or a decision to
    launch without it.
-5. **E0 in parallel:** repricing and the remaining checks (section below).
-6. **MU** before anything goes public.
-7. **U1–U5 garden and pet UI** (design decided 2026-11-05, [UI_GARDEN_PETS.md](UI_GARDEN_PETS.md) §11–12; scope each when it starts):
+4. **E0 in parallel:** repricing and the remaining checks (section below).
+5. **MU** before anything goes public.
+6. **U1–U5 garden and pet UI** (design decided 2026-11-05, [UI_GARDEN_PETS.md](UI_GARDEN_PETS.md) §11–12; scope each when it starts):
    **U1** built and Studio-checked (2026-11-06) except the multi-client look check (F7, the user); **U2** built and Studio-checked (2026-11-06); **U3** (rings, tap-select, square card, hand bar, reach borders) built and Studio-checked
    (2026-11-07) except the phone touch check and multi-client; **U4** and **U5** (panel split, barn, seed stall, plot layout, hatchery panel)
    built and Studio-checked (2026-11-07); E5's onboarding teaches the new controls.
-8. **Drops D1–D10** after the MVP (EXPANSION §14), one every 1–2 weeks: Critters, Comfort shop (M7), Weekly, Variants, Kitchen (the first
+7. **Drops D1–D10** after the MVP (EXPANSION §14), one every 1–2 weeks: Critters, Comfort shop (M7), Weekly, Variants, Kitchen (the first
    restoration landmark), Neighbours, Mastery, World 4 (S9 / S10), the Estate, Season 1. Restoration bundles (E6, D5) and estate tiers / decor /
    cottage (E7, D9) are the long-term Coin sinks; E0 holds a placeholder for their size until they are designed.
 
@@ -750,7 +748,7 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
   not filter text).
 - **Before Max Players 24 (going public):** 24 plots with fields at once (the budget was checked with synthetic plots only); a second client
   watching a square purchase. (The no-field paths and the live pen conversion went with FA.)
-- **The user's checks:** World 3 sign-off (S8); G1 hints in play.
+- **The user's checks:** G1 hints in play.
 - **Localization:** Czech overflow screenshots of the panels (the font is BuilderSansBold, so re-check widths in Czech and the
   pseudo-language), the Stage 9 exit-door label, the food stand's prompt ("Buy food" is a Studio literal: set its texts from
   `FoodShopClient` as `SeedStallClient` does).
@@ -830,7 +828,7 @@ a toast for a ready egg. Display only, no server change.
 **S8 — World 3** (2026-10-24 / 28; STAGES §7.11–7.13). *Why:* the third world for the Triple Jump and Dash talents. *What:* Triple Peaks (Triple
 ledges, crushers), Ice Rink (kit ice, wind, a pressure door), Dash Bridge (Long Dash = Dash level 2, rolling balls), Laser Lab (the Key Arena
 prototype rebuilt as stacked vault lanes and a tower after the user's sketches, checked by `tools/vault_reach.py`), Rising Tide (a lava tide
-under six segments replaying World 3). The user ran all five with Gold; medal times were set from those runs (Bronze 2.5 × tBase for every stage).
+under six segments replaying World 3). The user ran all five with Gold; medal times were set from those runs (Bronze 2.5 × tBase for every stage). **Signed off 2026-11-07** after a sign-off playtest: Stages 11–14 unchanged; Stage 15 got studded pillars and chimney shell, a 14-high `TideDoor`, a capped 1305 beam (`BeamHeight` attribute in `CheckpointClient`), plain-transparent `GlassN` (Glass hides transparent beams), a ceiling stamper gate with a three-stage telescope on `Slab3_N`, a studded hazard-stripe Sweeper, and Gold 46 s (own `tiers`); STAGES §7.13.
 
 **S7 — Triple Jump + Dash, World 3 courtyard** (2026-10-24). *Why:* World 3 needs new movement. *What:* Double Jump level 2 = Triple Jump, Dash
 (Q / gamepad / touch button), reach table with the real talents, the World 3 courtyard east of the hub.

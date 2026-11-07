@@ -248,7 +248,7 @@ StageConfig.Stages = {
 		world = 3,
 		requires = { { id = "DoubleJump", level = 2 }, { id = "Dash", level = 2 } }, -- Triple Jump, Long Dash
 		tBase = 55, -- 100 provisional, 55 on 2026-10-30 (user's best 34.8 s; Gold < 44 s)
-		tiers = StageConfig.DefaultTiers,
+		tiers = { Bronze = 2.5, Silver = 1.1, Gold = 46 / 55 }, -- Gold 46 s: +2 s on 2026-11-07 (the chimney's stamper gate, docs/STAGES.md §7.13)
 		unlock = { stage = "Stage14", medal = "Bronze" },
 		unlockPrice = 5500,
 		rewardFactor = 4.25,
