@@ -15,7 +15,7 @@
 -- locked squares carry grass tufts (U3a; full detail). Field pets stand on their squares (full: the PetLook model with a label of
 -- its name and job icons, never its level; mid: a block). The field has no prompts (U3a): the own plot's field parts are
 -- CanQuery so FieldHand's tap ray hits them, SquareAt maps a world point to a square, ShowSelect outlines the selected square
--- and ShowReach tints the squares a pet would work. ShowBorders (U3b) draws the placed pets' reach regions as thin borders in their
+-- and ShowReach tints the squares a pet would work; ShowHover (U3b) marks the square the player stands on with corner brackets. ShowBorders (U3b) draws the placed pets' reach regions as thin borders in their
 -- rarity colours (FieldRings computes the regions).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -788,6 +788,44 @@ function PlotView:ShowSelect(square: number?)
 	end
 	outline.Parent = self.root
 	self.select = outline
+end
+
+-- Four white corner brackets on field square `square` (the square the player stands on, U3b: shows that squares are things to
+-- tap) until called again; nil clears. Brackets, not a full outline: a full thin line reads as a pet's reach border (Common grey).
+-- 0.33-0.41 over the floor centre: inside the select outline's height (0.30-0.46) and off the reach tint's faces (0.28-0.38), no
+-- shared face; outside the borders' strips. The two strips of a corner do not overlap.
+function PlotView:ShowHover(square: number?)
+	if self.hover then
+		self.hover:Destroy()
+		self.hover = nil
+	end
+	if not square or not CropConfig.Cell(square) then
+		return
+	end
+	local x, z = squareSpot(square)
+	local marks = Instance.new("Model")
+	marks.Name = "Hover"
+	local half, thick, arm = (FIELD_PITCH - 0.4) / 2 + 0.05, 0.18, 1.4
+	local function strip(center: Vector3, size: Vector3)
+		part({
+			Name = "Corner",
+			Size = size,
+			CFrame = self:at(Vector3.new(x, 0.37, z) + center),
+			Color = Color3.new(1, 1, 1),
+			Material = Enum.Material.SmoothPlastic,
+			Transparency = 0.2,
+			CanCollide = false,
+		}).Parent = marks
+	end
+	for _, sx in { -1, 1 } do
+		for _, sz in { -1, 1 } do
+			-- along x: from half - arm to the outer edge of the corner; along z: from half - arm up to the x strip
+			strip(Vector3.new(sx * (half - arm / 2 + thick / 4), 0, sz * half), Vector3.new(arm + thick / 2, 0.08, thick))
+			strip(Vector3.new(sx * half, 0, sz * (half - arm / 2 - thick / 4)), Vector3.new(thick, 0.08, arm - thick / 2))
+		end
+	end
+	marks.Parent = self.root
+	self.hover = marks
 end
 
 -- Updates the countdowns of the drawn eggs (server time `now`, workspace:GetServerTimeNow()).

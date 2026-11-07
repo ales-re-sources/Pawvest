@@ -8,7 +8,7 @@
 -- Detail by horizontal distance from the character to the plot centre: full ≤ 60 studs, mid ≤ 120 (pets as blocks), low ≤ 300,
 -- nothing beyond (10 studs of hysteresis). Builds run on Heartbeat within BUDGET seconds per frame, the own plot first, then the
 -- nearest. The own plot's incubators carry prompts that call the handler registered with OnIncubator (the field has none since
--- U3a: SquareAt / SquareCFrame / ShowSelect / OwnRoot serve FieldHand's tap and FieldRings; U3b: ShowBorders). OwnState / OwnField return the own
+-- U3a: SquareAt / SquareCFrame / ShowSelect / OwnRoot serve FieldHand's tap and FieldRings; U3b: ShowBorders, ShowHover). OwnState / OwnField return the own
 -- plot and the owner's field state as last received (GardenSummary, U2).
 -- In Studio the folder carries the attributes Instances and Pending (tests).
 
@@ -89,6 +89,14 @@ function GardenView.ShowSelect(square: number?)
 	local view = ownView()
 	if view then
 		view:ShowSelect(square)
+	end
+end
+
+-- U3b: corner brackets on the own field's square `square` (the one the player stands on, PlotView:ShowHover); nil clears.
+function GardenView.ShowHover(square: number?)
+	local view = ownView()
+	if view then
+		view:ShowHover(square)
 	end
 end
 

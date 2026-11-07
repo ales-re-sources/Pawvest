@@ -427,6 +427,11 @@ way count against the seeds and are not sent twice (3 s). "Place on field" sits 
 the field (it moves it); "Show on field" is not built. The pop rises over the square (no barn to fly to before U4). Borders are flat
 (SmoothPlastic), not Neon: Common grey glowed white like the select outline; strips extend at inner corners. The hint line is a fixed
 300 × 40 box (AutomaticSize left a wrapped hint one line high). Pulse rule: a mode's pulse stops for the session once the mode was chosen.
+Added after the first U3b commit (the user, 2026-11-07: would a player know to tap a square?): corner brackets on the square the character
+stands on and Look's hint "Tap a square to see it" until the first tap on a square in the session; a hover outline for the mouse and the
+other tap signals (rings, pulses) are left for a later talk. A full thin outline was tried first and looked like a Common pet's border.
+Studio: the brackets follow the character (on square 9: centred on it), give way to the select outline on the selected square; a real
+click on square 3 opened its card and hid the hint; the hint fits in Czech; no errors (no profile write in this check).
 
 **Studio results U3b (2026-11-07; live profile snapshotted as `profile_9892673032_U3b_1`, restored after and checked equal; MostStars 48
 unchanged).** 7 ✔ real clicks: Basket, two quick taps on ripe squares 1 and 10 → both harvested (badge cleared, toast); Seeds → picker

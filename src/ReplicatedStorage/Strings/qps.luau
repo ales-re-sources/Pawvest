@@ -307,6 +307,7 @@ return {
 	["field.hand.seeds"] = "[!! Ťáp ěmpťý šqůářěš ťö pláňť {crop} ~~~~~~~~~~~ !!]",
 	["field.hand.basket"] = "[!! Ťáp řípě čřöpš ťö hářvěšť ťhěm ~~~~~~~~~~~~ !!]",
 	["field.hand.pets"] = "[!! Ťáp á pěť öň ýöůř fíělď ťö píčk íť ůp ~~~~~~~~~~~~~~~ !!]",
+	["field.hand.look"] = "[!! Ťáp á šqůářě ťö šěě íť ~~~~~~~~~ !!]",
 	["field.hand.dropAgain"] = "[!! Ťáp ťhě šámě šqůářě ágáíň ťö půť {pet} ťhěřě ~~~~~~~~~~~~~~~~ !!]",
 	["field.hand.pop"] = "[!! +{count} {icon} ~~ !!]",
 	["field.card.price"] = { "[!! Příčě: {count} Čöíň ~~~~~ !!]", "[!! Příčě: {count} Čöíňš ~~~~~ !!]" },

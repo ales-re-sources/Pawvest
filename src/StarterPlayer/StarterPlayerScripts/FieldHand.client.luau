@@ -15,8 +15,11 @@
 --     (a tap on a placed pet takes it in hand, its reach follows the mouse / the last tapped square, a tap on a free open square
 --     puts it there: one click with a mouse, two taps on the same square on touch; a tap on the pet's square or on Pets cancels;
 --     a free square with nothing in hand opens the pet picker), Look (default: select + card). The other taps select as in Look.
---     Leaving the range resets to Look. A hint line above the bar says what a tap does. Seeds pulses while nothing is planted and
---     seeds are held, Basket while something is ripe, each until its mode was used once this session;
+--     Leaving the range resets to Look. A hint line above the bar says what a tap does (in Look: "Tap a square" until the first
+--     tap on a square this session). Seeds pulses while nothing is planted and seeds are held, Basket while something is ripe, each
+--     until its mode was used once this session;
+--   * while the bar shows, the square the character stands on gets white corner brackets (GardenView.ShowHover; not the selected or
+--     the held pet's square): squares are things to tap, on touch screens too (no hover there);
 --   * every field remote is fired through one queue at most every FIRE_GAP seconds (the server drops actions under 0.2 s apart);
 --     a harvest result pops "+1 <crop>" over its square for POP_SECONDS.
 -- Display only: the remotes carry a square number (and a crop id / pet uid); GardenField checks plot, distance, square, seeds,
@@ -187,6 +190,8 @@ local heldFrom: number? = nil -- its square, nil while not placed
 local preview: number? = nil -- touch: the square a first tap previewed the held pet's reach on
 local hoverSquare: number? = nil
 local used = {} -- [mode] = true once chosen this session (its pulse stops)
+local tappedSquare = false -- a tap hit a square this session (Look's hint stops)
+local standing: number? = nil -- the square outlined under the character
 local pendingPlant: { [number]: { crop: string, untilClock: number } } = {}
 local pendingHarvest: { [number]: number } = {} -- [square] = until os.clock()
 local armedUntil = 0 -- Buy square's second tap is open until this os.clock()
@@ -1064,6 +1069,8 @@ function renderBar()
 		text = Locale.T("field.hand.basket")
 	elseif mode == "pets" then
 		text = Locale.T("field.hand.pets")
+	elseif mode == "look" and not tappedSquare then
+		text = Locale.T("field.hand.look")
 	end
 	handHint.Text = text
 	handHint.Visible = text ~= ""
@@ -1191,6 +1198,10 @@ local function onTap(point: Vector2, touch: boolean)
 		return
 	end
 	local square = squareUnder(point)
+	if square and not tappedSquare then
+		tappedSquare = true
+		renderBar()
+	end
 	if square and openSet()[square] and handTap(square, touch) then
 		return
 	end
@@ -1387,9 +1398,27 @@ end
 workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(watchCamera)
 watchCamera()
 
--- Every frame: the next queued remote (FIRE_GAP apart) and, with a pet in hand, its reach under the mouse
+-- the corner brackets on the square under the character (not the selected one or the held pet's square / preview)
+local function updateStanding()
+	local want = nil
+	if handBar.Visible then
+		local at = rootPosition()
+		local square = at and GardenView.SquareAt(at)
+		if square and square ~= selected and square ~= heldFrom and square ~= preview then
+			want = square
+		end
+	end
+	if want ~= standing then
+		standing = want
+		GardenView.ShowHover(want)
+	end
+end
+
+-- Every frame: the next queued remote (FIRE_GAP apart), the square under the character and, with a pet in hand, its reach
+-- under the mouse
 local lastMouse: Vector2? = nil
 RunService.Heartbeat:Connect(function()
+	updateStanding()
 	if #queue > 0 and os.clock() - lastFire >= FIRE_GAP then
 		lastFire = os.clock()
 		local item = table.remove(queue, 1)

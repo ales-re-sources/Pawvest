@@ -307,6 +307,7 @@ return {
 	["field.hand.seeds"] = "Klepej na prázdná políčka a sázej: {crop}",
 	["field.hand.basket"] = "Klepej na zralou úrodu a sklízej ji",
 	["field.hand.pets"] = "Klepni na mazlíčka na poli a vezmi ho do ruky",
+	["field.hand.look"] = "Klepni na políčko a uvidíš, co na něm je",
 	["field.hand.dropAgain"] = "{pet}: klepni na stejné políčko ještě jednou",
 	["field.hand.pop"] = "+{count} {icon}",
 	["field.card.price"] = { "Cena: {count} mince", "Cena: {count} mince", "Cena: {count} mincí" },

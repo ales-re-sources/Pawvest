@@ -551,7 +551,9 @@ otherwise items could be duplicated across servers.
   square number (and a crop id or pet uid); `GardenField` checks everything as before.
 - **Hand bar (U3b, 2026-11-07).** While the tap range applies, four bricks: 🌱 Seeds, 🧺 Basket, 🐾 Pets, ✋ Look (default); a row at the
   bottom right with a mouse, a 2 x 2 block above the jump button on a touch screen without a keyboard (the card then keeps clear of it). The
-  active one is raised and framed; a line above the bar says what a tap does. Seeds: the card picks a seed (count, grow time), then every tap
+  active one is raised and framed; a line above the bar says what a tap does (in Look: "Tap a square to see it" until the first tap on a
+  square in the session). The square the character stands on carries white corner brackets (not on the selected square), so a player
+  without a mouse sees that squares are things to tap; brackets, not a full outline, so they never look like a reach border. Seeds: the card picks a seed (count, grow time), then every tap
   on an empty open square plants it; the brick shows the seed and the count left; with none left a tap reopens the picker. Basket: every tap
   on a ripe square harvests that one (never all: harvest-all is the paid Wheelbarrow, D2). Pets: a tap on a placed pet takes it in hand
   (outline on its square, its reach tinted under the mouse, or on the last tapped square on touch); a tap on a free open square puts it there

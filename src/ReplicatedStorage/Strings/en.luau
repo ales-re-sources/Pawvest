@@ -307,6 +307,7 @@ return {
 	["field.hand.seeds"] = "Tap empty squares to plant {crop}",
 	["field.hand.basket"] = "Tap ripe crops to harvest them",
 	["field.hand.pets"] = "Tap a pet on your field to pick it up",
+	["field.hand.look"] = "Tap a square to see it",
 	["field.hand.dropAgain"] = "Tap the same square again to put {pet} there",
 	["field.hand.pop"] = "+{count} {icon}",
 	["field.card.price"] = { "Price: {count} Coin", "Price: {count} Coins" },
