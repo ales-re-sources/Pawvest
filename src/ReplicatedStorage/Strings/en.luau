@@ -2,7 +2,7 @@
 -- `python tools/loc.py build`.
 return {
 	["settings.title"] = "Settings",
-	["settings.music"] = "Music: {state}",
+	["settings.sound"] = "Sound: {state}",
 	["common.on"] = "On",
 	["common.off"] = "Off",
 	["settings.language"] = "Language: {name}",
@@ -292,7 +292,7 @@ return {
 	["field.section.seeds"] = "Seeds",
 	["field.seed.info"] = "Grows in {time}\nSells for {sale} · Seed {seed} · You have {stock}",
 	["field.seed.locked"] = "🔒 Renown {level}",
-	["field.seed.rareInfo"] = "Grows in {time}\nSells for {sale} · You have {stock}",
+	["field.seed.rareInfo"] = "Grows in {time}\r\nSells for {sale} · You have {stock}",
 	["field.seed.fromWorld"] = "⭐ Medals in {world}",
 	["field.barn"] = "Barn: {total} / {capacity} seeds",
 	["field.seed.note"] = "Prices are in Coins.",
@@ -354,7 +354,7 @@ return {
 	["field.reason.items"] = "You do not have that many",
 	["field.reason.maxed"] = "Your field is complete",
 	["field.reason.stale"] = "Out of date, try again",
-	["field.pet.label"] = "{name}\n<font color='#a8e6a0'>{jobs}</font>",
+	["field.pet.label"] = "{name}\r\n<font color='#a8e6a0'>{jobs}</font>",
 	["field.section.pets"] = "Field pets {used} / {slots}",
 	["field.slot.done"] = "All field pet slots bought.",
 	["field.petPicker.title"] = "Pet for square {n}",

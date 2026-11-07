@@ -2,7 +2,7 @@
 -- `python tools/loc.py build`.
 return {
 	["settings.title"] = "Nastavení",
-	["settings.music"] = "Hudba: {state}",
+	["settings.sound"] = "Zvuk: {state}",
 	["common.on"] = "Zapnuto",
 	["common.off"] = "Vypnuto",
 	["settings.language"] = "Jazyk: {name}",
@@ -292,7 +292,7 @@ return {
 	["field.section.seeds"] = "Semínka",
 	["field.seed.info"] = "Zraje {time}\nProdej {sale} · Semínko {seed} · Máš {stock}",
 	["field.seed.locked"] = "🔒 Pověst {level}",
-	["field.seed.rareInfo"] = "Zraje {time}\nProdej {sale} · Máš {stock}",
+	["field.seed.rareInfo"] = "Zraje {time}\r\nProdej {sale} · Máš {stock}",
 	["field.seed.fromWorld"] = "⭐ Za medaile: {world}",
 	["field.barn"] = "Stodola: {total} / {capacity} semínek",
 	["field.seed.note"] = "Ceny jsou v mincích.",
@@ -354,7 +354,7 @@ return {
 	["field.reason.items"] = "Tolik jich nemáš",
 	["field.reason.maxed"] = "Tvoje pole je kompletní",
 	["field.reason.stale"] = "Údaje se mezitím změnily, zkus to znovu",
-	["field.pet.label"] = "{name}\n<font color='#a8e6a0'>{jobs}</font>",
+	["field.pet.label"] = "{name}\r\n<font color='#a8e6a0'>{jobs}</font>",
 	["field.section.pets"] = "Mazlíčci na poli {used} / {slots}",
 	["field.slot.done"] = "Máš všechna místa pro mazlíčky na poli.",
 	["field.petPicker.title"] = "Mazlíček na políčko {n}",

@@ -684,8 +684,8 @@ LAYOUT.md "Adding a world stage" plus the `StageConfig` entry (`world`, `require
   window dies (the kill box reaches about 1.9 studs from a beam's centre).
 - **Music:** `StageMusic.client.luau` (a `Music` Sound in the stage folder: attributes `BPM`, `Metronome`, `BaseVolume`; plays while that stage's run
   is active, ticks on every beat from run time with a higher tick on bar starts; a looped track would use `TimePosition` = run time mod length);
-  the placeholder tick is the Creator Store sound `ui_click_2` (asset 110948579458469, by Doimens). `MusicSettings.client.luau` adds a
-  "Music: On / Off" row to the Settings panel (player attribute `MusicMuted`, session only).
+  the placeholder tick is the Creator Store sound `ui_click_2` (asset 110948579458469, by Doimens). `SoundSettings.client.luau` adds a
+  "Sound: On / Off" row to the Settings panel (player attribute `SoundMuted`, session only; it mutes all game sounds through a master SoundGroup).
 - **Coins** `Blink_1`..`_8` (5 easy 20, 2 risky 50, 1 talent 100 = 300): side pads off the course, a 2 x 2 pad opposite a piston, a coin hanging in a
   beam curtain's plane over a gap (collect it mid-jump while the beam is off) and a tower 11.5 studs above the last floor (Double Jump).
 - **StageConfig:** key `Blink`, displayName "Stage 3", order 3, world 1, `tBase` **60** (provisional; the perfect run takes about 40 s, so 80 was too

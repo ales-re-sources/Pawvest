@@ -1,9 +1,9 @@
 ﻿key,context,en,cs,cs_status,cs_en_hash
 # Settings panel,,,,,
 settings.title,Title of the Settings panel (⚙ icon); the text is set by LanguageSettings,Settings,Nastavení,ok,h453d7fe8
-settings.music,"Settings panel, Music row; {state} = common.on / common.off",Music: {state},Hudba: {state},ok,h7e079ff8
-common.on,State of a setting that is on (Music row),On,Zapnuto,ok,h88870f51
-common.off,State of a setting that is off (Music row),Off,Vypnuto,ok,h23ccb8cc
+settings.sound,"Settings panel, Sound row (mutes all game sounds and music); {state} = common.on / common.off",Sound: {state},Zvuk: {state},new,h628df0d4
+common.on,State of a setting that is on (Sound row),On,Zapnuto,ok,h88870f51
+common.off,State of a setting that is off (Sound row),Off,Vypnuto,ok,h23ccb8cc
 settings.language,"Settings panel, Language row; {name} = a language name in its own language (English, Čeština) or settings.language.auto",Language: {name},Jazyk: {name},ok,hd53397e5
 settings.language.auto,Language row while the language follows the player's Roblox locale; {name} = that language,Automatic ({name}),Automaticky ({name}),ok,h5f0769cc
 "# Names: hub, worlds, stages",,,,,
@@ -351,7 +351,7 @@ field.seed.locked,"Seed row of a crop above the player's Renown level, replaces 
 field.seed.rareInfo,"Seed row of a rare crop (E2: seeds only from obby medals), second and third line (
  = line break); {time} = grow time, {sale} = Coins one crop sells for, {stock} = seeds the player has","Grows in {time}
 Sells for {sale} · You have {stock}","Zraje {time}
-Prodej {sale} · Máš {stock}",new,h7f8b071a
+Prodej {sale} · Máš {stock}",new,hf8f7e61e
 field.seed.fromWorld,"Seed row of a rare crop, replaces the buy buttons (narrow, wraps): its seeds are earned with medals on the stages of {world} (world.name.*, Czech: nominative ""1. svět"")",⭐ Medals in {world},⭐ Za medaile: {world},new,h52450e9e
 field.barn,"Line under the seed list; {total} = seeds held, {capacity} = what the barn holds",Barn: {total} / {capacity} seeds,Stodola: {total} / {capacity} semínek,new,hdfd10ae1
 field.seed.note,Small note under the seed list,Prices are in Coins.,Ceny jsou v mincích.,new,hd2ae55c1
@@ -421,7 +421,7 @@ field.reason.maxed,Refused: all squares are bought,Your field is complete,Tvoje 
 field.reason.stale,"Refused: the panel showed old data (double click, lag)","Out of date, try again","Údaje se mezitím změnily, zkus to znovu",new,ha5b6c678
 field.pet.label,"Label over a pet working on a field square, only for a pet with a given name (rich text, green second line). {name} = the pet's name (user text), {jobs} = its job icons and levels, ""🌱4 🛡2"" (field.job.*). Never the pet's level (U3a)","{name}
 <font color='#a8e6a0'>{jobs}</font>","{name}
-<font color='#a8e6a0'>{jobs}</font>",new,hceea6416
+<font color='#a8e6a0'>{jobs}</font>",new,h385549f1
 field.section.pets,"Heading of the field panel's pet section; {used} = pets on the field, {slots} = field pet slots owned",Field pets {used} / {slots},Mazlíčci na poli {used} / {slots},new,ha5e701a6
 field.slot.done,Field panel: every field pet slot is bought,All field pet slots bought.,Máš všechna místa pro mazlíčky na poli.,new,hadffe186
 field.petPicker.title,Title of the pet picker opened at a field square; {n} = square number,Pet for square {n},Mazlíček na políčko {n},new,hb5233c8c

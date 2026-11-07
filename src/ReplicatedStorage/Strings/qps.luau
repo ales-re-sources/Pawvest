@@ -2,7 +2,7 @@
 -- `python tools/loc.py build`.
 return {
 	["settings.title"] = "[!! Šěťťíňgš ~~~ !!]",
-	["settings.music"] = "[!! Můšíč: {state} ~~~ !!]",
+	["settings.sound"] = "[!! Šöůňď: {state} ~~~ !!]",
 	["common.on"] = "[!! Öň ~~ !!]",
 	["common.off"] = "[!! Öff ~~ !!]",
 	["settings.language"] = "[!! Láňgůágě: {name} ~~~~ !!]",
@@ -292,7 +292,7 @@ return {
 	["field.section.seeds"] = "[!! Šěěďš ~~ !!]",
 	["field.seed.info"] = "[!! Gřöwš íň {time}\nŠěllš föř {sale} · Šěěď {seed} · Ýöů hávě {stock} ~~~~~~~~~~~~~~~~ !!]",
 	["field.seed.locked"] = "[!! 🔒 Řěňöwň {level} ~~~~ !!]",
-	["field.seed.rareInfo"] = "[!! Gřöwš íň {time}\nŠěllš föř {sale} · Ýöů hávě {stock} ~~~~~~~~~~~~ !!]",
+	["field.seed.rareInfo"] = "[!! Gřöwš íň {time}\r\nŠěllš föř {sale} · Ýöů hávě {stock} ~~~~~~~~~~~~~ !!]",
 	["field.seed.fromWorld"] = "[!! ⭐ Měďálš íň {world} ~~~~~ !!]",
 	["field.barn"] = "[!! Bářň: {total} / {capacity} šěěďš ~~~~~~ !!]",
 	["field.seed.note"] = "[!! Příčěš ářě íň Čöíňš. ~~~~~~~~ !!]",
@@ -354,7 +354,7 @@ return {
 	["field.reason.items"] = "[!! Ýöů ďö ňöť hávě ťháť máňý ~~~~~~~~~~ !!]",
 	["field.reason.maxed"] = "[!! Ýöůř fíělď íš čömplěťě ~~~~~~~~~ !!]",
 	["field.reason.stale"] = "[!! Öůť öf ďáťě, ťřý ágáíň ~~~~~~~~~ !!]",
-	["field.pet.label"] = "[!! {name}\n<font color='#a8e6a0'>{jobs}</font> ~~ !!]",
+	["field.pet.label"] = "[!! {name}\r\n<font color='#a8e6a0'>{jobs}</font> ~~ !!]",
 	["field.section.pets"] = "[!! Fíělď pěťš {used} / {slots} ~~~~~~ !!]",
 	["field.slot.done"] = "[!! Áll fíělď pěť šlöťš böůghť. ~~~~~~~~~~~ !!]",
 	["field.petPicker.title"] = "[!! Pěť föř šqůářě {n} ~~~~~~ !!]",

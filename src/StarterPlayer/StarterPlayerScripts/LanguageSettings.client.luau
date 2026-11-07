@@ -1,4 +1,4 @@
--- LanguageSettings (L1, docs/LOCALIZATION.md): the "Language" row of the Settings panel, below the Music row. Each click
+-- LanguageSettings (L1, docs/LOCALIZATION.md): the "Language" row of the Settings panel, below the Sound row. Each click
 -- moves to the next choice, Automatic -> English -> Čeština (-> [Pseudo] in Studio and for admins) -> Automatic, and asks
 -- the server (LanguageRemotes.Set); the server stores it in the profile and sets the player attributes LanguageSetting /
 -- Language, which every GUI follows. The panel is part of the ScreenGui that is re-created on every respawn, so the row is

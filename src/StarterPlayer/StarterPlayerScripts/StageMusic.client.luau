@@ -4,7 +4,7 @@
 -- one on the first beat of each bar, instead of looping it), BaseVolume (optional, default the Sound's Volume).
 -- While the player's timer runs on that stage (StageTimerUpdate) the sound plays; it stops when the run ends or is
 -- cancelled. A looped track is kept at TimePosition = run time mod TimeLength (re-synced when it drifts). The player
--- attribute MusicMuted (set by MusicSettings) silences it.
+-- attribute SoundMuted (set by SoundSettings) silences it.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -25,7 +25,7 @@ local baseVolume = 1
 local lastBeat = -1
 
 local function muted(): boolean
-	return player:GetAttribute("MusicMuted") == true
+	return player:GetAttribute("SoundMuted") == true
 end
 
 local function stopMusic()
