@@ -8,7 +8,9 @@
 -- and obby XP train now marked ▲ like the row's chip, U1; title in the trait's colour (PetRow.Traits); Cuteness: the Coin bonus and its
 -- XP; the work traits: level / rarity cap, effect bar, field hours to the next level, reach; E2c Scouting: meter bonus, medal finishes
 -- to the next level, the equipped scouts' total; E4b Pest control: the chance to chase crows off, the speciality, the squares it
--- guards), Equip / Unequip, and at the bottom under "More" a small grey Sell brick (U1: two taps, orange "Sure? +N"). Every player has
+-- guards), Equip / Unequip, and at the bottom under "More" a small grey Sell brick (U1: two taps, orange "Sure? +N") and, while the
+-- field's hand bar shows (FieldHandGui attribute HandShown) for a resting pet with Tending or Pest control, "Place on field" (U3b:
+-- closes the Pets panel and puts the pet in hand in Pets mode through FieldHandGui's HoldPet attribute). Every player has
 -- the crop field (the user, 2026-11-06): no "for later" cards any more. Under the header the name row
 -- (P3b): a text box and a button that names (free the first time), renames (PetConfig.RenamePrice) or removes the name; the server
 -- cleans, filters and prices it (PetRemotes.Rename), the page shows only the filtered name it sends back. The page re-renders on
@@ -17,6 +19,7 @@
 -- crop with its XP, Feed (one) and All (as many as the pet can take); GardenRemotes.FeedCrop, the server clamps and answers on
 -- GardenRemotes.Result ("FeedCrop"). The held crops come from GardenRemotes.State.field.items.
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
@@ -323,12 +326,23 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		Size = UDim2.fromOffset(150, BRICK),
 		TextSize = 14,
 	}, 2)
+	local placeButton = button("PlaceOnField", {
+		Position = UDim2.fromOffset(158, 0),
+		Size = UDim2.new(1, -160, 0, BRICK),
+		TextSize = 14,
+		TextWrapped = true,
+		BackgroundColor3 = COLOR_EQUIP,
+		Visible = false,
+	}, 2)
 	create("Frame", {
 		Name = "SellRow",
 		LayoutOrder = 96,
 		Size = UDim2.new(1, -2, 0, BRICK + 4),
 		BackgroundTransparency = 1,
-	}, { sellButton }).Parent = content
+	}, { sellButton, placeButton }).Parent = content
+	local function fieldHandGui(): Instance?
+		return Players.LocalPlayer:FindFirstChildOfClass("PlayerGui") and Players.LocalPlayer.PlayerGui:FindFirstChild("FieldHandGui")
+	end
 
 	local cards = {}
 	local heldCrops: { [string]: number } = {} -- GardenRemotes.State.field.items (E1a3)
@@ -726,6 +740,12 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		moreLabel.Text = Locale.T("petDetail.more")
 		sellButton.Text = Locale.T(if sellArmed then "pets.sellSure" else "pets.sell", { price = owned.sellValue })
 		sellButton.BackgroundColor3 = if sellArmed then COLOR_SELL_ARMED else COLOR_LOCKED
+		local hand = fieldHandGui()
+		placeButton.Visible = hand ~= nil
+			and hand:GetAttribute("HandShown") == true
+			and not owned.equipped
+			and (owned.tending > 0 or owned.guard > 0)
+		placeButton.Text = Locale.T("petDetail.placeOnField")
 		updateName()
 		return true
 	end
@@ -797,6 +817,17 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		else
 			remotes.Equip:FireServer(owned.uid)
 		end
+	end)
+
+	placeButton.Activated:Connect(function()
+		local owned = pet()
+		local hand = fieldHandGui()
+		if not (owned and hand) then
+			return
+		end
+		api.Close()
+		onClose() -- the whole Pets panel: the field is behind it
+		hand:SetAttribute("HoldPet", owned.uid)
 	end)
 
 	sellButton.Activated:Connect(function()
@@ -892,6 +923,17 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 	Locale.Changed:Connect(function()
 		if currentUid then
 			render()
+		end
+	end)
+	task.spawn(function()
+		-- the hand bar shows / hides while the page is open: "Place on field" follows
+		local hand = Players.LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("FieldHandGui", 60)
+		if hand then
+			hand:GetAttributeChangedSignal("HandShown"):Connect(function()
+				if currentUid then
+					render()
+				end
+			end)
 		end
 	end)
 

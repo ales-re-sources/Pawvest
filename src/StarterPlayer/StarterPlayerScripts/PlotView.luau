@@ -15,7 +15,8 @@
 -- locked squares carry grass tufts (U3a; full detail). Field pets stand on their squares (full: the PetLook model with a label of
 -- its name and job icons, never its level; mid: a block). The field has no prompts (U3a): the own plot's field parts are
 -- CanQuery so FieldHand's tap ray hits them, SquareAt maps a world point to a square, ShowSelect outlines the selected square
--- and ShowReach tints the squares a pet would work.
+-- and ShowReach tints the squares a pet would work. ShowBorders (U3b) draws the placed pets' reach regions as thin borders in their
+-- rarity colours (FieldRings computes the regions).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -55,6 +56,7 @@ local COLORS = {
 }
 local SPROUT = Color3.fromRGB(110, 190, 80) -- unripe crops (stage 1-2)
 local REACH = Color3.fromRGB(255, 230, 120) -- ShowReach tint
+local BORDER_INSET, BORDER_LANE, BORDER_WIDTH = 0.45, 0.35, 0.25 -- ShowBorders: studs inside a region's edge, per lane, strip width
 local TUFTS = { -- grass tufts on a locked square (U3a): local x, z (in squares), height, yaw, colour
 	{ -0.22, -0.18, 1.3, 20, Color3.fromRGB(96, 150, 62) },
 	{ 0.2, 0.05, 1.0, 55, Color3.fromRGB(70, 112, 46) },
@@ -649,6 +651,95 @@ function PlotView:ShowReach(squares: { number }?)
 	end
 	tint.Parent = self.root
 	self.reach = tint
+end
+
+-- Thin borders around field regions (U3b: the squares each placed pet counts for), until called again; nil or {} clears.
+-- `borders` = { { squares = { number }, color = Color3, lane = 0..2 } }: one border per entry along the outer edges of its region
+-- (collinear edges of neighbouring squares merged into one strip), BORDER_INSET + lane x BORDER_LANE studs inside the edge, so
+-- two regions that share an edge draw side by side; a strip ends where its perpendicular neighbour runs (shorter at an outer
+-- corner, longer at an inner one). Not Neon: a light rarity colour must not glow white like the select outline. 0.26-0.32 over the floor centre: above the soil top (0.25), under the reach
+-- tint (0.28-0.38) and the select outline (0.30-0.46) without a shared face.
+function PlotView:ShowBorders(borders)
+	if self.borders then
+		self.borders:Destroy()
+		self.borders = nil
+	end
+	if not (borders and #borders > 0 and (self.detail == "full" or self.detail == "mid")) then
+		return
+	end
+	local G = CropConfig.GridColumns
+	local model = Instance.new("Model")
+	model.Name = "Borders"
+	for index, border in borders do
+		local inside = {}
+		for _, n in border.squares do
+			local row, col = CropConfig.Cell(n)
+			if row then
+				inside[row * 100 + col] = true
+			end
+		end
+		local inset = BORDER_INSET + (border.lane or 0) * BORDER_LANE
+		-- runs[key] = sorted positions along the edge line; key = axis .. side .. line
+		local runs = {}
+		local function add(key: string, at: number)
+			runs[key] = runs[key] or {}
+			table.insert(runs[key], at)
+		end
+		for key in inside do
+			local row, col = key // 100, key % 100
+			if not inside[(row - 1) * 100 + col] then
+				add("z-" .. row, col)
+			end
+			if not inside[(row + 1) * 100 + col] then
+				add("z+" .. row, col)
+			end
+			if not inside[row * 100 + col - 1] then
+				add("x-" .. col, row)
+			end
+			if not inside[row * 100 + col + 1] then
+				add("x+" .. col, row)
+			end
+		end
+		local function strip(center: Vector3, size: Vector3)
+			part({
+				Name = "Border" .. index,
+				Size = size,
+				CFrame = self:at(center),
+				Color = border.color,
+				Material = Enum.Material.SmoothPlastic,
+				Transparency = 0.1,
+				CanCollide = false,
+			}).Parent = model
+		end
+		for key, list in runs do
+			table.sort(list)
+			local axis, side, line = string.sub(key, 1, 1), string.sub(key, 2, 2), tonumber(string.sub(key, 3)) :: number
+			local first = 1
+			for i = 1, #list do
+				if i == #list or list[i + 1] ~= list[i] + 1 then
+					local a, b = list[first], list[i]
+					first = i + 1
+					-- each end: the next cell along the run inside the region = an inner corner (reach past the cell's edge to
+					-- the perpendicular strip), outside = an outer corner (stop short of it)
+					if axis == "z" then
+						-- an edge along x at the front (-) or back (+) of row `line`, columns a..b
+						local z = FIELD_FRONT + (if side == "-" then line - 1 else line) * FIELD_PITCH + (if side == "-" then inset else -inset)
+						local x0 = (a - 1 - G / 2) * FIELD_PITCH + (if inside[line * 100 + a - 1] then -inset else inset)
+						local x1 = (b - G / 2) * FIELD_PITCH + (if inside[line * 100 + b + 1] then inset else -inset)
+						strip(Vector3.new((x0 + x1) / 2, 0.29, z), Vector3.new(math.max(x1 - x0, 0.5), 0.06, BORDER_WIDTH))
+					else
+						-- an edge along z at the left (-) or right (+) of column `line`, rows a..b
+						local x = (if side == "-" then line - 1 else line) * FIELD_PITCH - G / 2 * FIELD_PITCH + (if side == "-" then inset else -inset)
+						local z0 = FIELD_FRONT + (a - 1) * FIELD_PITCH + (if inside[(a - 1) * 100 + line] then -inset else inset)
+						local z1 = FIELD_FRONT + b * FIELD_PITCH + (if inside[(b + 1) * 100 + line] then inset else -inset)
+						strip(Vector3.new(x, 0.29, (z0 + z1) / 2), Vector3.new(BORDER_WIDTH, 0.06, math.max(z1 - z0, 0.5)))
+					end
+				end
+			end
+		end
+	end
+	model.Parent = self.root
+	self.borders = model
 end
 
 -- The field square under world point `position` (its grid cell, locked squares and the paths between squares included), or nil

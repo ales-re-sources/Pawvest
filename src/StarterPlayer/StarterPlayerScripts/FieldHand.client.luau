@@ -1,4 +1,4 @@
--- FieldHand (U3a, docs/GDD.md §7.9): acting on the own field by tapping a square, no prompts.
+-- FieldHand (U3a + U3b, docs/GDD.md §7.9): acting on the own field by tapping a square, no prompts.
 --   * tap (TouchTapInWorld) / click (left button pressed and released within TAP_SECONDS and TAP_PIXELS, not over a GUI) while
 --     the character is within TAP_DISTANCE (horizontal) of the own plot centre: a ray against the own plot's view (GardenView)
 --     or the field's plane picks a square; it gets a white outline and the square card slides up at the bottom. Tapping the
@@ -6,16 +6,28 @@
 --   * square card: crop icon and name (or empty / overgrown), a progress bar with the time left (ripe: full, "Ripe!"), the
 --     growth boosts that apply (Growth upgrade, Cloches), a row per field pet whose reach covers the square (portrait, job icons,
 --     what it does there; a tap opens its pet page through PetsGui's OpenPet attribute) and the context buttons: Plant (seed
---     picker), Harvest, Place pet (pet picker), Move pet (the next tap on a free square places it there), Take back, Buy square
---     (price and Renown of the next square; over CONFIRM_PRICE Coins a second tap within CONFIRM_SECONDS confirms);
---   * a placed pet's reach is tinted for REACH_SECONDS (GardenView.ShowReach), as is the reach of a row hovered in the pet picker.
+--     picker), Harvest, Place pet (pet picker), Move pet (takes the pet in hand, Pets mode), Take back, Buy square (price and
+--     Renown of the next square; over CONFIRM_PRICE Coins a second tap within CONFIRM_SECONDS confirms);
+--   * a placed pet's reach is tinted for REACH_SECONDS (GardenView.ShowReach), as is the reach of a row hovered in the pet picker;
+--   * hand bar (U3b, shown while the tap range applies; a 2 x 2 block above the jump button on a touch screen without a keyboard,
+--     else a row at the bottom right): Seeds (picks a seed in the card, then every tap on an empty square plants it; the button
+--     shows the seed and the count left), Basket (every tap on a ripe square harvests it: one Harvest per tap, never all), Pets
+--     (a tap on a placed pet takes it in hand, its reach follows the mouse / the last tapped square, a tap on a free open square
+--     puts it there: one click with a mouse, two taps on the same square on touch; a tap on the pet's square or on Pets cancels;
+--     a free square with nothing in hand opens the pet picker), Look (default: select + card). The other taps select as in Look.
+--     Leaving the range resets to Look. A hint line above the bar says what a tap does. Seeds pulses while nothing is planted and
+--     seeds are held, Basket while something is ripe, each until its mode was used once this session;
+--   * every field remote is fired through one queue at most every FIRE_GAP seconds (the server drops actions under 0.2 s apart);
+--     a harvest result pops "+1 <crop>" over its square for POP_SECONDS.
 -- Display only: the remotes carry a square number (and a crop id / pet uid); GardenField checks plot, distance, square, seeds,
 -- Renown and Coins and answers on GardenRemotes.Result (FieldClient shows the toasts). Times: workspace:GetServerTimeNow().
 -- The GUI is built here (ScreenGui FieldHandGui; stud bricks, StudStyle). Card width: at most CARD_WIDTH, and on a touch screen
 -- clear of the thumbstick and the jump button (TOUCH_SIDE on each side); it sits above FieldClient's Field button.
--- Test hook (FieldHandGui attribute, cleared after use): Select = square selects it as a tap would (display checks).
--- Buttons by path: FieldHandGui.Card.Body.Buttons.<Plant|Harvest|PlacePet|MovePet|TakeBack|Buy|Cancel>, .Header.Close,
--- .Body.Pets.Pet_<uid>, .Body.List.<CropId> (seed picker) / .Body.List.Pet_<uid> (pet picker), .Body.List.Shop.
+-- FieldHandGui attributes: Select = square selects it as a tap would (test hook, cleared after use); HoldPet = uid takes that
+-- pet in hand in Pets mode (the pet page's "Place on field", cleared after use); HandShown (set here) = whether the bar shows.
+-- Buttons by path: FieldHandGui.Card.Body.Buttons.<Plant|Harvest|PlacePet|MovePet|TakeBack|Buy|Shop>, .Header.Close,
+-- .Body.Pets.Pet_<uid>, .Body.List.<CropId> (seed picker) / .Body.List.Pet_<uid> (pet picker); FieldHandGui.HandBar.
+-- <Seeds|Basket|Pets|Look>, .HandBar.Hint.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -56,6 +68,12 @@ local CONFIRM_PRICE = 1000
 local CONFIRM_SECONDS = 3
 local REACH_SECONDS = 3
 local TICK_SECONDS = 0.25
+local FIRE_GAP = 0.25 -- s between two field remotes (the server's limit is 0.2)
+local PENDING_SECONDS = 3 -- a planted / harvested square waits this long for the State before it counts as free again
+local POP_SECONDS = 1
+local HAND_BUTTON = 52
+local HAND_GAP = 6
+local HAND_RAISE = 6 -- px the active mode's button is raised
 local LIST_MAX = 300 -- px: the pickers' list scrolls beyond this
 
 local COLOR_PANEL = StudStyle.PanelColors.Field
@@ -161,7 +179,16 @@ local fieldState = nil -- GardenRemotes.State.field (FieldClient's comment lists
 local receivedAt = 0
 local selected: number? = nil
 local page = "card" -- what the card shows: "card", "seeds" (seed picker) or "pets" (pet picker)
-local moving: string? = nil -- uid of the pet whose Move pet waits for a free square
+local cardOpen = false
+local mode = "look" -- hand mode (U3b): "look", "seeds", "basket" or "pets"
+local handSeed: string? = nil -- the crop id Seeds mode plants
+local held: string? = nil -- uid of the pet in hand (Pets mode)
+local heldFrom: number? = nil -- its square, nil while not placed
+local preview: number? = nil -- touch: the square a first tap previewed the held pet's reach on
+local hoverSquare: number? = nil
+local used = {} -- [mode] = true once chosen this session (its pulse stops)
+local pendingPlant: { [number]: { crop: string, untilClock: number } } = {}
+local pendingHarvest: { [number]: number } = {} -- [square] = until os.clock()
 local armedUntil = 0 -- Buy square's second tap is open until this os.clock()
 local reachToken = 0
 local barFill: Frame? = nil
@@ -205,6 +232,43 @@ local function contains(list: { number }, n: number): boolean
 	return table.find(list, n) ~= nil
 end
 
+local queue = {} -- { remote, args } fired one by one, FIRE_GAP apart
+local lastFire = 0
+local function fire(remote: RemoteEvent, ...)
+	table.insert(queue, { remote, table.pack(...) })
+end
+
+local function ripeEntry(entry): boolean
+	local crop = entry and CropConfig.ById[entry.crop]
+	if not crop then
+		return false
+	end
+	local _, ripe = progress(entry, crop, workspace:GetServerTimeNow())
+	return ripe
+end
+
+-- seeds of `crop` held minus the plantings still on their way
+local function seedsLeft(crop: string): number
+	local count = (fieldState and fieldState.seeds or {})[crop] or 0
+	local now = os.clock()
+	for square, item in pendingPlant do
+		if item.untilClock < now then
+			pendingPlant[square] = nil
+		elseif item.crop == crop then
+			count -= 1
+		end
+	end
+	return math.max(count, 0)
+end
+
+local function heldLevel(): number
+	local owned = held and PetClient.State and PetClient.State.pets[held]
+	if not owned then
+		return 0
+	end
+	return math.max(PetConfig.AptitudeLevel(owned, "Tending"), PetConfig.AptitudeLevel(owned, "PestControl"))
+end
+
 -- GUI --------------------------------------------------------------------------------------------------------------------------
 
 local screenGui = create("ScreenGui", {
@@ -243,10 +307,15 @@ local body = create("Frame", {
 
 local portraits = PetPortrait.Cache()
 
+local handBar: Frame -- forward (the hand bar, built below)
+
 local function cardWidth(): number
 	local camera = workspace.CurrentCamera
 	local viewport = if camera then camera.ViewportSize.X else 800
 	local side = if UserInputService.TouchEnabled then TOUCH_SIDE else 12
+	if UserInputService.TouchEnabled and handBar and handBar.Visible then
+		side = math.max(side, viewport - handBar.AbsolutePosition.X + GAP) -- clear of the 2 x 2 bar above the jump button
+	end
 	return math.floor(math.max(200, math.min(CARD_WIDTH, viewport - 2 * side)))
 end
 
@@ -347,17 +416,21 @@ local function buttonRow(order: number, specs)
 end
 
 local render -- forward
+local hold -- forward: (uid, square?) takes a pet in hand (Pets mode)
+local renderBar -- forward
 
 -- Card pages ---------------------------------------------------------------------------------------------------------------------
 
 local function closeCard()
-	selected, moving, page = nil, nil, "card"
-	GardenView.ShowSelect(nil)
-	GardenView.ShowReach(nil)
+	selected, page, cardOpen = nil, "card", false
+	if not held then
+		GardenView.ShowSelect(nil)
+		GardenView.ShowReach(nil)
+	end
 	if card.Visible then
 		local tween = TweenService:Create(card, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Position = UDim2.new(0.5, 0, 1, 400) })
 		tween.Completed:Connect(function()
-			if not selected then
+			if not cardOpen then
 				card.Visible = false
 				clearBody()
 			end
@@ -510,7 +583,7 @@ local function renderLocked(square: number)
 					return
 				end
 				armedUntil = 0
-				buySquareEvent:FireServer(square, #(fieldState.open or {}))
+				fire(buySquareEvent, square, #(fieldState.open or {}))
 			end,
 		},
 	})
@@ -540,24 +613,6 @@ local function renderCard()
 		paragraph("Hint", 3, { TextSize = 15, Text = Locale.T("field.card.emptyHint") }).Parent = body
 	end
 	petRows(square, 4)
-	if moving then
-		local uid = moving
-		local owned = PetClient.State and PetClient.State.pets[uid]
-		paragraph("Moving", 5, {
-			Font = StudStyle.Font,
-			TextSize = 17,
-			TextColor3 = COLOR_OK,
-			Text = Locale.T("field.card.moving", { pet = if owned then petName(uid, owned.Kind) else "" }),
-		}).Parent = body
-		buttonRow(9, {
-			{ name = "Cancel", color = COLOR_OFF, text = Locale.T("field.card.cancel"), action = function()
-				moving = nil
-				GardenView.ShowReach(nil)
-				render()
-			end },
-		})
-		return
-	end
 	local specs = {}
 	if not crop then
 		table.insert(specs, { name = "Plant", color = COLOR_GO, text = Locale.T("field.card.plant"), action = function()
@@ -566,18 +621,15 @@ local function renderCard()
 		end })
 	elseif ripe then
 		table.insert(specs, { name = "Harvest", color = COLOR_GO, text = Locale.T("field.card.harvest"), action = function()
-			harvestEvent:FireServer(square)
+			fire(harvestEvent, square)
 		end })
 	end
 	if pet then
 		table.insert(specs, { name = "MovePet", color = COLOR_PET, text = Locale.T("field.card.movePet"), action = function()
-			moving = pet.uid
-			local level = math.max(pet.apt or 0, if type(pet.guard) == "table" then pet.guard.level else 0)
-			GardenView.ShowReach(reachOf(square, level))
-			render()
+			hold(pet.uid, square)
 		end })
 		table.insert(specs, { name = "TakeBack", color = COLOR_OFF, text = Locale.T("field.card.takeBack"), action = function()
-			liftPetEvent:FireServer(pet.uid)
+			fire(liftPetEvent, pet.uid)
 		end })
 	else
 		table.insert(specs, { name = "PlacePet", color = COLOR_PET, text = Locale.T("field.card.placePet"), action = function()
@@ -646,10 +698,10 @@ local function back()
 	render()
 end
 
--- the seed picker: the seeds held (count, grow time); without seeds a hint and the way to the seed shop
-local function renderSeeds()
-	local square = selected :: number
-	header(Locale.T("field.picker.title", { n = square }), back)
+-- the seed picker: the seeds held (count, grow time); without seeds a hint and the way to the seed shop. With `square` nil it
+-- picks the seed of the hand's Seeds mode.
+local function renderSeeds(square: number?)
+	header(if square then Locale.T("field.picker.title", { n = square }) else Locale.T("field.hand.pickSeed"), if square then back else closeCard)
 	local list = pickerList(2)
 	local rows = 0
 	local growth = CropConfig.GrowthSpeed(CropConfig.UpgradeLevel(fieldState.upgrades, "Growth"))
@@ -660,9 +712,15 @@ local function renderSeeds()
 			local seconds = math.ceil(crop.growSeconds / growth - 1e-6)
 			local row = pickerRow(list, crop.id, rows, crop.icon .. " " .. Locale.CropName(crop), Locale.T("field.picker.info", { stock = stock, time = growTime(seconds) }), true, COLOR_GO)
 			row.Activated:Connect(function()
-				plantEvent:FireServer(square, crop.id)
-				page = "card"
-				render()
+				if square then
+					fire(plantEvent, square, crop.id)
+					page = "card"
+					render()
+				else
+					handSeed = crop.id
+					closeCard()
+					renderBar()
+				end
 			end)
 		end
 	end
@@ -743,7 +801,7 @@ local function renderPets()
 		end)
 		if enabled then
 			row.Activated:Connect(function()
-				placePetEvent:FireServer(square, pet.uid)
+				fire(placePetEvent, square, pet.uid)
 				page = "card"
 				GardenView.ShowReach(nil)
 				render()
@@ -754,13 +812,13 @@ local function renderPets()
 end
 
 function render()
-	if not (selected and fieldState) then
+	if not (cardOpen and fieldState) or (page ~= "handSeeds" and not selected) then
 		return
 	end
 	clearBody()
 	card.Size = UDim2.fromOffset(cardWidth(), 0)
-	if page == "seeds" then
-		renderSeeds()
+	if page == "seeds" or page == "handSeeds" then
+		renderSeeds(if page == "seeds" then selected else nil)
 	elseif page == "pets" then
 		renderPets()
 	else
@@ -778,16 +836,30 @@ end
 
 -- Selection and taps -------------------------------------------------------------------------------------------------------------
 
-local function select(square: number)
-	selected, page = square, "card"
-	armedUntil = 0
-	GardenView.ShowSelect(square)
+local function showCard()
+	cardOpen = true
 	render()
 	if not card.Visible then
 		card.Visible = true
 		card.Position = UDim2.new(0.5, 0, 1, 400)
 	end
 	TweenService:Create(card, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Position = UDim2.new(0.5, 0, 1, -CARD_BOTTOM) }):Play()
+end
+
+local function select(square: number, toPage: string?)
+	selected, page = square, toPage or "card"
+	armedUntil = 0
+	GardenView.ShowSelect(square)
+	showCard()
+end
+
+-- the card as the hand's seed picker (no square selected)
+local function openSeedPicker()
+	selected, page = nil, "handSeeds"
+	if not held then
+		GardenView.ShowSelect(nil)
+	end
+	showCard()
 end
 
 local rayParams = RaycastParams.new()
@@ -830,21 +902,297 @@ local function squareUnder(point: Vector2): number?
 	return GardenView.SquareAt(ray.Origin + ray.Direction * t)
 end
 
-local function onTap(point: Vector2)
+-- Hand bar (U3b) -----------------------------------------------------------------------------------------------------------------
+
+local MODES = { "seeds", "basket", "pets", "look" }
+local MODE_NAMES = { seeds = "Seeds", basket = "Basket", pets = "Pets", look = "Look" }
+local MODE_ICONS = { seeds = "🌱", basket = "🧺", pets = "🐾", look = "✋" }
+local MODE_COLORS = { seeds = COLOR_GO, basket = Color3.fromRGB(205, 140, 60), pets = COLOR_PET, look = COLOR_OFF }
+
+handBar = create("Frame", {
+	Name = "HandBar",
+	AnchorPoint = Vector2.new(1, 1),
+	BackgroundTransparency = 1,
+	Visible = false,
+	Parent = screenGui,
+})
+local handHint = label("Hint", {
+	-- a fixed two-line box (AutomaticSize did not grow it to the wrapped height), its text at the bottom, over the bar
+	AnchorPoint = Vector2.new(1, 1),
+	Position = UDim2.new(1, 0, 0, -2),
+	Size = UDim2.fromOffset(300, 40),
+	TextSize = 16,
+	TextWrapped = true,
+	TextXAlignment = Enum.TextXAlignment.Right,
+	TextYAlignment = Enum.TextYAlignment.Bottom,
+	TextStrokeTransparency = 0.2,
+	Text = "",
+	Visible = false,
+	Parent = handBar,
+})
+local handButtons: { [string]: TextButton } = {}
+local pulses: { [string]: Tween? } = {}
+local seedCount: TextLabel
+
+local function touchLayout(): boolean
+	return UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+end
+
+-- the jump button's top right corner on a touch screen (its real place if drawn, else Roblox's layout for this screen size)
+local function jumpCorner(viewport: Vector2): Vector2
+	local touchGui = player.PlayerGui:FindFirstChild("TouchGui")
+	local jump = touchGui and touchGui:FindFirstChild("JumpButton", true)
+	if jump and jump:IsA("GuiObject") and jump.AbsoluteSize.X > 0 then
+		return Vector2.new(jump.AbsolutePosition.X + jump.AbsoluteSize.X, jump.AbsolutePosition.Y)
+	end
+	if math.min(viewport.X, viewport.Y) <= 500 then
+		return Vector2.new(viewport.X - 25, viewport.Y - 90)
+	end
+	return Vector2.new(viewport.X - 50, viewport.Y - 210)
+end
+
+local function layoutBar()
+	local camera = workspace.CurrentCamera
+	local viewport = if camera then camera.ViewportSize else Vector2.new(800, 600)
+	local step = HAND_BUTTON + HAND_GAP
+	local touch = touchLayout()
+	if touch then
+		local corner = jumpCorner(viewport)
+		handBar.Size = UDim2.fromOffset(2 * HAND_BUTTON + HAND_GAP, 2 * HAND_BUTTON + HAND_GAP + HAND_RAISE)
+		handBar.Position = UDim2.fromOffset(corner.X, corner.Y - 10)
+	else
+		handBar.Size = UDim2.fromOffset(4 * HAND_BUTTON + 3 * HAND_GAP, HAND_BUTTON + HAND_RAISE)
+		handBar.Position = UDim2.new(1, -12, 1, -12)
+	end
+	for index, name in MODES do
+		local button = handButtons[name]
+		local col, row = if touch then (index - 1) % 2 else index - 1, if touch then (index - 1) // 2 else 0
+		button.Position = UDim2.fromOffset(col * step, HAND_RAISE + row * step - (if name == mode then HAND_RAISE else 0))
+	end
+end
+
+for index, name in MODES do
+	local button = create("TextButton", {
+		Name = MODE_NAMES[name],
+		LayoutOrder = index,
+		Size = UDim2.fromOffset(HAND_BUTTON, HAND_BUTTON),
+		BackgroundColor3 = MODE_COLORS[name],
+		TextColor3 = Color3.new(1, 1, 1),
+		TextSize = 26,
+		Font = Enum.Font.GothamBold,
+		Text = MODE_ICONS[name],
+		Parent = handBar,
+	})
+	StudStyle.Brick(button, { studs = 1, socket = true })
+	-- the active mode's frame (a separate frame: the brick's own stroke is its face's)
+	create("Frame", {
+		Name = "Active",
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.new(1, 6, 1, 6),
+		BackgroundTransparency = 1,
+		Visible = false,
+		ZIndex = 3,
+		Parent = button,
+	}, {
+		create("UICorner", { CornerRadius = UDim.new(0, 9) }),
+		create("UIStroke", { Color = Color3.new(1, 1, 1), Thickness = 3 }),
+	})
+	create("UIScale", { Name = "Pulse", Parent = button })
+	handButtons[name] = button
+end
+seedCount = label("Count", {
+	AnchorPoint = Vector2.new(1, 1),
+	Position = UDim2.new(1, -2, 1, -3),
+	Size = UDim2.fromOffset(40, 16),
+	TextSize = 15,
+	TextXAlignment = Enum.TextXAlignment.Right,
+	TextStrokeTransparency = 0,
+	ZIndex = 5,
+	Text = "",
+	Parent = handButtons.seeds,
+})
+
+local function setPulse(name: string, on: boolean)
+	if on == (pulses[name] ~= nil) then
+		return
+	end
+	local scale = handButtons[name]:FindFirstChild("Pulse") :: UIScale
+	if pulses[name] then
+		(pulses[name] :: Tween):Cancel()
+		pulses[name] = nil
+		scale.Scale = 1
+		return
+	end
+	local tween = TweenService:Create(scale, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Scale = 1.15 })
+	pulses[name] = tween
+	tween:Play()
+end
+
+-- the next step (G1 style): Seeds while nothing is planted and seeds are held, Basket while something is ripe
+local function updatePulse()
+	local planted, ripe, seeds = false, false, false
+	if fieldState and handBar.Visible then
+		for _, entry in fieldState.squares or {} do
+			planted = true
+			ripe = ripe or ripeEntry(entry)
+		end
+		for _, count in fieldState.seeds or {} do
+			seeds = seeds or count > 0
+		end
+	end
+	setPulse("seeds", not used.seeds and mode ~= "seeds" and not planted and seeds)
+	setPulse("basket", not used.basket and mode ~= "basket" and ripe)
+end
+
+function renderBar()
+	for _, name in MODES do
+		(handButtons[name]:FindFirstChild("Active") :: Frame).Visible = name == mode
+	end
+	layoutBar()
+	local crop = handSeed and CropConfig.ById[handSeed]
+	handButtons.seeds.Text = if crop then crop.icon else MODE_ICONS.seeds
+	seedCount.Text = if crop then Locale.Number(seedsLeft(crop.id)) else ""
+	local text = ""
+	if held then
+		local owned = PetClient.State and PetClient.State.pets[held]
+		local name = if owned then petName(held, owned.Kind) else ""
+		text = if preview then Locale.T("field.hand.dropAgain", { pet = name }) else Locale.T("field.card.moving", { pet = name })
+	elseif mode == "seeds" and crop then
+		text = Locale.T("field.hand.seeds", { crop = crop.icon .. " " .. Locale.CropName(crop) })
+	elseif mode == "basket" then
+		text = Locale.T("field.hand.basket")
+	elseif mode == "pets" then
+		text = Locale.T("field.hand.pets")
+	end
+	handHint.Text = text
+	handHint.Visible = text ~= ""
+	updatePulse()
+end
+
+local function showHeldReach(square: number?)
+	if held and square then
+		GardenView.ShowReach(reachOf(square, heldLevel()))
+	else
+		GardenView.ShowReach(nil)
+	end
+end
+
+local function cancelHold()
+	held, heldFrom, preview, hoverSquare = nil, nil, nil, nil
+	GardenView.ShowReach(nil)
+	if not cardOpen then
+		GardenView.ShowSelect(nil)
+	end
+	renderBar()
+end
+
+local function setMode(name: string)
+	if held then
+		cancelHold()
+	end
+	mode = name
+	if name ~= "look" then
+		used[name] = true
+	end
+	if cardOpen and page == "handSeeds" and name ~= "seeds" then
+		closeCard()
+	end
+	renderBar()
+end
+
+function hold(uid: string, square: number?)
+	if mode ~= "pets" then
+		setMode("pets")
+	end
+	closeCard()
+	held, heldFrom, preview, hoverSquare = uid, square, nil, nil
+	GardenView.ShowSelect(square)
+	showHeldReach(square)
+	renderBar()
+end
+
+local function drop(square: number)
+	fire(placePetEvent, square, held)
+	cancelHold()
+end
+
+handButtons.seeds.Activated:Connect(function()
+	setMode("seeds")
+	openSeedPicker()
+end)
+handButtons.basket.Activated:Connect(function()
+	setMode(if mode == "basket" then "look" else "basket")
+end)
+handButtons.pets.Activated:Connect(function()
+	if held then
+		cancelHold()
+	else
+		setMode(if mode == "pets" then "look" else "pets")
+	end
+end)
+handButtons.look.Activated:Connect(function()
+	setMode("look")
+end)
+
+-- Taps -------------------------------------------------------------------------------------------------------------------------
+
+-- a tap in a hand mode on an open square; true when the mode handled it (else the tap selects as in Look)
+local function handTap(square: number, touch: boolean): boolean
+	local key = tostring(square)
+	local entry = fieldState.squares and fieldState.squares[key]
+	local petAt = (fieldState.pets or {})[key]
+	if mode == "seeds" and not entry then
+		if pendingPlant[square] and pendingPlant[square].untilClock > os.clock() then
+			return true -- already on its way
+		end
+		if not handSeed or seedsLeft(handSeed) <= 0 then
+			openSeedPicker()
+			return true
+		end
+		closeCard()
+		pendingPlant[square] = { crop = handSeed :: string, untilClock = os.clock() + PENDING_SECONDS }
+		fire(plantEvent, square, handSeed)
+		renderBar()
+		return true
+	elseif mode == "basket" and entry and ripeEntry(entry) then
+		if (pendingHarvest[square] or 0) < os.clock() then
+			closeCard()
+			pendingHarvest[square] = os.clock() + PENDING_SECONDS
+			fire(harvestEvent, square)
+		end
+		return true
+	elseif mode == "pets" then
+		if held then
+			if petAt and petAt.uid == held then
+				cancelHold()
+			elseif petAt then
+				hold(petAt.uid, square) -- another pet: that one goes in hand instead
+			elseif touch and preview ~= square then
+				preview = square -- touch: the first tap shows where it would work
+				GardenView.ShowSelect(square)
+				showHeldReach(square)
+				renderBar()
+			else
+				drop(square)
+			end
+		elseif petAt then
+			hold(petAt.uid, square)
+		else
+			select(square, "pets")
+		end
+		return true
+	end
+	return false
+end
+
+local function onTap(point: Vector2, touch: boolean)
 	if not (fieldState and inRange()) then
 		return
 	end
 	local square = squareUnder(point)
-	if moving then
-		local uid = moving
-		moving = nil
-		GardenView.ShowReach(nil)
-		local open = openSet()
-		if square and open[square] and not (fieldState.pets or {})[tostring(square)] then
-			placePetEvent:FireServer(square, uid)
-			select(square)
-			return
-		end
+	if square and openSet()[square] and handTap(square, touch) then
+		return
 	end
 	if not square or (square == selected and page == "card") then
 		closeCard()
@@ -855,12 +1203,13 @@ end
 
 UserInputService.TouchTapInWorld:Connect(function(position: Vector2, processedByUI: boolean)
 	if not processedByUI then
-		onTap(position)
+		onTap(position, true)
 	end
 end)
 
 local pressAt: Vector2? = nil
 local pressClock = 0
+local mouseAt: Vector2? = nil -- the mouse (InputObject coordinates) for the held pet's reach
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 and not gameProcessed then
 		pressAt = Vector2.new(input.Position.X, input.Position.Y)
@@ -875,23 +1224,92 @@ UserInputService.InputEnded:Connect(function(input)
 	local start = pressAt
 	pressAt = nil
 	if (point - start).Magnitude <= TAP_PIXELS and os.clock() - pressClock <= TAP_SECONDS then
-		onTap(point)
+		onTap(point, false)
 	end
 end)
+UserInputService.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
+		mouseAt = Vector2.new(input.Position.X, input.Position.Y)
+	end
+end)
+
+-- Harvest pop ------------------------------------------------------------------------------------------------------------------
+
+local function pop(square: number, crop, size: number?)
+	local cframe = GardenView.SquareCFrame(square)
+	if not cframe then
+		return
+	end
+	local anchor = create("Part", {
+		Name = "HarvestPop",
+		Anchored = true,
+		CanCollide = false,
+		CanTouch = false,
+		CanQuery = false,
+		Transparency = 1,
+		Size = Vector3.new(0.2, 0.2, 0.2),
+		CFrame = cframe + Vector3.new(0, 2, 0),
+	})
+	local text = Locale.T("field.hand.pop", { count = 1, icon = crop.icon })
+	local tag = size and CropConfig.SizeLabel(size)
+	if tag then
+		text ..= " " .. Locale.T(if tag == "Giant" then "field.size.giant" else "field.size.big")
+	end
+	local gui = create("BillboardGui", {
+		Size = UDim2.fromOffset(220, 40),
+		StudsOffset = Vector3.new(0, 0, 3), -- toward the camera, as the rings
+		LightInfluence = 0,
+		AutoLocalize = false,
+		Parent = anchor,
+	})
+	local textLabel = label("Text", {
+		Size = UDim2.fromScale(1, 1),
+		TextSize = 28,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		TextStrokeTransparency = 0.2,
+		Text = text,
+		Parent = gui,
+	})
+	anchor.Parent = workspace
+	local info = TweenInfo.new(POP_SECONDS, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	TweenService:Create(anchor, info, { CFrame = anchor.CFrame + Vector3.new(0, 3, 0) }):Play()
+	TweenService:Create(textLabel, TweenInfo.new(POP_SECONDS, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
+	task.delay(POP_SECONDS + 0.1, function()
+		anchor:Destroy()
+	end)
+end
 
 -- Events -------------------------------------------------------------------------------------------------------------------------
 
 remotes:WaitForChild("State").OnClientEvent:Connect(function(state)
 	fieldState = if type(state) == "table" then state.field else nil
 	receivedAt = workspace:GetServerTimeNow()
-	if selected and not fieldState then
+	if fieldState then
+		for square in pendingPlant do
+			if fieldState.squares and fieldState.squares[tostring(square)] then
+				pendingPlant[square] = nil -- planted: the seeds held count it now
+			end
+		end
+	end
+	if cardOpen and not fieldState then
 		closeCard()
-	elseif selected then
+	elseif cardOpen then
 		render()
 	end
+	renderBar()
 end)
 
 remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail)
+	if action == "Plant" and not ok then
+		table.clear(pendingPlant) -- a refused planting: count from the State again
+		renderBar()
+	end
+	if action == "Harvest" and ok and type(detail) == "table" and type(detail.square) == "number" then
+		local crop = CropConfig.ById[detail.crop]
+		if crop then
+			pop(detail.square, crop, detail.size)
+		end
+	end
 	if action ~= "PlacePet" or not ok or type(detail) ~= "table" then
 		return
 	end
@@ -902,7 +1320,7 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 		local mine = reachToken
 		GardenView.ShowReach(reachOf(detail.square, math.max(PetConfig.AptitudeLevel(pet, "Tending"), PetConfig.AptitudeLevel(pet, "PestControl"))))
 		task.delay(REACH_SECONDS, function()
-			if reachToken == mine and not moving and page ~= "pets" then
+			if reachToken == mine and not held and page ~= "pets" then
 				GardenView.ShowReach(nil)
 			end
 		end)
@@ -910,15 +1328,19 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 end)
 
 PetClient.Changed:Connect(function()
-	if selected then
+	if cardOpen then
 		render() -- Coins (Buy square), pets equipped / hatched / renamed
+	end
+	if held and not (PetClient.State and PetClient.State.pets[held]) then
+		cancelHold() -- sold
 	end
 end)
 
 Locale.Changed:Connect(function()
-	if selected then
+	if cardOpen then
 		render()
 	end
+	renderBar()
 end)
 
 screenGui:GetAttributeChangedSignal("Select"):Connect(function()
@@ -931,10 +1353,30 @@ screenGui:GetAttributeChangedSignal("Select"):Connect(function()
 	end
 end)
 
+-- HoldPet = uid (the pet page's "Place on field"): that pet in hand, Pets mode
+screenGui:GetAttributeChangedSignal("HoldPet"):Connect(function()
+	local uid = screenGui:GetAttribute("HoldPet")
+	if type(uid) ~= "string" then
+		return
+	end
+	screenGui:SetAttribute("HoldPet", nil)
+	if not (fieldState and handBar.Visible and PetClient.State and PetClient.State.pets[uid]) then
+		return
+	end
+	local from = nil
+	for key, entry in fieldState.pets or {} do
+		if type(entry) == "table" and entry.uid == uid then
+			from = tonumber(key)
+		end
+	end
+	hold(uid, from)
+end)
+
 local function resize()
-	if selected then
+	if cardOpen then
 		card.Size = UDim2.fromOffset(cardWidth(), 0)
 	end
+	layoutBar()
 end
 local function watchCamera()
 	local camera = workspace.CurrentCamera
@@ -945,7 +1387,27 @@ end
 workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(watchCamera)
 watchCamera()
 
--- Every TICK_SECONDS: the card closes out of range; the bar and its time follow the server time
+-- Every frame: the next queued remote (FIRE_GAP apart) and, with a pet in hand, its reach under the mouse
+local lastMouse: Vector2? = nil
+RunService.Heartbeat:Connect(function()
+	if #queue > 0 and os.clock() - lastFire >= FIRE_GAP then
+		lastFire = os.clock()
+		local item = table.remove(queue, 1)
+		item[1]:FireServer(table.unpack(item[2], 1, item[2].n))
+	end
+	if held and mouseAt and mouseAt ~= lastMouse and fieldState and not preview then
+		lastMouse = mouseAt
+		local square = squareUnder(mouseAt)
+		if square ~= hoverSquare then
+			hoverSquare = square
+			local free = square and openSet()[square] and not (fieldState.pets or {})[tostring(square)]
+			showHeldReach(if free then square else heldFrom)
+		end
+	end
+end)
+
+-- Every TICK_SECONDS: the bar shows in range (leaving it resets to Look); the card closes out of range; the bar and its time
+-- follow the server time
 local elapsed = 0
 RunService.Heartbeat:Connect(function(dt)
 	elapsed += dt
@@ -953,11 +1415,28 @@ RunService.Heartbeat:Connect(function(dt)
 		return
 	end
 	elapsed = 0
-	if not selected then
+	local shown = fieldState ~= nil and inRange()
+	if shown ~= handBar.Visible then
+		handBar.Visible = shown
+		screenGui:SetAttribute("HandShown", shown)
+		if not shown then
+			if held then
+				cancelHold()
+			end
+			mode = "look"
+		end
+		renderBar()
+	elseif shown then
+		updatePulse()
+	end
+	if not cardOpen then
 		return
 	end
 	if not inRange() then
 		closeCard()
+		return
+	end
+	if not selected then
 		return
 	end
 	local entry = fieldState and fieldState.squares and fieldState.squares[tostring(selected)]
@@ -974,9 +1453,11 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 end)
 
+screenGui:SetAttribute("HandShown", false)
 screenGui.Parent = player:WaitForChild("PlayerGui")
 -- the State may have arrived before this script connected (GardenView keeps the last one)
 if not fieldState and GardenView.OwnField() then
 	fieldState = GardenView.OwnField()
 	receivedAt = workspace:GetServerTimeNow()
 end
+renderBar()

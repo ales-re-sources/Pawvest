@@ -190,6 +190,7 @@ pets.filter.none,Shown instead of the pet list when the chosen filter matches no
 petRow.chip.head,"Tooltip of a trait chip in a pet row (hover / hold), first line; {icon} = trait emoji, {trait} = trait name (pet.apt.*), {level} = its level, {cap} = the rarity's highest level. Czech keeps ""Lv""",<b>{icon} {trait} · Lv {level} / {cap}</b>,<b>{icon} {trait} · Lv {level} / {cap}</b>,new,h732a5920
 petRow.chip.care,"Tooltip of a trait chip, last line (yellow): food and stage runs with the player train this trait now (the ▲ on the chip)",▲ Treats and adventures train this now,▲ Jídlo a dobrodružství teď trénují tohle,new,h296d5c6c
 petDetail.more,"Pet detail page: small grey heading at the bottom, over the Sell button (U1)",More,Další,new,hf2ad7075
+petDetail.placeOnField,"Pet page button under More (next to Sell), shown while the field's hand bar shows: closes the panel and puts this pet in hand to place it on the field",Place on field,Dát na pole,new,h094723df
 pets.freeEggs[one],Info line while free eggs wait for an empty garden incubator; {count} = eggs. Form for 1,🎁 {count} free egg waiting for an empty incubator,🎁 {count} vejce zdarma čeká na volný inkubátor,new,h92639edf
 pets.freeEggs[few],Form for 2-4 (Czech only),,🎁 {count} vejce zdarma čekají na volný inkubátor,new,h92639edf
 pets.freeEggs[other],Form for 0 and 5+,🎁 {count} free eggs waiting for an empty incubator,🎁 {count} vajec zdarma čeká na volný inkubátor,new,h92639edf
@@ -364,8 +365,13 @@ field.card.movePet,Square card button on a square with a pet: the next tap on a 
 field.card.takeBack,Square card button on a square with a pet: takes the pet off the field (back to the pets),Take back,Vzít zpět,new,h57881cb3
 field.card.buy,Square card button on an overgrown square: buy it,Buy square,Koupit políčko,new,h712d511b
 field.card.tapAgain,"Square card: the Buy square button after the first tap (orange, confirms a big spend)",Tap again,Klepni znovu,new,h28272940
-field.card.cancel,Square card button while a pet is being moved: stop moving it,Cancel,Zrušit,new,ha96c5cb1
-field.card.moving,Square card line while a pet is being moved (green); {pet} = the pet's name or kind (no gendered verb in Czech),Tap a free square for {pet},{pet}: klepni na volné políčko,new,h2a3abe32
+field.card.moving,Hint line above the field's hand bar while a pet is in hand (Pets mode): a tap on a free square puts it there; {pet} = the pet's name or kind (no gendered verb in Czech),Tap a free square for {pet},{pet}: klepni na volné políčko,new,h2a3abe32
+field.hand.pickSeed,Title of the square card when it picks the seed for the hand bar's Seeds mode (not for one square),Choose a seed,Vyber semínko,new,h96e894c2
+field.hand.seeds,Hint line above the field's hand bar in Seeds mode: every tap on an empty square plants this seed; {crop} = crop icon + name (nominative; hence the colon in Czech),Tap empty squares to plant {crop},Klepej na prázdná políčka a sázej: {crop},new,hf4316ba7
+field.hand.basket,Hint line above the field's hand bar in Basket mode: every tap on a ripe square harvests it,Tap ripe crops to harvest them,Klepej na zralou úrodu a sklízej ji,new,h2f3d357a
+field.hand.pets,Hint line above the field's hand bar in Pets mode with no pet in hand,Tap a pet on your field to pick it up,Klepni na mazlíčka na poli a vezmi ho do ruky,new,h09d1063d
+field.hand.dropAgain,Hint line above the hand bar on a touch screen after the first tap on a free square with a pet in hand (the reach shows there); {pet} = the pet's name or kind (no gendered verb in Czech),Tap the same square again to put {pet} there,{pet}: klepni na stejné políčko ještě jednou,new,h6830532d
+field.hand.pop,"Text rising over a square for a second after a harvest; {count} = 1, {icon} = the crop's emoji (a size tag like Big! may follow)",\+{count} {icon},\+{count} {icon},new,h78886aee
 field.card.price[one],Square card of an overgrown square: its price; {count} = Coins. Form for 1,Price: {count} Coin,Cena: {count} mince,new,hb48ac67d
 field.card.price[few],Form for 2-4 (Czech only),,Cena: {count} mince,new,hb48ac67d
 field.card.price[other],Form for 0 and 5+,Price: {count} Coins,Cena: {count} mincí,new,hb48ac67d

@@ -8,6 +8,10 @@
 -- Positions: GardenView.SquareCFrame. The billboards sit on Attachments of one invisible client part (Workspace.FieldRings),
 -- not AlwaysOnTop (screen captures show them); drawn TOWARD the camera from the square so its crop does not hide it. In Studio the part carries the attributes
 -- Rings (rings drawn) and UpdateMs (the last update's cost).
+-- U3b: in the same tier, every placed field pet's reach region as a thin border in its rarity colour (GardenView.ShowBorders). The
+-- region = the squares this pet counts for under GardenField's rules: per square the strongest Tending pet that reaches it and the
+-- strongest guard (the guard chance from the State); ties go to the lower uid (the effect is the same). Redrawn only when a region
+-- changes (State, PetsChanged) or the tier shows / hides. Studio attribute Borders = the regions drawn.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -16,7 +20,9 @@ local TweenService = game:GetService("TweenService")
 
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
+local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local GardenView = require(script.Parent:WaitForChild("GardenView"))
+local PetClient = require(script.Parent:WaitForChild("PetClient"))
 
 local player = Players.LocalPlayer
 local studio = RunService:IsStudio()
@@ -260,6 +266,99 @@ local function setRipe(ring, ripe: boolean)
 end
 
 -- Re-fills every ring for server time `now` and shows them while the character is near the field.
+-- Reach borders -----------------------------------------------------------------------------------------------------------------
+
+local borders = {} -- { { squares, color, lane } } for GardenView.ShowBorders
+local bordersKey = "" -- signature of `borders`
+local bordersDrawn: string? = nil -- signature drawn now (nil = none shown)
+
+local function uidBefore(a: string, b: string): boolean
+	local x, y = tonumber(a), tonumber(b)
+	if x and y and x ~= y then
+		return x < y
+	end
+	return a < b
+end
+
+local function computeBorders()
+	local pets = type(field) == "table" and field.pets
+	local state = PetClient.State
+	borders, bordersKey = {}, ""
+	if type(pets) ~= "table" or not state then
+		return
+	end
+	local open = {}
+	for _, n in field.open or {} do
+		open[n] = true
+	end
+	local placed = {}
+	for key, entry in pets do
+		local square = tonumber(key)
+		local owned = type(entry) == "table" and state.pets[entry.uid]
+		if square and owned then
+			table.insert(placed, {
+				uid = entry.uid,
+				square = square,
+				kind = owned.Kind,
+				tending = PetConfig.AptitudeLevel(owned, "Tending"),
+				guard = PetConfig.AptitudeLevel(owned, "PestControl"),
+				chance = if type(entry.guard) == "table" then entry.guard.chance or 0 else 0,
+			})
+		end
+	end
+	table.sort(placed, function(a, b)
+		return uidBefore(a.uid, b.uid)
+	end)
+	-- per square the winner of each job; the list is in uid order, so a strict > keeps the lower uid on a tie
+	local tend, guard = {}, {}
+	for _, pet in placed do
+		if pet.tending > 0 then
+			local value = PetConfig.Strength(pet.tending)
+			for _, n in CropConfig.Reach(pet.square, PetConfig.ReachShape(pet.tending), open) do
+				if not tend[n] or value > tend[n].value then
+					tend[n] = { value = value, pet = pet }
+				end
+			end
+		end
+		if pet.guard > 0 then
+			for _, n in CropConfig.Reach(pet.square, PetConfig.ReachShape(pet.guard), open) do
+				if not guard[n] or pet.chance > guard[n].value then
+					guard[n] = { value = pet.chance, pet = pet }
+				end
+			end
+		end
+	end
+	local keys = {}
+	for index, pet in placed do
+		local mine = {}
+		for n = 1, CropConfig.MaxSquares do
+			if (tend[n] and tend[n].pet == pet) or (guard[n] and guard[n].pet == pet) then
+				table.insert(mine, n)
+			end
+		end
+		if #mine > 0 then
+			local rarity = PetConfig.RarityOf(pet.kind)
+			local color = if rarity then rarity.color else Color3.new(1, 1, 1)
+			local lane = (index - 1) % 3
+			table.insert(borders, { squares = mine, color = color, lane = lane })
+			table.insert(keys, pet.uid .. "@" .. lane .. ":" .. table.concat(mine, ",") .. ":" .. color:ToHex())
+		end
+	end
+	bordersKey = table.concat(keys, "|")
+end
+
+local function showBorders(near: boolean)
+	local want = if near and #borders > 0 then bordersKey else nil
+	if want == bordersDrawn then
+		return
+	end
+	bordersDrawn = want
+	GardenView.ShowBorders(if want then borders else nil)
+	if studio then
+		anchor:SetAttribute("Borders", if want then #borders else 0)
+	end
+end
+
 local function update(now: number)
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 	local at = if root and root:IsA("BasePart") then root.Position else nil
@@ -310,23 +409,33 @@ local function update(now: number)
 		item.ring.time.Text = countdown(item.left)
 		item.ring.time.Visible = true
 	end
+	showBorders(near)
 end
 
 ReplicatedStorage:WaitForChild("GardenRemotes"):WaitForChild("State").OnClientEvent:Connect(function(state)
 	field = if type(state) == "table" then state.field else nil
 	receivedAt = workspace:GetServerTimeNow()
 	sync()
+	computeBorders()
 	update(receivedAt)
+end)
+PetClient.Changed:Connect(function()
+	computeBorders() -- a job level or a pet changed
 end)
 player:GetAttributeChangedSignal(GardenConfig.PlotAttribute):Connect(function()
 	-- the plot's view is built a moment later: SquareCFrame needs it
-	task.delay(1, sync)
+	task.delay(1, function()
+		sync()
+		bordersDrawn = nil -- the new plot's view has none drawn
+		GardenView.ShowBorders(nil)
+	end)
 end)
 
 -- the State may have arrived before this script connected (GardenView keeps the last one)
 if not field and GardenView.OwnField() then
 	field = GardenView.OwnField()
 	receivedAt = workspace:GetServerTimeNow()
+	computeBorders()
 end
 
 local elapsed = 0

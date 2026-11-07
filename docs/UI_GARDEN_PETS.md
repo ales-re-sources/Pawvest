@@ -1,6 +1,6 @@
 # Pawvest — garden and pet UI redesign (U1–U5)
 
-*Proposed 2026-11-05 from the user's notes, all open decisions settled the same day (§12); U1, U2 and U3a built. Built UI as it is today: GDD §7.5–7.9, LAYOUT.md
+*Proposed 2026-11-05 from the user's notes, all open decisions settled the same day (§12); U1, U2 and U3 (a + b) built. Built UI as it is today: GDD §7.5–7.9, LAYOUT.md
 (PetsPanel, PetDetail, PlotView, FieldClient, IncubatorClient). When a piece ships, its as-built design moves to GDD and this file shrinks.*
 
 ## 1. Problems
@@ -35,28 +35,19 @@
 
 ## 4. Field: acting on a square
 **Decided (the user, 2026-11-05): tap a square + a square card + hand modes** (a light version of Stardew-style tools; no Roblox `Tool` objects).
-Tap-select, the square card with every context button and the removal of the square prompts are **built in U3a (2026-11-07)**, as built in
-GDD §7.9; the design text is in `git show 68b9c3b:docs/UI_GARDEN_PETS.md`. In U3a "Move pet" is the next tap on a free square; U3b's Pets
-mode replaces it with lifting the pet. Left for **U3b**:
-- **Hand bar** (only while in the own field, above the jump button on phones): `🌱 Seeds` · `🧺 Basket` · `🐾 Pets` · `✋ Look`.
-  - Seeds: pick a seed once (the picker shows count held), then every tap on an empty square plants it; the bar shows the seed and the count.
-  - Basket: every tap on a ripe square harvests it (one per tap; harvest-all stays the Wheelbarrow, D2). A pop `+1 Corn · Big!` flies to the
-    barn.
-  - Pets: tap a pet → it lifts, its reach follows the finger as a yellow tint, tap a square to drop it; tap a free square first → a pet
-    picker (Tending / Pest-control pets, with job levels).
-  - Look (default): tap = select + square card (U3a).
+Tap-select, the square card and the removal of the square prompts are **built in U3a**, the hand bar (Seeds / Basket / Pets / Look) in
+**U3b** (both 2026-11-07), as built in GDD §7.9; the design text is in `git show 68b9c3b:docs/UI_GARDEN_PETS.md`. The harvest pop rises
+over the square (it does not fly to a barn yet: the barn comes with U4). Left open:
 - Later, only if the phone check shows players missing squares: a **field camera** button that tilts the camera down over the own field
-  (easier to tap the right square on a phone). U3a's check was on a desktop only (no touch emulation through the MCP): open.
+  (easier to tap the right square on a phone). U3a / U3b were checked on a desktop only (no touch emulation through the MCP): the touch
+  taps (TouchTapInWorld, the two-tap drop) and how easy squares are to hit on a phone are open (MU or the user).
 
 *Rejected:* prompts with `Exclusivity = OneGlobally` and the card on trigger (fixes density only, not the repeated planting).
 
 ## 5. Pets on the field
-- A placed pet's reach stays visible in the Near tier as a **soft border in the pet's rarity colour** around its squares (several pets: the
-  strongest per job, as the rules count it).
-- The job-icon label (`🌱4 🛡2`, never the level) and the square card's line per pet (its effect there; a tap opens its page) are **built in
-  U3a** (GDD §7.9).
-- The pet page gets **"Show on field"** (marker + camera hint to its square) and, in the garden, **"Place on field"** (opens Pets mode with this
-  pet in hand). Moving field pets from far away stays open (EXPANSION §3).
+- The job-icon label and the card's line per pet are **built in U3a**; the reach borders in rarity colours and the pet page's "Place on
+  field" **in U3b** (GDD §7.9). Left open: **"Show on field"** on the pet page (marker + camera hint to its square); moving field pets from
+  far away (EXPANSION §3).
 
 ## 6. Splitting the Garden panel
 | Today in the Garden panel | Goes to |
@@ -86,7 +77,7 @@ is ready (the badge covers it for now); other players' bubbles (Renown, biggest 
 
 ## 9. Pets panel and pet page
 **Built in U1 (2026-11-06)**: as built in GDD §7.5 (rows, filters, summary) and §7.8 (pet page); the design history is in
-`git show a514b94:docs/UI_GARDEN_PETS.md`. Left for U3b: "Show on field" / "Place on field" on the pet page (§5).
+`git show a514b94:docs/UI_GARDEN_PETS.md`. "Place on field" is built (U3b); "Show on field" is left open (§5).
 
 ### 9.1 Food stand (plaza)
 **Built in U1**: the Pets panel's row with the trained chip outlined, pets with you first, trained ones greyed at the bottom (GDD §7.6).
@@ -94,10 +85,11 @@ Left for U4: the seed stall (§6) stands beside the food stand (decided 2026-11-
 food stand's counters stay reachable and readable from the plots on that side.
 
 ## 10. Other improvements
-- **Feedback for every action:** a pop where it happened (crop to the barn, Coins to the counter, XP to the pet), not only a toast.
+- **Feedback for every action:** a pop where it happened (crop to the barn, Coins to the counter, XP to the pet), not only a toast. The
+  harvest pop over the square is built (U3b); the rest is open.
 - **One confirm pattern** for every spend over ~1 000 Coins and for Sell: two taps with the button turning orange ("Tap again"), as the food
   buttons do; hold prompts only in the world.
-- **Next-step hint in the garden** (G1 / E5 onboarding builds on §4, so §4 comes first): an empty field points at Seeds, a ripe one at the Basket.
+- **Next-step hint in the garden:** an empty field pulses Seeds, a ripe one the Basket: **built in U3b** (E5's onboarding builds on it).
 - **Locked squares** look different from empty soil (grass tufts; the price only in the square card): **built in U3a**.
 - **Panel focus:** opening one panel closes the others (Pets, Skills, Barn, Seed stall, Food); panels close when walking away (32 studs, today
   only the Garden panel).
@@ -109,7 +101,7 @@ food stand's counters stay reachable and readable from the plots on that side.
 | U1 | Pets panel, pet page and the food stand panel (§9, §9.1): **built 2026-11-06** | P4 |
 | U2 | Garden HUD button + badge, summary bubble over the own sign (§3 Far, §8): **built 2026-11-06** | – |
 | U3a | Field: rings, tap-select, square card, prompts removed, locked look, pet job-icon labels (§3 Near, §4, §5): **built 2026-11-07** | every player |
-| U3b | Hand bar (Seeds / Basket / Pets / Look), pet reach borders, next-step hint on the bar, pet page buttons (§4, §5, §10) | U3a |
+| U3b | Hand bar (Seeds / Basket / Pets / Look), pet reach borders, next-step hint on the bar, pet page "Place on field" (§4, §5, §10): **built 2026-11-07** | U3a |
 | U4 | Panel split: Skills → Garden tab, Barn panel, Seed stall; Garden panel removed (§6) | U3b |
 | U5 | Plot layout: hatchery left, barn right, path; K1 egg cards (§7) | U4 (barn) |
 

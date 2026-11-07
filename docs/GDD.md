@@ -522,7 +522,7 @@ otherwise items could be duplicated across servers.
   everyone ("Mochi Lv 6") through the `PetNames` attribute and are never localized.
 
 ### 7.9 Crop field (E1-E4)
-*Built and Studio-validated 2026-10-30 – 11-04; every player has it since FA (2026-11-06; until then admins only); tap-and-card controls since U3a (2026-11-07). Exact numbers live in `CropConfig` / `PetConfig` and are pinned by
+*Built and Studio-validated 2026-10-30 – 11-04; every player has it since FA (2026-11-06; until then admins only); tap-and-card controls since U3a, the hand bar since U3b (both 2026-11-07). Exact numbers live in `CropConfig` / `PetConfig` and are pinned by
 `tools/economy.py`; why they are what they are: [ECONOMY.md](ECONOMY.md); what comes next: [EXPANSION.md](EXPANSION.md).*
 
 - **Goal (2026-11-02, the user).** Farming is the main game: over days 1-3 the field earns about what the obby earns, then 3x by day 7 and
@@ -545,10 +545,27 @@ otherwise items could be duplicated across servers.
   whose reach covers the square (portrait, job icons, what it does there: "harvests ripe crops here while you are away: 35 %", "chases
   crows away here: 70 %"; a tap opens its pet page) and context buttons: Plant (seed picker: seeds held, count, grow time; none → a way
   to the seed shop), Harvest, Place pet (pet picker: Tending / Pest-control pets with job levels and squares reached; hovering a row tints
-  its reach), Move pet (the next tap on a free square moves it there), Take back, Buy square (price and Renown; grey with the reason when
+  its reach), Move pet (takes it in hand, Pets mode below), Take back, Buy square (price and Renown; grey with the reason when
   not possible; over 1 000 Coins a second tap within 3 s confirms). The selected square again, a tap off the field or walking away closes it.
   The card is at most 400 px wide and on a touch screen keeps 110 px free on each side (thumbstick, jump button). The client sends only the
   square number (and a crop id or pet uid); `GardenField` checks everything as before.
+- **Hand bar (U3b, 2026-11-07).** While the tap range applies, four bricks: 🌱 Seeds, 🧺 Basket, 🐾 Pets, ✋ Look (default); a row at the
+  bottom right with a mouse, a 2 x 2 block above the jump button on a touch screen without a keyboard (the card then keeps clear of it). The
+  active one is raised and framed; a line above the bar says what a tap does. Seeds: the card picks a seed (count, grow time), then every tap
+  on an empty open square plants it; the brick shows the seed and the count left; with none left a tap reopens the picker. Basket: every tap
+  on a ripe square harvests that one (never all: harvest-all is the paid Wheelbarrow, D2). Pets: a tap on a placed pet takes it in hand
+  (outline on its square, its reach tinted under the mouse, or on the last tapped square on touch); a tap on a free open square puts it there
+  (one click; on touch the first tap shows the reach, a second tap on the same square drops); the pet's own square or 🐾 again cancels; a
+  free square with nothing in hand opens the pet picker. Any other tap selects as in Look. Leaving the range hides the bar and resets Look.
+  Every field action is queued and sent at most every 0.25 s (the server drops actions under 0.2 s apart), so quick taps are never lost.
+  Every harvest pops "+1 🌽" (plus Big! / Giant!) over its square for a second. Next step: Seeds pulses while nothing is planted and seeds
+  are held, Basket while something is ripe, each until that mode was used once in the session. The pet page has "Place on field" (under
+  More, while the bar shows, for a pet with Tending or Pest control that is not equipped; also moves a field pet): it closes the Pets panel
+  and puts the pet in hand.
+- **Reach borders (U3b).** In the Near tier every placed pet's region is outlined by thin strips in its rarity colour (not glowing: Common
+  grey must not look like the white select outline): the squares it counts for under the field's rules, i.e. per square the strongest Tending
+  pet and the strongest guard (ties to the lower uid). Regions that share an edge draw side by side (three lanes inset 0.45 / 0.8 / 1.15
+  studs); strips meet at outer and inner corners.
 - **Crops.** Potato (5 min, so the first harvest comes in the first session), Corn, Pumpkin and Giant melon from the seed shop behind Renown
   gates; three rare crops, one per world (Golden carrot, Frost grape, Glow mushroom), only from the obby (below), never sold as seeds, never
   eaten by crows. Growth runs on server time only: online x 1.0, offline x 0.5 for at most 24 h per absence, settled on join, on leave, every

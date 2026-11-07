@@ -49,8 +49,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | U1 | Pets panel rows with trait chips, filters, pet page Sell under More, food stand rows | ✔ | partial (multi-client look open) | – |
 | FA | The field for everyone, pens removed | ✔ | ✔ | – |
 | U2 | Garden icon with a badge (ripe crops + ready eggs), summary bubble over the own plot sign | ✔ | ✔ | – |
-| U3a | Field: rings, tap-select, square card, square prompts removed, overgrown locked squares, pet job-icon labels | ✔ | partial (phone touch, multi-client open) | – |
-| U3b–U5 | Garden and pet UI redesign, rest ([UI_GARDEN_PETS.md](UI_GARDEN_PETS.md)) — design decided 2026-11-05 | – | – | – |
+| U3 | Field: rings, tap-select, square card, hand bar (Seeds / Basket / Pets / Look), reach borders, square prompts removed | ✔ | partial (phone touch, multi-client open) | – |
+| U4–U5 | Garden and pet UI redesign, rest ([UI_GARDEN_PETS.md](UI_GARDEN_PETS.md)) — design decided 2026-11-05 | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
@@ -73,8 +73,8 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
 5. **E0 in parallel:** repricing and the remaining checks (section below).
 6. **MU** before anything goes public.
 7. **U1–U5 garden and pet UI** (design decided 2026-11-05, [UI_GARDEN_PETS.md](UI_GARDEN_PETS.md) §11–12; scope each when it starts):
-   **U1** built and Studio-checked (2026-11-06) except the multi-client look check (F7, the user); **U2** built and Studio-checked (2026-11-06); **U3a** (rings, tap-select, square card) built and Studio-checked (2026-11-07) except the
-   phone touch check and multi-client; **U3b–U5** (hand bar + reach borders, Skills Garden tab,
+   **U1** built and Studio-checked (2026-11-06) except the multi-client look check (F7, the user); **U2** built and Studio-checked (2026-11-06); **U3** (rings, tap-select, square card, hand bar, reach borders) built and Studio-checked
+   (2026-11-07) except the phone touch check and multi-client; **U4–U5** (Skills Garden tab,
    barn, seed stall, plot layout) before E5's onboarding, which teaches the new controls.
 8. **Drops D1–D10** after the MVP (EXPANSION §14), one every 1–2 weeks: Critters, Comfort shop (M7), Weekly, Variants, Kitchen (the first
    restoration landmark), Neighbours, Mastery, World 4 (S9 / S10), the Estate, Season 1. Restoration bundles (E6, D5) and estate tiers / decor /
@@ -301,7 +301,7 @@ part combination, ticking, = the Garden panel's time; shown at 110 studs and on 
 panel starts at 405, the coins at 504; the badge stays 4 px clear of the next icon). 6: cs / en / qps, bounds = size (`TextFits`
 misreads AutomaticSize labels); no literal; loc check 0 errors, lint 0. 7: no warnings or errors (both boots).
 
-### U3 — Field interaction: rings, tap-select, square card, hand bar, pet reach (design: [UI_GARDEN_PETS.md](UI_GARDEN_PETS.md) §3 Near, §4, §5, §10; scope 2026-11-07, approved by the user with the split, U3a first; U3a built and Studio-checked 2026-11-07)
+### U3 — Field interaction: rings, tap-select, square card, hand bar, pet reach (design: [UI_GARDEN_PETS.md](UI_GARDEN_PETS.md) §3 Near, §4, §5, §10; scope 2026-11-07, approved by the user with the split, U3a first; U3a and U3b built and Studio-checked 2026-11-07)
 **Goal.** On the own field a kid sees what grows and what is ripe without opening anything, and acts on exactly the square under their
 finger: no prompts competing at a 5.5-stud pitch. **No remote, profile or config change:** the client keeps firing `Plant(square, crop)`,
 `Harvest(square)`, `BuySquare(square, openCount)`, `PlacePet(square, uid)`, `LiftPet(uid)`; `GardenField` keeps every check (own plot from
@@ -420,6 +420,26 @@ charged once). 6 ✔ squares 0 / 37 / −1 / locked → `square`, 1.5 and "2" ig
 `far`. 7 / 8 U3b. 9 open: geometry only (the 400 px card at 667 wide spans x 133–533, clear of the jump button and thumbstick; buttons
 48 px); `TouchTapInWorld` and how easy squares are to hit on a phone are untested (no touch emulation through the MCP): the user or MU.
 10 ✔ en / cs / qps fit, no literals; `loc.py check` 0 errors, lint within baseline. 11 not run (F7). 12 ✔ no game errors.
+
+**Changed while building U3b.** The card's Move pet takes the pet in hand (Pets mode) instead of waiting for a tap; its Cancel button and
+`field.card.cancel` are gone. Every field remote (the card's too) goes through one queue ≥ 0.25 s apart; plantings / harvests still on their
+way count against the seeds and are not sent twice (3 s). "Place on field" sits under More next to Sell and also shows for a pet already on
+the field (it moves it); "Show on field" is not built. The pop rises over the square (no barn to fly to before U4). Borders are flat
+(SmoothPlastic), not Neon: Common grey glowed white like the select outline; strips extend at inner corners. The hint line is a fixed
+300 × 40 box (AutomaticSize left a wrapped hint one line high). Pulse rule: a mode's pulse stops for the session once the mode was chosen.
+
+**Studio results U3b (2026-11-07; live profile snapshotted as `profile_9892673032_U3b_1`, restored after and checked equal; MostStars 48
+unchanged).** 7 ✔ real clicks: Basket, two quick taps on ripe squares 1 and 10 → both harvested (badge cleared, toast); Seeds → picker
+→ Corn, quick taps on 1, 10 and growing 3 → two plantings (Corn 3 → 1, none dropped) and 3's card; Pets: tap the pet on 4 → in hand (outline,
+hint), the reach tint followed the mouse to 9, a click on 9 moved it there (server state 3@9, its border moved); picked again, 🐾 cancelled;
+free square 2 with nothing in hand → pet picker; Look → card; the card's pet row → pet page → "Dát na pole" → panel closed, pet in hand,
+dropped back on 4 (3@4); 70 studs away → bar hidden, HandShown false, back → Look. Pop: a Harvest result fixture showed "+1 🌽" over the
+square, removed after 1 s. Basket pulsed while 1 and 10 were ripe. 8 ✔ live borders around 4 (Uncommon green) and 1 (Common grey, lane 1);
+fixture of 4 pets with overlapping reach and a tie: the regions match GardenField's strongest-per-job values on every square, the tie went
+to the lower uid, borders side by side in lanes, inner corners closed (captures U3b_10 / U3b_12). 9 open: the touch layout (2 × 2 above the
+jump button, card kept clear of it) is by geometry only; the two-tap drop on touch is untested. 10 ✔ every hint fits the box in en and cs
+(≤ 2 lines); "Dát na pole" fits its brick; `loc.py check` 0 errors, lint within baseline. 11 not run (F7). 12 ✔ no game errors on server
+or client.
 
 ### E0 — Economy model
 **Goal.** One reproducible model of the Coin economy (`tools/economy.py`, Python stdlib; how to run it: ECONOMY.md) that fixes the numbers the
