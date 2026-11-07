@@ -522,7 +522,7 @@ otherwise items could be duplicated across servers.
   everyone ("Mochi Lv 6") through the `PetNames` attribute and are never localized.
 
 ### 7.9 Crop field (E1-E4)
-*Built and Studio-validated 2026-10-30 – 11-04; every player has it since FA (2026-11-06; until then admins only); tap-and-card controls since U3a, the hand bar since U3b (both 2026-11-07). Exact numbers live in `CropConfig` / `PetConfig` and are pinned by
+*Built and Studio-validated 2026-10-30 – 11-04; every player has it since FA (2026-11-06; until then admins only); tap-and-card controls since U3a, the hand bar since U3b, the Garden panel split up since U4 (all 2026-11-07). Exact numbers live in `CropConfig` / `PetConfig` and are pinned by
 `tools/economy.py`; why they are what they are: [ECONOMY.md](ECONOMY.md); what comes next: [EXPANSION.md](EXPANSION.md).*
 
 - **Goal (2026-11-02, the user).** Farming is the main game: over days 1-3 the field earns about what the obby earns, then 3x by day 7 and
@@ -530,9 +530,27 @@ otherwise items could be duplicated across servers.
 - **Field.** Behind each plot (a 40 x 16 strip in front holds the sign and the 3 incubators): 36 squares in rows 6-6-8-8-8 centred on an
   8-column grid, numbered row by row from the plot (the numbers are stored: never reorder the rows). A new field opens the 2 x 2 block at the
   front centre (squares 3, 4, 9, 10) with 4 free Potato seeds. Any locked square (overgrown: grass tufts, no price in the world) can be
-  bought from its square card; its price and Renown gate depend on how many are open (1 400 for the 5th up to 907 400 for the 36th). One
-  Garden panel at the own plot holds seeds, selling, the squares list, upgrades, tools, market cart, field pets and the crow forecast (U4
-  splits it up).
+  bought from its square card; its price and Renown gate depend on how many are open (1 400 for the 5th up to 907 400 for the 36th).
+- **Where the field's panels are (U4, 2026-11-07).** There is no Garden panel; each piece sits where it is used:
+  - **Barn** (own plot): the bottom-centre HUD brick "🧺 Barn" shows within 45 studs of the own plot and opens the barn panel: the crow
+    forecast line (ticking), the seeds held with their grow time (Growth upgrade included) and the barn's fill ("18 / 40 seeds"), the crops
+    held with count, average size and record, **Feed** (a page of the player's pets that can still learn from food, equipped first; a tap
+    opens that pet's page at its harvest-feeding section) and **Sell all** (always two taps; the button shows the value before the pet
+    bonus). Sell is accepted at the own plot only.
+  - **Seed stall** (`Workspace.Garden.SeedStall`, Studio-only, on the plaza beside the food stand, facing it): a green-and-white striped
+    market stall with sacks and crates; its counter prompt "Buy seeds" (E, 10 studs) opens the stall panel: the market cart's offers (one
+    buy takes all that is left at the offer price) and the seed catalogue (+1 / +10 per crop; Renown-locked rows say from which level, the
+    rare crops from which world's medals) with the barn's fill. The board above the counter (both faces) lists the day's cart offers
+    ("−30 % · 💰 1", "sold out") and the time to new ones. BuySeeds / BuyCart are accepted within 20 studs of the counter only; the panel
+    closes beyond that.
+  - **Skills panel, Garden tab** (the Obby tab holds the talents): Renown level and bar, the Growth / Barn upgrades and the tools, buyable
+    anywhere (pure Coin + Renown buys).
+  - **Pets panel:** the field pet slot line (pets on the field / slots) with "+1 slot" (buyable anywhere).
+  - The crow forecast also shows in the summary bubble over the own sign ("🐦 0:45" within an hour of crows, "🐦 now!" while they are on).
+    The join notice stays a toast.
+  - **Confirm and focus (all panels).** A spend over 1 000 Coins and every Sell take two taps: the first turns the button orange ("Tap
+    again") for 3 s. Opening the Pets, Skills, Barn, Seed stall or Food panel closes the one open before; Pets, Skills and Barn close when
+    the player walks 32 studs from where they were opened, the two stalls beyond 20 studs from their counter.
 - **Seeing the field (U3a, 2026-11-07).** Within 30 studs of the own field every planted square shows a ring (own plot only, ≤ 36): a dark
   disc whose pie fills as the crop grows, the crop icon inside; a ripe crop gets a full green pie, a ✓ badge and a small bounce; the 4 growing
   squares nearest the player also print the time left. The rings sit at crop height, drawn 3 studs toward the camera so the crop does not
@@ -543,8 +561,8 @@ otherwise items could be duplicated across servers.
   studs of the plot centre; the server allows 45) outlines it in white and slides the **square card** up from the bottom: crop icon and
   name, a progress bar with the time left ("Ripe!" when ripe), the growth boosts that apply (Growth upgrade, Cloches), a row per field pet
   whose reach covers the square (portrait, job icons, what it does there: "harvests ripe crops here while you are away: 35 %", "chases
-  crows away here: 70 %"; a tap opens its pet page) and context buttons: Plant (seed picker: seeds held, count, grow time; none → a way
-  to the seed shop), Harvest, Place pet (pet picker: Tending / Pest-control pets with job levels and squares reached; hovering a row tints
+  crows away here: 70 %"; a tap opens its pet page) and context buttons: Plant (seed picker: seeds held, count, grow time; none → a note
+  pointing to the seed stall), Harvest, Place pet (pet picker: Tending / Pest-control pets with job levels and squares reached; hovering a row tints
   its reach), Move pet (takes it in hand, Pets mode below), Take back, Buy square (price and Renown; grey with the reason when
   not possible; over 1 000 Coins a second tap within 3 s confirms). The selected square again, a tap off the field or walking away closes it.
   The card is at most 400 px wide and on a touch screen keeps 110 px free on each side (thumbstick, jump button). The client sends only the
@@ -569,12 +587,12 @@ otherwise items could be duplicated across servers.
   grey must not look like the white select outline): the squares it counts for under the field's rules, i.e. per square the strongest Tending
   pet and the strongest guard (ties to the lower uid). Regions that share an edge draw side by side (three lanes inset 0.45 / 0.8 / 1.15
   studs); strips meet at outer and inner corners.
-- **Crops.** Potato (5 min, so the first harvest comes in the first session), Corn, Pumpkin and Giant melon from the seed shop behind Renown
+- **Crops.** Potato (5 min, so the first harvest comes in the first session), Corn, Pumpkin and Giant melon from the seed stall behind Renown
   gates; three rare crops, one per world (Golden carrot, Frost grape, Glow mushroom), only from the obby (below), never sold as seeds, never
   eaten by crows. Growth runs on server time only: online x 1.0, offline x 0.5 for at most 24 h per absence, settled on join, on leave, every
   60 s and before every action; ripe crops wait. The barn holds 40 seeds and 40 stored crops (+20 per Barn level). Seeds held can always be
-  planted; the shop keeps the Renown gate.
-- **Selling and feeding.** A crop is sold (sale x its size, through `CoinRewards.Grant`) or fed to any pet from its page for XP = half the
+  planted; the stall keeps the Renown gate.
+- **Selling and feeding.** A crop is sold (sale x its size, through `CoinRewards.Grant`) or fed to any pet (from its page or the barn's Feed) for XP = half the
   sale, so feeding is never better than selling and buying food (the Kitchen, D5, stays the better route later).
 - **Size roll.** Every planting rolls a size factor (lognormal, mean exactly 1, 0.36-2.64), fixed by owner and planting number so a re-join
   cannot reroll it; Big = top 20 %, Giant = top 3 %, a record per crop, weight shown as kg x factor. The barn keeps a count and the summed size
@@ -600,7 +618,7 @@ otherwise items could be duplicated across servers.
   the barn. **Scouting** (equipped pets): 15 min of aptitude XP per medal finish; the scouts' bonus (up to +50 %) multiplies the meter points
   and at +50 % adds 1 pouch seed. The results popup lists every seed and the meter.
 - **Crows (E4-thin).** From Renown 3. The UTC day has four 6-hour blocks, a quarter of them crow blocks on a fixed schedule, shown as a
-  forecast in the Garden panel. On the join settle, after Tending, every ripe common crop whose ripe time overlaps a crow block is rolled once
+  forecast in the barn panel (and the summary bubble within an hour). On the join settle, after Tending, every ripe common crop whose ripe time overlaps a crow block is rolled once
   (30 %); a lost roll eats it unless the strongest guard reaching the square wins its chance (50 % + half the Pest-control strength, doubled
   for the crow speciality). At most 1 crop is eaten per absence; crops ripe while the owner plays are safe. A pet with Tending and Pest control
   does both jobs.

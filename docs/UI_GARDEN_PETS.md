@@ -37,7 +37,7 @@
 **Decided (the user, 2026-11-05): tap a square + a square card + hand modes** (a light version of Stardew-style tools; no Roblox `Tool` objects).
 Tap-select, the square card and the removal of the square prompts are **built in U3a**, the hand bar (Seeds / Basket / Pets / Look) in
 **U3b** (both 2026-11-07), as built in GDD §7.9; the design text is in `git show 68b9c3b:docs/UI_GARDEN_PETS.md`. The harvest pop rises
-over the square (it does not fly to a barn yet: the barn comes with U4). So that a player knows squares are tappable (the user,
+over the square (it does not fly to the barn: the barn building comes with U5). So that a player knows squares are tappable (the user,
 2026-11-07): corner brackets on the square under the mouse (pointing-hand cursor) or else the one the character stands on, and Look's
 hint until the first tap, are built; whether rings / pulses need more is to be discussed. Left open:
 - Later, only if the phone check shows players missing squares: a **field camera** button that tilts the camera down over the own field
@@ -52,15 +52,12 @@ hint until the first tap, are built; whether rings / pulses need more is to be d
   far away (EXPANSION §3).
 
 ## 6. Splitting the Garden panel
-| Today in the Garden panel | Goes to |
-|---|---|
-| squares, countdowns, seeds to plant | the field itself (§3, §4) |
-| barn: seeds held, crops held, Sell | **Barn** building on the own plot (§7): shelves / crates that fill visibly; panel with seeds, crops (size, record), Sell / Feed |
-| seed shop, market cart | **Seed stall** on the plaza beside the food stand (§9.1; one shop for everyone; cart offers shown on its board) |
-| Growth / Barn upgrades, tools | **Skills panel, tab "Garden"** (tab "Obby" = today's talents); buyable anywhere (server: drop the plot check for `BuyUpgrade` / `BuyTool`, they are pure Coin + Renown buys) |
-| field pet slots, field pets | Pets panel (slots as a line under the equip slots) and the hand bar's Pets mode |
-| Renown, crow forecast | Skills → Garden tab header (Renown bar) and the summary bubble / barn board (forecast) |
-| join notice | stays (grows into the E5 ledger) |
+**Built in U4 (2026-11-07)**: the Garden panel is gone. Upgrades / tools / Renown are in the Skills panel's Garden tab (buyable anywhere),
+field pet slots are a line in the Pets panel, the barn is a panel behind the bottom-centre "🧺 Barn" HUD button at the own plot (seeds, crops
+with size / record, Feed / Sell, crow forecast), and seeds and the market cart are bought at the seed stall on the plaza (its board shows the
+cart); the crow forecast is also in the summary bubble when crows are near. As built: GDD §7.9; the table of where each piece went is in
+`git show c06d477:docs/UI_GARDEN_PETS.md`. Left for U5: the barn as a building on the plot (shelves / crates that fill visibly; the panel
+opens from it as well as from the HUD button).
 
 ## 7. Plot layout
 Today the front strip holds the sign and three incubators across. Proposed: **hatchery** (3 nests under one small roof) on the left of the
@@ -83,18 +80,17 @@ is ready (the badge covers it for now); other players' bubbles (Renown, biggest 
 
 ### 9.1 Food stand (plaza)
 **Built in U1**: the Pets panel's row with the trained chip outlined, pets with you first, trained ones greyed at the bottom (GDD §7.6).
-Left for U4: the seed stall (§6) stands beside the food stand (decided 2026-11-05) as its own stall, not part of the kiosk; Studio check: the
-food stand's counters stay reachable and readable from the plots on that side.
+The seed stall stands beside it as its own stall (**built in U4**, GDD §7.9); the food counters stay reachable and readable.
 
 ## 10. Other improvements
 - **Feedback for every action:** a pop where it happened (crop to the barn, Coins to the counter, XP to the pet), not only a toast. The
   harvest pop over the square is built (U3b); the rest is open.
-- **One confirm pattern** for every spend over ~1 000 Coins and for Sell: two taps with the button turning orange ("Tap again"), as the food
-  buttons do; hold prompts only in the world.
+- **One confirm pattern** for every spend over ~1 000 Coins and for Sell: two taps, the button turning orange ("Tap again"): **built in U4**
+  (`ConfirmTap`; the food buttons keep their own); hold prompts only in the world.
 - **Next-step hint in the garden:** an empty field pulses Seeds, a ripe one the Basket: **built in U3b** (E5's onboarding builds on it).
 - **Locked squares** look different from empty soil (grass tufts; the price only in the square card): **built in U3a**.
-- **Panel focus:** opening one panel closes the others (Pets, Skills, Barn, Seed stall, Food); panels close when walking away (32 studs, today
-  only the Garden panel).
+- **Panel focus:** opening one panel closes the others (Pets, Skills, Barn, Seed stall, Food); panels close when walking away (32 studs; the
+  stalls at their own 20): **built in U4** (`PanelFocus`).
 - **Phone check** of every new piece is part of its milestone (MU's checklist), Czech widths included.
 
 ## 11. Milestones (each ships alone; scope with acceptance checks when it starts)
@@ -104,7 +100,7 @@ food stand's counters stay reachable and readable from the plots on that side.
 | U2 | Garden HUD button + badge, summary bubble over the own sign (§3 Far, §8): **built 2026-11-06** | – |
 | U3a | Field: rings, tap-select, square card, prompts removed, locked look, pet job-icon labels (§3 Near, §4, §5): **built 2026-11-07** | every player |
 | U3b | Hand bar (Seeds / Basket / Pets / Look), pet reach borders, next-step hint on the bar, pet page "Place on field" (§4, §5, §10): **built 2026-11-07** | U3a |
-| U4 | Panel split: Skills → Garden tab, Barn panel, Seed stall; Garden panel removed (§6) | U3b |
+| U4 | Panel split: Skills → Garden tab, Barn panel, Seed stall; Garden panel removed (§6, §10): **built 2026-11-07** | U3b |
 | U5 | Plot layout: hatchery left, barn right, path; K1 egg cards (§7) | U4 (barn) |
 
 Order proposed: U1 before M6a; U2–U5 before E5's onboarding (it teaches the new controls).

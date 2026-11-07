@@ -1,6 +1,8 @@
 -- GardenBubble (U2, docs/GDD.md §7.9): the summary bubble over the local player's own plot sign, so what waits in the garden
 -- reads without opening a panel: "🧺 4 ripe · ⏱ 2:14 · 🥚 Ready!" with only the parts that apply (ripe crops, the time to the
--- next ripe crop while something grows, a ready egg); nothing planted -> "🌱 Plant seeds". Counts from GardenSummary, updated
+-- next ripe crop while something grows, a ready egg; U4: "🐦 0:45" while the next crows are less than CROW_SOON away, "🐦 now!"
+-- while they are on, only once crows come to this field: State.field.crows.active, schedule from CropConfig.NextCrows); nothing
+-- planted -> "🌱 Plant seeds". Counts from GardenSummary, updated
 -- every half second (so no second is skipped) from workspace:GetServerTimeNow(). Only the own plot has one (other plots show their sign and crops).
 -- Shown while the character is within SHOW_DISTANCE studs (horizontal) of the sign or anywhere on the garden's central plaza
 -- (inside plot ring 1); a constant size on screen (pixels) and AlwaysOnTop: without it the food stand and the follower pets'
@@ -14,7 +16,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
+local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local GardenSummary = require(script.Parent:WaitForChild("GardenSummary"))
+local GardenView = require(script.Parent:WaitForChild("GardenView"))
 
 local player = Players.LocalPlayer
 
@@ -22,6 +26,7 @@ local SHOW_DISTANCE = 120 -- studs (horizontal) from the sign
 local PLAZA_RADIUS = GardenConfig.PlotRings[1].radius - GardenConfig.PlotSize / 2 -- the plaza: inside the inner ring's fronts
 local SIGN_SPOT = Vector3.new(0, 16, -22) -- plot floor space: above the name sign's top bar (PlotView: z -22, top bar 12.4)
 local TEXT_SIZE = 24 -- pixels
+local CROW_SOON = 3600 -- seconds: the crow part shows from this long before the crows come
 local COLOR_BACK = Color3.fromRGB(70, 46, 28) -- the sign's wood, darker
 local COLOR_EDGE = Color3.fromRGB(255, 205, 150) -- the sign's number colour
 
@@ -80,7 +85,7 @@ label.Parent = pill
 
 anchor.Parent = workspace
 
--- "1:00:00", "42:07", "0:05" (as the Garden panel's squares)
+-- "1:00:00", "42:07", "0:05" (as the rings and the square card)
 local function countdown(seconds: number): string
 	seconds = math.max(0, math.ceil(seconds))
 	if seconds >= 3600 then
@@ -107,6 +112,16 @@ local function textOf(now: number): string?
 	end
 	if summary.eggs > 0 then
 		table.insert(parts, Locale.T("garden.bubble.egg"))
+	end
+	local field = GardenView.OwnField()
+	local crows = field and field.crows
+	if type(crows) == "table" and crows.active then
+		local from, to = CropConfig.NextCrows(now, CROW_SOON)
+		if from and to and from <= now then
+			table.insert(parts, Locale.T("garden.bubble.crowsNow"))
+		elseif from then
+			table.insert(parts, Locale.T("garden.bubble.crows", { time = countdown(from - now) }))
+		end
 	end
 	return if #parts > 0 then table.concat(parts, "  ·  ") else nil
 end

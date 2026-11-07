@@ -50,7 +50,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | FA | The field for everyone, pens removed | ✔ | ✔ | – |
 | U2 | Garden icon with a badge (ripe crops + ready eggs), summary bubble over the own plot sign | ✔ | ✔ | – |
 | U3 | Field: rings, tap-select, square card, hand bar (Seeds / Basket / Pets / Look), reach borders, square prompts removed | ✔ | partial (phone touch, multi-client open) | – |
-| U4 | Panel split: U4a (Skills Garden tab, Pets field-slot line, anywhere buys, confirm + panel focus) done; U4b (seed stall, Barn panel, Garden panel removed) open | U4a ✔ | U4a ✔ (phone by geometry) | – |
+| U4 | Panel split: Skills Garden tab, Pets field-slot line, Barn panel, seed stall, confirm + panel focus; Garden panel removed | ✔ | ✔ (phone by geometry; crow-on bubble by code review) | – |
 | U5 | Plot layout: hatchery left, barn right, path; K1 egg cards ([UI_GARDEN_PETS.md](UI_GARDEN_PETS.md)) | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
@@ -581,6 +581,35 @@ unchanged; `BuySeeds` / `BuyCart` / `Sell` at the hub → `far`. 4 ✔ Pets pane
 30 studs and close at 33.5. Respawn with Skills open: restored on the Garden tab, no errors. 10: geometry only (tabs and Buy bricks are
 `ceil(44 / PanelFit scale)` tall, the field line's brick `BRICK`). 12 ✔ no errors or warnings on server or client.
 
+**Changed while building U4b.** The Barn's HUD brick sits bottom centre in its own ScreenGui `BarnGui` (not in `FieldGui`, which keeps only
+the toast). Sell shows the value before the pet bonus (the server pays it with the bonus, as before). The stall panel and the food panel
+close by their own 20-stud distance from the counter (PanelFocus with `math.huge`), Pets / Skills / Barn by PanelFocus's 32. The board's
+lines shrink to fit (TextScaled up to their size) instead of being cut: the pseudo-language cut the melon line. `field.section.seeds` /
+`crops` / `cart`, `field.seed.*`, `field.cart.*`, `field.crows.*`, `field.barn` and `field.crop.*` are reused unchanged; `field.picker.none`
+now points to the stall; removed: `field.button`, `field.title`, `field.renown.hint`, `field.section.squares|expand`, `field.square.*`,
+`field.crops.empty`, `field.expand.*`, `field.picker.shop`.
+
+**Studio results U4b (2026-11-07; live profile snapshotted as `profile_9892673032_U4b_2`, restored after and checked: Coins 10 509,
+MostStars 48; no stage finished, `GlobalLeaderboardsStore` untouched).** 1 ✔ the grep finds nothing in `FieldClient` (the `render*` names
+left are the new panels' own); no removed key is still used, no new key unused (`sign.seedStall` is the Studio sign's `LocKey`); `FieldGui`
+holds only `Toast`. 3 ✔ at the own plot `BuySeeds` / `BuyCart` → `far` (toast "Nejdřív dojdi ke stánku se semínky", Coins unchanged); at
+the hub `Sell` → `far`; the rare-crop / odd-count paths after the stall check are unchanged code (not re-run). 5 ✔ real E press at the stall
+opens the panel; board = panel (Brambora −30 % · 1, Obří meloun −50 % · 504, timer); Potato +1 (2), +10 (20) and the Potato cart offer
+(10 × 1) took exactly 32 Coins, the offer then showed 0 / 10 and "Vyprodáno", the board "vyprodáno"; the 2 520 melon offer: one tap only
+armed it (nothing bought), two taps → rejected `barn` (39 / 40 seeds), toast "Stodola je plná"; locked rows show "⭐ Za medaile: 1. / 2. /
+3. svět" for the rare crops; open at 18 studs, closed at 23. 6 ✔ real click on "🧺 Stodola" at plot 1: crow line, 4 seed rows with grow
+times, "18 / 40", crops with record; Sell Corn: one tap orange "Klepni znovu", nothing sold; two taps → `Sell` once, Corn ×2 gone, paid 3 178
+(the button's 2 126 × the pet bonus 1.49); Feed Potato → chooser (pets that can learn, equipped first) → a tap closed the barn and opened
+Kočička's page at "Krmení z úrody". 7 ✔ Barn → Pets closed; Skills → Barn closed; Barn → Skills closed; Food ↔ Seed stall close each other;
+Barn open at 30 studs, closed at 33. 8 ✔ no crows within 24 h (`NextCrows` nil) → no crow part in the bubble, the barn says "Dalších 24
+hodin žádné vrány"; the crow-on cases by code review only (no fixture). 9 ✔ coplanar audit of the stall clean, decor Anchored with CanTouch /
+CanQuery / CanCollide off; E at the food counter (seed-stall side) opens the food panel and the stall's sign and board read from there
+(capture U4b_food_1); the other three counter sides by geometry (the stall stands 29 studs away, outside the food prompt's 10). 10 geometry
+only (`TapHeight` keeps bricks ≥ 44 px on screen; `Fit` scales the 420 × 470 panels down to the screen). 11 ✔ Czech `TextFits` on the
+barn, stall, both boards, the Pets slot line and the Skills tabs; the pseudo-language shows no literal on the barn, stall, boards and prompt
+(the board line fix above); `loc.py check` 478 keys, 0 errors; lint 0. 12 ✔ `economy.py check` 48 / 48; boot without errors or warnings on
+server and client (twice).
+
 ### E0 — Economy model
 **Goal.** One reproducible model of the Coin economy (`tools/economy.py`, Python stdlib; how to run it: ECONOMY.md) that fixes the numbers the
 garden needs, proves GDD §6 and the EXPANSION §5 guardrails with crops, and re-prices every Coin sink. No game code in E0; approved prices are
@@ -631,7 +660,8 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
   watching a square purchase. (The no-field paths and the live pen conversion went with FA.)
 - **The user's checks:** World 3 sign-off (S8); G1 hints in play.
 - **Localization:** Czech overflow screenshots of the panels (the font is BuilderSansBold, so re-check widths in Czech and the
-  pseudo-language), the Stage 9 exit-door label.
+  pseudo-language), the Stage 9 exit-door label, the food stand's prompt ("Buy food" is a Studio literal: set its texts from
+  `FoodShopClient` as `SeedStallClient` does).
 - **Not built:** the pet page's "hatched on … from a Basic egg" line (`Born` / `Egg`).
 - **Housekeeping (Studio):** delete `ReplicatedStorage.StageTimerStopped` (unused).
 

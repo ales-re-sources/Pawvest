@@ -98,6 +98,8 @@ for _, food in GardenConfig.Foods do
 end
 GardenConfig.FoodStandName = "FoodStand" -- Workspace.Garden.FoodStand (Studio-only model, PrimaryPart "Counter")
 GardenConfig.FoodStandDistance = 20 -- studs from the stand's PrimaryPart within which Feed is accepted
+GardenConfig.SeedStallName = "SeedStall" -- Workspace.Garden.SeedStall (U4: Studio-only model beside the food stand, PrimaryPart "Counter")
+GardenConfig.SeedStallDistance = 20 -- studs from the stall's PrimaryPart within which BuySeeds / BuyCart are accepted
 
 -- Care XP (food, crops) a pet can still use before the rest is wasted (0: nothing left to train; PetConfig.CareXpLeft, P4).
 function GardenConfig.XpToMax(pet): number

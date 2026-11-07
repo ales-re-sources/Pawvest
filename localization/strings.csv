@@ -296,9 +296,28 @@ garden.bubble.ripe[few],Form for 2-4 (Czech only),,🧺 {count} zralé,new,h7c81
 garden.bubble.ripe[other],Form for 0 and 5+,🧺 {count} ripe,🧺 {count} zralých,new,h7c81d3ec
 garden.bubble.time,Summary bubble: time until the next crop on the field is ripe; {time} = m:ss or h:mm:ss (no words),⏱ {time},⏱ {time},new,ha39f96d6
 garden.bubble.egg,"Summary bubble: an egg in the player's incubator can hatch now; one short word after the egg, as the Ready! marker over the incubator (hints.ready)",🥚 Ready!,🥚 Hotovo!,new,h54fad9e3
+garden.bubble.crows,Summary bubble over the own plot sign: crows come in less than an hour (they may eat a ripe crop while the player is away); {time} = m:ss (no words),🐦 {time},🐦 {time},new,h252a31d9
+garden.bubble.crowsNow,Summary bubble: crows are here now (one short word after the bird),🐦 now!,🐦 teď!,new,h647e255f
 # Studio-authored signs (L3; tagged Loc with LocKey in the place file),,,,,
 sign.plot,Number on a garden plot's sign (drawn by the client); {n} = plot slot number 1-30,Plot {n},Pozemek {n},new,h1927be07
 sign.foodStand,"Sign over the pet food stand in the garden (capitals, big letters; keep it short)",🍓 PET FOOD,🍓 KRMENÍ,new,hfe6570f5
+sign.seedStall,"Sign over the seed stall on the garden plaza, beside the pet food stand (capitals, big letters; keep it short)",🌱 SEEDS,🌱 SEMÍNKA,new,hd2b0f5b5
+seedStall.title,Title strip of the seed stall panel (the plaza's seed shop: daily market cart offers and the seed catalogue),🌱 Seed stall,🌱 Stánek se semínky,new,hcd4bfe0a
+seedStall.prompt.action,Action text of the prompt on the seed stall's counter (opens the seed stall panel),Buy seeds,Koupit semínka,new,h7a9eff42
+seedStall.prompt.object,Object text of that prompt (the name of the stall),Seed stall,Stánek se semínky,new,ha23e66c1
+seedStall.reason.far,Toast: buying seeds was refused because the player walked away from the seed stall,Walk to the seed stall first,Nejdřív dojdi ke stánku se semínky,new,hb2c275ea
+seedStall.board.bargain,"Board over the seed stall, one market cart offer per line (big letters, one short line); {crop} = icon + crop name, {percent} = discount (30, 50), {price} = Coins per seed",{crop} −{percent} % · 💰 {price},{crop} −{percent} % · 💰 {price},new,hff0255de
+seedStall.board.taste,"Board over the seed stall: the offer of seeds the player has not unlocked yet (one short line); {crop} = icon + crop name, {price} = Coins per seed",{crop} · new! · 💰 {price},{crop} · novinka! · 💰 {price},new,hb734592f
+seedStall.board.soldOut,Board over the seed stall: an offer the player bought up today (greyed line); {crop} = icon + crop name,{crop} · sold out,{crop} · vyprodáno,new,ha12b1054
+barn.title,Title strip of the barn panel (seeds and harvested crops the player holds; Sell and Feed),🧺 Barn,🧺 Stodola,new,h3949e950
+barn.button,HUD button at the bottom of the screen near the own garden plot that opens the barn panel (112 px brick; icon first),🧺 Barn,🧺 Stodola,new,h3949e950
+barn.seed.grow,"Barn panel, seed row, second line; {time} = how long the crop grows (""3 hours"", ""45 min"")",Grows in {time},Doroste za {time},new,hb78bd88b
+barn.seeds.empty,"Barn panel, seeds section when the player holds no seeds",No seeds. Buy some at the seed stall on the plaza.,Žádná semínka. Kup si je ve stánku se semínky na náměstí.,new,he76c2e61
+barn.crops.empty,"Barn panel, harvest section when the player holds no crops (the 🧺 basket is the hand bar's harvest mode on the field)",Nothing harvested yet. Pick ripe crops with the 🧺 basket.,Zatím nic sklizeno. Zralé plodiny sbírej košíkem 🧺.,new,hc78335df
+barn.feed,"Barn panel, crop row: button that picks a pet to feed this crop to (84 px; short)",Feed,Nakrmit,new,h1fd087e4
+barn.feed.title,"Barn panel, pet chooser after Feed: heading over the list of pets; {crop} = icon + crop name (nominative)",{crop}: pick a pet,{crop}: vyber mazlíčka,new,h79098c58
+barn.feed.back,"Barn panel, pet chooser: button back to the barn (100 px)",‹ Back,‹ Zpět,new,h25eaa24b
+barn.feed.none,"Barn panel, pet chooser when no pet can still learn from food (every trait trained)",None of your pets can learn from food now.,Žádný tvůj mazlíček se teď z jídla nic nenaučí.,new,hb183da94
 sign.garden.title,Hub sign pointing to the pet garden (title line),Pet Garden,Zahrada mazlíčků,new,hdd8bd319
 sign.garden.sub,Hub sign pointing to the pet garden (second line),over the bridge,přes most,new,h16087c51
 sign.hub.sub,"Garden sign pointing back to the hub, under the hub's name",stages this way,úrovně tímto směrem,new,h3b9bcf33
@@ -310,22 +329,15 @@ sign.welcome,Welcome board in the tutorial,Welcome!,Vítej!,ok,h258fd7ce
 sign.giveUp.title,"Wooden sign on the checkpoint before the end of Stage 5 (title line, two short lines in big letters); hints that the stage is hard",Too tough?,Moc těžké?,new,hdd71c48b
 sign.giveUp.sub,"Same sign, second line; tells the player World 2 is open and can be tried first (World 2 is written out, no placeholder; Czech 2. svět)",Try World 2 first,Zkus nejdřív 2. svět,new,h49ad4ee9
 "# Crop field (E1a2: FieldClient, PlotView prompts)",,,,,
-field.button,HUD button near the own plot that opens the field panel (short; icon first),🌱 Field,🌱 Pole,new,h7f560217
-field.title,Title strip of the field panel,🌱 My field,🌱 Moje pole,new,h8630954b
 field.renown.level,Field panel header; {level} = Renown level (a garden level that grows with harvests; Czech: Pověst),Renown {level},Pověst {level},new,hea12a36b
 field.renown.next[one],"Field panel header; {count} = Renown points still missing for the next level, {level} = that next level. Form for 1",{count} more point to Renown {level},Do Pověsti {level} chybí {count} bod,new,hb55f2551
 field.renown.next[few],Form for 2-4 (Czech only),,Do Pověsti {level} chybí {count} body,new,hb55f2551
 field.renown.next[other],Form for 0 and 5+,{count} more points to Renown {level},Do Pověsti {level} chybí {count} bodů,new,hb55f2551
-field.renown.hint,Small hint under the Renown level,Harvest crops to earn Renown. A higher Renown unlocks new seeds and squares.,Sklízej plodiny a získávej Pověst. Vyšší Pověst odemyká nová semínka a políčka.,new,h8ded2086
 field.crows.next,"Field panel header, crow forecast; {time} = countdown to the next crow time (""3:20:00"")",Crows in {time},Vrány přiletí za {time},new,h22a9f693
 field.crows.now,"Field panel header, crow forecast during a crow time; {time} = countdown to its end (""1:05:00"")",Crows now: {time} left,Vrány jsou tu: ještě {time},new,hadd87b2a
 field.crows.calm,"Field panel header, crow forecast: no crow time within the next 24 hours",No crows in the next 24 hours,Dalších 24 hodin žádné vrány,new,h9850ff5d
 field.crows.later,Field panel header: crows do not come to a young field yet; {level} = the Renown level they start at (3),Crows come from Renown {level},Vrány začnou chodit od pověsti {level},new,he28dc7b6
 field.crows.hint,"Field panel header, small line under the crow forecast: what crows do","If you are away in a crow time, crows may eat 1 ripe crop. Rare crops are safe, and a pet with Pest control chases them off.","Když jsi pryč v čase vran, můžou sežrat 1 zralou úrodu. Vzácné plodiny jsou v bezpečí a mazlíček s hlídáním je odežene.",new,h6b0bdad1
-field.section.squares,Heading of the list of the field squares,Squares,Políčka,new,hf5039c4c
-field.square.ripe,"Square row, right aligned: the crop is ready to harvest (short)",Ripe!,Zralé!,new,hb1a0fa6a
-field.square.empty,"Square row, right aligned: nothing is planted (short)",Empty,Prázdné,new,hc1e47bd8
-field.square.note,Small note under the squares list: the countdowns,Times count while you stay online.,"Čas se počítá, jen když jsi ve hře.",new,hd0d3e42c
 field.section.seeds,Heading of the seed list (shop at the own plot),Seeds,Semínka,new,h8fa20aac
 field.seed.info,"Seed row, second and third line (\n = line break); {time} = grow time (""3 hours""), {sale} = Coins one harvested crop sells for, {seed} = Coins one seed costs, {stock} = seeds the player has",Grows in {time}\nSells for {sale} · Seed {seed} · You have {stock},Zraje {time}\nProdej {sale} · Semínko {seed} · Máš {stock},new,hefac51aa
 field.seed.locked,"Seed row of a crop above the player's Renown level, replaces the buy buttons; {level} = Renown level needed",🔒 Renown {level},🔒 Pověst {level},new,hb6e44305
@@ -339,14 +351,10 @@ field.seed.note,Small note under the seed list,Prices are in Coins.,Ceny jsou v 
 field.section.crops,Heading of the list of harvested crops that can be sold,Harvest,Sklizeň,new,h2c69834b
 field.crop.sell,Button on a harvested crop row: sell all of it; {coins} = Coins it is worth before the pet bonus (button is narrow: keep it short),Sell all · {coins},Prodat vše · {coins},new,hc18a15c3
 field.crops.note,Small note under the harvested crops,"Prices are in Coins, before the pet bonus.","Ceny jsou v mincích, před bonusem od mazlíčků.",new,hd4037cb5
-field.crops.empty,Harvested crops list when the player has none,Nothing to sell yet. Harvest ripe crops on your field.,Zatím nemáš co prodat. Sklidit můžeš zralé plodiny na poli.,new,hd1354325
-field.section.expand,Heading of the next-square offer,Bigger field,Větší pole,new,h7378b91b
 field.expand.needRenown,Red line under the square offer or a tool row when Renown is too low; {level} = Renown level needed,You need Renown {level},Potřebuješ Pověst {level},new,hd1d6d1fb
-field.expand.done,Shown when all 36 squares are bought,Your field is complete!,Tvoje pole je kompletní!,new,hb4aad4ae
 field.picker.title,Seed picker title; {n} = square number 1-36,Plant on square {n},Zasadit na políčko {n},new,h23b6b005
 field.picker.info,"Crop row in the seed picker; {stock} = seeds the player has, {time} = grow time (""3 hours"")",You have {stock} · grows in {time},Máš {stock} · zraje {time},new,h757c2c37
-field.picker.none,Seed picker when the player has no seeds that can be planted,You have no seeds. Buy some in the field panel.,Nemáš žádná semínka. Kup si je v panelu pole.,new,h20730b2e
-field.picker.shop,Button in the seed picker without seeds: opens the field panel at the seeds,Buy seeds,Koupit semínka,new,h7a9eff42
+field.picker.none,Seed picker on the field when the player has no seeds that can be planted (seeds are sold at the seed stall on the garden plaza),You have no seeds. Buy some at the seed stall on the plaza.,Nemáš žádná semínka. Kup si je ve stánku se semínky na náměstí.,new,hb485f560
 field.toast.sell[one],Toast after selling crops; {count} = Coins paid (pet bonus included). Form for 1,\+{count} Coin,\+{count} mince,new,h1befc8cc
 field.toast.sell[few],Form for 2-4 (Czech only),,\+{count} mince,new,h1befc8cc
 field.toast.sell[other],Form for 0 and 5+,\+{count} Coins,\+{count} mincí,new,h1befc8cc
@@ -559,8 +567,4 @@ field.size.giant,"Harvest toast, second line: the crop rolled giant (top 3 %); a
 field.size.record,"Harvest toast, after Big / Giant or alone: the heaviest crop of this kind the player has harvested",New record!,Nový rekord!,new,h14ead05b
 field.toast.renownUp,"Harvest toast, last line when the harvest raised the Renown level; {level} = new Renown level",Renown {level}!,Pověst {level}!,new,h03742e78
 field.crop.best,"Harvested crop row, second line; {kg} = weight of the heaviest crop of this kind harvested so far (""8.1"")",Record {kg} kg,Rekord {kg} kg,new,h9ad902fe
-field.expand.next[one],"Garden panel, 'Bigger field' section: price of the next square (whichever the player picks); {count} = Coins. Form for 1",Next square: {count} Coin,Další políčko: {count} mince,new,h45995237
-field.expand.next[few],Form for 2-4 (Czech only),,Další políčko: {count} mince,new,h45995237
-field.expand.next[other],Form for 0 and 5+,Next square: {count} Coins,Další políčko: {count} mincí,new,h45995237
-field.expand.hint,"Garden panel, 'Bigger field' section, under the price: how to buy a square (any locked square, in any order)",Tap any overgrown square on your field and buy it in its card. Each square costs more than the last.,Klepni na poli na kterékoli zarostlé políčko a kup ho v jeho kartě. Každé další políčko stojí víc.,new,h4cbe5a32
 field.reason.open,Refused: the square the player tried to buy is already open,That square is already yours,Tohle políčko už je tvoje,ok,h02853080

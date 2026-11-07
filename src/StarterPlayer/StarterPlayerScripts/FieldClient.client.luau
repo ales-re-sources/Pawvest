@@ -1,65 +1,31 @@
--- Field client (E1a2, docs/ROADMAP.md -> E1a2): the crop field's HUD button and the Garden panel (U4 splits it up).
---   * "Field" button (own ScreenGui FieldGui): visible only while the character is near the own plot; opens / closes the panel;
---   * Garden panel: Renown level, one row per owned square (crop and time left or "Ripe!"), the seed catalogue (buy 1 / 10, Renown
---     locks, barn), harvested crops (Sell all), the next square (price + Renown) -- closes when the player walks away;
---   * the squares themselves are used through FieldHand (U3a: tap a square, square card, seed / pet pickers); U4a moved the field
---     pets' slot to the Pets panel and the upgrades / tools to the Skills panel's Garden tab (GardenSkills); toasts for them stay here;
---   * crow forecast (E4b): a line under the Renown level, "Crows in 3:20:00" / "Crows now, 1:05:00 left", computed on the client
---     from CropConfig.NextCrows and the server time (the schedule is fixed); State.field.crows.active says whether crows come yet;
---   * toasts for the answers of the field actions on GardenRemotes.Result (eggs and food share that remote: ignored here), and
---     once per session the notices of State.field.notice (an old profile's pen conversion, what the pets harvested while away,
---     what the crows ate and which guards chased them off).
--- Display only: a click just names a square, a crop or a count; GardenField validates place, prices, times and Renown.
--- The countdowns use workspace:GetServerTimeNow() against `readyAt` ("ripe at, if you stay online"), never the device clock.
--- The GUI is built here (no Studio GUI), stud-brick wood look (StudStyle).
--- Hook (ScreenGui FieldGui attribute, cleared after use): OpenField = true opens the panel, "seeds" opens it at the seed shop
--- (FieldHand's seed picker without seeds).
--- Buttons by path (all under PlayerGui.FieldGui): Panel.Content.Seeds.<CropId>.Buy1 / .Buy10, Panel.Content.Crops.<CropId>.Sell,
--- Open (the HUD button).
+-- Field client (E1a2; U4): the field's toasts and join notices. The Garden panel it held is gone (U4): squares → the rings and the
+-- square card (FieldHand, FieldRings), seeds and the market cart → the plaza's seed stall (SeedStallClient), seeds / crops held, Sell
+-- and the crow forecast → the Barn panel (BarnClient), upgrades / tools → the Skills panel's Garden tab (GardenSkills), field pet
+-- slots → the Pets panel.
+--   * toasts for the answers of the field actions on GardenRemotes.Result (eggs and food share that remote: ignored here): plant,
+--     harvest (size, record, Shears, Renown level-up), seeds / cart bought, sale, square bought, upgrades and tools, field pets;
+--   * once per session the notices of State.field.notice (an old profile's pen conversion, what the pets harvested while away, what
+--     the crows ate and which guards chased them off).
+-- The GUI is built here (ScreenGui FieldGui with the toast only), stud-brick wood look (StudStyle).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
 
-local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
-local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
-local PanelFocus = require(ReplicatedStorage:WaitForChild("PanelFocus"))
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
-local buySeedsEvent = remotes:WaitForChild("BuySeeds")
-local sellEvent = remotes:WaitForChild("Sell")
-local buyCartEvent = remotes:WaitForChild("BuyCart")
 local requestStateEvent = remotes:WaitForChild("RequestState")
 
-local SHOW_DISTANCE = 45 -- studs from the plot centre: the Field button is visible within this
-local TICK_SECONDS = 0.25
-local GAP = 6 -- between the items of a row
-local SQUARE_ROW = 30
-local BUY1_WIDTH = 50
-local BUY10_WIDTH = 56
-local SELL_WIDTH = 116
-local LOCK_WIDTH = 112
-local UPGRADE_WIDTH = 104
 local NOTICE_SECONDS = 8
-
-local COLOR_PANEL = StudStyle.PanelColors.Field
-local COLOR_ROW = StudStyle.PetRowColor(COLOR_PANEL)
-local COLOR_BUY = StudStyle.Colors.Green
-local COLOR_SELL = StudStyle.Colors.Blue
-local COLOR_LOCKED = StudStyle.Colors.Grey
-local COLOR_CLOSE = StudStyle.Colors.Red
-local COLOR_INFO = Color3.fromRGB(235, 222, 190)
-local COLOR_DIM = Color3.fromRGB(190, 178, 150)
+local COLOR_PANEL = StudStyle.Colors.Wood
 local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
 local COLOR_OK = Color3.fromRGB(120, 230, 120)
-local COLOR_RARE = Color3.fromRGB(255, 205, 90) -- rare crops' "from World n" (E2a)
 
 -- the reasons GardenField answers with (texts: field.reason.<reason>)
 local REJECT_KEYS = {
@@ -113,65 +79,8 @@ local function create(className: string, props, children)
 	return instance
 end
 
-local function label(name: string, props)
-	props.Name = name
-	props.BackgroundTransparency = 1
-	props.Font = props.Font or StudStyle.Font
-	props.TextColor3 = props.TextColor3 or Color3.new(1, 1, 1)
-	props.TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Left
-	return create("TextLabel", props)
-end
-
--- a brick button (StudStyle.Brick: colour and text keep being set on the button itself)
-local function button(name: string, props, studs: number?)
-	props.Name = name
-	props.TextColor3 = Color3.new(1, 1, 1)
-	local instance = create("TextButton", props)
-	StudStyle.Brick(instance, { studs = studs })
-	return instance
-end
-
--- a text that wraps and grows downwards
-local function paragraph(name: string, props)
-	props.Size = props.Size or UDim2.new(1, 0, 0, 0)
-	props.AutomaticSize = Enum.AutomaticSize.Y
-	props.TextWrapped = true
-	props.Font = props.Font or Enum.Font.Gotham
-	props.TextSize = props.TextSize or 14
-	props.TextColor3 = props.TextColor3 or COLOR_INFO
-	props.TextYAlignment = Enum.TextYAlignment.Top
-	return label(name, props)
-end
-
 local function cropOf(id: string)
 	return CropConfig.ById[id]
-end
-
--- "1:00:00", "42:07", "0:05"
-local function countdown(seconds: number): string
-	seconds = math.max(0, math.ceil(seconds))
-	if seconds >= 3600 then
-		return string.format("%d:%02d:%02d", seconds // 3600, (seconds % 3600) // 60, seconds % 60)
-	end
-	return string.format("%d:%02d", seconds // 60, seconds % 60)
-end
-
--- "3 hours", "30 min"
-local function growTime(seconds: number): string
-	if seconds % 3600 == 0 then
-		return Locale.T("common.hours", { count = seconds // 3600 })
-	end
-	return Locale.Duration(seconds)
-end
-
-local function cropTitle(crop): string
-	return crop.icon .. " " .. Locale.CropName(crop)
-end
-
--- The crop's grow time on `field` (shortened by the Growth upgrade), whole seconds.
-local function growSecondsOn(field, crop): number
-	local level = CropConfig.UpgradeLevel(field and field.upgrades, "Growth")
-	return math.ceil(crop.growSeconds / CropConfig.GrowthSpeed(level) - 1e-6)
 end
 
 -- "7.4" (Czech "7,4"): the weight of a crop of size `factor`, to 0.1 kg (E1c2).
@@ -179,111 +88,19 @@ local function kgText(crop, factor: number): string
 	return Locale.Decimal(string.format("%.1f", crop.kg * factor))
 end
 
--- Seeds the barn of `field` holds (the Barn upgrade).
-local function barnOf(field): number
-	return CropConfig.BarnFor(CropConfig.UpgradeLevel(field and field.upgrades, "Barn"))
-end
-
--- State -------------------------------------------------------------------------------------------------------------------
-
-local fieldState = nil -- GardenRemotes.State.field: { open (sorted square numbers), squares, seeds, items, sizes, best, renown, level, pets, slots, slotPrice, upgrades, barn, notice }
-local panelPoint: Vector3? = nil -- where the Garden panel was opened (nil = closed)
+local fieldState = nil -- GardenRemotes.State.field (only its notice is read here)
 local noticesShown = {} -- [kind] = true once this session's notice was shown
-local timers = {} -- ticking square rows: { label, readyAt, ripe }
-local cartTimer = nil -- the market cart's "new offers in" line: { label, at, asked }
-local crowLabel = nil -- the crow forecast line (E4b), re-texted every frame while the panel is open
 local toastToken = 0
 
-local function rootPosition(): Vector3?
-	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-	return if root and root:IsA("BasePart") then root.Position else nil
-end
-
--- Garden panel ------------------------------------------------------------------------------------------------------------
-
-local titleLabel = label("TitleLabel", {
-	Size = UDim2.new(1, 0, 0, 34),
-	TextSize = 20,
-	TextXAlignment = Enum.TextXAlignment.Center,
-})
-local closeButton = button("Close", {
-	AnchorPoint = Vector2.new(1, 0),
-	Position = UDim2.new(1, -6, 0, 4),
-	Size = UDim2.fromOffset(30, 28),
-	ZIndex = 2,
-	BackgroundColor3 = COLOR_CLOSE,
-	TextSize = 16,
-	Text = "X",
-}, 1)
-
-local function newSection(name: string, order: number)
-	return create("Frame", {
-		Name = name,
-		LayoutOrder = order,
-		Size = UDim2.new(1, 0, 0, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
-		BackgroundTransparency = 1,
-	}, {
-		create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, GAP) }),
-	})
-end
-
-local headerSection = newSection("Header", 1)
-local squaresSection = newSection("Field", 2)
-local seedsSection = newSection("Seeds", 4)
-local cartSection = newSection("Cart", 5)
-local cropsSection = newSection("Crops", 6)
-local expandSection = newSection("Expand", 7)
-
-local content = create("ScrollingFrame", {
-	Name = "Content",
-	Position = UDim2.new(0, 8, 0, 44),
-	Size = UDim2.new(1, -16, 1, -52),
-	BackgroundTransparency = 1,
-	BorderSizePixel = 0,
-	ScrollBarThickness = 5,
-	CanvasSize = UDim2.new(),
-	AutomaticCanvasSize = Enum.AutomaticSize.Y,
-}, {
-	create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 14) }),
-	create("UIPadding", { PaddingRight = UDim.new(0, 6), PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 6) }),
-	headerSection,
-	squaresSection,
-	seedsSection,
-	cartSection,
-	cropsSection,
-	expandSection,
-})
-
-local panel = create("Frame", {
-	Name = "Panel",
-	AnchorPoint = Vector2.new(0.5, 0.5),
-	Position = UDim2.fromScale(0.5, 0.5),
-	Size = UDim2.new(1, -16, 0.85, 0),
-	Visible = false,
-}, {
-	create("UISizeConstraint", { MinSize = Vector2.new(200, 180), MaxSize = Vector2.new(400, 560) }),
-	titleLabel,
-	closeButton,
-	content,
-})
-StudStyle.Panel(panel, COLOR_PANEL)
-
--- HUD button and toast
-local openButton = button("Open", {
-	AnchorPoint = Vector2.new(0.5, 1),
-	Position = UDim2.new(0.5, 0, 1, -20),
-	Size = UDim2.fromOffset(112, 48),
-	BackgroundColor3 = COLOR_BUY,
-	TextSize = 18,
-	Visible = false,
-}, 2)
-
-local toast = label("Toast", {
+local toast = create("TextLabel", {
+	Name = "Toast",
 	AnchorPoint = Vector2.new(0.5, 0),
 	Position = UDim2.new(0.5, 0, 0, 108),
 	Size = UDim2.new(1, -16, 0, 34),
 	AutomaticSize = Enum.AutomaticSize.Y,
+	BackgroundTransparency = 1,
+	Font = StudStyle.Font,
+	TextColor3 = Color3.new(1, 1, 1),
 	TextSize = 18,
 	TextWrapped = true,
 	TextXAlignment = Enum.TextXAlignment.Center,
@@ -297,408 +114,9 @@ local screenGui = create("ScreenGui", {
 	Name = "FieldGui",
 	ResetOnSpawn = false,
 	DisplayOrder = 6,
-	-- Sibling: later siblings draw above the whole panel (with Global the panel's stud-button glyphs, ZIndex 2, showed through a
-	-- picker's rows, E1c4)
 	ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 	AutoLocalize = false, -- translated by Locale (L2)
-}, { openButton, panel, toast })
-
--- Rows --------------------------------------------------------------------------------------------------------------------
-
-local function clearSection(section: Instance)
-	for _, child in section:GetChildren() do
-		if not child:IsA("UIListLayout") then
-			child:Destroy()
-		end
-	end
-end
-
-local function heading(parent: Instance, order: number, text: string)
-	local title = label("Heading", {
-		LayoutOrder = order,
-		Size = UDim2.new(1, 0, 0, 24),
-		TextSize = 19,
-		Text = text,
-	})
-	StudStyle.Title(title, COLOR_PANEL)
-	title.Parent = parent
-end
-
--- A row: a text column that wraps and grows, then the buttons (`reserved` = their widths plus gaps).
-local function newRow(parent: Instance, name: string, order: number)
-	return create("Frame", {
-		Name = name,
-		LayoutOrder = order,
-		Size = UDim2.new(1, 0, 0, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
-		BackgroundColor3 = COLOR_ROW,
-		Parent = parent,
-	}, {
-		create("UICorner", { CornerRadius = UDim.new(0, 8) }),
-		create("UIPadding", {
-			PaddingTop = UDim.new(0, 6),
-			PaddingBottom = UDim.new(0, 6),
-			PaddingLeft = UDim.new(0, 10),
-			PaddingRight = UDim.new(0, 8),
-		}),
-		create("UIListLayout", {
-			FillDirection = Enum.FillDirection.Horizontal,
-			SortOrder = Enum.SortOrder.LayoutOrder,
-			Padding = UDim.new(0, GAP),
-			VerticalAlignment = Enum.VerticalAlignment.Center,
-		}),
-	})
-end
-
-local function textColumn(row: Instance, reserved: number, title: string, info: string?)
-	local column = create("Frame", {
-		Name = "Text",
-		LayoutOrder = 1,
-		Size = UDim2.new(1, -reserved, 0, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
-		BackgroundTransparency = 1,
-		Parent = row,
-	}, {
-		create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 2) }),
-	})
-	paragraph("Name", { LayoutOrder = 1, Font = StudStyle.Font, TextSize = 17, TextColor3 = Color3.new(1, 1, 1), Text = title }).Parent = column
-	if info then
-		paragraph("Info", { LayoutOrder = 2, TextSize = 13, Text = info }).Parent = column
-	end
-	return column
-end
-
-local function coinsNow(): number
-	return PetClient.Coins
-end
-
--- Sections ----------------------------------------------------------------------------------------------------------------
-
--- The crow forecast line's text and colour for the server time now (E4b).
-local function crowForecast()
-	local label = crowLabel
-	if not label then
-		return
-	end
-	local now = workspace:GetServerTimeNow()
-	local from, to = CropConfig.NextCrows(now, 24 * 3600)
-	if not from then
-		label.Text = Locale.T("field.crows.calm")
-		label.TextColor3 = COLOR_OK
-	elseif from <= now then
-		label.Text = Locale.T("field.crows.now", { time = countdown(to - now) })
-		label.TextColor3 = COLOR_ERROR
-	else
-		label.Text = Locale.T("field.crows.next", { time = countdown(from - now) })
-		label.TextColor3 = COLOR_INFO
-	end
-end
-
-local function renderHeader(field)
-	clearSection(headerSection)
-	paragraph("Level", {
-		LayoutOrder = 1,
-		Font = StudStyle.Font,
-		TextSize = 24,
-		TextColor3 = COLOR_OK,
-		Text = Locale.T("field.renown.level", { level = field.level }),
-	}).Parent = headerSection
-	paragraph("Next", {
-		LayoutOrder = 2,
-		TextSize = 15,
-		Text = Locale.T("field.renown.next", { count = math.max(0, CropConfig.PointsFor(field.level + 1) - field.renown), level = field.level + 1 }),
-	}).Parent = headerSection
-	paragraph("Hint", { LayoutOrder = 3, TextSize = 13, TextColor3 = COLOR_DIM, Text = Locale.T("field.renown.hint") }).Parent = headerSection
-	-- E4b crow forecast: from the fixed schedule (CropConfig.NextCrows) and the server time
-	crowLabel = nil
-	local crows = field.crows
-	if type(crows) == "table" then
-		if crows.active then
-			crowLabel = paragraph("Crows", { LayoutOrder = 4, Font = StudStyle.Font, TextSize = 16, Text = "" })
-			crowLabel.Parent = headerSection
-			crowForecast()
-			paragraph("CrowsHint", { LayoutOrder = 5, TextSize = 12, TextColor3 = COLOR_DIM, Text = Locale.T("field.crows.hint") }).Parent = headerSection
-		else
-			paragraph("Crows", {
-				LayoutOrder = 4,
-				TextSize = 13,
-				TextColor3 = COLOR_DIM,
-				Text = Locale.T("field.crows.later", { level = CropConfig.Crows.FromLevel }),
-			}).Parent = headerSection
-		end
-	end
-end
-
-local function renderSquares(field)
-	clearSection(squaresSection)
-	table.clear(timers)
-	heading(squaresSection, 1, Locale.T("field.section.squares"))
-	local now = workspace:GetServerTimeNow()
-	local open = field.open or {}
-	for index, n in open do
-		local square = field.squares[tostring(n)]
-		local crop = square and cropOf(square.crop)
-		local row = create("Frame", {
-			Name = "Square" .. n,
-			LayoutOrder = index + 1,
-			Size = UDim2.new(1, 0, 0, SQUARE_ROW),
-			BackgroundColor3 = COLOR_ROW,
-			Parent = squaresSection,
-		}, { create("UICorner", { CornerRadius = UDim.new(0, 8) }) })
-		label("Name", {
-			Position = UDim2.fromOffset(10, 0),
-			Size = UDim2.new(1, -100, 1, 0),
-			TextSize = 16,
-			TextTruncate = Enum.TextTruncate.AtEnd,
-			TextColor3 = if crop then Color3.new(1, 1, 1) else COLOR_DIM,
-			Text = if crop then string.format("%d  %s", n, cropTitle(crop)) else tostring(n),
-		}).Parent = row
-		local time = label("Time", {
-			AnchorPoint = Vector2.new(1, 0),
-			Position = UDim2.new(1, -10, 0, 0),
-			Size = UDim2.fromOffset(86, SQUARE_ROW),
-			TextSize = 16,
-			TextXAlignment = Enum.TextXAlignment.Right,
-			TextColor3 = COLOR_DIM,
-			Text = Locale.T("field.square.empty"),
-		})
-		time.Parent = row
-		if crop then
-			local ripe = square.grown >= crop.growSeconds
-			time.Text = if ripe then Locale.T("field.square.ripe") else countdown(math.max(square.readyAt - now, 1))
-			time.TextColor3 = if ripe then COLOR_OK else Color3.new(1, 1, 1)
-			table.insert(timers, { label = time, readyAt = square.readyAt, ripe = ripe })
-		end
-	end
-	paragraph("Note", { LayoutOrder = #open + 2, TextSize = 12, TextColor3 = COLOR_DIM, Text = Locale.T("field.square.note") }).Parent =
-		squaresSection
-end
-
-local function renderSeeds(field)
-	clearSection(seedsSection)
-	heading(seedsSection, 1, Locale.T("field.section.seeds"))
-	local total = CropConfig.SeedTotal(field.seeds)
-	local capacity = barnOf(field)
-	for index, crop in CropConfig.Crops do
-		local locked = field.level < crop.renown
-		local stock = field.seeds[crop.id] or 0
-		local reserved = if locked or crop.rare then LOCK_WIDTH + GAP else BUY1_WIDTH + BUY10_WIDTH + GAP * 2
-		local row = newRow(seedsSection, crop.id, index + 1)
-		textColumn(
-			row,
-			reserved,
-			cropTitle(crop),
-			if crop.rare
-				then Locale.T("field.seed.rareInfo", { time = growTime(growSecondsOn(field, crop)), sale = crop.sale, stock = stock })
-				else Locale.T("field.seed.info", { time = growTime(growSecondsOn(field, crop)), sale = crop.sale, seed = crop.seed, stock = stock })
-		)
-		if locked or crop.rare then -- rare seeds come only from the obby (E2a): the row says from which world
-			local lock = paragraph("Locked", {
-				LayoutOrder = 2,
-				Size = UDim2.new(0, LOCK_WIDTH, 0, 0),
-				Font = StudStyle.Font,
-				TextSize = 15,
-				TextColor3 = if crop.rare then COLOR_RARE else COLOR_DIM,
-				TextXAlignment = Enum.TextXAlignment.Center,
-				Text = if crop.rare
-					then Locale.T("field.seed.fromWorld", { world = Locale.WorldName(StageConfig.Worlds[crop.world]) })
-					else Locale.T("field.seed.locked", { level = crop.renown }),
-			})
-			lock.Parent = row
-		else
-			for slot, option in { { name = "Buy1", amount = 1, width = BUY1_WIDTH }, { name = "Buy10", amount = 10, width = BUY10_WIDTH } } do
-				local affordable = coinsNow() >= crop.seed * option.amount and total + option.amount <= capacity
-				local buy = button(option.name, {
-					LayoutOrder = slot + 1,
-					Size = UDim2.fromOffset(option.width, 36),
-					BackgroundColor3 = if affordable then COLOR_BUY else COLOR_LOCKED,
-					TextSize = 16,
-					Text = "+" .. option.amount,
-					Parent = row,
-				}, 2)
-				buy.Activated:Connect(function()
-					buySeedsEvent:FireServer(crop.id, option.amount)
-				end)
-			end
-		end
-	end
-	paragraph("Barn", {
-		LayoutOrder = #CropConfig.Crops + 2,
-		Font = StudStyle.Font,
-		TextSize = 15,
-		TextColor3 = if total >= capacity then COLOR_ERROR else Color3.new(1, 1, 1),
-		Text = Locale.T("field.barn", { total = total, capacity = capacity }),
-	}).Parent = seedsSection
-	paragraph("Note", { LayoutOrder = #CropConfig.Crops + 3, TextSize = 12, TextColor3 = COLOR_DIM, Text = Locale.T("field.seed.note") }).Parent =
-		seedsSection
-end
-
--- The market cart (E1c4): today's offers (bargains on unlocked crops, a taste of the next locked one); the button buys what is left.
-local function renderCart(field)
-	clearSection(cartSection)
-	cartTimer = nil
-	heading(cartSection, 1, Locale.T("field.section.cart"))
-	local cart = field.cart
-	if not cart then
-		return
-	end
-	local next = paragraph("Next", { LayoutOrder = 2, TextSize = 13, TextColor3 = COLOR_DIM, Text = "" })
-	next.Parent = cartSection
-	cartTimer = { label = next, at = cart.nextAt, asked = false }
-	cartTimer.label.Text = Locale.T("field.cart.next", { time = countdown(math.max(cart.nextAt - workspace:GetServerTimeNow(), 0)) })
-	local total, capacity = CropConfig.SeedTotal(field.seeds), barnOf(field)
-	for _, offer in cart.offers do
-		local crop = cropOf(offer.crop)
-		if crop then
-			local row = newRow(cartSection, "Offer" .. offer.slot, offer.slot + 2)
-			local info = if offer.taste
-				then Locale.T("field.cart.taste", { level = crop.renown, price = offer.price })
-				else Locale.T("field.cart.bargain", {
-					percent = math.floor((offer.discount or 0) * 100 + 0.5),
-					price = offer.price,
-					base = offer.base,
-				})
-			textColumn(row, UPGRADE_WIDTH + GAP, Locale.T("field.cart.row", { crop = cropTitle(crop), left = offer.left, count = offer.count }), info)
-			local cost = offer.price * offer.left
-			local affordable = offer.left > 0 and coinsNow() >= cost and total + offer.left <= capacity
-			local buy = button("Buy", {
-				LayoutOrder = 2,
-				Size = UDim2.fromOffset(UPGRADE_WIDTH, 40),
-				BackgroundColor3 = if affordable then COLOR_BUY else COLOR_LOCKED,
-				TextSize = 15,
-				TextWrapped = true,
-				Text = if offer.left > 0 then Locale.T("field.upgrade.price", { count = cost }) else Locale.T("field.cart.soldOut"),
-				Parent = row,
-			}, 2)
-			if offer.left > 0 then
-				buy.Activated:Connect(function()
-					buyCartEvent:FireServer(offer.slot, offer.crop, offer.left)
-				end)
-			end
-		end
-	end
-	paragraph("Note", { LayoutOrder = 50, TextSize = 12, TextColor3 = COLOR_DIM, Text = Locale.T("field.cart.note") }).Parent = cartSection
-end
-
-local function renderCrops(field)
-	clearSection(cropsSection)
-	heading(cropsSection, 1, Locale.T("field.section.crops"))
-	local any = false
-	for index, crop in CropConfig.Crops do
-		local owned = field.items[crop.id] or 0
-		if owned > 0 then
-			any = true
-			local row = newRow(cropsSection, crop.id, index + 1)
-			local best = field.best and field.best[crop.id]
-			textColumn(
-				row,
-				SELL_WIDTH + GAP,
-				string.format("%s × %s", cropTitle(crop), Locale.Number(owned)),
-				if best then Locale.T("field.crop.best", { kg = kgText(crop, best) }) else nil
-			)
-			local value = CropConfig.SaleValue(crop, field.sizes and field.sizes[crop.id] or owned)
-			local sell = button("Sell", {
-				LayoutOrder = 2,
-				Size = UDim2.fromOffset(SELL_WIDTH, 40),
-				BackgroundColor3 = COLOR_SELL,
-				TextSize = 14,
-				TextWrapped = true,
-				Text = Locale.T("field.crop.sell", { coins = value }),
-				Parent = row,
-			}, 2)
-			sell.Activated:Connect(function()
-				sellEvent:FireServer(crop.id, owned)
-			end)
-		end
-	end
-	if any then
-		paragraph("Note", { LayoutOrder = #CropConfig.Crops + 2, TextSize = 12, TextColor3 = COLOR_DIM, Text = Locale.T("field.crops.note") }).Parent =
-			cropsSection
-	else
-		paragraph("Empty", { LayoutOrder = 2, Text = Locale.T("field.crops.empty") }).Parent = cropsSection
-	end
-end
-
--- The next square's price (E1d2: the player buys any locked square through its prompt on the field; the price depends only on
--- how many are open).
-local function renderExpand(field)
-	clearSection(expandSection)
-	heading(expandSection, 1, Locale.T("field.section.expand"))
-	local expansion = CropConfig.NextExpansion(#(field.open or {}))
-	if not expansion then
-		paragraph("Info", { LayoutOrder = 2, Font = StudStyle.Font, TextSize = 16, TextColor3 = COLOR_OK, Text = Locale.T("field.expand.done") }).Parent =
-			expandSection
-		return
-	end
-	local lines = { Locale.T("field.expand.next", { count = expansion.price }) }
-	if field.level < expansion.renown then
-		table.insert(lines, "<font color='#f06a5a'>" .. Locale.T("field.expand.needRenown", { level = expansion.renown }) .. "</font>")
-	end
-	if coinsNow() < expansion.price then
-		table.insert(lines, Locale.T("common.needMoreCoins", { count = expansion.price - coinsNow() }))
-	end
-	paragraph("Info", { LayoutOrder = 2, TextSize = 15, TextColor3 = Color3.new(1, 1, 1), RichText = true, Text = table.concat(lines, "\n") }).Parent =
-		expandSection
-	paragraph("Hint", { LayoutOrder = 3, TextSize = 13, TextColor3 = COLOR_DIM, Text = Locale.T("field.expand.hint") }).Parent = expandSection
-end
-
-local function renderPanel()
-	titleLabel.Text = Locale.T("field.title")
-	if not panelPoint then
-		return
-	end
-	local field = fieldState
-	if not field then
-		clearSection(headerSection)
-		paragraph("Level", { Text = Locale.T("common.loading") }).Parent = headerSection
-		clearSection(squaresSection)
-		clearSection(seedsSection)
-		clearSection(cartSection)
-		cartTimer = nil
-		crowLabel = nil
-		clearSection(cropsSection)
-		clearSection(expandSection)
-		return
-	end
-	renderHeader(field)
-	renderSquares(field)
-	renderSeeds(field)
-	renderCart(field)
-	renderCrops(field)
-	renderExpand(field)
-end
-
-local closePanel
-local function openPanel(scrollToSeeds: boolean?)
-	PanelFocus.Open("Garden", closePanel) -- U4: one panel at a time; walking 32 studs away closes it
-	panelPoint = rootPosition() or Vector3.zero
-	panel.Visible = true
-	renderPanel()
-	if scrollToSeeds then
-		task.spawn(function()
-			task.wait() -- the automatic sizes settle on the next frame
-			content.CanvasPosition = Vector2.new(0, math.max(0, seedsSection.AbsolutePosition.Y - content.AbsolutePosition.Y + content.CanvasPosition.Y - 4))
-		end)
-	end
-end
-
-function closePanel()
-	PanelFocus.Closed("Garden")
-	panelPoint = nil
-	panel.Visible = false
-end
-
-local function staticTexts()
-	openButton.Text = Locale.T("field.button")
-	titleLabel.Text = Locale.T("field.title")
-end
-staticTexts()
-
-local function renderAll()
-	if panelPoint then
-		renderPanel()
-	end
-end
+}, { toast })
 
 -- Toast -------------------------------------------------------------------------------------------------------------------
 
@@ -715,16 +133,6 @@ local function showToast(text: string, color: Color3?, seconds: number?)
 	end)
 end
 
--- Events ------------------------------------------------------------------------------------------------------------------
-
-closeButton.Activated:Connect(closePanel)
-openButton.Activated:Connect(function()
-	if panelPoint then
-		closePanel()
-	else
-		openPanel()
-	end
-end)
 
 -- "Cat Lv 4" for a uid in the pet state ("" when unknown)
 local function petNameOf(uid: string?): string
@@ -788,18 +196,14 @@ end
 
 remotes:WaitForChild("State").OnClientEvent:Connect(function(state)
 	fieldState = if type(state) == "table" then state.field else nil
-	renderAll()
 	showNotices(fieldState)
 end)
 
 PetClient.Changed:Connect(function()
-	if panelPoint then
-		renderPanel() -- the Coins changed: affordability colours
-	end
 	showNotices(fieldState) -- a crow notice waits for the guards' names (E4b)
 end)
 
--- Answers of the field pet actions (E1b): toasts (FieldHand tints a placed pet's reach for a moment).
+-- Answers of the field pet actions (E1b): toasts.
 local function petResult(action: string, ok: boolean, detail)
 	if not ok then
 		showToast(Locale.T(PET_REJECT_KEYS[detail] or REJECT_KEYS[detail] or "common.reject.failed"), COLOR_ERROR)
@@ -840,7 +244,8 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 		return -- incubators and the food stand answer on the same remote
 	end
 	if not ok then
-		showToast(Locale.T(REJECT_KEYS[detail] or "common.reject.failed"), COLOR_ERROR)
+		local key = if detail == "far" and (action == "BuySeeds" or action == "BuyCart") then "seedStall.reason.far" else REJECT_KEYS[detail]
+		showToast(Locale.T(key or "common.reject.failed"), COLOR_ERROR)
 		return
 	end
 	local crop = type(detail) == "table" and detail.crop and cropOf(detail.crop)
@@ -874,57 +279,6 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 		showToast(Locale.T("field.toast.square", { n = detail.square }), COLOR_OK)
 	else
 		showToast(Locale.T("field.toast.plant", { crop = name }), COLOR_OK)
-	end
-end)
-
-Locale.Changed:Connect(function()
-	staticTexts()
-	renderAll()
-end)
-
--- Hook: OpenField = true opens the Garden panel, "seeds" at the seed shop (FieldHand's seed picker without seeds)
-screenGui:GetAttributeChangedSignal("OpenField"):Connect(function()
-	local value = screenGui:GetAttribute("OpenField")
-	if value then
-		screenGui:SetAttribute("OpenField", nil)
-		openPanel(value == "seeds")
-	end
-end)
-
--- Every TICK_SECONDS: the button near the own plot, panels closing when the player walks away, the countdowns
-local elapsed = 0
-RunService.Heartbeat:Connect(function(dt)
-	elapsed += dt
-	if elapsed < TICK_SECONDS then
-		return
-	end
-	elapsed = 0
-	local root = rootPosition()
-
-	local slot = player:GetAttribute(GardenConfig.PlotAttribute)
-	local plot = if type(slot) == "number" then GardenConfig.PlotCFrame(slot) else nil
-	local near = false
-	if root and plot then
-		local offset = root - plot.Position
-		near = Vector3.new(offset.X, 0, offset.Z).Magnitude <= SHOW_DISTANCE
-	end
-	openButton.Visible = near
-
-	if panelPoint then
-		local now = workspace:GetServerTimeNow()
-		for _, timer in timers do
-			if not timer.ripe then
-				timer.label.Text = countdown(math.max(timer.readyAt - now, 1)) -- ripe only when the server says so (State)
-			end
-		end
-		crowForecast()
-		if cartTimer then
-			cartTimer.label.Text = Locale.T("field.cart.next", { time = countdown(math.max(cartTimer.at - now, 0)) })
-			if now >= cartTimer.at and not cartTimer.asked then
-				cartTimer.asked = true -- the new day's offers come with the next State
-				requestStateEvent:FireServer()
-			end
-		end
 	end
 end)
 

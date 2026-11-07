@@ -52,7 +52,8 @@
 -- BuySquare(square, expectedOpen), PlacePet(square, uid) (also moves a placed pet), LiftPet(uid), BuyPetSlot(expectedSlots),
 -- BuyUpgrade(id, expectedLevel), BuyTool(id, expectedLevel), BuyCart(slot, crop, count), FeedCrop(uid, crop, count) (client → server); answers on GardenRemotes.Result; GardenRemotes.State.field (the owner's panel).
 -- Where they are accepted: at the own plot (GardenService.Usable, 45 studs) for the field actions and Sell (the barn is on the plot);
--- anywhere for BuyUpgrade, BuyTool, BuyPetSlot (U4: pure Coin + Renown buys from the Skills / Pets panels) and FeedCrop.
+-- within GardenConfig.SeedStallDistance of the plaza's seed stall for BuySeeds and BuyCart (U4); anywhere for BuyUpgrade, BuyTool,
+-- BuyPetSlot (U4: pure Coin + Renown buys from the Skills / Pets panels) and FeedCrop.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -647,6 +648,18 @@ local function usableField(player: Player, action: string, anywhere: boolean?)
 	return profile, field, open
 end
 
+-- True when the character stands within SeedStallDistance of Workspace.Garden.SeedStall (U4: BuySeeds / BuyCart).
+local function nearStall(player: Player): boolean
+	local garden = workspace:FindFirstChild("Garden")
+	local stall = garden and garden:FindFirstChild(GardenConfig.SeedStallName)
+	local anchor = stall and stall:IsA("Model") and stall.PrimaryPart
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	return anchor ~= nil
+		and root ~= nil
+		and root:IsA("BasePart")
+		and (root.Position - anchor.Position).Magnitude <= GardenConfig.SeedStallDistance
+end
+
 local function done(player: Player, action: string, detail: any)
 	GardenService.PublishAll(player)
 	GardenService.Succeed(player, action, detail)
@@ -725,7 +738,10 @@ buySeedsEvent.OnServerEvent:Connect(function(player, cropId, amount)
 	if not (crop and GardenService.WholeNumber(amount) and amount >= 1) or not GardenService.Allow(player) then
 		return
 	end
-	local profile, field = usableField(player, "BuySeeds")
+	if not nearStall(player) then
+		return reject(player, "BuySeeds", "far") -- U4: seeds are sold at the plaza's seed stall, not at the plot
+	end
+	local profile, field = usableField(player, "BuySeeds", true)
 	if not field then
 		return
 	end
@@ -886,7 +902,10 @@ buyCartEvent.OnServerEvent:Connect(function(player, slot, cropId, amount)
 	then
 		return
 	end
-	local profile, field = usableField(player, "BuyCart")
+	if not nearStall(player) then
+		return reject(player, "BuyCart", "far")
+	end
+	local profile, field = usableField(player, "BuyCart", true)
 	if not field then
 		return
 	end

@@ -75,7 +75,7 @@ local ICON_COLORS = {
 	HomeButton = StudStyle.Colors.Red,
 	SkillsButton = StudStyle.PanelColors.SkillsPanel,
 	PetsButton = StudStyle.Colors.Green,
-	GardenButton = StudStyle.Colors.Wood, -- the garden's wood (the Garden panel, the plot signs)
+	GardenButton = StudStyle.Colors.Wood, -- the garden's wood (the Barn panel, the plot signs)
 	SettingsButton = StudStyle.PanelColors.SettingsPanel,
 	AdminButton = StudStyle.PanelColors.AdminPanel,
 }

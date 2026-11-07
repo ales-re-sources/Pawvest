@@ -189,7 +189,7 @@ A Coin tree gated by Renown, never touching the obby, never sold for Robux (§13
 
 ## 7. Critters and raids
 The defence loop is Pawvest's strongest hook (§1.1). Critters raid the garden while the player is away; never other players.
-*Built (E4-thin, GDD §7.9): crows on a fixed UTC block schedule, the forecast line in the Garden panel, Pest-control guards with the crow
+*Built (E4-thin, GDD §7.9): crows on a fixed UTC block schedule, the forecast line in the barn panel (U4; before it the Garden panel), Pest-control guards with the crow
 speciality, deterministic resolution on join, at most 1 crop lost per absence, rare crops safe, losses in the join notice.*
 
 Still to build (drop D1 unless noted):

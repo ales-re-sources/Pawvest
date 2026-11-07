@@ -285,7 +285,7 @@ end
 local screenGui = create("ScreenGui", {
 	Name = "FieldHandGui",
 	ResetOnSpawn = false,
-	DisplayOrder = 5, -- under FieldClient's Garden panel (6)
+	DisplayOrder = 5, -- under the garden panels (Barn, Seed stall: 6)
 	ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 	AutoLocalize = false, -- translated by Locale
 })
@@ -709,7 +709,7 @@ local function back()
 	render()
 end
 
--- the seed picker: the seeds held (count, grow time); without seeds a hint and the way to the seed shop. With `square` nil it
+-- the seed picker: the seeds held (count, grow time); without seeds a hint to the plaza's seed stall. With `square` nil it
 -- picks the seed of the hand's Seeds mode.
 local function renderSeeds(square: number?)
 	header(if square then Locale.T("field.picker.title", { n = square }) else Locale.T("field.hand.pickSeed"), if square then back else closeCard)
@@ -740,16 +740,7 @@ local function renderSeeds(square: number?)
 		return
 	end
 	list:Destroy()
-	paragraph("None", 2, { Text = Locale.T("field.picker.none") }).Parent = body
-	buttonRow(9, {
-		{ name = "Shop", color = COLOR_GO, text = Locale.T("field.picker.shop"), action = function()
-			closeCard()
-			local fieldGui = player.PlayerGui:FindFirstChild("FieldGui")
-			if fieldGui then
-				fieldGui:SetAttribute("OpenField", "seeds")
-			end
-		end },
-	})
+	paragraph("None", 2, { Text = Locale.T("field.picker.none") }).Parent = body -- U4: seeds are sold at the plaza's seed stall
 end
 
 -- the pet picker: pets with Tending or Pest control (job levels, squares they would work here); hovering a row tints its reach
