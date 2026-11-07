@@ -484,10 +484,17 @@ collecting and caring over obby runs.
   own plot (no stealing, no shared fields).
 - **Incubators.** Every egg hatches here, in real time, and keeps hatching offline. Each plot has
   **3 incubators**, unlocked in order for 0 / 5 000 / 12 000 Coins (incubator 1 free; 17 000 in total). An egg is
-  bought at an empty incubator of the player's own plot (Basic 500 Coins, ready **5 minutes** later; Golden 4 000 Coins,
+  bought for an empty incubator of the player's own plot (Basic 500 Coins, ready **5 minutes** later; Golden 4 000 Coins,
   ready **1 hour** later, server time); free eggs start there by themselves (§7.2). A ready
-  egg waits until the owner taps **Hatch** (with a reveal); the pet is rolled then and equipped automatically
-  when a slot is free (§7.3). An egg can only be started while the pets plus the eggs already incubating stay below the
+  egg waits until the owner taps **Hatch**; the pet is rolled then and equipped automatically
+  when a slot is free (§7.3).
+  - **Hatchery panel (U5b).** The three incubators stand as nests under the hatchery's roof (§7.6 Layout) with one "Open hatchery"
+    prompt. The panel lists each incubator: its egg and a live countdown, **Hatch** when ready, the next one's Unlock brick with its
+    price (two taps over 1 000 Coins), "unlock incubator n first" for the later one. While an owned incubator is empty, **egg cards**
+    show each egg (drawn in its colour, name, hatch time, a price brick; Golden takes two taps) and a **?** brick that shows its odds;
+    a card starts the egg in the first empty incubator. Hatching shows a **reveal** in the panel: the pet's portrait, its kind in the
+    rarity colour and the rarity, where it went (with you / the Pets panel), then the traits it was born with as chips, one every
+    0.4 s. Opening it closes the other panels; walking 32 studs away closes it. An egg can only be started while the pets plus the eggs already incubating stay below the
   inventory cap (50), and a ready egg does not hatch into a full inventory (it waits). Other players see the eggs and their
   countdown but cannot use them.
 - **Feeding.** Food bought for Coins gives a pet XP: an alternative to leveling by playing the obby, and a Coin sink.

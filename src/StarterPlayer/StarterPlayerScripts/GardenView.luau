@@ -7,7 +7,7 @@
 --     ROADMAP E1a1 check 5).
 -- Detail by horizontal distance from the character to the plot centre: full ≤ 60 studs, mid ≤ 120 (pets as blocks), low ≤ 300,
 -- nothing beyond (10 studs of hysteresis). Builds run on Heartbeat within BUDGET seconds per frame, the own plot first, then the
--- nearest. The own plot's incubators carry prompts that call the handler registered with OnIncubator, its barn one for OnBarn (U5a;
+-- nearest. The own plot's hatchery carries a prompt that calls the handler registered with OnHatchery (U5b), its barn one OnBarn (U5a;
 -- the barn's sacks and crates come from the own field's State, SetBarn); the field has none since
 -- U3a: SquareAt / SquareCFrame / ShowSelect / OwnRoot serve FieldHand's tap and FieldRings; U3b: ShowBorders, ShowHover). OwnState / OwnField return the own
 -- plot and the owner's field state as last received (GardenSummary, U2).
@@ -42,16 +42,16 @@ local views = {} -- [slot] = PlotView
 local received = {} -- [userId] = state from the server
 local real = {} -- [userId] = that state with `names` = the owner's pet names (P3b, PetConfig.NamesAttribute)
 local order = {} -- slots in build order (own first, then by distance)
-local handlers = { incubator = nil, barn = nil }
+local handlers = { hatchery = nil, barn = nil }
 local ownField = nil -- the owner's field as GardenRemotes.State last sent it (OwnField)
 
 local GardenView = {}
 
 GardenView.Folder = folder
 
--- fn(incubator, base) when an incubator prompt of the own plot is triggered.
-function GardenView.OnIncubator(fn: (number, BasePart) -> ())
-	handlers.incubator = fn
+-- fn() when the own hatchery's prompt is triggered (U5b; the three nests share it).
+function GardenView.OnHatchery(fn: () -> ())
+	handlers.hatchery = fn
 end
 
 -- fn() when the own barn's prompt is triggered (U5a).
@@ -242,9 +242,9 @@ local function refresh()
 			if not view then
 				view = PlotView.new(slot, folder, {
 					own = slot == own,
-					onIncubator = function(n, base)
-						if handlers.incubator then
-							handlers.incubator(n, base)
+					onHatchery = function()
+						if handlers.hatchery then
+							handlers.hatchery()
 						end
 					end,
 					onBarn = function()

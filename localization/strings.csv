@@ -233,25 +233,32 @@ common.hours[few],Form for 2-4 (Czech only),,{count} hodiny,new,h8c6097ee
 common.hours[other],Form for 0 and 5+,{count} hours,{count} hodin,new,h8c6097ee
 # Incubator panel,,,,,
 incubator.title,Incubator panel title; {n} = incubator number 1-3,🥚 Incubator {n},🥚 Inkubátor {n},ok,hd5e8d5be
+hatchery.title,"Title strip of the hatchery panel (the 3 incubators of the own garden plot under one roof; eggs to buy, hatching)",🥚 Hatchery,🥚 Líheň,new,hbedeaa6f
+hatchery.prompt.action,"Action text of the prompt at the hatchery on the own garden plot (opens the hatchery panel); imperative, short",Open hatchery,Otevřít líheň,new,h1822c500
+hatchery.prompt.object,"Object text of that prompt: the hatchery (nominative, no emoji)",Hatchery,Líheň,new,he4cf0f4f
+hatchery.nest.empty,"Hatchery panel, incubator row: info line of an owned incubator without an egg (the egg cards are below it)",Empty: pick an egg below,Prázdný: vyber vejce níž,new,h7b7f8db2
+hatchery.unlock,"Hatchery panel, button on the row of the next incubator to buy (132 px brick, may wrap); {count} = price in Coins",Unlock · 💰 {count},Odemknout · 💰 {count},new,h6f96b259
+hatchery.eggs,"Hatchery panel, heading over the egg cards",Eggs,Vejce,new,h76fd936d
+hatchery.eggs.hint,"Hatchery panel, small line under the Eggs heading; {n} = the incubator the egg will go into (the first empty one)",The egg goes into incubator {n},Vejce půjde do inkubátoru {n},new,h7727c321
+hatchery.busy,"Hatchery panel, under the Eggs heading when every owned incubator holds an egg",Every incubator holds an egg. Hatch one to start another.,Ve všech inkubátorech je vejce. Vylíhni jedno a můžeš dát další.,new,h67f92233
+hatchery.egg.time,"Hatchery panel, egg card: how long the egg takes to hatch; {time} = ""5 min"", ""1 hour""",⏱ {time},⏱ {time},new,ha39f96d6
+hatchery.egg.buy,"Hatchery panel, egg card: the buy button (half the panel minus the ? button); {count} = price in Coins",💰 {count},💰 {count},new,h5b33c8c5
+hatchery.odds.button,"Hatchery panel, egg card: square button that shows the egg's chances (one character)",?,?,new,h9f64d1d4
+hatchery.odds,"Hatchery panel, under the egg cards after ? was tapped; {egg} = egg name, {odds} = coloured list ""Common 60 % · Rare 30 % · …""",{egg}: {odds},{egg}: {odds},new,ha2013ce2
+hatchery.reveal.title,"Hatchery panel, hatch reveal: the big title over the new pet's picture",New pet!,Nový mazlíček!,new,h40c24a23
+hatchery.reveal.follows,"Hatchery panel, hatch reveal: line under the pet's name when it was equipped at once",It follows you now.,Teď půjde všude s tebou.,new,h3c4bd076
+hatchery.reveal.panel,"Hatchery panel, hatch reveal: line under the pet's name when no equip slot was free",It is waiting in your Pets panel.,Čeká na tebe v panelu Mazlíčci.,new,h29d03f2b
+hatchery.reveal.ok,"Hatchery panel, hatch reveal: button back to the incubators (160 px)",Great!,Super!,new,h9f4027a3
 incubator.body.locked,Text of an incubator not bought yet,"Incubators hatch eggs in real time, even while you are away.",Inkubátory líhnou vejce ve skutečném čase. I když nejsi ve hře.,ok,h480d0efc
-incubator.unlock[one],"Button: buy the next incubator; {n} = its number, {count} = price. Form for 1",Unlock incubator {n}: {count} Coin,Odemknout inkubátor {n}: {count} mince,ok,h7ecab8e3
-incubator.unlock[few],Form for 2-4 (Czech only),,Odemknout inkubátor {n}: {count} mince,ok,h7ecab8e3
-incubator.unlock[other],Form for 0 and 5+,Unlock incubator {n}: {count} Coins,Odemknout inkubátor {n}: {count} mincí,ok,h7ecab8e3
-incubator.unlockFirst,Button of an incubator after the next one (grey),Unlock incubator {n} first,Nejdřív odemkni inkubátor {n},ok,h63e7c68e
-incubator.order,Status for an incubator after the next one,Incubators are unlocked in order.,Inkubátory se odemykají postupně.,ok,h04ecaaf4
+incubator.unlockFirst,"Hatchery panel, info line of an incubator after the next one to buy (they are bought in order); {n} = the next one's number",Unlock incubator {n} first,Nejdřív odemkni inkubátor {n},ok,h63e7c68e
 incubator.hatchesIn,"Status while an egg incubates; {time} = countdown ""42:07""",Hatches in {time},Vylíhne se za {time},ok,hbfaf5215
-incubator.hatching,Button (grey) while the egg incubates,Hatching...,Líhne se…,ok,hcff0297a
 incubator.ready,Status when the egg can hatch (green),Ready to hatch!,Připraveno k vylíhnutí!,ok,h4aa312f3
 incubator.hatch,Button: hatch the egg now,Hatch,Vylíhnout,ok,ha0a5eaee
-incubator.body.empty,"First line of an empty incubator, above the eggs to choose","Hatches in real time, also while you are away.",Líhne se ve skutečném čase. I když nejsi ve hře.,ok,hd6045426
 incubator.freeEggs[one],Status: free eggs start by themselves in the next empty incubator; {count} = eggs waiting. Form for 1,🎁 {count} free egg will start in the next empty incubator,🎁 {count} vejce zdarma čeká na volný inkubátor,ok,h5f21d558
 incubator.freeEggs[few],Form for 2-4 (Czech only),,🎁 {count} vejce zdarma čekají na volný inkubátor,ok,h5f21d558
 incubator.freeEggs[other],Form for 0 and 5+,🎁 {count} free eggs will start in the next empty incubators,🎁 {count} vajec zdarma čeká na volný inkubátor,ok,h5f21d558
 incubator.unlocked,Message after buying an incubator,Incubator {n} unlocked,Inkubátor {n} odemčen,ok,h071ed29e
 incubator.started,Message after putting an egg in,The egg is warming up. Come back when it is ready!,"Vejce se zahřívá. Vrať se, až bude připravené!",ok,h0ea3ff6d
-incubator.hatched.follows,"Message after hatching when the pet was equipped at once; {pet} = coloured ""Cat (Common)""",You got a {pet}! It follows you now.,Máš nového mazlíčka: {pet}! Teď půjde všude s tebou.,ok,h1b5f17fb
-incubator.hatched.panel,Message after hatching when no equip slot was free,You got a {pet}! It is in your Pets panel.,Máš nového mazlíčka: {pet}! Najdeš ho v panelu Mazlíčci.,ok,hce032885
-incubator.hatched.traits,"Second line of the hatch message: the traits the pet was born with; {traits} = trait names joined with "" · """,Traits: {traits},Vlastnosti: {traits},ok,h57995f01
 incubator.label.ready,Text over an egg in a plot's incubator once it can hatch,✨ Ready!,✨ Hotovo!,ok,hd37ff7a0
 incubator.reject.maxed,Refused: every incubator is bought,All incubators unlocked,Všechny inkubátory jsou odemčené,ok,h30705bfa
 incubator.reject.locked,Refused: the incubator is not bought,Unlock this incubator first,Nejdřív tenhle inkubátor odemkni,ok,h1ea71739
@@ -286,8 +293,6 @@ board.hubStars,Title of the hub's most-stars board; {rows} = 10,Most stars - top
 garden.sign.plotFree,Sign of a garden plot nobody owns right now (an owned plot shows the owner's name),Free plot,Volný pozemek,new,h456835a7
 garden.sign.incubator.locked,Billboard on an incubator that is not bought yet; {n} = incubator number 1-3,🔒 Incubator {n},🔒 Inkubátor {n},new,h4af320b7
 garden.sign.incubator.empty,Billboard on a bought incubator without an egg; {n} = incubator number; second line after the line break,Incubator {n}\nempty,Inkubátor {n}\nprázdný,new,haa069ea7
-garden.prompt.openIncubator,Action text of the prompt on an incubator of the own garden plot (opens the incubator panel),Open incubator,Otevřít inkubátor,new,h882cf717
-garden.prompt.incubator,Object text of that prompt; {n} = incubator number 1-3,Incubator {n},Inkubátor {n},new,h47892dc1
 # Garden icon and summary bubble (U2),,,,,
 garden.go.notReady,Toast at the bottom of the screen after a tap on the 🌱 Garden icon (top left) when the player's garden plot is not assigned yet (just joined),Your garden plot is not ready yet,Tvoje zahrádka ještě není připravená,new,h1b30371e
 garden.bubble.plant,Summary bubble over the player's own garden plot sign (seen from the garden plaza): nothing is planted on the field. Short; parts of the bubble are joined with · (e.g. 🌱 Plant seeds · 🥚 Ready!),🌱 Plant seeds,🌱 Zasaď semínka,new,h77b32ae7

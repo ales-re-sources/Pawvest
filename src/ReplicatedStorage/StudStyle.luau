@@ -32,7 +32,7 @@ StudStyle.PanelColors = {
 	AdminPanel = StudStyle.Colors.Purple,
 	PetsPanel = StudStyle.Colors.Green, -- PetsGui.Panel (PetsPanel.client)
 	Field = StudStyle.Colors.Wood, -- the field's wood: FieldHand's card and pickers (the Garden panel is gone, U4)
-	Incubator = StudStyle.Colors.Yellow, -- IncubatorGui.Panel (IncubatorClient)
+	Incubator = StudStyle.Colors.Yellow, -- HatcheryGui.Panel (IncubatorClient)
 	FoodShop = StudStyle.Colors.Red, -- FoodShopGui.Panel (FoodShopClient)
 }
 

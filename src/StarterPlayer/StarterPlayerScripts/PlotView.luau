@@ -1,10 +1,10 @@
 -- PlotView (E1a1, docs/EXPANSION.md §16): draws one garden plot on the client from a plain state table (GardenRemotes.Plot,
 -- GardenPlotFeed), at its slot's position (GardenConfig.PlotCFrame), in one of four details: "full" (floor, edges, sign,
--- incubators with egg and live countdown, incubator billboards, field pets with models and labels, incubator prompts on the own
--- plot), "mid" (the same without billboards and prompts, each pet one block in its rarity colour), "low" (floor, one block per egg,
+-- incubators with egg and live countdown, incubator billboards, field pets with models and labels, the hatchery and barn prompts
+-- on the own plot), "mid" (the same without billboards and prompts, each pet one block in its rarity colour), "low" (floor, one block per egg,
 -- the field as its row plates) or "none". Stand-in blocks only (no art pass). Used by GardenView, which picks the detail.
 -- The front strip (U5a): the path in the middle (base), the hatchery on the plaza's left (hatch: posts and roof over the nests
--- inc1..3), the barn on its right (barn: walls, roof, shelves; on the own plot the seed sacks and crop crates of SetBarn and the
+-- inc1..3; on the own plot its one "Open hatchery" prompt, U5b, which calls options.onHatchery), the barn on its right (barn: walls, roof, shelves; on the own plot the seed sacks and crop crates of SetBarn and the
 -- "Open barn" prompt, which calls options.onBarn).
 -- A plot is split into pieces (base, hatch, barn, inc1..3, field = the row plates, sq1..36). SetState / SetDetail / Relabel only
 -- mark the pieces whose look changed; Step builds marked pieces until a deadline, so a build is spread over frames by the caller.
@@ -204,14 +204,14 @@ local function squareSpot(square: number): (number, number)
 	return ((col :: number) - 0.5 - CropConfig.GridColumns / 2) * FIELD_PITCH, FIELD_FRONT + ((row :: number) - 0.5) * FIELD_PITCH
 end
 
--- New view of plot slot `slot` under `parent`. options: { own = boolean, onIncubator = fn(n, base), onBarn = fn() } (prompts on
--- the own plot only).
+-- New view of plot slot `slot` under `parent`. options: { own = boolean, onHatchery = fn(), onBarn = fn() } (prompts on the own
+-- plot only).
 function PlotView.new(slot: number, parent: Instance, options)
 	local self = setmetatable({}, PlotView)
 	self.slot = slot
 	self.floor = GardenConfig.PlotCFrame(slot) :: CFrame
 	self.own = options and options.own or false
-	self.onIncubator = options and options.onIncubator
+	self.onHatchery = options and options.onHatchery
 	self.onBarn = options and options.onBarn
 	self.barnFill = nil -- SetBarn: { sacks = 0..BARN_SACKS, crates = { crop letter, ... } } (the own plot only)
 	self.detail = "none"
@@ -258,7 +258,7 @@ function PlotView:signature(key: string): string
 		return if not state.free and state.field then detail else "none"
 	end
 	if key == "hatch" then
-		return detail
+		return table.concat({ detail, tostring(self.own and not state.free), self.lang }, "|")
 	end
 	if key == "barn" then
 		local fill = self.barnFill
@@ -473,6 +473,14 @@ function PlotView:buildHatchery(model: Model)
 			add("Post", Vector3.new(1, height, 1), Vector3.new(x, 0.25 + height / 2, z), COLORS.post).CanCollide = true
 		end
 	end
+	-- the own hatchery's one prompt (U5b), on an invisible anchor at the front centre of the shelter
+	if self.own and self.onHatchery and self.detail == "full" and not self.state.free then
+		local anchor = part({ Name = "PromptAnchor", Size = Vector3.new(1, 1, 1), CFrame = self:at(Vector3.new(cx, 1.5, z0 + 3)), Transparency = 1, CanCollide = false })
+		anchor.Parent = model
+		prompt(anchor, Locale.T("hatchery.prompt.action"), Locale.T("hatchery.prompt.object"), 10, function()
+			self.onHatchery()
+		end)
+	end
 end
 
 -- The barn (U5a): walls on three sides (open towards the plaza), a plank floor, a stepped roof, two shelves for BARN_SACKS seed sacks
@@ -619,11 +627,6 @@ function PlotView:buildIncubator(model: Model, n: number)
 	local base = part({ Name = "Base", Size = Vector3.new(6, 1.2, 6), CFrame = baseCFrame, Color = if locked then COLORS.padLocked else COLORS.base, Material = Enum.Material.WoodPlanks })
 	base.Parent = model
 	part({ Name = "Nest", Size = Vector3.new(4.4, 0.4, 4.4), CFrame = nestCFrame, Color = COLORS.nest, Material = Enum.Material.Fabric }).Parent = model
-	if self.own and self.onIncubator and self.detail == "full" then
-		prompt(base, Locale.T("garden.prompt.openIncubator"), Locale.T("garden.prompt.incubator", { n = n }), 10, function()
-			self.onIncubator(n, base)
-		end)
-	end
 	if not eggId then
 		if self.detail == "full" then
 			info(base, UDim2.new(6, 0, 2.2, 0), 3, Locale.T(if locked then "garden.sign.incubator.locked" else "garden.sign.incubator.empty", { n = n }))

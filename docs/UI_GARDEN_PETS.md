@@ -60,7 +60,8 @@ cart); the crow forecast is also in the summary bubble when crows are near. As b
 that fill visibly, own plot only; its prompt opens the panel, the HUD button stays).
 
 ## 7. Plot layout
-**Built in U5a (2026-11-07)** as described in the first paragraph (GDD §7.6, §7.9); the hatchery panel with egg cards is U5b.
+**Built in U5a / U5b (2026-11-07)** as described here (GDD §7.6, §7.9): the layout in U5a, the hatchery panel (one prompt, egg cards,
+the reveal with trait chips one by one) in U5b.
 Before U5a the front strip held the sign and three incubators across. Decided: **hatchery** (3 nests under one small roof) on the left of the
 strip, **barn** on the right, the sign raised over a **path** in the middle into the field. The field becomes the first thing seen from the
 plaza.
@@ -103,7 +104,7 @@ The seed stall stands beside it as its own stall (**built in U4**, GDD §7.9); t
 | U3b | Hand bar (Seeds / Basket / Pets / Look), pet reach borders, next-step hint on the bar, pet page "Place on field" (§4, §5, §10): **built 2026-11-07** | U3a |
 | U4 | Panel split: Skills → Garden tab, Barn panel, Seed stall; Garden panel removed (§6, §10): **built 2026-11-07** | U3b |
 | U5a | Plot layout: hatchery left, barn right (fill, prompt), path (§6, §7): **built 2026-11-07** | U4 (barn) |
-| U5b | Hatchery panel: one prompt, nest rows, K1 egg cards, reveal with trait chips (§7) | U5a |
+| U5b | Hatchery panel: one prompt, nest rows, K1 egg cards, reveal with trait chips (§7): **built 2026-11-07** | U5a |
 
 Order proposed: U1 before M6a; U2–U5 before E5's onboarding (it teaches the new controls).
 

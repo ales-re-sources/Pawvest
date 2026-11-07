@@ -36,7 +36,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | T1a, T1b | Telemetry | ✔ | ✔ | – |
 | L1–L3 | Localization (English + Czech) | ✔ | ✔ | – |
 | G1 | Player guidance hints — awaits the user's check in play | ✔ | ✔ | – |
-| K1 | First-hour fixes (kid playtest 2026-11-01): Stage 5, G1 fallback, Double Jump world reward done; hatch panel proposed | partial | partial | – |
+| K1 | First-hour fixes (kid playtest 2026-11-01): Stage 5, G1 fallback, Double Jump world reward, hatch panel (U5b) done | partial | partial | – |
 | E0 | Economy model: baseline, simulation, field and every E1–E4 re-run done; repricing and the remaining checks open | partial | – | – |
 | E1.0 | Client-drawn plots spike: **GO** | ✔ | ✔ | – |
 | E1a–E1d | Crop field (every player's since FA): client-drawn plots, field, field pets, crops as pet food, size roll, upgrades, tools, market cart, farming-first numbers, 36 squares | ✔ | ✔ | – |
@@ -51,7 +51,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | U2 | Garden icon with a badge (ripe crops + ready eggs), summary bubble over the own plot sign | ✔ | ✔ | – |
 | U3 | Field: rings, tap-select, square card, hand bar (Seeds / Basket / Pets / Look), reach borders, square prompts removed | ✔ | partial (phone touch, multi-client open) | – |
 | U4 | Panel split: Skills Garden tab, Pets field-slot line, Barn panel, seed stall, confirm + panel focus; Garden panel removed | ✔ | ✔ (phone by geometry; crow-on bubble by code review) | – |
-| U5 | Plot layout: hatchery left, barn right, path (U5a ✔); hatchery panel with K1 egg cards (U5b open) | U5a ✔ | U5a ✔ | – |
+| U5 | Plot layout: hatchery left, barn right, path (U5a); hatchery panel with K1 egg cards and the reveal (U5b) | ✔ | ✔ (phone by geometry) | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
@@ -75,8 +75,8 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
 6. **MU** before anything goes public.
 7. **U1–U5 garden and pet UI** (design decided 2026-11-05, [UI_GARDEN_PETS.md](UI_GARDEN_PETS.md) §11–12; scope each when it starts):
    **U1** built and Studio-checked (2026-11-06) except the multi-client look check (F7, the user); **U2** built and Studio-checked (2026-11-06); **U3** (rings, tap-select, square card, hand bar, reach borders) built and Studio-checked
-   (2026-11-07) except the phone touch check and multi-client; **U4–U5** (Skills Garden tab,
-   barn, seed stall, plot layout) before E5's onboarding, which teaches the new controls.
+   (2026-11-07) except the phone touch check and multi-client; **U4** and **U5** (panel split, barn, seed stall, plot layout, hatchery panel)
+   built and Studio-checked (2026-11-07); E5's onboarding teaches the new controls.
 8. **Drops D1–D10** after the MVP (EXPANSION §14), one every 1–2 weeks: Critters, Comfort shop (M7), Weekly, Variants, Kitchen (the first
    restoration landmark), Neighbours, Mastery, World 4 (S9 / S10), the Estate, Season 1. Restoration bundles (E6, D5) and estate tiers / decor /
    cottage (E7, D9) are the long-term Coin sinks; E0 holds a placeholder for their size until they are designed.
@@ -88,8 +88,7 @@ the balancing pass (STAGES §6, GDD §6).
 A 9-year-old on a phone, fresh progress, got stuck after about 20 minutes. Target: a new player who does not pay always has a next step for
 the first hour; World 1 and the garden are tuned for 8–10 year olds on a phone. Seen: signs and banners are not read (the GDD §11 rule
 "without reading anything" holds), too much text at hatching, Coins spent elsewhere so World 2 stopped him. Done: see "Done" → K1.
-- **Hatching text (proposed):** the empty incubator lists every egg with a line of percentages. Instead: two egg cards (picture, price, time),
-  odds behind a small "?", the hatch result as a pet reveal (portrait, name in the rarity colour, one line).
+- **Hatching text: built in U5b** (2026-11-07): egg cards with the odds behind "?" and the pet reveal (GDD §7.6 Incubators).
 - **World 2's star bar** stays at 10 of 15 until the wider test (the user, 2026-11-01); a checkpoint inside Stage 5's tightrope: not now
   (telemetry first).
 - **Measure it in M6a:** T1a fails per segment on Stage 5, quits per stage, session length of new players.
@@ -680,6 +679,28 @@ HintSources finds the nest by the unchanged key `inc1..3`). 3 ✔ a real E at th
 Potato at the stall (real click, −20 Coins) → 40 / 40 → 8 sacks (redrawn when back at full detail); a harvested Potato → one crate topped in
 the potato colour; Sell all through the panel (opened with the HUD button, real clicks, two taps) → the crate gone. The nest prompt (real E)
 still opens incubator 1's panel. 7 (U5a part) ✔ `loc.py check` 480 keys, 0 errors; lint 0. 8 ✔ `economy.py check` 48 / 48.
+
+**Changed while building U5b.** The hatchery's prompt sits on an invisible `PromptAnchor` at the shelter's front centre. Answers
+(started, unlocked, refusals) show in a status line at the top of the panel for 5 s instead of the old status label. Row titles reuse
+`incubator.title` ("🥚 Incubator n", "🔒" in front while locked); removed keys: `garden.prompt.openIncubator|incubator`,
+`incubator.body.empty`, `incubator.order`, `incubator.hatching`, `incubator.unlock`, `incubator.hatched.*`. The ScreenGui is
+`HatcheryGui` (the script keeps its file name `IncubatorClient`).
+
+**Studio results U5b (2026-11-07; live profile snapshotted as `profile_9892673032_U5b_1`, Coins 24 032, 14 pets, MostStars 48; restored
+after: Coins, pets, incubators and MostStars equal the snapshot, the rest differs only by the game's own progress over the 1.6 h before
+the next boot (crops grown, a Tending pet's harvest, Renown +2, timestamps); `GlobalLeaderboardsStore` untouched).** 4 ✔ the own plot
+carries exactly two prompts (hatchery, barn); a real E at the hatchery opens the panel (capture U5b_panel_1): incubator 1 empty, 2 with
+"Odemknout · 💰 5000", 3 "Nejdřív odemkni inkubátor 2", egg cards Basic / Golden; "?" on Golden shows its odds; the Basic card (one tap,
+500 ≤ 1 000) started incubator 1 (countdown 4:58, status "Vejce se zahřívá…", the cards replaced by "Ve všech inkubátorech je vejce…");
+Unlock 2: one tap → orange "Klepni znovu", no Coins taken (a second tap after the 3 s window only re-armed); two taps → "Inkubátor 2
+odemčen", −5 000 once, the cards then target incubator 2; the Barn HUD button closed the hatchery and E at the hatchery closed the Barn;
+open at 30 studs, closed at 33.5. 5 ✔ the egg became ready in the open panel (Hatch appeared by itself); one real click → the reveal
+(capture U5b_reveal_1): "Nový mazlíček!", the portrait, "Kočička" / "Běžný" in the rarity colour, "Čeká na tebe v panelu Mazlíčci.", no
+chip at once and "🛡 Hlídání 1" after the delay; "Super!" back to the rows (incubator 1 empty). Coins 24 032 → 18 532 (exactly 500 + 5 000).
+6 geometry only (`TapHeight` bricks, `Fit` scales the 420 × 500 panel). 7 ✔ Czech `TextFits` on every label; the pseudo-language: no
+literal (it found the reveal's hidden labels still carrying Roblox's default "Label": they start empty now, checked after a reboot); the
+"?" brick's one-character text is cut only in the pseudo-language; `loc.py check` 487 keys, 0 errors; lint 0. 8 ✔ boot without errors or
+warnings on server and client (twice).
 
 ### E0 — Economy model
 **Goal.** One reproducible model of the Coin economy (`tools/economy.py`, Python stdlib; how to run it: ECONOMY.md) that fixes the numbers the

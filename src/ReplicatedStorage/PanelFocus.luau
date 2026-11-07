@@ -8,7 +8,7 @@
 --   PanelFocus.Closed(name)                     the panel closed itself (its close button, its own toggle): forget it
 --   PanelFocus.Current() -> string?             the open panel's name
 --
--- Names: "Pets", "Skills", "Settings", "Admin", "Barn", "SeedStall", "Food". The square card and the hand bar are not panels.
+-- Names: "Pets", "Skills", "Settings", "Admin", "Barn", "SeedStall", "Food", "Hatchery". The square card and the hand bar are not panels.
 -- A respawn re-anchors the point to the new character (ButtonHandler restores an open panel through a death).
 
 local Players = game:GetService("Players")
