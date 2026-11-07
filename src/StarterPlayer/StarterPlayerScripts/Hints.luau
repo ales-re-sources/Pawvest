@@ -22,6 +22,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
+local UiSounds = require(ReplicatedStorage:WaitForChild("UiSounds"))
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -420,6 +421,7 @@ showNextToast = function()
 	toastShowing = true
 	toastLabel.Text = table.remove(toastQueue, 1)
 	toastLabel.Visible = true
+	UiSounds.Play("Notify")
 	task.delay(TOAST_SECONDS, function()
 		toastLabel.Visible = false
 		toastShowing = false

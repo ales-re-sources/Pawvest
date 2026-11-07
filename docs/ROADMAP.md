@@ -648,7 +648,7 @@ amounts ×10 (profile `Version = 3` migrates once). *Why:* one place for payouts
 saves) migrating the legacy stores. *Why:* one data model and one copy of every stage script.
 
 ## Ideas (unscheduled)
-- **UI sounds:** the Creator Store creator SodaBreadle has many short free UI sounds (`UI - Level Up` is already `ReplicatedStorage.PetLevelUpSound`);
-  use them for hover / click / panel open / buy result through a shared client module with one Studio-only `Sound` per cue, so the code works
-  when a sound is missing. Find them via the creator's page (a keyword search does not list them); check licence and length.
+- **More UI sounds:** click, tab, field hover and toast notify are in (`UiSounds`, AmbientSorcery `ui-simple-*`). Same creator also has
+  `-menu-open` / `-menu-close`, `-inventory-open` / `-close`, `-positive-confirmation`, `-negative-error`, `-reward-collect`, `-equip` /
+  `-unequip` (search `ui-simple`, Audio, Creator Store): candidates for panel open / close, buy result, error toasts, pet equip.
 - **Blink music:** a real track with its BPM instead of the metronome (S4).

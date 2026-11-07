@@ -323,6 +323,7 @@ for index, id in FILTERS do
 		TextSize = 14,
 		TextWrapped = true,
 	}, 2)
+	chip:SetAttribute("UiSound", "Tab") -- filters are tabs (UiSoundsClient)
 	chip.Parent = panel
 	filterButtons[id] = chip
 end
@@ -358,6 +359,7 @@ for order, trait in PetRow.Traits do
 		TextSize = 15,
 		ZIndex = 13,
 	}, 3)
+	option:SetAttribute("UiSound", "Tab")
 	option.Parent = bestMenu
 	bestOptions[trait.id] = option
 end
