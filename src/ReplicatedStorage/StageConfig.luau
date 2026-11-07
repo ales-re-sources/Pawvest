@@ -118,7 +118,7 @@ StageConfig.Stages = {
 		unlock = { stage = "Stage4", medal = "Bronze" },
 		unlockPrice = 2000,
 		rewardFactor = 1.75, -- curve 0.5 + 0.25 × order (GDD §5)
-		checkpointOrder = { "20", "26", "21", "22" }, -- level.2/26 lies between 20 and 21
+		checkpointOrder = { "20", "26", "21" }, -- level.2/26 lies between 20 and 21; 22 (7 studs before the finish) was deleted 2026-11-07
 	},
 	{
 		key = "Stage6", -- Double Up (World 2, docs/STAGES.md §7.9): Double Jump gaps and ledges, lifts, slide movers
