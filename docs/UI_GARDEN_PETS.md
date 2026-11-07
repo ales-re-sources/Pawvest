@@ -38,8 +38,8 @@
 Tap-select, the square card and the removal of the square prompts are **built in U3a**, the hand bar (Seeds / Basket / Pets / Look) in
 **U3b** (both 2026-11-07), as built in GDD §7.9; the design text is in `git show 68b9c3b:docs/UI_GARDEN_PETS.md`. The harvest pop rises
 over the square (it does not fly to a barn yet: the barn comes with U4). So that a player knows squares are tappable (the user,
-2026-11-07): corner brackets on the square the character stands on and Look's hint until the first tap are built; a hover outline for
-the mouse and whether rings / pulses need more is to be discussed. Left open:
+2026-11-07): corner brackets on the square under the mouse (pointing-hand cursor) or else the one the character stands on, and Look's
+hint until the first tap, are built; whether rings / pulses need more is to be discussed. Left open:
 - Later, only if the phone check shows players missing squares: a **field camera** button that tilts the camera down over the own field
   (easier to tap the right square on a phone). U3a / U3b were checked on a desktop only (no touch emulation through the MCP): the touch
   taps (TouchTapInWorld, the two-tap drop) and how easy squares are to hit on a phone are open (MU or the user).

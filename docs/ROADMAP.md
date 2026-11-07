@@ -430,6 +430,8 @@ the field (it moves it); "Show on field" is not built. The pop rises over the sq
 Added after the first U3b commit (the user, 2026-11-07: would a player know to tap a square?): corner brackets on the square the character
 stands on and Look's hint "Tap a square to see it" until the first tap on a square in the session; a hover outline for the mouse and the
 other tap signals (rings, pulses) are left for a later talk. A full thin outline was tried first and looked like a Common pet's border.
+Then (the user): the brackets follow the square under the mouse with a pointing-hand cursor (the stand-on square when the mouse is off
+the field, always on touch), and the hint sits 12 px above the bar; checked by the user in Studio.
 Studio: the brackets follow the character (on square 9: centred on it), give way to the select outline on the selected square; a real
 click on square 3 opened its card and hid the hint; the hint fits in Czech; no errors (no profile write in this check).
 

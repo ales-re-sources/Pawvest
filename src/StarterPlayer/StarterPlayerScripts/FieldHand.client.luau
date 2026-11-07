@@ -18,8 +18,9 @@
 --     Leaving the range resets to Look. A hint line above the bar says what a tap does (in Look: "Tap a square" until the first
 --     tap on a square this session). Seeds pulses while nothing is planted and seeds are held, Basket while something is ripe, each
 --     until its mode was used once this session;
---   * while the bar shows, the square the character stands on gets white corner brackets (GardenView.ShowHover; not the selected or
---     the held pet's square): squares are things to tap, on touch screens too (no hover there);
+--   * while the bar shows, white corner brackets (GardenView.ShowHover; never on the selected or the held pet's square) mark the
+--     own square under the mouse (and the cursor becomes a pointing hand), else the square the character stands on: squares are
+--     things to tap, on touch screens too (no hover there);
 --   * every field remote is fired through one queue at most every FIRE_GAP seconds (the server drops actions under 0.2 s apart);
 --     a harvest result pops "+1 <crop>" over its square for POP_SECONDS.
 -- Display only: the remotes carry a square number (and a crop id / pet uid); GardenField checks plot, distance, square, seeds,
@@ -77,6 +78,8 @@ local POP_SECONDS = 1
 local HAND_BUTTON = 52
 local HAND_GAP = 6
 local HAND_RAISE = 6 -- px the active mode's button is raised
+local HINT_GAP = 12 -- px between the hint line and the bar's top (the raised button)
+local POINTER = "rbxasset://SystemCursors/PointingHand"
 local LIST_MAX = 300 -- px: the pickers' list scrolls beyond this
 
 local COLOR_PANEL = StudStyle.PanelColors.Field
@@ -924,7 +927,7 @@ handBar = create("Frame", {
 local handHint = label("Hint", {
 	-- a fixed two-line box (AutomaticSize did not grow it to the wrapped height), its text at the bottom, over the bar
 	AnchorPoint = Vector2.new(1, 1),
-	Position = UDim2.new(1, 0, 0, -2),
+	Position = UDim2.new(1, 0, 0, -HINT_GAP),
 	Size = UDim2.fromOffset(300, 40),
 	TextSize = 16,
 	TextWrapped = true,
@@ -1222,6 +1225,9 @@ local pressAt: Vector2? = nil
 local pressClock = 0
 local mouseAt: Vector2? = nil -- the mouse (InputObject coordinates) for the held pet's reach
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if input.UserInputType == Enum.UserInputType.Touch then
+		mouseAt = nil -- a touch screen: no hover, the brackets follow the character
+	end
 	if input.UserInputType == Enum.UserInputType.MouseButton1 and not gameProcessed then
 		pressAt = Vector2.new(input.Position.X, input.Position.Y)
 		pressClock = os.clock()
@@ -1398,15 +1404,26 @@ end
 workspace:GetPropertyChangedSignal("CurrentCamera"):Connect(watchCamera)
 watchCamera()
 
--- the corner brackets on the square under the character (not the selected one or the held pet's square / preview)
+-- the corner brackets on the own square under the mouse, else under the character (not the selected one or the held pet's
+-- square / preview); a pointing-hand cursor while the mouse is over an own square
+local pointing = false
 local function updateStanding()
 	local want = nil
+	local overSquare = false
 	if handBar.Visible then
-		local at = rootPosition()
-		local square = at and GardenView.SquareAt(at)
+		local square = if mouseAt then squareUnder(mouseAt) else nil
+		overSquare = square ~= nil
+		if not square then
+			local at = rootPosition()
+			square = at and GardenView.SquareAt(at)
+		end
 		if square and square ~= selected and square ~= heldFrom and square ~= preview then
 			want = square
 		end
+	end
+	if overSquare ~= pointing then
+		pointing = overSquare
+		UserInputService.MouseIcon = if pointing then POINTER else ""
 	end
 	if want ~= standing then
 		standing = want
