@@ -145,7 +145,7 @@ before I leave, and who guards it?" is the end-of-session decision.
 
 ### 5.1 Tomato growth art pilot
 
-One annual Tomato grows continuously from bare soil to a ripe bush. Each stem extends from its base, a shorter arm branches from it,
+**CG1** is the first crop growth art pilot. One annual Tomato grows continuously from bare soil to a ripe bush. Each stem extends from its base, a shorter arm branches from it,
 and a leaf opens from its attachment. Vary lean, spread and spacing per planting. The fruit stays attached as its branch dips. Use colored
 Plastic blocks with the garden's `Studs` and `StudsSmall` materials. The five poses below are review stops on the same plant.
 
@@ -157,7 +157,7 @@ Plastic blocks with the garden's `Studs` and `StudsSmall` materials. The five po
 | 75% | Small green tomatoes swell beneath the outer branches, which begin to dip. |
 | 100% | Two or three full red tomatoes hang below the leaves. Fruit size and branch angle also signal ripeness in grayscale. |
 
-**Ripe silhouette decision (2026-11-08).** Ales chose **A, the spreading bush**, for the growth prototype. Its low canopy reads as a bush
+**CG1a — Ripe silhouette decision (2026-11-08).** Ales chose **A, the spreading bush**, for the growth prototype. Its low canopy reads as a bush
 at gameplay distance. Two outer tomatoes hang apart below the leaves and remain visible against the soil in the phone-size capture.
 Preserve that separation as seeded plants vary in lean and spread. B reads taller and sparser, and C's two adjacent fruit overlap from
 the review camera.
@@ -168,7 +168,7 @@ and 24 for three fruit assemblies. Each fruit uses a stalk, two sepals and five 
 would contain 1,944 plant Parts before soil, pets or UI. This is a geometry baseline for later tuning. Phone frame times are still open.
 The `A - Spreading` entry in the study script sets the joints and fruit spacing. The `leaf` and `fruit` builders control the detail cost.
 
-**Next art review.** Review A in a display-only Studio prototype with a scrubber, short loop, five poses and six planting seeds. Scrub
+**CG1b — Growth prototype.** Review A in a display-only Studio prototype with a scrubber, short loop, five poses and six planting seeds. Scrub
 both ways at 43–44% to check attachments. Check crop identity and ripeness with rings hidden, then check UI legibility with them visible.
 The developer signs off on the stills and loop before field integration.
 
@@ -176,9 +176,11 @@ The [ripe studies](art/tomato/ripe-studies.jpg) were captured from a client-only
 The [field view](art/tomato/field.jpg) includes a Potato ring and a Cat; the [720 × 405 view](art/tomato/phone.jpg) is a resized
 Studio capture. Reproduce the three studies with [the Studio client command](../tools/tomato_ripe_studies.luau) during a playtest.
 
-**Field integration after sign-off.** Build the structure once per planting identity and share compact identity and time anchors in the
+**CG1c — Field integration after sign-off.** Build the structure once per planting identity and share compact identity and time anchors in the
 public plot feed. The owner and nearby visitors see the same plant at the same age. Check rejoin, offline growth, replant and distance
-changes. Compare frame times against the current renderer on the same route with a full 36-square field and 24 synthetic plots, then test
+changes.
+
+**CG1d — Performance validation.** Compare frame times against the current renderer on the same route with a full 36-square field and 24 synthetic plots, then test
 a real phone against a proposed 30 FPS target. If necessary, group distant leaves into plates and shorten the full-detail radius.
 
 Tomato keeps its eight-minute crop time and clears the square at harvest. A future perennial Apple keeps its seeded trunk and branches

@@ -54,7 +54,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | U4 | Panel split: Skills Garden tab, Pets field-slot line, Barn panel, seed stall, confirm + panel focus; Garden panel removed | ✔ | ✔ (phone by geometry; crow-on bubble by code review) | – |
 | U5 | Plot layout: hatchery left, barn right, path (U5a); hatchery panel with K1 egg cards and the reveal (U5b) | ✔ | ✔ (phone by geometry) | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
-| Tomato growth art pilot | Parallel garden art study | three ripe studies built | A selected for motion review | – |
+| CG1 | Tomato growth art pilot (parallel garden art study) | CG1a ripe studies built | CG1a captured, A selected | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -81,10 +81,13 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
    restoration landmark), Neighbours, Mastery, World 4 (S9 / S10), the Estate, Season 1. Restoration bundles (E6, D5) and estate tiers / decor /
    cottage (E7, D9) are the long-term Coin sinks; E0 holds a placeholder for their size until they are designed.
 
-**Tomato growth art pilot** runs in parallel ([EXPANSION §5.1](EXPANSION.md#51-tomato-growth-art-pilot)). Ales selected **A, the
-spreading bush**, on 2026-11-08. Its ripe study uses 54 Parts. See the [A / B / C close-ups](art/tomato/ripe-studies.jpg),
-[field](art/tomato/field.jpg) and [phone-size view](art/tomato/phone.jpg). The next review is a scrubber, six seeded bushes and a growth loop. Field integration and
-the 36-square / 24-plot / real-phone checks follow art sign-off.
+**CG1 — Tomato growth art pilot** runs in parallel ([EXPANSION §5.1](EXPANSION.md#51-tomato-growth-art-pilot)).
+
+- **CG1a — Ripe studies.** Complete. Ales selected **A, the spreading bush**, on 2026-11-08. Its ripe study uses 54 Parts.
+  [A / B / C close-ups](art/tomato/ripe-studies.jpg) · [Field](art/tomato/field.jpg) · [Phone-size view](art/tomato/phone.jpg)
+- **CG1b — Growth prototype.** Next. Review A with a scrubber, five poses, six seeded bushes and a growth loop.
+- **CG1c — Field integration.** After art sign-off, connect the approved bush to planting and harvest for owners and visitors.
+- **CG1d — Performance validation.** Compare a full 36-square field and 24 synthetic plots to today's renderer, then measure a real phone.
 
 Key talents as **world rewards**: done for Double Jump (K1, GDD §6). Open: Triple Jump / Dash for World 3. The lost Coin sinks are made up in
 the balancing pass (STAGES §6, GDD §6).
