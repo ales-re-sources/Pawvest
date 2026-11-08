@@ -168,9 +168,25 @@ and 24 for three fruit assemblies. Each fruit uses a stalk, two sepals and five 
 would contain 1,944 plant Parts before soil, pets or UI. This is a geometry baseline for later tuning. Phone frame times are still open.
 The `A - Spreading` entry in the study script sets the joints and fruit spacing. The `leaf` and `fruit` builders control the detail cost.
 
-**CG1b — Growth prototype.** Review A in a display-only Studio prototype with a scrubber, short loop, five poses and six planting seeds. Scrub
-both ways at 43–44% to check attachments. Check crop identity and ripeness with rings hidden, then check UI legibility with them visible.
-The developer signs off on the stills and loop before field integration.
+**CG1b — Growth prototype (Studio).** In a Play session, run the following in the **Client** command bar:
+
+```luau
+require(game.Players.LocalPlayer.PlayerScripts.TomatoGrowthReview).Open()
+```
+
+**Plant** shows one individual. Drag the bottom scrubber in either direction, cycle **Seed**, or press **Play** for eight seconds of
+continuous growth and a one-second ripe hold. **Five poses** lines up the same seed at 0/20/50/75/100%. **Six seeds** lines up six ripe
+plants at field scale. **Rings** switches the crop overlays and field labels for the readability check. **Close** removes the display
+plot and restores the camera and HUD. This review uses its own clock and makes no field requests.
+
+Each planting reuses 54 anchored Parts. Leaves pivot from their attachment points, adjacent arms extend at different times and small
+green fruit swell as their branches bend. Red develops in the last fifth of growth. Seed 1 reproduces the selected ripe A. The other
+review seeds vary height, spread, lean and fruit size. Tune the joints, growth intervals and seed parameters in
+[`TomatoGrowthStudy`](../src/ReplicatedStorage/TomatoGrowthStudy.luau). Studio checks covered 43→44→43% seeks, branch / fruit attachment
+across all six seeds and the ripe seed-1 match against the original study. Art sign-off on the [loop](art/tomato/growth.gif),
+[poses](art/tomato/growth-poses.jpg) and [seeds](art/tomato/growth-seeds.jpg) comes before field integration. The current field ring
+covered the canopy from the close camera. The preview lifts it 1.35 studs, so the ripe fruit, field pet and selected square can be
+reviewed together. [Ring clearance in Studio](art/tomato/growth-ring.jpg)
 
 The [ripe studies](art/tomato/ripe-studies.jpg) were captured from a client-only display plot built by the production plot renderer.
 The [field view](art/tomato/field.jpg) includes a Potato ring and a Cat; the [720 × 405 view](art/tomato/phone.jpg) is a resized

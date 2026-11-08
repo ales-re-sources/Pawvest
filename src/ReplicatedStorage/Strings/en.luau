@@ -506,4 +506,12 @@ return {
 	["field.toast.renownUp"] = "Renown {level}!",
 	["field.crop.best"] = "Record {kg} kg",
 	["field.reason.open"] = "That square is already yours",
+	["study.tomato.plant"] = "One plant",
+	["study.tomato.poses"] = "Five poses",
+	["study.tomato.seeds"] = "Six seeds",
+	["study.tomato.close"] = "Close",
+	["study.tomato.play"] = "Play",
+	["study.tomato.pause"] = "Pause",
+	["study.tomato.seed"] = "Seed {seed}",
+	["study.tomato.rings"] = "Rings {state}",
 }
