@@ -506,12 +506,4 @@ return {
 	["field.toast.renownUp"] = "[!! Řěňöwň {level}! ~~~ !!]",
 	["field.crop.best"] = "[!! Řěčöřď {kg} kg ~~~~ !!]",
 	["field.reason.open"] = "[!! Ťháť šqůářě íš álřěáďý ýöůřš ~~~~~~~~~~~ !!]",
-	["study.tomato.plant"] = "[!! Öňě pláňť ~~~~ !!]",
-	["study.tomato.poses"] = "[!! Fívě pöšěš ~~~~ !!]",
-	["study.tomato.seeds"] = "[!! Šíx šěěďš ~~~~ !!]",
-	["study.tomato.close"] = "[!! Člöšě ~~ !!]",
-	["study.tomato.play"] = "[!! Pláý ~~ !!]",
-	["study.tomato.pause"] = "[!! Páůšě ~~ !!]",
-	["study.tomato.seed"] = "[!! Šěěď {seed} ~~ !!]",
-	["study.tomato.rings"] = "[!! Říňgš {state} ~~ !!]",
 }

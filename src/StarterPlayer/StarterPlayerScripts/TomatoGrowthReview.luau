@@ -14,7 +14,6 @@ local function open()
 	local PlotView = require(player.PlayerScripts:WaitForChild("PlotView"))
 	local CropConfig = require(ReplicatedStorage.CropConfig)
 	local GardenConfig = require(ReplicatedStorage.GardenConfig)
-	local Locale = require(ReplicatedStorage.Locale)
 	local name = "TomatoGrowthReview"
 	assert(not workspace:FindFirstChild(name), "Close the existing Tomato review first")
 	local drawn = workspace:WaitForChild("GardenView")
@@ -73,9 +72,7 @@ local function open()
 			corner.Parent = icon
 		end
 		gui.Enabled = root:GetAttribute("Rings")
-		-- The existing square ring obscures the mature canopy at this height.
-		-- Try the increased clearance only on the display plot.
-		gui.StudsOffset += Vector3.new(0,1.35,0)
+		gui.StudsOffset = Vector3.new(0,2.65,3)
 		gui.Adornee = attachment
 		gui.Parent = attachment
 		table.insert(rings, {attachment = attachment, gui = gui})
@@ -209,7 +206,7 @@ local function open()
 	value.Parent = slider
 	local function refreshGrowth()
 		local p = root:GetAttribute("Growth")
-		value.Text = Locale.Number(math.round(p*100)) .. "%"
+		value.Text = string.format("%d%%", math.round(p*100))
 		fill.Size = UDim2.fromScale(p,1)
 		if plants[1] and root:GetAttribute("View") == "Plant" then
 			plants[1]:SetGrowth(p)
@@ -218,7 +215,7 @@ local function open()
 	end
 	local function refreshRings()
 		local enabled = root:GetAttribute("Rings")
-		ringsButton.Text = Locale.T("study.tomato.rings", {state = if enabled then "✓" else "○"})
+		ringsButton.Text = if enabled then "Rings ✓" else "Rings ○" -- loc: ignore (Studio review)
 		for _,ring in rings do ring.gui.Enabled = enabled end
 		for _,label in fieldLabels do label.Enabled = enabled end
 		view:ShowSelect(if enabled and root:GetAttribute("View") == "Plant" then 9 else nil)
@@ -240,12 +237,12 @@ local function open()
 		for id, button in modes do
 			button.BackgroundColor3 = if id == mode then Color3.fromRGB(76,119,86) else Color3.fromRGB(54,79,65)
 		end
-		modes.Plant.Text = Locale.T("study.tomato.plant")
-		modes.Poses.Text = Locale.T("study.tomato.poses")
-		modes.Seeds.Text = Locale.T("study.tomato.seeds")
-		closeButton.Text = Locale.T("study.tomato.close")
-		play.Text = Locale.T(if root:GetAttribute("Playing") then "study.tomato.pause" else "study.tomato.play")
-		seedButton.Text = Locale.T("study.tomato.seed", {seed = root:GetAttribute("Seed")})
+		modes.Plant.Text = "One plant" -- loc: ignore (Studio review)
+		modes.Poses.Text = "Five poses" -- loc: ignore (Studio review)
+		modes.Seeds.Text = "Six seeds" -- loc: ignore (Studio review)
+		closeButton.Text = "Close" -- loc: ignore (Studio review)
+		play.Text = if root:GetAttribute("Playing") then "Pause" else "Play" -- loc: ignore (Studio review)
+		seedButton.Text = "Seed " .. root:GetAttribute("Seed") -- loc: ignore (Studio review)
 		slider.Visible = mode == "Plant"
 		refreshRings()
 	end
@@ -261,14 +258,10 @@ local function open()
 	local elapsed = 0
 	root:GetAttributeChangedSignal("Playing"):Connect(function()
 		local playing = root:GetAttribute("Playing")
-		play.Text = Locale.T(if playing then "study.tomato.pause" else "study.tomato.play")
+		play.Text = if playing then "Pause" else "Play" -- loc: ignore (Studio review)
 		elapsed = if root:GetAttribute("Growth") >= 1 then 0 else root:GetAttribute("Growth")*8
 	end)
 	refreshStudy()
-	local changed = Locale.Changed:Connect(function()
-		refreshControls()
-		refreshGrowth()
-	end)
 
 	local held
 	slider.InputBegan:Connect(function(event)
@@ -296,7 +289,6 @@ local function open()
 		RunService:UnbindFromRenderStep(name)
 		moved:Disconnect()
 		ended:Disconnect()
-		changed:Disconnect()
 		gui:Destroy()
 		for _,screen in hidden do if screen.Parent then screen.Enabled = true end end
 		camera.CFrame, camera.Focus, camera.CameraType = originalFrame, originalFocus, originalType

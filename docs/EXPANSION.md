@@ -174,7 +174,7 @@ The `A - Spreading` entry in the study script sets the joints and fruit spacing.
 require(game.Players.LocalPlayer.PlayerScripts.TomatoGrowthReview).Open()
 ```
 
-**Plant** shows one individual. Drag the bottom scrubber in either direction, cycle **Seed**, or press **Play** for eight seconds of
+The Studio review controls use English. **One plant** shows one individual. Drag the bottom scrubber in either direction, cycle **Seed**, or press **Play** for eight seconds of
 continuous growth and a one-second ripe hold. **Five poses** lines up the same seed at 0/20/50/75/100%. **Six seeds** lines up six ripe
 plants at field scale. **Rings** switches the crop overlays and field labels for the readability check. **Close** removes the display
 plot and restores the camera and HUD. This review uses its own clock and makes no field requests.
@@ -192,9 +192,11 @@ The [ripe studies](art/tomato/ripe-studies.jpg) were captured from a client-only
 The [field view](art/tomato/field.jpg) includes a Potato ring and a Cat; the [720 × 405 view](art/tomato/phone.jpg) is a resized
 Studio capture. Reproduce the three studies with [the Studio client command](../tools/tomato_ripe_studies.luau) during a playtest.
 
-**CG1c — Field integration after sign-off.** Build the structure once per planting identity and share compact identity and time anchors in the
-public plot feed. The owner and nearby visitors see the same plant at the same age. Check rejoin, offline growth, replant and distance
-changes.
+**CG1c — Field integration (built).** The public plot feed shares each Tomato's planting number and growth time anchors. The client derives
+its seed from owner ID and planting number. Time and stage updates preserve the existing bush, soil and pets. Full detail draws the
+54-Part model; mid detail draws a canopy and two ripe fruit at most; low detail clears the crop. Growth posing shares the garden's frame
+budget, runs at most once per 0.15 seconds per growing plant and stops when ripe. The Tomato ring sits 2.65 studs above the soil.
+The server rounds a floating-point residue within 0.0000001 growth seconds of ripeness to the ripe boundary.
 
 **CG1d — Performance validation.** Compare frame times against the current renderer on the same route with a full 36-square field and 24 synthetic plots, then test
 a real phone against a proposed 30 FPS target. If necessary, group distant leaves into plates and shorten the full-detail radius.

@@ -107,7 +107,7 @@ local function newRing(square: number, crop)
 	gui.AutoLocalize = false
 	gui.LightInfluence = 0
 	gui.Size = UDim2.new(WIDTH, 0, TALL, 0) -- scale = studs
-	gui.StudsOffset = Vector3.new(0, HEIGHT, TOWARD)
+	gui.StudsOffset = Vector3.new(0, if crop.id == "Tomato" then 2.65 else HEIGHT, TOWARD)
 	gui.MaxDistance = 90
 	gui.Enabled = false
 	local disc = circle("Disc", {

@@ -593,11 +593,3 @@ field.size.record,"Harvest toast, after Big / Giant or alone: the heaviest crop 
 field.toast.renownUp,"Harvest toast, last line when the harvest raised the Renown level; {level} = new Renown level",Renown {level}!,Pověst {level}!,new,h03742e78
 field.crop.best,"Harvested crop row, second line; {kg} = weight of the heaviest crop of this kind harvested so far (""8.1"")",Record {kg} kg,Rekord {kg} kg,new,h9ad902fe
 field.reason.open,Refused: the square the player tried to buy is already open,That square is already yours,Tohle políčko už je tvoje,ok,h02853080
-study.tomato.plant,Studio Tomato review tab showing one plant,One plant,Jedna rostlina,new,h46de588d
-study.tomato.poses,Studio Tomato review tab showing five growth poses of the same plant,Five poses,Pět fází růstu,new,h09327d4a
-study.tomato.seeds,Studio Tomato review tab showing six ripe plants with different seeds,Six seeds,Šest variant,new,hf0533875
-study.tomato.close,Studio Tomato review button that closes the preview,Close,Zavřít,new,h808b1d17
-study.tomato.play,Studio Tomato review button that starts the growth loop,Play,Přehrát,new,h5b5b5a54
-study.tomato.pause,Studio Tomato review button that pauses the loop,Pause,Pozastavit,new,hbb89a306
-study.tomato.seed,Studio Tomato review selector. {seed} is the numeric appearance seed,Seed {seed},Varianta {seed},new,h568c9b55
-study.tomato.rings,Studio Tomato review overlay switch. {state} is a check or an empty circle,Rings {state},Kruhy {state},new,hcd372ddc

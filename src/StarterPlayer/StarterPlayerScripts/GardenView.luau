@@ -244,7 +244,8 @@ local function ripenOwn(state)
 		local letter, stage = string.sub(cell, 1, 1), string.sub(cell, 2, 2)
 		local entry = squares[tostring(n)] or squares[n]
 		local crop = type(entry) == "table" and CropConfig.ById[entry.crop]
-		if crop and crop.letter == letter and (stage == "1" or stage == "2") and type(entry.readyAt) == "number" and entry.readyAt <= now then
+		local sharedTomato = letter == "k" and type(field.tomatoes) == "table" and field.tomatoes[tostring(n)]
+		if not sharedTomato and crop and crop.letter == letter and (stage == "1" or stage == "2") and type(entry.readyAt) == "number" and entry.readyAt <= now then
 			cell = letter .. "3"
 			changed = true
 		end
@@ -366,13 +367,10 @@ local function pendingCount(): number
 end
 
 local function step()
-	if pendingCount() == 0 then
-		return
-	end
 	local deadline = os.clock() + BUDGET
 	for _, slot in order do
 		local view = views[slot]
-		if view and view:Pending() > 0 then
+		if view and (view:Pending() > 0 or view:HasGrowingTomatoes()) then
 			view:Step(deadline)
 			if os.clock() >= deadline then
 				break
@@ -391,6 +389,7 @@ local function withNames(userId: number)
 	end
 	local owner = Players:GetPlayerByUserId(userId)
 	local copy = table.clone(state)
+	copy.ownerId = userId -- planting appearance is stable for owner and visitors
 	copy.names = PetConfig.DecodeNames(owner and owner:GetAttribute(PetConfig.NamesAttribute))
 	real[userId] = copy
 end

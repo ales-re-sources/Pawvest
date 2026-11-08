@@ -506,12 +506,4 @@ return {
 	["field.toast.renownUp"] = "Pověst {level}!",
 	["field.crop.best"] = "Rekord {kg} kg",
 	["field.reason.open"] = "Tohle políčko už je tvoje",
-	["study.tomato.plant"] = "Jedna rostlina",
-	["study.tomato.poses"] = "Pět fází růstu",
-	["study.tomato.seeds"] = "Šest variant",
-	["study.tomato.close"] = "Zavřít",
-	["study.tomato.play"] = "Přehrát",
-	["study.tomato.pause"] = "Pozastavit",
-	["study.tomato.seed"] = "Varianta {seed}",
-	["study.tomato.rings"] = "Kruhy {state}",
 }

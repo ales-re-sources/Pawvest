@@ -54,7 +54,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | U4 | Panel split: Skills Garden tab, Pets field-slot line, Barn panel, seed stall, confirm + panel focus; Garden panel removed | ✔ | ✔ (phone by geometry; crow-on bubble by code review) | – |
 | U5 | Plot layout: hatchery left, barn right, path (U5a); hatchery panel with K1 egg cards and the reveal (U5b) | ✔ | ✔ (phone by geometry) | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
-| CG1 | Tomato growth art pilot (parallel garden art study) | CG1a ripe studies and CG1b growth prototype built | A selected, CG1b motion ready for art review | – |
+| CG1 | Tomato growth art pilot (parallel garden art study) | CG1a–c built | CG1c single-client checked; multi-client and CG1d open | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -85,9 +85,12 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
 
 - **CG1a — Ripe studies.** Complete. Ales selected **A, the spreading bush**, on 2026-11-08. Its ripe study uses 54 Parts.
   [A / B / C close-ups](art/tomato/ripe-studies.jpg) · [Field](art/tomato/field.jpg) · [Phone-size view](art/tomato/phone.jpg)
-- **CG1b — Growth prototype.** Built and checked in Studio. Next is Ales's motion review:
+- **CG1b — Growth prototype.** Built and checked in Studio. Advanced to integration at Ales's request:
   [growth loop](art/tomato/growth.gif) · [five poses](art/tomato/growth-poses.jpg) · [six ripe seeds](art/tomato/growth-seeds.jpg).
-- **CG1c — Field integration.** After art sign-off, connect the approved bush to planting and harvest for owners and visitors.
+- **CG1c — Field integration.** Built and Studio-checked 2026-11-08. Public planting identity and time anchors drive the 54-Part bush
+  nearby and a 1–3-Part proxy at mid distance. Checked the real ripe field, tap-selection, visitor-feed growth, timing correction,
+  replant / removal and full → mid → low → full identity. Plant / early harvest / ripe harvest, offline growth and boosted readiness
+  passed an isolated server fixture. A second real client remains open.
 - **CG1d — Performance validation.** Compare a full 36-square field and 24 synthetic plots to today's renderer, then measure a real phone.
 
 Key talents as **world rewards**: done for Double Jump (K1, GDD §6). Open: Triple Jump / Dash for World 3. The lost Coin sinks are made up in
