@@ -143,6 +143,38 @@ Harvests are items with four uses: sell, process at a station (about 1.5–2× t
 bundle, replant. **Grow times match real-life gaps** (a quick crop for a short session, 1 h for lunch, 8–12 h for the night): "what do I plant
 before I leave, and who guards it?" is the end-of-session decision.
 
+### 5.1 Tomato growth art pilot
+
+One annual Tomato grows continuously from bare soil to a ripe bush. Each stem extends from its base, a shorter arm branches from it,
+and a leaf opens from its attachment. Vary lean, spread and spacing per planting. The fruit stays attached as its branch dips. Use colored
+Plastic blocks with the garden's `Studs` and `StudsSmall` materials. The five poses below are review stops on the same plant.
+
+| Growth | Pose |
+|---|---|
+| 0% | A green tip breaks the soil after planting. An empty square stays bare. |
+| 20% | A short leaning stem carries two broad leaves unfolding at different angles. |
+| 50% | Two or three unequal arms open, with clear gaps between them and smaller leaves near their tips. |
+| 75% | Small green tomatoes swell beneath the outer branches, which begin to dip. |
+| 100% | Two or three full red tomatoes hang below the leaves. Fruit size and branch angle also signal ripeness in grayscale. |
+
+**Art review.** First compare three ripe block studies in the field: A, squat and spreading; B, upright and open; C, leaning under fruit.
+Review at gameplay distance and phone size, with a neighbor crop, field pet and ring for scale. The developer chooses a silhouette or asks
+for another study. Next, review the chosen bush in a display-only Studio prototype: a scrubber, short loop, five poses and six planting
+seeds. Scrub both ways at 43–44% to check attachments. Check crop identity and ripeness with rings hidden, then check UI legibility with
+them visible. The developer signs off on the stills and loop before field integration.
+
+The [ripe studies](art/tomato/ripe-studies.jpg) were captured from a client-only display plot built by the production plot renderer.
+The [field view](art/tomato/field.jpg) includes a Potato ring and a Cat; the [720 × 405 view](art/tomato/phone.jpg) is a resized
+Studio capture. Reproduce the three studies with [the Studio client command](../tools/tomato_ripe_studies.luau) during a playtest.
+
+**Field integration after sign-off.** Build the structure once per planting identity and share compact identity and time anchors in the
+public plot feed. The owner and nearby visitors see the same plant at the same age. Check rejoin, offline growth, replant and distance
+changes. Compare frame times against the current renderer on the same route with a full 36-square field and 24 synthetic plots, then test
+a real phone against a proposed 30 FPS target. If necessary, group distant leaves into plates and shorten the full-detail radius.
+
+Tomato keeps its eight-minute crop time and clears the square at harvest. A future perennial Apple keeps its seeded trunk and branches
+through harvest; only fruit regrows at persistent attachment points. Particles and lights can follow the silhouette review.
+
 ### 5.2 Seed catalogue and market cart (not built parts)
 - **Species unlocks from the obby:** first finishes / first Golds and challenge-coin milestones unlock catalogue species (§8.1), on top of Renown.
 - The cart may also offer a fertiliser ingredient or a decor piece; its offers are never sold or re-rolled for Robux (§13).
