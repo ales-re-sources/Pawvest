@@ -122,6 +122,8 @@ src/Workspace/                StartLocation (hub), Tutorial, World1 (Stage1-5), 
   - Initial sync priority is **Client** (Studio overwrites files on connect): commit before connecting and check `git status` right after;
     files edited while disconnected are overwritten by Studio's copy.
   - If a file edit does not show in Studio although Argon is connected, reconnect the plugin (seen in P3b: Studio's copy missed the last edit).
+  - **Disconnect Argon before any git command that changes the working tree** (switch, checkout, merge, pull, reset, stash): Argon applies the
+    change to Studio and deletes the Studio-only children of every script container that disappears, even for a moment.
   - **Moving or renaming a script container on disk recreates its Studio instance**: its Studio-only children are lost, a stashed copy of the
     scripted part is deleted too (Argon tracks the instance, not the path), and a renamed checkpoint folder comes back as a default part at the
     origin. Reparent in Studio instead, or note the scripted parts' properties first and rebuild after the move.
