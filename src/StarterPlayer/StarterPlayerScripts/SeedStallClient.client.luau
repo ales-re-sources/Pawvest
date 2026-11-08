@@ -4,13 +4,15 @@
 --     seed catalogue (+1 / +10 per unlocked crop, the Renown lock or "from World n" for rare crops: E2a), the barn capacity line;
 --     spends over ConfirmTap.THRESHOLD take two taps; walking SeedStallDistance away from the counter closes it (the server checks the
 --     same distance), PanelFocus "SeedStall" closes the other panels;
+--   * two tabs under the title (playtest 2026-11-08): Buy (the above) and Sell (every harvested crop with the Barn's Sell brick);
 --   * board: a SurfaceGui (in PlayerGui, Adornee = the stall's Board, both faces) with the local player's cart offers and the time to
 --     the next ones, redrawn on every State and language change.
 -- Display only: a tap names a crop and a count (BuySeeds) or an offer (BuyCart); GardenField checks the stall distance, prices, Renown
 -- and the barn and answers on GardenRemotes.Result (FieldClient toasts it). The field state comes from GardenRemotes.State
 -- (GardenView keeps the last one).
 -- Hook (ScreenGui SeedStallGui attribute, cleared after use): Open = true opens the panel (as the prompt does).
--- Buttons by path (under PlayerGui.SeedStallGui.Panel.Content): Cart.Offer<slot>.Buy, Seeds.<CropId>.Buy1 / .Buy10; Close.
+-- Buttons by path (under PlayerGui.SeedStallGui.Panel): Tabs.Buy / .Sell, Content.Cart.Offer<slot>.Buy, Content.Seeds.<CropId>.Buy1 / .Buy10,
+-- Content.SellCrops.<CropId>.Sell; Close.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -31,6 +33,7 @@ local player = Players.LocalPlayer
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
 local buySeedsEvent = remotes:WaitForChild("BuySeeds")
 local buyCartEvent = remotes:WaitForChild("BuyCart")
+local sellEvent = remotes:WaitForChild("Sell")
 local requestStateEvent = remotes:WaitForChild("RequestState")
 
 local WIDTH = 420
@@ -40,6 +43,7 @@ local BUY1_WIDTH = 56
 local BUY10_WIDTH = 64
 local LOCK_WIDTH = 120
 local CART_WIDTH = 110
+local SELL_WIDTH = 150
 local BOARD_PPS = 40 -- board pixels per stud (10 x 3.6 studs → 400 x 144)
 
 local COLOR_PANEL = StudStyle.Colors.Green
@@ -48,8 +52,32 @@ local COLOR_ROW = StudStyle.PetRowColor(COLOR_PANEL)
 local ui = GardenUi.Panel("SeedStallGui", COLOR_PANEL, WIDTH, HEIGHT)
 local cartSection = GardenUi.Section("Cart", 1)
 local seedsSection = GardenUi.Section("Seeds", 2)
+local sellSection = GardenUi.Section("SellCrops", 3)
 cartSection.Parent = ui.content
 seedsSection.Parent = ui.content
+sellSection.Parent = ui.content
+
+local TABS_TOP = 44 -- under the title strip
+local CONTENT_TOP = 46 -- GardenUi.Panel's Content
+local CONTENT_BOTTOM = 54
+local tabs = GardenUi.Create("Frame", {
+	Name = "Tabs",
+	Position = UDim2.new(0, 8, 0, TABS_TOP),
+	Size = UDim2.new(1, -16, 0, 44),
+	BackgroundTransparency = 1,
+	Parent = ui.panel,
+})
+local function tabButton(name: string, x: number)
+	return GardenUi.Button(name, {
+		Position = UDim2.new(x, if x > 0 then 3 else 0, 0, 0),
+		Size = UDim2.new(0.5, -3, 1, 0),
+		TextSize = 17,
+		BackgroundColor3 = GardenUi.COLOR_LOCKED,
+		Parent = tabs,
+	}, 2)
+end
+local buyTab, sellTab = tabButton("Buy", 0), tabButton("Sell", 0.5)
+local activeTab = "buy"
 
 local openCounter: BasePart? = nil
 local cartTimer = nil -- { label, at }
@@ -177,23 +205,70 @@ local function renderSeeds(field, tap: number)
 		seedsSection
 end
 
+local function renderSell(field, tap: number)
+	GardenUi.Clear(sellSection)
+	GardenUi.Heading(sellSection, 1, Locale.T("field.section.crops"), COLOR_PANEL)
+	local any = false
+	for index, crop in CropConfig.Crops do
+		local owned = field.items[crop.id] or 0
+		if owned > 0 then
+			any = true
+			local row = GardenUi.Row(sellSection, crop.id, index + 1, COLOR_ROW)
+			local best = field.best and field.best[crop.id]
+			GardenUi.TextColumn(
+				row,
+				SELL_WIDTH + GAP,
+				string.format("%s × %s", GardenUi.CropTitle(crop), Locale.Number(owned)),
+				if best then Locale.T("field.crop.best", { kg = GardenUi.KgText(crop, best) }) else nil
+			)
+			GardenUi.SellButton(row, crop, field, PetClient.State, SELL_WIDTH, tap, 2, function(id, count)
+				sellEvent:FireServer(id, count)
+			end)
+		end
+	end
+	if not any then
+		GardenUi.Paragraph("Empty", { LayoutOrder = 2, Text = Locale.T("barn.crops.empty") }).Parent = sellSection
+	end
+end
+
 local function render()
 	ui.title.Text = Locale.T("seedStall.title")
+	buyTab.Text = Locale.T("seedStall.tab.buy")
+	sellTab.Text = Locale.T("seedStall.tab.sell")
 	if not openCounter then
 		return
 	end
+	local tap = ui.TapHeight()
+	tabs.Size = UDim2.new(1, -16, 0, tap)
+	ui.content.Position = UDim2.new(0, 8, 0, CONTENT_TOP + tap + GAP)
+	ui.content.Size = UDim2.new(1, -16, 1, -(CONTENT_BOTTOM + tap + GAP))
+	buyTab.BackgroundColor3 = if activeTab == "buy" then GardenUi.COLOR_BUY else GardenUi.COLOR_LOCKED
+	sellTab.BackgroundColor3 = if activeTab == "sell" then GardenUi.COLOR_SELL else GardenUi.COLOR_LOCKED
+	cartSection.Visible = activeTab == "buy"
+	seedsSection.Visible = activeTab == "buy"
+	sellSection.Visible = activeTab == "sell"
 	local field = GardenView.OwnField()
 	if not field then
 		GardenUi.Clear(cartSection)
 		GardenUi.Clear(seedsSection)
+		GardenUi.Clear(sellSection)
 		cartTimer = nil
-		GardenUi.Paragraph("Loading", { Text = Locale.T("common.loading") }).Parent = cartSection
+		GardenUi.Paragraph("Loading", { Text = Locale.T("common.loading") }).Parent = if activeTab == "buy" then cartSection else sellSection
 		return
 	end
-	local tap = ui.TapHeight()
 	renderCart(field, tap)
 	renderSeeds(field, tap)
+	renderSell(field, tap)
 end
+
+buyTab.Activated:Connect(function()
+	activeTab = "buy"
+	render()
+end)
+sellTab.Activated:Connect(function()
+	activeTab = "sell"
+	render()
+end)
 
 local function closePanel()
 	PanelFocus.Closed("SeedStall")
@@ -204,6 +279,7 @@ end
 local function openPanel(counter: BasePart)
 	PanelFocus.Open("SeedStall", closePanel, math.huge) -- the stall distance below closes it
 	openCounter = counter
+	activeTab = "buy"
 	ui.Fit()
 	ui.panel.Visible = true
 	render()

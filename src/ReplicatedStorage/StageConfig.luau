@@ -81,26 +81,26 @@ StageConfig.Stages = {
 		rewardFactor = 1.0,
 	},
 	{
-		key = "Stage3", -- Blink, the rhythm special (docs/STAGES.md §5.2, §7.7)
+		key = "Stage3", -- bounce corridors (swapped with Blink 2026-11-08: the easier course comes first)
 		displayName = "Stage 3",
 		folder = "Stage3",
 		order = 3,
 		world = 1,
 		requires = {},
-		tBase = 60, -- seconds; provisional until measured in M6a (a perfect run takes about 40 s)
+		tBase = 100,
 		tiers = StageConfig.DefaultTiers,
 		unlock = { stage = "Stage2", medal = "Bronze" },
 		unlockPrice = 1500,
 		rewardFactor = 1.25, -- curve 0.5 + 0.25 × order (GDD §5)
 	},
 	{
-		key = "Stage4", -- bounce corridors
+		key = "Stage4", -- Blink, the rhythm special (docs/STAGES.md §5.2, §7.7)
 		displayName = "Stage 4",
 		folder = "Stage4",
 		order = 4,
 		world = 1,
 		requires = {},
-		tBase = 100,
+		tBase = 60, -- seconds; provisional until measured in M6a (a perfect run takes about 40 s)
 		tiers = StageConfig.DefaultTiers,
 		unlock = { stage = "Stage3", medal = "Bronze" },
 		unlockPrice = 2000,

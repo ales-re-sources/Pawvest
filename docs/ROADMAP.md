@@ -754,7 +754,7 @@ new price. World rewards (Double Jump 1) stay free.
    | Run Speed | 800; 1 400 + 12 Garlic; 2 600 + 12 Cucumber; 4 500 + 15 Corn; 8 000 + 15 Pepper |
    | Jump Height | 1 100; 1 900 + 12 Cucumber; 6 500 + 15 Pepper |
    | Quick Respawn | 1 100 + 12 Tomato; 10 000 + 15 Broccoli |
-   | Double Jump | 1: world reward (free); 2 (Triple Jump): 16 000 + 20 Cucumber + 2 Frost grapes |
+   | Double Jump | 1: world reward (free); 2 (Triple Jump): 16 000 + 20 Cucumber + 1 Frost grape (2 until 2026-11-08) |
    | Dash | 1: 12 000 + 20 Corn; 2 (Long Dash): 29 000 + 20 Pepper + 1 Glow mushroom |
    | Wall Jump / Glide (planned, not built) | 700 000 + 20 Blueberry + 3 Glow mushrooms / 2.6 M + 25 Blueberry + 4 Glow mushrooms (GDD §6 table only) |
 2. **Config:** `TalentConfig` gets `crops[n] = { [cropId] = count }` next to `costs[n]` and a helper `NextCrops(id, level)`.
@@ -835,6 +835,8 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
 
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
+
+**Playtest fixes 2026-11-08** (ECONOMY.md, GDD §6, §7.9, STAGES §2). *Why:* a tester's first Golden carrot paid 350 000; the second Stage 2 lava looked like the lethal one; Blink was harder than the stage after it; the skill's crop price was unreadable and detached from its button; nobody found where to sell crops. *What:* rare crops 50 000 / 150 000 / 300 000 with fewer Renown points, model check R, Double Jump 2 takes 1 Frost grape; `Lava block` retiled as hot coals; bounce corridors are Stage 3 and Blink Stage 4 (folders, coin ids, boards cleared); the buy button shows 💰 and the crops with have/need; selling from anywhere, Barn button outside runs, the seed stall's Sell tab, a first-harvest toast. Studio-validated (controls through the real UI, boot clean); the toast and the pulse (young fields only) were reviewed in code, not seen.
 
 **Stud food stand and plot signs** (2026-11-05; GDD §7.6, LAYOUT Garden). *Why:* the stand and the plot signs were the last plain-wood
 pieces in the garden; the stand read from one side only, and the low plot sign blocked the way and the view into a plot. *What:* the food

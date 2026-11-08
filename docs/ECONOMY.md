@@ -91,7 +91,7 @@ in steps of 5 (120, 2 900, 35 000, 750 M). The checks run on the rounded prices;
 | Item | Old (built) | Proposed |
 |---|---|---|
 | Crops | Potato 5 m, Corn 6 h, Pumpkin 8 h, Giant melon 12 h | 16 annuals on 10 s … 24 h: **Potato 10 s** (sale 9), FP1 30 s, FP2 1 m, FP3 3 m, FP4 8 m, FP5 15 m, **Corn 30 m** (5 000), FP6 1 h, FP7 2 h, **Pumpkin 3 h** (50 000), FP8 4 h, FP9 6 h, FP10 8 h, **Giant melon 12 h** (450 000), FP11 18 h, FP12 24 h; seed = 25 % of the sale |
-| Rare crops | 6 / 8 / 10 h, sale 3 360 / 4 480 / 5 600 | same times, 2.5× the value of a common crop of that time (350 000 / 600 000 / 900 000) |
+| Rare crops | 6 / 8 / 10 h, sale 3 360 / 4 480 / 5 600 | same times; sale 50 000 / 150 000 / 300 000, Renown points 22 / 44 / 76, set by hand (2026-11-08). The first version, 2.5× a common crop of that time (350 000 / 600 000 / 900 000), ignored when a player gets the crop: the first Golden carrot paid 3.7× the World 1-2 talent tree on day 1, 58-79 % of that day's income and 7 Renown levels. Check R (`economy_ev.py`) now limits it: at most 70 % of a day's income on days 0-3, no sale in the first 5 days above 5× everything earned before it, one World 1 rare at most 3 Renown levels; G6 counts rare sales as obby income. Double Jump 2 takes 1 Frost grape (was 2) so that G4 holds at the lower prices |
 | Renown | 3 × L^1.6 | 0.4 × L³, gates R0 … R68 |
 | Squares | 1 400 → 907 400 (4.8 M in all) | 290 → 750 M (1.6 B in all) |
 | Talents | 22 300 in all, Coins only | 3.4 M in all + crop bundles: Run Speed L1: 800; Double Jump L2: 16 000 + 20 FP5 + 2 Frost grapes; Dash L2: 29 000 + 20 FP6 + 1 Glow mushroom; Wall Jump L1: 700 000 + 20 FP9 + 3 Glow mushrooms; Glide L1: 2.6 M + 25 FP9 + 4 Glow mushrooms |

@@ -278,7 +278,7 @@ plane with it (rims 0.03 in from the edge, frames standing wholly in front of th
 - **Solid hazards** (crushers, spikes, blades): charcoal `Studs` body with glowing Neon cracks / ridge (`#FF5913` spike tips), a Neon
   `BottomGlow` and black smoke on crushers. The kit's telegraph tints the body to `WarnColor` (255, 170, 60).
 - **Lava-like floors:** the kill part in dark red `Studs` covered by `LavaTile_n` children (2 x 4, palette dark red / red / orange, ~1 in 5 Neon
-  orange) and a `LavaSmoke` emitter on large parts (low rates for phones).
+  orange) and a `LavaSmoke` emitter on large parts (low rates for phones). **Hot coals** (Stage 2's `Lava block`: 20 damage every 0.5 s of contact, not a kill) look different on purpose: charcoal `Studs` tiles with dim burnt-orange ones, no Neon.
 - **Moving plates** (`KitMover`): LEGO yellow `#FFD54A` `Studs` with amber rim bars `RimN/S/W/E`, an amber `Hub` on discs. A gear is one union that
   *is* the mover (the kit carries a rider only on the exact `KitMover` part). Flips (Stage 10, and Stage 8's `Flip1-5` / `FlipB1-4` since 2026-11-05) the same: `Axle` bar with `AxleCapE/W` through the hinge, rims on both
   faces (the warning tint is close to the yellow). Cloned from `Stage10.Movers.Flip_1`; the Stage 8 flips keep their own `FlipN_Axle` pillars below.
@@ -332,8 +332,8 @@ Display number = position in the game (`order`, `displayName` in `StageConfig`);
 | T | – | Tutorial (hub stage, no world) | basics | jumps, first kill part | – | 30 | today's Tutorial (`Tutorial`) |
 | 1 | 1 | Island Hop | stud pillars | wide gaps, slow conveyors, first moving platform | – | 45–60 | **new** |
 | 2 | 1 | Stage 2 (today) | variety | laser strips, spinners, lava floor, choice stage, jump pads | – | 70 | `Stage2` |
-| 3 | 1 | Blink ★ special: rhythm | **blinking beams** pulsing to the music | disappearing plates, beam waves, pistons on the beat | – | 70–90 | **new** |
-| 4 | 1 | Stage 4 (today) | bounce corridors | kill-part corridors, bounce bricks | – | 100 | `Stage4` |
+| 3 | 1 | Bounce corridors (Stage 4 until 2026-11-08) | bounce corridors | kill-part corridors, bounce bricks | – | 100 | `Stage3` |
+| 4 | 1 | Blink ★ special: rhythm (Stage 3 until 2026-11-08: harder than the bounce corridors) | **blinking beams** pulsing to the music | disappearing plates, beam waves, pistons on the beat | – | 60 | `Stage4` |
 | 5 | 1 | Stage 5 (today) | dense precision (World 1 finale) | dense kill parts | – | 120 | `Stage5` |
 | 6 | 2 | Double Up | Double Jump gaps and ledges | moving platforms, elevators | Double Jump | 80–100 | new |
 | 7 | 2 | Seesaw | **tilt plates** | wind, DJ recovery jumps | Double Jump | 90–110 | new |
@@ -374,7 +374,7 @@ Decided: **one special stage per world** (marked ★ in §4), a stage that plays
   translucent, so nobody seems to walk through a wall.
 
 ### 5.2 World specials
-**World 1 — Blink (stage 3): rhythm stage.** Blinking beams, disappearing plates and pistons switch on the beat of the stage
+**World 1 — Blink (stage 4 since 2026-11-08): rhythm stage.** Blinking beams, disappearing plates and pistons switch on the beat of the stage
 music. A Studio-only `Sound` with a `BPM` attribute (100–120) drives the schedule. **Decided in the S4.2 design check
 (2026-10-21): the beat is per run, not shared:** every hazard is run-seeded and the music starts with the player's timer and
 follows run time (`TimePosition` = run time mod the loop length), so every run sees the same sequence; the course still works

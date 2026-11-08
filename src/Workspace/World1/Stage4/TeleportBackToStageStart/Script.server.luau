@@ -2,6 +2,8 @@ local StageConfig = require(game:GetService("ReplicatedStorage").StageConfig)
 local TeleportPart1 = script.Parent.Portal
 local TeleportPart2 = script.Parent.Parent.Arrival
 
+local handler = require(workspace.Handlers.PlayerTimerHandler)
+
 TeleportPart1.Touched:Connect(function(hit)
 	local w = hit.Parent:FindFirstChild("HumanoidRootPart")
 	if w then

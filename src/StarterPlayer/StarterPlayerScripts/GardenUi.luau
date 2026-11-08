@@ -1,6 +1,6 @@
 -- GardenUi (U4): what the garden's panels share (Seed stall: SeedStallClient, Barn: BarnClient). Client only.
 --   * builders: Create, Label, Button (StudStyle brick), Paragraph (wraps and grows), Heading, Row + TextColumn (a text column
---     that wraps, then the buttons), Clear;
+--     that wraps, then the buttons), SellButton (a crop row's Sell), Clear;
 --   * Panel(name, color, width, height): a ScreenGui (Sibling ZIndex, AutoLocalize off) with a centred stud panel (title strip,
 --     X button, a scrolling Content list) that Fit() scales down to the screen (UIScale; never below 0.5); TapHeight() = a brick
 --     height that stays at least 44 px on screen;
@@ -15,6 +15,7 @@ local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
+local ConfirmTap = require(ReplicatedStorage:WaitForChild("ConfirmTap"))
 
 local GardenUi = {}
 
@@ -147,6 +148,31 @@ function GardenUi.TextColumn(row: Instance, reserved: number, title: string, inf
 		GardenUi.Paragraph("Info", { LayoutOrder = 2, TextSize = 13, Text = info }).Parent = column
 	end
 	return column
+end
+
+-- The Sell brick of a crop row (Barn, the seed stall's Sell tab): sells everything held of `crop` in two taps (ConfirmTap, §10), the text
+-- says what the sale pays: SaleValue (sale × summed sizes), then × the pet multiplier (`petState` = PetClient.State), rounded as
+-- CoinRewards.Grant does. `fire(cropId, count)` asks the server.
+function GardenUi.SellButton(row: Instance, crop, field, petState, width: number, height: number, order: number, fire: (string, number) -> ())
+	local owned = field.items[crop.id] or 0
+	local base = CropConfig.SaleValue(crop, field.sizes and field.sizes[crop.id] or owned)
+	local multiplier = type(petState) == "table" and tonumber(petState.multiplier) or 1
+	local sell = GardenUi.Button("Sell", {
+		LayoutOrder = order,
+		Size = UDim2.fromOffset(width, height),
+		BackgroundColor3 = GardenUi.COLOR_SELL,
+		TextSize = 14,
+		TextWrapped = true,
+		Text = Locale.T("field.crop.sellCount", { count = owned, coins = math.floor(base * multiplier + 0.5 + 1e-9) }),
+		Parent = row,
+	}, 2)
+	local cropId = crop.id
+	ConfirmTap.Wrap(sell, "Sell" .. cropId .. owned, function()
+		return true -- Sell always takes two taps
+	end, function()
+		fire(cropId, owned)
+	end)
+	return sell
 end
 
 -- A centred panel in its own ScreenGui. Returns a table: gui, panel, content (ScrollingFrame with a list), title, close,

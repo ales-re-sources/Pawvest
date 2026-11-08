@@ -22,7 +22,7 @@ TalentConfig.List = {
 		id = "DoubleJump",
 		name = "Double Jump", -- loc: ignore (English source and fallback; players see Locale)
 		costs = { 0, 16000 }, -- level 1 is a world reward (3 000 until 2026-11-01, 1 500 until 2026-10-23; GDD §6); level 2 = Triple Jump (S7; 5 000 until EV2b)
-		crops = { [2] = { Cucumber = 20, FrostGrape = 2 } },
+		crops = { [2] = { Cucumber = 20, FrostGrape = 1 } },
 		rewards = { [1] = 2 }, -- granted when World 2 opens (K1)
 		perLevel = 1,
 		effect = "1 extra jump in the air", -- loc: ignore (English source and fallback; players see Locale)

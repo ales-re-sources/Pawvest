@@ -44,9 +44,9 @@ CAND = {
     "pts_a": 4.0, "pts_b": 0.5,
     "renown_k": 0.4, "renown_p": 3.0,
     "crop_gate": [0, 1, 2, 3, 4, 5, 6, 8, 11, 15, 20, 26, 33, 42, 54, 68],
-    # rare crops (CropConfig ids, grow seconds kept): sale = rare_mult x the ladder's net/h at the ladder index `at` x hours / (1 - seed_frac)
-    "rare": [("GoldenCarrot", 1, 21600, 12), ("FrostGrape", 2, 28800, 13), ("GlowMushroom", 3, 36000, 14)],
-    "rare_mult": 2.5,
+    # rare crops (CropConfig ids, world, grow seconds, sale, Renown points): set by hand against the income of the days a world is reached (playtest
+    # 2026-11-08: 2.5x a ladder crop of the same grow time made the first Golden carrot, day 1, worth 350 000 and 7 Renown levels; check R)
+    "rare": [("GoldenCarrot", 1, 21600, 50000, 22), ("FrostGrape", 2, 28800, 150000, 44), ("GlowMushroom", 3, 36000, 300000, 76)],
     # squares: 32 bought, price p1 x q^(i-1), Renown gate round(sq_gate_a x i^sq_gate_b)
     "sq_p1": 290.0, "sq_q": 1.33, "sq_q2": 1.45, "sq_k2": 16, "sq_gate_a": 0.8, "sq_gate_b": 1.08,
     # sinks anchored to squares: (family, level, anchor square j, factor); price = factor x sq(j), Renown gate = the gate of square j
@@ -70,7 +70,7 @@ CAND = {
         "RunSpeed": [(3, 1.0, {}, {}), (5, 1.0, {4: 12}, {}), (7, 1.0, {6: 12}, {}), (9, 1.0, {7: 15}, {}), (11, 1.0, {8: 15}, {})],
         "JumpHeight": [(4, 1.0, {}, {}), (6, 1.0, {6: 12}, {}), (10, 1.0, {8: 15}, {})],
         "QuickRespawn": [(4, 1.0, {5: 12}, {}), (12, 1.0, {9: 15}, {})],
-        "DoubleJump": [("reward",), (12, 1.5, {6: 20}, {2: 2})],
+        "DoubleJump": [("reward",), (12, 1.5, {6: 20}, {2: 1})],
         "Dash": [(11, 1.5, {7: 20}, {}), (14, 1.5, {8: 20}, {3: 1})],
         "WallJump": [(20, 1.5, {12: 20}, {3: 3})],
         "Glide": [(22, 1.5, {12: 25}, {3: 4})],
@@ -150,11 +150,9 @@ def build(c=None):
                       "v": v, "rare": False})
     M["crops"] = crops
     rares = {}
-    for cid, world, secs, at in c["rare"]:
-        v = c["rare_mult"] * c["v1"] * c["r"] ** (at - 1)
-        sale = nice(v * secs / H / (1 - seed))
-        rares[world] = {"k": None, "id": cid, "t": float(secs), "sale": sale, "seed": 0, "net": sale, "pts": crops[at - 1]["pts"] * 2,
-                        "gate": 0, "v": v, "rare": True, "world": world}
+    for cid, world, secs, sale, pts in c["rare"]:
+        rares[world] = {"k": None, "id": cid, "t": float(secs), "sale": sale, "seed": 0, "net": sale, "pts": pts,
+                        "gate": 0, "v": sale * H / secs, "rare": True, "world": world}
     M["rares"] = rares
     raw = [c["sq_p1"] * c["sq_q"] ** i * c["sq_q2"] ** max(0, i + 1 - c["sq_k2"]) for i in range(32)]
     sq = [nice(x) for x in raw]
@@ -281,7 +279,10 @@ class Sim:
         self.events = []  # online times of collect moments
         self.online_by_day = [0.0] * (days + 8)
         self.events_by_day = [0] * (days + 8)
-        self.income = {"field": 0.0, "obby": 0.0, "request": 0.0, "pets": 0.0}
+        self.income = {"field": 0.0, "rare": 0.0, "obby": 0.0, "request": 0.0, "pets": 0.0}  # "rare": sales of rare crops (their seeds come from the obby)
+        self.rare_by_day = [0.0] * (days + 2)
+        self.rare_sales = []  # (t, Coins of one sale, the Coins earned before it)
+        self.earned_total = 0.0
         self.after3 = self.obby_after3 = 0.0
         self.free_eggs = 0
         self.income_log = []  # (time, coins)
@@ -418,9 +419,13 @@ class Sim:
     def earn(self, t, coins, kind):
         coins *= self.mult if kind != "pets" else 1.0
         self.income[kind] += coins
+        if kind == "rare":
+            self.rare_by_day[min(self.day(t), len(self.rare_by_day) - 1)] += coins
+            self.rare_sales.append((t, coins, self.earned_total))
+        self.earned_total += coins
         if t >= 3 * DAY:
             self.after3 += coins
-            if kind == "obby":
+            if kind in ("obby", "rare"):  # the obby is where rare seeds come from: G6 counts what they pay as obby income
                 self.obby_after3 += coins
         self.earned_by_day[self.day(t)] += coins
         self.income_log.append((t, coins))
@@ -495,7 +500,7 @@ class Sim:
             self.kept[crop["id"]] = have + keep
         sell = n - keep
         if sell:
-            self.earn(t, sell * crop["sale"] * self.sale_mult(), "field")
+            self.earn(t, sell * crop["sale"] * self.sale_mult(), "rare" if crop["rare"] else "field")
         self.add_points(t, crop["pts"] * n)
         if self.first_harvest_t is None:
             self.first_harvest_t = t
@@ -942,7 +947,7 @@ class Sim:
             if extra > 0:
                 crop = next((c for c in self.M["crops"] if c["id"] == cid), None) or next(r for r in self.M["rares"].values() if r["id"] == cid)
                 self.kept[cid] = n - extra
-                self.earn(t, extra * crop["sale"] * self.sale_mult(), "field")
+                self.earn(t, extra * crop["sale"] * self.sale_mult(), "rare" if crop["rare"] else "field")
         self.runs_today = {}
         self.first_today = set()
         self.requests = []
@@ -1394,6 +1399,19 @@ def checks(M, days=60, verbose=True):
     ok6 &= worst <= 40
     rows.append(f"Sunshine at most {worst:.0f} min per obby hour")
     add("G6 the obby is the expedition", ok6, "; ".join(rows))
+    # R rare crops stay a treat (playtest 2026-11-08: the first Golden carrot paid 350 000 on day 1, 58-79 % of day 1's income): on days 0-3 at most 70 % of a day's income, in the
+    # first 5 days no single sale above 5x everything earned before it; one World 1 rare from an empty field gives at most 3 Renown levels
+    rows, okr = [], True
+    for n in names + ["Spender"]:
+        s = run(M, arch_by(n), "talent-first", days)
+        share = max(s.rare_by_day[d] / s.earned_by_day[d] for d in range(4) if s.earned_by_day[d] > 0)
+        jump = max((c / max(1.0, before) for t, c, before in s.rare_sales if t < 5 * DAY), default=0.0)
+        okr &= share <= 0.70 and jump <= 5.0
+        rows.append(f"{n} top share {share:.0%}, biggest sale {jump:.1f}x earned before")
+    first_levels = renown_level(M, M["rares"][1]["pts"])
+    okr &= first_levels <= 3
+    rows.append(f"first World 1 rare = Renown {first_levels}")
+    add("R rare crops stay a treat", okr, "; ".join(rows))
     # G8 Spender headroom
     free, paid = run(M, arch_by("Spender"), "talent-first", days, free=True), run(M, arch_by("Spender"), "talent-first", days)
     rows, ok8, ratios = [], True, []

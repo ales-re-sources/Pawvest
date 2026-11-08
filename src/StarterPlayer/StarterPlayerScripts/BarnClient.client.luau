@@ -1,29 +1,32 @@
 -- Barn (U4, docs/UI_GARDEN_PETS.md §6): what the player holds from the field. Two entries: the barn building's "Open barn" prompt on
--- the own plot (U5a, PlotView via GardenView.OnBarn) and the bottom-centre HUD button "🧺 Barn" (shown within 45 studs of the own plot).
+-- the own plot (U5a, PlotView via GardenView.OnBarn) and the bottom-centre HUD button "🧺 Barn" (shown within 45 studs of the own plot
+-- and, while the player holds crops, anywhere outside a stage run; a young field gets a toast at the first harvest of the session and
+-- the button pulses until the barn was opened: playtest 2026-11-08).
 --   * header: the crow forecast (E4b, from CropConfig.NextCrows and the server time; "crows come from Renown n" on a young field) and
 --     the barn's seed capacity;
 --   * Seeds: every seed held (icon, name × count, grow time with the Growth upgrade); nothing → a hint to the plaza's seed stall;
 --   * Harvest: every crop held (name × count, record kg) with Feed (a chooser of the pets that can still eat → that pet's page, which
 --     feeds crops: PetsGui attribute OpenPet) and Sell (two taps, ConfirmTap; "Sell 2 · 3 787": the count and what the sale pays with the
 --     pet bonus, PetClient.State.multiplier, rounded as CoinRewards.Grant rounds);
---   * PanelFocus "Barn": opening it closes the other panels, walking 32 studs away closes it (Sell needs the own plot on the server).
--- Display only: Sell names a crop and a count; GardenField checks the plot, the count and pays (answer toasted by FieldClient).
+--   * PanelFocus "Barn": opening it closes the other panels, walking 32 studs away closes it.
+-- Display only: Sell names a crop and a count; GardenField checks the count and pays (answer toasted by FieldClient).
 -- Hook (ScreenGui BarnGui attribute, cleared after use): Open = true opens the panel. Buttons by path (under PlayerGui.BarnGui):
 -- Open (the HUD button), Panel.Content.Crops.<CropId>.Sell / .Feed, Panel.Chooser.List.<uid>; Panel.Close.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PanelFocus = require(ReplicatedStorage:WaitForChild("PanelFocus"))
-local ConfirmTap = require(ReplicatedStorage:WaitForChild("ConfirmTap"))
 local GardenView = require(script.Parent:WaitForChild("GardenView"))
 local GardenUi = require(script.Parent:WaitForChild("GardenUi"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
+local Hints = require(script.Parent:WaitForChild("Hints"))
 
 local player = Players.LocalPlayer
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
@@ -35,6 +38,7 @@ local GAP = GardenUi.GAP
 local SHOW_DISTANCE = 45 -- studs from the plot centre: the Barn button is visible within this
 local SELL_WIDTH = 116
 local FEED_WIDTH = 84
+local SELL_HINT_LEVEL = 5 -- the sell toast and the pulse are for a young field: up to this Renown level
 
 local COLOR_PANEL = StudStyle.Colors.Wood
 local COLOR_ROW = StudStyle.PetRowColor(COLOR_PANEL)
@@ -185,22 +189,8 @@ local function renderCrops(field, tap: number)
 				ui.content.Visible = false
 				renderChooser()
 			end)
-			-- what the server pays: SaleValue (sale × summed sizes), then × the pet multiplier, rounded as CoinRewards.Grant does
-			local base = CropConfig.SaleValue(crop, field.sizes and field.sizes[crop.id] or owned)
-			local value = math.floor(base * petMultiplier() + 0.5 + 1e-9)
-			local sell = GardenUi.Button("Sell", {
-				LayoutOrder = 3,
-				Size = UDim2.fromOffset(SELL_WIDTH, tap),
-				BackgroundColor3 = GardenUi.COLOR_SELL,
-				TextSize = 14,
-				TextWrapped = true,
-				Text = Locale.T("field.crop.sellCount", { count = owned, coins = value }),
-				Parent = row,
-			}, 2)
-			ConfirmTap.Wrap(sell, "Sell" .. cropId .. owned, function()
-				return true -- Sell always takes two taps (§10)
-			end, function()
-				sellEvent:FireServer(cropId, owned)
+			GardenUi.SellButton(row, crop, field, PetClient.State, SELL_WIDTH, tap, 3, function(id, count)
+				sellEvent:FireServer(id, count)
 			end)
 		end
 	end
@@ -296,9 +286,12 @@ function closePanel()
 	ui.panel.Visible = false
 end
 
+local barnOpened = false -- once this session: the Barn button stops pulsing
+
 local function openPanel()
 	PanelFocus.Open("Barn", closePanel) -- walking 32 studs away closes it
 	isOpen = true
+	barnOpened = true
 	showContent()
 	ui.Fit()
 	ui.panel.Visible = true
@@ -347,7 +340,34 @@ ui.gui:GetAttributeChangedSignal("Open"):Connect(function()
 	end
 end)
 
--- Every 0.25 s: the button near the own plot, the crow countdown
+local function cropsHeld(field): number
+	local total = 0
+	for _, count in (type(field) == "table" and type(field.items) == "table" and field.items or {}) do
+		total += count
+	end
+	return total
+end
+
+local pulseScale = GardenUi.Create("UIScale", { Name = "Pulse", Parent = openButton })
+local pulse: Tween? = nil
+local function setPulse(on: boolean)
+	if on == (pulse ~= nil) then
+		return
+	end
+	if pulse then
+		pulse:Cancel()
+		pulse = nil
+		pulseScale.Scale = 1
+		return
+	end
+	pulse = TweenService:Create(pulseScale, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Scale = 1.12 })
+	;(pulse :: Tween):Play()
+end
+
+local shownCrops: number? = nil -- crops held at the last check (nil before the first field state)
+local sellHintShown = false
+
+-- Every 0.25 s: the button (near the own plot, or crops to sell outside a run), the sell hint, the crow countdown
 local elapsed = 0
 RunService.Heartbeat:Connect(function(dt)
 	elapsed += dt
@@ -363,7 +383,18 @@ RunService.Heartbeat:Connect(function(dt)
 		local offset = root.Position - plot.Position
 		near = Vector3.new(offset.X, 0, offset.Z).Magnitude <= SHOW_DISTANCE
 	end
-	openButton.Visible = near
+	local field = GardenView.OwnField()
+	local crops = cropsHeld(field)
+	openButton.Visible = near or (crops > 0 and not Hints.Running)
+	local young = type(field) == "table" and (tonumber(field.level) or math.huge) <= SELL_HINT_LEVEL
+	if field then
+		if shownCrops and crops > shownCrops and young and not sellHintShown then
+			sellHintShown = true
+			Hints.Toast(Locale.T("hints.sellCrops"))
+		end
+		shownCrops = crops
+	end
+	setPulse(young and crops > 0 and not barnOpened and openButton.Visible)
 	if isOpen and crowLabel then
 		local text, color = GardenUi.CrowLine(GardenView.OwnField(), workspace:GetServerTimeNow())
 		crowLabel.Text = text

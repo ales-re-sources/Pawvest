@@ -108,6 +108,7 @@ hud.arrival.continue,Popup button: closes it,Continue,Pokračovat,ok,hae7250da
 # Hints (G1: world markers and toasts),,,,,
 hints.ready,Label under the orange bobbing arrow marker above an incubator whose egg can hatch now (the player's own garden); one short word,Ready!,Hotovo!,ok,h92676a43
 hints.eggReady,"Toast at the bottom of the screen, shown once when an egg in the player's incubator becomes ready to hatch (wherever the player is)",Your egg is ready! Hatch it in your garden.,Tvoje vejce je připravené! Vylíhni si ho na své zahradě.,ok,hda8587b9
+hints.sellCrops,"Toast at the bottom of the screen, once at the first harvest of a session on a young field: harvested crops are sold for Coins in the Barn (the 🧺 Barn button on the screen)",Sell your harvest in the 🧺 Barn!,Úrodu prodáš ve 🧺 stodole!,new,h73b83d16
 hints.raiseMedal,"Label under the orange arrow marker above a stage gate when the next world is shut by its star requirement and every open stage already has a medal: the player should replay {stage} (stage name, e.g. ""Stage 2"") for a better medal; {medal} = the medal tier to reach (Bronze / Silver / Gold, nominative as in medal.name.*). Keep it short (shown on screen over the 3D view)",{stage}: {medal},{stage}: {medal},ok,h195788f1
 # Shared (L2),,,,,
 common.loading,A panel whose data has not arrived yet,Loading...,Načítám…,ok,h75bf472a
@@ -153,11 +154,10 @@ talent.effect.Dash,Skills panel: what Dash gives; Q = the keyboard key (touch sc
 talent.effect.Dash.2,Skills panel: what Long Dash (Dash level 2) adds: the burst in the air carries the player farther,The burst goes farther,Výpad doletí dál,ok,h7826423f
 talent.dash.button,On-screen touch button beside Jump (small round button: one short word),Dash,Výpad,ok,h76f645c2
 skills.maxedOut,Skills panel: second line of a talent at its highest level,Maxed out,Na maximu,ok,h5c0a2f9d
-skills.buy,Skills panel button (70 px wide: keep it short); {price} = Coins,Buy {price},Za {price},ok,ha9b337f4
 skills.max,Skills panel button of a talent at its highest level,MAX,MAX,ok,h693fda0e
 skills.reject.maxed,"Skills panel: refused, the talent is at its highest level",Already maxed,Už je na maximu,ok,h91cd8ee8
 skills.reject.failed,Skills panel: any other refused purchase,Purchase failed,Nákup se nepovedl,ok,hdf3992a8
-skills.needs,"Skills panel, third line of a talent row: the crops from the barn the next level takes besides its Coins (EV2b); {list} = comma-separated items of skills.needs.item, a missing one in red",Needs: {list},Potřebuješ: {list},new,h1d4c40fc
+skills.needs,"Skills panel, the info line of a talent for 2 s after a purchase was refused for missing crops (the button shows only their icons, this names them); {list} = comma-separated items of skills.needs.item",Needs: {list},Potřebuješ: {list},new,h1d4c40fc
 skills.needs.item,"Skills panel: one crop of the needs line; {crop} = crop name (nominative singular, e.g. ""Okurka""), {have} = how many the barn holds (at most {need}), {need} = how many the level takes",{crop} {have}/{need},{crop} {have}/{need},new,h80774dc6
 skills.reject.crops,"Skills panel: refused, the barn holds too few of a crop the level takes (EV2b)",Not enough crops,Nemáš dost plodin,new,h8c6020ac
 skills.reward,"Skills panel, second line of a talent level that is never sold but given free when a world opens (Double Jump); {world} = world name, e.g. ""World 2"" (Czech: nominative ""Svět 2"")",Free when {world} opens,"Zdarma, až otevřeš {world}",ok,hebb7c9eb
@@ -311,14 +311,16 @@ sign.plot,Number on a garden plot's sign (drawn by the client); {n} = plot slot 
 sign.foodStand,"Sign over the pet food stand in the garden (capitals, big letters; keep it short)",🍓 PET FOOD,🍓 KRMENÍ,new,hfe6570f5
 sign.seedStall,"Sign over the seed stall on the garden plaza, beside the pet food stand (capitals, big letters; keep it short)",🌱 SEEDS,🌱 SEMÍNKA,new,hd2b0f5b5
 seedStall.title,Title strip of the seed stall panel (the plaza's seed shop: daily market cart offers and the seed catalogue),🌱 Seed stall,🌱 Stánek se semínky,new,hcd4bfe0a
-seedStall.prompt.action,Action text of the prompt on the seed stall's counter (opens the seed stall panel),Buy seeds,Koupit semínka,new,h7a9eff42
+seedStall.tab.buy,Seed stall panel: tab brick (half of the 420 px panel) that shows the market cart and the seeds to buy; the icon is part of the text,🌱 Buy seeds,🌱 Koupit semínka,new,h41df1661
+seedStall.tab.sell,Seed stall panel: tab brick that shows the harvested crops to sell for Coins; the icon is part of the text,💰 Sell crops,💰 Prodat plodiny,new,h1e5e971b
+seedStall.prompt.action,Action text of the prompt on the seed stall's counter (opens the panel: buying seeds and selling crops),Buy & sell,Nákup a prodej,new,h075fea25
 seedStall.prompt.object,Object text of that prompt (the name of the stall),Seed stall,Stánek se semínky,new,ha23e66c1
 seedStall.reason.far,Toast: buying seeds was refused because the player walked away from the seed stall,Walk to the seed stall first,Nejdřív dojdi ke stánku se semínky,new,hb2c275ea
 seedStall.board.bargain,"Board over the seed stall, one market cart offer per line (big letters, one short line); {crop} = icon + crop name, {percent} = discount (30, 50), {price} = Coins per seed",{crop} −{percent} % · 💰 {price},{crop} −{percent} % · 💰 {price},new,hff0255de
 seedStall.board.taste,"Board over the seed stall: the offer of seeds the player has not unlocked yet (one short line); {crop} = icon + crop name, {price} = Coins per seed",{crop} · new! · 💰 {price},{crop} · novinka! · 💰 {price},new,hb734592f
 seedStall.board.soldOut,Board over the seed stall: an offer the player bought up today (greyed line); {crop} = icon + crop name,{crop} · sold out,{crop} · vyprodáno,new,ha12b1054
 barn.title,Title strip of the barn panel (seeds and harvested crops the player holds; Sell and Feed),🧺 Barn,🧺 Stodola,new,h3949e950
-barn.button,HUD button at the bottom of the screen near the own garden plot that opens the barn panel (112 px brick; icon first),🧺 Barn,🧺 Stodola,new,h3949e950
+barn.button,"HUD button at the bottom of the screen that opens the barn panel: near the own garden plot, and anywhere outside a run while the player holds crops to sell (112 px brick; icon first)",🧺 Barn,🧺 Stodola,new,h3949e950
 barn.prompt.action,"Action text of the prompt at the open front of the barn building on the own garden plot (opens the barn panel); imperative, short",Open barn,Otevřít stodolu,new,hcd8a906b
 barn.prompt.object,"Object text of that prompt: the barn building (nominative, no emoji)",Barn,Stodola,new,h737b3f38
 barn.seed.grow,"Barn panel, seed row, second line; {time} = how long the crop grows (""3 hours"", ""45 min"")",Grows in {time},Doroste za {time},new,hb78bd88b
@@ -337,7 +339,7 @@ sign.exit,Exit sign of the key arena (capitals),EXIT,VÝCHOD,new,h1aab843f
 sign.hubPortal,"Label of a portal that leads back to the hub (tutorial, worlds); not the hub's name",Hub,Zpět,ok,hf7bf415c
 sign.welcome,Welcome board in the tutorial,Welcome!,Vítej!,ok,h258fd7ce
 sign.giveUp.title,"Wooden sign on the checkpoint before the end of Stage 5 (title line, two short lines in big letters); hints that the stage is hard",Too tough?,Moc těžké?,new,hdd71c48b
-sign.giveUp.sub,"Same sign, second line; tells the player World 2 is open and can be tried first (World 2 is written out, no placeholder; Czech 2. svět)",Try World 2 first,Zkus nejdřív 2. svět,new,h49ad4ee9
+sign.giveUp.sub,"Same sign, second line; tells the player there are also other options and strages he can try.",Try other stages!,Zkus jiné úrovně!,new,h5905b709
 "# Crop field (E1a2: FieldClient, PlotView prompts)",,,,,
 field.renown.level,Field panel header; {level} = Renown level (a garden level that grows with harvests; Czech: Pověst),Renown {level},Pověst {level},new,hea12a36b
 field.renown.next[one],"Field panel header; {count} = Renown points still missing for the next level, {level} = that next level. Form for 1",{count} more point to Renown {level},Do Pověsti {level} chybí {count} bod,new,hb55f2551
@@ -354,7 +356,7 @@ field.seed.locked,"Seed row of a crop above the player's Renown level, replaces 
 field.seed.rareInfo,"Seed row of a rare crop (E2: seeds only from obby medals), second and third line (
  = line break); {time} = grow time, {sale} = Coins one crop sells for, {stock} = seeds the player has","Grows in {time}
 Sells for {sale} · You have {stock}","Zraje {time}
-Prodej {sale} · Máš {stock}",new,h7f8b071a
+Prodej {sale} · Máš {stock}",new,hf8f7e61e
 field.seed.fromWorld,"Seed row of a rare crop, replaces the buy buttons (narrow, wraps): its seeds are earned with medals on the stages of {world} (world.name.*, Czech: nominative ""1. svět"")",⭐ Medals in {world},⭐ Za medaile: {world},new,h52450e9e
 field.barn,"Line under the seed list; {total} = seeds held, {capacity} = what the barn holds",Barn: {total} / {capacity} seeds,Stodola: {total} / {capacity} semínek,new,hdfd10ae1
 field.seed.note,Small note under the seed list,Prices are in Coins.,Ceny jsou v mincích.,new,hd2ae55c1
@@ -437,7 +439,7 @@ field.reason.maxed,Refused: all squares are bought,Your field is complete,Tvoje 
 field.reason.stale,"Refused: the panel showed old data (double click, lag)","Out of date, try again","Údaje se mezitím změnily, zkus to znovu",new,ha5b6c678
 field.pet.label,"Label over a pet working on a field square, only for a pet with a given name (rich text, green second line). {name} = the pet's name (user text), {jobs} = its job icons and levels, ""🌱4 🛡2"" (field.job.*). Never the pet's level (U3a)","{name}
 <font color='#a8e6a0'>{jobs}</font>","{name}
-<font color='#a8e6a0'>{jobs}</font>",new,hceea6416
+<font color='#a8e6a0'>{jobs}</font>",new,h385549f1
 field.section.pets,"Heading of the field panel's pet section; {used} = pets on the field, {slots} = field pet slots owned",Field pets {used} / {slots},Mazlíčci na poli {used} / {slots},new,ha5e701a6
 field.slot.done,Field panel: every field pet slot is bought,All field pet slots bought.,Máš všechna místa pro mazlíčky na poli.,new,hadffe186
 field.petPicker.title,Title of the pet picker opened at a field square; {n} = square number,Pet for square {n},Mazlíček na políčko {n},new,hb5233c8c

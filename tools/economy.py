@@ -1808,7 +1808,7 @@ def cmd_check(P, days, seeds):
         print(f"[{tick(ok):4}] {name}" + (f"  ({detail})" if detail else ""))
     failed = [r for r in results if not r[1]]
     print(f"\n{len(results) - len(failed)} / {len(results)} checks pass" + ("" if not failed else f", {len(failed)} FAIL"))
-    print("Not implemented yet (E0 continues): dead end (7), rare-crop supply (8), repricing (10), sensitivity (11).")
+    print("Not implemented yet (E0 continues): dead end (7), repricing (10), sensitivity (11).")
     # EV (2026-11-07): the engagement checks run on the proposed numbers (economy_ev.CAND). The checks above still describe the game as it
     # is built (old parity targets) until EV2a moves the configs onto the proposal; then parity / lead go and drift pins the EV values.
     import economy_ev

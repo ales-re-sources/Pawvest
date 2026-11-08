@@ -1,4 +1,5 @@
--- "Your skills" panel: one row per talent with its level, next effect, the crops the next level takes (EV2b) and a buy button.
+-- "Your skills" panel: one row per talent with its level, next effect and a buy button that shows the price of the next level
+-- (line 1: 💰 Coins, line 2: the crops it takes, EV2b, have/need; what is short is highlighted; playtest 2026-11-08).
 -- Display only: levels come from the Talent_<id> attributes the server maintains, Coins from leaderstats, the barn's crops from
 -- the own field state (GardenView.OwnField, refreshed on GardenRemotes.State), and a click just asks the server (talentId,
 -- expected next level). The server decides and prices everything.
@@ -21,14 +22,17 @@ local panel = script.Parent
 local player = Players.LocalPlayer
 local GardenView = require(player:WaitForChild("PlayerScripts"):WaitForChild("GardenView"))
 
-local ROW_HEIGHT = 54
-local NEEDS_ROOM = 20 -- a row with a needs line grows by about one line of it (two when it wraps)
+local ROW_HEIGHT = 58
+local BUTTON_WIDTH = 92 -- fits 💰 16,000 over 🥒20/20  🍇2/2 (GardenSkills' buy bricks have the same width)
+local BUTTON_HEIGHT = 48
+local TEXT_INSET = BUTTON_WIDTH + 16
 local COLOR_BUY = StudStyle.Colors.Green
 local COLOR_LOCKED = StudStyle.Colors.Grey
 local COLOR_INFO = Color3.fromRGB(235, 222, 190)
 local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
 local COLOR_REWARD = Color3.fromRGB(255, 214, 102)
-local HEX_SHORT = "#F0645A" -- a crop the player holds too few of (COLOR_ERROR, in the needs line's rich text)
+local COLOR_SHORT = Color3.fromRGB(255, 214, 64) -- on the button: what the player has too little of (readable on green and grey)
+local HEX_SHORT = "#FFD640" -- COLOR_SHORT in the crops line's rich text
 local REWARD_GLYPH = "🔒" -- button of a level that comes with a world (no words: not localized)
 
 local REJECT_KEYS = {
@@ -64,26 +68,28 @@ local function held(cropId: string): number
 	return type(items) == "table" and tonumber(items[cropId]) or 0
 end
 
--- The needs line of the next level ("Needs: Cucumber 5/20, Frost grape 0/2", a short crop in red) and whether every crop is held;
--- nil text when the level takes no crops. Crops in catalogue order.
-local function needsLine(bundle): (string?, boolean)
-	local parts, enough = {}, true
+-- The crops the next level takes: the button's line ("🥒5/20  🍇0/2", a short crop highlighted), whether every crop is held, and the
+-- same with names ("Needs: Cucumber 5/20, Frost grape 0/2", shown when a purchase is refused for crops). Nil texts when it takes none.
+-- Crops in catalogue order.
+local function cropCost(bundle): (string?, boolean, string?)
+	local chips, names, enough = {}, {}, true
 	for _, crop in CropConfig.Crops do
 		local need = bundle[crop.id]
 		if need then
-			local have = held(crop.id)
-			local text = Locale.T("skills.needs.item", { crop = Locale.CropName(crop), have = math.min(have, need), need = need })
+			local have = math.min(held(crop.id), need)
+			local chip = crop.icon .. Locale.Number(have) .. "/" .. Locale.Number(need) -- loc: ignore (an icon and numbers, no words)
 			if have < need then
 				enough = false
-				text = '<font color="' .. HEX_SHORT .. '">' .. text .. "</font>" -- loc: ignore (rich-text markup, no words)
+				chip = '<font color="' .. HEX_SHORT .. '">' .. chip .. "</font>" -- loc: ignore (rich-text markup, no words)
 			end
-			table.insert(parts, text)
+			table.insert(chips, chip)
+			table.insert(names, Locale.T("skills.needs.item", { crop = Locale.CropName(crop), have = have, need = need }))
 		end
 	end
-	if #parts == 0 then
-		return nil, true
+	if #chips == 0 then
+		return nil, true, nil
 	end
-	return Locale.T("skills.needs", { list = table.concat(parts, ", ") }), enough
+	return table.concat(chips, "  "), enough, Locale.T("skills.needs", { list = table.concat(names, ", ") })
 end
 
 -- "Free when World 2 opens" for a level that is a world reward (K1), else nil
@@ -98,9 +104,9 @@ local function refreshRow(row)
 	local max = #talent.costs
 	local cost = TalentConfig.NextCost(talent.id, level)
 	local reward = rewardText(talent, level + 1)
-	local needs, enough = needsLine(if cost then TalentConfig.NextCrops(talent.id, level) else {})
-	row.needs.Text = needs or ""
-	row.needs.Visible = needs ~= nil and not reward
+	local cropsLine, enough, needsText = cropCost(if cost then TalentConfig.NextCrops(talent.id, level) else {})
+	row.needsText = needsText
+	row.cost.Visible = cost ~= nil and not reward
 
 	-- a talent with per-level names shows the level it sells ("Triple Jump 1/2"), maxed the level it has
 	row.title.Text = Locale.TalentName(talent, math.min(level + 1, max)) .. "  " .. level .. "/" .. max
@@ -112,7 +118,11 @@ local function refreshRow(row)
 		row.button.Text = REWARD_GLYPH
 		row.button.BackgroundColor3 = COLOR_LOCKED
 	elseif cost then
-		row.button.Text = Locale.T("skills.buy", { price = cost })
+		row.button.Text = "" -- the Cost overlay shows the price
+		row.costCoins.Text = "💰 " .. Locale.Number(cost) -- loc: ignore (an icon and a number, no words)
+		row.costCoins.TextColor3 = if coins >= cost then Color3.new(1, 1, 1) else COLOR_SHORT
+		row.costCrops.Text = cropsLine or ""
+		row.costCrops.Visible = cropsLine ~= nil
 		row.button.BackgroundColor3 = coins >= cost and enough and COLOR_BUY or COLOR_LOCKED
 	else
 		row.button.Text = Locale.T("skills.max")
@@ -151,7 +161,7 @@ local fitScale = PanelFit.Scale()
 if fitScale < 1 then
 	create("UIScale", { Scale = fitScale, Parent = panel })
 end
-local listHeight = math.min(#TalentConfig.List * (ROW_HEIGHT + NEEDS_ROOM + 10) - 10, PanelFit.MaxHeight(fitScale) - 55)
+local listHeight = math.min(#TalentConfig.List * (ROW_HEIGHT + 10) - 10, PanelFit.MaxHeight(fitScale) - 55)
 local rowList = create("ScrollingFrame", {
 	Name = "Rows",
 	LayoutOrder = 1,
@@ -175,7 +185,7 @@ for index, talent in TalentConfig.List do
 		Name = "Title",
 		BackgroundTransparency = 1,
 		Position = UDim2.new(0, 10, 0, 4),
-		Size = UDim2.new(1, -90, 0, 24),
+		Size = UDim2.new(1, -TEXT_INSET, 0, 24),
 		Font = StudStyle.Font,
 		TextSize = 17,
 		TextColor3 = Color3.new(1, 1, 1),
@@ -185,48 +195,69 @@ for index, talent in TalentConfig.List do
 		Name = "Info",
 		BackgroundTransparency = 1,
 		Position = UDim2.new(0, 10, 0, 28),
-		Size = UDim2.new(1, -90, 0, 20),
+		Size = UDim2.new(1, -TEXT_INSET, 0, 20),
+		AutomaticSize = Enum.AutomaticSize.Y, -- a refused purchase's "Needs: ..." and Czech texts wrap
 		Font = Enum.Font.SourceSans,
 		TextSize = 14,
 		TextColor3 = COLOR_INFO,
 		TextXAlignment = Enum.TextXAlignment.Left,
-	})
-	local needs = create("TextLabel", {
-		Name = "Needs",
-		BackgroundTransparency = 1,
-		Position = UDim2.new(0, 10, 0, 48),
-		Size = UDim2.new(1, -90, 0, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
-		Font = Enum.Font.SourceSans,
-		TextSize = 14,
-		TextColor3 = COLOR_INFO,
-		TextXAlignment = Enum.TextXAlignment.Left,
+		TextYAlignment = Enum.TextYAlignment.Top,
 		TextWrapped = true,
-		RichText = true,
-		AutoLocalize = false,
-		Visible = false,
 	})
 	local button = create("TextButton", {
 		Name = "Buy",
 		AnchorPoint = Vector2.new(1, 0.5),
 		Position = UDim2.new(1, -8, 0.5, 0),
-		Size = UDim2.new(0, 70, 0, 38),
+		Size = UDim2.new(0, BUTTON_WIDTH, 0, BUTTON_HEIGHT),
 		Font = Enum.Font.SourceSansBold,
 		TextSize = 16,
 		TextColor3 = Color3.new(1, 1, 1),
 		BackgroundColor3 = COLOR_LOCKED,
 	})
 	StudStyle.Brick(button) -- refreshRow recolours it through BackgroundColor3 / Text
+	local function costLine(name: string, order: number, size: number)
+		return create("TextLabel", {
+			Name = name,
+			LayoutOrder = order,
+			BackgroundTransparency = 1,
+			Size = UDim2.new(1, 0, 0, size + 3),
+			Font = StudStyle.Font,
+			TextSize = size,
+			TextColor3 = Color3.new(1, 1, 1),
+			TextStrokeTransparency = 0.3,
+			RichText = true,
+			AutoLocalize = false,
+			ZIndex = 3,
+		})
+	end
+	local costCoins, costCrops = costLine("Coins", 1, 15), costLine("Crops", 2, 14)
+	-- in the brick's face, so it goes down with the press like the Glyph
+	local cost = create("Frame", {
+		Name = "Cost",
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		ZIndex = 3,
+		Visible = false,
+		Parent = button:WaitForChild("Top"):WaitForChild("Face"),
+	}, {
+		create("UIListLayout", {
+			SortOrder = Enum.SortOrder.LayoutOrder,
+			HorizontalAlignment = Enum.HorizontalAlignment.Center,
+			VerticalAlignment = Enum.VerticalAlignment.Center,
+		}),
+		costCoins,
+		costCrops,
+	})
 	local rowFrame = create("Frame", {
 		Name = "Talent_" .. talent.id,
 		LayoutOrder = index,
 		Size = UDim2.new(1, -10, 0, ROW_HEIGHT), -- the panel's width (GardenSkills widens it for the Garden tab)
-		AutomaticSize = Enum.AutomaticSize.Y, -- grows around the needs line (EV2b)
-	}, { title, info, needs, button, create("UIPadding", { PaddingBottom = UDim.new(0, 6) }) })
+		AutomaticSize = Enum.AutomaticSize.Y, -- grows when the info line wraps
+	}, { title, info, button, create("UIPadding", { PaddingBottom = UDim.new(0, 6) }) })
 	StudStyle.Row(rowFrame, panel.Name)
 	rowFrame.Parent = rowList
 
-	local row = { talent = talent, title = title, info = info, needs = needs, button = button, flash = 0 }
+	local row = { talent = talent, title = title, info = info, button = button, cost = cost, costCoins = costCoins, costCrops = costCrops, flash = 0 }
 	rows[talent.id] = row
 
 	button.Activated:Connect(function()
@@ -253,6 +284,8 @@ resultEvent.OnClientEvent:Connect(function(id, ok, detail)
 		local reward = if detail == "reward" then rewardText(row.talent, level + 1) else nil
 		if reward then
 			flash(row, reward, COLOR_REWARD)
+		elseif detail == "crops" and row.needsText then
+			flash(row, row.needsText, COLOR_REWARD) -- the crops by name (the button only has their icons)
 		else
 			flash(row, Locale.T(REJECT_KEYS[detail] or "skills.reject.failed"))
 		end

@@ -784,7 +784,7 @@ sellEvent.OnServerEvent:Connect(function(player, cropId, amount)
 	if not (crop and GardenService.WholeNumber(amount) and amount >= 1) or not GardenService.Allow(player) then
 		return
 	end
-	local profile, field = usableField(player, "Sell")
+	local profile, field = usableField(player, "Sell", true) -- from anywhere (playtest 2026-11-08): the Barn button and the stall's Sell tab
 	if not field then
 		return
 	end

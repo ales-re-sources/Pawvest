@@ -12,7 +12,7 @@ local CropConfig = {}
 -- sale / seed in Coins (seed = 25 % of the sale); points: Renown points per harvest (4 x grow minutes ^ 0.5);
 -- kg: the weight shown at size factor 1 (E1c2); xp: pet XP of one crop fed to a pet (E1a3, half the sale, at least 1: no more than
 -- its Coins would buy as Berries; economy.py checks it).
--- Rare crops (E2, `rare = true`, 2.5x the value of a common crop of their grow time): one per obby world (`world`), seeds only from the obby (CropConfig.ObbySeeds), never sold as seeds
+-- Rare crops (E2, `rare = true`, sale and points set by hand for the days a world is reached, economy_ev.py check R): one per obby world (`world`), seeds only from the obby (CropConfig.ObbySeeds), never sold as seeds
 -- (seed = 0: BuySeeds and the market cart skip them), no Renown gate.
 CropConfig.Crops = {
 	{ id = "Potato", name = "Potato", icon = "🥔", letter = "a", growSeconds = 10, sale = 9, seed = 2, renown = 0, points = 2, kg = 0.25, xp = 4 }, -- loc: ignore
@@ -31,9 +31,9 @@ CropConfig.Crops = {
 	{ id = "GiantMelon", name = "Giant melon", icon = "🍉", letter = "d", growSeconds = 12 * 3600, sale = 450000, seed = 110000, renown = 42, points = 107, kg = 15, xp = 225000 }, -- loc: ignore
 	{ id = "Sunflower", name = "Sunflower", icon = "🌻", letter = "r", growSeconds = 18 * 3600, sale = 750000, seed = 190000, renown = 54, points = 131, kg = 1.5, xp = 375000 }, -- loc: ignore
 	{ id = "Pineapple", name = "Pineapple", icon = "🍍", letter = "s", growSeconds = 24 * 3600, sale = 1200000, seed = 300000, renown = 68, points = 152, kg = 1.5, xp = 600000 }, -- loc: ignore
-	{ id = "GoldenCarrot", name = "Golden carrot", icon = "🥕", letter = "e", growSeconds = 6 * 3600, sale = 350000, seed = 0, renown = 0, points = 152, kg = 0.3, xp = 175000, rare = true, world = 1 }, -- loc: ignore
-	{ id = "FrostGrape", name = "Frost grape", icon = "🍇", letter = "f", growSeconds = 8 * 3600, sale = 600000, seed = 0, renown = 0, points = 176, kg = 0.5, xp = 300000, rare = true, world = 2 }, -- loc: ignore
-	{ id = "GlowMushroom", name = "Glow mushroom", icon = "🍄", letter = "g", growSeconds = 10 * 3600, sale = 900000, seed = 0, renown = 0, points = 214, kg = 0.2, xp = 450000, rare = true, world = 3 }, -- loc: ignore
+	{ id = "GoldenCarrot", name = "Golden carrot", icon = "🥕", letter = "e", growSeconds = 6 * 3600, sale = 50000, seed = 0, renown = 0, points = 22, kg = 0.3, xp = 25000, rare = true, world = 1 }, -- loc: ignore
+	{ id = "FrostGrape", name = "Frost grape", icon = "🍇", letter = "f", growSeconds = 8 * 3600, sale = 150000, seed = 0, renown = 0, points = 44, kg = 0.5, xp = 75000, rare = true, world = 2 }, -- loc: ignore
+	{ id = "GlowMushroom", name = "Glow mushroom", icon = "🍄", letter = "g", growSeconds = 10 * 3600, sale = 300000, seed = 0, renown = 0, points = 76, kg = 0.2, xp = 150000, rare = true, world = 3 }, -- loc: ignore
 }
 CropConfig.ById = {}
 CropConfig.ByLetter = {}

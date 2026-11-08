@@ -41,8 +41,8 @@ they were `IslandHop`, `"Stage 1"`, `Blink`, `"Stage 2"`, `"Stage 3"`, `"Stage 4
 | T | – (hub) | Tutorial | `Tutorial` ¹ | yes | – | always open |
 | 1 | 1 | Stage 1 (Island Hop) | `Stage1` | yes (S4.1) | – | Bronze on Tutorial **or** 200 |
 | 2 | 1 | Stage 2 (the variety stage) | `Stage2` | yes | – | Bronze on Stage 1 **or** 1 000 (switched in S4.1) |
-| 3 | 1 | Stage 3 (Blink ★ rhythm) | `Stage3` | yes (S4.2) | – | Bronze on Stage 2 **or** 1 500 |
-| 4 | 1 | Stage 4 (bounce corridors) | `Stage4` | yes | – | Bronze on Stage 3 **or** 2 000 |
+| 3 | 1 | Stage 3 (bounce corridors; swapped with Blink 2026-11-08, the easier course first) | `Stage3` | yes | – | Bronze on Stage 2 **or** 1 500 |
+| 4 | 1 | Stage 4 (Blink ★ rhythm) | `Stage4` | yes (S4.2) | – | Bronze on Stage 3 **or** 2 000 |
 | 5 | 1 | Stage 5 (the precision finale) | `Stage5` | yes | – | Bronze on Stage 4 **or** 2 000 |
 | 6 | 2 | Double Up | `DoubleUp` | P (S6) | Double Jump | World gate ² **or** 2 500 |
 | 7 | 2 | Seesaw | `Seesaw` | P (S6) | Double Jump | Bronze on 6 **or** 3 000 |
@@ -137,8 +137,8 @@ much tighter than before while its Bronze stays close to the old limits. Worlds 
 | Tutorial | 30 | ≤ 75 s | ≤ 33 s | ≤ 24 s |
 | 1 Island Hop | 52 (provisional, built S4.1) | ≤ 130 s | ≤ 57 s | ≤ 42 s |
 | 2 Stage 1 | 70 | ≤ 175 s | ≤ 77 s | ≤ 56 s |
-| 3 Blink | 60 (provisional, built S4.2; a perfect run is about 40 s) | ≤ 150 s | ≤ 66 s | ≤ 48 s |
-| 4 Stage 2 | 100 | ≤ 250 s | ≤ 110 s | ≤ 80 s |
+| 3 Bounce corridors | 100 | ≤ 250 s | ≤ 110 s | ≤ 80 s |
+| 4 Blink | 60 (provisional, built S4.2; a perfect run is about 40 s) | ≤ 150 s | ≤ 66 s | ≤ 48 s |
 | 5 Stage 3 | 120 | ≤ 300 s | ≤ 132 s | ≤ 96 s |
 | 6–10 | 90, 80, 75, 100, 75 (set after the user's runs, StageConfig) | 2.5 × | 1.1 × | 0.8 × |
 | 11 Triple Peaks | 55 (2026-10-30, from the developer's best 35.4 s) | ≤ 137.5 s | ≤ 60.5 s | ≤ 44 s |
@@ -190,8 +190,8 @@ stages move along the curve: Stage 1 (n = 2) 1.0, Stage 2 (n = 4) 1.5, **Stage 3
 | Tutorial | 0.5 | 100 | 200 | 400 | 700 |
 | 1 Island Hop | 0.75 | 150 | 300 | 600 | 1 050 |
 | 2 Stage 1 | 1.0 | 200 | 400 | 800 | 1 400 |
-| 3 Blink | 1.25 | 250 | 500 | 1 000 | 1 750 |
-| 4 Stage 2 | 1.5 | 300 | 600 | 1 200 | 2 100 |
+| 3 Bounce corridors | 1.25 | 250 | 500 | 1 000 | 1 750 |
+| 4 Blink | 1.5 | 300 | 600 | 1 200 | 2 100 |
 | 5 Stage 3 | 1.75 | 350 | 700 | 1 400 | 2 450 |
 | 6–10 (P) | 2.0 … 3.0 | | | | 2 800 / 3 150 / 3 500 / 3 850 / 4 200 |
 | 11–15 (P) | 3.25 … 4.25 | | | | 4 550 / 4 900 / 5 250 / 5 600 / 5 950 |
@@ -239,8 +239,8 @@ every stage** (decided 2026-10-21: no scaling with the stage factor). Planned st
 | Tutorial | 120 | 2×50, 1×20 (behind the score board) |
 | Stage 1 (Island Hop, S4.1) | 280 | 4×20, 2×50, 1×100 |
 | Stage 2 | 280 | 4×20, 2×50, 1×100 |
-| Stage 3 (Blink, S4.2) | 300 | 5×20, 2×50, 1×100 |
-| Stage 4 | 380 | 4×20, 2×50, 2×100 |
+| Stage 3 | 380 | 4×20, 2×50, 2×100 |
+| Stage 4 (Blink, S4.2) | 300 | 5×20, 2×50, 1×100 |
 | Stage 5 | 480 | 4×20, 2×50, 3×100 |
 | **All** | **1 840** | 42 coins |
 
@@ -255,7 +255,7 @@ which have no fixed cap.
 Since **EV2b** (2026-11-07; numbers in [ECONOMY.md](ECONOMY.md) → EV) each bought level costs **Coins + a crop bundle** from the barn
 (`Garden.Items`): from level 2 common crops of the player's tier, and the levels a stage requires also a rare crop of the world before. The
 server takes the Coins and the crops together or not at all (`TalentService`, `GardenField.TakeCrops`; the average size leaves, as in a
-sale); the Skills panel shows a "Needs: Cucumber 5/20, Frost grape 0/2" line under each talent, a missing crop in red, and the buy brick is
+sale); the Skills panel's buy button shows the whole price (💰 Coins over the crops as icons with have/need, what is short highlighted; a refused tap names the crops, playtest 2026-11-08), and the buy brick is
 green only when everything is there. The built tree costs 94 900 Coins plus crops (5 300 Coins only before), so talents need the farm.
 Levels bought before EV2b stay; nothing was refunded or charged again.
 
@@ -591,11 +591,11 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   pet and the strongest guard (ties to the lower uid). Regions that share an edge draw side by side (three lanes inset 0.45 / 0.8 / 1.15
   studs); strips meet at outer and inner corners.
 - **Crops.** Potato (5 min, so the first harvest comes in the first session), Corn, Pumpkin and Giant melon from the seed stall behind Renown
-  gates; three rare crops, one per world (Golden carrot, Frost grape, Glow mushroom), only from the obby (below), never sold as seeds, never
+  gates; three rare crops, one per world (Golden carrot 50 000, Frost grape 150 000, Glow mushroom 300 000 Coins; priced for the days a world is reached, ECONOMY.md), only from the obby (below), never sold as seeds, never
   eaten by crows. Growth runs on server time only: online x 1.0, offline x 0.5 for at most 24 h per absence, settled on join, on leave, every
   60 s and before every action; ripe crops wait. The barn holds 40 seeds and 40 stored crops (+20 per Barn level). Seeds held can always be
   planted; the stall keeps the Renown gate.
-- **Selling and feeding.** A crop is sold (sale x its size, through `CoinRewards.Grant`) or fed to any pet (from its page or the barn's Feed) for XP = half the
+- **Selling and feeding.** A crop is sold from anywhere (playtest 2026-11-08: the Barn button shows outside runs while crops are held, the seed stall has a Sell tab; a young field gets a toast and a pulsing button) (sale x its size, through `CoinRewards.Grant`) or fed to any pet (from its page or the barn's Feed) for XP = half the
   sale, so feeding is never better than selling and buying food (the Kitchen, D5, stays the better route later).
 - **Size roll.** Every planting rolls a size factor (lognormal, mean exactly 1, 0.36-2.64), fixed by owner and planting number so a re-join
   cannot reroll it; Big = top 20 %, Giant = top 3 %, a record per crop, weight shown as kg x factor. The barn keeps a count and the summed size
