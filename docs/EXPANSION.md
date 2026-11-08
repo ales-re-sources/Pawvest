@@ -157,11 +157,20 @@ Plastic blocks with the garden's `Studs` and `StudsSmall` materials. The five po
 | 75% | Small green tomatoes swell beneath the outer branches, which begin to dip. |
 | 100% | Two or three full red tomatoes hang below the leaves. Fruit size and branch angle also signal ripeness in grayscale. |
 
-**Art review.** First compare three ripe block studies in the field: A, squat and spreading; B, upright and open; C, leaning under fruit.
-Review at gameplay distance and phone size, with a neighbor crop, field pet and ring for scale. The developer chooses a silhouette or asks
-for another study. Next, review the chosen bush in a display-only Studio prototype: a scrubber, short loop, five poses and six planting
-seeds. Scrub both ways at 43–44% to check attachments. Check crop identity and ripeness with rings hidden, then check UI legibility with
-them visible. The developer signs off on the stills and loop before field integration.
+**Ripe silhouette decision (2026-11-08).** Ales chose **A, the spreading bush**, for the growth prototype. Its low canopy reads as a bush
+at gameplay distance. Two outer tomatoes hang apart below the leaves and remain visible against the soil in the phone-size capture.
+Preserve that separation as seeded plants vary in lean and spread. B reads taller and sparser, and C's two adjacent fruit overlap from
+the review camera.
+
+**Geometry baseline.** The hand-built ripe A occupies 3.83 × 2.38 studs on the ground and stands 2.09 studs tall on a 5.5-stud square.
+Studio counted **54 anchored Parts plus one Model** for the bush alone: 8 main stem and branch pieces, 22 pieces for 11 stepped leaves,
+and 24 for three fruit assemblies. Each fruit uses a stalk, two sepals and five red blocks. A field of 36 identical full-detail bushes
+would contain 1,944 plant Parts before soil, pets or UI. This is a geometry baseline for later tuning. Phone frame times are still open.
+The `A - Spreading` entry in the study script sets the joints and fruit spacing. The `leaf` and `fruit` builders control the detail cost.
+
+**Next art review.** Review A in a display-only Studio prototype with a scrubber, short loop, five poses and six planting seeds. Scrub
+both ways at 43–44% to check attachments. Check crop identity and ripeness with rings hidden, then check UI legibility with them visible.
+The developer signs off on the stills and loop before field integration.
 
 The [ripe studies](art/tomato/ripe-studies.jpg) were captured from a client-only display plot built by the production plot renderer.
 The [field view](art/tomato/field.jpg) includes a Potato ring and a Cat; the [720 × 405 view](art/tomato/phone.jpg) is a resized
