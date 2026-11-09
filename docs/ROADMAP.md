@@ -58,7 +58,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG2 | Shared plant growth recipes and timing | ✔ | generic dispatch, field feed and detail changes checked | – |
 | CG3 | Potato growth art | CG3a–c built; desktop CPU tuning done | field lifecycle/detail checks pass; real phone and second client open | – |
 | CG4 | Plant individuality and harvested size | ✔ | size/rotation, bounds, detail transitions and reviewer controls Studio-checked | – |
-| CG5 | Frost Grape growth art | CG5a static ripe studies built | Studio captures ready; silhouette selection before motion | – |
+| CG5 | Frost Grape growth art | CG5a: tall B selected and revised | 7.43-stud plant / 5.39-stud avatar Studio comparison; motion next | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -124,10 +124,11 @@ harvest factor, rotate through a full circle and vary their branching more visib
 [Decision and review images](EXPANSION.md#cg4--plant-individuality-and-harvested-size-built).
 
 **CG5 — Frost Grape growth art** starts with three ripe studies: single-post fan, short vineyard trellis and wrapped pole.
-**CG5a** is built and Studio-captured (106 / 108 / 106 Parts including supports); all fit a 5.5-stud square. A is recommended;
-selection is pending. [A / B / C](art/frost-grape/ripe-studies.jpg) · [Field](art/frost-grape/field.jpg) ·
-[Phone-size composition](art/frost-grape/phone.jpg) · [Vineyard row](art/frost-grape/vineyard-row.jpg).
-Choose the silhouette before **CG5b** continuous growth; **CG5c** field integration and **CG5d** performance follow art approval.
+**CG5a:** Ales selected **B**, with the mature plant taller than the player (2026-11-09). Revised B is 7.43 studs tall beside the
+5.39-stud reference avatar, with rigid 7.4-stud posts and 115 Parts; it still fits one 5.5-stud square.
+[Selected tall B](art/frost-grape/selected-b.jpg) · [Phone-size composition](art/frost-grape/selected-b-phone.jpg) ·
+[Tall vineyard row](art/frost-grape/selected-b-row.jpg). Preserve a living-canopy top ≥7.1 studs across mature seeds/harvest sizes.
+Next is **CG5b** continuous growth using this height; **CG5c** field integration and **CG5d** performance follow motion approval.
 [Direction and review gates](EXPANSION.md#cg5--frost-grape-growth-design).
 
 ### K1 — First-hour fixes, open part (kid playtest 2026-11-01)

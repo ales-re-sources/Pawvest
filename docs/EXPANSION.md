@@ -332,17 +332,31 @@ The phone image is a downsample for readability review, not a device performance
 
 | Study | Parts including support | Height / maximum ground radius (studs) | Tradeoff |
 |---|---|---|---|
-| A — Single-post fan | 106 | 3.25 / 2.20 | One post and crossbar; open canopy and three separated bunches. Recommended starting point. |
-| B — Vineyard trellis | 108 | 3.28 / 2.15 | Two posts and rails; strongest repeated-row silhouette, more visible infrastructure. |
+| A — Single-post fan | 106 | 3.25 / 2.20 | One post and crossbar; original alternative. |
+| B — Vineyard trellis (initial) | 108 | 3.28 / 2.15 | Selected structure; its initial height is superseded below. |
 | C — Wrapped pole | 106 | 3.67 / 1.69 | One tall pole; compact footprint and three bunches at different heights. |
 
 Each study has five lobed leaves (five blocks and a stalk each), three nine-berry bunches (two overlapping blocks per berry),
 six pale frost facets, woody/green stems and one angular tendril. The overlapping berry blocks give individual fruit stepped
 shoulders. A full 36-square field would use 3,816–3,888 plant Parts at this
 detail, before field/pets/UI. These are art-study counts, not an approved production budget. After selection, compare one-block
-berries or merged bunch cores at phone size, and omit secondary detail in the mid proxy. No silhouette has been approved yet.
+berries or merged bunch cores at phone size, and omit secondary detail in the mid proxy.
 
-**CG5b — Proposed continuous motion, after silhouette approval.** Five review stops on one seeded structure:
+**CG5a selection — B, taller than the player (Ales, 2026-11-09).** Keep the two-post vineyard trellis and raise the living vine above
+the avatar. The revised [B beside the avatar](art/frost-grape/selected-b.jpg),
+[phone-sized composition](art/frost-grape/selected-b-phone.jpg) and [tall vineyard row](art/frost-grape/selected-b-row.jpg) replace
+the initial low B as the motion target. Studio measured 7.43 studs to the top of the foliage against a 5.39-stud current R15 avatar,
+both standing on the same soil plane. The rigid posts are 7.40 studs; the ground radius stays 2.15 studs. The lower main cane feeds
+three bunches around head/shoulder height, and a small lower leaf keeps the climbing trunk readable. Geometry uses **115 Parts**
+(one additional cane segment and one additional six-Part leaf), or 4,140 plant Parts for 36 full-detail copies.
+
+**Why:** the selected vineyard structure and the above-player scale give this rare crop a distinct presence beside the short food
+plants. Raise the cane and support rather than stretching the berries or leaves. For CG5b, every mature seed and harvested-size
+extreme must retain a living-canopy top of at least 7.1 studs; the trellis remains fixed at 7.4 studs. Vary the fruit dimensions,
+leaf size and constrained shoots around that height. Keep row alignment, the 5.5-stud footprint and visible gaps around the bunches.
+The growth-review camera and ring placement must accommodate this taller canopy, including the pet and selected-square view.
+
+**CG5b — Continuous motion next.** Use the selected tall B structure. Five review stops on one seeded structure:
 
 | Growth | Proposed pose |
 |---|---|
