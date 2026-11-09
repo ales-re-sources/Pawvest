@@ -93,6 +93,9 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
 
 - **CG1 / CG3:** [Tomato](plants/TOMATO.md) and [Potato](plants/POTATO.md) are integrated and
   Studio-checked, with desktop CPU work complete. Real-phone and second-client validation remain open.
+- **CG1e:** Tomato is now the tall **staked classic** (Ales, 2026-11-09; a tester wanted a much taller plant on a stick): 6-stud rigid
+  stake, 71 Parts, Studio-checked. Five stills await Ales's review; full-field/24-plot performance (2,556 plant Parts), real phone and
+  second client remain open. Variants (two floors, cherry spiral) are deferred until after GA.
 - **CG2 / CG4:** shared recipe dispatch, stable variation, harvest-size visuals and scheduled growth updates are implemented.
 - **CG5:** [Frost Grape's tall B](plants/FROST_GRAPE.md) and motion are approved; fruit slots are explicit. Next is **CG5c** field
   integration/proxy, then **CG5d** performance validation. Fruit-only perennial gameplay remains separate future work.

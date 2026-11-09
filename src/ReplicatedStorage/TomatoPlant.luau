@@ -1,5 +1,6 @@
--- Tomato art recipe. Shared by PlantGrowth and the Studio review.
--- Every seek poses the same 54 parts from the seed's fixed parameters.
+-- Tomato art recipe: a staked, single-leader tomato (CG1 / CG2 / CG4; the selected "A, classic" stake study, 2026-11-09).
+-- Shared by PlantGrowth and the Studio review. One rigid 6-stud stake is placed once; every seek then poses the same
+-- 70 parts from the seed's fixed parameters: 6 stem rods, 3 twine ties, 7 compound leaves (4 parts) and 3 trusses of two fruit.
 local TomatoPlant = {}
 TomatoPlant.__index = TomatoPlant
 
@@ -13,46 +14,65 @@ local NEW = Color3.fromRGB(143, 187, 75)
 local GREEN = Color3.fromRGB(105, 164, 65)
 local RED = Color3.fromRGB(219, 52, 43)
 local RIPE_RED = Color3.fromRGB(192, 42, 38)
-local ARMS = {
-	{V(-0.75, 1.37, 0.05), V(-1.18, 1.23, 0.44), V(-0.98, 0.12, -0.36), 0.85},
-	{V(0.68, 1.40, 0.14), V(1.19, 1.33, 0.34), V(0.94, 0.20, -0.35), 0.78},
-	{V(-0.20, 1.60, -0.50), V(-0.70, 1.40, -0.82), V(-0.32, 0.32, -0.81), 0.63},
+local WOOD = Color3.fromRGB(150, 112, 72)
+local TWINE = Color3.fromRGB(214, 190, 140)
+
+-- The ring sits above the stake and ignores mass, like the other tall crops.
+TomatoPlant.RingHeight = 6.8
+TomatoPlant.FixedRingHeight = true
+TomatoPlant.ReviewHeight = 6.2
+
+local STAKE_HEIGHT = 6
+local STEM_RADIUS = 0.26 -- the stem winds around the stake axis at this distance
+local TOP = 5.5 -- nominal height of the leader tip (scaled by the seed's height)
+local STEM_END = 0.68 -- growth at which the leader reaches its top
+local LEADER = {0, 0.9, 1.8, 2.7, 3.6, 4.5, 5.5}
+local TIES = {1.2, 2.9, 4.5}
+-- Node height, yaw in degrees, blade length, droop, colour.
+local FRONDS = {
+	{0.6, 100, 1.3, -0.20, LIT}, {1.75, -110, 1.6, -0.25, DARK}, {2.4, 75, 1.5, -0.25, LIT}, {3.5, -95, 1.5, -0.20, DARK},
+	{4.0, 120, 1.3, -0.15, LIT}, {5.0, 70, 1.2, 0, NEW}, {5.5, -60, 1.0, 0.15, NEW},
+}
+-- Node height, yaw, rachis length, rise, growth at which the fruit start to swell, fruit {t along the rachis, size, pedicel drop}.
+local TRUSSES = {
+	{1.15, 35, 1.20, 0.15, 0.38, {{0.5, 0.85, 0.28}, {1.0, 0.90, 0.50}}},
+	{2.95, -40, 1.15, 0.15, 0.46, {{0.5, 0.80, 0.30}, {1.0, 0.85, 0.55}}},
+	{4.40, 50, 1.00, 0.12, 0.54, {{0.5, 0.70, 0.25}, {1.0, 0.75, 0.45}}},
 }
 
--- Bounded planting tendencies: baseline, squat/wide, tall, left-heavy,
--- right-heavy, compact. Ordinary consecutive seeds expose all six silhouettes.
+-- Bounded planting tendencies: height, stem weave (degrees), mirror, leaf length, fruit sizes, truss lengths.
+-- Baseline, fruit-heavy, leafy and tall, compact, lopsided, airy. Ordinary consecutive seeds expose all six.
 local TENDENCIES = {
-	{1, 1, 0, {1, 1, 1}, {1, 1, 1}},
-	{1.11, 0.86, -0.02, {1.04, 0.98, 0.94}, {1.06, 0.94, 0.93}},
-	{0.89, 1.16, 0.02, {0.98, 1.04, 1.08}, {0.94, 1.03, 1.07}},
-	{1.02, 0.98, -0.08, {1.14, 0.85, 0.96}, {1.08, 0.88, 1.02}},
-	{1.02, 1.04, 0.08, {0.85, 1.14, 1.04}, {0.88, 1.08, 0.95}},
-	{0.91, 0.91, -0.04, {1.07, 0.96, 0.84}, {1.03, 0.96, 0.88}},
+	{1.00, 55, 1, 1.00, {1.00, 1.00, 1.00}, {1.00, 1.00, 1.00}},
+	{0.97, 45, -1, 0.90, {1.12, 1.10, 1.05}, {1.05, 1.00, 0.95}},
+	{1.03, 62, 1, 1.12, {0.90, 0.92, 0.95}, {0.95, 1.00, 1.05}},
+	{0.90, 40, -1, 0.95, {1.00, 0.95, 0.90}, {0.90, 0.92, 0.90}},
+	{1.00, 68, 1, 1.05, {1.08, 0.90, 1.00}, {1.15, 0.85, 1.10}},
+	{0.95, 50, -1, 1.05, {0.92, 1.05, 1.10}, {1.00, 1.12, 0.90}},
 }
 
--- Fixed topology: initialize names and stud variants even for hidden pieces.
+-- Fixed topology after the stake: initialize names and stud variants even for hidden pieces.
 local PART_METADATA = {}
 local function metadata(name, variant)
 	table.insert(PART_METADATA, { name, variant or "StudsSmall" })
 end
-metadata("Stem")
-metadata("Stem")
-for _ = 1, 3 do
-	metadata("Stem")
-	metadata("Stem")
-	for _ = 1, 3 do
-		metadata("Leaf", "Studs")
-		metadata("LeafTip")
-	end
-	for _, name in {"Stem", "Sepal", "Sepal", "Shoulder", "Tomato", "Cheek", "Cheek", "Base"} do
-		metadata(name)
-	end
-end
-for _ = 1, 2 do
+for _ = 1, #LEADER - 1 do metadata("Stem") end
+for _ = 1, #TIES do metadata("Tie") end
+for _ = 1, #FRONDS do
 	metadata("Leaf", "Studs")
 	metadata("LeafTip")
+	metadata("Leaflet")
+	metadata("Leaflet")
 end
-assert(#PART_METADATA == 54, "Tomato metadata budget changed")
+for _ = 1, #TRUSSES do
+	metadata("Stem")
+	for _ = 1, 2 do
+		for _, name in {"Stem", "Sepal", "Shoulder", "Tomato", "Base"} do
+			metadata(name)
+		end
+	end
+end
+assert(#PART_METADATA == 70, "Tomato metadata budget changed")
 
 local function radiusOf(parts, soil)
 	local radius = 0
@@ -73,27 +93,35 @@ local function radiusOf(parts, soil)
 	return radius
 end
 
+-- Draw order is part of a planting's identity: a new draw goes last.
 function TomatoPlant.new(parent, soilCFrame, seed, sizeFactor)
 	local self = setmetatable({}, TomatoPlant)
 	self.rig = PlantKit.newRig("TomatoPlant", soilCFrame)
 	self.model = self.rig.model
 	self.scale = PlantKit.dimension(sizeFactor)
 	self.horizontalFit = 1
-	-- Seed one preserves the approved A; the others retain its separated fruit.
+	-- Seed one is the approved A; other seeds vary tendency, leaf angles, truss sides and fruit size.
 	local vary = PlantKit.seeded(seed)
 	local tendency = PlantKit.tendency(TENDENCIES, seed)
-	self.spread = tendency[1] + vary(0.012)
-	self.height = tendency[2] + vary(0.012)
-	self.lean = tendency[3] + vary(0.012)
-	self.armLengths, self.fruitSizes, self.armHeights, self.leafTurns = {}, {}, {}, {}
-	self.timing = {}
-	for i = 1, 3 do
-		self.armLengths[i] = tendency[4][i] + vary(0.10)
-		self.fruitSizes[i] = tendency[5][i] + vary(0.13)
-		self.armHeights[i] = vary(0.16)
-		self.leafTurns[i] = CFrame.Angles(0, vary(0.22), 0)
-		self.timing[i] = vary(0.018)
+	self.height = tendency[1] + vary(0.02)
+	self.weave = math.rad(tendency[2] + vary(10))
+	self.phase = vary(0.5)
+	self.mirror = tendency[3]
+	self.fronds, self.trusses = {}, {}
+	for i = 1, #FRONDS do
+		self.fronds[i] = {yaw = vary(14), length = tendency[4] * (1 + vary(0.10)), droop = vary(0.05)}
 	end
+	for k = 1, #TRUSSES do
+		local first, second = vary(0.08), vary(0.08)
+		self.trusses[k] = {
+			yaw = vary(12), out = tendency[6][k] * (1 + vary(0.08)),
+			fruit = {tendency[5][k] * (1 + first), tendency[5][k] * (1 + second)}, timing = vary(0.02),
+		}
+	end
+	-- Equipment is present from planting and never follows seed, mass or growth.
+	local stake = self.rig:add("Stake", "Studs", "Support")
+	stake.Size, stake.CFrame, stake.Color, stake.Transparency =
+		V(0.22, STAKE_HEIGHT, 0.22), soilCFrame * CFrame.new(0, STAKE_HEIGHT / 2, 0), WOOD, 0
 	for _, meta in PART_METADATA do
 		self.rig:add(meta[1], meta[2])
 	end
@@ -116,104 +144,130 @@ end
 
 function TomatoPlant:SetGrowth(normalized)
 	local rig = self.rig
-	local g = rig:beginPose(normalized)
+	local g = rig:beginPose(normalized, 1) -- the rigid stake is placed once in new()
 	if not g then return end
-	local base = rig.base
-	local function point(p)
-		return V((p.X * self.spread + p.Y * self.lean) * self.horizontalFit, p.Y * self.height, p.Z * self.spread * self.horizontalFit)
+	local scale, fit, height, mirror = self.scale, self.horizontalFit, self.height, self.mirror
+	local top = TOP * height
+	local tip = 0.15 + (top - 0.15) * phase(g, 0, STEM_END)
+
+	local function stemPoint(h)
+		local a = mirror * self.weave * math.sin(h * 1.1 + self.phase)
+		return V(STEM_RADIUS * math.sin(a), h, STEM_RADIUS * math.cos(a)), a
 	end
-	local function block(_name, size, cf, color, _variant, visible)
-		if not visible then
-			rig:hide(1)
-			return
-		end
-		rig:place(size * self.scale, base * CFrame.new(cf.Position * self.scale) * cf.Rotation, color, 1)
-	end
-	local function twig(a, b, width, visible)
-		if not visible then
-			rig:hide(1)
-			return
-		end
-		block("Stem", V(width, width, (b - a).Magnitude), axis(a, b), STEM, "StudsSmall", visible)
+	-- Growth at which the stem tip reaches height h (inverse of the smoothstep).
+	local function reach(h)
+		local n = math.clamp((h - 0.15) / (top - 0.15), 0, 1)
+		return STEM_END * (0.5 - math.sin(math.asin(1 - 2 * n) / 3))
 	end
 	local function opened(offset, opening)
 		-- Keep a small horizontal component while tucked; its fixed hinge axis
 		-- avoids the lookAt up-vector switch near a vertical leaf.
 		return offset.Unit:Lerp(Vector3.yAxis, (1 - opening) * 0.94).Unit * offset.Magnitude
 	end
-	local function leaf(at, offset, width, color, scale, opening)
-		if scale <= 0 then
+	local function leaf(at, offset, width, color, q)
+		if q <= 0 then
 			rig:hide(2)
 			return
 		end
-		width *= self.horizontalFit
-		local direction = opened(offset, opening or scale)
-		local blade = direction * scale
+		local direction = opened(offset, q)
+		local blade = direction * q
 		local length = blade.Magnitude
 		local right = Vector3.yAxis:Cross(offset).Unit
 		local back = direction.Unit
 		local cf = CFrame.fromMatrix(at + blade / 2, right, back:Cross(right), back)
-		block("Leaf", V(width * scale, 0.14 * scale, length * 0.72), cf * CFrame.new(0, 0, -length * 0.14), color, "Studs", scale > 0)
-		block("LeafTip", V(width * scale * 0.56, 0.13 * scale, length * 0.28), cf * CFrame.new(0, 0, length * 0.36), color, "StudsSmall", scale > 0)
-	end
-	local function fruit(at, size, scale, color)
-		if scale <= 0 then
-			rig:hide(8)
-			return
-		end
-		local s = size * scale
-		local stalkEnd = at - V(0, 0.22 * scale, 0)
-		twig(at, stalkEnd, 0.10 * scale, scale > 0)
-		local top = CFrame.new(stalkEnd)
-		block("Sepal", V(s * 0.57, 0.09 * scale, 0.14 * scale), top, DARK, "StudsSmall", scale > 0)
-		block("Sepal", V(0.15 * scale, 0.10 * scale, s * 0.56), top, DARK, "StudsSmall", scale > 0)
-		block("Shoulder", V(s * 0.74, s * 0.17, s * 0.70), top * CFrame.new(0, -s * 0.085, 0), color, "StudsSmall", scale > 0)
-		block("Tomato", V(s, s * 0.55, s * 0.66), top * CFrame.new(0, -s * 0.445, 0), color, "StudsSmall", scale > 0)
-		for _, side in {-1, 1} do
-			block("Cheek", V(s * 0.74, s * 0.47, s * 0.14), top * CFrame.new(0, -s * 0.44, side * s * 0.40), color, "StudsSmall", scale > 0)
-		end
-		block("Base", V(s * 0.72, s * 0.16, s * 0.64), top * CFrame.new(0, -s * 0.80, 0), color, "StudsSmall", scale > 0)
+		rig:block(V(width * q, 0.14 * q, length * 0.72), cf * CFrame.new(0, 0, -length * 0.14), color, 1)
+		rig:block(V(width * q * 0.56, 0.13 * q, length * 0.28), cf * CFrame.new(0, 0, length * 0.36), color, 1)
 	end
 
-	local stemGrowth = phase(g, 0, 0.58)
-	local joint = point(V(-0.06, 0.83, 0)) * (0.10 + 0.90 * stemGrowth)
-	local crown = joint + point(V(0.24, 0.85, -0.18)) * phase(g, 0.10, 0.63)
-	twig(V(0, 0, 0), joint, 0.07 + 0.12 * stemGrowth, true)
-	twig(joint, crown, 0.17 * stemGrowth, g > 0.10)
-	for i, arm in ARMS do
-		local delay = self.timing[i]
-		local extension = phase(g, 0.22 + delay + (i - 1) * 0.035, 0.59 + delay)
-		local bend = phase(g, 0.66, 1)
-		local fork = joint:Lerp(crown, (i - 1) * 0.27)
-		local armLength = self.armLengths[i]
-		local finalFork = V(-0.06, 0.83, 0):Lerp(V(0.18, 1.68, -0.18), (i - 1) * 0.27)
-		local raisedElbow = finalFork + (arm[1] - finalFork) * armLength + V(0, self.armHeights[i] + 0.16 * (1 - bend), 0)
-		local elbow = fork:Lerp(point(raisedElbow), extension)
-		local endPoint = elbow + point((arm[2] - arm[1]) * armLength + V(0, 0.26 * (1 - bend), 0)) * extension
-		local fruitSize = arm[4] * self.fruitSizes[i]
-		local fruitScale = phase(g, 0.60 + delay, 1)
-		-- The heaviest fruit stays above soil on a short seeded bush.
-		local minimumY = (0.22 + fruitSize * 0.88) * fruitScale + 0.04
-		endPoint = V(endPoint.X, math.max(endPoint.Y, minimumY), endPoint.Z)
-		twig(fork, elbow, 0.14 * extension, extension > 0)
-		twig(elbow, endPoint, 0.12 * extension, extension > 0)
-		local blade = point(self.leafTurns[i]:VectorToWorldSpace(arm[3])) * (0.88 + armLength * 0.12)
-		local leafScale = phase(g, 0.28 + delay + (i - 1) * 0.035, 0.70 + delay)
-		local leafColor = if i % 2 == 1 then DARK else LIT
-		leaf(elbow, blade * 1.18, 0.60, leafColor, leafScale)
-		local side = Vector3.yAxis:Cross(blade).Unit
-		local leafJoint = elbow + opened(blade, leafScale) * 0.32 * leafScale
-		local smallScale = leafScale * phase(g, 0.38 + delay, 0.79 + delay)
-		leaf(leafJoint, blade * 0.46 + side * 0.52 * self.horizontalFit + V(0, -0.12, 0), 0.37, leafColor, smallScale)
-		leaf(leafJoint, blade * 0.53 - side * 0.46 * self.horizontalFit + V(0, 0.10, 0), 0.37, LIT, smallScale)
-		local ripeColor = if i == 2 then RIPE_RED else RED
-		local color = if g == 1 then ripeColor else GREEN:Lerp(ripeColor, phase(g, 0.79, 1))
-		fruit(endPoint, fruitSize, fruitScale, color)
+	-- The leader grows up the stake; each rod extends to the tip while the tip is inside it.
+	local thickness = 0.55 + 0.45 * phase(g, 0, 0.5)
+	for i = 1, #LEADER - 1 do
+		local from, to = LEADER[i] * height, LEADER[i + 1] * height
+		if i > 1 and tip <= from + 0.01 then
+			rig:hide(1)
+		else
+			local a, b = stemPoint(from), stemPoint(math.min(tip, to))
+			local width = (0.24 - 0.11 * (i - 1) / (#LEADER - 2)) * thickness
+			rig:block(V(width, width, (b - a).Magnitude), axis(a, b), STEM, 1)
+		end
 	end
-	local leftScale = phase(g, 0.025, 0.23)
-	local rightScale = phase(g, 0.055, 0.26)
-	leaf(crown, point(V(-0.78, 0.25, 0.35)), 0.48, LIT, leftScale, phase(g, 0.035, 0.29))
-	leaf(crown, point(V(0.57, 0.34, -0.51)), 0.41, NEW, rightScale, phase(g, 0.075, 0.34))
+	for _, h in TIES do
+		local nodeHeight = h * height
+		local q = phase(tip, nodeHeight + 0.1, nodeHeight + 0.5)
+		if q <= 0 then
+			rig:hide(1)
+		else
+			local point, a = stemPoint(nodeHeight)
+			rig:block(V(0.42 * q, 0.10 * q, 0.62 * q), CFrame.new((point + V(0, nodeHeight, 0)) / 2) * CFrame.Angles(0, a, 0), TWINE, 1)
+		end
+	end
+	-- Compound leaves: blade tucked up along the stem, then unfolding; side leaflets follow.
+	for i, node in FRONDS do
+		local seeded = self.fronds[i]
+		local nodeHeight = node[1] * height
+		local first = reach(nodeHeight)
+		local q = phase(g, first, first + 0.16)
+		if q <= 0 then
+			rig:hide(4)
+		else
+			local at = stemPoint(nodeHeight)
+			local yaw = math.rad(node[2] + seeded.yaw) * mirror
+			local length = node[3] * seeded.length * scale
+			local direction = V(math.sin(yaw), node[4] + seeded.droop, math.cos(yaw)).Unit * length
+			direction = V(direction.X * fit, direction.Y, direction.Z * fit)
+			local width = 0.78 * scale * fit
+			leaf(at, direction, width, node[5], q)
+			local small = q * phase(g, first + 0.06, first + 0.22)
+			local open = opened(direction, q)
+			local joint = at + open * 0.38 * q
+			local side = Vector3.yAxis:Cross(direction).Unit
+			for sign = -1, 1, 2 do
+				if small <= 0 then
+					rig:hide(1)
+				else
+					local offset = (open * 0.45 + side * (sign * length * 0.42) + V(0, 0.06, 0)) * small
+					rig:block(V(width * 0.7 * small, 0.13 * small, offset.Magnitude), axis(joint, joint + offset), LIT, 1)
+				end
+			end
+		end
+	end
+	-- Trusses: a short rachis, then green fruit that swell and redden together toward 100%.
+	local ripening = phase(g, 0.74, 1)
+	for k, node in TRUSSES do
+		local seeded = self.trusses[k]
+		local nodeHeight = node[1] * height
+		local first = reach(nodeHeight)
+		local extension = phase(g, first + 0.02, first + 0.20)
+		if extension <= 0 then
+			rig:hide(11)
+		else
+			local at = stemPoint(nodeHeight)
+			local yaw = math.rad(node[2] + seeded.yaw) * mirror
+			local out = node[3] * seeded.out * scale * fit * extension
+			local rachisEnd = at + V(math.sin(yaw) * out, node[4] * extension, math.cos(yaw) * out)
+			rig:block(V(0.11 * extension, 0.11 * extension, (rachisEnd - at).Magnitude), axis(at, rachisEnd), STEM, 1)
+			for j, fruit in node[6] do
+				local swell = phase(g, node[5] + seeded.timing, 1)
+				if swell <= 0 then
+					rig:hide(5)
+				else
+					local size = fruit[2] * seeded.fruit[j] * scale * swell
+					local from = at:Lerp(rachisEnd, fruit[1])
+					-- The heaviest fruit stays above soil on a compact seeded plant.
+					local hangY = math.min(math.max(from.Y - fruit[3] * scale * swell, size * 0.84 + 0.04), from.Y - 0.1)
+					local hang = V(from.X, hangY, from.Z)
+					rig:block(V(0.07 * swell, 0.07 * swell, (from - hang).Magnitude), axis(from, hang), STEM, 1)
+					local ripe = if j == 1 then RED else RIPE_RED
+					local color = if g == 1 then ripe else GREEN:Lerp(ripe, ripening)
+					local topCF = CFrame.new(hang)
+					rig:block(V(size * 0.6, 0.09 * swell, size * 0.6), topCF * CFrame.Angles(0, math.rad(45), 0), DARK, 1)
+					rig:block(V(size * 0.74, size * 0.17, size * 0.70), topCF * CFrame.new(0, -size * 0.085, 0), color, 1)
+					rig:block(V(size, size * 0.6, size * 0.8), topCF * CFrame.new(0, -size * 0.47, 0), color, 1)
+					rig:block(V(size * 0.72, size * 0.16, size * 0.64), topCF * CFrame.new(0, -size * 0.84, 0), color, 1)
+				end
+			end
+		end
+	end
 	rig:finish()
 end
 
@@ -221,37 +275,40 @@ function TomatoPlant:Destroy()
 	self.rig:destroy()
 end
 
-TomatoPlant.RingHeight = 2.65
-
+-- Mid-distance silhouette: the rigid stake from planting, leaf plates up the stake and, when ripe, three fruit.
 function TomatoPlant.BuildProxy(parent: Instance, soil: CFrame, stage: number, seed: number?, sizeFactor: number?)
 	if stage <= 0 then return end
 	local scale = PlantKit.dimension(sizeFactor)
-	local vary = PlantKit.seeded(seed)
 	local tendency = PlantKit.tendency(TENDENCIES, seed)
-	local width = (if stage == 1 then 1.4 elseif stage == 2 then 2.7 else 3.6) * tendency[1]
-	local height = (if stage == 1 then 0.70 elseif stage == 2 then 1.25 else 1.65) * tendency[2]
-	local pieces = {
-		{"Canopy", V(width, 0.5, width * 0.58), V(tendency[3], height - 0.25, -0.10), LIT, "Studs"},
-	}
-	if stage >= 3 then
-		for i, side in {-1, 1} do
-			local fruitScale = tendency[5][i] + vary(0.13)
-			table.insert(pieces, {"Tomato", V(0.85, 0.7, 0.8) * fruitScale, V(side * 1.12 * tendency[4][i], 0.60 * tendency[2], 0.35), Color3.fromRGB(225, 55, 45), "StudsSmall"})
+	local leaf, mirror = tendency[4], tendency[3]
+	local pieces = {}
+	if stage == 1 then
+		table.insert(pieces, {"Canopy", V(1.0, 0.5, 0.8) * leaf, V(0, 0.55, 0), LIT, "Studs"})
+	elseif stage == 2 then
+		table.insert(pieces, {"Canopy", V(2.5, 0.45, 1.5) * leaf, V(0.1 * mirror, 1.7, 0), LIT, "Studs"})
+		table.insert(pieces, {"Canopy", V(2.0, 0.45, 1.2) * leaf, V(-0.1 * mirror, 3.4, 0), DARK, "Studs"})
+	else
+		table.insert(pieces, {"Canopy", V(2.8, 0.5, 1.6) * leaf, V(0.1 * mirror, 1.9, 0), LIT, "Studs"})
+		table.insert(pieces, {"Canopy", V(2.4, 0.45, 1.4) * leaf, V(-0.1 * mirror, 3.5, 0), DARK, "Studs"})
+		table.insert(pieces, {"Canopy", V(1.8, 0.45, 1.2) * leaf, V(0.05 * mirror, 5.0, 0), NEW, "Studs"})
+		for i, at in {V(1.0, 0.85, 0.4), V(-0.95, 2.5, 0.3), V(0.95, 4.0, 0.3)} do
+			local size = tendency[5][i]
+			table.insert(pieces, {"Tomato", V(0.9, 0.75, 0.8) * size, V(at.X * mirror, at.Y * tendency[1], at.Z), RED, "StudsSmall"})
 		end
 	end
 	local radius = 0
 	for _, piece in pieces do
-		local size, at = piece[2] * scale, piece[3] * scale
+		local size, at = piece[2] * scale, piece[3]
 		radius = math.max(radius, V(math.abs(at.X) + size.X / 2, 0, math.abs(at.Z) + size.Z / 2).Magnitude)
 	end
 	local fit = math.min(1, 2.4 / radius)
-	local function block(name, size, offset, color, variant)
-		local dimensions = V(size.X * fit, size.Y, size.Z * fit) * scale
-		local at = V(offset.X * fit, offset.Y, offset.Z * fit) * scale
-		PlantKit.proxyPart(parent, name, dimensions, soil * CFrame.new(at), color, variant)
-	end
+	-- Rigid equipment: full-sized from planting, independent of mass.
+	PlantKit.proxyPart(parent, "Stake", V(0.22, STAKE_HEIGHT, 0.22), soil * CFrame.new(0, STAKE_HEIGHT / 2, 0), WOOD, "Studs", "Support")
 	for _, piece in pieces do
-		block(table.unpack(piece))
+		local size = piece[2]
+		local dimensions = V(size.X * fit, size.Y, size.Z * fit) * scale
+		local at = V(piece[3].X * fit, piece[3].Y, piece[3].Z * fit)
+		PlantKit.proxyPart(parent, piece[1], dimensions, soil * CFrame.new(at), piece[4], piece[5])
 	end
 end
 

@@ -6,7 +6,7 @@ selected silhouette, growth poses and geometry budget.
 
 | Crop | Design | Full-detail Parts |
 |---|---|---|
-| Tomato | [Spreading bush](plants/TOMATO.md) | 54 |
+| Tomato | [Classic staked tomato](plants/TOMATO.md) | 71 |
 | Potato | [Upright compound foliage](plants/POTATO.md) | 65 |
 | Frost Grape | [Tall vineyard trellis](plants/FROST_GRAPE.md) | 115 |
 | Corn | [Tall two-ear stalk](plants/CORN.md) | 99 |
