@@ -103,6 +103,9 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
   Real-phone and second-client validation remain open.
 - **CG8:** [Pepper](plants/PEPPER.md): Ales corrected the fruit to slender, pointed red chillies; growth and field registration are
   revalidated with the curved/tapered fruit. Updated five stills await art review; full-field/24-plot performance, real phone and second client remain open.
+- **CG9:** [Glow Mushroom](plants/GLOW_MUSHROOM.md): Ales chose a **chestnut bolete pair** (2026-11-09, after a porcini reference),
+  replacing the first gilled trio; the recipe (60 Parts, glowing Neon pore layer as the ripeness cue) is registered in `PlantGrowth`
+  and Studio-checked; Ales approved the five stills (2026-11-09). Full-field/24-plot performance, real phone and second client remain open.
 
 Key talents as **world rewards**: done for Double Jump (K1, GDD §6). Open: Triple Jump / Dash for World 3. The lost Coin sinks are made up in
 the balancing pass (STAGES §6, GDD §6).

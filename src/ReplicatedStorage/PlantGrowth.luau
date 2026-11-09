@@ -7,6 +7,7 @@ local recipes = {
 	Corn = require(script.Parent.CornPlant),
 	Lettuce = require(script.Parent.LettucePlant),
 	Pepper = require(script.Parent.PepperPlant),
+	GlowMushroom = require(script.Parent.GlowMushroomPlant),
 }
 
 local PlantGrowth = {}
