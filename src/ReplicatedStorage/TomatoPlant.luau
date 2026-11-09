@@ -66,11 +66,38 @@ local function axis(a, b)
 	return CFrame.lookAt((a + b) / 2, a, up)
 end
 
-function TomatoPlant.new(parent, soilCFrame, seed)
+local function massScale(sizeFactor)
+	local factor = sizeFactor or 1
+	assert(type(factor) == "number" and factor > 0 and factor < math.huge, "Invalid plant size factor")
+	return factor ^ (1 / 3)
+end
+
+local function radiusOf(parts, soil)
+	local radius = 0
+	for _, part in parts do
+		if part.Transparency < 1 then
+			local relative = soil:ToObjectSpace(part.CFrame)
+			local half = part.Size / 2
+			for _, x in {-1, 1} do
+				for _, y in {-1, 1} do
+					for _, z in {-1, 1} do
+						local corner = relative:PointToWorldSpace(half * V(x, y, z))
+						radius = math.max(radius, V(corner.X, 0, corner.Z).Magnitude)
+					end
+				end
+			end
+		end
+	end
+	return radius
+end
+
+function TomatoPlant.new(parent, soilCFrame, seed, sizeFactor)
 	local self = setmetatable({}, TomatoPlant)
 	self.model = Instance.new("Model")
 	self.model.Name = "TomatoPlant"
 	self.base = soilCFrame
+	self.scale = massScale(sizeFactor)
+	self.horizontalFit = 1
 	self.parts = {}
 	self.applied = {}
 	local random = Random.new(seed or 1)
@@ -80,10 +107,13 @@ function TomatoPlant.new(parent, soilCFrame, seed)
 	self.spread = tendency[1] + random:NextNumber(-0.012, 0.012) * amount
 	self.height = tendency[2] + random:NextNumber(-0.012, 0.012) * amount
 	self.lean = tendency[3] + random:NextNumber(-0.012, 0.012) * amount
-	self.turn = CFrame.Angles(0, random:NextNumber(-0.06, 0.06) * amount, 0)
-	self.armLengths, self.fruitSizes = tendency[4], tendency[5]
+	self.armLengths, self.fruitSizes, self.armHeights, self.leafTurns = {}, {}, {}, {}
 	self.timing = {}
 	for i = 1, 3 do
+		self.armLengths[i] = tendency[4][i] + random:NextNumber(-0.10, 0.10) * amount
+		self.fruitSizes[i] = tendency[5][i] + random:NextNumber(-0.13, 0.13) * amount
+		self.armHeights[i] = random:NextNumber(-0.16, 0.16) * amount
+		self.leafTurns[i] = CFrame.Angles(0, random:NextNumber(-0.22, 0.22) * amount, 0)
 		self.timing[i] = random:NextNumber(-0.018, 0.018) * amount
 	end
 	for i = 1, 54 do
@@ -97,6 +127,18 @@ function TomatoPlant.new(parent, soilCFrame, seed)
 		self.parts[i] = part
 		self.applied[i] = { visible = false }
 	end
+	-- Fit off the DataModel before revealing the plant. Check the opening poses as
+	-- well as ripe leaves; only horizontal spread/foliage is constrained.
+	for _ = 1, 16 do
+		local radius = 0
+		for _, growth in {0.2, 0.5, 0.75, 1} do
+			self:SetGrowth(growth)
+			radius = math.max(radius, radiusOf(self.parts, soilCFrame))
+		end
+		if radius <= 2.4 then break end
+		self.horizontalFit *= math.min(0.90, 2.35 / radius)
+		self.growth = nil
+	end
 	self:SetGrowth(0)
 	self.model.Parent = parent
 	return self
@@ -109,9 +151,9 @@ function TomatoPlant:SetGrowth(normalized)
 	if self.growth == g then return end
 	self.growth = g
 	local cursor = 0
-	local base = self.base * self.turn
+	local base = self.base
 	local function point(p)
-		return V(p.X * self.spread + p.Y * self.lean, p.Y * self.height, p.Z * self.spread)
+		return V((p.X * self.spread + p.Y * self.lean) * self.horizontalFit, p.Y * self.height, p.Z * self.spread * self.horizontalFit)
 	end
 	local function hide(count)
 		for _ = 1, count do
@@ -131,8 +173,9 @@ function TomatoPlant:SetGrowth(normalized)
 		cursor += 1
 		local part = self.parts[cursor]
 		local applied = self.applied[cursor]
-		local actualSize = V(math.max(size.X, 0.001), math.max(size.Y, 0.001), math.max(size.Z, 0.001))
-		local world = base * cf
+		local scaled = size * self.scale
+		local actualSize = V(math.max(scaled.X, 0.001), math.max(scaled.Y, 0.001), math.max(scaled.Z, 0.001))
+		local world = base * CFrame.new(cf.Position * self.scale) * cf.Rotation
 		if applied.size ~= actualSize then
 			part.Size = actualSize
 			applied.size = actualSize
@@ -167,6 +210,7 @@ function TomatoPlant:SetGrowth(normalized)
 			hide(2)
 			return
 		end
+		width *= self.horizontalFit
 		local direction = opened(offset, opening or scale)
 		local blade = direction * scale
 		local length = blade.Magnitude
@@ -207,24 +251,28 @@ function TomatoPlant:SetGrowth(normalized)
 		local fork = joint:Lerp(crown, (i - 1) * 0.27)
 		local armLength = self.armLengths[i]
 		local finalFork = V(-0.06, 0.83, 0):Lerp(V(0.18, 1.68, -0.18), (i - 1) * 0.27)
-		local raisedElbow = finalFork + (arm[1] - finalFork) * armLength + V(0, 0.16 * (1 - bend), 0)
+		local raisedElbow = finalFork + (arm[1] - finalFork) * armLength + V(0, self.armHeights[i] + 0.16 * (1 - bend), 0)
 		local elbow = fork:Lerp(point(raisedElbow), extension)
 		local endPoint = elbow + point((arm[2] - arm[1]) * armLength + V(0, 0.26 * (1 - bend), 0)) * extension
+		local fruitSize = arm[4] * self.fruitSizes[i]
+		local fruitScale = phase(g, 0.60 + delay, 1)
+		-- The heaviest fruit stays above soil on a short seeded bush.
+		local minimumY = (0.22 + fruitSize * 0.88) * fruitScale + 0.04
+		endPoint = V(endPoint.X, math.max(endPoint.Y, minimumY), endPoint.Z)
 		twig(fork, elbow, 0.14 * extension, extension > 0)
 		twig(elbow, endPoint, 0.12 * extension, extension > 0)
-		local blade = point(arm[3]) * (0.88 + armLength * 0.12)
+		local blade = point(self.leafTurns[i]:VectorToWorldSpace(arm[3])) * (0.88 + armLength * 0.12)
 		local leafScale = phase(g, 0.28 + delay + (i - 1) * 0.035, 0.70 + delay)
 		local leafColor = if i % 2 == 1 then DARK else LIT
 		leaf(elbow, blade * 1.18, 0.60, leafColor, leafScale)
 		local side = Vector3.yAxis:Cross(blade).Unit
 		local leafJoint = elbow + opened(blade, leafScale) * 0.32 * leafScale
 		local smallScale = leafScale * phase(g, 0.38 + delay, 0.79 + delay)
-		leaf(leafJoint, blade * 0.46 + side * 0.52 + V(0, -0.12, 0), 0.37, leafColor, smallScale)
-		leaf(leafJoint, blade * 0.53 - side * 0.46 + V(0, 0.10, 0), 0.37, LIT, smallScale)
-		local fruitScale = phase(g, 0.60 + delay, 1)
+		leaf(leafJoint, blade * 0.46 + side * 0.52 * self.horizontalFit + V(0, -0.12, 0), 0.37, leafColor, smallScale)
+		leaf(leafJoint, blade * 0.53 - side * 0.46 * self.horizontalFit + V(0, 0.10, 0), 0.37, LIT, smallScale)
 		local ripeColor = if i == 2 then RIPE_RED else RED
 		local color = if g == 1 then ripeColor else GREEN:Lerp(ripeColor, phase(g, 0.79, 1))
-		fruit(endPoint, arm[4] * self.fruitSizes[i], fruitScale, color)
+		fruit(endPoint, fruitSize, fruitScale, color)
 	end
 	local leftScale = phase(g, 0.025, 0.23)
 	local rightScale = phase(g, 0.055, 0.26)
@@ -243,22 +291,41 @@ end
 
 TomatoPlant.RingHeight = 2.65
 
-function TomatoPlant.BuildProxy(parent: Instance, soil: CFrame, stage: number)
-	local width = if stage == 1 then 1.4 elseif stage == 2 then 2.7 else 3.6
-	local height = if stage == 1 then 0.70 elseif stage == 2 then 1.25 else 1.65
+function TomatoPlant.BuildProxy(parent: Instance, soil: CFrame, stage: number, seed: number?, sizeFactor: number?)
+	if stage <= 0 then return end
+	local scale = massScale(sizeFactor)
+	local random = Random.new(seed or 1)
+	local amount = if (seed or 1) == 1 then 0 else 1
+	local tendency = TENDENCIES[(math.floor(seed or 1) - 1) % #TENDENCIES + 1]
+	local width = (if stage == 1 then 1.4 elseif stage == 2 then 2.7 else 3.6) * tendency[1]
+	local height = (if stage == 1 then 0.70 elseif stage == 2 then 1.25 else 1.65) * tendency[2]
+	local pieces = {
+		{"Canopy", V(width, 0.5, width * 0.58), V(tendency[3], height - 0.25, -0.10), LIT, "Studs"},
+	}
+	if stage >= 3 then
+		for i, side in {-1, 1} do
+			local fruitScale = tendency[5][i] + random:NextNumber(-0.13, 0.13) * amount
+			table.insert(pieces, {"Tomato", V(0.85, 0.7, 0.8) * fruitScale, V(side * 1.12 * tendency[4][i], 0.60 * tendency[2], 0.35), Color3.fromRGB(225, 55, 45), "StudsSmall"})
+		end
+	end
+	local radius = 0
+	for _, piece in pieces do
+		local size, at = piece[2] * scale, piece[3] * scale
+		radius = math.max(radius, V(math.abs(at.X) + size.X / 2, 0, math.abs(at.Z) + size.Z / 2).Magnitude)
+	end
+	local fit = math.min(1, 2.4 / radius)
 	local function block(name, size, offset, color, variant)
 		local part = Instance.new("Part")
-		part.Name, part.Size, part.CFrame, part.Color = name, size, soil * CFrame.new(offset), color
+		local dimensions = V(size.X * fit, size.Y, size.Z * fit) * scale
+		local at = V(offset.X * fit, offset.Y, offset.Z * fit) * scale
+		part.Name, part.Size, part.CFrame, part.Color = name, dimensions, soil * CFrame.new(at), color
 		part.Material, part.MaterialVariant = Enum.Material.Plastic, variant
 		part.Anchored, part.CanCollide, part.CanTouch, part.CanQuery, part.CastShadow = true, false, false, false, false
 		part.TopSurface, part.BottomSurface = Enum.SurfaceType.Smooth, Enum.SurfaceType.Smooth
 		part.Parent = parent
 	end
-	block("Canopy", V(width,0.5,width*0.58), V(0,height-0.25,-0.10), LIT, "Studs")
-	if stage >= 3 then
-		for _,side in {-1,1} do
-			block("Tomato",V(0.85,0.7,0.8),V(side*1.12,0.60,0.35),Color3.fromRGB(225,55,45),"StudsSmall")
-		end
+	for _, piece in pieces do
+		block(table.unpack(piece))
 	end
 end
 

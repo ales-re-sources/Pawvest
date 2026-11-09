@@ -311,10 +311,14 @@ local function shearsExtra(player: Player, garden, n: number): boolean
 	return chance > 0 and Random.new(player.UserId * 6271 + n * 15485863):NextNumber() < chance
 end
 
--- Puts one harvested crop of planting `planting` into the barn with its rolled size (× the Seed sorter), and a second one of the
--- same size when `extra`. Returns the factor and whether it is the player's best of that crop so far.
+local function harvestSize(player: Player, garden, planting: number): number
+	return CropConfig.SizeFactor(player.UserId, planting) * (1 + CropConfig.ToolEffect(garden.Tools, "Sorter"))
+end
+
+-- Puts one harvested crop into the barn, with a second of the same size when extra.
+-- The plot feed and the harvest use the same deterministic size calculation.
 local function store(player: Player, garden, crop, planting: number, extra: boolean?): (number, boolean)
-	local factor = CropConfig.SizeFactor(player.UserId, planting) * (1 + CropConfig.ToolEffect(garden.Tools, "Sorter"))
+	local factor = harvestSize(player, garden, planting)
 	local n = if extra then 2 else 1
 	garden.Items[crop.id] = (garden.Items[crop.id] or 0) + n
 	garden.ItemSize[crop.id] = (garden.ItemSize[crop.id] or 0) + factor * n
@@ -550,7 +554,8 @@ GardenService.AddStateField("field", function(profile)
 		local readyAt = if finish == 0 then now else finish
 		local grown = if finish == 0 then crop.growSeconds
 			else crop.growSeconds * math.clamp((now - startAt) / (finish - startAt), 0, 1)
-		squares[key] = { crop = square.Crop, grown = math.floor(grown), readyAt = readyAt }
+		squares[key] = { crop = square.Crop, grown = math.floor(grown), readyAt = readyAt,
+			size = harvestSize(owner, profile.Garden, square.N) }
 	end
 	local garden = profile.Garden
 	local pets = {} -- [square] = the pet working there
@@ -631,7 +636,8 @@ function GardenField.PlotField(player: Player)
 		if open[n] and crop then
 			local startAt, readyAt = growthWindow(field, square, crop.growSeconds, speed)
 			plants = plants or {}
-			plants[key] = { n = square.N, startAt = startAt, readyAt = readyAt }
+			plants[key] = { n = square.N, startAt = startAt, readyAt = readyAt,
+				size = harvestSize(player, profile.Garden, square.N) }
 		end
 	end
 	local pets = {} -- "Kind:Level:uid:square:tending:guard" per field pet, by square

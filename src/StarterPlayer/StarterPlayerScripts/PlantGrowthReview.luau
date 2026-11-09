@@ -14,6 +14,7 @@ local function open(cropId: string, seconds: number?)
 	local CropConfig = require(ReplicatedStorage.CropConfig)
 	local GardenConfig = require(ReplicatedStorage.GardenConfig)
 	local crop = assert(CropConfig.ById[cropId], "Unknown review crop")
+	local Growth = require(ReplicatedStorage.PlantGrowth)
 	local recipe = require(assert(ReplicatedStorage:FindFirstChild(cropId .. "Plant"), "No art recipe for " .. cropId))
 	local duration = seconds or math.min(crop.growSeconds, 10)
 	assert(duration > 0, "Review duration must be positive")
@@ -75,7 +76,7 @@ local function open(cropId: string, seconds: number?)
 			corner.Parent = icon
 		end
 		gui.Enabled = root:GetAttribute("Rings")
-		gui.StudsOffset = Vector3.new(0,recipe.RingHeight or 2.65,3)
+		gui.StudsOffset = Vector3.new(0,Growth.RingHeight(cropId,root:GetAttribute("SizeFactor")),3)
 		gui.Adornee = attachment
 		gui.Parent = attachment
 		table.insert(rings, {attachment = attachment, gui = gui})
@@ -93,7 +94,8 @@ local function open(cropId: string, seconds: number?)
 	end
 
 	local function addPlant(square, seed, progress)
-		local plant = recipe.new(root, view:SquareCFrame(square), seed)
+		local frame = Growth.PlantCFrame(view:SquareCFrame(square), seed)
+		local plant = recipe.new(root, frame, seed, root:GetAttribute("SizeFactor"))
 		plant:SetGrowth(progress)
 		table.insert(plants, plant)
 		addRing(square)
@@ -176,16 +178,23 @@ local function open(cropId: string, seconds: number?)
 		root:Destroy()
 	end
 	local closeButton = control("Close",4,4,5,close)
-	local play = control("Play",1,3,40,function()
+	local play = control("Play",1,4,40,function()
 		root:SetAttribute("View","Plant")
 		root:SetAttribute("Playing", not root:GetAttribute("Playing"))
 	end)
-	local seedButton = control("Seed",2,3,40,function()
+	local seedButton = control("Seed",2,4,40,function()
 		if root:GetAttribute("View") == "Seeds" then showMode("Plant") end
 		root:SetAttribute("Seed", root:GetAttribute("Seed")%6+1)
 	end)
-	local ringsButton = control("Rings",3,3,40,function()
+	local ringsButton = control("Rings",3,4,40,function()
 		root:SetAttribute("Rings", not root:GetAttribute("Rings"))
+	end)
+	local lowSize, highSize = CropConfig.SizeBounds()
+	local sizes = {lowSize, 1, highSize}
+	local sizeIndex = 2
+	local sizeButton = control("Size",4,4,40,function()
+		sizeIndex = sizeIndex % #sizes + 1
+		root:SetAttribute("SizeFactor", sizes[sizeIndex])
 	end)
 	local slider = Instance.new("TextButton")
 	slider.Name = "Scrubber"
@@ -233,6 +242,7 @@ local function open(cropId: string, seconds: number?)
 	root:SetAttribute("Growth", 1)
 	root:SetAttribute("View", "Plant")
 	root:SetAttribute("Seed", 1)
+	root:SetAttribute("SizeFactor", 1)
 	root:SetAttribute("Rings", false)
 	root:SetAttribute("Playing", false)
 	local function refreshControls()
@@ -246,6 +256,7 @@ local function open(cropId: string, seconds: number?)
 		closeButton.Text = "Close" -- loc: ignore (Studio review)
 		play.Text = if root:GetAttribute("Playing") then "Pause" else "Play" -- loc: ignore (Studio review)
 		seedButton.Text = "Seed " .. root:GetAttribute("Seed") -- loc: ignore (Studio review)
+		sizeButton.Text = string.format("Size ×%.2f",root:GetAttribute("SizeFactor")) -- loc: ignore (Studio review)
 		slider.Visible = mode == "Plant"
 		refreshRings()
 	end
@@ -256,6 +267,7 @@ local function open(cropId: string, seconds: number?)
 	end
 	root:GetAttributeChangedSignal("View"):Connect(refreshStudy)
 	root:GetAttributeChangedSignal("Seed"):Connect(refreshStudy)
+	root:GetAttributeChangedSignal("SizeFactor"):Connect(refreshStudy)
 	root:GetAttributeChangedSignal("Growth"):Connect(refreshGrowth)
 	root:GetAttributeChangedSignal("Rings"):Connect(refreshRings)
 	local elapsed = 0

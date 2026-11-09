@@ -222,7 +222,7 @@ through harvest; only fruit regrows at persistent attachment points. Particles a
 
 #### CG2 — Shared plant growth (built)
 
-The shared `PlantGrowth` registry selects a recipe by crop ID. Recipes provide `new(parent, soilCFrame, seed)`, `BuildProxy`,
+The shared `PlantGrowth` registry selects a recipe by crop ID. Recipes provide `new(parent, soilCFrame, seed, sizeFactor?)`, `BuildProxy`,
 `RingHeight` and an instance with `model`, `SetGrowth(0..1)` and `Destroy`. Tomato's recipe is `TomatoPlant`.
 To add another annual crop, register its recipe; the garden renderer and server feed already accept its crop ID and planting identity.
 Plot pieces are `grow<n>`. The server publishes `field.plants` time anchors for every planted crop. Appearance stays attached to the
@@ -296,6 +296,22 @@ The visible poses matched the reviewed recipe at 1,278 comparisons across six se
 The 24-plot fixture had 11,313 client instances and session frame p95 around 18 ms. These desktop scripting samples leave
 real-phone rendering/performance and the second real-client check open. Run [`plant_perf_probe.luau`](../tools/plant_perf_probe.luau)
 in a Studio playtest's Client command context to reproduce the current measurements.
+
+#### CG4 — Plant individuality and harvested size (built)
+
+**Decision, 2026-11-09:** the earlier shape variation was too subtle, and harvest size was invisible. Both Potato and Tomato now use
+a stable full-circle rotation plus stronger seeded differences in stem/arm heights, spread, lean and leaf angles. Owner and planting
+number determine the seed, so revisiting or changing detail does not reroll the plant. Seed 1 keeps the authored review orientation.
+
+The server shares the existing harvested mass factor, including the current Sorter bonus. Linear height and produce dimensions use
+its cube root: tripled mass should not mean tripled height. Brown Potato tubers and Tomato fruit keep this dimensional scale;
+horizontal canopy spread is constrained to a 2.4-stud radius so rotated plants stay within a 5.5-stud square. Full and mid-detail art
+share the size and orientation; part counts and production update cadence stay unchanged. This is a readability compromise rather
+than a literal volume simulation of the canopy. The ring follows the scaled plant height.
+
+Review [six individual Potatoes at equal mass](art/potato/individual-plants.jpg) and the
+[small/standard/large size comparison](art/potato/harvest-size.jpg). The Studio reviewer now offers a **Size** button cycling the
+supported minimum, standard and maximum mass factors, alongside **Seed**. The controls remain English for this Studio-only tool.
 
 ### 5.2 Seed catalogue and market cart (not built parts)
 - **Species unlocks from the obby:** first finishes / first Golds and challenge-coin milestones unlock catalogue species (§8.1), on top of Renown.

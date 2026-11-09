@@ -57,6 +57,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG1 | Tomato growth art pilot (parallel garden art study) | CG1a–c and CG1d CPU tuning built | desktop CPU checks pass; real phone and second client open | – |
 | CG2 | Shared plant growth recipes and timing | ✔ | generic dispatch, field feed and detail changes checked | – |
 | CG3 | Potato growth art | CG3a–c built; desktop CPU tuning done | field lifecycle/detail checks pass; real phone and second client open | – |
+| CG4 | Plant individuality and harvested size | ✔ | size/rotation, bounds, detail transitions and reviewer controls Studio-checked | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -116,6 +117,10 @@ mid proxy. Crops pose at 5 Hz with staggered square deadlines and skip completed
 plant/9 s refusal/10 s harvest/offline-growth fixture passed. **CG3d** desktop samples reduced one field's pose CPU from 115 to 39 ms/s
 and scheduler p95 from 6.02 to 1.10 ms; 24 plots used 110 ms/s and p95 3.83 ms. Reproduce with `tools/plant_perf_probe.luau`.
 Real-phone rendering/performance and a second real client remain open.
+
+**CG4 — Plant individuality and harvested size** is built and Studio-checked (2026-11-09). Potato and Tomato now reflect the actual
+harvest factor, rotate through a full circle and vary their branching more visibly. Part counts and Potato's 5 Hz cadence are unchanged.
+[Decision and review images](EXPANSION.md#cg4--plant-individuality-and-harvested-size-built).
 
 ### K1 — First-hour fixes, open part (kid playtest 2026-11-01)
 A 9-year-old on a phone, fresh progress, got stuck after about 20 minutes. Target: a new player who does not pay always has a next step for

@@ -311,6 +311,7 @@ function PlotView:signature(key: string): string
 	if kind == "grow" then
 		if not crop or string.sub(cell, 2, 2) == "0" then return "none" end
 		local identity = crop.id .. "|" .. tostring(state.ownerId or self.slot) .. "|" .. tostring(plant and plant.n or n)
+			.. "|" .. tostring(plant and plant.size or 1)
 		return if detail == "full" then "grow|" .. identity else "proxy|" .. identity .. "|" .. self:plantStage(n)
 	end
 	if crop then
@@ -802,16 +803,17 @@ function PlotView:buildPlant(model: Model, square: number)
 	local field = self.state.field
 	local crop = growthCrop(field, square)
 	if not crop then return end
-	if self.detail == "mid" then
-		PlantGrowth.BuildProxy(model, self:SquareCFrame(square), crop.id, self:plantStage(square))
-		return
-	end
 	local anchor = type(field.plants) == "table" and field.plants[tostring(square)]
 	local planting = anchor and anchor.n or square
+	local sizeFactor = anchor and anchor.size or 1
 	-- Same owner/planting prime mix as the deterministic Tending roll. Consecutive
 	-- plantings still cycle all six silhouettes (104729 is coprime with six).
 	local seed = (self.state.ownerId or self.slot) * 7919 + planting * 104729
-	local plant = PlantGrowth.new(model, self:SquareCFrame(square), crop.id, seed)
+	if self.detail == "mid" then
+		PlantGrowth.BuildProxy(model, self:SquareCFrame(square), crop.id, self:plantStage(square), seed, sizeFactor)
+		return
+	end
+	local plant = PlantGrowth.new(model, self:SquareCFrame(square), crop.id, seed, sizeFactor)
 	local now = workspace:GetServerTimeNow()
 	local growth = self:plantGrowth(square, now)
 	plant:SetGrowth(growth)

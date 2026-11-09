@@ -382,6 +382,8 @@ local function update(now: number)
 		local entry = squares[tostring(square)]
 		if entry then
 			local crop = ring.crop
+			local offset = Vector3.new(0, PlantGrowth.RingHeight(crop.id, entry.size), TOWARD)
+			if ring.gui.StudsOffset ~= offset then ring.gui.StudsOffset = offset end
 			local grown = entry.grown or 0
 			local readyAt = entry.readyAt or 0
 			local ripe = grown >= crop.growSeconds or readyAt <= now

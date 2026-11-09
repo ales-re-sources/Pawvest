@@ -69,7 +69,7 @@ local function axis(a, b)
 	return CFrame.lookAt((a + b) / 2, a, up)
 end
 
-function PotatoPlant.new(parent, soilCFrame, seed)
+function PotatoPlant.new(parent, soilCFrame, seed, sizeFactor)
 	local self = setmetatable({}, PotatoPlant)
 	self.model = Instance.new("Model")
 	self.model.Name = "PotatoPlant"
@@ -81,6 +81,62 @@ function PotatoPlant.new(parent, soilCFrame, seed)
 	self.spread = variation[1] + random:NextNumber(-0.012, 0.012) * amount
 	self.height = variation[2] + random:NextNumber(-0.012, 0.012) * amount
 	self.lean = variation[3] + random:NextNumber(-0.012, 0.012) * amount
+	local mass = if type(sizeFactor) == "number" and sizeFactor == sizeFactor then math.max(sizeFactor, 0.001) else 1
+	self.dimensionScale = mass ^ (1 / 3)
+	self.spread *= self.dimensionScale
+	self.height *= self.dimensionScale
+	self.lean *= self.dimensionScale
+	self.shoots = {}
+	for i, top in TOPS do
+		local yaw = random:NextNumber(-0.38, 0.38) * amount
+		local height = 1 + random:NextNumber(-0.20, 0.20) * amount
+		local lean = V(random:NextNumber(-0.22, 0.22), 0, random:NextNumber(-0.22, 0.22)) * amount
+		local rotated = CFrame.Angles(0, yaw, 0):VectorToWorldSpace(top)
+		self.shoots[i] = {
+			top = V(rotated.X, rotated.Y * height, rotated.Z) + lean,
+			leafScale = 1 + random:NextNumber(-0.22, 0.22) * amount,
+		}
+	end
+	-- Conservative triangle bounds cover every node interpolation, unfolded blade,
+	-- late stalk and exposed tuber. All horizontal terms scale together below.
+	-- Unlike a ripe-only box, this also covers the disappearing second flower.
+	local function horizontal(p)
+		return V(p.X * self.spread + p.Y * self.lean, 0, p.Z * self.spread).Magnitude
+	end
+	local radius = 0
+	for i, shoot in self.shoots do
+		local top = shoot.top
+		local origin = V((i - 2) * 0.08, 0.08, 0)
+		local elbow = origin:Lerp(top, 0.52) + V(if i % 2 == 0 then -0.08 else 0.08, 0, 0.07)
+		local stemRadius = math.max(horizontal(origin), horizontal(elbow), horizontal(top))
+		local outward = V(top.X, 0, top.Z).Unit
+		for tier, fraction in {0.38, 0.77} do
+			local node = if fraction <= 0.52 then origin:Lerp(elbow, fraction / 0.52) else elbow:Lerp(top, (fraction - 0.52) / 0.48)
+			local radial = CFrame.Angles(0, (tier - 1) * 0.72 + (i - 1) * 0.18, 0):VectorToWorldSpace(outward)
+			local side = V(-radial.Z, 0, radial.X)
+			local leafScale = 1.30 * (if tier == 1 then 1 else 0.91) * shoot.leafScale
+			local bladeRadius = math.max(
+				horizontal((radial * 0.48 + side * 0.70 + V(0, 0.10, 0)) * leafScale),
+				horizontal((radial * 0.48 - side * 0.70 + V(0, 0.04, 0)) * leafScale)
+			)
+			local extra = (0.46 * leafScale / 2 + 0.14) * self.dimensionScale
+			radius = math.max(radius, horizontal(node) + horizontal(radial * 0.46 + V(0, 0.09, 0)) + bladeRadius + extra)
+		end
+		radius = math.max(radius, stemRadius + horizontal(outward * 0.39 + V(0, 0.20, 0)) + 0.24 * self.dimensionScale)
+	end
+	local flowerRadius = horizontal(self.shoots[2].top) + horizontal(V(0, 0.20, 0.09))
+	local stalkRadius = math.max(horizontal(V(-0.18, 0.13, 0.04)), horizontal(V(0.17, 0.07, -0.02)), horizontal(V(-0.70, -0.35, 0.90)))
+	radius = math.max(radius, flowerRadius + stalkRadius + 0.46 * self.dimensionScale)
+	-- Tubers retain full isotropic mass scaling and pre-fit centre spacing.
+	-- Their radius is <= (0.814 * 1.092 + 0.49) * dimensionScale:
+	-- below 2.01 studs at CropConfig.SizeBounds' current maximum (dimension <1.45).
+	-- Canopy compression therefore never needs to shrink harvested tuber size.
+	self.tuberSpread = self.spread
+	self.tuberRadius = 0.814 * self.tuberSpread + 0.49 * self.dimensionScale
+	self.horizontalFit = math.min(1, 2.4 / radius)
+	self.spread *= self.horizontalFit
+	self.lean *= self.horizontalFit
+	self.detailScale = self.dimensionScale * self.horizontalFit
 	for i, meta in META do
 		local part = Instance.new("Part")
 		part.Name, part.MaterialVariant = meta[1], meta[2]
@@ -153,7 +209,7 @@ function PotatoPlant:SetGrowth(normalized)
 			hide(1)
 			return
 		end
-		block(V(width, width, (b - a).Magnitude), axis(a, b), STEM, true)
+		block(V(width * self.detailScale, width * self.detailScale, (b - a).Magnitude), axis(a, b), STEM, true)
 	end
 	local function blade(at, offset, width, color, scale)
 		if scale <= 0 then
@@ -162,7 +218,7 @@ function PotatoPlant:SetGrowth(normalized)
 		end
 		-- Leaves unfold from their own attachment rather than sliding into place.
 		local direction = offset.Unit:Lerp(Vector3.yAxis, (1 - scale) * 0.88).Unit * offset.Magnitude * scale
-		local crease = at + direction * 0.60 + V(0, 0.12 * scale, 0)
+		local crease = at + direction * 0.60 + V(0, 0.12 * scale * self.dimensionScale, 0)
 		local tip = at + direction
 		-- Both folds retain the mature blade's hinge while unfolding near vertical.
 		-- Using axis() here would switch its up vector and abruptly roll the leaf.
@@ -171,8 +227,8 @@ function PotatoPlant:SetGrowth(normalized)
 			local back = (b - a).Unit
 			return CFrame.fromMatrix((a + b) / 2, right, back:Cross(right), back)
 		end
-		block(V(width * scale, 0.14 * scale, (crease - at).Magnitude), segmentFrame(at, crease), color, true)
-		block(V(width * 0.62 * scale, 0.13 * scale, (tip - crease).Magnitude), segmentFrame(crease, tip), color, true)
+		block(V(width * scale * self.detailScale, 0.14 * scale * self.detailScale, (crease - at).Magnitude), segmentFrame(at, crease), color, true)
+		block(V(width * 0.62 * scale * self.detailScale, 0.13 * scale * self.detailScale, (tip - crease).Magnitude), segmentFrame(crease, tip), color, true)
 	end
 	local tops
 	if g >= 0.66 and self.foliageComplete then
@@ -182,7 +238,8 @@ function PotatoPlant:SetGrowth(normalized)
 		tops = self.matureTops
 	else
 		tops = {}
-		for i, finalTop in TOPS do
+		for i, shoot in self.shoots do
+			local finalTop = shoot.top
 			local extension = if i == 1 then 0.055 + 0.945 * phase(g, 0, 0.53) else phase(g, 0.17 + (i - 2) * 0.04, 0.57)
 			local origin = point(V((i - 2) * 0.08, 0.08, 0)) * extension
 			local top = point(finalTop) * extension
@@ -208,7 +265,7 @@ function PotatoPlant:SetGrowth(normalized)
 				end
 				local branchEnd = node + point(radial * 0.46 + V(0, 0.09, 0)) * scale
 				twig(node, branchEnd, 0.12 * scale, scale > 0)
-				local leafScale = 1.30 * (if tier == 1 then 1 else 0.91)
+				local leafScale = 1.30 * (if tier == 1 then 1 else 0.91) * shoot.leafScale
 				local secondScale = if i == 1 and tier == 1 then phase(g, 0.055, 0.26) else scale
 				blade(branchEnd, point((radial * 0.48 + side * 0.70 + V(0, 0.10, 0)) * leafScale), 0.46 * leafScale, GREEN, scale)
 				blade(branchEnd, point((radial * 0.48 - side * 0.70 + V(0, 0.04, 0)) * leafScale), 0.43 * leafScale, LIGHT, secondScale)
@@ -225,11 +282,13 @@ function PotatoPlant:SetGrowth(normalized)
 		if tuberScale <= 0 then
 			hide(3)
 		else
-			local cf = CFrame.new(point(at) + V(0, -0.28 * (1 - tuberScale), 0)) * CFrame.Angles(0, i * 0.60, 0)
+			local centre = V(at.X * self.tuberSpread, -0.28 * (1 - tuberScale) * self.dimensionScale, at.Z * self.tuberSpread)
+			local cf = CFrame.new(centre) * CFrame.Angles(0, i * 0.60, 0)
 			local size = 0.55 + 0.45 * tuberScale
-			block(V(0.73, 0.34, 0.45) * size, cf * CFrame.new(0, -0.08 * size, 0), TAN, true)
-			block(V(0.53, 0.33, 0.62) * size, cf * CFrame.new(0, -0.08 * size, 0), TAN, true)
-			block(V(0.44, 0.14, 0.35) * size, cf * CFrame.new(0, 0.13 * size, 0), TAN, true)
+			local tuberSize = self.dimensionScale * size
+			block(V(0.73, 0.34, 0.45) * tuberSize, cf * CFrame.new(0, -0.08 * size * self.dimensionScale, 0), TAN, true)
+			block(V(0.53, 0.33, 0.62) * tuberSize, cf * CFrame.new(0, -0.08 * size * self.dimensionScale, 0), TAN, true)
+			block(V(0.44, 0.14, 0.35) * tuberSize, cf * CFrame.new(0, 0.13 * size * self.dimensionScale, 0), TAN, true)
 		end
 	end
 	local bloom = phase(g, 0.60, 0.80)
@@ -243,10 +302,10 @@ function PotatoPlant:SetGrowth(normalized)
 		local face = CFrame.lookAt(at, at + V(0, 0.55, 0.84).Unit) * CFrame.Angles(0, 0, turn)
 		for petal = 1, 5 do
 			local angle = (petal - 1) * math.pi * 2 / 5
-			local cf = face * CFrame.Angles(0, 0, angle) * CFrame.new(0, 0.105 * scale, 0)
-			block(V(0.125, 0.17, 0.065) * scale, cf, CREAM, true)
+			local cf = face * CFrame.Angles(0, 0, angle) * CFrame.new(0, 0.105 * scale * self.detailScale, 0)
+			block(V(0.125, 0.17, 0.065) * scale * self.detailScale, cf, CREAM, true)
 		end
-		block(V(0.095, 0.11, 0.105) * scale, face * CFrame.new(0, 0, -0.067 * scale), YELLOW, true)
+		block(V(0.095, 0.11, 0.105) * scale * self.detailScale, face * CFrame.new(0, 0, -0.067 * scale * self.detailScale), YELLOW, true)
 	end
 	if g >= 0.80 and self.leftFlowerComplete then
 		-- Common stalk, left stalk and the retained flower: eight fixed parts.
@@ -264,8 +323,8 @@ function PotatoPlant:SetGrowth(normalized)
 	flower(right, -0.25, bloom * (1 - late))
 	-- These are small, decorative non-edible berries; the underground tubers
 	-- remain the harvest crop. Berry tops touch the shared upper side stalk.
-	block(V(0.29, 0.30, 0.29) * late, CFrame.new(right + point(V(-0.11, -0.10, 0)) * late), Color3.fromRGB(132, 169, 70), late > 0)
-	block(V(0.27, 0.28, 0.27) * late, CFrame.new(right + point(V(0.18, -0.13, 0.04)) * late), Color3.fromRGB(117, 155, 62), late > 0)
+	block(V(0.29, 0.30, 0.29) * late * self.detailScale, CFrame.new(right + point(V(-0.11, -0.10, 0)) * late), Color3.fromRGB(132, 169, 70), late > 0)
+	block(V(0.27, 0.28, 0.27) * late * self.detailScale, CFrame.new(right + point(V(0.18, -0.13, 0.04)) * late), Color3.fromRGB(117, 155, 62), late > 0)
 	assert(cursor == 65, "Potato part budget changed")
 end
 
@@ -282,12 +341,31 @@ PotatoPlant.RingHeight = 2.95
 
 -- Distance representation: three green pieces plus two ripe soil-line tubers.
 -- Flowers and decorative berries belong only to the detailed plant.
-function PotatoPlant.BuildProxy(parent: Instance, soilCFrame: CFrame, stage: number)
+function PotatoPlant.BuildProxy(parent: Instance, soilCFrame: CFrame, stage: number, seed: number?, sizeFactor: number?)
 	local height = if stage == 1 then 0.65 elseif stage == 2 then 1.35 else 2.10
 	local width = if stage == 1 then 1.05 elseif stage == 2 then 1.95 else 2.75
+	local random = Random.new(seed or 1)
+	local amount = if (seed or 1) == 1 then 0 else 1
+	local variation = VARIATIONS[(math.floor(seed or 1) - 1) % #VARIATIONS + 1]
+	local mass = if type(sizeFactor) == "number" and sizeFactor == sizeFactor then math.max(sizeFactor, 0.001) else 1
+	local dimension = mass ^ (1 / 3)
+	local spread = (variation[1] + random:NextNumber(-0.012, 0.012) * amount) * dimension
+	local rise = (variation[2] + random:NextNumber(-0.012, 0.012) * amount) * dimension
+	-- Lower canopy corner radius is <1.70 before scaling. Tuber corners are
+	-- below 1.20; this uniform horizontal fit therefore bounds every proxy part.
+	local fit = math.min(1, 2.4 / (1.70 * spread))
+	local horizontal = spread * fit
 	local function block(name, size, offset, color, variant, shape)
 		local part = Instance.new("Part")
-		part.Name, part.Size, part.CFrame, part.Color = name, size, soilCFrame * CFrame.new(offset), color
+		local fittedSize = V(size.X * horizontal, size.Y * rise, size.Z * horizontal)
+		local fittedOffset = V(offset.X * horizontal, offset.Y * rise, offset.Z * horizontal)
+		if name == "TuberTop" then
+			-- Exact isotropic harvested mass, independent of the canopy fit.
+			-- Unfitted corner radius <=1.20 * dimension (<1.74 at valid maximum).
+			fittedSize = size * dimension
+			fittedOffset = offset * dimension
+		end
+		part.Name, part.Size, part.CFrame, part.Color = name, fittedSize, soilCFrame * CFrame.new(fittedOffset), color
 		part.Material, part.MaterialVariant = Enum.Material.Plastic, variant
 		part.TopSurface, part.BottomSurface = Enum.SurfaceType.Smooth, Enum.SurfaceType.Smooth
 		part.Anchored, part.CanCollide, part.CanTouch, part.CanQuery, part.CastShadow = true, false, false, false, false
