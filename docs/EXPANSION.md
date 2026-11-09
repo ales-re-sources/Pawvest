@@ -408,6 +408,57 @@ regrowth clocks and server state will be implemented with perennial gameplay; id
 in the generic renderer. Use existing identity, size and time anchors; the eight-hour crop can use the one-second growth cadence.
 Review a cheaper mid-distance bunch silhouette, then measure a full field / 24 plots and a real phone before calling it validated.
 
+#### CG6 — Corn growth design
+
+**Requested 2026-11-09.** Design the existing thirty-minute Corn as a tall, jointed green stalk with long arching ribbon leaves,
+two upward-pointing ears in green husks and a small branching tassel. Use opaque colored stud-block geometry. The repeated unit is
+a stalk internode → attached leaf sheath → three shorter, narrower blade segments; ears attach at stable upper leaf axils. This
+gives the shared growth system a different branching rule from the food bushes and trained vine.
+
+**CG6a — Ripe silhouette review.** Compare A, a balanced single stalk with two ears; B, a taller, narrower single stalk with two ears;
+and C, a compact broad-leaf stalk with one large ear. All occupy one real 5.5-stud square. A is the proposed direction, pending Ales's
+review. Compare without labels and check avatar scale, field pet, selection and ring together. Reproduction:
+[`corn_ripe_studies.luau`](../tools/corn_ripe_studies.luau), Studio playtest **Client** context. This is a local display fixture.
+
+The [ripe comparison](art/corn/ripe-studies.jpg) shows **A / B / C from left to right**, on actual field soil with selection and a
+neighboring Potato. The [720-pixel composition check](art/corn/phone.jpg) is a resized desktop capture, not a phone performance test.
+Studio measured the current avatar at **5.46 studs** tall; A and B stand above it, while C is approximately avatar height.
+
+| Study | Parts / 36 full-detail plants | Height above soil / maximum ground radius (studs) |
+|---|---|---|
+| A — Classic two-ear | 96 / 3,456 | 6.73 / 2.10 |
+| B — Tall narrow | 99 / 3,564 | 7.93 / 1.70 |
+| C — Compact broad-leaf | 68 / 2,448 | 5.53 / 2.23 |
+
+Counts exclude soil, pets and UI. All three standard-size mature studies fit the 2.4-stud radius target. Seeded, all-age and
+mass-extreme bounds remain CG6b checks. The ears carry explicit `PlantRole = Fruit` and `FruitSlot` metadata in the static study;
+the future recipe must also expose its stable slot groups and attachment points. Studio boot had no game errors or warnings;
+the Assistant emitted its own camera-reset warning. Motion, production registration and device performance are not validated.
+
+**CG6b — Proposed motion, after silhouette selection.** Reuse a fixed set of Parts; grow each internode from the previous node,
+then unfold its blade from a narrow upright fold into an outward arch. Lower leaves open first, with overlapping intervals and
+small seeded timing differences. The tassel extends from the crown; ears swell from their attached husks. Partly opened ripe husks
+reveal golden kernels. This exposed window is a readability choice for the game. Avoid opening every husk into a flower.
+
+| Growth | Review pose on the same seeded plant |
+|---|---|
+| 0% | A small green spear just above the soil; an unplanted square stays bare. |
+| 20% | Short stalk, two lower blades unfolding, central spear still upright. |
+| 50% | Successive joints lift the crown; alternating long blades form open arches. |
+| 75% | Nearly full height, tassel branching, two slim green husked ears with silk. |
+| 100% | Filled upward ears, visible golden kernel windows, dry tan silk; leaves stay mostly green. |
+
+Seeded variation should change internode spacing, gentle lean, leaf yaw/arch, ear tilt and relative ear size while preserving the
+upright silhouette and square clearance. Harvest mass uses cube-root dimensional scaling, with ears changing most visibly and
+foliage constrained to the square. Keep explicit visual fruit-slot IDs, attachments and Part roles, as in CG5. These IDs do not
+define harvest quantity. Corn remains an annual: the current whole plant clears at harvest.
+
+**Acceptance gates.** Follow [PLANT_GROWTH.md](PLANT_GROWTH.md). First select the ripe silhouette; then deliver only five snapshots
+at 0/20/50/75/100%, using the same seed, mass factor, square and camera. Check continuous forward/backward seeking, six seeds and
+size extremes internally. Ear stalks and leaf bases must stay attached; leaves and husks must unfold from their bases rather than pop in.
+Report Part counts and measured bounds. Production registration, mid-detail proxy, full-field cost and real-phone performance
+follow motion approval. Existing duration, prices, rewards and persistence are outside this art study.
+
 ### 5.2 Seed catalogue and market cart (not built parts)
 - **Species unlocks from the obby:** first finishes / first Golds and challenge-coin milestones unlock catalogue species (§8.1), on top of Renown.
 - The cart may also offer a fertiliser ingredient or a decor piece; its offers are never sold or re-rolled for Robux (§13).
