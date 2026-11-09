@@ -234,9 +234,10 @@ Perennials will retain structure maturity while fruit slots have separate growth
 #### CG3 — Potato growth design (for review)
 
 **CG3a** is the [ripe silhouette comparison](art/potato/ripe-studies.jpg), captured from Studio with the actual field renderer:
-A, a bushy upright plant (48 Parts); B, open branching (44); C, leaning upright (48).
+A, a bushy upright plant with two flowers (63 Parts); B, open branching with two flowers (59);
+C, leaning upright with a flower and two green berries (59).
 All three have several green shoots, leaf pairs at different heights and two partly buried brown tuber shoulders.
-The measured mature height is about 2.75–3.08 studs; ground width is about 3.18–3.47 studs on the 5.5-stud square.
+The upright foliage, flowers and visible tuber tops fit within each 5.5-stud square.
 See the [field](art/potato/field.jpg) and [phone-size view](art/potato/phone.jpg). The reproduction tool is
 [`potato_ripe_studies.luau`](../tools/potato_ripe_studies.luau). The developer selects the silhouette before CG3b motion work.
 
@@ -245,13 +246,19 @@ shows upright branching stems with broad paired leaflets at several heights. Ale
 Use that structure for the mature silhouette, with brown tuber tops peeking through the soil as an intentional game readability shortcut.
 The proposed ten-second annual growth emphasizes height first, followed by lateral branches and unfolding compound leaves.
 
+The [anatomy sketch](art/potato/anatomy-reference.png) and [flower photo](art/potato/flower-reference.png) supplied by Ales anchor the
+organ placement. Compound leaflets sit along short lateral stalks. Flower clusters sit above the foliage, with five pale lobes and
+a raised yellow center. Later, small green berries can hang from an upper side stalk. They are decorative; the harvest cue remains
+the brown tuber shoulders at soil level. The shown white flowers follow the close-up photo. Buried roots and stolons can inform a
+future extraction effect; the standing plant only draws the visible tuber tops.
+
 | Growth | Proposed motion |
 |---|---|
 | 0% | A small green shoot breaks the soil. |
 | 20% | Two leaves open at slightly different times, pivoting from the shoot. |
 | 50% | Several unequal upright stems lengthen. Side branches develop paired leaves at lower, middle and upper nodes. |
-| 75% | The layered canopy fills. Small brown tuber shoulders begin to emerge at the soil line. |
-| 100% | The bush reaches its full height and spread. Outer leaf tips settle lower; brown shoulders remain visible beneath the foliage. |
+| 75% | The layered canopy fills and the upper buds open into white/yellow flowers. Brown tuber shoulders begin to emerge at the soil line. |
+| 100% | Some flowers can give way to small green berries. Outer leaf tips settle lower; brown tuber shoulders remain the harvest cue. |
 
 Seeded variation changes shoot angles, canopy spread, leaf sizes and shoulder placement within the selected silhouette.
 **CG3b** reviews a continuous scrubber and seeded loop. **CG3c** registers the approved Potato recipe in the field.

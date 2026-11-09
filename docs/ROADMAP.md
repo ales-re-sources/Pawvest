@@ -105,7 +105,8 @@ the balancing pass (STAGES §6, GDD §6).
 detail levels, seed identity and scheduling handle it. [Design and interface](EXPANSION.md#cg2--shared-plant-growth-built)
 
 **CG3 — Potato growth art** follows the same review sequence. **CG3a** was revised to upright, layered foliage from Ales's photo
-(2026-11-09); the low flat studies were rejected. The three revised silhouettes are ready for selection:
+(2026-11-09); the low flat studies were rejected. The flower/anatomy references now guide upper blooms and later decorative green berries.
+The three revised silhouettes are ready for selection:
 [A / B / C](art/potato/ripe-studies.jpg) · [Field](art/potato/field.jpg) · [Phone-size view](art/potato/phone.jpg).
 Next are **CG3b** motion/seed review, **CG3c** field integration and **CG3d** performance checks.
 

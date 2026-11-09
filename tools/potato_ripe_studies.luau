@@ -31,6 +31,7 @@ local function block(model, name, size, cf, color, variant)
 	p.TopSurface, p.BottomSurface = Enum.SurfaceType.Smooth, Enum.SurfaceType.Smooth
 	p.Anchored, p.CanCollide, p.CanTouch, p.CanQuery = true, false, false, false
 	p.Parent = model
+	return p
 end
 local function axis(a, b)
 	local direction = (b-a).Unit
@@ -63,6 +64,41 @@ local function shoulder(model,base,at,turn)
 	block(model,"TuberBuriedSides",V(0.73,0.34,0.45),cf*CFrame.new(0,-0.08,0),tan)
 	block(model,"TuberRoundedEnds",V(0.53,0.33,0.62),cf*CFrame.new(0,-0.08,0),tan)
 	block(model,"TuberCrown",V(0.44,0.14,0.35),cf*CFrame.new(0,0.13,0),tan)
+end
+-- Flowers face plot-local +Z and slightly upward, so their five lobes and
+-- raised yellow centre remain readable from the usual gameplay view.
+local function flower(model, base, at, turn)
+	local normal = V(0,0.55,0.84).Unit
+	local face = CFrame.lookAt(at,at+normal)*CFrame.Angles(0,0,turn)
+	for petal=1,5 do
+		local angle = (petal-1)*math.pi*2/5
+		local petalCF = face*CFrame.Angles(0,0,angle)*CFrame.new(0,0.105,0)
+		block(model,"FlowerPetal",V(0.125,0.17,0.065),base*petalCF,Color3.fromRGB(245,242,220),"StudsSmall")
+	end
+	block(model,"FlowerYellowCone",V(0.095,0.11,0.105),base*face*CFrame.new(0,0,-0.067),Color3.fromRGB(234,184,45),"StudsSmall")
+end
+local function flowers(model,base,top,later)
+	local fork = top + V(0,0.20,0.09)
+	twig(model,base,top,fork)
+	local left = fork+V(-0.18,0.13,0.04)
+	twig(model,base,fork,left)
+	flower(model,base,left,0.16)
+	if later then
+		-- Decorative, non-edible potato berries only: no crop state, rewards,
+		-- harvest target, or production recipe is added by this review fixture.
+		local side = fork+V(-0.70,-0.35,0.90)
+		twig(model,base,fork,side)
+		local first = block(model,"DecorativeGreenBerry",V(0.29,0.30,0.29),base*CFrame.new(side+V(-0.11,-0.10,0)),Color3.fromRGB(132,169,70))
+		local second = block(model,"DecorativeGreenBerry",V(0.27,0.28,0.27),base*CFrame.new(side+V(0.18,-0.13,0.04)),Color3.fromRGB(117,155,62))
+		first.Shape, second.Shape = Enum.PartType.Ball, Enum.PartType.Ball
+		model:SetAttribute("DecorativeBerryCount",2)
+	else
+		local right = fork+V(0.17,0.07,-0.02)
+		twig(model,base,fork,right)
+		flower(model,base,right,-0.25)
+		model:SetAttribute("DecorativeBerryCount",0)
+	end
+	model:SetAttribute("DecorativeFlowerCount",if later then 1 else 2)
 end
 local studies = {
 	{
@@ -101,7 +137,8 @@ local function drawStudy(parent,base,study)
 		blade(model,base,top,outward*0.39+V(0,0.20,0),0.33,light)
 	end
 	for i,at in study.shoulders do shoulder(model,base,at,i*0.60) end
-	assert(#model:GetChildren()<=50,"Study part budget exceeded")
+	flowers(model,base,study.shoots[2],study.name:sub(1,1)=="C")
+	assert(#model:GetChildren()<=66,"Study part budget exceeded")
 	model:SetAttribute("PartCount",#model:GetChildren())
 	model.Parent=parent
 end
