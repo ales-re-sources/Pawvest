@@ -25,7 +25,9 @@ Use Pawvest's opaque colored stud-block style. The supplied illustration's expos
 - Broad square shoulders beneath a small green calyx, a short bent green stalk, and a pendant orientation.
 - Four overlapping elongated lobes form one solid fruit with shallow vertical grooves and a subtly tapered body. The four blunt
   lower tips remain discernible; avoid a pointed chilli tip, a round tomato, or a cluster of separate balls.
-- Target about **0.85–1.0 studs wide and 1.1–1.3 studs long** at standard mass; tune against the actual gameplay camera.
+- **Ales's shape correction (2026-11-09):** lengthen and slim the fruit so it cannot be mistaken for Tomato. The revised study
+  stretches the fruit bodies by **27% vertically** and narrows them by **14%**, with matching narrower calyxes. The three
+  standard-mass bodies measure **0.83–0.96 studs wide and 1.22–1.40 studs long** (length/width about **1.46**).
   Reserve foliage gaps around the shoulders and lower lobes.
 - All three peppers finish red. Green → warm orange → red is a ripening shortcut; widening shoulders and filling lobes must
   also communicate progress. Seeded variation changes relative length/width and hanging angle while preserving the bell shape.
@@ -52,11 +54,12 @@ harvest mass, including Sorter, uses cube-root dimensional scaling chiefly on fr
 ## Implementation and review boundary
 
 The static study uses `PlantKit`: **88 Parts** (seven stems, 36 leaf plates, 45 fruit pieces in three 15-Part groups), or
-**3,168 plant-only Parts** for 36 squares. Its standard-size height is **3.38 studs** and maximum ground radius **1.77 studs**
+**3,168 plant-only Parts** for 36 squares. Its standard-size height is **3.38 studs** and maximum ground radius **1.71 studs**
 (rounded up). Each fruit's four diagonally oriented shoulder columns and narrower lower lobes make actual silhouette grooves.
-These baseline measurements do not validate future seed/mass extremes or production performance. The existing playtest's server
-log was clear; client warnings were limited to the Studio MCP camera-reset notices. The disposable study was removed and the
-camera/HUD restored without stopping Ales's pre-existing playtest.
+These baseline measurements do not validate future seed/mass extremes or production performance. The playtest's server
+log was clear; client warnings were limited to the Studio MCP camera-reset notices. The revised silhouette was checked in a fresh
+playtest, with the same soil square and camera composition. The disposable study was removed, camera/HUD restored and the
+agent-started playtest stopped after validation.
 
 Use `PlantKit` and a future `PepperPlant` recipe through the shared `PlantGrowth` system and existing reviewer. Target at most
 **90 full-detail Parts** (3,240 plant-only Parts for 36 squares; a budget, not a measured result). Use a cheaper direct-built mid

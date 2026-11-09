@@ -70,6 +70,8 @@ for n, spec in leaves do
 end
 
 -- Three 15-Part bells: four connected lobes with broad shoulders and blunt tapered lower tips.
+-- Longer, slimmer bells distinguish ripe red Pepper from Tomato at gameplay distance.
+local bodyProportions = V(0.86, 1.27, 0.86)
 local fruit = {
 	{left, V(-1.06,2.53,0.30), 1.0, -0.13, 0.18},
 	{right, V(1.02,2.94,0.12), 0.94, 0.11, -0.20},
@@ -82,19 +84,19 @@ for id, spec in fruit do
 	rod("Fruit"..id.."_StalkA", spec[1], joint, 0.085, "Fruit", id)
 	rod("Fruit"..id.."_StalkB", joint, at, 0.085, "Fruit", id)
 	local frame = CFrame.new(at) * CFrame.Angles(0,spec[5],spec[4])
-	block("Fruit"..id.."_Calyx", V(0.30,0.12,0.30)*scale, frame, dark, "Fruit", id)
+	block("Fruit"..id.."_Calyx", V(0.30,0.12,0.30)*V(bodyProportions.X,1,bodyProportions.Z)*scale, frame, dark, "Fruit", id)
 	for i=1,4 do
 		local turn = CFrame.Angles(0,(i-1)*math.pi/2,0)
-		block("Fruit"..id.."_Sepal"..i, V(0.13,0.065,0.33)*scale,
-			frame*turn*CFrame.new(0,-0.025*scale,0.15*scale)*CFrame.Angles(0.25,0,0), dark, "Fruit", id)
+		block("Fruit"..id.."_Sepal"..i, V(0.13*bodyProportions.X,0.065,0.33*bodyProportions.Z)*scale,
+			frame*turn*CFrame.new(0,-0.025*scale,0.15*bodyProportions.Z*scale)*CFrame.Angles(0.25,0,0), dark, "Fruit", id)
 	end
 	for i, p in {V(-1,0,-1), V(1,0,-1), V(-1,0,1), V(1,0,1)} do
 		local tint = if i==1 or i==4 then redShade else red
 		local tilt = CFrame.Angles(p.Z*0.055,0,-p.X*0.055)*CFrame.Angles(0,math.pi/4,0)
-		block("Fruit"..id.."_Shoulder"..i, V(0.44,0.72,0.44)*scale,
-			frame*CFrame.new((p*0.218+V(0,-0.40,0))*scale)*tilt,tint,"Fruit",id)
-		block("Fruit"..id.."_LowerLobe"..i, V(0.38,0.43,0.38)*scale,
-			frame*CFrame.new((p*0.195+V(0,-0.91+(i%2)*0.025,0))*scale)*tilt,tint,"Fruit",id)
+		block("Fruit"..id.."_Shoulder"..i, V(0.44,0.72,0.44)*bodyProportions*scale,
+			frame*CFrame.new((p*0.218+V(0,-0.40,0))*bodyProportions*scale)*tilt,tint,"Fruit",id)
+		block("Fruit"..id.."_LowerLobe"..i, V(0.38,0.43,0.38)*bodyProportions*scale,
+			frame*CFrame.new((p*0.195+V(0,-0.91+(i%2)*0.025,0))*bodyProportions*scale)*tilt,tint,"Fruit",id)
 	end
 end
 plant.Parent = root

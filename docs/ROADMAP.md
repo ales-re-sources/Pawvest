@@ -61,7 +61,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG5 | Frost Grape growth art | CG5a/b approved; explicit fruit slots | Studio checks pass; CG5c field integration next | – |
 | CG6 | Corn growth art | CG6a–d complete | Studio checks and desktop CPU sample pass; real phone and second client confirmed by Ales 2026-11-09 | – |
 | CG7 | Lettuce growth art | CG7a (A, crisp head, chosen) and CG7b/c recipe + field registration built | Studio checks pass (bounds, seeds, sizes, seek, proxies, PlotView path); five stills and colour/density fix approved by Ales 2026-11-09; real phone and second client open | – |
-| CG8 | Pepper / Paprika growth art | [No-pole upright bush](plants/PEPPER.md); CG8a mature study built, silhouette review next | Static baseline Studio-checked (88 Parts, 3.38 studs tall, radius 1.77); animation and field integration not built | – |
+| CG8 | Pepper / Paprika growth art | [No-pole upright bush](plants/PEPPER.md); CG8a mature study revised with longer/slimmer fruit, silhouette review next | Static baseline Studio-checked (88 Parts, 3.38 studs tall, radius 1.71); animation and field integration not built | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
