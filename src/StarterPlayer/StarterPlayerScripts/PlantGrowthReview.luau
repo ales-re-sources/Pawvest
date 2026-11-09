@@ -76,7 +76,7 @@ local function open(cropId: string, seconds: number?)
 			corner.Parent = icon
 		end
 		gui.Enabled = root:GetAttribute("Rings")
-		gui.StudsOffset = Vector3.new(0,Growth.RingHeight(cropId,root:GetAttribute("SizeFactor")),3)
+		gui.StudsOffset = Vector3.new(0,Growth.RecipeRingHeight(recipe,root:GetAttribute("SizeFactor")),3)
 		gui.Adornee = attachment
 		gui.Parent = attachment
 		table.insert(rings, {attachment = attachment, gui = gui})
@@ -94,7 +94,7 @@ local function open(cropId: string, seconds: number?)
 	end
 
 	local function addPlant(square, seed, progress)
-		local frame = Growth.PlantCFrame(view:SquareCFrame(square), seed)
+		local frame = Growth.PlantCFrame(view:SquareCFrame(square), seed, recipe)
 		local plant = recipe.new(root, frame, seed, root:GetAttribute("SizeFactor"))
 		plant:SetGrowth(progress)
 		table.insert(plants, plant)
@@ -124,10 +124,18 @@ local function open(cropId: string, seconds: number?)
 			for i = 1, 6 do addPlant(6+i, i, 1) end
 			center, distance, height = 2.75, 21, 7
 		end
+		local reviewHeight = recipe.ReviewHeight
+		local targetHeight = 1.25
+		if reviewHeight then
+			-- A tall trained vine needs its living canopy and rigid support in frame.
+			targetHeight = reviewHeight / 2
+			height = math.max(height, reviewHeight * 0.9)
+			distance = math.max(distance, reviewHeight * 1.15)
+		end
 		-- Keep the full comparison row in view on narrower Studio windows.
 		local aspect = camera.ViewportSize.X / math.max(1, camera.ViewportSize.Y)
 		distance *= math.max(1, 1.55/aspect)
-		target = base:PointToWorldSpace(Vector3.new(center, 1.25, 0))
+		target = base:PointToWorldSpace(Vector3.new(center, targetHeight, 0))
 		eye = base:PointToWorldSpace(Vector3.new(center, height, distance))
 	end
 

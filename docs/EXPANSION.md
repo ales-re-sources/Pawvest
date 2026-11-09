@@ -232,6 +232,9 @@ The shared update interval is proportional to grow duration, clamped to 0.2–1 
 cadence; the ten-second Potato poses at 5 Hz. Square deadlines are spread across the interval. Corrections and ripeness take priority
 within the frame budget. The Studio review can still pose on every rendered frame.
 Perennials will retain structure maturity while fruit slots have separate growth cycles when that gameplay is added.
+Recipes may declare `FixedOrientation` for row-aligned supports and `FixedRingHeight` for a ring offset independent of mass.
+`PlantCFrame` accepts the recipe; `RecipeRingHeight` also supports an unregistered Studio recipe. Optional `ReviewHeight` frames tall
+plants in the shared reviewer. Existing bush recipes keep their seeded rotation, mass-scaled ring and original review framing.
 
 #### CG3 — Potato growth design (for review)
 
@@ -356,7 +359,10 @@ extreme must retain a living-canopy top of at least 7.1 studs; the trellis remai
 leaf size and constrained shoots around that height. Keep row alignment, the 5.5-stud footprint and visible gaps around the bunches.
 The growth-review camera and ring placement must accommodate this taller canopy, including the pet and selected-square view.
 
-**CG5b — Continuous motion next.** Use the selected tall B structure. Five review stops on one seeded structure:
+**CG5b — Continuous motion (built for review).** `FrostGrapePlant` retains the selected tall B and its 115-Part topology. The four
+support pieces are built once. The vine extends in successive segments, lobed leaves unfold from attached stalks, and three bunches
+swell with staggered berry timing before gaining their violet color and pale frost. Completed leaf poses and unchanged properties
+are cached; invisible geometry is skipped. Seeking backward restores the same visible pose. Five review stops on one seeded structure:
 
 | Growth | Proposed pose |
 |---|---|
@@ -372,6 +378,20 @@ and constrained vine vigor; support clearance takes precedence over uniform whol
 size extremes, forward/backward scrubbing and bunch visibility with labels/rings hidden. Current single-harvest square-clearing
 behavior remains the pilot contract, including removal of its support; a persistent vine/fruit-regrowth lifecycle needs a separate
 gameplay decision, as with the future Apple tree. No new purchase or tool is implied by the visual support.
+
+Open the ten-second display loop in a Studio playtest's **Client** command bar:
+
+```luau
+require(game.Players.LocalPlayer.PlayerScripts.PlantGrowthReview).Open("FrostGrape", 10)
+```
+
+Review the [sampled Studio loop](art/frost-grape/growth.gif), [five poses](art/frost-grape/growth-poses.jpg),
+[six mature seeds](art/frost-grape/growth-seeds.jpg), [harvest-size extremes](art/frost-grape/growth-sizes.jpg) and
+[plant with ring and pet](art/frost-grape/growth-field.jpg). The shared tool offers scrub, seed, size and ring controls; Close restores
+the camera and HUD. Seed 1 at standard size reproduces the selected ripe study. Other seeds vary cane bends, leaf angles and sizes,
+individual berries, bunch size and hanging offset. Harvested mass scales the berries; the support and canopy height remain tall.
+Studio pose, bounds, attachment and control checks passed. **Motion art approval is pending.** This is a display-only module;
+the production registry, eight-hour crop duration, plot feed and harvest behavior are unchanged.
 
 **CG5c/d — Later gates.** After art sign-off, register the recipe and any explicit fixed-orientation / rigid-support recipe options
 in the generic renderer. Use existing identity, size and time anchors; the eight-hour crop can use the one-second growth cadence.
