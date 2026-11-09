@@ -22,6 +22,9 @@ boards, challenge coins, talents), pets, and a garden island with plots, incubat
 | [docs/LOCALIZATION.md](docs/LOCALIZATION.md) | localization design and the strings workflow |
 | [docs/TELEMETRY.md](docs/TELEMETRY.md) | telemetry events and how to read them on the Creator Dashboard |
 | [docs/PET_GROWTH.md](docs/PET_GROWTH.md) | how PetLook derives a pet's look, how pet models are authored |
+| [docs/PLANT_GROWTH.md](docs/PLANT_GROWTH.md) | plant authoring: silhouette, continuous growth, variation, fruit slots, performance and five-snapshot review |
+
+**Before designing a crop:** read `docs/PLANT_GROWTH.md`. The standard art review is five snapshots (0/20/50/75/100%); historical GIF links do not require new animation captures.
 
 Tools: `tools/economy.py` (economy model: run `check` after changing any price, rate or reward in a config, `pin` to accept reviewed values; `tools/economy_ev.py`: the engagement-first EV proposal, `economy.py proposal`),
 `tools/loc.py` (strings, below), `tools/vault_reach.py` + `tools/vault_right_checks.sh` (Stage 14's Key Vault reachability; re-run after moving
