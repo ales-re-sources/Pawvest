@@ -10,6 +10,7 @@ selected silhouette, growth poses and geometry budget.
 | Potato | [Upright compound foliage](plants/POTATO.md) | 65 |
 | Frost Grape | [Tall vineyard trellis](plants/FROST_GRAPE.md) | 115 |
 | Corn | [Tall two-ear stalk](plants/CORN.md) | 99 |
+| Lettuce | [Crisp head](plants/LETTUCE.md) | 70 |
 
 ## Studio growth player
 
@@ -19,7 +20,7 @@ Start a Studio playtest, then run in the **Client command bar**:
 require(game.Players.LocalPlayer.PlayerScripts.PlantGrowthReview).Open("FrostGrape", 10)
 ```
 
-Replace `"FrostGrape"` with `"Tomato"`, `"Potato"` or `"Corn"`. The optional seconds argument controls only review playback;
+Replace `"FrostGrape"` with `"Tomato"`, `"Potato"`, `"Corn"` or `"Lettuce"`. The optional seconds argument controls only review playback;
 it does not change real crop timing or saved data. The reviewer can open an unregistered art recipe, so it is not proof of field
 integration. Close the current reviewer before opening another crop.
 
@@ -55,8 +56,10 @@ desktop screenshot checks composition, not phone rendering performance. Studio r
 
 ## Build one deterministic plant
 
-Use a crop recipe through the shared `PlantGrowth` system, not a crop-specific scheduler or review UI. Build a bounded set of Parts
-once and pose them continuously. Leaves unfold at their bases; children follow the current parent as it extends. Growth should
+Use a crop recipe through the shared `PlantGrowth` system, not a crop-specific scheduler or review UI. Build on
+[`PlantKit`](../src/ReplicatedStorage/PlantKit.luau): its timing, seed and size helpers and its `Rig` (cached Part writes) belong
+there, not copied into a recipe. A pose writes Parts in the order they were added. Keep a recipe's `vary` draws in their order: a new
+draw goes last, otherwise every existing planting changes shape. Build a bounded set of Parts once and pose them continuously. Leaves unfold at their bases; children follow the current parent as it extends. Growth should
 extend successive stems and organs with overlapping timings rather than uniformly inflate the entire model. A 43→44→43% seek
 must restore the same visible pose without floating leaves, detached fruit or a changed random roll.
 
@@ -108,8 +111,9 @@ minimum/standard/maximum mass, mature height, all-age footprint and the selected
 integration and performance validation.
 
 Continuous growth does not require production updates every rendered frame. Reuse cached poses/properties, skip invisible work,
-freeze completed groups and stop posing ripe plants. Spread square updates within the shared frame budget. Current cadence scales
-with effective growth duration and clamps to 0.2–1 seconds: ten-second Potato uses 5 Hz; slower crops can use 1 Hz.
+freeze completed groups and stop posing ripe plants. Spread square updates within the shared frame budget. Current cadence is 1/480 of the
+effective growth duration, clamped to 0.2–30 seconds: ten-second Potato uses 5 Hz, thirty-minute Corn updates every 3.75 s, crops of
+4 h or more every 30 s. State corrections and the exact ripe moment do not wait for a sample.
 The Studio scrubber can pose immediately. Short preview playback must not change a live crop's growth duration. Measure the full field and the 24-plot scenario on the same route before
 claiming an improvement; real-phone performance remains a separate check. Simplify distant foliage while preserving harvest cues.
 

@@ -5,6 +5,7 @@ local recipes = {
 	Tomato = require(script.Parent.TomatoPlant),
 	Potato = require(script.Parent.PotatoPlant),
 	Corn = require(script.Parent.CornPlant),
+	Lettuce = require(script.Parent.LettucePlant),
 }
 
 local PlantGrowth = {}
@@ -45,8 +46,9 @@ function PlantGrowth.RingHeight(cropId: string, sizeFactor: number?): number
 end
 
 function PlantGrowth.UpdateInterval(duration: number): number
-	-- Keep a similar visible growth step for quick crops and boosted plants.
-	return math.clamp(duration / 480, 0.2, 1)
+	-- The same small visible step (1/480 of the growth) for every crop, at most 5 Hz for quick crops.
+	-- Corrections and the exact ripe moment do not wait for a sample (PlotView:plantDue).
+	return math.clamp(duration / 480, 0.2, 30)
 end
 
 return PlantGrowth

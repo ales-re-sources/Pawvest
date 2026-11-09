@@ -3,6 +3,8 @@
 local TomatoPlant = {}
 TomatoPlant.__index = TomatoPlant
 
+local PlantKit = require(script.Parent.PlantKit)
+local phase, axis = PlantKit.phase, PlantKit.axis
 local V = Vector3.new
 local STEM = Color3.fromRGB(59, 119, 64)
 local DARK = Color3.fromRGB(41, 126, 66)
@@ -52,26 +54,6 @@ for _ = 1, 2 do
 end
 assert(#PART_METADATA == 54, "Tomato metadata budget changed")
 
-local function phase(g, first, last)
-	local t = math.clamp((g - first) / (last - first), 0, 1)
-	return t * t * (3 - 2 * t)
-end
-
-local function axis(a, b)
-	local delta = b - a
-	if delta.Magnitude < 0.00001 then
-		return CFrame.new(a)
-	end
-	local up = if math.abs(delta.Unit.Y) > 0.98 then Vector3.xAxis else Vector3.yAxis
-	return CFrame.lookAt((a + b) / 2, a, up)
-end
-
-local function massScale(sizeFactor)
-	local factor = sizeFactor or 1
-	assert(type(factor) == "number" and factor > 0 and factor < math.huge, "Invalid plant size factor")
-	return factor ^ (1 / 3)
-end
-
 local function radiusOf(parts, soil)
 	local radius = 0
 	for _, part in parts do
@@ -93,39 +75,27 @@ end
 
 function TomatoPlant.new(parent, soilCFrame, seed, sizeFactor)
 	local self = setmetatable({}, TomatoPlant)
-	self.model = Instance.new("Model")
-	self.model.Name = "TomatoPlant"
-	self.base = soilCFrame
-	self.scale = massScale(sizeFactor)
+	self.rig = PlantKit.newRig("TomatoPlant", soilCFrame)
+	self.model = self.rig.model
+	self.scale = PlantKit.dimension(sizeFactor)
 	self.horizontalFit = 1
-	self.parts = {}
-	self.applied = {}
-	local random = Random.new(seed or 1)
 	-- Seed one preserves the approved A; the others retain its separated fruit.
-	local amount = if (seed or 1) == 1 then 0 else 1
-	local tendency = TENDENCIES[(math.floor(seed or 1) - 1) % #TENDENCIES + 1]
-	self.spread = tendency[1] + random:NextNumber(-0.012, 0.012) * amount
-	self.height = tendency[2] + random:NextNumber(-0.012, 0.012) * amount
-	self.lean = tendency[3] + random:NextNumber(-0.012, 0.012) * amount
+	local vary = PlantKit.seeded(seed)
+	local tendency = PlantKit.tendency(TENDENCIES, seed)
+	self.spread = tendency[1] + vary(0.012)
+	self.height = tendency[2] + vary(0.012)
+	self.lean = tendency[3] + vary(0.012)
 	self.armLengths, self.fruitSizes, self.armHeights, self.leafTurns = {}, {}, {}, {}
 	self.timing = {}
 	for i = 1, 3 do
-		self.armLengths[i] = tendency[4][i] + random:NextNumber(-0.10, 0.10) * amount
-		self.fruitSizes[i] = tendency[5][i] + random:NextNumber(-0.13, 0.13) * amount
-		self.armHeights[i] = random:NextNumber(-0.16, 0.16) * amount
-		self.leafTurns[i] = CFrame.Angles(0, random:NextNumber(-0.22, 0.22) * amount, 0)
-		self.timing[i] = random:NextNumber(-0.018, 0.018) * amount
+		self.armLengths[i] = tendency[4][i] + vary(0.10)
+		self.fruitSizes[i] = tendency[5][i] + vary(0.13)
+		self.armHeights[i] = vary(0.16)
+		self.leafTurns[i] = CFrame.Angles(0, vary(0.22), 0)
+		self.timing[i] = vary(0.018)
 	end
-	for i = 1, 54 do
-		local part = Instance.new("Part")
-		part.Name, part.MaterialVariant = PART_METADATA[i][1], PART_METADATA[i][2]
-		part.Material = Enum.Material.Plastic
-		part.TopSurface, part.BottomSurface = Enum.SurfaceType.Smooth, Enum.SurfaceType.Smooth
-		part.Anchored, part.CanCollide, part.CanTouch, part.CanQuery = true, false, false, false
-		part.Transparency = 1
-		part.Parent = self.model
-		self.parts[i] = part
-		self.applied[i] = { visible = false }
+	for _, meta in PART_METADATA do
+		self.rig:add(meta[1], meta[2])
 	end
 	-- Fit off the DataModel before revealing the plant. Check the opening poses as
 	-- well as ripe leaves; only horizontal spread/foliage is constrained.
@@ -133,11 +103,11 @@ function TomatoPlant.new(parent, soilCFrame, seed, sizeFactor)
 		local radius = 0
 		for _, growth in {0.2, 0.5, 0.75, 1} do
 			self:SetGrowth(growth)
-			radius = math.max(radius, radiusOf(self.parts, soilCFrame))
+			radius = math.max(radius, radiusOf(self.rig.parts, soilCFrame))
 		end
 		if radius <= 2.4 then break end
 		self.horizontalFit *= math.min(0.90, 2.35 / radius)
-		self.growth = nil
+		self.rig.growth = nil
 	end
 	self:SetGrowth(0)
 	self.model.Parent = parent
@@ -145,57 +115,23 @@ function TomatoPlant.new(parent, soilCFrame, seed, sizeFactor)
 end
 
 function TomatoPlant:SetGrowth(normalized)
-	assert(not self.destroyed, "TomatoPlant has been destroyed")
-	assert(type(normalized) == "number" and normalized == normalized, "Growth must be a number")
-	local g = math.clamp(normalized, 0, 1)
-	if self.growth == g then return end
-	self.growth = g
-	local cursor = 0
-	local base = self.base
+	local rig = self.rig
+	local g = rig:beginPose(normalized)
+	if not g then return end
+	local base = rig.base
 	local function point(p)
 		return V((p.X * self.spread + p.Y * self.lean) * self.horizontalFit, p.Y * self.height, p.Z * self.spread * self.horizontalFit)
 	end
-	local function hide(count)
-		for _ = 1, count do
-			cursor += 1
-			local applied = self.applied[cursor]
-			if applied.visible then
-				self.parts[cursor].Transparency = 1
-				applied.visible = false
-			end
-		end
-	end
 	local function block(_name, size, cf, color, _variant, visible)
 		if not visible then
-			hide(1)
+			rig:hide(1)
 			return
 		end
-		cursor += 1
-		local part = self.parts[cursor]
-		local applied = self.applied[cursor]
-		local scaled = size * self.scale
-		local actualSize = V(math.max(scaled.X, 0.001), math.max(scaled.Y, 0.001), math.max(scaled.Z, 0.001))
-		local world = base * CFrame.new(cf.Position * self.scale) * cf.Rotation
-		if applied.size ~= actualSize then
-			part.Size = actualSize
-			applied.size = actualSize
-		end
-		if applied.cf ~= world then
-			part.CFrame = world
-			applied.cf = world
-		end
-		if applied.color ~= color then
-			part.Color = color
-			applied.color = color
-		end
-		if not applied.visible then
-			part.Transparency = 0
-			applied.visible = true
-		end
+		rig:place(size * self.scale, base * CFrame.new(cf.Position * self.scale) * cf.Rotation, color, 1)
 	end
 	local function twig(a, b, width, visible)
 		if not visible then
-			hide(1)
+			rig:hide(1)
 			return
 		end
 		block("Stem", V(width, width, (b - a).Magnitude), axis(a, b), STEM, "StudsSmall", visible)
@@ -207,7 +143,7 @@ function TomatoPlant:SetGrowth(normalized)
 	end
 	local function leaf(at, offset, width, color, scale, opening)
 		if scale <= 0 then
-			hide(2)
+			rig:hide(2)
 			return
 		end
 		width *= self.horizontalFit
@@ -222,7 +158,7 @@ function TomatoPlant:SetGrowth(normalized)
 	end
 	local function fruit(at, size, scale, color)
 		if scale <= 0 then
-			hide(8)
+			rig:hide(8)
 			return
 		end
 		local s = size * scale
@@ -278,25 +214,20 @@ function TomatoPlant:SetGrowth(normalized)
 	local rightScale = phase(g, 0.055, 0.26)
 	leaf(crown, point(V(-0.78, 0.25, 0.35)), 0.48, LIT, leftScale, phase(g, 0.035, 0.29))
 	leaf(crown, point(V(0.57, 0.34, -0.51)), 0.41, NEW, rightScale, phase(g, 0.075, 0.34))
-	assert(cursor == 54, "Tomato part budget changed")
+	rig:finish()
 end
 
 function TomatoPlant:Destroy()
-	if self.destroyed then return end
-	self.destroyed = true
-	self.model:Destroy()
-	self.parts = {}
-	self.applied = {}
+	self.rig:destroy()
 end
 
 TomatoPlant.RingHeight = 2.65
 
 function TomatoPlant.BuildProxy(parent: Instance, soil: CFrame, stage: number, seed: number?, sizeFactor: number?)
 	if stage <= 0 then return end
-	local scale = massScale(sizeFactor)
-	local random = Random.new(seed or 1)
-	local amount = if (seed or 1) == 1 then 0 else 1
-	local tendency = TENDENCIES[(math.floor(seed or 1) - 1) % #TENDENCIES + 1]
+	local scale = PlantKit.dimension(sizeFactor)
+	local vary = PlantKit.seeded(seed)
+	local tendency = PlantKit.tendency(TENDENCIES, seed)
 	local width = (if stage == 1 then 1.4 elseif stage == 2 then 2.7 else 3.6) * tendency[1]
 	local height = (if stage == 1 then 0.70 elseif stage == 2 then 1.25 else 1.65) * tendency[2]
 	local pieces = {
@@ -304,7 +235,7 @@ function TomatoPlant.BuildProxy(parent: Instance, soil: CFrame, stage: number, s
 	}
 	if stage >= 3 then
 		for i, side in {-1, 1} do
-			local fruitScale = tendency[5][i] + random:NextNumber(-0.13, 0.13) * amount
+			local fruitScale = tendency[5][i] + vary(0.13)
 			table.insert(pieces, {"Tomato", V(0.85, 0.7, 0.8) * fruitScale, V(side * 1.12 * tendency[4][i], 0.60 * tendency[2], 0.35), Color3.fromRGB(225, 55, 45), "StudsSmall"})
 		end
 	end
@@ -315,14 +246,9 @@ function TomatoPlant.BuildProxy(parent: Instance, soil: CFrame, stage: number, s
 	end
 	local fit = math.min(1, 2.4 / radius)
 	local function block(name, size, offset, color, variant)
-		local part = Instance.new("Part")
 		local dimensions = V(size.X * fit, size.Y, size.Z * fit) * scale
 		local at = V(offset.X * fit, offset.Y, offset.Z * fit) * scale
-		part.Name, part.Size, part.CFrame, part.Color = name, dimensions, soil * CFrame.new(at), color
-		part.Material, part.MaterialVariant = Enum.Material.Plastic, variant
-		part.Anchored, part.CanCollide, part.CanTouch, part.CanQuery, part.CastShadow = true, false, false, false, false
-		part.TopSurface, part.BottomSurface = Enum.SurfaceType.Smooth, Enum.SurfaceType.Smooth
-		part.Parent = parent
+		PlantKit.proxyPart(parent, name, dimensions, soil * CFrame.new(at), color, variant)
 	end
 	for _, piece in pieces do
 		block(table.unpack(piece))

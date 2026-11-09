@@ -7,6 +7,8 @@ FrostGrapePlant.FixedOrientation = true
 FrostGrapePlant.FixedRingHeight = true
 FrostGrapePlant.ReviewHeight = 7.6
 
+local PlantKit = require(script.Parent.PlantKit)
+local phase, axis = PlantKit.phase, PlantKit.axis
 local V = Vector3.new
 local WOOD = Color3.fromRGB(123, 105, 85)
 local CANE = Color3.fromRGB(87, 82, 104)
@@ -51,29 +53,12 @@ local BERRY_POSITIONS = {
 	V(-0.14, -0.78, 0.05), V(0.14, -0.78, -0.10), V(0, -1.06, 0),
 }
 
-local function phase(g, first, last)
-	local t = math.clamp((g - first) / (last - first), 0, 1)
-	return t * t * (3 - 2 * t)
-end
-
-local function axis(a, b)
-	local d = b - a
-	if d.Magnitude < 0.000001 then return CFrame.new(a) end
-	local up = if math.abs(d.Unit.Y) > 0.98 then Vector3.xAxis else Vector3.yAxis
-	return CFrame.lookAt((a + b) / 2, a, up)
-end
-
 function FrostGrapePlant.new(parent, soilCFrame, seed, sizeFactor)
 	local self = setmetatable({}, FrostGrapePlant)
-	self.model = Instance.new("Model")
-	self.model.Name = "FrostGrapePlant"
-	self.base, self.parts, self.applied, self.leafPoses = soilCFrame, {}, {}, {}
-	local mass = sizeFactor or 1
-	assert(type(mass) == "number" and mass > 0 and mass < math.huge, "Invalid plant size factor")
-	self.dimensionScale = mass ^ (1 / 3)
-	local random = Random.new(seed or 1)
-	local amount = if (seed or 1) == 1 then 0 else 1
-	local function vary(extent) return random:NextNumber(-extent, extent) * amount end
+	local rig = PlantKit.newRig("FrostGrapePlant", soilCFrame)
+	self.rig, self.model, self.leafPoses = rig, rig.model, {}
+	self.dimensionScale = PlantKit.dimension(sizeFactor)
+	local vary = PlantKit.seeded(seed)
 	local function bend(p, extent, height)
 		return p + V(vary(extent), vary(height or 0.035), vary(extent * 0.7))
 	end
@@ -121,20 +106,12 @@ function FrostGrapePlant.new(parent, soilCFrame, seed, sizeFactor)
 		self.fruitSlots[i] = {id = i, attachment = soilCFrame * CFrame.new(node), parts = {}}
 	end
 	local function create(name, variant, fruitSlot)
-		local p = Instance.new("Part")
-		p.Name, p.Material, p.MaterialVariant = name, Enum.Material.Plastic, variant or "StudsSmall"
-		p.TopSurface, p.BottomSurface = Enum.SurfaceType.Smooth, Enum.SurfaceType.Smooth
-		p.Anchored, p.CanCollide, p.CanTouch, p.CanQuery = true, false, false, false
-		p.Transparency = 1
-		p:SetAttribute("PlantRole", if fruitSlot then "Fruit"
-			elseif name == "RigidPost" or name == "RigidRail" then "Support" else "Structure")
+		local role = if fruitSlot then "Fruit"
+			elseif name == "RigidPost" or name == "RigidRail" then "Support" else "Structure"
+		local p = rig:add(name, variant, role, fruitSlot)
 		if fruitSlot then
-			p:SetAttribute("FruitSlot", fruitSlot)
 			table.insert(self.fruitSlots[fruitSlot].parts, p)
 		end
-		p.Parent = self.model
-		table.insert(self.parts, p)
-		table.insert(self.applied, {})
 		return p
 	end
 	-- Equipment is present before planting and never follows seed, mass or growth.
@@ -157,49 +134,30 @@ function FrostGrapePlant.new(parent, soilCFrame, seed, sizeFactor)
 		create("FrostFacet", nil, slot); create("FrostFacet", nil, slot)
 	end
 	for _ = 1, 3 do create("Tendril") end
-	assert(#self.parts == 115, "Frost grape topology changed")
+	assert(#rig.parts == 115, "Frost grape topology changed")
 	self:SetGrowth(0)
 	self.model.Parent = parent
 	return self
 end
 
 function FrostGrapePlant:SetGrowth(normalized)
-	assert(not self.destroyed, "FrostGrapePlant has been destroyed")
-	assert(type(normalized) == "number" and normalized == normalized, "Growth must be a number")
-	local g = math.clamp(normalized, 0, 1)
-	if self.growth == g then return end
-	self.growth = g
-	local cursor = 4
-	local function block(size, cf, color, opacity)
-		cursor += 1
-		local p, old = self.parts[cursor], self.applied[cursor]
-		local transparency = 1 - opacity
-		if opacity > 0 then
-			local actual = V(math.max(size.X, 0.001), math.max(size.Y, 0.001), math.max(size.Z, 0.001))
-			local world = self.base * cf
-			if old.size ~= actual then p.Size, old.size = actual, actual end
-			if old.cf ~= world then p.CFrame, old.cf = world, world end
-			if old.color ~= color then p.Color, old.color = color, color end
-		end
-		if old.transparency ~= transparency then p.Transparency, old.transparency = transparency, transparency end
-	end
-	local function rod(a, b, width, color, q)
-		block(V(width, width, (b - a).Magnitude), axis(a, b), color, phase(q, 0, 0.08))
-	end
+	local rig = self.rig
+	local g = rig:beginPose(normalized, 4) -- the rigid supports are placed once in new()
+	if not g then return end
 	local main, mainQ = {self.path[1]}, {}
 	local starts, finishes = {0.01, 0.18, 0.35}, {0.20, 0.36, 0.49}
 	for i = 1, 3 do
 		local q = phase(g, starts[i], finishes[i])
 		mainQ[i] = q
 		main[i + 1] = main[i]:Lerp(self.path[i + 1], q)
-		rod(main[i], main[i + 1], 0.15 * (0.55 + 0.45 * q), YOUNG:Lerp(CANE, phase(g, 0.15, 0.75)), q)
+		rig:rod(main[i], main[i + 1], 0.15 * (0.55 + 0.45 * q), YOUNG:Lerp(CANE, phase(g, 0.15, 0.75)), q)
 	end
 	local arms = {}
 	for i, spec in ARMS do
 		local a = if spec[1] == 0 then main[4] else arms[spec[1]]
 		local q = phase(g, spec[3], spec[4])
 		arms[i] = a:Lerp(self.arms[i], q)
-		rod(a, arms[i], 0.115 * (0.5 + 0.5 * q), STEM, q)
+		rig:rod(a, arms[i], 0.115 * (0.5 + 0.5 * q), STEM, q)
 	end
 	for i, spec in LEAVES do
 		local leaf = self.leaves[i]
@@ -218,17 +176,17 @@ function FrostGrapePlant:SetGrowth(normalized)
 		end
 		local old = self.leafPoses[i]
 		if old and old.q == q and old.node == node then
-			cursor += 6
+			rig:skip(6)
 		else
 			self.leafPoses[i] = {q = q, node = node}
 			local at = node + leaf.offset * q
-			rod(node, at, 0.09 * (0.35 + 0.65 * q), STEM, q)
+			rig:rod(node, at, 0.09 * (0.35 + 0.65 * q), STEM, q)
 			-- Blade pieces share the same hinge and unfold together around its X axis.
 			local face = CFrame.new(at) * CFrame.Angles(leaf.tilt + 1.20 * (1 - q), leaf.yaw, 0)
 			local scale = leaf.scale * q
 			for j, lobe in LOBES do
 				local color = if j % 2 == 0 then DARK else LIGHT
-				block(lobe[2] * scale, face * CFrame.new(lobe[1] * scale) * CFrame.Angles(0, lobe[3], 0),
+				rig:block(lobe[2] * scale, face * CFrame.new(lobe[1] * scale) * CFrame.Angles(0, lobe[3], 0),
 					YOUNG:Lerp(color, q), phase(q, 0, 0.08))
 			end
 		end
@@ -243,15 +201,15 @@ function FrostGrapePlant:SetGrowth(normalized)
 		local stalk = phase(g, 0.55, 0.65)
 		local swell = phase(g, 0.60, 1)
 		local at = parent + fruit.offset * stalk + V(0, 0.10 * stalk * (1 - swell), 0)
-		rod(parent, at, 0.10 * (0.4 + 0.6 * stalk), STEM, stalk)
+		rig:rod(parent, at, 0.10 * (0.4 + 0.6 * stalk), STEM, stalk)
 		local frame = CFrame.new(at) * CFrame.Angles(0, fruit.turn, 0)
 		for j, berry in fruit.berries do
 			local q = phase(g, 0.60 + ((j - 1) % 3) * 0.012, 0.96 + ((j - 1) % 3) * 0.02)
 			local size = (if j == 9 then 0.35 else 0.43) * berry.size * fruit.scale * q
 			local cf = frame * CFrame.new(berry.at * fruit.scale * (0.35 + 0.65 * q)) * CFrame.Angles(0, (j % 3) * 0.20, 0)
 			local color = GREEN_BLUE:Lerp(BERRIES[(j - 1) % 3 + 1], phase(g, 0.73, 1))
-			block(V(size, size * 0.73, size * 0.85), cf, color, phase(q, 0, 0.08))
-			block(V(size * 0.76, size * 0.95, size * 0.72), cf, color, phase(q, 0, 0.08))
+			rig:block(V(size, size * 0.73, size * 0.85), cf, color, phase(q, 0, 0.08))
+			rig:block(V(size * 0.76, size * 0.95, size * 0.72), cf, color, phase(q, 0, 0.08))
 		end
 		for j = 1, 2 do
 			local frost = phase(g, 0.84, 1)
@@ -260,20 +218,18 @@ function FrostGrapePlant:SetGrowth(normalized)
 			local position = berry.at * (0.35 + 0.65 * q)
 			local y = position.Y + (0.43 * berry.size * 0.475 + 0.00075) * q
 			local cf = frame * CFrame.new(V(position.X, y, position.Z) * fruit.scale) * CFrame.Angles(0, 0.20, 0)
-			block(V(0.28 * frost, 0.055 * frost, 0.30 * frost) * fruit.scale * q, cf, ICE, frost)
+			rig:block(V(0.28 * frost, 0.055 * frost, 0.30 * frost) * fruit.scale * q, cf, ICE, frost)
 		end
 	end
 	local q = phase(g, 0.61, 0.78)
 	local tip = arms[4]
 	local curl = {tip, tip + V(0.14, 0.28, -0.13) * q, tip + V(0.35, 0.30, -0.20) * q, tip + V(0.30, 0.13, -0.17) * q}
-	for i = 1, 3 do rod(curl[i], curl[i + 1], 0.055 * (0.4 + 0.6 * q), STEM, q) end
-	assert(cursor == #self.parts, "Frost grape pose topology changed")
+	for i = 1, 3 do rig:rod(curl[i], curl[i + 1], 0.055 * (0.4 + 0.6 * q), STEM, q) end
+	rig:finish()
 end
 
 function FrostGrapePlant:Destroy()
-	if self.destroyed then return end
-	self.destroyed = true
-	self.model:Destroy()
+	self.rig:destroy()
 end
 
 return FrostGrapePlant

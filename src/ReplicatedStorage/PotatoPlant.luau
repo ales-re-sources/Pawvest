@@ -3,6 +3,8 @@
 -- Growth is normalized (the review runner supplies a ten-second timeline).
 local PotatoPlant = {}
 PotatoPlant.__index = PotatoPlant
+local PlantKit = require(script.Parent.PlantKit)
+local phase, axis = PlantKit.phase, PlantKit.axis
 local V = Vector3.new
 local GREEN = Color3.fromRGB(61, 132, 60)
 local LIGHT = Color3.fromRGB(91, 157, 67)
@@ -56,45 +58,29 @@ metadata("FlowerYellowCone")
 metadata("DecorativeGreenBerry")
 metadata("DecorativeGreenBerry")
 assert(#META == 65, "Potato metadata budget changed")
-local function phase(g, a, b)
-	local t = math.clamp((g - a) / (b - a), 0, 1)
-	return t * t * (3 - 2 * t)
-end
-local function axis(a, b)
-	local delta = b - a
-	if delta.Magnitude < 0.00001 then
-		return CFrame.new(a)
-	end
-	local up = if math.abs(delta.Unit.Y) > 0.98 then Vector3.xAxis else Vector3.yAxis
-	return CFrame.lookAt((a + b) / 2, a, up)
-end
 
 function PotatoPlant.new(parent, soilCFrame, seed, sizeFactor)
 	local self = setmetatable({}, PotatoPlant)
-	self.model = Instance.new("Model")
-	self.model.Name = "PotatoPlant"
-	self.base = soilCFrame
-	self.parts, self.applied = {}, {}
-	local variation = VARIATIONS[(math.floor(seed or 1) - 1) % #VARIATIONS + 1]
-	local random = Random.new(seed or 1)
-	local amount = if (seed or 1) == 1 then 0 else 1
-	self.spread = variation[1] + random:NextNumber(-0.012, 0.012) * amount
-	self.height = variation[2] + random:NextNumber(-0.012, 0.012) * amount
-	self.lean = variation[3] + random:NextNumber(-0.012, 0.012) * amount
-	local mass = if type(sizeFactor) == "number" and sizeFactor == sizeFactor then math.max(sizeFactor, 0.001) else 1
-	self.dimensionScale = mass ^ (1 / 3)
+	self.rig = PlantKit.newRig("PotatoPlant", soilCFrame)
+	self.model = self.rig.model
+	local variation = PlantKit.tendency(VARIATIONS, seed)
+	local vary = PlantKit.seeded(seed)
+	self.spread = variation[1] + vary(0.012)
+	self.height = variation[2] + vary(0.012)
+	self.lean = variation[3] + vary(0.012)
+	self.dimensionScale = PlantKit.dimension(sizeFactor)
 	self.spread *= self.dimensionScale
 	self.height *= self.dimensionScale
 	self.lean *= self.dimensionScale
 	self.shoots = {}
 	for i, top in TOPS do
-		local yaw = random:NextNumber(-0.38, 0.38) * amount
-		local height = 1 + random:NextNumber(-0.20, 0.20) * amount
-		local lean = V(random:NextNumber(-0.22, 0.22), 0, random:NextNumber(-0.22, 0.22)) * amount
+		local yaw = vary(0.38)
+		local height = 1 + vary(0.20)
+		local lean = V(vary(0.22), 0, vary(0.22))
 		local rotated = CFrame.Angles(0, yaw, 0):VectorToWorldSpace(top)
 		self.shoots[i] = {
 			top = V(rotated.X, rotated.Y * height, rotated.Z) + lean,
-			leafScale = 1 + random:NextNumber(-0.22, 0.22) * amount,
+			leafScale = 1 + vary(0.22),
 		}
 	end
 	-- Conservative triangle bounds cover every node interpolation, unfolded blade,
@@ -137,19 +123,11 @@ function PotatoPlant.new(parent, soilCFrame, seed, sizeFactor)
 	self.spread *= self.horizontalFit
 	self.lean *= self.horizontalFit
 	self.detailScale = self.dimensionScale * self.horizontalFit
-	for i, meta in META do
-		local part = Instance.new("Part")
-		part.Name, part.MaterialVariant = meta[1], meta[2]
-		part.Material = Enum.Material.Plastic
+	for _, meta in META do
+		local part = self.rig:add(meta[1], meta[2])
 		if meta[1] == "DecorativeGreenBerry" then
 			part.Shape = Enum.PartType.Ball
 		end
-		part.TopSurface, part.BottomSurface = Enum.SurfaceType.Smooth, Enum.SurfaceType.Smooth
-		part.Anchored, part.CanCollide, part.CanTouch, part.CanQuery = true, false, false, false
-		part.Transparency = 1
-		part.Parent = self.model
-		self.parts[i] = part
-		self.applied[i] = {visible = false}
 	end
 	self:SetGrowth(0)
 	self.model.Parent = parent
@@ -157,63 +135,24 @@ function PotatoPlant.new(parent, soilCFrame, seed, sizeFactor)
 end
 
 function PotatoPlant:SetGrowth(normalized)
-	assert(not self.destroyed, "PotatoPlant has been destroyed")
-	assert(type(normalized) == "number" and normalized == normalized, "Growth must be a number")
-	local g = math.clamp(normalized, 0, 1)
-	if self.growth == g then
+	local rig = self.rig
+	local g = rig:beginPose(normalized)
+	if not g then
 		return
 	end
-	self.growth = g
-	local cursor = 0
 	local function point(p)
 		return V(p.X * self.spread + p.Y * self.lean, p.Y * self.height, p.Z * self.spread)
 	end
-	local function hide(count)
-		for _ = 1, count do
-			cursor += 1
-			local state = self.applied[cursor]
-			if state.visible then
-				self.parts[cursor].Transparency = 1
-				state.visible = false
-			end
-		end
-	end
-	local function block(size, cf, color, visible)
-		if not visible then
-			hide(1)
-			return
-		end
-		cursor += 1
-		local part, state = self.parts[cursor], self.applied[cursor]
-		local actual = V(math.max(size.X, 0.001), math.max(size.Y, 0.001), math.max(size.Z, 0.001))
-		local world = self.base * cf
-		if state.size ~= actual then
-			part.Size = actual
-			state.size = actual
-		end
-		if state.cf ~= world then
-			part.CFrame = world
-			state.cf = world
-		end
-		if state.color ~= color then
-			part.Color = color
-			state.color = color
-		end
-		if not state.visible then
-			part.Transparency = 0
-			state.visible = true
-		end
-	end
 	local function twig(a, b, width, visible)
 		if not visible then
-			hide(1)
+			rig:hide(1)
 			return
 		end
-		block(V(width * self.detailScale, width * self.detailScale, (b - a).Magnitude), axis(a, b), STEM, true)
+		rig:block(V(width * self.detailScale, width * self.detailScale, (b - a).Magnitude), axis(a, b), STEM, 1)
 	end
 	local function blade(at, offset, width, color, scale)
 		if scale <= 0 then
-			hide(2)
+			rig:hide(2)
 			return
 		end
 		-- Leaves unfold from their own attachment rather than sliding into place.
@@ -227,14 +166,14 @@ function PotatoPlant:SetGrowth(normalized)
 			local back = (b - a).Unit
 			return CFrame.fromMatrix((a + b) / 2, right, back:Cross(right), back)
 		end
-		block(V(width * scale * self.detailScale, 0.14 * scale * self.detailScale, (crease - at).Magnitude), segmentFrame(at, crease), color, true)
-		block(V(width * 0.62 * scale * self.detailScale, 0.13 * scale * self.detailScale, (tip - crease).Magnitude), segmentFrame(crease, tip), color, true)
+		rig:block(V(width * scale * self.detailScale, 0.14 * scale * self.detailScale, (crease - at).Magnitude), segmentFrame(at, crease), color, 1)
+		rig:block(V(width * 0.62 * scale * self.detailScale, 0.13 * scale * self.detailScale, (tip - crease).Magnitude), segmentFrame(crease, tip), color, 1)
 	end
 	local tops
 	if g >= 0.66 and self.foliageComplete then
 		-- Saturated foliage is independent of later flowers, berries and tubers.
 		-- Advance the fixed topology without touching its already-cached pose.
-		cursor += 42
+		rig:skip(42)
 		tops = self.matureTops
 	else
 		tops = {}
@@ -280,15 +219,15 @@ function PotatoPlant:SetGrowth(normalized)
 	local tuberScale = phase(g, 0.70, 1)
 	for i, at in {V(-0.57, 0, 0.46), V(0.55, 0, 0.60)} do
 		if tuberScale <= 0 then
-			hide(3)
+			rig:hide(3)
 		else
 			local centre = V(at.X * self.tuberSpread, -0.28 * (1 - tuberScale) * self.dimensionScale, at.Z * self.tuberSpread)
 			local cf = CFrame.new(centre) * CFrame.Angles(0, i * 0.60, 0)
 			local size = 0.55 + 0.45 * tuberScale
 			local tuberSize = self.dimensionScale * size
-			block(V(0.73, 0.34, 0.45) * tuberSize, cf * CFrame.new(0, -0.08 * size * self.dimensionScale, 0), TAN, true)
-			block(V(0.53, 0.33, 0.62) * tuberSize, cf * CFrame.new(0, -0.08 * size * self.dimensionScale, 0), TAN, true)
-			block(V(0.44, 0.14, 0.35) * tuberSize, cf * CFrame.new(0, 0.13 * size * self.dimensionScale, 0), TAN, true)
+			rig:block(V(0.73, 0.34, 0.45) * tuberSize, cf * CFrame.new(0, -0.08 * size * self.dimensionScale, 0), TAN, 1)
+			rig:block(V(0.53, 0.33, 0.62) * tuberSize, cf * CFrame.new(0, -0.08 * size * self.dimensionScale, 0), TAN, 1)
+			rig:block(V(0.44, 0.14, 0.35) * tuberSize, cf * CFrame.new(0, 0.13 * size * self.dimensionScale, 0), TAN, 1)
 		end
 	end
 	local bloom = phase(g, 0.60, 0.80)
@@ -296,20 +235,20 @@ function PotatoPlant:SetGrowth(normalized)
 	local fork = tops[2] + point(V(0, 0.20, 0.09)) * bloom
 	local function flower(at, turn, scale)
 		if scale <= 0 then
-			hide(6)
+			rig:hide(6)
 			return
 		end
 		local face = CFrame.lookAt(at, at + V(0, 0.55, 0.84).Unit) * CFrame.Angles(0, 0, turn)
 		for petal = 1, 5 do
 			local angle = (petal - 1) * math.pi * 2 / 5
 			local cf = face * CFrame.Angles(0, 0, angle) * CFrame.new(0, 0.105 * scale * self.detailScale, 0)
-			block(V(0.125, 0.17, 0.065) * scale * self.detailScale, cf, CREAM, true)
+			rig:block(V(0.125, 0.17, 0.065) * scale * self.detailScale, cf, CREAM, 1)
 		end
-		block(V(0.095, 0.11, 0.105) * scale * self.detailScale, face * CFrame.new(0, 0, -0.067 * scale * self.detailScale), YELLOW, true)
+		rig:block(V(0.095, 0.11, 0.105) * scale * self.detailScale, face * CFrame.new(0, 0, -0.067 * scale * self.detailScale), YELLOW, 1)
 	end
 	if g >= 0.80 and self.leftFlowerComplete then
 		-- Common stalk, left stalk and the retained flower: eight fixed parts.
-		cursor += 8
+		rig:skip(8)
 	else
 		twig(tops[2], fork, 0.12 * bloom, bloom > 0)
 		local left = fork + point(V(-0.18, 0.13, 0.04)) * bloom
@@ -323,18 +262,13 @@ function PotatoPlant:SetGrowth(normalized)
 	flower(right, -0.25, bloom * (1 - late))
 	-- These are small, decorative non-edible berries; the underground tubers
 	-- remain the harvest crop. Berry tops touch the shared upper side stalk.
-	block(V(0.29, 0.30, 0.29) * late * self.detailScale, CFrame.new(right + point(V(-0.11, -0.10, 0)) * late), Color3.fromRGB(132, 169, 70), late > 0)
-	block(V(0.27, 0.28, 0.27) * late * self.detailScale, CFrame.new(right + point(V(0.18, -0.13, 0.04)) * late), Color3.fromRGB(117, 155, 62), late > 0)
-	assert(cursor == 65, "Potato part budget changed")
+	rig:block(V(0.29, 0.30, 0.29) * late * self.detailScale, CFrame.new(right + point(V(-0.11, -0.10, 0)) * late), Color3.fromRGB(132, 169, 70), if late > 0 then 1 else 0)
+	rig:block(V(0.27, 0.28, 0.27) * late * self.detailScale, CFrame.new(right + point(V(0.18, -0.13, 0.04)) * late), Color3.fromRGB(117, 155, 62), if late > 0 then 1 else 0)
+	rig:finish()
 end
 
 function PotatoPlant:Destroy()
-	if self.destroyed then
-		return
-	end
-	self.destroyed = true
-	self.model:Destroy()
-	self.parts, self.applied = {}, {}
+	self.rig:destroy()
 end
 
 PotatoPlant.RingHeight = 2.95
@@ -344,19 +278,16 @@ PotatoPlant.RingHeight = 2.95
 function PotatoPlant.BuildProxy(parent: Instance, soilCFrame: CFrame, stage: number, seed: number?, sizeFactor: number?)
 	local height = if stage == 1 then 0.65 elseif stage == 2 then 1.35 else 2.10
 	local width = if stage == 1 then 1.05 elseif stage == 2 then 1.95 else 2.75
-	local random = Random.new(seed or 1)
-	local amount = if (seed or 1) == 1 then 0 else 1
-	local variation = VARIATIONS[(math.floor(seed or 1) - 1) % #VARIATIONS + 1]
-	local mass = if type(sizeFactor) == "number" and sizeFactor == sizeFactor then math.max(sizeFactor, 0.001) else 1
-	local dimension = mass ^ (1 / 3)
-	local spread = (variation[1] + random:NextNumber(-0.012, 0.012) * amount) * dimension
-	local rise = (variation[2] + random:NextNumber(-0.012, 0.012) * amount) * dimension
+	local vary = PlantKit.seeded(seed)
+	local variation = PlantKit.tendency(VARIATIONS, seed)
+	local dimension = PlantKit.dimension(sizeFactor)
+	local spread = (variation[1] + vary(0.012)) * dimension
+	local rise = (variation[2] + vary(0.012)) * dimension
 	-- Lower canopy corner radius is <1.70 before scaling. Tuber corners are
 	-- below 1.20; this uniform horizontal fit therefore bounds every proxy part.
 	local fit = math.min(1, 2.4 / (1.70 * spread))
 	local horizontal = spread * fit
 	local function block(name, size, offset, color, variant, shape)
-		local part = Instance.new("Part")
 		local fittedSize = V(size.X * horizontal, size.Y * rise, size.Z * horizontal)
 		local fittedOffset = V(offset.X * horizontal, offset.Y * rise, offset.Z * horizontal)
 		if name == "TuberTop" then
@@ -365,14 +296,10 @@ function PotatoPlant.BuildProxy(parent: Instance, soilCFrame: CFrame, stage: num
 			fittedSize = size * dimension
 			fittedOffset = offset * dimension
 		end
-		part.Name, part.Size, part.CFrame, part.Color = name, fittedSize, soilCFrame * CFrame.new(fittedOffset), color
-		part.Material, part.MaterialVariant = Enum.Material.Plastic, variant
-		part.TopSurface, part.BottomSurface = Enum.SurfaceType.Smooth, Enum.SurfaceType.Smooth
-		part.Anchored, part.CanCollide, part.CanTouch, part.CanQuery, part.CastShadow = true, false, false, false, false
+		local part = PlantKit.proxyPart(parent, name, fittedSize, soilCFrame * CFrame.new(fittedOffset), color, variant)
 		if shape then
 			part.Shape = shape
 		end
-		part.Parent = parent
 	end
 	block("Stem", V(0.17, height, 0.17), V(0, height / 2, 0), STEM, "StudsSmall")
 	block("LowerCanopy", V(width, height * 0.20, width * 0.61), V(0, height * 0.55, 0.08), GREEN, "Studs")
