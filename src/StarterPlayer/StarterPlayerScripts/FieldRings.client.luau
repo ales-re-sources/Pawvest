@@ -19,6 +19,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
+local PlantGrowth = require(ReplicatedStorage:WaitForChild("PlantGrowth"))
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local GardenView = require(script.Parent:WaitForChild("GardenView"))
@@ -29,8 +30,6 @@ local studio = RunService:IsStudio()
 
 local SHOW_DISTANCE = 30 -- studs (horizontal) from the character to the nearest field square
 local NEAREST = 4 -- growing squares that print their time
-local HEIGHT = 1.3 -- studs over the soil (billboard centre: the disc's centre is 0.6 higher, at a crop's middle). Higher rings
--- looked a row further back from the default camera's angle
 local TOWARD = 3 -- studs toward the camera (StudsOffset Z): in front of the crop block (half width up to 1.9), so it does not hide the ring
 local WIDTH, TALL = 4.2, 3.5 -- billboard size in studs: the DISC-stud disc over a 1.05-stud time line
 local DISC = 2.3
@@ -107,7 +106,7 @@ local function newRing(square: number, crop)
 	gui.AutoLocalize = false
 	gui.LightInfluence = 0
 	gui.Size = UDim2.new(WIDTH, 0, TALL, 0) -- scale = studs
-	gui.StudsOffset = Vector3.new(0, if crop.id == "Tomato" then 2.65 else HEIGHT, TOWARD)
+	gui.StudsOffset = Vector3.new(0, PlantGrowth.RingHeight(crop.id), TOWARD)
 	gui.MaxDistance = 90
 	gui.Enabled = false
 	local disc = circle("Disc", {

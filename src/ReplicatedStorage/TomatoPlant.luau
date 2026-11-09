@@ -1,7 +1,7 @@
--- Display-only CG1b plant. No services, remotes, clock or profile access.
+-- Tomato art recipe. Shared by PlantGrowth and the Studio review.
 -- Every seek poses the same 54 parts from the seed's fixed parameters.
-local TomatoGrowthStudy = {}
-TomatoGrowthStudy.__index = TomatoGrowthStudy
+local TomatoPlant = {}
+TomatoPlant.__index = TomatoPlant
 
 local V = Vector3.new
 local STEM = Color3.fromRGB(59, 119, 64)
@@ -66,10 +66,10 @@ local function axis(a, b)
 	return CFrame.lookAt((a + b) / 2, a, up)
 end
 
-function TomatoGrowthStudy.new(parent, soilCFrame, seed)
-	local self = setmetatable({}, TomatoGrowthStudy)
+function TomatoPlant.new(parent, soilCFrame, seed)
+	local self = setmetatable({}, TomatoPlant)
 	self.model = Instance.new("Model")
-	self.model.Name = "TomatoGrowthStudy"
+	self.model.Name = "TomatoPlant"
 	self.base = soilCFrame
 	self.parts = {}
 	self.applied = {}
@@ -102,8 +102,8 @@ function TomatoGrowthStudy.new(parent, soilCFrame, seed)
 	return self
 end
 
-function TomatoGrowthStudy:SetGrowth(normalized)
-	assert(not self.destroyed, "TomatoGrowthStudy has been destroyed")
+function TomatoPlant:SetGrowth(normalized)
+	assert(not self.destroyed, "TomatoPlant has been destroyed")
 	assert(type(normalized) == "number" and normalized == normalized, "Growth must be a number")
 	local g = math.clamp(normalized, 0, 1)
 	if self.growth == g then return end
@@ -233,7 +233,7 @@ function TomatoGrowthStudy:SetGrowth(normalized)
 	assert(cursor == 54, "Tomato part budget changed")
 end
 
-function TomatoGrowthStudy:Destroy()
+function TomatoPlant:Destroy()
 	if self.destroyed then return end
 	self.destroyed = true
 	self.model:Destroy()
@@ -241,4 +241,25 @@ function TomatoGrowthStudy:Destroy()
 	self.applied = {}
 end
 
-return TomatoGrowthStudy
+TomatoPlant.RingHeight = 2.65
+
+function TomatoPlant.BuildProxy(parent: Instance, soil: CFrame, stage: number)
+	local width = if stage == 1 then 1.4 elseif stage == 2 then 2.7 else 3.6
+	local height = if stage == 1 then 0.70 elseif stage == 2 then 1.25 else 1.65
+	local function block(name, size, offset, color, variant)
+		local part = Instance.new("Part")
+		part.Name, part.Size, part.CFrame, part.Color = name, size, soil * CFrame.new(offset), color
+		part.Material, part.MaterialVariant = Enum.Material.Plastic, variant
+		part.Anchored, part.CanCollide, part.CanTouch, part.CanQuery, part.CastShadow = true, false, false, false, false
+		part.TopSurface, part.BottomSurface = Enum.SurfaceType.Smooth, Enum.SurfaceType.Smooth
+		part.Parent = parent
+	end
+	block("Canopy", V(width,0.5,width*0.58), V(0,height-0.25,-0.10), LIT, "Studs")
+	if stage >= 3 then
+		for _,side in {-1,1} do
+			block("Tomato",V(0.85,0.7,0.8),V(side*1.12,0.60,0.35),Color3.fromRGB(225,55,45),"StudsSmall")
+		end
+	end
+end
+
+return TomatoPlant

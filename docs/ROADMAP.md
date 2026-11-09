@@ -55,6 +55,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | U5 | Plot layout: hatchery left, barn right, path (U5a); hatchery panel with K1 egg cards and the reveal (U5b) | ✔ | ✔ (phone by geometry) | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | CG1 | Tomato growth art pilot (parallel garden art study) | CG1a–c and CG1d CPU tuning built | desktop CPU checks pass; real phone and second client open | – |
+| CG2 | Shared plant growth recipes and timing | ✔ | generic dispatch, field feed and detail changes checked | – |
+| CG3 | Potato growth art | CG3a ripe studies built | silhouette selection pending | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -98,6 +100,13 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
 
 Key talents as **world rewards**: done for Double Jump (K1, GDD §6). Open: Triple Jump / Dash for World 3. The lost Coin sinks are made up in
 the balancing pass (STAGES §6, GDD §6).
+
+**CG2 — Shared plant growth** is built and Studio-checked (2026-11-09). Register a crop recipe in `PlantGrowth`; generic field timing,
+detail levels, seed identity and scheduling handle it. [Design and interface](EXPANSION.md#cg2--shared-plant-growth-built)
+
+**CG3 — Potato growth art** follows the same review sequence. **CG3a** is ready for selection:
+[A / B / C](art/potato/ripe-studies.jpg) · [Field](art/potato/field.jpg) · [Phone-size view](art/potato/phone.jpg).
+Next are **CG3b** motion/seed review, **CG3c** field integration and **CG3d** performance checks.
 
 ### K1 — First-hour fixes, open part (kid playtest 2026-11-01)
 A 9-year-old on a phone, fresh progress, got stuck after about 20 minutes. Target: a new player who does not pay always has a next step for

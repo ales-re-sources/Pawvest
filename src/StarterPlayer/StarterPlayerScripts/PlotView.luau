@@ -2,17 +2,17 @@
 -- GardenPlotFeed), at its slot's position (GardenConfig.PlotCFrame), in one of four details: "full" (floor, edges, sign,
 -- incubators with egg and live countdown, incubator billboards, field pets with models and labels, the hatchery and barn prompts
 -- on the own plot), "mid" (the same without billboards and prompts, each pet one block in its rarity colour), "low" (floor, one block per egg,
--- the field as its row plates) or "none". Tomato uses seeded growth art at full detail; other crops remain blocks.
+-- the field as its row plates) or "none". Registered crops use seeded growth art; other crops remain blocks.
 -- The front strip (U5a): the path in the middle (base), the hatchery on the plaza's left (hatch: posts and roof over the nests
 -- inc1..3; on the own plot its one "Open hatchery" prompt, U5b, which calls options.onHatchery), the barn on its right (barn: walls, roof, shelves; on the own plot the seed sacks and crop crates of SetBarn and the
 -- "Open barn" prompt, which calls options.onBarn).
--- A plot is split into pieces (base, hatch, barn, inc1..3, field = row plates, sq1..36, tom1..36). SetState / SetDetail / Relabel only
+-- A plot is split into pieces (base, hatch, barn, inc1..3, field = row plates, sq1..36, grow1..36). SetState / SetDetail / Relabel only
 -- mark the pieces whose look changed; Step builds marked pieces until a deadline, so a build is spread over frames by the caller.
 -- State: { name, incCount, eggs = { [1..3] = "EggId:readyAt" or "" },
 -- field = { crops = two characters per square 1..CropConfig.MaxSquares: crop letter (CropConfig, a-s; a-f in synthetic plots) +
 -- stage 1-3 (3 = ripe), ".0" an empty open square, "#0" a locked one, pets = { "Kind:Level:uid:square:tending:guard" } (E1b field pets,
 -- tending / guard = Tending / Pest-control level, 0 without it; E4b; a feed without guard reads as 0),
--- tomatoes? = { [square string] = { n = planting identity, startAt, readyAt } } } } or { free = true } (a slot
+-- plants? = { [square string] = { n = planting identity, startAt, readyAt } } } } or { free = true } (a slot
 -- nobody holds: floor, sign "Free plot", grey incubators, an empty barn). Every plot's floor is the front strip; the field lies behind it
 -- (the P2 pens are gone since FA).
 -- The field (E1d2) has the shape CropConfig.RowWidths: every row is a plate of overgrown grass, open squares are soil on it,
@@ -30,7 +30,7 @@ local PetLook = require(ReplicatedStorage:WaitForChild("PetLook"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
-local TomatoGrowthStudy = require(ReplicatedStorage:WaitForChild("TomatoGrowthStudy"))
+local PlantGrowth = require(ReplicatedStorage:WaitForChild("PlantGrowth"))
 
 local PetModels = ReplicatedStorage:WaitForChild("PetModels")
 
@@ -240,13 +240,19 @@ function PlotView.new(slot: number, parent: Instance, options)
 	self.squares = 0 -- most field squares ever drawn (squares beyond the current field are cleared)
 	self.petMap = {} -- [square] = field pet of the current state (fieldPets)
 	self.labels = {} -- [incubator] = { label, egg, readyAt } of drawn countdowns
-	self.tomatoes = {} -- full-detail plants, separate from soil and field pets
-	self.tomatoCursor = 0
-	self.tomatoNextAt = math.huge
+	self.plants = {} -- full-detail plants, separate from soil and field pets
+	self.plantCursor = 0
+	self.plantNextAt = math.huge
 	self.root = Instance.new("Model")
 	self.root.Name = string.format("Slot_%02d", slot)
 	self.root.Parent = parent
 	return self
+end
+
+local function growthCrop(field, square: number)
+	local letter = field and string.sub(field.crops, square * 2 - 1, square * 2 - 1)
+	local crop = letter and CropConfig.ByLetter[letter]
+	return if crop and PlantGrowth.Supports(crop.id) then crop else nil
 end
 
 function PlotView:keys(): { string }
@@ -259,7 +265,7 @@ function PlotView:keys(): { string }
 	self.squares = math.max(self.squares, if field then CropConfig.MaxSquares else 0)
 	for n = 1, self.squares do
 		table.insert(keys, "sq" .. n)
-		table.insert(keys, "tom" .. n)
+		table.insert(keys, "grow" .. n)
 	end
 	return keys
 end
@@ -290,7 +296,7 @@ function PlotView:signature(key: string): string
 	local kind, number = string.match(key, "^(%a+)(%d+)$")
 	local n = tonumber(number) :: number
 	if state.free then
-		return if kind == "sq" or kind == "tom" or detail == "low" then "none" else detail .. "|free"
+		return if kind == "sq" or kind == "grow" or detail == "low" then "none" else detail .. "|free"
 	end
 	if kind == "inc" then
 		return table.concat({ detail, state.eggs[n] or "", tostring(n <= state.incCount), tostring(self.own), self.lang }, "|")
@@ -300,15 +306,16 @@ function PlotView:signature(key: string): string
 		return "none"
 	end
 	local cell = string.sub(field.crops, (n - 1) * 2 + 1, n * 2)
-	local tomato = type(field.tomatoes) == "table" and field.tomatoes[tostring(n)]
-	if kind == "tom" then
-		if string.sub(cell, 1, 1) ~= "k" or string.sub(cell, 2, 2) == "0" then return "none" end
-		local identity = tostring(state.ownerId or self.slot) .. "|" .. tostring(tomato and tomato.n or n)
-		return if detail == "full" then "tom|" .. identity else "proxy|" .. identity .. "|" .. self:tomatoStage(n)
+	local plant = type(field.plants) == "table" and field.plants[tostring(n)]
+	local crop = growthCrop(field, n)
+	if kind == "grow" then
+		if not crop or string.sub(cell, 2, 2) == "0" then return "none" end
+		local identity = crop.id .. "|" .. tostring(state.ownerId or self.slot) .. "|" .. tostring(plant and plant.n or n)
+		return if detail == "full" then "grow|" .. identity else "proxy|" .. identity .. "|" .. self:plantStage(n)
 	end
-	if string.sub(cell, 1, 1) == "k" then
+	if crop then
 		-- Both plant details live separately; stage/time changes retain soil and pets.
-		cell = if string.sub(cell, 2, 2) ~= "0" then "k1" else "k0"
+		cell = crop.letter .. (if string.sub(cell, 2, 2) ~= "0" then "1" else "0")
 	end
 	if string.sub(cell, 1, 1) == "#" then
 		-- a locked square is the row plate with grass tufts (full detail); its price shows only in the square card (U3a)
@@ -338,8 +345,8 @@ end
 function PlotView:SetState(state)
 	self.state = state
 	self.petMap = fieldPets(state.field)
-	for _, entry in self.tomatoes do entry.dirty = true end
-	self.tomatoNextAt = 0 -- a correction can wake a previously ripe plant
+	for _, entry in self.plants do entry.dirty = true end
+	self.plantNextAt = 0 -- a correction can wake a previously ripe plant
 	self:mark()
 end
 
@@ -735,13 +742,12 @@ function PlotView:buildSquare(model: Model, square: number)
 	local index = (square - 1) * 2 + 1
 	local letter = string.sub(field.crops, index, index)
 	local stage = tonumber(string.sub(field.crops, index + 1, index + 1)) or 0
-	if letter == "k" then stage = self:tomatoStage(square) end
 	if letter == "#" then
 		return self:buildOvergrown(model, square)
 	end
 	local soil = part({ Name = "Soil" .. square, Size = Vector3.new(size, 0.4, size), CFrame = self:at(Vector3.new(x, 0.05, z)), Color = COLORS.soil, Material = Enum.Material.Ground, CanQuery = self.own })
 	soil.Parent = model
-	if CROP_COLORS[letter] and stage > 0 and letter ~= "k" then
+	if CROP_COLORS[letter] and stage > 0 and not growthCrop(field, square) then
 		local height = 0.6 + stage * 0.7
 		local width = size * (0.3 + stage * 0.15)
 		local color = if stage >= 3 then CROP_COLORS[letter] else SPROUT
@@ -768,9 +774,9 @@ end
 
 -- The public anchors are shared by the owner and visitors. Old/synthetic feeds
 -- without anchors keep a static review pose, never a local guessed countdown.
-function PlotView:tomatoGrowth(square: number, now: number): number
+function PlotView:plantGrowth(square: number, now: number): number
 	local field = self.state and self.state.field
-	local anchor = field and type(field.tomatoes) == "table" and field.tomatoes[tostring(square)]
+	local anchor = field and type(field.plants) == "table" and field.plants[tostring(square)]
 	if type(anchor) == "table" and type(anchor.startAt) == "number" and type(anchor.readyAt) == "number" then
 		if anchor.startAt == 0 and anchor.readyAt == 0 then return 1 end
 		local duration = anchor.readyAt - anchor.startAt
@@ -780,90 +786,84 @@ function PlotView:tomatoGrowth(square: number, now: number): number
 	return if stage >= 3 then 1 elseif stage == 2 then 0.5 elseif stage == 1 then 0.2 else 0
 end
 
-function PlotView:tomatoStage(square: number): number
+function PlotView:plantStage(square: number): number
 	local field = self.state and self.state.field
-	local anchor = field and type(field.tomatoes) == "table" and field.tomatoes[tostring(square)]
-	if not self:tomatoTimed(square) and not (type(anchor) == "table" and anchor.startAt == 0 and anchor.readyAt == 0) then
+	local anchor = field and type(field.plants) == "table" and field.plants[tostring(square)]
+	if not self:plantTimed(square) and not (type(anchor) == "table" and anchor.startAt == 0 and anchor.readyAt == 0) then
 		return field and tonumber(string.sub(field.crops, square * 2, square * 2)) or 0
 	end
-	local growth = self:tomatoGrowth(square, workspace:GetServerTimeNow())
-	local crop = CropConfig.ById.Tomato
+	local growth = self:plantGrowth(square, workspace:GetServerTimeNow())
+	local crop = growthCrop(field, square)
+	if not crop then return 0 end
 	return CropConfig.Stage(crop, growth * crop.growSeconds)
 end
 
-function PlotView:buildTomato(model: Model, square: number)
+function PlotView:buildPlant(model: Model, square: number)
+	local field = self.state.field
+	local crop = growthCrop(field, square)
+	if not crop then return end
 	if self.detail == "mid" then
-		-- A's spreading outline and separated ripe fruit, at three Parts maximum.
-		local x, z = squareSpot(square)
-		local stage = self:tomatoStage(square)
-		local width = if stage == 1 then 1.4 elseif stage == 2 then 2.7 else 3.6
-		local y = if stage == 1 then 0.70 elseif stage == 2 then 1.25 else 1.65
-		part({ Name = "Canopy", Size = Vector3.new(width, 0.5, width * 0.58), CFrame = self:at(Vector3.new(x, y, z - 0.10)), Color = Color3.fromRGB(83, 161, 74), Material = Enum.Material.Plastic, MaterialVariant = "Studs", CanQuery = false, CanCollide = false }).Parent = model
-		if stage >= 3 then
-			for _, side in {-1, 1} do
-				part({ Name = "Tomato", Size = Vector3.new(0.85, 0.7, 0.8), CFrame = self:at(Vector3.new(x + side * 1.12, 0.85, z + 0.35)), Color = CROP_COLORS.k, Material = Enum.Material.Plastic, MaterialVariant = "StudsSmall", CanQuery = false, CanCollide = false }).Parent = model
-			end
-		end
+		PlantGrowth.BuildProxy(model, self:SquareCFrame(square), crop.id, self:plantStage(square))
 		return
 	end
-	local field = self.state.field
-	local anchor = type(field.tomatoes) == "table" and field.tomatoes[tostring(square)]
+	local anchor = type(field.plants) == "table" and field.plants[tostring(square)]
 	local planting = anchor and anchor.n or square
 	-- Same owner/planting prime mix as the deterministic Tending roll. Consecutive
 	-- plantings still cycle all six silhouettes (104729 is coprime with six).
 	local seed = (self.state.ownerId or self.slot) * 7919 + planting * 104729
-	local plant = TomatoGrowthStudy.new(model, self:SquareCFrame(square), seed)
+	local plant = PlantGrowth.new(model, self:SquareCFrame(square), crop.id, seed)
 	local now = workspace:GetServerTimeNow()
-	local growth = self:tomatoGrowth(square, now)
+	local growth = self:plantGrowth(square, now)
 	plant:SetGrowth(growth)
-	local nextAt = self:tomatoDue(square, growth, now, os.clock())
-	self.tomatoes[square] = { plant = plant, growth = growth, dirty = false, nextAt = nextAt, animated = self:tomatoTimed(square) }
-	self.tomatoNextAt = math.min(self.tomatoNextAt, nextAt)
+	local nextAt = self:plantDue(square, growth, now, os.clock())
+	self.plants[square] = { plant = plant, growth = growth, dirty = false, nextAt = nextAt, animated = self:plantTimed(square) }
+	self.plantNextAt = math.min(self.plantNextAt, nextAt)
 end
 
-function PlotView:tomatoTimed(square: number): boolean
+function PlotView:plantTimed(square: number): boolean
 	local field = self.state and self.state.field
-	local anchor = field and type(field.tomatoes) == "table" and field.tomatoes[tostring(square)]
+	local anchor = field and type(field.plants) == "table" and field.plants[tostring(square)]
 	return type(anchor) == "table" and type(anchor.startAt) == "number" and type(anchor.readyAt) == "number" and anchor.readyAt > anchor.startAt
 end
 
--- One production pose per second is enough for an eight-minute crop. Schedule
--- its exact ripe boundary sooner when necessary; the review scrubber bypasses this.
-function PlotView:tomatoDue(square: number, growth: number, now: number, clock: number): number
-	if growth >= 1 or not self:tomatoTimed(square) then return math.huge end
-	local anchor = self.state.field.tomatoes[tostring(square)]
-	return clock + math.min(1, math.max(0, anchor.readyAt - now))
+-- The registry scales cadence to the crop's duration. Schedule the exact ripe
+-- boundary sooner when necessary; a review scrubber bypasses this scheduler.
+function PlotView:plantDue(square: number, growth: number, now: number, clock: number): number
+	if growth >= 1 or not self:plantTimed(square) then return math.huge end
+	local anchor = self.state.field.plants[tostring(square)]
+	local interval = PlantGrowth.UpdateInterval(anchor.readyAt - anchor.startAt)
+	return clock + math.min(interval, math.max(0, anchor.readyAt - now))
 end
 
-function PlotView:HasGrowingTomatoes(): boolean
-	return self.detail == "full" and os.clock() >= self.tomatoNextAt
+function PlotView:HasGrowingPlants(): boolean
+	return self.detail == "full" and os.clock() >= self.plantNextAt
 end
 
 -- Share the build deadline, with a rotating square cursor so a large field can
 -- spread posing across frames. Ripe plants do no pose work until a correction.
-function PlotView:StepTomatoes(deadline: number)
-	if not self:HasGrowingTomatoes() then return end
+function PlotView:StepPlants(deadline: number)
+	if not self:HasGrowingPlants() then return end
 	local now, clock = workspace:GetServerTimeNow(), os.clock()
 	for _ = 1, CropConfig.MaxSquares do
 		if os.clock() >= deadline then break end
-		self.tomatoCursor = self.tomatoCursor % CropConfig.MaxSquares + 1
-		local entry = self.tomatoes[self.tomatoCursor]
+		self.plantCursor = self.plantCursor % CropConfig.MaxSquares + 1
+		local entry = self.plants[self.plantCursor]
 		if entry and (entry.dirty or (entry.animated and entry.growth < 1)) and (entry.dirty or clock >= entry.nextAt) then
-			local growth = self:tomatoGrowth(self.tomatoCursor, now)
+			local growth = self:plantGrowth(self.plantCursor, now)
 			if growth ~= entry.growth then
 				entry.plant:SetGrowth(growth)
 				entry.growth = growth
 			end
 			entry.dirty = false
-			entry.animated = self:tomatoTimed(self.tomatoCursor)
-			entry.nextAt = self:tomatoDue(self.tomatoCursor, growth, now, clock)
+			entry.animated = self:plantTimed(self.plantCursor)
+			entry.nextAt = self:plantDue(self.plantCursor, growth, now, clock)
 		end
 	end
 	-- Include unvisited entries if the deadline interrupted this pass, so their
 	-- overdue work resumes next frame rather than waiting another whole second.
-	self.tomatoNextAt = math.huge
-	for _, entry in self.tomatoes do
-		self.tomatoNextAt = math.min(self.tomatoNextAt, if entry.dirty then 0 else entry.nextAt)
+	self.plantNextAt = math.huge
+	for _, entry in self.plants do
+		self.plantNextAt = math.min(self.plantNextAt, if entry.dirty then 0 else entry.nextAt)
 	end
 end
 
@@ -886,8 +886,8 @@ function PlotView:build(key: string): Model?
 		local n = tonumber(number) :: number
 		if kind == "inc" then
 			self:buildIncubator(model, n)
-		elseif kind == "tom" then
-			self:buildTomato(model, n)
+		elseif kind == "grow" then
+			self:buildPlant(model, n)
 		else
 			self:buildSquare(model, n)
 		end
@@ -904,11 +904,11 @@ function PlotView:Step(deadline: number): boolean
 		local signature = self:signature(key)
 		if signature ~= (self.built[key] or "none") then
 			builtAny = true
-			if string.sub(key, 1, 3) == "tom" then
-				local square = tonumber(string.sub(key, 4)) :: number
-				local entry = self.tomatoes[square]
+			if string.sub(key, 1, 4) == "grow" then
+				local square = tonumber(string.sub(key, 5)) :: number
+				local entry = self.plants[square]
 				if entry then entry.plant:Destroy() end
-				self.tomatoes[square] = nil
+				self.plants[square] = nil
 			end
 			if string.sub(key, 1, 3) == "inc" then
 				self.labels[tonumber(string.sub(key, 4)) :: number] = nil
@@ -927,7 +927,7 @@ function PlotView:Step(deadline: number): boolean
 			break
 		end
 	end
-	self:StepTomatoes(deadline)
+	self:StepPlants(deadline)
 	if builtAny and #self.pending == 0 and self.tickNow then
 		self:Tick(self.tickNow)
 	end
@@ -1140,15 +1140,17 @@ end
 -- Updates the countdowns of the drawn eggs (server time `now`, workspace:GetServerTimeNow()).
 function PlotView:Tick(now: number)
 	self.tickNow = now
-	-- Only timed Tomato squares need a stage refresh at mid distance. No scan of
+	-- Only registered plant squares need a stage refresh at mid distance. No scan of
 	-- unrelated plot pieces, and no full plant posing here.
 	local field = self.state and self.state.field
-	if self.detail == "mid" and field and type(field.tomatoes) == "table" then
-		for square in field.tomatoes do
-			local key = "tom" .. square
-			if not self.marked[key] and self:signature(key) ~= (self.built[key] or "none") then
-				self.marked[key] = true
-				table.insert(self.pending, key)
+	if self.detail == "mid" and field and type(field.plants) == "table" then
+		for square in field.plants do
+			if growthCrop(field, tonumber(square) :: number) then
+				local key = "grow" .. square
+				if not self.marked[key] and self:signature(key) ~= (self.built[key] or "none") then
+					self.marked[key] = true
+					table.insert(self.pending, key)
+				end
 			end
 		end
 	end
@@ -1160,8 +1162,8 @@ function PlotView:Tick(now: number)
 end
 
 function PlotView:Destroy()
-	for _, entry in self.tomatoes do entry.plant:Destroy() end
-	self.tomatoes = {}
+	for _, entry in self.plants do entry.plant:Destroy() end
+	self.plants = {}
 	self.root:Destroy()
 	self.pieces = {}
 	self.pending = {}

@@ -5,7 +5,7 @@ local RunService = game:GetService("RunService")
 assert(RunService:IsStudio() and RunService:IsClient())
 local player = game.Players.LocalPlayer
 local PlotView = require(player.PlayerScripts.PlotView)
-local Growth = require(game.ReplicatedStorage.TomatoGrowthStudy)
+local Growth = require(game.ReplicatedStorage.TomatoPlant)
 local GardenConfig = require(game.ReplicatedStorage.GardenConfig)
 local root = Instance.new("Folder")
 root.Name = "TomatoPerfProbe"
@@ -34,7 +34,7 @@ local function measure(count, tomatoes)
 		local pets={}
 		for n=2,36,4 do table.insert(pets,string.format("Cat:10:perf%d:%d:4:4",n,n)) end
 		view:SetState({ownerId=slot,name="CG1d",incCount=3,eggs={},
-			field={crops=string.rep(if tomatoes then "k1" else "b1",36),pets=pets,tomatoes=if tomatoes then anchors else nil}})
+			field={crops=string.rep(if tomatoes then "k1" else "b1",36),pets=pets,plants=if tomatoes then anchors else nil}})
 		local delta=view.floor.Position-focus
 		local distance=Vector3.new(delta.X,0,delta.Z).Magnitude
 		local detail=if distance<=60 then "full" elseif distance<=120 then "mid" elseif distance<=300 then "low" else "none"
@@ -51,7 +51,7 @@ local function measure(count, tomatoes)
 		local frameStart=os.clock()
 		local deadline=frameStart+.006
 		for _,view in views do
-			if view:Pending()>0 or view:HasGrowingTomatoes() then view:Step(deadline) end
+			if view:Pending()>0 or view:HasGrowingPlants() then view:Step(deadline) end
 			if os.clock()>=deadline then break end
 		end
 		table.insert(workMs,(os.clock()-frameStart)*1000)

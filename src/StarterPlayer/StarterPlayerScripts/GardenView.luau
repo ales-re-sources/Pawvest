@@ -20,6 +20,7 @@ local RunService = game:GetService("RunService")
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
+local PlantGrowth = require(ReplicatedStorage:WaitForChild("PlantGrowth"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PlotView = require(script.Parent:WaitForChild("PlotView"))
 
@@ -244,8 +245,9 @@ local function ripenOwn(state)
 		local letter, stage = string.sub(cell, 1, 1), string.sub(cell, 2, 2)
 		local entry = squares[tostring(n)] or squares[n]
 		local crop = type(entry) == "table" and CropConfig.ById[entry.crop]
-		local sharedTomato = letter == "k" and type(field.tomatoes) == "table" and field.tomatoes[tostring(n)]
-		if not sharedTomato and crop and crop.letter == letter and (stage == "1" or stage == "2") and type(entry.readyAt) == "number" and entry.readyAt <= now then
+		local publicCrop = CropConfig.ByLetter[letter]
+		local sharedPlant = publicCrop and PlantGrowth.Supports(publicCrop.id) and type(field.plants) == "table" and field.plants[tostring(n)]
+		if not sharedPlant and crop and crop.letter == letter and (stage == "1" or stage == "2") and type(entry.readyAt) == "number" and entry.readyAt <= now then
 			cell = letter .. "3"
 			changed = true
 		end
@@ -370,7 +372,7 @@ local function step()
 	local deadline = os.clock() + BUDGET
 	for _, slot in order do
 		local view = views[slot]
-		if view and (view:Pending() > 0 or view:HasGrowingTomatoes()) then
+		if view and (view:Pending() > 0 or view:HasGrowingPlants()) then
 			view:Step(deadline)
 			if os.clock() >= deadline then
 				break

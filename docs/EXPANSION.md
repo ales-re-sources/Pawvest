@@ -182,7 +182,7 @@ plot and restores the camera and HUD. This review uses its own clock and makes n
 Each planting reuses 54 anchored Parts. Leaves pivot from their attachment points, adjacent arms extend at different times and small
 green fruit swell as their branches bend. Red develops in the last fifth of growth. Seed 1 reproduces the selected ripe A. The other
 review seeds vary height, spread, lean and fruit size. Tune the joints, growth intervals and seed parameters in
-[`TomatoGrowthStudy`](../src/ReplicatedStorage/TomatoGrowthStudy.luau). Studio checks covered 43→44→43% seeks, branch / fruit attachment
+[`TomatoPlant`](../src/ReplicatedStorage/TomatoPlant.luau). Studio checks covered 43→44→43% seeks, branch / fruit attachment
 across all six seeds and the ripe seed-1 match against the original study. Art sign-off on the [loop](art/tomato/growth.gif),
 [poses](art/tomato/growth-poses.jpg) and [seeds](art/tomato/growth-seeds.jpg) comes before field integration. The current field ring
 covered the canopy from the close camera. The preview lifts it 1.35 studs, so the ripe fruit, field pet and selected square can be
@@ -218,6 +218,39 @@ exhausted frame budget also passed. If phone measurements require it, group dist
 
 Tomato keeps its eight-minute crop time and clears the square at harvest. A future perennial Apple keeps its seeded trunk and branches
 through harvest; only fruit regrows at persistent attachment points. Particles and lights can follow the silhouette review.
+
+#### CG2 — Shared plant growth (built)
+
+The shared `PlantGrowth` registry selects a recipe by crop ID. Recipes provide `new(parent, soilCFrame, seed)`, `BuildProxy`,
+`RingHeight` and an instance with `model`, `SetGrowth(0..1)` and `Destroy`. Tomato's recipe is `TomatoPlant`.
+To add another annual crop, register its recipe; the garden renderer and server feed already accept its crop ID and planting identity.
+Plot pieces are `grow<n>`. The server publishes `field.plants` time anchors for every planted crop. Appearance stays attached to the
+owner, crop ID and planting number across corrections, replanting and detail changes. Existing crop/profile IDs are preserved.
+
+The shared update interval is proportional to grow duration, clamped to 0.05–1 seconds. The eight-minute Tomato keeps its one-second
+cadence; a future ten-second Potato can animate at 20 updates per second. Corrections and ripeness take priority within the frame budget.
+Perennials will retain structure maturity while fruit slots have separate growth cycles when that gameplay is added.
+
+#### CG3 — Potato growth design (for review)
+
+**CG3a** is the [ripe silhouette comparison](art/potato/ripe-studies.jpg), captured from Studio with the actual field renderer:
+A, a low rosette (22 Parts); B, a tufted bush (22); C, foliage on a soil mound with two tuber shoulders (26).
+See the [field](art/potato/field.jpg) and [phone-size view](art/potato/phone.jpg). The reproduction tool is
+[`potato_ripe_studies.luau`](../tools/potato_ripe_studies.luau). The developer selects the silhouette before CG3b motion work.
+
+The proposed ten-second annual growth keeps tubers at the soil line and emphasizes unfolding compound leaves.
+
+| Growth | Proposed motion |
+|---|---|
+| 0% | A small green shoot breaks the soil. |
+| 20% | Two leaves open at slightly different times, pivoting from the shoot. |
+| 50% | Unequal short shoots spread outward; paired leaves unfold and broaden. |
+| 75% | The canopy fills. Small tan tuber shoulders begin to emerge at the soil line. |
+| 100% | Outer leaf tips settle lower; the tan shoulders are fully exposed and the canopy is wider. |
+
+Seeded variation changes shoot angles, canopy spread, leaf sizes and shoulder placement within the selected silhouette.
+**CG3b** reviews a continuous scrubber and seeded loop. **CG3c** registers the approved Potato recipe in the field.
+**CG3d** measures a full field at Potato's faster cadence and includes phone readability/performance.
 
 ### 5.2 Seed catalogue and market cart (not built parts)
 - **Species unlocks from the obby:** first finishes / first Golds and challenge-coin milestones unlock catalogue species (§8.1), on top of Renown.

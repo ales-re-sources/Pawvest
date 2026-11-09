@@ -512,7 +512,7 @@ end
 
 -- Grown was earned through SettledAt, even if a visitor requests this plot much later.
 -- The first whole server second that accepts Harvest is the visual ripe boundary.
-local function tomatoWindow(field, square, duration: number, speed: number): (number, number)
+local function growthWindow(field, square, duration: number, speed: number): (number, number)
 	if square.Grown >= duration then
 		return 0, 0
 	end
@@ -546,15 +546,10 @@ GardenService.AddStateField("field", function(profile)
 	for key, square in field.Squares do
 		local crop = CropConfig.ById[square.Crop]
 		-- server time when the crop is ripe if the owner stays online (the panel's countdown)
-		local left = math.max(0, crop.growSeconds - square.Grown)
-		local readyAt = now + math.ceil(left / speed)
-		local grown = square.Grown
-		if crop.id == "Tomato" then
-			local startAt, finish = tomatoWindow(field, square, crop.growSeconds, speed)
-			readyAt = if finish == 0 then now else finish
-			grown = if finish == 0 then crop.growSeconds
-				else crop.growSeconds * math.clamp((now - startAt) / (finish - startAt), 0, 1)
-		end
+		local startAt, finish = growthWindow(field, square, crop.growSeconds, speed)
+		local readyAt = if finish == 0 then now else finish
+		local grown = if finish == 0 then crop.growSeconds
+			else crop.growSeconds * math.clamp((now - startAt) / (finish - startAt), 0, 1)
 		squares[key] = { crop = square.Crop, grown = math.floor(grown), readyAt = readyAt }
 	end
 	local garden = profile.Garden
@@ -626,17 +621,17 @@ function GardenField.PlotField(player: Player)
 		return nil
 	end
 	local cells = table.create(CropConfig.MaxSquares)
-	local tomatoes
+	local plants
 	local speed = onlineSpeed(profile.Garden, field)
 	for n = 1, CropConfig.MaxSquares do
 		local key = tostring(n)
 		local square = field.Squares[key]
 		local crop = square and CropConfig.ById[square.Crop]
 		cells[n] = if not open[n] then "#0" elseif crop then crop.letter .. CropConfig.Stage(crop, square.Grown) else ".0"
-		if open[n] and crop and crop.id == "Tomato" then
-			local startAt, readyAt = tomatoWindow(field, square, crop.growSeconds, speed)
-			tomatoes = tomatoes or {}
-			tomatoes[key] = { n = square.N, startAt = startAt, readyAt = readyAt }
+		if open[n] and crop then
+			local startAt, readyAt = growthWindow(field, square, crop.growSeconds, speed)
+			plants = plants or {}
+			plants[key] = { n = square.N, startAt = startAt, readyAt = readyAt }
 		end
 	end
 	local pets = {} -- "Kind:Level:uid:square:tending:guard" per field pet, by square
@@ -649,7 +644,7 @@ function GardenField.PlotField(player: Player)
 	table.sort(pets, function(a, b)
 		return tonumber(string.match(a, ":(%d+):%d+$")) < tonumber(string.match(b, ":(%d+):%d+$"))
 	end)
-	return { crops = table.concat(cells), pets = pets, tomatoes = tomatoes }
+	return { crops = table.concat(cells), pets = pets, plants = plants }
 end
 
 -- The caller's profile, field and open set if they may use the field now (loaded, at their plot unless `anywhere`);

@@ -10,7 +10,7 @@ local function open()
 
 	local player = Players.LocalPlayer
 	local playerGui = player:WaitForChild("PlayerGui")
-	local Growth = require(assert(ReplicatedStorage:FindFirstChild("TomatoGrowthStudy"), "Sync TomatoGrowthStudy with Argon first"))
+	local Growth = require(ReplicatedStorage:WaitForChild("PlantGrowth"))
 	local PlotView = require(player.PlayerScripts:WaitForChild("PlotView"))
 	local CropConfig = require(ReplicatedStorage.CropConfig)
 	local GardenConfig = require(ReplicatedStorage.GardenConfig)
@@ -90,7 +90,7 @@ local function open()
 	end
 
 	local function addPlant(square, seed, progress)
-		local plant = Growth.new(root, view:SquareCFrame(square), seed)
+		local plant = Growth.new(root, view:SquareCFrame(square), "Tomato", seed)
 		plant:SetGrowth(progress)
 		table.insert(plants, plant)
 		addRing(square)
