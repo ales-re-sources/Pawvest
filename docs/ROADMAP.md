@@ -58,6 +58,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG2 | Shared plant growth recipes and timing | ✔ | generic dispatch, field feed and detail changes checked | – |
 | CG3 | Potato growth art | CG3a–c built; desktop CPU tuning done | field lifecycle/detail checks pass; real phone and second client open | – |
 | CG4 | Plant individuality and harvested size | ✔ | size/rotation, bounds, detail transitions and reviewer controls Studio-checked | – |
+| CG5 | Frost Grape growth art | CG5a static ripe studies built | Studio captures ready; silhouette selection before motion | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -121,6 +122,13 @@ Real-phone rendering/performance and a second real client remain open.
 **CG4 — Plant individuality and harvested size** is built and Studio-checked (2026-11-09). Potato and Tomato now reflect the actual
 harvest factor, rotate through a full circle and vary their branching more visibly. Part counts and Potato's 5 Hz cadence are unchanged.
 [Decision and review images](EXPANSION.md#cg4--plant-individuality-and-harvested-size-built).
+
+**CG5 — Frost Grape growth art** starts with three ripe studies: single-post fan, short vineyard trellis and wrapped pole.
+**CG5a** is built and Studio-captured (106 / 108 / 106 Parts including supports); all fit a 5.5-stud square. A is recommended;
+selection is pending. [A / B / C](art/frost-grape/ripe-studies.jpg) · [Field](art/frost-grape/field.jpg) ·
+[Phone-size composition](art/frost-grape/phone.jpg) · [Vineyard row](art/frost-grape/vineyard-row.jpg).
+Choose the silhouette before **CG5b** continuous growth; **CG5c** field integration and **CG5d** performance follow art approval.
+[Direction and review gates](EXPANSION.md#cg5--frost-grape-growth-design).
 
 ### K1 — First-hour fixes, open part (kid playtest 2026-11-01)
 A 9-year-old on a phone, fresh progress, got stuck after about 20 minutes. Target: a new player who does not pay always has a next step for

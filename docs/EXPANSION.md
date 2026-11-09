@@ -313,6 +313,56 @@ Review [six individual Potatoes at equal mass](art/potato/individual-plants.jpg)
 [small/standard/large size comparison](art/potato/harvest-size.jpg). The Studio reviewer now offers a **Size** button cycling the
 supported minimum, standard and maximum mass factors, alongside **Seed**. The controls remain English for this Studio-only tool.
 
+#### CG5 — Frost Grape growth design
+
+**Requested 2026-11-09.** Treat the eight-hour World 2 rare crop as a visual centerpiece: a woody climbing vine, broad lobed grape
+leaves and tapered hanging bunches in blue-violet, with pale icy facets. Keep the colored stud-block language. The supplied
+[young-plant sketch](art/frost-grape/young-reference.png), [leaf/bunch detail](art/frost-grape/detail-reference.png) and
+[vineyard training sketch](art/frost-grape/training-reference.png) guide the climbing habit, attachments and row silhouette.
+
+**CG5a — Ripe studies.** Compare A, a single-post fan; B, a short two-post vineyard trellis; and C, a wrapped single pole, on real
+5.5-stud squares beside a field pet and neighboring crop. First review the mature silhouette at gameplay/phone size and in a row.
+Keep bunches below the leaves and separated from the pole. Epic character should come from the vine and frosted fruit silhouette.
+The first pass uses opaque Plastic with `Studs` / `StudsSmall`; part counts must be reported with the images.
+
+The [ripe comparison](art/frost-grape/ripe-studies.jpg), [field with pet and ring](art/frost-grape/field.jpg),
+[phone-sized composition](art/frost-grape/phone.jpg) and [repeated vineyard row](art/frost-grape/vineyard-row.jpg) were captured in Studio.
+The phone image is a downsample for readability review, not a device performance test. Reproduce the geometry with
+[`frost_grape_ripe_studies.luau`](../tools/frost_grape_ripe_studies.luau), using the Client command context during a Studio playtest.
+
+| Study | Parts including support | Height / maximum ground radius (studs) | Tradeoff |
+|---|---|---|---|
+| A — Single-post fan | 106 | 3.25 / 2.20 | One post and crossbar; open canopy and three separated bunches. Recommended starting point. |
+| B — Vineyard trellis | 108 | 3.28 / 2.15 | Two posts and rails; strongest repeated-row silhouette, more visible infrastructure. |
+| C — Wrapped pole | 106 | 3.67 / 1.69 | One tall pole; compact footprint and three bunches at different heights. |
+
+Each study has five lobed leaves (five blocks and a stalk each), three nine-berry bunches (two overlapping blocks per berry),
+six pale frost facets, woody/green stems and one angular tendril. The overlapping berry blocks give individual fruit stepped
+shoulders. A full 36-square field would use 3,816–3,888 plant Parts at this
+detail, before field/pets/UI. These are art-study counts, not an approved production budget. After selection, compare one-block
+berries or merged bunch cores at phone size, and omit secondary detail in the mid proxy. No silhouette has been approved yet.
+
+**CG5b — Proposed continuous motion, after silhouette approval.** Five review stops on one seeded structure:
+
+| Growth | Proposed pose |
+|---|---|
+| 0% | Full-sized support is installed on planting; a tiny shoot appears at its foot. An unplanted square stays bare. |
+| 20% | The shoot climbs the lower pole through fixed bends; two small lobed leaves unfold from their stems. |
+| 50% | The main cane reaches the support and lateral shoots extend along it. Unequal leaf fans open with visible gaps. |
+| 75% | Several small green-blue bunches develop at persistent stalk attachments, wider at the shoulders and tapered below. |
+| 100% | Heavy blue-violet bunches hang clearly below the canopy. Berries swell, short stalks dip and pale frost facets develop. |
+
+The support is rigid and does not grow or scale with harvested mass. A trellis follows field rows; seeded variation changes cane
+bends, leaf angles, shoot lengths and bunch spacing while preserving attachments. Harvest-size scaling prioritizes fruit dimensions
+and constrained vine vigor; support clearance takes precedence over uniform whole-model scaling. CG5b must review six mature seeds,
+size extremes, forward/backward scrubbing and bunch visibility with labels/rings hidden. Current single-harvest square-clearing
+behavior remains the pilot contract, including removal of its support; a persistent vine/fruit-regrowth lifecycle needs a separate
+gameplay decision, as with the future Apple tree. No new purchase or tool is implied by the visual support.
+
+**CG5c/d — Later gates.** After art sign-off, register the recipe and any explicit fixed-orientation / rigid-support recipe options
+in the generic renderer. Use existing identity, size and time anchors; the eight-hour crop can use the one-second growth cadence.
+Review a cheaper mid-distance bunch silhouette, then measure a full field / 24 plots and a real phone before calling it validated.
+
 ### 5.2 Seed catalogue and market cart (not built parts)
 - **Species unlocks from the obby:** first finishes / first Golds and challenge-coin milestones unlock catalogue species (§8.1), on top of Renown.
 - The cart may also offer a fertiliser ingredient or a decor piece; its offers are never sold or re-rolled for Robux (§13).
