@@ -78,7 +78,7 @@ function FrostGrapePlant.new(parent, soilCFrame, seed, sizeFactor)
 		return p + V(vary(extent), vary(height or 0.035), vary(extent * 0.7))
 	end
 	self.path = {PATH[1], bend(PATH[2], 0.12, 0.10), bend(PATH[3], 0.12, 0.10), bend(PATH[4], 0.055, 0.10)}
-	self.arms, self.leaves, self.fruit = {}, {}, {}
+	self.arms, self.leaves, self.fruit, self.fruitSlots = {}, {}, {}, {}
 	for i, arm in ARMS do
 		self.arms[i] = bend(arm[2], if i <= 4 then 0.09 else 0.075, 0.11)
 	end
@@ -114,13 +114,24 @@ function FrostGrapePlant.new(parent, soilCFrame, seed, sizeFactor)
 		self.fruit[i] = {first = first, last = last, fraction = fraction, attachment = attachment,
 			offset = fruit[2] - fruit[1] + V(vary(0.04), vary(0.14), vary(0.04)),
 			scale = fruit[3] * self.dimensionScale * (1 + vary(0.12)), turn = fruit[4] + vary(0.16), berries = berries}
+		local node = if i == 2 then self.path[4] + attachment
+			else self.arms[first]:Lerp(self.arms[last], fraction) + attachment
+		-- Stable visual slots, independent of Part order and future fruit-cycle state.
+		-- Attachment is the mature, seeded stalk origin, not the moving berry center.
+		self.fruitSlots[i] = {id = i, attachment = soilCFrame * CFrame.new(node), parts = {}}
 	end
-	local function create(name, variant)
+	local function create(name, variant, fruitSlot)
 		local p = Instance.new("Part")
 		p.Name, p.Material, p.MaterialVariant = name, Enum.Material.Plastic, variant or "StudsSmall"
 		p.TopSurface, p.BottomSurface = Enum.SurfaceType.Smooth, Enum.SurfaceType.Smooth
 		p.Anchored, p.CanCollide, p.CanTouch, p.CanQuery = true, false, false, false
 		p.Transparency = 1
+		p:SetAttribute("PlantRole", if fruitSlot then "Fruit"
+			elseif name == "RigidPost" or name == "RigidRail" then "Support" else "Structure")
+		if fruitSlot then
+			p:SetAttribute("FruitSlot", fruitSlot)
+			table.insert(self.fruitSlots[fruitSlot].parts, p)
+		end
 		p.Parent = self.model
 		table.insert(self.parts, p)
 		table.insert(self.applied, {})
@@ -140,10 +151,10 @@ function FrostGrapePlant.new(parent, soilCFrame, seed, sizeFactor)
 		create("LeafStalk")
 		for _ = 1, 5 do create("LeafLobe", "Studs") end
 	end
-	for _ = 1, 3 do
-		create("BunchStalk")
-		for _ = 1, 9 do create("Grape"); create("GrapeCrown") end
-		create("FrostFacet"); create("FrostFacet")
+	for slot = 1, 3 do
+		create("BunchStalk", nil, slot)
+		for _ = 1, 9 do create("Grape", nil, slot); create("GrapeCrown", nil, slot) end
+		create("FrostFacet", nil, slot); create("FrostFacet", nil, slot)
 	end
 	for _ = 1, 3 do create("Tendril") end
 	assert(#self.parts == 115, "Frost grape topology changed")

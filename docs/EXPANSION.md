@@ -390,8 +390,19 @@ Review the [sampled Studio loop](art/frost-grape/growth.gif), [five poses](art/f
 [plant with ring and pet](art/frost-grape/growth-field.jpg). The shared tool offers scrub, seed, size and ring controls; Close restores
 the camera and HUD. Seed 1 at standard size reproduces the selected ripe study. Other seeds vary cane bends, leaf angles and sizes,
 individual berries, bunch size and hanging offset. Harvested mass scales the berries; the support and canopy height remain tall.
-Studio pose, bounds, attachment and control checks passed. **Motion art approval is pending.** This is a display-only module;
+Studio pose, bounds, attachment and control checks passed. **Ales approved the motion on 2026-11-09.** This is a display-only module;
 the production registry, eight-hour crop duration, plot feed and harvest behavior are unchanged.
+
+**Fruit identity for future perennials (Ales, 2026-11-09).** Identify fruit in code rather than relying on remembered geometry or
+Part ordering. Each FrostGrapePlant instance's `fruitSlots[1..3]` holds stable visual slot IDs, the seeded mature world-space stalk `attachment`
+and its 21 `parts`: 18 grape blocks, two frost facets and the bunch stalk. Every Part carries client-local `PlantRole` = `Support`,
+`Structure` or `Fruit`; fruit Parts also carry numeric `FruitSlot`. IDs and attachments reproduce from the planting seed and remain
+fixed across growth seeks and harvest-size changes. Metadata is created once and does not add work to animation updates.
+
+Future fruit-only harvesting must retain the seeded vine, foliage and trellis and reset only the collected slots' fruit cycles.
+Keep structure maturity separate from per-slot fruit age/readiness; resetting the whole plant's `SetGrowth(0)` would shrink its vine.
+These three visual bunches do not define reward quantity or whether collection is per bunch or all at once. Fruit-only collection,
+regrowth clocks and server state will be implemented with perennial gameplay; identifying the Parts does not enable that behavior yet.
 
 **CG5c/d — Later gates.** After art sign-off, register the recipe and any explicit fixed-orientation / rigid-support recipe options
 in the generic renderer. Use existing identity, size and time anchors; the eight-hour crop can use the one-second growth cadence.

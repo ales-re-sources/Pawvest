@@ -58,7 +58,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG2 | Shared plant growth recipes and timing | ✔ | generic dispatch, field feed and detail changes checked | – |
 | CG3 | Potato growth art | CG3a–c built; desktop CPU tuning done | field lifecycle/detail checks pass; real phone and second client open | – |
 | CG4 | Plant individuality and harvested size | ✔ | size/rotation, bounds, detail transitions and reviewer controls Studio-checked | – |
-| CG5 | Frost Grape growth art | CG5a tall B selected; CG5b motion built | Studio pose/control checks pass; motion art approval pending | – |
+| CG5 | Frost Grape growth art | CG5a/b approved; explicit fruit slots | Studio checks pass; CG5c field integration next | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -131,7 +131,9 @@ harvest factor, rotate through a full circle and vary their branching more visib
 **CG5b** is built for review: 115 reusable Parts, fixed trellis, sequential climb, unfolding leaves and swelling/frosting berries.
 Studio pose/bounds/attachment and actual-control checks pass; the display-only module is not registered for live fields.
 [Loop](art/frost-grape/growth.gif) · [Five poses](art/frost-grape/growth-poses.jpg) · [Six seeds](art/frost-grape/growth-seeds.jpg) ·
-[Sizes](art/frost-grape/growth-sizes.jpg). **CG5c** field integration and **CG5d** performance follow motion art approval.
+[Sizes](art/frost-grape/growth-sizes.jpg). Motion approved by Ales (2026-11-09). Fruit slots and mature attachments are explicitly
+identified for future fruit-only perennial harvests; separate structure/fruit clocks remain future gameplay. **CG5c** field integration
+is next, followed by **CG5d** performance validation.
 [Direction and review gates](EXPANSION.md#cg5--frost-grape-growth-design).
 
 ### K1 — First-hour fixes, open part (kid playtest 2026-11-01)

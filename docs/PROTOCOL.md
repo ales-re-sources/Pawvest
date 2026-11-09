@@ -72,6 +72,8 @@ This is the same calculation used at harvest; upgrading the Sorter updates both 
 It adds no stored profile field. Older entries without `size` render at factor 1.
 The two times are zero once settled ripe. Clients clamp progress between the anchors using server time and derive appearance from
 the plot owner ID and `n`. The existing Plant and Harvest requests still settle growth on the server.
+CG5b Frost Grape art Parts have client-local `PlantRole` (`Support`, `Structure`, `Fruit`); fruit Parts also have `FruitSlot` (1–3).
+These identify visual organs only. They are not mirrored player attributes, server harvest authority or stored fruit-cycle state.
 Incubator eggs are stored with server `os.time()` only and checked at `Hatch`; to test hatching without waiting, move `StartedAt` / `ReadyAt`
 back in the stored profile between playtests (snapshot and restore it).
 `CollectedCoins` (sorted ids, comma-separated, `""` when none) mirrors `PlayerProfile.CollectedCoins[id] = true`;
