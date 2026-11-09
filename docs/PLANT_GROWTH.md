@@ -13,6 +13,7 @@ selected silhouette, growth poses and geometry budget.
 | Lettuce | [Crisp head](plants/LETTUCE.md) | 70 |
 | Pepper | [Upright red chilli-pepper bush](plants/PEPPER.md) | 84 |
 | Glow Mushroom | [Glowing chestnut bolete pair](plants/GLOW_MUSHROOM.md) | 60 |
+| Golden Carrot | [Buried pointed root and tall feathery crown](plants/GOLDEN_CARROT.md) | 72 |
 
 ## Studio growth player
 
@@ -22,7 +23,7 @@ Start a Studio playtest, then run in the **Client command bar**:
 require(game.Players.LocalPlayer.PlayerScripts.PlantGrowthReview).Open("FrostGrape", 10)
 ```
 
-Replace `"FrostGrape"` with `"Tomato"`, `"Potato"`, `"Corn"`, `"Lettuce"`, `"Pepper"` or `"GlowMushroom"`. The optional seconds argument controls only review playback;
+Replace `"FrostGrape"` with `"Tomato"`, `"Potato"`, `"Corn"`, `"Lettuce"`, `"Pepper"`, `"GlowMushroom"` or `"GoldenCarrot"`. The optional seconds argument controls only review playback;
 it does not change real crop timing or saved data. The reviewer can open an unregistered art recipe, so it is not proof of field
 integration. Close the current reviewer before opening another crop.
 
