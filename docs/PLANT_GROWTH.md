@@ -11,7 +11,7 @@ selected silhouette, growth poses and geometry budget.
 | Frost Grape | [Tall vineyard trellis](plants/FROST_GRAPE.md) | 115 |
 | Corn | [Tall two-ear stalk](plants/CORN.md) | 99 |
 | Lettuce | [Crisp head](plants/LETTUCE.md) | 70 |
-| Pepper / Paprika | [Upright bell-pepper bush — mature study](plants/PEPPER.md) | 88 (static study) |
+| Pepper / Paprika | [Upright red bell-pepper bush](plants/PEPPER.md) | 90 |
 
 ## Studio growth player
 
@@ -21,7 +21,7 @@ Start a Studio playtest, then run in the **Client command bar**:
 require(game.Players.LocalPlayer.PlayerScripts.PlantGrowthReview).Open("FrostGrape", 10)
 ```
 
-Replace `"FrostGrape"` with `"Tomato"`, `"Potato"`, `"Corn"` or `"Lettuce"`. The optional seconds argument controls only review playback;
+Replace `"FrostGrape"` with `"Tomato"`, `"Potato"`, `"Corn"`, `"Lettuce"` or `"Pepper"`. The optional seconds argument controls only review playback;
 it does not change real crop timing or saved data. The reviewer can open an unregistered art recipe, so it is not proof of field
 integration. Close the current reviewer before opening another crop.
 

@@ -519,7 +519,7 @@ otherwise items could be duplicated across servers.
 
 ### 7.9 Crop field (E1-E4)
 
-**Crop growth art (CG1–CG6).** Tomato, Potato and Corn grow continuously with stable variation tied to each planting and visible
+**Crop growth art (CG1–CG8).** Tomato, Potato, Corn, Lettuce and Pepper grow continuously with stable variation tied to each planting and visible
 harvest-size differences. Fruit and foliage develop from attached stems; ripeness is readable from shape and color. Nearby and
 mid-distance art preserve crop identity while distant art is hidden. These crops still clear at harvest. Frost Grape's tall trellis
 design is approved as a display prototype; its field integration and future perennial regrowth are separate work.
