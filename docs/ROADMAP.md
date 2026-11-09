@@ -61,6 +61,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG5 | Frost Grape growth art | CG5a/b approved; explicit fruit slots | Studio checks pass; CG5c field integration next | – |
 | CG6 | Corn growth art | CG6a–d complete | Studio checks and desktop CPU sample pass; real phone and second client confirmed by Ales 2026-11-09 | – |
 | CG7 | Lettuce growth art | CG7a (A, crisp head, chosen) and CG7b/c recipe + field registration built | Studio checks pass (bounds, seeds, sizes, seek, proxies, PlotView path); five stills and colour/density fix approved by Ales 2026-11-09; real phone and second client open | – |
+| CG8 | Pepper / Paprika growth art | [No-pole upright bush](plants/PEPPER.md); CG8a mature study built, silhouette review next | Static baseline Studio-checked (88 Parts, 3.38 studs tall, radius 1.77); animation and field integration not built | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -87,7 +88,7 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
    restoration landmark), Neighbours, Mastery, World 4 (S9 / S10), the Estate, Season 1. Restoration bundles (E6, D5) and estate tiers / decor /
    cottage (E7, D9) are the long-term Coin sinks; E0 holds a placeholder for their size until they are designed.
 
-**Plant growth art (CG1–CG7).** [Authoring guide and crop designs](PLANT_GROWTH.md) ·
+**Plant growth art (CG1–CG8).** [Authoring guide and crop designs](PLANT_GROWTH.md) ·
 [Studio growth player command](PLANT_GROWTH.md#studio-growth-player). Standard review: five snapshots, no animation capture.
 
 - **CG1 / CG3:** [Tomato](plants/TOMATO.md) and [Potato](plants/POTATO.md) are integrated and
@@ -97,6 +98,8 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
   integration/proxy, then **CG5d** performance validation. Fruit-only perennial gameplay remains separate future work.
 - **CG7:** [Lettuce's crisp head](plants/LETTUCE.md) is registered in `PlantGrowth` and Studio-checked; Ales approved the five stills (2026-11-09).
   Real-phone and second-client validation remain open.
+- **CG8:** [Pepper / Paprika](plants/PEPPER.md): no-pole direction accepted; mature study with three distinctly lobed hanging bells
+  is Studio-checked. [Silhouette review](art/pepper/ripe-study.jpg) comes before animation and field integration.
 
 Key talents as **world rewards**: done for Double Jump (K1, GDD §6). Open: Triple Jump / Dash for World 3. The lost Coin sinks are made up in
 the balancing pass (STAGES §6, GDD §6).
