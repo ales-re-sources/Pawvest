@@ -56,7 +56,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | CG1 | Tomato growth art pilot (parallel garden art study) | CG1a–c and CG1d CPU tuning built | desktop CPU checks pass; real phone and second client open | – |
 | CG2 | Shared plant growth recipes and timing | ✔ | generic dispatch, field feed and detail changes checked | – |
-| CG3 | Potato growth art | CG3a studies and CG3b motion prototype built | A selected; motion review next | – |
+| CG3 | Potato growth art | CG3a–c built; desktop CPU tuning done | field lifecycle/detail checks pass; real phone and second client open | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -96,7 +96,7 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
 - **CG1d — Performance validation.** Desktop CPU tuning checked 2026-11-09. Production posing runs once per second, hidden geometry
   and unchanged properties skip work, and ripeness / corrections wake immediately. At early growth, pose CPU per second fell from
   66.4 to 7.2 ms for 36 Tomatoes and from 189.6 to 20.5 ms for 24 plots (3 full, 4 mid, 17 low). Visible geometry matched across
-  1,230 poses, including reverse seeks. Reproduce with `tools/tomato_perf_probe.luau`. Real-phone frame time and a second client remain open.
+  1,230 poses, including reverse seeks. Reproduce with `tools/plant_perf_probe.luau` (set crop ID to Tomato). Real-phone frame time and a second client remain open.
 
 Key talents as **world rewards**: done for Double Jump (K1, GDD §6). Open: Triple Jump / Dash for World 3. The lost Coin sinks are made up in
 the balancing pass (STAGES §6, GDD §6).
@@ -110,8 +110,12 @@ The revised silhouettes are recorded here; A's fuller foliage and the later berr
 [A / B / C](art/potato/ripe-studies.jpg) · [Field](art/potato/field.jpg) · [Phone-size view](art/potato/phone.jpg).
 **CG3b** now provides a ten-second scrubber/loop with six seeded plants; Studio controls and forward/backward posing passed.
 [Loop](art/potato/growth.gif) · [Five ages](art/potato/growth-poses.jpg) · [Six seeds](art/potato/growth-seeds.jpg).
-Next is motion review. Before **CG3c** field integration, tune the fast-crop cadence: a first desktop 36-Potato check at 20 Hz reached
-115 ms of pose CPU per second and scheduler p95 6.02 ms. **CG3d** includes the full-field and real-phone checks.
+Motion approved and **CG3c** integrated (2026-11-09). Potato is registered in `PlantGrowth`, with a 65-Part full model and 3–5-Part
+mid proxy. Crops pose at 5 Hz with staggered square deadlines and skip completed foliage/flower groups. The original pose matched in
+1,278 comparisons across six seeds. Visitor-feed rendering, full/mid/low identity, ripe timing, replant/removal and an isolated server
+plant/9 s refusal/10 s harvest/offline-growth fixture passed. **CG3d** desktop samples reduced one field's pose CPU from 115 to 39 ms/s
+and scheduler p95 from 6.02 to 1.10 ms; 24 plots used 110 ms/s and p95 3.83 ms. Reproduce with `tools/plant_perf_probe.luau`.
+Real-phone rendering/performance and a second real client remain open.
 
 ### K1 — First-hour fixes, open part (kid playtest 2026-11-01)
 A 9-year-old on a phone, fresh progress, got stuck after about 20 minutes. Target: a new player who does not pay always has a next step for

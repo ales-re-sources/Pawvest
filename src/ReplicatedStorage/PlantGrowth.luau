@@ -3,6 +3,7 @@
 -- and a plant object with model, SetGrowth(0..1) and Destroy().
 local recipes = {
 	Tomato = require(script.Parent.TomatoPlant),
+	Potato = require(script.Parent.PotatoPlant),
 }
 
 local PlantGrowth = {}
@@ -26,7 +27,7 @@ end
 
 function PlantGrowth.UpdateInterval(duration: number): number
 	-- Keep a similar visible growth step for quick crops and boosted plants.
-	return math.clamp(duration / 480, 0.05, 1)
+	return math.clamp(duration / 480, 0.2, 1)
 end
 
 return PlantGrowth

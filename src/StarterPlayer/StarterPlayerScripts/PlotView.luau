@@ -832,7 +832,11 @@ function PlotView:plantDue(square: number, growth: number, now: number, clock: n
 	if growth >= 1 or not self:plantTimed(square) then return math.huge end
 	local anchor = self.state.field.plants[tostring(square)]
 	local interval = PlantGrowth.UpdateInterval(anchor.readyAt - anchor.startAt)
-	return clock + math.min(interval, math.max(0, anchor.readyAt - now))
+	-- Spread square updates across the interval instead of posing a whole field
+	-- in one frame. Ripeness can still arrive before the next regular sample.
+	local offset = (square - 1 + (self.slot - 1) / GardenConfig.PlotSlots) / CropConfig.MaxSquares * interval
+	local nextSample = (math.floor((now - offset) / interval) + 1) * interval + offset
+	return clock + math.min(nextSample - now, math.max(0, anchor.readyAt - now))
 end
 
 function PlotView:HasGrowingPlants(): boolean

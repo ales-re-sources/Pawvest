@@ -524,6 +524,8 @@ from shared planting identity and server-time anchors. The leaves unfold, green 
 At mid distance a canopy and two ripe fruit preserve its outline; distant crop art is hidden. Replanting changes the plant's shape.
 CG2 (2026-11-09) supplies shared recipe dispatch, crop timing and detail levels through `PlantGrowth`. Individual recipes own the
 geometry, proxy and ring height; the server shares growth anchors for all crops through `field.plants`.
+Potato (CG3c, 2026-11-09) uses upright compound foliage, upper white/yellow flowers and later small green berries. Brown tuber tops at
+soil level signal the harvest crop. The full plant has 65 Parts and poses at 5 Hz with staggered deadlines; the mid proxy has 3–5 Parts.
 *Decided, not built (EV, the user, 2026-11-07; numbers in [ECONOMY.md](ECONOMY.md) → EV, applied in EV2a–e):* the parity goal below is replaced by engagement: the four crops move onto one ladder
 of 10 s … 24 h (Potato 10 s, Corn 30 m, Pumpkin 3 h, Giant melon 12 h; 12 more crops later), Renown 0.4 × L³, every sink priced on the
 square ladder (290 → 750 M), Tending as growth speed, guards make their squares safe from crows, Scouting XP from timer seconds.

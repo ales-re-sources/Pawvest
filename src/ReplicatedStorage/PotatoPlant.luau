@@ -1,4 +1,4 @@
--- Potato art recipe, deliberately unregistered until the motion review passes.
+-- Potato art recipe used by the field renderer and the Studio motion review.
 -- Fixed topology: 42 foliage + 6 tuber + 3 stalk + 12 flower + 2 berry = 65 parts.
 -- Growth is normalized (the review runner supplies a ten-second timeline).
 local PotatoPlant = {}
@@ -174,39 +174,51 @@ function PotatoPlant:SetGrowth(normalized)
 		block(V(width * scale, 0.14 * scale, (crease - at).Magnitude), segmentFrame(at, crease), color, true)
 		block(V(width * 0.62 * scale, 0.13 * scale, (tip - crease).Magnitude), segmentFrame(crease, tip), color, true)
 	end
-	local tops = {}
-	for i, finalTop in TOPS do
-		local extension = if i == 1 then 0.055 + 0.945 * phase(g, 0, 0.53) else phase(g, 0.17 + (i - 2) * 0.04, 0.57)
-		local origin = point(V((i - 2) * 0.08, 0.08, 0)) * extension
-		local top = point(finalTop) * extension
-		tops[i] = top
-		local elbowOffset = V(if i % 2 == 0 then -0.08 else 0.08, 0, 0.07)
-		local finalOrigin = V((i - 2) * 0.08, 0.08, 0)
-		local elbow = point(finalOrigin:Lerp(finalTop, 0.52) + elbowOffset) * extension
-		twig(origin, elbow, 0.12 * (0.35 + 0.65 * extension), extension > 0)
-		twig(elbow, top, 0.12 * (0.35 + 0.65 * extension), extension > 0)
-		local outward = V(finalTop.X, 0, finalTop.Z).Unit
-		for tier, fraction in {0.38, 0.77} do
-			local node = if fraction <= 0.52 then origin:Lerp(elbow, fraction / 0.52) else elbow:Lerp(top, (fraction - 0.52) / 0.48)
-			local angle = (tier - 1) * 0.72 + (i - 1) * 0.18
-			local radial = CFrame.Angles(0, angle, 0):VectorToWorldSpace(outward)
-			local side = V(-radial.Z, 0, radial.X)
-			local scale
-			if i == 1 and tier == 1 then
-				scale = phase(g, 0.025, 0.23)
-			else
-				local start = 0.22 + (i - 1) * 0.025 + (tier - 1) * 0.04
-				local finish = 0.61 + (tier - 1) * 0.05
-				scale = phase(g, start, finish)
+	local tops
+	if g >= 0.66 and self.foliageComplete then
+		-- Saturated foliage is independent of later flowers, berries and tubers.
+		-- Advance the fixed topology without touching its already-cached pose.
+		cursor += 42
+		tops = self.matureTops
+	else
+		tops = {}
+		for i, finalTop in TOPS do
+			local extension = if i == 1 then 0.055 + 0.945 * phase(g, 0, 0.53) else phase(g, 0.17 + (i - 2) * 0.04, 0.57)
+			local origin = point(V((i - 2) * 0.08, 0.08, 0)) * extension
+			local top = point(finalTop) * extension
+			tops[i] = top
+			local elbowOffset = V(if i % 2 == 0 then -0.08 else 0.08, 0, 0.07)
+			local finalOrigin = V((i - 2) * 0.08, 0.08, 0)
+			local elbow = point(finalOrigin:Lerp(finalTop, 0.52) + elbowOffset) * extension
+			twig(origin, elbow, 0.12 * (0.35 + 0.65 * extension), extension > 0)
+			twig(elbow, top, 0.12 * (0.35 + 0.65 * extension), extension > 0)
+			local outward = V(finalTop.X, 0, finalTop.Z).Unit
+			for tier, fraction in {0.38, 0.77} do
+				local node = if fraction <= 0.52 then origin:Lerp(elbow, fraction / 0.52) else elbow:Lerp(top, (fraction - 0.52) / 0.48)
+				local angle = (tier - 1) * 0.72 + (i - 1) * 0.18
+				local radial = CFrame.Angles(0, angle, 0):VectorToWorldSpace(outward)
+				local side = V(-radial.Z, 0, radial.X)
+				local scale
+				if i == 1 and tier == 1 then
+					scale = phase(g, 0.025, 0.23)
+				else
+					local start = 0.22 + (i - 1) * 0.025 + (tier - 1) * 0.04
+					local finish = 0.61 + (tier - 1) * 0.05
+					scale = phase(g, start, finish)
+				end
+				local branchEnd = node + point(radial * 0.46 + V(0, 0.09, 0)) * scale
+				twig(node, branchEnd, 0.12 * scale, scale > 0)
+				local leafScale = 1.30 * (if tier == 1 then 1 else 0.91)
+				local secondScale = if i == 1 and tier == 1 then phase(g, 0.055, 0.26) else scale
+				blade(branchEnd, point((radial * 0.48 + side * 0.70 + V(0, 0.10, 0)) * leafScale), 0.46 * leafScale, GREEN, scale)
+				blade(branchEnd, point((radial * 0.48 - side * 0.70 + V(0, 0.04, 0)) * leafScale), 0.43 * leafScale, LIGHT, secondScale)
 			end
-			local branchEnd = node + point(radial * 0.46 + V(0, 0.09, 0)) * scale
-			twig(node, branchEnd, 0.12 * scale, scale > 0)
-			local leafScale = 1.30 * (if tier == 1 then 1 else 0.91)
-			local secondScale = if i == 1 and tier == 1 then phase(g, 0.055, 0.26) else scale
-			blade(branchEnd, point((radial * 0.48 + side * 0.70 + V(0, 0.10, 0)) * leafScale), 0.46 * leafScale, GREEN, scale)
-			blade(branchEnd, point((radial * 0.48 - side * 0.70 + V(0, 0.04, 0)) * leafScale), 0.43 * leafScale, LIGHT, secondScale)
+			blade(top, point(outward * 0.39 + V(0, 0.20, 0)), 0.33, LIGHT, phase(g, 0.31 + (i - 1) * 0.025, 0.65))
 		end
-		blade(top, point(outward * 0.39 + V(0, 0.20, 0)), 0.33, LIGHT, phase(g, 0.31 + (i - 1) * 0.025, 0.65))
+		self.foliageComplete = g >= 0.66
+		if self.foliageComplete then
+			self.matureTops = tops
+		end
 	end
 	local tuberScale = phase(g, 0.70, 1)
 	for i, at in {V(-0.57, 0, 0.46), V(0.55, 0, 0.60)} do
@@ -223,7 +235,6 @@ function PotatoPlant:SetGrowth(normalized)
 	local bloom = phase(g, 0.60, 0.80)
 	local late = phase(g, 0.85, 1)
 	local fork = tops[2] + point(V(0, 0.20, 0.09)) * bloom
-	twig(tops[2], fork, 0.12 * bloom, bloom > 0)
 	local function flower(at, turn, scale)
 		if scale <= 0 then
 			hide(6)
@@ -237,9 +248,16 @@ function PotatoPlant:SetGrowth(normalized)
 		end
 		block(V(0.095, 0.11, 0.105) * scale, face * CFrame.new(0, 0, -0.067 * scale), YELLOW, true)
 	end
-	local left = fork + point(V(-0.18, 0.13, 0.04)) * bloom
-	twig(fork, left, 0.12 * bloom, bloom > 0)
-	flower(left, 0.16, bloom)
+	if g >= 0.80 and self.leftFlowerComplete then
+		-- Common stalk, left stalk and the retained flower: eight fixed parts.
+		cursor += 8
+	else
+		twig(tops[2], fork, 0.12 * bloom, bloom > 0)
+		local left = fork + point(V(-0.18, 0.13, 0.04)) * bloom
+		twig(fork, left, 0.12 * bloom, bloom > 0)
+		flower(left, 0.16, bloom)
+		self.leftFlowerComplete = g >= 0.80
+	end
 	local rightOffset = V(0.17, 0.07, -0.02):Lerp(V(-0.70, -0.35, 0.90), late)
 	local right = fork + point(rightOffset) * bloom
 	twig(fork, right, 0.12 * bloom, bloom > 0)
@@ -261,5 +279,31 @@ function PotatoPlant:Destroy()
 end
 
 PotatoPlant.RingHeight = 2.95
+
+-- Distance representation: three green pieces plus two ripe soil-line tubers.
+-- Flowers and decorative berries belong only to the detailed plant.
+function PotatoPlant.BuildProxy(parent: Instance, soilCFrame: CFrame, stage: number)
+	local height = if stage == 1 then 0.65 elseif stage == 2 then 1.35 else 2.10
+	local width = if stage == 1 then 1.05 elseif stage == 2 then 1.95 else 2.75
+	local function block(name, size, offset, color, variant, shape)
+		local part = Instance.new("Part")
+		part.Name, part.Size, part.CFrame, part.Color = name, size, soilCFrame * CFrame.new(offset), color
+		part.Material, part.MaterialVariant = Enum.Material.Plastic, variant
+		part.TopSurface, part.BottomSurface = Enum.SurfaceType.Smooth, Enum.SurfaceType.Smooth
+		part.Anchored, part.CanCollide, part.CanTouch, part.CanQuery, part.CastShadow = true, false, false, false, false
+		if shape then
+			part.Shape = shape
+		end
+		part.Parent = parent
+	end
+	block("Stem", V(0.17, height, 0.17), V(0, height / 2, 0), STEM, "StudsSmall")
+	block("LowerCanopy", V(width, height * 0.20, width * 0.61), V(0, height * 0.55, 0.08), GREEN, "Studs")
+	block("UpperCanopy", V(width * 0.67, height * 0.22, width * 0.52), V(0.06, height * 0.84, -0.08), LIGHT, "Studs")
+	if stage >= 3 then
+		for _, side in {-1, 1} do
+			block("TuberTop", V(0.64, 0.30, 0.47), V(side * 0.54, 0.02, 0.53), TAN, "StudsSmall", Enum.PartType.Ball)
+		end
+	end
+end
 
 return PotatoPlant

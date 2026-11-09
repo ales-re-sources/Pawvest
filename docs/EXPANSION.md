@@ -203,7 +203,8 @@ The server rounds a floating-point residue within 0.0000001 growth seconds of ri
 squares. Fixed metadata is assigned once; cached properties avoid repeated writes and hidden leaf / fruit groups skip their geometry
 calculations. The direct Studio scrubber continues to pose on every call.
 
-The client-only [CPU probe](../tools/tomato_perf_probe.luau) compares 36-square fields of the existing one-block crops with Tomatoes.
+The client-only [CPU probe](../tools/plant_perf_probe.luau) compares 36-square fields of existing one-block crops with animated crops
+(set `CROP_ID` to Tomato for this earlier comparison).
 The 24-plot layout uses 3 full, 4 mid and 17 low plots, each with 9 field pets. Four-second desktop samples at about 44% growth gave:
 
 | Scenario | Pose CPU ms per second, before → after | Scheduler p95 ms per frame, before → after |
@@ -227,8 +228,9 @@ To add another annual crop, register its recipe; the garden renderer and server 
 Plot pieces are `grow<n>`. The server publishes `field.plants` time anchors for every planted crop. Appearance stays attached to the
 owner, crop ID and planting number across corrections, replanting and detail changes. Existing crop/profile IDs are preserved.
 
-The shared update interval is proportional to grow duration, clamped to 0.05–1 seconds. The eight-minute Tomato keeps its one-second
-cadence; a future ten-second Potato can animate at 20 updates per second. Corrections and ripeness take priority within the frame budget.
+The shared update interval is proportional to grow duration, clamped to 0.2–1 seconds. The eight-minute Tomato keeps its one-second
+cadence; the ten-second Potato poses at 5 Hz. Square deadlines are spread across the interval. Corrections and ripeness take priority
+within the frame budget. The Studio review can still pose on every rendered frame.
 Perennials will retain structure maturity while fruit slots have separate growth cycles when that gameplay is added.
 
 #### CG3 — Potato growth design (for review)
@@ -276,10 +278,24 @@ Studio checks covered 1,212 forward/backward poses across six seeds, reproductio
 
 An early desktop CPU check using a temporary recipe adapter and the production scheduler found about 115 ms of pose CPU per second
 for 36 synchronized Potatoes at 20 Hz (four seconds from approximately 45% growth, scheduler p95 6.02 ms).
-The fast-crop cadence needs tuning before field integration. This recipe is currently opened by the Studio reviewer.
+That result led to the production cadence and completed-group tuning below.
 
-**CG3c** registers the approved Potato recipe in the field.
-**CG3d** measures a full field at Potato's faster cadence and includes phone readability/performance.
+**CG3c — Field integration (built and Studio-checked).** Potato is registered in `PlantGrowth`. The full model uses 65 Parts; the mid
+proxy uses an upright stem and two canopy masses, with two ground-level brown tuber tops added when ripe (five Parts total).
+Completed foliage freezes after 66% growth; the retained flower/stalk freezes after 80%. Reverse seeks invalidate those caches.
+The visible poses matched the reviewed recipe at 1,278 comparisons across six seeds.
+
+**CG3d — Desktop CPU check, phone pending.** Four-second samples from 45% growth, with nine field pets per plot, gave:
+
+| Scenario | Pose CPU ms per second | Scheduler p95 ms per frame |
+|---|---|---|
+| Original 36-Potato prototype at 20 Hz | 115 | 6.02 |
+| Production 36-Potato field at 5 Hz | 39 | 1.10 |
+| 24 production fields (3 full, 4 mid, 17 low) | 110 | 3.83 |
+
+The 24-plot fixture had 11,313 client instances and session frame p95 around 18 ms. These desktop scripting samples leave
+real-phone rendering/performance and the second real-client check open. Run [`plant_perf_probe.luau`](../tools/plant_perf_probe.luau)
+in a Studio playtest's Client command context to reproduce the current measurements.
 
 ### 5.2 Seed catalogue and market cart (not built parts)
 - **Species unlocks from the obby:** first finishes / first Golds and challenge-coin milestones unlock catalogue species (§8.1), on top of Renown.
