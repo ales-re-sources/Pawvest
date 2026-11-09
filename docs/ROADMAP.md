@@ -59,7 +59,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG3 | Potato growth art | CG3a–c built; desktop CPU tuning done | field lifecycle/detail checks pass; real phone and second client open | – |
 | CG4 | Plant individuality and harvested size | ✔ | size/rotation, bounds, detail transitions and reviewer controls Studio-checked | – |
 | CG5 | Frost Grape growth art | CG5a/b approved; explicit fruit slots | Studio checks pass; CG5c field integration next | – |
-| CG6 | Corn growth art | CG6a/b approved; CG6c field integration built | Studio lifecycle/detail checks and desktop CPU sample pass; real phone and second client open | – |
+| CG6 | Corn growth art | CG6a–d complete | Studio checks and desktop CPU sample pass; real phone and second client confirmed by Ales 2026-11-09 | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -89,7 +89,7 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
 **Plant growth art (CG1–CG6).** [Authoring guide and crop designs](PLANT_GROWTH.md) ·
 [Studio growth player command](PLANT_GROWTH.md#studio-growth-player). Standard review: five snapshots, no animation capture.
 
-- **CG1 / CG3 / CG6:** [Tomato](plants/TOMATO.md), [Potato](plants/POTATO.md) and [Corn](plants/CORN.md) are integrated and
+- **CG1 / CG3:** [Tomato](plants/TOMATO.md) and [Potato](plants/POTATO.md) are integrated and
   Studio-checked, with desktop CPU work complete. Real-phone and second-client validation remain open.
 - **CG2 / CG4:** shared recipe dispatch, stable variation, harvest-size visuals and scheduled growth updates are implemented.
 - **CG5:** [Frost Grape's tall B](plants/FROST_GRAPE.md) and motion are approved; fruit slots are explicit. Next is **CG5c** field
@@ -850,6 +850,10 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
 
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
+
+**CG6 — Corn growth art** (2026-11-09; [design](plants/CORN.md)). Tall two-ear Corn now grows continuously in the field, with seeded
+variation, visible harvest mass and cheaper distant art. Studio lifecycle/detail and desktop CPU checks pass. Ales confirmed both
+real-phone and second-client validation on 2026-11-09; CG6a–d are complete.
 
 **Playtest fixes 2026-11-08** (ECONOMY.md, GDD §6, §7.9, STAGES §2). *Why:* a tester's first Golden carrot paid 350 000; the second Stage 2 lava looked like the lethal one; Blink was harder than the stage after it; the skill's crop price was unreadable and detached from its button; nobody found where to sell crops. *What:* rare crops 50 000 / 150 000 / 300 000 with fewer Renown points, model check R, Double Jump 2 takes 1 Frost grape; `Lava block` retiled as hot coals; bounce corridors are Stage 3 and Blink Stage 4 (folders, coin ids, boards cleared); the buy button shows 💰 and the crops with have/need; selling from anywhere, Barn button outside runs, the seed stall's Sell tab, a first-harvest toast. Studio-validated (controls through the real UI, boot clean); the toast and the pulse (young fields only) were reviewed in code, not seen.
 

@@ -29,7 +29,8 @@ repeated writes. Seeds vary spacing, lean, leaf yaw/arch, ear tilt and relative 
 for the ears, with constrained foliage vigor. Whole-plant rotation is seeded.
 
 Corn remains an annual: harvest clears the plant. Its production duration stays **thirty minutes**. Motion is approved and the
-recipe is registered in `PlantGrowth` (CG6c). Desktop scripting samples pass; real-phone and second-client checks remain open.
+recipe is registered in `PlantGrowth` (CG6c). Desktop scripting samples pass. Ales confirmed real-phone and second-client validation
+on **2026-11-09**, completing CG6d and the Corn growth-art milestone.
 
 ## Recipe and fruit identity
 
