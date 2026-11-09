@@ -454,7 +454,7 @@ Seeded variation changes internode spacing, gentle lean, leaf yaw/arch, ear tilt
 silhouette and square clearance. Harvest mass uses cube-root dimensional scaling for the ears and constrained foliage vigor.
 Each instance exposes `fruitSlots[1..2]`, with `id`, mature world-space `attachment` and its 25 `parts`; local `PlantRole` and
 `FruitSlot` attributes identify every ear piece. These IDs do not define harvest quantity. Corn remains an annual: the current whole
-plant clears at harvest. This display-only recipe is not registered in `PlantGrowth`; the thirty-minute field crop is unchanged.
+plant clears at harvest. CG6c registers this approved recipe in `PlantGrowth`; Corn retains its thirty-minute crop duration.
 
 Open it in a Studio playtest's **Client** command bar:
 
@@ -472,14 +472,32 @@ maximum Sorter bonus), exact visible 43→44→43% seeks, stable Part/slot ident
 all-age radius was **2.07 studs**; mature tops ranged about **7.57–9.71 studs**, with the reference about **8.6 studs**, above the
 5.46-stud avatar measured in CG6a. Leaf-base measurement error stayed below 0.015 studs (overlapping plate ends), ear stalk bases
 below 0.00003 studs. A full 36-square field would use **3,564 plant Parts**, excluding soil/pets/UI; rendering cost is unmeasured.
-Seed, Size, Rings, Play/Pause and the scrubber were exercised through the real review UI. Art approval and production integration
-remain open; these checks do not establish real-phone performance.
+Seed, Size, Rings, Play/Pause and the scrubber were exercised through the real review UI. **Ales approved the motion on 2026-11-09.**
+These checks do not establish real-phone performance.
 
-**Acceptance gates.** Follow [PLANT_GROWTH.md](PLANT_GROWTH.md). First select the ripe silhouette; then deliver only five snapshots
-at 0/20/50/75/100%, using the same seed, mass factor, square and camera. Check continuous forward/backward seeking, six seeds and
-size extremes internally. Ear stalks and leaf bases must stay attached; leaves and husks must unfold from their bases rather than pop in.
-Report Part counts and measured bounds. Production registration, mid-detail proxy, full-field cost and real-phone performance
-follow motion approval. Existing duration, prices, rewards and persistence are outside this art study.
+**CG6c — Field integration (built and Studio-checked, 2026-11-09).** Corn uses the existing public planting identity, harvested mass
+and server-time anchors. Nearby fields draw the approved 99-Part plant at the shared one-second cadence; ripe plants stop posing.
+Mid detail uses **5 / 9 / 14 Parts** for young/growing/ripe plants: a stalk, arching leaf plates, then two golden ears and a tassel.
+Shared seed parameters preserve height, lean, leaf angles, ear size and full-circle planting rotation without constructing a full
+plant to build the proxy. Sampled proxy radius stayed below **2.02 studs**. Low detail removes crop art. The ring stays 10.8 studs
+above the planting plane, independently of mass. The art does not intercept soil selection rays.
+
+Studio local public-feed fixtures passed growth/time corrections, ripe stopping and near-deadline readiness, harvest-message
+removal, replanting, mass updates and full→mid→low→full identity. Soil/pets survive ordinary growth updates. Extracting shared
+parameters reproduced the approved full model exactly at 126 visible pose comparisons across six seeds and mass extremes.
+There were no planted Corns in the observed real field; lifecycle checks used local renderer state, with no profile writes.
+
+**CG6d — Desktop CPU sample; real phone and second client open.** The [shared probe](../tools/plant_perf_probe.luau), with `CROP_ID`
+set to Corn, samples four seconds around 45% growth. Its baseline now selects an unregistered block crop (currently Lettuce);
+hard-coded Corn would otherwise animate the supposed baseline after CG6c. Baseline samples made zero pose calls.
+
+| Scenario | Plant pose CPU ms per second | Scheduler p95 ms per frame |
+|---|---|---|
+| 36 growing Corns | 7.95 | 0.24 |
+| 24 plots (3 full / 4 mid / 17 low, 9 pets each) | 21.67 | 0.59 |
+
+The 24-plot animated fixture contained 15,273 instances including plot/pet content. These are scripting measurements from one
+desktop session and camera, not a rendering benchmark or phone validation. No new economy, persistence or harvest rules were added.
 
 ### 5.2 Seed catalogue and market cart (not built parts)
 - **Species unlocks from the obby:** first finishes / first Golds and challenge-coin milestones unlock catalogue species (§8.1), on top of Renown.

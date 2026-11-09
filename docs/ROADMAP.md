@@ -59,7 +59,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG3 | Potato growth art | CG3a–c built; desktop CPU tuning done | field lifecycle/detail checks pass; real phone and second client open | – |
 | CG4 | Plant individuality and harvested size | ✔ | size/rotation, bounds, detail transitions and reviewer controls Studio-checked | – |
 | CG5 | Frost Grape growth art | CG5a/b approved; explicit fruit slots | Studio checks pass; CG5c field integration next | – |
-| CG6 | Corn growth art | CG6a B selected; taller CG6b built for review | Studio pose/bounds/attachment checks pass; motion approval next | – |
+| CG6 | Corn growth art | CG6a/b approved; CG6c field integration built | Studio lifecycle/detail checks and desktop CPU sample pass; real phone and second client open | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -138,11 +138,10 @@ is next, followed by **CG5d** performance validation.
 [Direction and review gates](EXPANSION.md#cg5--frost-grape-growth-design).
 
 **CG6 — Corn growth art** (2026-11-09): Ales selected **B, taller if needed**, from the [ripe studies](art/corn/ripe-studies.jpg).
-**CG6b** is built for review: a roughly 8.6-stud reference plant with 99 reusable Parts, successive internodes, unfolding ribbon
-leaves, two filling husked ears and a branching tassel. Explicit fruit slots identify each ear. Studio checks passed 1,818 poses
-across six seeds and mass extremes, exact backward seeking and attachments; sampled radius ≤2.07 studs, mature height 7.57–9.71.
-[Five snapshots](art/corn/growth-poses.jpg), at 0/20/50/75/100%, follow `PLANT_GROWTH.md`; seed/size checks stay internal.
-Motion approval comes before **CG6c** field registration/proxy and **CG6d** performance validation. No production recipe is registered.
+Motion approved and **CG6c integrated** (2026-11-09): a roughly 8.6-stud reference plant, 99 Parts nearby and 5/9/14 at mid distance.
+[Five review snapshots](art/corn/growth-poses.jpg). Growth/correction, ripe stopping, harvest-message removal, replant, mass and detail
+identity checks pass in local public-feed fixtures; approved full geometry is unchanged. **CG6d** desktop pose CPU: 7.95 ms/s for 36
+growing Corns, 21.67 ms/s for 24 plots (scheduler p95 0.24 / 0.59 ms). Real-phone and second-client validation remain open.
 [Direction and review gates](EXPANSION.md#cg6--corn-growth-design).
 
 ### K1 — First-hour fixes, open part (kid playtest 2026-11-01)

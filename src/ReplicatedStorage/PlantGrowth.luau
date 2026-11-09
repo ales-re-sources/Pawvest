@@ -4,6 +4,7 @@
 local recipes = {
 	Tomato = require(script.Parent.TomatoPlant),
 	Potato = require(script.Parent.PotatoPlant),
+	Corn = require(script.Parent.CornPlant),
 }
 
 local PlantGrowth = {}

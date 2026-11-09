@@ -1,4 +1,4 @@
--- CG1d / CG3d client-only CPU probe. Run in a Studio playtest Client command context.
+-- CG1d / CG3d / CG6d client-only CPU probe. Run in a Studio playtest Client command context.
 -- Uses the production scheduler budget and distance tiers, in a disposable plot folder.
 -- Frame timings belong to this desktop/session/camera, not to a phone.
 local RunService = game:GetService("RunService")
@@ -7,7 +7,13 @@ local player = game.Players.LocalPlayer
 local PlotView = require(player.PlayerScripts.PlotView)
 local CROP_ID = "Potato" -- change to another registered crop recipe for comparison
 local CropConfig = require(game.ReplicatedStorage.CropConfig)
+local Registry = require(game.ReplicatedStorage.PlantGrowth)
 local crop = assert(CropConfig.ById[CROP_ID])
+local baseline
+for _, candidate in CropConfig.Crops do
+	if not Registry.Supports(candidate.id) then baseline = candidate; break end
+end
+assert(baseline, "Probe needs an unregistered one-block crop baseline")
 local Growth = require(game.ReplicatedStorage[CROP_ID .. "Plant"])
 local GardenConfig = require(game.ReplicatedStorage.GardenConfig)
 local root = Instance.new("Folder")
@@ -37,7 +43,7 @@ local function measure(count, animated)
 		local pets={}
 		for n=2,36,4 do table.insert(pets,string.format("Cat:10:perf%d:%d:4:4",n,n)) end
 		view:SetState({ownerId=slot,name="CG1d",incCount=3,eggs={},
-			field={crops=string.rep(if animated then crop.letter .. "1" else "b1",36),pets=pets,plants=if animated then anchors else nil}})
+			field={crops=string.rep(if animated then crop.letter .. "1" else baseline.letter .. "1",36),pets=pets,plants=if animated then anchors else nil}})
 		local delta=view.floor.Position-focus
 		local distance=Vector3.new(delta.X,0,delta.Z).Magnitude
 		local detail=if distance<=60 then "full" elseif distance<=120 then "mid" elseif distance<=300 then "low" else "none"
@@ -78,7 +84,7 @@ local function measure(count, animated)
 	until os.clock()-start>=4
 	local elapsed=os.clock()-start
 	local instances=#root:GetDescendants()
-	local result={plots=count,crop=CROP_ID,animated=animated,tiers=tiers,instances=instances,
+	local result={plots=count,crop=CROP_ID,baselineCrop=baseline.id,animated=animated,tiers=tiers,instances=instances,
 		poseCalls=poseCalls,poseMsPerSecond=poseSeconds*1000/elapsed,
 		workP95=percentile(workMs,.95),workMax=workMs[#workMs],
 		frameP95=percentile(frameMs,.95)}

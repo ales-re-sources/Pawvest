@@ -1,4 +1,4 @@
--- CG6b display recipe: selected B, with a slightly taller jointed stalk.
+-- CG6b/c field recipe: selected B, with a slightly taller jointed stalk.
 -- 13 stalk/node + 27 blade + 50 ear + 9 tassel Parts, created once.
 local CornPlant = {}
 CornPlant.__index = CornPlant
@@ -29,14 +29,13 @@ local function axis(a, b)
 	return CFrame.lookAt((a + b) / 2, b, up)
 end
 
-function CornPlant.new(parent, soilCFrame, seed, sizeFactor)
-	local self = setmetatable({}, CornPlant)
+-- Shared seed parameters keep the distance proxy consistent without building
+-- the full plant just to discard its Parts.
+local function seededShape(soilCFrame, seed, sizeFactor)
+	local self = {}
 	local mass = sizeFactor or 1
 	assert(type(mass) == "number" and mass > 0 and mass < math.huge, "Invalid plant size factor")
-	self.model = Instance.new("Model")
-	self.model.Name = "CornPlant"
-	self.base, self.parts, self.applied = soilCFrame, {}, {}
-	self.leafPoses, self.earPoses, self.fruitSlots = {}, {}, {}
+	self.fruitSlots = {}
 	local random = Random.new(seed or 1)
 	local amount = if (seed or 1) == 1 then 0 else 1
 	local function vary(extent) return random:NextNumber(-extent, extent) * amount end
@@ -74,6 +73,15 @@ function CornPlant.new(parent, soilCFrame, seed, sizeFactor)
 			tilt = 0.36 + vary(0.13), scale = 0.85 * (if i == 1 then 1 else 0.84) * self.dimensionScale * (1 + vary(0.14))}
 		self.fruitSlots[i] = {id = i, attachment = soilCFrame * CFrame.new(node), parts = {}}
 	end
+	return self
+end
+
+function CornPlant.new(parent, soilCFrame, seed, sizeFactor)
+	local self = setmetatable(seededShape(soilCFrame, seed, sizeFactor), CornPlant)
+	self.model = Instance.new("Model")
+	self.model.Name = "CornPlant"
+	self.base, self.parts, self.applied = soilCFrame, {}, {}
+	self.leafPoses, self.earPoses = {}, {}
 	local function create(name, slot)
 		local p = Instance.new("Part")
 		p.Name, p.Material, p.MaterialVariant = name, Enum.Material.Plastic, "StudsSmall"
@@ -209,6 +217,52 @@ function CornPlant:Destroy()
 	if self.destroyed then return end
 	self.destroyed = true
 	self.model:Destroy()
+end
+
+-- Mid distance: 5 / 9 / 14 Parts. Keep the jointed upright silhouette,
+-- arching leaves, crown tassel and two golden ears; omit kernel/husk detail.
+function CornPlant.BuildProxy(parent, soilCFrame, stage, seed, sizeFactor)
+	local shape = seededShape(soilCFrame, seed, sizeFactor)
+	local growth = if stage <= 1 then 0.20 elseif stage == 2 then 0.90 else 1
+	local crown = shape.path[8] * growth
+	local function block(name, size, cf, color, slot)
+		local p = Instance.new("Part")
+		p.Name, p.Size, p.CFrame, p.Color = name, size, soilCFrame * cf, color
+		p.Material, p.MaterialVariant = Enum.Material.Plastic, "StudsSmall"
+		p.TopSurface, p.BottomSurface = Enum.SurfaceType.Smooth, Enum.SurfaceType.Smooth
+		p.Anchored, p.CanCollide, p.CanTouch, p.CanQuery, p.CastShadow = true, false, false, false, false
+		p:SetAttribute("PlantRole", if slot then "Fruit" else "Structure")
+		if slot then p:SetAttribute("FruitSlot", slot) end
+		p.Parent = parent
+	end
+	local function rod(name, a, b, width, color)
+		block(name, V(width, width, (b - a).Magnitude), axis(a, b), color)
+	end
+	rod("Stem", V(0, 0, 0), crown, if stage <= 1 then 0.09 else 0.16, GREEN)
+	local indices = if stage <= 1 then {1, 2} else {2, 3, 6, 7}
+	for _, i in indices do
+		local leaf = shape.leaves[i]
+		local node = crown * leaf.t
+		local scale = if stage <= 1 then 0.45 else 1
+		local frame = CFrame.new(node) * CFrame.Angles(0, leaf.yaw, 0)
+		local path = {V(0, 0, 0), V(0, leaf.rise, leaf.reach * 0.62) * scale,
+			V(0, leaf.rise - leaf.droop, leaf.reach) * scale}
+		for j = 1, 2 do
+			local a, b = path[j], path[j + 1]
+			block("Leaf", V(leaf.width * scale * (if j == 1 then 1 else 0.5), 0.075, (b - a).Magnitude + 0.025),
+				frame * axis(a, b), if i % 2 == 0 then LIGHT else DARK)
+		end
+	end
+	if stage >= 3 then
+		for i, ear in shape.ears do
+			local frame = CFrame.new(crown * ear.t) * CFrame.Angles(0, ear.yaw, 0) * CFrame.Angles(0, 0, -ear.tilt)
+			block("Ear", V(0.46, 1.45, 0.42) * ear.scale, frame * CFrame.new(0, 1.0 * ear.scale, 0), GOLD, i)
+		end
+		rod("Tassel", crown, crown + V(0, 0.68, 0), 0.08, TASSEL)
+		for _, side in {-1, 1} do
+			rod("TasselBranch", crown + V(0, 0.20, 0), crown + V(side * 0.38, 0.65, 0), 0.07, TASSEL)
+		end
+	end
 end
 
 return CornPlant
