@@ -11,7 +11,7 @@ selected silhouette, growth poses and geometry budget.
 | Frost Grape | [Tall vineyard trellis](plants/FROST_GRAPE.md) | 115 |
 | Corn | [Tall two-ear stalk](plants/CORN.md) | 99 |
 | Lettuce | [Crisp head](plants/LETTUCE.md) | 70 |
-| Pepper / Paprika | [Upright red bell-pepper bush](plants/PEPPER.md) | 90 |
+| Pepper | [Upright red chilli-pepper bush](plants/PEPPER.md) | 84 |
 
 ## Studio growth player
 

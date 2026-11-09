@@ -33,7 +33,7 @@ end
 local ok,result=xpcall(function()
 	view:SetState(state()); view:SetDetail("full"); drain()
 	local full=count()
-	assert(full==270,"Field did not build three Pepper rigs")
+	assert(full==252,"Field did not build three Pepper rigs")
 	local before,soil,pet=view.plants[7].plant,view.pieces.sq7,view.pieces.sq7:FindFirstChild("Pet7")
 	assert(pet,"Missing field pet")
 	plants["7"].startAt=now-1548; plants["7"].readyAt=now+2052

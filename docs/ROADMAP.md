@@ -61,7 +61,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG5 | Frost Grape growth art | CG5a/b approved; explicit fruit slots | Studio checks pass; CG5c field integration next | – |
 | CG6 | Corn growth art | CG6a–d complete | Studio checks and desktop CPU sample pass; real phone and second client confirmed by Ales 2026-11-09 | – |
 | CG7 | Lettuce growth art | CG7a (A, crisp head, chosen) and CG7b/c recipe + field registration built | Studio checks pass (bounds, seeds, sizes, seek, proxies, PlotView path); five stills and colour/density fix approved by Ales 2026-11-09; real phone and second client open | – |
-| CG8 | Pepper / Paprika growth art | [Red upright bush](plants/PEPPER.md) approved; CG8b/c growth recipe + field registration built | Studio checks pass (seeds, sizes, bounds, attachments, seeks, proxies, PlotView, ring/pet); five stills ready for review; performance, real phone and second client open | – |
+| CG8 | Pepper growth art | [Red chilli-pepper bush](plants/PEPPER.md); corrected pointed/curved fruit replaces the bell shape; CG8b/c registered | Revised Studio checks pass (84 Parts, seeds, sizes, bounds, attachments, seeks, proxies, PlotView); updated five stills await art review; performance, real phone and second client open | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -101,8 +101,8 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
   integration/proxy, then **CG5d** performance validation. Fruit-only perennial gameplay remains separate future work.
 - **CG7:** [Lettuce's crisp head](plants/LETTUCE.md) is registered in `PlantGrowth` and Studio-checked; Ales approved the five stills (2026-11-09).
   Real-phone and second-client validation remain open.
-- **CG8:** [Pepper / Paprika](plants/PEPPER.md): red, elongated bells on a free-standing bush approved; continuous growth and field
-  registration are Studio-checked. Five growth stills await art review; full-field/24-plot performance, real phone and second client remain open.
+- **CG8:** [Pepper](plants/PEPPER.md): Ales corrected the fruit to slender, pointed red chillies; growth and field registration are
+  revalidated with the curved/tapered fruit. Updated five stills await art review; full-field/24-plot performance, real phone and second client remain open.
 
 Key talents as **world rewards**: done for Double Jump (K1, GDD §6). Open: Triple Jump / Dash for World 3. The lost Coin sinks are made up in
 the balancing pass (STAGES §6, GDD §6).
@@ -746,7 +746,7 @@ d Scouting XP, e eggs rolled at purchase. The rules and targets: ECONOMY.md → 
 a number needs a small code change. Order: GDD / EXPANSION wording first, then the configs, then code, then loc, then Studio.
 1. **The crop ladder in the game:** the 4 crops re-timed (Potato 10 s, Corn 30 m, Pumpkin 3 h, Giant melon 12 h) **and the 12 "Future
    plants" added as real crops** (with only the 4 the game would jump 10 s → 30 m → 3 h → 12 h, and the ladder's gates would be empty).
-   Proposed names: 30 s Lettuce 🥬, 1 m Onion 🧅, 3 m Garlic 🧄, 8 m Tomato 🍅, 15 m Cucumber 🥒, 1 h Pepper 🫑, 2 h Broccoli 🥦,
+   Proposed names: 30 s Lettuce 🥬, 1 m Onion 🧅, 3 m Garlic 🧄, 8 m Tomato 🍅, 15 m Cucumber 🥒, 1 h Pepper 🌶️, 2 h Broccoli 🥦,
    4 h Eggplant 🍆, 6 h Strawberry 🍓, 8 h Sweet potato 🍠, 18 h Sunflower 🌻, 24 h Pineapple 🍍 (new ids, letters h-s, a ripe colour
    each in `PlotView.CROP_COLORS`, `crop.name.*` strings). Sale / seed / Renown gate / xp / kg from the proposal; rare crops re-priced.
 2. **Renown:** `RenownK` 0.4, `RenownP` 3, points per harvest per crop (`renownPoints`, 4 × minutes^0.5) instead of `RenownPoints[tier]`.

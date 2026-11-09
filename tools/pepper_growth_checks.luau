@@ -15,7 +15,7 @@ local function radiusHeight(model)
 			local c=base:PointToObjectSpace(p.CFrame:PointToWorldSpace(p.Size/2*V(x,y,z)))
 			radius=math.max(radius,V(c.X,0,c.Z).Magnitude)
 			height=math.max(height,c.Y)
-			if p.Name:find("Shoulder") or p.Name:find("LowerLobe") then fruitY=math.min(fruitY,c.Y) end
+			if p.Name:find("_Body") or p.Name:find("_Point") then fruitY=math.min(fruitY,c.Y) end
 		end end end
 	end end
 	return radius,height,fruitY
@@ -40,9 +40,9 @@ assert(Growth.Supports("Pepper"),"Pepper not registered")
 for _,size in {low,1,high} do
 	for seed=1,6 do
 		local plant=Recipe.new(parent,base,seed,size)
-		assert(#plant.rig.parts==90 and #plant.fruitSlots==3,"Topology/slots changed")
+		assert(#plant.rig.parts==84 and #plant.fruitSlots==3,"Topology/slots changed")
 		for id,slot in plant.fruitSlots do
-			assert(slot.id==id and #slot.parts==16,"Fruit group incomplete")
+			assert(slot.id==id and #slot.parts==14 and slot.parts[14]:IsA("WedgePart"),"Fruit group/point incomplete")
 			for _,part in slot.parts do assert(part:GetAttribute("FruitSlot")==id and part:GetAttribute("PlantRole")=="Fruit") end
 		end
 		local initial=snapshot(plant)
@@ -101,6 +101,6 @@ for _,size in {low,1,high} do
 end
 for i=1,6 do for j=i+1,6 do assert(identities[i]~=identities[j],"Seed silhouettes identical") end end
 parent:Destroy()
-return game.HttpService:JSONEncode({seeds=6,masses={low,1,high},ages=101,parts=90,fieldParts=3240,
+return game.HttpService:JSONEncode({seeds=6,masses={low,1,high},ages=101,parts=84,fieldParts=3024,
 	maxRadius=maxRadius,minFruitClearance=minFruitY,ripeHeight={minHeight,maxHeight},proxies=proxies,
 	productionSeconds=CropConfig.ById.Pepper.growSeconds,interval=Growth.UpdateInterval(CropConfig.ById.Pepper.growSeconds)})

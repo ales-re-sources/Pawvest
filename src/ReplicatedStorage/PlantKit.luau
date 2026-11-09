@@ -42,8 +42,10 @@ function PlantKit.tendency(list, seed: number?)
 	return list[(math.floor(seed or 1) - 1) % #list + 1]
 end
 
-local function newPart(name: string, variant: string?, role: string?, slot: number?): Part
-	local part = Instance.new("Part")
+-- Pointed organs can opt into WedgePart; existing recipes keep their ordinary Part geometry.
+local function newPart(name: string, variant: string?, role: string?, slot: number?, className: string?): BasePart
+	assert(className == nil or className == "Part" or className == "WedgePart", "Unsupported plant Part class")
+	local part = Instance.new(className or "Part")
 	part.Name = name
 	part.Material, part.MaterialVariant = Enum.Material.Plastic, variant or "StudsSmall"
 	part.TopSurface, part.BottomSurface = Enum.SurfaceType.Smooth, Enum.SurfaceType.Smooth
@@ -58,8 +60,8 @@ local function newPart(name: string, variant: string?, role: string?, slot: numb
 end
 
 -- One piece of a mid-distance proxy: placed once, casts no shadow.
-function PlantKit.proxyPart(parent: Instance, name: string, size: Vector3, cframe: CFrame, color: Color3, variant: string?, role: string?, slot: number?): Part
-	local part = newPart(name, variant, role, slot)
+function PlantKit.proxyPart(parent: Instance, name: string, size: Vector3, cframe: CFrame, color: Color3, variant: string?, role: string?, slot: number?, className: string?): BasePart
+	local part = newPart(name, variant, role, slot, className)
 	part.Size, part.CFrame, part.Color = size, cframe, color
 	part.CastShadow = false
 	part.Parent = parent
@@ -77,8 +79,8 @@ function PlantKit.newRig(modelName: string, base: CFrame)
 end
 
 -- Adds a hidden Part. A pose must write the Parts in the order they were added.
-function Rig:add(name: string, variant: string?, role: string?, slot: number?): Part
-	local part = newPart(name, variant, role, slot)
+function Rig:add(name: string, variant: string?, role: string?, slot: number?, className: string?): BasePart
+	local part = newPart(name, variant, role, slot, className)
 	part.Transparency = 1
 	part.Parent = self.model
 	table.insert(self.parts, part)

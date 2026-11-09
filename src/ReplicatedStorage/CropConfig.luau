@@ -22,7 +22,7 @@ CropConfig.Crops = {
 	{ id = "Tomato", name = "Tomato", icon = "🍅", letter = "k", growSeconds = 8 * 60, sale = 900, seed = 220, renown = 4, points = 11, kg = 0.2, xp = 450 }, -- loc: ignore
 	{ id = "Cucumber", name = "Cucumber", icon = "🥒", letter = "l", growSeconds = 15 * 60, sale = 2100, seed = 500, renown = 5, points = 15, kg = 0.3, xp = 1050 }, -- loc: ignore
 	{ id = "Corn", name = "Corn", icon = "🌽", letter = "b", growSeconds = 30 * 60, sale = 5000, seed = 1200, renown = 6, points = 22, kg = 0.5, xp = 2500 }, -- loc: ignore
-	{ id = "Pepper", name = "Pepper", icon = "🫑", letter = "m", growSeconds = 1 * 3600, sale = 12000, seed = 3000, renown = 8, points = 31, kg = 0.2, xp = 6000 }, -- loc: ignore
+	{ id = "Pepper", name = "Pepper", icon = "🌶️", letter = "m", growSeconds = 1 * 3600, sale = 12000, seed = 3000, renown = 8, points = 31, kg = 0.2, xp = 6000 }, -- loc: ignore
 	{ id = "Broccoli", name = "Broccoli", icon = "🥦", letter = "n", growSeconds = 2 * 3600, sale = 29000, seed = 7000, renown = 11, points = 44, kg = 0.5, xp = 14500 }, -- loc: ignore
 	{ id = "Pumpkin", name = "Pumpkin", icon = "🎃", letter = "c", growSeconds = 3 * 3600, sale = 50000, seed = 12000, renown = 15, points = 54, kg = 6, xp = 25000 }, -- loc: ignore
 	{ id = "Eggplant", name = "Eggplant", icon = "🍆", letter = "o", growSeconds = 4 * 3600, sale = 85000, seed = 21000, renown = 20, points = 62, kg = 0.4, xp = 42500 }, -- loc: ignore

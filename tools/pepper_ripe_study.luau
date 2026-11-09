@@ -1,3 +1,5 @@
+-- Historical CG8a bell-fruit study, superseded by PepperPlant's corrected chilli fruit.
+-- For current art use PlantGrowthReview.Open("Pepper", 10); this file preserves the original comparison only.
 -- CG8a: display-only mature silhouette, run in Studio playtest Client context.
 -- No field requests or saved-state writes. Destroy PepperRipeStudy to restore camera/HUD.
 local RunService = game:GetService("RunService")

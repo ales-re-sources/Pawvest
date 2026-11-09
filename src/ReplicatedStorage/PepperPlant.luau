@@ -1,5 +1,5 @@
--- CG8: the approved free-standing red bell-pepper bush. No support pole.
--- 7 stems + 35 leaf plates + 3 x 16 fruit/blossom pieces = 90 Parts, built once.
+-- CG8: free-standing red chilli peppers, following the corrected pointed-fruit reference.
+-- 7 stems + 35 leaf plates + 3 x 14 fruit/blossom pieces = 84 Parts, built once.
 local PepperPlant = {}
 PepperPlant.__index = PepperPlant
 PepperPlant.RingHeight = 4.4
@@ -10,8 +10,13 @@ local V, C = Vector3.new, Color3.fromRGB
 local STEM, DARK, LIGHT = C(63,121,53), C(48,121,49), C(86,151,59)
 local YOUNG, GREEN, ORANGE = C(140,181,76), C(78,145,48), C(245,140,31)
 local RED, SHADE, WHITE, POLLEN = C(222,45,32), C(205,35,28), C(244,242,225), C(218,185,69)
-local BODY = V(0.86,1.27,0.86)
 local ZERO = V(0,0,0)
+-- Curved centre line, shoulder to tip. The final wedge makes a real pointed silhouette.
+local PROFILE = {
+	{V(0,-0.04,0),0.34}, {V(0,-0.30,0),0.31}, {V(0.02,-0.68,0.01),0.25},
+	{V(0.09,-1.02,0.02),0.18}, {V(0.22,-1.28,0.02),0.10},
+	{V(0.37,-1.46,0.02),0.07}, {V(0.49,-1.55,0.02),0},
+}
 -- parent segment, fraction along parent, mature endpoint, emergence interval, stem width.
 local SEGMENTS = {
 	{0,0,V(-0.04,0.65,0),0,0.18,0.14},
@@ -80,7 +85,7 @@ local function seededShape(seed, sizeFactor)
 		shape.fruits[i] = {parent=f[1],offset=f[2]*vigor,scale=scale,tilt=f[4]+vary(0.035),yaw=f[5]+vary(0.18),delay=vary(0.012)}
 		-- Keep the lowest ripe tips clear of soil even for the largest Sorter harvest on a short seed.
 		local nominalY = SEGMENTS[f[1]][3].Y + f[2].Y
-		height = math.max(height,(1.57*scale+0.18)/(nominalY*vigor))
+		height = math.max(height,(1.78*scale+0.18)/(nominalY*vigor))
 	end
 	local function point(p)
 		return V(p.X*spread,p.Y*height,p.Z*spread)*vigor + lean*p.Y
@@ -99,7 +104,7 @@ local function seededShape(seed, sizeFactor)
 	local fit = 1
 	for _, f in shape.fruits do
 		local r = radial(lows[f.parent],highs[f.parent]) + V(f.offset.X,0,f.offset.Z).Magnitude
-		fit = math.min(fit,math.max(0.25,(2.35-0.84*f.scale)/math.max(r,0.001)))
+		fit = math.min(fit,math.max(0.25,(2.35-0.95*f.scale)/math.max(r,0.001)))
 	end
 	local horizontal = V(fit,1,fit)
 	for _, s in shape.segments do s.delta *= horizontal end
@@ -114,6 +119,12 @@ local function seededShape(seed, sizeFactor)
 		local leafFit = math.min(1,math.max(0.10,(2.32-radial(rootLo,rootHi))/(len+width/2)))
 		shape.leaves[i] = {parent=spec[1],t=spec[2],yaw=spec[3]+vary(0.32),len=len*leafFit,width=width*leafFit,
 			elev=spec[6]+vary(0.12),first=spec[7],last=spec[8],delay=vary(0.012),pieces=if i==1 then 2 else 3}
+	end
+	-- Append new draws after the existing seed stream, preserving the bush's identity.
+	for i,f in shape.fruits do
+		f.bend = (if i==2 then 1 else -1)*(1+vary(0.15))
+		f.slender = 1+vary(0.10)
+		f.length = 1+vary(0.08)
 	end
 	return shape
 end
@@ -171,39 +182,42 @@ local function fruitPose(f,g,starts,tips,rotations)
 	local set = phase(g,0.55+f.delay,0.66+f.delay)
 	local flower = phase(g,0.42+f.delay,0.52+f.delay)
 	local color = GREEN:Lerp(ORANGE,phase(g,0.79+f.delay,0.90+f.delay)):Lerp(RED,phase(g,0.89,1))
-	local dims = V((0.28+0.72*swell)*f.scale,(0.08+0.92*length)*f.scale,(0.28+0.72*swell)*f.scale)*BODY
-	return {node=node,cap=cap,joint=joint,frame=frame,pedicel=pedicel,flower=flower,set=set,dims=dims,color=color}
+	local dims = V((0.28+0.72*swell)*f.scale*f.slender,(0.08+0.92*length)*f.scale*f.length,(0.28+0.72*swell)*f.scale*f.slender)
+	return {node=node,cap=cap,joint=joint,frame=frame,pedicel=pedicel,flower=flower,set=set,dims=dims,color=color,
+		curve=(0.12+0.88*length)*f.scale*f.bend}
 end
 
 local function fruitGeometry(f,p,emit,proxy)
-	local function part(size,cf,color,opacity) emit(size,cf,color,opacity) end
+	local function part(size,cf,color,opacity,className) emit(size,cf,color,opacity,className) end
 	local function rod(a,b)
 		part(V(0.085,0.085,(b-a).Magnitude),axis(a,b),STEM,phase(p.pedicel,0,0.08))
 	end
 	rod(p.node,if proxy then p.cap else p.joint)
 	if not proxy then rod(p.joint,p.cap) end
 	local capSize = (0.30+0.70*p.set)*f.scale
-	part(V(0.30*BODY.X,0.12,0.30*BODY.Z)*capSize,p.frame,POLLEN:Lerp(DARK,p.set),phase(p.flower,0,0.08))
+	part(V(0.23,0.10,0.23)*capSize,p.frame,POLLEN:Lerp(DARK,p.set),phase(p.flower,0,0.08))
 	if not proxy then
 		for i=1,5 do
 			local turn = CFrame.Angles(0,(i-1)*math.pi*2/5,0)
 			local petalScale = f.scale*p.flower
-			local width = 0.15+(0.13*BODY.X-0.15)*p.set
-			local reach = 0.30+(0.33*BODY.Z-0.30)*p.set
+			local width = 0.15+(0.07-0.15)*p.set
+			local reach = 0.30+(0.17-0.30)*p.set
 			local hinge = p.frame*turn*CFrame.Angles(0.95*(1-p.flower)+0.25*p.set,0,0)
-			part(V(width,0.065,reach)*petalScale,hinge*CFrame.new(0,-0.025*petalScale,0.15*petalScale),
+			part(V(width,0.065,reach)*petalScale,hinge*CFrame.new(0,-0.025*petalScale,(0.15-0.07*p.set)*petalScale),
 				WHITE:Lerp(DARK,p.set),phase(p.flower,0,0.08))
 		end
 	end
-	for i,offset in {V(-1,0,-1),V(1,0,-1),V(-1,0,1),V(1,0,1)} do
-		local tint = if i==1 or i==4 then p.color:Lerp(SHADE,0.14*phase(p.set,0,1)) else p.color
-		local tilt = CFrame.Angles(offset.Z*0.055,0,-offset.X*0.055)*CFrame.Angles(0,math.pi/4,0)
-		if proxy then
-			part(V(0.41,1.10,0.41)*p.dims,p.frame*CFrame.new((offset*0.205+V(0,-0.57,0))*p.dims)*tilt,tint,phase(p.set,0,0.10))
-		else
-			part(V(0.44,0.72,0.44)*p.dims,p.frame*CFrame.new((offset*0.218+V(0,-0.40,0))*p.dims)*tilt,tint,phase(p.set,0,0.10))
-			part(V(0.38,0.43,0.38)*p.dims,p.frame*CFrame.new((offset*0.195+V(0,-0.91+(i%2)*0.025,0))*p.dims)*tilt,tint,phase(p.set,0,0.10))
-		end
+	local indices = if proxy then {1,3,5,6,7} else {1,2,3,4,5,6,7}
+	local function point(v) return V(v.X*p.curve,v.Y*p.dims.Y,v.Z*p.dims.Z) end
+	for i=1,#indices-1 do
+		local j,k = indices[i],indices[i+1]
+		local a,b = point(PROFILE[j][1]),point(PROFILE[k][1])
+		local width = PROFILE[j][2]
+		local tip = k==#PROFILE
+		local tint = p.color:Lerp(SHADE,if i%2==0 then 0.08*p.set else 0)
+		part(V(width*p.dims.Z,width*p.dims.X,(b-a).Magnitude+(if tip then 0 else 0.025*p.dims.Y)),
+			p.frame*axis(a,b)*(if tip then CFrame.Angles(0,math.pi,0) else CFrame.identity),tint,phase(p.set,0,0.10),
+			if tip then "WedgePart" else nil)
 	end
 end
 
@@ -218,11 +232,11 @@ function PepperPlant.new(parent,soilCFrame,seed,sizeFactor)
 		local slot = {id=id,attachment=soilCFrame*CFrame.new(tips[f.parent]),parts={}}
 		self.fruitSlots[id]=slot
 		for _,name in {"StalkA","StalkB","Calyx","Sepal1","Sepal2","Sepal3","Sepal4","Sepal5",
-			"Shoulder1","LowerLobe1","Shoulder2","LowerLobe2","Shoulder3","LowerLobe3","Shoulder4","LowerLobe4"} do
-			table.insert(slot.parts,rig:add("Fruit"..id.."_"..name,nil,"Fruit",id))
+			"Body1","Body2","Body3","Body4","Body5","Point"} do
+			table.insert(slot.parts,rig:add("Fruit"..id.."_"..name,nil,"Fruit",id,if name=="Point" then "WedgePart" else nil))
 		end
 	end
-	assert(#rig.parts==90,"Pepper topology changed")
+	assert(#rig.parts==84,"Pepper topology changed")
 	self:SetGrowth(0)
 	self.model.Parent=parent
 	return self
@@ -257,8 +271,8 @@ function PepperPlant.BuildProxy(parent,soilCFrame,stage,seed,sizeFactor)
 	local shape = seededShape(seed,sizeFactor)
 	local g = if stage<=1 then 0.20 elseif stage==2 then 0.72 else 1
 	local starts,tips,rotations,qs = structure(shape,g)
-	local function block(name,size,cf,color,opacity,role,id)
-		if opacity>0 then Kit.proxyPart(parent,name,size,soilCFrame*cf,color,nil,role,id) end
+	local function block(name,size,cf,color,opacity,role,id,className)
+		if opacity>0 then Kit.proxyPart(parent,name,size,soilCFrame*cf,color,nil,role,id,className) end
 	end
 	for i,s in shape.segments do
 		block("Stem"..i,V(s.width,s.width,(tips[i]-starts[i]).Magnitude),axis(starts[i],tips[i]),STEM,qs[i],"Structure")
@@ -272,8 +286,8 @@ function PepperPlant.BuildProxy(parent,soilCFrame,stage,seed,sizeFactor)
 	end
 	if stage>=2 then
 		for id,f in shape.fruits do
-			fruitGeometry(f,fruitPose(f,g,starts,tips,rotations),function(size,cf,color,opacity)
-				block("Fruit"..id,size,cf,color,opacity,"Fruit",id)
+			fruitGeometry(f,fruitPose(f,g,starts,tips,rotations),function(size,cf,color,opacity,className)
+				block("Fruit"..id,size,cf,color,opacity,"Fruit",id,className)
 			end,true)
 		end
 	end
