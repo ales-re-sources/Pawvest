@@ -519,20 +519,11 @@ otherwise items could be duplicated across servers.
 
 ### 7.9 Crop field (E1-E4)
 
-**Tomato art (CG1c, 2026-11-08).** A planted Tomato grows continuously as a seeded spreading bush. Nearby clients draw 54 anchored Parts
-from shared planting identity and server-time anchors. The leaves unfold, green fruit swell and the branches dip before fruit reddens.
-At mid distance a canopy and two ripe fruit preserve its outline; distant crop art is hidden. Replanting changes the plant's shape.
-CG2 (2026-11-09) supplies shared recipe dispatch, crop timing and detail levels through `PlantGrowth`. Individual recipes own the
-geometry, proxy and ring height; the server shares growth anchors for all crops through `field.plants`.
-Potato (CG3c, 2026-11-09) uses upright compound foliage, upper white/yellow flowers and later small green berries. Brown tuber tops at
-soil level signal the harvest crop. The full plant has 65 Parts and poses at 5 Hz with staggered deadlines; the mid proxy has 3–5 Parts.
-CG4 gives both recipes stable full-circle rotation and stronger branch/leaf asymmetry. Their height and visible produce scale with
-the cube root of the actual harvested mass factor, including the current Sorter bonus; canopy width is bounded to fit the square.
-The same size and orientation apply at mid detail. [Design decision and comparisons](EXPANSION.md#cg4--plant-individuality-and-harvested-size-built).
-Corn (CG6c, 2026-11-09) grows as a tall jointed stalk with unfolding ribbon leaves, two husked ears and a branching crown tassel.
-The approved reference is about 8.6 studs tall. Ears fill late, turn gold and gain tan silk; harvested mass chiefly scales the ears.
-Nearby art uses 99 Parts and the shared one-second cadence; mid detail uses 5/9/14 Parts by stage, retaining the arching leaves and
-ripe ears. The ring is fixed at 10.8 studs above the planting plane. Whole-plant clearing at harvest and the thirty-minute duration remain.
+**Crop growth art (CG1–CG6).** Tomato, Potato and Corn grow continuously with stable variation tied to each planting and visible
+harvest-size differences. Fruit and foliage develop from attached stems; ripeness is readable from shape and color. Nearby and
+mid-distance art preserve crop identity while distant art is hidden. These crops still clear at harvest. Frost Grape's tall trellis
+design is approved as a display prototype; its field integration and future perennial regrowth are separate work.
+[Plant art and individual crop designs](PLANT_GROWTH.md) · [Current status](ROADMAP.md).
 *Decided, not built (EV, the user, 2026-11-07; numbers in [ECONOMY.md](ECONOMY.md) → EV, applied in EV2a–e):* the parity goal below is replaced by engagement: the four crops move onto one ladder
 of 10 s … 24 h (Potato 10 s, Corn 30 m, Pumpkin 3 h, Giant melon 12 h; 12 more crops later), Renown 0.4 × L³, every sink priced on the
 square ladder (290 → 750 M), Tending as growth speed, guards make their squares safe from crows, Scouting XP from timer seconds.

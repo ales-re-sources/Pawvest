@@ -1,7 +1,31 @@
-# Plant growth art — authoring guide
+# Plant growth art
 
-Reusable decisions from the Tomato, Potato and Frost Grape work. Crop-specific choices and CG milestones live in
-[EXPANSION §5.1](EXPANSION.md#51-tomato-growth-art-pilot); current work is tracked in [ROADMAP](ROADMAP.md).
+This document owns the shared authoring workflow and Studio player. [EXPANSION §5.1](EXPANSION.md#51-plant-growth-art) holds
+the high-level direction; [ROADMAP](ROADMAP.md) owns status and next steps. Read only the relevant crop page for its anatomy,
+selected silhouette, growth poses and geometry budget.
+
+| Crop | Design | Full-detail Parts |
+|---|---|---|
+| Tomato | [Spreading bush](plants/TOMATO.md) | 54 |
+| Potato | [Upright compound foliage](plants/POTATO.md) | 65 |
+| Frost Grape | [Tall vineyard trellis](plants/FROST_GRAPE.md) | 115 |
+| Corn | [Tall two-ear stalk](plants/CORN.md) | 99 |
+
+## Studio growth player
+
+Start a Studio playtest, then run in the **Client command bar**:
+
+```luau
+require(game.Players.LocalPlayer.PlayerScripts.PlantGrowthReview).Open("FrostGrape", 10)
+```
+
+Replace `"FrostGrape"` with `"Tomato"`, `"Potato"` or `"Corn"`. The optional seconds argument controls only review playback;
+it does not change real crop timing or saved data. The reviewer can open an unregistered art recipe, so it is not proof of field
+integration. Close the current reviewer before opening another crop.
+
+**One plant** offers a growth scrubber; **Five poses** shows 0/20/50/75/100%; **Six seeds** is an internal variation check.
+**Seed**, **Size** and **Rings** change the comparison. **Play/Pause** runs the continuous preview. **Close** removes its disposable
+plot and restores the camera/HUD. These are Studio-only English controls. User review deliverables remain the five stills below.
 
 ## Review deliverable
 
@@ -46,6 +70,24 @@ larger without treating tripled mass as tripled height. Constrain canopy width a
 and rails stay full-sized from planting and do not scale with mass. Frost Grape keeps its tall canopy while its grapes change size.
 `FixedRingHeight` and `ReviewHeight` handle the corresponding ring and review framing.
 
+## Recipe interface
+
+The shared [PlantGrowth registry](../src/ReplicatedStorage/PlantGrowth.luau) dispatches registered crops. Each art recipe builds
+local anchored, non-colliding geometry and exposes:
+
+| Entry | Contract |
+|---|---|
+| `new(parent, soilCFrame, seed, sizeFactor?)` | Build once; return an instance with `model`. |
+| `plant:SetGrowth(0..1)` / `Destroy()` | Pose reversibly / dispose of the instance. |
+| `BuildProxy(parent, soilCFrame, stage, seed?, sizeFactor?)` | Production mid-detail silhouette; required before field integration. |
+| `RingHeight` | Nominal ring offset; mass-scaled unless `FixedRingHeight` is true. |
+| `FixedOrientation`, `FixedRingHeight`, `ReviewHeight` | Optional row-alignment, ring and Studio-framing rules. |
+| `plant.fruitSlots` | Explicit fruit IDs, attachments and Part groups where authored; see below. |
+
+The public plot feed supplies planting identity, harvested-size factor and server-time anchors; its schema belongs in
+[PROTOCOL](PROTOCOL.md). Ordinary time updates preserve existing plant, soil and pet instances. Mid proxies retain the selected
+silhouette and harvest cues; low detail removes crop art. Do not construct a full plant just to derive its cheaper proxy.
+
 ## Identify fruit before future perennial gameplay
 
 For new fruit-bearing recipes, assign stable fruit-slot IDs, explicit Part groups and seeded attachment points. Keep support,
@@ -68,8 +110,7 @@ integration and performance validation.
 Continuous growth does not require production updates every rendered frame. Reuse cached poses/properties, skip invisible work,
 freeze completed groups and stop posing ripe plants. Spread square updates within the shared frame budget. Current cadence scales
 with effective growth duration and clamps to 0.2–1 seconds: ten-second Potato uses 5 Hz; slower crops can use 1 Hz.
-The Studio scrubber can pose immediately. Short preview
-playback must not change a live crop's growth duration. Measure the full field and the 24-plot scenario on the same route before
+The Studio scrubber can pose immediately. Short preview playback must not change a live crop's growth duration. Measure the full field and the 24-plot scenario on the same route before
 claiming an improvement; real-phone performance remains a separate check. Simplify distant foliage while preserving harvest cues.
 
 ## Keep saved-data edits separate from art tooling
@@ -83,3 +124,9 @@ Currently `Crop`, `Grown` and `N` identify the planted crop and progress; the re
 per-plant art-version selector. Changing age or other unrelated data cannot enable an unregistered recipe. Explain a missing
 consumer before proposing code changes; do not invent an ineffective profile field. Keep display-only prototypes, registered art
 and future perennial behavior clearly distinguished in status reports.
+
+## Historical evidence
+
+Alternative-study details, acceptance counts and desktop CPU logs from CG1–CG6 are archived in git:
+`git show d73a9aa:docs/EXPANSION.md`. Keep durable design decisions in the crop pages and current open checks in ROADMAP;
+do not copy those validation narratives back into EXPANSION or this guide.

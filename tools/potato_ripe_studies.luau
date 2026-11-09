@@ -1,5 +1,5 @@
 -- Studio playtest, Client command context. Static ripe Potato design review only.
--- Upright branching reference and rationale: docs/EXPANSION.md CG3 and docs/art/potato/reference.png.
+-- Upright branching reference and rationale: docs/plants/POTATO.md and docs/art/potato/reference.png.
 -- Uses the production PlotView renderer in the first unused slot >=13; squares 8/9/10
 -- contain A/B/C, left to right when viewed from plot-local +Z. Square 7 has a real
 -- neighboring crop; square 11 has a Cat. No garden requests, profile writes, motion,

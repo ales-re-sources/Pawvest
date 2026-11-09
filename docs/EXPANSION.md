@@ -128,7 +128,7 @@ flexible, not stronger at a job. New aptitudes get new ids (stored ids never cha
 
 - **Looks follow the work:** size and tier effects follow the pet's highest aptitude (built, P4); still to build: the accessories pick by
   that aptitude (a veteran guard gets the scarf, a tender the straw hat).
-- **Bond** (`Pets[uid].Bond`): favourite food, mood and affection. Mood gives only bonuses, never penalties (no guilt-driven check-ins).
+- **Bond:** favourite food, mood and affection. Mood gives only bonuses, never penalties (no guilt-driven check-ins).
 - Personal spending: dyes, outfits and a den furnished to the pet's preferences (a fox wants a burrow). Names are built (P3b).
 
 ## 5. Crop economy
@@ -136,368 +136,24 @@ flexible, not stronger at a job. New aptitudes get new ids (stored ids never cha
 named later) and perennial fruit trees (a sapling, first growth 2–24 h, then a fruit every 5–60 min up to a cap of 4–6, forever).
 
 *Built (GDD §7.9): the field loop (one crop per square, ripe crops wait, Tending replants during absences), the catalogue gated by Renown, the
-daily market cart, the size roll with records, Renown as a derived level, selling through `CoinRewards.Grant`, crops as pet food. The value
+daily market cart, the size roll with records, Renown as a derived level, selling with pet bonuses, crops as pet food. The value
 ladder and prices are in `CropConfig` (ECONOMY.md).*
 
 Harvests are items with four uses: sell, process at a station (about 1.5–2× the raw value), turn in on the request board or in a restoration
 bundle, replant. **Grow times match real-life gaps** (a quick crop for a short session, 1 h for lunch, 8–12 h for the night): "what do I plant
 before I leave, and who guards it?" is the end-of-session decision.
 
-### 5.1 Tomato growth art pilot
+### 5.1 Plant growth art
 
-**CG1** is the first crop growth art pilot. One annual Tomato grows continuously from bare soil to a ripe bush. Each stem extends from its base, a shorter arm branches from it,
-and a leaf opens from its attachment. Vary lean, spread and spacing per planting. The fruit stays attached as its branch dips. Use colored
-Plastic blocks with the garden's `Studs` and `StudsSmall` materials. The five poses below are review stops on the same plant.
+Planted crops grow continuously as recognizable individuals in Pawvest's colored stud-block style. Stable variation and visible
+harvest size distinguish plantings; silhouettes and ripeness must read from the gameplay camera at phone size. Review a new crop
+with five snapshots of the same plant at 0/20/50/75/100% before field integration.
 
-| Growth | Pose |
-|---|---|
-| 0% | A green tip breaks the soil after planting. An empty square stays bare. |
-| 20% | A short leaning stem carries two broad leaves unfolding at different angles. |
-| 50% | Two or three unequal arms open, with clear gaps between them and smaller leaves near their tips. |
-| 75% | Small green tomatoes swell beneath the outer branches, which begin to dip. |
-| 100% | Two or three full red tomatoes hang below the leaves. Fruit size and branch angle also signal ripeness in grayscale. |
+Annual harvest clears the plant. Future perennials retain their seeded structure and regrow fruit at persistent attachment points;
+rigid supports remain separate from growing organs. Art authoring must preserve that distinction without changing harvest rules.
 
-**CG1a — Ripe silhouette decision (2026-11-08).** Ales chose **A, the spreading bush**, for the growth prototype. Its low canopy reads as a bush
-at gameplay distance. Two outer tomatoes hang apart below the leaves and remain visible against the soil in the phone-size capture.
-Preserve that separation as seeded plants vary in lean and spread. B reads taller and sparser, and C's two adjacent fruit overlap from
-the review camera.
-
-**Geometry baseline.** The hand-built ripe A occupies 3.83 × 2.38 studs on the ground and stands 2.09 studs tall on a 5.5-stud square.
-Studio counted **54 anchored Parts plus one Model** for the bush alone: 8 main stem and branch pieces, 22 pieces for 11 stepped leaves,
-and 24 for three fruit assemblies. Each fruit uses a stalk, two sepals and five red blocks. A field of 36 identical full-detail bushes
-would contain 1,944 plant Parts before soil, pets or UI. This is a geometry baseline for later tuning. Phone frame times are still open.
-The `A - Spreading` entry in the study script sets the joints and fruit spacing. The `leaf` and `fruit` builders control the detail cost.
-
-**CG1b — Growth prototype (Studio).** In a Play session, run the following in the **Client** command bar:
-
-```luau
-require(game.Players.LocalPlayer.PlayerScripts.TomatoGrowthReview).Open()
-```
-
-The Studio review controls use English. **One plant** shows one individual. Drag the bottom scrubber in either direction, cycle **Seed**, or press **Play** for eight seconds of
-continuous growth and a one-second ripe hold. **Five poses** lines up the same seed at 0/20/50/75/100%. **Six seeds** lines up six ripe
-plants at field scale. **Rings** switches the crop overlays and field labels for the readability check. **Close** removes the display
-plot and restores the camera and HUD. This review uses its own clock and makes no field requests.
-
-Each planting reuses 54 anchored Parts. Leaves pivot from their attachment points, adjacent arms extend at different times and small
-green fruit swell as their branches bend. Red develops in the last fifth of growth. Seed 1 reproduces the selected ripe A. The other
-review seeds vary height, spread, lean and fruit size. Tune the joints, growth intervals and seed parameters in
-[`TomatoPlant`](../src/ReplicatedStorage/TomatoPlant.luau). Studio checks covered 43→44→43% seeks, branch / fruit attachment
-across all six seeds and the ripe seed-1 match against the original study. Art sign-off on the [loop](art/tomato/growth.gif),
-[poses](art/tomato/growth-poses.jpg) and [seeds](art/tomato/growth-seeds.jpg) comes before field integration. The current field ring
-covered the canopy from the close camera. The preview lifts it 1.35 studs, so the ripe fruit, field pet and selected square can be
-reviewed together. [Ring clearance in Studio](art/tomato/growth-ring.jpg)
-
-The [ripe studies](art/tomato/ripe-studies.jpg) were captured from a client-only display plot built by the production plot renderer.
-The [field view](art/tomato/field.jpg) includes a Potato ring and a Cat; the [720 × 405 view](art/tomato/phone.jpg) is a resized
-Studio capture. Reproduce the three studies with [the Studio client command](../tools/tomato_ripe_studies.luau) during a playtest.
-
-**CG1c — Field integration (built).** The public plot feed shares each Tomato's planting number and growth time anchors. The client derives
-its seed from owner ID and planting number. Time and stage updates preserve the existing bush, soil and pets. Full detail draws the
-54-Part model; mid detail draws a canopy and two ripe fruit at most; low detail clears the crop. Growth posing shares the garden's frame
-budget, runs once per second per growing plant and stops when ripe. A nearer ripe deadline or a server correction wakes it sooner.
-The Tomato ring sits 2.65 studs above the soil.
-The server rounds a floating-point residue within 0.0000001 growth seconds of ripeness to the ripe boundary.
-
-**CG1d — CPU tuning (desktop checked, real phone pending).** Production plants check their next scheduled update before scanning their
-squares. Fixed metadata is assigned once; cached properties avoid repeated writes and hidden leaf / fruit groups skip their geometry
-calculations. The direct Studio scrubber continues to pose on every call.
-
-The client-only [CPU probe](../tools/plant_perf_probe.luau) compares 36-square fields of existing one-block crops with animated crops
-(set `CROP_ID` to Tomato for this earlier comparison).
-The 24-plot layout uses 3 full, 4 mid and 17 low plots, each with 9 field pets. Four-second desktop samples at about 44% growth gave:
-
-| Scenario | Pose CPU ms per second, before → after | Scheduler p95 ms per frame, before → after |
-|---|---|---|
-| 36 growing Tomatoes | 66.4 → 7.2 | 5.70 → 1.04 |
-| 24 plots | 189.6 → 20.5 | 6.24 → 1.98 |
-
-The 24-plot Tomato fixture contained 9,837 instances. Session frame p95 stayed around 18 ms. These samples measure the scripting cost
-in that desktop session and camera; real-phone rendering against the proposed 30 FPS target is still open. The original and optimized
-models matched at 1,230 visible poses across six seeds, including backward seeks. Corrections, the ripe boundary and resuming after an
-exhausted frame budget also passed. If phone measurements require it, group distant leaves into plates and shorten the full-detail radius.
-
-Tomato keeps its eight-minute crop time and clears the square at harvest. A future perennial Apple keeps its seeded trunk and branches
-through harvest; only fruit regrows at persistent attachment points. Particles and lights can follow the silhouette review.
-
-#### CG2 — Shared plant growth (built)
-
-The shared `PlantGrowth` registry selects a recipe by crop ID. Recipes provide `new(parent, soilCFrame, seed, sizeFactor?)`, `BuildProxy`,
-`RingHeight` and an instance with `model`, `SetGrowth(0..1)` and `Destroy`. Tomato's recipe is `TomatoPlant`.
-To add another annual crop, register its recipe; the garden renderer and server feed already accept its crop ID and planting identity.
-Plot pieces are `grow<n>`. The server publishes `field.plants` time anchors for every planted crop. Appearance stays attached to the
-owner, crop ID and planting number across corrections, replanting and detail changes. Existing crop/profile IDs are preserved.
-
-The shared update interval is proportional to grow duration, clamped to 0.2–1 seconds. The eight-minute Tomato keeps its one-second
-cadence; the ten-second Potato poses at 5 Hz. Square deadlines are spread across the interval. Corrections and ripeness take priority
-within the frame budget. The Studio review can still pose on every rendered frame.
-Perennials will retain structure maturity while fruit slots have separate growth cycles when that gameplay is added.
-Recipes may declare `FixedOrientation` for row-aligned supports and `FixedRingHeight` for a ring offset independent of mass.
-`PlantCFrame` accepts the recipe; `RecipeRingHeight` also supports an unregistered Studio recipe. Optional `ReviewHeight` frames tall
-plants in the shared reviewer. Existing bush recipes keep their seeded rotation, mass-scaled ring and original review framing.
-
-#### CG3 — Potato growth design (for review)
-
-**CG3a** is the [ripe silhouette comparison](art/potato/ripe-studies.jpg), captured from Studio with the actual field renderer:
-A, a bushy upright plant with two flowers (63 Parts); B, open branching with two flowers (59);
-C, leaning upright with a flower and two green berries (59).
-All three have several green shoots, leaf pairs at different heights and two partly buried brown tuber shoulders.
-The upright foliage, flowers and visible tuber tops fit within each 5.5-stud square.
-See the [field](art/potato/field.jpg) and [phone-size view](art/potato/phone.jpg). The reproduction tool is
-[`potato_ripe_studies.luau`](../tools/potato_ripe_studies.luau). Ales approved A's fuller foliage with the later berry stage for CG3b.
-
-**Direction corrected by Ales (2026-11-09).** The first studies were too flat. The [supplied reference](art/potato/reference.png)
-shows upright branching stems with broad paired leaflets at several heights. Ales describes the real plant as 30–50 cm tall.
-Use that structure for the mature silhouette, with brown tuber tops peeking through the soil as an intentional game readability shortcut.
-The proposed ten-second annual growth emphasizes height first, followed by lateral branches and unfolding compound leaves.
-
-The [anatomy sketch](art/potato/anatomy-reference.png) and [flower photo](art/potato/flower-reference.png) supplied by Ales anchor the
-organ placement. Compound leaflets sit along short lateral stalks. Flower clusters sit above the foliage, with five pale lobes and
-a raised yellow center. Later, small green berries can hang from an upper side stalk. They are decorative; the harvest cue remains
-the brown tuber shoulders at soil level. The shown white flowers follow the close-up photo. Buried roots and stolons can inform a
-future extraction effect; the standing plant only draws the visible tuber tops.
-
-| Growth | Proposed motion |
-|---|---|
-| 0% | A small green shoot breaks the soil. |
-| 20% | Two leaves open at slightly different times, pivoting from the shoot. |
-| 50% | Several unequal upright stems lengthen. Side branches develop paired leaves at lower, middle and upper nodes. |
-| 75% | The layered canopy fills and the upper buds open into white/yellow flowers. Brown tuber shoulders begin to emerge at the soil line. |
-| 100% | Some flowers can give way to small green berries. Outer leaf tips settle lower; brown tuber shoulders remain the harvest cue. |
-
-Seeded variation changes shoot angles, canopy spread, leaf sizes and shoulder placement within the selected silhouette.
-**CG3b — Motion review.** The `PotatoPlant` recipe has 65 reusable Parts and six bounded shape tendencies, with small deterministic
-variation per planting. Foliage unfolds from fixed hinges. Two flowers open, then one contracts as two green berries develop on its
-stalk. The brown tuber tops emerge late. Review it in a Studio playtest's Client command bar:
-
-```luau
-require(game.Players.LocalPlayer.PlayerScripts.PlantGrowthReview).Open("Potato")
-```
-
-The shared review tool offers one plant, five ages, six seeds, rings, a scrubber and a ten-second loop. Close restores the game camera
-and HUD. The original Tomato review command remains available. Review the [sampled Studio loop](art/potato/growth.gif),
-[five ages](art/potato/growth-poses.jpg) and [six ripe seeds](art/potato/growth-seeds.jpg).
-Studio checks covered 1,212 forward/backward poses across six seeds, reproduction at 43%, the selected foliage match and every control.
-
-An early desktop CPU check using a temporary recipe adapter and the production scheduler found about 115 ms of pose CPU per second
-for 36 synchronized Potatoes at 20 Hz (four seconds from approximately 45% growth, scheduler p95 6.02 ms).
-That result led to the production cadence and completed-group tuning below.
-
-**CG3c — Field integration (built and Studio-checked).** Potato is registered in `PlantGrowth`. The full model uses 65 Parts; the mid
-proxy uses an upright stem and two canopy masses, with two ground-level brown tuber tops added when ripe (five Parts total).
-Completed foliage freezes after 66% growth; the retained flower/stalk freezes after 80%. Reverse seeks invalidate those caches.
-The visible poses matched the reviewed recipe at 1,278 comparisons across six seeds.
-
-**CG3d — Desktop CPU check, phone pending.** Four-second samples from 45% growth, with nine field pets per plot, gave:
-
-| Scenario | Pose CPU ms per second | Scheduler p95 ms per frame |
-|---|---|---|
-| Original 36-Potato prototype at 20 Hz | 115 | 6.02 |
-| Production 36-Potato field at 5 Hz | 39 | 1.10 |
-| 24 production fields (3 full, 4 mid, 17 low) | 110 | 3.83 |
-
-The 24-plot fixture had 11,313 client instances and session frame p95 around 18 ms. These desktop scripting samples leave
-real-phone rendering/performance and the second real-client check open. Run [`plant_perf_probe.luau`](../tools/plant_perf_probe.luau)
-in a Studio playtest's Client command context to reproduce the current measurements.
-
-#### CG4 — Plant individuality and harvested size (built)
-
-**Decision, 2026-11-09:** the earlier shape variation was too subtle, and harvest size was invisible. Both Potato and Tomato now use
-a stable full-circle rotation plus stronger seeded differences in stem/arm heights, spread, lean and leaf angles. Owner and planting
-number determine the seed, so revisiting or changing detail does not reroll the plant. Seed 1 keeps the authored review orientation.
-
-The server shares the existing harvested mass factor, including the current Sorter bonus. Linear height and produce dimensions use
-its cube root: tripled mass should not mean tripled height. Brown Potato tubers and Tomato fruit keep this dimensional scale;
-horizontal canopy spread is constrained to a 2.4-stud radius so rotated plants stay within a 5.5-stud square. Full and mid-detail art
-share the size and orientation; part counts and production update cadence stay unchanged. This is a readability compromise rather
-than a literal volume simulation of the canopy. The ring follows the scaled plant height.
-
-Review [six individual Potatoes at equal mass](art/potato/individual-plants.jpg) and the
-[small/standard/large size comparison](art/potato/harvest-size.jpg). The Studio reviewer now offers a **Size** button cycling the
-supported minimum, standard and maximum mass factors, alongside **Seed**. The controls remain English for this Studio-only tool.
-
-#### CG5 — Frost Grape growth design
-
-**Requested 2026-11-09.** Treat the eight-hour World 2 rare crop as a visual centerpiece: a woody climbing vine, broad lobed grape
-leaves and tapered hanging bunches in blue-violet, with pale icy facets. Keep the colored stud-block language. The supplied
-[young-plant sketch](art/frost-grape/young-reference.png), [leaf/bunch detail](art/frost-grape/detail-reference.png) and
-[vineyard training sketch](art/frost-grape/training-reference.png) guide the climbing habit, attachments and row silhouette.
-
-**CG5a — Ripe studies.** Compare A, a single-post fan; B, a short two-post vineyard trellis; and C, a wrapped single pole, on real
-5.5-stud squares beside a field pet and neighboring crop. First review the mature silhouette at gameplay/phone size and in a row.
-Keep bunches below the leaves and separated from the pole. Epic character should come from the vine and frosted fruit silhouette.
-The first pass uses opaque Plastic with `Studs` / `StudsSmall`; part counts must be reported with the images.
-
-The [ripe comparison](art/frost-grape/ripe-studies.jpg), [field with pet and ring](art/frost-grape/field.jpg),
-[phone-sized composition](art/frost-grape/phone.jpg) and [repeated vineyard row](art/frost-grape/vineyard-row.jpg) were captured in Studio.
-The phone image is a downsample for readability review, not a device performance test. Reproduce the geometry with
-[`frost_grape_ripe_studies.luau`](../tools/frost_grape_ripe_studies.luau), using the Client command context during a Studio playtest.
-
-| Study | Parts including support | Height / maximum ground radius (studs) | Tradeoff |
-|---|---|---|---|
-| A — Single-post fan | 106 | 3.25 / 2.20 | One post and crossbar; original alternative. |
-| B — Vineyard trellis (initial) | 108 | 3.28 / 2.15 | Selected structure; its initial height is superseded below. |
-| C — Wrapped pole | 106 | 3.67 / 1.69 | One tall pole; compact footprint and three bunches at different heights. |
-
-Each study has five lobed leaves (five blocks and a stalk each), three nine-berry bunches (two overlapping blocks per berry),
-six pale frost facets, woody/green stems and one angular tendril. The overlapping berry blocks give individual fruit stepped
-shoulders. A full 36-square field would use 3,816–3,888 plant Parts at this
-detail, before field/pets/UI. These are art-study counts, not an approved production budget. After selection, compare one-block
-berries or merged bunch cores at phone size, and omit secondary detail in the mid proxy.
-
-**CG5a selection — B, taller than the player (Ales, 2026-11-09).** Keep the two-post vineyard trellis and raise the living vine above
-the avatar. The revised [B beside the avatar](art/frost-grape/selected-b.jpg),
-[phone-sized composition](art/frost-grape/selected-b-phone.jpg) and [tall vineyard row](art/frost-grape/selected-b-row.jpg) replace
-the initial low B as the motion target. Studio measured 7.43 studs to the top of the foliage against a 5.39-stud current R15 avatar,
-both standing on the same soil plane. The rigid posts are 7.40 studs; the ground radius stays 2.15 studs. The lower main cane feeds
-three bunches around head/shoulder height, and a small lower leaf keeps the climbing trunk readable. Geometry uses **115 Parts**
-(one additional cane segment and one additional six-Part leaf), or 4,140 plant Parts for 36 full-detail copies.
-
-**Why:** the selected vineyard structure and the above-player scale give this rare crop a distinct presence beside the short food
-plants. Raise the cane and support rather than stretching the berries or leaves. For CG5b, every mature seed and harvested-size
-extreme must retain a living-canopy top of at least 7.1 studs; the trellis remains fixed at 7.4 studs. Vary the fruit dimensions,
-leaf size and constrained shoots around that height. Keep row alignment, the 5.5-stud footprint and visible gaps around the bunches.
-The growth-review camera and ring placement must accommodate this taller canopy, including the pet and selected-square view.
-
-**CG5b — Continuous motion (built for review).** `FrostGrapePlant` retains the selected tall B and its 115-Part topology. The four
-support pieces are built once. The vine extends in successive segments, lobed leaves unfold from attached stalks, and three bunches
-swell with staggered berry timing before gaining their violet color and pale frost. Completed leaf poses and unchanged properties
-are cached; invisible geometry is skipped. Seeking backward restores the same visible pose. Five review stops on one seeded structure:
-
-| Growth | Proposed pose |
-|---|---|
-| 0% | Full-sized support is installed on planting; a tiny shoot appears at its foot. An unplanted square stays bare. |
-| 20% | The shoot climbs the lower pole through fixed bends; two small lobed leaves unfold from their stems. |
-| 50% | The main cane reaches the support and lateral shoots extend along it. Unequal leaf fans open with visible gaps. |
-| 75% | Several small green-blue bunches develop at persistent stalk attachments, wider at the shoulders and tapered below. |
-| 100% | Heavy blue-violet bunches hang clearly below the canopy. Berries swell, short stalks dip and pale frost facets develop. |
-
-The support is rigid and does not grow or scale with harvested mass. A trellis follows field rows; seeded variation changes cane
-bends, leaf angles, shoot lengths and bunch spacing while preserving attachments. Harvest-size scaling prioritizes fruit dimensions
-and constrained vine vigor; support clearance takes precedence over uniform whole-model scaling. CG5b must review six mature seeds,
-size extremes, forward/backward scrubbing and bunch visibility with labels/rings hidden. Current single-harvest square-clearing
-behavior remains the pilot contract, including removal of its support; a persistent vine/fruit-regrowth lifecycle needs a separate
-gameplay decision, as with the future Apple tree. No new purchase or tool is implied by the visual support.
-
-Open the ten-second display loop in a Studio playtest's **Client** command bar:
-
-```luau
-require(game.Players.LocalPlayer.PlayerScripts.PlantGrowthReview).Open("FrostGrape", 10)
-```
-
-Review the [sampled Studio loop](art/frost-grape/growth.gif), [five poses](art/frost-grape/growth-poses.jpg),
-[six mature seeds](art/frost-grape/growth-seeds.jpg), [harvest-size extremes](art/frost-grape/growth-sizes.jpg) and
-[plant with ring and pet](art/frost-grape/growth-field.jpg). The shared tool offers scrub, seed, size and ring controls; Close restores
-the camera and HUD. Seed 1 at standard size reproduces the selected ripe study. Other seeds vary cane bends, leaf angles and sizes,
-individual berries, bunch size and hanging offset. Harvested mass scales the berries; the support and canopy height remain tall.
-Studio pose, bounds, attachment and control checks passed. **Ales approved the motion on 2026-11-09.** This is a display-only module;
-the production registry, eight-hour crop duration, plot feed and harvest behavior are unchanged.
-
-**Fruit identity for future perennials (Ales, 2026-11-09).** Identify fruit in code rather than relying on remembered geometry or
-Part ordering. Each FrostGrapePlant instance's `fruitSlots[1..3]` holds stable visual slot IDs, the seeded mature world-space stalk `attachment`
-and its 21 `parts`: 18 grape blocks, two frost facets and the bunch stalk. Every Part carries client-local `PlantRole` = `Support`,
-`Structure` or `Fruit`; fruit Parts also carry numeric `FruitSlot`. IDs and attachments reproduce from the planting seed and remain
-fixed across growth seeks and harvest-size changes. Metadata is created once and does not add work to animation updates.
-
-Future fruit-only harvesting must retain the seeded vine, foliage and trellis and reset only the collected slots' fruit cycles.
-Keep structure maturity separate from per-slot fruit age/readiness; resetting the whole plant's `SetGrowth(0)` would shrink its vine.
-These three visual bunches do not define reward quantity or whether collection is per bunch or all at once. Fruit-only collection,
-regrowth clocks and server state will be implemented with perennial gameplay; identifying the Parts does not enable that behavior yet.
-
-**CG5c/d — Later gates.** After art sign-off, register the recipe and any explicit fixed-orientation / rigid-support recipe options
-in the generic renderer. Use existing identity, size and time anchors; the eight-hour crop can use the one-second growth cadence.
-Review a cheaper mid-distance bunch silhouette, then measure a full field / 24 plots and a real phone before calling it validated.
-
-#### CG6 — Corn growth design
-
-**Requested 2026-11-09.** Design the existing thirty-minute Corn as a tall, jointed green stalk with long arching ribbon leaves,
-two upward-pointing ears in green husks and a small branching tassel. Use opaque colored stud-block geometry. The repeated unit is
-a stalk internode → attached leaf sheath → three shorter, narrower blade segments; ears attach at stable upper leaf axils. This
-gives the shared growth system a different branching rule from the food bushes and trained vine.
-
-**CG6a — Ripe silhouette review.** Compare A, a balanced single stalk with two ears; B, a taller, narrower single stalk with two ears;
-and C, a compact broad-leaf stalk with one large ear. All occupy one real 5.5-stud square. B was selected and raised for CG6b below.
-Compare without labels and check avatar scale, field pet, selection and ring together. Reproduction:
-[`corn_ripe_studies.luau`](../tools/corn_ripe_studies.luau), Studio playtest **Client** context. This is a local display fixture.
-
-The [ripe comparison](art/corn/ripe-studies.jpg) shows **A / B / C from left to right**, on actual field soil with selection and a
-neighboring Potato. The [720-pixel composition check](art/corn/phone.jpg) is a resized desktop capture, not a phone performance test.
-Studio measured the current avatar at **5.46 studs** tall; A and B stand above it, while C is approximately avatar height.
-
-| Study | Parts / 36 full-detail plants | Height above soil / maximum ground radius (studs) |
-|---|---|---|
-| A — Classic two-ear | 96 / 3,456 | 6.73 / 2.10 |
-| B — Tall narrow | 99 / 3,564 | 7.93 / 1.70 |
-| C — Compact broad-leaf | 68 / 2,448 | 5.53 / 2.23 |
-
-Counts exclude soil, pets and UI. All three standard-size mature studies fit the 2.4-stud radius target. The ears carry explicit
-`PlantRole = Fruit` and `FruitSlot` metadata in the static study. These measurements describe the initial alternatives; CG6b raises B.
-
-**CG6a selection (Ales, 2026-11-09): B, with room to grow taller.** Preserve the narrow two-ear form. The motion baseline raises the
-stalk from 7.15 to 7.80 studs before the tassel (about 8.6 studs overall). Keep the 2.4-stud radius target and above-avatar scale.
-
-**CG6b — Continuous motion (built for review).** `CornPlant` reuses **99 Parts**: 13 stalk/node pieces, 27 leaf plates, 50 ear pieces
-and nine tassel pieces. Each internode extends from the current previous node; leaves unfold from their attached bases into outward
-arches, lower blades first. Growth intervals overlap with small seeded timing differences. The tassel extends from the crown;
-ears swell inside their attached green husks, then gain golden kernels and tan silk. Husks open from connected base/tip hinges.
-The exposed kernel window is a readability choice for the game. Cached properties and completed leaf/ear poses avoid repeated writes.
-
-| Growth | Review pose on the same seeded plant |
-|---|---|
-| 0% | A small green spear just above the soil; an unplanted square stays bare. |
-| 20% | Short stalk, two lower blades unfolding, central spear still upright. |
-| 50% | Successive joints lift the crown; alternating long blades form open arches. |
-| 75% | Nearly full height, tassel branching, two slim green husked ears with silk. |
-| 100% | Filled upward ears, visible golden kernel windows, dry tan silk; leaves stay mostly green. |
-
-Seeded variation changes internode spacing, gentle lean, leaf yaw/arch, ear tilt and relative ear size while preserving the upright
-silhouette and square clearance. Harvest mass uses cube-root dimensional scaling for the ears and constrained foliage vigor.
-Each instance exposes `fruitSlots[1..2]`, with `id`, mature world-space `attachment` and its 25 `parts`; local `PlantRole` and
-`FruitSlot` attributes identify every ear piece. These IDs do not define harvest quantity. Corn remains an annual: the current whole
-plant clears at harvest. CG6c registers this approved recipe in `PlantGrowth`; Corn retains its thirty-minute crop duration.
-
-Open it in a Studio playtest's **Client** command bar:
-
-```luau
-require(game.Players.LocalPlayer.PlayerScripts.PlantGrowthReview).Open("Corn", 10)
-```
-
-Review the [five snapshots](art/corn/growth-poses.jpg): [0%](art/corn/growth-0.jpg), [20%](art/corn/growth-20.jpg),
-[50%](art/corn/growth-50.jpg), [75%](art/corn/growth-75.jpg), [100%](art/corn/growth-100.jpg). They use the same seed 1, mass ×1,
-square and camera, with the field pet, selection and ring together. The composite resizes these same snapshots; no extra poses or
-motion sequence were generated. The shared reviewer can still scrub and play continuously.
-
-Studio internal checks covered **1,818 poses** across six seeds and minimum/standard/maximum mass (0.357 / 1 / 3.030, including the
-maximum Sorter bonus), exact visible 43→44→43% seeks, stable Part/slot identity, disposal and attachments. The largest sampled
-all-age radius was **2.07 studs**; mature tops ranged about **7.57–9.71 studs**, with the reference about **8.6 studs**, above the
-5.46-stud avatar measured in CG6a. Leaf-base measurement error stayed below 0.015 studs (overlapping plate ends), ear stalk bases
-below 0.00003 studs. A full 36-square field would use **3,564 plant Parts**, excluding soil/pets/UI; rendering cost is unmeasured.
-Seed, Size, Rings, Play/Pause and the scrubber were exercised through the real review UI. **Ales approved the motion on 2026-11-09.**
-These checks do not establish real-phone performance.
-
-**CG6c — Field integration (built and Studio-checked, 2026-11-09).** Corn uses the existing public planting identity, harvested mass
-and server-time anchors. Nearby fields draw the approved 99-Part plant at the shared one-second cadence; ripe plants stop posing.
-Mid detail uses **5 / 9 / 14 Parts** for young/growing/ripe plants: a stalk, arching leaf plates, then two golden ears and a tassel.
-Shared seed parameters preserve height, lean, leaf angles, ear size and full-circle planting rotation without constructing a full
-plant to build the proxy. Sampled proxy radius stayed below **2.02 studs**. Low detail removes crop art. The ring stays 10.8 studs
-above the planting plane, independently of mass. The art does not intercept soil selection rays.
-
-Studio local public-feed fixtures passed growth/time corrections, ripe stopping and near-deadline readiness, harvest-message
-removal, replanting, mass updates and full→mid→low→full identity. Soil/pets survive ordinary growth updates. Extracting shared
-parameters reproduced the approved full model exactly at 126 visible pose comparisons across six seeds and mass extremes.
-There were no planted Corns in the observed real field; lifecycle checks used local renderer state, with no profile writes.
-
-**CG6d — Desktop CPU sample; real phone and second client open.** The [shared probe](../tools/plant_perf_probe.luau), with `CROP_ID`
-set to Corn, samples four seconds around 45% growth. Its baseline now selects an unregistered block crop (currently Lettuce);
-hard-coded Corn would otherwise animate the supposed baseline after CG6c. Baseline samples made zero pose calls.
-
-| Scenario | Plant pose CPU ms per second | Scheduler p95 ms per frame |
-|---|---|---|
-| 36 growing Corns | 7.95 | 0.24 |
-| 24 plots (3 full / 4 mid / 17 low, 9 pets each) | 21.67 | 0.59 |
-
-The 24-plot animated fixture contained 15,273 instances including plot/pet content. These are scripting measurements from one
-desktop session and camera, not a rendering benchmark or phone validation. No new economy, persistence or harvest rules were added.
+The [plant growth art guide](PLANT_GROWTH.md) owns Studio commands, recipe contracts, authoring rules and links to individual crop
+designs. [ROADMAP](ROADMAP.md) owns implementation status and the next CG milestone.
 
 ### 5.2 Seed catalogue and market cart (not built parts)
 - **Species unlocks from the obby:** first finishes / first Golds and challenge-coin milestones unlock catalogue species (§8.1), on top of Renown.
@@ -772,15 +428,11 @@ stations, landmarks, estate / decor / cottage, strays, seasons, trading, World 4
    during an obby session), planting and harvesting stay on the plot.
 6. **Aptitudes:** whether levels 7+ need tonics; several field jobs at once (§3). (The pet level question was settled by P4: pet level = best aptitude.)
 
-**Plot architecture (decided 2026-10-30, built in E1a).** The server keeps only data; each client draws the plots it needs from one
-`GardenRemotes.Plot` message per plot (full / mid / low detail by distance, `GardenView`); plot positions come from `GardenConfig.PlotCFrame`
-(30 slots on two rings), so the player cap is not tied to built plots. Garden servers start at **24** players for the soft launch (the instance
-budget had about 4 % headroom at 30; raise to 30 after a fresh budget test with the 36-square field). Still open: a real-phone measurement and
-a 12-client join.
-- **Offline visit (designed, not built):** a store `GardenSnapshots`, key `garden_<UserId>`, written on leave and at most once per 5 min while
-  the garden changes (its own key, outside the profile's write gap); one compact JSON object (name, field pets, eggs as `Egg:readyAt`, the
-  field as one string of 4 characters per square: crop, minutes until ready in two base-64 characters, size / variant), under 1 KB. A visit
-  costs one `GetAsync`; an owner online on another server is shown from the same snapshot (at most 5 min old); no MessagingService.
+**Plot architecture (decided, built in E1a).** Clients draw nearby plots from server data, so player capacity is not tied to
+prebuilt scene plots. Soft-launch capacity targets 24 players; increasing it requires a fresh field budget test. Real-phone
+performance and a 12-client join remain open. The current feed is documented in [PROTOCOL](PROTOCOL.md).
+- **Offline visits (designed, not built):** show a lightweight saved garden, up to five minutes old, including when its owner is on
+  another server. [Storage proposal](PROTOCOL.md#planned-offline-garden-visits).
 
 **Risks**
 - **Genre overlap with Grow a Garden** (§1.1): check every drop against it; the store page and the first ten minutes lead with the obby, pets on

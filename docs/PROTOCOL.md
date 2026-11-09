@@ -81,3 +81,12 @@ back in the stored profile between playtests (snapshot and restore it).
 `ChallengeCoinsClient` hides those coins for that player only (the server never hides a coin).
 
 Checkpoint respawn state is kept in `ServerStorage.CheckpointData.<UserId>` (ObjectValue, runtime only).
+
+## Planned offline garden visits
+
+**Designed, not implemented** (original proposal: 2026-10-30). `GardenSnapshots`, key `garden_<UserId>`, is separate from the
+live profile and its write gap. Write on leave and at most once per five minutes while the garden changes. Proposed payload:
+a compact JSON object with name, field pets, eggs as `Egg:readyAt`, and four characters per square (crop, minutes to readiness in
+two base-64 characters, size/variant), targeting under 1 KB. One visit uses one `GetAsync`; an owner on another server uses the same
+snapshot, at most five minutes old, without MessagingService. Reconcile this proposed encoding with the current crop/fruit state
+before implementation; it is not a shipped schema.

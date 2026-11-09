@@ -54,7 +54,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | U4 | Panel split: Skills Garden tab, Pets field-slot line, Barn panel, seed stall, confirm + panel focus; Garden panel removed | ✔ | ✔ (phone by geometry; crow-on bubble by code review) | – |
 | U5 | Plot layout: hatchery left, barn right, path (U5a); hatchery panel with K1 egg cards and the reveal (U5b) | ✔ | ✔ (phone by geometry) | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
-| CG1 | Tomato growth art pilot (parallel garden art study) | CG1a–c and CG1d CPU tuning built | desktop CPU checks pass; real phone and second client open | – |
+| CG1 | Tomato growth art | CG1a–c and CG1d CPU tuning built | desktop CPU checks pass; real phone and second client open | – |
 | CG2 | Shared plant growth recipes and timing | ✔ | generic dispatch, field feed and detail changes checked | – |
 | CG3 | Potato growth art | CG3a–c built; desktop CPU tuning done | field lifecycle/detail checks pass; real phone and second client open | – |
 | CG4 | Plant individuality and harvested size | ✔ | size/rotation, bounds, detail transitions and reviewer controls Studio-checked | – |
@@ -86,63 +86,17 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
    restoration landmark), Neighbours, Mastery, World 4 (S9 / S10), the Estate, Season 1. Restoration bundles (E6, D5) and estate tiers / decor /
    cottage (E7, D9) are the long-term Coin sinks; E0 holds a placeholder for their size until they are designed.
 
-**CG1 — Tomato growth art pilot** runs in parallel ([EXPANSION §5.1](EXPANSION.md#51-tomato-growth-art-pilot)).
+**Plant growth art (CG1–CG6).** [Authoring guide and crop designs](PLANT_GROWTH.md) ·
+[Studio growth player command](PLANT_GROWTH.md#studio-growth-player). Standard review: five snapshots, no animation capture.
 
-- **CG1a — Ripe studies.** Complete. Ales selected **A, the spreading bush**, on 2026-11-08. Its ripe study uses 54 Parts.
-  [A / B / C close-ups](art/tomato/ripe-studies.jpg) · [Field](art/tomato/field.jpg) · [Phone-size view](art/tomato/phone.jpg)
-- **CG1b — Growth prototype.** Built and checked in Studio. Advanced to integration at Ales's request:
-  [growth loop](art/tomato/growth.gif) · [five poses](art/tomato/growth-poses.jpg) · [six ripe seeds](art/tomato/growth-seeds.jpg).
-- **CG1c — Field integration.** Built and Studio-checked 2026-11-08. Public planting identity and time anchors drive the 54-Part bush
-  nearby and a 1–3-Part proxy at mid distance. Checked the real ripe field, tap-selection, visitor-feed growth, timing correction,
-  replant / removal and full → mid → low → full identity. Plant / early harvest / ripe harvest, offline growth and boosted readiness
-  passed an isolated server fixture. A second real client remains open.
-- **CG1d — Performance validation.** Desktop CPU tuning checked 2026-11-09. Production posing runs once per second, hidden geometry
-  and unchanged properties skip work, and ripeness / corrections wake immediately. At early growth, pose CPU per second fell from
-  66.4 to 7.2 ms for 36 Tomatoes and from 189.6 to 20.5 ms for 24 plots (3 full, 4 mid, 17 low). Visible geometry matched across
-  1,230 poses, including reverse seeks. Reproduce with `tools/plant_perf_probe.luau` (set crop ID to Tomato). Real-phone frame time and a second client remain open.
+- **CG1 / CG3 / CG6:** [Tomato](plants/TOMATO.md), [Potato](plants/POTATO.md) and [Corn](plants/CORN.md) are integrated and
+  Studio-checked, with desktop CPU work complete. Real-phone and second-client validation remain open.
+- **CG2 / CG4:** shared recipe dispatch, stable variation, harvest-size visuals and scheduled growth updates are implemented.
+- **CG5:** [Frost Grape's tall B](plants/FROST_GRAPE.md) and motion are approved; fruit slots are explicit. Next is **CG5c** field
+  integration/proxy, then **CG5d** performance validation. Fruit-only perennial gameplay remains separate future work.
 
 Key talents as **world rewards**: done for Double Jump (K1, GDD §6). Open: Triple Jump / Dash for World 3. The lost Coin sinks are made up in
 the balancing pass (STAGES §6, GDD §6).
-
-**CG2 — Shared plant growth** is built and Studio-checked (2026-11-09). Register a crop recipe in `PlantGrowth`; generic field timing,
-detail levels, seed identity and scheduling handle it. [Design and interface](EXPANSION.md#cg2--shared-plant-growth-built)
-
-**CG3 — Potato growth art** follows the same review sequence. **CG3a** was revised to upright, layered foliage from Ales's photo
-(2026-11-09); the low flat studies were rejected. The flower/anatomy references now guide upper blooms and later decorative green berries.
-The revised silhouettes are recorded here; A's fuller foliage and the later berry stage were approved for motion work:
-[A / B / C](art/potato/ripe-studies.jpg) · [Field](art/potato/field.jpg) · [Phone-size view](art/potato/phone.jpg).
-**CG3b** now provides a ten-second scrubber/loop with six seeded plants; Studio controls and forward/backward posing passed.
-[Loop](art/potato/growth.gif) · [Five ages](art/potato/growth-poses.jpg) · [Six seeds](art/potato/growth-seeds.jpg).
-Motion approved and **CG3c** integrated (2026-11-09). Potato is registered in `PlantGrowth`, with a 65-Part full model and 3–5-Part
-mid proxy. Crops pose at 5 Hz with staggered square deadlines and skip completed foliage/flower groups. The original pose matched in
-1,278 comparisons across six seeds. Visitor-feed rendering, full/mid/low identity, ripe timing, replant/removal and an isolated server
-plant/9 s refusal/10 s harvest/offline-growth fixture passed. **CG3d** desktop samples reduced one field's pose CPU from 115 to 39 ms/s
-and scheduler p95 from 6.02 to 1.10 ms; 24 plots used 110 ms/s and p95 3.83 ms. Reproduce with `tools/plant_perf_probe.luau`.
-Real-phone rendering/performance and a second real client remain open.
-
-**CG4 — Plant individuality and harvested size** is built and Studio-checked (2026-11-09). Potato and Tomato now reflect the actual
-harvest factor, rotate through a full circle and vary their branching more visibly. Part counts and Potato's 5 Hz cadence are unchanged.
-[Decision and review images](EXPANSION.md#cg4--plant-individuality-and-harvested-size-built).
-
-**CG5 — Frost Grape growth art** starts with three ripe studies: single-post fan, short vineyard trellis and wrapped pole.
-**CG5a:** Ales selected **B**, with the mature plant taller than the player (2026-11-09). Revised B is 7.43 studs tall beside the
-5.39-stud reference avatar, with rigid 7.4-stud posts and 115 Parts; it still fits one 5.5-stud square.
-[Selected tall B](art/frost-grape/selected-b.jpg) · [Phone-size composition](art/frost-grape/selected-b-phone.jpg) ·
-[Tall vineyard row](art/frost-grape/selected-b-row.jpg). Preserve a living-canopy top ≥7.1 studs across mature seeds/harvest sizes.
-**CG5b** is built for review: 115 reusable Parts, fixed trellis, sequential climb, unfolding leaves and swelling/frosting berries.
-Studio pose/bounds/attachment and actual-control checks pass; the display-only module is not registered for live fields.
-[Loop](art/frost-grape/growth.gif) · [Five poses](art/frost-grape/growth-poses.jpg) · [Six seeds](art/frost-grape/growth-seeds.jpg) ·
-[Sizes](art/frost-grape/growth-sizes.jpg). Motion approved by Ales (2026-11-09). Fruit slots and mature attachments are explicitly
-identified for future fruit-only perennial harvests; separate structure/fruit clocks remain future gameplay. **CG5c** field integration
-is next, followed by **CG5d** performance validation.
-[Direction and review gates](EXPANSION.md#cg5--frost-grape-growth-design).
-
-**CG6 — Corn growth art** (2026-11-09): Ales selected **B, taller if needed**, from the [ripe studies](art/corn/ripe-studies.jpg).
-Motion approved and **CG6c integrated** (2026-11-09): a roughly 8.6-stud reference plant, 99 Parts nearby and 5/9/14 at mid distance.
-[Five review snapshots](art/corn/growth-poses.jpg). Growth/correction, ripe stopping, harvest-message removal, replant, mass and detail
-identity checks pass in local public-feed fixtures; approved full geometry is unchanged. **CG6d** desktop pose CPU: 7.95 ms/s for 36
-growing Corns, 21.67 ms/s for 24 plots (scheduler p95 0.24 / 0.59 ms). Real-phone and second-client validation remain open.
-[Direction and review gates](EXPANSION.md#cg6--corn-growth-design).
 
 ### K1 — First-hour fixes, open part (kid playtest 2026-11-01)
 A 9-year-old on a phone, fresh progress, got stuck after about 20 minutes. Target: a new player who does not pay always has a next step for

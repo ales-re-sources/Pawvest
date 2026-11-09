@@ -1,4 +1,4 @@
--- Shared plant-art reviewer, explicitly opened in a Studio playtest client (EXPANSION §5.1).
+-- Shared plant-art reviewer, explicitly opened in a Studio playtest client (docs/PLANT_GROWTH.md).
 -- The plot, controls and clock exist only for this review. Close restores the camera and HUD.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")

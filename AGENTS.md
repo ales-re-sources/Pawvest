@@ -13,7 +13,7 @@ boards, challenge coins, talents), pets, and a garden island with plots, incubat
 |---|---|
 | [docs/ROADMAP.md](docs/ROADMAP.md) | status, what next, open items, done log. Answer "what next?" from here |
 | [docs/GDD.md](docs/GDD.md) | the game as built: loop, stages, time tiers, rewards, talents, pets, garden, crop field (§7.9), hints |
-| [docs/EXPANSION.md](docs/EXPANSION.md) | the pet-garden direction not yet built: MVP and drop plan (E5–E11, D1–D10), monetization rules |
+| [docs/EXPANSION.md](docs/EXPANSION.md) | high-level pet-garden direction: MVP and drop plan (E5–E11, D1–D10), monetization rules |
 | [docs/UI_GARDEN_PETS.md](docs/UI_GARDEN_PETS.md) | garden / pet UI redesign U1–U5 (decided, not built): field rings, square card, hand bar, panel split, pets list |
 | [docs/ECONOMY.md](docs/ECONOMY.md) | economy parameters and decisions, how to run `tools/economy.py` |
 | [docs/STAGES.md](docs/STAGES.md) | stage building: components, build rules, reach table, difficulty curve, per-stage as-built notes |
@@ -22,7 +22,7 @@ boards, challenge coins, talents), pets, and a garden island with plots, incubat
 | [docs/LOCALIZATION.md](docs/LOCALIZATION.md) | localization design and the strings workflow |
 | [docs/TELEMETRY.md](docs/TELEMETRY.md) | telemetry events and how to read them on the Creator Dashboard |
 | [docs/PET_GROWTH.md](docs/PET_GROWTH.md) | how PetLook derives a pet's look, how pet models are authored |
-| [docs/PLANT_GROWTH.md](docs/PLANT_GROWTH.md) | plant authoring: silhouette, continuous growth, variation, fruit slots, performance and five-snapshot review |
+| [docs/PLANT_GROWTH.md](docs/PLANT_GROWTH.md) | plant art authoring, Studio player commands and recipe contracts; links to crop designs in `docs/plants/` |
 
 **Before designing a crop:** read `docs/PLANT_GROWTH.md`. The standard art review is five snapshots (0/20/50/75/100%); historical GIF links do not require new animation captures.
 
@@ -35,8 +35,9 @@ commit). Status levels (Implemented / Studio-validated / Live-validated) change 
 
 **Keeping docs small** (this file loads into every thread): AGENTS.md holds only rules that apply to most tasks; tables, procedures and
 per-stage facts go to `docs/`. A finished milestone shrinks to a short "Done" entry in ROADMAP and its as-built design goes to GDD (or STAGES
-for a stage); scopes, acceptance checks and validation logs stay in git only (point to them with `git show <hash>:<path>`). Durable lessons
-from a validation go here (Gotchas / Testing) as one-line rules, not as stories.
+for a stage); scopes, acceptance checks and validation logs stay in git only (point to them with `git show <hash>:<path>`).
+EXPANSION stays high-level; plant commands/contracts go to PLANT_GROWTH and crop detail to `docs/plants/`. Durable lessons from a
+validation go here (Gotchas / Testing) as one-line rules, not as stories.
 
 ## How code gets here (read before editing)
 Argon runs in **Only Code Mode**: `src/` contains every script **plus the instances that contain scripts** (as folders with `init.meta.json`
