@@ -195,11 +195,26 @@ Studio capture. Reproduce the three studies with [the Studio client command](../
 **CG1c — Field integration (built).** The public plot feed shares each Tomato's planting number and growth time anchors. The client derives
 its seed from owner ID and planting number. Time and stage updates preserve the existing bush, soil and pets. Full detail draws the
 54-Part model; mid detail draws a canopy and two ripe fruit at most; low detail clears the crop. Growth posing shares the garden's frame
-budget, runs at most once per 0.15 seconds per growing plant and stops when ripe. The Tomato ring sits 2.65 studs above the soil.
+budget, runs once per second per growing plant and stops when ripe. A nearer ripe deadline or a server correction wakes it sooner.
+The Tomato ring sits 2.65 studs above the soil.
 The server rounds a floating-point residue within 0.0000001 growth seconds of ripeness to the ripe boundary.
 
-**CG1d — Performance validation.** Compare frame times against the current renderer on the same route with a full 36-square field and 24 synthetic plots, then test
-a real phone against a proposed 30 FPS target. If necessary, group distant leaves into plates and shorten the full-detail radius.
+**CG1d — CPU tuning (desktop checked, real phone pending).** Production plants check their next scheduled update before scanning their
+squares. Fixed metadata is assigned once; cached properties avoid repeated writes and hidden leaf / fruit groups skip their geometry
+calculations. The direct Studio scrubber continues to pose on every call.
+
+The client-only [CPU probe](../tools/tomato_perf_probe.luau) compares 36-square fields of the existing one-block crops with Tomatoes.
+The 24-plot layout uses 3 full, 4 mid and 17 low plots, each with 9 field pets. Four-second desktop samples at about 44% growth gave:
+
+| Scenario | Pose CPU ms per second, before → after | Scheduler p95 ms per frame, before → after |
+|---|---|---|
+| 36 growing Tomatoes | 66.4 → 7.2 | 5.70 → 1.04 |
+| 24 plots | 189.6 → 20.5 | 6.24 → 1.98 |
+
+The 24-plot Tomato fixture contained 9,837 instances. Session frame p95 stayed around 18 ms. These samples measure the scripting cost
+in that desktop session and camera; real-phone rendering against the proposed 30 FPS target is still open. The original and optimized
+models matched at 1,230 visible poses across six seeds, including backward seeks. Corrections, the ripe boundary and resuming after an
+exhausted frame budget also passed. If phone measurements require it, group distant leaves into plates and shorten the full-detail radius.
 
 Tomato keeps its eight-minute crop time and clears the square at harvest. A future perennial Apple keeps its seeded trunk and branches
 through harvest; only fruit regrows at persistent attachment points. Particles and lights can follow the silhouette review.

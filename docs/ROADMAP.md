@@ -54,7 +54,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | U4 | Panel split: Skills Garden tab, Pets field-slot line, Barn panel, seed stall, confirm + panel focus; Garden panel removed | ✔ | ✔ (phone by geometry; crow-on bubble by code review) | – |
 | U5 | Plot layout: hatchery left, barn right, path (U5a); hatchery panel with K1 egg cards and the reveal (U5b) | ✔ | ✔ (phone by geometry) | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
-| CG1 | Tomato growth art pilot (parallel garden art study) | CG1a–c built | CG1c single-client checked; multi-client and CG1d open | – |
+| CG1 | Tomato growth art pilot (parallel garden art study) | CG1a–c and CG1d CPU tuning built | desktop CPU checks pass; real phone and second client open | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -91,7 +91,10 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
   nearby and a 1–3-Part proxy at mid distance. Checked the real ripe field, tap-selection, visitor-feed growth, timing correction,
   replant / removal and full → mid → low → full identity. Plant / early harvest / ripe harvest, offline growth and boosted readiness
   passed an isolated server fixture. A second real client remains open.
-- **CG1d — Performance validation.** Compare a full 36-square field and 24 synthetic plots to today's renderer, then measure a real phone.
+- **CG1d — Performance validation.** Desktop CPU tuning checked 2026-11-09. Production posing runs once per second, hidden geometry
+  and unchanged properties skip work, and ripeness / corrections wake immediately. At early growth, pose CPU per second fell from
+  66.4 to 7.2 ms for 36 Tomatoes and from 189.6 to 20.5 ms for 24 plots (3 full, 4 mid, 17 low). Visible geometry matched across
+  1,230 poses, including reverse seeks. Reproduce with `tools/tomato_perf_probe.luau`. Real-phone frame time and a second client remain open.
 
 Key talents as **world rewards**: done for Double Jump (K1, GDD §6). Open: Triple Jump / Dash for World 3. The lost Coin sinks are made up in
 the balancing pass (STAGES §6, GDD §6).

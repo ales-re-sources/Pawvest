@@ -242,6 +242,7 @@ function PlotView.new(slot: number, parent: Instance, options)
 	self.labels = {} -- [incubator] = { label, egg, readyAt } of drawn countdowns
 	self.tomatoes = {} -- full-detail plants, separate from soil and field pets
 	self.tomatoCursor = 0
+	self.tomatoNextAt = math.huge
 	self.root = Instance.new("Model")
 	self.root.Name = string.format("Slot_%02d", slot)
 	self.root.Parent = parent
@@ -338,6 +339,7 @@ function PlotView:SetState(state)
 	self.state = state
 	self.petMap = fieldPets(state.field)
 	for _, entry in self.tomatoes do entry.dirty = true end
+	self.tomatoNextAt = 0 -- a correction can wake a previously ripe plant
 	self:mark()
 end
 
@@ -811,9 +813,12 @@ function PlotView:buildTomato(model: Model, square: number)
 	-- plantings still cycle all six silhouettes (104729 is coprime with six).
 	local seed = (self.state.ownerId or self.slot) * 7919 + planting * 104729
 	local plant = TomatoGrowthStudy.new(model, self:SquareCFrame(square), seed)
-	local growth = self:tomatoGrowth(square, workspace:GetServerTimeNow())
+	local now = workspace:GetServerTimeNow()
+	local growth = self:tomatoGrowth(square, now)
 	plant:SetGrowth(growth)
-	self.tomatoes[square] = { plant = plant, growth = growth, dirty = false, nextAt = 0, animated = self:tomatoTimed(square) }
+	local nextAt = self:tomatoDue(square, growth, now, os.clock())
+	self.tomatoes[square] = { plant = plant, growth = growth, dirty = false, nextAt = nextAt, animated = self:tomatoTimed(square) }
+	self.tomatoNextAt = math.min(self.tomatoNextAt, nextAt)
 end
 
 function PlotView:tomatoTimed(square: number): boolean
@@ -822,18 +827,22 @@ function PlotView:tomatoTimed(square: number): boolean
 	return type(anchor) == "table" and type(anchor.startAt) == "number" and type(anchor.readyAt) == "number" and anchor.readyAt > anchor.startAt
 end
 
+-- One production pose per second is enough for an eight-minute crop. Schedule
+-- its exact ripe boundary sooner when necessary; the review scrubber bypasses this.
+function PlotView:tomatoDue(square: number, growth: number, now: number, clock: number): number
+	if growth >= 1 or not self:tomatoTimed(square) then return math.huge end
+	local anchor = self.state.field.tomatoes[tostring(square)]
+	return clock + math.min(1, math.max(0, anchor.readyAt - now))
+end
+
 function PlotView:HasGrowingTomatoes(): boolean
-	if self.detail ~= "full" then return false end
-	for _, entry in self.tomatoes do
-		if entry.dirty or (entry.animated and entry.growth < 1) then return true end
-	end
-	return false
+	return self.detail == "full" and os.clock() >= self.tomatoNextAt
 end
 
 -- Share the build deadline, with a rotating square cursor so a large field can
 -- spread posing across frames. Ripe plants do no pose work until a correction.
 function PlotView:StepTomatoes(deadline: number)
-	if self.detail ~= "full" then return end
+	if not self:HasGrowingTomatoes() then return end
 	local now, clock = workspace:GetServerTimeNow(), os.clock()
 	for _ = 1, CropConfig.MaxSquares do
 		if os.clock() >= deadline then break end
@@ -845,9 +854,16 @@ function PlotView:StepTomatoes(deadline: number)
 				entry.plant:SetGrowth(growth)
 				entry.growth = growth
 			end
-			entry.dirty, entry.nextAt = false, clock + 0.15
+			entry.dirty = false
 			entry.animated = self:tomatoTimed(self.tomatoCursor)
+			entry.nextAt = self:tomatoDue(self.tomatoCursor, growth, now, clock)
 		end
+	end
+	-- Include unvisited entries if the deadline interrupted this pass, so their
+	-- overdue work resumes next frame rather than waiting another whole second.
+	self.tomatoNextAt = math.huge
+	for _, entry in self.tomatoes do
+		self.tomatoNextAt = math.min(self.tomatoNextAt, if entry.dirty then 0 else entry.nextAt)
 	end
 end
 

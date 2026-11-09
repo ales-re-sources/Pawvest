@@ -28,6 +28,30 @@ local TENDENCIES = {
 	{0.91, 0.91, -0.04, {1.07, 0.96, 0.84}, {1.03, 0.96, 0.88}},
 }
 
+-- Fixed topology: initialize names and stud variants even for hidden pieces.
+local PART_METADATA = {}
+local function metadata(name, variant)
+	table.insert(PART_METADATA, { name, variant or "StudsSmall" })
+end
+metadata("Stem")
+metadata("Stem")
+for _ = 1, 3 do
+	metadata("Stem")
+	metadata("Stem")
+	for _ = 1, 3 do
+		metadata("Leaf", "Studs")
+		metadata("LeafTip")
+	end
+	for _, name in {"Stem", "Sepal", "Sepal", "Shoulder", "Tomato", "Cheek", "Cheek", "Base"} do
+		metadata(name)
+	end
+end
+for _ = 1, 2 do
+	metadata("Leaf", "Studs")
+	metadata("LeafTip")
+end
+assert(#PART_METADATA == 54, "Tomato metadata budget changed")
+
 local function phase(g, first, last)
 	local t = math.clamp((g - first) / (last - first), 0, 1)
 	return t * t * (3 - 2 * t)
@@ -48,6 +72,7 @@ function TomatoGrowthStudy.new(parent, soilCFrame, seed)
 	self.model.Name = "TomatoGrowthStudy"
 	self.base = soilCFrame
 	self.parts = {}
+	self.applied = {}
 	local random = Random.new(seed or 1)
 	-- Seed one preserves the approved A; the others retain its separated fruit.
 	local amount = if (seed or 1) == 1 then 0 else 1
@@ -63,12 +88,14 @@ function TomatoGrowthStudy.new(parent, soilCFrame, seed)
 	end
 	for i = 1, 54 do
 		local part = Instance.new("Part")
-		part.Name = "PlantPiece_" .. i
+		part.Name, part.MaterialVariant = PART_METADATA[i][1], PART_METADATA[i][2]
 		part.Material = Enum.Material.Plastic
 		part.TopSurface, part.BottomSurface = Enum.SurfaceType.Smooth, Enum.SurfaceType.Smooth
 		part.Anchored, part.CanCollide, part.CanTouch, part.CanQuery = true, false, false, false
+		part.Transparency = 1
 		part.Parent = self.model
 		self.parts[i] = part
+		self.applied[i] = { visible = false }
 	end
 	self:SetGrowth(0)
 	self.model.Parent = parent
@@ -86,16 +113,48 @@ function TomatoGrowthStudy:SetGrowth(normalized)
 	local function point(p)
 		return V(p.X * self.spread + p.Y * self.lean, p.Y * self.height, p.Z * self.spread)
 	end
-	local function block(name, size, cf, color, variant, visible)
+	local function hide(count)
+		for _ = 1, count do
+			cursor += 1
+			local applied = self.applied[cursor]
+			if applied.visible then
+				self.parts[cursor].Transparency = 1
+				applied.visible = false
+			end
+		end
+	end
+	local function block(_name, size, cf, color, _variant, visible)
+		if not visible then
+			hide(1)
+			return
+		end
 		cursor += 1
 		local part = self.parts[cursor]
-		if part.Name ~= name then part.Name = name end
-		if part.MaterialVariant ~= variant then part.MaterialVariant = variant end
-		part.Size = V(math.max(size.X, 0.001), math.max(size.Y, 0.001), math.max(size.Z, 0.001))
-		part.CFrame, part.Color = base * cf, color
-		part.Transparency = if visible then 0 else 1
+		local applied = self.applied[cursor]
+		local actualSize = V(math.max(size.X, 0.001), math.max(size.Y, 0.001), math.max(size.Z, 0.001))
+		local world = base * cf
+		if applied.size ~= actualSize then
+			part.Size = actualSize
+			applied.size = actualSize
+		end
+		if applied.cf ~= world then
+			part.CFrame = world
+			applied.cf = world
+		end
+		if applied.color ~= color then
+			part.Color = color
+			applied.color = color
+		end
+		if not applied.visible then
+			part.Transparency = 0
+			applied.visible = true
+		end
 	end
 	local function twig(a, b, width, visible)
+		if not visible then
+			hide(1)
+			return
+		end
 		block("Stem", V(width, width, (b - a).Magnitude), axis(a, b), STEM, "StudsSmall", visible)
 	end
 	local function opened(offset, opening)
@@ -104,6 +163,10 @@ function TomatoGrowthStudy:SetGrowth(normalized)
 		return offset.Unit:Lerp(Vector3.yAxis, (1 - opening) * 0.94).Unit * offset.Magnitude
 	end
 	local function leaf(at, offset, width, color, scale, opening)
+		if scale <= 0 then
+			hide(2)
+			return
+		end
 		local direction = opened(offset, opening or scale)
 		local blade = direction * scale
 		local length = blade.Magnitude
@@ -114,6 +177,10 @@ function TomatoGrowthStudy:SetGrowth(normalized)
 		block("LeafTip", V(width * scale * 0.56, 0.13 * scale, length * 0.28), cf * CFrame.new(0, 0, length * 0.36), color, "StudsSmall", scale > 0)
 	end
 	local function fruit(at, size, scale, color)
+		if scale <= 0 then
+			hide(8)
+			return
+		end
 		local s = size * scale
 		local stalkEnd = at - V(0, 0.22 * scale, 0)
 		twig(at, stalkEnd, 0.10 * scale, scale > 0)
@@ -171,6 +238,7 @@ function TomatoGrowthStudy:Destroy()
 	self.destroyed = true
 	self.model:Destroy()
 	self.parts = {}
+	self.applied = {}
 end
 
 return TomatoGrowthStudy
