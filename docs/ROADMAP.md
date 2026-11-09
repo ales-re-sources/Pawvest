@@ -56,7 +56,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
 | CG1 | Tomato growth art pilot (parallel garden art study) | CG1a–c and CG1d CPU tuning built | desktop CPU checks pass; real phone and second client open | – |
 | CG2 | Shared plant growth recipes and timing | ✔ | generic dispatch, field feed and detail changes checked | – |
-| CG3 | Potato growth art | CG3a ripe studies built | silhouette selection pending | – |
+| CG3 | Potato growth art | CG3a studies and CG3b motion prototype built | A selected; motion review next | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -106,9 +106,12 @@ detail levels, seed identity and scheduling handle it. [Design and interface](EX
 
 **CG3 — Potato growth art** follows the same review sequence. **CG3a** was revised to upright, layered foliage from Ales's photo
 (2026-11-09); the low flat studies were rejected. The flower/anatomy references now guide upper blooms and later decorative green berries.
-The three revised silhouettes are ready for selection:
+The revised silhouettes are recorded here; A's fuller foliage and the later berry stage were approved for motion work:
 [A / B / C](art/potato/ripe-studies.jpg) · [Field](art/potato/field.jpg) · [Phone-size view](art/potato/phone.jpg).
-Next are **CG3b** motion/seed review, **CG3c** field integration and **CG3d** performance checks.
+**CG3b** now provides a ten-second scrubber/loop with six seeded plants; Studio controls and forward/backward posing passed.
+[Loop](art/potato/growth.gif) · [Five ages](art/potato/growth-poses.jpg) · [Six seeds](art/potato/growth-seeds.jpg).
+Next is motion review. Before **CG3c** field integration, tune the fast-crop cadence: a first desktop 36-Potato check at 20 Hz reached
+115 ms of pose CPU per second and scheduler p95 6.02 ms. **CG3d** includes the full-field and real-phone checks.
 
 ### K1 — First-hour fixes, open part (kid playtest 2026-11-01)
 A 9-year-old on a phone, fresh progress, got stuck after about 20 minutes. Target: a new player who does not pay always has a next step for

@@ -239,7 +239,7 @@ C, leaning upright with a flower and two green berries (59).
 All three have several green shoots, leaf pairs at different heights and two partly buried brown tuber shoulders.
 The upright foliage, flowers and visible tuber tops fit within each 5.5-stud square.
 See the [field](art/potato/field.jpg) and [phone-size view](art/potato/phone.jpg). The reproduction tool is
-[`potato_ripe_studies.luau`](../tools/potato_ripe_studies.luau). The developer selects the silhouette before CG3b motion work.
+[`potato_ripe_studies.luau`](../tools/potato_ripe_studies.luau). Ales approved A's fuller foliage with the later berry stage for CG3b.
 
 **Direction corrected by Ales (2026-11-09).** The first studies were too flat. The [supplied reference](art/potato/reference.png)
 shows upright branching stems with broad paired leaflets at several heights. Ales describes the real plant as 30–50 cm tall.
@@ -261,7 +261,24 @@ future extraction effect; the standing plant only draws the visible tuber tops.
 | 100% | Some flowers can give way to small green berries. Outer leaf tips settle lower; brown tuber shoulders remain the harvest cue. |
 
 Seeded variation changes shoot angles, canopy spread, leaf sizes and shoulder placement within the selected silhouette.
-**CG3b** reviews a continuous scrubber and seeded loop. **CG3c** registers the approved Potato recipe in the field.
+**CG3b — Motion review.** The `PotatoPlant` recipe has 65 reusable Parts and six bounded shape tendencies, with small deterministic
+variation per planting. Foliage unfolds from fixed hinges. Two flowers open, then one contracts as two green berries develop on its
+stalk. The brown tuber tops emerge late. Review it in a Studio playtest's Client command bar:
+
+```luau
+require(game.Players.LocalPlayer.PlayerScripts.PlantGrowthReview).Open("Potato")
+```
+
+The shared review tool offers one plant, five ages, six seeds, rings, a scrubber and a ten-second loop. Close restores the game camera
+and HUD. The original Tomato review command remains available. Review the [sampled Studio loop](art/potato/growth.gif),
+[five ages](art/potato/growth-poses.jpg) and [six ripe seeds](art/potato/growth-seeds.jpg).
+Studio checks covered 1,212 forward/backward poses across six seeds, reproduction at 43%, the selected foliage match and every control.
+
+An early desktop CPU check using a temporary recipe adapter and the production scheduler found about 115 ms of pose CPU per second
+for 36 synchronized Potatoes at 20 Hz (four seconds from approximately 45% growth, scheduler p95 6.02 ms).
+The fast-crop cadence needs tuning before field integration. This recipe is currently opened by the Studio reviewer.
+
+**CG3c** registers the approved Potato recipe in the field.
 **CG3d** measures a full field at Potato's faster cadence and includes phone readability/performance.
 
 ### 5.2 Seed catalogue and market cart (not built parts)
