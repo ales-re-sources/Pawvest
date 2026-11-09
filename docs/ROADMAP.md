@@ -59,7 +59,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG3 | Potato growth art | CG3a–c built; desktop CPU tuning done | field lifecycle/detail checks pass; real phone and second client open | – |
 | CG4 | Plant individuality and harvested size | ✔ | size/rotation, bounds, detail transitions and reviewer controls Studio-checked | – |
 | CG5 | Frost Grape growth art | CG5a/b approved; explicit fruit slots | Studio checks pass; CG5c field integration next | – |
-| CG6 | Corn growth art | CG6a built for review; motion proposed | Studio counts/bounds checked; silhouette review next | – |
+| CG6 | Corn growth art | CG6a B selected; taller CG6b built for review | Studio pose/bounds/attachment checks pass; motion approval next | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -137,12 +137,12 @@ identified for future fruit-only perennial harvests; separate structure/fruit cl
 is next, followed by **CG5d** performance validation.
 [Direction and review gates](EXPANSION.md#cg5--frost-grape-growth-design).
 
-**CG6 — Corn growth art** (requested 2026-11-09): compare a balanced two-ear stalk, a tall narrow two-ear stalk and a compact
-single-ear stalk before building motion. Repeated joints lift alternating ribbon leaves; attached husked ears fill late, with a
-golden kernel window and a branching crown tassel. A is proposed, awaiting silhouette review.
-[A / B / C ripe comparison](art/corn/ripe-studies.jpg): 96 / 99 / 68 Parts; heights 6.73 / 7.93 / 5.53 studs against the current
-5.46-stud avatar. Standard-size mature radii are below 2.4 studs. Follow `PLANT_GROWTH.md`: motion review delivers only the five
-same-seed snapshots at 0/20/50/75/100%; seed/size/seek checks stay internal. No production recipe is registered.
+**CG6 — Corn growth art** (2026-11-09): Ales selected **B, taller if needed**, from the [ripe studies](art/corn/ripe-studies.jpg).
+**CG6b** is built for review: a roughly 8.6-stud reference plant with 99 reusable Parts, successive internodes, unfolding ribbon
+leaves, two filling husked ears and a branching tassel. Explicit fruit slots identify each ear. Studio checks passed 1,818 poses
+across six seeds and mass extremes, exact backward seeking and attachments; sampled radius ≤2.07 studs, mature height 7.57–9.71.
+[Five snapshots](art/corn/growth-poses.jpg), at 0/20/50/75/100%, follow `PLANT_GROWTH.md`; seed/size checks stay internal.
+Motion approval comes before **CG6c** field registration/proxy and **CG6d** performance validation. No production recipe is registered.
 [Direction and review gates](EXPANSION.md#cg6--corn-growth-design).
 
 ### K1 — First-hour fixes, open part (kid playtest 2026-11-01)

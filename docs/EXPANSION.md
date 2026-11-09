@@ -416,8 +416,8 @@ a stalk internode → attached leaf sheath → three shorter, narrower blade seg
 gives the shared growth system a different branching rule from the food bushes and trained vine.
 
 **CG6a — Ripe silhouette review.** Compare A, a balanced single stalk with two ears; B, a taller, narrower single stalk with two ears;
-and C, a compact broad-leaf stalk with one large ear. All occupy one real 5.5-stud square. A is the proposed direction, pending Ales's
-review. Compare without labels and check avatar scale, field pet, selection and ring together. Reproduction:
+and C, a compact broad-leaf stalk with one large ear. All occupy one real 5.5-stud square. B was selected and raised for CG6b below.
+Compare without labels and check avatar scale, field pet, selection and ring together. Reproduction:
 [`corn_ripe_studies.luau`](../tools/corn_ripe_studies.luau), Studio playtest **Client** context. This is a local display fixture.
 
 The [ripe comparison](art/corn/ripe-studies.jpg) shows **A / B / C from left to right**, on actual field soil with selection and a
@@ -430,15 +430,17 @@ Studio measured the current avatar at **5.46 studs** tall; A and B stand above i
 | B — Tall narrow | 99 / 3,564 | 7.93 / 1.70 |
 | C — Compact broad-leaf | 68 / 2,448 | 5.53 / 2.23 |
 
-Counts exclude soil, pets and UI. All three standard-size mature studies fit the 2.4-stud radius target. Seeded, all-age and
-mass-extreme bounds remain CG6b checks. The ears carry explicit `PlantRole = Fruit` and `FruitSlot` metadata in the static study;
-the future recipe must also expose its stable slot groups and attachment points. Studio boot had no game errors or warnings;
-the Assistant emitted its own camera-reset warning. Motion, production registration and device performance are not validated.
+Counts exclude soil, pets and UI. All three standard-size mature studies fit the 2.4-stud radius target. The ears carry explicit
+`PlantRole = Fruit` and `FruitSlot` metadata in the static study. These measurements describe the initial alternatives; CG6b raises B.
 
-**CG6b — Proposed motion, after silhouette selection.** Reuse a fixed set of Parts; grow each internode from the previous node,
-then unfold its blade from a narrow upright fold into an outward arch. Lower leaves open first, with overlapping intervals and
-small seeded timing differences. The tassel extends from the crown; ears swell from their attached husks. Partly opened ripe husks
-reveal golden kernels. This exposed window is a readability choice for the game. Avoid opening every husk into a flower.
+**CG6a selection (Ales, 2026-11-09): B, with room to grow taller.** Preserve the narrow two-ear form. The motion baseline raises the
+stalk from 7.15 to 7.80 studs before the tassel (about 8.6 studs overall). Keep the 2.4-stud radius target and above-avatar scale.
+
+**CG6b — Continuous motion (built for review).** `CornPlant` reuses **99 Parts**: 13 stalk/node pieces, 27 leaf plates, 50 ear pieces
+and nine tassel pieces. Each internode extends from the current previous node; leaves unfold from their attached bases into outward
+arches, lower blades first. Growth intervals overlap with small seeded timing differences. The tassel extends from the crown;
+ears swell inside their attached green husks, then gain golden kernels and tan silk. Husks open from connected base/tip hinges.
+The exposed kernel window is a readability choice for the game. Cached properties and completed leaf/ear poses avoid repeated writes.
 
 | Growth | Review pose on the same seeded plant |
 |---|---|
@@ -448,10 +450,30 @@ reveal golden kernels. This exposed window is a readability choice for the game.
 | 75% | Nearly full height, tassel branching, two slim green husked ears with silk. |
 | 100% | Filled upward ears, visible golden kernel windows, dry tan silk; leaves stay mostly green. |
 
-Seeded variation should change internode spacing, gentle lean, leaf yaw/arch, ear tilt and relative ear size while preserving the
-upright silhouette and square clearance. Harvest mass uses cube-root dimensional scaling, with ears changing most visibly and
-foliage constrained to the square. Keep explicit visual fruit-slot IDs, attachments and Part roles, as in CG5. These IDs do not
-define harvest quantity. Corn remains an annual: the current whole plant clears at harvest.
+Seeded variation changes internode spacing, gentle lean, leaf yaw/arch, ear tilt and relative ear size while preserving the upright
+silhouette and square clearance. Harvest mass uses cube-root dimensional scaling for the ears and constrained foliage vigor.
+Each instance exposes `fruitSlots[1..2]`, with `id`, mature world-space `attachment` and its 25 `parts`; local `PlantRole` and
+`FruitSlot` attributes identify every ear piece. These IDs do not define harvest quantity. Corn remains an annual: the current whole
+plant clears at harvest. This display-only recipe is not registered in `PlantGrowth`; the thirty-minute field crop is unchanged.
+
+Open it in a Studio playtest's **Client** command bar:
+
+```luau
+require(game.Players.LocalPlayer.PlayerScripts.PlantGrowthReview).Open("Corn", 10)
+```
+
+Review the [five snapshots](art/corn/growth-poses.jpg): [0%](art/corn/growth-0.jpg), [20%](art/corn/growth-20.jpg),
+[50%](art/corn/growth-50.jpg), [75%](art/corn/growth-75.jpg), [100%](art/corn/growth-100.jpg). They use the same seed 1, mass ×1,
+square and camera, with the field pet, selection and ring together. The composite resizes these same snapshots; no extra poses or
+motion sequence were generated. The shared reviewer can still scrub and play continuously.
+
+Studio internal checks covered **1,818 poses** across six seeds and minimum/standard/maximum mass (0.357 / 1 / 3.030, including the
+maximum Sorter bonus), exact visible 43→44→43% seeks, stable Part/slot identity, disposal and attachments. The largest sampled
+all-age radius was **2.07 studs**; mature tops ranged about **7.57–9.71 studs**, with the reference about **8.6 studs**, above the
+5.46-stud avatar measured in CG6a. Leaf-base measurement error stayed below 0.015 studs (overlapping plate ends), ear stalk bases
+below 0.00003 studs. A full 36-square field would use **3,564 plant Parts**, excluding soil/pets/UI; rendering cost is unmeasured.
+Seed, Size, Rings, Play/Pause and the scrubber were exercised through the real review UI. Art approval and production integration
+remain open; these checks do not establish real-phone performance.
 
 **Acceptance gates.** Follow [PLANT_GROWTH.md](PLANT_GROWTH.md). First select the ripe silhouette; then deliver only five snapshots
 at 0/20/50/75/100%, using the same seed, mass factor, square and camera. Check continuous forward/backward seeking, six seeds and

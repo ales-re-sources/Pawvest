@@ -126,7 +126,7 @@ for i,study in studies do
  counts[study.name]=model:GetAttribute("PartCount")
 end
 folder:SetAttribute("ReviewSlot",slot)
-folder:SetAttribute("ProposedStudy","A")
+folder:SetAttribute("SelectedStudy","B")
 folder.Parent=workspace
 view:ShowSelect(8)
 return game.HttpService:JSONEncode({folder=folder:GetFullName(),slot=slot,parts=counts})

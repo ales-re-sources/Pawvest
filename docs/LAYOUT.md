@@ -36,6 +36,7 @@ src/
     TomatoPlant.luau                  CG1/CG2 Tomato recipe used by PlantGrowth and the Studio review. new(parent, soilCFrame, seed, sizeFactor?) builds 54 Parts; SetGrowth(0..1) poses them in place and Destroy removes them.
     PotatoPlant.luau                  CG3b/c registered recipe with 65 Parts: upright foliage, flowers, later green berries and exposed tuber shoulders. Mid proxy uses 3–5 Parts.
     FrostGrapePlant.luau              CG5b display-only recipe, not registered for live fields: 115 Parts on the selected tall B trellis. SetGrowth(0..1), stable seeds, mass-scaled berries, rigid 7.4-stud support. Reviewed through PlantGrowthReview.
+    CornPlant.luau                    CG6b display-only recipe, not registered for live fields: 99 Parts on the selected taller B stalk, unfolding ribbon leaves, two husked ears with explicit fruit slots, crown tassel. Reviewed through PlantGrowthReview.
   ServerScriptService/
     PlayerProfile.luau                per-player profile DataStore (load/migrate/save), AddCoins, CoinsChanged; OnLeaving(fn) callbacks run once per player before the leave save (also from BindToClose); IsNew (no record and no legacy data)
     CoinRewards.luau                  Grant(player, base, source): the only gameplay Coin payout (pet multiplier, rounding)
