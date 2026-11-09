@@ -1,4 +1,5 @@
 -- Studio playtest, Client command context. Static ripe Potato design review only.
+-- Upright branching reference and rationale: docs/EXPANSION.md CG3 and docs/art/potato/reference.png.
 -- Uses the production PlotView renderer in the first unused slot >=13; squares 8/9/10
 -- contain A/B/C, left to right when viewed from plot-local +Z. Square 7 has a real
 -- neighboring crop; square 11 has a Cat. No garden requests, profile writes, motion,
@@ -23,7 +24,6 @@ local green = Color3.fromRGB(61, 132, 60)
 local light = Color3.fromRGB(91, 157, 67)
 local stem = Color3.fromRGB(80, 119, 54)
 local tan = Color3.fromRGB(173, 133, 83)
-local soil = Color3.fromRGB(106, 76, 49)
 local function block(model, name, size, cf, color, variant)
 	local p = Instance.new("Part")
 	p.Name, p.Size, p.CFrame, p.Color = name, size, cf, color
@@ -47,39 +47,61 @@ local function blade(model, base, at, direction, width, color)
 	block(model, "LeafFold", V(width,0.14,(crease-at).Magnitude), base*axis(at,crease), color, "Studs")
 	block(model, "LeafTip", V(width*0.62,0.13,(tip-crease).Magnitude), base*axis(crease,tip), color)
 end
-local function shoot(model, base, a, b, outward, width)
-	twig(model,base,a,b)
-	local side = V(-outward.Z,0,outward.X).Unit
-	blade(model,base,b,outward+side*0.30,width,green)
-	blade(model,base,b,outward*-0.66-side*0.36+V(0,0.06,0),width*0.84,light)
+-- Each branch is a short rachis with an opposed leaf pair. Branches sit at
+-- separate heights, leaving sections of the upright green shoots visible.
+local function compoundPair(model, base, node, outward, scale)
+	local branchEnd = node + outward*0.46 + V(0,0.09,0)
+	twig(model,base,node,branchEnd)
+	local side = V(-outward.Z,0,outward.X)
+	blade(model,base,branchEnd, (outward*0.48+side*0.70+V(0,0.10,0))*scale,0.46*scale,green)
+	blade(model,base,branchEnd, (outward*0.48-side*0.70+V(0,0.04,0))*scale,0.43*scale,light)
 end
 local function shoulder(model,base,at,turn)
-	-- Only the upper shoulder peeks through soil; the tuber body stays underground.
+	-- The wide middle block is partly buried. Narrow ends and a raised crown
+	-- describe a rounded voxel tuber shoulder, with its body below soil level.
 	local cf = base*CFrame.new(at)*CFrame.Angles(0,turn,0)
-	block(model,"TuberShoulder",V(0.56,0.18,0.40),cf,tan)
-	block(model,"TuberCrown",V(0.35,0.09,0.28),cf*CFrame.new(0,0.11,0),tan)
+	block(model,"TuberBuriedSides",V(0.73,0.34,0.45),cf*CFrame.new(0,-0.08,0),tan)
+	block(model,"TuberRoundedEnds",V(0.53,0.33,0.62),cf*CFrame.new(0,-0.08,0),tan)
+	block(model,"TuberCrown",V(0.44,0.14,0.35),cf*CFrame.new(0,0.13,0),tan)
 end
 local studies = {
-	{name="A - Low rosette", height=0.44, spread=0.64, blade=0.89, width=0.53, shoulders={V(0.46,0.04,0.60)}},
-	{name="B - Tufted bush", height=1.01, spread=0.30, blade=0.70, width=0.57, shoulders={V(-0.50,0.04,0.49)}},
-	{name="C - Mounded tubers", height=0.56, spread=0.55, blade=0.75, width=0.59, shoulders={V(-0.56,0.13,0.61),V(0.50,0.13,0.48)}, mound=true},
+	{
+		name="A - Bushy upright", tiers={0.38,0.77}, leafScale=1.30,
+		shoots={V(-0.54,1.98,-0.15),V(0.51,2.13,-0.20),V(0.05,1.90,0.54)},
+		shoulders={V(-0.57,0,0.46),V(0.55,0,0.60)},
+	},
+	{
+		name="B - Open branching", tiers={0.28,0.55,0.84}, leafScale=1.25,
+		shoots={V(-0.66,2.12,-0.12),V(0.62,2.04,0.13)},
+		shoulders={V(-0.46,0,0.57),V(0.45,0,0.63)},
+	},
+	{
+		name="C - Leaning upright", tiers={0.36,0.76}, leafScale=1.28,
+		shoots={V(-0.67,1.86,-0.20),V(0.61,2.03,-0.32),V(0.55,1.91,0.51)},
+		shoulders={V(-0.60,0,0.48),V(0.38,0,0.70)},
+	},
 }
 local function drawStudy(parent,base,study)
 	local model = Instance.new("Model")
 	model.Name = study.name
 	model:SetAttribute("StaticRipeStudy",true)
-	if study.mound then
-		block(model,"SoilMound",V(1.75,0.16,1.40),base*CFrame.new(0,0.02,0),soil,"Studs")
-		block(model,"SoilMoundTop",V(1.18,0.13,0.91),base*CFrame.new(0,0.14,-0.08),soil,"Studs")
+	for i,top in study.shoots do
+		local origin = V((i-2)*0.08,0.08,0)
+		local elbow = origin:Lerp(top,0.52)+V((if i%2==0 then -0.08 else 0.08),0,0.07)
+		twig(model,base,origin,elbow)
+		twig(model,base,elbow,top)
+		local outward = V(top.X,0,top.Z).Unit
+		for tier,fraction in study.tiers do
+			local node = if fraction<=0.52 then origin:Lerp(elbow,fraction/0.52)
+				else elbow:Lerp(top,(fraction-0.52)/0.48)
+			local angle = (tier-1)*0.72 + (i-1)*0.18
+			local radial = CFrame.Angles(0,angle,0):VectorToWorldSpace(outward)
+			compoundPair(model,base,node,radial,study.leafScale*(if tier==1 then 1 else 0.91))
+		end
+		blade(model,base,top,outward*0.39+V(0,0.20,0),0.33,light)
 	end
-	for i=1,4 do
-		local angle = (i-1)*math.pi/2 + math.rad(25)
-		local radial = V(math.cos(angle),0,math.sin(angle))
-		local h = study.height + (if i%2==0 then 0.12 else 0)
-		shoot(model,base,V(0,0.10,0),radial*study.spread+V(0,h,0),radial*study.blade+V(0,0.08,0),study.width)
-	end
-	for i,at in study.shoulders do shoulder(model,base,at,i*0.45) end
-	assert(#model:GetChildren()<=30,"Study part budget exceeded")
+	for i,at in study.shoulders do shoulder(model,base,at,i*0.60) end
+	assert(#model:GetChildren()<=50,"Study part budget exceeded")
 	model:SetAttribute("PartCount",#model:GetChildren())
 	model.Parent=parent
 end

@@ -234,19 +234,24 @@ Perennials will retain structure maturity while fruit slots have separate growth
 #### CG3 — Potato growth design (for review)
 
 **CG3a** is the [ripe silhouette comparison](art/potato/ripe-studies.jpg), captured from Studio with the actual field renderer:
-A, a low rosette (22 Parts); B, a tufted bush (22); C, foliage on a soil mound with two tuber shoulders (26).
+A, a bushy upright plant (48 Parts); B, open branching (44); C, leaning upright (48).
+All three have several green shoots, leaf pairs at different heights and two partly buried brown tuber shoulders.
+The measured mature height is about 2.75–3.08 studs; ground width is about 3.18–3.47 studs on the 5.5-stud square.
 See the [field](art/potato/field.jpg) and [phone-size view](art/potato/phone.jpg). The reproduction tool is
 [`potato_ripe_studies.luau`](../tools/potato_ripe_studies.luau). The developer selects the silhouette before CG3b motion work.
 
-The proposed ten-second annual growth keeps tubers at the soil line and emphasizes unfolding compound leaves.
+**Direction corrected by Ales (2026-11-09).** The first studies were too flat. The [supplied reference](art/potato/reference.png)
+shows upright branching stems with broad paired leaflets at several heights. Ales describes the real plant as 30–50 cm tall.
+Use that structure for the mature silhouette, with brown tuber tops peeking through the soil as an intentional game readability shortcut.
+The proposed ten-second annual growth emphasizes height first, followed by lateral branches and unfolding compound leaves.
 
 | Growth | Proposed motion |
 |---|---|
 | 0% | A small green shoot breaks the soil. |
 | 20% | Two leaves open at slightly different times, pivoting from the shoot. |
-| 50% | Unequal short shoots spread outward; paired leaves unfold and broaden. |
-| 75% | The canopy fills. Small tan tuber shoulders begin to emerge at the soil line. |
-| 100% | Outer leaf tips settle lower; the tan shoulders are fully exposed and the canopy is wider. |
+| 50% | Several unequal upright stems lengthen. Side branches develop paired leaves at lower, middle and upper nodes. |
+| 75% | The layered canopy fills. Small brown tuber shoulders begin to emerge at the soil line. |
+| 100% | The bush reaches its full height and spread. Outer leaf tips settle lower; brown shoulders remain visible beneath the foliage. |
 
 Seeded variation changes shoot angles, canopy spread, leaf sizes and shoulder placement within the selected silhouette.
 **CG3b** reviews a continuous scrubber and seeded loop. **CG3c** registers the approved Potato recipe in the field.
