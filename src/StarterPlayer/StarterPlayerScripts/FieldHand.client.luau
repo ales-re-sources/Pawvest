@@ -43,6 +43,7 @@ local player = Players.LocalPlayer
 
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
+local PlantGrowth = require(ReplicatedStorage:WaitForChild("PlantGrowth"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
@@ -1252,6 +1253,7 @@ local function pop(square: number, crop, size: number?)
 	if not cframe then
 		return
 	end
+	PlantGrowth.PlayHarvest(crop.id, workspace, cframe, size)
 	local anchor = create("Part", {
 		Name = "HarvestPop",
 		Anchored = true,

@@ -3,8 +3,9 @@
 [Shared authoring and Studio player](../PLANT_GROWTH.md) · [Status](../ROADMAP.md)
 
 Mature silhouette approved by Ales, 2026-11-09: one pointed golden root with two-thirds of its length buried, tall divided
-foliage, a gentle sheen and sparse ripe glints. The continuous recipe and direct mid proxy are built and Studio-checked (CG10b).
-Five growth stills await art review. The recipe is not registered for live fields; integration and harvest effects follow review.
+foliage, a gentle sheen and sparse ripe glints. Ales approved the five growth stills on 2026-11-10. The recipe is registered in
+`PlantGrowth`; field integration, owner harvest feedback and desktop CPU samples are Studio-checked (CG10b/c/d). Phone,
+multi-client and live validation remain open.
 
 [Mature study with two-thirds of the root buried](../art/golden-carrot/ripe-study-buried-root.jpg) ·
 [Reproducible Studio client study](../../tools/golden_carrot_ripe_study.luau)
@@ -42,9 +43,9 @@ Use Pawvest's colored stud-block style: faceted Parts, restrained stud texture, 
 Proposed palette: honey-gold body, pale golden upper facets, amber creases; deep green stalks, fresh green leaflets and a few
 lighter tips. Make gold readable through broad color planes under ordinary field lighting. Avoid effects that obscure the root.
 
-Accepted effect direction: the root's sheen strengthens over 75–100% growth; ripe shoulders produce an occasional tiny
-star-shaped gold glint, staggered between plants. Leaves remain matte green. A brief gold-fleck harvest burst is intended for
-the later field-integration pass. The first mature study previews only the sheen and sparse ripe glints.
+The root's sheen strengthens over 75–100% growth; ripe shoulders produce an occasional tiny star-shaped gold glint, staggered
+between plants. Leaves remain matte green. A successful owner harvest produces one brief gold-fleck burst, independent of the
+plant model that the plot feed removes. Failed harvests and distance/detail changes do not produce the burst.
 
 The planted crop is intrinsically Golden Carrot. This art does not implement the future earned Golden variant described in
 EXPANSION §5.3. Ripeness combines a fuller exposed root, wider shoulders and an opened crown, as well as richer gold color.
@@ -85,8 +86,8 @@ plants, retaining divided foliage and the exposed shoulder. This whole-root crop
 slots. The nominal ring height is 4.7 studs, scaled with harvested mass. Review framing is 4.3 studs.
 
 The five stills use seed 1, standard mass, the same camera and square, with the real soil and field pet. The review sheet simply
-assembles those stills using the same crop rectangle. Field registration and performance checks follow art review; crop timing,
-economy, harvest behavior and saved data have not changed.
+assembles those stills using the same crop rectangle. Production field rendering uses the existing owner/planting seed,
+harvested mass and server-time anchors. Six-hour timing, economy, harvest rewards and saved data have not changed.
 
 ## Mature dimensions and validation
 
@@ -99,7 +100,9 @@ field would contain **2,592 plant Parts** before soil, pets, UI and effect insta
 Root reflectance rises to 0.08 over 75–100% growth; leaves retain the ordinary matte surface. One attachment and one native
 particle emitter add sparse ripe glints: baseline rate 0.2/s (seeded variation ±0.035), lifetime 0.45–0.65 s. Glints enable only
 at 100%; seeking backward disables and clears them. The texture loaded successfully in the Studio client. There is no separate
-crop scheduler or per-frame particle loop. The harvest burst remains part of later field integration.
+crop scheduler or per-frame particle loop. The harvest burst uses a separate invisible, non-queryable local anchor with nine
+gold flecks and a 0.9-second Debris lifetime. `FieldHand` invokes the optional `PlantGrowth.PlayHarvest` dispatcher from its
+existing successful Harvest-result pop. Other crops retain their existing feedback. No new remote or profile field is needed.
 
 [`golden_carrot_growth_checks.luau`](../../tools/golden_carrot_growth_checks.luau) passed for six seeds, 101 ages and three harvested
 mass factors: **0.35656 / 1 / 3.02985** (including the top Sorter). Maximum full-model/proxy radius stayed below 2.4 studs; the full
@@ -107,8 +110,31 @@ models reached **2.08 studs**. Mature heights ranged **3.49–5.30 studs**. Chec
 backward seeks, initial-pose restoration, seed individuality, physics/query flags, ripe-only glints, and mature burial/aspect.
 Real clicks exercised five poses, six seeds, seed and size changes, rings, play/pause, scrubber and Close in the shared reviewer.
 The five stills were captured; client and server logs were clean, Close removed the reviewer, and the playtest was stopped.
-No direct profile writes or field actions were performed. Art approval, field integration, performance, phone and multi-client
-validation remain separate.
+No direct profile writes or field actions were performed.
+
+## Field integration and desktop samples
+
+[`golden_carrot_integration_checks.luau`](../../tools/golden_carrot_integration_checks.luau) exercises the production PlotView
+with disposable public-feed fixtures. Three age/mass samples use **216 full-detail Parts** or **52 mid-proxy Parts**; low detail
+removes crop art. Time corrections retain the plant, soil and pet; exact ripeness enables glints and stops posing; backward
+corrections clear them. Full→mid→low→full preserves planting identity. Art does not intercept the soil ray or selection outline.
+The production pose interval remains **30 seconds**, with the ripe boundary scheduled sooner when needed.
+
+A display-only server acknowledgment fixture checked the actual FieldHand response listener: failed Harvest produced neither
+pop nor burst, Potato retained its ordinary pop, and successful Golden Carrot produced one burst plus the ordinary pop. Its
+anchor was removed afterward. This verifies response wiring without consuming a saved crop; no profile fixture was written.
+
+`tools/plant_perf_probe.luau`, configured for GoldenCarrot, sampled one 36-square field and 24 distance-tiered plots (**3 full,
+4 mid, 17 low**), with growing and ripe art. In the four-second growing sample, plot-work p95 was **0.004 / 0.427 ms** for one/24
+plots; peak work was **6.06 / 6.32 ms**. Frame p95 was about **18 ms** on this desktop, similar to the one-block Onion baseline.
+In a three-second ripe transition sample (standing glints enabled), work p95 was **0.004 / 6.269 ms**, peaks **6.41 / 6.66 ms**;
+the 24-plot value includes the initial correction and mid-proxy rebuilds. Those samples contained **3,613 / 15,309 total fixture
+instances** for one/24 ripe plots, including scenery, pets and effect instances. They are desktop CPU/build samples, not a
+real-phone rendering or touch-performance approval.
+
+All disposable fixtures and harvest effects were removed. The fresh playtest ended after checks; no gameplay errors/warnings
+were logged. Studio Assistant emitted its own plugin-version-change warning. Real phone, second client and live validation
+remain open.
 
 ## Possible beet reuse
 

@@ -86,6 +86,7 @@ local anchored, non-colliding geometry and exposes:
 | `new(parent, soilCFrame, seed, sizeFactor?)` | Build once; return an instance with `model`. |
 | `plant:SetGrowth(0..1)` / `Destroy()` | Pose reversibly / dispose of the instance. |
 | `BuildProxy(parent, soilCFrame, stage, seed?, sizeFactor?)` | Production mid-detail silhouette; required before field integration. |
+| `PlayHarvest(parent, soilCFrame, sizeFactor?)` | Optional local feedback after a successful owner harvest; transient instances must clean themselves up. |
 | `RingHeight` | Nominal ring offset; mass-scaled unless `FixedRingHeight` is true. |
 | `FixedOrientation`, `FixedRingHeight`, `ReviewHeight` | Optional row-alignment, ring and Studio-framing rules. |
 | `plant.fruitSlots` | Explicit fruit IDs, attachments and Part groups where authored; see below. |
@@ -93,6 +94,10 @@ local anchored, non-colliding geometry and exposes:
 The public plot feed supplies planting identity, harvested-size factor and server-time anchors; its schema belongs in
 [PROTOCOL](PROTOCOL.md). Ordinary time updates preserve existing plant, soil and pet instances. Mid proxies retain the selected
 silhouette and harvest cues; low detail removes crop art. Do not construct a full plant just to derive its cheaper proxy.
+
+`FieldHand` dispatches optional harvest feedback through `PlantGrowth.PlayHarvest` from the existing successful Harvest-result
+pop. Keep it independent of `Destroy`: a distance change, redraw or state correction must not play a harvest effect. Recipes
+without this optional entry retain their ordinary pop.
 
 ## Identify fruit before future perennial gameplay
 

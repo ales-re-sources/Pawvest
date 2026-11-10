@@ -8,6 +8,7 @@ local recipes = {
 	Lettuce = require(script.Parent.LettucePlant),
 	Pepper = require(script.Parent.PepperPlant),
 	GlowMushroom = require(script.Parent.GlowMushroomPlant),
+	GoldenCarrot = require(script.Parent.GoldenCarrotPlant),
 }
 
 local PlantGrowth = {}
@@ -45,6 +46,16 @@ end
 
 function PlantGrowth.RingHeight(cropId: string, sizeFactor: number?): number
 	return PlantGrowth.RecipeRingHeight(recipes[cropId], sizeFactor)
+end
+
+-- Cosmetic feedback only after the caller receives a successful harvest acknowledgment.
+-- This is independent of plant teardown: distance changes and time corrections must not celebrate a harvest.
+function PlantGrowth.PlayHarvest(cropId: string, parent: Instance, soilCFrame: CFrame, sizeFactor: number?)
+	local recipe = recipes[cropId]
+	if recipe and recipe.PlayHarvest then
+		return recipe.PlayHarvest(parent, soilCFrame, sizeFactor)
+	end
+	return nil
 end
 
 function PlantGrowth.UpdateInterval(duration: number): number

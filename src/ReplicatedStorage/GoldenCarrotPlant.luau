@@ -203,6 +203,23 @@ function GoldenCarrotPlant:Destroy()
 	self.rig:destroy()
 end
 
+-- A short gold-fleck reward at collection, independent of the plant that the plot feed may already have removed.
+function GoldenCarrotPlant.PlayHarvest(parent,soilCFrame,sizeFactor)
+	local dimension=Kit.dimension(sizeFactor)
+	local anchor=Kit.proxyPart(parent,"GoldenCarrotHarvest",V(0.1,0.1,0.1),
+		soilCFrame*CFrame.new(0,0.6*dimension,0),GOLD,nil,"Effect")
+	anchor.Transparency=1
+	local at,e=addGlint(anchor,0)
+	at.Position=ZERO
+	e.Speed=NumberRange.new(1.1,2.3)
+	e.Acceleration=V(0,-2,0)
+	e.SpreadAngle=Vector2.new(65,65)
+	e.LockedToPart=false
+	e:Emit(9)
+	game:GetService("Debris"):AddItem(anchor,0.9)
+	return anchor
+end
+
 -- Direct mid proxy: shoulders and three divided fronds. Hidden geometry is never constructed.
 function GoldenCarrotPlant.BuildProxy(parent,soilCFrame,stage,seed,sizeFactor)
 	local shape=seededShape(seed,sizeFactor)
