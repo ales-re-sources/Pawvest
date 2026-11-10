@@ -20,16 +20,31 @@ selected silhouette, growth poses and geometry budget.
 Start a Studio playtest, then run in the **Client command bar**:
 
 ```luau
-require(game.Players.LocalPlayer.PlayerScripts.PlantGrowthReview).Open("FrostGrape", 10)
+require(game.Players.LocalPlayer.PlayerScripts.PlantGrowthReview).Open()
 ```
 
-Replace `"FrostGrape"` with `"Tomato"`, `"Potato"`, `"Corn"`, `"Lettuce"`, `"Pepper"`, `"GlowMushroom"` or `"GoldenCarrot"`. The optional seconds argument controls only review playback;
-it does not change real crop timing or saved data. The reviewer can open an unregistered art recipe, so it is not proof of field
-integration. Close the current reviewer before opening another crop.
+**The crop-name parameter stays supported** for direct use by commands and tools:
+
+```luau
+require(game.Players.LocalPlayer.PlayerScripts.PlantGrowthReview).Open("GoldenCarrot", 10)
+```
+
+`Open()` starts with the first catalogue crop that has a `<CropId>Plant` ModuleScript (normally Potato). An explicit crop ID
+selects that recipe immediately. The optional seconds argument controls review playback only; it changes neither real crop
+timing nor saved data. The **plant-name button** opens a scrolling picker, populated from the current crop catalogue and recipe
+modules when the reviewer opens. It includes unregistered art such as Frost Grape, so appearing here is not proof of field
+integration. New recipes join the picker on the next `Open()` without maintaining another crop list.
+
+Choosing a crop keeps growth, seed, harvested-size factor, rings, view mode and playback state, removes the previous review
+plants/rings, refreshes the comparison neighbour and reframes the camera for the recipe. Click the plant button again or outside
+the list to dismiss it. Crop names use the current locale; the Studio controls remain English. Use the picker to switch crops
+without reopening the reviewer; Close the existing reviewer before calling `Open(...)` again.
 
 **One plant** offers a growth scrubber; **Five poses** shows 0/20/50/75/100%; **Six seeds** is an internal variation check.
 **Seed**, **Size** and **Rings** change the comparison. **Play/Pause** runs the continuous preview. **Close** removes its disposable
 plot and restores the camera/HUD. These are Studio-only English controls. User review deliverables remain the five stills below.
+
+[Plant picker](art/plant-review/crop-picker.jpg)
 
 ## Review deliverable
 

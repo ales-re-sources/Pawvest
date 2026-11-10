@@ -5,7 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Input = game:GetService("UserInputService")
 
-local function open(cropId: string, seconds: number?)
+local function open(cropId: string?, seconds: number?)
 	assert(RunService:IsStudio() and RunService:IsClient(), "Use the Studio playtest Client command bar")
 
 	local player = Players.LocalPlayer
@@ -13,10 +13,21 @@ local function open(cropId: string, seconds: number?)
 	local PlotView = require(player.PlayerScripts:WaitForChild("PlotView"))
 	local CropConfig = require(ReplicatedStorage.CropConfig)
 	local GardenConfig = require(ReplicatedStorage.GardenConfig)
-	local crop = assert(CropConfig.ById[cropId], "Unknown review crop")
+	local Locale = require(ReplicatedStorage.Locale)
+	local choices, modules = {}, {}
+	for _, candidate in CropConfig.Crops do
+		local module = ReplicatedStorage:FindFirstChild(candidate.id .. "Plant")
+		if module and module:IsA("ModuleScript") then
+			table.insert(choices, candidate)
+			modules[candidate.id] = module
+		end
+	end
+	assert(#choices > 0, "No plant recipes to review")
+	local crop = assert(CropConfig.ById[cropId or choices[1].id], "Unknown review crop")
 	local Growth = require(ReplicatedStorage.PlantGrowth)
-	local recipe = require(assert(ReplicatedStorage:FindFirstChild(cropId .. "Plant"), "No art recipe for " .. cropId))
+	local recipe = require(assert(modules[crop.id], "No art recipe for " .. crop.id))
 	local duration = seconds or math.min(crop.growSeconds, 10)
+	local elapsed = 0
 	assert(duration > 0, "Review duration must be positive")
 	local name = "PlantGrowthReview"
 	assert(not workspace:FindFirstChild(name), "Close the existing plant review first")
@@ -34,7 +45,7 @@ local function open(cropId: string, seconds: number?)
 	local view = PlotView.new(slot, root)
 	local cells = table.create(CropConfig.MaxSquares, "#0")
 	for i = 1, 12 do cells[i] = ".0" end
-	cells[2] = if cropId == "Potato" then "k3" else "a2"
+	cells[2] = if crop.id == "Potato" then "k3" else "a2"
 	view:SetState({name = player.DisplayName, incCount = 1, eggs = {},
 		field = {crops = table.concat(cells), pets = {"Cat:3:review:4:1:1"}}})
 	view:SetDetail("full")
@@ -150,11 +161,11 @@ local function open(cropId: string, seconds: number?)
 	panel.Name = "Controls"
 	panel.AnchorPoint = Vector2.new(0.5, 1)
 	panel.Position = UDim2.new(0.5,0,1,-12)
-	panel.Size = UDim2.new(0.94,0,0,114)
+	panel.Size = UDim2.new(0.94,0,0,149)
 	panel.BackgroundColor3 = Color3.fromRGB(32,49,43)
 	panel.Parent = gui
 	local limit = Instance.new("UISizeConstraint")
-	limit.MaxSize = Vector2.new(624,114)
+	limit.MaxSize = Vector2.new(624,149)
 	limit.Parent = panel
 	local round = Instance.new("UICorner")
 	round.Parent = panel
@@ -174,39 +185,83 @@ local function open(cropId: string, seconds: number?)
 		return b
 	end
 
+	local picker = Instance.new("ScrollingFrame")
+	picker.Name = "CropPicker"
+	picker.BackgroundColor3 = Color3.fromRGB(32,49,43)
+	picker.BorderSizePixel = 0
+	picker.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	picker.CanvasSize = UDim2.fromOffset(0,0)
+	picker.ScrollBarThickness = 6
+	picker.ZIndex = 3
+	picker.Visible = false
+	picker.Parent = panel
+	local padding = Instance.new("UIPadding")
+	padding.PaddingTop, padding.PaddingBottom = UDim.new(0,4), UDim.new(0,4)
+	padding.PaddingLeft, padding.PaddingRight = UDim.new(0,4), UDim.new(0,10)
+	padding.Parent = picker
+	local list = Instance.new("UIListLayout")
+	list.Padding = UDim.new(0,4)
+	list.SortOrder = Enum.SortOrder.LayoutOrder
+	list.Parent = picker
+	local cropButton = control("Crop",1,1,5,function()
+		local height = math.min(240,#choices*34+8,math.max(40,panel.AbsolutePosition.Y-12))
+		picker.Position = UDim2.fromOffset(4,-height-6)
+		picker.Size = UDim2.new(1,-8,0,height)
+		picker.Visible = not picker.Visible
+	end)
+	cropButton.TextWrapped = true
+	local chooseCrop
+	local cropButtons = {}
+	for i, candidate in choices do
+		local b = Instance.new("TextButton")
+		b.Name = candidate.id
+		b.AutoLocalize = false
+		b.Size = UDim2.new(1,0,0,30)
+		b.LayoutOrder = i
+		b.Font = Enum.Font.GothamMedium
+		b.TextSize = 14
+		b.TextColor3 = Color3.fromRGB(244,248,237)
+		b.TextWrapped = true
+		b.BorderSizePixel = 0
+		b.ZIndex = 4
+		b.Parent = picker
+		b.Activated:Connect(function() chooseCrop(candidate) end)
+		cropButtons[candidate.id] = b
+	end
+
 	local function showMode(mode)
 		root:SetAttribute("Playing", false)
 		root:SetAttribute("View", mode)
 	end
 	local modes = {}
 	for i, mode in {"Plant", "Poses", "Seeds"} do
-		modes[mode] = control(mode,i,4,5,function() showMode(mode) end)
+		modes[mode] = control(mode,i,4,40,function() showMode(mode) end)
 	end
 	local function close()
 		root:Destroy()
 	end
-	local closeButton = control("Close",4,4,5,close)
-	local play = control("Play",1,4,40,function()
+	local closeButton = control("Close",4,4,40,close)
+	local play = control("Play",1,4,75,function()
 		root:SetAttribute("View","Plant")
 		root:SetAttribute("Playing", not root:GetAttribute("Playing"))
 	end)
-	local seedButton = control("Seed",2,4,40,function()
+	local seedButton = control("Seed",2,4,75,function()
 		if root:GetAttribute("View") == "Seeds" then showMode("Plant") end
 		root:SetAttribute("Seed", root:GetAttribute("Seed")%6+1)
 	end)
-	local ringsButton = control("Rings",3,4,40,function()
+	local ringsButton = control("Rings",3,4,75,function()
 		root:SetAttribute("Rings", not root:GetAttribute("Rings"))
 	end)
 	local lowSize, highSize = CropConfig.SizeBounds()
 	local sizes = {lowSize, 1, highSize}
 	local sizeIndex = 2
-	local sizeButton = control("Size",4,4,40,function()
+	local sizeButton = control("Size",4,4,75,function()
 		sizeIndex = sizeIndex % #sizes + 1
 		root:SetAttribute("SizeFactor", sizes[sizeIndex])
 	end)
 	local slider = Instance.new("TextButton")
 	slider.Name = "Scrubber"
-	slider.Position = UDim2.fromOffset(8,78)
+	slider.Position = UDim2.fromOffset(8,113)
 	slider.Size = UDim2.new(1,-16,0,28)
 	slider.AutoButtonColor = false
 	slider.Text = ""
@@ -253,6 +308,7 @@ local function open(cropId: string, seconds: number?)
 	root:SetAttribute("SizeFactor", 1)
 	root:SetAttribute("Rings", false)
 	root:SetAttribute("Playing", false)
+	root:SetAttribute("CropId", crop.id)
 	local function refreshControls()
 		local mode = root:GetAttribute("View")
 		for id, button in modes do
@@ -265,6 +321,12 @@ local function open(cropId: string, seconds: number?)
 		play.Text = if root:GetAttribute("Playing") then "Pause" else "Play" -- loc: ignore (Studio review)
 		seedButton.Text = "Seed " .. root:GetAttribute("Seed") -- loc: ignore (Studio review)
 		sizeButton.Text = string.format("Size ×%.2f",root:GetAttribute("SizeFactor")) -- loc: ignore (Studio review)
+		cropButton.Text = crop.icon .. " " .. Locale.CropName(crop) .. " ▼"
+		for _, candidate in choices do
+			local b = cropButtons[candidate.id]
+			b.Text = candidate.icon .. " " .. Locale.CropName(candidate)
+			b.BackgroundColor3 = if candidate.id == crop.id then Color3.fromRGB(76,119,86) else Color3.fromRGB(54,79,65)
+		end
 		slider.Visible = mode == "Plant"
 		refreshRings()
 	end
@@ -273,18 +335,43 @@ local function open(cropId: string, seconds: number?)
 		refreshControls()
 		refreshGrowth()
 	end
+	chooseCrop = function(nextCrop)
+		picker.Visible = false
+		if nextCrop.id == crop.id then return end
+		local nextRecipe = require(modules[nextCrop.id])
+		crop, recipe = nextCrop, nextRecipe
+		duration = seconds or math.min(crop.growSeconds,10)
+		elapsed = root:GetAttribute("Growth")*duration
+		root:SetAttribute("CropId",crop.id)
+		-- Keep the comparison neighbour distinct from the selected crop, without replacing soil or the field pet.
+		cells[2] = if crop.id == "Potato" then "k3" else "a2"
+		view:SetState({name = player.DisplayName,incCount = 1,eggs = {},
+			field = {crops = table.concat(cells),pets = {"Cat:3:review:4:1:1"}}})
+		view:Step(math.huge)
+		refreshStudy()
+	end
 	root:GetAttributeChangedSignal("View"):Connect(refreshStudy)
 	root:GetAttributeChangedSignal("Seed"):Connect(refreshStudy)
 	root:GetAttributeChangedSignal("SizeFactor"):Connect(refreshStudy)
 	root:GetAttributeChangedSignal("Growth"):Connect(refreshGrowth)
 	root:GetAttributeChangedSignal("Rings"):Connect(refreshRings)
-	local elapsed = 0
 	root:GetAttributeChangedSignal("Playing"):Connect(function()
 		local playing = root:GetAttribute("Playing")
 		play.Text = if playing then "Pause" else "Play" -- loc: ignore (Studio review)
 		elapsed = if root:GetAttribute("Growth") >= 1 then 0 else root:GetAttribute("Growth")*duration
 	end)
 	refreshStudy()
+	local languageChanged = Locale.Changed:Connect(refreshControls)
+	local dismiss = Input.InputBegan:Connect(function(event)
+		if not picker.Visible then return end
+		if event.UserInputType ~= Enum.UserInputType.MouseButton1 and event.UserInputType ~= Enum.UserInputType.Touch then return end
+		local function inside(object)
+			local at, size = object.AbsolutePosition, object.AbsoluteSize
+			return event.Position.X >= at.X and event.Position.X <= at.X+size.X
+				and event.Position.Y >= at.Y and event.Position.Y <= at.Y+size.Y
+		end
+		if not inside(picker) and not inside(cropButton) then picker.Visible = false end
+	end)
 
 	local held
 	slider.InputBegan:Connect(function(event)
@@ -312,6 +399,11 @@ local function open(cropId: string, seconds: number?)
 		RunService:UnbindFromRenderStep(name)
 		moved:Disconnect()
 		ended:Disconnect()
+		dismiss:Disconnect()
+		languageChanged:Disconnect()
+		for _, plant in plants do plant:Destroy() end
+		for _, ring in rings do ring.attachment:Destroy() end
+		view:Destroy()
 		gui:Destroy()
 		for _,screen in hidden do if screen.Parent then screen.Enabled = true end end
 		camera.CFrame, camera.Focus, camera.CameraType = originalFrame, originalFocus, originalType

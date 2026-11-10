@@ -869,6 +869,11 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
 
+**Plant reviewer crop picker** (2026-11-10; [guide](PLANT_GROWTH.md#studio-growth-player)). The shared Studio review UI now
+switches between catalogue crops with plant recipes, including unregistered art, while preserving review settings and playback.
+`Open(cropId, seconds)` remains compatible; `Open()` supplies a default. Real clicks checked nine recipes, all view modes,
+scroll/dismissal, cleanup and HUD/camera restoration; Czech names fit and refresh. No saved-state or production UI changes.
+
 **CG6 — Corn growth art** (2026-11-09; [design](plants/CORN.md)). Tall two-ear Corn now grows continuously in the field, with seeded
 variation, visible harvest mass and cheaper distant art. Studio lifecycle/detail and desktop CPU checks pass. Ales confirmed both
 real-phone and second-client validation on 2026-11-09; CG6a–d are complete.
