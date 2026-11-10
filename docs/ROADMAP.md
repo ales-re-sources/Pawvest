@@ -122,10 +122,11 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
   24-plot performance, real phone and second client remain open.
 
 - **CG12a:** [Garlic design proposal](plants/GARLIC.md), informed by Ales's two life-cycle references (2026-11-10).
-  [Static ripe studies](art/garlic/ripe-studies.jpg): A curled scape (recommended), B leaf fan, C pointed spathe; mature selection
-  pending. Display-only Studio checks: 54 / 42 / 47 Parts, 1.62-stud radius, heights 4.79 / 4.05 / 4.67 studs, non-queryable art,
-  real soil/pet/selection and avatar comparison; boot clean apart from Studio Assistant's plugin-version warning. No growth
-  recipe or field registration yet. Next: select mature shape, then CG12b continuous growth and five standard stills.
+  Ales selected **A, curled scape**. **CG12b:** `GarlicPlant.luau` built (54 Parts; proxies 9 / 14 / 26), Studio-checked for six
+  seeds × three masses × 101 ages: 1.89-stud maximum radius, attached blades/scape/bud, exact seeks and half-buried ripe head.
+  [Five stills](art/garlic/growth-review.png) await art review. Standard mature height 4.78 studs; 1,944 plant Parts per full field.
+  Three-minute duration retained; reviewer controls and cleanup checked. Not registered in `PlantGrowth` yet.
+  Next: approve growth art, then CG12c field lifecycle/detail integration; full-field / 24-plot performance, phone and second client open.
 - **CG13:** Cucumber (15 m). Ales's two references (life cycle, ladder-trellis timeline; 2026-11-10) fixed the design:
   [ladder trellis, twining vine, three hanging dark cucumbers](plants/CUCUMBER.md). `CucumberPlant.luau` (79 Parts, mid proxies
   11 / 18 / 20) built and Studio-checked (six seeds × three masses × 101 ages, 2.03-stud maximum radius, exact seeks). Five stills

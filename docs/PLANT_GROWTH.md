@@ -16,7 +16,7 @@ selected silhouette, growth poses and geometry budget.
 | Golden Carrot | [Buried pointed root and tall feathery crown](plants/GOLDEN_CARROT.md) | 72 |
 | Onion | [Half-buried brown bulb, tall quills and flower umbel](plants/ONION.md) | 59 |
 | Cucumber | [Ladder-trellis vine with hanging dark cucumbers](plants/CUCUMBER.md) | 79 |
-| Garlic | [Ivory head, flat leaves and scape studies; selection pending](plants/GARLIC.md) | proposed ≤64 |
+| Garlic | [Half-buried ivory head, flat leaves and curled scape; field registration pending](plants/GARLIC.md) | 54 |
 
 ## Studio growth player
 
