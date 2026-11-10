@@ -6,7 +6,8 @@
 
 Ales selected **A, hardneck with a curled scape**, on 2026-11-10 (CG12a): one half-buried ivory garlic head, a slim pale neck,
 tall flat strap leaves, a side curl and a rising tail with a pointed closed spathe. The continuous recipe is built and
-Studio-checked (CG12b); the five growth stills await art review. Field registration is pending.
+Studio-checked (CG12b). Ales approved the growth art on 2026-11-10, explicitly keeping the half-exposed bulb as a readability
+shortcut. The recipe is registered in `PlantGrowth`; CG12c production lifecycle checks and desktop CPU samples pass.
 
 [Five-pose sheet](../art/garlic/growth-review.png) · [0%](../art/garlic/growth-0.jpg) ·
 [20%](../art/garlic/growth-20.jpg) · [50%](../art/garlic/growth-50.jpg) ·
@@ -83,9 +84,29 @@ Close removed the reviewer and the playtest was stopped. No recipe/gameplay erro
 plugin-version warning, and one capture command encountered a reviewer that had already been closed. Capture completed after
 coordinating Studio use with Ales. No field actions or profile fixture writes were performed.
 
-**Current status:** mature A selected; continuous growth and proxies Studio-checked. Five growth stills await Ales's review.
-**Next (CG12c), after art approval:** register in `PlantGrowth` and validate production `PlotView` lifecycle, corrections, exact
-ripeness, soil selection and detail transitions. Full-field / 24-plot performance, real phone and second client remain CG12d.
+**Current status:** growth art approved, including the half-exposed bulb (Ales, 2026-11-10); registered and Studio-checked
+through production `PlotView`. Desktop CPU samples complete; real phone, second client and live validation remain open.
+
+## Field integration and desktop samples
+
+[`garlic_integration_checks.luau`](../../tools/garlic_integration_checks.luau) passed on 2026-11-10 with disposable public-feed
+fixtures. Three age/mass samples use **162 full-detail Parts** and **9 / 14 / 26-Part mid proxies**. Corrections retain plant,
+soil and pet instances. The exact ripe boundary completes the scape and stops sampling; a backward correction hides the ripe
+scape again. Full→mid→low→full retains planting identity; low detail removes crop art. Art does not intercept the soil ray,
+and the selection outline is present. A cleared harvest feed removes the old plant; replanting with a new planting number
+starts a fresh sprout without replacing its neighbour. No harvest effect is added. Duration remains **180 seconds**, sampled
+every **0.375 seconds**, with corrections and the exact ripe boundary handled immediately.
+
+`tools/plant_perf_probe.luau`, configured for Garlic, sampled one 36-square field and 24 distance-tiered plots (**3 full,
+4 mid, 17 low**) on the same route with a one-block Broccoli baseline. Four-second growing samples measured plot-work p95
+**0.681 / 1.943 ms** and peaks **6.16 / 6.21 ms** for one/24 plots. Frame p95 stayed around **18 ms**, similar to the baseline.
+Three-second ripe samples made **zero pose calls**, with plot-work p95 **0.003 / 0.020 ms** and peaks **0.026 / 0.423 ms**.
+The ripe fixtures contained **2,893 / 13,437 total instances**, including soil, scenery and pets. These are desktop CPU samples;
+they do not establish real-phone rendering performance. No optimisation or broad performance improvement is claimed.
+
+Integration and performance fixtures were removed; the playtest was stopped and Edit mode verified. No gameplay errors or
+warnings were logged; Studio Assistant reported its own plugin-version-change warning. No field actions, remotes or profile
+fixture writes were used. Production harvest authority and persistence are unchanged.
 
 ## Static study evidence
 

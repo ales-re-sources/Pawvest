@@ -89,7 +89,7 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
    restoration landmark), Neighbours, Mastery, World 4 (S9 / S10), the Estate, Season 1. Restoration bundles (E6, D5) and estate tiers / decor /
    cottage (E7, D9) are the long-term Coin sinks; E0 holds a placeholder for their size until they are designed.
 
-**Plant growth art (CG1–CG12).** [Authoring guide and crop designs](PLANT_GROWTH.md) ·
+**Plant growth art (CG1–CG13).** [Authoring guide and crop designs](PLANT_GROWTH.md) ·
 [Studio growth player command](PLANT_GROWTH.md#studio-growth-player). Standard review: five snapshots, no animation capture.
 
 - **CG1 / CG3:** [Tomato](plants/TOMATO.md) and [Potato](plants/POTATO.md) are integrated and
@@ -121,12 +121,11 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
   check passes (177 full Parts for three recipes, corrections, exact ripeness, soil ray, full/mid/low/full), boot clean. Full-field /
   24-plot performance, real phone and second client remain open.
 
-- **CG12a:** [Garlic design proposal](plants/GARLIC.md), informed by Ales's two life-cycle references (2026-11-10).
-  Ales selected **A, curled scape**. **CG12b:** `GarlicPlant.luau` built (54 Parts; proxies 9 / 14 / 26), Studio-checked for six
-  seeds × three masses × 101 ages: 1.89-stud maximum radius, attached blades/scape/bud, exact seeks and half-buried ripe head.
-  [Five stills](art/garlic/growth-review.png) await art review. Standard mature height 4.78 studs; 1,944 plant Parts per full field.
-  Three-minute duration retained; reviewer controls and cleanup checked. Not registered in `PlantGrowth` yet.
-  Next: approve growth art, then CG12c field lifecycle/detail integration; full-field / 24-plot performance, phone and second client open.
+- **CG12:** [Garlic's curled scape](plants/GARLIC.md) and [five growth stills](art/garlic/growth-review.png) approved by Ales
+  (2026-11-10), explicitly retaining the half-exposed ivory head for readability. CG12b/c registered (54 Parts; proxies 9 / 14 / 26).
+  Studio geometry, production lifecycle, corrections, exact ripeness, selection, detail transitions and harvest/replant feed checks
+  pass. Three-minute duration retained; 1,944 plant Parts per full field. CG12d desktop CPU samples cover one field and 24
+  distance-tiered plots, growing and ripe; ripe plants stop posing. Real phone, second client and live validation remain open.
 - **CG13:** Cucumber (15 m). Ales's two references (life cycle, ladder-trellis timeline; 2026-11-10) fixed the design:
   [ladder trellis, twining vine, three hanging dark cucumbers](plants/CUCUMBER.md). `CucumberPlant.luau` (79 Parts, mid proxies
   11 / 18 / 20) built and Studio-checked (six seeds × three masses × 101 ages, 2.03-stud maximum radius, exact seeks). Five stills
