@@ -407,6 +407,10 @@ Levels are permanent.
 
 ### 7.5 Display
 Equipped pets float behind their owner and are visible to all players, with rarity colour and level on a small label.
+**Parking (2026-11-10):** while a player stands on the field of their own garden plot, their followers wait in a row at the field
+entrance (the path's end, facing the field) so they never hang between the camera and the squares, and glide back when the owner
+walks out (hysteresis: park from 1 stud inside the field's front edge, return 3 studs before it). Display only, per client, for every
+player's own plot; the numbers are the `PARK_*` constants in `PetFollow`.
 The pets panel (top-left **🐶 Pets** button, U1): a summary line naming where the Coin bonus comes from ("Coin bonus +12 % · 2 cute
 pets with you"), filter chips (All n/50 · With me · On the field · Best for ▼ Coins / Tending / Pest control / Scouting: the pets with that
 trait, highest first; kept for the session), the pet list and the three equip slots. A row: portrait with a **level badge** (the pet

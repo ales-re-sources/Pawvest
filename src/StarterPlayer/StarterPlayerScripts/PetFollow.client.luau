@@ -12,6 +12,10 @@
 -- A level-up (same uid, higher level than in the previous list) plays PetLook.LevelUp on that pet, for every viewer: the old
 -- model spins up and rises, a flash covers the cross-fade to the new model (this script calls moment:Pose every frame and
 -- applies the returned pose and fade); the label shows the tier badge (PetLook.LabelText).
+-- Parking: while a player stands on the field of their own garden plot, their pets stop following and wait in a row at the
+-- field entrance (the end of the gravel path, facing the field), so they never hang between the camera and the squares; they
+-- glide back to the owner when the owner leaves the field. Every client does this for every player (the plot comes from the
+-- GardenPlot attribute and GardenConfig.PlotCFrame), so others see the pets parked too. Display only, like all of this script.
 -- Tier effects (trail / aura / orbiting motes / halo, accent tint) are built by PetLook.Apply; here every frame PetLook.UpdateFx
 -- moves the motes and switches emitters and lights off for pets farther than PetLook.LodDistance from the camera or too faded
 -- to see (camera close, run mode, level-up moment). The float animation gets livelier with the tier (PetLook.Bob).
@@ -23,6 +27,8 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
+local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
+local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local PetLook = require(ReplicatedStorage:WaitForChild("PetLook"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PetModels = ReplicatedStorage:WaitForChild("PetModels")
@@ -45,6 +51,22 @@ local LEVEL_UP_WINDOW = 1 -- seconds a level-up may wait for its model to appear
 local CULL_DISTANCE = 150 -- studs from the camera to another player's character beyond which their pets leave the world
 local CULL_HYSTERESIS = 15 -- ... and they come back this much inside it, so a player at the border does not flicker
 
+-- Parking, in the owner's plot space (floor centre; +Z = from the plaza towards the field). The field geometry is PlotView's
+-- (FIELD_FRONT / FIELD_PITCH): the first row starts at z = -2, squares are 5.5 studs, RowWidths rows of GridColumns columns.
+local FIELD_FRONT = -2
+local FIELD_PITCH = 5.5
+local PARK_MARGIN = 3 -- studs around the field that still count as on it
+local PARK_ENTER_Z = FIELD_FRONT + 1 -- the owner parks their pets from here on (inside the field)
+local PARK_LEAVE_Z = FIELD_FRONT - 3 -- ... and takes them back when they walk out past here (hysteresis, no flicker at the edge)
+local PARK_X = (CropConfig.GridColumns / 2) * FIELD_PITCH + PARK_MARGIN
+local PARK_BACK_Z = FIELD_FRONT + #CropConfig.RowWidths * FIELD_PITCH + PARK_MARGIN
+local PARK_MAX_Y = 25 -- plot-space height beyond which the owner counts as off the field (flying, another level)
+local PARK_Z = -3.5 -- the parked formation's anchor: at the path's end; the pets stand behind it (towards the plaza), facing the field
+-- (the hatchery's back post is at z = -4.7, x = 5.6: a wide pet (Dragon) in the side slot must stay in front of it)
+local PARK_HEIGHT = 2.75 -- anchor height above the floor's middle (the floor top is 0.25; same as the following anchor on flat ground)
+local GLIDE_SPEED = 3 -- anchor smoothing rate (1/s) while pets travel between the owner and the parking spot
+local GLIDE_DONE = 2.5 -- studs from the target at which the glide ends and normal following resumes
+
 local running = false -- the local player's stage timer is running
 local runBlend = 0 -- 0 = normal formation, 1 = run mode
 StageTimerUpdate.OnClientEvent:Connect(function(elapsed)
@@ -55,7 +77,8 @@ local folder = Instance.new("Folder")
 folder.Name = "PetFollowers"
 folder.Parent = workspace
 
-local followers = {} -- [Player] = { pets = { { key, model, metrics, parts, fade, offset, phase } }, anchor = CFrame? }
+-- [Player] = { pets = { { key, model, metrics, parts, fade, offset, phase } }, anchor = CFrame?, parked = boolean?, glide = boolean? }
+local followers = {}
 local warned = {}
 
 local function makePet(entry, name: string?): any?
@@ -267,14 +290,37 @@ RunService.Heartbeat:Connect(function(dt)
 			end
 			continue
 		end
-		local look = root.CFrame.LookVector
-		local yaw = math.atan2(-look.X, -look.Z)
-		local target = CFrame.new(root.Position + Vector3.new(0, HEIGHT, 0)) * CFrame.Angles(0, yaw, 0)
+		local target
+		local plotSlot = player:GetAttribute(GardenConfig.PlotAttribute)
+		local plot = if type(plotSlot) == "number" then GardenConfig.PlotCFrame(plotSlot) else nil
+		local parked = false
+		if plot then
+			local spot = plot:PointToObjectSpace(root.Position)
+			parked = math.abs(spot.X) <= PARK_X
+				and math.abs(spot.Y) <= PARK_MAX_Y
+				and spot.Z <= PARK_BACK_Z
+				and spot.Z >= (if state.parked then PARK_LEAVE_Z else PARK_ENTER_Z)
+		end
+		if parked then
+			target = plot * CFrame.new(0, PARK_HEIGHT, PARK_Z) * CFrame.Angles(0, math.pi, 0) -- faces the field
+		else
+			local look = root.CFrame.LookVector
+			local yaw = math.atan2(-look.X, -look.Z)
+			target = CFrame.new(root.Position + Vector3.new(0, HEIGHT, 0)) * CFrame.Angles(0, yaw, 0)
+		end
+		if parked ~= (state.parked == true) then
+			state.glide = true -- the pets travel between the owner and the parking spot at a gentler pace
+		end
+		state.parked = parked
 		local anchor = state.anchor
 		if not anchor or (anchor.Position - target.Position).Magnitude > SNAP_DISTANCE then
 			anchor = target
+			state.glide = false
 		else
-			anchor = anchor:Lerp(target, alpha)
+			if state.glide and (anchor.Position - target.Position).Magnitude < GLIDE_DONE then
+				state.glide = false
+			end
+			anchor = anchor:Lerp(target, if state.glide then 1 - math.exp(-GLIDE_SPEED * dt) else alpha)
 		end
 		state.anchor = anchor
 		local blend = if player == LocalPlayer then runBlend else 0
