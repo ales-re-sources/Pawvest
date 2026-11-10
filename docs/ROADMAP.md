@@ -62,7 +62,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG6 | Corn growth art | CG6a–d complete | Studio checks and desktop CPU sample pass; real phone and second client confirmed by Ales 2026-11-09 | – |
 | CG7 | Lettuce growth art | CG7a (A, crisp head, chosen) and CG7b/c recipe + field registration built | Studio checks pass (bounds, seeds, sizes, seek, proxies, PlotView path); five stills and colour/density fix approved by Ales 2026-11-09; real phone and second client open | – |
 | CG8 | Pepper growth art | [Red chilli-pepper bush](plants/PEPPER.md); corrected pointed/curved fruit replaces the bell shape; CG8b/c registered | Revised Studio checks pass (84 Parts, seeds, sizes, bounds, attachments, seeks, proxies, PlotView); updated five stills await art review; performance, real phone and second client open | – |
-| CG10 | Golden Carrot growth art | [Buried pointed root and tall divided crown](plants/GOLDEN_CARROT.md); mature shape approved; CG10b recipe/proxy built, unregistered | Six seeds × three masses × 101 ages, attachment/bounds/seek checks and review controls pass; five stills await art review; field integration and performance follow | – |
+| CG10 | Golden Carrot growth art | [Buried pointed root and tall divided crown](plants/GOLDEN_CARROT.md); CG10b/c/d registered with harvest feedback | Five stills approved 2026-11-10; growth, PlotView lifecycle/detail transitions, harvest-response fixture and desktop growing/ripe CPU samples checked; real phone and second client open | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -108,9 +108,10 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
   replacing the first gilled trio; the recipe (60 Parts, glowing Neon pore layer as the ripeness cue) is registered in `PlantGrowth`
   and Studio-checked; Ales approved the five stills (2026-11-09). Full-field/24-plot performance, real phone and second client remain open.
 - **CG10:** [Golden Carrot](plants/GOLDEN_CARROT.md) has the approved pointed root (two-thirds buried), tall feathery crown,
-  late sheen and sparse ripe glints. CG10b recipe and direct proxy are built and Studio-checked: 72 Parts, 2.08-stud maximum
-  radius across six seeds / three mass extremes / 101 ages, joined foliage, reversible poses, and working review controls.
-  Five stills await Ales's art review, then field integration/harvest effects and performance checks. Not registered yet.
+  late sheen and sparse ripe glints. Five stills approved by Ales (2026-11-10). CG10b/c/d is registered with a brief owner-harvest
+  burst; Studio growth, production lifecycle, detail transitions, selection rays, response wiring and effect cleanup checked.
+  Desktop CPU samples cover one 36-square field and 24 distance-tiered plots, growing and ripe. Real phone, second client and
+  live validation remain open; no profile fixture writes or crop-economy changes.
 
 Key talents as **world rewards**: done for Double Jump (K1, GDD §6). Open: Triple Jump / Dash for World 3. The lost Coin sinks are made up in
 the balancing pass (STAGES §6, GDD §6).
