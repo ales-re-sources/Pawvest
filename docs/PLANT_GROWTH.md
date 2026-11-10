@@ -14,6 +14,9 @@ selected silhouette, growth poses and geometry budget.
 | Pepper | [Upright red chilli-pepper bush](plants/PEPPER.md) | 84 |
 | Glow Mushroom | [Glowing chestnut bolete pair](plants/GLOW_MUSHROOM.md) | 60 |
 | Golden Carrot | [Buried pointed root and tall feathery crown](plants/GOLDEN_CARROT.md) | 72 |
+| Onion | [Half-buried brown bulb, tall quills and flower umbel](plants/ONION.md) | 59 |
+| Cucumber | [Ladder-trellis vine with hanging dark cucumbers](plants/CUCUMBER.md) | 79 |
+| Garlic | [Ivory head, flat leaves and scape studies; selection pending](plants/GARLIC.md) | proposed ≤64 |
 
 ## Studio growth player
 

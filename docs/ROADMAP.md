@@ -89,7 +89,7 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
    restoration landmark), Neighbours, Mastery, World 4 (S9 / S10), the Estate, Season 1. Restoration bundles (E6, D5) and estate tiers / decor /
    cottage (E7, D9) are the long-term Coin sinks; E0 holds a placeholder for their size until they are designed.
 
-**Plant growth art (CG1–CG10).** [Authoring guide and crop designs](PLANT_GROWTH.md) ·
+**Plant growth art (CG1–CG12).** [Authoring guide and crop designs](PLANT_GROWTH.md) ·
 [Studio growth player command](PLANT_GROWTH.md#studio-growth-player). Standard review: five snapshots, no animation capture.
 
 - **CG1 / CG3:** [Tomato](plants/TOMATO.md) and [Potato](plants/POTATO.md) are integrated and
@@ -112,6 +112,26 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
   burst; Studio growth, production lifecycle, detail transitions, selection rays, response wiring and effect cleanup checked.
   Desktop CPU samples cover one 36-square field and 24 distance-tiered plots, growing and ripe. Real phone, second client and
   live validation remain open; no profile fixture writes or crop-economy changes.
+- **CG11a:** Onion (next unbuilt crop, 1 m). Static ripe studies built (`tools/onion_ripe_studies.luau`, [image](art/onion/ripe-studies.jpg)):
+  A quill fan with folded tops, B bulb-forward, C flowering allium, D = A in copper-yellow. Ales chose a **brown onion** from the
+  life-cycle reference (2026-11-10): [design](plants/ONION.md). **CG11b:** `OnionPlant.luau` (59 Parts, mid
+  proxies 13 / 20 / 26) built and Studio-checked (six seeds × three masses × 101 ages, 1.81-stud maximum radius, joined quills and
+  scape, exact seeks). Revised after Ales's notes (2026-11-10): half-buried bulb, tall leaves, flower scape and umbel as the ripeness
+  cue. Five stills approved by Ales (2026-11-10). **CG11c:** registered in `PlantGrowth`; the production `PlotView` lifecycle
+  check passes (177 full Parts for three recipes, corrections, exact ripeness, soil ray, full/mid/low/full), boot clean. Full-field /
+  24-plot performance, real phone and second client remain open.
+
+- **CG12a:** [Garlic design proposal](plants/GARLIC.md), informed by Ales's two life-cycle references (2026-11-10).
+  [Static ripe studies](art/garlic/ripe-studies.jpg): A curled scape (recommended), B leaf fan, C pointed spathe; mature selection
+  pending. Display-only Studio checks: 54 / 42 / 47 Parts, 1.62-stud radius, heights 4.79 / 4.05 / 4.67 studs, non-queryable art,
+  real soil/pet/selection and avatar comparison; boot clean apart from Studio Assistant's plugin-version warning. No growth
+  recipe or field registration yet. Next: select mature shape, then CG12b continuous growth and five standard stills.
+- **CG13:** Cucumber (15 m). Ales's two references (life cycle, ladder-trellis timeline; 2026-11-10) fixed the design:
+  [ladder trellis, twining vine, three hanging dark cucumbers](plants/CUCUMBER.md). `CucumberPlant.luau` (79 Parts, mid proxies
+  11 / 18 / 20) built and Studio-checked (six seeds × three masses × 101 ages, 2.03-stud maximum radius, exact seeks). Five stills
+  approved by Ales (2026-11-10). **CG13c:** registered in `PlantGrowth`; the production `PlotView` lifecycle check passes (237 full
+  Parts for three recipes, corrections, exact ripeness, soil ray, full/mid/low/full), boot clean. Full-field / 24-plot
+  performance, real phone and second client remain open.
 
 Key talents as **world rewards**: done for Double Jump (K1, GDD §6). Open: Triple Jump / Dash for World 3. The lost Coin sinks are made up in
 the balancing pass (STAGES §6, GDD §6).
