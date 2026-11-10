@@ -506,4 +506,5 @@ return {
 	["field.toast.renownUp"] = "Renown {level}!",
 	["field.crop.best"] = "Record {kg} kg",
 	["field.reason.open"] = "That square is already yours",
+	["admin.plants.open"] = "🌱 Plant growth",
 }

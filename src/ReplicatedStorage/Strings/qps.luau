@@ -506,4 +506,5 @@ return {
 	["field.toast.renownUp"] = "[!! Řěňöwň {level}! ~~~ !!]",
 	["field.crop.best"] = "[!! Řěčöřď {kg} kg ~~~~ !!]",
 	["field.reason.open"] = "[!! Ťháť šqůářě íš álřěáďý ýöůřš ~~~~~~~~~~~ !!]",
+	["admin.plants.open"] = "[!! 🌱 Pláňť gřöwťh ~~~~~~ !!]",
 }

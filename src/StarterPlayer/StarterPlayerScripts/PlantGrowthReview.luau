@@ -203,11 +203,14 @@ local function open(cropId: string?, seconds: number?)
 	list.Padding = UDim.new(0,4)
 	list.SortOrder = Enum.SortOrder.LayoutOrder
 	list.Parent = picker
-	local cropButton = control("Crop",1,1,5,function()
+	local function showPicker(openPicker)
 		local height = math.min(240,#choices*34+8,math.max(40,panel.AbsolutePosition.Y-12))
 		picker.Position = UDim2.fromOffset(4,-height-6)
 		picker.Size = UDim2.new(1,-8,0,height)
-		picker.Visible = not picker.Visible
+		picker.Visible = openPicker
+	end
+	local cropButton = control("Crop",1,1,5,function()
+		showPicker(not picker.Visible)
 	end)
 	cropButton.TextWrapped = true
 	local chooseCrop
@@ -409,6 +412,12 @@ local function open(cropId: string?, seconds: number?)
 		camera.CFrame, camera.Focus, camera.CameraType = originalFrame, originalFocus, originalType
 	end)
 	root.Parent, gui.Parent = workspace, playerGui
+	if not cropId then
+		task.defer(function()
+			RunService.RenderStepped:Wait() -- use the laid-out panel position when sizing the list
+			if root.Parent and gui.Parent then showPicker(true) end
+		end)
+	end
 	RunService:BindToRenderStep(name, Enum.RenderPriority.Last.Value+1, function(dt)
 		camera.CFrame = CFrame.lookAt(eye,target)
 		camera.Focus = CFrame.new(target)

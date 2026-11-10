@@ -869,6 +869,10 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
 
+**Admin plant review shortcut** (2026-11-10; [guide](PLANT_GROWTH.md#studio-growth-player)). Studio admins can open the reviewer
+and expanded crop picker from Admin → Plant growth. Named `Open(cropId, seconds)` stays direct; hidden HUD clicks preserve
+the Admin panel for return on Close. Real UI open/select/close/reopen and Czech/pseudo Glyph fit pass; no saved-state writes.
+
 **Plant reviewer crop picker** (2026-11-10; [guide](PLANT_GROWTH.md#studio-growth-player)). The shared Studio review UI now
 switches between catalogue crops with plant recipes, including unregistered art, while preserving review settings and playback.
 `Open(cropId, seconds)` remains compatible; `Open()` supplies a default. Real clicks checked nine recipes, all view modes,

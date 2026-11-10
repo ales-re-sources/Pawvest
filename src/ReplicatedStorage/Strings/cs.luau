@@ -506,4 +506,5 @@ return {
 	["field.toast.renownUp"] = "Pověst {level}!",
 	["field.crop.best"] = "Rekord {kg} kg",
 	["field.reason.open"] = "Tohle políčko už je tvoje",
+	["admin.plants.open"] = "🌱 Růst rostlin",
 }

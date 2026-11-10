@@ -17,7 +17,11 @@ selected silhouette, growth poses and geometry budget.
 
 ## Studio growth player
 
-Start a Studio playtest, then run in the **Client command bar**:
+During a Studio playtest, admins can open **Admin → 🌱 Plant growth** (**🌱 Růst rostlin** in Czech). This opens the reviewer
+with its crop list expanded. Close returns to the Admin panel and restores the camera/HUD. The shortcut is Studio-only and
+does not send remotes or change saved data.
+
+The **Client command bar** remains available:
 
 ```luau
 require(game.Players.LocalPlayer.PlayerScripts.PlantGrowthReview).Open()
@@ -29,8 +33,8 @@ require(game.Players.LocalPlayer.PlayerScripts.PlantGrowthReview).Open()
 require(game.Players.LocalPlayer.PlayerScripts.PlantGrowthReview).Open("GoldenCarrot", 10)
 ```
 
-`Open()` starts with the first catalogue crop that has a `<CropId>Plant` ModuleScript (normally Potato). An explicit crop ID
-selects that recipe immediately. The optional seconds argument controls review playback only; it changes neither real crop
+`Open()` starts with the first catalogue crop that has a `<CropId>Plant` ModuleScript (normally Potato) and expands the picker.
+An explicit crop ID selects that recipe immediately with the picker closed. The optional seconds argument controls review playback only; it changes neither real crop
 timing nor saved data. The **plant-name button** opens a scrolling picker, populated from the current crop catalogue and recipe
 modules when the reviewer opens. It includes unregistered art such as Frost Grape, so appearing here is not proof of field
 integration. New recipes join the picker on the next `Open()` without maintaining another crop list.

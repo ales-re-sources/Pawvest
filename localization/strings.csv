@@ -593,3 +593,4 @@ field.size.record,"Harvest toast, after Big / Giant or alone: the heaviest crop 
 field.toast.renownUp,"Harvest toast, last line when the harvest raised the Renown level; {level} = new Renown level",Renown {level}!,Pověst {level}!,new,h03742e78
 field.crop.best,"Harvested crop row, second line; {kg} = weight of the heaviest crop of this kind harvested so far (""8.1"")",Record {kg} kg,Rekord {kg} kg,new,h9ad902fe
 field.reason.open,Refused: the square the player tried to buy is already open,That square is already yours,Tohle políčko už je tvoje,ok,h02853080
+admin.plants.open,Studio-only Admin panel button: opens the disposable plant growth art reviewer and crop picker; no saved-state changes. No placeholders. Czech short noun label.,🌱 Plant growth,🌱 Růst rostlin,new,hedaae587

@@ -260,7 +260,7 @@ end)
 -- Close panel when clicking outside
 local userInputService = game:GetService("UserInputService")
 userInputService.InputBegan:Connect(function(input, gameProcessed)
-	if gameProcessed then return end
+	if gameProcessed or not screenGui.Parent.Enabled then return end -- a reviewer may temporarily hide this HUD
 	
 	if input.UserInputType == Enum.UserInputType.MouseButton1 and lastOpenPanel then
 		local mousePos = userInputService:GetMouseLocation() - game:GetService("GuiService"):GetGuiInset()
