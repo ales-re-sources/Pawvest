@@ -53,7 +53,7 @@ local function attached(p)
 		for j = 1, 2 do joined(p.model["Blade_" .. i .. "_" .. j], p.model["Blade_" .. i .. "_" .. (j + 1)]) end
 		local petiole = p.model["Petiole_" .. i]
 		if petiole.Transparency < 0.5 then
-			local node = stemStart:Lerp(stemEnd, 0.18 + (i - 1) * 0.10)
+			local node = stemStart:Lerp(stemEnd, 0.14 + (i - 1) * 0.065)
 			assert((node - ends(petiole)).Magnitude < 0.0007, "Detached petiole")
 		end
 	end
@@ -95,6 +95,11 @@ for _, mass in {low, 1, high} do for seed = 1, 6 do
 	local _, _, ripe = measure(p.model)
 	minRipe, maxRipe = math.min(minRipe, ripe.Y), math.max(maxRipe, ripe.Y)
 	local _, blo, bhi = measure(p.model, function(part) return part:GetAttribute("PlantRole") == "Crown" end)
+	for i = 1, 6 do
+		local length = 0
+		for j = 1, 3 do length += p.model["Blade_" .. i .. "_" .. j].Size.Z - 0.025 end
+		assert(length > 2.35, "Long broccoli blade shortened: " .. i)
+	end
 	assert(p.model.Floret_1.Position.Y > p.model.Floret_2.Position.Y, "Crown has no central dome")
 	assert(p.model.Cotyledon_1.Transparency == 1 and p.model.Cotyledon_2.Transparency == 1, "Seed leaves retained at maturity")
 	if seed == 1 and mass == 1 then baseline = {height = ripe.Y, headWidth = math.max(bhi.X - blo.X, bhi.Z - blo.Z),

@@ -6,7 +6,7 @@ local Config = require(game.ReplicatedStorage.CropConfig)
 local GardenConfig = require(game.ReplicatedStorage.GardenConfig)
 local crop = Config.ById.Broccoli
 assert(Registry.Supports(crop.id) and crop.growSeconds == 7200, "Registry/timing changed")
-assert(Registry.RingHeight(crop.id, 1) == 4.5 and Registry.RingHeight(crop.id, 3) == 4.5, "Broccoli ring must be fixed")
+assert(Registry.RingHeight(crop.id, 1) == 5.6 and Registry.RingHeight(crop.id, 3) == 5.6, "Broccoli ring must be fixed")
 local low, high = Config.SizeBounds()
 local garden = assert(workspace:FindFirstChild("GardenView"), "Wait for GardenView")
 local slot = 13

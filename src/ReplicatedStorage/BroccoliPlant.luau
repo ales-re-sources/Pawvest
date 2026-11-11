@@ -2,9 +2,9 @@
 -- 1 stalk + 2 cotyledons + 6 seven-Part leaves + 7 nine-Part floret groups = 108 Parts, built once.
 local BroccoliPlant = {}
 BroccoliPlant.__index = BroccoliPlant
-BroccoliPlant.RingHeight = 4.5
+BroccoliPlant.RingHeight = 5.6
 BroccoliPlant.FixedRingHeight = true
-BroccoliPlant.ReviewHeight = 4.0
+BroccoliPlant.ReviewHeight = 5.2
 
 local Kit = require(script.Parent.PlantKit)
 local phase, V, C = Kit.phase, Vector3.new, Color3.fromRGB
@@ -12,6 +12,7 @@ local STALK, RIB, YOUNG = C(132, 177, 93), C(163, 194, 131), C(136, 184, 100)
 local LEAF, LEAF_B = C(56, 119, 96), C(72, 136, 105)
 local CROWN, BUD, LIGHT = C(42, 100, 57), C(60, 131, 66), C(83, 149, 73)
 local STARTS = {0.025, 0.07, 0.16, 0.23, 0.30, 0.36}
+local YAWS = {0.30, 2.40, 4.20, 1.40, 3.50, 5.30}
 local FRACS, WIDTHS = {0.28, 0.43, 0.29}, {0.55, 1, 0.58}
 local BUDS = {V(0, 0.39, 0)}
 for i = 1, 6 do
@@ -27,10 +28,10 @@ local function shape(seed, sizeFactor)
 	s.lean = V(vary(0.08), 0, vary(0.08))
 	for i = 1, 6 do
 		s.leaves[i] = {
-			yaw = (i - 1) * 2.40 + 0.35 + vary(0.28),
-			length = (2.05 - (i - 1) * 0.140) * s.vigor * (1 + vary(0.10)),
-			width = (1.38 - (i - 1) * 0.040) * s.vigor * (1 + vary(0.10)),
-			elev = 0.78 + i * 0.055 + vary(0.10),
+			yaw = YAWS[i] + vary(0.28),
+			length = (3.20 - (i - 1) * 0.060) * s.vigor * (1 + vary(0.10)),
+			width = (1.48 - (i - 1) * 0.025) * s.vigor * (1 + vary(0.10)),
+			elev = 1.27 + i * 0.012 + vary(0.04) + math.max(0, s.vigor - 1) * 1.2,
 			start = STARTS[i] + vary(0.012),
 		}
 	end
@@ -64,15 +65,16 @@ local function geometry(s, g, emit, proxy)
 		local opacity = phase(q, 0, 0.06)
 		local out = V(math.sin(f.yaw), 0, math.cos(f.yaw))
 		local side = V(math.cos(f.yaw), 0, -math.sin(f.yaw))
-		local node = tip * (0.18 + (i - 1) * 0.10)
+		local node = tip * (0.14 + (i - 1) * 0.065)
 		local elev = 1.40 + (f.elev - 1.40) * q
-		local petioleEnd = node + (out * math.cos(elev) + Vector3.yAxis * math.sin(elev)) * 0.30 * q
+		local petioleEnd = node + (out * 0.58 + Vector3.yAxis * 0.18) * s.vigor * q
 		emit("Petiole_" .. i, V(0.075, 0.075, (petioleEnd - node).Magnitude + 0.025),
 			Kit.axis(node, petioleEnd), STALK, opacity, "Foliage")
 		local pos, frames, lengths = petioleEnd, {}, {}
 		for j = 1, 3 do
 			local a = pos
-			local angle = elev - (j - 1) * 0.30 * q
+			-- Long brassica blades rise beside the crown; a shallow bend keeps their tips inside the square.
+			local angle = elev - (j - 1) * 0.12 * q
 			local dir = out * math.cos(angle) + Vector3.yAxis * math.sin(angle)
 			local len = f.length * FRACS[j] * q
 			pos += dir * len

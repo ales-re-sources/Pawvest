@@ -534,7 +534,8 @@ Garlic uses a half-exposed ivory head, alternating flat blue-green leaves and a 
 The exposed head is an approved readability shortcut (Ales, 2026-11-10). Growth takes three minutes; harvest clears the whole
 plant. Its 54-Part recipe and 9/14/26-Part mid proxies are registered and Studio-checked; phone and second-client checks remain open.
 
-Broccoli establishes six lobed blue-green leaves before its pale stalk branches into a late, dense domed green crown.
+Broccoli establishes six long lobed blue-green leaves before its pale stalk branches into a late, dense domed green crown.
+The blades frame and rise partly above the head; standard mature height is about 4 studs.
 Its 108-Part recipe and 11/27/27-Part mid proxies are registered and Studio-checked. Growth remains two hours and harvest clears
 the whole plant. [Five growth stills and anatomy](plants/BROCCOLI.md); art approval and performance checks remain open.
 

@@ -139,8 +139,9 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
   performance, real phone and second client remain open.
 
 - **CG14:** [Broccoli](plants/BROCCOLI.md) (2 h) uses Ales's life-cycle and mature-crown references (2026-11-11): six lobed
-  blue-green leaves, a thick pale stalk and a late seven-cluster green dome. Registered recipe: 108 Parts, mid proxies 11 / 27 / 27;
-  Studio geometry (six seeds × three masses × 101 ages, 2.32-stud maximum radius, exact seeks) and production PlotView lifecycle,
+  blue-green leaves, a thick pale stalk and a late seven-cluster green dome. Revised from Ales's third reference: much longer
+  2.9–3.2-stud blades frame and rise above the head; 4.01-stud standard height. Registered recipe: 108 Parts, mid proxies 11 / 27 / 27;
+  Studio geometry (six seeds × three masses × 101 ages, 2.08-stud maximum radius, exact seeks) and production PlotView lifecycle,
   corrections, exact ripeness, detail transitions, soil ray and harvest/replant feed checks pass. [Five stills](art/broccoli/growth-review.png)
   await Ales's art review. CG14d field/24-plot performance, real phone, second client and live validation remain open.
 
