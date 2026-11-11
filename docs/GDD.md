@@ -523,7 +523,7 @@ otherwise items could be duplicated across servers.
 
 ### 7.9 Crop field (E1-E4)
 
-**Crop growth art (CG1–CG15).** Tomato, Potato, Corn, Lettuce, Onion, Garlic, Cucumber, Broccoli, Pumpkin, Pepper, Glow Mushroom, Golden Carrot and
+**Crop growth art (CG1–CG16).** Tomato, Potato, Corn, Lettuce, Onion, Garlic, Cucumber, Broccoli, Pumpkin, Eggplant, Pepper, Glow Mushroom, Golden Carrot and
 Frost Grape grow continuously with stable variation tied to each planting and visible
 harvest-size differences. Fruit and foliage develop from attached stems; ripeness is readable from shape and color. Nearby and
 mid-distance art preserve crop identity while distant art is hidden. These crops still clear at harvest. Frost Grape is a tall
@@ -538,6 +538,11 @@ Broccoli establishes six long lobed blue-green leaves before its pale stalk bran
 The blades frame and rise partly above the head; standard mature height is about 4 studs.
 Its 108-Part recipe and 11/27/27-Part mid proxies are registered and Studio-checked. Growth remains two hours and harvest clears
 the whole plant. [Longer-leaf art and five growth stills](plants/BROCCOLI.md) approved by Ales (2026-11-11); performance checks remain open.
+
+Eggplant is a tall open bush with five large upright lobed leaves and three long hanging purple fruit. Its young stem stays
+green, then develops purple at 35–65% growth; violet flowers give way to fruit that lengthens before filling. Growth remains
+four hours and harvest clears the whole square. Its 113-Part recipe and 7/37/37-Part mid proxies are registered and
+Studio-checked; [revised growth art](plants/EGGPLANT.md) approved by Ales (2026-11-11). Performance, phone and second-client checks remain open.
 
 *Decided, not built (EV, the user, 2026-11-07; numbers in [ECONOMY.md](ECONOMY.md) → EV, applied in EV2a–e):* the parity goal below is replaced by engagement: the four crops move onto one ladder
 of 10 s … 24 h (Potato 10 s, Corn 30 m, Pumpkin 3 h, Giant melon 12 h; 12 more crops later), Renown 0.4 × L³, every sink priced on the

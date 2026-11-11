@@ -7,6 +7,7 @@
 **Ales chose B — Tall open plant.** Keep the tall leader, unequal upper arms, five broad lobed leaves and three long hanging
 aubergines from that study. A and C below are the decision record. Ales's growth review correction: leaf blades **1.85× longer
 and wider**, held more upright on shorter petioles; the young stem stays green and develops its purple tint midway through growth.
+The revised five growth poses were approved by Ales (2026-11-11); CG16c is registered and Studio-validated.
 
 Ales supplied a [life-cycle illustration](../art/eggplant/reference-life-cycle.png) and a
 [fruiting-plant photo](../art/eggplant/reference-ripe-plant.png). Preserve the upright branching habit, broad shallow-lobed
@@ -62,19 +63,11 @@ Free-standing orientation can vary over 360°. Actual harvested mass (including 
 root; foliage vigor stays constrained. Raise or tuck fruit inward if needed to retain soil clearance and the 2.4-stud radius
 at the supported mass extremes. Final ring height is chosen against the selected mature model.
 
-## Scope and acceptance
-
-**CG16a:** disposable static Studio studies and this design; choose A/B/C before building growth.
-**CG16b:** one selected `EggplantPlant` recipe through `PlantKit`, stable fruit IDs and grouped Parts, reversible attachment-aware
-growth, six-seed/three-mass bounds checks and exactly five review stills at 0/20/50/75/100%, using the same seed, size and camera.
-**CG16c:** after art approval, direct-built mid proxies and `PlantGrowth` registration, production lifecycle/detail/selection
-checks. **CG16d:** full-field/24-plot performance, real phone and second client. No economy, persistence or remote changes.
-
 ## Recipe and validation
 
 [`EggplantPlant.luau`](../../src/ReplicatedStorage/EggplantPlant.luau) uses the shared `PlantKit` rig and builds **113 Parts**:
 eight stem segments, two cotyledons, five six-Part leaves, three 22-Part flower/fruit groups and a seven-Part decorative top
-flower. A hypothetical 36-square full-detail field would contain **4,068 plant Parts**, before soil, pets or UI. This is a
+flower. A 36-square full-detail field contains **4,068 plant Parts**, before soil, pets or UI. This is a
 recipe count, not a production performance measurement. Each `fruitSlots[1..3]` entry holds a stable ID, mature world-space
 attachment CFrame and its 22 grouped Parts. `PlantRole` separates structure, foliage and fruit; `FruitSlot` identifies each
 fruit group, including its spent blossom Parts.
@@ -96,9 +89,24 @@ non-queryable. The 4 h config and the shared 30 s production update interval are
 
 [Five review stills](../art/eggplant/growth-review.jpg) show 0/20/50/75/100% on the same soil square, seed 1, standard harvest
 size and camera. The shared reviewer's Play/Pause path and ring/selection/pet context were checked. No new crop-specific UI,
-schedule, remotes or profile writes. **CG16b built and geometry-validated; awaiting Ales's growth-art approval.**
-CG16c field registration, direct-built mid proxies and production lifecycle checks remain separate; CG16d performance, real
-phone and second-client checks remain open.
+schedule, remotes or profile writes. **CG16b art approved by Ales (2026-11-11).**
 
-Playtest boot/reviewer session: no server or client warnings/errors; review disposed and Play stopped. Localization
-build/check/lint pass (0 errors, 0 literals); no new or changed Czech strings.
+## Field integration (CG16c)
+
+Registered in [`PlantGrowth`](../../src/ReplicatedStorage/PlantGrowth.luau). Direct-built mid proxies use **7 / 37 / 37 Parts**
+for young/growing/ripe crops. They share the full recipe's seeded structure, attachment, leaf-opening and fruit-size math,
+without allocating a full rig. Young proxies keep the green stem and cotyledons; mature proxies retain the tall leader, broad
+upright leaf blades, purple lower stem, three hanging pear-shaped fruit with green calyxes and the top flower. Each mid leaf
+uses a petiole, broad lower plate and authored tip; each fruit uses a stalk, calyx, neck and belly. Low detail hides crop art.
+No custom harvest effect; ordinary successful-harvest feedback and the square-clearing contract remain in force.
+
+Studio Client [`eggplant_integration_checks.luau`](../../tools/eggplant_integration_checks.luau) passes: three production
+`PlotView` crops build 339 full Parts or 7/37/37 proxy Parts; corrections retain plant/soil/pet; exact ripeness stops posing;
+backward corrections clear ripeness; full → mid → low → full retains seed identity; selection rays reach the soil; harvest
+clears only its square and replant starts young. All proxies pass six-seed/three-mass footprint and physics/input checks.
+Mid silhouettes were inspected in field context with the pet and selection outline. **CG16c Studio-validated** (2026-11-11).
+CG16d full-field/24-plot performance, real phone, second client and live validation remain open.
+
+Playtest boot and integration: no gameplay errors/warnings; Studio MCP logged its camera-reset diagnostic during the
+disposable visual check. Fixtures disposed and Play stopped. Localization build/check/lint pass (0 errors, 0 literals);
+no new or changed Czech strings.

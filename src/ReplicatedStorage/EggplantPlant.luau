@@ -1,4 +1,4 @@
--- CG16b: selected B, the tall open eggplant (docs/plants/EGGPLANT.md). Review recipe; field registration follows art approval.
+-- CG16: selected B, the tall open eggplant with enlarged leaves (docs/plants/EGGPLANT.md).
 -- Eight stems, two cotyledons, five six-Part leaves, three 22-Part flower/fruit slots and a seven-Part top flower = 113 Parts.
 local EggplantPlant = {}
 EggplantPlant.__index = EggplantPlant
@@ -212,5 +212,55 @@ function EggplantPlant:SetGrowth(normalized)
 end
 
 function EggplantPlant:Destroy() self.rig:destroy() end
+
+-- Direct-built mid silhouette; no full plant or hidden rig is allocated to derive it.
+function EggplantPlant.BuildProxy(parent,soilCFrame,stage,seed,sizeFactor)
+	local shape=seededShape(seed,sizeFactor)
+	local g=if stage<=1 then 0.20 elseif stage==2 then 0.75 else 1
+	local starts,tips,rotations,qs=structure(shape,g)
+	local tint=phase(g,0.35,0.65)
+	local function block(name,size,cf,color,opacity,role,id)
+		if opacity>0 then Kit.proxyPart(parent,name,size,soilCFrame*cf,color,nil,role,id) end
+	end
+	local function rod(name,a,b,width,color,opacity,role,id)
+		block(name,V(width,width,(b-a).Magnitude),axis(a,b),color,opacity,role,id)
+	end
+	for i,s in shape.segments do
+		local color=if i<=2 then STEM:Lerp(PURPLESTEM,tint) else STEM
+		rod("Stem"..i,starts[i],tips[i],s.width*(0.40+0.60*qs[i]),YOUNG:Lerp(color,qs[i]),phase(qs[i],0,0.08),"Structure")
+	end
+	local cotyledon=1-phase(g,0.26,0.43)
+	local open=phase(g,0,0.16)
+	if cotyledon>0 then for side=-1,1,2 do
+		local cf=CFrame.new(tips[1])*CFrame.Angles(0,side*math.pi/2,0)*CFrame.Angles(-1.18+1.02*open,0,0)
+		block("Cotyledon",V(0.13+0.09*open,0.035,0.15+0.30*open),cf*CFrame.new(0,0,0.075+0.15*open),YOUNG,cotyledon,"Foliage")
+	end end
+	for i,leaf in shape.leaves do
+		local q,node,hinge,cf=leafPose(leaf,g,tips,rotations)
+		local visible=phase(q,0,0.09)
+		local len,width=leaf.len*(0.10+0.90*q),leaf.width*(0.09+0.91*q)
+		rod("Leaf"..i.."Petiole",node,hinge,0.10*(0.4+0.6*q),STEM:Lerp(PURPLESTEM,tint),visible,"Foliage")
+		-- A broad lower blade and the authored faceted tip preserve the enlarged leaf's outline.
+		block("Leaf"..i.."Blade",V(width*0.80,0.075,len*0.72),cf*CFrame.new(0,0,len*0.36),YOUNG:Lerp(LEAF,q),visible,"Foliage")
+		block("Leaf"..i.."Tip",V(width*0.40,0.063,len*0.42),cf*CFrame.new(0,0.026,len*0.81)*CFrame.Angles(0,0.72*q,0),YOUNG:Lerp(LEAF,q),visible,"Foliage")
+	end
+	if stage>=2 then
+		for id,f in shape.fruits do
+			local p=fruitPose(f,g,tips,rotations)
+			local len,width=f.len*(0.15+0.85*p.length),f.width*(0.35+0.65*p.swell)
+			local visible=phase(p.set,0,0.14)
+			rod("Fruit"..id.."Stalk",p.node,p.cap,0.14,STEM,phase(p.pedicel,0,0.08),"Fruit",id)
+			block("Fruit"..id.."Calyx",V(width*0.68,0.17,width*0.68),p.frame,CALYX,visible,"Fruit",id)
+			local color=UNRIPE:Lerp(SKIN,p.ripe)
+			block("Fruit"..id.."Neck",V(width*0.70,len*0.58,width*0.70),p.frame*CFrame.new(0,-len*0.29,0),color,visible,"Fruit",id)
+			block("Fruit"..id.."Belly",V(width,len*0.50,width),p.frame*CFrame.new(0,-len*0.75,0),color,visible,"Fruit",id)
+		end
+		local q=phase(g,0.46,0.57)
+		local node=tips[8]
+		local at=node+rotations[8]:VectorToWorldSpace(shape.flowerOffset)*q
+		rod("FlowerStalk",node,at,0.075,STEM,q,"Foliage")
+		block("Flower",V(0.48,0.065,0.48)*q,CFrame.new(at)*rotations[8]*CFrame.Angles(math.rad(60),0,0),PETAL,q,"Foliage")
+	end
+end
 
 return EggplantPlant

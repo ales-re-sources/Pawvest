@@ -8,7 +8,7 @@ local V=Vector3.new
 local base=CFrame.new(0,20,0)*CFrame.Angles(0,0.73,0)
 local parent=Instance.new("Folder")
 local radius,height,minRipe,maxRipe,minClear=0,0,math.huge,0,math.huge
-local identities,baseline={},{}
+local identities,baseline,proxies={},{},{}
 local function measure(model,filter)
 	local r,lo,hi,n=0,V(math.huge,math.huge,math.huge),V(-math.huge,-math.huge,-math.huge),0
 	for _,p in model:GetChildren() do
@@ -111,12 +111,30 @@ for _,mass in {low,1,high} do for seed=1,6 do
 		p:SetGrowth(g);local pose=snapshot(p);p:SetGrowth(g+0.01);p:SetGrowth(g);same(p,pose)
 	end
 	p:SetGrowth(1);p:SetGrowth(0);same(p,initial)
+	for stage=1,3 do
+		local proxy=Instance.new("Model")
+		Recipe.BuildProxy(proxy,base,stage,seed,mass)
+		local r,lo,_,count=measure(proxy)
+		assert(count>=5 and count<=40 and r<=2.4001,"Proxy bounds/budget failed: "..stage.."/"..seed.."/"..mass..": "..r)
+		for _,part in proxy:GetChildren() do
+			assert(part.Anchored and not part.CanCollide and not part.CanTouch and not part.CanQuery and not part.CastShadow,"Proxy intercepts input/physics")
+		end
+		if stage>=2 then
+			for id=1,3 do
+				local calyx=proxy:FindFirstChild("Fruit"..id.."Calyx")
+				assert(calyx and calyx:GetAttribute("FruitSlot")==id,"Proxy lost a fruit slot")
+			end
+			assert(lo.Y>=-0.11,"Proxy extends below soil")
+		end
+		if seed==1 and mass==1 then proxies[stage]=count end
+		proxy:Destroy()
+	end
 	for _,part in p.rig.parts do assert(part.Anchored and not part.CanCollide and not part.CanTouch and not part.CanQuery,"Art intercepts input/physics") end
 	if mass==1 then p:SetGrowth(1);identities[seed]=tostring(p.model.Stem4.CFrame)..tostring(p.model.Leaf1Centre.CFrame)..tostring(p.model.Fruit1Body3a.Size) end
 	p:Destroy();task.wait()
 end end
 for i=1,6 do for j=i+1,6 do assert(identities[i]~=identities[j],"Identical seeds") end end
 parent:Destroy()
-assert(Crops.ById.Eggplant.growSeconds==14400 and Growth.UpdateInterval(14400)==30,"Production timing changed")
+assert(Growth.Supports("Eggplant") and Crops.ById.Eggplant.growSeconds==14400 and Growth.UpdateInterval(14400)==30,"Registry/production timing changed")
 return game.HttpService:JSONEncode({seeds=6,masses={low,1,high},ages=101,parts=113,fieldParts=4068,
-	maxRadius=radius,tallestAnyAge=height,ripeHeight={minRipe,maxRipe},fruitClearance=minClear,baseline=baseline})
+	maxRadius=radius,tallestAnyAge=height,ripeHeight={minRipe,maxRipe},fruitClearance=minClear,baseline=baseline,proxies=proxies})

@@ -65,7 +65,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG10 | Golden Carrot growth art | [Buried pointed root and tall divided crown](plants/GOLDEN_CARROT.md); CG10b/c/d registered with harvest feedback | Five stills approved 2026-11-10; growth, PlotView lifecycle/detail transitions, harvest-response fixture and desktop growing/ripe CPU samples checked; real phone and second client open | – |
 | CG14 | Broccoli growth art | [Lobed foliage and domed floret crown](plants/BROCCOLI.md); CG14a/b/c registered | Longer-leaf art approved by Ales 2026-11-11; Studio geometry and production PlotView checks pass; field/24-plot performance, real phone and second client open | – |
 | CG15 | Pumpkin growth art | [Arching vine, ribbed 2.6-stud fruit](plants/PUMPKIN.md); CG15a-c registered | Studio geometry and production PlotView checks pass; five stills await Ales's review; field/24-plot performance, real phone and second client open | – |
-| CG16 | Eggplant growth art | [B, tall open plant](plants/EGGPLANT.md); CG16b recipe built | Studio growth geometry checks pass; five stills await art approval before field integration | – |
+| CG16 | Eggplant growth art | [Tall open B with enlarged leaves](plants/EGGPLANT.md); CG16b/c registered | Revised growth art approved by Ales 2026-11-11; Studio geometry and production PlotView checks pass; performance, real phone and second client open | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -154,12 +154,10 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
   harvest/replant pass (`tools/pumpkin_integration_checks.luau`); boot clean. [Five stills](art/pumpkin/growth-review.jpg) await
   Ales's review. CG15d field/24-plot performance (3,456 plant Parts per full field), real phone and second client open.
 
-- **CG16:** [Eggplant](plants/EGGPLANT.md) (4 h). Ales chose **B, tall open plant** (2026-11-11). CG16b review recipe: 113 Parts,
-  tall leader, five broad leaves, three flower-to-fruit slots and one decorative top flower. Revised from Ales's growth review:
-  blades 1.85× longer/wider, upright on shorter petioles; stem stays green until 35%, then tints purple at 35–65%. Studio checks
-  (six seeds × three harvested masses × 101 ages): 2.37-stud maximum radius, 5.49–6.67-stud ripe height, 0.39-stud minimum fruit
-  clearance; attached organs, colour timing and exact backward seeks pass. [Five stills](art/eggplant/growth-review.jpg) await growth-art approval before CG16c
-  field registration/proxies/lifecycle checks. CG16d performance (4,068 plant Parts per full field), real phone and second client open.
+- **CG16:** [Eggplant's tall open B](plants/EGGPLANT.md), enlarged leaves and [revised five stills](art/eggplant/growth-review.jpg)
+  approved by Ales (2026-11-11). CG16b/c registered: 113 Parts, mid proxies 7 / 37 / 37. Studio geometry, colour timing,
+  attachments, seeks and production PlotView lifecycle/corrections/exact ripeness/detail/selection/harvest-replant checks pass;
+  boot clean. CG16d full-field/24-plot performance (4,068 plant Parts per full field), real phone, second client and live validation open.
 
 Key talents as **world rewards**: done for Double Jump (K1, GDD §6). Open: Triple Jump / Dash for World 3. The lost Coin sinks are made up in
 the balancing pass (STAGES §6, GDD §6).

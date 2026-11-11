@@ -10,6 +10,7 @@ local recipes = {
 	Garlic = require(script.Parent.GarlicPlant),
 	Broccoli = require(script.Parent.BroccoliPlant),
 	Pumpkin = require(script.Parent.PumpkinPlant),
+	Eggplant = require(script.Parent.EggplantPlant),
 	Cucumber = require(script.Parent.CucumberPlant),
 	Pepper = require(script.Parent.PepperPlant),
 	GlowMushroom = require(script.Parent.GlowMushroomPlant),
