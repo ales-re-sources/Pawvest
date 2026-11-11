@@ -17,6 +17,7 @@ selected silhouette, growth poses and geometry budget.
 | Onion | [Half-buried brown bulb, tall quills and flower umbel](plants/ONION.md) | 59 |
 | Cucumber | [Ladder-trellis vine with hanging dark cucumbers](plants/CUCUMBER.md) | 79 |
 | Garlic | [Half-buried ivory head, flat leaves and curled scape](plants/GARLIC.md) | 54 |
+| Broccoli | [Lobed blue-green foliage and a domed floret crown](plants/BROCCOLI.md) | 108 |
 
 ## Studio growth player
 
