@@ -9,19 +9,8 @@ local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Wait for the ScreenGui to be available
-local screenGui = nil
-for _, gui in ipairs(playerGui:GetChildren()) do
-	if gui:IsA("ScreenGui") and gui.Name == "ScreenGui" then
-		screenGui = gui
-		break
-	end
-end
-screenGui = screenGui.TopLeftIcons
-
-if not screenGui then
-	return
-end
+-- This script lives in ScreenGui.TopLeftIcons (the icons' frame; re-created with the ScreenGui on every respawn)
+local screenGui = script.Parent
 
 local homeButton = screenGui:WaitForChild("HomeButton")
 local skillsButton = screenGui:WaitForChild("SkillsButton")
@@ -64,10 +53,6 @@ for index, icon in { homeButton, skillsButton, petsButton, gardenIcon, settingsB
 	icon.Position = UDim2.new(0, 10 + (index - 1) * 60, 0, 20)
 end
 
-local function isAdminUser(userId)
-	return AdminConfig.IsAdmin(userId)
-end
-
 -- Stud-brick look (ReplicatedStorage.StudStyle): icons as bricks in the colour of the panel they open, the panels in
 -- deep tones of that colour, the status card (ScorePanel) as a wooden plate. All of it lives in this ScreenGui,
 -- which is re-created on every respawn, so it is styled here each time.
@@ -98,7 +83,7 @@ if scorePanel then
 end
 
 -- Check if player is admin and show/hide admin button accordingly
-if isAdminUser(player.UserId) then
+if AdminConfig.IsAdmin(player.UserId) then
 	adminButton.Visible = true
 end
 
@@ -114,7 +99,7 @@ local remembered = player:GetAttribute(OPEN_PANEL_ATTRIBUTE)
 if remembered ~= nil then
 	lastOpenPanel = nil
 	for _, panel in { skillsPanel, settingsPanel, adminPanel } do
-		local open = panel.Name == remembered and (panel ~= adminPanel or isAdminUser(player.UserId))
+		local open = panel.Name == remembered and (panel ~= adminPanel or AdminConfig.IsAdmin(player.UserId))
 		panel.Visible = open
 		panel.Position = UDim2.new(0, if open then 10 else -(panel.Size.X.Offset + 20), 0, 80.3)
 		if open then
@@ -213,9 +198,10 @@ end)
 -- Garden: to the own plot (the server checks the plot and the cooldown, cancels a running timer and teleports)
 local Hints = require(player:WaitForChild("PlayerScripts"):WaitForChild("Hints"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
+local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local goGardenEvent = ReplicatedStorage:WaitForChild("GoGarden")
 gardenIcon.MouseButton1Click:Connect(function()
-	if player:GetAttribute("GardenPlot") == nil then
+	if player:GetAttribute(GardenConfig.PlotAttribute) == nil then
 		Hints.Toast(Locale.T("garden.go.notReady"))
 		return
 	end
@@ -223,12 +209,16 @@ gardenIcon.MouseButton1Click:Connect(function()
 	goGardenEvent:FireServer()
 end)
 
-skillsButton.MouseButton1Click:Connect(function()
-	if (lastOpenPanel == skillsPanel) then
-		closePanel(skillsPanel)
+local function togglePanel(panel)
+	if lastOpenPanel == panel then
+		closePanel(panel)
 	else
-		openPanel(skillsPanel)
+		openPanel(panel)
 	end
+end
+
+skillsButton.MouseButton1Click:Connect(function()
+	togglePanel(skillsPanel)
 end)
 
 -- Open request from another script (StageArrivalWarning's "Open Skills"): a ScreenGui attribute, reset right away
@@ -240,20 +230,12 @@ screenGui.Parent:GetAttributeChangedSignal("OpenSkills"):Connect(function()
 end)
 
 settingsButton.MouseButton1Click:Connect(function()
-	if (lastOpenPanel == settingsPanel) then
-		closePanel(settingsPanel)
-	else
-		openPanel(settingsPanel)
-	end
+	togglePanel(settingsPanel)
 end)
 
 adminButton.MouseButton1Click:Connect(function()
-	if isAdminUser(player.UserId) then
-		if (lastOpenPanel == adminPanel) then
-			closePanel(adminPanel)
-		else
-			openPanel(adminPanel)
-		end
+	if AdminConfig.IsAdmin(player.UserId) then
+		togglePanel(adminPanel)
 	end
 end)
 

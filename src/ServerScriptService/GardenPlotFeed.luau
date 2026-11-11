@@ -48,7 +48,6 @@ local function plotState(player: Player)
 		field = GardenField.PlotField(player),
 	}
 end
-GardenPlotFeed.PlotState = plotState
 
 -- Sends `state` of `owner` to `viewer`.
 local function send(viewer: Player, owner: Player, state)

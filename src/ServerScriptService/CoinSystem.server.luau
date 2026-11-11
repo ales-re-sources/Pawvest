@@ -12,7 +12,7 @@ local coinUpdateEvent = Instance.new("RemoteEvent")
 coinUpdateEvent.Name = "CoinUpdateEvent"
 coinUpdateEvent.Parent = ReplicatedStorage
 
-function createLeaderstats(player)
+local function createLeaderstats(player)
 	local leaderstats = Instance.new("Folder")
 	leaderstats.Name = "leaderstats"
 	leaderstats.Parent = player

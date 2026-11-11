@@ -76,7 +76,6 @@ local function publishState(player: Player)
 	end
 	stateEvent:FireClient(player, state)
 end
-GardenService.PublishState = publishState
 
 local function runPublishHooks(player: Player)
 	for _, fn in publishHooks do

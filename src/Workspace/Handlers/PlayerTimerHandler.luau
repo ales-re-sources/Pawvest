@@ -46,11 +46,15 @@ local TOP_ROWS = 10
 -- elsewhere, which the next board refresh, at most a minute later, picks up)
 local cachedBoards = {}
 
+-- The GlobalLeaderboardsStore key of a stage's Top-10
+local function leaderboardKey(stageKey: string): string
+	return "leaderboard_" .. stageKey
+end
+
 -- Loads a stage's global Top-10 ({} when there is none or the read fails)
 local function loadGlobalLeaderboard(stageName)
-	local key = "leaderboard_" .. stageName
 	local success, data = pcall(function()
-		return GlobalLeaderboardsStore:GetAsync(key)
+		return GlobalLeaderboardsStore:GetAsync(leaderboardKey(stageName))
 	end)
 	if success and type(data) == "table" then
 		cachedBoards[stageName] = data
@@ -91,7 +95,7 @@ local function updateGlobalLeaderboard(stageName, playerName, elapsed, userId)
 	end
 	local written = nil
 	local ok, err = pcall(function()
-		GlobalLeaderboardsStore:UpdateAsync("leaderboard_" .. stageName, function(old)
+		GlobalLeaderboardsStore:UpdateAsync(leaderboardKey(stageName), function(old)
 			local leaderboard = if type(old) == "table" then old else {}
 			cachedBoards[stageName] = leaderboard
 			written = nil
@@ -129,19 +133,20 @@ local function updateGlobalLeaderboard(stageName, playerName, elapsed, userId)
 end
 
 
--- Removes a player's entries from every stage's Top-10 (admin self-reset); boards redraw via LeaderboardChanged
-local function removeFromGlobalLeaderboards(playerName)
+-- Removes a player's entries from every stage's Top-10 (admin self-reset), matched like findEntry (by UserId, or by
+-- name for entries written before UserIds were stored); boards redraw via LeaderboardChanged
+local function removeFromGlobalLeaderboards(playerName, userId)
 	for _, stage in StageConfig.Stages do
 		local kept = nil
 		local ok, err = pcall(function()
-			GlobalLeaderboardsStore:UpdateAsync("leaderboard_" .. stage.key, function(old)
+			GlobalLeaderboardsStore:UpdateAsync(leaderboardKey(stage.key), function(old)
 				kept = nil
 				if type(old) ~= "table" then
 					return nil
 				end
 				local list = {}
 				for _, entry in old do
-					if entry.PlayerName ~= playerName then
+					if not ((userId and entry.UserId == userId) or entry.PlayerName == playerName) then
 						table.insert(list, entry)
 					end
 				end
@@ -314,7 +319,6 @@ return {
 		return panelStages[player] or StageConfig.HubName
 	end,
 	LoadGlobalLeaderboard = loadGlobalLeaderboard,
-	UpdateGlobalLeaderboard = updateGlobalLeaderboard,
 	LeaderboardChanged = leaderboardChanged.Event,
 	RemoveFromGlobalLeaderboards = removeFromGlobalLeaderboards,
 }

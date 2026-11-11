@@ -58,7 +58,6 @@ LINT_IGNORE = (
     "ServerScriptService/AdminCoinsServer",
     "ReplicatedStorage/Strings/",
     "ReplicatedStorage/Locale.luau",
-    "/TopTimeScript.",  # legacy time-played board, Disabled
 )
 LINT_PATTERNS = [
     # label.Text = "…" / .ActionText / .ObjectText / .PlaceholderText, also string.format("…") and concatenations

@@ -38,5 +38,5 @@ resetTimerEvent.OnServerEvent:Connect(function(player)
 	end
 	StageResults.PublishMedals(player)
 	handler.UpdateScorePanel(player, nil)
-	handler.RemoveFromGlobalLeaderboards(player.Name)
+	handler.RemoveFromGlobalLeaderboards(player.Name, player.UserId)
 end)

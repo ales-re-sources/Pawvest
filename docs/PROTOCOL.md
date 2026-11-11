@@ -46,7 +46,7 @@ In `ReplicatedStorage`; the first three exist only in Studio (not in files), eve
 | `PlayerScoresStore` | `player_<UserId>` | legacy `{ {StageName, Elapsed}, … }` — read once for migration |
 | `GlobalLeaderboardsStore` | `leaderboard_<StageName>` | Top-10 `{ {PlayerName, Elapsed, UserId?}, … }` (UserId missing on entries from before the avatar boards) |
 | ordered `MostStars` | `<UserId>` | total stars (sum of the profile's medals, `StageConfig.TotalStars`); no entry = 0; hub board |
-| ordered `"a"` | — | legacy time-played board; `TopTimeScript` is **Disabled** |
+| ordered `"a"` | — | legacy time-played board (script removed; old data only) |
 
 ## Coins, mirrored attributes, runtime state
 Gameplay Coins (medals, repeat rewards, pickups, future sources) go through `CoinRewards.Grant`; purchases and

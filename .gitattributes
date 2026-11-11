@@ -1,0 +1,3 @@
+# Luau and Argon meta files are LF everywhere (byte-identical stage-script copies compare equal on disk too)
+*.luau text eol=lf
+*.json text eol=lf

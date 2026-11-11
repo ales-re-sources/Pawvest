@@ -97,31 +97,9 @@ function PetClient.NameOf(uid: string?): string?
 	return if type(name) == "string" and name ~= "" then name else nil
 end
 
-function PetClient.PetCount(): number
-	local count = 0
-	if PetClient.State then
-		for _ in PetClient.State.pets do
-			count += 1
-		end
-	end
-	return count
-end
-
 -- "2", "3.5", "0.5": a number with at most one decimal and no trailing zero.
 function PetClient.Percent(permille: number): string
 	return string.format("%g", math.round(permille) / 10)
-end
-
--- Thousands separators for Coin amounts: 1500 → "1,500".
-function PetClient.Number(n: number): string
-	local text = tostring(math.floor(n))
-	while true do
-		local replaced, count = string.gsub(text, "^(-?%d+)(%d%d%d)", "%1,%2")
-		text = replaced
-		if count == 0 then
-			return text
-		end
-	end
 end
 
 remotes:WaitForChild("PetsChanged").OnClientEvent:Connect(function(state)

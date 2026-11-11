@@ -67,7 +67,6 @@ local function gardenOf(profile)
 	garden.Incubators = kept
 	return garden
 end
-GardenIncubators.GardenOf = gardenOf
 
 GardenService.AddStateField("incubators", function(profile)
 	local garden = gardenOf(profile)
