@@ -5,10 +5,10 @@
 -- Transparency (default 0.65) sets how faint the others look. Purely cosmetic and local: it changes only the
 -- LocalTransparencyModifier of the other players' character parts on this client.
 
-local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local KitMath = require(game:GetService("ReplicatedStorage"):WaitForChild("KitMath"))
+local KitClient = require(script.Parent:WaitForChild("KitClient"))
 
 local player = Players.LocalPlayer
 
@@ -18,19 +18,11 @@ local zones = {} -- [part] = true
 local ghosted = {} -- [Model] = transparency applied, for characters currently drawn as ghosts
 
 local function addZone(part: Instance)
-	if part:IsA("BasePart") then
+	if KitClient.HideZone(part) then
 		zones[part] = true
-		part.Transparency = 1
-		part.CanCollide = false
-		part.CanTouch = false
-		part.CanQuery = false
 	end
 end
-for _, part in CollectionService:GetTagged("KitGhostZone") do
-	addZone(part)
-end
-CollectionService:GetInstanceAddedSignal("KitGhostZone"):Connect(addZone)
-CollectionService:GetInstanceRemovedSignal("KitGhostZone"):Connect(function(part)
+KitClient.Track("KitGhostZone", addZone, function(part)
 	zones[part] = nil
 end)
 

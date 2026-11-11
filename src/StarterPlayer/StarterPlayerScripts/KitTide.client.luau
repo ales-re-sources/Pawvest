@@ -10,12 +10,12 @@
 -- kills). A Studio-only Sound child "Rumble" plays (2D) louder as the gap between the feet and the top drops below
 -- RUMBLE_RANGE studs; silent without it.
 
-local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
+local KitClient = require(script.Parent:WaitForChild("KitClient"))
 
 local player = Players.LocalPlayer
 
@@ -116,23 +116,9 @@ local function reset()
 	active = wanted
 end
 
-local function kill(part: BasePart, humanoid: Humanoid)
-	humanoid.Health = 0
-	player:SetAttribute("KitKillAt", workspace:GetServerTimeNow())
-	player:SetAttribute("KitKilledBy", part.Parent.Name .. "." .. part.Name)
-	-- telemetry (T1a): the server cannot see a client kill's cause
-	local remotes = ReplicatedStorage:FindFirstChild("TelemetryRemotes")
-	local report = remotes and remotes:FindFirstChild("Report")
-	if report then
-		report:FireServer("kill", part)
-	end
-end
+local kill = KitClient.Kill
 
-for _, part in CollectionService:GetTagged("KitTide") do
-	addTide(part)
-end
-CollectionService:GetInstanceAddedSignal("KitTide"):Connect(addTide)
-CollectionService:GetInstanceRemovedSignal("KitTide"):Connect(removeTide)
+KitClient.Track("KitTide", addTide, removeTide)
 
 ReplicatedStorage:WaitForChild("StageTimerUpdate").OnClientEvent:Connect(function(elapsed: number, stageKey: string?)
 	local key = if type(elapsed) == "number" and elapsed >= 0 then stageKey else nil

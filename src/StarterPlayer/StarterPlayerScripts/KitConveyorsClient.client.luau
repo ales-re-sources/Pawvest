@@ -7,8 +7,9 @@
 -- turn around. The phase comes from workspace:GetServerTimeNow(), so every player sees the same belt. Belts farther than ANIMATE_DISTANCE
 -- from the camera are not updated.
 
-local CollectionService = game:GetService("CollectionService")
 local RunService = game:GetService("RunService")
+
+local KitClient = require(script.Parent:WaitForChild("KitClient"))
 
 local TAG = "KitConveyor"
 local ANIMATE_DISTANCE = 300
@@ -60,13 +61,9 @@ local function add(instance: Instance)
 	end
 end
 
-CollectionService:GetInstanceAddedSignal(TAG):Connect(add)
-CollectionService:GetInstanceRemovedSignal(TAG):Connect(function(instance)
+KitClient.Track(TAG, add, function(instance)
 	belts[instance :: BasePart] = nil
 end)
-for _, instance in CollectionService:GetTagged(TAG) do
-	add(instance)
-end
 
 local FLIP = CFrame.Angles(0, math.pi, 0)
 

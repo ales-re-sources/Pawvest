@@ -17,6 +17,8 @@ local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
 
+local KitClient = require(script.Parent:WaitForChild("KitClient"))
+
 local player = Players.LocalPlayer
 
 local BEAD_SPEED = 45 -- studs/s along the wire
@@ -245,11 +247,7 @@ local function onColors()
 	shown = now
 end
 
-for _, part in CollectionService:GetTagged("KitWire") do
-	addWire(part)
-end
-CollectionService:GetInstanceAddedSignal("KitWire"):Connect(addWire)
-CollectionService:GetInstanceRemovedSignal("KitWire"):Connect(function(part)
+KitClient.Track("KitWire", addWire, function(part)
 	wires[part] = nil
 end)
 player:GetAttributeChangedSignal("KitColors"):Connect(onColors)

@@ -12,18 +12,17 @@
 -- Nothing here pushes a character at a speed above the attributes' own limits, and everything stops the moment the character
 -- dies or leaves the box. Priority is not needed: the effects of overlapping zones simply add.
 
-local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local KitMath = require(ReplicatedStorage:WaitForChild("KitMath"))
+local KitClient = require(script.Parent:WaitForChild("KitClient"))
 
 local player = Players.LocalPlayer
 
 local zones = {} -- [part] = true
 local windEmitters = {} -- [part] = ParticleEmitter (wind zones only)
-local runStart: number? = nil
 
 local EMIT_DISTANCE = 260 -- studs from the character within which a wind zone emits
 
@@ -75,23 +74,15 @@ local function addWindEmitter(part: BasePart)
 end
 
 local function addZone(part: Instance)
-	if part:IsA("BasePart") then
+	if KitClient.HideZone(part) then
 		zones[part] = true
-		part.Transparency = 1
-		part.CanCollide = false
-		part.CanTouch = false
-		part.CanQuery = false
 		local kind = part:GetAttribute("Kind")
 		if kind == nil or kind == "Wind" then
 			addWindEmitter(part)
 		end
 	end
 end
-for _, part in CollectionService:GetTagged("KitZone") do
-	addZone(part)
-end
-CollectionService:GetInstanceAddedSignal("KitZone"):Connect(addZone)
-CollectionService:GetInstanceRemovedSignal("KitZone"):Connect(function(part)
+KitClient.Track("KitZone", addZone, function(part)
 	zones[part] = nil
 	local emitter = windEmitters[part]
 	if emitter then
@@ -100,17 +91,7 @@ CollectionService:GetInstanceRemovedSignal("KitZone"):Connect(function(part)
 	end
 end)
 
-ReplicatedStorage:WaitForChild("StageTimerUpdate").OnClientEvent:Connect(function(elapsed: number)
-	runStart = if type(elapsed) == "number" and elapsed >= 0 then workspace:GetServerTimeNow() - elapsed else nil
-end)
-
-local function attr(part: Instance, name: string, default: any): any
-	local value = part:GetAttribute(name)
-	if value == nil then
-		return default
-	end
-	return value
-end
+local attr = KitClient.Attr
 
 -- Current strength of a wind zone, 0..1 (1 for a steady wind, KitMath.Gust for a gusting one).
 local function windStrength(zone: BasePart, now: number): number
@@ -118,16 +99,13 @@ local function windStrength(zone: BasePart, now: number): number
 	if type(period) ~= "number" then
 		return 1
 	end
-	return KitMath.Gust(KitMath.TimeBase(now, runStart, attr(zone, "RunSeeded", false)), period, attr(zone, "Duty", 0.5), attr(zone, "Phase", 0))
+	return KitMath.Gust(KitMath.TimeBase(now, KitClient.RunStart(), attr(zone, "RunSeeded", false)), period, attr(zone, "Duty", 0.5), attr(zone, "Phase", 0))
 end
 
 -- The wind particles follow the zone's strength: a rate in proportion to its volume, none while a gust is off or the zone is far from the character.
 RunService.Heartbeat:Connect(function()
 	-- distance from the character (the camera follows it; a cut-scene or test camera far away must not switch the wind off)
-	local character = player.Character
-	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
-	local camera = workspace.CurrentCamera
-	local origin = if root then root.Position elseif camera then camera.CFrame.Position else nil
+	local origin = KitClient.Focus()
 	if not origin then
 		return
 	end

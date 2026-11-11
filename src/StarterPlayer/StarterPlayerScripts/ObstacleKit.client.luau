@@ -78,13 +78,13 @@
 -- (e.g. "A=Blue,B=Red"), KitSteps (e.g. "Vault3=4": the highest step reached per group) and KitRunStart (server time the current run started, 0 when none).
 -- All kit-local state (crumbled plates, colour groups) resets when the character dies or respawns.
 
-local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
 
 local KitMath = require(ReplicatedStorage:WaitForChild("KitMath"))
+local KitClient = require(script.Parent:WaitForChild("KitClient"))
 
 local player = Players.LocalPlayer
 
@@ -122,7 +122,7 @@ local lastTick = 0 -- whole seconds left on the last frame (door ticks)
 local latched = {} -- [group] = true: a Latch button of that group was pressed in this run
 local ices = {} -- [part] = true
 local BUTTON_ON_COLOR = Color3.fromRGB(90, 230, 120)
-local runStart: number? = nil -- server time the player's current run started (StageTimerUpdate)
+local runStart: number? = nil -- server time the player's current run started (KitClient.OnRun keeps it)
 local timeBaseChanged = false -- a run started or ended: run-seeded movers jump to their new time, nobody is carried by it
 
 local character, humanoid, root = nil, nil, nil
@@ -135,36 +135,7 @@ sightParams.FilterType = Enum.RaycastFilterType.Exclude
 sightParams.RespectCanCollide = true
 local SIGHT_END = 0.15 -- studs the hazard sight line stops short of the hazard
 
--- Attribute reads are cached per part (the frame loop reads several per kit part every frame, and GetAttribute is far
--- slower than a table lookup); AttributeChanged drops a changed value, so tuning a part in Studio still takes effect.
--- Only kit parts are read (each registry check comes before the attribute), so the AttributeChanged connections stay
--- one per kit part; weak keys let a part that left the kit go.
-local NONE = {} -- cached "attribute not set"
-local attrCache = setmetatable({}, { __mode = "k" }) -- [Instance] = { [name] = value or NONE }
-
-local function attr(part: Instance, name: string, default: any): any
-	local cache = attrCache[part]
-	if not cache then
-		local fresh = {}
-		cache = fresh
-		attrCache[part] = fresh
-		part.AttributeChanged:Connect(function(changed: string)
-			fresh[changed] = nil
-		end)
-	end
-	local value = cache[name]
-	if value == nil then
-		value = part:GetAttribute(name)
-		if value == nil then
-			value = NONE
-		end
-		cache[name] = value
-	end
-	if value == NONE then
-		return default
-	end
-	return value
-end
+local attr = KitClient.Attr -- cached per part
 
 local moverCount = 0
 local function addMover(part: Instance)
@@ -373,11 +344,7 @@ local function addDoor(part: Instance)
 end
 
 local function track(tag: string, add: (Instance) -> (), registry: { [Instance]: any })
-	for _, part in CollectionService:GetTagged(tag) do
-		add(part)
-	end
-	CollectionService:GetInstanceAddedSignal(tag):Connect(add)
-	CollectionService:GetInstanceRemovedSignal(tag):Connect(function(part)
+	KitClient.Track(tag, add, function(part)
 		local data = registry[part]
 		-- local helper parts (a beam's floor strip) go with their part, also when it streams out
 		if type(data) == "table" and typeof(data.mark) == "Instance" then
@@ -412,9 +379,8 @@ track("KitIce", function(part)
 	end
 end, ices)
 
--- the player's run: StageTimerUpdate (elapsed >= 0, stageKey) while it runs, (-1, ...) when it ends
-ReplicatedStorage:WaitForChild("StageTimerUpdate").OnClientEvent:Connect(function(elapsed: number)
-	local newStart = if type(elapsed) == "number" and elapsed >= 0 then workspace:GetServerTimeNow() - elapsed else nil
+-- the player's run (KitClient.OnRun: StageTimerUpdate)
+KitClient.OnRun(function(newStart: number?)
 	if (newStart == nil) ~= (runStart == nil) or (newStart and runStart and math.abs(newStart - runStart) > 0.5) then
 		timeBaseChanged = true
 		table.clear(latched)
@@ -590,15 +556,7 @@ local function touchesCharacter(part: BasePart): boolean
 end
 
 local function kill(part: Instance)
-	humanoid.Health = 0
-	player:SetAttribute("KitKillAt", workspace:GetServerTimeNow())
-	player:SetAttribute("KitKilledBy", part.Parent.Name .. "." .. part.Name)
-	-- telemetry (T1a): the server cannot see a client kill's cause
-	local remotes = ReplicatedStorage:FindFirstChild("TelemetryRemotes")
-	local report = remotes and remotes:FindFirstChild("Report")
-	if report then
-		report:FireServer("kill", part)
-	end
+	KitClient.Kill(part, humanoid)
 end
 
 RunService.PreSimulation:Connect(function(dt: number)
@@ -608,8 +566,7 @@ RunService.PreSimulation:Connect(function(dt: number)
 
 	-- movers far from the character (or the camera, without one) run at a lower rate; a mover's delta is only trusted
 	-- while it is near in two frames in a row, so a mover coming back from the low rate never jerks a character
-	local camera = workspace.CurrentCamera
-	local focus = if root and root.Parent then root.Position elseif camera then camera.CFrame.Position else nil
+	local focus = KitClient.Focus()
 	for part, data in movers do
 		local near = focus == nil or (part.Position - focus).Magnitude < NEAR_DISTANCE + data.radius
 		if not near and (frameIndex + data.slot) % FAR_EVERY ~= 0 then

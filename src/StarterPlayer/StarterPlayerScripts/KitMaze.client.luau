@@ -12,12 +12,12 @@
 -- The layouts are generated and checked for solvability when the maze is built (every layout keeps every cell connected to
 -- the exit); this script only plays the pattern.
 
-local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local KitMath = require(ReplicatedStorage:WaitForChild("KitMath"))
+local KitClient = require(script.Parent:WaitForChild("KitClient"))
 
 local player = Players.LocalPlayer
 
@@ -28,15 +28,8 @@ local PUSH_CLEARANCE = 1.8 -- studs from the wall face a pushed-out character en
 local ACTIVE_DISTANCE = 300 -- studs: walls farther from the character (the camera without one) keep their last pose
 
 local walls = {} -- [part] = { base, color, material, transparency, pattern, pose }
-local runStart: number? = nil
 
-local function attr(part: Instance, name: string, default: any): any
-	local value = part:GetAttribute(name)
-	if value == nil then
-		return default
-	end
-	return value
-end
+local attr = KitClient.Attr
 
 local function addWall(part: Instance)
 	if part:IsA("BasePart") then
@@ -57,17 +50,10 @@ local function addWall(part: Instance)
 		}
 	end
 end
-for _, part in CollectionService:GetTagged("KitMazeWall") do
-	addWall(part)
-end
-CollectionService:GetInstanceAddedSignal("KitMazeWall"):Connect(addWall)
-CollectionService:GetInstanceRemovedSignal("KitMazeWall"):Connect(function(part)
+KitClient.Track("KitMazeWall", addWall, function(part)
 	walls[part] = nil
 end)
 
-ReplicatedStorage:WaitForChild("StageTimerUpdate").OnClientEvent:Connect(function(elapsed: number)
-	runStart = if type(elapsed) == "number" and elapsed >= 0 then workspace:GetServerTimeNow() - elapsed else nil
-end)
 
 -- Height share 0..1 and look ("solid" / "flash" / "glow" / "hidden") of a wall at time t.
 local function wallState(part: BasePart, data, t: number): (number, string)
@@ -97,15 +83,14 @@ RunService.PreSimulation:Connect(function()
 	local character = player.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
 	-- distance from the character: the iso camera hangs about 230 studs away from it
-	local camera = workspace.CurrentCamera
-	local focus = if root then root.Position elseif camera then camera.CFrame.Position else Vector3.zero
+	local focus = KitClient.Focus() or Vector3.zero
 	local flashOn = math.floor(now * 8) % 2 == 0
 
 	for part, data in walls do
 		if (data.base.Position - focus).Magnitude > ACTIVE_DISTANCE then
 			continue
 		end
-		local height, look = wallState(part, data, KitMath.TimeBase(now, runStart, attr(part, "RunSeeded", false)))
+		local height, look = wallState(part, data, KitMath.TimeBase(now, KitClient.RunStart(), attr(part, "RunSeeded", false)))
 		local wallHeight = part.Size.Y
 		local pose = string.format("%.3f %s %s", height, look, if look == "flash" then tostring(flashOn) else "")
 		if pose ~= data.pose then
