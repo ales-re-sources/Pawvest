@@ -58,7 +58,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG2 | Shared plant growth recipes and timing | ✔ | generic dispatch, field feed and detail changes checked | – |
 | CG3 | Potato growth art | CG3a–c built; desktop CPU tuning done | field lifecycle/detail checks pass; real phone and second client open | – |
 | CG4 | Plant individuality and harvested size | ✔ | size/rotation, bounds, detail transitions and reviewer controls Studio-checked | – |
-| CG5 | Frost Grape growth art | CG5a/b approved; explicit fruit slots | Studio checks pass; CG5c field integration next | – |
+| CG5 | Frost Grape growth art | CG5a/b approved; CG5c registered with frost flecks, proxies and harvest burst | Studio checks pass (geometry, production PlotView lifecycle); CG5d CPU, real phone and second client open | – |
 | CG6 | Corn growth art | CG6a–d complete | Studio checks and desktop CPU sample pass; real phone and second client confirmed by Ales 2026-11-09 | – |
 | CG7 | Lettuce growth art | CG7a (A, crisp head, chosen) and CG7b/c recipe + field registration built | Studio checks pass (bounds, seeds, sizes, seek, proxies, PlotView path); five stills and colour/density fix approved by Ales 2026-11-09; real phone and second client open | – |
 | CG8 | Pepper growth art | [Red chilli-pepper bush](plants/PEPPER.md); corrected pointed/curved fruit replaces the bell shape; CG8b/c registered | Revised Studio checks pass (84 Parts, seeds, sizes, bounds, attachments, seeks, proxies, PlotView); updated five stills await art review; performance, real phone and second client open | – |
@@ -98,8 +98,12 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
   stake, 71 Parts, Studio-checked. Five stills await Ales's review; full-field/24-plot performance (2,556 plant Parts), real phone and
   second client remain open. Variants (two floors, cherry spiral) are deferred until after GA.
 - **CG2 / CG4:** shared recipe dispatch, stable variation, harvest-size visuals and scheduled growth updates are implemented.
-- **CG5:** [Frost Grape's tall B](plants/FROST_GRAPE.md) and motion are approved; fruit slots are explicit. Next is **CG5c** field
-  integration/proxy, then **CG5d** performance validation. Fruit-only perennial gameplay remains separate future work.
+- **CG5:** [Frost Grape's tall B](plants/FROST_GRAPE.md) and motion are approved (fruit slots explicit); at Ales's request (2026-11-11)
+  ripe bunches shed drifting frost flecks and a harvest pops a frost burst. **CG5c** done: registered in `PlantGrowth`, 8 / 34 / 34-Part
+  mid proxies, `PlayHarvest`. Studio checks pass (6 seeds × 3 masses × 101 ages: 2.21-stud maximum radius, 7.39-7.57-stud top, exact
+  seeks; production `PlotView` lifecycle, corrections, exact ripeness, selection, detail round trip, harvest/replant;
+  `tools/frost_grape_integration_checks.luau`). Open: **CG5d** full-field / 24-plot CPU (4,140 plant Parts per full field plus
+  particles), real phone and second client. Fruit-only perennial gameplay remains separate future work.
 - **CG7:** [Lettuce's crisp head](plants/LETTUCE.md) is registered in `PlantGrowth` and Studio-checked; Ales approved the five stills (2026-11-09).
   Real-phone and second-client validation remain open.
 - **CG8:** [Pepper](plants/PEPPER.md): Ales corrected the fruit to slender, pointed red chillies; growth and field registration are

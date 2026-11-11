@@ -29,9 +29,17 @@ Raise the cane and support rather than stretching berries or leaves. The support
 Seed 1 at standard mass reproduces the selected ripe B. Other seeds vary cane bends, leaf angles/size, berry proportions, bunch size
 and hanging offset. Harvested mass changes grapes while mature height and rigid support remain tall.
 
-**Current status:** Ales approved the motion; the recipe is display-only and is not registered for live fields. The eight-hour crop
-duration and existing square-clearing harvest contract are unchanged. Field integration/proxy and performance validation are CG5c/d.
-Fruit-only perennial harvesting remains future gameplay, not a side effect of this art recipe.
+**Current status:** Ales approved the motion and the design; the recipe is registered in `PlantGrowth` (CG5c, 2026-11-11). The
+eight-hour crop duration and existing square-clearing harvest contract are unchanged. CG5d performance, real phone and second
+client remain open. Fruit-only perennial harvesting remains future gameplay, not a side effect of this art recipe.
+
+**Frost particles (Ales, 2026-11-11).** From 90% growth each bunch's middle berry carries a `FrostFlecks` ParticleEmitter (4/s,
+pale-ice sparkles, 1.8-2.8 s life, slowly falling, not locked to the Part). It switches off and clears on a backward seek.
+`PlayHarvest` emits a 26-fleck falling burst at the bunches for the owner's successful harvest only. Particles never run in
+mid/low detail.
+
+**Mid proxy (8 / 34 / 34 Parts for stage 1 / 2 / 3):** posts and rails, cane, arms, a stalk and one blade per leaf, and a stalk
+plus two tapered blocks per bunch (`Fruit` role with slot id). The frost facets are omitted at mid distance.
 
 ## Recipe and fruit identity
 

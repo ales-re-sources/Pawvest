@@ -1,5 +1,5 @@
--- Display-only CG5b recipe: the approved tall B trellis, with reversible growth.
--- 4 rigid supports + 9 vine segments + 36 leaf pieces + 63 fruit pieces + 3 tendrils.
+-- CG5 registered recipe: the approved tall B trellis, with reversible growth.
+-- 4 rigid supports + 9 vine segments + 36 leaf pieces + 63 fruit pieces + 3 tendrils. Ripe bunches shed drifting frost flecks.
 local FrostGrapePlant = {}
 FrostGrapePlant.__index = FrostGrapePlant
 FrostGrapePlant.RingHeight = 8.1
@@ -52,18 +52,19 @@ local BERRY_POSITIONS = {
 	V(-0.23, -0.47, 0.08), V(0.23, -0.47, 0.08), V(0, -0.42, -0.22),
 	V(-0.14, -0.78, 0.05), V(0.14, -0.78, -0.10), V(0, -1.06, 0),
 }
+local MAIN_START, MAIN_FINISH = {0.01, 0.18, 0.35}, {0.20, 0.36, 0.49}
+local FROST_RIPE = 0.9 -- growth at which the bunches start shedding frost
+local FROST_BERRY = 5 -- the middle berry of each bunch carries its emitter
 
-function FrostGrapePlant.new(parent, soilCFrame, seed, sizeFactor)
-	local self = setmetatable({}, FrostGrapePlant)
-	local rig = PlantKit.newRig("FrostGrapePlant", soilCFrame)
-	self.rig, self.model, self.leafPoses = rig, rig.model, {}
-	self.dimensionScale = PlantKit.dimension(sizeFactor)
+-- Seeded shape shared by the full plant and the mid proxy. The draw order is part of a planting's identity.
+local function seededShape(seed, sizeFactor)
+	local self = {dimensionScale = PlantKit.dimension(sizeFactor)}
 	local vary = PlantKit.seeded(seed)
 	local function bend(p, extent, height)
 		return p + V(vary(extent), vary(height or 0.035), vary(extent * 0.7))
 	end
 	self.path = {PATH[1], bend(PATH[2], 0.12, 0.10), bend(PATH[3], 0.12, 0.10), bend(PATH[4], 0.055, 0.10)}
-	self.arms, self.leaves, self.fruit, self.fruitSlots = {}, {}, {}, {}
+	self.arms, self.leaves, self.fruit = {}, {}, {}
 	for i, arm in ARMS do
 		self.arms[i] = bend(arm[2], if i <= 4 then 0.09 else 0.075, 0.11)
 	end
@@ -99,11 +100,72 @@ function FrostGrapePlant.new(parent, soilCFrame, seed, sizeFactor)
 		self.fruit[i] = {first = first, last = last, fraction = fraction, attachment = attachment,
 			offset = fruit[2] - fruit[1] + V(vary(0.04), vary(0.14), vary(0.04)),
 			scale = fruit[3] * self.dimensionScale * (1 + vary(0.12)), turn = fruit[4] + vary(0.16), berries = berries}
-		local node = if i == 2 then self.path[4] + attachment
+		-- Mature, seeded stalk origin (soil space), not the moving berry centre.
+		self.fruit[i].node = if i == 2 then self.path[4] + attachment
 			else self.arms[first]:Lerp(self.arms[last], fraction) + attachment
+	end
+	return self
+end
+
+-- Cane tips and arm tips at growth g; the arm parent is the main tip or an earlier arm.
+local function skeleton(shape, g)
+	local main, mainQ, arms = {shape.path[1]}, {}, {}
+	for i = 1, 3 do
+		local q = phase(g, MAIN_START[i], MAIN_FINISH[i])
+		mainQ[i] = q
+		main[i + 1] = main[i]:Lerp(shape.path[i + 1], q)
+	end
+	for i, spec in ARMS do
+		local a = if spec[1] == 0 then main[4] else arms[spec[1]]
+		arms[i] = a:Lerp(shape.arms[i], phase(g, spec[3], spec[4]))
+	end
+	return main, mainQ, arms
+end
+
+local function leafNode(shape, spec, leaf, main, mainQ, arms)
+	if spec[1] > 0 then
+		return arms[spec[1]]
+	elseif spec[1] == 0 then
+		return main[4]
+	end
+	-- This node stops travelling as soon as its section of cane has grown.
+	local fraction = (leaf.node.Y - shape.path[2].Y) / (shape.path[3].Y - shape.path[2].Y)
+	local reached = math.min(fraction, mainQ[2])
+	local onCane = shape.path[2]:Lerp(shape.path[3], fraction)
+	return main[2]:Lerp(shape.path[3], reached) + (leaf.node - onCane) * math.min(1, mainQ[2] / fraction)
+end
+
+local function bunchParent(fruit, i, g, main, mainQ, arms)
+	if i == 2 then
+		return main[4] + fruit.attachment * mainQ[3]
+	end
+	return arms[fruit.first]:Lerp(arms[fruit.last], fruit.fraction) + fruit.attachment * phase(g, 0.49, 0.61)
+end
+
+-- Slow pale flecks that drift down through a ripe bunch, like frost shaken off a cold vine.
+local function addFrost(part)
+	local e = Instance.new("ParticleEmitter")
+	e.Name, e.Texture = "FrostFlecks", "rbxasset://textures/particles/sparkles_main.dds"
+	e.Color = ColorSequence.new(ICE, Color3.new(1, 1, 1))
+	e.LightEmission, e.LightInfluence = 0.55, 0.3
+	e.Rate, e.Lifetime, e.Speed = 4, NumberRange.new(1.8, 2.8), NumberRange.new(0.12, 0.45)
+	e.Acceleration = V(0, -0.45, 0)
+	e.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.3, 0.32), NumberSequenceKeypoint.new(1, 0)})
+	e.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.25, 0.12), NumberSequenceKeypoint.new(1, 1)})
+	e.Rotation, e.RotSpeed = NumberRange.new(0, 180), NumberRange.new(-20, 20)
+	e.SpreadAngle, e.LockedToPart = Vector2.new(180, 180), false
+	e.Enabled = false
+	e.Parent = part
+	return e
+end
+
+function FrostGrapePlant.new(parent, soilCFrame, seed, sizeFactor)
+	local self = setmetatable(seededShape(seed, sizeFactor), FrostGrapePlant)
+	local rig = PlantKit.newRig("FrostGrapePlant", soilCFrame)
+	self.rig, self.model, self.leafPoses, self.fruitSlots, self.frost = rig, rig.model, {}, {}, {}
+	for i, fruit in self.fruit do
 		-- Stable visual slots, independent of Part order and future fruit-cycle state.
-		-- Attachment is the mature, seeded stalk origin, not the moving berry center.
-		self.fruitSlots[i] = {id = i, attachment = soilCFrame * CFrame.new(node), parts = {}}
+		self.fruitSlots[i] = {id = i, attachment = soilCFrame * CFrame.new(fruit.node), parts = {}}
 	end
 	local function create(name, variant, fruitSlot)
 		local role = if fruitSlot then "Fruit"
@@ -130,7 +192,11 @@ function FrostGrapePlant.new(parent, soilCFrame, seed, sizeFactor)
 	end
 	for slot = 1, 3 do
 		create("BunchStalk", nil, slot)
-		for _ = 1, 9 do create("Grape", nil, slot); create("GrapeCrown", nil, slot) end
+		for j = 1, 9 do
+			local berry = create("Grape", nil, slot)
+			create("GrapeCrown", nil, slot)
+			if j == FROST_BERRY then table.insert(self.frost, addFrost(berry)) end
+		end
 		create("FrostFacet", nil, slot); create("FrostFacet", nil, slot)
 	end
 	for _ = 1, 3 do create("Tendril") end
@@ -144,36 +210,19 @@ function FrostGrapePlant:SetGrowth(normalized)
 	local rig = self.rig
 	local g = rig:beginPose(normalized, 4) -- the rigid supports are placed once in new()
 	if not g then return end
-	local main, mainQ = {self.path[1]}, {}
-	local starts, finishes = {0.01, 0.18, 0.35}, {0.20, 0.36, 0.49}
+	local main, mainQ, arms = skeleton(self, g)
 	for i = 1, 3 do
-		local q = phase(g, starts[i], finishes[i])
-		mainQ[i] = q
-		main[i + 1] = main[i]:Lerp(self.path[i + 1], q)
-		rig:rod(main[i], main[i + 1], 0.15 * (0.55 + 0.45 * q), YOUNG:Lerp(CANE, phase(g, 0.15, 0.75)), q)
+		rig:rod(main[i], main[i + 1], 0.15 * (0.55 + 0.45 * mainQ[i]), YOUNG:Lerp(CANE, phase(g, 0.15, 0.75)), mainQ[i])
 	end
-	local arms = {}
 	for i, spec in ARMS do
 		local a = if spec[1] == 0 then main[4] else arms[spec[1]]
 		local q = phase(g, spec[3], spec[4])
-		arms[i] = a:Lerp(self.arms[i], q)
 		rig:rod(a, arms[i], 0.115 * (0.5 + 0.5 * q), STEM, q)
 	end
 	for i, spec in LEAVES do
 		local leaf = self.leaves[i]
 		local q = phase(g, spec[7], spec[8])
-		local node
-		if spec[1] > 0 then
-			node = arms[spec[1]]
-		elseif spec[1] == 0 then
-			node = main[4]
-		else
-			-- This node stops travelling as soon as its section of cane has grown.
-			local fraction = (leaf.node.Y - self.path[2].Y) / (self.path[3].Y - self.path[2].Y)
-			local reached = math.min(fraction, mainQ[2])
-			local onCane = self.path[2]:Lerp(self.path[3], fraction)
-			node = main[2]:Lerp(self.path[3], reached) + (leaf.node - onCane) * math.min(1, mainQ[2] / fraction)
-		end
+		local node = leafNode(self, spec, leaf, main, mainQ, arms)
 		local old = self.leafPoses[i]
 		if old and old.q == q and old.node == node then
 			rig:skip(6)
@@ -192,12 +241,7 @@ function FrostGrapePlant:SetGrowth(normalized)
 		end
 	end
 	for i, fruit in self.fruit do
-		local parent
-		if i == 2 then
-			parent = main[4] + fruit.attachment * mainQ[3]
-		else
-			parent = arms[fruit.first]:Lerp(arms[fruit.last], fruit.fraction) + fruit.attachment * phase(g, 0.49, 0.61)
-		end
+		local parent = bunchParent(fruit, i, g, main, mainQ, arms)
 		local stalk = phase(g, 0.55, 0.65)
 		local swell = phase(g, 0.60, 1)
 		local at = parent + fruit.offset * stalk + V(0, 0.10 * stalk * (1 - swell), 0)
@@ -226,10 +270,92 @@ function FrostGrapePlant:SetGrowth(normalized)
 	local curl = {tip, tip + V(0.14, 0.28, -0.13) * q, tip + V(0.35, 0.30, -0.20) * q, tip + V(0.30, 0.13, -0.17) * q}
 	for i = 1, 3 do rig:rod(curl[i], curl[i + 1], 0.055 * (0.4 + 0.6 * q), STEM, q) end
 	rig:finish()
+	-- Frost only sheds from heavy ripe bunches; a backward seek clears the flecks already in the air.
+	local ripe = g >= FROST_RIPE
+	for _, emitter in self.frost do
+		if emitter.Enabled ~= ripe then
+			emitter.Enabled = ripe
+			if not ripe then emitter:Clear() end
+		end
+	end
 end
 
 function FrostGrapePlant:Destroy()
 	self.rig:destroy()
+end
+
+-- A short burst of falling frost flecks at collection, independent of the plant the plot feed may already have removed.
+function FrostGrapePlant.PlayHarvest(parent, soilCFrame, sizeFactor)
+	local anchor = PlantKit.proxyPart(parent, "FrostGrapeHarvest", V(3.2, 0.8, 0.6),
+		soilCFrame * CFrame.new(0, 4.6, 0.35), ICE, nil, "Effect")
+	anchor.Transparency = 1
+	local e = addFrost(anchor)
+	e.Rate, e.Speed, e.Lifetime = 0, NumberRange.new(0.5, 1.6), NumberRange.new(0.7, 1.2)
+	e.Acceleration = V(0, -3, 0)
+	e.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.3, 0.3 * PlantKit.dimension(sizeFactor)), NumberSequenceKeypoint.new(1, 0)})
+	e:Emit(26)
+	game:GetService("Debris"):AddItem(anchor, 1.4)
+	return anchor
+end
+
+-- Direct mid proxy: posts and rails, cane, arms, one stalk and blade per leaf, a stalk and two blocks per bunch.
+function FrostGrapePlant.BuildProxy(parent, soilCFrame, stage, seed, sizeFactor)
+	local shape = seededShape(seed, sizeFactor)
+	local g = if stage <= 1 then 0.20 elseif stage == 2 then 0.70 else 1
+	local main, mainQ, arms = skeleton(shape, g)
+	local function rod(name, a, b, width, color, role, slot)
+		PlantKit.proxyPart(parent, name, V(width, width, (b - a).Magnitude), soilCFrame * axis(a, b), color, nil, role, slot)
+	end
+	for _, x in {-1.88, 1.88} do
+		PlantKit.proxyPart(parent, "RigidPost", V(0.19, 7.40, 0.19), soilCFrame * CFrame.new(x, 3.70, -0.14), WOOD, "Studs", "Support")
+	end
+	for _, y in {5.30, 7.10} do
+		PlantKit.proxyPart(parent, "RigidRail", V(3.95, 0.095, 0.095), soilCFrame * CFrame.new(0, y, -0.14), WOOD, nil, "Support")
+	end
+	for i = 1, 3 do
+		if mainQ[i] > 0.02 then
+			rod("Cane", main[i], main[i + 1], 0.15 * (0.55 + 0.45 * mainQ[i]), YOUNG:Lerp(CANE, phase(g, 0.15, 0.75)), "Structure")
+		end
+	end
+	for i, spec in ARMS do
+		local q = phase(g, spec[3], spec[4])
+		if q > 0.05 then
+			rod("Arm", if spec[1] == 0 then main[4] else arms[spec[1]], arms[i], 0.115 * (0.5 + 0.5 * q), STEM, "Structure")
+		end
+	end
+	for i, spec in LEAVES do
+		local leaf = shape.leaves[i]
+		local q = phase(g, spec[7], spec[8])
+		if q > 0.05 then
+			local node = leafNode(shape, spec, leaf, main, mainQ, arms)
+			local at = node + leaf.offset * q
+			rod("LeafStalk", node, at, 0.09 * (0.35 + 0.65 * q), STEM, "Structure")
+			local face = CFrame.new(at) * CFrame.Angles(leaf.tilt + 1.20 * (1 - q), leaf.yaw, 0)
+			local scale = leaf.scale * q
+			PlantKit.proxyPart(parent, "LeafBlade", V(0.95, 0.10, 0.85) * scale, soilCFrame * face * CFrame.new(0, 0, 0.15 * scale),
+				YOUNG:Lerp(if i % 2 == 0 then DARK else LIGHT, q), "Studs", "Structure")
+		end
+	end
+	local swell = phase(g, 0.60, 0.96)
+	for i, fruit in shape.fruit do
+		local slot = i
+		local parent3 = bunchParent(fruit, i, g, main, mainQ, arms)
+		local stalk = phase(g, 0.55, 0.65)
+		if stalk > 0.05 then
+			local at = parent3 + fruit.offset * stalk + V(0, 0.10 * stalk * (1 - phase(g, 0.60, 1)), 0)
+			rod("BunchStalk", parent3, at, 0.10 * (0.4 + 0.6 * stalk), STEM, "Fruit", slot)
+			if swell > 0.05 then
+				local frame = soilCFrame * CFrame.new(at) * CFrame.Angles(0, fruit.turn, 0)
+				local grow = 0.35 + 0.65 * swell
+				local ripeColor = phase(g, 0.73, 1)
+				local scale = fruit.scale * swell
+				PlantKit.proxyPart(parent, "Bunch", V(0.9, 0.85, 0.75) * scale, frame * CFrame.new(0, -0.25 * fruit.scale * grow, 0.04 * fruit.scale),
+					GREEN_BLUE:Lerp(BERRIES[1], ripeColor), nil, "Fruit", slot)
+				PlantKit.proxyPart(parent, "BunchTip", V(0.62, 0.62, 0.55) * scale, frame * CFrame.new(0, -0.92 * fruit.scale * grow, 0),
+					GREEN_BLUE:Lerp(BERRIES[3], ripeColor), nil, "Fruit", slot)
+			end
+		end
+	end
 end
 
 return FrostGrapePlant

@@ -523,11 +523,11 @@ otherwise items could be duplicated across servers.
 
 ### 7.9 Crop field (E1-E4)
 
-**Crop growth art (CG1–CG13).** Tomato, Potato, Corn, Lettuce, Onion, Garlic, Cucumber, Pepper, Glow Mushroom and Golden Carrot
-grow continuously with stable variation tied to each planting and visible
+**Crop growth art (CG1–CG13).** Tomato, Potato, Corn, Lettuce, Onion, Garlic, Cucumber, Pepper, Glow Mushroom, Golden Carrot and
+Frost Grape grow continuously with stable variation tied to each planting and visible
 harvest-size differences. Fruit and foliage develop from attached stems; ripeness is readable from shape and color. Nearby and
-mid-distance art preserve crop identity while distant art is hidden. These crops still clear at harvest. Frost Grape's tall trellis
-design is approved as a display prototype; its field integration and future perennial regrowth are separate work.
+mid-distance art preserve crop identity while distant art is hidden. These crops still clear at harvest. Frost Grape is a tall
+vineyard trellis whose ripe bunches shed frost flecks (a frost burst on harvest); its future perennial regrowth is separate work.
 [Plant art and individual crop designs](PLANT_GROWTH.md) · [Current status](ROADMAP.md).
 
 Garlic uses a half-exposed ivory head, alternating flat blue-green leaves and a curled scape with a pointed closed spathe.

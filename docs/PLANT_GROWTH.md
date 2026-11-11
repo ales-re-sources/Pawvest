@@ -39,8 +39,8 @@ require(game.Players.LocalPlayer.PlayerScripts.PlantGrowthReview).Open("GoldenCa
 `Open()` starts with the first catalogue crop that has a `<CropId>Plant` ModuleScript (normally Potato) and expands the picker.
 An explicit crop ID selects that recipe immediately with the picker closed. The optional seconds argument controls review playback only; it changes neither real crop
 timing nor saved data. The **plant-name button** opens a scrolling picker, populated from the current crop catalogue and recipe
-modules when the reviewer opens. It includes unregistered art such as Frost Grape, so appearing here is not proof of field
-integration. New recipes join the picker on the next `Open()` without maintaining another crop list.
+modules when the reviewer opens. It also lists any unregistered recipe, so appearing here is not proof of field
+integration (check `PlantGrowth`). New recipes join the picker on the next `Open()` without maintaining another crop list.
 
 Choosing a crop keeps growth, seed, harvested-size factor, rings, view mode and playback state, removes the previous review
 plants/rings, refreshes the comparison neighbour and reframes the camera for the recipe. Click the plant button again or outside
@@ -73,7 +73,7 @@ desktop screenshot checks composition, not phone rendering performance. Studio r
   relative to the actual avatar on the same ground plane; a close-up alone hides scale mistakes. Frost Grape's living canopy,
   not just its posts, must exceed the player.
 - State what harvest removes: the whole annual plant, or fruit from a persistent plant. Real-world biology does not automatically
-  change existing gameplay. The current Frost Grape pilot still uses the existing square-clearing harvest contract.
+  change existing gameplay. Frost Grape still uses the existing square-clearing harvest contract.
 - Keep the current 5.5-stud square and its clearances. Existing recipes target a maximum 2.4-stud ground radius throughout growth,
   including rotated poses and supported size extremes. Record any deliberate exception before implementation.
 - Choose intentional readability shortcuts. Potato's brown tuber shoulders show the harvest underground; its green berries are
