@@ -155,9 +155,10 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
   Ales's review. CG15d field/24-plot performance (3,456 plant Parts per full field), real phone and second client open.
 
 - **CG16:** [Eggplant](plants/EGGPLANT.md) (4 h). Ales chose **B, tall open plant** (2026-11-11). CG16b review recipe: 113 Parts,
-  tall leader, five broad leaves, three flower-to-fruit slots and one decorative top flower. Studio checks (six seeds × three
-  harvested masses × 101 ages): 2.26-stud maximum radius, 4.67–5.67-stud ripe height, 0.39-stud minimum fruit clearance; attached
-  organs and exact backward seeks pass. [Five stills](art/eggplant/growth-review.jpg) await growth-art approval before CG16c
+  tall leader, five broad leaves, three flower-to-fruit slots and one decorative top flower. Revised from Ales's growth review:
+  blades 1.85× longer/wider, upright on shorter petioles; stem stays green until 35%, then tints purple at 35–65%. Studio checks
+  (six seeds × three harvested masses × 101 ages): 2.37-stud maximum radius, 5.49–6.67-stud ripe height, 0.39-stud minimum fruit
+  clearance; attached organs, colour timing and exact backward seeks pass. [Five stills](art/eggplant/growth-review.jpg) await growth-art approval before CG16c
   field registration/proxies/lifecycle checks. CG16d performance (4,068 plant Parts per full field), real phone and second client open.
 
 Key talents as **world rewards**: done for Double Jump (K1, GDD §6). Open: Triple Jump / Dash for World 3. The lost Coin sinks are made up in

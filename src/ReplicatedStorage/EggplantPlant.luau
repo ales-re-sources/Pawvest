@@ -2,9 +2,9 @@
 -- Eight stems, two cotyledons, five six-Part leaves, three 22-Part flower/fruit slots and a seven-Part top flower = 113 Parts.
 local EggplantPlant = {}
 EggplantPlant.__index = EggplantPlant
-EggplantPlant.RingHeight = 6.4
+EggplantPlant.RingHeight = 7.2
 EggplantPlant.FixedRingHeight = true
-EggplantPlant.ReviewHeight = 5.8
+EggplantPlant.ReviewHeight = 6.5
 
 local Kit = require(script.Parent.PlantKit)
 local phase, axis = Kit.phase, Kit.axis
@@ -65,9 +65,10 @@ local function seededShape(seed, sizeFactor)
 		shape.segments[i] = {parent=s[1],delta=point(s[2])-parentTip,first=s[3],last=s[4],width=s[5]*vigor}
 	end
 	for i,s in LEAVES do
-		shape.leaves[i] = {parent=s[1],offset=point(s[2])-point(SEGMENTS[s[1]][2]),
-			len=s[3]*1.10*vigor*(1+vary(0.09)),width=s[4]*1.25*vigor*(1+vary(0.08)),
-			yaw=s[5]+vary(0.19),rise=s[6]+0.20+vary(0.09),first=s[7],last=s[8],delay=vary(0.008)}
+		-- Larger blades stand more upright and sit closer to their branch, preserving the field clearance.
+		shape.leaves[i] = {parent=s[1],offset=(point(s[2])-point(SEGMENTS[s[1]][2]))*V(0.50,1,0.50),
+			len=s[3]*1.10*1.85*vigor*(1+vary(0.09)),width=s[4]*1.25*1.85*vigor*(1+vary(0.08)),
+			yaw=s[5]+vary(0.19),rise=s[6]+(if i==4 then 0.35 else 0.85)+vary(0.09),first=s[7],last=s[8],delay=vary(0.008)}
 	end
 	for i,f in shape.fruits do f.offset=point(FRUITS[i][2])-point(SEGMENTS[f.parent][2]) end
 	shape.flowerOffset=point(V(0.98,4.31,0.23))-point(SEGMENTS[8][2])
@@ -103,7 +104,7 @@ local function leaves(rig,leaf,g,tips,rotations)
 	local len,width=leaf.len*(0.10+0.90*q),leaf.width*(0.09+0.91*q)
 	local opacity=phase(q,0,0.09)
 	local function plate(size,frame,color) rig:block(size,frame,YOUNG:Lerp(color,q),opacity) end
-	rig:rod(node,hinge,0.10*(0.4+0.6*q),PURPLESTEM,q)
+	rig:rod(node,hinge,0.10*(0.4+0.6*q),STEM:Lerp(PURPLESTEM,phase(g,0.35,0.65)),q)
 	plate(V(width*0.55,0.07,len*0.76),cf*CFrame.new(0,0,len*0.42),LEAF)
 	for side=-1,1,2 do
 		plate(V(width*0.56,0.065,len*0.45),cf*CFrame.new(side*width*0.24,0.013,len*0.35)*CFrame.Angles(0,side*0.32*q,0),LEAF2)
@@ -180,7 +181,11 @@ function EggplantPlant:SetGrowth(normalized)
 	local g=rig:beginPose(normalized)
 	if not g then return end
 	local starts,tips,rotations,qs=structure(self,g)
-	for i,s in self.segments do rig:rod(starts[i],tips[i],s.width*(0.40+0.60*qs[i]),YOUNG:Lerp(if i<=2 then PURPLESTEM else STEM,qs[i]),qs[i]) end
+	local tint=phase(g,0.35,0.65)
+	for i,s in self.segments do
+		local color=if i<=2 then STEM:Lerp(PURPLESTEM,tint) else STEM
+		rig:rod(starts[i],tips[i],s.width*(0.40+0.60*qs[i]),YOUNG:Lerp(color,qs[i]),qs[i])
+	end
 	local cotyledon=1-phase(g,0.26,0.43)
 	local open=phase(g,0,0.16)
 	for side=-1,1,2 do
@@ -190,9 +195,9 @@ function EggplantPlant:SetGrowth(normalized)
 	for i,leaf in self.leaves do
 		local q,node,hinge,frame=leafPose(leaf,g,tips,rotations)
 		local old=self.leafPoses[i]
-		if old and old.q==q and old.frame==frame and old.node==node then rig:skip(6) else
+		if old and old.q==q and old.frame==frame and old.node==node and old.tint==tint then rig:skip(6) else
 			leaves(rig,leaf,g,tips,rotations)
-			self.leafPoses[i]={q=q,frame=frame,node=node}
+			self.leafPoses[i]={q=q,frame=frame,node=node,tint=tint}
 		end
 	end
 	for _,f in self.fruits do fruit(rig,f,fruitPose(f,g,tips,rotations)) end

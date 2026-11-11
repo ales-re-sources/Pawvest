@@ -81,9 +81,17 @@ for _,mass in {low,1,high} do for seed=1,6 do
 		radius,height=math.max(radius,r),math.max(height,hi.Y)
 		attached(p)
 		if step==0 then assert(hi.Y<0.3 and p.model.Cotyledon1.Transparency==0 and p.model.Fruit1Body1a.Transparency==1,"Bad seedling") end
+		if step<=35 then
+			assert(p.model.Stem1.Color.G>p.model.Stem1.Color.R and p.model.Stem1.Color.G>p.model.Stem1.Color.B,"Young stem is not green")
+		end
+		if step==50 then
+			local tint=p.model.Leaf1Petiole.Color
+			assert(tint~=Color3.fromRGB(104,146,65) and tint~=Color3.fromRGB(100,73,100),"Petiole tint skipped its halfway transition")
+		end
 		if step<=58 then assert(p.model.Fruit1Body1a.Transparency==1,"Fruit before flowering") end
 		if step==50 then assert(p.model.Fruit1Petal1.Transparency<0.1,"Flower not open at 50%") end
 		if step==100 then
+			assert(p.model.Stem1.Color==Color3.fromRGB(100,73,100) and p.model.Leaf1Petiole.Color==Color3.fromRGB(100,73,100),"Mature purple tint missing")
 			local _,lo=measure(p.model,function(part) return string.find(part.Name,"Body",1,true)~=nil end)
 			assert(lo.Y>=0.18,"Fruit touches soil: "..lo.Y)
 			minClear=math.min(minClear,lo.Y)
@@ -94,7 +102,10 @@ for _,mass in {low,1,high} do for seed=1,6 do
 	end
 	local _,_,hi=measure(p.model)
 	minRipe,maxRipe=math.min(minRipe,hi.Y),math.max(maxRipe,hi.Y)
-	if seed==1 and mass==1 then baseline={height=hi.Y,radius=measure(p.model),clearance=minClear} end
+	if seed==1 and mass==1 then
+		assert(math.abs(p.leaves[1].len/(1.33*1.10)-1.85)<0.001 and math.abs(p.leaves[1].width/(0.94*1.25)-1.85)<0.001,"Leaf enlargement lost")
+		baseline={height=hi.Y,radius=measure(p.model),clearance=minClear,leafLength=p.leaves[1].len,leafWidth=p.leaves[1].width}
+	end
 	assert(p.model.Cotyledon1.Transparency==1 and p.model.Cotyledon2.Transparency==1,"Mature seed leaves")
 	for _,g in {0,0.20,0.43,0.50,0.59,0.75,0.88,0.99} do
 		p:SetGrowth(g);local pose=snapshot(p);p:SetGrowth(g+0.01);p:SetGrowth(g);same(p,pose)

@@ -5,7 +5,8 @@
 ## Selected design (CG16a, 2026-11-11)
 
 **Ales chose B — Tall open plant.** Keep the tall leader, unequal upper arms, five broad lobed leaves and three long hanging
-aubergines from that study. A and C below are the decision record.
+aubergines from that study. A and C below are the decision record. Ales's growth review correction: leaf blades **1.85× longer
+and wider**, held more upright on shorter petioles; the young stem stays green and develops its purple tint midway through growth.
 
 Ales supplied a [life-cycle illustration](../art/eggplant/reference-life-cycle.png) and a
 [fruiting-plant photo](../art/eggplant/reference-ripe-plant.png). Preserve the upright branching habit, broad shallow-lobed
@@ -39,15 +40,16 @@ The B recipe implements the following poses. Art review precedes field registrat
 | Growth | Pose |
 |---|---|
 | **0%** | Tiny emerging shoot and two folded cotyledons at the soil. An unplanted square stays bare. |
-| **20%** | A short green stem, two opened cotyledons and the first broad true leaves; purple tint begins at the lower stem. |
-| **50%** | The main fork and unequal side shoots extend; true leaves unfold in alternating tiers. Violet five-petal flowers with yellow centres open at future fruit attachments. |
+| **20%** | A short green stem, two opened cotyledons and the first broad true leaf. The stem and petiole remain green. |
+| **50%** | The main fork and unequal side shoots extend; large true leaves unfold in alternating tiers. The lower stem and petioles are midway through their green-to-purple transition. Violet five-petal flowers with yellow centres open at future fruit attachments. |
 | **75%** | The bush is almost full. Petals curl inward and fade; calyxes remain green as small dusky-purple fruit lengthen beneath them. The lower fruit leads the upper fruit slightly. |
 | **100%** | Three full deep-purple fruit hang from bent pedicels under green star calyxes. Leaves frame the fruit; loaded arms settle slightly. No brown, dried or yellow overripe fruit. |
 
 Overlapping phases: stem/branches 0–63%; true leaves 10–66%; fruit-slot flowers open at 43–52% and contract during fruit set
 at 59–74%; neck and length 62–88%; belly filling 74–100%; richer purple 70–96%; load settling 80–100%. The shorter central
 fruit starts 2.5 percentage points later. Flowers and fruit share their attachment point. The decorative top flower opens at
-46–57% and remains on the mature plant, as in the selected study. Cotyledons fade at 26–43%.
+46–57% and remains on the mature plant, as in the selected study. Cotyledons fade at 26–43%. Lower stems and leaf petioles
+stay green through 35%, then continuously develop purple at 35–65%; this depends on plant age rather than segment extension.
 The small violet fruit starts purple, rather than borrowing Pepper's green → orange → red ripening sequence. Ripeness reads
 from the full lower belly, length and dark skin together. Keep the calyx and stalk attached throughout the bend.
 
@@ -77,14 +79,18 @@ recipe count, not a production performance measurement. Each `fruitSlots[1..3]` 
 attachment CFrame and its 22 grouped Parts. `PlantRole` separates structure, foliage and fruit; `FruitSlot` identifies each
 fruit group, including its spent blossom Parts.
 
-Seed 1 at standard harvest size matches the selected B: **5.11 studs** tall with **2.06-stud** ground radius. The recipe uses
-free-standing seeded orientation, constrained foliage vigor and cube-root fruit dimensions. A larger harvest can lift the
-leader to keep the long fruit clear of soil. The nominal ring is fixed at **6.4 studs** (foliage does not shrink with small
-fruit); review framing is **5.8 studs**. Completed leaf groups skip unchanged poses; the shared rig caches Part writes.
+Seed 1 at standard harvest size retains B's tall leader and fruit positions; the enlarged foliage raises the top to **6.12
+studs** with **2.16-stud** ground radius. Its first blade is **2.71 studs long × 2.17 wide**, 1.85× its previous length and
+width. Blade dimensions retain seeded vigor; upright leaf pitch and horizontally shorter petioles keep them inside the
+field footprint. The recipe uses free-standing seeded orientation, constrained foliage vigor and cube-root fruit dimensions.
+A larger harvest can lift the leader to keep the long fruit clear of soil. The nominal ring is fixed at **7.2 studs**
+(foliage does not shrink with small fruit); review framing is **6.5 studs**. Completed leaf groups skip unchanged poses,
+including the petiole colour transition; the shared rig caches Part writes.
 
 [`eggplant_growth_checks.luau`](../../tools/eggplant_growth_checks.luau), Studio Client (2026-11-11): six seeds × three harvested
-mass factors **0.3566 / 1 / 3.0298** × 101 ages pass. Maximum radius **2.26 studs**, ripe height **4.67–5.67 studs**, minimum ripe
-fruit clearance **0.39 studs**. Stem, petiole and fruit-stalk attachments, stable fruit groups, finite geometry, distinct seeds,
+mass factors **0.3566 / 1 / 3.0298** × 101 ages pass after the leaf/stem correction. Maximum radius **2.37 studs**, ripe height
+**5.49–6.67 studs** (maximum all-age top **6.75 studs**), minimum ripe fruit clearance **0.39 studs**. Stem, petiole and fruit-stalk
+attachments, stable fruit groups, green young stems, intermediate petiole tint, enlarged blades, finite geometry, distinct seeds,
 flower/fruit order, exact backward seeks and 1 → 0 restoration pass. All 113 Parts remain anchored, non-colliding and
 non-queryable. The 4 h config and the shared 30 s production update interval are unchanged.
 
