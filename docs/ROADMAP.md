@@ -63,7 +63,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG7 | Lettuce growth art | CG7a (A, crisp head, chosen) and CG7b/c recipe + field registration built | Studio checks pass (bounds, seeds, sizes, seek, proxies, PlotView path); five stills and colour/density fix approved by Ales 2026-11-09; real phone and second client open | – |
 | CG8 | Pepper growth art | [Red chilli-pepper bush](plants/PEPPER.md); corrected pointed/curved fruit replaces the bell shape; CG8b/c registered | Revised Studio checks pass (84 Parts, seeds, sizes, bounds, attachments, seeks, proxies, PlotView); updated five stills await art review; performance, real phone and second client open | – |
 | CG10 | Golden Carrot growth art | [Buried pointed root and tall divided crown](plants/GOLDEN_CARROT.md); CG10b/c/d registered with harvest feedback | Five stills approved 2026-11-10; growth, PlotView lifecycle/detail transitions, harvest-response fixture and desktop growing/ripe CPU samples checked; real phone and second client open | – |
-| CG14 | Broccoli growth art | [Lobed foliage and domed floret crown](plants/BROCCOLI.md); CG14a/b/c registered | Studio geometry and production PlotView checks pass; five stills await art review; field/24-plot performance, real phone and second client open | – |
+| CG14 | Broccoli growth art | [Lobed foliage and domed floret crown](plants/BROCCOLI.md); CG14a/b/c registered | Longer-leaf art approved by Ales 2026-11-11; Studio geometry and production PlotView checks pass; field/24-plot performance, real phone and second client open | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -143,7 +143,7 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
   2.9–3.2-stud blades frame and rise above the head; 4.01-stud standard height. Registered recipe: 108 Parts, mid proxies 11 / 27 / 27;
   Studio geometry (six seeds × three masses × 101 ages, 2.08-stud maximum radius, exact seeks) and production PlotView lifecycle,
   corrections, exact ripeness, detail transitions, soil ray and harvest/replant feed checks pass. [Five stills](art/broccoli/growth-review.png)
-  await Ales's art review. CG14d field/24-plot performance, real phone, second client and live validation remain open.
+  and the longer-leaf design approved by Ales (2026-11-11). CG14d field/24-plot performance, real phone, second client and live validation remain open.
 
 Key talents as **world rewards**: done for Double Jump (K1, GDD §6). Open: Triple Jump / Dash for World 3. The lost Coin sinks are made up in
 the balancing pass (STAGES §6, GDD §6).

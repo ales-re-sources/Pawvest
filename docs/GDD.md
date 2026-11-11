@@ -537,7 +537,7 @@ plant. Its 54-Part recipe and 9/14/26-Part mid proxies are registered and Studio
 Broccoli establishes six long lobed blue-green leaves before its pale stalk branches into a late, dense domed green crown.
 The blades frame and rise partly above the head; standard mature height is about 4 studs.
 Its 108-Part recipe and 11/27/27-Part mid proxies are registered and Studio-checked. Growth remains two hours and harvest clears
-the whole plant. [Five growth stills and anatomy](plants/BROCCOLI.md); art approval and performance checks remain open.
+the whole plant. [Longer-leaf art and five growth stills](plants/BROCCOLI.md) approved by Ales (2026-11-11); performance checks remain open.
 
 *Decided, not built (EV, the user, 2026-11-07; numbers in [ECONOMY.md](ECONOMY.md) → EV, applied in EV2a–e):* the parity goal below is replaced by engagement: the four crops move onto one ladder
 of 10 s … 24 h (Potato 10 s, Corn 30 m, Pumpkin 3 h, Giant melon 12 h; 12 more crops later), Renown 0.4 × L³, every sink priced on the

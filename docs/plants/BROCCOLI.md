@@ -14,6 +14,7 @@ Ales's [uncut-leaf proportion reference](../art/broccoli/reference-long-leaves.p
 short foliage: use much longer blades, with lower leaves spreading and upper leaves rising around and above the head.
 Some leaves in the photo were removed to expose the head; the game plant keeps its foliage. Maintain the field-square
 clearance by making the long leaves more upright, with a gentle joined bend, rather than shortening the blades.
+**Ales approved this longer-leaf design and its five growth poses on 2026-11-11.**
 
 Blades are **2.9–3.2 studs long** at standard seed/mass, **1.6–2.1×** their first-recipe lengths, with approximately **0.61-stud**
 petioles extending outward from lower attachment points. Upper leaves reach above the head while gaps reveal its green florets.
@@ -67,5 +68,5 @@ with a shared **15-second** update interval and immediate corrections/ripe bound
 
 The existing reviewer exercised five poses, six seeds, seed/size changes, rings, playback and Close through real UI clicks.
 Client/server logs contained no errors or warnings; disposable fixtures were removed and the playtest stopped. No field action,
-remote or profile fixture write was used. Art approval, full-field/24-plot performance, real phone, second client and live
+remote or profile fixture write was used. Art is approved; full-field/24-plot performance, real phone, second client and live
 validation remain open; see ROADMAP.

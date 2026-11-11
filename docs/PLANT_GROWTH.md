@@ -68,9 +68,14 @@ desktop screenshot checks composition, not phone rendering performance. Studio r
 
 ## Decide the plant before animating it
 
+**Review gates (Ales, 2026-11-11):** first present **three static mature variants** and wait for Ales's choice. Build growth
+only for the selected variant, then present the five growth stills for art approval. Field integration and performance work
+follow that approval as separate milestones. Combine these steps only when Ales explicitly requests it. Keep the variant
+study small: enough geometry and scale context to choose the silhouette, without implementing three growth recipes.
+
 - Use the supplied references to choose the stem habit, leaf shape, fruit position and support needs. Potato needed upright,
   layered foliage; a flat rosette lost its identity. Preserve the cues that distinguish the crop at gameplay distance.
-- Agree the mature silhouette first. Static alternatives can resolve an undecided shape before animation work. Define height
+- Agree the mature silhouette from the three static variants first. Define height
   relative to the actual avatar on the same ground plane; a close-up alone hides scale mistakes. Frost Grape's living canopy,
   not just its posts, must exceed the player.
 - State what harvest removes: the whole annual plant, or fruit from a persistent plant. Real-world biology does not automatically
