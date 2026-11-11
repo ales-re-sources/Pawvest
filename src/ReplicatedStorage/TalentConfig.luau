@@ -72,6 +72,11 @@ function TalentConfig.ClampLevel(id: string, level: any): number
 	return if talent then Num.Level(level, 0, #talent.costs, 0) else 0
 end
 
+-- The player's level of talent `id` in a profile (PlayerProfile.Talents), clamped to a valid level. Server.
+function TalentConfig.LevelOf(profile, id: string): number
+	return TalentConfig.ClampLevel(id, type(profile.Talents) == "table" and profile.Talents[id] or 0)
+end
+
 -- The world whose opening grants `level` of the talent (never sold), or nil when that level is bought.
 function TalentConfig.RewardWorld(id: string, level: number): number?
 	local rewards = TalentConfig.ById[id].rewards

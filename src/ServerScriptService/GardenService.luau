@@ -7,7 +7,6 @@
 -- Sibling modules (GardenIncubators, GardenFood, GardenPlotFeed, GardenField) add remotes, State fields and publish hooks
 -- through the hooks below.
 
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -16,24 +15,16 @@ local Num = require(ReplicatedStorage.Num)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local PetService = require(ServerScriptService.PetService)
 local GardenPlots = require(ServerScriptService.GardenPlots)
+local Remotes = require(ServerScriptService.Remotes)
+local RateLimit = require(ServerScriptService.RateLimit)
 
-local COOLDOWN = 0.2 -- seconds between garden requests per player
 local MAX_DISTANCE = 45 -- studs from the middle of the caller's own plot
 
-local remotes = Instance.new("Folder")
-remotes.Name = "GardenRemotes"
-local function remote(name: string): RemoteEvent
-	local event = Instance.new("RemoteEvent")
-	event.Name = name
-	event.Parent = remotes
-	return event
-end
-local requestStateEvent = remote("RequestState") -- client → server, no arguments
-local stateEvent = remote("State") -- server → client: (state)
-local resultEvent = remote("Result") -- server → client: (action, ok: boolean, detailOrReason)
-remotes.Parent = ReplicatedStorage
-
-local lastRequest = {} -- [Player] = os.clock() of the last accepted request
+-- RequestState: client → server, no arguments; State: server → client (state); Result: server → client (action, ok, detailOrReason)
+local remoteFolder, remotes = Remotes.Folder("GardenRemotes", { "RequestState", "State", "Result" })
+local stateEvent = remotes.State
+local reject, succeed = Remotes.Results(remotes.Result)
+local allow = RateLimit.new(0.2) -- seconds between garden requests per player, shared by every garden remote
 local stateFields = {} -- { { name, fn(profile) } }: extra fields of the State payload (sibling modules)
 local publishHooks = {} -- { fn(player) }: called after every publish (sibling modules)
 
@@ -41,7 +32,9 @@ local GardenService = {}
 
 -- Hooks for the sibling garden modules (GardenIncubators, GardenFood, GardenPlotFeed): they add their remotes to GardenRemotes,
 -- share the request rate limit and the plot checks, extend the State payload and follow every publish.
-GardenService.Remote = remote
+function GardenService.Remote(name: string): RemoteEvent
+	return Remotes.Add(remoteFolder, name)
+end
 
 -- Adds field `name` = fn(profile) to every GardenRemotes.State payload.
 function GardenService.AddStateField(name: string, fn: (any) -> any)
@@ -90,20 +83,6 @@ local function publishAll(player: Player)
 	runPublishHooks(player)
 end
 
--- Per-player rate limit shared by the garden remotes; true if the request may proceed.
-local function allow(player: Player): boolean
-	local now = os.clock()
-	if lastRequest[player] and now - lastRequest[player] < COOLDOWN then
-		return false
-	end
-	lastRequest[player] = now
-	return true
-end
-
-local function reject(player: Player, action: string, reason: string)
-	resultEvent:FireClient(player, action, false, reason)
-end
-
 -- The caller's profile if they may use their plot now: loaded, borrowing a plot and standing near it. Otherwise rejects.
 local function usable(player: Player, action: string)
 	local profile = PlayerProfile.Get(player)
@@ -111,8 +90,7 @@ local function usable(player: Player, action: string)
 		reject(player, action, "loading")
 		return nil
 	end
-	-- the plot's position comes from its slot (GardenConfig.PlotCFrame, E1.0), not from the plot model
-	local floor = GardenPlots.PlotOf(player) and GardenConfig.PlotCFrame(GardenPlots.PlotOf(player))
+	local floor = GardenPlots.FloorCFrame(player) -- from the slot (E1.0), not from the plot model
 	if not floor then
 		reject(player, action, "noplot")
 		return nil
@@ -125,10 +103,6 @@ local function usable(player: Player, action: string)
 	return profile
 end
 
-local function succeed(player: Player, action: string, detail: any)
-	resultEvent:FireClient(player, action, true, detail)
-end
-
 GardenService.Allow = allow
 GardenService.Reject = reject
 GardenService.Succeed = succeed
@@ -136,46 +110,39 @@ GardenService.Usable = usable
 GardenService.WholeNumber = Num.Whole -- kept for the garden modules
 GardenService.PublishAll = publishAll
 
-requestStateEvent.OnServerEvent:Connect(function(player)
+-- A garden action went through: everything it touched is re-published, the caller gets the success answer and the profile
+-- is saved (the Coins spent and what they bought go together).
+function GardenService.Done(player: Player, action: string, detail: any)
+	publishAll(player)
+	succeed(player, action, detail)
+	task.spawn(PlayerProfile.Save, player)
+end
+
+-- True when the player's character stands within `distance` studs of the PrimaryPart of the Workspace.Garden model `name`
+-- (the seed stall, the food stand); false while it is missing.
+function GardenService.NearModel(player: Player, name: string, distance: number): boolean
+	local garden = workspace:FindFirstChild("Garden")
+	local model = garden and garden:FindFirstChild(name)
+	local anchor = model and model:IsA("Model") and model.PrimaryPart
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	return anchor ~= nil and root ~= nil and root:IsA("BasePart") and (root.Position - anchor.Position).Magnitude <= distance
+end
+
+remotes.RequestState.OnServerEvent:Connect(function(player)
 	if not allow(player) then
 		return
 	end
 	publishState(player)
 end)
 
--- Join: publishes the garden, then runs the sibling modules' setup (GardenField converts an old profile and settles the field).
-local function setup(player: Player)
-	local profile = PlayerProfile.WaitFor(player)
-	if not profile then
-		return
-	end
+-- Join and admin reset (a reset starts the garden over from now): publishes the garden, then runs the sibling modules'
+-- setup (GardenField converts an old profile and settles the field).
+PlayerProfile.OnReady(function(player, profile)
 	sanitize(profile)
-	publishState(player)
-	runPublishHooks(player)
+	publishAll(player)
 	for _, fn in setupHooks do
 		fn(player)
 	end
-end
-
--- Admin reset replaced the profile: start the garden over from now.
-PlayerProfile.ProfileReset:Connect(function(player)
-	local profile = PlayerProfile.Get(player)
-	if profile then
-		sanitize(profile)
-		publishAll(player)
-		for _, fn in setupHooks do
-			fn(player)
-		end
-	end
-end)
-
-Players.PlayerAdded:Connect(setup)
-for _, player in Players:GetPlayers() do
-	task.spawn(setup, player)
-end
-
-Players.PlayerRemoving:Connect(function(player)
-	lastRequest[player] = nil
 end)
 
 return GardenService

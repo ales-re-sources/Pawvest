@@ -9,6 +9,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local TalentConfig = require(ReplicatedStorage.TalentConfig)
+local PlayerProfile = require(game:GetService("ServerScriptService").PlayerProfile)
 
 local TALENT = "QuickRespawn"
 
@@ -29,7 +30,8 @@ local function scheduleRespawn(player: Player)
 		return
 	end
 	waiting[player] = true
-	local level = TalentConfig.ClampLevel(TALENT, player:GetAttribute(TalentConfig.AttributeName(TALENT)))
+	local profile = PlayerProfile.Get(player)
+	local level = if profile then TalentConfig.LevelOf(profile, TALENT) else 0
 	task.delay(TalentConfig.RespawnDelay(level, defaultDelay), load, player)
 end
 

@@ -27,29 +27,21 @@ local PetConfig = require(ReplicatedStorage.PetConfig)
 local Num = require(ReplicatedStorage.Num)
 local GardenConfig = require(ReplicatedStorage.GardenConfig)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
+local Remotes = require(ServerScriptService.Remotes)
+local RateLimit = require(ServerScriptService.RateLimit)
 
-local COOLDOWN = 0.2 -- seconds between pet requests per player
 local LAUNCH_EGG = "Basic" -- free egg every player gets once when pets launch (GDD §7.2)
 
-local remotes = Instance.new("Folder")
-remotes.Name = "PetRemotes"
-local function remote(name: string): RemoteEvent
-	local event = Instance.new("RemoteEvent")
-	event.Name = name
-	event.Parent = remotes
-	return event
-end
-local equipEvent = remote("Equip") -- client → server: (uid: string)
-local unequipEvent = remote("Unequip") -- client → server: (uid: string)
-local buySlotEvent = remote("BuySlot") -- client → server: (expectedSlot: number)
-local sellEvent = remote("SellPet") -- client → server: (uid: string)
-local renameEvent = remote("Rename") -- client → server: (uid: string, text: string); "" clears the name
-local requestStateEvent = remote("RequestState") -- client → server, no arguments: resend the state (join publish may be missed)
-local changedEvent = remote("PetsChanged") -- server → client: (state)
-local resultEvent = remote("Result") -- server → client: (action, ok: boolean, detailOrReason)
-remotes.Parent = ReplicatedStorage
+-- client → server: Equip(uid), Unequip(uid), BuySlot(expectedSlot), SellPet(uid), Rename(uid, text) ("" clears the name),
+-- RequestState() (resend the state: the join publish may be missed); server → client: PetsChanged(state),
+-- Result(action, ok, detailOrReason)
+local _, remotes = Remotes.Folder("PetRemotes", { "Equip", "Unequip", "BuySlot", "SellPet", "Rename", "RequestState", "PetsChanged", "Result" })
+local equipEvent, unequipEvent, buySlotEvent = remotes.Equip, remotes.Unequip, remotes.BuySlot
+local sellEvent, renameEvent, requestStateEvent = remotes.SellPet, remotes.Rename, remotes.RequestState
+local changedEvent = remotes.PetsChanged
+local reject, answer = Remotes.Results(remotes.Result)
+local allow = RateLimit.new(0.2) -- seconds between pet requests per player, shared by every pet remote
 
-local lastRequest = {} -- [Player] = os.clock() of the last accepted request
 local lastRename = {} -- [Player] = os.clock() of the last rename that reached the filter
 local filtered = {} -- [Player] = { [uid] = filtered name } (P3b; never the raw text)
 
@@ -263,11 +255,7 @@ local function refilter(player: Player)
 end
 
 -- Join and admin reset: grants the launch egg once and publishes the state.
-local function setup(player: Player)
-	local profile = PlayerProfile.WaitFor(player)
-	if not profile then
-		return
-	end
+local function setup(player: Player, profile)
 	if sanitize(profile, player) then
 		task.spawn(PlayerProfile.Save, player)
 	end
@@ -282,23 +270,10 @@ local function setup(player: Player)
 	task.spawn(refilter, player)
 end
 
--- Per-player rate limit shared by all pet remotes; true if the request may proceed.
-local function allow(player: Player): boolean
-	local now = os.clock()
-	if lastRequest[player] and now - lastRequest[player] < COOLDOWN then
-		return false
-	end
-	lastRequest[player] = now
-	return true
-end
-
-local function reject(player: Player, action: string, reason: string)
-	resultEvent:FireClient(player, action, false, reason)
-end
-
+-- the state changed: re-publish it, then the success answer
 local function succeed(player: Player, action: string, detail: any)
 	publish(player)
-	resultEvent:FireClient(player, action, true, detail)
+	answer(player, action, detail)
 end
 
 requestStateEvent.OnServerEvent:Connect(function(player)
@@ -356,11 +331,9 @@ buySlotEvent.OnServerEvent:Connect(function(player, expectedSlot)
 		return reject(player, "BuySlot", "stale") -- out-of-date panel, double click or forged request
 	end
 	local price = PetConfig.SlotPrices[expectedSlot]
-	if profile.Coins < price then
+	if not PlayerProfile.TrySpend(player, price) then
 		return reject(player, "BuySlot", "coins")
 	end
-
-	PlayerProfile.AddCoins(player, -price)
 	profile.PetSlots = expectedSlot
 	succeed(player, "BuySlot", expectedSlot)
 	task.spawn(PlayerProfile.Save, player)
@@ -431,11 +404,8 @@ renameEvent.OnServerEvent:Connect(function(player, uid, text)
 	if PlayerProfile.Get(player) ~= profile or profile.Pets[uid] ~= pet then
 		return
 	end
-	if profile.Coins < price then
+	if not PlayerProfile.TrySpend(player, price) then
 		return reject(player, "Rename", "coins")
-	end
-	if price > 0 then
-		PlayerProfile.AddCoins(player, -price)
 	end
 	pet.Name = name
 	pet.Renamed = true
@@ -444,15 +414,9 @@ renameEvent.OnServerEvent:Connect(function(player, uid, text)
 	task.spawn(PlayerProfile.Save, player)
 end)
 
-PlayerProfile.ProfileReset:Connect(setup)
-
-Players.PlayerAdded:Connect(setup)
-for _, player in Players:GetPlayers() do
-	task.spawn(setup, player)
-end
+PlayerProfile.OnReady(setup)
 
 Players.PlayerRemoving:Connect(function(player)
-	lastRequest[player] = nil
 	lastRename[player] = nil
 	filtered[player] = nil
 end)

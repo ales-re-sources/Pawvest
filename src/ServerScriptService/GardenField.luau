@@ -683,21 +683,10 @@ end
 
 -- True when the character stands within SeedStallDistance of Workspace.Garden.SeedStall (U4: BuySeeds / BuyCart).
 local function nearStall(player: Player): boolean
-	local garden = workspace:FindFirstChild("Garden")
-	local stall = garden and garden:FindFirstChild(GardenConfig.SeedStallName)
-	local anchor = stall and stall:IsA("Model") and stall.PrimaryPart
-	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-	return anchor ~= nil
-		and root ~= nil
-		and root:IsA("BasePart")
-		and (root.Position - anchor.Position).Magnitude <= GardenConfig.SeedStallDistance
+	return GardenService.NearModel(player, GardenConfig.SeedStallName, GardenConfig.SeedStallDistance)
 end
 
-local function done(player: Player, action: string, detail: any)
-	GardenService.PublishAll(player)
-	GardenService.Succeed(player, action, detail)
-	task.spawn(PlayerProfile.Save, player)
-end
+local done = GardenService.Done
 
 -- Removes `amount` held crops of `cropId` from the barn (the caller checked they are there); returns the summed size factor
 -- that leaves with them (their average size: a sale, a pet's meal and a talent bundle all take the average).
@@ -803,11 +792,9 @@ buySeedsEvent.OnServerEvent:Connect(function(player, cropId, amount)
 		return reject(player, "BuySeeds", "barn")
 	end
 	local price = crop.seed * amount
-	if profile.Coins < price then
+	if not PlayerProfile.TrySpend(player, price) then
 		return reject(player, "BuySeeds", "coins")
 	end
-
-	PlayerProfile.AddCoins(player, -price)
 	garden.Seeds[crop.id] = (garden.Seeds[crop.id] or 0) + amount
 	done(player, "BuySeeds", { crop = crop.id, count = amount, price = price })
 end)
@@ -894,11 +881,9 @@ buySquareEvent.OnServerEvent:Connect(function(player, square, expected)
 	if CropConfig.RenownLevel(profile.Garden.Renown) < expansion.renown then
 		return reject(player, "BuySquare", "renown")
 	end
-	if profile.Coins < expansion.price then
+	if not PlayerProfile.TrySpend(player, expansion.price) then
 		return reject(player, "BuySquare", "coins")
 	end
-
-	PlayerProfile.AddCoins(player, -expansion.price)
 	field.Open[tostring(square)] = true
 	done(player, "BuySquare", { square = square, open = opened + 1, price = expansion.price })
 end)
@@ -923,11 +908,9 @@ buyUpgradeEvent.OnServerEvent:Connect(function(player, id, expected)
 	if CropConfig.RenownLevel(profile.Garden.Renown) < (upgrade.renown[level + 1] or 0) then
 		return reject(player, "BuyUpgrade", "renown")
 	end
-	if profile.Coins < price then
+	if not PlayerProfile.TrySpend(player, price) then -- the field was settled at the old rate just now (usableField)
 		return reject(player, "BuyUpgrade", "coins")
 	end
-
-	PlayerProfile.AddCoins(player, -price) -- the field was settled at the old rate just now (usableField)
 	field.Upgrades[upgrade.id] = level + 1
 	done(player, "BuyUpgrade", { id = upgrade.id, level = level + 1, price = price })
 end)
@@ -964,11 +947,9 @@ buyCartEvent.OnServerEvent:Connect(function(player, slot, cropId, amount)
 		return reject(player, "BuyCart", "barn")
 	end
 	local price = offer.price * amount
-	if profile.Coins < price then
+	if not PlayerProfile.TrySpend(player, price) then
 		return reject(player, "BuyCart", "coins")
 	end
-
-	PlayerProfile.AddCoins(player, -price)
 	garden.Seeds[offer.crop.id] = (garden.Seeds[offer.crop.id] or 0) + amount
 	cart.Bought[key] = (cart.Bought[key] or 0) + amount
 	done(player, "BuyCart", { crop = offer.crop.id, count = amount, price = price, taste = offer.taste })
@@ -995,11 +976,9 @@ buyToolEvent.OnServerEvent:Connect(function(player, id, expected)
 	if CropConfig.RenownLevel(garden.Renown) < tool.renown[level + 1] then
 		return reject(player, "BuyTool", "renown")
 	end
-	if profile.Coins < price then
+	if not PlayerProfile.TrySpend(player, price) then -- the field was settled at the old rate just now (usableField)
 		return reject(player, "BuyTool", "coins")
 	end
-
-	PlayerProfile.AddCoins(player, -price) -- the field was settled at the old rate just now (usableField)
 	garden.Tools[tool.id] = level + 1
 	done(player, "BuyTool", { id = tool.id, level = level + 1, price = price })
 end)
@@ -1082,11 +1061,9 @@ buyPetSlotEvent.OnServerEvent:Connect(function(player, expected)
 	if expected ~= garden.FieldPetSlots + 1 then
 		return reject(player, "BuyPetSlot", "stale") -- out-of-date panel, double click or forged request
 	end
-	if profile.Coins < price then
+	if not PlayerProfile.TrySpend(player, price) then
 		return reject(player, "BuyPetSlot", "coins")
 	end
-
-	PlayerProfile.AddCoins(player, -price)
 	garden.FieldPetSlots = expected
 	done(player, "BuyPetSlot", expected)
 end)

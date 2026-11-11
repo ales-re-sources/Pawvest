@@ -3,7 +3,6 @@
 -- through CoinRewards.
 -- Server-only. Medals are mirrored to player attributes (StageConfig.MedalAttribute) for client displays.
 
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -21,11 +20,7 @@ local GOLD_EGG = "Basic" -- free egg for the first Gold on each stage (GDD §7.2
 
 local StageResults = {}
 
-local function publishMedals(player)
-	local profile = PlayerProfile.WaitFor(player)
-	if not profile then
-		return
-	end
+local function publishMedals(player: Player, profile)
 	for _, stage in StageConfig.Stages do
 		player:SetAttribute(StageConfig.MedalAttribute(stage), profile.Medals[stage.key] or 0)
 	end
@@ -128,12 +123,7 @@ function StageResults.RecordFinish(player: Player, stageKey: string, elapsed: nu
 	}
 end
 
--- Re-sends the medal attributes, e.g. after the profile was reset
-StageResults.PublishMedals = publishMedals
-
-Players.PlayerAdded:Connect(publishMedals)
-for _, player in Players:GetPlayers() do
-	task.spawn(publishMedals, player)
-end
+-- the medal attributes on join and after an admin reset
+PlayerProfile.OnReady(publishMedals)
 
 return StageResults

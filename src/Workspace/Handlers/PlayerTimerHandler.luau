@@ -13,6 +13,7 @@ local StageConfig = require(ReplicatedStorage.StageConfig)
 local TimeFormat = require(ReplicatedStorage.TimeFormat)
 local MedalText = require(ReplicatedStorage.MedalText)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
+local Remotes = require(ServerScriptService.Remotes)
 local StageResults = require(ServerScriptService.StageResults)
 local RunDistance = require(ServerScriptService.RunDistance)
 local Telemetry = require(ServerScriptService.Telemetry)
@@ -22,9 +23,7 @@ local TalentConfig = require(ReplicatedStorage.TalentConfig)
 local Locale = require(ReplicatedStorage.Locale)
 
 -- server → client (stageKey): the player arrived on a stage without a talent it requires (StageArrivalWarning.client)
-local stageArrival = Instance.new("RemoteEvent")
-stageArrival.Name = "StageArrival"
-stageArrival.Parent = ReplicatedStorage
+local stageArrival = Remotes.Add(ReplicatedStorage, "StageArrival")
 local GlobalLeaderboardsStore = DataStoreService:GetDataStore("GlobalLeaderboardsStore")
 
 -- fires (stageKey, leaderboard) after this server wrote a stage's Top-10, so boards redraw at once
@@ -175,9 +174,10 @@ local function updateScorePanel(player, stageKey)
 		-- arriving on a stage (the hub portals pass its key): warn about required talents the player lacks (S1.2);
 		-- entry is never blocked
 		local arrived = StageConfig.ByKey[stageKey]
-		if arrived and #arrived.requires > 0 then
+		local profile = PlayerProfile.Get(player)
+		if arrived and #arrived.requires > 0 and profile then
 			local missing = StageConfig.MissingTalents(arrived, function(id)
-				return player:GetAttribute(TalentConfig.AttributeName(id)) or 0
+				return TalentConfig.LevelOf(profile, id)
 			end)
 			if #missing > 0 then
 				stageArrival:FireClient(player, stageKey)

@@ -3,40 +3,20 @@
 -- entries are removed from the Top-10 boards and the hub "most stars" ranking (StarBoard reacts to the profile reset).
 -- Other players are never touched; non-admin requests are ignored.
 
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
-local AdminConfig = require(ReplicatedStorage.AdminConfig)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
-local StageResults = require(ServerScriptService.StageResults)
+local Remotes = require(ServerScriptService.Remotes)
 local handler = require(workspace.Handlers.PlayerTimerHandler)
 
-local resetTimerEvent = ReplicatedStorage:WaitForChild("ResetPlayerTimer")
-
-local COOLDOWN = 5 -- seconds; each reset writes several DataStore keys
-local lastReset = {} -- [Player] = os.clock() of the last accepted reset
-
-Players.PlayerRemoving:Connect(function(player)
-	lastReset[player] = nil
-end)
-
-resetTimerEvent.OnServerEvent:Connect(function(player)
-	if not AdminConfig.IsAdmin(player.UserId) then
-		warn(string.format("ResetPlayerTimer: ignored request from non-admin %s (%d)", player.Name, player.UserId))
-		return
-	end
-	local now = os.clock()
-	if lastReset[player] and now - lastReset[player] < COOLDOWN then
-		return
-	end
-	lastReset[player] = now
-
+-- 5 s between accepted resets per player: each reset writes several DataStore keys
+Remotes.Admin(ReplicatedStorage:WaitForChild("ResetPlayerTimer"), 5, function(player)
 	handler.ResetTimer(player, "reset")
 	if not PlayerProfile.Reset(player) then
 		return -- profile still loading
 	end
-	StageResults.PublishMedals(player)
+	-- the services that mirror the profile (medals, unlocks, talents, pets, garden …) refresh through PlayerProfile.OnReady
 	handler.UpdateScorePanel(player, nil)
 	handler.RemoveFromGlobalLeaderboards(player.Name, player.UserId)
 end)

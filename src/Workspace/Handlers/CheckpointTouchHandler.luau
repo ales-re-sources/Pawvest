@@ -7,23 +7,18 @@ local ServerStorage = game:GetService("ServerStorage")
 local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local TimerHandler = require(script.Parent.PlayerTimerHandler)
 local Telemetry = require(game:GetService("ServerScriptService").Telemetry)
+local Remotes = require(game:GetService("ServerScriptService").Remotes)
 
 -- server -> client (part, first): the player's checkpoint (respawn point) is now that part; CheckpointClient lights its pad
 -- (and turns the previous one off) for that player only and plays script.Sound when `first` (first time in the run)
-local reachedEvent = Instance.new("RemoteEvent")
-reachedEvent.Name = "CheckpointReached"
-reachedEvent.Parent = ReplicatedStorage
+local reachedEvent = Remotes.Add(ReplicatedStorage, "CheckpointReached")
 
 -- server -> client, no arguments: a new run started; CheckpointClient turns every pad back to "not reached"
-local resetEvent = Instance.new("RemoteEvent")
-resetEvent.Name = "CheckpointsReset"
-resetEvent.Parent = ReplicatedStorage
+local resetEvent = Remotes.Add(ReplicatedStorage, "CheckpointsReset")
 
 -- server -> client (stageKey): the player reached a checkpoint of a stage while no timer runs for it (they got in around the
 -- gate, e.g. over the courtyard wall): StageExploreWarning tells them this run is not timed
-local exploreEvent = Instance.new("RemoteEvent")
-exploreEvent.Name = "ExploreWarning"
-exploreEvent.Parent = ReplicatedStorage
+local exploreEvent = Remotes.Add(ReplicatedStorage, "ExploreWarning")
 
 -- server-side signal (player): a new run started (NewRun); ArenaServer resets the Laser Lab's keys and gates on it
 local runStarted = Instance.new("BindableEvent")

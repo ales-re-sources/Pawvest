@@ -158,6 +158,8 @@ src/Workspace/                StartLocation (hub), Tutorial, World1 (Stage1-5), 
 - **Shared helpers before local copies:** countdowns `TimeFormat.Clock`, client / stored number checks `Num`, id-set
   attributes `IdSet`, status colours `StudStyle.Text`, refusal texts `Locale.Reject(reason, specific)` (falls back to
   `common.reject.*`), stage lookups `StageConfig.TryForInstance` / `AreaOf` / `MedalsFromAttributes` / `AnyUnlocked`.
+  Server: remotes through `Remotes` (Folder / Add / Results / Admin), cooldowns `RateLimit.new`, profile mirrors through
+  `PlayerProfile.OnReady` (join + reset), purchases `PlayerProfile.TrySpend`, garden successes `GardenService.Done`.
 - Legacy APIs are common (`wait`, `spawn`, `:connect`, `findFirstChild`); prefer `task.*` and `Players:GetPlayerFromCharacter` in new code,
   but don't mass-rewrite without asking.
 

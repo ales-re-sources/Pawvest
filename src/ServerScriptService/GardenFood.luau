@@ -17,17 +17,6 @@ local feedEvent = GardenService.Remote("Feed") -- client → server: (uid: strin
 
 local reject = GardenService.Reject
 
--- True when the player's character stands within FoodStandDistance of Workspace.Garden.FoodStand.
-local function nearStand(player: Player): boolean
-	local garden = workspace:FindFirstChild("Garden")
-	local stand = garden and garden:FindFirstChild(GardenConfig.FoodStandName)
-	local anchor = stand and stand:IsA("Model") and stand.PrimaryPart
-	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-	return anchor ~= nil
-		and root ~= nil
-		and (root.Position - anchor.Position).Magnitude <= GardenConfig.FoodStandDistance
-end
-
 feedEvent.OnServerEvent:Connect(function(player, uid, foodId)
 	if type(uid) ~= "string" or type(foodId) ~= "string" or not GardenService.Allow(player) then
 		return
@@ -44,27 +33,24 @@ feedEvent.OnServerEvent:Connect(function(player, uid, foodId)
 	if not pet then
 		return
 	end
-	if not nearStand(player) then
+	if not GardenService.NearModel(player, GardenConfig.FoodStandName, GardenConfig.FoodStandDistance) then
 		return reject(player, "Feed", "far")
 	end
 	if not PetConfig.CareTarget(pet) then
 		return reject(player, "Feed", "maxed")
 	end
-	if profile.Coins < food.price then
+	if not PlayerProfile.TrySpend(player, food.price) then
 		return reject(player, "Feed", "coins")
 	end
-
-	PlayerProfile.AddCoins(player, -food.price)
 	local trained, wasted = PetConfig.GainCareXp(pet, food.xp)
-	GardenService.PublishAll(player) -- Pets panel, Coin bonus, EquippedPets labels, field pet labels
-	GardenService.Succeed(player, "Feed", {
+	-- re-publishes the Pets panel, Coin bonus, EquippedPets labels, field pet labels
+	GardenService.Done(player, "Feed", {
 		uid = uid,
 		food = food.id,
 		xp = food.xp - wasted,
 		level = PetConfig.PetLevel(pet),
 		trained = trained, -- { { id, levels, level } } in order (P4)
 	})
-	task.spawn(PlayerProfile.Save, player)
 end)
 
 return {}

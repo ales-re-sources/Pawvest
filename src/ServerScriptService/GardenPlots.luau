@@ -17,6 +17,12 @@ function GardenPlots.PlotOf(player: Player): number?
 	return assigner.IndexOf(player)
 end
 
+-- The floor CFrame of the plot `player` borrows (from its slot: GardenConfig.PlotCFrame, no plot model, E1.0), or nil.
+function GardenPlots.FloorCFrame(player: Player): CFrame?
+	local slot = assigner.IndexOf(player)
+	return if slot then GardenConfig.PlotCFrame(slot) else nil
+end
+
 local function claim(player: Player)
 	local slot = assigner.Claim(player)
 	if not slot then

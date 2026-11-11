@@ -4,7 +4,6 @@
 -- ChallengeCoin with the attribute CoinId (ChallengeCoinConfig); the value comes from the config tier.
 
 local CollectionService = game:GetService("CollectionService")
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -14,10 +13,7 @@ local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local CoinRewards = require(ServerScriptService.CoinRewards)
 local PetService = require(ServerScriptService.PetService)
 local PetConfig = require(ReplicatedStorage.PetConfig)
-
--- Max distance (studs) between the character's root and the coin on the server: a body part touching the coin is
--- within ~5 studs; the rest covers replication lag of a fast-falling character. Rejects coins moved on a client.
-local MAX_REACH = 15
+local CharacterUtil = require(ServerScriptService.CharacterUtil)
 
 local coinParts = {} -- [id] = part, to reject duplicates
 
@@ -29,21 +25,15 @@ local function publish(player: Player)
 end
 
 local function tryCollect(coin, part: BasePart, otherPart: BasePart)
-	local character = otherPart.Parent
-	local player = character and Players:GetPlayerFromCharacter(character)
-	if not player then
-		return
-	end
-	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	local root = character:FindFirstChild("HumanoidRootPart")
-	if not humanoid or humanoid.Health <= 0 or not root then
+	local player, _, root = CharacterUtil.FromHit(otherPart)
+	if not player or not root then
 		return
 	end
 	local profile = PlayerProfile.Get(player)
 	if not profile or profile.CollectedCoins[coin.id] then
 		return -- still loading (the coin stays), or already collected (repeated / queued touches)
 	end
-	if (root.Position - part.Position).Magnitude > MAX_REACH then
+	if not CharacterUtil.Reaches(root, part) then
 		return
 	end
 
@@ -88,15 +78,4 @@ for _, part in CollectionService:GetTagged(ChallengeCoinConfig.Tag) do
 end
 CollectionService:GetInstanceAddedSignal(ChallengeCoinConfig.Tag):Connect(setupCoin)
 
-local function setupPlayer(player: Player)
-	if PlayerProfile.WaitFor(player) then
-		publish(player)
-	end
-end
-
-PlayerProfile.ProfileReset:Connect(publish)
-
-Players.PlayerAdded:Connect(setupPlayer)
-for _, player in Players:GetPlayers() do
-	task.spawn(setupPlayer, player)
-end
+PlayerProfile.OnReady(publish) -- join and admin reset

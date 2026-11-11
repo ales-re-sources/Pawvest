@@ -13,29 +13,17 @@ local ServerScriptService = game:GetService("ServerScriptService")
 
 local StageConfig = require(ReplicatedStorage.StageConfig)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
+local DataStoreUtil = require(ServerScriptService.DataStoreUtil)
 
 local ROWS = StageConfig.TopRows
 local MIN_FETCH_GAP = 10 -- seconds between reads of one sorted store (budget: a few requests per minute)
 local OVERRIDE_TTL = 120 -- seconds a write of this server is layered over the (possibly stale) read
-local MAX_ATTEMPTS = 3
 
 local names = {} -- [UserId] = resolved name (shared by all boards)
 
 local StarBoard = {}
 
-local function withRetries(fn)
-	local ok, result
-	for attempt = 1, MAX_ATTEMPTS do
-		ok, result = pcall(fn)
-		if ok then
-			return true, result
-		end
-		if attempt < MAX_ATTEMPTS then
-			task.wait(attempt)
-		end
-	end
-	return false, result
-end
+local withRetries = DataStoreUtil.WithRetries
 
 local function resolveName(userId: number): string
 	local player = Players:GetPlayerByUserId(userId)

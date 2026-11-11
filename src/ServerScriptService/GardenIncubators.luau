@@ -151,16 +151,12 @@ startEggEvent.OnServerEvent:Connect(function(player, index, eggId)
 	if PetService.PetCount(profile) + GardenConfig.IncubatingCount(garden) >= PetConfig.MaxPets then
 		return reject(player, "StartEgg", "full") -- every egg needs a free inventory place when it hatches
 	end
-	if profile.Coins < egg.price then
+	if not PlayerProfile.TrySpend(player, egg.price) then
 		return reject(player, "StartEgg", "coins")
 	end
-
-	PlayerProfile.AddCoins(player, -egg.price)
 	local now = os.time()
 	garden.Incubators[tostring(index)] = { Egg = eggId, StartedAt = now, ReadyAt = now + egg.hatchSeconds }
-	GardenService.PublishAll(player)
-	GardenService.Succeed(player, "StartEgg", { incubator = index, egg = eggId })
-	task.spawn(PlayerProfile.Save, player) -- spent Coins and the egg are saved together
+	GardenService.Done(player, "StartEgg", { incubator = index, egg = eggId }) -- spent Coins and the egg are saved together
 end)
 
 hatchEvent.OnServerEvent:Connect(function(player, index)
@@ -187,15 +183,13 @@ hatchEvent.OnServerEvent:Connect(function(player, index)
 	garden.Incubators[key] = nil
 	local uid, equipped = PetService.AddPet(player, kind)
 	startFreeEggs(profile, garden) -- a waiting free egg takes the incubator at once
-	GardenService.PublishAll(player)
 	local traits = {} -- P4: the working traits it was born with, in display order (the reveal lists them)
 	for _, id in PetConfig.Aptitudes do
 		if PetConfig.Shown[id] and PetConfig.AptitudeLevel(profile.Pets[uid], id) > 0 then
 			table.insert(traits, id)
 		end
 	end
-	GardenService.Succeed(player, "Hatch", { incubator = index, uid = uid, kind = kind, rarity = rarityId, equipped = equipped, traits = traits })
-	task.spawn(PlayerProfile.Save, player)
+	GardenService.Done(player, "Hatch", { incubator = index, uid = uid, kind = kind, rarity = rarityId, equipped = equipped, traits = traits })
 end)
 
 buyIncubatorEvent.OnServerEvent:Connect(function(player, expected)
@@ -213,16 +207,12 @@ buyIncubatorEvent.OnServerEvent:Connect(function(player, expected)
 		return reject(player, "BuyIncubator", "stale") -- out-of-date panel, double click or forged request
 	end
 	local price = GardenConfig.IncubatorPrices[expected]
-	if profile.Coins < price then
+	if not PlayerProfile.TrySpend(player, price) then
 		return reject(player, "BuyIncubator", "coins")
 	end
-
-	PlayerProfile.AddCoins(player, -price)
 	garden.IncubatorCount = expected
 	startFreeEggs(profile, garden)
-	GardenService.PublishAll(player)
-	GardenService.Succeed(player, "BuyIncubator", expected)
-	task.spawn(PlayerProfile.Save, player)
+	GardenService.Done(player, "BuyIncubator", expected)
 end)
 
 return GardenIncubators

@@ -17,28 +17,19 @@ local Telemetry = require(ServerScriptService.Telemetry)
 local StageConfig = require(ReplicatedStorage.StageConfig)
 local TalentConfig = require(ReplicatedStorage.TalentConfig)
 local Num = require(ReplicatedStorage.Num)
+local Remotes = require(ServerScriptService.Remotes)
+local RateLimit = require(ServerScriptService.RateLimit)
 
-local BUY_COOLDOWN = 0.25 -- seconds between requests per player
+-- Buy: client → server (talentId: string, expectedLevel: number); Result: server → client (talentId, ok, levelOrReason);
+-- Granted: server → client (talentId, level) a world reward was granted
+local _, remotes = Remotes.Folder("TalentRemotes", { "Buy", "Result", "Granted" })
+local buyEvent, grantedEvent = remotes.Buy, remotes.Granted
+local reject, succeed = Remotes.Results(remotes.Result)
+local allow = RateLimit.new(0.25) -- seconds between requests per player
 
-local remotes = Instance.new("Folder")
-remotes.Name = "TalentRemotes"
-local buyEvent = Instance.new("RemoteEvent") -- client → server: (talentId: string, expectedLevel: number)
-buyEvent.Name = "Buy"
-buyEvent.Parent = remotes
-local resultEvent = Instance.new("RemoteEvent") -- server → client: (talentId, ok: boolean, levelOrReason)
-resultEvent.Name = "Result"
-resultEvent.Parent = remotes
-local grantedEvent = Instance.new("RemoteEvent") -- server → client: (talentId, level) a world reward was granted
-grantedEvent.Name = "Granted"
-grantedEvent.Parent = remotes
-remotes.Parent = ReplicatedStorage
-
-local lastBuy = {} -- [Player] = os.clock() of the last request
 local bases = setmetatable({}, { __mode = "k" }) -- [Humanoid] = values before talents
 
-local function levelOf(profile, id: string): number
-	return TalentConfig.ClampLevel(id, profile.Talents[id])
-end
+local levelOf = TalentConfig.LevelOf
 
 local function publish(player: Player, profile)
 	for _, talent in TalentConfig.List do
@@ -106,23 +97,13 @@ local function grantRewards(player: Player)
 	task.spawn(PlayerProfile.Save, player)
 end
 
-local function setupPlayer(player: Player)
+local function watchCharacter(player: Player)
 	player.CharacterAdded:Connect(function(character)
 		onCharacterAdded(player, character)
 	end)
 	if player.Character then
 		task.spawn(onCharacterAdded, player, player.Character)
 	end
-	local profile = PlayerProfile.WaitFor(player)
-	if profile then
-		publish(player, profile)
-		apply(player, profile)
-		grantRewards(player)
-	end
-end
-
-local function reject(player: Player, id: string, reason: string)
-	resultEvent:FireClient(player, id, false, reason)
 end
 
 buyEvent.OnServerEvent:Connect(function(player, id, expectedLevel)
@@ -133,12 +114,9 @@ buyEvent.OnServerEvent:Connect(function(player, id, expectedLevel)
 	if not talent then
 		return
 	end
-
-	local now = os.clock()
-	if lastBuy[player] and now - lastBuy[player] < BUY_COOLDOWN then
+	if not allow(player) then
 		return
 	end
-	lastBuy[player] = now
 
 	local profile = PlayerProfile.Get(player)
 	if not profile then
@@ -169,26 +147,20 @@ buyEvent.OnServerEvent:Connect(function(player, id, expectedLevel)
 	profile.Talents[id] = current + 1
 	publish(player, profile)
 	apply(player, profile)
-	resultEvent:FireClient(player, id, true, current + 1)
+	succeed(player, id, current + 1)
 	Telemetry.TalentBought(player, id, current + 1, cost, profile.Coins) -- the bundle follows from id + level
 	task.spawn(PlayerProfile.Save, player) -- spent Coins, crops and the level are saved together
 end)
 
-PlayerProfile.ProfileReset:Connect(function(player)
-	local profile = PlayerProfile.Get(player)
-	if profile then
-		publish(player, profile)
-		apply(player, profile)
-	end
-end)
-
 StageUnlocks.Changed:Connect(grantRewards)
 
-Players.PlayerAdded:Connect(setupPlayer)
+Players.PlayerAdded:Connect(watchCharacter)
 for _, player in Players:GetPlayers() do
-	task.spawn(setupPlayer, player)
+	watchCharacter(player)
 end
-
-Players.PlayerRemoving:Connect(function(player)
-	lastBuy[player] = nil
+-- join and admin reset (a reset profile has no open world, so grantRewards grants nothing then)
+PlayerProfile.OnReady(function(player, profile)
+	publish(player, profile)
+	apply(player, profile)
+	grantRewards(player)
 end)

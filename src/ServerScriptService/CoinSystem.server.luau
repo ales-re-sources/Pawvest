@@ -6,11 +6,10 @@ local StageConfig = require(ReplicatedStorage.StageConfig)
 
 -- Coins are stored in the player's profile (loaded / saved by PlayerProfile); pickups live in ChallengeCoins
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
+local Remotes = require(ServerScriptService.Remotes)
 
--- Create RemoteEvent for coin updates
-local coinUpdateEvent = Instance.new("RemoteEvent")
-coinUpdateEvent.Name = "CoinUpdateEvent"
-coinUpdateEvent.Parent = ReplicatedStorage
+-- server → client (coins): the coin counter
+local coinUpdateEvent = Remotes.Add(ReplicatedStorage, "CoinUpdateEvent")
 
 local function createLeaderstats(player)
 	local leaderstats = Instance.new("Folder")
@@ -55,21 +54,12 @@ local function watchStars(player)
 	showStars(player)
 end
 
--- Show coins once the profile is loaded
-local function loadPlayerData(player)
-	local profile = PlayerProfile.WaitFor(player)
-	if profile then
-		showCoins(player, profile.Coins)
-	end
-end
-
 PlayerProfile.CoinsChanged:Connect(showCoins)
 
 -- Handle existing and new players
 Players.PlayerAdded:Connect(function(player)
 	createLeaderstats(player)
 	watchStars(player)
-	loadPlayerData(player)
 end)
 
 for _, player in Players:GetPlayers() do
@@ -77,5 +67,9 @@ for _, player in Players:GetPlayers() do
 		createLeaderstats(player)
 		watchStars(player)
 	end
-	task.spawn(loadPlayerData, player)
 end
+
+-- Show coins once the profile is loaded (and after an admin reset)
+PlayerProfile.OnReady(function(player, profile)
+	showCoins(player, profile.Coins)
+end)

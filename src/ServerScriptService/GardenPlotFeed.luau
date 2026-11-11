@@ -16,14 +16,14 @@ local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local GardenPlots = require(ServerScriptService.GardenPlots)
 local GardenService = require(ServerScriptService.GardenService)
 local GardenField = require(ServerScriptService.GardenField)
+local RateLimit = require(ServerScriptService.RateLimit)
 
-local REQUEST_COOLDOWN = 1 -- seconds per player
+local allowRequest = RateLimit.new(1) -- seconds per player
 
 local plotEvent = GardenService.Remote("Plot") -- server → client: (userId, state or nil)
 local requestEvent = GardenService.Remote("RequestPlots") -- client → server, no arguments
 
 local sent = {} -- [Player] = JSON of the last state sent to everyone
-local lastRequest = {} -- [Player] = os.clock()
 
 local GardenPlotFeed = {}
 
@@ -79,16 +79,13 @@ end)
 
 Players.PlayerRemoving:Connect(function(player)
 	sent[player] = nil
-	lastRequest[player] = nil
 	plotEvent:FireAllClients(player.UserId, nil)
 end)
 
 requestEvent.OnServerEvent:Connect(function(caller)
-	local now = os.clock()
-	if lastRequest[caller] and now - lastRequest[caller] < REQUEST_COOLDOWN then
+	if not allowRequest(caller) then
 		return
 	end
-	lastRequest[caller] = now
 	for _, player in Players:GetPlayers() do
 		local state = plotState(player)
 		if state then

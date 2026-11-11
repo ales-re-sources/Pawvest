@@ -20,6 +20,7 @@ local Locale = require(ReplicatedStorage.Locale)
 local StageConfig = require(ReplicatedStorage.StageConfig)
 local TalentConfig = require(ReplicatedStorage.TalentConfig)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
+local Remotes = require(ServerScriptService.Remotes)
 
 local FUNNEL = "StageRun"
 local MAX_CP = 20 -- funnel steps cp1..cp20 (step k + 1); a later checkpoint counts as cp20
@@ -458,12 +459,8 @@ end
 --   ("platform", "touch" | "gamepad" | "keyboard") once on join (TelemetryClient)
 --   ("kill", part) the kit killed the character on the client (ObstacleKit); part must lie in a stage folder
 --   ("fall") a Quick Respawn fall reset put the character back on its plate without a death (QuickRespawnClient)
-local remotes = Instance.new("Folder")
-remotes.Name = "TelemetryRemotes"
-local report = Instance.new("RemoteEvent")
-report.Name = "Report"
-report.Parent = remotes
-remotes.Parent = ReplicatedStorage
+local _, remotes = Remotes.Folder("TelemetryRemotes", { "Report" })
+local report = remotes.Report
 
 report.OnServerEvent:Connect(function(player, kind, arg)
 	local s = state(player)

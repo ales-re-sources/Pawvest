@@ -14,23 +14,14 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local StageConfig = require(ReplicatedStorage.StageConfig)
 local AdminConfig = require(ReplicatedStorage.AdminConfig)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
+local Remotes = require(ServerScriptService.Remotes)
+local RateLimit = require(ServerScriptService.RateLimit)
 
-local BUY_COOLDOWN = 0.25 -- seconds between requests per player
+local _, remotes = Remotes.Folder("UnlockRemotes", { "Buy", "Result", "Locked" })
+local buyEvent, lockedEvent = remotes.Buy, remotes.Locked
+local reject, succeed = Remotes.Results(remotes.Result)
+local allow = RateLimit.new(0.25) -- seconds between requests per player
 
-local remotes = Instance.new("Folder")
-remotes.Name = "UnlockRemotes"
-local buyEvent = Instance.new("RemoteEvent")
-buyEvent.Name = "Buy"
-buyEvent.Parent = remotes
-local resultEvent = Instance.new("RemoteEvent")
-resultEvent.Name = "Result"
-resultEvent.Parent = remotes
-local lockedEvent = Instance.new("RemoteEvent")
-lockedEvent.Name = "Locked"
-lockedEvent.Parent = remotes
-remotes.Parent = ReplicatedStorage
-
-local lastBuy = {} -- [Player] = os.clock() of the last request
 local changed = Instance.new("BindableEvent")
 
 local StageUnlocks = {}
@@ -86,8 +77,8 @@ local function publish(player: Player)
 	changed:Fire(player)
 end
 
-local function setupPlayer(player: Player)
-	-- the bar depends on the previous stage's medal: re-check whenever StageResults publishes a new one
+-- the bar depends on the previous stage's medal: re-check whenever StageResults publishes a new one
+local function watchMedals(player: Player)
 	for _, stage in StageConfig.Stages do
 		local rule = stage.unlock
 		if rule then
@@ -100,13 +91,6 @@ local function setupPlayer(player: Player)
 			end
 		end
 	end
-	if PlayerProfile.WaitFor(player) then
-		publish(player)
-	end
-end
-
-local function reject(player: Player, stageKey: string, reason: string)
-	resultEvent:FireClient(player, stageKey, false, reason)
 end
 
 buyEvent.OnServerEvent:Connect(function(player, stageKey)
@@ -117,12 +101,9 @@ buyEvent.OnServerEvent:Connect(function(player, stageKey)
 	if not (stage and stage.unlock and stage.unlockPrice) then
 		return
 	end
-
-	local now = os.clock()
-	if lastBuy[player] and now - lastBuy[player] < BUY_COOLDOWN then
+	if not allow(player) then
 		return
 	end
-	lastBuy[player] = now
 
 	local profile = PlayerProfile.Get(player)
 	if not profile then
@@ -131,27 +112,19 @@ buyEvent.OnServerEvent:Connect(function(player, stageKey)
 	if isOpen(profile, stage) then
 		return reject(player, stageKey, "owned") -- bought before or the bar is met: never charged twice
 	end
-	local price = stage.unlockPrice
-	if profile.Coins < price then
+	if not PlayerProfile.TrySpend(player, stage.unlockPrice) then
 		return reject(player, stageKey, "coins")
 	end
-
-	PlayerProfile.AddCoins(player, -price)
 	profile.UnlockedStages[stageKey] = true
 	publish(player)
-	resultEvent:FireClient(player, stageKey, true)
+	succeed(player, stageKey)
 	task.spawn(PlayerProfile.Save, player) -- spent Coins and the unlock are saved together
 end)
 
-PlayerProfile.ProfileReset:Connect(publish)
-
-Players.PlayerAdded:Connect(setupPlayer)
+Players.PlayerAdded:Connect(watchMedals)
 for _, player in Players:GetPlayers() do
-	task.spawn(setupPlayer, player)
+	watchMedals(player)
 end
-
-Players.PlayerRemoving:Connect(function(player)
-	lastBuy[player] = nil
-end)
+PlayerProfile.OnReady(publish)
 
 return StageUnlocks

@@ -11,21 +11,15 @@ local ServerScriptService = game:GetService("ServerScriptService")
 
 local Locale = require(ReplicatedStorage.Locale)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
+local Remotes = require(ServerScriptService.Remotes)
+local RateLimit = require(ServerScriptService.RateLimit)
 
-local COOLDOWN = 0.3 -- seconds between requests per player
+-- Set: client -> server (code: string), "" = automatic; SystemLocale: client -> server (localeId: string), the device's
+-- locale, once per join
+local _, remotes = Remotes.Folder("LanguageRemotes", { "Set", "SystemLocale" })
+local setEvent, systemEvent = remotes.Set, remotes.SystemLocale
+local allow = RateLimit.new(0.3) -- seconds between requests per player
 
-local remotes = Instance.new("Folder")
-remotes.Name = "LanguageRemotes"
-local setEvent = Instance.new("RemoteEvent") -- client -> server: (code: string), "" = automatic
-setEvent.Name = "Set"
-setEvent.Parent = remotes
-remotes.Parent = ReplicatedStorage
-
-local systemEvent = Instance.new("RemoteEvent") -- client -> server: (localeId: string), the device's locale, once per join
-systemEvent.Name = "SystemLocale"
-systemEvent.Parent = remotes
-
-local lastSet = {} -- [Player] = os.clock() of the last request
 local systemReported = {} -- [Player] = true once the device locale arrived
 
 local function publish(player: Player, setting: string)
@@ -36,23 +30,14 @@ local function publish(player: Player, setting: string)
 	)
 end
 
-local function setupPlayer(player: Player)
-	publish(player, "") -- the locale until the profile has loaded
-	local profile = PlayerProfile.WaitFor(player)
-	if profile then
-		publish(player, if Locale.IsValidSetting(player, profile.Language) then profile.Language else "")
-	end
-end
 
 setEvent.OnServerEvent:Connect(function(player, setting)
 	if not Locale.IsValidSetting(player, setting) then
 		return
 	end
-	local now = os.clock()
-	if lastSet[player] and now - lastSet[player] < COOLDOWN then
+	if not allow(player) then
 		return
 	end
-	lastSet[player] = now
 	local profile = PlayerProfile.Get(player)
 	if profile then
 		profile.Language = setting
@@ -72,16 +57,18 @@ systemEvent.OnServerEvent:Connect(function(player, localeId)
 	end
 end)
 
-PlayerProfile.ProfileReset:Connect(function(player)
+-- the locale until the profile has loaded
+Players.PlayerAdded:Connect(function(player)
 	publish(player, "")
 end)
-
-Players.PlayerAdded:Connect(setupPlayer)
 for _, player in Players:GetPlayers() do
-	task.spawn(setupPlayer, player)
+	publish(player, "")
 end
+-- join and admin reset (a reset profile is automatic again)
+PlayerProfile.OnReady(function(player, profile)
+	publish(player, if Locale.IsValidSetting(player, profile.Language) then profile.Language else "")
+end)
 
 Players.PlayerRemoving:Connect(function(player)
-	lastSet[player] = nil
 	systemReported[player] = nil
 end)

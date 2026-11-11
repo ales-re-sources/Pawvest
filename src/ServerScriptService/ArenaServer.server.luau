@@ -13,9 +13,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local ArenaConfig = require(ReplicatedStorage.ArenaConfig)
 local CheckpointTouchHandler = require(workspace:WaitForChild("Handlers"):WaitForChild("CheckpointTouchHandler"))
-
--- Max distance (studs) between the character's root and a key on the server: rejects keys moved on a client.
-local MAX_REACH = 15
+local CharacterUtil = require(game:GetService("ServerScriptService").CharacterUtil)
 
 local keys = {} -- [Player] = { [keyId] = true }
 local opened = {} -- [Player] = { [keyId] = true }
@@ -25,29 +23,17 @@ local function publish(player: Player)
 	player:SetAttribute(ArenaConfig.OpenedAttribute, ArenaConfig.Encode(opened[player] or {}))
 end
 
--- player, humanoid and root part of a live character touching something, or nil
-local function aliveCharacter(hit: BasePart)
-	local character = hit.Parent
-	local player = character and Players:GetPlayerFromCharacter(character)
-	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
-	local root = character and character:FindFirstChild("HumanoidRootPart")
-	if player and humanoid and humanoid.Health > 0 and root then
-		return player, humanoid, root
-	end
-	return nil
-end
-
 local function setupKey(part: Instance)
 	if not part:IsA("BasePart") then
 		return
 	end
 	local id = part:GetAttribute(ArenaConfig.KeyAttribute)
 	part.Touched:Connect(function(hit)
-		local player, _, root = aliveCharacter(hit)
+		local player, _, root = CharacterUtil.FromHit(hit)
 		if not player or not keys[player] or keys[player][id] then
 			return
 		end
-		if (root.Position - part.Position).Magnitude > MAX_REACH then
+		if not CharacterUtil.Reaches(root, part) then
 			return
 		end
 		keys[player][id] = true
@@ -64,7 +50,7 @@ local function setupLock(part: Instance)
 	end
 	local id = part:GetAttribute(ArenaConfig.KeyAttribute)
 	part.Touched:Connect(function(hit)
-		local player = aliveCharacter(hit)
+		local player = CharacterUtil.FromHit(hit)
 		if player and keys[player] and keys[player][id] and not opened[player][id] then
 			opened[player][id] = true
 			publish(player)

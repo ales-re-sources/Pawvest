@@ -7,6 +7,7 @@
 
 local Players = game:GetService("Players")
 local DataStoreService = game:GetService("DataStoreService")
+local DataStoreUtil = require(script.Parent:WaitForChild("DataStoreUtil"))
 local PetConfig = require(game:GetService("ReplicatedStorage"):WaitForChild("PetConfig"))
 local CropConfig = require(game:GetService("ReplicatedStorage"):WaitForChild("CropConfig"))
 
@@ -14,7 +15,6 @@ local PROFILE_VERSION = 5 -- 2: pets (P1a); 3: Coin scale ×10 (R2); 4: pet trai
 -- 5: Renown points onto the EV2a curve, every player keeps the level
 local COIN_SCALE = 10 -- R2: Coins stored before version 3 (and legacy PlayerCoins) are multiplied once
 local AUTOSAVE_INTERVAL = 60
-local MAX_ATTEMPTS = 3
 local SHUTDOWN_TIMEOUT = 25
 local MIN_WRITE_GAP = 7 -- seconds between loop writes of one key; the limit is 6 s, closer writes sit in the request queue
 
@@ -94,19 +94,7 @@ local function reconcile(data, userId: number)
 	return data
 end
 
-local function withRetries(fn)
-	local ok, result
-	for attempt = 1, MAX_ATTEMPTS do
-		ok, result = pcall(fn)
-		if ok then
-			return true, result
-		end
-		if attempt < MAX_ATTEMPTS then
-			task.wait(attempt)
-		end
-	end
-	return false, result
-end
+local withRetries = DataStoreUtil.WithRetries
 
 local function profileKey(userId)
 	return "user_" .. userId
@@ -253,6 +241,38 @@ function PlayerProfile.AddCoins(player: Player, amount: number)
 	profile.Coins += amount
 	coinsChanged:Fire(player, profile.Coins)
 	return profile.Coins
+end
+
+-- Deducts `price` Coins when the player has them (a purchase): true when paid, false when too few or not loaded.
+-- The caller rejects with "coins" on false; never deduct by hand after a balance check.
+function PlayerProfile.TrySpend(player: Player, price: number): boolean
+	local profile = profiles[player]
+	if not profile or profile.Coins < price then
+		return false
+	end
+	PlayerProfile.AddCoins(player, -price)
+	return true
+end
+
+-- Calls fn(player, profile) whenever a player's profile is ready to mirror: once it loaded on join (also for players
+-- already in the server) and again after Reset replaced it. Each call runs in its own thread.
+function PlayerProfile.OnReady(fn: (Player, any) -> ())
+	local function joined(player: Player)
+		local profile = PlayerProfile.WaitFor(player)
+		if profile then
+			fn(player, profile)
+		end
+	end
+	Players.PlayerAdded:Connect(joined)
+	for _, player in Players:GetPlayers() do
+		task.spawn(joined, player)
+	end
+	profileReset.Event:Connect(function(player)
+		local profile = profiles[player]
+		if profile then
+			fn(player, profile)
+		end
+	end)
 end
 
 -- Replaces the player's progress with a fresh profile and saves it (admin self-reset). False if not loaded.
