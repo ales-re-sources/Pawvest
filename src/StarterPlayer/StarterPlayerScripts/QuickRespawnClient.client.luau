@@ -60,11 +60,7 @@ end
 
 local function stageDepth(part: BasePart): number
 	-- the stage folder (Workspace.World1.Stage4 …), or for a plate outside every stage the top-level folder it lies in
-	local found, _, folder = pcall(StageConfig.ForInstance, part)
-	local stage = if found then folder else part
-	while not found and stage.Parent and stage.Parent ~= workspace do
-		stage = stage.Parent
-	end
+	local stage = StageConfig.AreaOf(part)
 	local depth = stage:GetAttribute("FallResetDepth")
 	return if type(depth) == "number" then depth else DEFAULT_DEPTH
 end

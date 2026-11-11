@@ -6,6 +6,7 @@ local TimeFormat = require(script.Parent.TimeFormat)
 local StageConfig = {}
 
 StageConfig.HubName = "Central Island" -- loc: ignore (English source and fallback; players see Locale)
+StageConfig.TopRows = 10 -- rows of a stage's Top-10 board and of the hub's star board
 
 -- Medal tiers in ascending order (GDD §4–5). A medal is stored as its index here; 0 = no medal.
 -- runMultiplier scales the repeat reward of a run with that medal.
@@ -308,6 +309,29 @@ function StageConfig.ForInstance(instance: Instance)
 	error("StageConfig: no stage folder above " .. instance:GetFullName())
 end
 
+-- ForInstance without the error: (stage, folder), or nil when `instance` lies in no stage folder.
+function StageConfig.TryForInstance(instance: Instance)
+	local found, stage, folder = pcall(StageConfig.ForInstance, instance)
+	if found then
+		return stage, folder
+	end
+	return nil, nil
+end
+
+-- The area `instance` lies in: its stage folder (and the stage), or outside every stage the top-level Workspace child
+-- that holds it (the hub's StartLocation, the Garden …; the instance itself when it is one) and nil.
+function StageConfig.AreaOf(instance: Instance): (Instance, any)
+	local stage, folder = StageConfig.TryForInstance(instance)
+	if stage then
+		return folder, stage
+	end
+	local root = instance
+	while root.Parent and root.Parent ~= workspace do
+		root = root.Parent
+	end
+	return root, nil
+end
+
 -- The folder of `stage` in the scene: Workspace.<world folder>.<stage folder> for a world stage, Workspace.<folder> for the hub
 -- stage. StageFolder waits for the scene to load; FindStageFolder returns nil when it is not there (yet).
 function StageConfig.StageFolder(stage): Instance
@@ -434,6 +458,15 @@ function StageConfig.MedalAttribute(stage): string
 	return "Medal_" .. stage.folder
 end
 
+-- [stageKey] = medal index of `player` read from the mirrored Medal_ attributes, for `stages` (default: every stage).
+function StageConfig.MedalsFromAttributes(player: Player, stages: { any }?): { [string]: number }
+	local medals = {}
+	for _, stage in stages or StageConfig.Stages do
+		medals[stage.key] = player:GetAttribute(StageConfig.MedalAttribute(stage)) or 0
+	end
+	return medals
+end
+
 -- True when `medals` ([stageKey] = medal index) meet the stage's unlock bar, or the stage has no unlock rule (GDD §3).
 function StageConfig.MeetsUnlockBar(stage, medals): boolean
 	local rule = stage.unlock
@@ -498,6 +531,17 @@ end
 -- Player attribute that replicates whether the player may enter `stage` (bar met or bought).
 function StageConfig.UnlockedAttribute(stage): string
 	return "Unlocked_" .. stage.folder
+end
+
+-- True when the mirrored Unlocked_ attribute of `player` is set for any of `stages` (a world's hub gate is open when
+-- any of its stages is).
+function StageConfig.AnyUnlocked(player: Player, stages: { any }): boolean
+	for _, stage in stages do
+		if player:GetAttribute(StageConfig.UnlockedAttribute(stage)) == true then
+			return true
+		end
+	end
+	return false
 end
 
 return StageConfig

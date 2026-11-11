@@ -29,6 +29,7 @@ local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local PetLook = require(ReplicatedStorage:WaitForChild("PetLook"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
+local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local PlantGrowth = require(ReplicatedStorage:WaitForChild("PlantGrowth"))
 
@@ -166,14 +167,6 @@ local function prompt(parentPart: BasePart, action: string, object: string, dist
 	p.Triggered:Connect(onTriggered)
 	p.Parent = parentPart
 	return p
-end
-
-local function countdown(seconds: number): string
-	seconds = math.max(0, math.ceil(seconds))
-	if seconds >= 3600 then
-		return string.format("%d:%02d:%02d", seconds // 3600, (seconds % 3600) // 60, seconds % 60)
-	end
-	return string.format("%d:%02d", seconds // 60, seconds % 60)
 end
 
 -- The filtered name of the owner's pet `uid` (P3b): GardenView puts the owner's PetConfig.NamesAttribute into state.names.
@@ -1163,7 +1156,7 @@ function PlotView:Tick(now: number)
 	for _, entry in self.labels do
 		local name = if entry.egg then Locale.EggName(entry.egg) else ""
 		local remaining = (entry.readyAt or 0) - now
-		entry.label.Text = name .. "\n" .. (if remaining > 0 then countdown(remaining) else Locale.T("incubator.label.ready"))
+		entry.label.Text = name .. "\n" .. (if remaining > 0 then TimeFormat.Clock(remaining) else Locale.T("incubator.label.ready"))
 	end
 end
 

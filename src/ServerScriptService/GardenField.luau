@@ -60,6 +60,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local GardenConfig = require(ReplicatedStorage.GardenConfig)
+local Num = require(ReplicatedStorage.Num)
 local CropConfig = require(ReplicatedStorage.CropConfig)
 local PetConfig = require(ReplicatedStorage.PetConfig)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
@@ -88,9 +89,7 @@ local notices = {} -- [Player] = { converted?, tended? } for this session's pane
 
 local GardenField = {}
 
-local function finite(value: any): boolean
-	return type(value) == "number" and value == value and math.abs(value) < 1e12
-end
+local finite = Num.Finite
 
 local function count(value: any): number
 	return if finite(value) then math.max(0, math.floor(value)) else 0

@@ -8,6 +8,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local StageConfig = require(ReplicatedStorage.StageConfig)
+local TimeFormat = require(ReplicatedStorage.TimeFormat)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local CoinRewards = require(ServerScriptService.CoinRewards)
 local PetService = require(ServerScriptService.PetService)
@@ -30,11 +31,9 @@ local function publishMedals(player)
 	end
 end
 
-local SECONDS_PER_DAY = 86400
-
 -- The profile's finish counts for the current UTC day, started afresh when the day changed.
 local function runsToday(profile)
-	local today = math.floor(os.time() / SECONDS_PER_DAY)
+	local today = TimeFormat.UtcDay(os.time())
 	if profile.RunsToday.Day ~= today then
 		profile.RunsToday = { Day = today }
 	end

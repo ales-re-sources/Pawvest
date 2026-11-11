@@ -3,6 +3,8 @@
 -- room: collect the keys, open the gates with them, leave through the green gate. Key ids and tags are used by ArenaServer
 -- (validation) and ArenaClient (what the local player sees).
 
+local IdSet = require(script.Parent:WaitForChild("IdSet"))
+
 local ArenaConfig = {}
 
 ArenaConfig.CameraZone = "VaultCamera" -- the vault's CameraZone part (StageCamera publishes its name as the player attribute CameraZone)
@@ -30,26 +32,8 @@ ArenaConfig.HeldAttribute = "OpensWhenHeld"
 ArenaConfig.KeysAttribute = "ArenaKeys" -- keys the player holds
 ArenaConfig.OpenedAttribute = "ArenaOpened" -- gates the player has opened
 
-function ArenaConfig.Encode(set: { [string]: boolean }): string
-	local ids = {}
-	for id, on in set do
-		if on then
-			table.insert(ids, id)
-		end
-	end
-	table.sort(ids)
-	return table.concat(ids, ",")
-end
-
-function ArenaConfig.Decode(text: any): { [string]: boolean }
-	local set = {}
-	if type(text) == "string" then
-		for id in string.gmatch(text, "[^,]+") do
-			set[id] = true
-		end
-	end
-	return set
-end
+ArenaConfig.Encode = IdSet.Encode
+ArenaConfig.Decode = IdSet.Decode
 
 -- True when `set` holds every key the exit needs.
 function ArenaConfig.HasAllKeys(set: { [string]: boolean }): boolean

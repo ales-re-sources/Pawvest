@@ -28,6 +28,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
+local KitMath = require(ReplicatedStorage:WaitForChild("KitMath"))
 
 local player = Players.LocalPlayer
 
@@ -79,9 +80,7 @@ local function currentMode(root: BasePart)
 	for zone in zones do
 		local mode = zone:GetAttribute("Mode")
 		if MODES[mode] then
-			local local_ = zone.CFrame:PointToObjectSpace(root.Position)
-			local half = zone.Size / 2
-			if math.abs(local_.X) <= half.X and math.abs(local_.Y) <= half.Y and math.abs(local_.Z) <= half.Z then
+			if KitMath.InBox(zone, root.Position) then
 				local priority = zone:GetAttribute("Priority") or 0
 				local volume = zone.Size.X * zone.Size.Y * zone.Size.Z
 				if priority > bestPriority or (priority == bestPriority and volume < bestVolume) then

@@ -56,11 +56,7 @@ local function resolve(part)
 	if tonumber(part.Parent.Name) then
 		return part
 	end
-	local found, _, folder = pcall(StageConfig.ForInstance, part)
-	local stage = if found then folder else part
-	while not found and stage.Parent and stage.Parent ~= workspace do
-		stage = stage.Parent
-	end
+	local stage = StageConfig.AreaOf(part)
 	local first = firstOfStage[stage]
 	if not (first and first.Parent) then
 		first = nil
@@ -89,8 +85,8 @@ function module.OnTouched(part, hit)
 	-- a stage's checkpoint without a running timer for that stage: an exploring run. Warn once per stage (again after
 	-- EXPLORE_REWARN seconds, e.g. a second visit); this runs on every touch, not only when the respawn point changes, because
 	-- the respawn point may already be that plate from an earlier visit
-	local found, stage = pcall(StageConfig.ForInstance, part)
-	if found then
+	local stage = StageConfig.TryForInstance(part)
+	if stage then
 		local _, runningKey = TimerHandler.GetTimer(player)
 		if runningKey ~= stage.key then
 			local last = explored[player]

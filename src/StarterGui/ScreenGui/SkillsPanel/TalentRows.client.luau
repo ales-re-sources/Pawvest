@@ -28,19 +28,16 @@ local BUTTON_HEIGHT = 48
 local TEXT_INSET = BUTTON_WIDTH + 16
 local COLOR_BUY = StudStyle.Colors.Green
 local COLOR_LOCKED = StudStyle.Colors.Grey
-local COLOR_INFO = Color3.fromRGB(235, 222, 190)
-local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
+local COLOR_INFO = StudStyle.Text.Info
+local COLOR_ERROR = StudStyle.Text.Error
 local COLOR_REWARD = Color3.fromRGB(255, 214, 102)
 local COLOR_SHORT = Color3.fromRGB(255, 214, 64) -- on the button: what the player has too little of (readable on green and grey)
 local HEX_SHORT = "#FFD640" -- COLOR_SHORT in the crops line's rich text
 local REWARD_GLYPH = "🔒" -- button of a level that comes with a world (no words: not localized)
 
-local REJECT_KEYS = {
-	coins = "common.reject.coins",
+local REJECT_KEYS = { -- the rest: Locale.Reject's common.reject.*
 	crops = "skills.reject.crops",
 	maxed = "skills.reject.maxed",
-	stale = "common.reject.stale",
-	loading = "common.reject.loading",
 }
 
 local function create(className: string, props, children)
@@ -287,7 +284,7 @@ resultEvent.OnClientEvent:Connect(function(id, ok, detail)
 		elseif detail == "crops" and row.needsText then
 			flash(row, row.needsText, COLOR_REWARD) -- the crops by name (the button only has their icons)
 		else
-			flash(row, Locale.T(REJECT_KEYS[detail] or "skills.reject.failed"))
+			flash(row, Locale.Reject(detail, REJECT_KEYS, nil, "skills.reject.failed"))
 		end
 	end
 end)

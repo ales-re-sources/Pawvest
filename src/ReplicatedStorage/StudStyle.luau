@@ -25,6 +25,16 @@ StudStyle.Colors = {
 	Grey = Color3.fromRGB(128, 128, 134),
 }
 
+-- status texts on the dark panels: Info (light parchment), Dim, Ok, Error, Rare (gold), Grey (the pet panels' info line)
+StudStyle.Text = {
+	Info = Color3.fromRGB(235, 222, 190),
+	Dim = Color3.fromRGB(190, 178, 150),
+	Ok = Color3.fromRGB(120, 230, 120),
+	Error = Color3.fromRGB(240, 100, 90),
+	Rare = Color3.fromRGB(255, 205, 90),
+	Grey = Color3.fromRGB(190, 190, 190),
+}
+
 -- the panel colour is the colour of the icon that opens it
 StudStyle.PanelColors = {
 	SkillsPanel = StudStyle.Colors.Yellow,

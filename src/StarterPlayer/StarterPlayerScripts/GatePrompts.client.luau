@@ -9,6 +9,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 
 local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
+local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local remotes = ReplicatedStorage:WaitForChild("UnlockRemotes")
 local buyEvent = remotes:WaitForChild("Buy")
@@ -16,15 +17,11 @@ local resultEvent = remotes:WaitForChild("Result")
 
 local player = Players.LocalPlayer
 
-local COLOR_OK = Color3.fromRGB(120, 230, 120)
-local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
+local COLOR_OK = StudStyle.Text.Ok
+local COLOR_ERROR = StudStyle.Text.Error
 local TOAST_SECONDS = 2.5
 
-local REJECT_KEYS = {
-	coins = "gate.reject.coins",
-	owned = "gate.reject.owned",
-	loading = "gate.reject.loading",
-}
+local REJECT_KEYS = { owned = "gate.reject.owned" } -- the rest: Locale.Reject's common.reject.*
 
 -- ---- toast: one short line at the bottom of the screen ----
 local toastLabel = Instance.new("TextLabel")
@@ -91,13 +88,7 @@ local function addPrompt(adornee: BasePart, stage, objectText: () -> string, wat
 	prompt.Parent = adornee
 
 	local function refresh()
-		local open = false
-		for _, other in watched do
-			if player:GetAttribute(StageConfig.UnlockedAttribute(other)) == true then
-				open = true
-			end
-		end
-		prompt.Enabled = not open
+		prompt.Enabled = not StageConfig.AnyUnlocked(player, watched)
 		prompt.ObjectText = objectText()
 		prompt.ActionText = Locale.T(if coins >= price then "gate.prompt.unlock" else "gate.prompt.needs", { count = price })
 	end
@@ -146,7 +137,7 @@ resultEvent.OnClientEvent:Connect(function(stageKey, ok, reason)
 			else Locale.T("gate.toast.gate")
 		toast(Locale.T("gate.toast.unlocked", { name = name }), COLOR_OK)
 	else
-		toast(Locale.T(REJECT_KEYS[reason] or "gate.reject.failed"), COLOR_ERROR)
+		toast(Locale.Reject(reason, REJECT_KEYS, nil, "gate.reject.failed"), COLOR_ERROR)
 	end
 end)
 

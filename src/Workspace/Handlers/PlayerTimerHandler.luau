@@ -39,7 +39,7 @@ Players.PlayerRemoving:Connect(function(player)
 	panelStages[player] = nil
 end)
 
-local TOP_ROWS = 10
+local TOP_ROWS = StageConfig.TopRows
 
 -- last Top-10 of each stage this server read or wrote, [stageKey] = list; lets a finish that cannot make the board skip
 -- the DataStore. Boards only get faster, so a stale copy errs towards writing (except right after an admin removal

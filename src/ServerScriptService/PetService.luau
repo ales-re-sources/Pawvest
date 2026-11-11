@@ -24,6 +24,7 @@ local TextService = game:GetService("TextService")
 local HttpService = game:GetService("HttpService")
 
 local PetConfig = require(ReplicatedStorage.PetConfig)
+local Num = require(ReplicatedStorage.Num)
 local GardenConfig = require(ReplicatedStorage.GardenConfig)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 
@@ -341,7 +342,7 @@ unequipEvent.OnServerEvent:Connect(function(player, uid)
 end)
 
 buySlotEvent.OnServerEvent:Connect(function(player, expectedSlot)
-	if type(expectedSlot) ~= "number" or not allow(player) then
+	if not Num.Whole(expectedSlot) or not allow(player) then
 		return
 	end
 	local profile = PlayerProfile.Get(player)

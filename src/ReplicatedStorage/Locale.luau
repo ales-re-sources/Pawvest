@@ -5,6 +5,8 @@
 --   Locale.Current()             the player's language on a client (player attribute Language, else Locale.Resolve of the
 --                                client's account and device locales); "en" on the server, which never builds translated text but sends keys
 --   Locale.Changed               client: fires when the language changes
+--   Locale.Reject(reason, specific?, args?, fallback?)
+--                                the text of a refused request: specific[reason], else common.reject.<reason>, else fallback
 --   Locale.SetKey(label, key, args?) / Locale.SetText(label, text)
 --                                a label shows a key (attributes LocKey / LocArgs + tag Loc, rendered per player by
 --                                LocalizedText.client) or a literal (times, star lines; the key is cleared)
@@ -210,6 +212,16 @@ end
 
 function Locale.Has(key: string): boolean
 	return english[key] ~= nil
+end
+
+-- The text of a refused request's `reason` (a service's Result): the panel's own key in `specific` [reason] = key, else the
+-- shared common.reject.<reason> (coins, stale, loading, far, noplot), else `fallback` (default common.reject.failed).
+function Locale.Reject(reason: any, specific: { [string]: string }?, args: { [string]: any }?, fallback: string?): string
+	local key = type(reason) == "string" and specific and specific[reason]
+	if not key and type(reason) == "string" and Locale.Has("common.reject." .. reason) then
+		key = "common.reject." .. reason
+	end
+	return Locale.T(key or fallback or "common.reject.failed", args)
 end
 
 -- Display names: the key when it exists, else the config's English name

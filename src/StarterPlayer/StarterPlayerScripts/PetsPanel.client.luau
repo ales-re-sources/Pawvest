@@ -70,23 +70,20 @@ local COLOR_CLOSE = StudStyle.Colors.Red
 local COLOR_EQUIP = StudStyle.Colors.Yellow
 local COLOR_UNEQUIP = StudStyle.Colors.Wood
 local COLOR_DETAILS = StudStyle.Colors.Blue
-local COLOR_INFO = Color3.fromRGB(190, 190, 190)
-local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
-local COLOR_OK = Color3.fromRGB(120, 230, 120)
+local COLOR_INFO = StudStyle.Text.Grey
+local COLOR_ERROR = StudStyle.Text.Error
+local COLOR_OK = StudStyle.Text.Ok
 
-local REJECT_KEYS = {
-	coins = "common.reject.coins",
+local REJECT_KEYS = { -- the rest: Locale.Reject's common.reject.*
 	full = "pets.reject.full",
 	slots = "pets.reject.slots",
 	equipped = "pets.reject.equipped",
 	field = "pets.reject.field",
-	stale = "common.reject.stale",
 	maxed = "pets.reject.maxed",
-	loading = "common.reject.loading",
 }
 
 local function rejectText(reason: string?): string
-	return Locale.T(reason and REJECT_KEYS[reason] or "common.reject.failed")
+	return Locale.Reject(reason, REJECT_KEYS)
 end
 
 -- "+4.5%" in the player's language

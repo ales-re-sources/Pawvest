@@ -2,6 +2,8 @@
 -- table only (clients never send a price), the skills panel renders it. Pure data + helpers, no side effects.
 -- Talent ids are stored in PlayerProfile.Talents and as Talent_<id> player attributes: never rename them.
 
+local Num = require(script.Parent:WaitForChild("Num"))
+
 local TalentConfig = {}
 
 export type Talent = {
@@ -67,10 +69,7 @@ end
 -- Clamps whatever is stored or replicated to a valid whole level (corrupt data counts as 0).
 function TalentConfig.ClampLevel(id: string, level: any): number
 	local talent = TalentConfig.ById[id]
-	if not talent or type(level) ~= "number" or level ~= level then
-		return 0
-	end
-	return math.clamp(math.floor(level), 0, #talent.costs)
+	return if talent then Num.Level(level, 0, #talent.costs, 0) else 0
 end
 
 -- The world whose opening grants `level` of the talent (never sold), or nil when that level is bought.

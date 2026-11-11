@@ -19,6 +19,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
+local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
 local PlantGrowth = require(ReplicatedStorage:WaitForChild("PlantGrowth"))
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
@@ -202,14 +203,6 @@ local function dropRing(square: number)
 		ring.attachment:Destroy()
 		rings[square] = nil
 	end
-end
-
-local function countdown(seconds: number): string
-	seconds = math.max(1, math.ceil(seconds))
-	if seconds >= 3600 then
-		return string.format("%d:%02d:%02d", seconds // 3600, (seconds % 3600) // 60, seconds % 60)
-	end
-	return string.format("%d:%02d", seconds // 60, seconds % 60)
 end
 
 -- Builds / drops rings to match the planted squares of the current field (only where the crop changed).
@@ -407,7 +400,7 @@ local function update(now: number)
 	end)
 	for i = 1, math.min(NEAREST, #growing) do
 		local item = growing[i]
-		item.ring.time.Text = countdown(item.left)
+		item.ring.time.Text = TimeFormat.Clock(item.left)
 		item.ring.time.Visible = true
 	end
 	showBorders(near)

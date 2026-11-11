@@ -55,8 +55,8 @@ end
 
 -- Key of the stage whose Workspace folder contains `part`, or nil.
 local function stageKeyOf(part: Instance): string?
-	local ok, stage = pcall(StageConfig.ForInstance, part)
-	return ok and stage.key or nil
+	local stage = StageConfig.TryForInstance(part)
+	return stage and stage.key
 end
 
 local function setupCoin(part: Instance)

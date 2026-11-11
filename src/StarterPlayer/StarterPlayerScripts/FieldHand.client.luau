@@ -47,6 +47,7 @@ local PlantGrowth = require(ReplicatedStorage:WaitForChild("PlantGrowth"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
+local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
 local UiSounds = require(ReplicatedStorage:WaitForChild("UiSounds"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local GardenView = require(script.Parent:WaitForChild("GardenView"))
@@ -93,9 +94,9 @@ local COLOR_PET = StudStyle.Colors.Blue
 local COLOR_OFF = StudStyle.Colors.Grey
 local COLOR_CLOSE = StudStyle.Colors.Red
 local COLOR_ARMED = Color3.fromRGB(240, 140, 40)
-local COLOR_INFO = Color3.fromRGB(235, 222, 190)
-local COLOR_DIM = Color3.fromRGB(190, 178, 150)
-local COLOR_OK = Color3.fromRGB(120, 230, 120)
+local COLOR_INFO = StudStyle.Text.Info
+local COLOR_DIM = StudStyle.Text.Dim
+local COLOR_OK = StudStyle.Text.Ok
 local COLOR_BAR = Color3.fromRGB(245, 200, 70)
 local COLOR_TRACK = Color3.fromRGB(45, 38, 30)
 
@@ -142,22 +143,6 @@ local function brick(name: string, props, studs: number?)
 	local instance = create("TextButton", props)
 	StudStyle.Brick(instance, { studs = studs })
 	return instance
-end
-
-local function countdown(seconds: number): string
-	seconds = math.max(1, math.ceil(seconds))
-	if seconds >= 3600 then
-		return string.format("%d:%02d:%02d", seconds // 3600, (seconds % 3600) // 60, seconds % 60)
-	end
-	return string.format("%d:%02d", seconds // 60, seconds % 60)
-end
-
--- "3 hours", "30 min"
-local function growTime(seconds: number): string
-	if seconds % 3600 == 0 then
-		return Locale.T("common.hours", { count = seconds // 3600 })
-	end
-	return Locale.Duration(seconds)
 end
 
 local function pct(share: number): string
@@ -722,7 +707,7 @@ local function renderSeeds(square: number?)
 		if stock > 0 then
 			rows += 1
 			local seconds = math.ceil(crop.growSeconds / growth - 1e-6)
-			local row = pickerRow(list, crop.id, rows, crop.icon .. " " .. Locale.CropName(crop), Locale.T("field.picker.info", { stock = stock, time = growTime(seconds) }), true, COLOR_GO)
+			local row = pickerRow(list, crop.id, rows, crop.icon .. " " .. Locale.CropName(crop), Locale.T("field.picker.info", { stock = stock, time = TimeFormat.GrowTime(seconds) }), true, COLOR_GO)
 			row.Activated:Connect(function()
 				if square then
 					fire(plantEvent, square, crop.id)
@@ -832,7 +817,7 @@ function render()
 			local share, ripe, left = progress(entry, crop, workspace:GetServerTimeNow())
 			barFill.Size = UDim2.fromScale(share, 1)
 			barFill.BackgroundColor3 = if ripe then COLOR_OK else COLOR_BAR
-			barText.Text = if ripe then Locale.T("field.card.ripe") else countdown(left)
+			barText.Text = if ripe then Locale.T("field.card.ripe") else TimeFormat.Clock(left)
 		end
 	end
 end
@@ -1497,7 +1482,7 @@ RunService.Heartbeat:Connect(function(dt)
 		end
 		barFill.Size = UDim2.fromScale(share, 1)
 		barFill.BackgroundColor3 = if ripe then COLOR_OK else COLOR_BAR
-		barText.Text = if ripe then Locale.T("field.card.ripe") else countdown(left)
+		barText.Text = if ripe then Locale.T("field.card.ripe") else TimeFormat.Clock(left)
 	end
 end)
 

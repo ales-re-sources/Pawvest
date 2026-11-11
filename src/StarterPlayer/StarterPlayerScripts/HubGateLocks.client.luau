@@ -29,12 +29,7 @@ local function addGate(world)
 		if world.soon then
 			return AdminConfig.IsAdmin(LocalPlayer.UserId) -- the stages are not built yet (S5): admins test the island, the server agrees
 		end
-		for _, stage in stages do
-			if LocalPlayer:GetAttribute(StageConfig.UnlockedAttribute(stage)) == true then
-				return true
-			end
-		end
-		return false
+		return StageConfig.AnyUnlocked(LocalPlayer, stages)
 	end
 	local function refresh()
 		local open = isOpen() -- shut until the server says otherwise

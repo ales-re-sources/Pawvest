@@ -155,6 +155,9 @@ src/Workspace/                StartLocation (hub), Tutorial, World1 (Stage1-5), 
 - Debounces in timer, portal and checkpoint code are per player; kill scripts key a script-global `h` by the touching part. The timer uses
   `os.clock()`; times are floored to tenths (`TimeFormat.Tenths`) before storing.
 - A ScreenGui built in code gets `ZIndexBehavior = Sibling` (with Global its children drew under later pages / pickers).
+- **Shared helpers before local copies:** countdowns `TimeFormat.Clock`, client / stored number checks `Num`, id-set
+  attributes `IdSet`, status colours `StudStyle.Text`, refusal texts `Locale.Reject(reason, specific)` (falls back to
+  `common.reject.*`), stage lookups `StageConfig.TryForInstance` / `AreaOf` / `MedalsFromAttributes` / `AnyUnlocked`.
 - Legacy APIs are common (`wait`, `spawn`, `:connect`, `findFirstChild`); prefer `task.*` and `Players:GetPlayerFromCharacter` in new code,
   but don't mass-rewrite without asking.
 

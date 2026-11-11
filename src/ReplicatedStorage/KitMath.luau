@@ -135,4 +135,11 @@ function KitMath.Swing(now: number, period: number, phase: number, amplitude: nu
 	return amplitude * KitMath.Sine(now, period, phase)
 end
 
+-- Geometry: true when `position` lies inside the (rotated) box of `part` (zones of the kit and the stage camera).
+function KitMath.InBox(part: BasePart, position: Vector3): boolean
+	local offset = part.CFrame:PointToObjectSpace(position)
+	local half = part.Size / 2
+	return math.abs(offset.X) <= half.X and math.abs(offset.Y) <= half.Y and math.abs(offset.Z) <= half.Z
+end
+
 return KitMath

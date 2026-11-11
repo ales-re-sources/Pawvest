@@ -16,15 +16,16 @@ local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
 local ConfirmTap = require(ReplicatedStorage:WaitForChild("ConfirmTap"))
+local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
 
 local GardenUi = {}
 
 GardenUi.GAP = 6
-GardenUi.COLOR_INFO = Color3.fromRGB(235, 222, 190)
-GardenUi.COLOR_DIM = Color3.fromRGB(190, 178, 150)
-GardenUi.COLOR_ERROR = Color3.fromRGB(240, 100, 90)
-GardenUi.COLOR_OK = Color3.fromRGB(120, 230, 120)
-GardenUi.COLOR_RARE = Color3.fromRGB(255, 205, 90)
+GardenUi.COLOR_INFO = StudStyle.Text.Info
+GardenUi.COLOR_DIM = StudStyle.Text.Dim
+GardenUi.COLOR_ERROR = StudStyle.Text.Error
+GardenUi.COLOR_OK = StudStyle.Text.Ok
+GardenUi.COLOR_RARE = StudStyle.Text.Rare
 GardenUi.COLOR_BUY = StudStyle.Colors.Green
 GardenUi.COLOR_SELL = StudStyle.Colors.Blue
 GardenUi.COLOR_LOCKED = StudStyle.Colors.Grey
@@ -238,22 +239,9 @@ end
 
 -- Texts ---------------------------------------------------------------------------------------------------------------------
 
--- "1:00:00", "42:07", "0:05"
-function GardenUi.Countdown(seconds: number): string
-	seconds = math.max(0, math.ceil(seconds))
-	if seconds >= 3600 then
-		return string.format("%d:%02d:%02d", seconds // 3600, (seconds % 3600) // 60, seconds % 60)
-	end
-	return string.format("%d:%02d", seconds // 60, seconds % 60)
-end
-
--- "3 hours", "30 min"
-function GardenUi.GrowTime(seconds: number): string
-	if seconds % 3600 == 0 then
-		return Locale.T("common.hours", { count = seconds // 3600 })
-	end
-	return Locale.Duration(seconds)
-end
+-- "1:00:00", "42:07", "0:05" / "3 hours", "30 min" (TimeFormat)
+GardenUi.Countdown = TimeFormat.Clock
+GardenUi.GrowTime = TimeFormat.GrowTime
 
 function GardenUi.CropTitle(crop): string
 	return crop.icon .. " " .. Locale.CropName(crop)

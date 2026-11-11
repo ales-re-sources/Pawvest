@@ -9,7 +9,7 @@ local StarBoard = require(ServerScriptService.StarBoard)
 local AvatarThumbs = require(ServerScriptService.AvatarThumbs)
 
 local REFRESH = 1 -- minutes; picks up stars earned on other servers
-local ROWS = 10
+local ROWS = StageConfig.TopRows
 local scoreBlock = script.Parent.StarsLeaderboard.Model.ScoreBlock
 local maxStars = StageConfig.MaxStars()
 

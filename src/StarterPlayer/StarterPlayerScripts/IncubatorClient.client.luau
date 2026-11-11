@@ -48,18 +48,13 @@ local COLOR_ROW = StudStyle.PetRowColor(COLOR_PANEL)
 local COLOR_HATCH = StudStyle.Colors.Purple -- stands out on the yellow panel
 local COLOR_CHIP = Color3.fromRGB(28, 28, 28)
 
-local REJECT_KEYS = {
-	coins = "common.reject.coins",
-	stale = "common.reject.stale",
+local REJECT_KEYS = { -- the rest: Locale.Reject's common.reject.*
 	maxed = "incubator.reject.maxed",
 	locked = "incubator.reject.locked",
 	occupied = "incubator.reject.occupied",
 	full = "incubator.reject.full",
 	empty = "incubator.reject.empty",
 	notready = "incubator.reject.notready",
-	far = "common.reject.far",
-	noplot = "common.reject.noplot",
-	loading = "common.reject.loading",
 }
 
 local function hex(color: Color3): string
@@ -553,7 +548,7 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 		return
 	end
 	if not ok then
-		setStatus(Locale.T(REJECT_KEYS[detail] or "common.reject.failed", { max = PetConfig.MaxPets }), GardenUi.COLOR_ERROR)
+		setStatus(Locale.Reject(detail, REJECT_KEYS, { max = PetConfig.MaxPets }), GardenUi.COLOR_ERROR)
 	elseif action == "BuyIncubator" then
 		setStatus(Locale.T("incubator.unlocked", { n = detail }), GardenUi.COLOR_OK)
 	elseif action == "StartEgg" then

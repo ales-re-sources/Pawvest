@@ -17,6 +17,7 @@ local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
+local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
 local GardenSummary = require(script.Parent:WaitForChild("GardenSummary"))
 local GardenView = require(script.Parent:WaitForChild("GardenView"))
 
@@ -85,15 +86,6 @@ label.Parent = pill
 
 anchor.Parent = workspace
 
--- "1:00:00", "42:07", "0:05" (as the rings and the square card)
-local function countdown(seconds: number): string
-	seconds = math.max(0, math.ceil(seconds))
-	if seconds >= 3600 then
-		return string.format("%d:%02d:%02d", seconds // 3600, (seconds % 3600) // 60, seconds % 60)
-	end
-	return string.format("%d:%02d", seconds // 60, seconds % 60)
-end
-
 -- The bubble's text now, or nil when there is nothing to show yet.
 local function textOf(now: number): string?
 	local summary = GardenSummary.Get(now)
@@ -108,7 +100,7 @@ local function textOf(now: number): string?
 		table.insert(parts, Locale.T("garden.bubble.ripe", { count = summary.ripe }))
 	end
 	if summary.nextAt then
-		table.insert(parts, Locale.T("garden.bubble.time", { time = countdown(math.max(summary.nextAt - now, 1)) }))
+		table.insert(parts, Locale.T("garden.bubble.time", { time = TimeFormat.Clock(math.max(summary.nextAt - now, 1)) }))
 	end
 	if summary.eggs > 0 then
 		table.insert(parts, Locale.T("garden.bubble.egg"))
@@ -120,7 +112,7 @@ local function textOf(now: number): string?
 		if from and to and from <= now then
 			table.insert(parts, Locale.T("garden.bubble.crowsNow"))
 		elseif from then
-			table.insert(parts, Locale.T("garden.bubble.crows", { time = countdown(from - now) }))
+			table.insert(parts, Locale.T("garden.bubble.crows", { time = TimeFormat.Clock(from - now) }))
 		end
 	end
 	return if #parts > 0 then table.concat(parts, "  ·  ") else nil

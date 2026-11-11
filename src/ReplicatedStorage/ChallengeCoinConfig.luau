@@ -3,6 +3,8 @@
 -- here, never from the part. Ids are stored in PlayerProfile.CollectedCoins: never rename or reuse one.
 -- Collected ids replicate to clients as the player attribute `CollectedAttribute` (Encode / Decode).
 
+local IdSet = require(script.Parent:WaitForChild("IdSet"))
+
 local ChallengeCoinConfig = {}
 
 ChallengeCoinConfig.Tag = "ChallengeCoin"
@@ -164,26 +166,15 @@ function ChallengeCoinConfig.Found(stageKey: string, collected): (number, number
 end
 
 -- Attribute string of a collected set: known ids only, sorted, comma-separated ("" when none).
+local function known(id: string): boolean
+	return ChallengeCoinConfig.ById[id] ~= nil
+end
+
 function ChallengeCoinConfig.Encode(collected): string
-	local ids = {}
-	for id, value in collected do
-		if value == true and ChallengeCoinConfig.ById[id] then
-			table.insert(ids, id)
-		end
-	end
-	table.sort(ids)
-	return table.concat(ids, ",")
+	return IdSet.Encode(collected, known)
 end
 
 -- Set [id] = true from an attribute string (nil or "" → empty set).
-function ChallengeCoinConfig.Decode(text: string?)
-	local collected = {}
-	if type(text) == "string" then
-		for id in string.gmatch(text, "[^,]+") do
-			collected[id] = true
-		end
-	end
-	return collected
-end
+ChallengeCoinConfig.Decode = IdSet.Decode
 
 return ChallengeCoinConfig

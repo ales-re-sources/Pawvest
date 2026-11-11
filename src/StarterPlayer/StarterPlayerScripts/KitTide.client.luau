@@ -33,8 +33,8 @@ local shown = 0 -- world y the part shows (sinks smoothly after a checkpoint)
 local speed = DEFAULT_SPEED
 
 local function folderOf(part: Instance): (Instance?, string?)
-	local found, stage, folder = pcall(StageConfig.ForInstance, part)
-	if found and stage then
+	local stage, folder = StageConfig.TryForInstance(part)
+	if stage then
 		return folder, stage.key
 	end
 	return nil, nil

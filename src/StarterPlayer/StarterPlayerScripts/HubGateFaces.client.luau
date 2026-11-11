@@ -52,12 +52,7 @@ local function addGate(world)
 	local setStarsTick = StageMastery.AddTick(starsLabel)
 	local setCoinsTick = StageMastery.AddTick(coinsLabel)
 
-	local stages = {}
-	for _, stage in StageConfig.Stages do
-		if stage.world == world.index then
-			table.insert(stages, stage)
-		end
-	end
+	local stages = StageConfig.StagesOfWorld(world.index)
 
 	local function refresh()
 		setStarsTick(false)
@@ -67,22 +62,14 @@ local function addGate(world)
 			coinsLabel.Text = MedalText.UnlockBar({ unlock = world.unlock }) or ""
 			return
 		end
-		local open = false
-		for _, stage in stages do
-			if LocalPlayer:GetAttribute(StageConfig.UnlockedAttribute(stage)) == true then
-				open = true
-			end
-		end
+		local open = StageConfig.AnyUnlocked(LocalPlayer, stages)
 		local entry = stages[1]
 		if not open and entry and entry.unlock then
 			starsLabel.Text = "🔒 " .. (MedalText.UnlockBar(entry) or "")
 			coinsLabel.Text = if entry.unlockPrice then Locale.T("faces.orCoins", { count = entry.unlockPrice }) else ""
 			return
 		end
-		local medals = {}
-		for _, stage in stages do
-			medals[stage.key] = LocalPlayer:GetAttribute(StageConfig.MedalAttribute(stage)) or 0
-		end
+		local medals = StageConfig.MedalsFromAttributes(LocalPlayer, stages)
 		starsLabel.Text = string.format('<font color="%s">★</font> %d / %d', GOLD, StageConfig.WorldStars(medals, world.index), StageConfig.MaxWorldStars(world.index))
 
 		local collected = ChallengeCoinConfig.Decode(LocalPlayer:GetAttribute(ChallengeCoinConfig.CollectedAttribute))

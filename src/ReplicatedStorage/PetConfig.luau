@@ -3,6 +3,8 @@
 -- Pure data + helpers, no side effects. Kind, rarity and egg ids are stored in PlayerProfile: never rename them.
 -- Bonuses are in permille (1 ‰ = 0.1 %) so sums stay exact.
 
+local Num = require(script.Parent:WaitForChild("Num"))
+
 local PetConfig = {}
 
 export type Rarity = {
@@ -99,10 +101,7 @@ end
 
 -- Clamps whatever is stored to a valid whole level (corrupt data counts as 1).
 function PetConfig.ClampLevel(level: any): number
-	if type(level) ~= "number" or level ~= level then
-		return 1
-	end
-	return math.clamp(math.floor(level), 1, PetConfig.MaxLevel)
+	return Num.Level(level, 1, PetConfig.MaxLevel, 1)
 end
 
 -- Look tier of a level: 0 below Tiers[1], then one more per reached threshold (Lv 5 / 10 / 15 / 20 → 1 / 2 / 3 / 4).
@@ -501,6 +500,18 @@ function PetConfig.CareXpLeft(pet): number
 		total += PetConfig.CareNeed(pet, id)
 	end
 	return total
+end
+
+-- The last shown trait that gained a level in a `trained` list (GainCareXp's steps, also as replicated in a feed result:
+-- { id, levels, level }), or nil when none did (P4: the "fed, Tending reached Lv 5" line).
+function PetConfig.LastLevelUp(trained: any)
+	local leveled = nil
+	for _, step in (if type(trained) == "table" then trained else {}) do
+		if type(step) == "table" and (tonumber(step.levels) or 0) > 0 and PetConfig.Shown[step.id] then
+			leveled = step
+		end
+	end
+	return leveled
 end
 
 -- Adds `amount` care XP (obby XP, food, crops) to the pet (mutates its Apt): CareTarget gets it up to its care limit, the rest goes on

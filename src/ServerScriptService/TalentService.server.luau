@@ -16,6 +16,7 @@ local StageUnlocks = require(ServerScriptService.StageUnlocks)
 local Telemetry = require(ServerScriptService.Telemetry)
 local StageConfig = require(ReplicatedStorage.StageConfig)
 local TalentConfig = require(ReplicatedStorage.TalentConfig)
+local Num = require(ReplicatedStorage.Num)
 
 local BUY_COOLDOWN = 0.25 -- seconds between requests per player
 
@@ -125,7 +126,7 @@ local function reject(player: Player, id: string, reason: string)
 end
 
 buyEvent.OnServerEvent:Connect(function(player, id, expectedLevel)
-	if type(id) ~= "string" or type(expectedLevel) ~= "number" then
+	if type(id) ~= "string" or not Num.Whole(expectedLevel) then
 		return
 	end
 	local talent = TalentConfig.ById[id]

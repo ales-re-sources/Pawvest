@@ -45,19 +45,13 @@ local COLOR_ROW = StudStyle.PetRowColor(COLOR_PANEL)
 local COLOR_BUY = StudStyle.Colors.Green
 local COLOR_LOCKED = StudStyle.Colors.Grey
 local COLOR_CLOSE = StudStyle.Shade(StudStyle.Colors.Red, 0.75) -- a darker red than the panel's title strip
-local COLOR_INFO = Color3.fromRGB(235, 222, 190)
-local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
-local COLOR_OK = Color3.fromRGB(120, 230, 120)
-local REJECT_KEYS = {
-	coins = "common.reject.coins",
+local COLOR_INFO = StudStyle.Text.Info
+local COLOR_ERROR = StudStyle.Text.Error
+local COLOR_OK = StudStyle.Text.Ok
+local REJECT_KEYS = { -- the rest: Locale.Reject's common.reject.*
 	maxed = "food.reject.maxed",
 	far = "food.reject.far",
-	loading = "common.reject.loading",
 }
-
-local function rejectText(reason: string?): string
-	return Locale.T(reason and REJECT_KEYS[reason] or "common.reject.failed")
-end
 
 local function create(className: string, props, children)
 	local instance = Instance.new(className)
@@ -449,7 +443,7 @@ local function petRow(order: number, entry)
 				if lastInputWasTouch() then
 					arm(key)
 				end
-				return flash(rejectText("coins"), COLOR_ERROR)
+				return flash(Locale.Reject("coins", REJECT_KEYS), COLOR_ERROR)
 			end
 			if lastInputWasTouch() and armed ~= key then
 				return arm(key) -- first tap: preview
@@ -570,16 +564,11 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 		return
 	end
 	if not ok then
-		return flash(rejectText(detail), COLOR_ERROR)
+		return flash(Locale.Reject(detail, REJECT_KEYS), COLOR_ERROR)
 	end
 	local food = GardenConfig.FoodById[detail.food]
 	local pet = PetClient.State and PetClient.State.pets[detail.uid]
-	local leveled = nil -- P4: the last trait that gained a level
-	for _, step in (if type(detail.trained) == "table" then detail.trained else {}) do
-		if type(step) == "table" and (step.levels or 0) > 0 and PetConfig.Shown[step.id] then
-			leveled = step
-		end
-	end
+	local leveled = PetConfig.LastLevelUp(detail.trained)
 	flash(
 		Locale.T(if leveled then "food.fedLevelUp" else "food.fed", {
 			icon = food and food.icon or "",

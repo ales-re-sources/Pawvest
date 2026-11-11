@@ -24,15 +24,13 @@ local requestStateEvent = remotes:WaitForChild("RequestState")
 
 local NOTICE_SECONDS = 8
 local COLOR_PANEL = StudStyle.Colors.Wood
-local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
-local COLOR_OK = Color3.fromRGB(120, 230, 120)
+local COLOR_ERROR = StudStyle.Text.Error
+local COLOR_OK = StudStyle.Text.Ok
 
 -- the reasons GardenField answers with (texts: field.reason.<reason>)
-local REJECT_KEYS = {
+local REJECT_KEYS = { -- coins, stale, loading, noplot: Locale.Reject's common.reject.*
 	obby = "field.reason.obby",
 	far = "field.reason.far",
-	loading = "field.reason.loading",
-	noplot = "field.reason.noplot",
 	square = "field.reason.square",
 	occupied = "field.reason.occupied",
 	renown = "field.reason.renown",
@@ -40,21 +38,21 @@ local REJECT_KEYS = {
 	empty = "field.reason.empty",
 	notripe = "field.reason.notripe",
 	barn = "field.reason.barn",
-	coins = "field.reason.coins",
 	items = "field.reason.items",
 	maxed = "field.reason.maxed",
-	stale = "field.reason.stale",
 	open = "field.reason.open",
 	soldout = "field.reason.soldOut",
 }
 -- the field pet actions' own texts for some reasons (E1b)
-local PET_REJECT_KEYS = {
+local PET_REJECT_KEYS = setmetatable({
 	occupied = "field.reason.petOccupied",
 	equipped = "field.reason.equipped",
 	aptitude = "field.reason.aptitude",
 	slots = "field.reason.slots",
 	maxed = "field.reason.slotsMaxed",
-}
+}, { __index = REJECT_KEYS })
+local UPGRADE_REJECT_KEYS = setmetatable({ maxed = "field.reason.upgradeMaxed" }, { __index = REJECT_KEYS })
+local STALL_REJECT_KEYS = setmetatable({ far = "seedStall.reason.far" }, { __index = REJECT_KEYS })
 local PET_ACTIONS = { PlacePet = true, LiftPet = true, BuyPetSlot = true }
 -- the field upgrades' texts (E1c1): name, effect now → next level, effect at the top level
 local UPGRADE_KEYS = {
@@ -206,7 +204,7 @@ end)
 -- Answers of the field pet actions (E1b): toasts.
 local function petResult(action: string, ok: boolean, detail)
 	if not ok then
-		showToast(Locale.T(PET_REJECT_KEYS[detail] or REJECT_KEYS[detail] or "common.reject.failed"), COLOR_ERROR)
+		showToast(Locale.Reject(detail, PET_REJECT_KEYS), COLOR_ERROR)
 		return
 	end
 	if action == "PlacePet" then
@@ -226,8 +224,7 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 	if action == "BuyUpgrade" or action == "BuyTool" then
 		local names = if action == "BuyTool" then TOOL_KEYS else UPGRADE_KEYS
 		if not ok then
-			local key = if detail == "maxed" then "field.reason.upgradeMaxed" else REJECT_KEYS[detail]
-			showToast(Locale.T(key or "common.reject.failed"), COLOR_ERROR)
+			showToast(Locale.Reject(detail, UPGRADE_REJECT_KEYS), COLOR_ERROR)
 		elseif type(detail) == "table" and names[detail.id] then
 			showToast(Locale.T("field.toast.upgrade", { name = Locale.T(names[detail.id].name), level = detail.level }), COLOR_OK)
 		end
@@ -244,8 +241,7 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 		return -- incubators and the food stand answer on the same remote
 	end
 	if not ok then
-		local key = if detail == "far" and (action == "BuySeeds" or action == "BuyCart") then "seedStall.reason.far" else REJECT_KEYS[detail]
-		showToast(Locale.T(key or "common.reject.failed"), COLOR_ERROR)
+		showToast(Locale.Reject(detail, if action == "BuySeeds" or action == "BuyCart" then STALL_REJECT_KEYS else REJECT_KEYS), COLOR_ERROR)
 		return
 	end
 	local crop = type(detail) == "table" and detail.crop and cropOf(detail.crop)

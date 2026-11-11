@@ -44,10 +44,10 @@ local PAGE_Z = 20 -- the page's ZIndex; its contents are lifted by as much
 -- a tap target stays at least 36 px on screen when the Pets panel is scaled down (PanelFit; 44 at scale 1)
 local BRICK = math.max(44, math.ceil(36 / PanelFit.Scale()))
 
-local COLOR_INFO = Color3.fromRGB(190, 190, 190)
+local COLOR_INFO = StudStyle.Text.Grey
 local COLOR_DIM = Color3.fromRGB(150, 150, 150)
-local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
-local COLOR_OK = Color3.fromRGB(120, 230, 120)
+local COLOR_ERROR = StudStyle.Text.Error
+local COLOR_OK = StudStyle.Text.Ok
 local COLOR_EQUIPPED = Color3.fromRGB(255, 205, 60)
 local COLOR_XP = Color3.fromRGB(120, 200, 255)
 local COLOR_APT = Color3.fromRGB(140, 220, 120)
@@ -58,18 +58,15 @@ local COLOR_SELL_IDLE = StudStyle.Colors.Wood
 local COLOR_SELL_ARMED = Color3.fromRGB(240, 140, 40) -- the one confirm pattern (UI_GARDEN_PETS §10): orange on the first tap
 local COLOR_CARE = Color3.fromRGB(255, 205, 60) -- ▲, as on the row's chip
 
-local REJECT_KEYS = {
-	coins = "common.reject.coins",
+local REJECT_KEYS = { -- the rest: Locale.Reject's common.reject.*
 	slots = "pets.reject.slots",
 	equipped = "pets.reject.equipped",
 	field = "pets.reject.field",
-	loading = "common.reject.loading",
 }
 -- answers to GardenRemotes.FeedCrop (E1a3)
 local FEED_REJECT_KEYS = {
 	items = "field.reason.items",
 	maxed = "petDetail.feed.maxed",
-	loading = "common.reject.loading",
 }
 -- answers to PetRemotes.Rename (P3b)
 local RENAME_REJECT_KEYS = {
@@ -77,7 +74,6 @@ local RENAME_REJECT_KEYS = {
 	same = "petDetail.reject.same",
 	cooldown = "petDetail.reject.cooldown",
 	filter = "petDetail.reject.filter",
-	coins = "common.reject.coins",
 }
 
 local function create(className: string, props, children)
@@ -837,7 +833,7 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		end
 		local reason = if owned.field then "field" elseif owned.equipped then "equipped" else nil
 		if reason then
-			message(Locale.T(REJECT_KEYS[reason]), COLOR_ERROR)
+			message(Locale.Reject(reason, REJECT_KEYS), COLOR_ERROR)
 			return
 		end
 		if sellArmed then
@@ -919,12 +915,12 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 				nameBox.Text = detail.name or ""
 				nameResult(if detail.name then Locale.T("petDetail.name.done", { name = detail.name }) else Locale.T("petDetail.name.removed"), COLOR_OK)
 			elseif not ok then
-				nameResult(Locale.T(RENAME_REJECT_KEYS[detail] or "common.reject.failed", { max = PetConfig.NameMaxLength }), COLOR_ERROR)
+				nameResult(Locale.Reject(detail, RENAME_REJECT_KEYS, { max = PetConfig.NameMaxLength }), COLOR_ERROR)
 			end
 			return
 		end
 		if currentUid and not ok and (action == "Equip" or action == "Unequip" or action == "SellPet") then
-			message(Locale.T(REJECT_KEYS[detail] or "common.reject.failed"), COLOR_ERROR)
+			message(Locale.Reject(detail, REJECT_KEYS), COLOR_ERROR)
 		end
 	end)
 	Locale.Changed:Connect(function()
@@ -962,19 +958,14 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 					return
 				end
 				if not ok then
-					feedResult(Locale.T(FEED_REJECT_KEYS[detail] or "common.reject.failed"), COLOR_ERROR)
+					feedResult(Locale.Reject(detail, FEED_REJECT_KEYS), COLOR_ERROR)
 					return
 				end
 				if type(detail) ~= "table" or detail.uid ~= currentUid then
 					return
 				end
 				local crop = CropConfig.ById[detail.crop]
-				local leveled = nil -- P4: the last trait that gained a level
-				for _, step in (if type(detail.trained) == "table" then detail.trained else {}) do
-					if type(step) == "table" and (step.levels or 0) > 0 and PetConfig.Shown[step.id] then
-						leveled = step
-					end
-				end
+				local leveled = PetConfig.LastLevelUp(detail.trained)
 				local args = {
 					icon = if crop then crop.icon else "",
 					count = detail.used,

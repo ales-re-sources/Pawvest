@@ -18,6 +18,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local GardenConfig = require(ReplicatedStorage.GardenConfig)
+local Num = require(ReplicatedStorage.Num)
 local PetConfig = require(ReplicatedStorage.PetConfig)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local PetService = require(ServerScriptService.PetService)
@@ -32,9 +33,7 @@ local reject = GardenService.Reject
 
 local GardenIncubators = {}
 
-local function finite(value: any): boolean
-	return type(value) == "number" and value == value and math.abs(value) < 1e12
-end
+local finite = Num.Finite
 
 -- The profile's garden with its incubators cleaned (idempotent): the count clamped to 1..MaxIncubators; entries beyond it,
 -- with an unknown egg or with a non-number time dropped. Nil if the garden is not a table (not set up yet).

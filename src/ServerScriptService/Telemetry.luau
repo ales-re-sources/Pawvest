@@ -224,12 +224,8 @@ local function causeOf(part: Instance): (string?, string)
 	if part == workspace:FindFirstChild("DebugBaseplate") then
 		return nil, "fall"
 	end
-	local found, stage, folder = pcall(StageConfig.ForInstance, part)
-	local root = if found then folder else part
-	while not found and root.Parent and root.Parent ~= workspace do
-		root = root.Parent
-	end
-	if not found and root.Parent ~= workspace then
+	local root, stage = StageConfig.AreaOf(part)
+	if not stage and root.Parent ~= workspace then
 		return nil, "other"
 	end
 	local names = {}
@@ -241,7 +237,7 @@ local function causeOf(part: Instance): (string?, string)
 	if #names == 0 then
 		names = { root.Name }
 	end
-	return if found then stage.key else root.Name, "kill:" .. table.concat(names, "/", 1, math.min(2, #names))
+	return if stage then stage.key else root.Name, "kill:" .. table.concat(names, "/", 1, math.min(2, #names))
 end
 
 local function countFail(player: Player, stageName: string, seg: string, cause: string)
@@ -403,8 +399,8 @@ function Telemetry.Checkpoint(player: Player, part: BasePart)
 	if not run then
 		return
 	end
-	local found, stage, folder = pcall(StageConfig.ForInstance, part)
-	if not found or stage ~= run.stage then
+	local stage, folder = StageConfig.TryForInstance(part)
+	if not stage or stage ~= run.stage then
 		return
 	end
 	local k = positionOf(stage, folder, part)
@@ -487,7 +483,7 @@ report.OnServerEvent:Connect(function(player, kind, arg)
 	end
 	s.lastReport = now
 	if kind == "kill" then
-		if typeof(arg) ~= "Instance" or not arg:IsA("BasePart") or not pcall(StageConfig.ForInstance, arg) then
+		if typeof(arg) ~= "Instance" or not arg:IsA("BasePart") or not StageConfig.TryForInstance(arg) then
 			debugPrint("report dropped (not a stage part)", player.Name, describe(arg))
 			return
 		end

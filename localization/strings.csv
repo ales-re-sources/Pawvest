@@ -95,9 +95,7 @@ gate.prompt.needs[few],Form for 2-4 (Czech only),,Potřebuješ {count} mince,ok,
 gate.prompt.needs[other],Form for 0 and 5+,Needs {count} Coins,Potřebuješ {count} mincí,ok,hc7fb3379
 gate.toast.unlocked,"Short message after buying a gate; {name} = stage or world name (any gender, hence the Czech word order)",{name} unlocked!,Odemčeno: {name}!,ok,hbcffaedd
 gate.toast.gate,Fallback name in gate.toast.unlocked when the stage is unknown,Gate,Brána,ok,ha8d07fb4
-gate.reject.coins,Message when the purchase fails: not enough Coins,Not enough Coins,Nemáš dost mincí,ok,h35fbd693
 gate.reject.owned,Message when the gate is open already,Already unlocked,Už je odemčeno,ok,ha2c4620f
-gate.reject.loading,Message while the player's data is still loading,Still loading...,Ještě se načítá…,ok,hefd53ef6
 gate.reject.failed,Message for any other failure,Unlock failed,Odemčení se nepovedlo,ok,hb827097a
 # Warnings,,,,,
 hud.explore,"Banner when the player reached a stage checkpoint around the gate (no timer runs); {stage} = stage name. <b> = bold title, \n = line break","<b>Exploring {stage} without a timer</b>\nYou got in around the gate: no time, medal or finish reward counts here, but Coins you pick up do. Go through the gate to run it for real. Carrying on is at your own risk.","<b>{stage} bez měření času</b>\nDovnitř vedla cesta mimo bránu: čas, medaile ani odměna za dokončení se tu nepočítají, sebrané mince ano. Projdi branou. Jinak pokračuješ na vlastní riziko.",ok,h6896c21e
@@ -424,8 +422,6 @@ crop.name.Pineapple,"Crop name (singular, shown with its icon; EV2a ladder crop,
 number.million,"A number from a million on in short form (prices, sales); {n} = ""1.23"", ""12.3"", ""123"" (decimal mark per language). Czech: mil. = milionů",{n} M,{n} mil.,new,h365c6914
 number.billion,"A number from a billion on in short form; {n} = ""1.23"" etc. Czech: mld. = miliard",{n} B,{n} mld.,new,h7c54d8bc
 field.reason.far,Refused: the player is not at their own plot,Walk to your plot first,Nejdřív dojdi ke své zahrádce,new,h876a55dc
-field.reason.loading,Refused: the player's data is still loading,Still loading...,Ještě se načítá…,new,hefd53ef6
-field.reason.noplot,Refused: no garden plot was free on this server,You have no plot on this server,Na tomhle serveru nemáš zahrádku,new,h089bd3d2
 field.reason.square,Refused: the square number does not exist,That square does not exist,Takové políčko není,new,h301a7d89
 field.reason.occupied,Refused: something already grows on the square,Something is already growing there,Tady už něco roste,new,h516d50f4
 field.reason.renown,Refused: Renown level too low for the crop or square,Your Renown is too low for that,Máš na to málo Pověsti,new,hcaccd9dd
@@ -433,10 +429,8 @@ field.reason.seeds,Refused: no seeds of that crop,You have no seeds of that crop
 field.reason.empty,Refused: nothing is planted on the square,Nothing is growing there,Tady nic neroste,new,hc2718b15
 field.reason.notripe,Refused: the crop is not ripe yet,It is not ripe yet,Ještě to není zralé,new,h63d6b782
 field.reason.barn,Refused: the barn would hold too many seeds,The barn is full,Stodola je plná,new,h2e5c9c0a
-field.reason.coins,Refused: too few Coins,Not enough Coins,Nemáš dost mincí,new,h35fbd693
 field.reason.items,Refused: the player has fewer crops than asked to sell,You do not have that many,Tolik jich nemáš,new,h7ce6df01
 field.reason.maxed,Refused: all squares are bought,Your field is complete,Tvoje pole je kompletní,new,hda4eabde
-field.reason.stale,"Refused: the panel showed old data (double click, lag)","Out of date, try again","Údaje se mezitím změnily, zkus to znovu",new,ha5b6c678
 field.pet.label,"Label over a pet working on a field square, only for a pet with a given name (rich text, green second line). {name} = the pet's name (user text), {jobs} = its job icons and levels, ""🌱4 🛡2"" (field.job.*). Never the pet's level (U3a)","{name}
 <font color='#a8e6a0'>{jobs}</font>","{name}
 <font color='#a8e6a0'>{jobs}</font>",new,h385549f1

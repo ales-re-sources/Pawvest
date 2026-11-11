@@ -5,6 +5,9 @@
 -- Growth: a planted square earns growth seconds (`Grown`) at OnlineRate while its owner is online and at OfflineRate for
 -- at most OfflineCapSeconds of each absence; a crop is ripe at Grown >= growSeconds and waits (never rots).
 
+local TimeFormat = require(script.Parent:WaitForChild("TimeFormat"))
+local Num = require(script.Parent:WaitForChild("Num"))
+
 local CropConfig = {}
 
 -- Crops in catalogue order (EV2a, docs/ECONOMY.md → "EV": one ladder of grow times from 10 s to 24 h, net Coins per square-hour x 1.2
@@ -141,7 +144,7 @@ CropConfig.Cart = {
 	bargains = { { count = 10, discount = 0.3 }, { count = 5, discount = 0.5 } },
 	taste = { count = 2, price = 1, fromLevel = 3 },
 }
-CropConfig.DaySeconds = 86400
+CropConfig.DaySeconds = TimeFormat.DAY
 
 -- Garden tools (E1c3, docs/EXPANSION.md §6; numbers approved 2026-11-03, docs/ECONOMY.md → "Garden tools at F2"): levels bought with
 -- Coins, each level gated by a Renown level; Garden.Tools[id] = level. effect[n] at level n: Sorter = a harvest's size factor x (1 + effect)
@@ -272,21 +275,13 @@ end
 -- Level 0..max of upgrade `id` in `upgrades` (Garden.Field.Upgrades or the panel state's field.upgrades).
 function CropConfig.UpgradeLevel(upgrades, id: string): number
 	local upgrade = CropConfig.UpgradeById[id]
-	local level = type(upgrades) == "table" and upgrades[id]
-	if not upgrade or type(level) ~= "number" or level ~= level then
-		return 0
-	end
-	return math.clamp(math.floor(level), 0, #upgrade.prices)
+	return if upgrade and type(upgrades) == "table" then Num.Level(upgrades[id], 0, #upgrade.prices, 0) else 0
 end
 
 -- Level 0..max of tool `id` in `tools` (Garden.Tools or the panel state's field.tools).
 function CropConfig.ToolLevel(tools, id: string): number
 	local tool = CropConfig.ToolById[id]
-	local level = type(tools) == "table" and tools[id]
-	if not tool or type(level) ~= "number" or level ~= level then
-		return 0
-	end
-	return math.clamp(math.floor(level), 0, #tool.prices)
+	return if tool and type(tools) == "table" then Num.Level(tools[id], 0, #tool.prices, 0) else 0
 end
 
 -- The effect of tool `id` at its level in `tools` (0 without the tool).
@@ -427,7 +422,7 @@ end
 
 -- The market cart's day number for server time `now` (UTC days since the epoch).
 function CropConfig.CartDay(now: number): number
-	return math.floor(now / CropConfig.DaySeconds)
+	return TimeFormat.UtcDay(now)
 end
 
 -- The market cart's offers on day `day` for a player at Renown level `level`, in slot order: { slot, crop, count, price (Coins per seed),

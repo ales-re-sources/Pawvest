@@ -43,11 +43,7 @@ local function showStars(player)
 	if not stars then
 		return
 	end
-	local medals = {}
-	for _, stage in StageConfig.Stages do
-		medals[stage.key] = player:GetAttribute(StageConfig.MedalAttribute(stage)) or 0
-	end
-	stars.Value = StageConfig.TotalStars(medals)
+	stars.Value = StageConfig.TotalStars(StageConfig.MedalsFromAttributes(player))
 end
 
 local function watchStars(player)

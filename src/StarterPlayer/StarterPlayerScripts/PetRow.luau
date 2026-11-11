@@ -46,7 +46,7 @@ PetRow.CHIP_GAP = 4
 local COLOR_CHIP = Color3.fromRGB(28, 28, 28)
 local COLOR_TRACK = Color3.fromRGB(60, 60, 60)
 local COLOR_CARE = Color3.fromRGB(255, 205, 60) -- ▲
-local COLOR_TRAINED = Color3.fromRGB(120, 230, 120)
+local COLOR_TRAINED = StudStyle.Text.Ok
 local COLOR_WITH_YOU = StudStyle.Colors.Green
 local COLOR_FIELD = StudStyle.Colors.Wood
 

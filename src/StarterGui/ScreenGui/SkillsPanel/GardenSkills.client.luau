@@ -32,9 +32,9 @@ local BUY_WIDTH = 92
 local COLOR_BUY = StudStyle.Colors.Green
 local COLOR_LOCKED = StudStyle.Colors.Grey
 local COLOR_TAB = StudStyle.Shade(StudStyle.PanelColors.SkillsPanel, 0.6)
-local COLOR_INFO = Color3.fromRGB(235, 222, 190)
-local COLOR_ERROR = Color3.fromRGB(240, 100, 90)
-local COLOR_OK = Color3.fromRGB(120, 230, 120)
+local COLOR_INFO = StudStyle.Text.Info
+local COLOR_ERROR = StudStyle.Text.Error
+local COLOR_OK = StudStyle.Text.Ok
 
 local UPGRADE_KEYS = {
 	Growth = { name = "field.upgrade.growth", effect = "field.upgrade.growth.effect", max = "field.upgrade.growth.max" },

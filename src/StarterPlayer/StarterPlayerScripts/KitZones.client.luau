@@ -112,12 +112,6 @@ local function attr(part: Instance, name: string, default: any): any
 	return value
 end
 
-local function inside(zone: BasePart, position: Vector3): boolean
-	local local_ = zone.CFrame:PointToObjectSpace(position)
-	local half = zone.Size / 2
-	return math.abs(local_.X) <= half.X and math.abs(local_.Y) <= half.Y and math.abs(local_.Z) <= half.Z
-end
-
 -- Current strength of a wind zone, 0..1 (1 for a steady wind, KitMath.Gust for a gusting one).
 local function windStrength(zone: BasePart, now: number): number
 	local period = zone:GetAttribute("Period")
@@ -160,7 +154,7 @@ RunService.PreSimulation:Connect(function(dt: number)
 	local names = {}
 
 	for zone in zones do
-		if inside(zone, root.Position) then
+		if KitMath.InBox(zone, root.Position) then
 			local kind = attr(zone, "Kind", "Wind")
 			table.insert(names, zone.Name)
 			if kind == "Wind" then

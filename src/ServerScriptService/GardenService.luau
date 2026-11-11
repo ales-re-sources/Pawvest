@@ -12,6 +12,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local GardenConfig = require(ReplicatedStorage.GardenConfig)
+local Num = require(ReplicatedStorage.Num)
 local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local PetService = require(ServerScriptService.PetService)
 local GardenPlots = require(ServerScriptService.GardenPlots)
@@ -124,10 +125,6 @@ local function usable(player: Player, action: string)
 	return profile
 end
 
-local function wholeNumber(value: any): boolean
-	return type(value) == "number" and value == math.floor(value) and math.abs(value) < 1e6
-end
-
 local function succeed(player: Player, action: string, detail: any)
 	resultEvent:FireClient(player, action, true, detail)
 end
@@ -136,7 +133,7 @@ GardenService.Allow = allow
 GardenService.Reject = reject
 GardenService.Succeed = succeed
 GardenService.Usable = usable
-GardenService.WholeNumber = wholeNumber
+GardenService.WholeNumber = Num.Whole -- kept for the garden modules
 GardenService.PublishAll = publishAll
 
 requestStateEvent.OnServerEvent:Connect(function(player)

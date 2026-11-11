@@ -8,6 +8,7 @@
 local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local KitMath = require(game:GetService("ReplicatedStorage"):WaitForChild("KitMath"))
 
 local player = Players.LocalPlayer
 
@@ -45,9 +46,7 @@ end
 local function zoneTransparency(position: Vector3): number?
 	local result: number? = nil
 	for zone in zones do
-		local local_ = zone.CFrame:PointToObjectSpace(position)
-		local half = zone.Size / 2
-		if math.abs(local_.X) <= half.X and math.abs(local_.Y) <= half.Y and math.abs(local_.Z) <= half.Z then
+		if KitMath.InBox(zone, position) then
 			local value = zone:GetAttribute("Transparency")
 			value = if type(value) == "number" then value else DEFAULT_TRANSPARENCY
 			result = if result then math.max(result, value) else value
