@@ -64,6 +64,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG8 | Pepper growth art | [Red chilli-pepper bush](plants/PEPPER.md); corrected pointed/curved fruit replaces the bell shape; CG8b/c registered | Revised Studio checks pass (84 Parts, seeds, sizes, bounds, attachments, seeks, proxies, PlotView); updated five stills await art review; performance, real phone and second client open | – |
 | CG10 | Golden Carrot growth art | [Buried pointed root and tall divided crown](plants/GOLDEN_CARROT.md); CG10b/c/d registered with harvest feedback | Five stills approved 2026-11-10; growth, PlotView lifecycle/detail transitions, harvest-response fixture and desktop growing/ripe CPU samples checked; real phone and second client open | – |
 | CG14 | Broccoli growth art | [Lobed foliage and domed floret crown](plants/BROCCOLI.md); CG14a/b/c registered | Longer-leaf art approved by Ales 2026-11-11; Studio geometry and production PlotView checks pass; field/24-plot performance, real phone and second client open | – |
+| CG15 | Pumpkin growth art | [Arching vine, ribbed 2.6-stud fruit](plants/PUMPKIN.md); CG15a-c registered | Studio geometry and production PlotView checks pass; five stills await Ales's review; field/24-plot performance, real phone and second client open | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -144,6 +145,13 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
   Studio geometry (six seeds × three masses × 101 ages, 2.08-stud maximum radius, exact seeks) and production PlotView lifecycle,
   corrections, exact ripeness, detail transitions, soil ray and harvest/replant feed checks pass. [Five stills](art/broccoli/growth-review.png)
   and the longer-leaf design approved by Ales (2026-11-11). CG14d field/24-plot performance, real phone, second client and live validation remain open.
+- **CG15:** [Pumpkin](plants/PUMPKIN.md) (3 h). From Ales's life-cycle and ripe-patch references (2026-11-11) three static ripe studies were
+  built; Ales chose **B, the arching vine**, with the fruit **30% bigger** (2.6 studs). Registered recipe: 96 Parts (seed shell, seed
+  leaves, 7 vine rods, 6 leaves, 2 flowers that wilt, 3 tendrils, 24-rib fruit + stem), mid proxies 5 / 26 / 24. Studio geometry (six
+  seeds × three masses × 101 ages: 2.39-stud maximum radius, 4.47-stud top, exact seeks; the heavy fruit slides inward and is clamped
+  to 3.24 studs at the largest mass) and production PlotView lifecycle, corrections, exact ripeness, selection, detail round trip,
+  harvest/replant pass (`tools/pumpkin_integration_checks.luau`); boot clean. [Five stills](art/pumpkin/growth-review.jpg) await
+  Ales's review. CG15d field/24-plot performance (3,456 plant Parts per full field), real phone and second client open.
 
 Key talents as **world rewards**: done for Double Jump (K1, GDD §6). Open: Triple Jump / Dash for World 3. The lost Coin sinks are made up in
 the balancing pass (STAGES §6, GDD §6).
