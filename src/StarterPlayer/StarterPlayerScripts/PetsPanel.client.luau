@@ -22,6 +22,7 @@ local TweenService = game:GetService("TweenService")
 
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
+local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
 local PetDetail = require(script.Parent:WaitForChild("PetDetail"))
@@ -54,7 +55,7 @@ local SUMMARY_TOP = if COMPACT then 38 else 42
 local FILTER_TOP = if COMPACT then 60 else 68
 local INFO_TOP = FILTER_TOP + BRICK + 6 -- not compact
 local LIST_TOP = if COMPACT then FILTER_TOP + BRICK + 6 else INFO_TOP + 24
-local CONFIRM_SECONDS = 3 -- how long "Sure?" waits for the second click
+local SLOT_KEY = "PetSlot" -- ConfirmTap key of the slot buy ("Sure?" waits for a second click)
 local POS_OPEN = UDim2.new(0, LEFT, 0, 80.3)
 local POS_CLOSED = UDim2.new(0, -WIDTH * FIT_SCALE - 20, 0, 80.3)
 
@@ -91,34 +92,12 @@ local function bonusText(permille: number): string
 	return Locale.T("common.percentBonus", { pct = Locale.Decimal(PetClient.Percent(permille)) })
 end
 
-local function create(className: string, props, children)
-	local instance = Instance.new(className)
-	for key, value in props do
-		instance[key] = value
-	end
-	for _, child in children or {} do
-		child.Parent = instance
-	end
-	return instance
-end
+local create = UiKit.Create
 
-local function label(name: string, props)
-	props.Name = name
-	props.BackgroundTransparency = 1
-	props.Font = props.Font or StudStyle.Font
-	props.TextColor3 = props.TextColor3 or Color3.new(1, 1, 1)
-	props.TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Left
-	return create("TextLabel", props)
-end
+local label = UiKit.Label
 
 -- a brick button (StudStyle.Brick: colour and text keep being set on the button itself)
-local function button(name: string, props, studs: number?)
-	props.Name = name
-	props.TextColor3 = Color3.new(1, 1, 1)
-	local instance = create("TextButton", props)
-	StudStyle.Brick(instance, { studs = studs })
-	return instance
-end
+local button = UiKit.Button
 
 -- Pet portraits -------------------------------------------------------------------------------------------------------
 local listPortrait = PetPortrait.Cache()
@@ -238,8 +217,7 @@ local screenGui = create("ScreenGui", {
 }, { panel, setOpenEvent })
 
 local pendingSlot: number? = nil -- slot waiting for the second click
-local pendingToken = 0
-local flashToken = 0
+local flashTimer = UiKit.Latest()
 local flashing = false -- a message is showing: refresh leaves the info line alone
 local rows = {} -- [uid] = row frame (rebuilt on every state change)
 
@@ -277,33 +255,21 @@ local function defaultInfo()
 end
 
 local function flash(text: string, color: Color3)
-	flashToken += 1
 	flashing = true
-	local mine = flashToken
 	showInfo(text, color)
-	task.delay(3, function()
-		if flashToken == mine then
-			flashing = false
-			defaultInfo()
-		end
+	flashTimer.After(3, function()
+		flashing = false
+		defaultInfo()
 	end)
 end
 
 local function clearPending()
 	pendingSlot = nil
-	pendingToken += 1
+	ConfirmTap.Disarm(SLOT_KEY)
 end
 
--- arms a two-click confirmation; it lapses after CONFIRM_SECONDS
-local function armPending()
-	pendingToken += 1
-	local mine = pendingToken
-	task.delay(CONFIRM_SECONDS, function()
-		if pendingToken == mine then
-			clearPending()
-			refresh()
-		end
-	end)
+local function isPending(index: number): boolean
+	return pendingSlot == index and ConfirmTap.IsArmed(SLOT_KEY)
 end
 
 local function equippedCount(): number
@@ -421,13 +387,13 @@ for index = 1, slotCount do
 			flash(Locale.T("pets.slot.buyFirst", { slot = state.slots + 1 }), COLOR_ERROR)
 		elseif PetClient.Coins < PetConfig.SlotPrices[index] then
 			flash(rejectText("coins"), COLOR_ERROR)
-		elseif pendingSlot == index then
+		elseif isPending(index) then
 			clearPending()
 			remotes.BuySlot:FireServer(index)
 		else
 			clearPending()
 			pendingSlot = index
-			armPending()
+			ConfirmTap.Tap(SLOT_KEY, refresh)
 		end
 		refresh()
 		hoveredSlot = index -- a tap on a touch screen shows the tooltip too
@@ -478,11 +444,12 @@ local function refreshSlots(inventory)
 		elseif slot.kind == "buy" then
 			local price = PetConfig.SlotPrices[index]
 			b.BackgroundColor3 = if PetClient.Coins >= price then COLOR_BUY else COLOR_LOCKED
-			if pendingSlot == index then
+			local pending = isPending(index)
+			if pending then
 				b.BackgroundColor3 = ConfirmTap.COLOR -- U4: the one confirm colour (the slot keeps its short "Sure?")
 			end
-			b.Text = Locale.T(if pendingSlot == index then "pets.slot.sure" else "pets.slot.buy")
-			slot.caption.Text = if pendingSlot == index then Locale.Number(price) else ""
+			b.Text = Locale.T(if pending then "pets.slot.sure" else "pets.slot.buy")
+			slot.caption.Text = if pending then Locale.Number(price) else ""
 			slot.caption.TextColor3 = Color3.new(1, 1, 1)
 		else
 			b.BackgroundColor3 = COLOR_LOCKED_LATER

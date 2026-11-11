@@ -7,7 +7,7 @@
 --     growth boosts that apply (Growth upgrade, Cloches), a row per field pet whose reach covers the square (portrait, job icons,
 --     what it does there; a tap opens its pet page through PetsGui's OpenPet attribute) and the context buttons: Plant (seed
 --     picker), Harvest, Place pet (pet picker), Move pet (takes the pet in hand, Pets mode), Take back, Buy square (price and
---     Renown of the next square; over CONFIRM_PRICE Coins a second tap within CONFIRM_SECONDS confirms);
+--     Renown of the next square; ConfirmTap: two taps over its threshold);
 --   * a placed pet's reach is tinted for REACH_SECONDS (GardenView.ShowReach), as is the reach of a row hovered in the pet picker;
 --   * hand bar (U3b, shown while the tap range applies; a 2 x 2 block above the jump button on a touch screen without a keyboard,
 --     else a row at the bottom right): Seeds (picks a seed in the card, then every tap on an empty square plants it; the button
@@ -46,6 +46,8 @@ local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local PlantGrowth = require(ReplicatedStorage:WaitForChild("PlantGrowth"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
+local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
+local ConfirmTap = require(ReplicatedStorage:WaitForChild("ConfirmTap"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
 local UiSounds = require(ReplicatedStorage:WaitForChild("UiSounds"))
@@ -53,6 +55,7 @@ local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local GardenView = require(script.Parent:WaitForChild("GardenView"))
 local PlotView = require(script.Parent:WaitForChild("PlotView"))
 local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
+local GardenUi = require(script.Parent:WaitForChild("GardenUi"))
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
 local plantEvent = remotes:WaitForChild("Plant")
@@ -71,8 +74,6 @@ local CARD_BOTTOM = 76 -- px from the bottom: above the Field button (48 px at 2
 local BUTTON_HEIGHT = 48
 local ROW_HEIGHT = 54
 local GAP = 8
-local CONFIRM_PRICE = 1000
-local CONFIRM_SECONDS = 3
 local REACH_SECONDS = 3
 local TICK_SECONDS = 0.25
 local FIRE_GAP = 0.25 -- s between two field remotes (the server's limit is 0.2)
@@ -93,7 +94,6 @@ local COLOR_GO = StudStyle.Colors.Green
 local COLOR_PET = StudStyle.Colors.Blue
 local COLOR_OFF = StudStyle.Colors.Grey
 local COLOR_CLOSE = StudStyle.Colors.Red
-local COLOR_ARMED = Color3.fromRGB(240, 140, 40)
 local COLOR_INFO = StudStyle.Text.Info
 local COLOR_DIM = StudStyle.Text.Dim
 local COLOR_OK = StudStyle.Text.Ok
@@ -102,47 +102,21 @@ local COLOR_TRACK = Color3.fromRGB(45, 38, 30)
 
 -- Helpers ---------------------------------------------------------------------------------------------------------------------
 
-local function create(className: string, props, children)
-	local instance = Instance.new(className)
-	for key, value in props do
-		(instance :: any)[key] = value
-	end
-	for _, child in children or {} do
-		child.Parent = instance
-	end
-	return instance
-end
+local create = UiKit.Create
 
-local function label(name: string, props)
-	props.Name = name
-	props.BackgroundTransparency = 1
-	props.Font = props.Font or StudStyle.Font
-	props.TextColor3 = props.TextColor3 or Color3.new(1, 1, 1)
-	props.TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Left
-	return create("TextLabel", props)
-end
+local label = UiKit.Label
 
 -- a text that wraps and grows downwards
 local function paragraph(name: string, order: number, props)
 	props.LayoutOrder = order
-	props.Size = props.Size or UDim2.new(1, 0, 0, 0)
-	props.AutomaticSize = Enum.AutomaticSize.Y
-	props.TextWrapped = true
-	props.Font = props.Font or Enum.Font.Gotham
 	props.TextSize = props.TextSize or 15
-	props.TextColor3 = props.TextColor3 or COLOR_INFO
-	props.TextYAlignment = Enum.TextYAlignment.Top
-	return label(name, props)
+	return UiKit.Paragraph(name, props)
 end
 
 -- a brick button (StudStyle.Brick: colour and text keep being set on the button itself)
 local function brick(name: string, props, studs: number?)
-	props.Name = name
-	props.TextColor3 = Color3.new(1, 1, 1)
 	props.TextWrapped = true
-	local instance = create("TextButton", props)
-	StudStyle.Brick(instance, { studs = studs })
-	return instance
+	return UiKit.Button(name, props, studs)
 end
 
 local function pct(share: number): string
@@ -154,18 +128,9 @@ local function rootPosition(): Vector3?
 	return if root and root:IsA("BasePart") then root.Position else nil
 end
 
-local function plotCFrame(): CFrame?
-	local slot = player:GetAttribute(GardenConfig.PlotAttribute)
-	return if type(slot) == "number" then GardenConfig.PlotCFrame(slot) else nil
-end
-
 local function inRange(): boolean
-	local root, plot = rootPosition(), plotCFrame()
-	if not (root and plot) then
-		return false
-	end
-	local offset = root - plot.Position
-	return Vector3.new(offset.X, 0, offset.Z).Magnitude <= TAP_DISTANCE
+	local distance = GardenView.FlatDistanceToPlot()
+	return distance ~= nil and distance <= TAP_DISTANCE
 end
 
 -- State ------------------------------------------------------------------------------------------------------------------------
@@ -186,8 +151,7 @@ local tappedSquare = false -- a tap hit a square this session (Look's hint stops
 local standing: number? = nil -- the square outlined under the character
 local pendingPlant: { [number]: { crop: string, untilClock: number } } = {}
 local pendingHarvest: { [number]: number } = {} -- [square] = until os.clock()
-local armedUntil = 0 -- Buy square's second tap is open until this os.clock()
-local reachToken = 0
+local reachTimer = UiKit.Latest()
 local barFill: Frame? = nil
 local barText: TextLabel? = nil
 local cardRipe = false -- whether the card was drawn for a ripe crop (it redraws when the crop ripens)
@@ -359,27 +323,18 @@ end
 
 -- the progress bar with the time left inside
 local function bar(order: number)
-	local track = create("Frame", {
-		Name = "Bar",
-		LayoutOrder = order,
-		Size = UDim2.new(1, 0, 0, 30),
-		BackgroundColor3 = COLOR_TRACK,
-		Parent = body,
-	}, { create("UICorner", { CornerRadius = UDim.new(0, 8) }) })
-	barFill = create("Frame", {
-		Name = "Fill",
-		Size = UDim2.fromScale(0, 1),
-		BackgroundColor3 = COLOR_BAR,
-		Parent = track,
-	}, { create("UICorner", { CornerRadius = UDim.new(0, 8) }) })
-	barText = label("Time", {
-		Size = UDim2.fromScale(1, 1),
-		TextSize = 18,
-		TextXAlignment = Enum.TextXAlignment.Center,
-		TextStrokeTransparency = 0.3,
-		ZIndex = 2,
-		Parent = track,
+	local _, fill, text = UiKit.Bar("Bar", {
+		order = order,
+		height = 30,
+		corner = 8,
+		track = COLOR_TRACK,
+		fill = COLOR_BAR,
+		text = "",
+		textSize = 18,
+		textStroke = 0.3,
+		parent = body,
 	})
+	barFill, barText = fill, text
 end
 
 local function buttonRow(order: number, specs)
@@ -407,7 +362,11 @@ local function buttonRow(order: number, specs)
 			Text = spec.text,
 			Parent = row,
 		}, 2)
-		button.Activated:Connect(spec.action)
+		if spec.confirmKey then
+			ConfirmTap.Wrap(button, spec.confirmKey, spec.needsConfirm, spec.action)
+		else
+			button.Activated:Connect(spec.action)
+		end
 	end
 	return row
 end
@@ -559,28 +518,19 @@ local function renderLocked(square: number)
 		paragraph("Reason", 3, { RichText = true, Text = table.concat(lines, "\n") }).Parent = body
 	end
 	local can = #lines == 0
-	local armed = os.clock() < armedUntil
 	buttonRow(9, {
 		{
 			name = "Buy",
-			color = if not can then COLOR_OFF elseif armed then COLOR_ARMED else COLOR_GO,
-			text = if armed then Locale.T("field.card.tapAgain") else Locale.T("field.card.buy"),
+			color = if can then COLOR_GO else COLOR_OFF,
+			text = Locale.T("field.card.buy"),
+			confirmKey = "Square" .. square,
+			needsConfirm = function()
+				return can and ConfirmTap.Over(expansion.price)
+			end,
 			action = function()
-				if not can then
-					return
+				if can then
+					fire(buySquareEvent, square, #(fieldState.open or {}))
 				end
-				if expansion.price > CONFIRM_PRICE and os.clock() >= armedUntil then
-					armedUntil = os.clock() + CONFIRM_SECONDS
-					render()
-					task.delay(CONFIRM_SECONDS, function()
-						if os.clock() >= armedUntil then
-							render()
-						end
-					end)
-					return
-				end
-				armedUntil = 0
-				fire(buySquareEvent, square, #(fieldState.open or {}))
 			end,
 		},
 	})
@@ -595,7 +545,7 @@ local function renderCard()
 	local entry = fieldState.squares and fieldState.squares[tostring(square)]
 	local crop = entry and CropConfig.ById[entry.crop]
 	local pet = (fieldState.pets or {})[tostring(square)]
-	header(if crop then crop.icon .. " " .. Locale.CropName(crop) else Locale.T("field.card.empty"), closeCard)
+	header(if crop then GardenUi.CropTitle(crop) else Locale.T("field.card.empty"), closeCard)
 	local ripe = false
 	if crop then
 		bar(2)
@@ -701,13 +651,12 @@ local function renderSeeds(square: number?)
 	header(if square then Locale.T("field.picker.title", { n = square }) else Locale.T("field.hand.pickSeed"), if square then back else closeCard)
 	local list = pickerList(2)
 	local rows = 0
-	local growth = CropConfig.GrowthSpeed(CropConfig.UpgradeLevel(fieldState.upgrades, "Growth"))
 	for _, crop in CropConfig.Crops do
 		local stock = (fieldState.seeds or {})[crop.id] or 0
 		if stock > 0 then
 			rows += 1
-			local seconds = math.ceil(crop.growSeconds / growth - 1e-6)
-			local row = pickerRow(list, crop.id, rows, crop.icon .. " " .. Locale.CropName(crop), Locale.T("field.picker.info", { stock = stock, time = TimeFormat.GrowTime(seconds) }), true, COLOR_GO)
+			local seconds = GardenUi.GrowSecondsOn(fieldState, crop)
+			local row = pickerRow(list, crop.id, rows, GardenUi.CropTitle(crop), Locale.T("field.picker.info", { stock = stock, time = TimeFormat.GrowTime(seconds) }), true, COLOR_GO)
 			row.Activated:Connect(function()
 				if square then
 					fire(plantEvent, square, crop.id)
@@ -815,7 +764,7 @@ function render()
 		local crop = entry and CropConfig.ById[entry.crop]
 		if crop and barFill and barText then
 			local share, ripe, left = progress(entry, crop, workspace:GetServerTimeNow())
-			barFill.Size = UDim2.fromScale(share, 1)
+			UiKit.SetShare(barFill, share)
 			barFill.BackgroundColor3 = if ripe then COLOR_OK else COLOR_BAR
 			barText.Text = if ripe then Locale.T("field.card.ripe") else TimeFormat.Clock(left)
 		end
@@ -836,7 +785,6 @@ end
 
 local function select(square: number, toPage: string?)
 	selected, page = square, toPage or "card"
-	armedUntil = 0
 	GardenView.ShowSelect(square)
 	showCard()
 end
@@ -856,7 +804,7 @@ rayParams.FilterType = Enum.RaycastFilterType.Include
 -- The own square under screen point `point` (InputObject / TouchTapInWorld coordinates), or nil.
 local function squareUnder(point: Vector2): number?
 	local camera = workspace.CurrentCamera
-	local plot = plotCFrame()
+	local plot = GardenConfig.PlotOf(player)
 	local root = GardenView.OwnRoot()
 	if not (camera and plot) then
 		return nil
@@ -919,7 +867,7 @@ local handHint = label("Hint", {
 	Parent = handBar,
 })
 local handButtons: { [string]: TextButton } = {}
-local pulses: { [string]: Tween? } = {}
+local pulses: { [string]: (boolean) -> () } = {} -- UiKit.Pulse setters of the hand buttons
 local seedCount: TextLabel
 
 local function touchLayout(): boolean
@@ -987,7 +935,7 @@ for index, name in MODES do
 		create("UICorner", { CornerRadius = UDim.new(0, 9) }),
 		create("UIStroke", { Color = Color3.new(1, 1, 1), Thickness = 3 }),
 	})
-	create("UIScale", { Name = "Pulse", Parent = button })
+	pulses[name] = UiKit.Pulse(button, 1.15, 0.45)
 	handButtons[name] = button
 end
 seedCount = label("Count", {
@@ -1003,19 +951,7 @@ seedCount = label("Count", {
 })
 
 local function setPulse(name: string, on: boolean)
-	if on == (pulses[name] ~= nil) then
-		return
-	end
-	local scale = handButtons[name]:FindFirstChild("Pulse") :: UIScale
-	if pulses[name] then
-		(pulses[name] :: Tween):Cancel()
-		pulses[name] = nil
-		scale.Scale = 1
-		return
-	end
-	local tween = TweenService:Create(scale, TweenInfo.new(0.45, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Scale = 1.15 })
-	pulses[name] = tween
-	tween:Play()
+	pulses[name](on)
 end
 
 -- the next step (G1 style): Seeds while nothing is planted and seeds are held, Basket while something is ripe
@@ -1048,7 +984,7 @@ function renderBar()
 		local name = if owned then petName(held, owned.Kind) else ""
 		text = if preview then Locale.T("field.hand.dropAgain", { pet = name }) else Locale.T("field.card.moving", { pet = name })
 	elseif mode == "seeds" and crop then
-		text = Locale.T("field.hand.seeds", { crop = crop.icon .. " " .. Locale.CropName(crop) })
+		text = Locale.T("field.hand.seeds", { crop = GardenUi.CropTitle(crop) })
 	elseif mode == "basket" then
 		text = Locale.T("field.hand.basket")
 	elseif mode == "pets" then
@@ -1315,11 +1251,9 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 	-- the placed pet's reach, for a moment
 	local pet = PetClient.State and PetClient.State.pets[detail.uid]
 	if pet then
-		reachToken += 1
-		local mine = reachToken
 		GardenView.ShowReach(reachOf(detail.square, math.max(PetConfig.AptitudeLevel(pet, "Tending"), PetConfig.AptitudeLevel(pet, "PestControl"))))
-		task.delay(REACH_SECONDS, function()
-			if reachToken == mine and not held and page ~= "pets" then
+		reachTimer.After(REACH_SECONDS, function()
+			if not held and page ~= "pets" then
 				GardenView.ShowReach(nil)
 			end
 		end)
@@ -1480,7 +1414,7 @@ RunService.Heartbeat:Connect(function(dt)
 			render() -- it ripened while the card was open: the Harvest button appears
 			return
 		end
-		barFill.Size = UDim2.fromScale(share, 1)
+		UiKit.SetShare(barFill, share)
 		barFill.BackgroundColor3 = if ripe then COLOR_OK else COLOR_BAR
 		barText.Text = if ripe then Locale.T("field.card.ripe") else TimeFormat.Clock(left)
 	end

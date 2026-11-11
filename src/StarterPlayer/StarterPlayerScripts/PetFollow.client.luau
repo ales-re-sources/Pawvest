@@ -291,8 +291,7 @@ RunService.Heartbeat:Connect(function(dt)
 			continue
 		end
 		local target
-		local plotSlot = player:GetAttribute(GardenConfig.PlotAttribute)
-		local plot = if type(plotSlot) == "number" then GardenConfig.PlotCFrame(plotSlot) else nil
+		local plot = GardenConfig.PlotOf(player)
 		local parked = false
 		if plot then
 			local spot = plot:PointToObjectSpace(root.Position)

@@ -55,6 +55,12 @@ function GardenConfig.PlotCFrame(slot: number, rings: { PlotRing }?): CFrame?
 	return CFrame.lookAt(at, Vector3.new(centre.X, at.Y, centre.Z))
 end
 
+-- Floor CFrame of the plot `player` borrows (its PlotAttribute), or nil without one. Works for any player, on both sides.
+function GardenConfig.PlotOf(player: Player): CFrame?
+	local slot = player:GetAttribute(GardenConfig.PlotAttribute)
+	return if type(slot) == "number" then GardenConfig.PlotCFrame(slot) else nil
+end
+
 local PetConfig = require(script.Parent:WaitForChild("PetConfig"))
 
 -- Square (1..12) of the crop field where pet `uid` works (E1b: Garden.FieldPets[uid] = { Square, Job }), or nil.

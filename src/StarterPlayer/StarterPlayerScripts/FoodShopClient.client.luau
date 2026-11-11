@@ -13,19 +13,19 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
+local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
-local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
 local PanelFocus = require(ReplicatedStorage:WaitForChild("PanelFocus"))
 local PetRow = require(script.Parent:WaitForChild("PetRow"))
 local PetFilterBar = require(script.Parent:WaitForChild("PetFilterBar"))
+local GardenUi = require(script.Parent:WaitForChild("GardenUi"))
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
 local feedEvent = remotes:WaitForChild("Feed") -- looked up by name, never `remotes.X`
@@ -35,16 +35,13 @@ local WIDTH = 540
 local HEIGHT = 480
 local FOOD_BUTTON_WIDTH = 86
 local ARM_SECONDS = 3 -- touch: how long a selected food button waits for the second tap
-local TOOLTIP_ROOM = 130 -- a button closer than this to the panel's top gets its tooltip below it
 local FILTER_TOP = 74 -- the filter chips (PetFilterBar, as in the Pets panel) sit above the pet list
-local MARGIN = 16 -- screen margin around the panel on a small screen
 local CLOSE_DISTANCE = GardenConfig.FoodStandDistance -- walking further from the stand closes the panel (the server rejects it too)
 
 local COLOR_PANEL = StudStyle.PanelColors.FoodShop
 local COLOR_ROW = StudStyle.PetRowColor(COLOR_PANEL)
 local COLOR_BUY = StudStyle.Colors.Green
 local COLOR_LOCKED = StudStyle.Colors.Grey
-local COLOR_CLOSE = StudStyle.Shade(StudStyle.Colors.Red, 0.75) -- a darker red than the panel's title strip
 local COLOR_INFO = StudStyle.Text.Info
 local COLOR_ERROR = StudStyle.Text.Error
 local COLOR_OK = StudStyle.Text.Ok
@@ -53,54 +50,23 @@ local REJECT_KEYS = { -- the rest: Locale.Reject's common.reject.*
 	far = "food.reject.far",
 }
 
-local function create(className: string, props, children)
-	local instance = Instance.new(className)
-	for key, value in props do
-		instance[key] = value
-	end
-	for _, child in children or {} do
-		child.Parent = instance
-	end
-	return instance
-end
+local create = UiKit.Create
 
-local function label(name: string, props)
-	props.Name = name
-	props.BackgroundTransparency = 1
-	props.Font = props.Font or StudStyle.Font
-	props.TextColor3 = props.TextColor3 or Color3.new(1, 1, 1)
-	props.TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Left
-	return create("TextLabel", props)
-end
+local label = UiKit.Label
 
 -- a brick button (StudStyle.Brick: colour and text keep being set on the button itself)
-local function button(name: string, props, studs: number?)
-	props.Name = name
-	props.TextColor3 = Color3.new(1, 1, 1)
-	local instance = create("TextButton", props)
-	StudStyle.Brick(instance, { studs = studs })
-	return instance
-end
+local button = UiKit.Button
 
 local rowPortrait = PetPortrait.Cache()
 
 -- Panel ------------------------------------------------------------------------------------------------------------------
 
--- the brick title strip: StudStyle.Panel styles a child named TitleLabel
-local titleLabel = label("TitleLabel", {
-	Size = UDim2.new(1, 0, 0, 34),
-	TextSize = 20,
-	TextXAlignment = Enum.TextXAlignment.Center,
-})
-local closeButton = button("Close", {
-	AnchorPoint = Vector2.new(1, 0),
-	Position = UDim2.new(1, -6, 0, 4),
-	Size = UDim2.fromOffset(30, 28),
-	ZIndex = 2,
-	BackgroundColor3 = COLOR_CLOSE,
-	TextSize = 16,
-	Text = "X",
-}, 1)
+-- the shell (GardenUi.Panel: brick title strip, X button, fit to the screen); the filter chips, status line and pet list are
+-- laid out here
+local shell = GardenUi.Panel("FoodShopGui", COLOR_PANEL, WIDTH, HEIGHT, { content = false })
+local panel, titleLabel, closeButton = shell.panel, shell.title, shell.close
+local screenGui = shell.gui
+
 local statusLabel = label("Status", {
 	Position = UDim2.new(0, 12, 0, 38),
 	Size = UDim2.new(1, -24, 0, 34),
@@ -133,48 +99,12 @@ local emptyLabel = label("Empty", {
 	Visible = false,
 })
 
--- one tooltip for the whole panel, placed above the food button it describes
-local tooltip = label("Tooltip", {
-	AnchorPoint = Vector2.new(0.5, 1),
-	Size = UDim2.fromOffset(220, 0),
-	AutomaticSize = Enum.AutomaticSize.Y,
-	TextSize = 14,
-	TextWrapped = true,
-	TextXAlignment = Enum.TextXAlignment.Center,
-	RichText = true,
-	ZIndex = 10,
-	Visible = false,
-})
-tooltip.BackgroundTransparency = 0 -- label() makes labels transparent
-tooltip.BackgroundColor3 = StudStyle.Shade(COLOR_PANEL, 0.2)
-create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = tooltip })
-create("UIStroke", { ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = Color3.fromRGB(255, 205, 60), Thickness = 2, Parent = tooltip })
-create("UIPadding", {
-	PaddingTop = UDim.new(0, 5),
-	PaddingBottom = UDim.new(0, 5),
-	PaddingLeft = UDim.new(0, 8),
-	PaddingRight = UDim.new(0, 8),
-	Parent = tooltip,
-})
-
-local fit = create("UIScale", { Scale = 1 })
-local panel = create("Frame", {
-	Name = "Panel",
-	AnchorPoint = Vector2.new(0.5, 0.5),
-	Position = UDim2.fromScale(0.5, 0.5),
-	Size = UDim2.fromOffset(WIDTH, HEIGHT),
-	Visible = false,
-}, {
-	titleLabel,
-	closeButton,
-	statusLabel,
-	list,
-	emptyLabel,
-	tooltip,
-	fit,
-})
-StudStyle.Panel(panel, COLOR_PANEL)
+statusLabel.Parent = panel
+list.Parent = panel
+emptyLabel.Parent = panel
 local chipTooltip = PetRow.Tooltip(panel, COLOR_PANEL)
+-- one for the whole panel, over the food button it describes (under it in the first rows: it would cover the filter chips)
+local foodTooltip = PetRow.Tooltip(panel, COLOR_PANEL, { name = "Tooltip", room = 130 })
 
 local refresh -- defined below; a filter pick calls it
 local chipHeight = 36
@@ -202,25 +132,13 @@ local function layoutList()
 end
 layoutList()
 
-local screenGui = create("ScreenGui", {
-	Name = "FoodShopGui",
-	ResetOnSpawn = false,
-	DisplayOrder = 5,
-	ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
-	AutoLocalize = false, -- translated by Locale (L2)
-}, { panel })
-
 -- U1: a phone screen (e.g. 844 x 390) is smaller than the panel: scale it to fit; the food buttons then grow so a finger still hits
 -- them (≥ 36 px on screen)
 local buttonHeight = 46
 local rowHeight = 62
 local function fitToScreen()
-	local camera = workspace.CurrentCamera
-	local viewport = camera.ViewportSize
-	local inset = math.max(game:GetService("GuiService").TopbarInset.Height, 58)
-	local scale = math.min(1, (PanelFit.ViewportHeight() - inset - MARGIN) / HEIGHT, (viewport.X - 2 * MARGIN) / WIDTH)
-	scale = math.max(scale, 0.5)
-	fit.Scale = scale
+	shell.Fit()
+	local scale = shell.Scale()
 	buttonHeight = math.min(60, math.max(46, math.ceil(36 / scale)))
 	rowHeight = math.max(62, buttonHeight + 10)
 	chipHeight = math.max(36, math.ceil(36 / scale))
@@ -241,8 +159,8 @@ local rows = {}
 local buttons = {} -- ["uid:foodId"] = { button, entry, food } of the current rows
 local hovered: string? = nil -- key of the food button under the mouse
 local armed: string? = nil -- touch: key of the selected food button
-local armToken = 0
-local flashToken = 0
+local armTimer = UiKit.Latest()
+local flashTimer = UiKit.Latest()
 
 local function showDefaultStatus()
 	statusLabel.Text = Locale.T("food.status")
@@ -250,15 +168,9 @@ local function showDefaultStatus()
 end
 
 local function flash(text: string, color: Color3)
-	flashToken += 1
-	local mine = flashToken
 	statusLabel.Text = text
 	statusLabel.TextColor3 = color
-	task.delay(4, function()
-		if flashToken == mine then
-			showDefaultStatus()
-		end
-	end)
+	flashTimer.After(4, showDefaultStatus)
 end
 
 local function hex(color: Color3): string
@@ -319,7 +231,7 @@ local function updateTooltip()
 	local key = armed or hovered
 	local info = key and buttons[key]
 	if not (info and info.button.Parent and PetClient.State) then
-		tooltip.Visible = false
+		foodTooltip.Hide()
 		return
 	end
 	local food = info.food
@@ -332,29 +244,14 @@ local function updateTooltip()
 	elseif armed == key then
 		table.insert(lines, Locale.T("food.tapAgain"))
 	end
-	tooltip.Text = table.concat(lines, "\n")
-	-- above the button; below it near the top of the list (it would cover the title and the close button), and kept
-	-- inside the panel's width
-	local b = info.button
-	local scale = fit.Scale -- panel pixels: the panel may be scaled down (fitToScreen)
-	local top = (b.AbsolutePosition.Y - panel.AbsolutePosition.Y) / scale
-	local half = tooltip.Size.X.Offset / 2
-	local x = math.clamp((b.AbsolutePosition.X - panel.AbsolutePosition.X + b.AbsoluteSize.X / 2) / scale, half + 4, WIDTH - half - 4)
-	if top < TOOLTIP_ROOM then
-		tooltip.AnchorPoint = Vector2.new(0.5, 0)
-		tooltip.Position = UDim2.fromOffset(x, top + b.AbsoluteSize.Y / scale + 8)
-	else
-		tooltip.AnchorPoint = Vector2.new(0.5, 1)
-		tooltip.Position = UDim2.fromOffset(x, top - 8)
-	end
-	tooltip.Visible = true
+	foodTooltip.ShowAt(info.button, table.concat(lines, "\n"))
 end
 
 local function disarm()
 	if armed then
 		setOutline(armed, false)
 		armed = nil
-		armToken += 1
+		armTimer.Cancel()
 		updateTooltip()
 	end
 end
@@ -362,15 +259,9 @@ end
 local function arm(key: string)
 	disarm()
 	armed = key
-	armToken += 1
-	local mine = armToken
 	setOutline(key, true)
 	updateTooltip()
-	task.delay(ARM_SECONDS, function()
-		if armToken == mine then
-			disarm()
-		end
-	end)
+	armTimer.After(ARM_SECONDS, disarm)
 end
 
 local function lastInputWasTouch(): boolean
@@ -464,7 +355,7 @@ refresh = function()
 	table.clear(buttons)
 	if not (openStand and PetClient.State) then
 		armed, hovered = nil, nil
-		tooltip.Visible = false
+		foodTooltip.Hide()
 		return
 	end
 	chipTooltip.Hide()
@@ -515,7 +406,7 @@ local function closePanel()
 end
 
 local function openPanel(stand: BasePart)
-	PanelFocus.Open("Food", closePanel, math.huge) -- U4: one panel at a time; the stand distance below closes it
+	PanelFocus.Open("Food", closePanel, CLOSE_DISTANCE, stand) -- U4: one panel at a time; walking away from the stand closes it
 	openStand = stand
 	armed, hovered = nil, nil
 	fitToScreen()
@@ -550,7 +441,7 @@ list:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
 	chipTooltip.Hide()
 	hovered = nil
 	disarm()
-	tooltip.Visible = false
+	foodTooltip.Hide()
 end)
 
 PetClient.Changed:Connect(function()
@@ -591,50 +482,5 @@ end)
 
 -- Prompt -----------------------------------------------------------------------------------------------------------------
 
-local function counter(): BasePart?
-	local garden = workspace:FindFirstChild("Garden")
-	local stand = garden and garden:FindFirstChild(GardenConfig.FoodStandName)
-	return stand and stand:IsA("Model") and stand.PrimaryPart or nil
-end
-
-task.spawn(function()
-	local stand = workspace:WaitForChild("Garden"):WaitForChild(GardenConfig.FoodStandName, 60)
-	local part = stand and stand:IsA("Model") and stand.PrimaryPart
-	local prompt = part and part:FindFirstChild("Prompt")
-	if prompt and prompt:IsA("ProximityPrompt") then
-		prompt.Triggered:Connect(function(who)
-			if who == player then
-				openPanel(part)
-			end
-		end)
-	end
-end)
-
--- Opens the panel when the ScreenGui attribute Open is set (same effect as the prompt; a test hook).
-screenGui:GetAttributeChangedSignal("Open"):Connect(function()
-	if screenGui:GetAttribute("Open") then
-		local part = counter()
-		if part then
-			openPanel(part)
-		end
-		screenGui:SetAttribute("Open", nil)
-	end
-end)
-
--- Closes the panel when the player walks away from the stand
-local elapsed = 0
-RunService.Heartbeat:Connect(function(dt)
-	elapsed += dt
-	if elapsed < 0.5 then
-		return
-	end
-	elapsed = 0
-	if openStand then
-		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-		if not root or (root.Position - openStand.Position).Magnitude > CLOSE_DISTANCE then
-			closePanel()
-		end
-	end
-end)
-
+GardenUi.BindStand(screenGui, GardenConfig.FoodStandName, openPanel)
 screenGui.Parent = player:WaitForChild("PlayerGui")

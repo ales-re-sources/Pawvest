@@ -324,7 +324,6 @@ return {
 	["field.card.movePet"] = "Move pet",
 	["field.card.takeBack"] = "Take back",
 	["field.card.buy"] = "Buy square",
-	["field.card.tapAgain"] = "Tap again",
 	["field.card.moving"] = "Tap a free square for {pet}",
 	["field.hand.pickSeed"] = "Choose a seed",
 	["field.hand.seeds"] = "Tap empty squares to plant {crop}",

@@ -16,8 +16,10 @@ local player = Players.LocalPlayer
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
+local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
+local GardenUi = require(script.Parent:WaitForChild("GardenUi"))
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
 local requestStateEvent = remotes:WaitForChild("RequestState")
@@ -66,29 +68,10 @@ local TOOL_KEYS = {
 	Shears = { name = "field.tool.shears", effect = "field.tool.shears.effect", max = "field.tool.shears.max" },
 }
 
-local function create(className: string, props, children)
-	local instance = Instance.new(className)
-	for key, value in props do
-		instance[key] = value
-	end
-	for _, child in children or {} do
-		child.Parent = instance
-	end
-	return instance
-end
-
-local function cropOf(id: string)
-	return CropConfig.ById[id]
-end
-
--- "7.4" (Czech "7,4"): the weight of a crop of size `factor`, to 0.1 kg (E1c2).
-local function kgText(crop, factor: number): string
-	return Locale.Decimal(string.format("%.1f", crop.kg * factor))
-end
+local create = UiKit.Create
 
 local fieldState = nil -- GardenRemotes.State.field (only its notice is read here)
 local noticesShown = {} -- [kind] = true once this session's notice was shown
-local toastToken = 0
 
 local toast = create("TextLabel", {
 	Name = "Toast",
@@ -118,18 +101,7 @@ local screenGui = create("ScreenGui", {
 
 -- Toast -------------------------------------------------------------------------------------------------------------------
 
-local function showToast(text: string, color: Color3?, seconds: number?)
-	toastToken += 1
-	local mine = toastToken
-	toast.Text = text
-	toast.TextColor3 = color or Color3.new(1, 1, 1)
-	toast.Visible = true
-	task.delay(seconds or 3, function()
-		if toastToken == mine then
-			toast.Visible = false
-		end
-	end)
-end
+local showToast = UiKit.Toast(toast, 3)
 
 
 -- "Cat Lv 4" for a uid in the pet state ("" when unknown)
@@ -244,11 +216,11 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 		showToast(Locale.Reject(detail, if action == "BuySeeds" or action == "BuyCart" then STALL_REJECT_KEYS else REJECT_KEYS), COLOR_ERROR)
 		return
 	end
-	local crop = type(detail) == "table" and detail.crop and cropOf(detail.crop)
+	local crop = type(detail) == "table" and detail.crop and CropConfig.ById[detail.crop]
 	local name = if crop then Locale.CropName(crop) else ""
 	if action == "Harvest" then
 		local size = if type(detail.size) == "number" then detail.size else 1
-		local lines = { Locale.T("field.toast.harvestSize", { crop = name, kg = kgText(crop, size) }) }
+		local lines = { Locale.T("field.toast.harvestSize", { crop = name, kg = GardenUi.KgText(crop, size) }) }
 		if detail.extra then
 			table.insert(lines, Locale.T("field.toast.shears"))
 		end

@@ -160,6 +160,8 @@ src/Workspace/                StartLocation (hub), Tutorial, World1 (Stage1-5), 
   `common.reject.*`), stage lookups `StageConfig.TryForInstance` / `AreaOf` / `MedalsFromAttributes` / `AnyUnlocked`.
   Server: remotes through `Remotes` (Folder / Add / Results / Admin), cooldowns `RateLimit.new`, profile mirrors through
   `PlayerProfile.OnReady` (join + reset), purchases `PlayerProfile.TrySpend`, garden successes `GardenService.Done`.
+  Client GUI: builders, bars, self-clearing messages, toasts, pulses `UiKit`; HUD popups `HudPopup`; two-tap confirms
+  `ConfirmTap`; stand prompts `GardenUi.BindStand` + `PanelFocus.Open(..., anchor)`; a player's plot `GardenConfig.PlotOf`.
 - Legacy APIs are common (`wait`, `spawn`, `:connect`, `findFirstChild`); prefer `task.*` and `Players:GetPlayerFromCharacter` in new code,
   but don't mass-rewrite without asking.
 

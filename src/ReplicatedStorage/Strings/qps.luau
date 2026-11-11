@@ -324,7 +324,6 @@ return {
 	["field.card.movePet"] = "[!! Mövě pěť ~~~ !!]",
 	["field.card.takeBack"] = "[!! Ťákě báčk ~~~~ !!]",
 	["field.card.buy"] = "[!! Bůý šqůářě ~~~~ !!]",
-	["field.card.tapAgain"] = "[!! Ťáp ágáíň ~~~~ !!]",
 	["field.card.moving"] = "[!! Ťáp á fřěě šqůářě föř {pet} ~~~~~~~~~ !!]",
 	["field.hand.pickSeed"] = "[!! Čhööšě á šěěď ~~~~~ !!]",
 	["field.hand.seeds"] = "[!! Ťáp ěmpťý šqůářěš ťö pláňť {crop} ~~~~~~~~~~~ !!]",

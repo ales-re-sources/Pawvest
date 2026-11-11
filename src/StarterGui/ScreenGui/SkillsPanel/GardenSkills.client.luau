@@ -13,6 +13,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
+local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
 local ConfirmTap = require(ReplicatedStorage:WaitForChild("ConfirmTap"))
@@ -46,34 +47,11 @@ local TOOL_KEYS = {
 	Shears = { name = "field.tool.shears", effect = "field.tool.shears.effect", max = "field.tool.shears.max" },
 }
 
-local function create(className: string, props, children)
-	local instance = Instance.new(className)
-	for key, value in props do
-		instance[key] = value
-	end
-	for _, child in children or {} do
-		child.Parent = instance
-	end
-	return instance
-end
+local create = UiKit.Create
 
 local function text(name: string, props)
-	local base = {
-		Name = name,
-		BackgroundTransparency = 1,
-		Size = UDim2.new(1, 0, 0, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
-		Font = Enum.Font.SourceSans,
-		TextSize = 14,
-		TextWrapped = true,
-		TextColor3 = COLOR_INFO,
-		TextXAlignment = Enum.TextXAlignment.Left,
-		Text = "",
-	}
-	for key, value in props do
-		base[key] = value
-	end
-	return create("TextLabel", base)
+	props.Font = props.Font or Enum.Font.SourceSans
+	return UiKit.Paragraph(name, props)
 end
 
 -- Layout -------------------------------------------------------------------------------------------------------------------
@@ -174,21 +152,7 @@ local function renderHeader(field, order: number)
 	}).Parent = header
 	local low, high = CropConfig.PointsFor(field.level), CropConfig.PointsFor(field.level + 1)
 	local fraction = if high > low then math.clamp((field.renown - low) / (high - low), 0, 1) else 1
-	create("Frame", {
-		Name = "Bar",
-		LayoutOrder = 2,
-		Size = UDim2.new(1, 0, 0, 12),
-		BackgroundColor3 = Color3.fromRGB(60, 45, 20),
-		BorderSizePixel = 0,
-	}, {
-		create("UICorner", { CornerRadius = UDim.new(0, 6) }),
-		create("Frame", {
-			Name = "Fill",
-			Size = UDim2.new(fraction, 0, 1, 0),
-			BackgroundColor3 = COLOR_OK,
-			BorderSizePixel = 0,
-		}, { create("UICorner", { CornerRadius = UDim.new(0, 6) }) }),
-	}).Parent = header
+	UiKit.Bar("Bar", { order = 2, height = 12, track = Color3.fromRGB(60, 45, 20), fill = COLOR_OK, share = fraction, parent = header })
 	text("Next", {
 		LayoutOrder = 3,
 		Text = Locale.T("field.renown.next", { count = math.max(0, high - field.renown), level = field.level + 1 }),

@@ -6,6 +6,8 @@
 --   ConfirmTap.Wrap(button, key, needsConfirm, onConfirm, armedText?)   wires `button` (a StudStyle brick: colour and text are set
 --                                                                        on the button itself); `needsConfirm()` is asked on every tap
 --   ConfirmTap.Over(price) -> boolean                                     price > THRESHOLD
+--   ConfirmTap.Tap(key, onLapse?) -> boolean                              for a button that draws itself: true = confirmed, else
+--                                                                        armed (IsArmed(key) while it waits; Disarm(key))
 --   ConfirmTap.Reset()                                                    disarms everything (a panel closed)
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -28,9 +30,33 @@ function ConfirmTap.Reset()
 	table.clear(armedUntil)
 end
 
-local function isArmed(key: string): boolean
+function ConfirmTap.IsArmed(key: string): boolean
 	local untilTime = armedUntil[key]
 	return untilTime ~= nil and os.clock() < untilTime
+end
+
+function ConfirmTap.Disarm(key: string)
+	armedUntil[key] = nil
+end
+
+-- One tap on `key`: true when it confirms (it was armed: now disarmed); otherwise arms `key` for SECONDS and returns false.
+-- onLapse runs once the arming has lapsed (or was disarmed) without a second tap: redraw the button there.
+function ConfirmTap.Tap(key: string, onLapse: (() -> ())?): boolean
+	if ConfirmTap.IsArmed(key) then
+		armedUntil[key] = nil
+		return true
+	end
+	local mine = os.clock() + ConfirmTap.SECONDS
+	armedUntil[key] = mine
+	task.delay(ConfirmTap.SECONDS, function()
+		if armedUntil[key] == mine then
+			armedUntil[key] = nil
+		end
+		if onLapse and not ConfirmTap.IsArmed(key) then
+			onLapse()
+		end
+	end)
+	return false
 end
 
 function ConfirmTap.Wrap(button: GuiButton, key: string, needsConfirm: () -> boolean, onConfirm: () -> (), armedText: string?)
@@ -44,27 +70,22 @@ function ConfirmTap.Wrap(button: GuiButton, key: string, needsConfirm: () -> boo
 		button.BackgroundColor3 = if on then ConfirmTap.COLOR else normalColor
 		textButton.Text = if on then (armedText or Locale.T("common.tapAgain")) else normalText
 	end
-	if isArmed(key) then
+	if ConfirmTap.IsArmed(key) then
 		showArmed(true) -- rebuilt between the two taps
 	end
 	button.Activated:Connect(function()
-		if not needsConfirm() or isArmed(key) then
-			armedUntil[key] = nil
+		if not needsConfirm() then
+			ConfirmTap.Disarm(key)
 			showArmed(false)
 			onConfirm()
-			return
+		elseif ConfirmTap.Tap(key, function()
+			showArmed(false)
+		end) then
+			showArmed(false)
+			onConfirm()
+		else
+			showArmed(true)
 		end
-		local mine = os.clock() + ConfirmTap.SECONDS
-		armedUntil[key] = mine
-		showArmed(true)
-		task.delay(ConfirmTap.SECONDS, function()
-			if armedUntil[key] == mine then
-				armedUntil[key] = nil
-			end
-			if not isArmed(key) then
-				showArmed(false)
-			end
-		end)
 	end)
 end
 

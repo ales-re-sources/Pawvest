@@ -11,6 +11,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
+local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local PetRow = require(script.Parent:WaitForChild("PetRow"))
@@ -22,25 +23,10 @@ local COLOR_MENU_STROKE = Color3.fromRGB(255, 205, 60)
 
 local PetFilterBar = {}
 
-local function create(className: string, props, children)
-	local instance = Instance.new(className)
-	for key, value in props do
-		instance[key] = value
-	end
-	for _, child in children or {} do
-		child.Parent = instance
-	end
-	return instance
-end
+local create = UiKit.Create
 
 -- a brick button (StudStyle.Brick: colour and text keep being set on the button itself)
-local function button(name: string, props, studs: number?)
-	props.Name = name
-	props.TextColor3 = Color3.new(1, 1, 1)
-	local instance = create("TextButton", props)
-	StudStyle.Brick(instance, { studs = studs })
-	return instance
-end
+local button = UiKit.Button
 
 local function traitWord(id: string): string
 	return if id == "Cuteness" then Locale.T("pets.filter.coins") else Locale.T("pet.apt." .. id)

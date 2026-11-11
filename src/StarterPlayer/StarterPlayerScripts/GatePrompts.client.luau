@@ -6,10 +6,10 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TweenService = game:GetService("TweenService")
 
 local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
+local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local remotes = ReplicatedStorage:WaitForChild("UnlockRemotes")
 local buyEvent = remotes:WaitForChild("Buy")
@@ -43,28 +43,7 @@ toastGui.DisplayOrder = 6
 toastLabel.Parent = toastGui
 toastGui.Parent = player:WaitForChild("PlayerGui")
 
-local toastGeneration = 0
-local function toast(text: string, color: Color3)
-	toastGeneration += 1
-	local mine = toastGeneration
-	toastLabel.Text = text
-	toastLabel.TextColor3 = color
-	toastLabel.TextTransparency = 0
-	toastLabel.BackgroundTransparency = 0.15
-	toastLabel.Visible = true
-	task.delay(TOAST_SECONDS, function()
-		if mine ~= toastGeneration then
-			return
-		end
-		local info = TweenInfo.new(0.3)
-		TweenService:Create(toastLabel, info, { TextTransparency = 1, BackgroundTransparency = 1 }):Play()
-		task.delay(0.3, function()
-			if mine == toastGeneration then
-				toastLabel.Visible = false
-			end
-		end)
-	end)
-end
+local toast = UiKit.Toast(toastLabel, TOAST_SECONDS, 0.3)
 
 -- ---- prompts ----
 local coins = 0

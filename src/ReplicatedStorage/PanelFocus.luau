@@ -1,10 +1,11 @@
 --!strict
 -- PanelFocus (U4, docs/UI_GARDEN_PETS.md §10): one panel open at a time, and panels close when the player walks away. Client only.
 --
---   PanelFocus.Open(name, close, maxDistance?)  a panel opened: the one open before closes (its `close` is called), and this one
+--   PanelFocus.Open(name, close, maxDistance?, anchor?)
+--                                               a panel opened: the one open before closes (its `close` is called), and this one
 --                                               closes (its `close`) once the character is more than `maxDistance` studs
---                                               (default WALK_AWAY) from where it was opened; math.huge = never (the stalls close
---                                               themselves at their stand distance, the server checks it too)
+--                                               (default WALK_AWAY) from where it was opened, or from the part `anchor` (a stall's
+--                                               counter: its stand distance, which the server checks too); math.huge = never
 --   PanelFocus.Closed(name)                     the panel closed itself (its close button, its own toggle): forget it
 --   PanelFocus.Current() -> string?             the open panel's name
 --
@@ -24,6 +25,7 @@ local closeCurrent: (() -> ())? = nil
 local limit = PanelFocus.WALK_AWAY
 local point: Vector3? = nil
 local anchoredTo: Model? = nil -- the character the point belongs to
+local anchorPart: BasePart? = nil -- the point is this part's position (Open's anchor)
 local connection: RBXScriptConnection? = nil
 
 local function root(): BasePart?
@@ -33,7 +35,7 @@ local function root(): BasePart?
 end
 
 local function forget()
-	current, closeCurrent, point, anchoredTo = nil, nil, nil, nil
+	current, closeCurrent, point, anchoredTo, anchorPart = nil, nil, nil, nil, nil
 	if connection then
 		connection:Disconnect()
 		connection = nil
@@ -58,7 +60,9 @@ local function watch()
 		if not part then
 			return
 		end
-		if not point or anchoredTo ~= player.Character then
+		if anchorPart then
+			point = anchorPart.Position
+		elseif not point or anchoredTo ~= player.Character then
 			point, anchoredTo = part.Position, player.Character
 			return
 		end
@@ -72,7 +76,7 @@ local function watch()
 	end)
 end
 
-function PanelFocus.Open(name: string, close: () -> (), maxDistance: number?)
+function PanelFocus.Open(name: string, close: () -> (), maxDistance: number?, anchor: BasePart?)
 	if current and current ~= name then
 		local previous = closeCurrent
 		forget()
@@ -80,7 +84,7 @@ function PanelFocus.Open(name: string, close: () -> (), maxDistance: number?)
 			previous() -- may call Closed(previous name): ignored, it is no longer current
 		end
 	end
-	current, closeCurrent, limit = name, close, maxDistance or PanelFocus.WALK_AWAY
+	current, closeCurrent, limit, anchorPart = name, close, maxDistance or PanelFocus.WALK_AWAY, anchor
 	local part = root()
 	point, anchoredTo = if part then part.Position else nil, player.Character
 	watch()

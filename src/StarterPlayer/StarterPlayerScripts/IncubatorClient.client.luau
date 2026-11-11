@@ -58,7 +58,7 @@ local REJECT_KEYS = { -- the rest: Locale.Reject's common.reject.*
 }
 
 local function hex(color: Color3): string
-	return string.format("#%02x%02x%02x", math.round(color.R * 255), math.round(color.G * 255), math.round(color.B * 255))
+	return "#" .. color:ToHex()
 end
 
 local function eggName(eggId: string): string
@@ -154,7 +154,7 @@ local revealOk = GardenUi.Button("Ok", {
 local isOpen = false
 local incubators = nil -- last GardenRemotes.State.incubators: { count, eggs = { ["n"] = { egg, readyAt } } }
 local status: { text: string, color: Color3 }? = nil -- the last answer, shown for STATUS_SECONDS
-local statusToken = 0
+local statusTimer = GardenUi.Latest()
 local oddsShown: string? = nil -- egg id whose odds are shown
 local countdowns = {} -- { { label, readyAt } } of the drawn rows
 local revealToken = 0
@@ -183,15 +183,11 @@ local function firstEmpty(state): number?
 end
 
 local function setStatus(text: string, color: Color3)
-	statusToken += 1
-	local mine = statusToken
 	status = { text = text, color = color }
 	render()
-	task.delay(STATUS_SECONDS, function()
-		if statusToken == mine then
-			status = nil
-			render()
-		end
+	statusTimer.After(STATUS_SECONDS, function()
+		status = nil
+		render()
 	end)
 end
 

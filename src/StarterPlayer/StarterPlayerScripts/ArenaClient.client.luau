@@ -13,6 +13,7 @@ local TweenService = game:GetService("TweenService")
 
 local ArenaConfig = require(ReplicatedStorage:WaitForChild("ArenaConfig"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
+local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
 
 local LocalPlayer = Players.LocalPlayer
 
@@ -109,19 +110,7 @@ toast.Visible = false
 toast.Parent = gui
 Instance.new("UICorner", toast).CornerRadius = UDim.new(0, 10)
 
-local toastId = 0
-local function showToast(text: string, color: Color3?)
-	toastId += 1
-	local id = toastId
-	toast.Text = text
-	toast.TextColor3 = color or Color3.new(1, 1, 1)
-	toast.Visible = true
-	task.delay(TOAST_TIME, function()
-		if toastId == id then
-			toast.Visible = false
-		end
-	end)
-end
+local showToast = UiKit.Toast(toast, TOAST_TIME)
 
 local function refreshHud()
 	for id, slot in slots do

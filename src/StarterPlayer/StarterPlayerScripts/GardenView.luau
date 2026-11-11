@@ -23,6 +23,7 @@ local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local PlantGrowth = require(ReplicatedStorage:WaitForChild("PlantGrowth"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PlotView = require(script.Parent:WaitForChild("PlotView"))
+local GardenUi = require(script.Parent:WaitForChild("GardenUi"))
 
 local FULL_DISTANCE = 60
 local MID_DISTANCE = 120
@@ -66,7 +67,7 @@ local function barnFill(field)
 	if type(field) ~= "table" then
 		return nil
 	end
-	local capacity = CropConfig.BarnFor(CropConfig.UpgradeLevel(field.upgrades, "Barn"))
+	local capacity = GardenUi.BarnOf(field)
 	local seeds = CropConfig.SeedTotal(field.seeds)
 	local crates = {}
 	for _, crop in CropConfig.Crops do
@@ -79,6 +80,18 @@ end
 
 local function ownSlot(): number?
 	return player:GetAttribute(GardenConfig.PlotAttribute)
+end
+
+-- Horizontal distance (studs) from the local character to the centre of its own plot; nil without a plot or a character.
+function GardenView.FlatDistanceToPlot(): number?
+	local plot = GardenConfig.PlotOf(player)
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not (plot and root and root:IsA("BasePart")) then
+		return nil
+	end
+	local offset = root.Position - plot.Position
+	return Vector3.new(offset.X, 0, offset.Z).Magnitude
 end
 
 -- The state of the own plot as last received ({ eggs, incCount, field, ... }), or nil.

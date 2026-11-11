@@ -3,7 +3,6 @@
 -- pet XP (§7.4), free egg of the first Gold (§7.2), rare seeds and the stage's rare-seed meter (E2a, players with the field), next goal.
 -- Driven by the finish message StageTimerUpdate(-1, final, result); the GUI is built here, not in Studio.
 
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StageTimerUpdate = ReplicatedStorage:WaitForChild("StageTimerUpdate")
 local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
@@ -13,58 +12,19 @@ local MedalText = require(ReplicatedStorage:WaitForChild("MedalText"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
+local HudPopup = require(script.Parent:WaitForChild("HudPopup"))
 
 local SHOW_SECONDS = 7
 local DIM = "#5A5A5A"
 
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "StageResults"
-screenGui.ResetOnSpawn = false
-screenGui.DisplayOrder = 5
-screenGui.Enabled = false
-screenGui.AutoLocalize = false -- translated by Locale (L1)
-
-local panel = Instance.new("TextButton") -- a button so a click closes it
-panel.Name = "Panel"
-panel.AutoButtonColor = false
-panel.Text = ""
-panel.AnchorPoint = Vector2.new(0.5, 0)
-panel.Position = UDim2.new(0.5, 0, 0, 80)
-panel.Size = UDim2.fromOffset(320, 0)
-panel.AutomaticSize = Enum.AutomaticSize.Y
-panel.BackgroundColor3 = Color3.fromRGB(32, 32, 32)
-panel.BackgroundTransparency = 0.1
-panel.Parent = screenGui
-
-Instance.new("UICorner", panel).CornerRadius = UDim.new(0, 12)
-
-local padding = Instance.new("UIPadding")
-padding.PaddingTop = UDim.new(0, 12)
-padding.PaddingBottom = UDim.new(0, 14)
-padding.Parent = panel
-
-local layout = Instance.new("UIListLayout")
-layout.SortOrder = Enum.SortOrder.LayoutOrder
-layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-layout.Padding = UDim.new(0, 2)
-layout.Parent = panel
-
-local function addLine(name, order, textSize)
-	local label = Instance.new("TextLabel")
-	label.Name = name
-	label.LayoutOrder = order
-	label.Size = UDim2.new(1, -24, 0, textSize + 6)
-	label.AutomaticSize = Enum.AutomaticSize.Y -- a long line (Czech) wraps and grows the panel
-	label.TextWrapped = true
-	label.BackgroundTransparency = 1
-	label.Font = Enum.Font.GothamBold
-	label.TextSize = textSize
-	label.TextColor3 = Color3.new(1, 1, 1)
-	label.RichText = true
-	label.Text = ""
-	label.Parent = panel
-	return label
-end
+local popup = HudPopup.new("StageResults", {
+	displayOrder = 5,
+	position = UDim2.new(0.5, 0, 0, 80),
+	padding = { top = 12, bottom = 14 },
+	gap = 2,
+	tapCloses = true,
+})
+local addLine = popup.Line
 
 local titleLabel = addLine("Title", 1, 20)
 local timeLabel = addLine("Time", 2, 40)
@@ -87,14 +47,6 @@ eggLabel.TextColor3 = Color3.fromRGB(255, 215, 90)
 seedsLabel.TextColor3 = StudStyle.Text.Rare
 meterLabel.TextColor3 = Color3.fromRGB(230, 200, 140)
 nextLabel.TextColor3 = StudStyle.Text.Grey
-
-local showGeneration = 0
-local shownResult = nil -- the result on screen, re-rendered when the language changes
-
-local function hide()
-	showGeneration += 1
-	screenGui.Enabled = false
-end
 
 local function render(result)
 	local stage = StageConfig.ByKey[result.stageKey]
@@ -167,34 +119,13 @@ local function render(result)
 	end
 end
 
-local function show(result)
-	shownResult = result
-	render(result)
-
-	showGeneration += 1
-	local generation = showGeneration
-	screenGui.Enabled = true
-	task.delay(SHOW_SECONDS, function()
-		if generation == showGeneration then
-			hide()
-		end
-	end)
-end
-
-panel.Activated:Connect(hide)
-
-Locale.Changed:Connect(function()
-	if screenGui.Enabled and shownResult then
-		render(shownResult)
-	end
-end)
-
 StageTimerUpdate.OnClientEvent:Connect(function(elapsed, _final, result)
 	if elapsed >= 0 then
-		hide() -- a new run started
+		popup.Hide() -- a new run started
 	elseif result then
-		show(result)
+		popup.Show(function()
+			render(result)
+			return true
+		end, SHOW_SECONDS)
 	end
 end)
-
-screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")

@@ -11,6 +11,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TalentConfig = require(ReplicatedStorage:WaitForChild("TalentConfig"))
 local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
+local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
@@ -40,16 +41,7 @@ local REJECT_KEYS = { -- the rest: Locale.Reject's common.reject.*
 	maxed = "skills.reject.maxed",
 }
 
-local function create(className: string, props, children)
-	local instance = Instance.new(className)
-	for key, value in props do
-		instance[key] = value
-	end
-	for _, child in children or {} do
-		child.Parent = instance
-	end
-	return instance
-end
+local create = UiKit.Create
 
 local function levelOf(id: string): number
 	return TalentConfig.ClampLevel(id, player:GetAttribute(TalentConfig.AttributeName(id)))

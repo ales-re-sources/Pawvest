@@ -10,7 +10,9 @@
 --                                 tooltip (from PetRow.Tooltip: hover / hold on a chip shows its exact numbers). Returns the chips.
 --   Progress(stored, id, kind)    share 0..1 of the trait's way to its next level (1 at the rarity cap): the pet page's bar
 --   ChipText(entry, stored, id)   the chip's exact numbers (rich text, several lines)
---   Tooltip(panel, color)         one tooltip for a panel: { Attach(guiObject, textFn), Hide() }. Mouse: shown while hovering;
+--   Tooltip(panel, color, opts?)  one tooltip for a panel: { Attach(guiObject, textFn), ShowAt(guiObject, text?), Hide() }.
+--                                 opts: name (default "ChipTooltip"), room (a target closer than this to the panel's top gets
+--                                 the tip below it; default 120). ShowAt places it by hand (FoodShop's food buttons). Attach: mouse: shown while hovering;
 --                                 touch: shown while the finger holds the chip (and 2 s after). Placed above the chip (below it near
 --                                 the panel's top), kept inside the panel; works under a UIScale.
 -- Its children are drawn in code; the caller's ScreenGui uses ZIndexBehavior Sibling.
@@ -20,6 +22,7 @@ local TextService = game:GetService("TextService")
 
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
+local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
@@ -50,24 +53,11 @@ local COLOR_TRAINED = StudStyle.Text.Ok
 local COLOR_WITH_YOU = StudStyle.Colors.Green
 local COLOR_FIELD = StudStyle.Colors.Wood
 
-local function create(className: string, props, children)
-	local instance = Instance.new(className)
-	for key, value in props do
-		instance[key] = value
-	end
-	for _, child in children or {} do
-		child.Parent = instance
-	end
-	return instance
-end
+local create = UiKit.Create
 
 local function label(name: string, props)
-	props.Name = name
-	props.BackgroundTransparency = props.BackgroundTransparency or 1
-	props.Font = props.Font or StudStyle.Font
-	props.TextColor3 = props.TextColor3 or Color3.new(1, 1, 1)
 	props.TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Center
-	return create("TextLabel", props)
+	return UiKit.Label(name, props)
 end
 
 -- Share of the way to the next level, as the pet page's XP bar for that trait: Cuteness XP / CuteXpToNext, a work trait's field
@@ -316,8 +306,9 @@ function PetRow.Fill(row: GuiObject, entry, opts)
 	return chips, nameLabel
 end
 
-function PetRow.Tooltip(panel: GuiObject, color: Color3)
-	local tip = label("ChipTooltip", {
+function PetRow.Tooltip(panel: GuiObject, color: Color3, opts: { name: string?, room: number? }?)
+	local room = opts and opts.room or 120
+	local tip = label(opts and opts.name or "ChipTooltip", {
 		AnchorPoint = Vector2.new(0.5, 1),
 		Size = UDim2.fromOffset(230, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
@@ -350,8 +341,8 @@ function PetRow.Tooltip(panel: GuiObject, color: Color3)
 		tip.Visible = false
 	end
 
-	local function show(target: GuiObject, textFn: () -> string?)
-		local text = textFn()
+	-- the tip with `text` over (or, near the panel's top, under) `target`, inside the panel's width; nil text hides it
+	function api.ShowAt(target: GuiObject, text: string?)
 		if not (text and target.Parent and panel.AbsoluteSize.X > 0) then
 			return api.Hide()
 		end
@@ -364,7 +355,7 @@ function PetRow.Tooltip(panel: GuiObject, color: Color3)
 		local topY = (target.AbsolutePosition.Y - panel.AbsolutePosition.Y) / scale
 		local half = tip.Size.X.Offset / 2
 		x = math.clamp(x, half + 4, panel.Size.X.Offset - half - 4)
-		if topY < 120 then
+		if topY < room then
 			tip.AnchorPoint = Vector2.new(0.5, 0)
 			tip.Position = UDim2.fromOffset(x, topY + target.AbsoluteSize.Y / scale + 6)
 		else
@@ -372,6 +363,10 @@ function PetRow.Tooltip(panel: GuiObject, color: Color3)
 			tip.Position = UDim2.fromOffset(x, topY - 6)
 		end
 		tip.Visible = true
+	end
+
+	local function show(target: GuiObject, textFn: () -> string?)
+		api.ShowAt(target, textFn())
 	end
 
 	function api.Attach(target: GuiObject, textFn: () -> string?)

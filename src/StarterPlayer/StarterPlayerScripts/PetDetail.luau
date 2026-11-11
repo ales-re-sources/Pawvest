@@ -26,6 +26,8 @@ local RunService = game:GetService("RunService")
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local PetLook = require(ReplicatedStorage:WaitForChild("PetLook"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
+local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
+local ConfirmTap = require(ReplicatedStorage:WaitForChild("ConfirmTap"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
@@ -39,7 +41,6 @@ local remotes = PetClient.Remotes
 local PORTRAIT = 104
 local BAR_HEIGHT = 16
 local SPIN_SPEED = 0.6 -- radians per second
-local CONFIRM_SECONDS = 3
 local PAGE_Z = 20 -- the page's ZIndex; its contents are lifted by as much
 -- a tap target stays at least 36 px on screen when the Pets panel is scaled down (PanelFit; 44 at scale 1)
 local BRICK = math.max(44, math.ceil(36 / PanelFit.Scale()))
@@ -55,7 +56,6 @@ local COLOR_EQUIP = StudStyle.Colors.Yellow
 local COLOR_LOCKED = StudStyle.Colors.Grey
 local COLOR_SELL = StudStyle.Colors.Red -- the X
 local COLOR_SELL_IDLE = StudStyle.Colors.Wood
-local COLOR_SELL_ARMED = Color3.fromRGB(240, 140, 40) -- the one confirm pattern (UI_GARDEN_PETS §10): orange on the first tap
 local COLOR_CARE = Color3.fromRGB(255, 205, 60) -- ▲, as on the row's chip
 
 local REJECT_KEYS = { -- the rest: Locale.Reject's common.reject.*
@@ -76,72 +76,23 @@ local RENAME_REJECT_KEYS = {
 	filter = "petDetail.reject.filter",
 }
 
-local function create(className: string, props, children)
-	local instance = Instance.new(className)
-	for key, value in props do
-		instance[key] = value
-	end
-	for _, child in children or {} do
-		child.Parent = instance
-	end
-	return instance
-end
+local create = UiKit.Create
 
-local function label(name: string, props)
-	props.Name = name
-	props.BackgroundTransparency = 1
-	props.Font = props.Font or StudStyle.Font
-	props.TextColor3 = props.TextColor3 or Color3.new(1, 1, 1)
-	props.TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Left
-	return create("TextLabel", props)
-end
+local label = UiKit.Label
 
 -- a wrapping text line that grows with its text (Czech is longer)
 local function line(name: string, order: number, props)
 	props.LayoutOrder = order
-	props.Size = UDim2.new(1, 0, 0, 0)
-	props.AutomaticSize = Enum.AutomaticSize.Y
-	props.TextWrapped = true
-	props.Font = props.Font or Enum.Font.Gotham
 	props.TextSize = props.TextSize or 13
 	props.TextColor3 = props.TextColor3 or COLOR_INFO
-	return label(name, props)
+	return UiKit.Paragraph(name, props)
 end
 
-local function button(name: string, props, studs: number?)
-	props.Name = name
-	props.TextColor3 = Color3.new(1, 1, 1)
-	local instance = create("TextButton", props)
-	StudStyle.Brick(instance, { studs = studs })
-	return instance
-end
+local button = UiKit.Button
 
 -- a bar 0..1 with a centred text on it
 local function bar(name: string, order: number, share: number, color: Color3, text: string)
-	return create("Frame", {
-		Name = name,
-		LayoutOrder = order,
-		Size = UDim2.new(1, 0, 0, BAR_HEIGHT),
-		BackgroundColor3 = Color3.fromRGB(30, 30, 30),
-		BorderSizePixel = 0,
-	}, {
-		create("UICorner", { CornerRadius = UDim.new(0, 6) }),
-		create("Frame", {
-			Name = "Fill",
-			Size = UDim2.fromScale(math.clamp(share, 0, 1), 1),
-			BackgroundColor3 = color,
-			BorderSizePixel = 0,
-			Visible = share > 0,
-		}, { create("UICorner", { CornerRadius = UDim.new(0, 6) }) }),
-		label("Text", {
-			Size = UDim2.fromScale(1, 1),
-			TextSize = 12,
-			TextXAlignment = Enum.TextXAlignment.Center,
-			TextStrokeTransparency = 0.5,
-			Text = text,
-			ZIndex = 2,
-		}),
-	})
+	return (UiKit.Bar(name, { order = order, height = BAR_HEIGHT, track = Color3.fromRGB(30, 30, 30), fill = color, share = share, text = text }))
 end
 
 -- a dark card holding a vertical list
@@ -173,9 +124,10 @@ local PetDetail = {}
 
 function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 	local currentUid: string? = nil
-	local sellArmed = false
-	local sellToken = 0
-	local messageToken = 0
+	local function sellKey(): string
+		return "SellPet" .. (currentUid or "")
+	end
+	local messageTimer = UiKit.Latest()
 	local portraitKey: string? = nil
 	local portrait: ViewportFrame? = nil
 	local spin: RBXScriptConnection? = nil
@@ -300,7 +252,8 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 	nameRow.Parent = content
 	local nameNote = line("NameNote", 3, { TextSize = 12, Text = "" })
 	nameNote.Parent = content
-	local nameNoteToken = 0 -- while a result note shows (non-zero), the hint waits until it lapses
+	local nameNoteShown = false -- while a result note shows, the hint waits until it lapses
+	local nameNoteTimer = UiKit.Latest()
 
 	local equipButton = button("Equip", {
 		Size = UDim2.new(1, 0, 0, BRICK),
@@ -344,7 +297,7 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 	local heldCrops: { [string]: number } = {} -- GardenRemotes.State.field.items (E1a3)
 	local feedEvent: RemoteEvent? = nil
 	local feedNote: { text: string, color: Color3 }? = nil
-	local feedToken = 0
+	local feedTimer = UiKit.Latest()
 	local render: () -> boolean
 
 	local function pet()
@@ -361,14 +314,10 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 	end
 
 	local function message(text: string, colour: Color3)
-		messageToken += 1
-		local mine = messageToken
 		messageLabel.Text = text
 		messageLabel.TextColor3 = colour
-		task.delay(3, function()
-			if messageToken == mine then
-				messageLabel.Text = ""
-			end
+		messageTimer.After(3, function()
+			messageLabel.Text = ""
 		end)
 	end
 
@@ -622,18 +571,14 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 	end
 
 	local function feedResult(text: string, colour: Color3)
-		feedToken += 1
-		local mine = feedToken
 		feedNote = { text = text, color = colour }
 		if currentUid then
 			render()
 		end
-		task.delay(4, function()
-			if feedToken == mine then
-				feedNote = nil
-				if currentUid then
-					render()
-				end
+		feedTimer.After(4, function()
+			feedNote = nil
+			if currentUid then
+				render()
 			end
 		end)
 	end
@@ -666,22 +611,19 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 			nameButton.BackgroundColor3 = COLOR_EQUIP
 			hint = if price > 0 then Locale.T("petDetail.name.priceNote", { price = price }) else Locale.T("petDetail.name.freeNote")
 		end
-		if nameNoteToken == 0 then
+		if not nameNoteShown then
 			nameNote.Text = hint
 			nameNote.TextColor3 = hintColor
 		end
 	end
 
 	local function nameResult(text: string, colour: Color3)
-		nameNoteToken += 1
-		local mine = nameNoteToken
+		nameNoteShown = true
 		nameNote.Text = text
 		nameNote.TextColor3 = colour
-		task.delay(4, function()
-			if nameNoteToken == mine then
-				nameNoteToken = 0
-				updateName()
-			end
+		nameNoteTimer.After(4, function()
+			nameNoteShown = false
+			updateName()
 		end)
 	end
 
@@ -734,8 +676,9 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		equipButton.Text = Locale.T(if owned.equipped then "petDetail.unequip" else "petDetail.equip")
 		equipButton.BackgroundColor3 = if busy then COLOR_LOCKED elseif owned.equipped then COLOR_SELL_IDLE else COLOR_EQUIP
 		moreLabel.Text = Locale.T("petDetail.more")
+		local sellArmed = ConfirmTap.IsArmed(sellKey()) -- the one confirm pattern (UI_GARDEN_PETS §10): orange on the first tap
 		sellButton.Text = Locale.T(if sellArmed then "pets.sellSure" else "pets.sell", { price = owned.sellValue })
-		sellButton.BackgroundColor3 = if sellArmed then COLOR_SELL_ARMED else COLOR_LOCKED
+		sellButton.BackgroundColor3 = if sellArmed then ConfirmTap.COLOR else COLOR_LOCKED
 		local hand = fieldHandGui()
 		placeButton.Visible = hand ~= nil
 			and hand:GetAttribute("HandShown") == true
@@ -771,20 +714,22 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 	end
 
 	function api.Close()
+		ConfirmTap.Disarm(sellKey())
 		currentUid = nil
-		sellArmed = false
 		page.Visible = false
 		showList()
 		stopSpin()
 	end
 
 	function api.Open(uid: string)
+		ConfirmTap.Disarm(sellKey())
 		currentUid = uid
-		sellArmed = false
+		ConfirmTap.Disarm(sellKey())
 		messageLabel.Text = ""
 		portraitKey = nil
-		nameNoteToken = 0
-		feedToken += 1
+		nameNoteShown = false
+		nameNoteTimer.Cancel()
+		feedTimer.Cancel()
 		feedNote = nil
 		nameBox.Text = PetClient.NameOf(uid) or ""
 		if render() then
@@ -836,23 +781,13 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 			message(Locale.Reject(reason, REJECT_KEYS), COLOR_ERROR)
 			return
 		end
-		if sellArmed then
-			sellArmed = false
-			remotes.SellPet:FireServer(owned.uid)
-			render()
-			return
-		end
-		sellArmed = true
-		sellToken += 1
-		local mine = sellToken
-		task.delay(CONFIRM_SECONDS, function()
-			if sellToken == mine and sellArmed then
-				sellArmed = false
-				if currentUid then
-					render()
-				end
+		if ConfirmTap.Tap(sellKey(), function()
+			if currentUid then
+				render()
 			end
-		end)
+		end) then
+			remotes.SellPet:FireServer(owned.uid)
+		end
 		render()
 	end)
 

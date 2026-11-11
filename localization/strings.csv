@@ -385,7 +385,6 @@ field.card.placePet,Square card button: opens the pet picker to put a pet with T
 field.card.movePet,Square card button on a square with a pet: the next tap on a free square moves the pet there,Move pet,Přesunout,new,h93f87859
 field.card.takeBack,Square card button on a square with a pet: takes the pet off the field (back to the pets),Take back,Vzít zpět,new,h57881cb3
 field.card.buy,Square card button on an overgrown square: buy it,Buy square,Koupit políčko,new,h712d511b
-field.card.tapAgain,"Square card: the Buy square button after the first tap (orange, confirms a big spend)",Tap again,Klepni znovu,new,h28272940
 field.card.moving,Hint line above the field's hand bar while a pet is in hand (Pets mode): a tap on a free square puts it there; {pet} = the pet's name or kind (no gendered verb in Czech),Tap a free square for {pet},{pet}: klepni na volné políčko,new,h2a3abe32
 field.hand.pickSeed,Title of the square card when it picks the seed for the hand bar's Seeds mode (not for one square),Choose a seed,Vyber semínko,new,h96e894c2
 field.hand.seeds,Hint line above the field's hand bar in Seeds mode: every tap on an empty square plants this seed; {crop} = crop icon + name (nominative; hence the colon in Czech),Tap empty squares to plant {crop},Klepej na prázdná políčka a sázej: {crop},new,hf4316ba7

@@ -1,14 +1,18 @@
 -- GardenUi (U4): what the garden's panels share (Seed stall: SeedStallClient, Barn: BarnClient). Client only.
---   * builders: Create, Label, Button (StudStyle brick), Paragraph (wraps and grows), Heading, Row + TextColumn (a text column
---     that wraps, then the buttons), SellButton (a crop row's Sell), Clear;
+--   * builders: Create, Label, Button, Paragraph, Section, Clear, Latest, Pulse (re-exported from UiKit), Heading, Row + TextColumn (a text column
+--     that wraps, then the buttons), SellButton (a crop row's Sell);
 --   * Panel(name, color, width, height): a ScreenGui (Sibling ZIndex, AutoLocalize off) with a centred stud panel (title strip,
---     X button, a scrolling Content list) that Fit() scales down to the screen (UIScale; never below 0.5); TapHeight() = a brick
+--     X button, a scrolling Content list unless opts.content is false) that Fit() scales down to the screen (UIScale, Scale();
+--     never below 0.5); TapHeight() = a brick
 --     height that stays at least 44 px on screen;
 --   * texts: Countdown ("1:00:00"), GrowTime ("3 hours"), CropTitle (icon + name), GrowSecondsOn (with the Growth upgrade),
---     KgText, BarnOf (seeds the barn holds), CrowLine (the crow forecast's text and colour, E4b).
+--     KgText, BarnOf (seeds the barn holds), CrowLine (the crow forecast's text and colour, E4b);
+--   * BindStand(gui, standName, open, opts?): a garden stand's prompt and the gui's Open attribute (a test hook) call
+--     open(counter part); opts.prompt = { action, object } Locale keys of the prompt, opts.onStand(stand model) once found.
 -- Display only: nothing here talks to the server.
 
 local GuiService = game:GetService("GuiService")
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
@@ -17,6 +21,7 @@ local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
 local ConfirmTap = require(ReplicatedStorage:WaitForChild("ConfirmTap"))
 local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
+local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
 
 local GardenUi = {}
 
@@ -32,67 +37,15 @@ GardenUi.COLOR_LOCKED = StudStyle.Colors.Grey
 
 local MARGIN = 16
 
-function GardenUi.Create(className: string, props, children)
-	local instance = Instance.new(className)
-	for key, value in props do
-		instance[key] = value
-	end
-	for _, child in children or {} do
-		child.Parent = instance
-	end
-	return instance
-end
-local create = GardenUi.Create
-
-function GardenUi.Label(name: string, props)
-	props.Name = name
-	props.BackgroundTransparency = 1
-	props.Font = props.Font or StudStyle.Font
-	props.TextColor3 = props.TextColor3 or Color3.new(1, 1, 1)
-	props.TextXAlignment = props.TextXAlignment or Enum.TextXAlignment.Left
-	return create("TextLabel", props)
-end
-
--- a brick button (StudStyle.Brick: colour and text keep being set on the button itself)
-function GardenUi.Button(name: string, props, studs: number?)
-	props.Name = name
-	props.TextColor3 = Color3.new(1, 1, 1)
-	local instance = create("TextButton", props)
-	StudStyle.Brick(instance, { studs = studs })
-	return instance
-end
-
--- a text that wraps and grows downwards
-function GardenUi.Paragraph(name: string, props)
-	props.Size = props.Size or UDim2.new(1, 0, 0, 0)
-	props.AutomaticSize = Enum.AutomaticSize.Y
-	props.TextWrapped = true
-	props.Font = props.Font or Enum.Font.Gotham
-	props.TextSize = props.TextSize or 14
-	props.TextColor3 = props.TextColor3 or GardenUi.COLOR_INFO
-	props.TextYAlignment = Enum.TextYAlignment.Top
-	return GardenUi.Label(name, props)
-end
-
-function GardenUi.Clear(section: Instance)
-	for _, child in section:GetChildren() do
-		if not child:IsA("UIListLayout") and not child:IsA("UIPadding") then
-			child:Destroy()
-		end
-	end
-end
-
-function GardenUi.Section(name: string, order: number)
-	return create("Frame", {
-		Name = name,
-		LayoutOrder = order,
-		Size = UDim2.new(1, 0, 0, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
-		BackgroundTransparency = 1,
-	}, {
-		create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, GardenUi.GAP) }),
-	})
-end
+GardenUi.Create = UiKit.Create
+GardenUi.Label = UiKit.Label
+GardenUi.Button = UiKit.Button
+GardenUi.Paragraph = UiKit.Paragraph
+GardenUi.Clear = UiKit.Clear
+GardenUi.Section = UiKit.Section
+GardenUi.Latest = UiKit.Latest
+GardenUi.Pulse = UiKit.Pulse
+local create = UiKit.Create
 
 function GardenUi.Heading(parent: Instance, order: number, text: string, color: Color3)
 	local title = GardenUi.Label("Heading", {
@@ -178,7 +131,8 @@ end
 
 -- A centred panel in its own ScreenGui. Returns a table: gui, panel, content (ScrollingFrame with a list), title, close,
 -- Fit() (scale to the screen; call on open), TapHeight().
-function GardenUi.Panel(name: string, color: Color3, width: number, height: number)
+-- opts.content = false: no Content list (the caller lays out its own children; FoodShop)
+function GardenUi.Panel(name: string, color: Color3, width: number, height: number, opts: { content: boolean? }?)
 	local title = GardenUi.Label("TitleLabel", {
 		Size = UDim2.new(1, 0, 0, 34),
 		TextSize = 20,
@@ -193,7 +147,7 @@ function GardenUi.Panel(name: string, color: Color3, width: number, height: numb
 		TextSize = 18,
 		Text = "X",
 	}, 1)
-	local content = create("ScrollingFrame", {
+	local content = if opts and opts.content == false then nil else create("ScrollingFrame", {
 		Name = "Content",
 		Position = UDim2.new(0, 8, 0, 46),
 		Size = UDim2.new(1, -16, 1, -54),
@@ -230,6 +184,9 @@ function GardenUi.Panel(name: string, color: Color3, width: number, height: numb
 		local inset = math.max(GuiService.TopbarInset.Height, 58)
 		local scale = math.min(1, (PanelFit.ViewportHeight() - inset - MARGIN) / height, (viewport.X - 2 * MARGIN) / width)
 		fit.Scale = math.max(scale, 0.5)
+	end
+	function self.Scale(): number
+		return fit.Scale
 	end
 	function self.TapHeight(): number
 		return math.max(44, math.ceil(44 / fit.Scale))
@@ -277,6 +234,50 @@ function GardenUi.CrowLine(field, now: number): (string, Color3)
 		return Locale.T("field.crows.now", { time = GardenUi.Countdown(to - now) }), GardenUi.COLOR_ERROR
 	end
 	return Locale.T("field.crows.next", { time = GardenUi.Countdown(from - now) }), GardenUi.COLOR_INFO
+end
+
+function GardenUi.BindStand(gui: ScreenGui, standName: string, open: (BasePart) -> (), opts: { prompt: { action: string, object: string }?, onStand: ((Model) -> ())? }?)
+	local function counter(): BasePart?
+		local garden = workspace:FindFirstChild("Garden")
+		local stand = garden and garden:FindFirstChild(standName)
+		return if stand and stand:IsA("Model") then stand.PrimaryPart else nil
+	end
+	gui:GetAttributeChangedSignal("Open"):Connect(function()
+		if gui:GetAttribute("Open") then
+			gui:SetAttribute("Open", nil)
+			local part = counter()
+			if part then
+				open(part)
+			end
+		end
+	end)
+	task.spawn(function()
+		local stand = workspace:WaitForChild("Garden"):WaitForChild(standName, 60)
+		local part = stand and stand:IsA("Model") and stand.PrimaryPart
+		if not part then
+			return
+		end
+		local prompt = part:FindFirstChild("Prompt")
+		if prompt and prompt:IsA("ProximityPrompt") then
+			local keys = opts and opts.prompt
+			if keys then
+				local function texts()
+					prompt.ActionText = Locale.T(keys.action)
+					prompt.ObjectText = Locale.T(keys.object)
+				end
+				texts()
+				Locale.Changed:Connect(texts)
+			end
+			prompt.Triggered:Connect(function(who)
+				if who == Players.LocalPlayer then
+					open(part)
+				end
+			end)
+		end
+		if opts and opts.onStand then
+			opts.onStand(stand)
+		end
+	end)
 end
 
 return GardenUi

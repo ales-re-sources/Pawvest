@@ -119,8 +119,7 @@ local function textOf(now: number): string?
 end
 
 local function update()
-	local slot = player:GetAttribute(GardenConfig.PlotAttribute)
-	local plot = slot and GardenConfig.PlotCFrame(slot)
+	local plot = GardenConfig.PlotOf(player)
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 	local text = plot and textOf(workspace:GetServerTimeNow())
 	if not (plot and root and text) then

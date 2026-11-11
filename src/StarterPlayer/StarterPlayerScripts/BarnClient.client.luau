@@ -16,9 +16,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 
-local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
@@ -348,21 +346,7 @@ local function cropsHeld(field): number
 	return total
 end
 
-local pulseScale = GardenUi.Create("UIScale", { Name = "Pulse", Parent = openButton })
-local pulse: Tween? = nil
-local function setPulse(on: boolean)
-	if on == (pulse ~= nil) then
-		return
-	end
-	if pulse then
-		pulse:Cancel()
-		pulse = nil
-		pulseScale.Scale = 1
-		return
-	end
-	pulse = TweenService:Create(pulseScale, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), { Scale = 1.12 })
-	;(pulse :: Tween):Play()
-end
+local setPulse = GardenUi.Pulse(openButton)
 
 local shownCrops: number? = nil -- crops held at the last check (nil before the first field state)
 local sellHintShown = false
@@ -375,14 +359,8 @@ RunService.Heartbeat:Connect(function(dt)
 		return
 	end
 	elapsed = 0
-	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-	local slot = player:GetAttribute(GardenConfig.PlotAttribute)
-	local plot = if type(slot) == "number" then GardenConfig.PlotCFrame(slot) else nil
-	local near = false
-	if root and plot then
-		local offset = root.Position - plot.Position
-		near = Vector3.new(offset.X, 0, offset.Z).Magnitude <= SHOW_DISTANCE
-	end
+	local distance = GardenView.FlatDistanceToPlot()
+	local near = distance ~= nil and distance <= SHOW_DISTANCE
 	local field = GardenView.OwnField()
 	local crops = cropsHeld(field)
 	openButton.Visible = near or (crops > 0 and not Hints.Running)

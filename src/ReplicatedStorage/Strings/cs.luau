@@ -324,7 +324,6 @@ return {
 	["field.card.movePet"] = "Přesunout",
 	["field.card.takeBack"] = "Vzít zpět",
 	["field.card.buy"] = "Koupit políčko",
-	["field.card.tapAgain"] = "Klepni znovu",
 	["field.card.moving"] = "{pet}: klepni na volné políčko",
 	["field.hand.pickSeed"] = "Vyber semínko",
 	["field.hand.seeds"] = "Klepej na prázdná políčka a sázej: {crop}",

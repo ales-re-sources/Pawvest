@@ -87,10 +87,6 @@ local function coinsNow(): number
 	return PetClient.Coins or 0
 end
 
-local function cropOf(id: string)
-	return CropConfig.ById[id]
-end
-
 -- Panel -------------------------------------------------------------------------------------------------------------------
 
 local function renderCart(field, tap: number)
@@ -107,7 +103,7 @@ local function renderCart(field, tap: number)
 	nextLine.Text = Locale.T("field.cart.next", { time = GardenUi.Countdown(cart.nextAt - workspace:GetServerTimeNow()) })
 	local total, capacity = CropConfig.SeedTotal(field.seeds), GardenUi.BarnOf(field)
 	for _, offer in cart.offers do
-		local crop = cropOf(offer.crop)
+		local crop = CropConfig.ById[offer.crop]
 		if crop then
 			local row = GardenUi.Row(cartSection, "Offer" .. offer.slot, offer.slot + 2, COLOR_ROW)
 			local info = if offer.taste
@@ -277,7 +273,7 @@ local function closePanel()
 end
 
 local function openPanel(counter: BasePart)
-	PanelFocus.Open("SeedStall", closePanel, math.huge) -- the stall distance below closes it
+	PanelFocus.Open("SeedStall", closePanel, GardenConfig.SeedStallDistance, counter) -- walking away from the counter closes it
 	openCounter = counter
 	activeTab = "buy"
 	ui.Fit()
@@ -332,7 +328,7 @@ local function renderBoard()
 		local cart = field and field.cart
 		if cart then
 			for _, offer in cart.offers do
-				local crop = cropOf(offer.crop)
+				local crop = CropConfig.ById[offer.crop]
 				if crop then
 					local text = if offer.left <= 0
 						then Locale.T("seedStall.board.soldOut", { crop = GardenUi.CropTitle(crop) })
@@ -351,28 +347,13 @@ local function renderBoard()
 	end
 end
 
-task.spawn(function()
-	local stall = workspace:WaitForChild("Garden"):WaitForChild(GardenConfig.SeedStallName, 60)
-	if not (stall and stall:IsA("Model") and stall.PrimaryPart) then
-		return
-	end
-	local counter = stall.PrimaryPart :: BasePart
-	local prompt = counter:FindFirstChild("Prompt")
-	if prompt and prompt:IsA("ProximityPrompt") then
-		local function promptTexts()
-			prompt.ActionText = Locale.T("seedStall.prompt.action")
-			prompt.ObjectText = Locale.T("seedStall.prompt.object")
+GardenUi.BindStand(ui.gui, GardenConfig.SeedStallName, openPanel, {
+	prompt = { action = "seedStall.prompt.action", object = "seedStall.prompt.object" },
+	onStand = function(stall)
+		local board = stall:FindFirstChild("Board")
+		if not (board and board:IsA("BasePart")) then
+			return
 		end
-		promptTexts()
-		Locale.Changed:Connect(promptTexts)
-		prompt.Triggered:Connect(function(who)
-			if who == player then
-				openPanel(counter)
-			end
-		end)
-	end
-	local board = stall:FindFirstChild("Board")
-	if board and board:IsA("BasePart") then
 		for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
 			table.insert(boardGuis, GardenUi.Create("SurfaceGui", {
 				Name = "SeedBoard" .. face.Name,
@@ -387,8 +368,8 @@ task.spawn(function()
 			}))
 		end
 		renderBoard()
-	end
-end)
+	end,
+})
 
 -- Events ------------------------------------------------------------------------------------------------------------------
 
@@ -408,17 +389,7 @@ Locale.Changed:Connect(function()
 	renderBoard()
 end)
 
-ui.gui:GetAttributeChangedSignal("Open"):Connect(function()
-	if ui.gui:GetAttribute("Open") then
-		ui.gui:SetAttribute("Open", nil)
-		local stall = workspace:FindFirstChild("Garden") and workspace.Garden:FindFirstChild(GardenConfig.SeedStallName)
-		if stall and stall:IsA("Model") and stall.PrimaryPart then
-			openPanel(stall.PrimaryPart)
-		end
-	end
-end)
-
--- Every 0.25 s: the stall distance, the cart countdowns (panel and board), a new State once the offers change
+-- Every 0.25 s: the cart countdowns (panel and board), a new State once the offers change
 local elapsed = 0
 RunService.Heartbeat:Connect(function(dt)
 	elapsed += dt
@@ -427,12 +398,6 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 	elapsed = 0
 	local now = workspace:GetServerTimeNow()
-	if openCounter then
-		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-		if root and (root.Position - openCounter.Position).Magnitude > GardenConfig.SeedStallDistance then
-			closePanel()
-		end
-	end
 	local nextAt = nil
 	if cartTimer then
 		cartTimer.label.Text = Locale.T("field.cart.next", { time = GardenUi.Countdown(cartTimer.at - now) })
