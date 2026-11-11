@@ -65,6 +65,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG10 | Golden Carrot growth art | [Buried pointed root and tall divided crown](plants/GOLDEN_CARROT.md); CG10b/c/d registered with harvest feedback | Five stills approved 2026-11-10; growth, PlotView lifecycle/detail transitions, harvest-response fixture and desktop growing/ripe CPU samples checked; real phone and second client open | – |
 | CG14 | Broccoli growth art | [Lobed foliage and domed floret crown](plants/BROCCOLI.md); CG14a/b/c registered | Longer-leaf art approved by Ales 2026-11-11; Studio geometry and production PlotView checks pass; field/24-plot performance, real phone and second client open | – |
 | CG15 | Pumpkin growth art | [Arching vine, ribbed 2.6-stud fruit](plants/PUMPKIN.md); CG15a-c registered | Studio geometry and production PlotView checks pass; five stills await Ales's review; field/24-plot performance, real phone and second client open | – |
+| CG16 | Eggplant growth art | [Three static mature studies](plants/EGGPLANT.md) and growth design | CG16a standard-size geometry checked in Studio; awaiting mature choice before growth | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -91,7 +92,7 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
    restoration landmark), Neighbours, Mastery, World 4 (S9 / S10), the Estate, Season 1. Restoration bundles (E6, D5) and estate tiers / decor /
    cottage (E7, D9) are the long-term Coin sinks; E0 holds a placeholder for their size until they are designed.
 
-**Plant growth art (CG1–CG14).** [Authoring guide and crop designs](PLANT_GROWTH.md) ·
+**Plant growth art (CG1–CG16).** [Authoring guide and crop designs](PLANT_GROWTH.md) ·
 [Studio growth player command](PLANT_GROWTH.md#studio-growth-player). Standard review: five snapshots, no animation capture.
 
 - **CG1 / CG3:** [Tomato](plants/TOMATO.md) and [Potato](plants/POTATO.md) are integrated and
@@ -152,6 +153,11 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
   to 3.24 studs at the largest mass) and production PlotView lifecycle, corrections, exact ripeness, selection, detail round trip,
   harvest/replant pass (`tools/pumpkin_integration_checks.luau`); boot clean. [Five stills](art/pumpkin/growth-review.jpg) await
   Ales's review. CG15d field/24-plot performance (3,456 plant Parts per full field), real phone and second client open.
+
+- **CG16a:** [Eggplant](plants/EGGPLANT.md) (4 h). Three [mature studies](art/eggplant/ripe-studies.jpg) from Ales's life-cycle and
+  fruiting-plant references: A natural fork (recommended), B tall open, C compact heavy. Standard heights 4.44 / 5.11 / 3.48 studs;
+  99 / 93 / 92 Parts; static bounds and fruit clearance checked against 5.5-stud soil squares and an R15 rig. Growth/flower-to-fruit
+  animation design saved. **Awaiting mature choice before CG16b**; no recipe or field integration yet.
 
 Key talents as **world rewards**: done for Double Jump (K1, GDD §6). Open: Triple Jump / Dash for World 3. The lost Coin sinks are made up in
 the balancing pass (STAGES §6, GDD §6).
