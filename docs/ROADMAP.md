@@ -69,7 +69,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG17 | Blueberry growth art | [Round highbush A, berries over the whole bush](plants/BLUEBERRY.md); CG17b/c registered | Growth art approved by Ales in Studio 2026-11-12; Studio geometry and production PlotView checks pass; performance, real phone and second client open | – |
 | CG18 | Sweet potato growth art | [C trained fan with fuller foliage](plants/SWEET_POTATO.md) approved; CG18b/c registered | Studio geometry and production PlotView lifecycle checks pass; performance, real phone and second client open | – |
 | CG19 | Giant melon growth art | [Arching vine B, striped green melon](plants/GIANT_MELON.md); CG19a chosen, CG19b/c registered | Growth art approved by Ales 2026-11-12; Studio geometry (97 Parts, 2.38 radius, seeks, flowers clear of the fruit) and production PlotView checks pass; performance (3,492 plant Parts per full field), real phone and second client open | – |
-| CG20 | Sunflower growth art | [Three static mature studies](plants/SUNFLOWER.md) (CG20a) | Studio bounds/scale checked; awaiting Ales's A / B / C choice before growth | – |
+| CG20 | Sunflower growth art | [Natural refinements of tall A](plants/SUNFLOWER.md) (CG20a) | leaves wrap around the stem; Studio bounds/scale checked; awaiting A1 / A2 / A3 choice before growth | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -179,10 +179,10 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
   lifecycle/corrections/exact ripeness/detail/selection/harvest-replant checks pass; boot clean. CG19d full-field/24-plot performance
   (3,492 plant Parts per full field), real phone and second client open.
 
-- **CG20:** [Sunflower](plants/SUNFLOWER.md) (18 h). Three static mature studies from Ales's life-cycle and flowering-plant
-  references (2026-11-12): [A tall classic / B heavy seed head / C branching garden](art/sunflower/ripe-studies.png),
-  138 / 166 / 180 Parts and 7.58 / 8.35 / 6.47 studs tall, against a 5.18-stud avatar. All fit the 2.4-stud radius.
-  Next: Ales chooses a silhouette, then CG20b shared-framework draft growth and five stills; field integration follows art approval.
+- **CG20:** [Sunflower](plants/SUNFLOWER.md) (18 h). Ales preferred tall single-headed A, but requested less artificial shapes
+  and leaves around the whole stem. [Natural refinements A1 spiral / A2 open / A3 lush](art/sunflower/natural-studies.png)
+  built with curved blades, unequal petioles, rounded uneven rays and a convex disk. All occupy four leaf quadrants and fit
+  the 2.4-stud radius; boot clean. Next: Ales chooses A1 / A2 / A3, then CG20b shared-framework draft growth and five stills.
 
 Key talents as **world rewards**: done for Double Jump (K1, GDD §6). Open: Triple Jump / Dash for World 3. The lost Coin sinks are made up in
 the balancing pass (STAGES §6, GDD §6).
