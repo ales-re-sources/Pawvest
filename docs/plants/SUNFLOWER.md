@@ -2,7 +2,19 @@
 
 [Shared authoring workflow](../PLANT_GROWTH.md) · [Status](../ROADMAP.md)
 
-## Natural refinements of A — awaiting selection
+## A1 selected; head refinement pending
+
+Ales chose **A1's stem and foliage** on 2026-11-12 and requested other head options before growth. Keep its nine-leaf spiral,
+stem path, dimensions and leaf seed fixed across the next comparison. `tools/sunflower_head_studies.luau` stages three mature
+head alternatives; Studio capture and bounds checks are pending:
+
+- **H1 — broad pointed:** one crown of wider, tapered golden petals around a textured dark disk.
+- **H2 — layered golden:** two offset petal layers and a slightly smaller disk for a fuller flower.
+- **H3 — nodding seed head:** a larger seed disk, shorter rays and a stronger nod for a harvest-heavy silhouette.
+
+These are static head studies only. Choose the head before CG20b's deterministic draft growth and five stills.
+
+## Earlier natural refinements of A
 
 Ales preferred the original **A, tall classic**, but found its shape too artificial and its leaves confined to left/right rows
 (2026-11-12). Keep the tall single-head direction. The revised studies give the stem a slight irregular bend, distribute unequal
