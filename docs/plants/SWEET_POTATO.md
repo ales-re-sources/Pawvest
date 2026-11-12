@@ -2,14 +2,16 @@
 
 [Shared authoring workflow](../PLANT_GROWTH.md) · [Status](../ROADMAP.md)
 
-## Mature study — awaiting selection
+## Selected mature silhouette
+
+Ales selected **C, the trained fan**, on 2026-11-12. Its continuous growth is built as a review-only draft, awaiting art approval.
 
 Three static mature studies precede the continuous recipe, following the shared art review gates.
 The supplied references guide organ shapes and growth; their captions are reference material, not game requirements.
 
 ![Mature studies](../art/sweet-potato/ripe-studies.png)
 
-- **A — spreading patch (recommended):** low unequal runners, broad heart-shaped leaves, two pale trumpet flowers and
+- **A — spreading patch:** low unequal runners, broad heart-shaped leaves, two pale trumpet flowers and
   three reddish tapered root shoulders. The strongest silhouette difference from upright Potato.
 - **B — lifted cascade:** a higher central crown with leafy arching runners descending toward the soil; larger exposed
   root shoulders remain visible below it. More upright readability without a rigid support.
@@ -27,21 +29,47 @@ Reference images: [life cycle](../art/sweet-potato/reference-life-cycle.png),
 [indoor trained vine](../art/sweet-potato/reference-indoor.png),
 [trumpet flowers](../art/sweet-potato/reference-flowers.png).
 
-## Scope and acceptance
+## Continuous growth and recipe
 
-This milestone produces only the three mature studies and a comparison image. No `SweetPotatoPlant` module is registered,
-no field art changes, and no saved data changes. Existing eight-hour timing and whole-square harvest stay as built.
-The study runner is `tools/sweet_potato_ripe_studies.luau`; its disposable Studio folder must be removed after capture.
+CG18a produced the three mature studies and a comparison image. CG18b builds the selected C as a `Draft = true`
+`SweetPotatoPlant` recipe for the existing growth reviewer. No field art or saved data changes. Existing eight-hour timing
+and whole-square harvest stay as built. Field integration follows approval of the five growth stills.
+The static study runner is `tools/sweet_potato_ripe_studies.luau`; its disposable Studio folder is removed after capture.
 
-- Each study fits a 2.4-stud ground radius, including every Part corner, and stays within 180 plant Parts.
-- Compare all three from one camera, against identical soil and an avatar on the same ground plane.
-- Inspect heart-leaf silhouette, flower throat and exposed root cues in Studio, then run one boot and check both logs.
-- After Ales chooses a mature variant: use `PlantKit.recipe` for one deterministic bounded geometry function, shared
-  phase/seed/size/Rig helpers and reversible attached growth. Present five stills at 0/20/50/75/100% before field integration.
-- Continuous growth should establish a small slip, extend successive runner nodes, unfold attached leaves, then develop
-  flower accents and reddish root shoulders. Keep the supported option's frame rigid from planting if selected.
+| Growth | Pose |
+|---|---|
+| 0% | The full-sized fan is already installed. A tiny green slip breaks the soil between its feet. |
+| 20% | Three unequal vines establish their lower stems and first unfolding heart leaves. |
+| 50% | Successive nodes climb the fan; attached middle leaves open as the lower stems turn reddish. |
+| 75% | Upper leaves continue to unfold, both pale trumpets open and small pink root shoulders emerge. |
+| 100% | The selected fan canopy settles above three larger reddish tapered storage-root shoulders. |
 
-Growth, seed/mass extremes, backward seeks, proxies, production lifecycle and performance remain later acceptance checks.
+[Five-pose sheet](../art/sweet-potato/growth-review.png) · [0%](../art/sweet-potato/growth-0.png) ·
+[20%](../art/sweet-potato/growth-20.png) · [50%](../art/sweet-potato/growth-50.png) ·
+[75%](../art/sweet-potato/growth-75.png) · [100%](../art/sweet-potato/growth-100.png).
+
+[`SweetPotatoPlant.luau`](../../src/ReplicatedStorage/SweetPotatoPlant.luau) uses `PlantKit.recipe` for construction, reversible
+posing, destruction and direct proxy generation. It reuses 133 Parts: five fixed supports, 12 stem segments, 72 leaf/stalk/vein
+pieces, three ties, 15 storage-root pieces and 26 flower pieces. A hypothetical full-detail 36-square field would use 4,788
+plant Parts before soil, pets and UI; this draft is **not registered in the field**. Proxy stages currently use 20 / 57 / 79 Parts.
+
+Seed variation changes vine heights, lean, leaf angles/sizes and root proportions. Seed 1 retains the chosen C baseline.
+Storage roots scale by the cube root of the server's harvested mass, including Sorter; their centres move inward at large
+sizes. Foliage width is constrained, and rigid equipment does not scale with mass. Orientation and 5-stud ring height are fixed.
+The three roots have stable fruit-slot IDs, mature attachments and explicit five-Part groups; flowers remain separate accents.
+
+Studio playtest Client command: `require(game.Players.LocalPlayer.PlayerScripts.PlantGrowthReview).Open("SweetPotato", 10)`.
+Ten seconds controls review playback only. Production duration remains eight hours, with the shared scheduler's 30-second cadence
+when integration is approved. Harvest will continue to clear the entire square; organ metadata does not change gameplay.
+
+## Growth validation
+
+CG18b Studio checks (2026-11-12, `tools/sweet_potato_growth_checks.luau`) pass for six seeds, harvested mass 0.35656 / 1 / 3.02985,
+101 ages, attachments, fixed supports, root metadata, physics/input flags, direct proxies and backward seeks. Maximum corner
+radius is 2.181 studs, maximum all-age height 4.857 studs; the standard seed-1 mature baseline remains 4.609 studs tall with
+2.038-stud radius. Crop-picker selection, Play/Pause, rings/selection border and Close were exercised through the real reviewer UI;
+the field pet and soil were checked together. Server and client logs were clean, and the playtest was stopped.
+Production lifecycle, field/24-plot performance, real phone and second client remain unvalidated.
 
 ## Static study validation
 
