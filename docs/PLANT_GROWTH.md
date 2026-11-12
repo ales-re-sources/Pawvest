@@ -23,7 +23,7 @@ selected silhouette, growth poses and geometry budget.
 | Blueberry | [Round highbush with ten berry bunches over the whole bush](plants/BLUEBERRY.md) | 134 |
 | Sweet potato | [Trained fan with broad heart leaves and reddish root shoulders](plants/SWEET_POTATO.md) | 169 |
 | Giant melon | [Arching vine, lobed leaves, big striped green melon](plants/GIANT_MELON.md) | 97 |
-| Sunflower | [A1 spiral foliage and H2 layered head selected](plants/SUNFLOWER.md) | – |
+| Sunflower | [A1 spiral foliage + H2 layered head; growth draft](plants/SUNFLOWER.md) | 192 (draft) |
 | Pineapple | [Tall stalk lifting a diamond-eyed fruit over a leaf rosette](plants/PINEAPPLE.md) | 155 |
 
 ## Studio growth player

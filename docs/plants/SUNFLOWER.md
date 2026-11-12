@@ -14,12 +14,12 @@ head alternatives in Studio Edit:
 - **H2 — layered golden (recommended):** two offset layers of rounded, folded petals and a slightly smaller disk for a fuller flower.
 - **H3 — nodding seed head:** a larger seed disk, shorter rays and a stronger nod for a harvest-heavy silhouette.
 
-Ales selected **H2** on 2026-11-12. These are static studies; next is CG20b's deterministic draft growth and five stills.
+Ales selected **H2** on 2026-11-12. The CG20b growth draft and its five stills are below; art approval is pending.
 
-H2 currently uses 189 Parts plus 138 built-in sphere `SpecialMesh` children (327 instances excluding the Model). Its 120 head
+The static H2 study uses 189 Parts plus 138 built-in sphere `SpecialMesh` children (327 instances excluding the Model). Its 120 head
 Parts comprise 68 petal pieces (34 two-piece petals), 42 seed marks, three disk/back pieces and seven bracts; stem and foliage
 use 69 Parts. A 36-square field at this study detail would contain 6,804 plant Parts plus 4,968 mesh children, before soil, pets
-or UI. These counts are geometry budgets, not measured frame time; production simplification and proxies remain unbuilt.
+or UI. These static counts are geometry budgets, not measured frame time; the growth draft adds early organs and a mid proxy below.
 
 | Head study | Height | Radius | Parts | Built-in sphere meshes |
 |---|---|---|---|---|
@@ -32,6 +32,34 @@ between studies (138 comparisons, local pose error below 0.000001 studs). Smooth
 the studded crown surface. The comparison faces existing daylight; place lighting was unchanged. Static costs include no
 production proxy or field performance claims. The display was removed, GUI visibility and camera restored, and a playtest boot
 reported zero server/client warnings or errors; it was stopped. No gameplay strings changed.
+
+## Growth draft — awaiting art approval
+
+[`SunflowerPlant`](../../src/ReplicatedStorage/SunflowerPlant.luau) uses `PlantKit.recipe` with **`Draft = true`** (reviewer only).
+The approved A1/H2 mature geometry and colours are preserved at seed 1, standard mass. Five successive stem segments carry
+staggered petioles; leaf blades unfold at their attached hinges. A seed shell and two cotyledons appear early and fade away.
+The green bud emerges around 43–53%, the ray layers open over 58–84%, the disk darkens over 72–98%, seeds appear over 80–99%,
+and the head makes its small late nod over 84–100%. This remains a continuously posed plant with fixed topology.
+
+![Five growth poses](../art/sunflower/growth-review.jpg)
+
+Full captures: [0%](../art/sunflower/growth-000-source.jpg), [20%](../art/sunflower/growth-020-source.jpg),
+[50%](../art/sunflower/growth-050-source.jpg), [75%](../art/sunflower/growth-075-source.jpg),
+[100%](../art/sunflower/growth-100-source.jpg). Seed 1, standard size, the same real field square and camera throughout.
+
+The draft reuses **192 Parts + 141 built-in sphere meshes**: the 189 mature pieces plus the seed shell and two cotyledons.
+A hypothetical 36-square full-detail field is 6,912 plant Parts plus 5,076 mesh children before soil, pets and UI. The proxy
+uses **12 / 45 / 45 Parts** at young / growing / ripe: fewer leaves and single-piece petals, with seed marks and veins omitted.
+One explicit visual head slot contains its 120 Parts. Free orientation and seed-dependent leaf/lean/head variation retain
+planting identity. Harvest mass uses cube-root head scaling capped at 1.20 for clearance, with gentler stem/leaf scaling;
+the 8.9-stud ring height is fixed. No external mesh assets, new scheduler, remotes or profile changes.
+
+Studio checks (`tools/sunflower_growth_checks.luau`) pass: six seeds × three masses × 101 ages (1,818 poses), 17,964 stem/leaf
+attachment checks, 54 exact visible backward seeks, deterministic rebuilds, finite poses and fixed instance counts. Maximum
+corner radius 2.275 studs; standard mature top 7.580 studs, maximum top 8.406. The mature comparison checked all 189 study Parts:
+colours identical, position error below 0.001 studs. Real Play/Pause, scrubber, rings/selection with the field pet and Close were
+exercised. Final server/client boot logs were clean; reviewer and playtest closed. Field registration, production PlotView
+integration and full-field/24-plot/phone performance remain later gates after art approval.
 
 ## Earlier natural refinements of A
 
@@ -59,7 +87,7 @@ they do not change gameplay. Fine hairs and individual serrations are omitted at
 The reference ends with seed release and a dried plant. The proposed game-ripe pose retains a golden crown around a dark textured
 disk, with a modest head nod and limited lower-leaf aging. This intentionally combines flowering identity and seed-readiness cues.
 
-After mature selection, use one deterministic `PlantKit.recipe` with `Draft = true`, shared timing/seed/size helpers, attached
+The growth draft uses one deterministic `PlantKit.recipe` with `Draft = true`, shared timing/seed/size helpers, attached
 stem and petiole growth, hinged leaf unfolding, a green bud opening into rays, a swelling/darkening disk and a late head nod.
 Keep the head as one explicit visual harvest slot. Present five stills at 0/20/50/75/100% before field integration.
 Head facing, seed/mass extremes, all-age bounds and detail proxies belong to the selected recipe's validation.
@@ -82,7 +110,7 @@ bounded meshes once through framework hooks and pose the Parts through the share
 The original angular studies remain reproducible with `tools/sunflower_ripe_studies.luau`.
 
 The temporary revised display was removed after capture and the camera restored. The final boot had zero server/client warnings or
-errors; the playtest was stopped. Localization build/check/lint pass with no changed strings. No `SunflowerPlant` module exists yet.
+errors; the playtest was stopped. Localization build/check/lint pass with no changed strings. These checks describe the earlier static studies.
 
 Stored ID `Sunflower`, existing **18-hour** duration, prices/rewards and whole-square harvest stay as built. No profile edits or
-custom harvest feedback are part of this milestone. Growth, field integration and performance remain later gates.
+custom harvest feedback are part of this milestone. Growth art approval, field integration and performance remain later gates.
