@@ -66,6 +66,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG14 | Broccoli growth art | [Lobed foliage and domed floret crown](plants/BROCCOLI.md); CG14a/b/c registered | Longer-leaf art approved by Ales 2026-11-11; Studio geometry and production PlotView checks pass; field/24-plot performance, real phone and second client open | – |
 | CG15 | Pumpkin growth art | [Arching vine, ribbed 2.6-stud fruit](plants/PUMPKIN.md); CG15a-c registered | Studio geometry and production PlotView checks pass; five stills await Ales's review; field/24-plot performance, real phone and second client open | – |
 | CG16 | Eggplant growth art | [Tall open B with enlarged leaves](plants/EGGPLANT.md); CG16b/c registered | Revised growth art approved by Ales 2026-11-11; Studio geometry and production PlotView checks pass; performance, real phone and second client open | – |
+| CG17 | Blueberry growth art | [Round highbush A, berries over the whole bush](plants/BLUEBERRY.md); CG17b/c registered | Growth art approved by Ales in Studio 2026-11-12; Studio geometry and production PlotView checks pass; performance, real phone and second client open | – |
 | CG18 | Sweet potato growth art | [C trained fan](plants/SWEET_POTATO.md) selected; CG18b draft recipe built | Studio growth/reviewer checks pass; five stills await art approval before field integration | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
@@ -159,6 +160,13 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
   approved by Ales (2026-11-11). CG16b/c registered: 113 Parts, mid proxies 7 / 37 / 37. Studio geometry, colour timing,
   attachments, seeks and production PlotView lifecycle/corrections/exact ripeness/detail/selection/harvest-replant checks pass;
   boot clean. CG16d full-field/24-plot performance (4,068 plant Parts per full field), real phone, second client and live validation open.
+- **CG17:** [Blueberry](plants/BLUEBERRY.md) (6 h). Of three static studies Ales chose **A, the round highbush**, with ten tight
+  bunches spread over the whole bush (second ripe-bush reference) and white bells at flowering (petal-fall reference). CG17b
+  recipe: 134 Parts, ten 9-Part fruit slots; growth art approved by Ales in Studio (2026-11-12). CG17c registered: mid proxies
+  6 / 48 / 48. Studio geometry (six seeds × three masses × 101 ages, 2.396-stud radius, exact seeks) and production PlotView
+  lifecycle/corrections/exact ripeness/detail/selection/harvest-replant checks pass; boot clean. CG17d full-field/24-plot
+  performance (4,824 plant Parts per full field), real phone, second client and live validation open.
+
 - **CG18:** [Sweet potato's C trained fan](plants/SWEET_POTATO.md) selected by Ales (2026-11-12). CG18b `PlantKit.recipe`
   draft built (133 Parts): fixed support, successively extending vines, unfolding heart leaves, pale purple-throated flowers and
   red root shoulders. Studio bounds/attachments/seeks/seeds/mass checks and reviewer controls pass; boot clean.
