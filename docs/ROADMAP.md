@@ -70,6 +70,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG18 | Sweet potato growth art | [C trained fan with fuller foliage](plants/SWEET_POTATO.md) approved; CG18b/c registered | Studio geometry and production PlotView lifecycle checks pass; performance, real phone and second client open | – |
 | CG19 | Giant melon growth art | [Arching vine B, striped green melon](plants/GIANT_MELON.md); CG19a chosen, CG19b/c registered | Growth art approved by Ales 2026-11-12; Studio geometry (97 Parts, 2.38 radius, seeks, flowers clear of the fruit) and production PlotView checks pass; performance (3,492 plant Parts per full field), real phone and second client open | – |
 | CG20 | Sunflower growth art | [Natural refinements of tall A](plants/SUNFLOWER.md) (CG20a) | leaves wrap around the stem; Studio bounds/scale checked; awaiting A1 / A2 / A3 choice before growth | – |
+| CG21 | Pineapple growth art | [Three static mature studies](plants/PINEAPPLE.md) (CG21a) | Growth art approved by Ales 2026-11-12; Studio geometry (155 Parts, 2.31 radius, seeks) and production PlotView checks pass; performance (5,580 plant Parts per full field), real phone and second client open | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -96,7 +97,7 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
    restoration landmark), Neighbours, Mastery, World 4 (S9 / S10), the Estate, Season 1. Restoration bundles (E6, D5) and estate tiers / decor /
    cottage (E7, D9) are the long-term Coin sinks; E0 holds a placeholder for their size until they are designed.
 
-**Plant growth art (CG1–CG20).** [Authoring guide and crop designs](PLANT_GROWTH.md) ·
+**Plant growth art (CG1–CG21).** [Authoring guide and crop designs](PLANT_GROWTH.md) ·
 [Studio growth player command](PLANT_GROWTH.md#studio-growth-player). Standard review: five snapshots, no animation capture.
 
 - **CG1 / CG3:** [Tomato](plants/TOMATO.md) and [Potato](plants/POTATO.md) are integrated and
@@ -183,6 +184,13 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
   and leaves around the whole stem. [Natural refinements A1 spiral / A2 open / A3 lush](art/sunflower/natural-studies.png)
   built with curved blades, unequal petioles, rounded uneven rays and a convex disk. All occupy four leaf quadrants and fit
   the 2.4-stud radius; boot clean. Next: Ales chooses A1 / A2 / A3, then CG20b shared-framework draft growth and five stills.
+- **CG21:** [Pineapple](plants/PINEAPPLE.md) (24 h). Three static mature studies from Ales's fruit photo and cultivation
+  infographic: A classic rosette (recommended), B tall stalk, C mother and sucker; 156 / 154 / 175 Parts, all inside the 2.4-stud
+  radius. Ales chose **B, the tall stalk**. CG21b: `PineapplePlant` draft recipe (155 Parts, radius 2.31, top 7.0, six seeds × three
+  masses × 101 ages and seeks pass, mid proxy 11 / 55 / 55, boot clean) and [five stills](art/pineapple/growth-review.jpg).
+  Growth art approved 2026-11-12; CG21c registered it (no `Draft`): production PlotView checks pass (465 Parts for three recipes,
+  corrections, exact ripeness, detail round trip, harvest / replant, ring 7.2, 30 s cadence), boot clean. Open: performance
+  (5,580 plant Parts per full field, the heaviest crop), real phone, second client.
 
 Key talents as **world rewards**: done for Double Jump (K1, GDD §6). Open: Triple Jump / Dash for World 3. The lost Coin sinks are made up in
 the balancing pass (STAGES §6, GDD §6).
