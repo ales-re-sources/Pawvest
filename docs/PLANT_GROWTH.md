@@ -76,6 +76,8 @@ desktop screenshot checks composition, not phone rendering performance. Studio r
 only for the selected variant, then present the five growth stills for art approval. Field integration and performance work
 follow that approval as separate milestones. Combine these steps only when Ales explicitly requests it. Keep the variant
 study small: enough geometry and scale context to choose the silhouette, without implementing three growth recipes.
+A recipe module is in the field as soon as it exists, so the growth build starts with `Draft = true` (reviewer only); field
+integration ends by removing it.
 
 - Use the supplied references to choose the stem habit, leaf shape, fruit position and support needs. Potato needed upright,
   layered foliage; a flat rosette lost its identity. Preserve the cues that distinguish the crop at gameplay distance.
@@ -93,13 +95,19 @@ study small: enough geometry and scale context to choose the silhouette, without
 
 Use a crop recipe through the shared `PlantGrowth` system, not a crop-specific scheduler or review UI. Build on
 [`PlantKit`](../src/ReplicatedStorage/PlantKit.luau): its timing, seed and size helpers and its `Rig` (cached Part writes) belong
-there, not copied into a recipe. A recipe that describes its plant as one `geometry(s, g, emit, proxy)` (Broccoli, Garlic, Onion,
-Cucumber, Golden Carrot, Blueberry, Sweet Potato) gets `new` / `SetGrowth` / `Destroy` / `BuildProxy` from `PlantKit.recipe`
-(its header lists the `supports` list for rigid stakes / trellis / fan and the hooks for fruit slots and effects); with
-`proxy = true` the geometry simply does not emit what the proxy leaves out (no hidden placeholders); every proxy takes its stage growth from `PlantKit.proxyGrowth(stage, mid)` and rods
-from `PlantKit.proxyRod`. A pose writes Parts in the order they were added. Keep a recipe's `vary` draws in their order: a new
-draw goes last, otherwise every existing planting changes shape. Build a bounded set of Parts once and pose them continuously. Leaves unfold at their bases; children follow the current parent as it extends. Growth should
-extend successive stems and organs with overlapping timings rather than uniformly inflate the entire model. A 43→44→43% seek
+there, not copied into a recipe (`seeded`, `tendency`, `dimension`, `phase`, `axis`).
+
+**Write a new recipe for `PlantKit.recipe`** (Broccoli, Garlic, Onion, Cucumber, Golden Carrot, Blueberry and Sweet Potato do;
+the newest two are the best templates). One `geometry(s, g, emit, proxy)` describes the plant and `recipe` supplies `new` /
+`SetGrowth` / `Destroy` / `BuildProxy`; its header lists the spec. Rigid stakes, trellis or fan go in `supports` (placed once,
+full size, never posed); fruit slots, effects and extra proxy pieces go in the hooks. `geometry` emits the same Parts in the same
+order at every growth; with `proxy = true` it skips what the proxy leaves out (no invisible placeholders). Older recipes with a
+hand-written proxy take its stage growth from `PlantKit.proxyGrowth(stage, mid)` and rods from `PlantKit.proxyRod`.
+
+Keep a recipe's `vary` draws in their order: a new draw goes last, otherwise every existing planting changes shape. Build a
+bounded set of Parts once and pose them continuously. Leaves unfold at their bases; children follow the current parent as it
+extends.
+Growth should extend successive stems and organs with overlapping timings rather than uniformly inflate the entire model. A 43→44→43% seek
 must restore the same visible pose without floating leaves, detached fruit or a changed random roll.
 
 Derive appearance from the existing owner/planting identity. Seed 1 is the reproducible authored baseline. Variation must be visible
@@ -156,6 +164,13 @@ Check intermediate attachment/hinge poses and backward seeks in Studio without c
 minimum/standard/maximum mass, mature height, all-age footprint and the selected ripe baseline. Report model Part count and the
 36-square plant-only total; include soil, pets and UI when measuring the complete field. Keep art approval distinct from production
 integration and performance validation.
+
+Each crop keeps its Studio scripts in `tools/` (start from the newest crop's copy; no remotes or profile writes):
+`<crop>_ripe_studies.luau` (Edit: the three static mature variants), `<crop>_growth_checks.luau` (seeds × harvested masses: Part
+count, footprint, height, backward seeks) and `<crop>_integration_checks.luau` (Client: production `PlotView` with disposable
+public-feed fixtures). A code change that must not change the look (PlantKit, a shared helper, a recipe refactor) is proven
+with [`plant_golden_master.luau`](../tools/plant_golden_master.luau): run it in Edit before and after, the lines must be equal;
+it needs no new stills.
 
 Continuous growth does not require production updates every rendered frame. Reuse cached poses/properties, skip invisible work,
 freeze completed groups and stop posing ripe plants. Spread square updates within the shared frame budget. Current cadence is 1/480 of the
