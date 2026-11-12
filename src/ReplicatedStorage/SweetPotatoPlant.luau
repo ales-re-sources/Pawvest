@@ -1,7 +1,6 @@
--- CG18b: selected C, three vines on a fixed fan with heart leaves, pale purple-throated trumpets and red storage roots.
--- Review-only until growth art approval. 169 Parts: 5 supports + 12 stems + 108 foliage + 3 ties + 15 root + 26 flower.
+-- CG18b/c: approved C, three vines on a fixed fan with heart leaves, pale purple-throated trumpets and red storage roots.
+-- 169 Parts: 5 supports + 12 stems + 108 foliage + 3 ties + 15 root + 26 flower.
 local SweetPotatoPlant = {
-	Draft = true,
 	RingHeight = 5.0,
 	FixedOrientation = true,
 	FixedRingHeight = true,

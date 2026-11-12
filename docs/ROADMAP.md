@@ -67,7 +67,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG15 | Pumpkin growth art | [Arching vine, ribbed 2.6-stud fruit](plants/PUMPKIN.md); CG15a-c registered | Studio geometry and production PlotView checks pass; five stills await Ales's review; field/24-plot performance, real phone and second client open | – |
 | CG16 | Eggplant growth art | [Tall open B with enlarged leaves](plants/EGGPLANT.md); CG16b/c registered | Revised growth art approved by Ales 2026-11-11; Studio geometry and production PlotView checks pass; performance, real phone and second client open | – |
 | CG17 | Blueberry growth art | [Round highbush A, berries over the whole bush](plants/BLUEBERRY.md); CG17b/c registered | Growth art approved by Ales in Studio 2026-11-12; Studio geometry and production PlotView checks pass; performance, real phone and second client open | – |
-| CG18 | Sweet potato growth art | [C trained fan](plants/SWEET_POTATO.md) selected; CG18b draft recipe built | Studio growth/reviewer checks pass; five stills await art approval before field integration | – |
+| CG18 | Sweet potato growth art | [C trained fan with fuller foliage](plants/SWEET_POTATO.md) approved; CG18b/c registered | Studio geometry and production PlotView lifecycle checks pass; performance, real phone and second client open | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -167,10 +167,10 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
   lifecycle/corrections/exact ripeness/detail/selection/harvest-replant checks pass; boot clean. CG17d full-field/24-plot
   performance (4,824 plant Parts per full field), real phone, second client and live validation open.
 
-- **CG18:** [Sweet potato's C trained fan](plants/SWEET_POTATO.md) selected by Ales (2026-11-12). CG18b `PlantKit.recipe`
-  draft built (169 Parts): fixed support, successively extending vines, 18 broader outward-facing heart leaves (foliage revision
-  requested by Ales), pale purple-throated flowers and red root shoulders. Revised Studio geometry/reviewer checks pass; boot clean.
-  [Five growth stills](art/sweet-potato/growth-review.png) await art approval. CG18c field integration and CG18d performance remain separate.
+- **CG18:** [Sweet potato's C trained fan](plants/SWEET_POTATO.md) and [fuller-foliage growth art](art/sweet-potato/growth-review.png)
+  approved by Ales (2026-11-12). CG18b/c registered: 169 Parts, mid proxies 20 / 75 / 97. Studio geometry and production PlotView
+  lifecycle/corrections/exact ripeness/detail/selection/harvest-replant checks pass; boot clean. CG18d full-field/24-plot
+  performance (6,084 plant Parts per full field), real phone, second client and live validation remain open.
 
 Key talents as **world rewards**: done for Double Jump (K1, GDD §6). Open: Triple Jump / Dash for World 3. The lost Coin sinks are made up in
 the balancing pass (STAGES §6, GDD §6).

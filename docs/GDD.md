@@ -523,7 +523,7 @@ otherwise items could be duplicated across servers.
 
 ### 7.9 Crop field (E1-E4)
 
-**Crop growth art (CG1–CG17).** Tomato, Potato, Corn, Lettuce, Onion, Garlic, Cucumber, Broccoli, Pumpkin, Eggplant, Blueberry, Pepper, Glow Mushroom, Golden Carrot and
+**Crop growth art (CG1–CG18).** Tomato, Potato, Corn, Lettuce, Onion, Garlic, Cucumber, Broccoli, Pumpkin, Eggplant, Blueberry, Sweet potato, Pepper, Glow Mushroom, Golden Carrot and
 Frost Grape grow continuously with stable variation tied to each planting and visible
 harvest-size differences. Fruit and foliage develop from attached stems; ripeness is readable from shape and color. Nearby and
 mid-distance art preserve crop identity while distant art is hidden. These crops still clear at harvest. Frost Grape is a tall
@@ -549,6 +549,12 @@ urn-shaped bells drop at petal fall; the green berry starts gather into round bu
 blush → dusty blue one by one, a pale berry or two staying in most bunches. Growth remains six hours and harvest clears the whole
 square; each bunch is a fruit slot for future picking. Its 134-Part recipe and 6/48/48-Part mid proxies are registered and
 Studio-checked; [growth art](plants/BLUEBERRY.md) approved by Ales (2026-11-12). Performance, phone and second-client checks remain open.
+
+Sweet potato grows three vines on a fixed fan support, unfolding 18 broad heart-shaped leaves with two pale purple-throated
+trumpet flowers. Three tapered reddish storage-root shoulders emerge late as an intentional harvest-readability shortcut.
+Growth remains eight hours and harvest clears the whole square. Its 169-Part recipe and 20/75/97-Part mid proxies are registered
+and Studio-checked; [fuller-foliage growth art](plants/SWEET_POTATO.md) approved by Ales (2026-11-12).
+Performance, phone and second-client checks remain open.
 
 *Decided, not built (EV, the user, 2026-11-07; numbers in [ECONOMY.md](ECONOMY.md) → EV, applied in EV2a–e):* the parity goal below is replaced by engagement: the four crops move onto one ladder
 of 10 s … 24 h (Potato 10 s, Corn 30 m, Pumpkin 3 h, Giant melon 12 h; 12 more crops later), Renown 0.4 × L³, every sink priced on the

@@ -104,7 +104,7 @@ local small,big=Recipe.new(parent,base,1,low),Recipe.new(parent,base,1,high)
 for i=1,5 do assert(small.rig.parts[i].Size==big.rig.parts[i].Size and small.rig.parts[i].CFrame==big.rig.parts[i].CFrame,"Mass scaled equipment") end
 assert(math.abs(big.roots[1].len/small.roots[1].len-(high/low)^(1/3))<0.0001,"Root mass scale")
 small:Destroy(); big:Destroy(); parent:Destroy()
-assert(Recipe.Draft and not Growth.Supports("SweetPotato"),"Draft entered the field")
+assert(not Recipe.Draft and Growth.Supports("SweetPotato"),"Recipe missing from the field")
 assert(Crops.ById.SweetPotato.growSeconds==28800 and Growth.UpdateInterval(28800)==30,"Production timing changed")
 return game.HttpService:JSONEncode({parts=169,fieldParts=6084,seeds=6,masses={low,1,high},ages=101,
 	maxRadius=maxRadius,maxHeight=maxHeight,baseline=baseline,proxyParts=proxies,draft=Recipe.Draft})

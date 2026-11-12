@@ -21,7 +21,7 @@ selected silhouette, growth poses and geometry budget.
 | Pumpkin | [Arching vine, broad leaves, big ribbed orange fruit](plants/PUMPKIN.md) | 96 |
 | Eggplant | [Tall open plant with three long hanging purple fruit](plants/EGGPLANT.md) | 113 |
 | Blueberry | [Round highbush with ten berry bunches over the whole bush](plants/BLUEBERRY.md) | 134 |
-| Sweet potato | [Trained fan; growth art awaiting approval](plants/SWEET_POTATO.md) | 169 (draft) |
+| Sweet potato | [Trained fan with broad heart leaves and reddish root shoulders](plants/SWEET_POTATO.md) | 169 |
 
 ## Studio growth player
 
