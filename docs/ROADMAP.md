@@ -744,7 +744,8 @@ change**: the incubator remotes, the `inc1..3` piece keys and the Barn panel sta
 - **Barn prompt** (own plot, full detail): "Open barn" at the barn's open front (10 studs) → the Barn panel (`GardenView.OnBarn`, BarnClient's
   `openPanel`). The bottom-centre 🧺 Barn button stays (the user, 2026-11-07).
 - **Fill source:** GardenView keeps the own field (`State`); it hands `SetBarn({ sacks, crates })` to the own view on each `State`, so the
-  barn redraws only when the sack count or the crop kinds change.
+  barn redraws only when the sack count or the crop kinds change. *(Sacks, crates and `SetBarn` removed 2026-11-12: Done → Barn stock
+  display removed.)*
 - No two parts share a face plane (z-fighting); every part Anchored, CanTouch off, CanQuery off except what a prompt or tap needs.
 
 **Build (U5b).**
@@ -949,9 +950,14 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
 
-**Admin plant review shortcut** (2026-11-10; [guide](PLANT_GROWTH.md#studio-growth-player)). Studio admins can open the reviewer
 **Pet page without the growth card, 20 pet levels** (2026-11-12; GDD §7.4, §7.8). The pet page lost its top Growth card (level bar, "trained" line, next look): the trait cards come first, the Feed card below them (it carries the "what trains now" line). Pet and trait levels run 1..20 instead of 1..10: the curves stay written on the 10-level scale and `PetConfig` splits every step (`BaseLevel`, `ToLevel`; level 1 stays 1, L → 2L), so XP totals, caps, strengths, reach and the Coin bonus at even levels are unchanged and `economy.py check` stays valid (it reads `BaseMaxLevel`). Profile `Version = 6` rescales every pet once (`RescaleAptitudes`). Studio-validated on the developer's profile (Dragon Cuteness 9 → 18, Owl 8 → 16; snapshot `profile_9892673032_petlevels20_1`, the migrated profile was kept). Open: the Feed card with held crops and a Czech-width check of the page were not looked at; look tiers at Lv 5 / 10 / 15 / 20; the first level-up now comes after a third of the old XP (Cuteness 33 XP, Tending 3.3 field hours), so the early game feels faster: check it in the next retention look.
 
+**Barn stock display removed** (2026-11-12; GDD §7.9, [UI_GARDEN_PETS.md](UI_GARDEN_PETS.md) §6). The barn building keeps its walls,
+roof, empty shelves and "Open barn" prompt; the U5a seed sacks and crop crates are gone (`PlotView:SetBarn`, GardenView's `barnFill`).
+They repeated the barn panel less exactly, only the owner saw them, and the colour-topped crates clashed with the crop growth art.
+Open: a "barn full" cue in the world, and a public shelf of record crops in their grown art (Estate / decor drop).
+
+**Admin plant review shortcut** (2026-11-10; [guide](PLANT_GROWTH.md#studio-growth-player)). Studio admins can open the reviewer
 and expanded crop picker from Admin → Plant growth. Named `Open(cropId, seconds)` stays direct; hidden HUD clicks preserve
 the Admin panel for return on Close. Real UI open/select/close/reopen and Czech/pseudo Glyph fit pass; no saved-state writes.
 

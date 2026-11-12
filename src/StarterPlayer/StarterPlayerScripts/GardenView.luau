@@ -8,7 +8,7 @@
 -- Detail by horizontal distance from the character to the plot centre: full ≤ 60 studs, mid ≤ 120 (pets as blocks), low ≤ 300,
 -- nothing beyond (10 studs of hysteresis). Builds run on Heartbeat within BUDGET seconds per frame, the own plot first, then the
 -- nearest. The own plot's hatchery carries a prompt that calls the handler registered with OnHatchery (U5b), its barn one OnBarn (U5a;
--- the barn's sacks and crates come from the own field's State, SetBarn); the field has none since
+-- the barn shows no stock since 2026-11-12: the barn panel lists it); the field has none since
 -- U3a: SquareAt / SquareCFrame / ShowSelect / OwnRoot serve FieldHand's tap and FieldRings; U3b: ShowBorders, ShowHover). OwnState / OwnField return the own
 -- plot and the owner's field state as last received (GardenSummary, U2).
 -- In Studio the folder carries the attributes Instances and Pending (tests).
@@ -23,7 +23,6 @@ local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local PlantGrowth = require(ReplicatedStorage:WaitForChild("PlantGrowth"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PlotView = require(script.Parent:WaitForChild("PlotView"))
-local GardenUi = require(script.Parent:WaitForChild("GardenUi"))
 
 local FULL_DISTANCE = 60
 local MID_DISTANCE = 120
@@ -59,23 +58,6 @@ end
 -- fn() when the own barn's prompt is triggered (U5a).
 function GardenView.OnBarn(fn: () -> ())
 	handlers.barn = fn
-end
-
--- What the own barn shows (U5a): seed sacks for the share of the barn's capacity the seeds fill (none at 0, at least one above),
--- a crate per crop kind held (crop letters in catalogue order). nil without a field.
-local function barnFill(field)
-	if type(field) ~= "table" then
-		return nil
-	end
-	local capacity = GardenUi.BarnOf(field)
-	local seeds = CropConfig.SeedTotal(field.seeds)
-	local crates = {}
-	for _, crop in CropConfig.Crops do
-		if type(field.items) == "table" and (field.items[crop.id] or 0) > 0 then
-			table.insert(crates, crop.letter)
-		end
-	end
-	return { sacks = math.min(PlotView.BarnSacks, math.ceil(PlotView.BarnSacks * seeds / math.max(capacity, 1))), crates = crates }
 end
 
 local function ownSlot(): number?
@@ -325,9 +307,6 @@ local function refresh()
 					end,
 				})
 				views[slot] = view
-				if slot == own then
-					view:SetBarn(barnFill(ownField))
-				end
 			end
 			if view.state ~= state then
 				view:SetState(state)
@@ -426,11 +405,6 @@ end
 -- asks for it), kept here because this module is required before anyone asks (GardenSummary reads it, U2).
 remotes:WaitForChild("State").OnClientEvent:Connect(function(state)
 	ownField = if type(state) == "table" then state.field else nil
-	local slot = ownSlot()
-	local view = slot and views[slot]
-	if view and view.own then
-		view:SetBarn(barnFill(ownField))
-	end
 	refresh() -- new readyAt times (a plant, a harvest)
 end)
 function GardenView.OwnField()

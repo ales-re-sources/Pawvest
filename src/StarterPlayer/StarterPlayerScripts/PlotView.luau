@@ -4,7 +4,7 @@
 -- on the own plot), "mid" (the same without billboards and prompts, each pet one block in its rarity colour), "low" (floor, one block per egg,
 -- the field as its row plates) or "none". Registered crops use seeded growth art; other crops remain blocks.
 -- The front strip (U5a): the path in the middle (base), the hatchery on the plaza's left (hatch: posts and roof over the nests
--- inc1..3; on the own plot its one "Open hatchery" prompt, U5b, which calls options.onHatchery), the barn on its right (barn: walls, roof, shelves; on the own plot the seed sacks and crop crates of SetBarn and the
+-- inc1..3; on the own plot its one "Open hatchery" prompt, U5b, which calls options.onHatchery), the barn on its right (barn: walls, roof, empty shelves; on the own plot the
 -- "Open barn" prompt, which calls options.onBarn).
 -- A plot is split into pieces (base, hatch, barn, inc1..3, field = row plates, sq1..36, grow1..36). SetState / SetDetail / Relabel only
 -- mark the pieces whose look changed; Step builds marked pieces until a deadline, so a build is spread over frames by the caller.
@@ -44,7 +44,6 @@ local HATCH_X0, HATCH_X1, HATCH_Z0, HATCH_Z1 = 5.6, 19.3, -19.3, -4.7 -- hatcher
 local HATCH_ROOF = 8 -- hatchery: height of the posts' tops (the roof's underside)
 local BARN_X0, BARN_X1, BARN_Z0, BARN_Z1 = -19, -6, -15, -5 -- barn: outer faces of its walls (open towards −Z, the plaza)
 local BARN_WALL, BARN_HEIGHT = 0.6, 6 -- barn: wall thickness, wall height over the floor
-local BARN_SACKS = 8 -- seed sacks on the barn's two shelves (SetBarn: how many show)
 local STRIP_FRONT, STRIP_BACK = -20, -4 -- a plot's floor: the strip that holds the sign side, the hatchery and the barn
 local FIELD_FRONT = -2 -- the field lies behind the strip (floor +Z), from this far behind the centre
 local FIELD_PITCH = 5.5 -- studs per square
@@ -71,8 +70,6 @@ local COLORS = {
 	barnTrim = Color3.fromRGB(245, 235, 215),
 	barnFloor = Color3.fromRGB(150, 105, 65),
 	shelf = Color3.fromRGB(120, 85, 50),
-	sack = Color3.fromRGB(214, 186, 130),
-	crate = Color3.fromRGB(165, 115, 65),
 	base = Color3.fromRGB(150, 100, 60),
 	nest = Color3.fromRGB(225, 195, 110),
 	soil = Color3.fromRGB(105, 70, 45),
@@ -222,7 +219,6 @@ function PlotView.new(slot: number, parent: Instance, options)
 	self.own = options and options.own or false
 	self.onHatchery = options and options.onHatchery
 	self.onBarn = options and options.onBarn
-	self.barnFill = nil -- SetBarn: { sacks = 0..BARN_SACKS, crates = { crop letter, ... } } (the own plot only)
 	self.detail = "none"
 	self.state = nil
 	self.lang = Locale.Current()
@@ -280,11 +276,7 @@ function PlotView:signature(key: string): string
 		return table.concat({ detail, tostring(self.own and not state.free), self.lang }, "|")
 	end
 	if key == "barn" then
-		local fill = self.barnFill
-		if state.free or detail ~= "full" or not self.own or not fill then
-			return table.concat({ detail, tostring(self.own), self.lang }, "|")
-		end
-		return table.concat({ detail, "own", tostring(fill.sacks), table.concat(fill.crates, ""), self.lang }, "|")
+		return table.concat({ detail, tostring(self.own and not state.free), self.lang }, "|")
 	end
 	local kind, number = string.match(key, "^(%a+)(%d+)$")
 	local n = tonumber(number) :: number
@@ -350,15 +342,6 @@ function PlotView:SetDetail(detail: string)
 		self:mark()
 	end
 end
-
--- What the own plot's barn shows (U5a): `fill` = { sacks = 0..BARN_SACKS, crates = { crop letter, ... } } or nil (empty barn).
--- Only a change of the sack count or the crop kinds redraws the barn.
-function PlotView:SetBarn(fill)
-	self.barnFill = fill
-	self:mark()
-end
-
-PlotView.BarnSacks = BARN_SACKS
 
 -- Redraws the texts in the current language (Locale.Changed).
 function PlotView:Relabel()
@@ -516,9 +499,9 @@ function PlotView:buildHatchery(model: Model)
 	end
 end
 
--- The barn (U5a): walls on three sides (open towards the plaza), a plank floor, a stepped roof, two shelves for BARN_SACKS seed sacks
--- and a row of crates, one per crop kind held (self.barnFill, the own plot only), topped in the crop's ripe colour. The own plot's
--- barn carries the "Open barn" prompt (full detail). Low detail: one block. No two parts share a face plane.
+-- The barn (U5a): walls on three sides (open towards the plaza), a plank floor, a stepped roof, two empty shelves (the stock it
+-- held is gone since 2026-11-12: the barn panel lists it). The own plot's barn carries the "Open barn" prompt (full detail).
+-- Low detail: one block. No two parts share a face plane.
 function PlotView:buildBarn(model: Model)
 	local x0, x1, z0, z1 = BARN_X0, BARN_X1, BARN_Z0, BARN_Z1
 	local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
@@ -556,30 +539,8 @@ function PlotView:buildBarn(model: Model)
 	-- two shelves on the back wall
 	local shelfW, shelfD = inX1 - inX0 - 1, 1.6
 	local shelfZ = inZ1 - shelfD / 2
-	local shelves = { 2.2, 4.2 }
-	for _, y in shelves do
+	for _, y in { 2.2, 4.2 } do
 		add("Shelf", Vector3.new(shelfW, 0.3, shelfD), Vector3.new(cx, y, shelfZ), COLORS.shelf, Enum.Material.Wood)
-	end
-	local fill = if self.own and self.detail == "full" and not self.state.free then self.barnFill else nil
-	if fill then
-		-- seed sacks: the lower shelf first, from the left as seen from the plaza (+X)
-		local perShelf = BARN_SACKS // #shelves
-		for i = 1, math.clamp(fill.sacks, 0, BARN_SACKS) do
-			local shelf = (i - 1) // perShelf + 1
-			local slot = (i - 1) % perShelf
-			local x = cx + (perShelf - 1) / 2 * 2.6 - slot * 2.6
-			add("Sack", Vector3.new(1.8, 1.5, 1.2), Vector3.new(x, shelves[shelf] + 0.15 + 0.75, shelfZ), COLORS.sack, Enum.Material.Fabric)
-		end
-		-- crates: one per crop kind held, in a row in front of the shelves
-		for i, letter in fill.crates do
-			local x = inX1 - 0.8 - (i - 1) * 1.55
-			if x - 0.7 < inX0 then
-				break
-			end
-			local crateZ = shelfZ - shelfD / 2 - 1.6
-			add("Crate", Vector3.new(1.4, 1.4, 1.4), Vector3.new(x, 0.45 + 0.7, crateZ), COLORS.crate, Enum.Material.WoodPlanks)
-			add("CropTop", Vector3.new(1.1, 0.25, 1.1), Vector3.new(x, 0.45 + 1.4 + 0.125, crateZ), CROP_COLORS[letter] or SPROUT)
-		end
 	end
 	if self.own and self.onBarn and self.detail == "full" and not self.state.free then
 		prompt(floor, Locale.T("barn.prompt.action"), Locale.T("barn.prompt.object"), 10, function()
