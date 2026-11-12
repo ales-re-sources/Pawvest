@@ -148,6 +148,7 @@ src/
     Handlers/                         ModuleScripts shared by all stage scripts (required via workspace.Handlers.*)
       CheckpointTouchHandler.luau     checkpoint touch → respawn point, fires CheckpointReached(part, first) to that player whenever the respawn point changes (`first` = first reach in the run → sound); a TimerStart touch counts as the stage's lowest-numbered checkpoint; NewRun from TimerStart fires CheckpointsReset and the server signal `RunStarted(player)` (ArenaServer resets the Laser Lab keys); fires ExploreWarning(stageKey) on a checkpoint touch without a running timer for that stage (on every touch, not only when the respawn point changes; again after 120 s, cleared by NewRun); dead characters ignored; a respawn is placed on the stored plate facing its LookVector (the course direction)
       PlayerTimerHandler.luau         stage timers (os.clock; `ResetTimer(player, reason)`, reason for telemetry: `exit` default / `home` / `reset`), personal bests (profile), global Top-10 (`UpdateAsync`, so servers never overwrite each other's records; a time that cannot make the cached board skips the DataStore; entries matched by UserId, legacy ones by name), score panel
+      StageScripts.luau               the behaviour of every copied stage scene script (each copy is the one-line stub `require(workspace.Handlers.StageScripts).<Fn>(script)`): gate TimerStart / GateExit / GateSign, Top10 board, finish FinishTimer + TeleportToArrival, portals WorldGate / ReturnGate / HubPortal / LeaveStage (one 2 s per-player cooldown), hazards Kill (players only, once per living character, Telemetry.MarkKill) / Damage(script, hp, gap) (lava) / ChoiceStep; the function list is in its header
     StartLocation/                    hub (central island, part-built since H1, centre (-1126, 16, -475), r 80): SpawnLocation on the plaza + TeleportToTutorial and GateWorld1 (S4.0: Script + 1.25x arch + Portal; teleports to the World 1 island) and GateWorld2..4 (S5: clones of it, `soon` worlds: shut for non-admins) on a circle of radius about 44 round the plaza centre at 90 / 60 / 30 / 0 degrees for Worlds 1 / 2 / 3 / 4 (Tutorial at 142), facing it (the stage portals moved to Workspace.World1) (each: Script, `Portal` = touch trigger + face with the stage-name SurfaceGui, Studio-only `Arch` Model of stud-stone blocks cloned from `ServerStorage.DecorKit.StudPortal`, H1.1) + StarsLeaderboard (Studio-only board model in the wooden stud style, no scripts; StarsBoard.server.luau beside it draws into Model.ScoreBlock.SurfaceGui: DataLabel, Names.NameN, Score.ScoreN, Photos.PhotoN); Studio-only Island folder (Island, IslandRock, Plaza, PlazaRing, Hedge + invisible Barrier ring with an opening toward the garden, BridgePath, GardenSign, Decor). Scripts find the hub by name, never by coordinates
     World1/                           World 1 courtyard (S4.0, Studio-only, rectangle x -430..-320, z 187..357, y 77; see "Courtyard layout" below): `Plaza`, `Rock` underside, low `Wall` (6 high, 3 thick) with the gate openings, `Spawn` pad (hub gate lands here, facing north), `ReturnGate` (Script + Portal + Arch in the south wall: back to the hub), no closed gates any more (`SoonGate1` / `SoonGate3` were replaced by the gates of Island Hop in S4.1 and Blink in S4.2), Decor, the five stage folders `Stage1` … `Stage5` (since 2026-10-22 key = folder = position; see "Stage anatomy"), `WorldSign` (S5, Studio-only: "World N" on two posts in front of the Spawn pad). The stages lie physically behind the gates
     World2/                           World 2 courtyard (S5, Studio-only): `Workspace.World1` cloned 263 studs south (z 450..620) and rotated 180 degrees about its centre (entrance + `ReturnGate` on the north side, the finale gate will be on the south side, courses run away from World 1); same children as World1 (Plaza, Rock, Wall, Spawn, ReturnGate, Decor, WorldSign); Stage6 / Stage7 (S6.1) stand in the east wall gates, Stage8 / Stage9 (S6.2) stand in the west gates, Stage10 (S6.3) in the south gate (all five World 2 gates are built), two bonus-portal slots stay free beside the return gate (S11)
@@ -208,23 +209,25 @@ A cloned stage's gate sign (`Gate.Sign.Gui.Title`) keeps the source stage's lite
 stage's sign (the `GateSign` script writes the localized name at runtime; the literal is what Edit mode shows). Then add the stage to
 `StageConfig`, give a course with a deep catch surface its `FallResetDepth`, and run the coplanar audit (AGENTS.md → Gotchas).
 
-## Reusable script variants (copy-pasted, not modules)
+## Reusable script variants (one-line stubs)
 
-Most of the 119 scripts are identical copies. Edit them consistently (grep by content or md5):
+The copied stage scripts are byte-identical one-line stubs, `require(workspace.Handlers.StageScripts).<Fn>(script)`: the behaviour lives in `Workspace/Handlers/StageScripts.luau` and a stub only names its function, so a new stage copies the stubs (StageKit templates) unchanged. Counts include the `ServerStorage/StageKit` templates:
 
-| Count | Variant | Example |
+| Count | Stub | Where |
 |---|---|---|
-| 32 | checkpoint → `CheckpointTouchHandler.OnTouched` | `Workspace/World1/Stage2/1/C/Script.server.luau` |
-| 10 | kill on touch (`Humanoid.Health = 0`, then `Telemetry.MarkKill`, T1a) | `Workspace/World1/Stage5/Part_06/Script.server.luau` |
-| 8 | kill player on touch (debounced by `hit`; then `Telemetry.MarkKill`; `DebugBaseplate`'s script is the same with other whitespace) | `Workspace/World1/Stage2/LaserStripStage/Part_01/…` |
+| 88 | checkpoint → `CheckpointTouchHandler.OnTouched` (3 lines, its own stub) | `Workspace/World1/Stage2/1/C/Script.server.luau` |
+| 17 | `TimerStart` | `Workspace/World*/Stage*/Gate/TimerStart/…`, `Workspace/Tutorial/LandingPad/TimerStart/…` |
+| 17 | `GateExit` | `…/Gate/GateExit/…`, `Workspace/Tutorial/LandingPad/GateExit/…` |
+| 17 | `GateSign` (finds `Sign`, or the Tutorial's `StartGate.Sign`) | `…/Gate/GateSign.server.luau`, `Workspace/Tutorial/LandingPad/GateSign.server.luau` |
+| 17 | `Top10` | `…/Top10Leaderboard/Script…` |
+| 16 | `FinishTimer` (on the finish Portal) | `Workspace/World*/Stage*/TeleportBackToStageStart/Portal/…`, Tutorial |
+| 16 | `TeleportToArrival` (to the stage's `Arrival`; the Tutorial: `LandingPad.TeleportDestination`) | `…/TeleportBackToStageStart/Script.server.luau` |
+| 4 | `WorldGate` (world found by the gate model's name; nowhere to go while the island folder is missing) | `Workspace/StartLocation/GateWorld*/…` |
+| 3 | `ReturnGate` | `Workspace/World*/ReturnGate/…` |
+| 1 | `HubPortal` (the stage portals are gone since S4.0: the stages open through door gates) | `Workspace/StartLocation/TeleportToTutorial/…` |
+| 1 | `LeaveStage` (Tutorial only since S4.0) | `Workspace/Tutorial/LandingPad/TeleportToSpawn/…` |
+| 19 | `Kill` (Stage 3 `11/level 11`, Stage 5, Stage 2 lasers and lava floor, `DebugBaseplate`) | `Workspace/World1/Stage5/Part_06/Script.server.luau` |
+| 1 | `Damage(script, 20, 0.5)` (lava block) | `Workspace/World1/Stage2/Lava block/…` |
+| 3 | `ChoiceStep` (one random `Step` made solid) | `Workspace/World1/Stage2/ChoiceStage_*/Script…` |
 | 0 | ~~spinner~~: since S3.3c the Stage 2 spinners (`Workspace/World1/Stage2/SpinnerStage_1` / `_2`) are kit parts: attributes `Kind = Spin`, `Speed = 60` (the old 2° per `wait()`), `Kill` on the two sweeper bars, no `Carry` attribute on the two spinning plates (since 2026-10-25 they carry the character like `KitLab.Mover_Spin`; before, `Carry = false` made them only rotate under the player), tag `KitMover`, no scripts (the folders only hold `init.meta.json`; the hub pillars `Part_4/5`, `_2: Part_2/6` no longer rotate, their rotation was invisible) | – |
-| 7 | `TimerStart` (5 world stages, the Tutorial, the kit template) | `Workspace/Stage*/Gate/TimerStart/…`, `Workspace/Tutorial/LandingPad/TimerStart/…` |
-| 1 | `TeleportToSpawn` (Tutorial only since S4.0) | `Workspace/Tutorial/LandingPad/TeleportToSpawn/…` |
-| 16 | `GateExit` (14 world stages, the Tutorial, the kit template) | `Workspace/World*/Stage*/Gate/GateExit/…`, `Workspace/Tutorial/LandingPad/GateExit/…` |
-| 6+6 | finish portal / teleport back to stage start (Stage1 teleport copy differs slightly) | `Workspace/Stage*/TeleportBackToStageStart/…` |
-| 1 | hub portal `TeleportToTutorial` (the stage portals are gone since S4.0: the stages open through door gates) | `Workspace/StartLocation/TeleportToTutorial/…` |
-| 4 | world gate `GateWorld1`..`4` (find their world by the model name; refuse while the island folder is missing) | `Workspace/StartLocation/GateWorld*/Script.server.luau` |
-| 4 | Top10Leaderboard | `Workspace/World1/Stage2/Top10Leaderboard/Script…` |
-| 6 | `GateSign` | `Workspace/Stage*/Gate/GateSign.server.luau` |
-| 3 | ChoiceStage random safe `Step` | `Workspace/World1/Stage2/ChoiceStage_*/Script…` |
 | 3 | bounce brick: declares `LAUNCH_SPEED` (attribute `LaunchSpeed` + tag `BounceBrick`; the launch is done by `BounceBricks.client`) — all 300 since the user's tuning (2026-10-21); `Bounce Brick_1`–`_3` are siblings; since 2026-10-25 they look like stud trampolines: the pink `#FF46B4` Studs mat (= the bounce part, full landing area) stands 1.5 studs above its column on four dark legs; a white frame around the mat and dark spring bars across its edges form the Studio-only child model `Trampoline`, all non-colliding, CanTouch / CanQuery off, set 0.05 studs off the mat / column faces (coplanar stud textures flicker) | `Workspace/World1/Stage3/12/Bounce Brick_*` (the `Level 12` model is gone; the bricks sit in the checkpoint model `12`) |

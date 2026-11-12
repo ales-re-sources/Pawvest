@@ -68,7 +68,7 @@ src/StarterPlayer/StarterPlayerScripts/  client: obstacle kit (ObstacleKit, KitZ
                               gates / portals, pets (PetClient, PetFollow, PetsPanel, PetDetail), garden (GardenView, PlotView,
                               FieldClient, panels), settings
 src/StarterGui/               CoinGui, ScreenGui (TopLeftIcons/ButtonHandler, SkillsPanel, AdminPanel)
-src/Workspace/Handlers/       CheckpointTouchHandler, PlayerTimerHandler (required by every stage script)
+src/Workspace/Handlers/       CheckpointTouchHandler, PlayerTimerHandler, StageScripts (the logic behind every stage script stub)
 src/Workspace/                StartLocation (hub), Tutorial, World1 (Stage1-5), World2 (Stage6-10), World3 (Stage11-15), Garden,
                               DebugBaseplate (the sea kill brick); scene content of these is Studio-only
 ```
@@ -77,9 +77,9 @@ src/Workspace/                StartLocation (hub), Tutorial, World1 (Stage1-5), 
 - World stages live in `Workspace.World<n>.Stage<k>` (`Gate`, `Top10Leaderboard`, `Arrival`, checkpoints `<number>/C`, finish
   `TeleportBackToStageStart/Portal`, obstacles); a new stage takes the next free block of 100 checkpoint numbers. Anatomy and the procedure
   for a new stage: LAYOUT.md.
-- Stage scripts never hard-code a stage: they call `StageConfig.ForInstance(script)` (stage = the Workspace folder they live in) or
-  `StageConfig.ByHubPortal[...]`, so most stage scripts are **byte-identical copies**: edit all copies consistently (grep by content or md5),
-  including the `ServerStorage.StageKit` template copies (LAYOUT.md → Reusable script variants).
+- Stage scene scripts are byte-identical one-line stubs `require(workspace.Handlers.StageScripts).<Fn>(script)`: change behaviour in
+  `StageScripts`, never in a copy. It never hard-codes a stage: `StageConfig.ForInstance(script)` (stage = the Workspace folder the stub
+  lives in) or `StageConfig.ByHubPortal[...]` (LAYOUT.md → Reusable script variants, incl. the `ServerStorage.StageKit` templates).
 - Stage keys (`"Stage1"`…`"Stage15"`, `"Tutorial"`; equal to the stage's `folder` and position) are DataStore keys and **never change**. Hub
   label: `StageConfig.HubName` (`"Central Island"`).
 
@@ -152,7 +152,7 @@ src/Workspace/                StartLocation (hub), Tutorial, World1 (Stage1-5), 
   looked up by name: keep that folder); placed decor is Anchored with CanTouch / CanQuery off (flowers / grass also CanCollide off).
 - Challenge coins pay once per player and are hidden only on that player's client; a new coin needs a new id in `ChallengeCoinConfig` **and**
   the Studio part (tag + `CoinId`) in its stage folder. No Highlights on coins (Roblox renders at most 31 at once).
-- Debounces in timer, portal and checkpoint code are per player; kill scripts key a script-global `h` by the touching part. The timer uses
+- Debounces in timer, portal and checkpoint code are per player; a kill part kills a living character once (no debounce). The timer uses
   `os.clock()`; times are floored to tenths (`TimeFormat.Tenths`) before storing.
 - A ScreenGui built in code gets `ZIndexBehavior = Sibling` (with Global its children drew under later pages / pickers).
 - **Shared helpers before local copies:** countdowns `TimeFormat.Clock`, client / stored number checks `Num`, id-set
