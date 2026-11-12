@@ -2,7 +2,7 @@
 
 [Shared authoring workflow](../PLANT_GROWTH.md) · [Status](../ROADMAP.md)
 
-## A1 selected; head refinement pending
+## Selected: A1 stem and foliage with H2 head
 
 Ales chose **A1's stem and foliage** on 2026-11-12 and requested other head options before growth. Keep its nine-leaf spiral,
 stem path, dimensions and leaf seed fixed across the comparison. `tools/sunflower_head_studies.luau` builds these three mature
@@ -14,7 +14,12 @@ head alternatives in Studio Edit:
 - **H2 — layered golden (recommended):** two offset layers of rounded, folded petals and a slightly smaller disk for a fuller flower.
 - **H3 — nodding seed head:** a larger seed disk, shorter rays and a stronger nod for a harvest-heavy silhouette.
 
-These are static head studies only. Choose the head before CG20b's deterministic draft growth and five stills.
+Ales selected **H2** on 2026-11-12. These are static studies; next is CG20b's deterministic draft growth and five stills.
+
+H2 currently uses 189 Parts plus 138 built-in sphere `SpecialMesh` children (327 instances excluding the Model). Its 120 head
+Parts comprise 68 petal pieces (34 two-piece petals), 42 seed marks, three disk/back pieces and seven bracts; stem and foliage
+use 69 Parts. A 36-square field at this study detail would contain 6,804 plant Parts plus 4,968 mesh children, before soil, pets
+or UI. These counts are geometry budgets, not measured frame time; production simplification and proxies remain unbuilt.
 
 | Head study | Height | Radius | Parts | Built-in sphere meshes |
 |---|---|---|---|---|
