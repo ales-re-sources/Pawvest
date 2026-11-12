@@ -69,7 +69,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG17 | Blueberry growth art | [Round highbush A, berries over the whole bush](plants/BLUEBERRY.md); CG17b/c registered | Growth art approved by Ales in Studio 2026-11-12; Studio geometry and production PlotView checks pass; performance, real phone and second client open | – |
 | CG18 | Sweet potato growth art | [C trained fan with fuller foliage](plants/SWEET_POTATO.md) approved; CG18b/c registered | Studio geometry and production PlotView lifecycle checks pass; performance, real phone and second client open | – |
 | CG19 | Giant melon growth art | [Arching vine B, striped green melon](plants/GIANT_MELON.md); CG19a chosen, CG19b/c registered | Growth art approved by Ales 2026-11-12; Studio geometry (97 Parts, 2.38 radius, seeks, flowers clear of the fruit) and production PlotView checks pass; performance (3,492 plant Parts per full field), real phone and second client open | – |
-| CG20 | Sunflower growth art | [A1 + H2 growth draft](plants/SUNFLOWER.md) (CG20b) | five stills await art approval; geometry/proxy checks and boot pass; field integration follows approval | – |
+| CG20 | Sunflower growth art | [A1 + H2 growth draft](plants/SUNFLOWER.md) (CG20b) | growth art approved 2026-11-12; geometry/proxy checks and boot pass; CG20c field integration next | – |
 | CG21 | Pineapple growth art | [Three static mature studies](plants/PINEAPPLE.md) (CG21a) | Growth art approved by Ales 2026-11-12; Studio geometry (155 Parts, 2.31 radius, seeks) and production PlotView checks pass; performance (5,580 plant Parts per full field), real phone and second client open | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
@@ -183,8 +183,8 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
 - **CG20:** [Sunflower](plants/SUNFLOWER.md) (18 h). Ales chose A1's spiral foliage and H2's layered golden head.
   CG20b draft: [five growth stills](art/sunflower/growth-review.jpg), approved mature geometry preserved, 192 Parts + 141
   built-in sphere meshes; mid proxies 12 / 45 / 45. Studio geometry (six seeds × three masses × 101 ages, radius 2.275,
-  attachments, seeks and identity) and real reviewer playback/scrubber/ring/close checks pass; boot clean. Art approval
-  pending; next CG20c field registration and integration, then CG20d full-field/24-plot/phone performance.
+  attachments, seeks and identity) and real reviewer playback/scrubber/ring/close checks pass; boot clean. Growth art approved by Ales 2026-11-12;
+  next CG20c field registration and integration, then CG20d full-field/24-plot/phone performance.
 - **CG21:** [Pineapple](plants/PINEAPPLE.md) (24 h). Three static mature studies from Ales's fruit photo and cultivation
   infographic: A classic rosette (recommended), B tall stalk, C mother and sucker; 156 / 154 / 175 Parts, all inside the 2.4-stud
   radius. Ales chose **B, the tall stalk**. CG21b: `PineapplePlant` draft recipe (155 Parts, radius 2.31, top 7.0, six seeds × three

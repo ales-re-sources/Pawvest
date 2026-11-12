@@ -14,7 +14,7 @@ head alternatives in Studio Edit:
 - **H2 — layered golden (recommended):** two offset layers of rounded, folded petals and a slightly smaller disk for a fuller flower.
 - **H3 — nodding seed head:** a larger seed disk, shorter rays and a stronger nod for a harvest-heavy silhouette.
 
-Ales selected **H2** on 2026-11-12. The CG20b growth draft and its five stills are below; art approval is pending.
+Ales selected **H2** on 2026-11-12. The CG20b growth draft and its five stills are below; Ales approved the growth art on 2026-11-12.
 
 The static H2 study uses 189 Parts plus 138 built-in sphere `SpecialMesh` children (327 instances excluding the Model). Its 120 head
 Parts comprise 68 petal pieces (34 two-piece petals), 42 seed marks, three disk/back pieces and seven bracts; stem and foliage
@@ -33,7 +33,7 @@ the studded crown surface. The comparison faces existing daylight; place lightin
 production proxy or field performance claims. The display was removed, GUI visibility and camera restored, and a playtest boot
 reported zero server/client warnings or errors; it was stopped. No gameplay strings changed.
 
-## Growth draft — awaiting art approval
+## Growth art approved — field integration pending
 
 [`SunflowerPlant`](../../src/ReplicatedStorage/SunflowerPlant.luau) uses `PlantKit.recipe` with **`Draft = true`** (reviewer only).
 The approved A1/H2 mature geometry and colours are preserved at seed 1, standard mass. Five successive stem segments carry
@@ -59,7 +59,8 @@ attachment checks, 54 exact visible backward seeks, deterministic rebuilds, fini
 corner radius 2.275 studs; standard mature top 7.580 studs, maximum top 8.406. The mature comparison checked all 189 study Parts:
 colours identical, position error below 0.001 studs. Real Play/Pause, scrubber, rings/selection with the field pet and Close were
 exercised. Final server/client boot logs were clean; reviewer and playtest closed. Field registration, production PlotView
-integration and full-field/24-plot/phone performance remain later gates after art approval.
+integration and full-field/24-plot/phone performance remain later gates. Ales approved these five growth poses on 2026-11-12;
+the recipe stays `Draft = true` until the separate field-integration milestone.
 
 ## Earlier natural refinements of A
 
@@ -113,4 +114,4 @@ The temporary revised display was removed after capture and the camera restored.
 errors; the playtest was stopped. Localization build/check/lint pass with no changed strings. These checks describe the earlier static studies.
 
 Stored ID `Sunflower`, existing **18-hour** duration, prices/rewards and whole-square harvest stay as built. No profile edits or
-custom harvest feedback are part of this milestone. Growth art approval, field integration and performance remain later gates.
+custom harvest feedback are part of this milestone. Growth art is approved; field integration and performance remain later gates.
