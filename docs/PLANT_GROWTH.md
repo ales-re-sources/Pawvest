@@ -42,8 +42,8 @@ require(game.Players.LocalPlayer.PlayerScripts.PlantGrowthReview).Open("GoldenCa
 `Open()` starts with the first catalogue crop that has a `<CropId>Plant` ModuleScript (normally Potato) and expands the picker.
 An explicit crop ID selects that recipe immediately with the picker closed. The optional seconds argument controls review playback only; it changes neither real crop
 timing nor saved data. The **plant-name button** opens a scrolling picker, populated from the current crop catalogue and recipe
-modules when the reviewer opens. It also lists any unregistered recipe, so appearing here is not proof of field
-integration (check `PlantGrowth`). New recipes join the picker on the next `Open()` without maintaining another crop list.
+modules when the reviewer opens. It also lists a recipe marked `Draft = true`, which the field does not use, so appearing
+here is not proof of field integration (check the recipe's `Draft`). New recipes join the picker on the next `Open()` without maintaining another crop list.
 
 Choosing a crop keeps growth, seed, harvested-size factor, rings, view mode and playback state, removes the previous review
 plants/rings, refreshes the comparison neighbour and reframes the camera for the recipe. Click the plant button again or outside
@@ -91,7 +91,10 @@ study small: enough geometry and scale context to choose the silhouette, without
 
 Use a crop recipe through the shared `PlantGrowth` system, not a crop-specific scheduler or review UI. Build on
 [`PlantKit`](../src/ReplicatedStorage/PlantKit.luau): its timing, seed and size helpers and its `Rig` (cached Part writes) belong
-there, not copied into a recipe. A pose writes Parts in the order they were added. Keep a recipe's `vary` draws in their order: a new
+there, not copied into a recipe. A recipe that describes its plant as one `geometry(s, g, emit, proxy)` (Broccoli, Garlic, Onion,
+Cucumber, Golden Carrot) gets `new` / `SetGrowth` / `Destroy` / `BuildProxy` from `PlantKit.recipe` (hooks for supports, fruit
+slots and effects are listed in its header); every proxy takes its stage growth from `PlantKit.proxyGrowth(stage, mid)` and rods
+from `PlantKit.proxyRod`. A pose writes Parts in the order they were added. Keep a recipe's `vary` draws in their order: a new
 draw goes last, otherwise every existing planting changes shape. Build a bounded set of Parts once and pose them continuously. Leaves unfold at their bases; children follow the current parent as it extends. Growth should
 extend successive stems and organs with overlapping timings rather than uniformly inflate the entire model. A 43→44→43% seek
 must restore the same visible pose without floating leaves, detached fruit or a changed random roll.
@@ -108,7 +111,9 @@ and rails stay full-sized from planting and do not scale with mass. Frost Grape 
 
 ## Recipe interface
 
-The shared [PlantGrowth registry](../src/ReplicatedStorage/PlantGrowth.luau) dispatches registered crops. Each art recipe builds
+The shared [PlantGrowth registry](../src/ReplicatedStorage/PlantGrowth.luau) dispatches every crop of `CropConfig.Crops` whose
+`<CropId>Plant` ModuleScript exists in ReplicatedStorage and is not marked `Draft = true`: a new recipe module is in the field
+as soon as it exists, so stage unfinished art with `Draft`. Each art recipe builds
 local anchored, non-colliding geometry and exposes:
 
 | Entry | Contract |
@@ -119,6 +124,7 @@ local anchored, non-colliding geometry and exposes:
 | `PlayHarvest(parent, soilCFrame, sizeFactor?)` | Optional local feedback after a successful owner harvest; transient instances must clean themselves up. |
 | `RingHeight` | Nominal ring offset; mass-scaled unless `FixedRingHeight` is true. |
 | `FixedOrientation`, `FixedRingHeight`, `ReviewHeight` | Optional row-alignment, ring and Studio-framing rules. |
+| `Draft` | Optional: `true` keeps the recipe out of the field (reviewer only). |
 | `plant.fruitSlots` | Explicit fruit IDs, attachments and Part groups where authored; see below. |
 
 The public plot feed supplies planting identity, harvested-size factor and server-time anchors; its schema belongs in

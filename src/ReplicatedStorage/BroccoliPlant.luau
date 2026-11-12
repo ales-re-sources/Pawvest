@@ -1,7 +1,6 @@
 -- CG14: leafy brassica with one late, tightly budded crown (docs/plants/BROCCOLI.md).
 -- 1 stalk + 2 cotyledons + 6 seven-Part leaves + 7 nine-Part floret groups = 108 Parts, built once.
 local BroccoliPlant = {}
-BroccoliPlant.__index = BroccoliPlant
 BroccoliPlant.RingHeight = 5.6
 BroccoliPlant.FixedRingHeight = true
 BroccoliPlant.ReviewHeight = 5.2
@@ -117,37 +116,13 @@ local function geometry(s, g, emit, proxy)
 	end
 end
 
-function BroccoliPlant.new(parent, soilCFrame, seed, sizeFactor)
-	local self = setmetatable(shape(seed, sizeFactor), BroccoliPlant)
-	self.rig = Kit.newRig("BroccoliPlant", soilCFrame)
-	self.model = self.rig.model
-	geometry(self, 1, function(name, _, _, _, _, role) self.rig:add(name, nil, role) end)
-	assert(#self.rig.parts == 108, "Broccoli topology changed")
-	self:SetGrowth(0)
-	self.model.Parent = parent
-	return self
-end
-
-function BroccoliPlant:SetGrowth(normalized)
-	local g = self.rig:beginPose(normalized)
-	if not g then return end
-	geometry(self, g, function(_, size, cf, color, opacity) self.rig:block(size, cf, color, opacity) end)
-	self.rig:finish()
-end
-
-function BroccoliPlant:Destroy()
-	self.rig:destroy()
-end
-
 -- Direct-built silhouette: three broad three-plate leaves and seven joined crown lobes; no tiny bud blocks.
-function BroccoliPlant.BuildProxy(parent, soilCFrame, stage, seed, sizeFactor)
-	local s = shape(seed, sizeFactor)
-	local g = if stage <= 1 then 0.20 elseif stage == 2 then 0.60 else 1
-	geometry(s, g, function(name, size, cf, color, opacity, role)
-		if opacity <= 0.01 then return end
-		local part = Kit.proxyPart(parent, name, size, soilCFrame * cf, color, nil, role)
-		part.Transparency = 1 - opacity
-	end, true)
-end
+Kit.recipe(BroccoliPlant, {
+	name = "BroccoliPlant",
+	parts = 108,
+	shape = shape,
+	geometry = geometry,
+	proxyMid = 0.60,
+})
 
 return BroccoliPlant

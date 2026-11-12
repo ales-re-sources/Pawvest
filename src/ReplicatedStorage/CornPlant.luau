@@ -187,7 +187,7 @@ end
 -- arching leaves, crown tassel and two golden ears; omit kernel/husk detail.
 function CornPlant.BuildProxy(parent, soilCFrame, stage, seed, sizeFactor)
 	local shape = seededShape(soilCFrame, seed, sizeFactor)
-	local growth = if stage <= 1 then 0.20 elseif stage == 2 then 0.90 else 1
+	local growth = PlantKit.proxyGrowth(stage, 0.90)
 	local crown = shape.path[8] * growth
 	local function block(name, size, cf, color, slot)
 		PlantKit.proxyPart(parent, name, size, soilCFrame * cf, color, nil, if slot then "Fruit" else "Structure", slot)

@@ -1,7 +1,6 @@
 -- CG12b: selected A, wrapped ivory head, alternating flat leaves and one curled hardneck scape.
 -- 21 head/neck/stem + 21 blade + 10 scape + 2 spathe Parts = 54, built once (docs/plants/GARLIC.md).
 local GarlicPlant = {}
-GarlicPlant.__index = GarlicPlant
 GarlicPlant.RingHeight = 5.5
 GarlicPlant.FixedRingHeight = true
 GarlicPlant.ReviewHeight = 5.0
@@ -145,37 +144,13 @@ local function geometry(s, g, emit, proxy)
 		CREAM, if bud > 0.01 then 1 else 0, "Scape")
 end
 
-function GarlicPlant.new(parent, soilCFrame, seed, sizeFactor)
-	local self = setmetatable(shape(seed, sizeFactor), GarlicPlant)
-	self.rig = Kit.newRig("GarlicPlant", soilCFrame)
-	self.model = self.rig.model
-	geometry(self, 1, function(name, _, _, _, _, role) self.rig:add(name, nil, role) end)
-	assert(#self.rig.parts == 54, "Garlic topology changed")
-	self:SetGrowth(0)
-	self.model.Parent = parent
-	return self
-end
-
-function GarlicPlant:SetGrowth(normalized)
-	local g = self.rig:beginPose(normalized)
-	if not g then return end
-	geometry(self, g, function(_, size, cf, color, opacity) self.rig:block(size, cf, color, opacity) end)
-	self.rig:finish()
-end
-
-function GarlicPlant:Destroy()
-	self.rig:destroy()
-end
-
 -- Direct-built mid silhouette: three shoulders, neck/core/stem, four two-piece blades and the complete scape curl.
-function GarlicPlant.BuildProxy(parent, soilCFrame, stage, seed, sizeFactor)
-	local s = shape(seed, sizeFactor)
-	local g = if stage <= 1 then 0.20 elseif stage == 2 then 0.60 else 1
-	geometry(s, g, function(name, size, cf, color, opacity, role)
-		if opacity <= 0.01 then return end
-		local part = Kit.proxyPart(parent, name, size, soilCFrame * cf, color, nil, role)
-		part.Transparency = 1 - opacity
-	end, true)
-end
+Kit.recipe(GarlicPlant, {
+	name = "GarlicPlant",
+	parts = 54,
+	shape = shape,
+	geometry = geometry,
+	proxyMid = 0.60,
+})
 
 return GarlicPlant

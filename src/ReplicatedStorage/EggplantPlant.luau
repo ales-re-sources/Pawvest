@@ -216,7 +216,7 @@ function EggplantPlant:Destroy() self.rig:destroy() end
 -- Direct-built mid silhouette; no full plant or hidden rig is allocated to derive it.
 function EggplantPlant.BuildProxy(parent,soilCFrame,stage,seed,sizeFactor)
 	local shape=seededShape(seed,sizeFactor)
-	local g=if stage<=1 then 0.20 elseif stage==2 then 0.75 else 1
+	local g=Kit.proxyGrowth(stage, 0.75)
 	local starts,tips,rotations,qs=structure(shape,g)
 	local tint=phase(g,0.35,0.65)
 	local function block(name,size,cf,color,opacity,role,id)

@@ -1,22 +1,19 @@
--- Shared plant-art entry point. Register a recipe here to animate another crop.
--- Recipes provide new(parent, soilCFrame, seed, sizeFactor?), BuildProxy, RingHeight,
--- and a plant object with model, SetGrowth(0..1) and Destroy().
-local recipes = {
-	Tomato = require(script.Parent.TomatoPlant),
-	Potato = require(script.Parent.PotatoPlant),
-	Corn = require(script.Parent.CornPlant),
-	Lettuce = require(script.Parent.LettucePlant),
-	Onion = require(script.Parent.OnionPlant),
-	Garlic = require(script.Parent.GarlicPlant),
-	Broccoli = require(script.Parent.BroccoliPlant),
-	Pumpkin = require(script.Parent.PumpkinPlant),
-	Eggplant = require(script.Parent.EggplantPlant),
-	Cucumber = require(script.Parent.CucumberPlant),
-	Pepper = require(script.Parent.PepperPlant),
-	GlowMushroom = require(script.Parent.GlowMushroomPlant),
-	GoldenCarrot = require(script.Parent.GoldenCarrotPlant),
-	FrostGrape = require(script.Parent.FrostGrapePlant),
-}
+-- Shared plant-art entry point. A crop animates when ReplicatedStorage holds a recipe module named `<crop id>Plant`
+-- (the same convention as PlantGrowthReview) that is not marked `Draft = true` (a draft shows only in the reviewer).
+-- Recipes provide new(parent, soilCFrame, seed, sizeFactor?), BuildProxy, RingHeight, and a plant object with model,
+-- SetGrowth(0..1) and Destroy() (emit-style recipes: PlantKit.recipe).
+local CropConfig = require(script.Parent.CropConfig)
+
+local recipes = {}
+for _, crop in CropConfig.Crops do
+	local module = script.Parent:FindFirstChild(crop.id .. "Plant")
+	if module and module:IsA("ModuleScript") then
+		local recipe = require(module)
+		if not recipe.Draft then
+			recipes[crop.id] = recipe
+		end
+	end
+end
 
 local PlantGrowth = {}
 

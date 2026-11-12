@@ -301,10 +301,10 @@ end
 -- Direct mid proxy: posts and rails, cane, arms, one stalk and blade per leaf, a stalk and two blocks per bunch.
 function FrostGrapePlant.BuildProxy(parent, soilCFrame, stage, seed, sizeFactor)
 	local shape = seededShape(seed, sizeFactor)
-	local g = if stage <= 1 then 0.20 elseif stage == 2 then 0.70 else 1
+	local g = PlantKit.proxyGrowth(stage, 0.70)
 	local main, mainQ, arms = skeleton(shape, g)
 	local function rod(name, a, b, width, color, role, slot)
-		PlantKit.proxyPart(parent, name, V(width, width, (b - a).Magnitude), soilCFrame * axis(a, b), color, nil, role, slot)
+		return PlantKit.proxyRod(parent, soilCFrame, name, a, b, width, color, role, slot)
 	end
 	for _, x in {-1.88, 1.88} do
 		PlantKit.proxyPart(parent, "RigidPost", V(0.19, 7.40, 0.19), soilCFrame * CFrame.new(x, 3.70, -0.14), WOOD, "Studs", "Support")

@@ -3,6 +3,7 @@
 -- Growth is normalized (the review runner supplies a ten-second timeline).
 local PotatoPlant = {}
 PotatoPlant.__index = PotatoPlant
+PotatoPlant.RingHeight = 2.95
 local PlantKit = require(script.Parent.PlantKit)
 local phase, axis = PlantKit.phase, PlantKit.axis
 local V = Vector3.new
@@ -270,8 +271,6 @@ end
 function PotatoPlant:Destroy()
 	self.rig:destroy()
 end
-
-PotatoPlant.RingHeight = 2.95
 
 -- Distance representation: three green pieces plus two ripe soil-line tubers.
 -- Flowers and decorative berries belong only to the detailed plant.

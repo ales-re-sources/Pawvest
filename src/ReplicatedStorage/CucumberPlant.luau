@@ -2,7 +2,6 @@
 -- leaves, yellow flowers, tendrils and three dark-green ridged cucumbers hanging in front of the leaves.
 -- 5 rigid supports + 4 stem + 2 cotyledon + 30 leaf + 24 fruit + 8 male flower + 6 tendril Parts = 79, built once.
 local CucumberPlant = {}
-CucumberPlant.__index = CucumberPlant
 CucumberPlant.RingHeight = 5.6
 CucumberPlant.FixedOrientation = true -- a trained vine keeps its trellis aligned with the field rows
 CucumberPlant.FixedRingHeight = true
@@ -257,58 +256,31 @@ local function geometry(shape, g, emit, proxy)
 	end
 end
 
-function CucumberPlant.new(parent, soilCFrame, seed, sizeFactor)
-	local self = setmetatable(seededShape(seed, sizeFactor), CucumberPlant)
-	local rig = Kit.newRig("CucumberPlant", soilCFrame)
-	self.rig, self.model = rig, rig.model
-	for i, fruit in self.fruit do
-		-- Stable visual slot: mature, seeded stalk origin (docs/PLANT_GROWTH.md, fruit identity).
-		self.fruitSlots[i] = {id = i, attachment = soilCFrame * CFrame.new(fruit.attachment), parts = {}}
-	end
-	for _, s in SUPPORTS do
-		local p = rig:add(s[1], "Studs", "Support")
-		p.Size, p.CFrame, p.Color, p.Transparency = s[2], soilCFrame * CFrame.new(s[3]), WOOD, 0
-	end
-	geometry(self, 1, function(name, _, _, _, _, role, slot, variant)
-		local p = rig:add(name, variant, role, slot)
-		if slot then
-			table.insert(self.fruitSlots[slot].parts, p)
+Kit.recipe(CucumberPlant, {
+	name = "CucumberPlant",
+	parts = 79, -- 5 supports + 4 stem + 2 cotyledon + 30 leaf + 24 fruit + 8 male + 6 tendril
+	shape = seededShape,
+	geometry = geometry,
+	proxyMid = 0.60,
+	fixedParts = #SUPPORTS, -- the rigid supports are placed once in onNew
+	onNew = function(self, rig, soilCFrame)
+		for i, fruit in self.fruit do
+			-- Stable visual slot: mature, seeded stalk origin (docs/PLANT_GROWTH.md, fruit identity).
+			self.fruitSlots[i] = {id = i, attachment = soilCFrame * CFrame.new(fruit.attachment), parts = {}}
 		end
-	end, false)
-	assert(#rig.parts == 79, "Cucumber topology changed") -- 5 supports + 4 stem + 2 cotyledon + 30 leaf + 24 fruit + 8 male + 6 tendril
-	self:SetGrowth(0)
-	self.model.Parent = parent
-	return self
-end
-
-function CucumberPlant:SetGrowth(normalized)
-	local rig = self.rig
-	local g = rig:beginPose(normalized, #SUPPORTS) -- the rigid supports are placed once in new()
-	if not g then return end
-	geometry(self, g, function(_, size, cf, color, opacity)
-		rig:block(size, cf, color, opacity)
-	end, false)
-	rig:finish()
-end
-
-function CucumberPlant:Destroy()
-	self.rig:destroy()
-end
-
--- Direct mid proxy: posts and two rungs, the stem, three leaves of three plates and one body piece per ripe fruit.
-function CucumberPlant.BuildProxy(parent, soilCFrame, stage, seed, sizeFactor)
-	local shape = seededShape(seed, sizeFactor)
-	for i, s in SUPPORTS do
-		if i ~= 4 then
-			Kit.proxyPart(parent, s[1], s[2], soilCFrame * CFrame.new(s[3]), WOOD, "Studs", "Support")
+		for _, s in SUPPORTS do
+			local p = rig:add(s[1], "Studs", "Support")
+			p.Size, p.CFrame, p.Color, p.Transparency = s[2], soilCFrame * CFrame.new(s[3]), WOOD, 0
 		end
-	end
-	local g = if stage <= 1 then 0.20 elseif stage == 2 then 0.60 else 1
-	geometry(shape, g, function(name, size, cf, color, opacity, role, slot, variant)
-		if opacity <= 0.01 then return end
-		local p = Kit.proxyPart(parent, name, size, soilCFrame * cf, color, variant, role, slot)
-		p.Transparency = 1 - opacity
-	end, true)
-end
+	end,
+	-- Direct mid proxy: posts and two rungs, the stem, three leaves of three plates and one body piece per ripe fruit.
+	onProxy = function(parent, soilCFrame)
+		for i, s in SUPPORTS do
+			if i ~= 4 then
+				Kit.proxyPart(parent, s[1], s[2], soilCFrame * CFrame.new(s[3]), WOOD, "Studs", "Support")
+			end
+		end
+	end,
+})
 
 return CucumberPlant

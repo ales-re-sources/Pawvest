@@ -219,10 +219,10 @@ end
 -- Direct mid proxy: vine, two parts per leaf, flowers as one disc, a two-box fruit with a two-box shoulder and the stem.
 function PumpkinPlant.BuildProxy(parent, soilCFrame, stage, seed, sizeFactor)
 	local shape = seededShape(seed, sizeFactor)
-	local g = if stage <= 1 then 0.20 elseif stage == 2 then 0.70 else 1
+	local g = Kit.proxyGrowth(stage, 0.70)
 	local pts, vq = vineState(shape, g)
 	local function rod(name, a, b, width, color, role, slot)
-		return Kit.proxyPart(parent, name, V(width, width, (b - a).Magnitude), soilCFrame * axis(a, b), color, nil, role, slot)
+		return Kit.proxyRod(parent, soilCFrame, name, a, b, width, color, role, slot)
 	end
 	for k = 1, 7 do
 		if vq[k] > 0.05 then

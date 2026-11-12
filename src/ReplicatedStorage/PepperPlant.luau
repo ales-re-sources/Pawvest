@@ -269,7 +269,7 @@ function PepperPlant:Destroy() self.rig:destroy() end
 -- Direct-built mid silhouette: same seed/size/attachment math, without allocating a full rig.
 function PepperPlant.BuildProxy(parent,soilCFrame,stage,seed,sizeFactor)
 	local shape = seededShape(seed,sizeFactor)
-	local g = if stage<=1 then 0.20 elseif stage==2 then 0.72 else 1
+	local g = Kit.proxyGrowth(stage, 0.72)
 	local starts,tips,rotations,qs = structure(shape,g)
 	local function block(name,size,cf,color,opacity,role,id,className)
 		if opacity>0 then Kit.proxyPart(parent,name,size,soilCFrame*cf,color,nil,role,id,className) end

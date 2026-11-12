@@ -242,7 +242,7 @@ end
 -- omit the stem's octagon layers, rim and cap layers.
 function GlowMushroomPlant.BuildProxy(parent, soilCFrame, stage, seed, sizeFactor)
 	local shape = seededShape(seed, sizeFactor)
-	local g = if stage <= 1 then 0.20 elseif stage == 2 then 0.72 else 1
+	local g = Kit.proxyGrowth(stage, 0.72)
 	local function block(kind, size, cf, color, role, id, glowing)
 		local part = Kit.proxyPart(parent, kind, size, soilCFrame * cf, color, nil, role, id)
 		if glowing then setGlowing(part, true) end

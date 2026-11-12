@@ -162,7 +162,8 @@ src/Workspace/                StartLocation (hub), Tutorial, World1 (Stage1-5), 
   `PlayerProfile.OnReady` (join + reset), purchases `PlayerProfile.TrySpend`, garden successes `GardenService.Done`.
   Client GUI: builders, bars, self-clearing messages, toasts, pulses `UiKit`; HUD popups `HudPopup`; two-tap confirms
   `ConfirmTap`; stand prompts `GardenUi.BindStand` + `PanelFocus.Open(..., anchor)`; a player's plot `GardenConfig.PlotOf`.
-  Obstacle kit client: tags, cached attributes, kills, run start `KitClient`.
+  Obstacle kit client: tags, cached attributes, kills, run start `KitClient`. Plant recipes: `PlantKit.recipe`, `proxyGrowth`,
+  `proxyRod`; a `<CropId>Plant` module is in the field unless `Draft = true`.
 - Legacy APIs are common (`wait`, `spawn`, `:connect`, `findFirstChild`); prefer `task.*` and `Players:GetPlayerFromCharacter` in new code,
   but don't mass-rewrite without asking.
 

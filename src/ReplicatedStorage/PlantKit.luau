@@ -68,6 +68,16 @@ function PlantKit.proxyPart(parent: Instance, name: string, size: Vector3, cfram
 	return part
 end
 
+-- Growth a mid-distance proxy shows at visual stage 1 / 2 / 3: a seedling, the recipe's own `mid`, ripe.
+function PlantKit.proxyGrowth(stage: number, mid: number): number
+	return if stage <= 1 then 0.20 elseif stage == 2 then mid else 1
+end
+
+-- A proxy rod from a to b (soil space), its Z axis along the segment.
+function PlantKit.proxyRod(parent: Instance, soilCFrame: CFrame, name: string, a: Vector3, b: Vector3, width: number, color: Color3, role: string?, slot: number?): BasePart
+	return PlantKit.proxyPart(parent, name, V(width, width, (b - a).Magnitude), soilCFrame * PlantKit.axis(a, b), color, nil, role, slot)
+end
+
 local Rig = {}
 Rig.__index = Rig
 
@@ -159,6 +169,90 @@ function Rig:destroy()
 	end
 	self.destroyed = true
 	self.model:Destroy()
+end
+
+-- An emit-style recipe: one geometry(s, g, emit, proxy) describes the plant, and emit is called once per Part, in the same
+-- order at every growth: emit(name, size, cf, color, opacity, role?, slot?, variant?, className?) with cf relative to the
+-- soil. recipe() fills Plant.new / SetGrowth / Destroy / BuildProxy from it:
+--   new        builds the Rig once (emit = add; asserts spec.parts), then poses growth 0
+--   SetGrowth  poses the Rig (emit = block)
+--   BuildProxy builds only the visible Parts (opacity > 0.01) at PlantKit.proxyGrowth(stage, spec.proxyMid), proxy = true
+-- spec: name (model name), parts (Part count), shape(seed, sizeFactor) -> s (the plant object's fields), geometry, proxyMid,
+-- and the optional hooks:
+--   fixedParts                 leading Parts that onNew places once and no pose writes (rigid supports)
+--   onNew(self, rig, soilCFrame)   before the Parts are added (supports, fruit slots: a slotted Part joins
+--                              self.fruitSlots[slot].parts)
+--   onBuilt(self)              after the Parts are added
+--   onPart(part, role, g, index)   after each posed Part; onPose(self, g, result) after a pose (result = geometry's return)
+--   onProxy(parent, soilCFrame, s) before the proxy's Parts; onProxyPart(part, role, g) after each proxy Part
+function PlantKit.recipe(Plant, spec)
+	Plant.__index = Plant
+
+	function Plant.new(parent: Instance, soilCFrame: CFrame, seed: number, sizeFactor: number?)
+		local self = setmetatable(spec.shape(seed, sizeFactor), Plant)
+		local rig = PlantKit.newRig(spec.name, soilCFrame)
+		self.rig, self.model = rig, rig.model
+		if spec.onNew then
+			spec.onNew(self, rig, soilCFrame)
+		end
+		spec.geometry(self, 1, function(name, _, _, _, _, role, slot, variant, className)
+			local part = rig:add(name, variant, role, slot, className)
+			if slot and self.fruitSlots then
+				table.insert(self.fruitSlots[slot].parts, part)
+			end
+		end, false)
+		assert(#rig.parts == spec.parts, spec.name .. " topology changed")
+		if spec.onBuilt then
+			spec.onBuilt(self)
+		end
+		self:SetGrowth(0)
+		self.model.Parent = parent
+		return self
+	end
+
+	function Plant:SetGrowth(normalized: number)
+		local rig = self.rig
+		local g = rig:beginPose(normalized, spec.fixedParts)
+		if not g then
+			return
+		end
+		local onPart = spec.onPart
+		local result = spec.geometry(self, g, function(_, size, cf, color, opacity, role)
+			rig:block(size, cf, color, opacity)
+			if onPart then
+				onPart(rig.parts[rig.cursor], role, g, rig.cursor)
+			end
+		end, false)
+		rig:finish()
+		if spec.onPose then
+			spec.onPose(self, g, result)
+		end
+	end
+
+	function Plant:Destroy()
+		self.rig:destroy()
+	end
+
+	function Plant.BuildProxy(parent: Instance, soilCFrame: CFrame, stage: number, seed: number?, sizeFactor: number?)
+		local s = spec.shape(seed, sizeFactor)
+		if spec.onProxy then
+			spec.onProxy(parent, soilCFrame, s)
+		end
+		local g = PlantKit.proxyGrowth(stage, spec.proxyMid)
+		local onProxyPart = spec.onProxyPart
+		spec.geometry(s, g, function(name, size, cf, color, opacity, role, slot, variant, className)
+			if opacity <= 0.01 then
+				return
+			end
+			local part = PlantKit.proxyPart(parent, name, size, soilCFrame * cf, color, variant, role, slot, className)
+			part.Transparency = 1 - opacity
+			if onProxyPart then
+				onProxyPart(part, role, g)
+			end
+		end, true)
+	end
+
+	return Plant
 end
 
 return PlantKit

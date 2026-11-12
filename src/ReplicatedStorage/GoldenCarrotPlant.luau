@@ -1,7 +1,6 @@
 -- CG10b: tall divided foliage and one pointed golden taproot, two-thirds buried (docs/plants/GOLDEN_CARROT.md).
 -- 6 root + 3 crease + 2 seed-leaf + 12 stalk + 42 leaflet + 7 terminal Parts = 72, built once.
 local GoldenCarrotPlant = {}
-GoldenCarrotPlant.__index = GoldenCarrotPlant
 GoldenCarrotPlant.RingHeight = 4.7
 GoldenCarrotPlant.ReviewHeight = 4.3
 
@@ -67,14 +66,14 @@ local function rootGeometry(shape,s,emit,proxy)
 		if proxy and i<5 then continue end
 		local at = V(0.01*(i-1)*shape.rootWidth*s.q,s.bottom+s.length*(i-0.5)/6,0)+shape.rootLean*s.q
 		emit("Root_"..i,V(width*s.width,s.length/6,width*s.width),CFrame.new(at)*CFrame.Angles(0,math.pi/4,0),
-			PALE:Lerp(if i==6 then LIGHT else GOLD,s.color),phase(s.q,0,0.04),false,"Root")
+			PALE:Lerp(if i==6 then LIGHT else GOLD,s.color),phase(s.q,0,0.04),"Root")
 	end
 	if proxy then return end
 	local scale = shape.rootLength/2.1
 	for i,spec in CREASES do
 		local p = V(spec[1]*shape.rootWidth*s.q,(spec[2]-2.02)*scale*s.q+s.top,spec[3]*s.width)+shape.rootLean*s.q
 		emit("RootCrease_"..i,V(spec[4]*s.width,0.026*shape.dimension,0.018*shape.dimension),
-			CFrame.new(p)*CFrame.Angles(0,spec[5],0),AMBER,phase(s.q,0.38,0.70),false,"Root")
+			CFrame.new(p)*CFrame.Angles(0,spec[5],0),AMBER,phase(s.q,0.38,0.70),"Root")
 	end
 end
 
@@ -87,7 +86,7 @@ local function cotyledons(shape,s,g,emit)
 		local elev = 1.15-0.94*open
 		local b = a+V(side*math.cos(elev)*len,math.sin(elev)*len,0.02)
 		emit("SeedLeaf_"..i,V(0.04,0.12*size,(b-a).Magnitude),Kit.axis(a,b)*CFrame.Angles(0,0,side*math.pi/2),
-			TIP,1,true,"Foliage")
+			TIP,1,"Foliage",nil,nil,"WedgePart")
 	end
 end
 
@@ -105,7 +104,7 @@ local function frondGeometry(shape,s,f,index,g,emit,proxy)
 	local function point(p) return frame:PointToWorldSpace(p*horizontal) end
 	local function rod(name,p1,p2,width,q)
 		local x,y = point(p1),point(p2)
-		emit(name,V(width,width,(y-x).Magnitude+0.015),Kit.axis(x,y),STALK,phase(q,0,0.08),false,"Foliage")
+		emit(name,V(width,width,(y-x).Magnitude+0.015),Kit.axis(x,y),STALK,phase(q,0,0.08),"Foliage")
 	end
 	if f.single then
 		rod("Frond_"..index.."_Spine",a,c,0.048,q1)
@@ -124,7 +123,7 @@ local function frondGeometry(shape,s,f,index,g,emit,proxy)
 			emit("Frond_"..index.."_Leaf_"..pair.."_"..side,
 				V(0.045,0.22*(1.15-pair*0.12)*f.leafScale*(0.2+0.8*q)*shape.horizontal,(y-x).Magnitude),
 				Kit.axis(x,y)*CFrame.Angles(0,0,side*math.pi/2),if pair==3 then TIP else GREEN,
-				phase(q,0,0.08)*phase(q1,0,0.10),true,"Foliage")
+				phase(q,0,0.08)*phase(q1,0,0.10),"Foliage",nil,nil,"WedgePart")
 		end
 	end
 	local qTip = phase(g,f.first+0.22,math.min(1,f.first+0.52))
@@ -132,7 +131,7 @@ local function frondGeometry(shape,s,f,index,g,emit,proxy)
 	local tip = c+(if delta.Magnitude>0.00001 then delta.Unit else Vector3.yAxis)*0.20*qTip
 	local x,y = point(c-V(0,0.05*qTip,0)),point(tip)
 		emit("Frond_"..index.."_Tip",V(0.04,0.14*shape.horizontal,(y-x).Magnitude),
-		Kit.axis(x,y)*CFrame.Angles(0,0,math.pi/2),TIP,phase(qTip,0,0.10),true,"Foliage")
+		Kit.axis(x,y)*CFrame.Angles(0,0,math.pi/2),TIP,phase(qTip,0,0.10),"Foliage",nil,nil,"WedgePart")
 end
 
 local function geometry(shape,g,emit,proxy)
@@ -164,44 +163,41 @@ local function addGlint(part,rate)
 	return at,e
 end
 
-function GoldenCarrotPlant.new(parent,soilCFrame,seed,sizeFactor)
-	local self=setmetatable(seededShape(seed,sizeFactor),GoldenCarrotPlant)
-	self.rig=Kit.newRig("GoldenCarrotPlant",soilCFrame)
-	self.model=self.rig.model
-	geometry(self,1,function(name,_,_,_,_,wedge,role)
-		self.rig:add(name,nil,role,nil,if wedge then "WedgePart" else nil)
-	end)
-	assert(#self.rig.parts==72,"Golden Carrot topology changed")
-	self.glintAnchor,self.glint=addGlint(self.rig.parts[6],self.glintRate)
-	self:SetGrowth(0)
-	self.model.Parent=parent
-	return self
-end
-
-function GoldenCarrotPlant:SetGrowth(normalized)
-	local rig=self.rig
-	local g=rig:beginPose(normalized)
-	if not g then return end
-	local s=geometry(self,g,function(_,size,cf,color,opacity,_,role)
-		rig:block(size,cf,color,opacity)
-		if role=="Root" then
-			local part=rig.parts[rig.cursor]
-			local reflectance=if rig.cursor<=6 then 0.08*phase(g,0.75,1) else 0
-			if part.Reflectance~=reflectance then part.Reflectance=reflectance end
+Kit.recipe(GoldenCarrotPlant, {
+	name = "GoldenCarrotPlant",
+	parts = 72,
+	shape = seededShape,
+	geometry = geometry,
+	proxyMid = 0.70,
+	onBuilt = function(self)
+		self.glintAnchor, self.glint = addGlint(self.rig.parts[6], self.glintRate)
+	end,
+	-- the six root slabs shine as the carrot ripens
+	onPart = function(part, role, g, index)
+		if role == "Root" then
+			local reflectance = if index <= 6 then 0.08 * phase(g, 0.75, 1) else 0
+			if part.Reflectance ~= reflectance then
+				part.Reflectance = reflectance
+			end
 		end
-	end)
-	rig:finish()
-	self.glintAnchor.Position=V(0,0.10*self.dimension*s.q,0.38*s.width+0.006)
-	local ripe=g>=1
-	if self.glint.Enabled~=ripe then
-		self.glint.Enabled=ripe
-		if not ripe then self.glint:Clear() end
-	end
-end
-
-function GoldenCarrotPlant:Destroy()
-	self.rig:destroy()
-end
+	end,
+	onPose = function(self, g, s)
+		self.glintAnchor.Position = V(0, 0.10 * self.dimension * s.q, 0.38 * s.width + 0.006)
+		local ripe = g >= 1
+		if self.glint.Enabled ~= ripe then
+			self.glint.Enabled = ripe
+			if not ripe then
+				self.glint:Clear()
+			end
+		end
+	end,
+	-- Direct mid proxy: shoulders and three divided fronds. Hidden geometry is never constructed.
+	onProxyPart = function(part, role, g)
+		if role == "Root" then
+			part.Reflectance = 0.08 * phase(g, 0.75, 1)
+		end
+	end,
+})
 
 -- A short gold-fleck reward at collection, independent of the plant that the plot feed may already have removed.
 function GoldenCarrotPlant.PlayHarvest(parent,soilCFrame,sizeFactor)
@@ -218,18 +214,6 @@ function GoldenCarrotPlant.PlayHarvest(parent,soilCFrame,sizeFactor)
 	e:Emit(9)
 	game:GetService("Debris"):AddItem(anchor,0.9)
 	return anchor
-end
-
--- Direct mid proxy: shoulders and three divided fronds. Hidden geometry is never constructed.
-function GoldenCarrotPlant.BuildProxy(parent,soilCFrame,stage,seed,sizeFactor)
-	local shape=seededShape(seed,sizeFactor)
-	local g=if stage<=1 then 0.20 elseif stage==2 then 0.70 else 1
-	geometry(shape,g,function(name,size,cf,color,opacity,wedge,role)
-		if opacity<=0.01 then return end
-		local p=Kit.proxyPart(parent,name,size,soilCFrame*cf,color,nil,role,nil,if wedge then "WedgePart" else nil)
-		p.Transparency=1-opacity
-		if role=="Root" then p.Reflectance=0.08*phase(g,0.75,1) end
-	end,true)
 end
 
 return GoldenCarrotPlant

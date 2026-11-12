@@ -201,7 +201,7 @@ end
 -- Mid distance: 2 / 9 / 14 Parts. Keep the open outer leaves and the closed head; omit frills and inner detail.
 function LettucePlant.BuildProxy(parent, soilCFrame, stage, seed, sizeFactor)
 	local shape = seededShape(seed, sizeFactor)
-	local g = if stage <= 1 then 0.20 elseif stage == 2 then 0.70 else 1
+	local g = PlantKit.proxyGrowth(stage, 0.70)
 	local cup = phase(g, 0.55, 1)
 	local function leaf(ring, i, pieces)
 		local lf = shape.byRing[ring][i]

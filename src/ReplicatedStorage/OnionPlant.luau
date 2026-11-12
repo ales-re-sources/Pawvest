@@ -1,7 +1,6 @@
 -- CG11b: brown onion, a half-buried globe bulb, tall slim quills and a flower scape with an umbel at harvest (docs/plants/ONION.md).
 -- 19 bulb + 1 seed coat + 24 quill (8 x 3 rods) + 2 scape + 2 bud + 1 core + 10 floret Parts = 59, built once.
 local OnionPlant = {}
-OnionPlant.__index = OnionPlant
 OnionPlant.RingHeight = 5.0
 OnionPlant.FixedRingHeight = true -- height barely follows mass, so the ring does not scale with it
 OnionPlant.ReviewHeight = 4.6
@@ -199,42 +198,13 @@ local function newShape(seed, sizeFactor)
 	return shape
 end
 
-function OnionPlant.new(parent, soilCFrame, seed, sizeFactor)
-	local self = setmetatable(newShape(seed, sizeFactor), OnionPlant)
-	self.rig = Kit.newRig("OnionPlant", soilCFrame)
-	self.model = self.rig.model
-	geometry(self, 1, function(name, _, _, _, _, role)
-		self.rig:add(name, nil, role)
-	end)
-	assert(#self.rig.parts == 59, "Onion topology changed") -- 19 bulb slab/seam/neck + seed + 24 quill + 2 scape + 2 bud + core + 10 floret
-	self:SetGrowth(0)
-	self.model.Parent = parent
-	return self
-end
-
-function OnionPlant:SetGrowth(normalized)
-	local rig = self.rig
-	local g = rig:beginPose(normalized)
-	if not g then return end
-	geometry(self, g, function(_, size, cf, color, opacity)
-		rig:block(size, cf, color, opacity)
-	end)
-	rig:finish()
-end
-
-function OnionPlant:Destroy()
-	self.rig:destroy()
-end
-
 -- Direct mid proxy: the bulb's upper slabs, neck, every other quill, the scape and half the florets. Hidden geometry is never constructed.
-function OnionPlant.BuildProxy(parent, soilCFrame, stage, seed, sizeFactor)
-	local shape = newShape(seed, sizeFactor)
-	local g = if stage <= 1 then 0.20 elseif stage == 2 then 0.60 else 1
-	geometry(shape, g, function(name, size, cf, color, opacity, role)
-		if opacity <= 0.01 then return end
-		local p = Kit.proxyPart(parent, name, size, soilCFrame * cf, color, nil, role)
-		p.Transparency = 1 - opacity
-	end, true)
-end
+Kit.recipe(OnionPlant, {
+	name = "OnionPlant",
+	parts = 59,
+	shape = newShape,
+	geometry = geometry,
+	proxyMid = 0.60,
+})
 
 return OnionPlant
