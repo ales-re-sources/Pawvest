@@ -5,14 +5,28 @@
 ## A1 selected; head refinement pending
 
 Ales chose **A1's stem and foliage** on 2026-11-12 and requested other head options before growth. Keep its nine-leaf spiral,
-stem path, dimensions and leaf seed fixed across the next comparison. `tools/sunflower_head_studies.luau` stages three mature
-head alternatives; Studio capture and bounds checks are pending:
+stem path, dimensions and leaf seed fixed across the comparison. `tools/sunflower_head_studies.luau` builds these three mature
+head alternatives in Studio Edit:
+
+![Head alternatives on A1](../art/sunflower/head-studies.jpg)
 
 - **H1 — broad pointed:** one crown of wider, tapered golden petals around a textured dark disk.
-- **H2 — layered golden:** two offset petal layers and a slightly smaller disk for a fuller flower.
+- **H2 — layered golden (recommended):** two offset layers of rounded, folded petals and a slightly smaller disk for a fuller flower.
 - **H3 — nodding seed head:** a larger seed disk, shorter rays and a stronger nod for a harvest-heavy silhouette.
 
 These are static head studies only. Choose the head before CG20b's deterministic draft growth and five stills.
+
+| Head study | Height | Radius | Parts | Built-in sphere meshes |
+|---|---|---|---|---|
+| H1 broad pointed | 7.63 | 1.92 | 175 | 88 |
+| H2 layered golden | 7.58 | 1.83 | 189 | 138 |
+| H3 nodding seed head | 7.48 | 1.83 | 193 | 104 |
+
+Standard mass, the same 5.18-stud avatar and 5.5-stud squares; all fit the 2.4-stud radius. The 69 stem/neck/leaf Parts match
+between studies (138 comparisons, local pose error below 0.000001 studs). Smooth petals and raised spiral seed marks replace
+the studded crown surface. The comparison faces existing daylight; place lighting was unchanged. Static costs include no
+production proxy or field performance claims. The display was removed, GUI visibility and camera restored, and a playtest boot
+reported zero server/client warnings or errors; it was stopped. No gameplay strings changed.
 
 ## Earlier natural refinements of A
 

@@ -55,14 +55,14 @@ end
 -- Broad ray with an ellipsoid shoulder and two wedges forming a tapered tip.
 local function ray(m,cf,angle,radius,len,width,bend,tone,id)
     local f=cf*CFrame.Angles(0,0,angle)*CFrame.new(0,radius,-0.02)*CFrame.Angles(bend,0,0)
-    local p=part(m,"PetalShoulder"..id,V(width,len*0.66,0.075),f*CFrame.new(0,len*0.27,0),tone,"Flower",Enum.PartType.Ball)
+    local p=part(m,"PetalShoulder"..id,V(width,len*0.76,0.075),f*CFrame.new(0,len*0.31,0),tone,"Flower",Enum.PartType.Ball)
     p.MaterialVariant=""
-    local tip=f*CFrame.new(0,len*0.49,-0.01)*CFrame.Angles(0.18,0,0)
+    local tip=f*CFrame.new(0,len*0.54,-0.01)*CFrame.Angles(0.18,0,0)
     for side=-1,1,2 do
-        local a=V(0,len*0.51,0)
+        local a=V(0,len*0.40,0)
         local c=V(side*width*0.40,0,0)
         local frame=tip*CFrame.fromMatrix((a+c)/2,Vector3.zAxis*side,Vector3.yAxis,-Vector3.xAxis*side)
-        local q=Kit.proxyPart(m,"PetalPoint"..id,V(0.055,len*0.51,width*0.40),frame,tone:Lerp(PALE,0.10),"","Flower",1,"WedgePart")
+        Kit.proxyPart(m,"PetalPoint"..id,V(0.055,len*0.40,width*0.40),frame,tone:Lerp(PALE,0.10),"","Flower",1,"WedgePart")
     end
 end
 local function head(m,b,at,s)
@@ -93,7 +93,14 @@ local function head(m,b,at,s)
             local width=s.width*random:NextNumber(0.86,1.12)
             local bend=s.bend+random:NextNumber(-0.09,0.14)
             local f=if layer==2 then cf*CFrame.new(0,0,0.045) else cf
-            ray(m,f,a,diameter*0.43,len,width,bend,GOLD:Lerp(AMBER,random:NextNumber(0,0.27)),layer.."_"..j)
+            local tone=GOLD:Lerp(AMBER,random:NextNumber(0,0.27))
+            if s.rounded then
+                local rf=f*CFrame.Angles(0,0,a)*CFrame.new(0,diameter*0.42,-0.03)*CFrame.Angles(bend,0,0)
+                soft("LayeredPetal"..layer.."_"..j,V(width,len,0.075),rf*CFrame.new(0,len*0.44,0),tone,"Flower")
+                soft("PetalFold"..layer.."_"..j,V(width*0.69,len*0.54,0.06),rf*CFrame.new(0,len*0.71,-len*0.055)*CFrame.Angles(0.22,0,0),tone:Lerp(PALE,0.19),"Flower")
+            else
+                ray(m,f,a,diameter*0.43,len,width,bend,tone,layer.."_"..j)
+            end
         end
     end
     for j=1,7 do
@@ -103,7 +110,7 @@ local function head(m,b,at,s)
 end
 local studies={
     {name="H1_BroadPointed",diameter=1.78,ray=0.99,rays=18,layers=1,width=0.39,bend=0.09,pitch=0.13,seeds=42},
-    {name="H2_LayeredGolden",diameter=1.68,ray=1.00,rays=17,inner=12,layers=2,width=0.43,bend=0.18,pitch=0.13,seeds=42},
+    {name="H2_LayeredGolden",diameter=1.68,ray=0.96,rays=20,inner=14,layers=2,rounded=true,width=0.43,bend=0.18,pitch=0.13,seeds=42},
     {name="H3_NoddingSeedHead",diameter=2.18,ray=0.66,rays=19,layers=1,width=0.34,bend=-0.25,pitch=0.43,seeds=57},
 }
 for _,s in studies do
@@ -171,5 +178,11 @@ avatar:PivotTo(avatar:GetPivot()+V(0,y0-minY,0))
 avatar.Humanoid.DisplayDistanceType=Enum.HumanoidDisplayDistanceType.None
 avatar.Parent=folder
 counts.avatarHeight=math.round(avatar:GetExtentsSize().Y*100)/100
+-- Face the existing daylight for review; do not alter place Lighting.
+local origin=CFrame.new(0,y0,0)
+local turn=origin*CFrame.Angles(0,math.pi,0)*origin:Inverse()
+for _,p in folder:GetDescendants() do
+    if p:IsA("BasePart") then p.CFrame=turn*p.CFrame end
+end
 folder.Parent=workspace
 return game.HttpService:JSONEncode(counts)
