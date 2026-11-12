@@ -66,6 +66,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG14 | Broccoli growth art | [Lobed foliage and domed floret crown](plants/BROCCOLI.md); CG14a/b/c registered | Longer-leaf art approved by Ales 2026-11-11; Studio geometry and production PlotView checks pass; field/24-plot performance, real phone and second client open | – |
 | CG15 | Pumpkin growth art | [Arching vine, ribbed 2.6-stud fruit](plants/PUMPKIN.md); CG15a-c registered | Studio geometry and production PlotView checks pass; five stills await Ales's review; field/24-plot performance, real phone and second client open | – |
 | CG16 | Eggplant growth art | [Tall open B with enlarged leaves](plants/EGGPLANT.md); CG16b/c registered | Revised growth art approved by Ales 2026-11-11; Studio geometry and production PlotView checks pass; performance, real phone and second client open | – |
+| CG18 | Sweet potato growth art | [Three static mature studies](plants/SWEET_POTATO.md) (CG18a) | Studio geometry checked; awaiting Ales's A / B / C choice before growth | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -92,7 +93,7 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
    restoration landmark), Neighbours, Mastery, World 4 (S9 / S10), the Estate, Season 1. Restoration bundles (E6, D5) and estate tiers / decor /
    cottage (E7, D9) are the long-term Coin sinks; E0 holds a placeholder for their size until they are designed.
 
-**Plant growth art (CG1–CG16).** [Authoring guide and crop designs](PLANT_GROWTH.md) ·
+**Plant growth art (CG1–CG18).** [Authoring guide and crop designs](PLANT_GROWTH.md) ·
 [Studio growth player command](PLANT_GROWTH.md#studio-growth-player). Standard review: five snapshots, no animation capture.
 
 - **CG1 / CG3:** [Tomato](plants/TOMATO.md) and [Potato](plants/POTATO.md) are integrated and
@@ -158,6 +159,10 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
   approved by Ales (2026-11-11). CG16b/c registered: 113 Parts, mid proxies 7 / 37 / 37. Studio geometry, colour timing,
   attachments, seeks and production PlotView lifecycle/corrections/exact ripeness/detail/selection/harvest-replant checks pass;
   boot clean. CG16d full-field/24-plot performance (4,068 plant Parts per full field), real phone, second client and live validation open.
+- **CG18:** [Sweet potato](plants/SWEET_POTATO.md) (8 h). Three static mature studies from Ales's four references (2026-11-12):
+  [A spreading patch / B lifted cascade / C trained fan](art/sweet-potato/ripe-studies.png), 125 / 125 / 133 Parts and
+  1.37 / 2.65 / 4.61 studs tall; all fit the 2.4-stud radius. Heart leaves, purple-throated pale trumpet flowers and tapered
+  reddish root shoulders distinguish it from upright Potato. Next: Ales selects a variant, then CG18b shared-framework growth and five stills.
 
 Key talents as **world rewards**: done for Double Jump (K1, GDD §6). Open: Triple Jump / Dash for World 3. The lost Coin sinks are made up in
 the balancing pass (STAGES §6, GDD §6).

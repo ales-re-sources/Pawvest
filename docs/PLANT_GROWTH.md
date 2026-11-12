@@ -20,6 +20,7 @@ selected silhouette, growth poses and geometry budget.
 | Broccoli | [Lobed blue-green foliage and a domed floret crown](plants/BROCCOLI.md) | 108 |
 | Pumpkin | [Arching vine, broad leaves, big ribbed orange fruit](plants/PUMPKIN.md) | 96 |
 | Eggplant | [Tall open plant with three long hanging purple fruit](plants/EGGPLANT.md) | 113 |
+| Sweet potato | [Three mature studies; choice pending](plants/SWEET_POTATO.md) | – |
 
 ## Studio growth player
 
