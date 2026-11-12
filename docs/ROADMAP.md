@@ -168,8 +168,8 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
   performance (4,824 plant Parts per full field), real phone, second client and live validation open.
 
 - **CG18:** [Sweet potato's C trained fan](plants/SWEET_POTATO.md) selected by Ales (2026-11-12). CG18b `PlantKit.recipe`
-  draft built (133 Parts): fixed support, successively extending vines, unfolding heart leaves, pale purple-throated flowers and
-  red root shoulders. Studio bounds/attachments/seeks/seeds/mass checks and reviewer controls pass; boot clean.
+  draft built (169 Parts): fixed support, successively extending vines, 18 broader outward-facing heart leaves (foliage revision
+  requested by Ales), pale purple-throated flowers and red root shoulders. Revised Studio geometry/reviewer checks pass; boot clean.
   [Five growth stills](art/sweet-potato/growth-review.png) await art approval. CG18c field integration and CG18d performance remain separate.
 
 Key talents as **world rewards**: done for Double Jump (K1, GDD §6). Open: Triple Jump / Dash for World 3. The lost Coin sinks are made up in

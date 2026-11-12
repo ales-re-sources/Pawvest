@@ -1,5 +1,5 @@
 -- CG18b: selected C, three vines on a fixed fan with heart leaves, pale purple-throated trumpets and red storage roots.
--- Review-only until growth art approval. 133 Parts: 5 supports + 12 stems + 72 foliage + 3 ties + 15 root + 26 flower.
+-- Review-only until growth art approval. 169 Parts: 5 supports + 12 stems + 108 foliage + 3 ties + 15 root + 26 flower.
 local SweetPotatoPlant = {
 	Draft = true,
 	RingHeight = 5.0,
@@ -40,9 +40,9 @@ local function shape(seed, sizeFactor)
 		for j,p in mature do
 			path[j+1]=V(p.X+sway*j/4,p.Y*height,p.Z+depth*j/4)
 			local yaw=(if (i+j+1)%2==0 then -1.1 else 1.1)+vary(0.33)
-			local len=math.min(1.15,1.02*math.clamp(1+(ds-1)*0.20,0.92,1.08)*(1+vary(0.14)))
-			vine.leaves[j]={yaw=yaw,tilt=0.65+vary(0.18),len=len,width=len*(0.90/1.02),
-				offset=V(math.sin(yaw)*0.15,0.14,0.15),tone=(i+j+1)%3==0}
+			local len=math.min(1.32,1.18*math.clamp(1+(ds-1)*0.20,0.92,1.08)*(1+vary(0.14)))
+			vine.leaves[j]={yaw=yaw,tilt=0.65+vary(0.18),len=len,width=len*(1.02/1.18),segment=j,fraction=1,
+				start=LEAF_TIME[j][1],finish=LEAF_TIME[j][2],offset=V(math.sin(yaw)*0.15,0.14,0.15),tone=(i+j+1)%3==0}
 		end
 		s.vines[k]=vine
 	end
@@ -56,6 +56,24 @@ local function shape(seed, sizeFactor)
 	for id,def in {{1,3,V(-0.23,0.38,0.53),-0.25,0.69,0.48},{3,4,V(0.11,0.21,0.50),0.40,0.62,0.64}} do
 		s.flowers[id]={vine=def[1],node=def[2],offset=def[3]+V(vary(0.08),vary(0.06),0),
 			yaw=def[4]+vary(0.22),size=def[5]*(1+vary(0.12)),start=def[6]}
+	end
+	-- New variation draws go after the original shape draws, preserving the existing vines, roots and flowers.
+	for k,vine in s.vines do
+		for j=1,2 do
+			local yaw=(if (k+j)%2==0 then -0.85 else 0.85)+vary(0.25)
+			local len=0.98*(1+vary(0.12))
+			table.insert(vine.leaves,{yaw=yaw,tilt=0.65,len=len,width=len*0.91,segment=j+1,fraction=0.52,
+				start=0.20+(j-1)*0.21,finish=0.43+(j-1)*0.22,
+				offset=V(math.sin(yaw)*0.17,0.10,0.30),tone=(k+j)%3==0,lower=true})
+		end
+		for _,leaf in vine.leaves do
+			-- Face the broad blade toward the field camera instead of viewing the original upward plate edge-on.
+			leaf.direction=V(math.sin(leaf.yaw),if leaf.lower then -0.25 else 0.42+(leaf.tilt-0.65)*0.5,0.10).Unit
+			local at=vine.path[leaf.segment]:Lerp(vine.path[leaf.segment+1],leaf.fraction)+leaf.offset
+			local reach=math.sqrt(leaf.len^2+(leaf.width*0.5)^2)+0.06
+			local fit=math.min(1,(2.35-V(at.X,0,at.Z).Magnitude)/reach)
+			leaf.len*=fit; leaf.width*=fit
+		end
 	end
 	return s
 end
@@ -80,14 +98,16 @@ local function geometry(s,g,emit,proxy)
 			rod(emit,"Vine"..k.."Stem"..j,pts[j],pts[j+1],0.09, YOUNG:Lerp(if j==1 then REDSTEM else STEM,phase(g,0.08,0.42)),q,"Structure")
 		end
 		for j,leaf in vine.leaves do
-			local t=LEAF_TIME[j]
-			local q=phase(g,t[1]+vine.delay,t[2]+vine.delay)
+			local q=phase(g,leaf.start+vine.delay,leaf.finish+vine.delay)
 			if k==2 and j==1 then q=0.16+0.84*q end
-			local at=pts[j+1]
+			local at=pts[leaf.segment]:Lerp(pts[leaf.segment+1],leaf.fraction)
 			local hinge=at+leaf.offset*q
 			local name="Vine"..k.."Leaf"..j
 			rod(emit,name.."Petiole",at,hinge,0.065,YOUNG:Lerp(REDSTEM,phase(g,0.10,0.50)),q,"Foliage")
-			local cf=CFrame.new(hinge)*CFrame.Angles(0,leaf.yaw,0)*CFrame.Angles(-(1.48+(leaf.tilt-1.48)*q),0,0)
+			local blade=Vector3.yAxis:Lerp(leaf.direction,q).Unit
+			local outward=V(0,0.25,1)
+			local normal=(outward-blade*outward:Dot(blade)).Unit
+			local cf=CFrame.fromMatrix(hinge,normal:Cross(blade),normal,blade)
 			local len,width=leaf.len*q,leaf.width*q
 			local col=YOUNG:Lerp(if leaf.tone then LIGHT else GREEN,q)
 			for side=-1,1,2 do
@@ -97,7 +117,7 @@ local function geometry(s,g,emit,proxy)
 					emit(name.."Lobe"..side,V(width*0.54,0.055,len*0.47),cf*CFrame.new(side*width*0.20,0.004*side,len*0.28)*CFrame.Angles(0,side*0.23,0),col,phase(q,0,0.08),"Foliage",nil,"Studs")
 				end
 				local apex,corner=V(0,0,len),V(side*width*0.5,0,len*0.4)
-				local wedge=cf*CFrame.fromMatrix((apex+corner)/2,Vector3.yAxis*-side,Vector3.zAxis,Vector3.xAxis*-side)
+				local wedge=cf*CFrame.fromMatrix((apex+corner)/2,Vector3.yAxis*side,Vector3.zAxis,Vector3.xAxis*side)
 				emit(name.."Tip"..side,V(0.055,len*0.60,width*0.50),wedge,col,phase(q,0,0.08),"Foliage",nil,"Studs","WedgePart")
 			end
 			if proxy then hidden(emit,name.."Vein","Foliage") else
@@ -140,7 +160,7 @@ local function geometry(s,g,emit,proxy)
 end
 
 Kit.recipe(SweetPotatoPlant,{
-	name="SweetPotatoPlant",parts=133,shape=shape,geometry=geometry,proxyMid=0.60,fixedParts=#SUPPORTS,
+	name="SweetPotatoPlant",parts=169,shape=shape,geometry=geometry,proxyMid=0.60,fixedParts=#SUPPORTS,
 	onNew=function(self,rig,base)
 		for id,root in self.roots do self.fruitSlots[id]={id=id,attachment=base*root.cf,parts={}} end
 		for i,support in SUPPORTS do

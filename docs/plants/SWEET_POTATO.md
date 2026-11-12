@@ -5,6 +5,9 @@
 ## Selected mature silhouette
 
 Ales selected **C, the trained fan**, on 2026-11-12. Its continuous growth is built as a review-only draft, awaiting art approval.
+The first growth review was too bare (Ales, 2026-11-12). Foliage now has **18 leaves instead of 12**: broader blades face outward
+toward the field view, with two smaller staggered leaves between each vine's original nodes. The flowers, roots and fan silhouette
+stay readable. Original variation draws retain their order; the new leaf draws come after the existing vines, roots and flowers.
 
 Three static mature studies precede the continuous recipe, following the shared art review gates.
 The supplied references guide organ shapes and growth; their captions are reference material, not game requirements.
@@ -49,11 +52,11 @@ The static study runner is `tools/sweet_potato_ripe_studies.luau`; its disposabl
 [75%](../art/sweet-potato/growth-75.png) · [100%](../art/sweet-potato/growth-100.png).
 
 [`SweetPotatoPlant.luau`](../../src/ReplicatedStorage/SweetPotatoPlant.luau) uses `PlantKit.recipe` for construction, reversible
-posing, destruction and direct proxy generation. It reuses 133 Parts: five fixed supports, 12 stem segments, 72 leaf/stalk/vein
-pieces, three ties, 15 storage-root pieces and 26 flower pieces. A hypothetical full-detail 36-square field would use 4,788
-plant Parts before soil, pets and UI; this draft is **not registered in the field**. Proxy stages currently use 20 / 57 / 79 Parts.
+posing, destruction and direct proxy generation. It reuses 169 Parts: five fixed supports, 12 stem segments, 108 leaf/stalk/vein
+pieces, three ties, 15 storage-root pieces and 26 flower pieces. A hypothetical full-detail 36-square field would use 6,084
+plant Parts before soil, pets and UI; this draft is **not registered in the field**. Proxy stages currently use 20 / 75 / 97 Parts.
 
-Seed variation changes vine heights, lean, leaf angles/sizes and root proportions. Seed 1 retains the chosen C baseline.
+Seed variation changes vine heights, lean, leaf angles/sizes and root proportions. Seed 1 is the reproducible authored baseline.
 Storage roots scale by the cube root of the server's harvested mass, including Sorter; their centres move inward at large
 sizes. Foliage width is constrained, and rigid equipment does not scale with mass. Orientation and 5-stud ring height are fixed.
 The three roots have stable fruit-slot IDs, mature attachments and explicit five-Part groups; flowers remain separate accents.
@@ -66,9 +69,10 @@ when integration is approved. Harvest will continue to clear the entire square; 
 
 CG18b Studio checks (2026-11-12, `tools/sweet_potato_growth_checks.luau`) pass for six seeds, harvested mass 0.35656 / 1 / 3.02985,
 101 ages, attachments, fixed supports, root metadata, physics/input flags, direct proxies and backward seeks. Maximum corner
-radius is 2.181 studs, maximum all-age height 4.857 studs; the standard seed-1 mature baseline remains 4.609 studs tall with
-2.038-stud radius. Crop-picker selection, Play/Pause, rings/selection border and Close were exercised through the real reviewer UI;
-the field pet and soil were checked together. Server and client logs were clean, and the playtest was stopped.
+radius is 2.293 studs, maximum all-age height 5.253 studs; the revised standard seed-1 mature baseline is 4.929 studs tall with
+2.282-stud radius. Crop-picker selection and Play/Pause were checked in the original review; the revised foliage, rings/selection
+border and Close were checked in the real reviewer, with the field pet and soil together. Updated five stills use the same square,
+seed, mass and camera. Server and client logs were clean, and the playtest was stopped.
 Production lifecycle, field/24-plot performance, real phone and second client remain unvalidated.
 
 ## Static study validation

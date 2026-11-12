@@ -44,8 +44,14 @@ local function attached(plant)
 		for j=1,4 do
 			local stem=plant.model["Vine"..k.."Stem"..j]
 			if stem.Transparency<0.5 and j>1 then near(ends(stem),select(2,ends(plant.model["Vine"..k.."Stem"..(j-1)])),stem.Name) end
+		end
+		for j,leaf in plant.vines[k].leaves do
 			local petiole=plant.model["Vine"..k.."Leaf"..j.."Petiole"]
-			if petiole.Transparency<0.5 then near(ends(petiole),select(2,ends(stem)),petiole.Name) end
+			if petiole.Transparency<0.5 then
+				local start=ends(plant.model["Vine"..k.."Stem"..leaf.segment])
+				local finish=select(2,ends(plant.model["Vine"..k.."Stem"..leaf.segment]))
+				near(ends(petiole),start:Lerp(finish,leaf.fraction),petiole.Name)
+			end
 		end
 	end
 	for id,f in plant.flowers do
@@ -55,7 +61,7 @@ local function attached(plant)
 end
 for _,mass in {low,1,high} do for seed=1,6 do
 	local plant=Recipe.new(parent,base,seed,mass)
-	assert(#plant.rig.parts==133 and #plant.fruitSlots==3,"Topology changed")
+	assert(#plant.rig.parts==169 and #plant.fruitSlots==3 and #plant.vines[1].leaves==6,"Topology changed")
 	local supports={}
 	for i=1,5 do local p=plant.model["FanSupport"..i]; supports[i]={p.CFrame,p.Size} end
 	for id,slot in plant.fruitSlots do
@@ -100,5 +106,5 @@ assert(math.abs(big.roots[1].len/small.roots[1].len-(high/low)^(1/3))<0.0001,"Ro
 small:Destroy(); big:Destroy(); parent:Destroy()
 assert(Recipe.Draft and not Growth.Supports("SweetPotato"),"Draft entered the field")
 assert(Crops.ById.SweetPotato.growSeconds==28800 and Growth.UpdateInterval(28800)==30,"Production timing changed")
-return game.HttpService:JSONEncode({parts=133,fieldParts=4788,seeds=6,masses={low,1,high},ages=101,
+return game.HttpService:JSONEncode({parts=169,fieldParts=6084,seeds=6,masses={low,1,high},ages=101,
 	maxRadius=maxRadius,maxHeight=maxHeight,baseline=baseline,proxyParts=proxies,draft=Recipe.Draft})
