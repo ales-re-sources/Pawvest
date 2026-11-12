@@ -18,10 +18,14 @@ local FRUIT_YOUNG, FRUIT_RIPE, FRUIT_SHOULDER, FRUIT_STRIPE = C(128, 184, 88), C
 local FLOWER, FLOWER_DRY = C(252, 214, 62), C(206, 140, 52)
 
 -- Rigid equipment, present from planting and never scaled by mass: name, size, centre (the plane sits just behind the vine).
+local function support(name, size, at, proxy)
+	return {name = name, size = size, cf = CFrame.new(at), color = WOOD, variant = "Studs", proxy = proxy}
+end
+-- The proxy shows the posts and two rungs (not the middle one).
 local SUPPORTS = {
-	{"RigidPost_1", V(0.20, 4.8, 0.20), V(-1.0, 2.4, -0.14)}, {"RigidPost_2", V(0.20, 4.8, 0.20), V(1.0, 2.4, -0.14)},
-	{"RigidRung_1", V(2.2, 0.12, 0.12), V(0, 1.2, -0.14)}, {"RigidRung_2", V(2.2, 0.12, 0.12), V(0, 2.7, -0.14)},
-	{"RigidRung_3", V(2.2, 0.12, 0.12), V(0, 4.2, -0.14)},
+	support("RigidPost_1", V(0.20, 4.8, 0.20), V(-1.0, 2.4, -0.14)), support("RigidPost_2", V(0.20, 4.8, 0.20), V(1.0, 2.4, -0.14)),
+	support("RigidRung_1", V(2.2, 0.12, 0.12), V(0, 1.2, -0.14)), support("RigidRung_2", V(2.2, 0.12, 0.12), V(0, 2.7, -0.14), false),
+	support("RigidRung_3", V(2.2, 0.12, 0.12), V(0, 4.2, -0.14)),
 }
 -- Mature stem points: four segments climbing the trellis. Start and finish growth of each segment.
 local PX = {0, -0.14, 0.15, -0.12, 0.08}
@@ -130,20 +134,15 @@ local function rod(emit, name, a, b, width, color, q, role, slot)
 	emit(name, V(width, width, (b - a).Magnitude + 0.02), Kit.axis(a, b), color, phase(q, 0, 0.08), role, slot)
 end
 
-local function hidden(emit, name, role, slot, variant)
-	emit(name, V(0.01, 0.01, 0.01), CFrame.new(), FLOWER, 0, role, slot, variant)
-end
-
 -- Six-pointed yellow star facing the viewer from three crossed plates.
 local function flower(emit, name, center, q, wilt, turn, role, slot, proxy)
+	if proxy then
+		return
+	end
 	for k = 1, 3 do
-		if proxy then
-			hidden(emit, name .. k, role, slot)
-		else
-			local s = q * (1 - 0.6 * wilt)
-			emit(name .. k, V(0.50 * s, 0.17 * s, 0.05), CFrame.new(center + V(0, 0, k * 0.012)) * CFrame.Angles(0, 0, (k - 1) * math.pi / 3 + turn),
-				FLOWER:Lerp(FLOWER_DRY, wilt), phase(q, 0, 0.08), role, slot)
-		end
+		local s = q * (1 - 0.6 * wilt)
+		emit(name .. k, V(0.50 * s, 0.17 * s, 0.05), CFrame.new(center + V(0, 0, k * 0.012)) * CFrame.Angles(0, 0, (k - 1) * math.pi / 3 + turn),
+			FLOWER:Lerp(FLOWER_DRY, wilt), phase(q, 0, 0.08), role, slot)
 	end
 end
 
@@ -170,18 +169,14 @@ local function geometry(shape, g, emit, proxy)
 	for i, leaf in shape.leaves do
 		local q = phase(g, leaf.t0, leaf.t1)
 		local at = nodeAt(leaf.k, leaf.f) + leaf.stalk * q
-		if proxy then
-			hidden(emit, "Leaf_" .. i .. "_Stalk", "Structure")
-		else
+		if not proxy then
 			rod(emit, "Leaf_" .. i .. "_Stalk", nodeAt(leaf.k, leaf.f), at, 0.09 * (0.4 + 0.6 * q), stemColor, q, "Structure")
 		end
 		local d = (V(0, 1, 0) * (1 - q) + leaf.d * q).Unit
 		local frame = leafFrame(at, d)
 		local scale = leaf.scale * q
 		for j, lobe in LOBES do
-			if proxy and (i % 2 == 0 or j > 3) then
-				hidden(emit, "Leaf_" .. i .. "_Lobe_" .. j, "Foliage", nil, "Studs")
-			else
+			if not (proxy and (i % 2 == 0 or j > 3)) then
 				local tone = if (i + j) % 2 == 0 then LEAF_LIGHT else LEAF_DARK
 				emit("Leaf_" .. i .. "_Lobe_" .. j, lobe[2] * scale, frame * CFrame.new(lobe[1] * scale) * CFrame.Angles(0, lobe[3], 0),
 					LEAF_YOUNG:Lerp(tone, q), phase(q, 0, 0.08), "Foliage", nil, "Studs")
@@ -197,9 +192,7 @@ local function geometry(shape, g, emit, proxy)
 		local len = fruit.len * (0.18 + 0.82 * grow)
 		local w = fruit.width * (0.50 + 0.50 * grow)
 		local dir = fruit.dir
-		if proxy then
-			hidden(emit, "Fruit_" .. i .. "_Stalk", "Fruit", i)
-		else
+		if not proxy then
 			rod(emit, "Fruit_" .. i .. "_Stalk", top0, top, 0.09 * (0.5 + 0.5 * show), stemColor, show, "Fruit", i)
 		end
 		local body = FRUIT_YOUNG:Lerp(FRUIT_RIPE, ripe)
@@ -210,17 +203,15 @@ local function geometry(shape, g, emit, proxy)
 		}
 		for _, p in parts do
 			local name = "Fruit_" .. i .. "_" .. p[1]
-			if proxy and p[1] == "Body" then
-				rod(emit, name, top, top + dir * len, w * 0.95, body, show, "Fruit", i)
-			elseif proxy then
-				hidden(emit, name, "Fruit", i)
+			if proxy then
+				if p[1] == "Body" then
+					rod(emit, name, top, top + dir * len, w * 0.95, body, show, "Fruit", i)
+				end
 			else
 				rod(emit, name, top + dir * (len * p[2]), top + dir * (len * p[3]), w * p[4], p[5], show, "Fruit", i)
 			end
 		end
-		if proxy then
-			hidden(emit, "Fruit_" .. i .. "_Stripe", "Fruit", i)
-		else
+		if not proxy then
 			local lift = V(0, 0, w * 0.5 + 0.004)
 			rod(emit, "Fruit_" .. i .. "_Stripe", top + dir * (len * 0.12) + lift, top + dir * (len * 0.80) + lift, 0.06,
 				FRUIT_STRIPE, phase(g, fruit.t0 + 0.10, fruit.t0 + 0.25), "Fruit", i)
@@ -232,9 +223,7 @@ local function geometry(shape, g, emit, proxy)
 		local q = phase(g, male.t0, male.t0 + 0.10)
 		local node = nodeAt(male.k, male.f)
 		local center = node + V(male.side * 0.40, 0.06, 0.34) * q
-		if proxy then
-			hidden(emit, "Male_" .. i .. "_Stalk", "Structure")
-		else
+		if not proxy then
 			rod(emit, "Male_" .. i .. "_Stalk", node, center, 0.07, stemColor, q, "Structure")
 		end
 		flower(emit, "Male_" .. i .. "_Petal_", center, q, 0, male.turn, "Flower", nil, proxy)
@@ -246,10 +235,8 @@ local function geometry(shape, g, emit, proxy)
 		for j, offset in CURL do
 			points[j + 1] = start + V(offset.X * tendril.side, offset.Y, offset.Z) * (q * tendril.size)
 		end
-		for j = 1, 3 do
-			if proxy then
-				hidden(emit, "Tendril_" .. i .. "_" .. j, "Structure")
-			else
+		if not proxy then
+			for j = 1, 3 do
 				rod(emit, "Tendril_" .. i .. "_" .. j, points[j], points[j + 1], 0.05, TENDRIL, q, "Structure")
 			end
 		end
@@ -262,23 +249,12 @@ Kit.recipe(CucumberPlant, {
 	shape = seededShape,
 	geometry = geometry,
 	proxyMid = 0.60,
-	fixedParts = #SUPPORTS, -- the rigid supports are placed once in onNew
-	onNew = function(self, rig, soilCFrame)
+	-- Mid proxy: posts and two rungs, the stem, three leaves of three plates and one body piece per ripe fruit.
+	supports = SUPPORTS,
+	onNew = function(self, _, soilCFrame)
 		for i, fruit in self.fruit do
 			-- Stable visual slot: mature, seeded stalk origin (docs/PLANT_GROWTH.md, fruit identity).
 			self.fruitSlots[i] = {id = i, attachment = soilCFrame * CFrame.new(fruit.attachment), parts = {}}
-		end
-		for _, s in SUPPORTS do
-			local p = rig:add(s[1], "Studs", "Support")
-			p.Size, p.CFrame, p.Color, p.Transparency = s[2], soilCFrame * CFrame.new(s[3]), WOOD, 0
-		end
-	end,
-	-- Direct mid proxy: posts and two rungs, the stem, three leaves of three plates and one body piece per ripe fruit.
-	onProxy = function(parent, soilCFrame)
-		for i, s in SUPPORTS do
-			if i ~= 4 then
-				Kit.proxyPart(parent, s[1], s[2], soilCFrame * CFrame.new(s[3]), WOOD, "Studs", "Support")
-			end
 		end
 	end,
 })

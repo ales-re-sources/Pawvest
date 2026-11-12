@@ -177,21 +177,28 @@ end
 --   new        builds the Rig once (emit = add; asserts spec.parts), then poses growth 0
 --   SetGrowth  poses the Rig (emit = block)
 --   BuildProxy builds only the visible Parts (opacity > 0.01) at PlantKit.proxyGrowth(stage, spec.proxyMid), proxy = true
--- spec: name (model name), parts (Part count), shape(seed, sizeFactor) -> s (the plant object's fields), geometry, proxyMid,
--- and the optional hooks:
---   fixedParts                 leading Parts that onNew places once and no pose writes (rigid supports)
---   onNew(self, rig, soilCFrame)   before the Parts are added (supports, fruit slots: a slotted Part joins
+-- spec: name (model name), parts (Part count, supports included), shape(seed, sizeFactor) -> s (the plant object's fields),
+-- geometry, proxyMid, and the optional fields and hooks:
+--   supports                   rigid Parts placed once, before the posed ones, and never posed (stakes, trellis, fan):
+--                              { name, size, cf (soil space), color, variant?, proxy = false to leave it out of the proxy },
+--                              role "Support"; the proxy draws them too, before onProxy
+--   onNew(self, rig, soilCFrame)   before the posed Parts are added (fruit slots: a slotted Part joins
 --                              self.fruitSlots[slot].parts)
 --   onBuilt(self)              after the Parts are added
 --   onPart(part, role, g, index)   after each posed Part; onPose(self, g, result) after a pose (result = geometry's return)
 --   onProxy(parent, soilCFrame, s) before the proxy's Parts; onProxyPart(part, role, g) after each proxy Part
 function PlantKit.recipe(Plant, spec)
 	Plant.__index = Plant
+	local supports = spec.supports or {}
 
 	function Plant.new(parent: Instance, soilCFrame: CFrame, seed: number, sizeFactor: number?)
 		local self = setmetatable(spec.shape(seed, sizeFactor), Plant)
 		local rig = PlantKit.newRig(spec.name, soilCFrame)
 		self.rig, self.model = rig, rig.model
+		for _, support in supports do
+			local part = rig:add(support.name, support.variant, "Support")
+			part.Size, part.CFrame, part.Color, part.Transparency = support.size, soilCFrame * support.cf, support.color, 0
+		end
 		if spec.onNew then
 			spec.onNew(self, rig, soilCFrame)
 		end
@@ -212,7 +219,7 @@ function PlantKit.recipe(Plant, spec)
 
 	function Plant:SetGrowth(normalized: number)
 		local rig = self.rig
-		local g = rig:beginPose(normalized, spec.fixedParts)
+		local g = rig:beginPose(normalized, #supports)
 		if not g then
 			return
 		end
@@ -235,6 +242,11 @@ function PlantKit.recipe(Plant, spec)
 
 	function Plant.BuildProxy(parent: Instance, soilCFrame: CFrame, stage: number, seed: number?, sizeFactor: number?)
 		local s = spec.shape(seed, sizeFactor)
+		for _, support in supports do
+			if support.proxy ~= false then
+				PlantKit.proxyPart(parent, support.name, support.size, soilCFrame * support.cf, support.color, support.variant, "Support")
+			end
+		end
 		if spec.onProxy then
 			spec.onProxy(parent, soilCFrame, s)
 		end

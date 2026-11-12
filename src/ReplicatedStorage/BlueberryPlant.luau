@@ -119,9 +119,12 @@ local function bunchFrame(b, pts, g, d, margin)
 end
 
 local function geometry(s, g, emit, proxy)
+	local canes, caneGrowth = {}, {}
+	for i, c in s.canes do
+		canes[i], caneGrowth[i] = canePoints(c, g, i == 1)
+	end
 	-- Seed leaves on the first shoot, folded at 0 %, open by 10 %, gone by 40 %.
-	local first = canePoints(s.canes[1], g, true)
-	local sprout = first[2]
+	local sprout = canes[1][2]
 	for i = 1, 2 do
 		local open = phase(g, 0, 0.10)
 		local yaw = 0.25 + (i - 1) * math.pi
@@ -131,10 +134,8 @@ local function geometry(s, g, emit, proxy)
 			CFrame.new(sprout + dir * 0.13 * q) * CFrame.Angles(0, yaw, 0) * CFrame.Angles(-1.1 + 0.85 * open, 0, 0),
 			SEED_LEAF, 1 - phase(g, 0.24, 0.40), "Foliage")
 	end
-	local canes = {}
 	for i, c in s.canes do
-		local pts, q = canePoints(c, g, i == 1)
-		canes[i] = pts
+		local pts, q = canes[i], caneGrowth[i]
 		local wood = YOUNG:Lerp(CANE, phase(g, c.start + 0.25, c.start + 0.70))
 		local width = 0.05 + 0.13 * phase(g, c.start, 0.90)
 		local opacity = if i == 1 then 1 else phase(q, 0, 0.04)

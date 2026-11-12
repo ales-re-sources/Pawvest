@@ -94,8 +94,9 @@ study small: enough geometry and scale context to choose the silhouette, without
 Use a crop recipe through the shared `PlantGrowth` system, not a crop-specific scheduler or review UI. Build on
 [`PlantKit`](../src/ReplicatedStorage/PlantKit.luau): its timing, seed and size helpers and its `Rig` (cached Part writes) belong
 there, not copied into a recipe. A recipe that describes its plant as one `geometry(s, g, emit, proxy)` (Broccoli, Garlic, Onion,
-Cucumber, Golden Carrot) gets `new` / `SetGrowth` / `Destroy` / `BuildProxy` from `PlantKit.recipe` (hooks for supports, fruit
-slots and effects are listed in its header); every proxy takes its stage growth from `PlantKit.proxyGrowth(stage, mid)` and rods
+Cucumber, Golden Carrot, Blueberry, Sweet Potato) gets `new` / `SetGrowth` / `Destroy` / `BuildProxy` from `PlantKit.recipe`
+(its header lists the `supports` list for rigid stakes / trellis / fan and the hooks for fruit slots and effects); with
+`proxy = true` the geometry simply does not emit what the proxy leaves out (no hidden placeholders); every proxy takes its stage growth from `PlantKit.proxyGrowth(stage, mid)` and rods
 from `PlantKit.proxyRod`. A pose writes Parts in the order they were added. Keep a recipe's `vary` draws in their order: a new
 draw goes last, otherwise every existing planting changes shape. Build a bounded set of Parts once and pose them continuously. Leaves unfold at their bases; children follow the current parent as it extends. Growth should
 extend successive stems and organs with overlapping timings rather than uniformly inflate the entire model. A 43→44→43% seek

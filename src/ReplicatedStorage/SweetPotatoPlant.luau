@@ -22,8 +22,11 @@ local ROOTS = {
 }
 local SLICES = {{-0.16,0.32,0.54},{0.08,0.34,0.88},{0.34,0.36,1},{0.60,0.30,0.70},{0.81,0.18,0.32}}
 local SUPPORTS = {}
-for i=-1,1 do table.insert(SUPPORTS,{V(i*0.20,0,-0.40),V(i*1.05,4.18,-0.40),0.10}) end
-for j=1,2 do table.insert(SUPPORTS,{V(-j*0.43,j*1.42,-0.40),V(j*0.43,j*1.42,-0.40),0.075}) end
+local function support(a,b,width)
+	table.insert(SUPPORTS,{name="FanSupport"..#SUPPORTS+1,size=V(width,width,(b-a).Magnitude),cf=Kit.axis(a,b),color=WOOD})
+end
+for i=-1,1 do support(V(i*0.20,0,-0.40),V(i*1.05,4.18,-0.40),0.10) end
+for j=1,2 do support(V(-j*0.43,j*1.42,-0.40),V(j*0.43,j*1.42,-0.40),0.075) end
 
 local function shape(seed, sizeFactor)
 	local vary, ds = Kit.seeded(seed), Kit.dimension(sizeFactor)
@@ -80,9 +83,6 @@ end
 local function rod(emit,name,a,b,width,color,q,role)
 	emit(name,V(width,width,(b-a).Magnitude),Kit.axis(a,b),color,phase(q,0,0.08),role)
 end
-local function hidden(emit,name,role,slot)
-	emit(name,V(0.01,0.01,0.01),CFrame.new(),GREEN,0,role,slot)
-end
 
 local function geometry(s,g,emit,proxy)
 	local current={}
@@ -110,16 +110,14 @@ local function geometry(s,g,emit,proxy)
 			local len,width=leaf.len*q,leaf.width*q
 			local col=YOUNG:Lerp(if leaf.tone then LIGHT else GREEN,q)
 			for side=-1,1,2 do
-				if proxy then
-					hidden(emit,name.."Lobe"..side,"Foliage")
-				else
+				if not proxy then
 					emit(name.."Lobe"..side,V(width*0.54,0.055,len*0.47),cf*CFrame.new(side*width*0.20,0.004*side,len*0.28)*CFrame.Angles(0,side*0.23,0),col,phase(q,0,0.08),"Foliage",nil,"Studs")
 				end
 				local apex,corner=V(0,0,len),V(side*width*0.5,0,len*0.4)
 				local wedge=cf*CFrame.fromMatrix((apex+corner)/2,Vector3.yAxis*side,Vector3.zAxis,Vector3.xAxis*side)
 				emit(name.."Tip"..side,V(0.055,len*0.60,width*0.50),wedge,col,phase(q,0,0.08),"Foliage",nil,"Studs","WedgePart")
 			end
-			if proxy then hidden(emit,name.."Vein","Foliage") else
+			if not proxy then
 				emit(name.."Vein",V(0.025,0.025,len*0.76),cf*CFrame.new(0,0.044,len*0.51),C(138,177,97),phase(q,0,0.08),"Foliage")
 			end
 		end
@@ -130,7 +128,7 @@ local function geometry(s,g,emit,proxy)
 		local scale=0.08+0.92*q
 		local show=phase(g,0.58+(id-1)*0.025,0.64+(id-1)*0.025)
 		for j,slice in SLICES do
-			if proxy and (j==1 or j==4) then hidden(emit,"Root"..id.."Slice"..j,"Fruit",id) else
+			if not (proxy and (j==1 or j==4)) then
 				emit("Root"..id.."Slice"..j,V(root.width*slice[3],root.len*slice[2],root.width*slice[3]*0.74)*scale,
 					root.cf*CFrame.new(0,-root.len*slice[1]*scale,0)*CFrame.Angles(0,0.18,0),
 					PINK:Lerp(if j%2==0 then FACET else SKIN,phase(g,0.62,0.96)),show,"Fruit",id)
@@ -146,29 +144,22 @@ local function geometry(s,g,emit,proxy)
 		local size=flower.size*q
 		for i=0,4 do
 			local f=cf*CFrame.Angles(0,0,i*math.pi*0.4)
-			if proxy then hidden(emit,"Flower"..id.."Funnel"..i,"Flower") else
+			if not proxy then
 				emit("Flower"..id.."Funnel"..i,V(size*0.37,size*0.42,size*0.45),f*CFrame.new(0,size*0.15,size*0.10)*CFrame.Angles(-0.58,0,0),PURPLE,phase(q,0,0.08),"Flower")
 			end
 			emit("Flower"..id.."Rim"..i,V(size*0.59,size*0.34,0.065),f*CFrame.new(0,size*0.35,size*0.36)*CFrame.Angles(-0.10,0,0),CREAM,phase(q,0,0.08),"Flower")
 		end
 		emit("Flower"..id.."Throat",V(size*0.29,size*0.29,0.055),cf*CFrame.new(0,0,size*0.28),DARK,phase(q,0,0.08),"Flower")
-		if proxy then hidden(emit,"Flower"..id.."Pollen","Flower") else
+		if not proxy then
 			emit("Flower"..id.."Pollen",V(size*0.065,size*0.12,0.06),cf*CFrame.new(0,-size*0.025,size*0.32),PINK,phase(q,0,0.08),"Flower")
 		end
 	end
 end
 
 Kit.recipe(SweetPotatoPlant,{
-	name="SweetPotatoPlant",parts=169,shape=shape,geometry=geometry,proxyMid=0.60,fixedParts=#SUPPORTS,
-	onNew=function(self,rig,base)
+	name="SweetPotatoPlant",parts=169,shape=shape,geometry=geometry,proxyMid=0.60,supports=SUPPORTS,
+	onNew=function(self,_,base)
 		for id,root in self.roots do self.fruitSlots[id]={id=id,attachment=base*root.cf,parts={}} end
-		for i,support in SUPPORTS do
-			local p=rig:add("FanSupport"..i,"StudsSmall","Support")
-			p.Size,p.CFrame,p.Color,p.Transparency=V(support[3],support[3],(support[2]-support[1]).Magnitude),base*Kit.axis(support[1],support[2]),WOOD,0
-		end
-	end,
-	onProxy=function(parent,base)
-		for i,support in SUPPORTS do Kit.proxyRod(parent,base,"FanSupport"..i,support[1],support[2],support[3],WOOD,"Support") end
 	end,
 })
 return SweetPotatoPlant
