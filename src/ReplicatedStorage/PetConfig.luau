@@ -86,13 +86,49 @@ PetConfig.MaxPets = 50 -- inventory cap
 -- P4: a pet has no level of its own any more. Its level (PetLevel) is the highest level of its working traits (aptitudes in Shown),
 -- 1..MaxLevel; it drives the label, size and look tiers. The stored Pets[uid].Level / XP (1..LegacyMaxLevel, before P4) are
 -- frozen and read only by the profile migration (MigrateLegacyPet).
-PetConfig.MaxLevel = 10
-PetConfig.LegacyMaxLevel = 20
-PetConfig.CuteStep = 19 -- Cuteness: permille per level above 1, on top of the rarity's base bonus (P4)
+-- 20-level scale (the user, 2026-11-12): the pet and trait levels run 1..MaxLevel = 20, but every curve below (caps, XP, strengths, bonus, reach)
+-- is still written on the base 10-level scale (BaseMaxLevel; tools/economy.py reads it) and refined by the helpers further down: base level 1
+-- stays level 1 (its step is split in three), every other base level L is level 2L (each step is split in two). Totals do not change.
+PetConfig.BaseMaxLevel = 10
+PetConfig.MaxLevel = 20
+PetConfig.LegacyMaxLevel = 20 -- the pre-P4 pet level (1..20), unrelated to MaxLevel
+PetConfig.CuteStep = 19 -- Cuteness: permille per base level above 1, on top of the rarity's base bonus (P4)
 PetConfig.MaxBonus = 500 -- cap on the summed bonus of equipped pets (+50 %)
 PetConfig.AttributeName = "EquippedPets" -- player attribute "Kind:Level:uid,…" of the equipped pets (P1c, uid since P1e1; level = PetLevel)
 PetConfig.MaxScale = 1.6 -- model size at MaxLevel relative to Lv 1 (PetLook.Scale, P1e1)
-PetConfig.Tiers = { 3, 5, 8, 10 } -- first level of look tiers 1..4 (PetLook.Tier); P4: the 5 / 10 / 15 / 20 of the 20-level look, scaled
+PetConfig.Tiers = { 5, 10, 15, 20 } -- first level of look tiers 1..4 (PetLook.Tier): even steps of the 20 levels (the user, 2026-11-12)
+
+-- Base level (the 10-level curves' scale, fractional) a level stands for: 1 at level 1, 2 at level 4, then half the level (20 → 10).
+function PetConfig.BaseLevel(level: number): number
+	local n = math.clamp(level, 1, PetConfig.MaxLevel)
+	return if n <= 4 then 1 + (n - 1) / 3 else n / 2
+end
+
+-- Level of a whole base level: 1 stays 1, L is 2L.
+function PetConfig.ToLevel(base: number): number
+	return if base <= 1 then 1 else 2 * base
+end
+
+-- The base step the step from `level` to level + 1 is a share of: its base level, the index of the share (1-based) and how many shares
+-- the base step is split in (3 for the first, 2 for the others).
+local function stepOf(level: number): (number, number, number)
+	local n = math.clamp(math.floor(level), 1, PetConfig.MaxLevel)
+	if n <= 3 then
+		return 1, n, 3
+	end
+	return n // 2, if n % 2 == 0 then 1 else 2, 2
+end
+
+-- Share `k` of `parts` of a base step that costs `base`, in whole numbers that add up to `base`.
+local function share(base: number, k: number, parts: number): number
+	return math.floor(base * k / parts + 0.5) - math.floor(base * (k - 1) / parts + 0.5)
+end
+
+-- The cost of the step from `level` to level + 1 of a curve given on the base scale (`baseCost(L)` = the base step L → L + 1).
+local function stepShare(level: number, baseCost: (number) -> number): number
+	local base, k, parts = stepOf(level)
+	return share(baseCost(base), k, parts)
+end
 
 function PetConfig.RarityOf(kind: string): Rarity?
 	local rarityId = PetConfig.Kinds[kind]
@@ -173,15 +209,20 @@ function PetConfig.Roll(eggId: string, rng: Random): (string?, string?)
 	return nil, nil -- unreachable while the weights are positive
 end
 
--- Coin bonus of one pet in permille (P4: only a pet with Cuteness has one): rarity base + CuteStep per Cuteness level above 1; 0 for
--- a pet without Cuteness or of an unknown kind.
+-- Coin bonus in permille of a Cuteness at base level `level` (the 10-level scale, may be fractional): rarity base + CuteStep per level above 1.
+function PetConfig.BaseBonus(rarity: Rarity, level: number): number
+	return rarity.bonus + PetConfig.CuteStep * (level - 1)
+end
+
+-- Coin bonus of one pet in permille (P4: only a pet with Cuteness has one): BaseBonus at the base level of its Cuteness, rounded; 0 for
+-- a pet without Cuteness or of an unknown kind. Equal to the 10-level bonus at every even level (and at level 1).
 function PetConfig.PetBonus(pet): number
 	local rarity = PetConfig.RarityOf(pet.Kind)
 	local level = PetConfig.AptitudeLevel(pet, "Cuteness")
 	if not rarity or level < 1 then
 		return 0
 	end
-	return rarity.bonus + PetConfig.CuteStep * (level - 1)
+	return math.floor(PetConfig.BaseBonus(rarity, PetConfig.BaseLevel(level)) + 0.5)
 end
 
 -- Coin multiplier of a list of equipped pets: 1 + min(+50 %, sum of their bonuses).
@@ -193,14 +234,19 @@ function PetConfig.Multiplier(pets: { any }): number
 	return 1 + math.min(PetConfig.MaxBonus, sum) / 1000
 end
 
--- Cuteness XP needed to go from `level` to level + 1: round(CuteXpFactor × L^1.5); nil at the max level (the rarity cap may stop it
--- earlier: AptitudeCap).
+-- Cuteness XP to go from base level L to L + 1: round(CuteXpFactor × L^1.5) (the 10-level curve; 11 100 XP from 1 to 10).
 PetConfig.CuteXpFactor = 100
+function PetConfig.BaseCuteXp(level: number): number
+	return math.floor(PetConfig.CuteXpFactor * level ^ 1.5 + 0.5)
+end
+
+-- Cuteness XP needed to go from `level` to level + 1: its share of the base step (the same 11 100 XP from 1 to 20); nil at the max
+-- level (the rarity cap may stop it earlier: AptitudeCap).
 function PetConfig.CuteXpToNext(level: number): number?
 	if level >= PetConfig.MaxLevel then
 		return nil
 	end
-	return math.floor(PetConfig.CuteXpFactor * level ^ 1.5 + 0.5)
+	return stepShare(level, PetConfig.BaseCuteXp)
 end
 
 -- Care XP sources (GDD §7.4): every equipped pet receives the full amount of each event, trained by GainCareXp
@@ -245,16 +291,18 @@ PetConfig.Specs = { "Crows", "Moles", "Slugs", "Raccoons" }
 PetConfig.TendingChance = { Common = 0.2, Uncommon = 0.22, Rare = 0.4, Epic = 0.5, Legendary = 0.6 }
 -- aptitudes at birth by rarity: { count, chance of one more }
 PetConfig.AptitudeCount = { Common = { 1, 0 }, Uncommon = { 1, 0.1 }, Rare = { 2, 0 }, Epic = { 2, 0.5 }, Legendary = { 3, 0 } }
-PetConfig.AptitudeCaps = { Common = 6, Uncommon = 7, Rare = 8, Epic = 9, Legendary = 10 }
+PetConfig.AptitudeCaps = { Common = 6, Uncommon = 7, Rare = 8, Epic = 9, Legendary = 10 } -- base levels (12 / 14 / 16 / 18 / 20 as levels)
 -- the kind leans the draw of the other aptitudes (weight LeanWeight against 1); Owl's Pest control is always against raccoons
 PetConfig.KindLean = { Cat = "PestControl", Dog = "PestControl", Bunny = "Fertilising", Fox = "Scouting", Owl = "PestControl",
 	Panda = "Weeding", Dragon = "Fertilising", Phoenix = "Scouting" }
 PetConfig.LeanWeight = 3
 PetConfig.KindSpec = { Owl = "Raccoons" }
--- effect of an aptitude level in share of the maximum (Tending: the chance a ripe crop is harvested and replanted at once)
+-- effect of an aptitude at base level 1..10 in share of the maximum (Tending: the chance a ripe crop is harvested and replanted at once);
+-- Strength() interpolates it for the 20 levels
 PetConfig.AptitudeStrength = { 0.20, 0.35, 0.48, 0.59, 0.68, 0.76, 0.83, 0.89, 0.95, 1.00 }
-PetConfig.AptitudeXpFirst = 10 * 3600 -- weighted field seconds from level 1 to 2
-PetConfig.AptitudeXpRatio = 1.56 -- each next level takes this much longer
+PetConfig.AptitudeXpFirst = 10 * 3600 -- weighted field seconds from base level 1 to 2
+PetConfig.AptitudeXpRatio = 1.56 -- each next base level takes this much longer
+PetConfig.ReachBaseLevels = { 4, 7 } -- base levels where the reach grows (ReachShape: 1 square → plus the 4 next to it → 3 × 3)
 PetConfig.LiveLevelStep = 4 -- a pet from before E1b starts its aptitudes at ceil(pet level / LiveLevelStep)
 
 -- pseudo-random generator seeded from `text` (deterministic: the same text always gives the same sequence)
@@ -325,9 +373,9 @@ function PetConfig.RollAptitudes(seed: string, kind: string, withTending: boolea
 	return apt, spec
 end
 
--- Aptitude level cap of a pet of `kind`.
+-- Aptitude level cap of a pet of `kind` (the rarity's base cap as a level: 12 / 14 / 16 / 18 / 20).
 function PetConfig.AptitudeCap(kind: string): number
-	return PetConfig.AptitudeCaps[PetConfig.Kinds[kind] or "Common"]
+	return PetConfig.ToLevel(PetConfig.AptitudeCaps[PetConfig.Kinds[kind] or "Common"])
 end
 
 -- The pet's level in aptitude `id` (0 when it does not have it).
@@ -338,7 +386,15 @@ end
 
 -- Effect share of aptitude `level` (0 for level 0).
 function PetConfig.Strength(level: number): number
-	return PetConfig.AptitudeStrength[math.clamp(math.floor(level), 0, #PetConfig.AptitudeStrength)] or 0
+	local whole = math.floor(level)
+	if whole < 1 then
+		return 0
+	end
+	local base = PetConfig.BaseLevel(whole)
+	local low = math.floor(base)
+	local from = PetConfig.AptitudeStrength[low] or 0
+	local to = PetConfig.AptitudeStrength[math.min(low + 1, #PetConfig.AptitudeStrength)] or from
+	return from + (to - from) * (base - low)
 end
 
 -- Pest control (E4-thin): a guard on the field chases the critters off the squares in its reach with Base + PerStrength x Strength(level),
@@ -368,9 +424,14 @@ function PetConfig.ScoutBonus(pets: { any }): number
 	return math.min(rules.Cap, sum)
 end
 
--- Weighted field seconds from aptitude `level` to level + 1.
-function PetConfig.AptitudeXpToNext(level: number): number
+-- Weighted field seconds from base level L to L + 1.
+function PetConfig.BaseAptitudeXp(level: number): number
 	return math.floor(PetConfig.AptitudeXpFirst * PetConfig.AptitudeXpRatio ^ (level - 1) + 0.5)
+end
+
+-- Weighted field seconds from aptitude `level` to level + 1: its share of the base step (the same hours from 1 to the cap).
+function PetConfig.AptitudeXpToNext(level: number): number
+	return stepShare(level, PetConfig.BaseAptitudeXp)
 end
 
 -- Adds `seconds` of weighted field time to the pet's aptitude `id` (mutates it): levels up while the XP reaches the next step, up to
@@ -428,7 +489,7 @@ end
 -- Level up to which care XP raises trait `id` of a pet of `kind`: the rarity cap for Cuteness, CareLevelCap (at most the cap) otherwise.
 function PetConfig.CareLimit(kind: string, id: string): number
 	local cap = PetConfig.AptitudeCap(kind)
-	return if id == "Cuteness" then cap else math.min(cap, PetConfig.CareLevelCap)
+	return if id == "Cuteness" then cap else math.min(cap, PetConfig.ToLevel(PetConfig.CareLevelCap))
 end
 
 -- The trait care XP trains now: Cuteness while below its cap, otherwise the lowest working trait below its care limit (ties in list
@@ -554,6 +615,7 @@ end
 -- P4 profile migration (PlayerProfile Version 4): a pet from before P4 gets Cuteness once, at its old level (1..LegacyMaxLevel) scaled
 -- to 1..MaxLevel and rounded up (so its Coin bonus never drops), clamped to its cap, on top of its traits. A pet from before E1b (no
 -- aptitudes) first gets them rolled (starting at ceil(old level / LiveLevelStep)). Level / XP stay as stored. False for a bad record.
+-- Works on the base 10-level scale (the scale of Version 4 profiles): RescaleAptitudes brings the pet to the 20 levels (Version 6).
 function PetConfig.MigrateLegacyPet(pet, seed: string): boolean
 	if type(pet) ~= "table" or not PetConfig.Kinds[pet.Kind] then
 		return false
@@ -564,14 +626,41 @@ function PetConfig.MigrateLegacyPet(pet, seed: string): boolean
 	if not PetConfig.CleanAptitudes(pet) then
 		pet.Apt, pet.Spec = PetConfig.RollAptitudes(seed, pet.Kind, false, math.ceil(old / PetConfig.LiveLevelStep))
 	end
-	local cap = PetConfig.AptitudeCap(pet.Kind)
-	local level = math.min(cap, 1 + math.ceil((old - 1) * (PetConfig.MaxLevel - 1) / (PetConfig.LegacyMaxLevel - 1)))
+	local cap = PetConfig.AptitudeCaps[PetConfig.Kinds[pet.Kind]]
+	local level = math.min(cap, 1 + math.ceil((old - 1) * (PetConfig.BaseMaxLevel - 1) / (PetConfig.LegacyMaxLevel - 1)))
 	local entry = pet.Apt.Cuteness
 	if entry and entry.L >= level then
 		return true
 	end
 	pet.Apt.Cuteness = { L = level, XP = 0 }
 	return true
+end
+
+-- 20-level migration (PlayerProfile Version 6, 2026-11-12): every aptitude of a pet from before it moves from the base 10-level scale to the
+-- 20 levels, keeping its total XP: level 1 stays 1, level L becomes 2L, and the XP already earned towards the next base level can
+-- already be worth one or two levels (an exact split of the base step, so nothing is gained or lost). Bonus, strength, reach and the cap
+-- are the same at every even level. Not idempotent: it runs once per profile (a level above BaseMaxLevel would be clamped to it).
+function PetConfig.RescaleAptitudes(pet)
+	if type(pet) ~= "table" or type(pet.Apt) ~= "table" then
+		return
+	end
+	local cap = PetConfig.AptitudeCap(pet.Kind)
+	for id, entry in pet.Apt do
+		if type(entry) == "table" and type(entry.L) == "number" and entry.L == entry.L then
+			local level = math.min(cap, PetConfig.ToLevel(math.clamp(math.floor(entry.L), 1, PetConfig.BaseMaxLevel)))
+			local xp = if type(entry.XP) == "number" and entry.XP == entry.XP and entry.XP < 1e12 then math.max(0, entry.XP) else 0
+			while level < cap do
+				local need = if id == "Cuteness" then PetConfig.CuteXpToNext(level) else PetConfig.AptitudeXpToNext(level)
+				if not need or xp < need then
+					break
+				end
+				xp -= need
+				level += 1
+			end
+			entry.L = level
+			entry.XP = if level >= cap then 0 else xp
+		end
+	end
 end
 
 -- Pet names (P3b, docs/ROADMAP.md → P3): stored raw as Pets[uid].Name, filtered by the server (TextService, broadcast) on every join and
@@ -633,10 +722,11 @@ function PetConfig.DecodeNames(value: any): { [string]: string }
 	return names
 end
 
--- Reach shape of aptitude `level` (docs/EXPANSION.md §3): 0 = the pet's own square (levels 1-3), 1 = plus the 4 next to it (4-6),
--- 2 = the 3 x 3 block (7-10).
+-- Reach shape of aptitude `level` (docs/EXPANSION.md §3): 0 = the pet's own square (levels 1-7), 1 = plus the 4 next to it (8-13),
+-- 2 = the 3 x 3 block (14-20): the base levels 1-3 / 4-6 / 7-10.
 function PetConfig.ReachShape(level: number): number
-	return if level >= 7 then 2 elseif level >= 4 then 1 else 0
+	local base = PetConfig.BaseLevel(level)
+	return if base >= PetConfig.ReachBaseLevels[2] then 2 elseif base >= PetConfig.ReachBaseLevels[1] then 1 else 0
 end
 
 return PetConfig

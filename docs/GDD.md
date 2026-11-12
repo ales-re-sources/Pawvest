@@ -382,7 +382,7 @@ A Cuteness-10 Legendary gives +32.1 %, a capped Common (6) +11.5 %; two strong c
 Cuteness raises nothing, so the slots are a choice between income and Scouting.
 
 ### 7.4 Levels and XP
-**Pet level (P4)** = the highest level of its working traits, 1–**10** (max level and max look, §7.5); traits cap by rarity (§7.1). Food and
+**Pet level (P4)** = the highest level of its working traits, 1–**20** (max level and max look, §7.5; 20 levels since 2026-11-12: every curve is the old 10-level one with its steps split, level 1 stays 1 and old level L is level 2L, so XP totals, caps ×2 = 12 / 14 / 16 / 18 / 20, strengths, reach (levels 8 and 14) and the bonus at every even level are unchanged; `PetConfig.BaseLevel`); traits cap by rarity (§7.1). Food and
 obby XP are **care XP**: they train **Cuteness** while it is below its cap, otherwise the pet's lowest working trait below **level 5**, as
 36 s of field time per XP (so Coins never buy the top work levels); with nothing left to train the XP is lost and food is refused.
 Tending / Pest control also level from field hours, Scouting from medal finishes (§7.9). Cuteness XP from level L to L+1:
@@ -401,6 +401,8 @@ Movement is measured on the server (horizontal distance of the character); jumps
 (teleports, respawns) do not count, and nothing is earned outside a running timer, so AFK walking earns nothing.
 Movement XP is paid at the finish, together with the medal XP; a run that is cancelled (back to the hub) earns none.
 Levels are permanent.
+
+**Migration (20 levels, profile `Version = 6`, 2026-11-12):** every trait of every pet became level 1 → 1, L → 2L, keeping its XP (the XP already earned towards the next old level can be worth one or two levels: `PetConfig.RescaleAptitudes`). A Legendary Lv 10 → Lv 20, a Cuteness 9 → 18; the Coin bonus is the same at every even level and in between it rises by half a step (about 0.95 %).
 
 **Migration (P4, profile `Version = 4`):** a pet from before P4 got Cuteness at `1 + ceil((old level − 1) × 9 / 19)`, clamped to its cap
 (old Lv 20 → 10, Lv 10 → 6, Lv 2 → 2); no pet's bonus dropped. Its old `Level` / `XP` stay stored, unused.
@@ -424,7 +426,7 @@ scaled down on short screens, where the tap targets grow to stay ≥ 36 px (44 a
 shows as label colour and a glow (Epic, Legendary). Models live in `ReplicatedStorage.PetModels`, so real art can
 replace them later without code changes.
 
-*P4 downscaled the look from 20 levels to 10: read Lv 5 / 10 / 15 / 20 below as Lv 3 / 5 / 8 / 10 (`PetConfig.Tiers`), size 1.6× at Lv 10.*
+*P4 downscaled the look from 20 levels to 10 and the 20-level rescale (2026-11-12) put it back on 20: Lv 5 / 10 / 15 / 20 below are the original levels again (`PetConfig.Tiers` = 5 / 10 / 15 / 20, size 1.6× at Lv 20).*
 **Growth (P1e1):** a pet's size follows its level, 1.0× at Lv 1 up to 1.6× at Lv 20 (linear), for followers and field
 pets alike. The follower formation widens with the pets so they never overlap, and while the owner's stage timer runs
 their pets drop 4 studs further back and turn ghostly so the course stays visible; pets close to the camera fade out.
@@ -511,10 +513,10 @@ otherwise items could be duplicated across servers.
 
 ### 7.8 Pet page and names (P3)
 - **Pet page.** A row's **Details ›** brick opens the pet's page: a turning portrait, name, rarity, tier stars and where the pet is;
-  growth (P4: level = best trait, what food and runs train now or "✔ Trained", next look); one card per working trait
+  one card per working trait (no growth card since 2026-11-12: the level is in the title and the stars under the name)
   (`PetConfig.Shown`), titled in the trait's colour and icon, the one food trains now outlined with a ▲ like the row's chip: Cuteness
   (level / cap, Coin bonus, XP), Tending, Scouting, Pest control (level / rarity cap, effect, field hours to the next level, reach, the
-  care cap); the Feed card (crops, §7.9); Equip / Unequip; Rename; at the bottom under "More" a small grey **Sell** brick (first tap:
+  care cap); the Feed card below them (crops, §7.9; its first line says what food and runs train now or "✔ Trained"); Equip / Unequip; Rename; at the bottom under "More" a small grey **Sell** brick (first tap:
   orange "Sure? +N", a second tap within 3 s sells). Built for 8-10 year olds on a phone: bars, stars and icons over text.
 - **Names.** 1-20 letters, digits and spaces; clearing is free, the first name is free and every later one costs 250 Coins
   (`PetConfig.RenamePrice`); 10 s cooldown. Filtering is a Roblox rule: the server filters with `TextService` (owner, `PublicChat`), stores
@@ -646,7 +648,7 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
 - **Market cart.** Offers per UTC day, the same on every server, counts per player: 10 seeds of an unlocked crop at -30 %, 5 of another at -50 %,
   and from Renown 3 a taste of 2 seeds of the next locked crop at the catalogue price.
 - **Field pets.** Every pet has aptitudes (traits, §7.1: Cuteness, Tending, Pest control, Scouting; stored but not yet rolled: Fertilising,
-  Weeding, Crafting; levels 1-10 up to its rarity's cap), rolled once from its uid (the count by rarity, the kind leans the draw) and never
+  Weeding, Crafting; levels 1-20 up to its rarity's cap (12-20)), rolled once from its uid (the count by rarity, the kind leans the draw) and never
   rerolled; a hatch while the owner has no Tending pet gets Tending. Food and obby XP also train the work traits up to level 5 (§7.4). A pet with Tending or Pest control can stand on a square (one per square, not equipped; 1 free field pet slot + 4 bought). Reach
   by the job's level: its square (1-3), plus its 4 neighbours (4-6), the 3 x 3 block (7-10); on overlaps the strongest pet of a job counts.
   **Tending** works only during absences: a crop that ripens in reach is harvested with the pet's strength (20 % at level 1 to 100 % at 10)

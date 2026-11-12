@@ -950,6 +950,8 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
 What was built and why, newest first. Details: the design docs and git history.
 
 **Admin plant review shortcut** (2026-11-10; [guide](PLANT_GROWTH.md#studio-growth-player)). Studio admins can open the reviewer
+**Pet page without the growth card, 20 pet levels** (2026-11-12; GDD §7.4, §7.8). The pet page lost its top Growth card (level bar, "trained" line, next look): the trait cards come first, the Feed card below them (it carries the "what trains now" line). Pet and trait levels run 1..20 instead of 1..10: the curves stay written on the 10-level scale and `PetConfig` splits every step (`BaseLevel`, `ToLevel`; level 1 stays 1, L → 2L), so XP totals, caps, strengths, reach and the Coin bonus at even levels are unchanged and `economy.py check` stays valid (it reads `BaseMaxLevel`). Profile `Version = 6` rescales every pet once (`RescaleAptitudes`). Studio-validated on the developer's profile (Dragon Cuteness 9 → 18, Owl 8 → 16; snapshot `profile_9892673032_petlevels20_1`, the migrated profile was kept). Open: the Feed card with held crops and a Czech-width check of the page were not looked at; look tiers at Lv 5 / 10 / 15 / 20; the first level-up now comes after a third of the old XP (Cuteness 33 XP, Tending 3.3 field hours), so the early game feels faster: check it in the next retention look.
+
 and expanded crop picker from Admin → Plant growth. Named `Open(cropId, seconds)` stays direct; hidden HUD clicks preserve
 the Admin panel for return on Close. Real UI open/select/close/reopen and Czech/pseudo Glyph fit pass; no saved-state writes.
 

@@ -271,7 +271,7 @@ incubator.reject.notready,Refused: the egg needs more time,Not ready yet,Ještě
 food.title,Food stand panel title,🍓 Pet food,🍓 Krmení pro mazlíčky,ok,h10d5bce0
 food.status,Default status line of the food stand (P4: food trains Cuteness first),Feed a pet to train it. Treats improve Cuteness first. Only the fed pet gets the XP.,Nakrm mazlíčka a vytrénuj ho. Jídlem zlepšuješ hlavně Roztomilost.,new,h7473af7f
 food.empty,Shown instead of the list while the player has no pet,You have no pets yet. Hatch one in your incubator.,Zatím nemáš žádného mazlíčka. Vylíhni si ho v inkubátoru.,ok,h4301e9df
-food.maxTag,Shown instead of the food buttons for a pet at the top level (10),★ Max level,★ Max. Lv,ok,h5a7b36ca
+food.maxTag,Shown instead of the food buttons for a pet at the top level (20),★ Max level,★ Max. Lv,ok,h5a7b36ca
 food.doneTag,Shown instead of the food buttons for a pet food can no longer train (below the top level),✔ Trained,✔ Vytrénovaný,ok,hf0b4053c
 food.button[one],"Food button: XP it gives over its price; {icon} = food emoji, {xp} = XP, {count} = price. Form for 1",{icon} +{xp} XP\n<font size='12'>{count} Coin</font>,{icon} +{xp} XP\n<font size='12'>{count} mince</font>,ok,hdfb0e729
 food.button[few],Form for 2-4 (Czech only),,{icon} +{xp} XP\n<font size='12'>{count} mince</font>,ok,hdfb0e729
@@ -478,13 +478,8 @@ pets.guard,"Pet row and field pet labels, after "" · "": the pet's Pest-control
 petDetail.where.equipped,"Pet detail page, header: the pet is equipped (follows the player)",✔ With you,✔ Je s tebou,new,hc67d5235
 petDetail.where.field,"Pet detail page, header: the pet works field square {n}",🌱 Works square {n},🌱 Pracuje na políčku {n},new,h350939bd
 petDetail.where.resting,"Pet detail page, header: the pet is neither equipped nor working",💤 Resting,💤 Odpočívá,new,hf1d011c8
-petDetail.level,"Pet detail page, growth card heading; {level} = pet level (its best trait, P4), {max} = 10",Level {level} / {max},Úroveň {level} / {max},new,h62faaccb
-petDetail.levelNote,"Pet detail page, text on the level bar: a pet's level is the level of its best trait (P4)",Its level is its best trait's,Jeho úroveň je úroveň nejlepší vlastnosti,new,hed0bb863
 petDetail.care,"Pet detail page, under the level bar: what food and stage runs with you train now; {trait} = trait name (pet.apt.*, nominative)",🏃🍓 Adventures with you and treats train: {trait},🏃🍓 Dobrodružství s tebou a jídlo trénují: {trait},new,hc19d84e4
 petDetail.careDone,"Pet detail page, under the level bar: food and stage runs can no longer train the pet (its traits are at their limits)","✔ Trained: treats can't teach it more, it grows by working","✔ Vytrénovaný: jídlo ho už nic nenaučí, roste prací",new,h3caf463a
-petDetail.levelMax,Pet detail page: text on the full level bar at level 10,Top level!,Nejvyšší úroveň!,new,h4e2f641e
-petDetail.nextLook,"Pet detail page: the pet's next look; {stars} = ★★, {level} = the level it comes at",Next look {stars} at level {level},Nový vzhled {stars} na úrovni {level},new,h36c8f257
-petDetail.allLooks,Pet detail page: the pet has every look (level 10),Every look unlocked,Má všechny vzhledy,new,h2b3645ee
 petDetail.bonus,"Pet detail page, Cuteness card, text on the effect bar: the pet's Coin bonus; {bonus} = ""+4.5%""",💰 {bonus} Coins while it is with you,"💰 {bonus} mincí, když je s tebou",new,hdb7b1faf
 pet.apt.Tending,Aptitude name (a pet's field job: harvests and replants while the owner is away),Tending,Péče,new,h4e5b0ea1
 pet.apt.Cuteness,Trait name (P4): the pet is so cute that everyone pays the owner more; it carries the Coin bonus. Czech: feminine noun,Cuteness,Roztomilost,new,ha5c40880
@@ -514,7 +509,7 @@ petDetail.effect,"Pet detail page, text on the effect bar; {pct} = whole percent
 petDetail.aptXp,"Pet detail page, text on the aptitude XP bar; {xp} / {next} = hours of field time (decimal, ""3.5"")",{xp} / {next} h on the field,{xp} / {next} h na poli,new,habc95980
 petDetail.aptGrow,"Pet detail page, under the aptitude XP bar: how the aptitude levels up",Grows while it works on the field (a third as fast while you are away),"Roste, když pracuje na poli (když jsi pryč, třikrát pomaleji)",ok,hddb15404
 petDetail.cuteGrow,"Pet detail page, Cuteness card, under the XP bar: how Cuteness levels up","Grows on your stage runs while it is with you, and with treats","Roste z jídla, nebo když s tebou běhá po úrovních",ok,h2c847b46
-petDetail.careNote,"Pet detail page, card of a work trait: food and stage runs train it too, but only up to level {cap} (5)",Treats and adventures train it up to level {cap},Jídlo a dobrodružství ho vytrénují až na úroveň {cap},ok,ha9be6fd5
+petDetail.careNote,"Pet detail page, card of a work trait: food and stage runs train it too, but only up to level {cap} (10)",Treats and adventures train it up to level {cap},Jídlo a dobrodružství ho vytrénují až na úroveň {cap},ok,ha9be6fd5
 petDetail.aptMax,Pet detail page: the aptitude is at the highest level of the pet's rarity; {rarity} = rarity name (nominative),Max for its rarity ({rarity}),Maximum pro jeho vzácnost ({rarity}),ok,h0e014f9d
 petDetail.reach[one],"Pet detail page, Tending card: squares the pet works from its square; {count} = 1, 5 or 9. Form for 1",Works {count} square,Stará se o {count} políčko,new,h91c58953
 petDetail.reach[few],Form for 2-4 (Czech only),,Stará se o {count} políčka,new,h91c58953

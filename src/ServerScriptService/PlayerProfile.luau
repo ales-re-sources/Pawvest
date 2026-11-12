@@ -11,8 +11,8 @@ local DataStoreUtil = require(script.Parent:WaitForChild("DataStoreUtil"))
 local PetConfig = require(game:GetService("ReplicatedStorage"):WaitForChild("PetConfig"))
 local CropConfig = require(game:GetService("ReplicatedStorage"):WaitForChild("CropConfig"))
 
-local PROFILE_VERSION = 5 -- 2: pets (P1a); 3: Coin scale ×10 (R2); 4: pet traits, Cuteness for every older pet (P4);
--- 5: Renown points onto the EV2a curve, every player keeps the level
+local PROFILE_VERSION = 6 -- 2: pets (P1a); 3: Coin scale ×10 (R2); 4: pet traits, Cuteness for every older pet (P4);
+-- 5: Renown points onto the EV2a curve, every player keeps the level; 6: trait levels 1..10 → 1..20, same XP (2026-11-12)
 local COIN_SCALE = 10 -- R2: Coins stored before version 3 (and legacy PlayerCoins) are multiplied once
 local AUTOSAVE_INTERVAL = 60
 local SHUTDOWN_TIMEOUT = 25
@@ -78,6 +78,12 @@ local function reconcile(data, userId: number)
 		-- P4: every pet from before the traits rework gets Cuteness (the Coin bonus) at its old level, scaled to 1..10
 		for uid, pet in data.Pets do
 			PetConfig.MigrateLegacyPet(pet, userId .. "/" .. tostring(uid))
+		end
+	end
+	if version < 6 and type(data.Pets) == "table" then
+		-- 20 levels: every trait of every pet moves from the 10-level scale to 1..20 (PetConfig.RescaleAptitudes, runs once)
+		for _, pet in data.Pets do
+			PetConfig.RescaleAptitudes(pet)
 		end
 	end
 	if version < 5 and type(data.Garden) == "table" and type(data.Garden.Renown) == "number" then

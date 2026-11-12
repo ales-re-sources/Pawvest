@@ -392,7 +392,7 @@ def load():
                  for k, e in luau("PetConfig.luau", "PetConfig.Eggs").items()}
     P["slot_prices"] = luau("PetConfig.luau", "PetConfig.SlotPrices")
     P["rename_price"] = luau("PetConfig.luau", "PetConfig.RenamePrice")  # P3b: every pet name after the first
-    P["max_level"] = luau("PetConfig.luau", "PetConfig.MaxLevel")
+    P["max_level"] = luau("PetConfig.luau", "PetConfig.BaseMaxLevel")  # the 10-level scale: the 20 levels refine it with the same totals
     P["cute_step"] = luau("PetConfig.luau", "PetConfig.CuteStep")  # P4: Cuteness carries the Coin bonus
     P["cute_xp_factor"] = luau("PetConfig.luau", "PetConfig.CuteXpFactor")
     P["cute_chance"] = luau("PetConfig.luau", "PetConfig.CuteChance")

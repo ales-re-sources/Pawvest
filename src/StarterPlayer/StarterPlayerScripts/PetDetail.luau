@@ -3,8 +3,8 @@
 -- PetConfig, every action is a request the server validates (PetService).
 --   Mount(panel, color, onClose)  builds the page as a child of `panel` (covers it, same size and UIScale) and returns
 --                                 { Open(uid), Close(), IsOpen() }; onClose() closes the whole Pets panel (the X)
--- Sections: header (turning portrait, kind, rarity + tier stars, where the pet is), growth (P4: the level = the best working trait,
--- which trait food and obby XP train now or "✔ Trained", the next look), one card per working trait (PetConfig.Shown; the one food
+-- Sections: header (turning portrait, kind, rarity + tier stars, where the pet is; the level is in the title), one card per working trait
+-- (the pet's level = the best of them, 1..20, PetConfig.MaxLevel; PetConfig.Shown; the one food
 -- and obby XP train now marked ▲ like the row's chip, U1; title in the trait's colour (PetRow.Traits); Cuteness: the Coin bonus and its
 -- XP; the work traits: level / rarity cap, effect bar, field hours to the next level, reach; E2c Scouting: meter bonus, medal finishes
 -- to the next level, the equipped scouts' total; E4b Pest control: the chance to chase crows off, the speciality, the squares it
@@ -15,7 +15,8 @@
 -- (P3b): a text box and a button that names (free the first time), renames (PetConfig.RenamePrice) or removes the name; the server
 -- cleans, filters and prices it (PetRemotes.Rename), the page shows only the filtered name it sends back. The page re-renders on
 -- PetsChanged and Locale.Changed and closes itself when the pet is gone (sold).
--- Feed card (E1a3, under Growth while they hold crops and the pet is below the max level): one row per held
+-- Feed card (E1a3, under the trait cards while the player holds crops and the pet can still train; its first line says which trait food
+-- and obby XP train now, or "✔ Trained"): one row per held
 -- crop with its XP, Feed (one) and All (as many as the pet can take); GardenRemotes.FeedCrop, the server clamps and answers on
 -- GardenRemotes.Result ("FeedCrop"). The held crops come from GardenRemotes.State.field.items.
 
@@ -44,6 +45,9 @@ local SPIN_SPEED = 0.6 -- radians per second
 local PAGE_Z = 20 -- the page's ZIndex; its contents are lifted by as much
 -- a tap target stays at least 36 px on screen when the Pets panel is scaled down (PanelFit; 44 at scale 1)
 local BRICK = math.max(44, math.ceil(36 / PanelFit.Scale()))
+-- LayoutOrder in the content list: header 1, name 2-3, the trait cards 10.., the "no job" line, Feed, then the actions (90)
+local TRAIT_ORDER = 10
+local FEED_ORDER = 60
 
 local COLOR_INFO = StudStyle.Text.Grey
 local COLOR_DIM = Color3.fromRGB(150, 150, 150)
@@ -361,39 +365,6 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		end
 	end
 
-	local function growthCard(owned)
-		local growth = card("Growth", 4, color)
-		label("Level", {
-			LayoutOrder = 1,
-			Size = UDim2.new(1, 0, 0, 22),
-			TextSize = 18,
-			Text = Locale.T("petDetail.level", { level = owned.level, max = PetConfig.MaxLevel }),
-		}).Parent = growth
-		-- P4: the level is the best working trait's; food and obby XP train owned.care (its bar is on the trait's card)
-		bar("Xp", 2, owned.level / PetConfig.MaxLevel, COLOR_XP, if owned.level >= PetConfig.MaxLevel
-			then Locale.T("petDetail.levelMax")
-			else Locale.T("petDetail.levelNote")).Parent = growth
-		line("Grow", 3, {
-			Text = if owned.care
-				then Locale.T("petDetail.care", { trait = Locale.T("pet.apt." .. owned.care) })
-				else Locale.T("petDetail.careDone"),
-			TextColor3 = if owned.care then COLOR_INFO else COLOR_OK,
-		}).Parent = growth
-		local nextTier = nil
-		for _, level in PetConfig.Tiers do
-			if owned.level < level then
-				nextTier = level
-				break
-			end
-		end
-		line("Look", 4, {
-			Text = if nextTier
-				then Locale.T("petDetail.nextLook", { stars = string.rep("★", PetLook.Tier(nextTier)), level = nextTier })
-				else Locale.T("petDetail.allLooks"),
-		}).Parent = growth
-		return growth
-	end
-
 	local function aptitudeCard(order: number, owned, stored, id: string)
 		local level = PetConfig.AptitudeLevel(stored, id)
 		local cap = PetConfig.AptitudeCap(owned.kind)
@@ -476,7 +447,8 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 			local shape = PetConfig.ReachShape(level)
 			local squares = ({ 1, 5, 9 })[shape + 1]
 			local reach = Locale.T(if guarding then "petDetail.guardReach" else "petDetail.reach", { count = squares })
-			local nextLevel = if shape == 0 then 4 elseif shape == 1 then 7 else nil
+			local nextBase = PetConfig.ReachBaseLevels[shape + 1]
+			local nextLevel = nextBase and PetConfig.ToLevel(nextBase)
 			if nextLevel and nextLevel <= cap then
 				reach ..= " · " .. Locale.T("petDetail.reachNext", { count = ({ 1, 5, 9 })[shape + 2], level = nextLevel })
 			end
@@ -503,12 +475,19 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		if #rows == 0 and not feedNote then -- the result line stays while it shows (the pet may just have reached the max level)
 			return nil
 		end
-		local feed = card("Feed", 5, color)
+		local feed = card("Feed", FEED_ORDER, color)
 		label("Title", {
 			LayoutOrder = 1,
 			Size = UDim2.new(1, 0, 0, 22),
 			TextSize = 18,
 			Text = Locale.T("petDetail.feed.title"),
+		}).Parent = feed
+		-- P4: food and obby XP train owned.care (its bar is on that trait's card, marked ▲)
+		line("Care", 2, {
+			Text = if owned.care
+				then Locale.T("petDetail.care", { trait = Locale.T("pet.apt." .. owned.care) })
+				else Locale.T("petDetail.careDone"),
+			TextColor3 = if owned.care then COLOR_INFO else COLOR_OK,
 		}).Parent = feed
 		for index, crop in rows do
 			local held = heldCrops[crop.id]
@@ -547,7 +526,7 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 			})
 			create("Frame", {
 				Name = "Row_" .. crop.id,
-				LayoutOrder = 1 + index,
+				LayoutOrder = 2 + index,
 				Size = UDim2.new(1, 0, 0, 36),
 				AutomaticSize = Enum.AutomaticSize.Y,
 				BackgroundTransparency = 1,
@@ -648,16 +627,8 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 			old:Destroy()
 		end
 		table.clear(cards)
-		local growth = growthCard(owned)
-		growth.Parent = content
-		table.insert(cards, growth)
-		local feed = feedCard(owned)
-		if feed then
-			feed.Parent = content
-			table.insert(cards, feed)
-		end
-		-- P4: the trait cards for every player (Cuteness first); "no field job" only for players with the field
-		local order = 10
+		-- P4: the trait cards for every player (Cuteness first); "no field job" only for players with the field; the Feed card follows them
+		local order = TRAIT_ORDER
 		for _, id in PetConfig.Aptitudes do
 			if PetConfig.Shown[id] and PetConfig.AptitudeLevel(stored, id) > 0 then
 				local apt = aptitudeCard(order, owned, stored, id)
@@ -670,6 +641,11 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 			local none = line("NoJob", order, { TextColor3 = COLOR_DIM, Text = Locale.T("petDetail.noJob") })
 			none.Parent = content
 			table.insert(cards, none)
+		end
+		local feed = feedCard(owned)
+		if feed then
+			feed.Parent = content
+			table.insert(cards, feed)
 		end
 
 		local busy = owned.field ~= nil
