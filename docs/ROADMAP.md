@@ -956,7 +956,8 @@ its ripe-crop / ready-egg badge. The adjacent blue brick with a cyan portal and 
 (stage plaza → Central Island); the separate Garden button is gone. Studio-validated: desktop clicks, both timer cancellations,
 8-item badge matching the plot feed, respawn, iPhone 13 landscape layout, clean logs and localization checks. Real-phone touch
 remains with MU (MCP clicks did not activate under touch emulation); no new Czech texts or profile fixtures. Scope / acceptance /
-validation record: `git show 39afdc8:docs/ROADMAP.md`.
+validation record: `git show 39afdc8:docs/ROADMAP.md`. Follow-up: the portal glyph is smaller inside the same 34 px circular
+socket as the other icons (18 × 24 px, 2 px rim); Studio screenshot, Gateway click and clean boot logs checked.
 
 **MU1 responsive HUD navigation** (2026-11-13; GDD §11). Desktop row; phones get a two-column block, landscape panels beside it
 and portrait panels replacing it until closed. Skills / Pets reflow on rotation, close targets stay 44 px, the pet trait menu
