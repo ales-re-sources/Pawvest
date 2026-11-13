@@ -1,4 +1,4 @@
--- GardenSummary (U2, docs/GDD.md §7.9): what waits in the local player's own garden, for the Garden button's badge
+-- GardenSummary (U2, docs/GDD.md §7.9): what waits in the local player's own garden, for the Home button's badge
 -- (HintSources) and the summary bubble over the own plot's sign (GardenBubble). Display only: it reads GardenView's copies of
 -- the server's messages, the own plot (GardenRemotes.Plot: eggs "EggId:readyAt") and the owner's field (GardenRemotes.State
 -- field.squares: crop, grown, readyAt), and compares their times with workspace:GetServerTimeNow().

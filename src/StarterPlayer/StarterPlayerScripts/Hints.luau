@@ -1,7 +1,7 @@
 -- Hints (docs/GDD.md §11, ROADMAP G1): the one place that draws "you can do something here" signals for the local player.
 --   Hints.SetDot(target, source, on)        red dot on a button while any source wants it; one pulse when it appears.
 --   Hints.SetBadge(target, count)           red badge with a number on a button (none at 0); one pulse when it rises (U2).
---                                           Targets: the top-left icons by name ("SkillsButton", "GardenButton"). The icons'
+--                                           Targets: the top-left icons by name ("SkillsButton", "HomeButton"). The icons'
 --                                           ScreenGui is re-created on every respawn, so dots and badges are re-attached by
 --                                           the loop below.
 --   Hints.SetMarker(id, adornee, label, height)  world marker: an orange arrow with the text `label()` (re-read when the

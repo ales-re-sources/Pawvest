@@ -33,39 +33,76 @@ if not petsButton then
 	petsButton.Text = "🐶"
 	petsButton.Parent = screenGui
 end
--- 🌱 Garden button (U2): made here from the Skills button (no Studio placeholder); teleports to the own plot (GoGarden,
--- HomeService). Its badge (ripe crops + ready eggs) is drawn by Hints / HintSources.
-local gardenIcon = screenGui:FindFirstChild("GardenButton")
-if not gardenIcon then
-	gardenIcon = skillsButton:Clone()
-	gardenIcon.Name = "GardenButton"
-	for _, child in gardenIcon:GetChildren() do
+-- Home now means the own farm. The adjacent Gateway button keeps GoHome's stage plaza / central island return.
+-- Both use the existing server destinations; HintSources puts the farm's readiness badge on Home.
+local gatewayButton = screenGui:FindFirstChild("GatewayButton")
+if not gatewayButton then
+	gatewayButton = skillsButton:Clone()
+	gatewayButton.Name = "GatewayButton"
+	for _, child in gatewayButton:GetChildren() do
 		if child.Name == "HintDot" or child.Name == "HintBadge" then
 			child:Destroy()
 		end
 	end
-	gardenIcon.Text = "🌱"
-	gardenIcon.Parent = screenGui
+	gatewayButton.Text = ""
+	gatewayButton.AutoLocalize = false
+	gatewayButton.Parent = screenGui
 end
 local petsGui = playerGui:WaitForChild("PetsGui", 10)
 local petsSetOpen = petsGui and petsGui:WaitForChild("SetOpen", 10)
 
-local icons = { homeButton, skillsButton, petsButton, gardenIcon, settingsButton, adminButton }
+local icons = { homeButton, gatewayButton, skillsButton, petsButton, settingsButton, adminButton }
 
 -- Stud-brick look (ReplicatedStorage.StudStyle): icons as bricks in the colour of the panel they open, the panels in
 -- deep tones of that colour, the status card (ScorePanel) as a wooden plate. All of it lives in this ScreenGui,
 -- which is re-created on every respawn, so it is styled here each time.
 local ICON_COLORS = {
 	HomeButton = StudStyle.Colors.Red,
+	GatewayButton = StudStyle.Colors.Blue,
 	SkillsButton = StudStyle.PanelColors.SkillsPanel,
 	PetsButton = StudStyle.Colors.Green,
-	GardenButton = StudStyle.Colors.Wood, -- the garden's wood (the Barn panel, the plot signs)
 	SettingsButton = StudStyle.PanelColors.SettingsPanel,
 	AdminButton = StudStyle.PanelColors.AdminPanel,
 }
-for _, icon in { homeButton, skillsButton, petsButton, gardenIcon, settingsButton, adminButton } do
+for _, icon in icons do
 	icon.BackgroundColor3 = ICON_COLORS[icon.Name]
 	StudStyle.Brick(icon, { socket = true })
+end
+
+-- A cyan portal opening with an inward arrow, drawn in the moving brick face so hover / press move the whole icon.
+-- GUI shapes keep the small silhouette crisp on phones and need no uploaded image asset.
+local portalFace = gatewayButton.Top.Face
+portalFace.Glyph.Visible = false
+local portal = Instance.new("Frame")
+portal.Name = "Portal"
+portal.AnchorPoint = Vector2.new(0.5, 0.5)
+portal.Position = UDim2.fromScale(0.5, 0.5)
+portal.Size = UDim2.fromOffset(23, 31)
+portal.BackgroundColor3 = Color3.fromRGB(17, 25, 69)
+portal.BorderSizePixel = 0
+portal.ZIndex = 2
+Instance.new("UICorner", portal).CornerRadius = UDim.new(0.5, 0)
+local rim = Instance.new("UIStroke")
+rim.Color = Color3.fromRGB(105, 246, 255)
+rim.Thickness = 3
+rim.Parent = portal
+portal.Parent = portalFace
+local glow = Instance.new("UIGradient")
+glow.Color = ColorSequence.new(Color3.fromRGB(66, 92, 175), Color3.fromRGB(17, 25, 69))
+glow.Rotation = 35
+glow.Parent = portal
+for index, angle in { 40, -40 } do
+	local arrow = Instance.new("Frame")
+	arrow.Name = "Arrow" .. index
+	arrow.AnchorPoint = Vector2.new(0.5, 0.5)
+	arrow.Position = UDim2.new(0.5, 1, 0.5, if index == 1 then -3 else 3)
+	arrow.Size = UDim2.fromOffset(11, 3)
+	arrow.Rotation = angle
+	arrow.BackgroundColor3 = Color3.fromRGB(219, 255, 255)
+	arrow.BorderSizePixel = 0
+	arrow.ZIndex = 3
+	Instance.new("UICorner", arrow).CornerRadius = UDim.new(0.5, 0)
+	arrow.Parent = portal
 end
 for _, panel in { skillsPanel, settingsPanel, adminPanel } do
 	StudStyle.Panel(panel, StudStyle.PanelColors[panel.Name])
@@ -232,9 +269,9 @@ if lastOpenPanel then
 end
 
 -- Button click handlers
--- Home: back to the hub (the server validates, cancels a running timer and teleports)
+-- Gateway: back to the stage's plaza, then Central Island (server validates and cancels a running timer).
 local goHomeEvent = ReplicatedStorage:WaitForChild("GoHome")
-homeButton.Activated:Connect(function()
+gatewayButton.Activated:Connect(function()
 	goHomeEvent:FireServer()
 end)
 
@@ -252,12 +289,12 @@ petsButton.Activated:Connect(function()
 	end
 end)
 
--- Garden: to the own plot (the server checks the plot and the cooldown, cancels a running timer and teleports)
+-- Home: to the own farm (the server checks the plot and the cooldown, cancels a running timer and teleports).
 local Hints = require(player:WaitForChild("PlayerScripts"):WaitForChild("Hints"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local goGardenEvent = ReplicatedStorage:WaitForChild("GoGarden")
-gardenIcon.Activated:Connect(function()
+homeButton.Activated:Connect(function()
 	if player:GetAttribute(GardenConfig.PlotAttribute) == nil then
 		Hints.Toast(Locale.T("garden.go.notReady"))
 		return

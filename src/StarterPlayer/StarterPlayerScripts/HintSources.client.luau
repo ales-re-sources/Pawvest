@@ -356,7 +356,7 @@ local function updateEggs(area: string?)
 		end
 	end
 	local summary = GardenSummary.Get(now)
-	Hints.SetBadge("GardenButton", summary.ripe + summary.eggs)
+	Hints.SetBadge("HomeButton", summary.ripe + summary.eggs)
 
 	local piece = first and GardenView.OwnPiece("inc" .. first) -- the drawn incubator (nil while not drawn)
 	local base = piece and piece:FindFirstChild("Base")

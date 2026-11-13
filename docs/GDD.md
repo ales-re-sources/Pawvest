@@ -461,8 +461,8 @@ collecting and caring over obby runs.
   as nests in a triangle under one stud roof on four posts), the **barn** on the right (a red stud barn, 2026-11-13: a stepped gable under slate caps, white X-brace door leaves swung open towards the plaza, a hayloft window, a weathervane with a pet, hay bales, milk cans and a pitchfork in front;
   it shows no stock since 2026-11-12, the barn panel lists it) and a gravel **path** between them from the sign to the field, so the field shows from the plaza. Servers hold **12 players** (one plot per slot). Each player's
   client draws the plots from the server's data (E1a1); free plots of the inner ring show "Free plot".
-- **Getting there and seeing what waits (U2).** A **🌱 Garden** icon in the top-left row (after Pets, a wood brick) puts the player
-  on the grass in front of their plot from anywhere (as the Home button does; a running timer is cancelled); without a plot yet
+- **Getting there and seeing what waits (U2; Home since 2026-11-13).** The leftmost **🏠 Home** icon (red brick) puts the player
+  on the grass in front of their plot from anywhere (a running timer is cancelled); without a plot yet
   (just joined) a toast says so. A red **badge** on it counts what waits: ripe crops + eggs ready to hatch (none at 0; a pulse
   when the number rises). Over the own plot's name sign a **summary bubble** (only on the own plot, only for its owner) reads
   e.g. `🧺 4 ripe · ⏱ 2:14 · 🥚 Ready!` with only the parts that apply: ripe crops, the time to the next ripe crop while
@@ -697,7 +697,10 @@ Decided 2026-10-25. The product list and offer rules are in [EXPANSION.md](EXPAN
   or a stage's unlock is bought more often than earned, or garden income exceeds the obby first-hour income (pillar 2).
 
 ## 11. Player guidance (hints)
-**HUD navigation (MU1).** The desktop uses the top-left row: Home, Skills, Pets, Garden, Settings, plus Admin for admins. On a
+**HUD navigation (MU1).** The desktop uses the top-left row: Home (own farm, including ripe-crop / ready-egg badge), Gateway,
+Skills, Pets, Settings, plus Admin for admins. Gateway is a blue stud brick with a cyan portal opening and inward arrow;
+it returns from a world stage to its gateway plaza, then from the plaza (or anywhere else) to Central Island. Both travel
+buttons cancel a running timer. On a
 touch screen whose safe short edge is at most 600 px, the same 50 px buttons form a two-column block (110 × 170 px including
 the admin row). On landscape screens at least 600 px wide, panels align with the block's top and open to its right (x = 130).
 On narrower or portrait screens a panel replaces the block; its close button restores navigation. Panels fit the safe area,
@@ -714,7 +717,7 @@ incubator models) and never ask the server for anything.
 |---|---|---|
 | World marker | *Where do I go?* | a chunky orange down arrow with a white outline and a label (the stage's name, "Ready!"), bobbing above the target; drawn on the screen (not in the 3D world) at a constant size, so a sign or a wall never hides it. It always points at the target at the player's height (a gate's doorway, never the point above its sign): while that spot is in view left to right, the arrow stays above it pointing down, kept under the top of the screen when the player stands close and the point above the sign is out of view. Otherwise it sits on the screen edge nearest the target and turns to point at it, the label level on the side towards the screen centre; a target behind the player goes to the left or right edge of the shorter turn, at mid-height. The edge area keeps clear of the top-left icons, the score panel and the bottom 30 % (touch joystick and jump button). Orange and the arrow are used for nothing else (green and ticks mean "done") |
 | HUD dot | *Which button?* | a red dot on the top-right corner of a top-left icon (and of a button inside a panel); one pulse when it appears, then still |
-| HUD badge | *How much waits there?* | a red pill with a number on the top-right corner of a top-left icon (the Garden icon: ripe crops + ready eggs, U2); none at 0, one pulse when the number rises |
+| HUD badge | *How much waits there?* | a red pill with a number on the top-right corner of a top-left icon (Home: ripe crops + ready eggs, U2); none at 0, one pulse when the number rises |
 | Toast | *Something happened elsewhere* | one line at the bottom of the screen for a few seconds, once per event |
 
 **Rules (they keep the hints from becoming noise):**
@@ -747,7 +750,7 @@ incubator models) and never ask the server for anything.
   there (the next stage is then a World 2 stage). No other stage to improve: the marker stays.
 - **Skills:** a dot on the Skills icon when a talent level became affordable that the player has not seen affordable with the
   panel open (the panel's green Buy brick already marks the row).
-- **Ready egg:** counted in the Garden icon's badge (with the ripe crops, §7.6; U2 replaced the dots on the Pets icon and its
+- **Ready egg:** counted in Home's badge (with the ripe crops, §7.6; U2 replaced the dots on the Pets icon and its
   old "Go to my garden" button); a marker ("Ready!") above that incubator while the player is in the garden; a toast "Your egg
   is ready!" once per egg (also on joining with an egg already ready).
 

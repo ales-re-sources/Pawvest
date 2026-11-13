@@ -73,7 +73,8 @@ plaza.
 - Studio check: plots stand 9 studs apart; the barn and hatchery stay inside the plot's 40-stud width.
 
 ## 8. Getting there
-**Built in U2 (2026-11-06)**: the 🌱 Garden icon with its badge (ripe crops + ready eggs) and the summary bubble, as built in GDD §7.6 and
+**Built in U2 (2026-11-06)**: the farm shortcut with its badge (ripe crops + ready eggs) and the summary bubble; since 2026-11-13
+the shortcut is the leftmost 🏠 Home icon, with Gateway beside it for the old Home return path, as built in GDD §7.6 and
 §11; the design text is in `git show e2f7a06:docs/UI_GARDEN_PETS.md`. Left open: G1's markers could point at the own plot when something
 is ready (the badge covers it for now); other players' bubbles (Renown, biggest crop) stay optional (§3).
 
