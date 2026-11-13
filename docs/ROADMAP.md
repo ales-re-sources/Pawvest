@@ -952,12 +952,13 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
 What was built and why, newest first. Details: the design docs and git history.
 
 **Home farm and Gateway navigation** (2026-11-13; GDD §7.6, §11). The leftmost house goes to the own farm and carries
-its ripe-crop / ready-egg badge. The adjacent blue brick with a cyan portal and inward arrow keeps the old Home return
+its ripe-crop / ready-egg badge. The adjacent blue brick with a 🌀 emoji keeps the old Home return
 (stage plaza → Central Island); the separate Garden button is gone. Studio-validated: desktop clicks, both timer cancellations,
 8-item badge matching the plot feed, respawn, iPhone 13 landscape layout, clean logs and localization checks. Real-phone touch
 remains with MU (MCP clicks did not activate under touch emulation); no new Czech texts or profile fixtures. Scope / acceptance /
-validation record: `git show 39afdc8:docs/ROADMAP.md`. Follow-up: the portal glyph is smaller inside the same 34 px circular
-socket as the other icons (18 × 24 px, 2 px rim); Studio screenshot, Gateway click and clean boot logs checked.
+validation record: `git show 39afdc8:docs/ROADMAP.md`. Follow-up: the custom outlined portal is replaced by the chosen 🌀 emoji in the standard circular
+socket, matching the other navigation glyphs. Fresh Studio boot, screenshot, Gateway click and clean client / server
+logs checked; localization checks pass, with no new or changed Czech texts.
 
 **MU1 responsive HUD navigation** (2026-11-13; GDD §11). Desktop row; phones get a two-column block, landscape panels beside it
 and portrait panels replacing it until closed. Skills / Pets reflow on rotation, close targets stay 44 px, the pet trait menu

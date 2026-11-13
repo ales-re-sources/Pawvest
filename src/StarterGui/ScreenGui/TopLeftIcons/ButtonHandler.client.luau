@@ -44,7 +44,7 @@ if not gatewayButton then
 			child:Destroy()
 		end
 	end
-	gatewayButton.Text = ""
+	gatewayButton.Text = "🌀"
 	gatewayButton.AutoLocalize = false
 	gatewayButton.Parent = screenGui
 end
@@ -69,41 +69,6 @@ for _, icon in icons do
 	StudStyle.Brick(icon, { socket = true })
 end
 
--- A small cyan portal glyph inside the standard circular socket; hover / press move the whole icon.
--- GUI shapes keep the small silhouette crisp on phones and need no uploaded image asset.
-local portalFace = gatewayButton.Top.Face
-portalFace.Glyph.Visible = false
-local portal = Instance.new("Frame")
-portal.Name = "Portal"
-portal.AnchorPoint = Vector2.new(0.5, 0.5)
-portal.Position = UDim2.fromScale(0.5, 0.5)
-portal.Size = UDim2.fromOffset(18, 24)
-portal.BackgroundColor3 = Color3.fromRGB(17, 25, 69)
-portal.BorderSizePixel = 0
-portal.ZIndex = 2
-Instance.new("UICorner", portal).CornerRadius = UDim.new(0.5, 0)
-local rim = Instance.new("UIStroke")
-rim.Color = Color3.fromRGB(105, 246, 255)
-rim.Thickness = 2
-rim.Parent = portal
-portal.Parent = portalFace.Socket
-local glow = Instance.new("UIGradient")
-glow.Color = ColorSequence.new(Color3.fromRGB(66, 92, 175), Color3.fromRGB(17, 25, 69))
-glow.Rotation = 35
-glow.Parent = portal
-for index, angle in { 40, -40 } do
-	local arrow = Instance.new("Frame")
-	arrow.Name = "Arrow" .. index
-	arrow.AnchorPoint = Vector2.new(0.5, 0.5)
-	arrow.Position = UDim2.new(0.5, 1, 0.5, if index == 1 then -2.2 else 2.2)
-	arrow.Size = UDim2.fromOffset(8, 2)
-	arrow.Rotation = angle
-	arrow.BackgroundColor3 = Color3.fromRGB(219, 255, 255)
-	arrow.BorderSizePixel = 0
-	arrow.ZIndex = 3
-	Instance.new("UICorner", arrow).CornerRadius = UDim.new(0.5, 0)
-	arrow.Parent = portal
-end
 for _, panel in { skillsPanel, settingsPanel, adminPanel } do
 	StudStyle.Panel(panel, StudStyle.PanelColors[panel.Name])
 	panel.Active = true

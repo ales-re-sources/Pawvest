@@ -698,7 +698,7 @@ Decided 2026-10-25. The product list and offer rules are in [EXPANSION.md](EXPAN
 
 ## 11. Player guidance (hints)
 **HUD navigation (MU1).** The desktop uses the top-left row: Home (own farm, including ripe-crop / ready-egg badge), Gateway,
-Skills, Pets, Settings, plus Admin for admins. Gateway is a blue stud brick with a small cyan portal opening and inward arrow
+Skills, Pets, Settings, plus Admin for admins. Gateway is a blue stud brick with a 🌀 emoji
 inside the same faint circular socket as the other icons;
 it returns from a world stage to its gateway plaza, then from the plaza (or anywhere else) to Central Island. Both travel
 buttons cancel a running timer. On a
