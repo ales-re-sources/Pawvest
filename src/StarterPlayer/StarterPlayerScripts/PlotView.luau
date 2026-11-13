@@ -4,8 +4,8 @@
 -- on the own plot), "mid" (the same without billboards and prompts, each pet one block in its rarity colour), "low" (floor, one block per egg,
 -- the field as its row plates) or "none". Registered crops use seeded growth art; other crops remain blocks.
 -- The front strip (U5a): the path in the middle (base), the hatchery on the plaza's left (hatch: posts and roof over the nests
--- inc1..3; on the own plot its one "Open hatchery" prompt, U5b, which calls options.onHatchery), the barn on its right (barn: walls, roof, empty shelves; on the own plot the
--- "Open barn" prompt, which calls options.onBarn).
+-- inc1..3; on the own plot its one "Open hatchery" prompt, U5b, which calls options.onHatchery), the barn on its right (barn: a red stud
+-- barn with a stepped gable and its decoration; on the own plot the "Open barn" prompt, which calls options.onBarn).
 -- A plot is split into pieces (base, hatch, barn, inc1..3, field = row plates, sq1..36, grow1..36). SetState / SetDetail / Relabel only
 -- mark the pieces whose look changed; Step builds marked pieces until a deadline, so a build is spread over frames by the caller.
 -- State: { name, incCount, eggs = { [1..3] = "EggId:readyAt" or "" },
@@ -42,8 +42,11 @@ local PATH_HALF = 4.8 -- the gravel path: half its width (the strip's front and 
 local EDGE_GAP = 5
 local HATCH_X0, HATCH_X1, HATCH_Z0, HATCH_Z1 = 5.6, 19.3, -19.3, -4.7 -- hatchery: centres of its corner posts
 local HATCH_ROOF = 8 -- hatchery: height of the posts' tops (the roof's underside)
-local BARN_X0, BARN_X1, BARN_Z0, BARN_Z1 = -19, -6, -15, -5 -- barn: outer faces of its walls (open towards −Z, the plaza)
-local BARN_WALL, BARN_HEIGHT = 0.6, 6 -- barn: wall thickness, wall height over the floor
+local BARN_X0, BARN_X1, BARN_Z0, BARN_Z1 = -19, -6, -15, -5 -- barn: outer faces of its walls (the door faces −Z, the plaza)
+local BARN_WALL, BARN_HEIGHT = 0.6, 8 -- barn: wall thickness, wall height over the floor
+local BARN_DOOR_HALF, BARN_DOOR_HEIGHT = 3.5, 7 -- barn: half the door opening's width, its height over the floor (a character fits with room)
+local BARN_STEPS = { 10, 6.8, 3.6 } -- barn: widths of the stepped gable's red steps over the walls (the ridge ends ~12.2 over the floor)
+local BARN_STEP, BARN_CAP = 0.9, 0.3 -- barn: height of each red step, of the slate cap on the walls and on each step
 local STRIP_FRONT, STRIP_BACK = -20, -4 -- a plot's floor: the strip that holds the sign side, the hatchery and the barn
 local FIELD_FRONT = -2 -- the field lies behind the strip (floor +Z), from this far behind the centre
 local FIELD_PITCH = 5.5 -- studs per square
@@ -69,7 +72,14 @@ local COLORS = {
 	barnWall = Color3.fromRGB(176, 60, 50),
 	barnTrim = Color3.fromRGB(245, 235, 215),
 	barnFloor = Color3.fromRGB(150, 105, 65),
-	shelf = Color3.fromRGB(120, 85, 50),
+	barnDoor = Color3.fromRGB(150, 45, 38),
+	barnRoof = Color3.fromRGB(76, 96, 112), -- slate caps of the barn's stepped gable
+	steel = Color3.fromRGB(100, 133, 147), -- hardware (the stud palette's steel collars)
+	pane = Color3.fromRGB(74, 51, 34), -- the hayloft window's dark pane
+	hay = Color3.fromRGB(232, 194, 74),
+	can = Color3.fromRGB(200, 208, 212),
+	lantern = Color3.fromRGB(255, 214, 120),
+	leaf = Color3.fromRGB(97, 149, 0),
 	base = Color3.fromRGB(150, 100, 60),
 	nest = Color3.fromRGB(225, 195, 110),
 	soil = Color3.fromRGB(105, 70, 45),
@@ -499,53 +509,172 @@ function PlotView:buildHatchery(model: Model)
 	end
 end
 
--- The barn (U5a): walls on three sides (open towards the plaza), a plank floor, a stepped roof, two empty shelves (the stock it
--- held is gone since 2026-11-12: the barn panel lists it). The own plot's barn carries the "Open barn" prompt (full detail).
--- Low detail: one block. No two parts share a face plane.
+-- The barn (U5a; stud look since 2026-11-13, the user's pick "classic red barn"): red Inlets walls with a door opening towards the
+-- plaza, a stepped gable (red steps under slate Studs caps), a white door frame, both door leaves swung open flat against the front
+-- wall with a white frame and X brace, a hayloft window over the door. Full detail adds the decoration: a flower box, a hay hook and a
+-- weathervane with a pet on the ridge; hay bales, milk cans and a pitchfork in front; a lantern, hay and a ladder inside. The barn
+-- shows no stock (the barn panel lists it, 2026-11-12). The own plot's barn carries the "Open barn" prompt (full detail). Low detail:
+-- one block under the stepped gable. No two parts share a face plane: details on a face stand 0.03 inside it, and crossing or
+-- overlapping details stand out by different depths.
 function PlotView:buildBarn(model: Model)
 	local x0, x1, z0, z1 = BARN_X0, BARN_X1, BARN_Z0, BARN_Z1
 	local cx, cz = (x0 + x1) / 2, (z0 + z1) / 2
 	local w, d, t = x1 - x0, z1 - z0, BARN_WALL
-	local top = 0.25 + BARN_HEIGHT -- the walls' top
-	if self.detail == "low" then
-		part({ Name = "Barn", Size = Vector3.new(w, BARN_HEIGHT, d), CFrame = self:at(Vector3.new(cx, 0.25 + BARN_HEIGHT / 2, cz)), Color = COLORS.barnWall }).Parent =
-			model
-		return
-	end
-	local function add(name: string, size: Vector3, at: Vector3, color: Color3, material: Enum.Material?)
-		local p = part({ Name = name, Size = size, CFrame = self:at(at), Color = color, Material = material or Enum.Material.Plastic })
+	local base = 0.25 -- the plot floor's top
+	local top = base + BARN_HEIGHT -- the walls' top
+	-- a part at `cf` in plot-floor space: stud `variant` on Plastic, else SmoothPlastic (small parts: the texture reads as a waffle)
+	local function put(name: string, size: Vector3, cf: CFrame, color: Color3, variant: string?, solid: boolean?): Part
+		local p = part({
+			Name = name,
+			Size = size,
+			CFrame = self.floor * cf,
+			Color = color,
+			Material = if variant then Enum.Material.Plastic else Enum.Material.SmoothPlastic,
+			MaterialVariant = variant or "",
+			CanCollide = solid == true,
+		})
 		p.Parent = model
 		return p
 	end
-	-- walls: the back one spans the full width, the sides stop at its front face
-	add("Wall", Vector3.new(w, BARN_HEIGHT, t), Vector3.new(cx, 0.25 + BARN_HEIGHT / 2, z1 - t / 2), COLORS.barnWall, Enum.Material.WoodPlanks).CanCollide =
-		true
-	for _, x in { x0 + t / 2, x1 - t / 2 } do
-		add("Wall", Vector3.new(t, BARN_HEIGHT, d - t), Vector3.new(x, 0.25 + BARN_HEIGHT / 2, z0 + (d - t) / 2), COLORS.barnWall, Enum.Material.WoodPlanks).CanCollide =
-			true
+	local function add(name: string, size: Vector3, at: Vector3, color: Color3, variant: string?, solid: boolean?): Part
+		return put(name, size, CFrame.new(at), color, variant, solid)
 	end
-	-- white trim: a lintel over the opening and corner strips on the front ends of the side walls (in front of them, no shared plane)
-	add("Trim", Vector3.new(w - 0.2, 0.6, 0.3), Vector3.new(cx, top - 0.4, z0 - 0.15), COLORS.barnTrim)
-	for _, x in { x0 + t / 2, x1 - t / 2 } do
-		add("Trim", Vector3.new(t + 0.2, BARN_HEIGHT - 0.7, 0.3), Vector3.new(x, 0.25 + (BARN_HEIGHT - 0.7) / 2, z0 - 0.15), COLORS.barnTrim)
+	-- a detail on a face looking towards −Z at z = `face`: `proud` studs in front of it, 0.03 inside it, turned `roll` about Z
+	local function onFront(name: string, width: number, height: number, x: number, y: number, face: number, proud: number, color: Color3, roll: number?): Part
+		local depth = proud + 0.03
+		return put(name, Vector3.new(width, height, depth), CFrame.new(x, y, face + 0.03 - depth / 2) * CFrame.Angles(0, 0, roll or 0), color)
 	end
-	-- the roof: two steps, overhanging the walls
-	add("Roof", Vector3.new(w + 1.2, 0.6, d + 1.0), Vector3.new(cx, top + 0.3, cz - 0.2), COLORS.roofTop)
-	add("Roof", Vector3.new(w - 4, 0.6, d + 0.6), Vector3.new(cx, top + 0.9, cz - 0.2), COLORS.roof)
-	add("Roof", Vector3.new(2.2, 0.4, d + 0.2), Vector3.new(cx, top + 1.4, cz - 0.2), COLORS.roofTop)
-	-- the floor inside the walls (its sides meet the walls' inner faces, which face the other way)
+	-- the stepped gable: a slate cap on the walls, then each red step under its own cap (caps overhang the sides and the back by 0.4;
+	-- at the front they end flush with the steps, so the window and the hay hook sit on one plane)
+	local y = top
+	local function cap(width: number)
+		add("Roof", Vector3.new(width + 0.8, BARN_CAP, d + 0.4), Vector3.new(cx, y + BARN_CAP / 2, z0 + (d + 0.4) / 2), COLORS.barnRoof, "Studs", true)
+		y += BARN_CAP
+	end
+	cap(w)
+	local stepBottom = y -- the lowest step's bottom
+	for _, width in BARN_STEPS do
+		add("Gable", Vector3.new(width, BARN_STEP, d), Vector3.new(cx, y + BARN_STEP / 2, cz), COLORS.barnWall, "Inlets", true)
+		y += BARN_STEP
+		cap(width)
+	end
+	local ridge = y
+	if self.detail == "low" then
+		add("Barn", Vector3.new(w, BARN_HEIGHT, d), Vector3.new(cx, base + BARN_HEIGHT / 2, cz), COLORS.barnWall, "Inlets", true)
+		return
+	end
+
+	-- walls: the back one spans the full width, the sides run between it and the front wall: two pieces beside the door and a header
+	local doorL, doorR = cx - BARN_DOOR_HALF, cx + BARN_DOOR_HALF
+	local doorTop = base + BARN_DOOR_HEIGHT
+	add("Wall", Vector3.new(w, BARN_HEIGHT, t), Vector3.new(cx, base + BARN_HEIGHT / 2, z1 - t / 2), COLORS.barnWall, "Inlets", true)
+	for _, x in { x0 + t / 2, x1 - t / 2 } do
+		add("Wall", Vector3.new(t, BARN_HEIGHT, d - 2 * t), Vector3.new(x, base + BARN_HEIGHT / 2, cz), COLORS.barnWall, "Inlets", true)
+	end
+	for _, span in { { x0, doorL }, { doorR, x1 } } do
+		add("Wall", Vector3.new(span[2] - span[1], BARN_HEIGHT, t), Vector3.new((span[1] + span[2]) / 2, base + BARN_HEIGHT / 2, z0 + t / 2), COLORS.barnWall, "Inlets", true)
+	end
+	add("Wall", Vector3.new(doorR - doorL, top - doorTop, t), Vector3.new(cx, (doorTop + top) / 2, z0 + t / 2), COLORS.barnWall, "Inlets", true)
+	-- the floor inside the walls (its sides meet the walls' inner faces, which face the other way; its front edge is hidden in the front
+	-- wall and 0.03 inside the opening)
 	local inX0, inX1, inZ1 = x0 + t, x1 - t, z1 - t
-	local floor = add("BarnFloor", Vector3.new(inX1 - inX0, 0.2, inZ1 - z0), Vector3.new(cx, 0.35, (z0 + inZ1) / 2), COLORS.barnFloor, Enum.Material.WoodPlanks)
-	-- two shelves on the back wall
-	local shelfW, shelfD = inX1 - inX0 - 1, 1.6
-	local shelfZ = inZ1 - shelfD / 2
-	for _, y in { 2.2, 4.2 } do
-		add("Shelf", Vector3.new(shelfW, 0.3, shelfD), Vector3.new(cx, y, shelfZ), COLORS.shelf, Enum.Material.Wood)
+	local floorZ0 = z0 + 0.03
+	local floor = add("BarnFloor", Vector3.new(inX1 - inX0, 0.2, inZ1 - floorZ0), Vector3.new(cx, base + 0.1, (floorZ0 + inZ1) / 2), COLORS.barnFloor, "Inlets", true)
+	-- the white door frame: jambs straddling the opening's edges, a lintel over them
+	for _, x in { doorL, doorR } do
+		onFront("Trim", 0.4, BARN_DOOR_HEIGHT - 0.2, x, base + (BARN_DOOR_HEIGHT - 0.2) / 2, z0, 0.2, COLORS.barnTrim)
+	end
+	onFront("Trim", 2 * BARN_DOOR_HALF + 0.8, 0.4, cx, doorTop, z0, 0.2, COLORS.barnTrim)
+	-- the door leaves, swung open flat against the front wall pieces (0.2 in front of them), each with a white frame and an X brace
+	-- (the brace's bars cross, so they stand out by different depths)
+	local leafW, leafH = doorL - 0.25 - (x0 + 0.05), BARN_DOOR_HEIGHT - 0.5
+	local leafY, leafFace = base + 0.25 + leafH / 2, z0 - 0.4
+	local innerW, innerH = leafW - 0.66, leafH - 0.66 -- inside the frame bars (0.3 wide, 0.03 in from the leaf's edges)
+	local braceLength, braceAngle = math.sqrt(innerW * innerW + innerH * innerH) - 0.2, math.atan2(innerH, innerW)
+	for _, lx in { x0 + 0.05 + leafW / 2, x1 - 0.05 - leafW / 2 } do
+		add("Door", Vector3.new(leafW, leafH, 0.2), Vector3.new(lx, leafY, z0 - 0.3), COLORS.barnDoor, "Inlets", true)
+		for _, s in { -1, 1 } do
+			onFront("DoorTrim", leafW - 0.06, 0.3, lx, leafY + s * (leafH / 2 - 0.18), leafFace, 0.12, COLORS.barnTrim)
+			onFront("DoorTrim", 0.3, innerH, lx + s * (leafW / 2 - 0.18), leafY, leafFace, 0.12, COLORS.barnTrim)
+		end
+		onFront("DoorBrace", braceLength, 0.3, lx, leafY, leafFace, 0.08, COLORS.barnTrim, braceAngle)
+		onFront("DoorBrace", braceLength, 0.3, lx, leafY, leafFace, 0.05, COLORS.barnTrim, -braceAngle)
+	end
+	-- the hayloft window over the door, on the steps' front faces: a dark pane, a white frame and a mullion
+	local paneW, paneH = 2, 1.8
+	local paneY = stepBottom + 0.2 + paneH / 2
+	onFront("Window", paneW, paneH, cx, paneY, z0, 0.05, COLORS.pane)
+	onFront("WindowFrame", 0.15, paneH, cx, paneY, z0, 0.09, COLORS.barnTrim)
+	for _, s in { -1, 1 } do
+		onFront("WindowFrame", 0.25, paneH, cx + s * (paneW + 0.25) / 2, paneY, z0, 0.12, COLORS.barnTrim)
+		onFront("WindowFrame", paneW + 0.5, 0.25, cx, paneY + s * (paneH + 0.25) / 2, z0, 0.12, COLORS.barnTrim)
 	end
 	if self.own and self.onBarn and self.detail == "full" and not self.state.free then
 		prompt(floor, Locale.T("barn.prompt.action"), Locale.T("barn.prompt.object"), 10, function()
 			self.onBarn()
 		end)
+	end
+	if self.detail ~= "full" then
+		return
+	end
+
+	-- decoration (full detail; never solid except the hay bales in front, which a player may climb)
+	-- a flower box over the door frame
+	local boxY = top - 0.3
+	onFront("FlowerBox", 2.6, 0.5, cx, boxY, z0, 0.5, COLORS.signFrame)
+	local boxZ = z0 - 0.235 -- the flower box's depth centre
+	add("FlowerLeaves", Vector3.new(2.4, 0.15, 0.4), Vector3.new(cx, boxY + 0.325, boxZ), COLORS.leaf)
+	for i, color in { Color3.fromRGB(255, 102, 204), Color3.fromRGB(255, 232, 61), Color3.fromRGB(126, 255, 255) } do
+		add("Flower", Vector3.new(0.35, 0.35, 0.35), Vector3.new(cx + (i - 2) * 0.8, boxY + 0.425, boxZ), color)
+	end
+	-- the hay hook: a beam out of the top step, a hook hanging from its end
+	local hookY = ridge - BARN_CAP - BARN_STEP / 2
+	add("HookBeam", Vector3.new(0.4, 0.4, 1.4), Vector3.new(cx, hookY, z0 + 0.03 - 0.7), COLORS.sign)
+	add("Hook", Vector3.new(0.12, 0.5, 0.12), Vector3.new(cx, hookY - 0.45, z0 - 1.2), COLORS.steel)
+	-- the weathervane on the ridge: a collar, a pole, an arrow along X (head, tail fin) and a little pet on top
+	add("VaneCollar", Vector3.new(0.6, 0.3, 0.6), Vector3.new(cx, ridge + 0.15, cz), COLORS.steel, "Inlets")
+	add("VanePole", Vector3.new(0.2, 2.17, 0.2), Vector3.new(cx, ridge + 0.03 + 2.17 / 2, cz), COLORS.steel)
+	local arrowY, petY = ridge + 1.6, ridge + 2.2
+	add("VaneArrow", Vector3.new(2.6, 0.12, 0.12), Vector3.new(cx, arrowY, cz), COLORS.steel)
+	put("VaneHead", Vector3.new(0.45, 0.45, 0.1), CFrame.new(cx + 1.3, arrowY, cz) * CFrame.Angles(0, 0, math.rad(45)), COLORS.steel)
+	add("VaneFin", Vector3.new(0.6, 0.7, 0.08), Vector3.new(cx - 1.2, arrowY, cz), COLORS.steel)
+	add("VanePet", Vector3.new(1, 0.5, 0.3), Vector3.new(cx, petY + 0.25, cz), COLORS.signPost)
+	add("VanePet", Vector3.new(0.55, 0.5, 0.36), Vector3.new(cx + 0.6, petY + 0.5, cz), COLORS.signPost)
+	for _, ex in { 0.45, 0.75 } do
+		add("VanePet", Vector3.new(0.14, 0.22, 0.2), Vector3.new(cx + ex, petY + 0.86, cz), COLORS.signPost)
+	end
+	add("VanePet", Vector3.new(0.14, 0.6, 0.14), Vector3.new(cx - 0.55, petY + 0.5, cz), COLORS.signPost)
+	-- hay bales in front of the left leaf (two side by side, one on top)
+	for _, bale in { { x0 + 1.1, 0.5, z0 - 3.6 }, { x0 + 1.1, 0.5, z0 - 2.3 }, { x0 + 1.2, 1.5, z0 - 2.95 } } do
+		add("Hay", Vector3.new(2, 1, 1.2), Vector3.new(bale[1], base + bale[2], bale[3]), COLORS.hay, "Studs", true)
+	end
+	-- two milk cans in front of the right leaf
+	local upright = CFrame.Angles(0, 0, math.rad(90)) -- a cylinder's axis is its X: turn it to stand
+	for _, at in { Vector3.new(x1 - 1, 0, z0 - 2.2), Vector3.new(x1 - 2, 0, z0 - 2.8) } do
+		put("MilkCan", Vector3.new(1.2, 0.8, 0.8), CFrame.new(at.X, base + 0.6, at.Z) * upright, COLORS.can).Shape = Enum.PartType.Cylinder
+		put("MilkCan", Vector3.new(0.2, 0.6, 0.6), CFrame.new(at.X, base + 1.3, at.Z) * upright, COLORS.steel).Shape = Enum.PartType.Cylinder
+	end
+	-- a pitchfork leaning against the right leaf, tines up
+	local fork = CFrame.new(x1 - 0.7, base, z0 - 1.3) * CFrame.Angles(math.atan2(0.7, 3.8), 0, 0)
+	put("Pitchfork", Vector3.new(0.15, 3.3, 0.15), fork * CFrame.new(0, 1.65, 0), COLORS.signFrame)
+	put("Pitchfork", Vector3.new(0.7, 0.12, 0.12), fork * CFrame.new(0, 3.3, 0), COLORS.steel)
+	for _, tx in { -0.3, 0, 0.3 } do
+		put("Pitchfork", Vector3.new(0.08, 0.55, 0.08), fork * CFrame.new(tx, 3.575, 0), COLORS.steel)
+	end
+	-- inside: a lantern hanging from the ceiling, hay in the back left corner, a ladder on the back wall
+	add("Lantern", Vector3.new(0.08, 0.9, 0.08), Vector3.new(cx, top - 0.45, cz + 1), COLORS.steel)
+	add("Lantern", Vector3.new(0.5, 0.15, 0.5), Vector3.new(cx, top - 0.975, cz + 1), COLORS.steel)
+	add("Lantern", Vector3.new(0.4, 0.6, 0.4), Vector3.new(cx, top - 1.35, cz + 1), COLORS.lantern).Material = Enum.Material.Neon
+	local inside = base + 0.2 -- the barn floor's top
+	for _, bale in { { inX0 + 1.1, 0.5, inZ1 - 0.7 }, { inX0 + 1.1, 0.5, inZ1 - 2 }, { inX0 + 1.2, 1.5, inZ1 - 1.35 } } do
+		add("Hay", Vector3.new(2, 1, 1.2), Vector3.new(bale[1], inside + bale[2], bale[3]), COLORS.hay, "Studs")
+	end
+	local ladderZ, ladderH = inZ1 - 0.2, top - 0.5 - inside
+	for _, rx in { inX1 - 1.5, inX1 - 0.5 } do
+		add("Ladder", Vector3.new(0.2, ladderH, 0.2), Vector3.new(rx, inside + ladderH / 2, ladderZ), COLORS.signFrame)
+	end
+	for rung = 1, math.floor(ladderH - 0.5) do
+		add("Ladder", Vector3.new(1.1, 0.15, 0.15), Vector3.new(inX1 - 1, inside + rung - 0.2, ladderZ), COLORS.signFrame)
 	end
 end
 
