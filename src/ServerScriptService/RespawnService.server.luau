@@ -3,13 +3,14 @@
 -- possible. Delay after a death: the place's Players.RespawnTime without the talent, 1 s at level 1, none at level 2
 -- (TalentConfig.RespawnDelay). The stage timer is not touched: the talent only removes the waiting. The Home button
 -- moves the live character (HomeService) and needs nothing from here; the respawn point itself is placed by
--- CheckpointTouchHandler on CharacterAdded.
+-- CheckpointTouchHandler on CharacterAdded. Only the first character of a join is placed at the own garden (Home's arrival).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local TalentConfig = require(ReplicatedStorage.TalentConfig)
 local PlayerProfile = require(game:GetService("ServerScriptService").PlayerProfile)
+local GardenPlots = require(game:GetService("ServerScriptService").GardenPlots)
 
 local TALENT = "QuickRespawn"
 
@@ -55,6 +56,14 @@ local function setupPlayer(player: Player)
 		task.spawn(onCharacterAdded, player, player.Character)
 	else
 		load(player) -- the join spawn
+	end
+	-- LoadCharacter has finished placing the first character. GardenPlots claims a slot before setupPlayer is connected;
+	-- subsequent deaths call load directly, so they retain the existing checkpoint / default respawn handling.
+	local character = player.Character
+	local root = character and character:WaitForChild("HumanoidRootPart", 10)
+	local destination = GardenPlots.ArrivalCFrame(player)
+	if root and destination and player.Parent == Players and player.Character == character then
+		character:PivotTo(destination)
 	end
 end
 

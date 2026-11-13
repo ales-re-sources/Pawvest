@@ -948,6 +948,20 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
 - **Not built:** the pet page's "hatched on … from a Basic egg" line (`Born` / `Egg`).
 - **Housekeeping (Studio):** delete `ReplicatedStorage.StageTimerStopped` (unused).
 
+### Garden arrival on every join (2026-11-13)
+
+Scope: the first character of every session arrives in front of the own garden, facing the field, at Home's destination.
+Share the server arrival calculation; keep death / checkpoint respawns unchanged. No profile or localization changes.
+Acceptance: fresh Studio boot and rejoin at the own plot, Home matches join arrival, stage checkpoint respawn stays on its
+plate, clean client / server logs. Status: implemented and Studio-validated; live validation open.
+
+Studio: two separate joins on the existing developer profile land at plot-space (8, ~2.85, -30) after gravity, facing the
+plot (dot 1.0); camera looks towards it (dot ~0.966 with its pitch). Home's native UI click lands at the same offset.
+Walked through Stage1's start, died and respawned at its stored 101.C checkpoint (~4.23 studs from its centre), not the
+garden; Home cancelled the test run afterward (no finish or movement XP). Client / server logs have no warnings or errors
+on either boot. No fresh-profile fixture was needed: arrival uses only the session's assigned plot and has no profile
+branch, migration or write. Localization build / check / lint pass (0 errors, 0 literals), no changed Czech texts.
+
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
 

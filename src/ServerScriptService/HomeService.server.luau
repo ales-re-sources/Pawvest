@@ -16,9 +16,6 @@ local CharacterUtil = require(ServerScriptService.CharacterUtil)
 local TimerHandler = require(workspace.Handlers.PlayerTimerHandler)
 
 local COOLDOWN = 0.5 -- seconds per player and button: only stops double-click spam, chained hops (stage gate → hub) must feel instant
--- garden arrival, in the plot floor's space: its front (-Z, LookVector) faces the garden plaza, the sign stands 22
--- studs out on that side, so the player lands beside the sign's line and turns to the plot centre
-local GARDEN_ARRIVAL = Vector3.new(8, 0, -30)
 
 local goHomeEvent = Remotes.Add(ReplicatedStorage, "GoHome")
 local goGardenEvent = Remotes.Add(ReplicatedStorage, "GoGarden")
@@ -66,17 +63,15 @@ goHomeEvent.OnServerEvent:Connect(function(player)
 end)
 
 goGardenEvent.OnServerEvent:Connect(function(player)
-	local floor = GardenPlots.FloorCFrame(player)
-	if not floor then
+	local destination = GardenPlots.ArrivalCFrame(player)
+	if not destination then
 		return
 	end
 	local character = acceptRequest(player, "garden")
 	if not character then
 		return
 	end
-	local position = floor:PointToWorldSpace(GARDEN_ARRIVAL) + Vector3.new(0, 5, 0)
-	local centre = floor.Position
-	character:PivotTo(CFrame.lookAt(position, Vector3.new(centre.X, position.Y, centre.Z)))
+	character:PivotTo(destination)
 	TimerHandler.ResetTimer(player, "home")
 	TimerHandler.UpdateScorePanel(player, StageConfig.HubName)
 end)

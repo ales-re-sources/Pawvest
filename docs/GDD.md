@@ -470,6 +470,8 @@ collecting and caring over obby runs.
   screen and draws over everything (the food stand and the pets' labels would hide it from the plaza); it shows within 120
   studs of the sign or anywhere on the central plaza. A crop counts as ripe once its time is up (the server settles the
   field before a harvest).
+  Every join starts the player at this same spot, facing their own field. This applies to new and returning players;
+  later deaths keep the existing checkpoint / respawn behavior.
 - **Personal plot.** A player borrows a free plot while online: it is assigned on join, built from the profile, and
   released on leave. The plot's contents are saved in the profile and restored on any server. Growth and hatching run on
   server time, so they do not need the plot to exist while the player is offline.

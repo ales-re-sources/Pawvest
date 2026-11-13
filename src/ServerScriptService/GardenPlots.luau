@@ -1,5 +1,5 @@
 -- GardenPlots: borrows one of the garden's plot slots to every player while they are online (docs/GDD.md §7.6). Server-only.
--- A slot is assigned on join (the lowest free one, also while the player is still on the hub) and released on leave.
+-- A slot is assigned on join (the lowest free one, before the garden arrival) and released on leave.
 -- The slot is mirrored to the player attribute GardenConfig.PlotAttribute. Nothing is drawn here: the plots exist only as
 -- slots of the formula GardenConfig.PlotCFrame, and every client draws them from GardenRemotes.Plot (E1a1, GardenPlotFeed).
 
@@ -12,6 +12,9 @@ local assigner = GardenConfig.NewAssigner(GardenConfig.PlotSlots)
 
 local GardenPlots = {}
 
+-- In front of the plot sign, looking towards the field; shared by join spawns and the Home shortcut.
+local ARRIVAL_OFFSET = Vector3.new(8, 0, -30)
+
 -- Plot slot borrowed by `player`, or nil (none free, or not assigned yet).
 function GardenPlots.PlotOf(player: Player): number?
 	return assigner.IndexOf(player)
@@ -21,6 +24,16 @@ end
 function GardenPlots.FloorCFrame(player: Player): CFrame?
 	local slot = assigner.IndexOf(player)
 	return if slot then GardenConfig.PlotCFrame(slot) else nil
+end
+
+function GardenPlots.ArrivalCFrame(player: Player): CFrame?
+	local floor = GardenPlots.FloorCFrame(player)
+	if not floor then
+		return nil
+	end
+	local position = floor:PointToWorldSpace(ARRIVAL_OFFSET) + Vector3.new(0, 5, 0)
+	local centre = floor.Position
+	return CFrame.lookAt(position, Vector3.new(centre.X, position.Y, centre.Z))
 end
 
 local function claim(player: Player)

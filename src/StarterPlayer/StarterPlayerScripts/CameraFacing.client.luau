@@ -1,7 +1,7 @@
 -- Turns the camera the way the character faces after a teleport and on the first spawn. The default camera keeps its
 -- heading when the server moves the character, so a player would arrive looking at the wrong thing. The facing itself is
--- set by the teleport targets: the hub SpawnLocation looks at the Tutorial / Stage 1 portals (spawn and the Home button use
--- its CFrame), the return portals land in front of their hub portal looking out of it (StageConfig.HubExitCFrame), a courtyard
+-- set by the teleport targets: joins and Home face the own field (GardenPlots.ArrivalCFrame); the hub SpawnLocation looks
+-- at the Tutorial / Stage 1 portals (Gateway uses its CFrame), return portals look out of their hub portal (StageConfig.HubExitCFrame), a courtyard
 -- landing looks away from the stage's gate (StageConfig.ArrivalCFrame), each stage's TeleportDestination looks along the course.
 -- A respawn on a checkpoint counts as a teleport too: the server moves the new character from the hub spawn onto the
 -- plate, facing along the course (CheckpointTouchHandler).
