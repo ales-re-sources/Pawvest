@@ -72,6 +72,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG19 | Giant melon growth art | [Arching vine B, striped green melon](plants/GIANT_MELON.md); CG19a chosen, CG19b/c registered | Growth art approved by Ales 2026-11-12; Studio geometry (97 Parts, 2.38 radius, seeks, flowers clear of the fruit) and production PlotView checks pass; performance (3,492 plant Parts per full field), real phone and second client open | – |
 | CG20 | Sunflower growth art | [A1 + H2 growth draft](plants/SUNFLOWER.md) (CG20b) | growth art approved 2026-11-12; geometry/proxy checks and boot pass; CG20c field integration next | – |
 | CG21 | Pineapple growth art | [Three static mature studies](plants/PINEAPPLE.md) (CG21a) | Growth art approved by Ales 2026-11-12; Studio geometry (155 Parts, 2.31 radius, seeks) and production PlotView checks pass; performance (5,580 plant Parts per full field), real phone and second client open | – |
+| TH | Store thumbnails: 3 themes × 3 variants, logo + icon, built in two passes, tested with thumbnail personalization ([THUMBNAILS.md](THUMBNAILS.md)) | – | – | – |
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
@@ -81,6 +82,7 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
 1. **M6a soft launch** (friends, then unlisted) with 15 stages, pets and the garden with the crop field: real finish times, T1a / T1b on the
    Creator Dashboard and a first retention baseline. The planned obby-only baseline is dropped (the garden is in from the start since FA);
    what later drops add is measured against this one. Includes the live-test checks below.
+   The store page needs **TH** (thumbnails, below) before going public; an unlisted soft launch can start without it.
 2. **Offline growth (OG) validation:** a 24 h-back `SettledAt` must give `Grown` = 43 200 for a pumpkin (ripe at 28 800). The same test
    explains the user's pumpkin that still had 5 h 47 min left after 24 h away (at most about 4 h was expected under the old 0.33 / 12 h rules).
 3. **E5 + rest of the garden MVP** (scope when it starts; EXPANSION §14): request board, the ledger on join (the join notice grows into it),
@@ -933,6 +935,10 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
 - **Trading:** first profile session locking (`UpdateAsync` with a `{ JobId, Time }` lock); then an atomic two-sided swap with confirmation,
   immediate saves and a trade log (GDD §7.7). Open whether to do it at all (EXPANSION §16).
 - **M7 — Monetization:** comfort only (no paid random items, luck and weather never sold; EXPANSION §13), drop D2.
+- **TH — Store thumbnails** ([THUMBNAILS.md](THUMBNAILS.md)): three themes (Action, Pets on guard, Harvest) × three variants, a logo
+  and an icon, built as Studio-only photo sets and tested in rounds with Roblox thumbnail personalization. TH0 shared pieces →
+  TH1 one per theme + icon (tile and kid test) → THU upload, round 1 → TH2 the other six → THR round 2; THD crow shots with D1.
+  TH1 and THU before going public.
 
 ## Open items from finished work
 - **For the live test (M6a):** several real players at once (others' plots, pets, coins; checkpoint pads only for their own player); two servers

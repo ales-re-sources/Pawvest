@@ -22,6 +22,7 @@ boards, challenge coins, talents), pets, and a garden island with plots, incubat
 | [docs/LOCALIZATION.md](docs/LOCALIZATION.md) | localization design and the strings workflow |
 | [docs/TELEMETRY.md](docs/TELEMETRY.md) | telemetry events and how to read them on the Creator Dashboard |
 | [docs/PET_GROWTH.md](docs/PET_GROWTH.md) | how PetLook derives a pet's look, how pet models are authored |
+| [docs/THUMBNAILS.md](docs/THUMBNAILS.md) | store thumbnails (TH): themes and variants, Roblox thumbnail testing, Studio-only photo sets |
 | [docs/PLANT_GROWTH.md](docs/PLANT_GROWTH.md) | plant art authoring, Studio player commands and recipe contracts; links to crop designs in `docs/plants/` |
 
 **Before designing a crop:** read `docs/PLANT_GROWTH.md`. The standard art review is five snapshots (0/20/50/75/100%); historical GIF links do not require new animation captures.
