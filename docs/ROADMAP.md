@@ -948,32 +948,15 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
 - **Not built:** the pet page's "hatched on … from a Basic egg" line (`Born` / `Egg`).
 - **Housekeeping (Studio):** delete `ReplicatedStorage.StageTimerStopped` (unused).
 
-### Navigation — Home farm and Gateway (2026-11-13)
-
-Scope: leftmost house goes to the own farm through GoGarden and carries the existing ripe-crop + ready-egg badge;
-second button is a blue stud brick with a cyan portal opening / inward arrow and preserves GoHome's stage plaza → hub behavior.
-Remove the separate Garden shortcut; keep Skills / Pets / Settings / Admin and the existing responsive six-button layout.
-No remote, price, reward, profile or localization contract changes.
-
-Acceptance: click both destinations through the real UI; verify the stage plaza → hub path and timer cancellation;
-check badge count against the plot feed and respawn attachment; inspect desktop and phone layout; clean boot logs.
-Status: implemented and Studio-validated. Live validation remains open.
-
-Studio: native desktop clicks send Home to plot-space (8, ~2.85, -30), looking into the farm; Gateway sends a Stage1 run to
-its plaza (~2.23 studs from the authored return CFrame after gravity), then to Central Island (~3.60 studs from spawn).
-Both travel buttons cancel a running Stage1 timer (StageTimerUpdate -1); the run is cancelled, no finish / XP reward.
-Home's badge is 8, matching ripe crops + ready eggs in the plot feed; it reattaches after respawn and Gateway is rebuilt.
-Zero removal / pulse use the unchanged Hints.SetBadge code. No GardenButton remains at runtime.
-iPhone 13 landscape (749 × 388 safe viewport, CoreUISafeInsets, LandscapeSensor) shows Home / Gateway across the top,
-Skills / Pets below, Settings / Admin on the third row; 50 px targets and the portal art fit. The MCP mouse tool does not
-activate buttons under touch emulation; clicks were validated on desktop, phone touch remains with MU. Default viewport
-restored, playtest stopped; server / client warnings and errors empty. Localization build / check / lint pass (0 errors,
-0 literals), no new or changed Czech text, no profile fixtures. One diagnostic mistakenly required GardenSummary (and thus
-started a second GardenView); that playtest was stopped and subsequent validation ran with one view. The Home cancellation
-check uses the gate's plaza → course approach and waits beyond the start trigger, avoiding repeated touch events mid-hop.
-
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
+
+**Home farm and Gateway navigation** (2026-11-13; GDD §7.6, §11). The leftmost house goes to the own farm and carries
+its ripe-crop / ready-egg badge. The adjacent blue brick with a cyan portal and inward arrow keeps the old Home return
+(stage plaza → Central Island); the separate Garden button is gone. Studio-validated: desktop clicks, both timer cancellations,
+8-item badge matching the plot feed, respawn, iPhone 13 landscape layout, clean logs and localization checks. Real-phone touch
+remains with MU (MCP clicks did not activate under touch emulation); no new Czech texts or profile fixtures. Scope / acceptance /
+validation record: `git show 39afdc8:docs/ROADMAP.md`.
 
 **MU1 responsive HUD navigation** (2026-11-13; GDD §11). Desktop row; phones get a two-column block, landscape panels beside it
 and portrait panels replacing it until closed. Skills / Pets reflow on rotation, close targets stay 44 px, the pet trait menu
