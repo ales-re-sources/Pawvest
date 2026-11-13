@@ -667,6 +667,16 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 
 	local api = {}
 
+	function api.Resize(scale: number)
+		local target = math.ceil(44 / scale)
+		local header = target + 8
+		titleLabel.Size = UDim2.new(1, 0, 0, header)
+		backButton.Size = UDim2.fromOffset(target, target)
+		closeButton.Size = UDim2.fromOffset(target, target)
+		content.Position = UDim2.fromOffset(8, header + 8)
+		content.Size = UDim2.new(1, -16, 1, -(header + 16))
+	end
+
 	function api.IsOpen(): boolean
 		return currentUid ~= nil
 	end
@@ -687,6 +697,13 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 			child.Visible = true
 		end
 		table.clear(hidden)
+	end
+
+	-- Reflow the underlying inventory without losing which controls must return after Back / Close.
+	function api.Reflow(update)
+		if currentUid then showList() end
+		update()
+		if currentUid then hideList() end
 	end
 
 	function api.Close()

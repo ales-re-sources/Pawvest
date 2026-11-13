@@ -13,8 +13,8 @@
 -- A row is PetRow's (portrait with level badge and status icon, name, trait chips with fills and ▲; hover / hold a chip for its
 -- numbers) plus an Equip / Unequip brick and a Details › brick that opens the pet page (PetDetail, drawn over this panel). The rest
 -- of the row does nothing (kids toggled pets while scrolling); selling is only on the pet page.
--- Width 460, capped to the viewport (16 px margins), scaled by PanelFit on short screens; compact layout there (messages
--- replace the summary line for a moment).
+-- Width 460, capped to the safe area beside the phone navigation (or replacing it in portrait). HudLayout reflows on
+-- rotation; short panels compact the inventory (messages replace the summary line for a moment).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -30,6 +30,7 @@ local PetRow = require(script.Parent:WaitForChild("PetRow"))
 local PetFilterBar = require(script.Parent:WaitForChild("PetFilterBar"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
+local HudLayout = require(ReplicatedStorage:WaitForChild("HudLayout"))
 local PanelFocus = require(ReplicatedStorage:WaitForChild("PanelFocus"))
 local ConfirmTap = require(ReplicatedStorage:WaitForChild("ConfirmTap"))
 local GardenView = require(script.Parent:WaitForChild("GardenView"))
@@ -37,27 +38,36 @@ local GardenView = require(script.Parent:WaitForChild("GardenView"))
 local remotes = PetClient.Remotes
 local player = Players.LocalPlayer
 
--- Short screens (a phone in landscape): the panel is scaled down (PanelFit) and shortened to what fits; the slot bricks
--- shrink and the list takes the rest (it scrolls). Tap targets stay at least 36 px on screen (44 at scale 1).
-local FIT_SCALE = PanelFit.Scale()
-local HEIGHT = math.clamp(PanelFit.MaxHeight(FIT_SCALE), 300, 560)
-local COMPACT = HEIGHT < 480
-local LEFT = 10 -- the panel's left edge, on the icons' line
-local MARGIN = 16
-local WIDTH = math.floor(math.min(460, (workspace.CurrentCamera.ViewportSize.X - LEFT - MARGIN) / FIT_SCALE))
-local BRICK = math.max(44, math.ceil(36 / FIT_SCALE)) -- height of a tap target in panel pixels
-local ROW_HEIGHT = math.max(64, BRICK + 12)
+-- Reflow the same panel on rotation; preserve its selected pet, filter and open state.
+PanelFit.ViewportHeight() -- wait for the initial camera to settle
+local layout = HudLayout.Get(player:WaitForChild("PlayerGui"):WaitForChild("ScreenGui"))
+local FIT_SCALE, HEIGHT, WIDTH, COMPACT, BRICK, ROW_HEIGHT
+local SLOT_SIZE, SLOT_GAP, SUMMARY_TOP, FILTER_TOP, INFO_TOP, LIST_TOP, FIELD_TOP, SLOTS_TOP
+local POS_OPEN, POS_CLOSED
 local EQUIP_WIDTH = 84
 local DETAILS_WIDTH = 84
-local SLOT_SIZE = if COMPACT then BRICK else 96
-local SLOT_GAP = if COMPACT then 12 else 16
-local SUMMARY_TOP = if COMPACT then 38 else 42
-local FILTER_TOP = if COMPACT then 60 else 68
-local INFO_TOP = FILTER_TOP + BRICK + 6 -- not compact
-local LIST_TOP = if COMPACT then FILTER_TOP + BRICK + 6 else INFO_TOP + 24
-local SLOT_KEY = "PetSlot" -- ConfirmTap key of the slot buy ("Sure?" waits for a second click)
-local POS_OPEN = UDim2.new(0, LEFT, 0, 80.3)
-local POS_CLOSED = UDim2.new(0, -WIDTH * FIT_SCALE - 20, 0, 80.3)
+local SLOT_KEY = "PetSlot"
+local function measure(nextLayout)
+	layout = nextLayout
+	FIT_SCALE = layout.scale
+	HEIGHT = math.min(560, math.floor(layout.height / FIT_SCALE))
+	WIDTH = math.floor(math.min(460, layout.width / FIT_SCALE))
+	COMPACT = HEIGHT < 480
+	BRICK = math.max(44, math.ceil(44 / FIT_SCALE))
+	ROW_HEIGHT = math.max(64, BRICK + 12)
+	SLOT_GAP = if COMPACT then 12 else 16
+	SLOT_SIZE = math.min(if COMPACT then BRICK else 96, math.floor((WIDTH - 20 - SLOT_GAP * 2) / 3))
+	local header = math.ceil(44 / FIT_SCALE) + 8
+	SUMMARY_TOP = header + 4
+	FILTER_TOP = SUMMARY_TOP + 24
+	INFO_TOP = FILTER_TOP + BRICK + 6
+	LIST_TOP = if COMPACT then FILTER_TOP + BRICK + 6 else INFO_TOP + 24
+	FIELD_TOP = HEIGHT - 10 - BRICK
+	SLOTS_TOP = FIELD_TOP - 8 - SLOT_SIZE
+	POS_OPEN = UDim2.fromOffset(layout.left, layout.top)
+	POS_CLOSED = UDim2.fromOffset(-WIDTH * FIT_SCALE - 20, layout.top)
+end
+measure(layout)
 
 local COLOR_PANEL = StudStyle.PanelColors.PetsPanel
 -- pet rows stay very dark so the rarity colours (green, blue, purple, gold names) read on the green panel
@@ -135,8 +145,6 @@ local infoLabel = label("Info", {
 	TextTruncate = Enum.TextTruncate.AtEnd,
 	Visible = not COMPACT, -- compact: messages show on the summary line
 })
-local FIELD_TOP = HEIGHT - 10 - BRICK -- U4: the field pet slot line under the equip slots
-local SLOTS_TOP = FIELD_TOP - 8 - SLOT_SIZE -- top of the slot bricks
 local list = create("ScrollingFrame", {
 	Name = "Inventory",
 	Position = UDim2.new(0, 8, 0, LIST_TOP),
@@ -184,6 +192,7 @@ create("UIStroke", { ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = COLO
 
 local panel = create("Frame", {
 	Name = "Panel",
+	Active = true,
 	Position = POS_CLOSED,
 	Size = UDim2.fromOffset(WIDTH, HEIGHT),
 	Visible = false,
@@ -198,9 +207,7 @@ local panel = create("Frame", {
 	tooltip,
 })
 StudStyle.Panel(panel, COLOR_PANEL)
-if FIT_SCALE < 1 then
-	create("UIScale", { Scale = FIT_SCALE, Parent = panel })
-end
+local panelScale = create("UIScale", { Name = "HudScale", Scale = FIT_SCALE, Parent = panel })
 local chipTooltip = PetRow.Tooltip(panel, COLOR_PANEL)
 local setOpen -- defined below; the detail page's X closes the whole panel
 local detail = PetDetail.Mount(panel, COLOR_PANEL, function()
@@ -211,7 +218,7 @@ local setOpenEvent = create("BindableEvent", { Name = "SetOpen" })
 local screenGui = create("ScreenGui", {
 	Name = "PetsGui",
 	ResetOnSpawn = false,
-	DisplayOrder = 4,
+	DisplayOrder = 6, -- above the field hand bar, like the other panels
 	ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 	AutoLocalize = false, -- translated by Locale (L2)
 }, { panel, setOpenEvent })
@@ -663,6 +670,23 @@ Locale.Changed:Connect(function()
 end)
 
 -- Open / close (driven by the 🐾 button through SetOpen)
+local slide
+local function positionPanel(open, animate)
+	if slide then slide:Cancel() end
+	local target = if open then POS_OPEN else POS_CLOSED
+	if not animate then
+		panel.Position = target
+		return
+	end
+	slide = TweenService:Create(panel, TweenInfo.new(0.3, Enum.EasingStyle.Quad,
+		if open then Enum.EasingDirection.Out else Enum.EasingDirection.In), { Position = target })
+	slide.Completed:Connect(function(state)
+		if state == Enum.PlaybackState.Completed and not open and screenGui:GetAttribute("Open") ~= true then
+			panel.Visible = false
+		end
+	end)
+	slide:Play()
+end
 function setOpen(open: boolean)
 	if screenGui:GetAttribute("Open") == open then
 		return
@@ -673,7 +697,7 @@ function setOpen(open: boolean)
 			setOpen(false)
 		end) -- U4: closes the panel open before; walking 32 studs away closes this one
 		panel.Visible = true
-		TweenService:Create(panel, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Position = POS_OPEN }):Play()
+		positionPanel(true, true)
 	else
 		PanelFocus.Closed("Pets")
 		clearPending()
@@ -681,13 +705,7 @@ function setOpen(open: boolean)
 		filterBar.HideMenu()
 		chipTooltip.Hide()
 		detail.Close()
-		local tween = TweenService:Create(panel, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Position = POS_CLOSED })
-		tween.Completed:Connect(function()
-			if screenGui:GetAttribute("Open") ~= true then
-				panel.Visible = false
-			end
-		end)
-		tween:Play()
+		positionPanel(false, true)
 		refresh()
 	end
 end
@@ -712,3 +730,34 @@ ReplicatedStorage:WaitForChild("GardenRemotes"):WaitForChild("State").OnClientEv
 end)
 refresh()
 screenGui.Parent = player:WaitForChild("PlayerGui")
+
+HudLayout.Watch(screenGui, function(nextLayout)
+	measure(nextLayout)
+	detail.Reflow(function()
+		panelScale.Scale = FIT_SCALE
+		panel.Size = UDim2.fromOffset(WIDTH, HEIGHT)
+		local closeSize = math.ceil(44 / FIT_SCALE)
+		titleLabel.Size = UDim2.new(1, 0, 0, closeSize + 8)
+		closeButton.Size = UDim2.fromOffset(closeSize, closeSize)
+		summaryLabel.Position = UDim2.fromOffset(12, SUMMARY_TOP)
+		infoLabel.Position = UDim2.fromOffset(12, INFO_TOP)
+		infoLabel.Visible = not COMPACT
+		list.Position = UDim2.fromOffset(8, LIST_TOP)
+		list.Size = UDim2.new(1, -16, 0, math.max(1, SLOTS_TOP - (if COMPACT then 6 else 30) - LIST_TOP))
+		emptyLabel.Position = UDim2.fromOffset(12, LIST_TOP + 10)
+		slotsLabel.Position = UDim2.fromOffset(12, SLOTS_TOP - 28)
+		slotsLabel.Visible = not COMPACT
+		for index, slot in slots do
+			slot.button.Position = UDim2.fromOffset(10 + (index - 1) * (SLOT_SIZE + SLOT_GAP), SLOTS_TOP)
+			slot.button.Size = UDim2.fromOffset(SLOT_SIZE, SLOT_SIZE)
+		end
+		fieldLine.Position = UDim2.fromOffset(10, FIELD_TOP)
+		fieldLine.Size = UDim2.new(1, -20, 0, BRICK)
+		filterBar.HideMenu()
+		filterBar.SetLayout(FILTER_TOP, BRICK, WIDTH)
+		chipTooltip.Hide()
+		detail.Resize(FIT_SCALE)
+		positionPanel(screenGui:GetAttribute("Open") == true, false)
+		refresh()
+	end)
+end)

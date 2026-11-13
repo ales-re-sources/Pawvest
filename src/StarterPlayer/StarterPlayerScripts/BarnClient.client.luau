@@ -363,7 +363,8 @@ RunService.Heartbeat:Connect(function(dt)
 	local near = distance ~= nil and distance <= SHOW_DISTANCE
 	local field = GardenView.OwnField()
 	local crops = cropsHeld(field)
-	openButton.Visible = near or (crops > 0 and not Hints.Running)
+	local focus = PanelFocus.Current()
+	openButton.Visible = (focus == nil or focus == "Barn") and (near or (crops > 0 and not Hints.Running))
 	local young = type(field) == "table" and (tonumber(field.level) or math.huge) <= SELL_HINT_LEVEL
 	if field then
 		if shownCrops and crops > shownCrops and young and not sellHintShown then

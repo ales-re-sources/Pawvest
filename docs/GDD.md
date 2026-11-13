@@ -697,6 +697,12 @@ Decided 2026-10-25. The product list and offer rules are in [EXPANSION.md](EXPAN
   or a stage's unlock is bought more often than earned, or garden income exceeds the obby first-hour income (pillar 2).
 
 ## 11. Player guidance (hints)
+**HUD navigation (MU1).** The desktop uses the top-left row: Home, Skills, Pets, Garden, Settings, plus Admin for admins. On a
+touch screen whose safe short edge is at most 600 px, the same 50 px buttons form a two-column block (110 × 170 px including
+the admin row). On landscape screens at least 600 px wide, panels align with the block's top and open to its right (x = 130).
+On narrower or portrait screens a panel replaces the block; its close button restores navigation. Panels fit the safe area,
+their lists scroll, and layout updates when the screen rotates. Badges stay attached to their buttons.
+
 Decided 2026-10-27. A player who finishes a stage, earns Coins or waits for an egg should always see what they can do next
 without reading anything. One client-side system (milestone G1) draws every such hint, so the game speaks one visual
 language. Hints are local to the player and display only: they read state the client already has (attributes, leaderstats,

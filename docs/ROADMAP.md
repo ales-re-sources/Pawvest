@@ -47,6 +47,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E5 | Garden MVP rest: request board, ledger on join, onboarding, garden telemetry | – | – | – |
 | M6a | Soft launch + World 1 balancing — World 1 balanced by feel (2026-10-30); live test open | – | – | – |
 | MU | Mobile UX check | – | – | – |
+| MU1 | Responsive HUD navigation and panels | ✔ | ✔ (phone emulation; real phone feel remains with MU) | – |
 | U1 | Pets panel rows with trait chips, filters, pet page Sell under More, food stand rows | ✔ | partial (multi-client look open) | – |
 | FA | The field for everyone, pens removed | ✔ | ✔ | – |
 | U2 | Garden icon with a badge (ripe crops + ready eggs), summary bubble over the own plot sign | ✔ | ✔ | – |
@@ -74,6 +75,24 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
+**MU1 — responsive HUD navigation (Studio-validated, 2026-11-13).** Inputs: safe screen size and touch availability. Keep the desktop
+row; phones use 50 px buttons in a 110 × 170 px two-column block. Landscape panels open beside it (x = 130); narrow / portrait
+panels replace the block until closed. Resize existing panels and scroll their lists on orientation changes. No scene edits or
+profile changes. Acceptance: desktop row unchanged; 667 × 375 and 844 × 390 landscape buttons and all four panels fit without
+overlap; 390 × 844 portrait hides navigation only while a panel is open and restores it on close; real UI opens each panel,
+switches panels and closes them, including Pets detail; five player buttons / six admin buttons and badges survive respawn;
+rotation updates an already-open panel; no new client / server errors. Validate geometry and real controls in Studio; real phone
+touch remains part of MU.
+Validation: native UI clicks exercised Home / Garden, all four panel openers, their close buttons, Skills tabs, pet Details /
+Back / Close and filters. iPhone 13 (844 × 390 preset) and iPhone 7 (667 × 375 preset), both orientations: safe bounds pass,
+44 px close targets and inventory filter targets, open detail survives rotation and restores the right inventory labels,
+portrait hides / restores navigation. Czech panel titles and filter glyphs fit. Respawn retains six admin buttons and the
+Garden badge; the non-admin fifth-button rule was reviewed in code. The bounded Best menu was dragged to Scouting and the
+last option selected through the UI. Barn shortcut hides under another panel and returns on close. Desktop row and Settings
+click checked. Client / server logs clean. Fresh profile snapshots taken per session (`profile_9892673032_mu1_20261113_2`…`_6`);
+no profile fixture, purchases, rewards or migrations were exercised; language was changed only on the client. No scene edits.
+Real-phone feel and a second client remain with MU. Localization build / check / lint pass; no new or changed Czech strings.
+
 **Order (2026-10-30, updated 2026-11-06).** The soft launch takes the obby (15 stages) and the garden as built: since FA (2026-11-06) every
 player has the crop field, so the rest of the garden MVP (EXPANSION §14) is built in the open game. World 4 waits until after the MVP.
 

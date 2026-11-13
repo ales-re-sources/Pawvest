@@ -5,12 +5,15 @@ local TweenService = game:GetService("TweenService")
 local AdminConfig = require(ReplicatedStorage:WaitForChild("AdminConfig"))
 local PanelFocus = require(ReplicatedStorage:WaitForChild("PanelFocus"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
+local HudLayout = require(ReplicatedStorage:WaitForChild("HudLayout"))
+local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
 -- This script lives in ScreenGui.TopLeftIcons (the icons' frame; re-created with the ScreenGui on every respawn)
 local screenGui = script.Parent
+screenGui.Parent.DisplayOrder = 6 -- panels above world hints and the field hand bar
 
 local homeButton = screenGui:WaitForChild("HomeButton")
 local skillsButton = screenGui:WaitForChild("SkillsButton")
@@ -47,11 +50,7 @@ end
 local petsGui = playerGui:WaitForChild("PetsGui", 10)
 local petsSetOpen = petsGui and petsGui:WaitForChild("SetOpen", 10)
 
--- Icon order, left to right: Home, Skills, Pets, Garden, Settings, Admin (last, only visible to admins).
--- Positions are set here, so adding an icon never needs Studio edits.
-for index, icon in { homeButton, skillsButton, petsButton, gardenIcon, settingsButton, adminButton } do
-	icon.Position = UDim2.new(0, 10 + (index - 1) * 60, 0, 20)
-end
+local icons = { homeButton, skillsButton, petsButton, gardenIcon, settingsButton, adminButton }
 
 -- Stud-brick look (ReplicatedStorage.StudStyle): icons as bricks in the colour of the panel they open, the panels in
 -- deep tones of that colour, the status card (ScorePanel) as a wooden plate. All of it lives in this ScreenGui,
@@ -70,6 +69,7 @@ for _, icon in { homeButton, skillsButton, petsButton, gardenIcon, settingsButto
 end
 for _, panel in { skillsPanel, settingsPanel, adminPanel } do
 	StudStyle.Panel(panel, StudStyle.PanelColors[panel.Name])
+	panel.Active = true
 end
 
 local scorePanel = screenGui.Parent:FindFirstChild("ScorePanel")
@@ -83,13 +83,11 @@ if scorePanel then
 end
 
 -- Check if player is admin and show/hide admin button accordingly
-if AdminConfig.IsAdmin(player.UserId) then
-	adminButton.Visible = true
-end
+local isAdmin = AdminConfig.IsAdmin(player.UserId)
+adminButton.Visible = isAdmin
 
 
 -- Panel state tracking
-local isPanelOpen = false
 -- This ScreenGui is re-created on every respawn, with the Skills panel visible as authored. The first spawn keeps that
 -- (it counts as the open panel: opening another one closes it); after that the player's own choice is restored, so a
 -- panel they closed stays closed through a death. The choice lives in a player attribute ("" = none open).
@@ -101,7 +99,6 @@ if remembered ~= nil then
 	for _, panel in { skillsPanel, settingsPanel, adminPanel } do
 		local open = panel.Name == remembered and (panel ~= adminPanel or AdminConfig.IsAdmin(player.UserId))
 		panel.Visible = open
-		panel.Position = UDim2.new(0, if open then 10 else -(panel.Size.X.Offset + 20), 0, 80.3)
 		if open then
 			lastOpenPanel = panel
 		end
@@ -120,6 +117,42 @@ local function closePets()
 end
 
 -- PanelFocus names (U4: one panel at a time across the HUD panels, Pets and the garden's stalls; Skills closes when walking away)
+local layout = HudLayout.Get(screenGui.Parent)
+local tweens = {}
+local function panelPosition(panel, open)
+	local scale = panel:FindFirstChild("HudScale")
+	return UDim2.fromOffset(if open then layout.left else -(panel.Size.X.Offset * (scale and scale.Scale or 1) + 20), layout.top)
+end
+
+local function placePanel(panel, open, animate)
+	if tweens[panel] then tweens[panel]:Cancel() end
+	if not animate then
+		panel.Position = panelPosition(panel, open)
+		return
+	end
+	local tween = TweenService:Create(panel, TweenInfo.new(0.3, Enum.EasingStyle.Quad,
+		if open then Enum.EasingDirection.Out else Enum.EasingDirection.In), { Position = panelPosition(panel, open) })
+	tweens[panel] = tween
+	tween.Completed:Connect(function(state)
+		if state == Enum.PlaybackState.Completed and not open and lastOpenPanel ~= panel then
+			panel.Visible = false
+		end
+	end)
+	tween:Play()
+end
+
+local function updateNavigation()
+	local hidden = layout.overlay and (lastOpenPanel ~= nil or petsOpen())
+	for index, icon in icons do
+		local col = if layout.compact then (index - 1) % 2 else index - 1
+		local row = if layout.compact then (index - 1) // 2 else 0
+		icon.Position = UDim2.fromOffset(10 + col * 60, 20 + row * 60)
+		icon.Visible = not hidden and (icon ~= adminButton or isAdmin)
+	end
+end
+
+if petsGui then petsGui:GetAttributeChangedSignal("Open"):Connect(updateNavigation) end
+
 local FOCUS = {
 	SkillsPanel = { name = "Skills", distance = nil },
 	SettingsPanel = { name = "Settings", distance = math.huge },
@@ -127,44 +160,68 @@ local FOCUS = {
 }
 
 local function closePanel(panel)
-	if not lastOpenPanel then return end
+	if lastOpenPanel ~= panel then return end
 	PanelFocus.Closed(FOCUS[panel.Name].name)
-
-	local slideOut = TweenService:Create(panel, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-		Position = UDim2.new(0, -(panel.Size.X.Offset + 20), 0, 80.3) -- off screen (GardenSkills widens the Skills panel to 300)
-	})
-	slideOut:Play()
-	slideOut.Completed:Connect(function()
-		if lastOpenPanel ~= panel then -- not reopened in the meantime
-			panel.Visible = false
-		end
-	end)
 	lastOpenPanel = nil
+	placePanel(panel, false, true)
 	player:SetAttribute(OPEN_PANEL_ATTRIBUTE, "")
+	updateNavigation()
 end
 
--- Panel animation functions
 local function openPanel(panel)
 	if lastOpenPanel then
-		if (lastOpenPanel == panel) then return end
+		if lastOpenPanel == panel then return end
 		closePanel(lastOpenPanel)
 	end
-	
 	lastOpenPanel = panel
 	player:SetAttribute(OPEN_PANEL_ATTRIBUTE, panel.Name)
 	PanelFocus.Open(FOCUS[panel.Name].name, function()
 		closePanel(panel)
-	end, FOCUS[panel.Name].distance) -- closes Pets / a stall panel
-
+	end, FOCUS[panel.Name].distance)
 	panel.Visible = true
-	isPanelOpen = true
-
-	local slideIn = TweenService:Create(panel, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-		Position = UDim2.new(0, 10, 0, 80.3)
-	})
-	slideIn:Play()
+	placePanel(panel, true, true)
+	updateNavigation()
 end
 
+-- Close stays reachable when portrait panels replace navigation, outside the panel's UIListLayout.
+for _, panel in { skillsPanel, settingsPanel, adminPanel } do
+	local close = UiKit.Button("Close", {
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -4, 0, 4),
+		Size = UDim2.fromOffset(44, 44),
+		BackgroundColor3 = StudStyle.Colors.Red,
+		Text = "×", -- loc: ignore (close symbol)
+		TextSize = 24,
+		ZIndex = 10,
+		AutoLocalize = false,
+	}, 1)
+	close.Parent = panel:WaitForChild("TitleLabel")
+	close.Activated:Connect(function() closePanel(panel) end)
+end
+
+HudLayout.Watch(screenGui.Parent, function(nextLayout)
+	layout = nextLayout
+	for _, panel in { skillsPanel, settingsPanel, adminPanel } do
+		local scale = panel:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
+		scale.Name = "HudScale"
+		scale.Scale = layout.scale
+		scale.Parent = panel
+		local width = if panel == skillsPanel then 300 else 250
+		panel.Size = UDim2.new(0, math.min(width, layout.width / layout.scale), panel.Size.Y.Scale, panel.Size.Y.Offset)
+		local title = panel.TitleLabel
+		local closeSize = math.ceil(44 / layout.scale)
+		title.Size = UDim2.new(1, 0, 0, closeSize + 8)
+		title.Close.Size = UDim2.fromOffset(closeSize, closeSize)
+		title.Close.Position = UDim2.new(1, closeSize + 6, 0, 4) -- compensate the title's text padding
+		local padding = title:FindFirstChildOfClass("UIPadding") or Instance.new("UIPadding")
+		padding.PaddingRight = UDim.new(0, closeSize + 10)
+		padding.PaddingLeft = UDim.new(0, 6)
+		padding.Parent = title
+		title.TextWrapped = true
+		placePanel(panel, lastOpenPanel == panel, false)
+	end
+	updateNavigation()
+end)
 
 -- the panel open at start (authored visible on the first spawn, or restored through a death) takes the focus
 if lastOpenPanel then
@@ -177,11 +234,11 @@ end
 -- Button click handlers
 -- Home: back to the hub (the server validates, cancels a running timer and teleports)
 local goHomeEvent = ReplicatedStorage:WaitForChild("GoHome")
-homeButton.MouseButton1Click:Connect(function()
+homeButton.Activated:Connect(function()
 	goHomeEvent:FireServer()
 end)
 
-petsButton.MouseButton1Click:Connect(function()
+petsButton.Activated:Connect(function()
 	if not petsSetOpen then
 		return
 	end
@@ -200,7 +257,7 @@ local Hints = require(player:WaitForChild("PlayerScripts"):WaitForChild("Hints")
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local goGardenEvent = ReplicatedStorage:WaitForChild("GoGarden")
-gardenIcon.MouseButton1Click:Connect(function()
+gardenIcon.Activated:Connect(function()
 	if player:GetAttribute(GardenConfig.PlotAttribute) == nil then
 		Hints.Toast(Locale.T("garden.go.notReady"))
 		return
@@ -217,7 +274,7 @@ local function togglePanel(panel)
 	end
 end
 
-skillsButton.MouseButton1Click:Connect(function()
+skillsButton.Activated:Connect(function()
 	togglePanel(skillsPanel)
 end)
 
@@ -229,11 +286,11 @@ screenGui.Parent:GetAttributeChangedSignal("OpenSkills"):Connect(function()
 	end
 end)
 
-settingsButton.MouseButton1Click:Connect(function()
+settingsButton.Activated:Connect(function()
 	togglePanel(settingsPanel)
 end)
 
-adminButton.MouseButton1Click:Connect(function()
+adminButton.Activated:Connect(function()
 	if AdminConfig.IsAdmin(player.UserId) then
 		togglePanel(adminPanel)
 	end

@@ -13,7 +13,6 @@ local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
-local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local remotes = ReplicatedStorage:WaitForChild("TalentRemotes")
 local buyEvent = remotes:WaitForChild("Buy")
@@ -144,13 +143,9 @@ if placeholder then
 	placeholder:Destroy()
 end
 
--- Short screens (a phone in landscape): the panel is scaled down and the rows scroll in a list capped to what fits.
--- The panel itself fits its content (StudStyle.Panel: AutomaticSize.Y): title 35 + gap 10 + list + bottom padding 10.
-local fitScale = PanelFit.Scale()
-if fitScale < 1 then
-	create("UIScale", { Scale = fitScale, Parent = panel })
-end
-local listHeight = math.min(#TalentConfig.List * (ROW_HEIGHT + 10) - 10, PanelFit.MaxHeight(fitScale) - 55)
+-- GardenSkills caps both scrolling tabs to the safe area whenever the screen changes.
+-- The panel fits its title, tabs and visible list through StudStyle.Panel's AutomaticSize.Y.
+local listHeight = #TalentConfig.List * (ROW_HEIGHT + 10) - 10
 local rowList = create("ScrollingFrame", {
 	Name = "Rows",
 	LayoutOrder = 1,

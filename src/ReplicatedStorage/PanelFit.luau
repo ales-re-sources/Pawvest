@@ -1,4 +1,4 @@
--- PanelFit: fits the slide-in panels (Skills, Pets) to short screens, i.e. a phone held in landscape (about 375-430 px
+-- PanelFit: fits legacy garden panels to short screens, i.e. a phone held in landscape (about 375-430 px
 -- high), where the panels designed for a desktop window ran off the bottom. On a short screen a panel is scaled down a
 -- little (UIScale, never below MIN_SCALE) and the rest is solved by the panel itself: it caps its height at `MaxHeight`
 -- and scrolls or compacts what does not fit. Tall screens get scale 1 and a huge maximum, so nothing changes there.
@@ -11,7 +11,7 @@ local GuiService = game:GetService("GuiService")
 local PanelFit = {}
 
 local MIN_SCALE = 0.7
-local PANEL_TOP = 80.3 -- where ButtonHandler and PetsPanel open the panels
+local PANEL_TOP = 80.3 -- legacy garden-panel origin; navigation uses HudLayout
 local MARGIN = 8 -- air below the panel
 local TOPBAR = 58 -- the tallest Roblox top bar (desktop); phones have a slightly lower one
 

@@ -15,7 +15,7 @@ local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
-local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
+local HudLayout = require(ReplicatedStorage:WaitForChild("HudLayout"))
 local ConfirmTap = require(ReplicatedStorage:WaitForChild("ConfirmTap"))
 
 local player = Players.LocalPlayer
@@ -56,12 +56,13 @@ end
 
 -- Layout -------------------------------------------------------------------------------------------------------------------
 
-local fitScale = PanelFit.Scale()
+local fitScale = HudLayout.Get(panel.Parent).scale
 local tapHeight = math.ceil(44 / fitScale) -- tabs and Buy bricks stay at least 44 px tall on screen
 panel.Size = UDim2.new(0, PANEL_WIDTH, panel.Size.Y.Scale, panel.Size.Y.Offset)
 
 local rows = panel:WaitForChild("Rows", 10) -- TalentRows' list (the Obby tab)
-local listCap = PanelFit.MaxHeight(fitScale) - 55 - (tapHeight + 10)
+local obbyHeight = rows and rows.Size.Y.Offset or 430
+local listCap = HudLayout.Get(panel.Parent).height / fitScale - 55 - (tapHeight + 10)
 if rows then
 	rows.LayoutOrder = 2
 	rows.Size = UDim2.new(1, 0, 0, math.min(rows.Size.Y.Offset, listCap))
@@ -340,3 +341,16 @@ end)
 
 staticTexts()
 showTab()
+
+HudLayout.Watch(panel.Parent, function(layout)
+	fitScale = layout.scale
+	tapHeight = math.ceil(44 / fitScale)
+	local titleHeight = tapHeight + 8 -- ButtonHandler's title and 44 px close button
+	listCap = math.max(1, layout.height / fitScale - titleHeight - tapHeight - 40)
+	panel.Tabs.Size = UDim2.new(1, -10, 0, tapHeight)
+	obbyTab.Size = UDim2.new(0.5, -4, 0, tapHeight)
+	gardenTab.Size = UDim2.new(0.5, -4, 0, tapHeight)
+	if rows then rows.Size = UDim2.new(1, 0, 0, math.min(obbyHeight, listCap)) end
+	gardenList.Size = UDim2.new(1, 0, 0, math.min(430, listCap))
+	renderIfShown()
+end)

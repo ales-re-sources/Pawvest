@@ -4,7 +4,7 @@
 --   bar.Filtered(inventory) -> the pets the filter shows (inventory order, or by the trait's level for "Best for")
 --   bar.Refresh(inventory)  -> chip texts and highlight (call on every refresh)
 --   bar.SetTexts()          -> texts that do not depend on the state (on Locale.Changed)
---   bar.SetLayout(top, height), bar.HideMenu(), bar.Filter()
+--   bar.SetLayout(top, height, width?), bar.HideMenu(), bar.Filter(); the trait menu scrolls within the panel.
 -- `onPress` runs on any chip press (hide tooltips); `onChange` after a filter was picked (reset the scroll, refresh).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -57,12 +57,17 @@ function PetFilterBar.Mount(panel: Frame, opts)
 	end
 
 	-- "Best for ▼" opens a list of the traits under its chip
-	local menu = create("Frame", {
+	local menu = create("ScrollingFrame", {
 		Name = "BestMenu",
+		Active = true,
+		ScrollingDirection = Enum.ScrollingDirection.Y,
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.fromOffset(width - RIGHT, top + height + 4),
 		Size = UDim2.fromOffset(180, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
+		AutomaticCanvasSize = Enum.AutomaticSize.Y,
+		CanvasSize = UDim2.new(),
+		ScrollBarThickness = 4,
+		BorderSizePixel = 0,
 		BackgroundColor3 = StudStyle.Shade(opts.color, 0.2),
 		ZIndex = 12,
 		Visible = false,
@@ -92,6 +97,12 @@ function PetFilterBar.Mount(panel: Frame, opts)
 		options[trait.id] = option
 	end
 
+	local function fitMenu()
+		local scale = if menu.AbsoluteSize.X > 0 then menu.AbsoluteSize.X / 180 else 1
+		local room = panel.AbsoluteSize.Y / scale - top - height - 12
+		menu.Size = UDim2.fromOffset(180, math.min(#PetRow.Traits * (height + 6) + 8, math.max(height + 14, room)))
+	end
+
 	function bar.SetTexts()
 		chips.with.Text = Locale.T("pets.filter.withMe")
 		chips.field.Text = Locale.T("pets.filter.field")
@@ -100,16 +111,20 @@ function PetFilterBar.Mount(panel: Frame, opts)
 		end
 	end
 
-	function bar.SetLayout(newTop: number, newHeight: number)
+	function bar.SetLayout(newTop: number, newHeight: number, newWidth: number?)
 		top, height = newTop, newHeight
-		for _, chip in chips do
-			chip.Position = UDim2.fromOffset(chip.Position.X.Offset, top)
+		width = newWidth or width
+		chipWidth = math.floor((width - 10 - RIGHT - 6 * (#FILTERS - 1)) / #FILTERS)
+		for index, id in FILTERS do
+			local chip = chips[id]
+			chip.Position = UDim2.fromOffset(10 + (index - 1) * (chipWidth + 6), top)
 			chip.Size = UDim2.fromOffset(chipWidth, height)
 		end
 		menu.Position = UDim2.fromOffset(width - RIGHT, top + height + 4)
 		for _, option in options do
 			option.Size = UDim2.new(1, 0, 0, height)
 		end
+		fitMenu()
 	end
 
 	function bar.HideMenu()
@@ -131,6 +146,7 @@ function PetFilterBar.Mount(panel: Frame, opts)
 				opts.onPress()
 			end
 			if id == "best" then
+				fitMenu()
 				menu.Visible = not menu.Visible
 				return
 			end
