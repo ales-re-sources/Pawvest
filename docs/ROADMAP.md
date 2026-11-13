@@ -75,24 +75,6 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
 
 ## Next
-**MU1 — responsive HUD navigation (Studio-validated, 2026-11-13).** Inputs: safe screen size and touch availability. Keep the desktop
-row; phones use 50 px buttons in a 110 × 170 px two-column block. Landscape panels open beside it (x = 130); narrow / portrait
-panels replace the block until closed. Resize existing panels and scroll their lists on orientation changes. No scene edits or
-profile changes. Acceptance: desktop row unchanged; 667 × 375 and 844 × 390 landscape buttons and all four panels fit without
-overlap; 390 × 844 portrait hides navigation only while a panel is open and restores it on close; real UI opens each panel,
-switches panels and closes them, including Pets detail; five player buttons / six admin buttons and badges survive respawn;
-rotation updates an already-open panel; no new client / server errors. Validate geometry and real controls in Studio; real phone
-touch remains part of MU.
-Validation: native UI clicks exercised Home / Garden, all four panel openers, their close buttons, Skills tabs, pet Details /
-Back / Close and filters. iPhone 13 (844 × 390 preset) and iPhone 7 (667 × 375 preset), both orientations: safe bounds pass,
-44 px close targets and inventory filter targets, open detail survives rotation and restores the right inventory labels,
-portrait hides / restores navigation. Czech panel titles and filter glyphs fit. Respawn retains six admin buttons and the
-Garden badge; the non-admin fifth-button rule was reviewed in code. The bounded Best menu was dragged to Scouting and the
-last option selected through the UI. Barn shortcut hides under another panel and returns on close. Desktop row and Settings
-click checked. Client / server logs clean. Fresh profile snapshots taken per session (`profile_9892673032_mu1_20261113_2`…`_6`);
-no profile fixture, purchases, rewards or migrations were exercised; language was changed only on the client. No scene edits.
-Real-phone feel and a second client remain with MU. Localization build / check / lint pass; no new or changed Czech strings.
-
 **Order (2026-10-30, updated 2026-11-06).** The soft launch takes the obby (15 stages) and the garden as built: since FA (2026-11-06) every
 player has the crop field, so the rest of the garden MVP (EXPANSION §14) is built in the open game. World 4 waits until after the MVP.
 
@@ -968,6 +950,12 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
 
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
+
+**MU1 responsive HUD navigation** (2026-11-13; GDD §11). Desktop row; phones get a two-column block, landscape panels beside it
+and portrait panels replacing it until closed. Skills / Pets reflow on rotation, close targets stay 44 px, the pet trait menu
+scrolls within the panel and the Barn shortcut hides behind panel focus. Studio-validated with native UI clicks, iPhone 7 / 13
+emulation in both orientations, Czech fit, respawn and clean logs. No new Czech strings or profile fixtures. Real-phone feel
+remains with MU. Scope / acceptance / validation record: `git show bf22ffc:docs/ROADMAP.md`.
 
 **Pet page without the growth card, 20 pet levels** (2026-11-12; GDD §7.4, §7.8). The pet page lost its top Growth card (level bar, "trained" line, next look): the trait cards come first, the Feed card below them (it carries the "what trains now" line). Pet and trait levels run 1..20 instead of 1..10: the curves stay written on the 10-level scale and `PetConfig` splits every step (`BaseLevel`, `ToLevel`; level 1 stays 1, L → 2L), so XP totals, caps, strengths, reach and the Coin bonus at even levels are unchanged and `economy.py check` stays valid (it reads `BaseMaxLevel`). Profile `Version = 6` rescales every pet once (`RescaleAptitudes`). Studio-validated on the developer's profile (Dragon Cuteness 9 → 18, Owl 8 → 16; snapshot `profile_9892673032_petlevels20_1`, the migrated profile was kept). Open: the Feed card with held crops and a Czech-width check of the page were not looked at; look tiers at Lv 5 / 10 / 15 / 20; the first level-up now comes after a third of the old XP (Cuteness 33 XP, Tending 3.3 field hours), so the early game feels faster: check it in the next retention look.
 
