@@ -1,4 +1,4 @@
--- CG16: selected B, the tall open eggplant with enlarged leaves (docs/plants/EGGPLANT.md).
+-- CG16: selected B, the tall open eggplant with enlarged leaves; CG16e spreads it round the stem (docs/plants/EGGPLANT.md).
 -- Eight stems, two cotyledons, five six-Part leaves, three 22-Part flower/fruit slots and a seven-Part top flower = 113 Parts.
 local EggplantPlant = {}
 EggplantPlant.__index = EggplantPlant
@@ -14,30 +14,37 @@ local STEM, PURPLESTEM = C(104,146,65), C(100,73,100)
 local LEAF, LEAF2, YOUNG = C(77,132,62), C(96,151,75), C(142,181,83)
 local SKIN, FACET, UNRIPE = C(57,20,84), C(83,30,113), C(116,74,149)
 local CALYX, PETAL, POLLEN = C(106,153,58), C(179,102,220), C(242,197,57)
+-- Layout around the stem: P(r, azimuth°, rise) is an offset from the parent tip, azimuth 0 = +Z, 90 = +X.
+local function P(r,deg,dy) local a=math.rad(deg) return V(r*math.sin(a),dy,r*math.cos(a)) end
+local SEGMENTS, LEAVES, FRUITS = {}, {}, {}
+local function tip(parent) return if parent==0 then ZERO else SEGMENTS[parent][2] end
 -- Parent, mature tip, growth interval, width. Parent tips are the attachment bases.
-local SEGMENTS = {
-	{0,V(0.06,1.35,-0.08),0,0.24,0.19},
-	{1,V(0,2.55,-0.12),0.12,0.38,0.173},
-	{2,V(-0.20,3.52,-0.16),0.25,0.48,0.156},
-	{3,V(0.02,4.39,-0.10),0.35,0.58,0.139},
-	{2,V(-0.75,3.16,-0.12),0.28,0.47,0.15},
-	{5,V(-1.02,3.72,-0.10),0.38,0.59,0.1365},
-	{3,V(0.70,3.76,-0.12),0.33,0.53,0.14},
-	{7,V(0.94,4.13,-0.20),0.42,0.63,0.1274},
-}
--- Parent, mature hinge, length, width, yaw, rise, unfolding interval.
-local LEAVES = {
-	{1,V(-0.38,1.75,-0.38),1.33,0.94,-1.55,0.16,0.10,0.40},
-	{2,V(0.44,2.80,-0.24),1.18,0.90,1.25,0.12,0.24,0.52},
-	{5,V(-1.00,3.42,-0.29),1.05,0.87,-1.36,0.35,0.33,0.61},
-	{4,V(0.06,4.44,-0.20),0.87,0.76,3.04,0.44,0.40,0.66},
-	{7,V(0.86,4.02,-0.44),1.05,0.84,2.55,0.25,0.38,0.65},
-}
-local FRUITS = {
-	{5,V(-0.92,3.00,0.48),1.88,0.69,-0.14,0},
-	{7,V(0.91,3.47,0.42),1.79,0.73,0.13,0.012},
-	{2,V(-0.03,2.68,0.52),1.16,0.53,0.08,0.025},
-}
+local function seg(parent,rel,first,last,width) table.insert(SEGMENTS,{parent,tip(parent)+rel,first,last,width}) end
+-- Parent, mature hinge, length, width, yaw (= azimuth), rise, unfolding interval, roll.
+local function leaf(parent,r,deg,dy,len,width,rise,first,last,roll)
+	table.insert(LEAVES,{parent,tip(parent)+P(r,deg,dy),len,width,math.rad(deg),rise,first,last,roll})
+end
+-- Parent, mature calyx point, length, width, outward swing, delay.
+local function fruitAt(parent,r,deg,dy,len,width,swing,delay) table.insert(FRUITS,{parent,tip(parent)+P(r,deg,dy),len,width,swing,delay}) end
+-- LAYOUT BEGIN (CG16e: C, cross fork: B's left/right arms, one long fruit forward, one back, leaves fore and aft)
+seg(0,V(0.06,1.35,-0.08),0,0.24,0.19)
+seg(1,V(-0.06,1.20,-0.04),0.12,0.38,0.173)
+seg(2,V(-0.20,0.97,-0.04),0.25,0.48,0.156)
+seg(3,V(0.22,0.87,0.06),0.35,0.58,0.139)
+seg(2,P(0.90,-90,0.55),0.28,0.47,0.15)
+seg(5,P(0.32,-90,0.50),0.38,0.59,0.1365)
+seg(3,P(1.00,90,0.20),0.33,0.53,0.14)
+seg(7,P(0.30,90,0.35),0.42,0.63,0.1274)
+leaf(1,0.50,180,0.40,1.33,0.94,0.12,0.10,0.40,0.45)
+leaf(2,0.46,10,0.25,1.18,0.90,-0.08,0.24,0.52,-0.45)
+leaf(5,0.30,-160,0.26,1.05,0.87,0.15,0.33,0.61,0.45)
+leaf(4,0.11,-40,0.05,0.87,0.76,0.0,0.40,0.66,0.3)
+leaf(7,0.30,15,0.26,1.05,0.84,0.25,0.38,0.65,-0.45)
+fruitAt(5,0.35,-30,-0.20,1.88,0.69,0.14,0)
+fruitAt(7,0.35,150,-0.25,1.79,0.73,0.13,0.012)
+fruitAt(2,0.70,-150,0.13,1.16,0.53,0.08,0.025)
+local FLOWER = P(0.43,90,0.18) -- top flower, off the tip of segment 8
+-- LAYOUT END
 local LEVELS = {{0.16,0.36,0.56},{0.40,0.42,0.87},{0.67,0.40,1.00},{0.88,0.24,0.73}}
 local TENDENCIES = {{1,1,1,1},{0.96,0.94,1.08,0.92},{1.06,0.98,0.94,1.09},
 	{0.94,1.02,1.06,0.95},{1.04,0.95,0.93,1.08},{0.98,1.01,1.10,0.91}}
@@ -51,7 +58,7 @@ local function seededShape(seed, sizeFactor)
 	local lean = V(vary(0.035),0,vary(0.025))
 	for i,spec in FRUITS do
 		local length, width = spec[3]*ds*(1+vary(0.09)), spec[4]*ds*(1+vary(0.07))
-		shape.fruits[i] = {parent=spec[1],len=length,width=width,tilt=spec[5]+vary(0.025),
+		shape.fruits[i] = {parent=spec[1],len=length,width=width,swing=spec[5]+vary(0.025),
 			yaw=0.12+vary(0.20),delay=spec[6]+vary(0.006)}
 		-- A larger harvest grows longer fruit, with the leader lifted only when needed for clearance.
 		height = math.max(height,(length*1.01+width*0.18+0.22)/(spec[2].Y*vigor))
@@ -62,16 +69,25 @@ local function seededShape(seed, sizeFactor)
 	end
 	for i,s in SEGMENTS do
 		local parentTip = if s[1]==0 then ZERO else point(SEGMENTS[s[1]][2])
-		shape.segments[i] = {parent=s[1],delta=point(s[2])-parentTip,first=s[3],last=s[4],width=s[5]*vigor}
+		local delta=point(s[2])-parentTip
+		-- Side arms (they start off the leader) lift slightly until the fruit load settles them, whatever their azimuth.
+		local side=s[1]~=0 and s[1]~=i-1 and V(delta.X,0,delta.Z).Magnitude>0.2
+		shape.segments[i] = {parent=s[1],delta=delta,first=s[3],last=s[4],width=s[5]*vigor,
+			bendAxis=if side then Vector3.yAxis:Cross(V(delta.X,0,delta.Z).Unit) else nil}
 	end
 	for i,s in LEAVES do
 		-- Larger blades stand more upright and sit closer to their branch, preserving the field clearance.
 		shape.leaves[i] = {parent=s[1],offset=(point(s[2])-point(SEGMENTS[s[1]][2]))*V(0.50,1,0.50),
 			len=s[3]*1.10*1.85*vigor*(1+vary(0.09)),width=s[4]*1.25*1.85*vigor*(1+vary(0.08)),
-			yaw=s[5]+vary(0.19),rise=s[6]+(if i==4 then 0.35 else 0.85)+vary(0.09),first=s[7],last=s[8],delay=vary(0.008)}
+			yaw=s[5]+vary(0.19),rise=s[6]+(if i==4 then 0.35 else 0.85)+vary(0.09),first=s[7],last=s[8],delay=vary(0.008),roll=s[9]}
 	end
-	for i,f in shape.fruits do f.offset=point(FRUITS[i][2])-point(SEGMENTS[f.parent][2]) end
-	shape.flowerOffset=point(V(0.98,4.31,0.23))-point(SEGMENTS[8][2])
+	-- Fruit hang outward from their node: local +Z points away from the stem, so the pedicel crooks back towards it.
+	for i,f in shape.fruits do
+		f.offset=point(FRUITS[i][2])-point(SEGMENTS[f.parent][2])
+		f.yaw+=math.atan2(f.offset.X,f.offset.Z)
+	end
+	shape.flowerOffset=point(SEGMENTS[8][2]+FLOWER)-point(SEGMENTS[8][2])
+	shape.flowerYaw=math.atan2(shape.flowerOffset.X,shape.flowerOffset.Z)
 	return shape
 end
 
@@ -83,8 +99,7 @@ local function structure(shape,g)
 		local start = if s.parent==0 then ZERO else tips[s.parent]
 		local q = phase(g,s.first,s.last)
 		if i==1 then q=0.06+0.94*q end
-		local bend = if i==5 then -0.055*unloaded elseif i==7 then 0.055*unloaded else 0
-		local rotation = parentRotation*CFrame.Angles(0,0,bend)
+		local rotation = if s.bendAxis then parentRotation*CFrame.fromAxisAngle(s.bendAxis,-0.055*unloaded) else parentRotation
 		starts[i],tips[i],rotations[i],qs[i] = start,start+rotation:VectorToWorldSpace(s.delta)*q,rotation,q
 	end
 	return starts,tips,rotations,qs
@@ -95,7 +110,7 @@ local function leafPose(leaf,g,tips,rotations)
 	local node=tips[leaf.parent]
 	local hinge=node+rotations[leaf.parent]:VectorToWorldSpace(leaf.offset)*q
 	local frame=CFrame.new(hinge)*rotations[leaf.parent]*CFrame.Angles(0,leaf.yaw,0)
-		*CFrame.Angles(-1.40+(1.40-leaf.rise)*q,0,math.sin(leaf.yaw)*0.65*q)
+		*CFrame.Angles(-1.40+(1.40-leaf.rise)*q,0,leaf.roll*q)
 	return q,node,hinge,frame
 end
 
@@ -117,8 +132,8 @@ local function fruitPose(f,g,tips,rotations)
 	local q=phase(g,0.37+f.delay,0.48+f.delay)
 	local node=tips[f.parent]
 	local cap=node+rotations[f.parent]:VectorToWorldSpace(f.offset)*q
-	local rotation=rotations[f.parent]*CFrame.Angles(0,f.yaw,f.tilt)
-	return {node=node,cap=cap,crook=cap+rotation:VectorToWorldSpace(V(-f.tilt*0.14,0.26,-0.08))*q,
+	local rotation=rotations[f.parent]*CFrame.Angles(0,f.yaw,0)*CFrame.Angles(-f.swing,0,0)
+	return {node=node,cap=cap,crook=cap+rotation:VectorToWorldSpace(V(0,0.26,-0.08-f.swing*0.14))*q,
 		frame=CFrame.new(cap)*rotation,pedicel=q,
 		flower=phase(g,0.43+f.delay,0.52+f.delay),set=phase(g,0.59+f.delay,0.74+f.delay),
 		length=phase(g,0.62+f.delay,0.88+f.delay),swell=phase(g,0.74+f.delay,1),ripe=phase(g,0.70+f.delay,0.96)}
@@ -205,7 +220,7 @@ function EggplantPlant:SetGrowth(normalized)
 	local node=tips[8]
 	local at=node+rotations[8]:VectorToWorldSpace(self.flowerOffset)*q
 	rig:rod(node,at,0.075,STEM,q)
-	local cf=CFrame.new(at)*rotations[8]*CFrame.Angles(math.rad(60),0,0)
+	local cf=CFrame.new(at)*rotations[8]*CFrame.Angles(0,self.flowerYaw,0)*CFrame.Angles(math.rad(60),0,0)
 	for i=0,4 do rig:block(V(0.17,0.055,0.31)*math.max(q,0.001),cf*CFrame.Angles(0,i*math.pi*0.4,0)*CFrame.new(0,0,0.16*q),PETAL,q) end
 	rig:block(V(0.12,0.18,0.12)*math.max(q,0.001),cf*CFrame.new(0,0.10*q,0),POLLEN,q)
 	rig:finish()
@@ -259,7 +274,7 @@ function EggplantPlant.BuildProxy(parent,soilCFrame,stage,seed,sizeFactor)
 		local node=tips[8]
 		local at=node+rotations[8]:VectorToWorldSpace(shape.flowerOffset)*q
 		rod("FlowerStalk",node,at,0.075,STEM,q,"Foliage")
-		block("Flower",V(0.48,0.065,0.48)*q,CFrame.new(at)*rotations[8]*CFrame.Angles(math.rad(60),0,0),PETAL,q,"Foliage")
+		block("Flower",V(0.48,0.065,0.48)*q,CFrame.new(at)*rotations[8]*CFrame.Angles(0,shape.flowerYaw,0)*CFrame.Angles(math.rad(60),0,0),PETAL,q,"Foliage")
 	end
 end
 
