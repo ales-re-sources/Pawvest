@@ -298,3 +298,11 @@ washed the rig; contrast 0.18 and saturation 0.32 so the white pillars part at t
 - Tile test of J (320 / 200 / 150 px, by Claude): the player, the Phoenix, the coin and the logo read at 150 px, the pillar
   path over blue water reads as a course at 320 / 200; the reached pad's light column is a pale cyan band through the
   middle, and her orange top looks amber in the pad's green light (both real).
+- **Release candidate (2026-11-14, the user's call; final after the grid tile test and the kid test, §8 TH1).** Draft J
+  re-grabbed from the stashed set. Files in `docs/art/thumbnails/`: `a3.jpg` (1920×1080, wordmark top right, the upload) and
+  `a3-clean.jpg` (no logo); the 512×512 squares as for C1: `a3-square.jpg` (wordmark at 44 % width top left, clear of the
+  Phoenix's crest), `a3-square-mark.jpg` (pawprint mark at 20 %), `a3-square-clean.jpg` (1360×1360 master, no logo). Square
+  camera: along J's line of sight, aimed between the player and the course (pad space {2.6, 4.4, -6.8}), FOV 32, about 29
+  studs back (pad space {1.2, 8.2, -36}: cam {-774.88, 87.70, 271.79} look {-745.77, 83.90, 274.46}); a camera aimed at the
+  player + Phoenix box put the side pillars, not the course, behind them. The coin `Stage1_4` falls outside the square; coins
+  on the far pillars still show. Grabbed with `-Rect "726,323,1968,1360" -Aspect 1:1`.
