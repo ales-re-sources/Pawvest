@@ -39,6 +39,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | K1 | First-hour fixes (kid playtest 2026-11-01): Stage 5, G1 fallback, Double Jump world reward, hatch panel (U5b) done | partial | partial | – |
 | E0 | Economy model: baseline, simulation, field and every E1–E4 re-run done; repricing and the remaining checks open (continued as EV) | partial | – | – |
 | EV | Engagement-first economy (the user, 2026-11-07): EV1 model + proposal table; EV2a–e apply it | EV1 implemented (13 / 13 EV checks pass); EV2a (nice prices, pinned 2026-11-07) and EV2b (talent bundles) Studio-validated 2026-11-08 (boot, Renown migration, Barn and a square bought, 10 s Potato, seed stall and Skills panel in Czech; the user tested the bundle purchases); barn Sell shows count + pet bonus; next: EV2e / EV2c / EV2d | – | – |
+| EV3 | Crop levels replace Renown, milestone quests, crop upgrades, first-hour obby payouts (draft 2026-11-14, awaits sign-off; EV3a model, EV3b levels, EV3c upgrades) | – | – | – |
 | E1.0 | Client-drawn plots spike: **GO** | ✔ | ✔ | – |
 | E1a–E1d | Crop field (every player's since FA): client-drawn plots, field, field pets, crops as pet food, size roll, upgrades, tools, market cart, farming-first numbers, 36 squares | ✔ | ✔ | – |
 | E2 | Obby seeds: rare crops, rare-seed meters, seed pouch, Scouting | ✔ | ✔ | – |
@@ -89,7 +90,8 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
    onboarding for the first ten minutes, garden telemetry. Before going public Max Players goes to 24 (a place setting) and the open item
    "Before Max Players 24" below is checked.
    Gates before going public: M6a, the balancing pass, the Czech review of the new texts, MU, and the comfort shop (D2) or a decision to
-   launch without it.
+   launch without it. Since 2026-11-14 also **EV3** (no Renown in the first hour) and an online loop from day 2 (requests, E5). Whether
+   the content horizon (~5 days for a heavy player) is a gate too is open (ECONOMY.md → open decisions).
 4. **E0 in parallel:** repricing and the remaining checks (section below).
 5. **MU** before anything goes public.
 6. **U1–U5 garden and pet UI** (design decided 2026-11-05, [UI_GARDEN_PETS.md](UI_GARDEN_PETS.md) §11–12; scope each when it starts):
@@ -897,6 +899,83 @@ new price. World rewards (Double Jump 1) stay free.
 - **Acceptance:** `economy.py check` exit 0 (drift 0 after `pin`); `loc.py build / check / lint`; a playtest boot without errors or warnings;
   in Studio (snapshot first) one level bought with a bundle through the real Skills panel (Coins and the crops leave, the level shows), one
   refused for missing crops (the right message, nothing taken), the needs line in Czech fits.
+
+### EV3 — Crop levels replace Renown; milestone quests; crop upgrades; first-hour obby payouts (draft 2026-11-14, rewritten the same day after the user's review; awaits sign-off)
+**Why (the user, 2026-11-14).** Two 12-year-old players did not know what Renown is; a concept that needs explaining is out. Renown also
+favours the wrong play: points per harvest are 4 × √minutes, so per hour a Potato gives ~720 points, Garlic 140, Corn 44, and spam-clicking
+Potatoes is the fastest way to level. Old crops have no use: Lettuce (0.3 min) beats Potato after ~20 s of play, and a crop only pays
+Coins, so the 13 crops below the newest 2–3 are dead. The late game has nothing to spend time on once the shop is a list of "+1 square
+for 4 M". On the obby side, the Tutorial (30 s target) pays up to 750 Coins once (≈ 7 min of the 4-square Potato farm), Stage 1 up to
+1 125: early first clears outpay the farm they should feed.
+
+**Direction (the user, 2026-11-14: not a quest per crop; upgradeable crops).**
+- **Crop levels (★):** every crop has its own level, earned by growing that crop. It replaces Renown and sits on the crop itself
+  ("Garlic ★2"), where a kid already looks.
+- **Unlocks mostly happen by playing:** the next crop opens when the previous one reaches ★1 (the seed stall shows the bar). Nothing is
+  used up.
+- **Quests only at milestones:** Corn, Pumpkin, Giant melon (the original crops; the model may move them): "bring 20 Cucumbers + 30 Garlic"
+  (taken at once, EV2b's `TakeCrops`). They keep obby Coins from buying the farm and feel like events, not chores.
+- **Crop upgrades:** each crop level gives a point to invest in that crop's lines **Value** (sells for more), **Size** (grows bigger:
+  look, size records, the sale through the size factor), **Speed** (grows faster). Points come only from growing that crop, so upgrading
+  Potato means planting Potatoes: old crops become a choice, and 16 crops × 3 lines is a long goal that needs no bigger Coin numbers.
+
+**Rules for the first cut (the model tunes the numbers):**
+1. **Crop XP = growing time of that crop** (each harvest adds its grow minutes), not harvests: a harvest count would bring the
+   spam-click back. Level thresholds per crop are set so a level takes about the same play time on the squares the player has then;
+   ★1 is small for the first crops (G7: something new every ≤ 10 min). The player sees a bar, not minutes.
+2. **Caps:** a fully upgraded crop matches a fresh crop 2–3 steps above it, never the top one. First cut: 5 points per line; Value +10 %
+   per point, Speed −6 % grow time per point, Size +10 % size factor per point (Potato maxed ≈ 4 900 Coins per square-hour, about Tomato).
+   Every line can be maxed in the end (completion, not a forced build); the choice is the order.
+3. **Global upgrades stay** (Growth, Barn, Sorter, Cloches, Shears) and stack with crop upgrades: the global ones are the Coin sinks,
+   crop upgrades the time sink.
+4. **Squares, upgrades, tools, field pet slots:** Coins only, no gate (the user, 2026-11-14). The model never needed the Renown gates: with
+   every sink ungated all EV checks and every square's purchase day stay the same (ECONOMY.md → Findings); the ×1.33 / ×1.93 price ladder
+   paces them.
+5. **Other Renown uses:** the market cart's taste and crows (both from Renown 3) start with the Garlic unlock.
+6. **Obby one-time Coins:** first finish + medal Coins of the Tutorial and World 1 resized; part of a first clear paid as a seed pack of an
+   unlocked crop (seeds of a locked crop would skip its unlock). Repeat-run Coins stay until EV2c.
+
+**EV3a — model (no game code).** `economy_ev.py` drops Renown and simulates crop XP, levels, unlocks, milestone quests and point
+spending (policy: points into the crop the player plants most; Value first). New checks (bands provisional, for the user):
+- **G10** a Tutorial / World 1 first clear (finish + all medals) pays ≤ 3 min of the Casual farm's income when the model reaches it.
+- **G11** on days 3–30 ≥ 15 % of harvests are crops ≥ 3 steps below the newest unlocked one.
+- **G12** the first crop fully upgraded not before day 7 (Garden main); Casual has ≥ 25 % of all crop points still to earn on day 60.
+- G1–G9 keep passing; G7 (first hour) is the one at risk.
+- **Output:** old → new table (Renown gate → unlock / quest; sink gates removed), each unlock's time per archetype old vs new, crop levels
+  by day.
+- **Acceptance:** `economy.py evcheck` passes G1–G12; the table printed by `economy.py proposal`; the user signs off the thresholds, caps,
+  quests and bands.
+
+**EV3b — levels, unlocks, Renown out (scope after EV3a's review).** Fixes the first hour.
+1. **Config:** `CropConfig` crops get level thresholds and, for milestones, `quest = { [cropId] = n }`; the `renown` gates of `Expansions`,
+   `Upgrades`, `Tools` go (prices stay); `RenownK` / `RenownP` / `points` go; `StageConfig` payouts + seed packs.
+2. **Server:** `Garden.Crops[cropId] = { XP }` and `Garden.Unlocked` (IdSet; stored ids never reused); harvest adds XP and unlocks the
+   next crop at ★1 (answer `{ …, cropLevel, levelUp, unlocked? }`); `GardenRemotes.Quest(cropId)` at the seed stall takes a milestone bundle
+   (all or nothing, reject `crops`); `BuySeeds` checks `Unlocked`; `BuySquare` / `BuyUpgrade` / `BuyTool` lose the `renown` check and reject.
+3. **Migration** (`Version = 7`): `Unlocked` = every crop whose old gate ≤ the profile's Renown level (no player loses a crop); crop XP
+   starts at 0 (or from `Plantings` if the live profiles show it fair); `Renown` stays as a field, unused. Read the live profiles first.
+4. **Client:** seed stall: a locked crop shows the previous crop's ★ bar or the quest `{crop} {have}/{need}` with a Bring button; the
+   crop's ★ on the seed row, square card and barn row; a level-up toast "Garlic ★2"; the Renown bar / level go (FieldHand, FieldClient,
+   BarnClient, GardenSkills, SeedStallClient); sink tiles show only the price (no "from level" line).
+5. **Docs and text:** GDD §7.9, PROTOCOL, ECONOMY.md, strings (the `renown` keys removed, new ones with Czech).
+- **Acceptance (draft):** `economy.py check` exit 0 (drift 0 after `pin`); `loc.py build / check / lint`; a boot without errors or
+  warnings; in Studio (snapshot first) on a fresh test profile Lettuce opens when Potato reaches ★1, the Corn quest done through the real
+  seed stall, one refusal for missing crops (nothing taken), a square and an upgrade bought on Coins alone; a migrated live profile keeps every
+  crop it could buy; the word Renown nowhere on screen in English or Czech (pseudo-language pass, `strings.csv` grep); the Tutorial's
+  first clear pays the new amount and the seed pack; Czech fits on the stall and the square card.
+
+**EV3c — crop upgrades (scope after EV3b; can ship as a drop).** The endgame layer.
+1. **Server:** `Garden.Crops[cropId].Pts = { Value, Size, Speed }`; `GardenRemotes.CropPoint(cropId, line)` (free points = level − spent;
+   reject `points` / `maxed`); sale, size roll and grow time read the crop's points (grow time settled server-side as now).
+2. **Client:** a crop page (from the seed stall row and the barn row): ★ level and bar, the three lines with their dots and the next
+   effect, a + per line; the square card's ready time uses the crop's speed.
+3. **Docs and text** as EV3b.
+- **Acceptance (draft):** model and loc checks as EV3b; in Studio a point spent in each line through the real crop page, its effect
+  seen (sale price, size factor, ready time); a refusal without free points.
+- **Open:** whether points can be moved later (a reset); whether the crop page shows a collection total (all crops' ★, a garden score).
+
+**Not in EV3:** repeat-run Coins → Sunshine (EV2c); requests and trees (the online loop, E5); a flatter price curve (decided after EV3a,
+ECONOMY.md → open decisions).
 
 ### E0 — Economy model
 **Goal.** One reproducible model of the Coin economy (`tools/economy.py`, Python stdlib; how to run it: ECONOMY.md) that fixes the numbers the

@@ -122,12 +122,39 @@ Obby main 36 M, R150; Garden main 29 M, R138; Spender 51 M. Obby Coins are 0 % o
   for launch. If the queue empties later, a soft "Replant" (reset squares, Coins and Renown; keep pets, talents, obby progress, looks; reward a
   permanent verb or a small capped bonus) fits better than a Coin multiplier.
 
+## Findings (the user's review, 2026-11-14)
+- **The 4× markup is not the slope:** sale = 4 × seed is the margin of one crop; tiers do not compound. Net Coins per square-hour rise ×1.2
+  per crop (Potato 2 520 → Pineapple 37 500, ×15). The per-harvest numbers (9 → 1.2 M) are steep because grow times span 10 s → 24 h.
+  Lowering the margin scales all income down equally and flattens nothing; flattening means a shorter time span, slower value steps or a
+  slower square ladder.
+- **Raising starter crop prices 5× = dividing obby Coins by 5** (every early sink would have to rise with it). The early problem is the
+  obby's one-time Coins (Tutorial up to 750 in a 30 s run ≈ 7 min of the 4-square Potato farm), handled in EV3.
+- **Old crops die at once:** the best crop is the longest that ripens before the next visit (ripe crops wait), so Potato is beaten ~20 s in
+  (Lettuce unlocks at 0.3 min) and only the 2–3 crops near the top are planted. Renown points do the opposite (per hour: Potato ~720,
+  Garlic 140, Corn 44), rewarding spam-clicks. EV3 replaces Renown with per-crop levels (XP = growing time of that crop) whose points
+  upgrade that crop, so growing an old crop has a purpose.
+- **Sink gates never bind:** with the Renown gate removed from squares (and from every sink but talents) all EV checks pass and every
+  square's purchase day is unchanged (Casual #20 / #26 / #30 on days 3.3 / 10.3 / 21.3, day-60 income the same): the price ladder paces
+  them. EV3 drops the gates (the user, 2026-11-14).
+- **Day 5:** the user bought "almost everything" in ~5 days; the model agrees by count (Garden main 55 / 85 items, Obby main 60, Casual
+  47) but those are 0.02–0.18 % of the total Coin price; the rest (550 k → 750 M) is a day or more each. The model's longer horizon leans on
+  parts not built (trees, requests, Sunshine, placeholder eggs, reserved sinks); in the game a 24 h crop and logging off is the best play.
+
 ## Open decisions for the user
 1. The EV bands (table above) and the proposal itself: approved; EV2a (numbers) and EV2b (talent bundles) are built (2026-11-07); EV2e
    (eggs at purchase), EV2c (Sunshine), EV2d (Scouting) are scoped when each starts. EV2b retired E0's check 3 (the no-grind required set,
    garden off): talents need the farm by design, G4 replaces it.
 2. Whether the placeholder eggs become real egg kinds (needed for Legendary scarcity past week 3).
 3. The real landmark / estate sinks (E6 / E7) that replace the reserved ladder.
+4. **EV3** (ROADMAP → EV3, draft 2026-11-14): crop levels replace Renown, next crop at the previous one's ★1, quests only at milestones,
+   crop upgrades (Value / Size / Speed, capped at a crop 2–3 steps up), sinks on Coins alone; G10–G12 bands; the obby's first-hour
+   payouts.
+5. **A flatter curve** (shorter grow-time span, value steps ~1.5–2× per crop, a slower square ladder): probe in the model after EV3a,
+   before M7 (after it prices never go down).
+6. **Going public with a ~5-day horizon:** the recommendation (2026-11-14) is that the first hour (EV3) and an online loop from day 2
+   (requests) gate it, not the horizon, if drops follow every 1–2 weeks; the user decides.
+7. **Endgame:** drops (Weekly, Variants, Kitchen), landmark / estate sinks, a soft Replant if the queue empties, harvest boards; nothing
+   needed now.
 
 ## E0 — checks of the game as built (until EV2a)
 | Check | Rule |
