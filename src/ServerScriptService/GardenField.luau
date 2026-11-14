@@ -1007,9 +1007,6 @@ placePetEvent.OnServerEvent:Connect(function(player, square, uid)
 	if not open[square] then
 		return reject(player, "PlacePet", "square")
 	end
-	if table.find(profile.EquippedPets, uid) then
-		return reject(player, "PlacePet", "equipped")
-	end
 	local tending = PetConfig.AptitudeLevel(pet, "Tending") > 0
 	if not tending and PetConfig.AptitudeLevel(pet, "PestControl") < 1 then -- a field job: Tending or Pest control (E4-thin)
 		return reject(player, "PlacePet", "aptitude")
@@ -1024,6 +1021,11 @@ placePetEvent.OnServerEvent:Connect(function(player, square, uid)
 	end
 
 	local moved = garden.FieldPets[uid] ~= nil
+	-- Validate first, then transfer without yielding or publishing an intermediate assignment.
+	local equippedIndex = table.find(profile.EquippedPets, uid)
+	if equippedIndex then
+		table.remove(profile.EquippedPets, equippedIndex)
+	end
 	garden.FieldPets[uid] = { Square = square, Job = if tending then "Tending" else "PestControl" }
 	done(player, "PlacePet", { square = square, uid = uid, moved = moved })
 end)

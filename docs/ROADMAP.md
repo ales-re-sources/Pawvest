@@ -97,7 +97,8 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
 6. **U1–U5 garden and pet UI** (design decided 2026-11-05, [UI_GARDEN_PETS.md](UI_GARDEN_PETS.md) §11–12; scope each when it starts):
    **U1** built and Studio-checked (2026-11-06) except the multi-client look check (F7, the user); **U2** built and Studio-checked (2026-11-06); **U3** (rings, tap-select, square card, hand bar, reach borders) built and Studio-checked
    (2026-11-07) except the phone touch check and multi-client; **U4** and **U5** (panel split, barn, seed stall, plot layout, hatchery panel)
-   built and Studio-checked (2026-11-07); E5's onboarding teaches the new controls.
+   built and Studio-checked (2026-11-07); E5's onboarding teaches the new controls. Soil-card / pet-placement clarity follow-up
+   **Studio-checked 2026-11-14** (desktop controls, Czech phone layout; physical touch remains open): [UI_GARDEN_PETS.md §5.1](UI_GARDEN_PETS.md#51-soil-card-and-pet-placement--decided-2026-11-14).
 7. **Drops D1–D10** after the MVP (EXPANSION §14), one every 1–2 weeks: Critters, Comfort shop (M7), Weekly, Variants, Kitchen (the first
    restoration landmark), Neighbours, Mastery, World 4 (S9 / S10), the Estate, Season 1. Restoration bundles (E6, D5) and estate tiers / decor /
    cottage (E7, D9) are the long-term Coin sinks; E0 holds a placeholder for their size until they are designed.

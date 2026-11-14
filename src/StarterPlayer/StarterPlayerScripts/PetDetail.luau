@@ -9,7 +9,7 @@
 -- XP; the work traits: level / rarity cap, effect bar, field hours to the next level, reach; E2c Scouting: meter bonus, medal finishes
 -- to the next level, the equipped scouts' total; E4b Pest control: the chance to chase crows off, the speciality, the squares it
 -- guards), Equip / Unequip, and at the bottom under "More" a small grey Sell brick (U1: two taps, orange "Sure? +N") and, while the
--- field's hand bar shows (FieldHandGui attribute HandShown) for a resting pet with Tending or Pest control, "Place on field" (U3b:
+-- field's hand bar shows (FieldHandGui attribute HandShown) for a pet with Tending or Pest control, "Place on field" (U3b:
 -- closes the Pets panel and puts the pet in hand in Pets mode through FieldHandGui's HoldPet attribute). Every player has
 -- the crop field (the user, 2026-11-06): no "for later" cards any more. Under the header the name row
 -- (P3b): a text box and a button that names (free the first time), renames (PetConfig.RenamePrice) or removes the name; the server
@@ -293,12 +293,28 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		Size = UDim2.new(1, -2, 0, BRICK + 4),
 		BackgroundTransparency = 1,
 	}, { sellButton, placeButton }).Parent = content
+	local placeHint = line("PlaceHint", 97, { TextSize = 14, Text = "", Visible = false })
+	placeHint.Parent = content
 	local function fieldHandGui(): Instance?
 		return Players.LocalPlayer:FindFirstChildOfClass("PlayerGui") and Players.LocalPlayer.PlayerGui:FindFirstChild("FieldHandGui")
 	end
 
 	local cards = {}
 	local heldCrops: { [string]: number } = {} -- GardenRemotes.State.field.items (E1a3)
+	local fieldState = nil
+	local function hasFieldSlot(owned): boolean
+		if owned.field then
+			return true
+		end
+		if not fieldState then
+			return false
+		end
+		local used = 0
+		for _ in fieldState.pets or {} do
+			used += 1
+		end
+		return used < (fieldState.slots or 1)
+	end
 	local feedEvent: RemoteEvent? = nil
 	local feedNote: { text: string, color: Color3 }? = nil
 	local feedTimer = UiKit.Latest()
@@ -619,7 +635,7 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		rarityLabel.TextColor3 = owned.rarity.color
 		whereLabel.Text = if owned.equipped
 			then Locale.T("petDetail.where.equipped")
-			elseif owned.field then Locale.T("petDetail.where.field", { n = owned.field })
+			elseif owned.field then Locale.T("petDetail.where.field")
 			else Locale.T("petDetail.where.resting")
 		whereLabel.TextColor3 = if owned.equipped then COLOR_EQUIPPED else COLOR_INFO
 
@@ -658,9 +674,11 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		local hand = fieldHandGui()
 		placeButton.Visible = hand ~= nil
 			and hand:GetAttribute("HandShown") == true
-			and not owned.equipped
 			and (owned.tending > 0 or owned.guard > 0)
 		placeButton.Text = Locale.T("petDetail.placeOnField")
+		placeButton.BackgroundColor3 = if hasFieldSlot(owned) then COLOR_EQUIP else COLOR_LOCKED
+		placeHint.Visible = placeButton.Visible
+		placeHint.Text = Locale.T(if not hasFieldSlot(owned) then "field.petPicker.noSlot" elseif owned.equipped then "field.petPicker.equipped" elseif owned.field then "field.petPicker.move" else "field.petPicker.rest")
 		updateName()
 		return true
 	end
@@ -757,6 +775,10 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		local owned = pet()
 		local hand = fieldHandGui()
 		if not (owned and hand) then
+			return
+		end
+		if not hasFieldSlot(owned) then
+			message(Locale.T("field.petPicker.noSlot"), COLOR_ERROR)
 			return
 		end
 		api.Close()
@@ -875,6 +897,7 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 			local gotState = false
 			gardenRemotes:WaitForChild("State").OnClientEvent:Connect(function(state)
 				gotState = true
+				fieldState = type(state) == "table" and state.field or nil
 				local items = type(state) == "table" and type(state.field) == "table" and state.field.items
 				heldCrops = if type(items) == "table" then items else {}
 				if currentUid then

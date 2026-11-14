@@ -4,10 +4,8 @@
 --     or the field's plane picks a square; it gets a white outline and the square card slides up at the bottom. Tapping the
 --     selected square again, or off the field, closes the card; so does walking away;
 --   * square card: crop icon and name (or empty / overgrown), a progress bar with the time left (ripe: full, "Ripe!"), the
---     growth boosts that apply (Growth upgrade, Cloches), a row per field pet whose reach covers the square (portrait, job icons,
---     what it does there; a tap opens its pet page through PetsGui's OpenPet attribute) and the context buttons: Plant (seed
---     picker), Harvest, Place pet (pet picker), Move pet (takes the pet in hand, Pets mode), Take back, Buy square (price and
---     Renown of the next square; ConfirmTap: two taps over its threshold);
+--     growth boosts, non-clickable strongest-job coverage and a separate resident section with Move / Return to pets;
+--     the pet picker shows capacity, origin/consequence and a Place pet button for resting, field and equipped pets;
 --   * a placed pet's reach is tinted for REACH_SECONDS (GardenView.ShowReach), as is the reach of a row hovered in the pet picker;
 --   * hand bar (U3b, shown while the tap range applies; a 2 x 2 block above the jump button on a touch screen without a keyboard,
 --     else a row at the bottom right): Seeds (picks a seed in the card, then every tap on an empty square plants it; the button
@@ -29,15 +27,15 @@
 -- clear of the thumbstick and the jump button (TOUCH_SIDE on each side); it sits above FieldClient's Field button.
 -- FieldHandGui attributes: Select = square selects it as a tap would (test hook, cleared after use); HoldPet = uid takes that
 -- pet in hand in Pets mode (the pet page's "Place on field", cleared after use); HandShown (set here) = whether the bar shows.
--- Buttons by path: FieldHandGui.Card.Body.Buttons.<Plant|Harvest|PlacePet|MovePet|TakeBack|Buy|Shop>, .Header.Close,
--- .Body.Pets.Pet_<uid>, .Body.List.<CropId> (seed picker) / .Body.List.Pet_<uid> (pet picker); FieldHandGui.HandBar.
--- <Seeds|Basket|Pets|Look>, .HandBar.Hint.
+-- Buttons: Card.Body.Buttons.<Plant|Harvest|Buy>, .Resident.Buttons.<PlacePet|MovePet|TakeBack>, .Header.Close;
+-- pet picker .Body.List.Pet_<uid>.PlacePet; HandBar.<Seeds|Basket|Pets|Look>; Placement.<Hint|Cancel>.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local TextService = game:GetService("TextService")
 
 local player = Players.LocalPlayer
 
@@ -56,6 +54,7 @@ local GardenView = require(script.Parent:WaitForChild("GardenView"))
 local PlotView = require(script.Parent:WaitForChild("PlotView"))
 local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
 local GardenUi = require(script.Parent:WaitForChild("GardenUi"))
+local PanelFocus = require(ReplicatedStorage:WaitForChild("PanelFocus"))
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
 local plantEvent = remotes:WaitForChild("Plant")
@@ -144,6 +143,9 @@ local mode = "look" -- hand mode (U3b): "look", "seeds", "basket" or "pets"
 local handSeed: string? = nil -- the crop id Seeds mode plants
 local held: string? = nil -- uid of the pet in hand (Pets mode)
 local heldFrom: number? = nil -- its square, nil while not placed
+local heldCard: number? = nil -- source card restored by Cancel
+local placing = nil -- { uid, square, picker }: submitted placement, awaiting Result
+local placementHint: string? = nil -- occupied destination; cleared by the next preview
 local preview: number? = nil -- touch: the square a first tap previewed the held pet's reach on
 local hoverSquare: number? = nil
 local used = {} -- [mode] = true once chosen this session (its pulse stops)
@@ -245,15 +247,18 @@ local card = create("Frame", {
 	AnchorPoint = Vector2.new(0.5, 1),
 	Position = UDim2.new(0.5, 0, 1, 400),
 	Size = UDim2.fromOffset(CARD_WIDTH, 0),
-	AutomaticSize = Enum.AutomaticSize.Y,
+	AutomaticSize = Enum.AutomaticSize.None,
 	Visible = false,
 	Parent = screenGui,
 })
 StudStyle.Panel(card, COLOR_PANEL)
-local body = create("Frame", {
+local body = create("ScrollingFrame", {
 	Name = "Body",
-	Size = UDim2.new(1, 0, 0, 0),
-	AutomaticSize = Enum.AutomaticSize.Y,
+	Size = UDim2.fromScale(1, 1),
+	CanvasSize = UDim2.new(),
+	AutomaticCanvasSize = Enum.AutomaticSize.Y,
+	ScrollBarThickness = 4,
+	BorderSizePixel = 0,
 	BackgroundTransparency = 1,
 	Parent = card,
 }, {
@@ -265,6 +270,15 @@ local body = create("Frame", {
 		PaddingRight = UDim.new(0, 10),
 	}),
 })
+
+local function fitCard()
+	local camera = workspace.CurrentCamera
+	local available = if screenGui.AbsoluteSize.Y > 0 then screenGui.AbsoluteSize.Y else if camera then camera.ViewportSize.Y else 600
+	local room = available - CARD_BOTTOM - 16
+	local height = body.UIListLayout.AbsoluteContentSize.Y + 18
+	card.Size = UDim2.fromOffset(card.Size.X.Offset, math.max(44, math.min(height, room)))
+end
+body.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(fitCard)
 
 local portraits = PetPortrait.Cache()
 
@@ -337,13 +351,13 @@ local function bar(order: number)
 	barFill, barText = fill, text
 end
 
-local function buttonRow(order: number, specs)
+local function buttonRow(order: number, specs, parent: Instance?)
 	local row = create("Frame", {
 		Name = "Buttons",
 		LayoutOrder = order,
 		Size = UDim2.new(1, 0, 0, BUTTON_HEIGHT),
 		BackgroundTransparency = 1,
-		Parent = body,
+		Parent = parent or body,
 	}, {
 		create("UIListLayout", {
 			FillDirection = Enum.FillDirection.Horizontal,
@@ -374,6 +388,7 @@ end
 local render -- forward
 local hold -- forward: (uid, square?) takes a pet in hand (Pets mode)
 local renderBar -- forward
+local submitPlacement -- forward
 
 -- Card pages ---------------------------------------------------------------------------------------------------------------------
 
@@ -395,85 +410,39 @@ local function closeCard()
 	end
 end
 
-local function openPetPage(uid: string)
-	local petsGui = player.PlayerGui:FindFirstChild("PetsGui")
-	if petsGui then
-		petsGui:SetAttribute("OpenPet", uid)
-	end
-end
-
--- one row per field pet whose reach covers `square`: portrait, name and job icons, what it does here; a tap opens its page
+-- Coverage is information, separate from the pet physically sitting here. Only the strongest effect per job applies.
 local function petRows(square: number, order: number)
-	local holder = create("Frame", {
-		Name = "Pets",
-		LayoutOrder = order,
-		Size = UDim2.new(1, 0, 0, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
-		BackgroundTransparency = 1,
-		Parent = body,
-	}, { create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 6) }) })
+	local holder = UiKit.Section("Helping", order)
+	holder.Parent = body
+	paragraph("Heading", 1, { Font = StudStyle.Font, TextSize = 17, Text = Locale.T("field.card.helping") }).Parent = holder
 	local open = openSet()
 	local statePets = (fieldState and fieldState.pets) or {}
-	local placed = {}
+	local best = {}
 	for at, pet in plotPets() do
-		table.insert(placed, { at = at, pet = pet })
-	end
-	table.sort(placed, function(a, b)
-		return a.at < b.at
-	end)
-	local shown = 0
-	for _, item in placed do
-		local pet, at = item.pet, item.at
-		local lines = {}
+		local function consider(job: string, strength: number)
+			local previous = best[job]
+			if not previous or strength > previous.strength or (strength == previous.strength and (tonumber(pet.uid) or 0) < (tonumber(previous.pet.uid) or 0)) then
+				best[job] = { pet = pet, at = at, strength = strength }
+			end
+		end
 		if pet.apt > 0 and contains(CropConfig.Reach(at, PetConfig.ReachShape(pet.apt), open), square) then
-			table.insert(lines, Locale.T("field.card.petTend", { pct = pct(PetConfig.Strength(pet.apt)) }))
+			consider("Tending", PetConfig.Strength(pet.apt))
 		end
 		local guard = statePets[tostring(at)] and statePets[tostring(at)].guard
 		if pet.guard > 0 and type(guard) == "table" and contains(CropConfig.Reach(at, PetConfig.ReachShape(pet.guard), open), square) then
-			table.insert(lines, Locale.T("field.card.petGuard", { pct = pct(guard.chance or 0) }))
-		end
-		if #lines > 0 then
-			shown += 1
-			local row = create("TextButton", {
-				Name = "Pet_" .. pet.uid,
-				LayoutOrder = at,
-				Size = UDim2.new(1, 0, 0, ROW_HEIGHT),
-				AutomaticSize = Enum.AutomaticSize.Y,
-				BackgroundColor3 = COLOR_ROW,
-				AutoButtonColor = true,
-				Text = "",
-				Parent = holder,
-			}, {
-				create("UICorner", { CornerRadius = UDim.new(0, 8) }),
-				create("UIPadding", { PaddingTop = UDim.new(0, 5), PaddingBottom = UDim.new(0, 5) }),
-			})
-			PetPortrait.Holder({
-				Position = UDim2.fromOffset(6, 0),
-				Size = UDim2.fromOffset(44, 44),
-				BackgroundColor3 = StudStyle.Shade(COLOR_ROW, 0.6),
-			}, portraits(pet)).Parent = row
-			local column = create("Frame", {
-				Name = "Text",
-				Position = UDim2.fromOffset(58, 0),
-				Size = UDim2.new(1, -64, 0, 0),
-				AutomaticSize = Enum.AutomaticSize.Y,
-				BackgroundTransparency = 1,
-				Parent = row,
-			}, { create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 1) }) })
-			paragraph("Name", 1, {
-				Font = StudStyle.Font,
-				TextSize = 17,
-				TextColor3 = Color3.new(1, 1, 1),
-				Text = petName(pet.uid, pet.kind) .. "  " .. PlotView.JobIcons(pet.apt, pet.guard),
-			}).Parent = column
-			paragraph("Effect", 2, { TextSize = 14, Text = table.concat(lines, "\n") }).Parent = column
-			row.Activated:Connect(function()
-				openPetPage(pet.uid)
-			end)
+			consider("Guard", guard.chance or 0)
 		end
 	end
-	if shown == 0 then
-		holder:Destroy()
+	for index, job in { "Guard", "Tending" } do
+		local effect = best[job]
+		if effect then
+			local location = Locale.T(if effect.at == square then "field.card.here" else "field.card.nearby")
+			local text = Locale.T(if job == "Guard" then "field.card.petGuard" else "field.card.petTend", { pct = pct(effect.strength) })
+			paragraph(job, index + 1, { TextSize = 14, Text = text .. "\n" .. petName(effect.pet.uid, effect.pet.kind) .. " · " .. location }).Parent = holder
+		end
+	end
+	if not next(best) then
+		paragraph("None", 2, { Text = Locale.T("field.card.noHelp") }).Parent = holder
 	end
 end
 
@@ -559,7 +528,6 @@ local function renderCard()
 	else
 		paragraph("Hint", 3, { TextSize = 15, Text = Locale.T("field.card.emptyHint") }).Parent = body
 	end
-	petRows(square, 4)
 	local specs = {}
 	if not crop then
 		table.insert(specs, { name = "Plant", color = COLOR_GO, text = Locale.T("field.card.plant"), action = function()
@@ -571,7 +539,19 @@ local function renderCard()
 			fire(harvestEvent, square)
 		end })
 	end
+	if #specs > 0 then
+		buttonRow(4, specs)
+	end
+	petRows(square, 5)
+	local resident = UiKit.Section("Resident", 6)
+	resident.Parent = body
+	paragraph("Heading", 1, { Font = StudStyle.Font, TextSize = 17, Text = Locale.T("field.card.resident") }).Parent = resident
+	specs = {}
 	if pet then
+		local row = GardenUi.Row(resident, "Pet", 2, COLOR_ROW)
+		PetPortrait.Holder({ LayoutOrder = 1, Size = UDim2.fromOffset(44, 44), BackgroundColor3 = StudStyle.Shade(COLOR_ROW, 0.6) }, portraits(pet)).Parent = row
+		local name = paragraph("Name", 2, { Size = UDim2.new(1, -58, 0, 0), Font = StudStyle.Font, TextSize = 17, Text = petName(pet.uid, pet.kind) .. "  " .. PlotView.JobIcons(pet.apt, pet.guard and pet.guard.level or 0) })
+		name.Parent = row
 		table.insert(specs, { name = "MovePet", color = COLOR_PET, text = Locale.T("field.card.movePet"), action = function()
 			hold(pet.uid, square)
 		end })
@@ -579,12 +559,13 @@ local function renderCard()
 			fire(liftPetEvent, pet.uid)
 		end })
 	else
+		paragraph("None", 2, { Text = Locale.T("field.card.noResident") }).Parent = resident
 		table.insert(specs, { name = "PlacePet", color = COLOR_PET, text = Locale.T("field.card.placePet"), action = function()
 			page = "pets"
 			render()
 		end })
 	end
-	buttonRow(9, specs)
+	buttonRow(3, specs, resident)
 end
 
 -- the scrolling list of a picker (rows of ROW_HEIGHT)
@@ -640,6 +621,9 @@ local function pickerRow(list: Instance, name: string, order: number, title: str
 end
 
 local function back()
+	if placing then
+		return
+	end
 	page = "card"
 	GardenView.ShowReach(nil)
 	render()
@@ -648,7 +632,7 @@ end
 -- the seed picker: the seeds held (count, grow time); without seeds a hint to the plaza's seed stall. With `square` nil it
 -- picks the seed of the hand's Seeds mode.
 local function renderSeeds(square: number?)
-	header(if square then Locale.T("field.picker.title", { n = square }) else Locale.T("field.hand.pickSeed"), if square then back else closeCard)
+	header(if square then Locale.T("field.picker.title") else Locale.T("field.hand.pickSeed"), if square then back else closeCard)
 	local list = pickerList(2)
 	local rows = 0
 	for _, crop in CropConfig.Crops do
@@ -681,10 +665,14 @@ end
 -- the pet picker: pets with Tending or Pest control (job levels, squares they would work here); hovering a row tints its reach
 local function renderPets()
 	local square = selected :: number
-	header(Locale.T("field.petPicker.title", { n = square }), back)
+	header(Locale.T("field.petPicker.title"), back)
 	local used = 0
 	for _ in (fieldState.pets or {}) do
 		used += 1
+	end
+	paragraph("Slots", 2, { Text = Locale.T("field.section.pets", { used = used, slots = fieldState.slots or 1 }) }).Parent = body
+	if used >= (fieldState.slots or 1) then
+		paragraph("Capacity", 3, { Text = Locale.T("field.petPicker.full") }).Parent = body
 	end
 	local candidates = {}
 	for _, pet in PetClient.Inventory() do
@@ -693,6 +681,11 @@ local function renderPets()
 		end
 	end
 	table.sort(candidates, function(a, b)
+		local aCan = a.field ~= nil or used < (fieldState.slots or 1)
+		local bCan = b.field ~= nil or used < (fieldState.slots or 1)
+		if aCan ~= bCan then
+			return aCan
+		end
 		if a.tending ~= b.tending then
 			return a.tending > b.tending
 		end
@@ -702,34 +695,34 @@ local function renderPets()
 		return (tonumber(a.uid) or 0) < (tonumber(b.uid) or 0)
 	end)
 	if #candidates == 0 then
-		paragraph("None", 2, { Text = Locale.T("field.petPicker.none") }).Parent = body
+		paragraph("None", 4, { Text = Locale.T("field.petPicker.none") }).Parent = body
 		return
 	end
-	local list = pickerList(2)
+	local list = pickerList(4)
 	for index, pet in candidates do
 		local reach = reachOf(square, math.max(pet.tending, pet.guard))
-		local enabled = not pet.equipped and (pet.field ~= nil or used < (fieldState.slots or 1))
-		local info
-		if pet.equipped then
-			info = Locale.T("field.petPicker.equipped")
-		elseif not enabled then
-			info = Locale.T("field.petPicker.noSlot")
-		elseif pet.tending > 0 then
-			local count = #reachOf(square, pet.tending)
-			info = if pet.field
-				then Locale.T("field.petPicker.move", { level = pet.tending, count = count, n = pet.field })
-				else Locale.T("field.petPicker.info", { level = pet.tending, count = count })
-			if pet.guard > 0 then
-				info ..= " · " .. Locale.T("pets.guard", { level = pet.guard })
-			end
-		else
-			info = Locale.T("field.petPicker.guard", { level = pet.guard, count = #reach })
-			if pet.field then
-				info ..= " · " .. Locale.T("field.petPicker.now", { n = pet.field })
-			end
+		local hasSlot = pet.field ~= nil or used < (fieldState.slots or 1)
+		local enabled = hasSlot and not placing
+		local location = Locale.T(if pet.field then "field.petPicker.fromField" elseif pet.equipped then "field.petPicker.fromEquipped" else "field.petPicker.fromRest")
+		local info = if not hasSlot then Locale.T("field.petPicker.noSlot") else Locale.T(if pet.field then "field.petPicker.move" elseif pet.equipped then "field.petPicker.equipped" else "field.petPicker.rest")
+		local effects = {}
+		if pet.tending > 0 then
+			table.insert(effects, Locale.T("field.petPicker.info", { level = pet.tending, count = #reachOf(square, pet.tending) }))
+		end
+		if pet.guard > 0 then
+			table.insert(effects, Locale.T("field.petPicker.guard", { level = pet.guard, count = #reachOf(square, pet.guard) }))
 		end
 		local title = petName(pet.uid, pet.kind) .. "  " .. PlotView.JobIcons(pet.tending, pet.guard)
-		local row = pickerRow(list, "Pet_" .. pet.uid, index, title, info, enabled, COLOR_PET)
+		local row = UiKit.Section("Pet_" .. pet.uid, index, 4)
+		row.Size = UDim2.new(1, -8, 0, 0)
+		row.Parent = list
+		local identity = GardenUi.Row(row, "Identity", 1, COLOR_ROW)
+		PetPortrait.Holder({ LayoutOrder = 1, Size = UDim2.fromOffset(44, 44), BackgroundColor3 = StudStyle.Shade(COLOR_ROW, 0.6) }, portraits(pet)).Parent = identity
+		GardenUi.TextColumn(identity, 58, title, location).LayoutOrder = 2
+		paragraph("Effects", 2, { TextSize = 13, Text = table.concat(effects, "\n") }).Parent = row
+		paragraph("Info", 3, { TextSize = 14, Text = info }).Parent = row
+		local action = brick("PlacePet", { LayoutOrder = 4, Size = UDim2.new(1, 0, 0, BUTTON_HEIGHT), BackgroundColor3 = if enabled then COLOR_PET else COLOR_OFF, TextSize = 17,
+			Text = Locale.T(if placing and placing.uid == pet.uid then "field.hand.placing" else "field.card.placePet"), Active = enabled, AutoButtonColor = enabled, Parent = row }, 2)
 		row.MouseEnter:Connect(function()
 			GardenView.ShowReach(reach)
 		end)
@@ -737,15 +730,12 @@ local function renderPets()
 			GardenView.ShowReach(nil)
 		end)
 		if enabled then
-			row.Activated:Connect(function()
-				fire(placePetEvent, square, pet.uid)
-				page = "card"
-				GardenView.ShowReach(nil)
-				render()
+			action.Activated:Connect(function()
+				submitPlacement(square, pet.uid, true)
 			end)
 		end
 	end
-	fitList(list, #candidates)
+	fitList(list, #candidates * 4)
 end
 
 function render()
@@ -753,7 +743,7 @@ function render()
 		return
 	end
 	clearBody()
-	card.Size = UDim2.fromOffset(cardWidth(), 0)
+	card.Size = UDim2.fromOffset(cardWidth(), card.Size.Y.Offset)
 	if page == "seeds" or page == "handSeeds" then
 		renderSeeds(if page == "seeds" then selected else nil)
 	elseif page == "pets" then
@@ -769,6 +759,7 @@ function render()
 			barText.Text = if ripe then Locale.T("field.card.ripe") else TimeFormat.Clock(left)
 		end
 	end
+	fitCard()
 end
 
 -- Selection and taps -------------------------------------------------------------------------------------------------------------
@@ -866,6 +857,43 @@ local handHint = label("Hint", {
 	Visible = false,
 	Parent = handBar,
 })
+local placementStrip = create("Frame", {
+	Name = "Placement",
+	AnchorPoint = Vector2.new(1, 1),
+	Position = UDim2.new(1, 0, 0, -HINT_GAP),
+	Size = UDim2.fromOffset(400, 0),
+	AutomaticSize = Enum.AutomaticSize.Y,
+	Visible = false,
+	Parent = screenGui,
+})
+StudStyle.Panel(placementStrip, COLOR_PANEL)
+local placementText = label("Hint", {
+	Position = UDim2.fromOffset(10, 8),
+	Size = UDim2.new(1, -120, 0, 44),
+	Font = Enum.Font.Gotham,
+	TextSize = 16,
+	TextColor3 = COLOR_INFO,
+	TextWrapped = true,
+	TextYAlignment = Enum.TextYAlignment.Top,
+	Text = "",
+	Parent = placementStrip,
+})
+local function fitPlacementText()
+	local bounds = TextService:GetTextSize(placementText.Text, placementText.TextSize, placementText.Font, Vector2.new(math.max(1, placementText.AbsoluteSize.X), 10000))
+	placementText.Size = UDim2.new(1, -120, 0, math.max(44, bounds.Y + 4))
+end
+placementText:GetPropertyChangedSignal("Text"):Connect(fitPlacementText)
+placementText:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitPlacementText)
+create("UIPadding", { PaddingBottom = UDim.new(0, 8), Parent = placementStrip })
+local cancelPlacement = brick("Cancel", {
+	AnchorPoint = Vector2.new(1, 0),
+	Position = UDim2.new(1, -8, 0, 8),
+	Size = UDim2.fromOffset(96, 44),
+	TextSize = 16,
+	BackgroundColor3 = COLOR_OFF,
+	Text = "",
+	Parent = placementStrip,
+}, 2)
 local handButtons: { [string]: TextButton } = {}
 local pulses: { [string]: (boolean) -> () } = {} -- UiKit.Pulse setters of the hand buttons
 local seedCount: TextLabel
@@ -892,6 +920,7 @@ local function layoutBar()
 	local viewport = if camera then camera.ViewportSize else Vector2.new(800, 600)
 	local step = HAND_BUTTON + HAND_GAP
 	local touch = touchLayout()
+	placementStrip.Size = UDim2.fromOffset(math.min(400, viewport.X - 24), 0)
 	if touch then
 		local corner = jumpCorner(viewport)
 		handBar.Size = UDim2.fromOffset(2 * HAND_BUTTON + HAND_GAP, 2 * HAND_BUTTON + HAND_GAP + HAND_RAISE)
@@ -904,6 +933,19 @@ local function layoutBar()
 		local button = handButtons[name]
 		local col, row = if touch then (index - 1) % 2 else index - 1, if touch then (index - 1) // 2 else 0
 		button.Position = UDim2.fromOffset(col * step, HAND_RAISE + row * step - (if name == mode then HAND_RAISE else 0))
+	end
+	if touch then
+		-- Above the bottom HUD, beside the hand bar: the top-right stage HUD must not cover Cancel.
+		placementStrip.AnchorPoint = Vector2.new(0.5, 1)
+		placementStrip.Position = UDim2.new(0.5, 0, 1, -CARD_BOTTOM)
+		placementStrip.Size = UDim2.fromOffset(cardWidth(), 0)
+	else
+		placementStrip.AnchorPoint = Vector2.new(1, 1)
+		placementStrip.Position = UDim2.fromOffset(handBar.AbsolutePosition.X + handBar.AbsoluteSize.X, handBar.AbsolutePosition.Y - HINT_GAP)
+	end
+	if cardOpen and card.Size.X.Offset ~= cardWidth() then
+		card.Size = UDim2.fromOffset(cardWidth(), card.Size.Y.Offset)
+		fitCard()
 	end
 end
 
@@ -982,7 +1024,10 @@ function renderBar()
 	if held then
 		local owned = PetClient.State and PetClient.State.pets[held]
 		local name = if owned then petName(held, owned.Kind) else ""
-		text = if preview then Locale.T("field.hand.dropAgain", { pet = name }) else Locale.T("field.card.moving", { pet = name })
+		text = if placing then Locale.T("field.hand.placing") elseif placementHint then placementHint elseif preview then Locale.T("field.hand.dropAgain", { pet = name }) else Locale.T(if heldFrom then "field.card.moving" else "field.hand.place", { pet = name })
+		if owned and PetClient.State and table.find(PetClient.State.equipped, held) and not placing then
+			text ..= "\n" .. Locale.T("field.petPicker.equipped")
+		end
 	elseif mode == "seeds" and crop then
 		text = Locale.T("field.hand.seeds", { crop = GardenUi.CropTitle(crop) })
 	elseif mode == "basket" then
@@ -993,7 +1038,11 @@ function renderBar()
 		text = Locale.T("field.hand.look")
 	end
 	handHint.Text = text
-	handHint.Visible = text ~= ""
+	handHint.Visible = text ~= "" and not held
+	placementStrip.Visible = held ~= nil and handBar.Visible
+	placementText.Text = text
+	cancelPlacement.Visible = placing == nil
+	cancelPlacement.Text = Locale.T("field.hand.cancel")
 	updatePulse()
 end
 
@@ -1005,16 +1054,31 @@ local function showHeldReach(square: number?)
 	end
 end
 
-local function cancelHold()
+local function cancelHold(restore: boolean?)
+	if placing then
+		return
+	end
+	local source = heldCard
 	held, heldFrom, preview, hoverSquare = nil, nil, nil, nil
+	heldCard, placementHint = nil, nil
+	mode = "look"
 	GardenView.ShowReach(nil)
 	if not cardOpen then
 		GardenView.ShowSelect(nil)
 	end
 	renderBar()
+	if restore and source and inRange() then
+		select(source)
+	end
 end
+cancelPlacement.Activated:Connect(function()
+	cancelHold(true)
+end)
 
 local function setMode(name: string)
+	if placing then
+		return
+	end
 	if held then
 		cancelHold()
 	end
@@ -1029,19 +1093,35 @@ local function setMode(name: string)
 end
 
 function hold(uid: string, square: number?)
+	if placing then
+		return
+	end
+	local source = if cardOpen then selected else nil
 	if mode ~= "pets" then
 		setMode("pets")
 	end
 	closeCard()
 	held, heldFrom, preview, hoverSquare = uid, square, nil, nil
+	heldCard, placementHint = source, nil
 	GardenView.ShowSelect(square)
 	showHeldReach(square)
 	renderBar()
 end
 
+function submitPlacement(square: number, uid: string, picker: boolean?)
+	if placing then
+		return
+	end
+	placing = { uid = uid, square = square, picker = picker == true }
+	fire(placePetEvent, square, uid)
+	if cardOpen then
+		render()
+	end
+	renderBar()
+end
+
 local function drop(square: number)
-	fire(placePetEvent, square, held)
-	cancelHold()
+	submitPlacement(square, held)
 end
 
 handButtons.seeds.Activated:Connect(function()
@@ -1053,7 +1133,7 @@ handButtons.basket.Activated:Connect(function()
 end)
 handButtons.pets.Activated:Connect(function()
 	if held then
-		cancelHold()
+		cancelHold(true)
 	else
 		setMode(if mode == "pets" then "look" else "pets")
 	end
@@ -1092,10 +1172,12 @@ local function handTap(square: number, touch: boolean): boolean
 	elseif mode == "pets" then
 		if held then
 			if petAt and petAt.uid == held then
-				cancelHold()
+				cancelHold(true)
 			elseif petAt then
-				hold(petAt.uid, square) -- another pet: that one goes in hand instead
+				placementHint = Locale.T("field.reason.petOccupied")
+				renderBar()
 			elseif touch and preview ~= square then
+				placementHint = nil
 				preview = square -- touch: the first tap shows where it would work
 				GardenView.ShowSelect(square)
 				showHeldReach(square)
@@ -1114,7 +1196,7 @@ local function handTap(square: number, touch: boolean): boolean
 end
 
 local function onTap(point: Vector2, touch: boolean)
-	if not (fieldState and inRange()) then
+	if placing or not (fieldState and inRange()) then
 		return
 	end
 	local square = squareUnder(point)
@@ -1142,6 +1224,9 @@ local pressAt: Vector2? = nil
 local pressClock = 0
 local mouseAt: Vector2? = nil -- the mouse (InputObject coordinates) for the held pet's reach
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if input.KeyCode == Enum.KeyCode.Escape and held and not UserInputService:GetFocusedTextBox() and not PanelFocus.Current() then
+		cancelHold(true)
+	end
 	if input.UserInputType == Enum.UserInputType.Touch then
 		mouseAt = nil -- a touch screen: no hover, the brackets follow the character
 	end
@@ -1245,7 +1330,33 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 			pop(detail.square, crop, detail.size)
 		end
 	end
-	if action ~= "PlacePet" or not ok or type(detail) ~= "table" then
+	if action ~= "PlacePet" then
+		return
+	end
+	local request = placing
+	placing = nil
+	if request then
+		if ok then
+			if held then
+				cancelHold()
+			elseif cardOpen and selected == request.square and page == "pets" then
+				page = "card"
+			end
+		elseif held then
+			placementHint = Locale.Reject(detail, {
+				occupied = "field.reason.petOccupied", slots = "field.petPicker.noSlot",
+				aptitude = "field.reason.aptitude", far = "field.reason.far", square = "field.reason.square",
+			})
+			if not inRange() then
+				cancelHold()
+			end
+		end
+		if cardOpen then
+			render()
+		end
+		renderBar()
+	end
+	if not ok or type(detail) ~= "table" then
 		return
 	end
 	-- the placed pet's reach, for a moment
@@ -1307,7 +1418,8 @@ end)
 
 local function resize()
 	if cardOpen then
-		card.Size = UDim2.fromOffset(cardWidth(), 0)
+		card.Size = UDim2.fromOffset(cardWidth(), card.Size.Y.Offset)
+		fitCard()
 	end
 	layoutBar()
 end
@@ -1367,6 +1479,8 @@ RunService.Heartbeat:Connect(function()
 		local square = squareUnder(mouseAt)
 		if square ~= hoverSquare then
 			hoverSquare = square
+				placementHint = nil
+				renderBar()
 			local free = square and openSet()[square] and not (fieldState.pets or {})[tostring(square)]
 			showHeldReach(if free then square else heldFrom)
 		end
@@ -1395,6 +1509,9 @@ RunService.Heartbeat:Connect(function(dt)
 		renderBar()
 	elseif shown then
 		updatePulse()
+	end
+	if shown then
+		layoutBar() -- touch controls can finish laying out after the camera / device resize
 	end
 	if not cardOpen then
 		return

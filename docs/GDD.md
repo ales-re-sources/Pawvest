@@ -605,14 +605,14 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   from Cuteness).
 - **Acting on a square (U3a).** No prompts on the field (the incubators keep theirs). A tap / click on a square of the own field (within 40
   studs of the plot centre; the server allows 45) outlines it in white and slides the **square card** up from the bottom: crop icon and
-  name, a progress bar with the time left ("Ripe!" when ripe), the growth boosts that apply (Growth upgrade, Cloches), a row per field pet
-  whose reach covers the square (portrait, job icons, what it does there: "harvests ripe crops here while you are away: 35 %", "chases
-  crows away here: 70 %"; a tap opens its pet page) and context buttons: Plant (seed picker: seeds held, count, grow time; none → a note
-  pointing to the seed stall), Harvest, Place pet (pet picker: Tending / Pest-control pets with job levels and squares reached; hovering a row tints
-  its reach), Move pet (takes it in hand, Pets mode below), Take back, Buy square (price and Renown; grey with the reason when
-  not possible; over 1 000 Coins a second tap within 3 s confirms). The selected square again, a tap off the field or walking away closes it.
-  The card is at most 400 px wide and on a touch screen keeps 110 px free on each side (thumbstick, jump button). The client sends only the
-  square number (and a crop id or pet uid); `GardenField` checks everything as before.
+  name, growth progress / boosts and Plant / Harvest. **Helping this soil** shows plain text for the strongest effect per job and its
+  pet (sitting here / nearby); **Pet sitting here** has the resident portrait/name and Move / Return to pets. Coverage and assignment
+  are separate so those controls have an unambiguous target (2026-11-14). With no resident, Place pet opens **Choose a pet for this spot**:
+  field slots used, job/reach, origin and consequence; every eligible row uses **Place pet**, including followers. Capacity blocks before
+  the following explanation; field pets reuse their slot. The server validates first, then unequips and assigns together. No square
+  numbers in the picker, location or placement toasts. Buy square retains its price / Renown and two-tap spend confirmation.
+  The selected square again, a tap off-field or walking away closes the card. Width is at most 400 px; on touch it clears the controls,
+  and its contents scroll when taller than the safe area. The client sends only square / crop / pet ids; the server validates everything.
 - **Hand bar (U3b, 2026-11-07).** While the tap range applies, four bricks: 🌱 Seeds, 🧺 Basket, 🐾 Pets, ✋ Look (default); a row at the
   bottom right with a mouse, a 2 x 2 block above the jump button on a touch screen without a keyboard (the card then keeps clear of it). The
   active one is raised and framed; a line above the bar says what a tap does (in Look: "Tap a square to see it" until the first tap on a
@@ -622,13 +622,15 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   on an empty open square plants it; the brick shows the seed and the count left; with none left a tap reopens the picker. Basket: every tap
   on a ripe square harvests that one (never all: harvest-all is the paid Wheelbarrow, D2). Pets: a tap on a placed pet takes it in hand
   (outline on its square, its reach tinted under the mouse, or on the last tapped square on touch); a tap on a free open square puts it there
-  (one click; on touch the first tap shows the reach, a second tap on the same square drops); the pet's own square or 🐾 again cancels; a
-  free square with nothing in hand opens the pet picker. Any other tap selects as in Look. Leaving the range hides the bar and resets Look.
+  (one click; on touch the first tap shows the reach, a second tap on the same square drops). The pet's own square or 🐾 again cancels;
+  an occupied destination keeps the held pet. A free square with nothing in hand opens the pet picker. Any other tap selects as in Look. Leaving the range hides the bar and resets Look.
   Every field action is queued and sent at most every 0.25 s (the server drops actions under 0.2 s apart), so quick taps are never lost.
   Every harvest pops "+1 🌽" (plus Big! / Giant!) over its square for a second. Next step: Seeds pulses while nothing is planted and seeds
   are held, Basket while something is ripe, each until that mode was used once in the session. The pet page has "Place on field" (under
-  More, while the bar shows, for a pet with Tending or Pest control that is not equipped; also moves a field pet): it closes the Pets panel
-  and puts the pet in hand.
+  More, while the bar shows, for a pet with Tending or Pest control, including followers): capacity is checked before closing the Pets panel
+  and taking the pet in hand. Moving uses the real field and reach preview, with a compact Cancel strip above the hand bar on desktop /
+  beside it above the bottom HUD on touch. Cancel / Escape keeps the original assignment and restores the source card; no field-grid dialog.
+  Submitted placement waits for the server answer; refusal preserves the selection. Following stops only after a successful placement.
 - **Reach borders (U3b).** In the Near tier every placed pet's region is outlined by thin strips in its rarity colour (not glowing: Common
   grey must not look like the white select outline): the squares it counts for under the field's rules, i.e. per square the strongest Tending
   pet and the strongest guard (ties to the lower uid). Regions that share an edge draw side by side (three lanes inset 0.45 / 0.8 / 1.15

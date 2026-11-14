@@ -51,6 +51,17 @@ hint until the first tap, are built; whether rings / pulses need more is to be d
   field" **in U3b** (GDD §7.9). Left open: **"Show on field"** on the pet page (marker + camera hint to its square); moving field pets from
   far away (EXPANSION §3).
 
+### 5.1 Soil card and pet placement — decided 2026-11-14
+
+- Separate non-clickable **Helping this soil** (strongest effect per job, pet name + sitting here / nearby) from **Pet sitting here**
+  (resident portrait/name, Move and Return to pets). This distinguishes coverage from the pet those controls affect.
+- Picker: **Choose a pet for this spot**, field slots used, job/reach, current location and **Place pet** for every eligible pet.
+  Consequence text explains resting / moving from another spot / stopping following; capacity blocks first. Existing field pets reuse
+  their slot. Equipped pets transfer directly after all server checks pass; no separate trip to Pets. No square numbers in UI labels.
+- Moving uses the **real field**, with a compact hint + **Cancel** by the hand bar (above on desktop, beside on touch); no grid dialog.
+  Cancel / Escape leaves the assignment unchanged and restores the source card when applicable. Touch retains preview then second tap. An occupied destination
+  keeps the held pet instead of picking up another; submitted placement waits for the server answer before finishing.
+
 ## 6. Splitting the Garden panel
 **Built in U4 (2026-11-07)**: the Garden panel is gone. Upgrades / tools / Renown are in the Skills panel's Garden tab (buyable anywhere),
 field pet slots are a line in the Pets panel, the barn is a panel behind the bottom-centre "🧺 Barn" HUD button at the own plot (seeds, crops

@@ -181,7 +181,7 @@ local function petResult(action: string, ok: boolean, detail)
 	end
 	if action == "PlacePet" then
 		local name = petNameOf(detail.uid)
-		showToast(Locale.T(if detail.moved then "field.toast.petMoved" else "field.toast.petPlaced", { pet = name, n = detail.square }), COLOR_OK)
+		showToast(Locale.T(if detail.moved then "field.toast.petMoved" else "field.toast.petPlaced", { pet = name }), COLOR_OK)
 	elseif action == "LiftPet" then
 		showToast(Locale.T("field.toast.petLifted", { pet = petNameOf(detail.uid) }), COLOR_OK)
 	else
