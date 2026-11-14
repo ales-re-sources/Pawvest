@@ -3,6 +3,7 @@
 -- ServerStorage.PhotoSet.Builder_Rig and load it from a set builder with `loadstring(...Builder_Rig.Value)()`.
 --   Rig.build(look?)          an anchored R15 Model (Players:CreateHumanoidModelFromDescription), accessories seated on
 --                             their attachments, the dynamic head's FaceControls set to look.expression; not parented
+--   Rig.mirror(pose)          the pose to the other side (Left / Right swapped)
 --   Rig.pose(rig, pose, at, ground?)  places HumanoidRootPart at CFrame `at` and every other part down the joint chain, each joint
 --                             turned by pose[jointName] = Vector3 degrees (X, Y, Z in the joint's frame; the rig faces -Z:
 --                             +X lifts a limb forward, +Z swings it to the rig's right, -Z to its left), then reseats the
@@ -29,6 +30,20 @@ Rig.LOOK = {
 	},
 }
 
+-- other looks by name (Rig.build(Rig.LOOKS.classic)); "updo" is Rig.LOOK
+-- classic: Roblox's default avatar (the user, 2026-11-14, for C2): Pal Hair (63690008), Blue and Black Motorcycle Shirt
+-- (144076358, the black jacket over a blue tee), Dark Green Jeans (144076760), all free Roblox items; light stone grey skin
+Rig.LOOKS = {
+	updo = Rig.LOOK,
+	classic = {
+		hair = "63690008",
+		shirt = 144076358,
+		pants = 144076760,
+		skin = C(229, 228, 223),
+		expression = Rig.LOOK.expression,
+	},
+}
+
 -- named poses (degrees per joint); joints left out stay straight
 Rig.POSES = {
 	stand = {},
@@ -47,7 +62,35 @@ Rig.POSES = {
 		LeftKnee = Vector3.new(-22, 0, 0),
 		LeftAnkle = Vector3.new(10, 0, 0),
 	},
+	-- A2: a running leap over a laser, seen from the side (rig yaw about -112 against the course): leading knee up, trailing
+	-- leg back, arms swinging opposite, the head turned to the camera; a softer stride looked like sitting in the air
+	leap = {
+		Waist = Vector3.new(-14, -12, 0),
+		Neck = Vector3.new(4, -32, 0),
+		LeftShoulder = Vector3.new(85, 0, -15),
+		LeftElbow = Vector3.new(25, 0, 0),
+		RightShoulder = Vector3.new(-55, 0, 20),
+		RightElbow = Vector3.new(35, 0, 0),
+		RightHip = Vector3.new(80, 0, 0),
+		RightKnee = Vector3.new(-35, 0, 0),
+		RightAnkle = Vector3.new(10, 0, 0),
+		LeftHip = Vector3.new(-45, 0, 0),
+		LeftKnee = Vector3.new(-80, 0, 0),
+		LeftAnkle = Vector3.new(25, 0, 0),
+	},
 }
+
+-- the pose mirrored left / right (Left* and Right* joints swapped, turns about Y and Z negated): the same move to the other side
+function Rig.mirror(pose: { [string]: Vector3 }): { [string]: Vector3 }
+	local out = {}
+	for name, deg in pose do
+		local other = if name:sub(1, 4) == "Left" then "Right" .. name:sub(5)
+			elseif name:sub(1, 5) == "Right" then "Left" .. name:sub(6)
+			else name
+		out[other] = Vector3.new(deg.X, -deg.Y, -deg.Z)
+	end
+	return out
+end
 
 local function seat(rig: Model)
 	local attachments = {}

@@ -3,7 +3,7 @@
 -- ServerStorage.PhotoSet.Builder_Lighting and run it through loadstring with { MODE = ..., PRESET = ... }.
 --   "snapshot"  saves Lighting's properties and clones of its children to ServerStorage.PhotoSet.LightingSnapshot.
 --               Refuses if a snapshot already exists (restore first), so a second shoot never overwrites the real look.
---   "apply"     applies PRESETS[PRESET] (C1, A3, B1) on top of the current look (needs a snapshot).
+--   "apply"     applies PRESETS[PRESET] (C1, A3, B1, C2, A2) on top of the current look (needs a snapshot).
 --   "restore"   puts the saved properties and children back and removes the snapshot.
 --   "status"    says whether a snapshot is waiting and lists Lighting's children.
 -- No game code references Lighting or its children (grep src), so restoring by clones is safe.
@@ -62,6 +62,30 @@ local PRESETS = {
 			DepthOfFieldEffect = { FarIntensity = 0.25, FocusDistance = 12, InFocusRadius = 7, NearIntensity = 0 },
 		},
 		disable = { "SunRaysEffect" },
+	},
+	-- C2: bright midday-ish sun from behind the camera (photoset_c2 picks the plot on the sun's side), saturated like A3 so
+	-- the melon's dark stripes and the pet part at tile size; no depth of field (it does not render in Edit grabs).
+	C2 = {
+		lighting = { ClockTime = 11, Brightness = 2.6, ExposureCompensation = 0, ShadowSoftness = 0.3,
+			OutdoorAmbient = Color3.fromRGB(150, 150, 160), Ambient = Color3.fromRGB(90, 90, 100) },
+		children = {
+			ColorCorrectionEffect = { Saturation = 0.28, Contrast = 0.12, Brightness = 0.02, TintColor = Color3.fromRGB(255, 250, 240) },
+			BloomEffect = { Intensity = 0.6, Size = 28, Threshold = 1.6 },
+			Atmosphere = { Density = 0.2, Haze = 0.3, Glare = 0, Offset = 0.1 },
+		},
+		disable = { "SunRaysEffect", "DepthOfFieldEffect" },
+	},
+	-- A2: night over World 3, so the Laser Lab's sand-blue panel goes dark and its neon beams carry the frame (by day the lab
+	-- is a light room: neon on light reads as red sticks); the player gets a key light from the set (photoset_a2).
+	A2 = {
+		lighting = { ClockTime = 21, Brightness = 2, ExposureCompensation = 0, ShadowSoftness = 0.3, -- darker hid rig and pet
+			OutdoorAmbient = Color3.fromRGB(100, 100, 140), Ambient = Color3.fromRGB(80, 80, 110) },
+		children = {
+			ColorCorrectionEffect = { Saturation = 0.3, Contrast = 0.15, Brightness = 0, TintColor = Color3.fromRGB(255, 255, 255) },
+			BloomEffect = { Intensity = 1, Size = 30, Threshold = 0.9 },
+			Atmosphere = { Density = 0.2, Haze = 0, Glare = 0, Offset = 0.1 },
+		},
+		disable = { "SunRaysEffect", "DepthOfFieldEffect" },
 	},
 }
 

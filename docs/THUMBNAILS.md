@@ -51,7 +51,7 @@ The player in motion with one pet; saturated, fast, tilted camera.
 | # | Subject | Camera / light | Pieces |
 |---|---|---|---|
 | A1 | One jump over World 3 lava (Rising Tide) with a Dragon trailing; the garden as **one glowing island** behind (no split frame) | low, from the side of the jump; lava glow in front, golden island behind | Stage 15 section, posed rig, Dragon, garden backdrop |
-| A2 | Laser Lab **side-on** (the stage's own 2D view): the player mid-leap between neon beams, a pet trailing; neon on dark looks like nothing else on the page | side view, player large; dark lab, neon beams | Stage 14 section, rig, pet |
+| A2 | Laser Lab **side-on** (the stage's own 2D view): the player mid-leap between neon beams, a pet trailing; neon on dark looks like nothing else on the page | side view, player large; the lab at night (by day it is a light sand-blue room: §9 A2), neon beams | Stage 14 section, rig, pet |
 | A3 | The player landing on a stud checkpoint, **facing the camera**, with the Phoenix; a challenge coin beside them (taking one has no burst: it vanishes); the course behind them | high, ahead of the pad, looking back along the course; bright day | checkpoint, challenge coin, course section, rig, Phoenix |
 
 ### B — Characters: "Pets on guard" (for pet lovers and defence players)
@@ -180,7 +180,7 @@ Two passes: two thumbnails first (A3, C1; theme B waits for D1), the others only
 
 ## 9. As built
 **Tools** (run through MCP `execute_luau` in Edit; header comments say how):
-- `tools/photoset_lighting.luau`: `snapshot` / `apply` (per-set presets, `C1` so far) / `restore` / `status`. The snapshot lives in
+- `tools/photoset_lighting.luau`: `snapshot` / `apply` (per-set presets: `C1`, `A3`, `B1`, `C2`, `A2`) / `restore` / `status`. The snapshot lives in
   `ServerStorage.PhotoSet.LightingSnapshot` and refuses to be overwritten, so a forgotten restore never loses the real look.
 - `tools/photoset_c1.luau`: builds `Workspace.PhotoSet_C1`, returns the camera for `screen_capture`; `stash` / `shoot` move it to and
   from `ServerStorage.PhotoSet.C1`. For iterating, its source sits in the StringValue `ServerStorage.PhotoSet.Builder_C1` and runs
@@ -189,9 +189,18 @@ Two passes: two thumbnails first (A3, C1; theme B waits for D1), the others only
 - `tools/photoset_b1.luau`: the same for `Workspace.PhotoSet_B1` (`ServerStorage.PhotoSet.B1`, iterating copy `Builder_B1`).
   Refuses a pet level above its kind's cap. Set-space +X is camera-left.
 - `tools/photoset_rig.luau`: the player rig, a library the set builders load from `ServerStorage.PhotoSet.Builder_Rig`:
-  `build` (the chosen look) and `pose` (named poses, forward kinematics down the joint chain, feet set on a given floor).
+  `build` (the chosen look) and `pose` (named poses `stand` / `cheer` / `leap`, `mirror` flips one; forward kinematics down the joint chain, feet
+  set on a given floor).
 - `tools/photoset_a3.luau`: A3 in the stage itself (`ServerStorage.PhotoSet.A3`, iterating copy `Builder_A3`): nothing in the
   stage is moved; the reached pad is drawn on copies over it.
+- `tools/photoset_c2.luau`: C2 on the sun-side plot (`ServerStorage.PhotoSet.C2`, iterating copy `Builder_C2`, preset `C2`); loads
+  the rig like A3. Refuses a pet level above its kind's cap and a melon past `CropConfig.SizeBounds()`.
+- `tools/photoset_c3.luau`: C3 on the same sun-side plot (`ServerStorage.PhotoSet.C3`, iterating copy `Builder_C3`, preset `C2`
+  shared). A `LINEUP` table of pet + crop pairs; refuses a level above the cap, a crop past the size bound and draft crop art.
+- `tools/photoset_a2.luau`: A2 in Stage 14 itself (`ServerStorage.PhotoSet.A2`, iterating copy `Builder_A2`, preset `A2`): draws
+  every hazard as ObstacleKit would `T` seconds into a run (beams by `KitMath.Window`, sweepers turned on copies), hiding the
+  originals only through `LocalTransparencyModifier` (not saved; `stash` resets it); `COLORS` shows colour-switch groups as
+  pressed (other-colour plates ghosted, the group's wire lit). `POSE` takes a name or a pose table, `MIRROR` flips it.
 - `tools/thumb_art.ps1` (PowerShell, Windows: headless Edge + System.Drawing): `render` (logo PNGs from `docs/art/logo/logo.html`),
   `grab` (a full-resolution 16:9 frame from Studio's viewport), `compose` (a logo onto a frame), `tiles` (320 / 200 / 150 px sheet).
 
@@ -280,6 +289,7 @@ default head is a **dynamic head** (classic face decals are ignored), so the gri
 jaw, cheeks, brows); the joints are `AnimationConstraint`s, so the parts are anchored and placed by forward kinematics; some
 accessories come unwelded (the updo's handle sat 29 studs off), so every accessory is seated on its matching body attachment.
 Catalog ids are checked with `MarketplaceService:GetProductInfo` before use (Creator Store search does not cover the catalog).
+`Rig.LOOKS` names the looks: `updo` (the above, `Rig.LOOK`) and `classic` (Roblox's default avatar, added for C2 draft I).
 
 **A3 (draft J, 2026-11-14; the builder's defaults rebuild it).** **Stage 1 (Island Hop), checkpoint 105**, the camera ahead
 of the pad and above the next pillars, looking back along the course: the chain of stud pillars, the yellow mover and coins on
@@ -306,3 +316,103 @@ washed the rig; contrast 0.18 and saturation 0.32 so the white pillars part at t
   studs back (pad space {1.2, 8.2, -36}: cam {-774.88, 87.70, 271.79} look {-745.77, 83.90, 274.46}); a camera aimed at the
   player + Phoenix box put the side pillars, not the course, behind them. The coin `Stage1_4` falls outside the square; coins
   on the far pillars still show. Grabbed with `-Rect "726,323,1968,1360" -Aspect 1:1`.
+
+**C2 (draft H, 2026-11-14, started in TH2 ahead of the TH1 grid and kid tests; the builder's defaults rebuild it).** A ripe
+**Giant Melon at the size bound** (factor 3.03, seed 1, turned -47° so its striped side and stem face the camera) on the
+sun-side plot's outer square 32 (preset C2: ClockTime 11, the sun behind the camera), the **Cat uid 2 at Lv 12** (its real
+maximum, Scarf) standing on its crown, the player cheering a row back (square 31 + 5 studs; squares 23, 31, 32 empty).
+- **The size problem:** at the bound the melon is only 2.9 studs tall (`GiantMelonPlant` caps the radius at 1.55: "a heavy
+  melon gets longer, not taller"), a tier-2/3 pet is 4 studs (the Panda at Lv 16 too; Lv 1 would still be ~3), the player
+  6.4. Seen from eye height (draft E) the melon is knee-high and the frame reads "cat on a green block". Draft H fixes the
+  scale by forced perspective: the camera half a stud above the soil, ~9 studs out, FOV 62, the player a row back, so the
+  melon stands as tall as she does; closer (draft F, 5.6 studs, FOV 72) it became a wall of stud blocks.
+- Drafts `docs/art/thumbnails/drafts/`: `c2-cat-e.jpg` (eye-level, beside), `c2-cat-h.jpg`, `c2-cat-h-logo.jpg` (wordmark
+  top left at 30 %), `c2-cat-h-tiles.png`. Draft A (the Panda, the melon's blossom end to the camera) was not kept.
+- Tile test of H (320 / 200 / 150 px, by Claude): the Cat's face, the player and the logo read at 150 px; the melon reads as
+  a big green block (its stripes merge), so "giant watermelon" depends on the light ground spot and the stem. The pet is still
+  bigger than the melon, the opposite of the brief's "melon as big as the player".
+- **Draft I (2026-11-14, the user):** the Cat at **Lv 11** (3.9 studs instead of 4.0: the scale grows only 3 % per level,
+  so a lower level does not fix the size problem; still tier 2 with its Scarf), and a second look for the player:
+  **`classic`, Roblox's default avatar** (Rig.LOOKS: Pal Hair 63690008, Blue and Black Motorcycle Shirt 144076358,
+  Dark Green Jeans 144076760, all free Roblox items; light stone grey skin), chosen with `LOOK_NAME`. Drafts
+  `c2-cat11-i-{classic,updo}(-logo).jpg` + `-tiles.png`. At 150 px the classic avatar's white face and black jacket read as
+  "a Roblox player" at once but darker against the red barn; the updo's orange top is the stronger colour patch.
+- **Draft J (2026-11-14, the user): the Cat at Lv 6** (look tier 1: 3.4 studs, no Scarf), now a little shorter than the
+  melon is long, so the melon reads bigger. Moved 0.5 studs toward the camera (`PET_SHIFT`): at the crown's centre a leaf
+  lobe of the arch crossed its mouth (found by segment-box tests from the camera: plant parts have CanQuery off, so
+  raycasts miss them). Both looks: `c2-cat6-j-{classic,updo}(-logo).jpg` + `-tiles.png`; the builder's defaults rebuild J
+  (`LOOK_NAME` picks the look).
+- **Release candidate (2026-11-14, the user's call: draft J with the default avatar; final after the grid tile test and the
+  kid test, §8 TH1).** The builder's defaults (`LOOK_NAME` "classic"). Files in `docs/art/thumbnails/`: `c2.jpg` (1920×1080,
+  wordmark top left at 30 %, the upload) and `c2-clean.jpg`; the 512×512 squares as for C1: `c2-square.jpg` (wordmark at
+  **40 %** top left: at 44 % the T of VEST touched the Cat's ear), `c2-square-mark.jpg` (pawprint mark at 20 %),
+  `c2-square-clean.jpg` (1360×1360 master). Square camera: the 16:9 camera position nudged (set space {-0.2, 0.55, -10.2}
+  look {1.2, 3.0, 0}, FOV 48: narrower from the same low spot keeps the forced perspective; cam {-1147.83, 17.05, -958.29}
+  look {-1151.72, 19.50, -948.76}), grabbed with `-Rect "726,323,1968,1360" -Aspect 1:1`.
+
+**C3 (draft F, 2026-11-14, TH2 started early; the builder's defaults rebuild it).** Four pets, one per rarity step
+(Dragon left out: four read at tile size), camera-left to camera-right on the sun-side plot's outer squares 31-34, each with
+a ripe crop whose seed price and size factor grow with it: **Cat 2 Lv 6** (no accessory) + Tomato ×1.0, **Fox 4 Lv 12**
+(Wings) + Blueberry ×1.4, **Panda 2 Lv 16** (Scarf) + Pumpkin ×2.0, **Phoenix 1 Lv 19** (FlameTail, hovering 1.7 studs)
++ Glow Mushroom ×2.6. Preset C2's light (shared), camera FOV 40 low and tilted up (set space {0.6, 1.2, -24} look
+{0.4, 4.4, 0}), so the foreground grass drops out and the top left stays sky for the logo.
+- **Heights barely grow with level** (Cat Lv 6 3.4, Fox 4.3, Panda 4.0, Phoenix 4.8 studs; the scale is ×1.0 at Lv 1 to
+  ×1.6 at Lv 20), widths do (1.9 / 2.8 / 4.3 / 6.5). In a straight row (draft E) they looked one size; a **diagonal**,
+  each pet a step nearer the camera (z -2.4 / -3.6 / -5.0 / -7.4), makes the ladder read and the Phoenix dominant.
+- **Orbiting motes** (tier 3) are placed by `UpdateFx`'s time: the builder picks the moment when every mote stands most to
+  the side as seen from the camera (at time 0 one sat on the Panda's nose).
+- Drafts `docs/art/thumbnails/drafts/`: `c3-a.jpg` (first, a straight row seen from eye height: a third of the frame grass),
+  `c3-e(-logo).jpg` + `-tiles.png` (the diagonal, wider), `c3-f(-logo).jpg` + `c3-f-tiles.png` (closer).
+- Tile test of F (320 / 200 / 150 px, by Claude): all four faces read at 150 px (in E the Cat and Fox were specks); the
+  Phoenix's glow does not show in Edit grabs, so "glowing" rests on its gold; the Glow Mushroom is half behind the Phoenix
+  (its teal rings show, the caps at the right edge); the barn behind the Cat and Fox is busy.
+- **Release candidate (2026-11-14, the user's call: draft F; final after the grid tile test and the kid test, §8 TH1).** The
+  builder's defaults. Files in `docs/art/thumbnails/`: `c3.jpg` (1920×1080, wordmark top left at 30 %, the upload) and
+  `c3-clean.jpg`; the 512×512 squares: `c3-square.jpg` (wordmark at **60 %**: a row of four leaves the square's top half
+  sky, which the bigger wordmark fills), `c3-square-mark.jpg` (pawprint mark at 20 %), `c3-square-clean.jpg` (1360×1360
+  master). Square camera: further back and lower along F's line of sight (set space {0.6, 0.2, -30.5} look {0.4, 6.0, 0},
+  FOV 40: the grazing angle keeps the foreground grass thin; cam {-1139.37, 16.70, -976.85} look {-1154.80, 22.50,
+  -950.53}), grabbed with `-Rect "726,323,1968,1360" -Aspect 1:1`. From further back (z -33, camera 1.4 up) a Phoenix mote
+  crossed the Panda's cheek: the mote timing only clears each pet's own face.
+
+**A2 (TH2, 2026-11-14; the builder's defaults rebuild draft L, the release candidate below).** Draft H: **Stage 14 (Laser Lab)**, square on to the lane like the
+game's own side camera (26 studs out instead of 45), at run time **T 0.78 s**: Sweeper1's east arm 35° below level and coming
+down, Beam3 and Beam4 (the two just passed) on, Beam1 and Beam2 off; the player (look `updo`, pose `leap`, yaw -112, the head
+turned to the camera) mid-leap with her leading foot just over the arm's tip, the **Dog uid 4 at Lv 12** (its cap; Wings)
+flying behind her. Lab space: origin on the floor under Sweeper1's hub, +X along the course (screen right), +Z to the camera.
+- **The lab is not dark.** As built it is a sand-blue panel and white floors (STAGES.md §7.12), so by day the beams read as red
+  sticks on a light wall. Preset **A2** is night (ClockTime 21) with a raised ambient (darker hid rig and pet) and a narrow
+  key spot on the player from the set (a wide one lit a pale disc on the panel). The navy panel then carries the neon.
+- **Every hazard is at one real moment:** the beams take `KitMath.Window` at T, the sweepers `Speed * T + Phase` (both are
+  RunSeeded), so the frame is a moment a run really shows; the beams' blink means the two outer beams are never on together.
+- **Pet:** the Dragon at Lv 18 (draft A) is purple and vanished against the night panel; the Dog is warm brown, unused by the
+  other sets, and its Wings let it fly behind.
+- **Logo** (dark version, cream rims) top left at 30 % over the grid's dark ceiling; aiming the camera a little higher kept
+  Beam4's top from running under HAR (draft G).
+- Drafts `docs/art/thumbnails/drafts/`: `a2-e(-logo).jpg` + `-tiles.png` (30 studs out: floor, both lit beams, rig and pet
+  small), `a2-f-logo.jpg` (22 out: big faces, no floor, one beam), `a2-g-logo.jpg` (26 out, Beam4 under the logo),
+  `a2-h(-logo).jpg` + `a2-h-tiles.png`.
+- Tile test of H (320 / 200 / 150 px, by Claude): the player's face, the orange top, the Dog and the red arm read at 150 px;
+  only Beam4 is in frame (Beam3 is just out); the neon is flat red because Bloom does not render in Edit grabs (a Play
+  capture would show the glow); the lower right is empty panel.
+- **Other parts of Stage 14 (2026-11-14, scouted at preset A2):** `a2-scout-1..5.jpg`. The finale's 34-stud jump over the
+  red laser floor is the most dramatic but needs a high camera (side-on the floor leaves the frame; from above the lane's open
+  front and the sea show); the beam grid corridor frames the player large under a dark ceiling; the teal key reads but is
+  calm; the Vault overview and the colour shaft are too busy or need explaining at tile size (the green key is 1.8 studs).
+- **Draft L, the Vault switch (the user's idea):** the jump from `Switch_Lane1` (blue, on `Block_Float2`) up and left toward
+  `Block_Float1` and `PlatformA`, group `Vault1` shown pressed: the wire lit neon green from the button up and across the
+  top, `Bar_Lane1` a ghost; the floor spike row bottom left, `PlatformA`'s spiked end top left, the Dog following from the
+  button; now the builder's defaults. H rebuilds with `{ ORIGIN = Vector3.new(-594, 78, -585), COLORS = {}, MIRROR = false,
+  RIG_AT = Vector3.new(-9.5, 0, 0), GROUND = 8.2, RIG_YAW = -112, PET_AT = Vector3.new(-15.5, 9.4, 0.5), PET_YAW = -130,
+  KEY_AT = Vector3.new(-6, 13, 16), CAMERA = Vector3.new(-12.5, 9.2, 26), LOOK = Vector3.new(-12.5, 8.7, 0) }`. Files `a2-l(-logo).jpg` + `a2-l-tiles.png`;
+  `a2-k-logo.jpg` was closer (33 out), but the 16:9 band cut the spikes and the logo (top right) sat on the wire. Tile test
+  (by Claude): reads as a 2D platformer level (blocks, the lit wire, the button, spikes) with the player and the Dog; the
+  player is smaller than in H and the only neon is the green wire, so it is calmer than H's red arm; the logo top left
+  overlaps the wire and the platform's corner but stays readable.
+- **Release candidate (2026-11-14, the user's call: draft L; final after the grid tile test and the kid test, §8 TH1).** The
+  builder's defaults. Files in `docs/art/thumbnails/`: `a2.jpg` (1920×1080, dark wordmark top left at 30 %, the upload) and
+  `a2-clean.jpg`; the 512×512 squares: `a2-square.jpg` (wordmark at 44 % top left, across the lit wire), `a2-square-mark.jpg`
+  (pawprint mark at 20 %), `a2-square-clean.jpg` (1330×1330 master). Square camera: L's side-on line of sight, closer and
+  narrower, on the player, the Dog and the button (lab space {-6, 6.7, 33.8} look {-6, 6.7, 0}, FOV 40; cam {-332.40, 92.85,
+  -618.80} look {-332.40, 92.85, -585.00}); the floor spikes fall outside it, the spike on the switch block stays. Grabbed with
+  `-Rect "726,323,1968,1330" -Aspect 1:1`: at height 1360 the view gizmo's green "Y" showed at the bottom edge.
