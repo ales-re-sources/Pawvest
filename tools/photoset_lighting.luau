@@ -3,7 +3,7 @@
 -- ServerStorage.PhotoSet.Builder_Lighting and run it through loadstring with { MODE = ..., PRESET = ... }.
 --   "snapshot"  saves Lighting's properties and clones of its children to ServerStorage.PhotoSet.LightingSnapshot.
 --               Refuses if a snapshot already exists (restore first), so a second shoot never overwrites the real look.
---   "apply"     applies PRESETS[PRESET] (C1, B1) on top of the current look (needs a snapshot).
+--   "apply"     applies PRESETS[PRESET] (C1, A3, B1) on top of the current look (needs a snapshot).
 --   "restore"   puts the saved properties and children back and removes the snapshot.
 --   "status"    says whether a snapshot is waiting and lists Lighting's children.
 -- No game code references Lighting or its children (grep src), so restoring by clones is safe.
@@ -35,6 +35,18 @@ local PRESETS = {
 			DepthOfFieldEffect = { FarIntensity = 0.3, FocusDistance = 11, InFocusRadius = 6, NearIntensity = 0 },
 		},
 		disable = { "SunRaysEffect" },
+	},
+	-- A3: bright late morning in World 1 (Stage 1's Island Hop, the camera looks back along the pillar chain), saturated,
+	-- extra contrast so the white stud pillars part at tile size; no depth of field (it does not render in Edit grabs).
+	A3 = {
+		lighting = { ClockTime = 10.2, Brightness = 2.2, ExposureCompensation = -0.15, ShadowSoftness = 0.3, -- brighter washed the rig
+			OutdoorAmbient = Color3.fromRGB(150, 150, 160), Ambient = Color3.fromRGB(90, 90, 100) },
+		children = {
+			ColorCorrectionEffect = { Saturation = 0.32, Contrast = 0.18, Brightness = 0.02, TintColor = Color3.fromRGB(255, 250, 240) },
+			BloomEffect = { Intensity = 0.6, Size = 28, Threshold = 1.6 },
+			Atmosphere = { Density = 0.2, Haze = 0.3, Glare = 0, Offset = 0.1 },
+		},
+		disable = { "SunRaysEffect", "DepthOfFieldEffect" },
 	},
 	-- B1: late afternoon, a low warm sun behind the camera (photoset_b1 picks the plot on the sun's side), long shadows across
 	-- the field; warmer tint than C1, the reach tint's neon still reads.

@@ -52,7 +52,7 @@ The player in motion with one pet; saturated, fast, tilted camera.
 |---|---|---|---|
 | A1 | One jump over World 3 lava (Rising Tide) with a Dragon trailing; the garden as **one glowing island** behind (no split frame) | low, from the side of the jump; lava glow in front, golden island behind | Stage 15 section, posed rig, Dragon, garden backdrop |
 | A2 | Laser Lab **side-on** (the stage's own 2D view): the player mid-leap between neon beams, a pet trailing; neon on dark looks like nothing else on the page | side view, player large; dark lab, neon beams | Stage 14 section, rig, pet |
-| A3 | The player landing on a stud checkpoint, **facing the camera**, with the Phoenix; a challenge coin bursting; the course with a visible hazard receding behind | very low, wide lens; bright day | checkpoint, challenge coin, course section, rig, Phoenix |
+| A3 | The player landing on a stud checkpoint, **facing the camera**, with the Phoenix; a challenge coin beside them (taking one has no burst: it vanishes); the course behind them | high, ahead of the pad, looking back along the course; bright day | checkpoint, challenge coin, course section, rig, Phoenix |
 
 ### B — Characters: "Pets on guard" (for pet lovers and defence players)
 Calm and cosy, eye contact with the pet; the defence angle no other garden game has.
@@ -118,7 +118,7 @@ field rows, a basket of crops. Typography with no character does not earn a tap,
 | # | Who it pulls in | At tile size | Expectation |
 |---|---|---|---|
 | B2 | pet lovers | one face, one enemy, a conflict | the strongest idea; waits for D1 |
-| A3 | obby players | one subject facing the camera, hazard behind | strong |
+| A3 | obby players | one subject facing the camera, the course behind | strong |
 | C1 | farming and pet players | pet + glowing carrot | strong; also the icon's source |
 | C2 | farming players (the biggest audience in the genre) | one huge crop, one pet | strong; watch the "another garden game" read (§3) |
 | C3 | collectors | reads with 3–4 pets (eight were specks) | medium |
@@ -158,8 +158,8 @@ C3 went from eight pets to three or four.
 - **Scene reuse:** the real garden plot (U5 layout) and its reach ring, stage parts in place (shoot A in the stage itself, add
   only rig and pet), `ServerStorage.DecorKit` decor with the placement rules (AGENTS.md Gotchas), the stud sign from StudStyle
   bricks.
-- **Player:** one posed R15 rig for the whole set (`Players:CreateHumanoidModelFromUserId`), face visible and expressive, joints
-  posed by `Motor6D` transforms.
+- **Player:** one posed R15 rig for the whole set, built from free Roblox catalog items (the user, 2026-11-14: a purpose-made
+  avatar, not an account's), face visible and expressive; `tools/photoset_rig.luau` (§9).
 - **Logo:** per §4 Logo (vector master rendered to PNG, §9); composited onto the finals.
 - **Light:** a per-set Lighting preset (time of day, Atmosphere, ColorCorrection, Bloom, DepthOfField for B2) applied by script;
   **snapshot Lighting and its children before and restore after** every session.
@@ -188,6 +188,10 @@ Two passes: two thumbnails first (A3, C1; theme B waits for D1), the others only
   hidden (`ShowDevelopmentGui`).
 - `tools/photoset_b1.luau`: the same for `Workspace.PhotoSet_B1` (`ServerStorage.PhotoSet.B1`, iterating copy `Builder_B1`).
   Refuses a pet level above its kind's cap. Set-space +X is camera-left.
+- `tools/photoset_rig.luau`: the player rig, a library the set builders load from `ServerStorage.PhotoSet.Builder_Rig`:
+  `build` (the chosen look) and `pose` (named poses, forward kinematics down the joint chain, feet set on a given floor).
+- `tools/photoset_a3.luau`: A3 in the stage itself (`ServerStorage.PhotoSet.A3`, iterating copy `Builder_A3`): nothing in the
+  stage is moved; the reached pad is drawn on copies over it.
 - `tools/thumb_art.ps1` (PowerShell, Windows: headless Edge + System.Drawing): `render` (logo PNGs from `docs/art/logo/logo.html`),
   `grab` (a full-resolution 16:9 frame from Studio's viewport), `compose` (a logo onto a frame), `tiles` (320 / 200 / 150 px sheet).
 
@@ -245,8 +249,8 @@ halo clears the logo; build sets that camera.
   (maximised Studio, current panel layout; re-read it after moving panels), and its middle 16:9 band is 1968×1107, enough for
   1920×1080.
 - Still in the frame: the plot's small "Central Island" portal sign at the left edge (hide it in the set if it distracts).
-- **Level check (2026-11-14, open):** a Bunny reaches Lv 14 at most (Uncommon cap), so C1's Lv 19 Bunny is not real content
-  (§3). Lv 14 is look tier 2 (smaller, other accessories): C1 needs the user's call (re-shoot at Lv 14, or another kind).
+- **Level exception (2026-11-14):** a Bunny reaches Lv 14 at most (Uncommon cap), so C1's Lv 19 Bunny is above what a player
+  can own. **The user keeps C1 as it is** (C1 is done); later sets stay within the cap (§4).
 
 **B1 (draft N, 2026-11-14, parked until D1: §4 B; the builder's defaults rebuild it).** Pet: **Owl uid 2 at Lv 16**, the Owl's real maximum (Rare cap;
 tier 3: no halo, a blue scarf, orbiting motes); the Owl leans to Pest control and is the raccoon guard, so it is the guard pet
@@ -268,3 +272,29 @@ for the logo (30 % width).
 - Tile test (320 / 200 / 150 px, by Claude): the Owl's face, scarf and the Pumpkin read at 150 px; the outline is too thin to
   see there, and the yellow reach squares read as a lit patch, not yet as "guarding"; the barn and corn behind are busier than
   C1's frame. The guard story stays thin until D1's crows (§4 B).
+
+**Player rig (TH0, 2026-11-14).** Look C of three, the user's pick: Lavender Updo (Roblox, free; asset 451220849), skin
+204/142/105, orange torso, navy legs, no clothing items; the other looks were classic Roblox colours with Pal Hair and a denim
+jacket with Brown Charmer Hair (`docs/art/thumbnails/drafts/a3-rig-looks.jpg`). Edit-mode facts the library handles: the
+default head is a **dynamic head** (classic face decals are ignored), so the grin is set on its `FaceControls` (lip corners,
+jaw, cheeks, brows); the joints are `AnimationConstraint`s, so the parts are anchored and placed by forward kinematics; some
+accessories come unwelded (the updo's handle sat 29 studs off), so every accessory is seated on its matching body attachment.
+Catalog ids are checked with `MarketplaceService:GetProductInfo` before use (Creator Store search does not cover the catalog).
+
+**A3 (draft J, 2026-11-14; the builder's defaults rebuild it).** **Stage 1 (Island Hop), checkpoint 105**, the camera ahead
+of the pad and above the next pillars, looking back along the course: the chain of stud pillars, the yellow mover and coins on
+pillars cross the sea behind the player, which reads as an obby. Draft D (Stage 3, checkpoint 11, a low camera between red /
+orange kill corridors) read as "it can be anything" and its lava smoke as unexplained (the user); from higher up Stage 3's
+background is the hub, Stage 2 is a flat walkway with thin spinners, Stage 6's checkpoint a white block. The player stands
+camera-left at the pillar's front edge (in the pad's middle the light column washed her pale), pose `cheer` (arms in a V, one
+knee up from the landing step). The **Phoenix at Lv 19** (uid 1: FlameTail) hovers camera-left beside her, facing the camera
+(its own glow, PointLight 2.5 range 10, bleached her when it hovered at her hand). The coin is the stage's own `Stage1_4` on
+the pillar camera-right (a copy beside her hand left the real one in view too: two coins). Logo top right (`-Corner TR`, in
+the sky; top left covered the Phoenix). Camera FOV 60; preset A3 (late morning, Brightness 2.2, exposure -0.15: brighter
+washed the rig; contrast 0.18 and saturation 0.32 so the white pillars part at tile size).
+- Drafts `docs/art/thumbnails/drafts/`: `a3-{a,b,c,d}-logo.jpg` (+ `a3-d.jpg` clean) on Stage 3: A floated and stood in the
+  light column, B fixed the feet and the coin, C moved the Phoenix off, D turned it to the camera. On Island Hop: `a3-h.jpg`
+  (first framing), `a3-i-logo.jpg` (logo over the Phoenix), `a3-j-logo.jpg` + `a3-j-tiles.png` (+ `a3-j.jpg` clean).
+- Tile test of J (320 / 200 / 150 px, by Claude): the player, the Phoenix, the coin and the logo read at 150 px, the pillar
+  path over blue water reads as a course at 320 / 200; the reached pad's light column is a pale cyan band through the
+  middle, and her orange top looks amber in the pad's green light (both real).
