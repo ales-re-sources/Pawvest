@@ -3,7 +3,7 @@
 -- ServerStorage.PhotoSet.Builder_Lighting and run it through loadstring with { MODE = ..., PRESET = ... }.
 --   "snapshot"  saves Lighting's properties and clones of its children to ServerStorage.PhotoSet.LightingSnapshot.
 --               Refuses if a snapshot already exists (restore first), so a second shoot never overwrites the real look.
---   "apply"     applies PRESETS[PRESET] on top of the current look (needs a snapshot).
+--   "apply"     applies PRESETS[PRESET] (C1, B1) on top of the current look (needs a snapshot).
 --   "restore"   puts the saved properties and children back and removes the snapshot.
 --   "status"    says whether a snapshot is waiting and lists Lighting's children.
 -- No game code references Lighting or its children (grep src), so restoring by clones is safe.
@@ -33,6 +33,21 @@ local PRESETS = {
 			BloomEffect = { Intensity = 0.6, Size = 28, Threshold = 1.6 },
 			Atmosphere = { Density = 0.22, Haze = 0.4, Glare = 0, Offset = 0.1 },
 			DepthOfFieldEffect = { FarIntensity = 0.3, FocusDistance = 11, InFocusRadius = 6, NearIntensity = 0 },
+		},
+		disable = { "SunRaysEffect" },
+	},
+	-- B1: late afternoon, a low warm sun behind the camera (photoset_b1 picks the plot on the sun's side), long shadows across
+	-- the field; warmer tint than C1, the reach tint's neon still reads.
+	B1 = {
+		lighting = { ClockTime = 17.4, Brightness = 3, ExposureCompensation = 0.2, ShadowSoftness = 0.3,
+			ColorShift_Top = Color3.fromRGB(255, 214, 165), -- warmer made the brown Owl as orange as the Pumpkin
+			OutdoorAmbient = Color3.fromRGB(150, 135, 130), Ambient = Color3.fromRGB(95, 85, 85) },
+		children = {
+			ColorCorrectionEffect = { Saturation = 0.25, Contrast = 0.08, Brightness = 0.02, TintColor = Color3.fromRGB(255, 236, 215) },
+			BloomEffect = { Intensity = 0.6, Size = 28, Threshold = 1.5 },
+			Atmosphere = { Density = 0.3, Haze = 1.2, Glare = 0.2, Offset = 0.1, Color = Color3.fromRGB(255, 205, 160),
+				Decay = Color3.fromRGB(150, 110, 90) },
+			DepthOfFieldEffect = { FarIntensity = 0.25, FocusDistance = 12, InFocusRadius = 7, NearIntensity = 0 },
 		},
 		disable = { "SunRaysEffect" },
 	},

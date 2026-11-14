@@ -42,8 +42,9 @@ themes with three variants each** (9 thumbnails, §4) plus a logo and an icon, i
 - **One look across the set** (§2): the same avatar with its face visible, the same logo corner, the same palette.
 
 ## 4. Themes and variants
-Variants inside a theme differ in subject, camera or place, not only in colour. Pets are at max level (Lv 20 since 2026-11-12, `PetConfig.MaxLevel`: two accessories,
-PetLook tier effects); uids are picked for the best accessory roll (no crown on Bunny / Fox / Phoenix).
+Variants inside a theme differ in subject, camera or place, not only in colour. Pets are at a level their kind reaches: the
+rarity caps every trait, so the pet level too (`PetConfig.AptitudeCap`: Cat / Dog 12, Bunny / Fox 14, Owl / Panda 16, Dragon 18,
+Phoenix 20; look tier 4 and its halo only on a Phoenix); uids are picked for the best accessory roll (no crown on a thumbnail pet).
 
 ### A — Action: "Run it, grow it" (for obby players)
 The player in motion with one pet; saturated, fast, tilted camera.
@@ -58,12 +59,16 @@ Calm and cosy, eye contact with the pet; the defence angle no other garden game 
 | # | Subject | Camera / light | Pieces |
 |---|---|---|---|
 | B1 | One big guard pet on its square, its reach ring glowing over ripe crops, one big Pumpkin beside it. **With D1:** two or three crows landing on the fence | at fence height, pet in the foreground; late afternoon | plot, field squares, reach ring, pet, Pumpkin (crows later) |
-| B2 | Stare-down: one guard pet (Fox, Lv 20 scarf) face to face with a single crow on the fence, ripe crops soft behind. **Needs D1** | macro-close, shallow depth (DepthOfField); warm | Fox, crow, fence, crops |
+| B2 | Stare-down: one guard pet (Fox with its scarf) face to face with a single crow on the fence, ripe crops soft behind. **Needs D1** | macro-close, shallow depth (DepthOfField); warm | Fox, crow, fence, crops |
 | B3 | Wide plot at sunset: hatchery with a glowing egg on the left, barn on the right, pets resting among ripe Giant Melons and Sunflowers. **Experience Detail Page only** (no focal point at tile size) | high three-quarter view; sunset | plot (U5 layout), egg, pets, ripe crops |
 
 **Crows (decided 2026-11-13):** crows are E4-thin today, a forecast and a settle roll with no bird in the world, so a crow in a
-frame would break "real content only". B1 ships crow-free first; B2 and B1's crows launch with drop D1 (Critters), which is also
-the update that refreshes the thumbnails (§2).
+frame would break "real content only". B2 and B1's crows launch with drop D1 (Critters), which is also the update that
+refreshes the thumbnails (§2).
+
+**B1 parked until D1 (the user, 2026-11-14).** Crow-free, the guard idea rests on the yellow reach tint, which only a player who
+has placed a field pet understands; a viewer sees a lit patch. The whole theme B waits for visible pests (D1); the crow-free
+set stays buildable (§9 B1).
 
 ### C — Harvest: "Paw + Harvest" (for farming players and collectors)
 The payoff: pets and what they grow. The most readable theme at phone size.
@@ -118,7 +123,7 @@ field rows, a basket of crops. Typography with no character does not earn a tap,
 | C2 | farming players (the biggest audience in the genre) | one huge crop, one pet | strong; watch the "another garden game" read (§3) |
 | C3 | collectors | reads with 3–4 pets (eight were specks) | medium |
 | A1 | obby and farming players | reads once the split is gone | medium |
-| B1 | pet and defence players | reads with one pet; the story is thin until crows | medium, better with D1 |
+| B1 | pet and defence players | reads with one pet; the reach tint is not understood without pests | parked until D1 |
 | A2 | obby players | high contrast, face in profile | medium, the most distinctive look |
 | B3 | cosy and farming players | no focal point | Detail Page only |
 
@@ -130,7 +135,7 @@ C3 went from eight pets to three or four.
 ## 6. Test plan
 - **Home Page tab** takes the single-subject thumbnails; **Experience Detail Page tab** takes the story shots: B3 plus wide views
   made from the same sets (the full field, the hub), in the order obby → pets → garden.
-- **Round 1 (≥ 7 days):** pass 1's three, one per theme (A3, B1 crow-free, C1). It answers the biggest question first: which
+- **Round 1 (≥ 7 days):** pass 1's two, A3 and C1 (theme B waits for D1, §4 B). It answers the biggest question first: which
   theme, i.e. which player, the game attracts.
 - **Round 2 (≥ 7 days):** add pass 2's variants up to five active, the winning theme's first; drop a clear loser.
 - **With D1:** B2 and B1 with crows replace the weakest active ones.
@@ -163,15 +168,15 @@ C3 went from eight pets to three or four.
   hidden; the user, or Claude after sizing the window. Finals are stored under `docs/art/thumbnails/` (JPG).
 
 ## 8. Milestones (each scoped with acceptance checks when it starts)
-Two passes: three thumbnails first, the other six only after they have been seen at tile size and by a kid.
+Two passes: two thumbnails first (A3, C1; theme B waits for D1), the others only after they have been seen at tile size and by a kid.
 | # | Content |
 |---|---|
 | TH0 | Shared pieces: the posed rig, pets at max level with chosen uids, the ripe crop set, the logo (three sketches, the user picks; wordmark + pawprint mark) and the stud sign in the same lettering, the Lighting snapshot / preset helper |
-| TH1 | Pass 1: A3, B1 (crow-free), C1 and the icon. Each draft passes the **tile test** (shrunk to tile size in a grid of real competitor thumbnails) and the **kid test** (which one would the playtester tap, and what does he think the game is) before finals |
+| TH1 | Pass 1: A3, C1 and the icon (B1 parked until D1, §4 B). Each draft passes the **tile test** (shrunk to tile size in a grid of real competitor thumbnails) and the **kid test** (which one would the playtester tap, and what does he think the game is) before finals |
 | THU | Upload; round 1 active (the user on the dashboard) |
 | TH2 | Pass 2, shaped by TH1's lessons: A1, A2, C2, C3; B3 and the wide views for the Detail Page |
 | THR | Round 2 after ≥ 7 days; keep the top 2–3; as-built notes here |
-| THD | With drop D1 (Critters): B2 and crows in B1 |
+| THD | With drop D1 (Critters): B2 and B1 with crows (or other visible pests) |
 
 ## 9. As built
 **Tools** (run through MCP `execute_luau` in Edit; header comments say how):
@@ -181,6 +186,8 @@ Two passes: three thumbnails first, the other six only after they have been seen
   from `ServerStorage.PhotoSet.C1`. For iterating, its source sits in the StringValue `ServerStorage.PhotoSet.Builder_C1` and runs
   through `loadstring` with a parameter table (re-store the file after editing it). While a set is in Workspace the Studio GUI is
   hidden (`ShowDevelopmentGui`).
+- `tools/photoset_b1.luau`: the same for `Workspace.PhotoSet_B1` (`ServerStorage.PhotoSet.B1`, iterating copy `Builder_B1`).
+  Refuses a pet level above its kind's cap. Set-space +X is camera-left.
 - `tools/thumb_art.ps1` (PowerShell, Windows: headless Edge + System.Drawing): `render` (logo PNGs from `docs/art/logo/logo.html`),
   `grab` (a full-resolution 16:9 frame from Studio's viewport), `compose` (a logo onto a frame), `tiles` (320 / 200 / 150 px sheet).
 
@@ -238,3 +245,26 @@ halo clears the logo; build sets that camera.
   (maximised Studio, current panel layout; re-read it after moving panels), and its middle 16:9 band is 1968×1107, enough for
   1920×1080.
 - Still in the frame: the plot's small "Central Island" portal sign at the left edge (hide it in the set if it distracts).
+- **Level check (2026-11-14, open):** a Bunny reaches Lv 14 at most (Uncommon cap), so C1's Lv 19 Bunny is not real content
+  (§3). Lv 14 is look tier 2 (smaller, other accessories): C1 needs the user's call (re-shoot at Lv 14, or another kind).
+
+**B1 (draft N, 2026-11-14, parked until D1: §4 B; the builder's defaults rebuild it).** Pet: **Owl uid 2 at Lv 16**, the Owl's real maximum (Rare cap;
+tier 3: no halo, a blue scarf, orbiting motes); the Owl leans to Pest control and is the raccoon guard, so it is the guard pet
+that needs no explaining. The set stands on the plot whose field faces the sun (`PLOT_SLOT = "sun"`: slot 8 at preset B1),
+with the Owl on the outer row's square 32: its reach (Lv 16: 3 × 3) is clipped to six squares (23-25, 31-33) and tinted by
+`PlotView:ShowReach`, the game's own reach tint, and outlined in the Owl's rarity blue by `PlotView:ShowBorders` (U3b;
+a thin line along the front edge). Beside it in square 31 a ripe **Pumpkin at the size bound** (factor 3.03), as
+tall as the Owl. No other pumpkin in `CROPS`, and **no Sunflower**: its art is still a draft, so the plot draws it as a
+yellow block (drafts G-I had two behind the Owl). Late-afternoon light (preset B1, ClockTime 17.4, the sun behind the camera);
+a warmer `ColorShift_Top` turned the brown Owl as orange as the Pumpkin. The Owl model faces the camera at `PET_YAW` 0 (turned
+30° toward the Pumpkin). Camera FOV 50, low on the field's outer side; the Pumpkin left, the Owl right of centre, sky top-left
+for the logo (30 % width).
+- Drafts `docs/art/thumbnails/drafts/b1-owl-{g,h,i}(-logo).jpg`: G closer (the 16:9 band cut the Owl's tufts, logo over corn
+  and barn), H further back (Owl small), I between; N is I without the Sunflower blocks and with the outline.
+- Tried and dropped (`b1-owl-{j,k,l,m}-logo.jpg`): a camera at Owl height (J: the reach squares seen edge-on, the outline
+  lost); the Owl in the middle of its full 3 × 3 reach (square 24) seen from above (K-M: the zone never fits the frame, so it
+  still reads as a lit floor; the Owl small, the background busier, and a crop in front of it covered its face).
+  DepthOfField does not show in Edit grabs (stronger far blur changed nothing).
+- Tile test (320 / 200 / 150 px, by Claude): the Owl's face, scarf and the Pumpkin read at 150 px; the outline is too thin to
+  see there, and the yellow reach squares read as a lit patch, not yet as "guarding"; the barn and corn behind are busier than
+  C1's frame. The guard story stays thin until D1's crows (§4 B).
