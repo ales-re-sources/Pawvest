@@ -37,9 +37,9 @@ local LOOK = P.LOOK or Vector3.new(-0.6, 0.1, 0) -- set-space offset added to th
 local DOLLY = P.DOLLY or 1.4
 local LIFT = P.LIFT or 0.7
 local SHIFT = P.SHIFT or 1.2
--- degrees to turn every plant model of a name about the centre of its visible parts (some keep hidden parts far away):
--- the eggplant is flat and showed its edge from this camera (the user, 2026-11-13); at 90° its leaves face the camera.
-local TURN: { [string]: number } = P.TURN or { EggplantPlant = 90 }
+-- degrees to turn every plant model of a name about the centre of its visible parts (some keep hidden parts far away).
+-- Drafts G-H turned the old flat eggplant 90° ({ EggplantPlant = 90 }); the round-the-stem eggplant (CG16e) needs no turn.
+local TURN: { [string]: number } = P.TURN or {}
 local RADIUS = P.RADIUS or 195 -- studs from the island's centre
 local OUTWARD: any = P.OUTWARD or Vector3.new(1, 0, -0.3) -- direction from the island's centre to the set, the camera looks along it ("sun": the sun behind the camera)
 -- RADIUS / OUTWARD place the bare field (PLOT_SLOT = 0); with a plot the frame sits on SQUARE, the camera outside the field

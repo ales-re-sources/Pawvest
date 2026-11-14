@@ -1,16 +1,17 @@
 # Store-thumbnail art helper (docs/THUMBNAILS.md §9). Windows only: headless Edge + System.Drawing, no extra installs.
 #   render   docs/art/logo/logo.html -> transparent, trimmed PNGs in docs/art/logo/ (light + dark logo, pawprint mark).
-#   compose  puts a logo PNG onto a frame:   -Frame <jpg/png> -Logo <png> -Out <png> [-Width 0.42] [-Corner TL|TR|BL|BR]
-#            [-Margin 0.035]. The frame is first cropped to its middle 16:9 band (Studio captures are taller).
+#   compose  puts a logo PNG onto a frame:   -Frame <jpg/png> [-Logo <png>] -Out <png> [-Width 0.42] [-Corner TL|TR|BL|BR]
+#            [-Margin 0.035]. The frame is first cropped to its middle -Aspect band (default 16:9; Studio captures are
+#            taller) and scaled to -Size "WxH" if given (the store wants 1920x1080; the icon 512x512). No -Logo: crop only.
 #   tiles    writes one image with the frame at 320, 200 and 150 px wide (store tile sizes): -Frame <png> -Out <png>
 #   grab     captures Roblox Studio's window at full resolution (PrintWindow: Studio needn't be in front, but must not be
-#            minimized) and saves the 3D viewport's middle 16:9 band: -Out <png> -Rect "x,y,w,h" (the viewport inside the
+#            minimized) and saves the 3D viewport's middle -Aspect band: -Out <png> -Rect "x,y,w,h" (the viewport inside the
 #            capture, in physical pixels). Without -Rect it saves the whole window so you can read the viewport's edges off it
 #            (on a 150 % display: workspace.CurrentCamera.ViewportSize x 1.5; the edge is the grey 188,190,200 border).
 # Outputs ending in .jpg are saved as JPEG (quality 92), others as PNG.
 param(
 	[Parameter(Mandatory)][ValidateSet("render", "compose", "tiles", "grab")][string]$Mode,
-	[string]$Frame, [string]$Logo, [string]$Out, [string]$Rect,
+	[string]$Frame, [string]$Logo, [string]$Out, [string]$Rect, [string]$Aspect = "16:9", [string]$Size,
 	[double]$Width = 0.42, [ValidateSet("TL", "TR", "BL", "BR")][string]$Corner = "TL", [double]$Margin = 0.035,
 	[int]$Scale = 2
 )
@@ -31,13 +32,19 @@ public static class LogoArt {
 		if (x1 < 0) throw new Exception("image is fully transparent");
 		var r = b.Clone(new Rectangle(x0, y0, x1 - x0 + 1, y1 - y0 + 1), PixelFormat.Format32bppArgb); b.Dispose(); return r;
 	}
-	public static Bitmap Band169(Image src) {
-		int h = (int)Math.Round(src.Width * 9.0 / 16.0), w = src.Width;
-		if (h > src.Height) { h = src.Height; w = (int)Math.Round(h * 16.0 / 9.0); }
-		var r = new Bitmap(w, h, PixelFormat.Format32bppArgb);
+	// The largest centred band of aspect aw:ah, scaled to outW x outH (0 = keep its size).
+	public static Bitmap Band(Image src, double aw, double ah, int outW, int outH) {
+		int h = (int)Math.Round(src.Width * ah / aw), w = src.Width;
+		if (h > src.Height) { h = src.Height; w = (int)Math.Round(h * aw / ah); }
+		if (outW <= 0) { outW = w; outH = h; }
+		var r = new Bitmap(outW, outH, PixelFormat.Format32bppArgb);
 		using (var g = Graphics.FromImage(r)) {
 			g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-			g.DrawImage(src, new Rectangle(0, 0, w, h), new Rectangle((src.Width - w) / 2, (src.Height - h) / 2, w, h), GraphicsUnit.Pixel);
+			g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+			using (var a = new ImageAttributes()) {
+				a.SetWrapMode(System.Drawing.Drawing2D.WrapMode.TileFlipXY);
+				g.DrawImage(src, new Rectangle(0, 0, outW, outH), (src.Width - w) / 2, (src.Height - h) / 2, w, h, GraphicsUnit.Pixel, a);
+			}
 		}
 		return r;
 	}
@@ -75,6 +82,11 @@ public static class LogoArt {
 $root = Split-Path -Parent $PSScriptRoot
 $logoDir = Join-Path $root "docs\art\logo"
 function Full([string]$p) { if ([IO.Path]::IsPathRooted($p)) { $p } else { Join-Path (Get-Location) $p } }
+function Get-Band($img) {
+	$a = $Aspect.Split(":") | ForEach-Object { [double]$_ }
+	$s = if ($Size) { $Size.ToLower().Split("x") | ForEach-Object { [int]$_ } } else { 0, 0 }
+	[LogoArt]::Band($img, $a[0], $a[1], $s[0], $s[1])
+}
 
 if ($Mode -eq "render") {
 	$edge = "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe"
@@ -97,14 +109,18 @@ if ($Mode -eq "render") {
 	}
 }
 elseif ($Mode -eq "compose") {
-	$src = [Drawing.Image]::FromFile((Full $Frame)); $band = [LogoArt]::Band169($src); $src.Dispose()
-	$logoImg = [Drawing.Image]::FromFile((Full $Logo))
-	$w = [int]($band.Width * $Width); $h = [int]($w * $logoImg.Height / $logoImg.Width); $m = [int]($band.Width * $Margin)
-	$x = if ($Corner -like "?L") { $m } else { $band.Width - $w - $m }
-	$y = if ($Corner -like "T?") { $m } else { $band.Height - $h - $m }
-	$g = [Drawing.Graphics]::FromImage($band); [LogoArt]::Draw($g, $logoImg, $x, $y, $w, $h); $g.Dispose(); $logoImg.Dispose()
+	$src = [Drawing.Image]::FromFile((Full $Frame)); $band = Get-Band $src; $src.Dispose()
+	$note = "no logo"
+	if ($Logo) {
+		$logoImg = [Drawing.Image]::FromFile((Full $Logo))
+		$w = [int]($band.Width * $Width); $h = [int]($w * $logoImg.Height / $logoImg.Width); $m = [int]($band.Width * $Margin)
+		$x = if ($Corner -like "?L") { $m } else { $band.Width - $w - $m }
+		$y = if ($Corner -like "T?") { $m } else { $band.Height - $h - $m }
+		$g = [Drawing.Graphics]::FromImage($band); [LogoArt]::Draw($g, $logoImg, $x, $y, $w, $h); $g.Dispose(); $logoImg.Dispose()
+		$note = "logo ${w}x$h at $x,$y"
+	}
 	[LogoArt]::Save($band, (Full $Out))
-	"composed $($band.Width)x$($band.Height), logo ${w}x$h at $x,$y"
+	"composed $($band.Width)x$($band.Height), $note"
 	$band.Dispose()
 }
 elseif ($Mode -eq "grab") {
@@ -114,7 +130,7 @@ elseif ($Mode -eq "grab") {
 	if (-not $Rect) { [LogoArt]::Save($win, (Full $Out)); "whole window $($win.Width)x$($win.Height) saved: read the viewport rect off it"; $win.Dispose(); return }
 	$r = $Rect.Split(",") | ForEach-Object { [int]$_ }
 	$vp = $win.Clone([Drawing.Rectangle]::new($r[0], $r[1], $r[2], $r[3]), [Drawing.Imaging.PixelFormat]::Format32bppArgb); $win.Dispose()
-	$band = [LogoArt]::Band169($vp); $vp.Dispose()
+	$band = Get-Band $vp; $vp.Dispose()
 	[LogoArt]::Save($band, (Full $Out)); "grabbed $($band.Width)x$($band.Height)"; $band.Dispose()
 }
 else {

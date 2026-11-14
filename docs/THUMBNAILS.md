@@ -76,8 +76,8 @@ The payoff: pets and what they grow. The most readable theme at phone size.
 **C2's size is real:** the melon is built at the upper bound of `CropConfig.SizeBounds()` (the drawn size grows with the cube
 root, `PlantKit.dimension`); the camera does the rest. Never scale a crop past that bound.
 
-**Icon (512×512):** one Lv 20 pet face (Cat with crown, or Dog) peeking over a Golden Carrot, the pawprint mark in a corner, no
-words; built from C1's set, cropped square. The icon is not testable (§2); C1 doubles as the "icon-style" thumbnail.
+**Icon (512×512):** the C1 pet (Bunny 4 at Lv 19, no crown or halo) with its Golden Carrot, a logo in a corner; built from
+C1's set, cropped square (as built: §9 C1 square). The icon is not testable (§2); C1 doubles as the "icon-style" thumbnail.
 
 ### Logo (replaces the old C2 thumbnail)
 The first plan had a thumbnail that was only a sign: PAWVEST with a letter turned into a pawprint, pawprint stamps along the
@@ -217,7 +217,17 @@ halo clears the logo; build sets that camera.
   at the Bunny's grip; a higher grip cleared it (measured by rays from the camera to a grid over eyes, nose and mouth). At
   150 px the Panda's face reads more strongly (black and white, blue scarf); the Bunny's carrot reads better as a carrot (its
   tapered tip shows).
-- Drafts: `docs/art/thumbnails/drafts/` (H current; `c1-bunny-g*`, `c1-cat-*` earlier).
+- Drafts: `docs/art/thumbnails/drafts/` (`c1-bunny-h*` last; `c1-bunny-g*`, `c1-panda-h*`, `c1-cat-*` earlier).
+- **Release candidate (2026-11-14, the user's call; final after the grid tile test and the kid test, §8 TH1).** Re-captured with
+  the round-the-stem eggplant (CG16e, merged the same day), which needs no turn (`TURN` now defaults to none). Files in
+  `docs/art/thumbnails/`: `c1.jpg` (1920×1080 with the logo, the upload) and `c1-clean.jpg` (no logo), scaled from the
+  1968×1107 grab; the square, which the store also takes (512×512): `c1-square.jpg` (wordmark at 44 % width top-left; at 50 %
+  it touched an ear), `c1-square-mark.jpg` (the pawprint mark instead), `c1-square-clean.jpg` (1360×1360 master, no logo).
+  At 100–150 px the wordmark's PAW VEST still reads; the mark is cleaner but says less. **The user keeps both** square
+  variants (2026-11-14). Square camera: the 16:9 camera's line
+  of sight to the centre of the pet + carrot box, FOV 30 (less perspective than 48: up close the carrot loomed and fronds
+  crossed an eye), about 20 studs back (cam {-1071.73, 19.20, -842.56} look {-1088.23, 19.36, -830.92}); grabbed with
+  `-Rect "726,323,1968,1360" -Aspect 1:1`, the viewport minus its bottom 160 px, where Studio draws the view-cube gizmo.
 - The pull is posed, not a game action (pets never harvest; `PlayHarvest` is a gold-fleck burst): the user chose it on 2026-11-13.
 - Tile test (150 px): the face and the gold carrot read; the carrot reads as a carrot only with its tapered tip out.
 - **Capture in Edit.** Particles (ripe glint, pet aura) do not render in Edit captures; a Play capture (HUD hidden, camera bound
