@@ -48,7 +48,8 @@ yaw against the flat fan ([studies](../art/eggplant/3d-studies.jpg), reproducibl
 | B — Spiral | Leaves climb the leader in a 137.5° spiral; arms 140° apart, fruit about 120° apart |
 | **C — Cross fork (selected)** | B's left/right arms; one long fruit hangs forward, the other back, the short one back-left; leaves fore and aft |
 
-**Ales chose C** and approved its [five growth stills](../art/eggplant/growth-review-c.jpg) (2026-11-14). To keep the largest
+**Ales chose C** and approved its [five growth stills](../art/eggplant/growth-review-c.jpg) (2026-11-14); merged and
+Studio-validated the same day. To keep the largest
 harvest inside the field radius, three leaves stand slightly more upright than in the study, and the right arm's leaf turns
 a little further to the front. The recipe's layout is one `LAYOUT` block: `P(r, azimuth°, rise)` offsets from the parent tip
 (azimuth 0 = +Z). Side arms bend about their own horizontal axis under the fruit load, fruit hang outward from their node with the
@@ -125,8 +126,9 @@ Studio Client [`eggplant_integration_checks.luau`](../../tools/eggplant_integrat
 backward corrections clear ripeness; full → mid → low → full retains seed identity; selection rays reach the soil; harvest
 clears only its square and replant starts young. All proxies pass six-seed/three-mass footprint and physics/input checks.
 Mid silhouettes were inspected in field context with the pet and selection outline. **CG16c Studio-validated** (2026-11-11).
-CG16e's proxies passed the footprint and physics checks in the growth check; the production `PlotView` check is re-run once
-Argon has synced the new recipe into Studio.
+CG16e (2026-11-14, after merge and Argon sync): the production `PlotView` check passes again (339 full Parts, proxies
+7 / 37 / 37, corrections, exact ripeness, detail round trip, soil ray, harvest/replant); playtest boot clean. **CG16e
+Studio-validated.**
 CG16d full-field/24-plot performance, real phone, second client and live validation remain open.
 
 Playtest boot and integration: no gameplay errors/warnings; Studio MCP logged its camera-reset diagnostic during the
