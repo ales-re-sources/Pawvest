@@ -1,0 +1,103 @@
+<!doctype html>
+<!--
+  PAWVEST logo master (docs/THUMBNAILS.md §4 Logo). HARVEST with HAR torn out by three claw cuts at 74 degrees and PAW
+  written over it. Rendered to transparent PNGs by tools/thumb_art.ps1 -Mode render (headless Edge); open it in a browser to look.
+  Hash parameters: #v=light|dark (rim colour of the cuts: dark brown for light frames, cream for dark ones)
+                   &part=wordmark|mark (the whole logo, or the pawprint mark alone for the icon)
+  The cuts are real holes (an SVG mask), so the frame under the logo shows through them; a thin rim outlines each whole cut.
+  The claw tears are seeded: change SEEDS to reroll their ragged edges.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PAWVEST logo</title>
+<style>
+  @font-face { font-family: "Lilita One"; src: url("LilitaOne-Regular.ttf") format("truetype"); }
+  html, body { margin: 0; background: transparent; }
+  svg { display: block; width: 100vw; height: auto; max-height: 100vh; }
+  .wm { font-family: "Lilita One", sans-serif; letter-spacing: 2px; stroke-linejoin: round; paint-order: stroke; }
+</style>
+</head>
+<body>
+<svg id="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 240"></svg>
+<script>
+const COLORS = { orange: "#F08A3C", gold: "#F2B91E", dim: "#C9A24A", ink: "#3B2414", cream: "#FFF1DC" };
+const ANGLE = 74;            // degrees from horizontal (the user's pick, 2026-11-13)
+const SEEDS = [11, 18, 25];  // ragged-edge seeds of the three cuts
+const params = Object.fromEntries(new URLSearchParams(location.hash.slice(1)));
+const variant = params.v === "dark" ? "dark" : "light";
+const part = params.part === "mark" ? "mark" : "wordmark";
+const NS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById("logo");
+
+function rnd(seed) { let s = seed; return () => { s = (s * 16807) % 2147483647; return s / 2147483647 - 0.5; }; }
+
+// One claw cut: a sickle from a to b (sharp ends, thickest past the middle, slight bend, ragged edges).
+function cut(ax, ay, bx, by, width, bend, seed) {
+  const dx = bx - ax, dy = by - ay, len = Math.hypot(dx, dy), nx = -dy / len, ny = dx / len, r = rnd(seed), N = 22;
+  const left = [], right = [];
+  for (let i = 0; i <= N; i++) {
+    const t = i / N, w = width * Math.pow(Math.sin(Math.PI * Math.min(1, t * 1.08)), 0.75) * (0.75 + 0.5 * t);
+    const cx = ax + dx * t + nx * bend * Math.sin(Math.PI * t), cy = ay + dy * t + ny * bend * Math.sin(Math.PI * t);
+    const j1 = i > 0 && i < N ? 1 + r() * 0.9 : 1, j2 = i > 0 && i < N ? 1 + r() * 0.9 : 1;
+    left.push([cx + nx * w * j1, cy + ny * w * j1]);
+    right.push([cx - nx * w * 0.55 * j2, cy - ny * w * 0.55 * j2]);
+  }
+  return "M " + left.concat(right.reverse()).map(p => p[0].toFixed(2) + " " + p[1].toFixed(2)).join(" L ") + " Z";
+}
+
+// Three staggered cuts over the box of HAR: the middle one longest and lowest.
+function cuts(x0, x1, top, h) {
+  const span = x1 - x0, lengths = [h * 1.45, h * 1.75, h * 1.5], drops = [0, h * 0.12, h * 0.04], out = [];
+  for (let i = 0; i < 3; i++) {
+    const mx = x0 + span * (0.22 + 0.28 * i), my = top + h * 0.5 + drops[i], a = -ANGLE * Math.PI / 180, half = lengths[i] / 2;
+    out.push(cut(mx - Math.cos(a) * half, my - Math.sin(a) * half, mx + Math.cos(a) * half, my + Math.sin(a) * half, 13, -7, SEEDS[i]));
+  }
+  return out;
+}
+
+const PAW = `<ellipse cx="0" cy="16" rx="23" ry="19"/><circle cx="-27" cy="-10" r="10"/><circle cx="-10" cy="-29" r="10"/>` +
+  `<circle cx="10" cy="-29" r="10"/><circle cx="27" cy="-10" r="10"/>`;
+
+function fit(pad) {
+  const box = svg.getBBox();
+  svg.setAttribute("viewBox", `${box.x - pad} ${box.y - pad} ${box.width + 2 * pad} ${box.height + 2 * pad}`);
+  document.title = "aspect=" + ((box.width + 2 * pad) / (box.height + 2 * pad)).toFixed(4);
+  document.body.dataset.ready = "1";
+}
+
+function wordmark() {
+  const rim = variant === "dark" ? COLORS.cream : COLORS.ink;
+  svg.innerHTML =
+    `<text id="har" class="wm" x="0" y="200" style="font-size:96px;stroke:${COLORS.ink};stroke-width:11px" fill="${COLORS.dim}">HAR</text>`;
+  const har = svg.querySelector("#har");
+  const box = har.getBBox(), first = har.getExtentOfChar(0);
+  const x0 = box.x, x1 = box.x + box.width, top = first.y + 8, h = first.height - 14;
+  svg.innerHTML = "";
+  const paths = cuts(x0, x1, top, h);
+  const harText = (attrs) => `<text class="wm" x="0" y="200" style="font-size:96px" ${attrs}>HAR</text>`;
+  svg.insertAdjacentHTML("beforeend",
+    `<defs>
+      <mask id="torn" maskUnits="userSpaceOnUse" x="-200" y="-200" width="1200" height="700">
+        <rect x="-200" y="-200" width="1200" height="700" fill="#fff"/>
+        ${paths.map(d => `<path d="${d}" fill="#000"/>`).join("")}
+      </mask>
+    </defs>
+    <g mask="url(#torn)">${harText(`fill="${COLORS.dim}" stroke="${COLORS.ink}" stroke-width="11"`)}</g>
+    <g>${paths.map(d => `<path d="${d}" fill="none" stroke="${rim}" stroke-width="4" stroke-linejoin="round"/>`).join("")}</g>
+    <text class="wm" x="${x1}" y="200" style="font-size:96px;stroke:${COLORS.ink};stroke-width:11px" fill="${COLORS.gold}">VEST</text>`);
+  const cx = (x0 + x1) / 2, pawY = first.y - 2;
+  svg.insertAdjacentHTML("beforeend",
+    `<text class="wm" x="${cx}" y="${pawY}" text-anchor="middle" fill="${COLORS.orange}" style="font-size:66px;stroke:${COLORS.ink};stroke-width:9px" transform="rotate(-10 ${cx} ${pawY - 24})">PAW</text>`);
+  fit(10);
+}
+
+function mark() {
+  svg.innerHTML = `<g fill="${COLORS.orange}" stroke="${COLORS.ink}" stroke-width="7" stroke-linejoin="round">${PAW}</g>`;
+  fit(8);
+}
+
+document.fonts.load('96px "Lilita One"').then(() => document.fonts.ready).then(() => part === "mark" ? mark() : wordmark());
+</script>
+</body>
+</html>

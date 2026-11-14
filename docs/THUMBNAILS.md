@@ -42,7 +42,7 @@ themes with three variants each** (9 thumbnails, §4) plus a logo and an icon, i
 - **One look across the set** (§2): the same avatar with its face visible, the same logo corner, the same palette.
 
 ## 4. Themes and variants
-Variants inside a theme differ in subject, camera or place, not only in colour. Pets are at max level (Lv 10: two accessories,
+Variants inside a theme differ in subject, camera or place, not only in colour. Pets are at max level (Lv 20 since 2026-11-12, `PetConfig.MaxLevel`: two accessories,
 PetLook tier effects); uids are picked for the best accessory roll (no crown on Bunny / Fox / Phoenix).
 
 ### A — Action: "Run it, grow it" (for obby players)
@@ -58,7 +58,7 @@ Calm and cosy, eye contact with the pet; the defence angle no other garden game 
 | # | Subject | Camera / light | Pieces |
 |---|---|---|---|
 | B1 | One big guard pet on its square, its reach ring glowing over ripe crops, one big Pumpkin beside it. **With D1:** two or three crows landing on the fence | at fence height, pet in the foreground; late afternoon | plot, field squares, reach ring, pet, Pumpkin (crows later) |
-| B2 | Stare-down: one guard pet (Fox, Lv 10 scarf) face to face with a single crow on the fence, ripe crops soft behind. **Needs D1** | macro-close, shallow depth (DepthOfField); warm | Fox, crow, fence, crops |
+| B2 | Stare-down: one guard pet (Fox, Lv 20 scarf) face to face with a single crow on the fence, ripe crops soft behind. **Needs D1** | macro-close, shallow depth (DepthOfField); warm | Fox, crow, fence, crops |
 | B3 | Wide plot at sunset: hatchery with a glowing egg on the left, barn on the right, pets resting among ripe Giant Melons and Sunflowers. **Experience Detail Page only** (no focal point at tile size) | high three-quarter view; sunset | plot (U5 layout), egg, pets, ripe crops |
 
 **Crows (decided 2026-11-13):** crows are E4-thin today, a forecast and a settle roll with no bird in the world, so a crow in a
@@ -76,21 +76,33 @@ The payoff: pets and what they grow. The most readable theme at phone size.
 **C2's size is real:** the melon is built at the upper bound of `CropConfig.SizeBounds()` (the drawn size grows with the cube
 root, `PlantKit.dimension`); the camera does the rest. Never scale a crop past that bound.
 
-**Icon (512×512):** one Lv 10 pet face (Cat with crown, or Dog) peeking over a Golden Carrot, the pawprint mark in a corner, no
+**Icon (512×512):** one Lv 20 pet face (Cat with crown, or Dog) peeking over a Golden Carrot, the pawprint mark in a corner, no
 words; built from C1's set, cropped square. The icon is not testable (§2); C1 doubles as the "icon-style" thumbnail.
 
 ### Logo (replaces the old C2 thumbnail)
 The first plan had a thumbnail that was only a sign: PAWVEST with a letter turned into a pawprint, pawprint stamps along the
 field rows, a basket of crops. Typography with no character does not earn a tap, and the idea is a logo, so it is one now.
-- **Idea:** a **PAWVEST** wordmark that shows the wordplay without a sentence: **PAW** and **VEST** in two colours (paw = a pet
-  colour, vest = harvest gold / leaf green) and a pawprint worked into a letter (the counter of the A, or the print pressed into
-  the V). No "PAW + HARVEST" line: it is unreadable at tile size and English only.
-- **Style:** stud-brick letters like the in-game signs (StudStyle), thick outline, readable on a light and on a dark frame.
+- **Idea (the user, 2026-11-13, replacing "a paw worked into a letter"):** the word **HARVEST** with **HAR** crossed out and
+  **PAW** written over it, tilted like a correction, in the pet colour (orange); VEST stays harvest gold, the struck HAR is a
+  dimmed gold. The edit shows the wordplay without a sentence.
+- **Chosen cross-out (the user, 2026-11-13): torn claw cuts.** Three claw marks tear through HAR so the background shows through,
+  as if a pet clawed it out. Each mark is a sickle (sharp at both ends, thickest past the middle, slightly curved, ragged edges),
+  steep at **74°** (the user's pick from 62 / 68 / 74 / 80°), staggered (the middle one longest and lowest),
+  with a thin rim. Dropped on the way: a pawprint stamp over HAR (lost its shape when small), a plain strike bar, a scribble,
+  a pawprint trail, a swipe ending in a paw, straight claw lines; and the first sketches (a pawprint in the A or the V, a
+  stacked PAW / VEST badge).
+- **Dark frames:** the cuts show the background, so on a dark frame a dark rim disappears (seen in the sketches). The rim must
+  contrast with what lies under the logo: dark brown on light frames, cream on dark ones. **Check the cuts on every final image**
+  (the user, 2026-11-13); where the frame behind the logo is busy, a backing plate behind the wordmark may be needed.
+- **Style:** the user likes the chunky rounded font of the sketches (Lilita One, Google Fonts, OFL licence: free for commercial
+  use) with a thick dark-brown outline, readable on a light and on a dark frame. Open: whether C1's in-scene sign uses the same
+  lettering (as stud bricks or a decal) or is left out.
 - **Deliverables:** the wordmark; the **pawprint mark** alone (for the icon and small sizes); both as transparent PNG, with a
-  light-outline and a dark-outline version.
-- **How:** three sketches in TH0 (which letter carries the paw, the two colours), the user picks one. The letters can be built
-  from stud bricks in Studio and captured, so the logo and C1's stud sign are the same lettering; the final is cleaned up in an
-  image editor.
+  light-outline and a dark-outline version (the dark one with cream rims on the claw cuts).
+- **How:** the final is drawn as vector art in that font (the sketches' SVG paths are the start) and exported as PNG (built:
+  §9 Logo).
+- **Tile-size risk:** the struck HAR and the smaller PAW are the finest parts of the logo; at a thumbnail corner PAW + VEST must
+  read as one word, and the struck HAR may blur into a smudge (acceptable if PAWVEST still reads).
 - **Where it goes:** the same corner of every thumbnail, the mark on the icon, C1's sign. Later candidates (not TH): the hub
   sign, the loading screen.
 - **Checks:** the wordmark reads at tile size in a thumbnail corner; the mark reads at icon size in the Roblox home grid.
@@ -143,7 +155,7 @@ C3 went from eight pets to three or four.
   bricks.
 - **Player:** one posed R15 rig for the whole set (`Players:CreateHumanoidModelFromUserId`), face visible and expressive, joints
   posed by `Motor6D` transforms.
-- **Logo:** per §4 Logo (stud letters captured in Studio, finished in an image editor); composited onto the finals.
+- **Logo:** per §4 Logo (vector master rendered to PNG, §9); composited onto the finals.
 - **Light:** a per-set Lighting preset (time of day, Atmosphere, ColorCorrection, Bloom, DepthOfField for B2) applied by script;
   **snapshot Lighting and its children before and restore after** every session.
 - **Capture:** drafts by MCP `screen_capture` with a camera CFrame, one at a time (AGENTS.md → Studio MCP habits; set
@@ -154,9 +166,65 @@ C3 went from eight pets to three or four.
 Two passes: three thumbnails first, the other six only after they have been seen at tile size and by a kid.
 | # | Content |
 |---|---|
-| TH0 | Shared pieces: the posed rig, pets at Lv 10 with chosen uids, the ripe crop set, the logo (three sketches, the user picks; wordmark + pawprint mark) and the stud sign in the same lettering, the Lighting snapshot / preset helper |
+| TH0 | Shared pieces: the posed rig, pets at max level with chosen uids, the ripe crop set, the logo (three sketches, the user picks; wordmark + pawprint mark) and the stud sign in the same lettering, the Lighting snapshot / preset helper |
 | TH1 | Pass 1: A3, B1 (crow-free), C1 and the icon. Each draft passes the **tile test** (shrunk to tile size in a grid of real competitor thumbnails) and the **kid test** (which one would the playtester tap, and what does he think the game is) before finals |
 | THU | Upload; round 1 active (the user on the dashboard) |
 | TH2 | Pass 2, shaped by TH1's lessons: A1, A2, C2, C3; B3 and the wide views for the Detail Page |
 | THR | Round 2 after ≥ 7 days; keep the top 2–3; as-built notes here |
 | THD | With drop D1 (Critters): B2 and crows in B1 |
+
+## 9. As built
+**Tools** (run through MCP `execute_luau` in Edit; header comments say how):
+- `tools/photoset_lighting.luau`: `snapshot` / `apply` (per-set presets, `C1` so far) / `restore` / `status`. The snapshot lives in
+  `ServerStorage.PhotoSet.LightingSnapshot` and refuses to be overwritten, so a forgotten restore never loses the real look.
+- `tools/photoset_c1.luau`: builds `Workspace.PhotoSet_C1`, returns the camera for `screen_capture`; `stash` / `shoot` move it to and
+  from `ServerStorage.PhotoSet.C1`. For iterating, its source sits in the StringValue `ServerStorage.PhotoSet.Builder_C1` and runs
+  through `loadstring` with a parameter table (re-store the file after editing it). While a set is in Workspace the Studio GUI is
+  hidden (`ShowDevelopmentGui`).
+- `tools/thumb_art.ps1` (PowerShell, Windows: headless Edge + System.Drawing): `render` (logo PNGs from `docs/art/logo/logo.html`),
+  `grab` (a full-resolution 16:9 frame from Studio's viewport), `compose` (a logo onto a frame), `tiles` (320 / 200 / 150 px sheet).
+
+**Logo (2026-11-13).** `docs/art/logo/logo.html` is the master (SVG drawn by script in Lilita One; the font file and its OFL licence
+sit next to it): HARVEST with HAR dimmed gold, VEST gold, PAW orange tilted 10°, outline dark brown; three seeded sickle cuts at 74°
+are real holes through HAR with a 4-unit rim that also traces them past the letters (the tips scratch the frame). `render` writes
+`pawvest-logo-light.png` (dark-brown rims), `pawvest-logo-dark.png` (cream rims) and `pawvest-mark.png` (pawprint), transparent
+and trimmed, ~3000 px wide.
+- On C1 it sits top-left at 30 % of the frame width over the sky; at 40 % it covered the cat's face. The dark rims keep the cuts
+  readable over sky and leaves; the dark version's cream rims read on the soil (tried bottom-left, not used).
+- Tile test (320 / 200 / 150 px): PAW and VEST read at all three; the struck HAR becomes a smudge at 150 px (accepted in §4).
+
+**C1 (draft G, 2026-11-13; the builder's defaults rebuild it).** Pet: **Bunny uid 4** (Scarf + Wings), also the icon's pet. **No
+crown on a thumbnail pet** (the user, 2026-11-13, on draft F's Cat 33: the crown and the cat's leaning pose did not flatter it).
+Crown-free max-level uids: Bunny / Cat / Fox 4 (Scarf + Wings), Panda 2 (Scarf + Wings), Dog 2 (FlameTail + Wings). The Bunny
+won the drafts: tall enough that the carrot clears its body, and a bunny with a carrot reads at once; every Lv 20 Bunny has the
+same lime trim (uids only change the coat). Panda 2 and Dog 2 are shorter: with the Bunny's pose the carrot hid behind their
+bodies (they would need their own pose). Facing the camera, the mouth-held fronds always crossed the face; a three-quarter turn
+works. The set stands on **slot 1's real plot** (`PLOT_SLOT = 1`, drawn by `PlotView` at full detail, labels removed): the pet in
+square 32 (left empty), ripe crops around it from `CROPS` (no pineapples, whose gold competed with the carrot; no giant melon in
+front), the barn and weathervane behind; the user's call over draft D's bare island edge, whose background was too empty and whose
+square design did not suit (the squares themselves are hidden by the crops). **Eggplants turned 90°** (`TURN`): the eggplant is
+flat and showed its edge to this camera (the user: revisit its design). Morning light (preset C1, ClockTime 9.2: the sun in the
+east behind a camera looking west). The bunny leans back 14°, turned 70° toward the carrot, which hangs from its mouth by the
+stalks (grip 1.8 studs up), tilted 50° and spun 250° so the root comes out ahead with its tapered tip showing and the fronds stay
+below the eyes. Carrot: `GoldenCarrotPlant` at growth 1, size factor 1.6 (the upper bound is 3.03). Camera FOV 48, low on the
+field's east side, backed off ×1.4 (`DOLLY`), aimed 0.7 studs higher (`LIFT`) and 1.2 studs to the pet's left (`SHIFT`) so the
+halo clears the logo; build sets that camera.
+- **Draft H (2026-11-14): Lv 19, no halo.** Every Lv 20 pet wears the tier-4 neon halo, which the user found as wrong for the
+  thumbnail as the crown. Lv 19 is the last tier-3 level: no halo, one accessory (Bunny 4: Wings; Panda 2: Scarf), scale 1.57
+  instead of 1.6, orbiting motes stay. The builder now defaults to Lv 19. **The user picked the Bunny (2026-11-14):**
+  `c1-bunny-h(-logo).jpg` is C1 (the builder's defaults); the dropped candidate was `c1-panda-h(-logo).jpg` (Panda 2: `PET_YAW` 20, `DOLLY` 1.15, `CARROT_TILT` -55,
+  `GRIP` 2.6). The Panda's model faces about 50° off the Bunny's, and its square head took 11–33 % of the stalks over the face
+  at the Bunny's grip; a higher grip cleared it (measured by rays from the camera to a grid over eyes, nose and mouth). At
+  150 px the Panda's face reads more strongly (black and white, blue scarf); the Bunny's carrot reads better as a carrot (its
+  tapered tip shows).
+- Drafts: `docs/art/thumbnails/drafts/` (H current; `c1-bunny-g*`, `c1-cat-*` earlier).
+- The pull is posed, not a game action (pets never harvest; `PlayHarvest` is a gold-fleck burst): the user chose it on 2026-11-13.
+- Tile test (150 px): the face and the gold carrot read; the carrot reads as a carrot only with its tapered tip out.
+- **Capture in Edit.** Particles (ripe glint, pet aura) do not render in Edit captures; a Play capture (HUD hidden, camera bound
+  with `BindToRenderStep`, character parked) shows them, but at this distance they add almost nothing and stud textures render
+  worse there.
+- **Full-resolution frames:** `screen_capture` returns a downscaled image, so finals come from `thumb_art.ps1 grab` right after
+  `build` / `shoot` (they leave the set's camera on, `Scriptable`); PrintWindow captures Studio without bringing it to the front. On this machine (3840×2160 at 150 %) the 1312×1013 viewport is 1968×1520 physical pixels at `-Rect "726,323,1968,1520"`
+  (maximised Studio, current panel layout; re-read it after moving panels), and its middle 16:9 band is 1968×1107, enough for
+  1920×1080.
+- Still in the frame: the plot's small "Central Island" portal sign at the left edge (hide it in the set if it distracts).
