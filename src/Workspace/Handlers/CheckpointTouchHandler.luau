@@ -45,6 +45,26 @@ function module.NewRun(player)
 	runStarted:Fire(player)
 end
 
+-- RespawnService calls this after LoadCharacter returns: CharacterAdded fires before Roblox finishes placing the
+-- character at the default spawn, so moving it there (even after one task.wait) can be overwritten on a live server.
+function module.PlaceCharacter(player: Player, character: Model)
+	local checkpointData = ServerStorage:FindFirstChild("CheckpointData")
+	local checkpointValue = checkpointData and checkpointData:FindFirstChild(tostring(player.UserId))
+	local storedCheckpoint = checkpointValue and checkpointValue.Value
+	if player.Character ~= character or not (storedCheckpoint and storedCheckpoint:IsDescendantOf(workspace)) then
+		return
+	end
+	local look = storedCheckpoint.CFrame.LookVector
+	local forward = Vector3.new(look.X, 0, look.Z)
+	local top = storedCheckpoint.Position.Y + storedCheckpoint.Size.Y / 2
+	local position = Vector3.new(storedCheckpoint.Position.X + math.random(-2, 2), top + 4, storedCheckpoint.Position.Z + math.random(-2, 2))
+	if forward.Magnitude < 0.1 then
+		character:MoveTo(position)
+	else
+		character:PivotTo(CFrame.lookAt(position, position + forward))
+	end
+end
+
 -- The stage's start gate (TimerStart) stands just before the first checkpoint: touching it counts as reaching that
 -- checkpoint, so walking gate -> plate plays one sound and the respawn point is the plate, not the gate
 local function resolve(part)
@@ -119,22 +139,6 @@ function module.OnTouched(part, hit)
 			checkpointValue = Instance.new("ObjectValue")
 			checkpointValue.Name = userIdString
 			checkpointValue.Parent = checkpointData
-
-			-- respawn on the stored plate, facing along the course: a plate's front (LookVector, -Z) points downstream
-			-- (CameraFacing then turns the camera the same way, the move from the hub spawn counts as a teleport)
-			player.CharacterAdded:Connect(function(character)
-				task.wait()
-				local storedCheckpoint = ServerStorage.CheckpointData[userIdString].Value
-				local look = storedCheckpoint.CFrame.LookVector
-				local forward = Vector3.new(look.X, 0, look.Z)
-				local top = storedCheckpoint.Position.Y + storedCheckpoint.Size.Y / 2
-				local position = Vector3.new(storedCheckpoint.Position.X + math.random(-2, 2), top + 4, storedCheckpoint.Position.Z + math.random(-2, 2))
-				if forward.Magnitude < 0.1 then
-					character:MoveTo(position)
-				else
-					character:PivotTo(CFrame.lookAt(position, position + forward))
-				end
-			end)
 		end
 
 		checkpointValue.Value = part

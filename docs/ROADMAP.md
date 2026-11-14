@@ -957,6 +957,12 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
 
+**Checkpoint respawn timing fix** (2026-11-14; GDD §3, STAGES §6.2.1). Removed the early `CharacterAdded` placement race:
+`RespawnService` restores the checkpoint after `LoadCharacter` returns. Studio-validated: garden join, real touches and
+deaths at all nine Stage 2 pads, Stage 1 regression, walking onto a Stage 2 laser and retaining the timer, clean server /
+client logs and localization checks. No profile fixtures or changed Czech texts. The reported published-game failure
+did not reproduce before the fix; publishing and live confirmation remain open.
+
 **Garden arrival on every join** (2026-11-13; GDD §7.6). New and returning players start in front of their own field,
 facing it, at the same destination as Home (shared GardenPlots.ArrivalCFrame). Later deaths keep their checkpoint / respawn
 behavior. Studio-validated: two joins, matching Home arrival, camera facing, Stage1 checkpoint death / respawn, clean logs and

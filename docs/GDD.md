@@ -88,7 +88,8 @@ required talent shows a warning with a button to the Skills panel, and entry sta
 player's current checkpoint (the respawn point) glows, and only for that player: its tile grows into a larger glowing
 square with a column of light rising from it (about 1 s) and the previous one turns back. The first reach in a run also
 plays a sound; walking back to an earlier checkpoint moves the respawn point there silently. Passing the stage's start
-gate counts as reaching its first checkpoint; a new run turns the lit pad back.
+gate counts as reaching its first checkpoint; a new run turns the lit pad back. Death respawns are placed on the stored
+plate facing along the course after Roblox finishes loading and placing the character at its default spawn.
 
 **Unlocks.** Every stage after the Tutorial opens either by **meeting the bar** (required medal on the previous stage)
 or by a **one-time Coin price**. Prices are set so that buying an unlock costs roughly a full talent level or two —
