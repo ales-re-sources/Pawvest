@@ -34,6 +34,26 @@ R15 rig (5.18 studs tall) on the same ground plane. Studio Edit checks: maximum 
 lowest fruit clearance **0.39 / 1.10 / 0.36 studs**. Each is below the 130-Part static budget. These are standard-size static
 studies, not validation of a growth recipe or its future mass extremes. The temporary display was removed after capture.
 
+## Spread round the stem (CG16e, 2026-11-14)
+
+Looking at the C1 store thumbnail, Ales found the ripe plant **too flat**: every arm and leaf sat in one plane, all three fruit
+hung in front, and from the side it read as a thin fan. CG16e keeps B's identity, Part count, growth phases and seeded variation
+and changes only where arms, leaves, fruit and the top flower point round the stem. Three layouts were compared at 0° / 45° / 90°
+yaw against the flat fan ([studies](../art/eggplant/3d-studies.jpg), reproducible with
+[`eggplant_3d_studies.luau`](../../tools/eggplant_3d_studies.luau)):
+
+| Layout | Arrangement |
+|---|---|
+| A — Three-way | Long fruit in a front V, short fruit behind; low leaves in the gaps, upper leaves over the fruit |
+| B — Spiral | Leaves climb the leader in a 137.5° spiral; arms 140° apart, fruit about 120° apart |
+| **C — Cross fork (selected)** | B's left/right arms; one long fruit hangs forward, the other back, the short one back-left; leaves fore and aft |
+
+**Ales chose C** and approved its [five growth stills](../art/eggplant/growth-review-c.jpg) (2026-11-14). To keep the largest
+harvest inside the field radius, three leaves stand slightly more upright than in the study, and the right arm's leaf turns
+a little further to the front. The recipe's layout is one `LAYOUT` block: `P(r, azimuth°, rise)` offsets from the parent tip
+(azimuth 0 = +Z). Side arms bend about their own horizontal axis under the fruit load, fruit hang outward from their node with the
+pedicel crooking back toward it, and the top flower faces along its arm; the leaf roll is an explicit per-leaf value.
+
 ## Continuous growth and animation
 
 The B recipe implements the following poses. Art review precedes field registration.
@@ -72,17 +92,17 @@ recipe count, not a production performance measurement. Each `fruitSlots[1..3]` 
 attachment CFrame and its 22 grouped Parts. `PlantRole` separates structure, foliage and fruit; `FruitSlot` identifies each
 fruit group, including its spent blossom Parts.
 
-Seed 1 at standard harvest size retains B's tall leader and fruit positions; the enlarged foliage raises the top to **6.12
-studs** with **2.16-stud** ground radius. Its first blade is **2.71 studs long × 2.17 wide**, 1.85× its previous length and
+Seed 1 at standard harvest size retains B's tall leader; with the CG16e layout its top is **6.07 studs** with **2.15-stud**
+ground radius. Its first blade is **2.71 studs long × 2.17 wide**, 1.85× its previous length and
 width. Blade dimensions retain seeded vigor; upright leaf pitch and horizontally shorter petioles keep them inside the
 field footprint. The recipe uses free-standing seeded orientation, constrained foliage vigor and cube-root fruit dimensions.
 A larger harvest can lift the leader to keep the long fruit clear of soil. The nominal ring is fixed at **7.2 studs**
 (foliage does not shrink with small fruit); review framing is **6.5 studs**. Completed leaf groups skip unchanged poses,
 including the petiole colour transition; the shared rig caches Part writes.
 
-[`eggplant_growth_checks.luau`](../../tools/eggplant_growth_checks.luau), Studio Client (2026-11-11): six seeds × three harvested
-mass factors **0.3566 / 1 / 3.0298** × 101 ages pass after the leaf/stem correction. Maximum radius **2.37 studs**, ripe height
-**5.49–6.67 studs** (maximum all-age top **6.75 studs**), minimum ripe fruit clearance **0.39 studs**. Stem, petiole and fruit-stalk
+[`eggplant_growth_checks.luau`](../../tools/eggplant_growth_checks.luau): six seeds × three harvested mass factors
+**0.3566 / 1 / 3.0298** × 101 ages pass. CG16e (2026-11-14, Studio Edit on a draft clone of the recipe): maximum radius
+**2.37 studs**, ripe height **5.45–6.73 studs** (maximum all-age top **6.80 studs**), minimum ripe fruit clearance **0.39 studs**. Stem, petiole and fruit-stalk
 attachments, stable fruit groups, green young stems, intermediate petiole tint, enlarged blades, finite geometry, distinct seeds,
 flower/fruit order, exact backward seeks and 1 → 0 restoration pass. All 113 Parts remain anchored, non-colliding and
 non-queryable. The 4 h config and the shared 30 s production update interval are unchanged.
@@ -105,6 +125,8 @@ Studio Client [`eggplant_integration_checks.luau`](../../tools/eggplant_integrat
 backward corrections clear ripeness; full → mid → low → full retains seed identity; selection rays reach the soil; harvest
 clears only its square and replant starts young. All proxies pass six-seed/three-mass footprint and physics/input checks.
 Mid silhouettes were inspected in field context with the pet and selection outline. **CG16c Studio-validated** (2026-11-11).
+CG16e's proxies passed the footprint and physics checks in the growth check; the production `PlotView` check is re-run once
+Argon has synced the new recipe into Studio.
 CG16d full-field/24-plot performance, real phone, second client and live validation remain open.
 
 Playtest boot and integration: no gameplay errors/warnings; Studio MCP logged its camera-reset diagnostic during the

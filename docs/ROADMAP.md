@@ -66,7 +66,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | CG10 | Golden Carrot growth art | [Buried pointed root and tall divided crown](plants/GOLDEN_CARROT.md); CG10b/c/d registered with harvest feedback | Five stills approved 2026-11-10; growth, PlotView lifecycle/detail transitions, harvest-response fixture and desktop growing/ripe CPU samples checked; real phone and second client open | – |
 | CG14 | Broccoli growth art | [Lobed foliage and domed floret crown](plants/BROCCOLI.md); CG14a/b/c registered | Longer-leaf art approved by Ales 2026-11-11; Studio geometry and production PlotView checks pass; field/24-plot performance, real phone and second client open | – |
 | CG15 | Pumpkin growth art | [Arching vine, ribbed 2.6-stud fruit](plants/PUMPKIN.md); CG15a-c registered | Studio geometry and production PlotView checks pass; five stills await Ales's review; field/24-plot performance, real phone and second client open | – |
-| CG16 | Eggplant growth art | [Tall open B with enlarged leaves](plants/EGGPLANT.md); CG16b/c registered | Revised growth art approved by Ales 2026-11-11; Studio geometry and production PlotView checks pass; performance, real phone and second client open | – |
+| CG16 | Eggplant growth art | [Tall open B with enlarged leaves](plants/EGGPLANT.md); CG16b/c registered; CG16e spread round the stem (C cross fork) | CG16e growth art approved by Ales 2026-11-14; Studio geometry checks pass on a draft clone; production PlotView re-check after Argon sync, performance, real phone and second client open | – |
 | CG17 | Blueberry growth art | [Round highbush A, berries over the whole bush](plants/BLUEBERRY.md); CG17b/c registered | Growth art approved by Ales in Studio 2026-11-12; Studio geometry and production PlotView checks pass; performance, real phone and second client open | – |
 | CG18 | Sweet potato growth art | [C trained fan with fuller foliage](plants/SWEET_POTATO.md) approved; CG18b/c registered | Studio geometry and production PlotView lifecycle checks pass; performance, real phone and second client open | – |
 | CG19 | Giant melon growth art | [Arching vine B, striped green melon](plants/GIANT_MELON.md); CG19a chosen, CG19b/c registered | Growth art approved by Ales 2026-11-12; Studio geometry (97 Parts, 2.38 radius, seeks, flowers clear of the fruit) and production PlotView checks pass; performance (3,492 plant Parts per full field), real phone and second client open | – |
@@ -166,6 +166,9 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
   approved by Ales (2026-11-11). CG16b/c registered: 113 Parts, mid proxies 7 / 37 / 37. Studio geometry, colour timing,
   attachments, seeks and production PlotView lifecycle/corrections/exact ripeness/detail/selection/harvest-replant checks pass;
   boot clean. CG16d full-field/24-plot performance (4,068 plant Parts per full field), real phone, second client and live validation open.
+  **CG16e** (2026-11-14): the ripe plant read as a flat fan from the side. Of three around-the-stem layouts Ales chose **C, cross
+  fork** ([studies](art/eggplant/3d-studies.jpg)) and approved its [five stills](art/eggplant/growth-review-c.jpg); same 113 Parts and
+  timing. Growth checks pass on a Studio draft clone; production PlotView checks wait for the Argon sync after merge.
 - **CG17:** [Blueberry](plants/BLUEBERRY.md) (6 h). Of three static studies Ales chose **A, the round highbush**, with ten tight
   bunches spread over the whole bush (second ripe-bush reference) and white bells at flowering (petal-fall reference). CG17b
   recipe: 134 Parts, ten 9-Part fruit slots; growth art approved by Ales in Studio (2026-11-12). CG17c registered: mid proxies
