@@ -383,7 +383,7 @@ field.card.plant,"Square card button (brick, about 180 px): opens the seed picke
 field.card.harvest,Square card button: harvest the ripe crop,Harvest,Sklidit,new,h2c69834b
 field.card.placePet,Square card button: opens the pet picker to put a pet with Tending / Pest control on this square,Place pet,Umístit mazlíčka,new,haa61e2b4
 field.card.movePet,Square card button on a square with a pet: the next tap on a free square moves the pet there,Move pet,Přesunout,new,h93f87859
-field.card.takeBack,Resident pet section: returns only the pet sitting on this soil to inventory,Return to pets,Vrátit mezi mazlíčky,new,hd3f77d93
+field.card.takeBack,Resident pet button: remove only this resident from the field to rest in inventory,Take off field,Vzít z pole,new,h5354c27f
 field.card.buy,Square card button on an overgrown square: buy it,Buy square,Koupit políčko,new,h712d511b
 field.card.moving,"Placement strip above the hand bar, real field remains visible; {pet} = pet name/kind, nominative after colon in Czech",Moving {pet} · Choose a spot,Přesun: {pet} · Vyber místo,new,h0150f5a2
 field.hand.pickSeed,Title of the square card when it picks the seed for the hand bar's Seeds mode (not for one square),Choose a seed,Vyber semínko,new,h96e894c2
@@ -582,7 +582,7 @@ field.card.helping,"Soil card heading for non-clickable effective coverage, sepa
 field.card.here,Location after helper name; pet physically sits on selected soil,sitting here,sedí tady,new,h5fb6bd7b
 field.card.nearby,Location after helper name; reaches selected soil from elsewhere on own field,nearby,poblíž,new,hba901575
 field.card.noHelp,Soil card: no Tending or Pest control reaches selected soil,No pet is helping this soil yet.,Tomuhle políčku zatím žádný mazlíček nepomáhá.,new,h8081abc3
-field.card.resident,Soil card heading; Move and Return to pets apply only to this resident,Pet sitting here,Mazlíček na tomhle políčku,new,haa8a7e49
+field.card.resident,Soil card heading; Move and Take off field apply only to this resident,Pet sitting here,Mazlíček na tomhle políčku,new,haa8a7e49
 field.card.noResident,Selected soil can have help from neighbours without a resident,No pet is sitting here.,Tady žádný mazlíček nesedí.,new,h6053921f
 field.petPicker.full,Capacity banner; existing field pets remain movable when full,All field slots are in use. You can still move a pet already on your field. Manage slots in Pets.,"Všechna místa pro mazlíčky na poli jsou obsazená. Mazlíčka, který už na poli je, můžeš přesunout. Místa spravuješ v panelu Mazlíčci.",new,h655165ed
 field.petPicker.fromField,"Pet picker current location, no numbered square",Working elsewhere on your field,Pracuje jinde na tvém poli,new,h009adef9
@@ -593,3 +593,6 @@ field.petPicker.rest,Consequence for resting pet when capacity is available,Will
 field.hand.cancel,"Always visible while holding a pet, cancels preview without moving or unequipping",Cancel,Zrušit,new,ha96c5cb1
 field.hand.place,"Placement strip for a pet not on field; {pet} = name/kind, nominative after colon in Czech",Placing {pet} · Choose a spot,Umístění: {pet} · Vyber místo,new,h014462b8
 field.hand.placing,"Submitted pet placement, awaiting server result; Cancel hidden until answer",Placing…,Umisťování…,new,h1600f3d9
+field.card.title,Selected soil dialog title; crop and pet controls are in labelled groups,This spot,Tohle místo,new,h2b31d9c5
+field.card.cropGroup,Soil dialog group-box legend enclosing crop status and Plant or Harvest,Crop,Plodina,new,h0bb43346
+field.card.petsGroup,"Soil dialog group-box legend enclosing help, resident and pet controls",Pets,Mazlíčci,new,he7accae6

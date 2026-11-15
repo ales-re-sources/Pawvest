@@ -322,7 +322,7 @@ return {
 	["field.card.harvest"] = "Harvest",
 	["field.card.placePet"] = "Place pet",
 	["field.card.movePet"] = "Move pet",
-	["field.card.takeBack"] = "Return to pets",
+	["field.card.takeBack"] = "Take off field",
 	["field.card.buy"] = "Buy square",
 	["field.card.moving"] = "Moving {pet} · Choose a spot",
 	["field.hand.pickSeed"] = "Choose a seed",
@@ -508,4 +508,7 @@ return {
 	["field.hand.cancel"] = "Cancel",
 	["field.hand.place"] = "Placing {pet} · Choose a spot",
 	["field.hand.placing"] = "Placing…",
+	["field.card.title"] = "This spot",
+	["field.card.cropGroup"] = "Crop",
+	["field.card.petsGroup"] = "Pets",
 }

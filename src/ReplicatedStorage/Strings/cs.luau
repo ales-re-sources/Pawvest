@@ -322,7 +322,7 @@ return {
 	["field.card.harvest"] = "Sklidit",
 	["field.card.placePet"] = "Umístit mazlíčka",
 	["field.card.movePet"] = "Přesunout",
-	["field.card.takeBack"] = "Vrátit mezi mazlíčky",
+	["field.card.takeBack"] = "Vzít z pole",
 	["field.card.buy"] = "Koupit políčko",
 	["field.card.moving"] = "Přesun: {pet} · Vyber místo",
 	["field.hand.pickSeed"] = "Vyber semínko",
@@ -508,4 +508,7 @@ return {
 	["field.hand.cancel"] = "Zrušit",
 	["field.hand.place"] = "Umístění: {pet} · Vyber místo",
 	["field.hand.placing"] = "Umisťování…",
+	["field.card.title"] = "Tohle místo",
+	["field.card.cropGroup"] = "Plodina",
+	["field.card.petsGroup"] = "Mazlíčci",
 }

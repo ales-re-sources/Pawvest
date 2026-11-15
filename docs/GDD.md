@@ -605,8 +605,9 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   from Cuteness).
 - **Acting on a square (U3a).** No prompts on the field (the incubators keep theirs). A tap / click on a square of the own field (within 40
   studs of the plot centre; the server allows 45) outlines it in white and slides the **square card** up from the bottom: crop icon and
-  name, growth progress / boosts and Plant / Harvest. **Helping this soil** shows plain text for the strongest effect per job and its
-  pet (sitting here / nearby); **Pet sitting here** has the resident portrait/name and Move / Return to pets. Coverage and assignment
+  name, growth progress / boosts and Plant / Harvest. The Crop and Pets group boxes enclose their respective controls (2026-11-15).
+  **Helping this soil** shows plain text for the strongest effect per job and its
+  pet (sitting here / nearby); **Pet sitting here** has the resident portrait/name and Move / Take off field. Coverage and assignment
   are separate so those controls have an unambiguous target (2026-11-14). With no resident, Place pet opens **Choose a pet for this spot**:
   field slots used, job/reach, origin and consequence; every eligible row uses **Place pet**, including followers. Capacity blocks before
   the following explanation; field pets reuse their slot. The server validates first, then unequips and assigns together. No square

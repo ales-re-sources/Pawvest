@@ -322,7 +322,7 @@ return {
 	["field.card.harvest"] = "[!! Hářvěšť ~~~ !!]",
 	["field.card.placePet"] = "[!! Pláčě pěť ~~~~ !!]",
 	["field.card.movePet"] = "[!! Mövě pěť ~~~ !!]",
-	["field.card.takeBack"] = "[!! Řěťůřň ťö pěťš ~~~~~~ !!]",
+	["field.card.takeBack"] = "[!! Ťákě öff fíělď ~~~~~~ !!]",
 	["field.card.buy"] = "[!! Bůý šqůářě ~~~~ !!]",
 	["field.card.moving"] = "[!! Mövíňg {pet} · Čhööšě á špöť ~~~~~~~~~ !!]",
 	["field.hand.pickSeed"] = "[!! Čhööšě á šěěď ~~~~~ !!]",
@@ -508,4 +508,7 @@ return {
 	["field.hand.cancel"] = "[!! Čáňčěl ~~ !!]",
 	["field.hand.place"] = "[!! Pláčíňg {pet} · Čhööšě á špöť ~~~~~~~~~~ !!]",
 	["field.hand.placing"] = "[!! Pláčíňg… ~~~ !!]",
+	["field.card.title"] = "[!! Ťhíš špöť ~~~~ !!]",
+	["field.card.cropGroup"] = "[!! Čřöp ~~ !!]",
+	["field.card.petsGroup"] = "[!! Pěťš ~~ !!]",
 }

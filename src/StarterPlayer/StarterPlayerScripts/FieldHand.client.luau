@@ -4,7 +4,7 @@
 --     or the field's plane picks a square; it gets a white outline and the square card slides up at the bottom. Tapping the
 --     selected square again, or off the field, closes the card; so does walking away;
 --   * square card: crop icon and name (or empty / overgrown), a progress bar with the time left (ripe: full, "Ripe!"), the
---     growth boosts, non-clickable strongest-job coverage and a separate resident section with Move / Return to pets;
+--     Crop / Pets group boxes, non-clickable strongest-job coverage and a resident section with Move / Take off field;
 --     the pet picker shows capacity, origin/consequence and a Place pet button for resting, field and equipped pets;
 --   * a placed pet's reach is tinted for REACH_SECONDS (GardenView.ShowReach), as is the reach of a row hovered in the pet picker;
 --   * hand bar (U3b, shown while the tap range applies; a 2 x 2 block above the jump button on a touch screen without a keyboard,
@@ -27,7 +27,8 @@
 -- clear of the thumbstick and the jump button (TOUCH_SIDE on each side); it sits above FieldClient's Field button.
 -- FieldHandGui attributes: Select = square selects it as a tap would (test hook, cleared after use); HoldPet = uid takes that
 -- pet in hand in Pets mode (the pet page's "Place on field", cleared after use); HandShown (set here) = whether the bar shows.
--- Buttons: Card.Body.Buttons.<Plant|Harvest|Buy>, .Resident.Buttons.<PlacePet|MovePet|TakeBack>, .Header.Close;
+-- Buttons: Card.Body.CropGroup.Content.Buttons.<Plant|Harvest>, .PetsGroup.Content.Resident.Buttons.<PlacePet|MovePet|TakeBack>;
+-- locked square .Body.Buttons.Buy; .Body.Header.Close;
 -- pet picker .Body.List.Pet_<uid>.PlacePet; HandBar.<Seeds|Basket|Pets|Look>; Placement.<Hint|Cancel>.
 
 local Players = game:GetService("Players")
@@ -89,6 +90,8 @@ local LIST_MAX = 300 -- px: the pickers' list scrolls beyond this
 
 local COLOR_PANEL = StudStyle.PanelColors.Field
 local COLOR_ROW = StudStyle.PetRowColor(COLOR_PANEL)
+local COLOR_GROUP = StudStyle.Shade(COLOR_PANEL, 0.35)
+local COLOR_GROUP_BORDER = StudStyle.Shade(COLOR_PANEL, 0.8)
 local COLOR_GO = StudStyle.Colors.Green
 local COLOR_PET = StudStyle.Colors.Blue
 local COLOR_OFF = StudStyle.Colors.Grey
@@ -291,6 +294,13 @@ local function cardWidth(): number
 	if UserInputService.TouchEnabled and handBar and handBar.Visible then
 		side = math.max(side, viewport - handBar.AbsolutePosition.X + GAP) -- clear of the 2 x 2 bar above the jump button
 	end
+	if UserInputService.TouchEnabled then
+		local hud = player.PlayerGui:FindFirstChild("ScreenGui")
+		local score = hud and hud:FindFirstChild("ScorePanel")
+		if score and score:IsA("GuiObject") and score.Visible and score.AbsoluteSize.X > 0 then
+			side = math.max(side, viewport - score.AbsolutePosition.X + GAP) -- keep the close button clear of the stage HUD
+		end
+	end
 	return math.floor(math.max(200, math.min(CARD_WIDTH, viewport - 2 * side)))
 end
 
@@ -336,7 +346,7 @@ local function header(title: string, onClose: () -> ())
 end
 
 -- the progress bar with the time left inside
-local function bar(order: number)
+local function bar(order: number, parent: Instance?)
 	local _, fill, text = UiKit.Bar("Bar", {
 		order = order,
 		height = 30,
@@ -346,7 +356,7 @@ local function bar(order: number)
 		text = "",
 		textSize = 18,
 		textStroke = 0.3,
-		parent = body,
+		parent = parent or body,
 	})
 	barFill, barText = fill, text
 end
@@ -385,6 +395,45 @@ local function buttonRow(order: number, specs, parent: Instance?)
 	return row
 end
 
+-- The legend interrupts the border; everything inside a group, including its buttons, shares the inset surface.
+local function groupBox(name: string, order: number, key: string): Frame
+	local group = create("Frame", {
+		Name = name,
+		LayoutOrder = order,
+		Size = UDim2.new(1, 0, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		BackgroundTransparency = 1,
+		Parent = body,
+	})
+	local content = UiKit.Section("Content", 1, GAP)
+	content.Position = UDim2.fromOffset(0, 12)
+	content.BackgroundTransparency = 0
+	content.BackgroundColor3 = COLOR_GROUP
+	content.BorderSizePixel = 0
+	content.Parent = group
+	create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = content })
+	create("UIStroke", { ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = COLOR_GROUP_BORDER, Thickness = 1, Parent = content })
+	create("UIPadding", {
+		PaddingTop = UDim.new(0, 16), PaddingBottom = UDim.new(0, 12),
+		PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10), Parent = content,
+	})
+	local legend = label("Legend", {
+		Position = UDim2.fromOffset(12, 0),
+		Size = UDim2.fromOffset(0, 24),
+		AutomaticSize = Enum.AutomaticSize.X,
+		BackgroundTransparency = 0,
+		BackgroundColor3 = StudStyle.Shade(COLOR_PANEL, 0.42),
+		BorderSizePixel = 0,
+		TextColor3 = COLOR_INFO,
+		TextSize = 18,
+		Text = Locale.T(key),
+		ZIndex = 2,
+		Parent = group,
+	})
+	create("UIPadding", { PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6), Parent = legend })
+	return content
+end
+
 local render -- forward
 local hold -- forward: (uid, square?) takes a pet in hand (Pets mode)
 local renderBar -- forward
@@ -394,6 +443,7 @@ local submitPlacement -- forward
 
 local function closeCard()
 	selected, page, cardOpen = nil, "card", false
+	renderBar()
 	if not held then
 		GardenView.ShowSelect(nil)
 		GardenView.ShowReach(nil)
@@ -411,9 +461,9 @@ local function closeCard()
 end
 
 -- Coverage is information, separate from the pet physically sitting here. Only the strongest effect per job applies.
-local function petRows(square: number, order: number)
+local function petRows(square: number, order: number, parent: Instance)
 	local holder = UiKit.Section("Helping", order)
-	holder.Parent = body
+	holder.Parent = parent
 	paragraph("Heading", 1, { Font = StudStyle.Font, TextSize = 17, Text = Locale.T("field.card.helping") }).Parent = holder
 	local open = openSet()
 	local statePets = (fieldState and fieldState.pets) or {}
@@ -514,19 +564,24 @@ local function renderCard()
 	local entry = fieldState.squares and fieldState.squares[tostring(square)]
 	local crop = entry and CropConfig.ById[entry.crop]
 	local pet = (fieldState.pets or {})[tostring(square)]
-	header(if crop then GardenUi.CropTitle(crop) else Locale.T("field.card.empty"), closeCard)
+	header(Locale.T("field.card.title"), closeCard)
+	local cropGroup = groupBox("CropGroup", 2, "field.card.cropGroup")
+	paragraph("Title", 1, {
+		Font = StudStyle.Font, TextSize = 18, TextColor3 = Color3.new(1, 1, 1),
+		Text = if crop then GardenUi.CropTitle(crop) else Locale.T("field.card.empty"),
+	}).Parent = cropGroup
 	local ripe = false
 	if crop then
-		bar(2)
+		bar(2, cropGroup)
 		local _, isRipe = progress(entry, crop, workspace:GetServerTimeNow())
 		ripe = isRipe
 		cardRipe = ripe
 		local boosts = boostLine()
 		if boosts and not ripe then
-			paragraph("Boosts", 3, { TextSize = 14, Text = boosts }).Parent = body
+			paragraph("Boosts", 3, { TextSize = 14, Text = boosts }).Parent = cropGroup
 		end
 	else
-		paragraph("Hint", 3, { TextSize = 15, Text = Locale.T("field.card.emptyHint") }).Parent = body
+		paragraph("Hint", 3, { TextSize = 15, Text = Locale.T("field.card.emptyHint") }).Parent = cropGroup
 	end
 	local specs = {}
 	if not crop then
@@ -540,12 +595,25 @@ local function renderCard()
 		end })
 	end
 	if #specs > 0 then
-		buttonRow(4, specs)
+		buttonRow(4, specs, cropGroup)
 	end
-	petRows(square, 5)
-	local resident = UiKit.Section("Resident", 6)
-	resident.Parent = body
-	paragraph("Heading", 1, { Font = StudStyle.Font, TextSize = 17, Text = Locale.T("field.card.resident") }).Parent = resident
+	local petsGroup = groupBox("PetsGroup", 3, "field.card.petsGroup")
+	petRows(square, 1, petsGroup)
+	create("Frame", {
+		Name = "Divider", LayoutOrder = 2, Size = UDim2.new(1, 0, 0, 1),
+		BackgroundColor3 = COLOR_GROUP_BORDER, BorderSizePixel = 0, Parent = petsGroup,
+	})
+	paragraph("ResidentHeading", 3, { Font = StudStyle.Font, TextSize = 17, Text = Locale.T("field.card.resident") }).Parent = petsGroup
+	local resident = UiKit.Section("Resident", 4)
+	resident.BackgroundTransparency = 0
+	resident.BackgroundColor3 = COLOR_ROW
+	resident.BorderSizePixel = 0
+	resident.Parent = petsGroup
+	create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = resident })
+	create("UIPadding", {
+		PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8),
+		PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), Parent = resident,
+	})
 	specs = {}
 	if pet then
 		local row = GardenUi.Row(resident, "Pet", 2, COLOR_ROW)
@@ -767,6 +835,7 @@ end
 local function showCard()
 	cardOpen = true
 	render()
+	renderBar()
 	if not card.Visible then
 		card.Visible = true
 		card.Position = UDim2.new(0.5, 0, 1, 400)
@@ -1038,7 +1107,7 @@ function renderBar()
 		text = Locale.T("field.hand.look")
 	end
 	handHint.Text = text
-	handHint.Visible = text ~= "" and not held
+	handHint.Visible = text ~= "" and not held and not cardOpen
 	placementStrip.Visible = held ~= nil and handBar.Visible
 	placementText.Text = text
 	cancelPlacement.Visible = placing == nil
