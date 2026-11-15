@@ -251,6 +251,7 @@ local card = create("Frame", {
 	Position = UDim2.new(0.5, 0, 1, 400),
 	Size = UDim2.fromOffset(CARD_WIDTH, 0),
 	AutomaticSize = Enum.AutomaticSize.None,
+	Active = true, -- blank areas must consume world input too
 	Visible = false,
 	Parent = screenGui,
 })
@@ -260,6 +261,7 @@ local body = create("ScrollingFrame", {
 	Size = UDim2.fromScale(1, 1),
 	CanvasSize = UDim2.new(),
 	AutomaticCanvasSize = Enum.AutomaticSize.Y,
+	Active = true,
 	ScrollBarThickness = 4,
 	BorderSizePixel = 0,
 	BackgroundTransparency = 1,
@@ -861,8 +863,21 @@ end
 local rayParams = RaycastParams.new()
 rayParams.FilterType = Enum.RaycastFilterType.Include
 
+-- Non-button frames and labels are UI too. Check both tap and hover paths before raycasting the field.
+local function overFieldUi(point: Vector2): boolean
+	for _, object in player.PlayerGui:GetGuiObjectsAtPosition(point.X, point.Y) do
+		if object:IsDescendantOf(screenGui) then
+			return true
+		end
+	end
+	return false
+end
+
 -- The own square under screen point `point` (InputObject / TouchTapInWorld coordinates), or nil.
 local function squareUnder(point: Vector2): number?
+	if overFieldUi(point) then
+		return nil
+	end
 	local camera = workspace.CurrentCamera
 	local plot = GardenConfig.PlotOf(player)
 	local root = GardenView.OwnRoot()
@@ -907,6 +922,7 @@ local MODE_COLORS = { seeds = COLOR_GO, basket = Color3.fromRGB(205, 140, 60), p
 
 handBar = create("Frame", {
 	Name = "HandBar",
+	Active = true,
 	AnchorPoint = Vector2.new(1, 1),
 	BackgroundTransparency = 1,
 	Visible = false,
@@ -928,6 +944,7 @@ local handHint = label("Hint", {
 })
 local placementStrip = create("Frame", {
 	Name = "Placement",
+	Active = true,
 	AnchorPoint = Vector2.new(1, 1),
 	Position = UDim2.new(1, 0, 0, -HINT_GAP),
 	Size = UDim2.fromOffset(400, 0),
@@ -1265,7 +1282,7 @@ local function handTap(square: number, touch: boolean): boolean
 end
 
 local function onTap(point: Vector2, touch: boolean)
-	if placing or not (fieldState and inRange()) then
+	if overFieldUi(point) or placing or not (fieldState and inRange()) then
 		return
 	end
 	local square = squareUnder(point)
@@ -1299,19 +1316,23 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if input.UserInputType == Enum.UserInputType.Touch then
 		mouseAt = nil -- a touch screen: no hover, the brackets follow the character
 	end
-	if input.UserInputType == Enum.UserInputType.MouseButton1 and not gameProcessed then
-		pressAt = Vector2.new(input.Position.X, input.Position.Y)
-		pressClock = os.clock()
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		pressAt = nil
+		local point = Vector2.new(input.Position.X, input.Position.Y)
+		if not gameProcessed and not overFieldUi(point) then
+			pressAt = point
+			pressClock = os.clock()
+		end
 	end
 end)
-UserInputService.InputEnded:Connect(function(input)
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
 	if input.UserInputType ~= Enum.UserInputType.MouseButton1 or not pressAt then
 		return
 	end
 	local point = Vector2.new(input.Position.X, input.Position.Y)
 	local start = pressAt
 	pressAt = nil
-	if (point - start).Magnitude <= TAP_PIXELS and os.clock() - pressClock <= TAP_SECONDS then
+	if not gameProcessed and (point - start).Magnitude <= TAP_PIXELS and os.clock() - pressClock <= TAP_SECONDS then
 		onTap(point, false)
 	end
 end)
