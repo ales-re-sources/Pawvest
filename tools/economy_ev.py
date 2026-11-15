@@ -13,7 +13,8 @@ built on the EV rules the user decided on 2026-11-07:
   * pets: Cuteness (Coin multiplier), Tending, Scouting (XP from timer seconds), Pest-control guards;
   * a Spender archetype for the monetization headroom.
 Every number in CAND is a candidate for the user's review (the proposal table); the CropConfig crops keep their ids, the rest are placeholders.
-The checks G1-G9, B, B2, C read the simulation (ECONOMY.md -> "EV checks").
+The checks G1-G12, R, B, B2, C, U read the simulation (ECONOMY.md -> "EV checks"). EV3a: CAND["mode"] "stars" (crop levels, quests, crop
+points, sinks on Coins alone) or "renown" (the game as built).
 """
 import bisect
 import math
@@ -40,7 +41,54 @@ CAND = {
     "v1": 2500.0,  # net Coins per square-hour of growth of the first crop
     "r": 1.20,  # each next crop: x r net per square-hour
     "seed_frac": 0.25,
-    # Renown: points per harvest = max(1, round(pts_a x minutes^pts_b)); level L needs K x L^P points; crop k needs level crop_gate[k]
+    # EV3 (draft 2026-11-14): "stars" = crop levels replace Renown; "renown" = the game as built until EV3b (kept for the old -> new table
+    # and EV0's comparison with the configs)
+    "mode": "stars",
+    # crop levels (EV3a): XP = grow minutes of every harvest of that crop. Star 1 (the unlock pace) needs star1(k) = round(star_n0 x
+    # star_g^k) square-harvests x its grow minutes; star L > 1 needs star1 + star_u x minutes^star_b x (L - 1)^star_p in all (a star of a long
+    # crop costs less than its grow time suggests: long crops grow overnight, short ones in sessions). The next crop opens at the previous
+    # one's star 1, a milestone by its quest.
+    "star_n0": 12, "star_g": 1.05, "star_u": 40.0, "star_b": 0.7, "star_p": 1.5,
+    # each star = one point in Value (sale x), Size (size factor x) or Speed (grow time x); pt_cap per line, so 3 x pt_cap stars per crop.
+    # The draft's first cut (+10 % / +10 % / -6 %) made a maxed crop x3.7 per square-hour (~7 steps); the cap is 2-3 steps (check U).
+    # At 3 steps (+3 % / +3 % / -3 %) the extra income bought the shop out early (G5, C, G8, B2 failed): about 2 steps
+    "pt_cap": 5, "pt_value": 0.02, "pt_size": 0.02, "pt_speed": 0.025,
+    "pt_order": ("Value", "Speed", "Size"),  # policy: Value first
+    "chase": 0.5,  # policy: just enough squares of the newest crop to fill its star 1, while it earns >= chase x the best crop's rate
+    # milestone quests (taken at once from the barn, EV2b's TakeCrops); quest_star: the quest opens only at the previous crop's star 1
+    # (False: as soon as the previous crop is unlocked; the strict chain made a 3-4 h crop come days later for a 2-visit player, G2)
+    "quest_star": False,
+    # (about one partial field harvest: 15 Broccoli + 15 Pepper took Casual ~2.5 days and ~615 000 Coins of sales; Broccoli in the Pumpkin
+    # quest kept 2 h crops on a weekly player's squares through its first session, G1)
+    "quests": {"Corn": {"FP5": 6, "FP3": 10}, "Pumpkin": {"FP6": 5, "Corn": 8}, "GiantMelon": {"FP10": 4, "FP9": 5}},
+    # unlock rule (EV3a comparison, 2026-11-14): "price" = no unlock: every crop is in the stall from the start and its seed price paces
+    # it (the genre's way; a crop counts as "opened" at its first harvest, quests off); "chain" = a crop opens at the previous one's
+    # star 1 (the draft); "total" = at a total of
+    # crop XP over all crops (one bar on the next locked seed: growing anything counts; a fixed Renown without the word), total_k x
+    # gate^renown_p with the as-built gate ladder (crop_gate); "hybrid" = chain up to ladder index hybrid_k, total after. Milestones keep
+    # their quest in every rule (opened by the rule, taken from the barn).
+    # price_quests (price rule only): the milestone quests gate groups (Potato-Cucumber, Corn-Broccoli, Pumpkin-Sweet potato, Giant
+    # melon-Pineapple: garden levels); inside a group the price paces
+    "price_quests": False,
+    # "stall" (2026-11-15, the genre's rotating shop): no unlock, every crop is sold in a stall that restocks every stall_every seconds
+    # (the same stock on every server, counts per player; a missed restock is gone). The staples (ladder index < stall_staples) are always
+    # in stock; crop k above them shows with chance stall_p0 x stall_pd^(k - staples), 1..round(stall_n0 x stall_nd^(k - staples)) seeds.
+    # Bought seeds wait in the seed bag (non-staple seeds: at most stall_bag x open squares and one field of a kind, bundle / request
+    # crops on top).
+    "stall_every": 600, "stall_staples": 4, "stall_p0": 0.7, "stall_pd": 0.7, "stall_n0": 4.0, "stall_nd": 0.85, "stall_bag": 2.0,
+    # the stall rule's trees (replace "trees"): timers from a session to a day, the overnight hook the stall's random bag cannot give
+    "stall_trees": [("Tree1", 6, 3, 1800, 300, 4, 6), ("Tree2", 10, 3, 7200, 1800, 4, 8), ("Tree3", 14, 3, 21600, 5400, 4, 10),
+                    ("Tree4", 18, 3, 43200, 10800, 4, 12), ("Tree5", 22, 3, 86400, 21600, 4, 14), ("Tree6", 26, 3, 86400, 21600, 4, 16)],
+    "unlock": "chain", "total_k": 0.8, "hybrid_k": 5, "total_rare": True,  # total_rare: rare crops' growing time counts toward the total
+    "crows_from": "FP3",  # crows and the market cart's taste start with the Garlic unlock (were Renown 3)
+    # first clears of the Tutorial and World 1 (EV3 rule 6): stage key -> (finish + medal Coins, seed pack size, up to crop): the pack holds
+    # seeds of the newest unlocked crop up to that one (a locked crop's seeds would skip its unlock; "the newest" alone paid a late
+    # Garden main clear ~44 000 in Pumpkin seeds). Challenge coins unchanged; a stage not listed pays as built (StageConfig).
+    # As built (finish + medals): Tutorial 750, Stage1-5 1 125 / 1 500 / 1 875 / 2 250 / 2 625.
+    "obby_first": {"Tutorial": (250, 4, "FP3"), "Stage1": (600, 4, "FP4"), "Stage2": (800, 4, "FP4"), "Stage3": (1000, 4, "FP4"),
+                   "Stage4": (1250, 4, "FP4"), "Stage5": (1500, 4, "FP4")},
+    # Renown (the game as built): points per harvest = max(1, round(pts_a x minutes^pts_b)); level L needs K x L^P points; crop k needs
+    # level crop_gate[k]
     "pts_a": 4.0, "pts_b": 0.5,
     "renown_k": 0.4, "renown_p": 3.0,
     "crop_gate": [0, 1, 2, 3, 4, 5, 6, 8, 11, 15, 20, 26, 33, 42, 54, 68],
@@ -147,8 +195,12 @@ def build(c=None):
         sd = max(1, nice(sale * seed))
         pts = max(1, round(c["pts_a"] * (secs / 60.0) ** c["pts_b"]))
         crops.append({"k": k, "id": cid, "t": float(secs), "sale": sale, "seed": sd, "net": sale - sd, "pts": pts, "gate": c["crop_gate"][k],
-                      "v": v, "rare": False})
+                      "v": v, "rare": False, "star1": round(c["star_n0"] * c["star_g"] ** k) * secs / 60.0,
+                      "quest": dict(c["quests"].get(cid, {})), "total_need": c["total_k"] * c["crop_gate"][k] ** c["renown_p"]})
     M["crops"] = crops
+    M["mode"] = c["mode"]
+    M["by_id"] = {cr["id"]: cr for cr in crops}
+    M["levels"] = 3 * c["pt_cap"]
     rares = {}
     for cid, world, secs, sale, pts in c["rare"]:
         rares[world] = {"k": None, "id": cid, "t": float(secs), "sale": sale, "seed": 0, "net": sale, "pts": pts,
@@ -168,7 +220,7 @@ def build(c=None):
     for i in range(32):
         items.append({"name": f"Square {5 + i}", "fam": "Square", "lvl": i + 1, "price": sq[i], "gate": M["sq_gate"][i], "group": "field"})
     trees = []
-    for tid, j, n, t0, f, cap, at in c["trees"]:
+    for tid, j, n, t0, f, cap, at in (c["stall_trees"] if c["mode"] == "stars" and c["unlock"] == "stall" else c["trees"]):
         v = c["tree_mult"] * c["v1"] * c["r"] ** (at - 1)
         fruit = round(v * f / H)
         trees.append({"id": tid, "t0": float(t0), "f": float(f), "cap": cap, "fruit": fruit, "pts": crops[at - 1]["pts"]})
@@ -214,6 +266,34 @@ def renown_level(M, pts):
     return int((max(pts, 0.0) / c["renown_k"]) ** (1 / c["renown_p"]) + 1e-9)
 
 
+def star_need(crop, L, c):
+    """XP (grow minutes) a crop needs in all for star L: star1 (the unlock pace), then star_u x minutes^star_b x (L - 1)^star_p."""
+    if L <= 1:
+        return crop["star1"] * L
+    return crop["star1"] + c["star_u"] * (crop["t"] / 60.0) ** c["star_b"] * (L - 1) ** c["star_p"]
+
+
+def pt_mults(pts, c):
+    """(sale multiplier, grow-time multiplier) of a crop's points {"Value", "Size", "Speed"}."""
+    return (1 + c["pt_value"] * pts["Value"]) * (1 + c["pt_size"] * pts["Size"]), 1 - c["pt_speed"] * pts["Speed"]
+
+
+def maxed_mult(c, seed_frac=None):
+    """Net Coins per square-hour of a maxed crop against the same crop fresh (seed price unchanged)."""
+    s = c["seed_frac"] if seed_frac is None else seed_frac
+    a, g = pt_mults({"Value": c["pt_cap"], "Size": c["pt_cap"], "Speed": c["pt_cap"]}, c)
+    return (a - s) / (1 - s) / g
+
+
+def first_clear_coins(M, s):
+    """Finish + medal Coins of a stage's first clear and its seed pack (EV3 rule 6 in stars mode; as built otherwise)."""
+    P = M["P"]
+    o = M["c"]["obby_first"].get(s["key"]) if M["mode"] == "stars" else None
+    if o is None:
+        return E.first_finish(P, s) + E.stage_medal_total(P, s), 0, None
+    return o[0], o[1], o[2]
+
+
 # --------------------------------------------------------------------------------------------------------------------
 # One player.
 # --------------------------------------------------------------------------------------------------------------------
@@ -247,6 +327,23 @@ class Sim:
         self.egg_fund = self.food_fund = 0.0
         self.pts = 0.0
         self.level = 0
+        self.stars_on = M["mode"] == "stars"
+        self.price_rule = M["mode"] == "stars" and M["c"]["unlock"] in ("price", "stall")
+        self.stall_on = self.price_rule and M["c"]["unlock"] == "stall"
+        self.bag = {}  # stall: ladder index -> seeds bought, not planted yet
+        self.stall_slot, self.stall_left = -1, {}
+        self.first_seed_t = {}  # stall: ladder index -> first purchase of its seeds (news, G7)
+        self.unl = {0}  # ladder indexes the player may plant
+        if self.price_rule:
+            self.unl = set(self.group_from(0))
+        self.xp = {cr["k"]: 0.0 for cr in M["crops"]}
+        self.xp_total = 0.0  # crop XP over all crops (the "total" unlock rule)
+        self.star = {cr["k"]: 0 for cr in M["crops"]}
+        self.cpts = {cr["k"]: {"Value": 0, "Size": 0, "Speed": 0} for cr in M["crops"]}
+        self.star_t = []  # (t, ladder index, star)
+        self.quest_t = {}  # ladder index -> time its quest was done
+        self.harv = {}  # day -> [square-harvests, of crops >= 3 steps below the newest unlocked]
+        self.clear_log = []  # (t, stage key, Coins + seed pack value, the farm's online Coins per minute)
         self.lvl = {"Growth": 0, "Barn": 0, "Sorter": 0, "Cloches": 0, "Shears": 0, "FieldSlot": 1, "EquipSlot": 1, "Incubator": 1, "Square": 0}
         self.open_sq = 4
         self.batches = []  # {"crop", "n", "need", "grown", "at", "ready"}
@@ -449,17 +546,132 @@ class Sim:
         return (1 + s) * (1 + sh)
 
     def unlocked(self):
-        return [c for c in self.M["crops"] if c["gate"] <= self.level]
+        return [c for c in self.M["crops"] if c["k"] in self.unl]
+
+    def group_from(self, k):
+        """Ladder indexes from k up to the next milestone (price rule with quests), or to the top."""
+        out, crops = [k], self.M["crops"]
+        while out[-1] + 1 < len(crops) and not (self.c["price_quests"] and crops[out[-1] + 1]["quest"]):
+            out.append(out[-1] + 1)
+        return out
+
+    def newest(self):
+        """Ladder index of the newest crop the player has (price rule: the newest one harvested)."""
+        return max(self.unlock_t) if self.price_rule else max(self.unl)
+
+    def known(self):
+        """Crops the player knows: unlocked ones, or (price rule) ones harvested at least once."""
+        if self.price_rule:
+            return [c for c in self.M["crops"] if c["k"] in self.unlock_t]
+        return self.unlocked()
+
+    def unlock(self, t, k):
+        if self.price_rule:  # a milestone opens its group; "opened" stays the first harvest
+            self.unl |= set(self.group_from(k))
+            return
+        if k not in self.unl:
+            self.unl.add(k)
+            self.unlock_t.setdefault(k, t)
 
     def add_points(self, t, pts):
+        """Renown (the game as built): in "renown" mode its levels unlock crops; in "stars" mode it is only counted."""
         self.pts += pts
         lv = renown_level(self.M, self.pts)
         while self.level < lv:
             self.level += 1
             self.level_t.append(t)
-            for c in self.M["crops"]:
-                if c["gate"] == self.level and c["k"] not in self.unlock_t:
-                    self.unlock_t[c["k"]] = t
+            if not self.stars_on:
+                for c in self.M["crops"]:
+                    if c["gate"] == self.level:
+                        self.unlock(t, c["k"])
+
+    # ---- crop levels (EV3) -------------------------------------------------------------------------------------
+    def add_xp(self, t, crop, n):
+        """A harvest of n squares: XP = grow minutes; a star gives a point (Value first); star 1 opens the next crop unless it is a
+        milestone (a quest)."""
+        if not self.stars_on or n <= 0:
+            return
+        if crop["rare"]:  # no level of its own; its growing time counts toward the total when total_rare is on
+            if self.c["total_rare"]:
+                self.xp_total += n * crop["t"] / 60.0
+                self.total_unlocks(t)
+            return
+        k = crop["k"]
+        self.xp[k] += n * crop["t"] / 60.0
+        self.xp_total += n * crop["t"] / 60.0
+        self.total_unlocks(t)
+        while self.star[k] < self.M["levels"] and self.xp[k] >= star_need(crop, self.star[k] + 1, self.c) - 1e-9:
+            self.star[k] += 1
+            self.star_t.append((t, k, self.star[k]))
+            for line in self.c["pt_order"]:
+                if self.cpts[k][line] < self.c["pt_cap"]:
+                    self.cpts[k][line] += 1
+                    break
+            nxt = k + 1
+            if self.star[k] == 1 and nxt < len(self.M["crops"]) and not self.M["crops"][nxt]["quest"] and self.chain_rule(nxt):
+                self.unlock(t, nxt)
+
+    def chain_rule(self, k):
+        """Does crop k open at the previous crop's star 1 (else at a crop XP total)?"""
+        u = self.c["unlock"]
+        if u in ("price", "stall"):
+            return False
+        return u == "chain" or (u == "hybrid" and k <= self.c["hybrid_k"])
+
+    def total_unlocks(self, t):
+        """The "total" rule: the next crops open in ladder order while the crop XP total reaches theirs (a milestone waits for its quest)."""
+        while True:
+            k = max(self.unl) + 1
+            if k >= len(self.M["crops"]) or self.chain_rule(k):
+                return
+            crop = self.M["crops"][k]
+            if crop["quest"] or self.xp_total < crop["total_need"]:
+                return
+            self.unlock(t, k)
+
+    def open_quest(self):
+        """The milestone crop whose quest is open (the next crop to unlock; with quest_star the previous crop needs star 1), or None."""
+        if not self.stars_on:
+            return None
+        k = max(self.unl) + 1
+        if k >= len(self.M["crops"]):
+            return None
+        crop = self.M["crops"][k]
+        if not crop["quest"]:
+            return None
+        if self.price_rule:
+            return crop  # open as soon as the group below is open
+        if not self.chain_rule(k):
+            return crop if self.xp_total >= crop["total_need"] else None
+        return crop if not self.c["quest_star"] or self.star[k - 1] >= 1 else None
+
+    def try_quest(self, t):
+        crop = self.open_quest()
+        if crop is None:
+            return False
+        if any(self.kept.get(cid, 0) < n for cid, n in crop["quest"].items()):
+            return False
+        for cid, n in crop["quest"].items():
+            self.kept[cid] -= n
+        self.quest_t[crop["k"]] = t
+        self.unlock(t, crop["k"])
+        return True
+
+    def sale_of(self, crop):
+        """A crop's sale with its Value and Size points (rare crops have none)."""
+        if not self.stars_on or crop["rare"]:
+            return crop["sale"]
+        return crop["sale"] * pt_mults(self.cpts[crop["k"]], self.c)[0]
+
+    def grow_of(self, crop):
+        if not self.stars_on or crop["rare"]:
+            return crop["t"]
+        return crop["t"] * pt_mults(self.cpts[crop["k"]], self.c)[1]
+
+    def farm_rate(self):
+        """The farm's online Coins per minute now: every open square on the best unlocked crop, harvested the moment it ripens."""
+        best = max((self.sale_of(c) - c["seed"]) * self.sale_mult() / self.grow_of(c) for c in self.unlocked())
+        return best * self.open_sq * self.g_on * self.mult * 60.0
 
     def wanted(self):
         """Crops the player keeps instead of selling: the next talent's bundle and open crop requests -> {crop id: count}."""
@@ -469,8 +681,19 @@ class Sim:
             for k, n in nxt["crops"].items():
                 cid = self.M["crops"][k - 1]["id"]
                 want[cid] = want.get(cid, 0) + n
-            for w, n in nxt["rare_need"].items():
-                cid = self.M["rares"][w]["id"]
+        # rare crops are scarce: kept for the next level of every talent, not only the next talent (EV3a: a later crop unlock left
+        # Quick Respawn 2 first in the queue and the Frost grapes Double Jump 2 needs were sold)
+        rare = {}
+        for it in self.queue:
+            if it["fam"] == "Talent" and it["name"] not in self.bought and self.talent[it["tid"]] == it["lvl"] - 1:
+                for w, n in it["rare_need"].items():
+                    cid = self.M["rares"][w]["id"]
+                    rare[cid] = max(rare.get(cid, 0), n)
+        for cid, n in rare.items():
+            want[cid] = want.get(cid, 0) + n
+        q = self.open_quest()
+        if q:
+            for cid, n in q["quest"].items():
                 want[cid] = want.get(cid, 0) + n
         for rq in self.requests:
             if rq["type"] == "crop" and not rq["done"]:
@@ -500,8 +723,16 @@ class Sim:
             self.kept[crop["id"]] = have + keep
         sell = n - keep
         if sell:
-            self.earn(t, sell * crop["sale"] * self.sale_mult(), "rare" if crop["rare"] else "field")
+            self.earn(t, sell * self.sale_of(crop) * self.sale_mult(), "rare" if crop["rare"] else "field")
         self.add_points(t, crop["pts"] * n)
+        self.add_xp(t, crop, n)
+        if not crop["rare"]:
+            if self.price_rule:
+                self.unlock_t.setdefault(crop["k"], t)  # price rule: a crop is "opened" by its first harvest
+            h = self.harv.setdefault(self.day(t), [0, 0])
+            h[0] += n
+            if crop["k"] <= self.newest() - 3:
+                h[1] += n
         if self.first_harvest_t is None:
             self.first_harvest_t = t
         self.first_crop_t.setdefault(crop["id"], t)  # the first harvest of a crop kind is news too (G7)
@@ -510,13 +741,13 @@ class Sim:
     def rate(self, t, crop, n, bonus=True):
         """Coins per wall-clock second of a square planted with `crop` at t until the player can harvest it."""
         plant = t + n * self.c["act_s"]
-        ready = self.ready_at(plant, crop["t"])
+        ready = self.ready_at(plant, self.grow_of(crop))
         h = self.attention_after(ready) if ready < math.inf else math.inf
         if h == math.inf:
             return -1.0
-        gain = crop["net"] * self.sale_mult() * self.mult
+        gain = (self.sale_of(crop) - crop["seed"]) * self.sale_mult() * self.mult
         if bonus and self.wanted().get(crop["id"], 0) > self.kept.get(crop["id"], 0):
-            gain += crop["sale"] * (self.c["req_mult"] - 1) * self.mult  # a request crop pays the premium
+            gain += self.sale_of(crop) * (self.c["req_mult"] - 1) * self.mult  # a request crop pays the premium
         return gain / max(1.0, h - t)
 
     def choose(self, t, n, bonus=False):
@@ -531,6 +762,108 @@ class Sim:
                 best, best_rate = crop, r
         return best
 
+    def chase_bar(self, t):
+        """The unlock bar (EV3): just enough squares of the newest crop to fill its star 1 with one harvest (counting what grows), while
+        it earns at least `chase` x the best crop's rate. A maxed crop matches a fresh one 2-3 steps up, so a pure rate player would never
+        grow the newest crop and nothing would open."""
+        if not self.stars_on or self.free_sq <= 0 or not self.chain_rule(max(self.unl) + 1):
+            return
+        new = self.M["crops"][max(self.unl)]
+        if self.star[new["k"]] > 0:
+            return
+        growing = sum(b["n"] for b in self.batches if b["crop"] is new)
+        short = star_need(new, 1, self.c) - self.xp[new["k"]] - growing * new["t"] / 60.0
+        n = min(self.free_sq, math.ceil(short / (new["t"] / 60.0) - 1e-9), int(self.coins // max(1, new["seed"])))
+        if n <= 0:
+            return
+        best = self.choose(t, n)
+        if best is not new and best is not None and self.rate(t, new, n) < self.c["chase"] * self.rate(t, best, n):
+            return
+        self.spend(t, new["seed"] * n)
+        at = t + n * self.c["act_s"]
+        g = self.grow_of(new)
+        self.batches.append({"crop": new, "n": n, "need": g, "grown": 0.0, "at": at, "ready": self.ready_at(at, g)})
+        self.free_sq -= n
+
+    def stall_stock(self, slot):
+        """The stall's stock in restock slot `slot`: {ladder index: seeds} of the non-staple crops (staples are always there)."""
+        c, rng = self.c, random.Random(self.seed * 1299709 + slot * 7919 + 11)
+        out = {}
+        for crop in self.M["crops"][c["stall_staples"]:]:
+            j = crop["k"] - c["stall_staples"]
+            if rng.random() < c["stall_p0"] * c["stall_pd"] ** j:
+                out[crop["k"]] = 1 + rng.randrange(max(1, round(c["stall_n0"] * c["stall_nd"] ** j)))
+        return out
+
+    def avail(self, crop):
+        """Seeds of `crop` the player can plant now without the Coins check (math.inf = a staple, bought on planting)."""
+        if not self.stall_on or crop["k"] < self.c["stall_staples"]:
+            return math.inf
+        return self.bag.get(crop["k"], 0) + self.pouch.get(crop["id"], 0)
+
+    def take_seeds(self, t, crop, n):
+        """Pay for n seeds of `crop` at planting: pouch first, then (stall) the bag, else Coins."""
+        free = min(n, self.pouch.get(crop["id"], 0))
+        if free:
+            self.pouch[crop["id"]] -= free
+        n -= free
+        if self.stall_on and crop["k"] >= self.c["stall_staples"]:
+            self.bag[crop["k"]] -= n
+            return
+        self.spend(t, crop["seed"] * n)
+
+    def visit_stall(self, t):
+        """Stall rule: buy the current restock, rarest first, into the seed bag (keeping a staple replant)."""
+        if not self.stall_on:
+            return
+        slot = int(t // self.c["stall_every"])
+        if slot != self.stall_slot:
+            self.stall_slot, self.stall_left = slot, self.stall_stock(slot)
+        want = self.wanted()
+        keep = self.M["crops"][self.c["stall_staples"] - 1]["seed"] * self.open_sq
+        cap = self.c["stall_bag"] * self.open_sq
+        for k in sorted(self.stall_left, reverse=True):
+            crop = self.M["crops"][k]
+            left = self.stall_left[k]
+            extra = max(0, want.get(crop["id"], 0) - self.kept.get(crop["id"], 0) - self.bag.get(k, 0))
+            room = min(max(0, cap - sum(self.bag.values())), max(0, self.open_sq - self.bag.get(k, 0))) + extra  # one field of a kind
+            n = min(left, room, int(max(0.0, self.coins - keep) // max(1, crop["seed"])))
+            if n <= 0:
+                continue
+            self.spend(t, crop["seed"] * n)
+            self.bag[k] = self.bag.get(k, 0) + n
+            self.stall_left[k] -= n
+            self.first_seed_t.setdefault(k, t)
+
+    def stall_plant(self, t):
+        """Stall rule: fill the free squares crop by crop, the best net per wall-clock second among the seeds at hand."""
+        while self.free_sq > 0:
+            best, best_r, best_n = None, -1.0, 0
+            for crop in self.unlocked():
+                a = self.avail(crop)
+                n = min(self.free_sq, a if a < math.inf else int(self.coins // max(1, crop["seed"])))
+                if n <= 0 and not (crop["k"] == 0 and self.start_seeds > 0):
+                    continue
+                if crop["k"] == 0 and self.start_seeds > 0:
+                    n = min(self.free_sq, max(n, self.start_seeds))
+                r = self.rate(t, crop, n) + (crop["seed"] * self.mult / max(1.0, self.grow_of(crop)) if a < math.inf else 0.0)
+                if r > best_r:
+                    best, best_r, best_n = crop, r, n
+            if best is None:
+                return
+            crop, n = best, best_n
+            if crop["k"] == 0 and self.start_seeds > 0:
+                s0 = min(n, self.start_seeds)
+                self.start_seeds -= s0
+                self.spend(t, crop["seed"] * (n - s0))
+            else:
+                self.take_seeds(t, crop, n)
+            at = t + n * self.c["act_s"]
+            g = self.grow_of(crop)
+            self.batches.append({"crop": crop, "n": n, "need": g, "grown": 0.0, "at": at, "ready": self.ready_at(at, g)})
+            self.free_sq -= n
+            self.last_crop = crop
+
     def plant(self, t):
         # rare seeds first (the best value on a square, kept apart from the ladder)
         for w in sorted(self.rare_seeds):
@@ -539,6 +872,7 @@ class Sim:
                 self.rare_seeds[w] -= 1
                 self.free_sq -= 1
                 self.batches.append({"crop": crop, "n": 1, "need": crop["t"], "grown": 0.0, "at": t, "ready": self.ready_at(t, crop["t"])})
+        self.chase_bar(t)  # the unlock bar before bundles and requests: it is what the player is after
         if self.free_sq <= 0:
             return
         # crops the barn still needs: the next talent's bundle (planted when it ripens by the next visit) and open requests (planted when
@@ -549,27 +883,41 @@ class Sim:
         bundle = set()
         if nt:
             bundle = {self.M["crops"][k - 1]["id"] for k in nt["crops"]}
+        q = self.open_quest()
+        # a milestone quest's crops: planted at once, whatever their length, only the ones still missing (a kid who reads "bring 5
+        # Blueberries" plants 5; timing rules stalled the Giant melon quest: a 6 h Blueberry ripens in no Casual absence or session)
+        quest = set(q["quest"]) if q else set()
         base = self.choose(t, self.free_sq, bonus=False)
         base_rate = self.rate(t, base, self.free_sq, False) if base else 0.0
         nxt_visit = self.starts[self.idx(t) + 1] if self.idx(t) + 1 < len(self.S) else math.inf
-        for cid, need in want.items():
+        for cid, need in sorted(want.items(), key=lambda kv: kv[0] not in quest):
             crop = unl.get(cid)
             if crop is None or self.free_sq <= 0:
                 continue
             growing = sum(b["n"] for b in self.batches if b["crop"]["id"] == cid)
-            n = min(self.free_sq, need - self.kept.get(cid, 0) - growing, int(self.coins // max(1, crop["seed"])))
+            a = self.avail(crop)
+            n = min(self.free_sq, need - self.kept.get(cid, 0) - growing, a if a < math.inf else int(self.coins // max(1, crop["seed"])))
             if n <= 0:
                 continue
-            if cid in bundle:
-                ok = self.ready_at(t, crop["t"]) <= nxt_visit
+            g = self.grow_of(crop)
+            if cid in quest:
+                ok = True
+            elif cid in bundle:
+                ok = self.ready_at(t, g) <= nxt_visit
             else:
                 ok = self.rate(t, crop, n, True) > base_rate
             if ok:
-                self.spend(t, crop["seed"] * n)
+                if a < math.inf:
+                    self.take_seeds(t, crop, n)
+                else:
+                    self.spend(t, crop["seed"] * n)
                 at = t + n * self.c["act_s"]
-                self.batches.append({"crop": crop, "n": n, "need": crop["t"], "grown": 0.0, "at": at, "ready": self.ready_at(at, crop["t"])})
+                self.batches.append({"crop": crop, "n": n, "need": g, "grown": 0.0, "at": at, "ready": self.ready_at(at, g)})
                 self.free_sq -= n
         if self.free_sq <= 0:
+            return
+        if self.stall_on:
+            self.stall_plant(t)
             return
         n = self.free_sq
         crop = self.choose(t, n)
@@ -582,7 +930,8 @@ class Sim:
             self.free_sq -= n
             self.spend(t, crop["seed"] * n)
             at = t + n * self.c["act_s"]
-            self.batches.append({"crop": crop, "n": n, "need": crop["t"], "grown": 0.0, "at": at, "ready": self.ready_at(at, crop["t"])})
+            g = self.grow_of(crop)
+            self.batches.append({"crop": crop, "n": n, "need": g, "grown": 0.0, "at": at, "ready": self.ready_at(at, g)})
             return
         if crop["k"] == 0 and self.start_seeds >= n:
             self.start_seeds -= n
@@ -592,7 +941,8 @@ class Sim:
                 self.pouch[crop["id"]] -= free
             self.spend(t, crop["seed"] * (n - free))
         at = t + n * self.c["act_s"]
-        self.batches.append({"crop": crop, "n": n, "need": crop["t"], "grown": 0.0, "at": at, "ready": self.ready_at(at, crop["t"])})
+        g = self.grow_of(crop)
+        self.batches.append({"crop": crop, "n": n, "need": g, "grown": 0.0, "at": at, "ready": self.ready_at(at, g)})
         self.free_sq = 0
         self.last_crop = crop
 
@@ -839,7 +1189,7 @@ class Sim:
 
     # ---- purchases ---------------------------------------------------------------------------------------------
     def can_buy(self, it):
-        if it["name"] in self.bought or it["gate"] > self.level:
+        if it["name"] in self.bought or (not self.stars_on and it["gate"] > self.level):  # EV3: sinks on Coins alone
             return False
         if it["fam"] == "Talent":
             if self.talent[it["tid"]] != it["lvl"] - 1:
@@ -902,7 +1252,7 @@ class Sim:
 
     def shop(self, t):
         """Buy in queue order; may skip at most 2 items that are gated or unaffordable (SIM window); required talents first."""
-        reserve = self.last_crop["seed"] * self.open_sq  # never spend the seeds for the next replant
+        reserve = self.reserve()  # never spend the seeds for the next replant
         for _ in range(200):
             done = False
             req = [it for it in self.queue if it["fam"] == "Talent" and it["tid"] in self.blocked_since and it["name"] not in self.bought]
@@ -922,6 +1272,17 @@ class Sim:
                     break
             if not done:
                 return
+
+    def reserve(self):
+        """Coins kept for the next replant: the last crop on every square, or (EV3) the newest crop while its bar is open."""
+        seed = self.last_crop["seed"]
+        if self.stall_on:
+            return self.M["crops"][self.c["stall_staples"] - 1]["seed"] * self.open_sq
+        if self.stars_on and self.chain_rule(max(self.unl) + 1):
+            new = self.M["crops"][max(self.unl)]
+            if self.star[new["k"]] == 0:
+                seed = max(seed, new["seed"])
+        return seed * self.open_sq
 
     def next_goal(self):
         """The next purchase: the cheapest of the first three items the player can buy once the Coins are there (the shop's window)."""
@@ -947,11 +1308,11 @@ class Sim:
             if extra > 0:
                 crop = next((c for c in self.M["crops"] if c["id"] == cid), None) or next(r for r in self.M["rares"].values() if r["id"] == cid)
                 self.kept[cid] = n - extra
-                self.earn(t, extra * crop["sale"] * self.sale_mult(), "rare" if crop["rare"] else "field")
+                self.earn(t, extra * self.sale_of(crop) * self.sale_mult(), "rare" if crop["rare"] else "field")
         self.runs_today = {}
         self.first_today = set()
         self.requests = []
-        crops = [c for c in self.unlocked() if c["t"] <= self.c["req_max_h"] * H and c["k"] >= 2]
+        crops = [c for c in self.known() if c["t"] <= self.c["req_max_h"] * H and c["k"] >= 2]
         daily = max(self.daily_income(), 2000.0)
         picked = set()
         for slot in range(self.c["req_per_day"] if len(crops) >= 2 else 0):
@@ -982,7 +1343,7 @@ class Sim:
             if self.kept.get(cid, 0) >= rq["q"]:
                 self.kept[cid] -= rq["q"]
                 rq["done"] = True
-                self.earn(t, rq["q"] * rq["crop"]["sale"] * self.c["req_mult"], "request")
+                self.earn(t, rq["q"] * self.sale_of(rq["crop"]) * self.c["req_mult"], "request")
                 self.add_points(t, rq["crop"]["pts"] * rq["q"])
                 self.request_drop(t)
                 self.mark(t)
@@ -1010,8 +1371,10 @@ class Sim:
         self.settle(t)
         self.apply_sun(t)
         got = self.collect(t, online)
+        got = self.try_quest(t) or got
         if got and online:
             self.mark(t)
+        self.visit_stall(t)
         self.shop(t)
         self.buy_eggs(t)
         self.feed()
@@ -1026,7 +1389,16 @@ class Sim:
             return
         back = self.starts[i + 1]
         gap = back - t
-        opts = [c["t"] for c in self.unlocked()] + [self.M["rares"][w]["t"] for w, n in self.rare_seeds.items() if n > 0]
+        crops = self.unlocked()
+        if self.stall_on:  # the staples, the seeds in the bag and what was just planted from it
+            crops = [c for c in crops if self.avail(c) > 0] + [bt["crop"] for bt in self.batches if bt["at"] >= t and not bt["crop"]["rare"]]
+        elif self.price_rule:  # what the player has grown, or could plant on a square now
+            crops = [c for c in crops if c["k"] in self.unlock_t or c["seed"] <= self.coins]
+        opts = [self.grow_of(c) for c in crops] + [self.M["rares"][w]["t"] for w, n in self.rare_seeds.items() if n > 0]
+        for tr in self.trees:  # a tree is a timer too: full (its cap of fruit) at its next fill
+            T = self.M["trees"][tr["id"]]
+            self.fruits(tr, t)
+            opts.append(max(1.0, max(T["t0"], tr["picked"]) + T["cap"] * T["f"] - tr["grown"]))
         ok = False
         for need in opts:
             r = self.ready_at(t, need) - t
@@ -1055,8 +1427,9 @@ class Sim:
             extra = min(extra, room)
             if extra > 0:
                 crop = bt["crop"]
-                self.earn(b, extra * (crop["sale"] * self.sale_mult() - crop["seed"] / self.mult), "field")
+                self.earn(b, extra * (self.sale_of(crop) * self.sale_mult() - crop["seed"] / self.mult), "field")
                 self.add_points(b, crop["pts"] * extra)
+                self.add_xp(b, crop, extra)
                 self.tend_extra += extra * crop["net"]
         hours = self.growth(a, b) / H
         for p in self.pets:
@@ -1065,7 +1438,8 @@ class Sim:
             if p["where"] == "guard":
                 self.train(p, "G", hours)
         share, chance, cap, block_h, from_lv = self.M["crows"]
-        if self.crows_on and self.level >= from_lv and cap > 0:
+        crows_open = self.M["by_id"][self.c["crows_from"]]["k"] <= self.newest() if self.stars_on else self.level >= from_lv
+        if self.crows_on and crows_open and cap > 0:
             ripe = [bt for bt in self.batches if not bt["crop"]["rare"] and bt["ready"] < b]
             if ripe:
                 k0, k1 = int(max(a, min(bt["ready"] for bt in ripe)) // (block_h * H)), int(b // (block_h * H))
@@ -1121,8 +1495,15 @@ class Sim:
                 if self.learn[1] <= 0:
                     self.cleared.append(s)
                     self.learn = None
-                    one = E.first_finish(P, s) + E.stage_medal_total(P, s) + E.SIM["coin_capture"] * E.coins_of(P, s)
-                    self.earn(t, one, "obby")
+                    coins, pack, upto = first_clear_coins(self.M, s)
+                    rate = self.farm_rate()
+                    self.earn(t, coins + E.SIM["coin_capture"] * E.coins_of(P, s), "obby")
+                    seed_val = 0
+                    if pack:  # a seed pack of the newest unlocked crop (a locked crop's seeds would skip its unlock)
+                        crop = self.M["crops"][min(max(self.unl), self.M["by_id"][upto]["k"])]
+                        self.pouch[crop["id"]] = self.pouch.get(crop["id"], 0) + pack
+                        seed_val = pack * crop["seed"]
+                    self.clear_log.append((t, s["key"], coins * self.mult + seed_val, rate))
                     if s["world"] >= 2 and s["world"] >= self.M["obby_seeds"][0]:
                         self.rare_seeds[min(s["world"], 3)] = self.rare_seeds.get(min(s["world"], 3), 0) + self.M["obby_seeds"][1]
                     if s["order"] == 5:  # World 2 opens: Double Jump is the world reward
@@ -1237,7 +1618,7 @@ class Sim:
         rate = self.daily_income(2) / 24.0 * (1 - self.egg_share - self.food_share)  # 2 days: long crops pay every other day
         if ng is None or rate <= 0:
             return
-        reserve = self.last_crop["seed"] * self.open_sq
+        reserve = self.reserve()
         hrs = max(0.0, ng["price"] - (self.coins - reserve)) / rate
         aff = sum(1 for it in self.queue if it["name"] not in self.bought and it["group"] != "reserved" and self.can_buy(it)
                   and it["price"] <= self.coins)
@@ -1248,6 +1629,9 @@ class Sim:
         t = a
         while t < b:
             nxt = min([bt["ready"] for bt in self.batches] + [inc["end"] for inc in self.incs] + [self.next_fruit(t), b])
+            if self.stall_on:  # the player looks at every restock while online
+                e = self.c["stall_every"]
+                nxt = min(nxt, (int(t // e) + 1) * e)
             if nxt >= b:
                 break
             t = max(nxt, t + 1.0)
@@ -1284,12 +1668,15 @@ def arch_by(name):
 
 def first_hour(M):
     """G7: a fresh player gardening for 60 minutes straight (no obby): first harvest, crops unlocked, the longest wait for something new
-    (a Renown level, a crop unlocked, the first harvest of a crop kind, a purchase, every hatch), first square, first hatch."""
+    (a crop's star (EV3) or a Renown level, a crop unlocked, the first harvest of a crop kind, a purchase, every hatch), first square,
+    first hatch."""
     a = {"name": "First hour", "sessions": [(0.0, 1.0)], "period": 400, "obby_min": 0, "check": 5}
     s = Sim(M, a, "talent-first", days=1).run()
     unl = sorted(t for k, t in s.unlock_t.items() if t <= 3600)
+    levels = [t for t, _, _ in s.star_t] if s.stars_on else s.level_t  # a crop's star (EV3) or a Renown level
     news = sorted(set(unl + [d * DAY for d in s.buy_day.values() if d * DAY <= 3600] + [t for t in s.hatch_t if t <= 3600]
-                      + [t for t in s.level_t if t <= 3600] + [t for t in s.first_crop_t.values() if t <= 3600]))
+                      + [t for t in levels if t <= 3600] + [t for t in s.first_crop_t.values() if t <= 3600]
+                      + [t for t in s.first_seed_t.values() if t <= 3600]))
     gaps = [b - a for a, b in zip(news, news[1:] + [3600.0])]
     sq = s.buy_day.get("Square 5")
     return {"first_harvest_s": s.first_harvest_t, "crops_hour1": len(unl), "max_gap_min": round(max(gaps) / 60, 1),
@@ -1305,7 +1692,14 @@ def checks(M, days=60, verbose=True):
         res.append((name, ok, text))
 
     diff = config_match(M)
-    add("EV0 configs carry the proposal (CAND)", not diff, "; ".join(diff[:4]) + (f" ... ({len(diff)} in all)" if len(diff) > 4 else "") or "equal")
+    ev3b = ""
+    if M["mode"] == "stars":  # the configs still carry Renown; EV3b takes it out (the Renown numbers in CAND are the game as built)
+        gated = sum(1 for it in M["items"] if it["gate"] > 0)
+        pay = sum(1 for k in M["c"]["obby_first"] if any(s["key"] == k for s in M["stages"]))
+        ev3b = (f" (Renown as built; EV3b removes the Renown points and gates of {len(M['crops'])} crops, the gates of {gated} sinks, "
+                f"Renown K / P, and resizes {pay} first-clear payouts)")
+    add("EV0 configs carry the proposal (CAND)", not diff,
+        ("; ".join(diff[:4]) + (f" ... ({len(diff)} in all)" if len(diff) > 4 else "") or "equal") + ev3b)
     g7 = first_hour(M)
     ok7 = (g7["first_harvest_s"] or 1e9) <= 30 and g7["crops_hour1"] >= 6 and g7["max_gap_min"] <= 10 and (g7["first_square_min"] or 99) <= 15         and (g7["first_hatch_min"] or 99) <= 5
     add("G7 first hour", ok7, f"first harvest {g7['first_harvest_s']:.0f} s, {g7['crops_hour1']} crops (at {g7['unlock_min']} min), longest wait for "
@@ -1356,7 +1750,7 @@ def checks(M, days=60, verbose=True):
     add("G3 next goal when leaving (0.3-2 sessions away)", ok3, "; ".join(rows))
     # G4 talents
     P = M["P"]
-    obby_w2 = sum(E.first_finish(P, s) + E.stage_medal_total(P, s) + E.coins_of(P, s) for s in M["stages"] if s["order"] <= 10)
+    obby_w2 = sum(first_clear_coins(M, s)[0] + E.coins_of(P, s) for s in M["stages"] if s["order"] <= 10)
     tree = sum(it["price"] for it in M["items"] if it["fam"] == "Talent" and it["tid"] in ("RunSpeed", "JumpHeight", "QuickRespawn", "DoubleJump", "Dash"))
     share = obby_w2 / tree if tree else 9
     rows = [f"obby-only Coins to World 2 = {share:.0%} of the World 1-2 tree ({E.n(obby_w2)} / {E.n(tree)})"]
@@ -1408,9 +1802,12 @@ def checks(M, days=60, verbose=True):
         jump = max((c / max(1.0, before) for t, c, before in s.rare_sales if t < 5 * DAY), default=0.0)
         okr &= share <= 0.70 and jump <= 5.0
         rows.append(f"{n} top share {share:.0%}, biggest sale {jump:.1f}x earned before")
-    first_levels = renown_level(M, M["rares"][1]["pts"])
-    okr &= first_levels <= 3
-    rows.append(f"first World 1 rare = Renown {first_levels}")
+    if M["mode"] == "renown":
+        first_levels = renown_level(M, M["rares"][1]["pts"])
+        okr &= first_levels <= 3
+        rows.append(f"first World 1 rare = Renown {first_levels}")
+    else:
+        rows.append("rare crops give no crop XP (EV3)")
     add("R rare crops stay a treat", okr, "; ".join(rows))
     # G8 Spender headroom
     free, paid = run(M, arch_by("Spender"), "talent-first", days, free=True), run(M, arch_by("Spender"), "talent-first", days)
@@ -1465,6 +1862,9 @@ def checks(M, days=60, verbose=True):
         okc &= ok
         rows.append(f"{n} {s30 / max(1, e30):.0%} / {s60 / max(1, e60):.0%}")
     add("C sinks absorb the faucet (day 30 / 60)", okc, "; ".join(rows))
+    if M["mode"] == "stars":
+        for r in ev3_checks(M, sims, names, days):
+            add(*r)
     if verbose:
         for name, ok, text in res:
             print(f"{'PASS' if ok else 'FAIL'}  {name}: {text}")
@@ -1473,6 +1873,67 @@ def checks(M, days=60, verbose=True):
 
 
 POLICIES = ("talent-first", "pets-first")
+_OLD = {}
+
+
+def old_model():
+    """The game as built (Renown gates), for EV3's old -> new comparisons."""
+    if "M" not in _OLD:
+        _OLD["M"] = build(dict(CAND, mode="renown"))
+    return _OLD["M"]
+
+
+def old_share(s, d0=3, d1=30):
+    """Share of square-harvests on days d0..d1-1 that are crops >= 3 steps below the newest unlocked one (G11)."""
+    h = [s.harv.get(d, [0, 0]) for d in range(d0, d1)]
+    return sum(o for _, o in h) / max(1, sum(a for a, _ in h))
+
+
+def w1_clears(M, s):
+    """(stage key, minutes of the farm's online income) of a sim's Tutorial / World 1 first clears (G10)."""
+    w1 = {st["key"] for st in M["stages"] if st["world"] <= 1}
+    return [(k, v / r) for t, k, v, r in s.clear_log if k in w1 and r > 0]
+
+
+def ev3_checks(M, sims, names, days):
+    """G10-G12 and U (EV3a, bands provisional)."""
+    out, c = [], M["c"]
+    # G10 a first clear of the Tutorial / World 1 pays <= 3 min of the Casual farm's income (Coins + the seed pack at its seed price)
+    mins = w1_clears(M, sims[("Casual", "talent-first")])
+    ok = bool(mins) and all(m <= 3.0 for _, m in mins)
+    rows = ["Casual " + ", ".join(f"{k} {m:.1f}" for k, m in mins)]
+    for n in names:
+        mm = w1_clears(M, sims[(n, "talent-first")]) if n != "Casual" else []
+        if mm:
+            k, m = max(mm, key=lambda x: x[1])
+            rows.append(f"{n} at most {m:.1f} ({k})")
+    out.append(("G10 a Tutorial / World 1 first clear <= 3 min of the farm (Casual)", ok, "; ".join(rows)))
+    # G11 days 3-30: >= 15 % of square-harvests are crops >= 3 steps below the newest unlocked one
+    OM = old_model()
+    rows, ok, old_ok = [], True, True
+    for n in names:
+        sh, osh = old_share(sims[(n, "talent-first")]), old_share(run(OM, arch_by(n), "talent-first", days))
+        ok &= sh >= 0.15
+        old_ok &= osh >= 0.15
+        rows.append(f"{n} {sh:.0%} (Renown model {osh:.0%})")
+    out.append(("G11 old crops are grown (days 3-30, >= 15 %)", ok, "; ".join(rows) + ("; the Renown model passes it too" if old_ok else "")))
+    # G12 the first crop fully upgraded not before day 7 (Garden main); Casual has >= 25 % of all stars still to earn on day 60
+    gm, cas = sims[("Garden main", "talent-first")], sims[("Casual", "talent-first")]
+    full = [(t / DAY, k) for t, k, L in gm.star_t if L == M["levels"]]
+    total = len(M["crops"]) * M["levels"]
+    earned = sum(1 for t, _, _ in cas.star_t if t < 60 * DAY)
+    left = 1 - earned / total
+    ok = (not full or full[0][0] >= 7) and (days < 60 or left >= 0.25)
+    first = f"day {full[0][0]:.1f} ({cfg_id(M['crops'][full[0][1]]['id'])})" if full else "none"
+    out.append(("G12 crop stars are a long goal", ok, f"Garden main first crop maxed {first}, {len(set(k for _, k in full))} maxed by day {days}; "
+                f"Casual {earned} / {total} stars on day 60 ({left:.0%} left)"))
+    # U a maxed crop matches a fresh crop 2-3 steps up (EV3 rule 2)
+    mm = maxed_mult(c)
+    steps = math.log(mm) / math.log(c["r"])
+    out.append(("U maxed crop = a fresh crop 2-3 steps up", 2 - 1e-9 <= steps <= 3 + 1e-9,
+                f"x{mm:.2f} net per square-hour = {steps:.1f} steps (per point: Value +{c['pt_value']:.0%}, Size +{c['pt_size']:.0%}, Speed "
+                f"-{c['pt_speed']:.0%}; {c['pt_cap']} per line)"))
+    return out
 
 
 def sq_name(goal):
@@ -1590,9 +2051,83 @@ def proposal(M, days=60):
     print("\n## Per archetype (talent-first, day %d)" % days)
     rows = []
     for n, s in sims.items():
-        rows.append([n, E.n(sum(s.earned_by_day[:days]) / days), f"{s.income['obby'] / max(1, sum(s.income.values())):.0%}", f"R{s.level}",
+        lvl = f"{sum(s.star.values())} stars" if s.stars_on else f"R{s.level}"
+        rows.append([n, E.n(sum(s.earned_by_day[:days]) / days), f"{s.income['obby'] / max(1, sum(s.income.values())):.0%}", lvl,
                      str(s.open_sq), str(len(s.trees)), str(len(s.pets)), fmt_short(s.legendary_t / DAY if s.legendary_t else None), f"{s.mult:.2f}"])
-    print(E.table(["archetype", "Coins / day", "obby share", "Renown", "squares", "trees", "pets", "1st Legendary", "multiplier"], rows))
+    print(E.table(["archetype", "Coins / day", "obby share", "Renown / stars", "squares", "trees", "pets", "1st Legendary", "multiplier"], rows))
+    if M["mode"] == "stars":
+        ev3_tables(M, days)
+
+
+def ev3_tables(M, days=60):
+    """EV3a's output: crops old -> new (Renown gate -> star 1 / quest), each unlock's day per archetype old vs new, crop stars by day, the
+    sinks that lose their gate, and the Tutorial / World 1 first clears."""
+    c, OM = M["c"], old_model()
+    names = ("Casual", "Garden main", "Obby main", "Binge")
+    new = {n: run(M, arch_by(n), "talent-first", days) for n in names}
+    old = {n: run(OM, arch_by(n), "talent-first", days) for n in names}
+    print("\n## EV3: crops, old -> new (star 1 in square-harvests: XP = grow minutes; star 15 in square-hours of that crop)")
+    rows = []
+    for cr in M["crops"]:
+        k = cr["k"]
+        if k == 0:
+            how = "start crop"
+        elif cr["quest"]:
+            how = "quest: " + " + ".join(f"{q} {cfg_id(cid)}" for cid, q in cr["quest"].items())
+        else:
+            how = f"{cfg_id(M['crops'][k - 1]['id'])} star 1"
+        rows.append([cfg_id(cr["id"]), fmt_t(cr["t"]), f"R{cr['gate']}", how, str(round(c["star_n0"] * c["star_g"] ** k)),
+                     E.n(star_need(cr, M["levels"], c) / 60.0)])
+    print(E.table(["crop", "grow", "old gate", "new: opens at", "star 1", "star 15 (sq-h)"], rows))
+    a, g = pt_mults({"Value": c["pt_cap"], "Size": c["pt_cap"], "Speed": c["pt_cap"]}, c)
+    print(f"Points: a star = 1 point, {c['pt_cap']} per line (Value +{c['pt_value']:.0%} sale, Size +{c['pt_size']:.0%} size factor, Speed "
+          f"-{c['pt_speed']:.1%} grow time each; policy {' > '.join(c['pt_order'])}); maxed: sale x{a:.2f}, grow time x{g:.3f}, net per "
+          f"square-hour x{maxed_mult(c):.2f}. Unlock bar policy: the newest crop on just enough squares while it earns >= {c['chase']} x the best.")
+    print("\n## EV3: unlock day per archetype, old (Renown) -> new (stars); h = hours on day 0")
+    rows = []
+    for cr in M["crops"]:
+        k = cr["k"]
+        rows.append([cfg_id(cr["id"])] + [f"{fmt_short(old[n].unlock_t.get(k) and old[n].unlock_t[k] / DAY) if k else '0'} -> "
+                                          f"{fmt_short(new[n].unlock_t.get(k) and new[n].unlock_t[k] / DAY) if k else '0'}" for n in names])
+    print(E.table(["crop"] + list(names), rows))
+    print("\n## EV3: crop stars by day (all crops; maxed = star 15)")
+    rows = []
+    for d in (1, 3, 7, 14, 30, 60):
+        if d > days:
+            continue
+        cells = []
+        for n in names:
+            st = [(k, L) for t, k, L in new[n].star_t if t < d * DAY]
+            best = {}
+            for k, L in st:
+                best[k] = L
+            cells.append(f"{len(st)} stars, {sum(1 for L in best.values() if L == M['levels'])} maxed, {len(new[n].unlock_t)} open"
+                         if d >= days else f"{len(st)} / {sum(1 for L in best.values() if L == M['levels'])} / "
+                         f"{sum(1 for k, t in new[n].unlock_t.items() if t < d * DAY)}")
+        rows.append([f"day {d}"] + cells)
+    print("(stars earned / crops maxed / crops open)")
+    print(E.table(["by"] + list(names), rows))
+    print("\n## EV3: sinks on Coins alone (old Renown gates removed; prices unchanged)")
+    fams = {}
+    for it in M["items"]:
+        if it["gate"] > 0:
+            fams.setdefault(it["fam"], []).append(it["gate"])
+    print(E.table(["family", "levels", "old gates"], [[f, str(len(g)), f"R{min(g)}-R{max(g)}"] for f, g in fams.items()]))
+    print("\n## EV3: Tutorial / World 1 first clears (finish + medals; challenge coins unchanged); minutes of the farm's online income "
+          "when the archetype clears it, old -> new")
+    rows = []
+    for st in M["stages"]:
+        if st["world"] > 1:
+            continue
+        old_c = E.first_finish(M["P"], st) + E.stage_medal_total(M["P"], st)
+        coins, pack, upto = first_clear_coins(M, st)
+        cells = []
+        for n in names:
+            om = dict(w1_clears(OM, old[n])).get(st["key"])
+            nm = dict(w1_clears(M, new[n])).get(st["key"])
+            cells.append(f"{om:.1f} -> {nm:.1f}" if om is not None and nm is not None else "-")
+        rows.append([st["key"], E.n(old_c), E.n(coins) + (f" + {pack} seeds (up to {cfg_id(upto)})" if pack else "")] + cells)
+    print(E.table(["stage", "old", "new"] + list(names), rows))
 
 
 def old_price_map(P):

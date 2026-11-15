@@ -39,7 +39,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | K1 | First-hour fixes (kid playtest 2026-11-01): Stage 5, G1 fallback, Double Jump world reward, hatch panel (U5b) done | partial | partial | – |
 | E0 | Economy model: baseline, simulation, field and every E1–E4 re-run done; repricing and the remaining checks open (continued as EV) | partial | – | – |
 | EV | Engagement-first economy (the user, 2026-11-07): EV1 model + proposal table; EV2a–e apply it | EV1 implemented (13 / 13 EV checks pass); EV2a (nice prices, pinned 2026-11-07) and EV2b (talent bundles) Studio-validated 2026-11-08 (boot, Renown migration, Barn and a square bought, 10 s Potato, seed stall and Skills panel in Czech; the user tested the bundle purchases); barn Sell shows count + pet bonus; next: EV2e / EV2c / EV2d | – | – |
-| EV3 | Crop levels replace Renown, milestone quests, crop upgrades, first-hour obby payouts (draft 2026-11-14, awaits sign-off; EV3a model, EV3b levels, EV3c upgrades) | – | – | – |
+| EV3 | Crop levels replace Renown, milestone quests, crop upgrades, first-hour obby payouts (draft 2026-11-14, awaits sign-off; EV3a model built 2026-11-14, awaits review; EV3b levels, EV3c upgrades) | – | – | – |
 | E1.0 | Client-drawn plots spike: **GO** | ✔ | ✔ | – |
 | E1a–E1d | Crop field (every player's since FA): client-drawn plots, field, field pets, crops as pet food, size roll, upgrades, tools, market cart, farming-first numbers, 36 squares | ✔ | ✔ | – |
 | E2 | Obby seeds: rare crops, rare-seed meters, seed pouch, Scouting | ✔ | ✔ | – |
@@ -946,6 +946,8 @@ spending (policy: points into the crop the player plants most; Value first). New
   by day.
 - **Acceptance:** `economy.py evcheck` passes G1–G12; the table printed by `economy.py proposal`; the user signs off the thresholds, caps,
   quests and bands.
+- **Status (2026-11-14):** model built (`CAND["mode"] = "stars"`; `"renown"` = as built), `evcheck` 18 / 18 (G10–G12 and U added),
+  `proposal` prints the EV3 tables; awaits the user's review. Findings and what to sign off: ECONOMY.md → Findings (EV3a), open decision 4.
 
 **EV3b — levels, unlocks, Renown out (scope after EV3a's review).** Fixes the first hour.
 1. **Config:** `CropConfig` crops get level thresholds and, for milestones, `quest = { [cropId] = n }`; the `renown` gates of `Expansions`,
