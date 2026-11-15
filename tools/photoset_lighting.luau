@@ -3,7 +3,7 @@
 -- ServerStorage.PhotoSet.Builder_Lighting and run it through loadstring with { MODE = ..., PRESET = ... }.
 --   "snapshot"  saves Lighting's properties and clones of its children to ServerStorage.PhotoSet.LightingSnapshot.
 --               Refuses if a snapshot already exists (restore first), so a second shoot never overwrites the real look.
---   "apply"     applies PRESETS[PRESET] (C1, A3, B1, C2, A2) on top of the current look (needs a snapshot).
+--   "apply"     applies PRESETS[PRESET] (C1, A3, B1, C2, A1, A2) on top of the current look (needs a snapshot).
 --   "restore"   puts the saved properties and children back and removes the snapshot.
 --   "status"    says whether a snapshot is waiting and lists Lighting's children.
 -- No game code references Lighting or its children (grep src), so restoring by clones is safe.
@@ -72,6 +72,21 @@ local PRESETS = {
 			ColorCorrectionEffect = { Saturation = 0.28, Contrast = 0.12, Brightness = 0.02, TintColor = Color3.fromRGB(255, 250, 240) },
 			BloomEffect = { Intensity = 0.6, Size = 28, Threshold = 1.6 },
 			Atmosphere = { Density = 0.2, Haze = 0.3, Glare = 0, Offset = 0.1 },
+		},
+		disable = { "SunRaysEffect", "DepthOfFieldEffect" },
+	},
+	-- A1: early morning over World 3 (Stage 15's Dash Run, the camera looks west-north-west at the garden island): a low
+	-- warm sun to camera-right lights the player's face and the island; thin Atmosphere so the island 1250 studs out stays
+	-- clear, a warm decay so the horizon reads gold (a brown Decay drew a brown band there).
+	A1 = {
+		lighting = { ClockTime = 7, Brightness = 2.6, ExposureCompensation = 0, ShadowSoftness = 0.3,
+			ColorShift_Top = Color3.fromRGB(255, 205, 150),
+			OutdoorAmbient = Color3.fromRGB(150, 135, 130), Ambient = Color3.fromRGB(95, 85, 85) },
+		children = {
+			ColorCorrectionEffect = { Saturation = 0.3, Contrast = 0.15, Brightness = 0.02, TintColor = Color3.fromRGB(255, 240, 222) },
+			BloomEffect = { Intensity = 0.6, Size = 28, Threshold = 1.5 },
+			Atmosphere = { Density = 0.15, Haze = 0.4, Glare = 0.3, Offset = 0.1, Color = Color3.fromRGB(255, 215, 175),
+				Decay = Color3.fromRGB(255, 205, 160) },
 		},
 		disable = { "SunRaysEffect", "DepthOfFieldEffect" },
 	},

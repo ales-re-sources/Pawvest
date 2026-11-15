@@ -9,6 +9,8 @@
 -- Any character whose feet are below the top inside the footprint dies (client kill, reported to telemetry like ObstacleKit's
 -- kills). A Studio-only Sound child "Rumble" plays (2D) louder as the gap between the feet and the top drops below
 -- RUMBLE_RANGE studs; silent without it.
+-- Look layers: BasePart children of the tide (Stage 15: `Crust`, a CrackedLava sheet over the Neon slab) move with it at
+-- their Studio offset and hide / show with it; the kill test uses only the tide part itself.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -23,7 +25,7 @@ local DEFAULT_SPEED = 1.5 -- studs/s
 local SINK_SPEED = 40 -- studs/s: how fast the shown tide sinks to a checkpoint's floor (the real top drops at once)
 local RUMBLE_RANGE = 15 -- studs between the feet and the top below which the rumble grows
 
-local tides = {} -- [part] = { cframe, transparency, folder, rumble = Sound?, volume }
+local tides = {} -- [part] = { cframe, transparency, folder, rumble = Sound?, volume, layers = { [BasePart] = { offset, transparency } } }
 local runKey: string? = nil -- stage key of the player's running timer
 local plate: BasePart? = nil -- the current checkpoint plate (respawn point)
 
@@ -40,12 +42,30 @@ local function folderOf(part: Instance): (Instance?, string?)
 	return nil, nil
 end
 
+-- the look layers follow the tide part (at their Studio offset) and show with it (`shown`) or hide
+local function placeLayers(part: BasePart, shown: boolean?)
+	for layer, layerData in tides[part].layers do
+		layer.CFrame = part.CFrame * layerData.offset
+		if shown ~= nil then
+			layer.Transparency = if shown then layerData.transparency else 1
+		end
+	end
+end
+
 local function park(part: BasePart)
 	local data = tides[part]
 	part.CFrame = data.cframe
 	part.Transparency = 1
+	placeLayers(part, false)
 	if data.rumble then
 		data.rumble:Stop()
+	end
+end
+
+local function addLayer(part: BasePart, data, child: Instance)
+	if child:IsA("BasePart") and not data.layers[child] then
+		data.layers[child] = { offset = data.cframe:ToObjectSpace(child.CFrame), transparency = child.Transparency }
+		child.Transparency = if active == part then data.layers[child].transparency else 1
 	end
 end
 
@@ -54,7 +74,15 @@ local function addTide(part: Instance)
 		return
 	end
 	local folder = folderOf(part)
-	local data = { cframe = part.CFrame, transparency = part.Transparency, folder = folder, rumble = nil, volume = 0 }
+	local data = { cframe = part.CFrame, transparency = part.Transparency, folder = folder, rumble = nil, volume = 0, layers = {} }
+	for _, child in part:GetChildren() do
+		addLayer(part, data, child)
+	end
+	part.ChildAdded:Connect(function(child)
+		if tides[part] == data then
+			addLayer(part, data, child)
+		end
+	end)
 	local sound = part:FindFirstChild("Rumble")
 	if sound and sound:IsA("Sound") then
 		local rumble = sound:Clone()
@@ -108,6 +136,7 @@ local function reset()
 	if active ~= wanted then
 		shown = floor
 		wanted.Transparency = data.transparency
+		placeLayers(wanted, true)
 		if data.rumble then
 			data.rumble.Volume = 0
 			data.rumble:Play()
@@ -162,6 +191,7 @@ RunService.PreSimulation:Connect(function(dt: number)
 	shown = if shown > top then math.max(top, shown - SINK_SPEED * dt) else top
 	local position = data.cframe.Position
 	part.CFrame = data.cframe.Rotation + Vector3.new(position.X, shown - part.Size.Y / 2, position.Z)
+	placeLayers(part)
 
 	if not alive then
 		if data.rumble then

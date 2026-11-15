@@ -78,6 +78,22 @@ Rig.POSES = {
 		LeftKnee = Vector3.new(-80, 0, 0),
 		LeftAnkle = Vector3.new(25, 0, 0),
 	},
+	-- A1: a Long Dash over the lava toward a three-quarter camera (rig yaw about 140, mirrored): a bigger stride than leap,
+	-- the leading arm thrown forward, the head turned to the camera
+	dash = {
+		Waist = Vector3.new(-18, -10, 0),
+		Neck = Vector3.new(6, -28, 0),
+		LeftShoulder = Vector3.new(110, 0, -25),
+		LeftElbow = Vector3.new(30, 0, 0),
+		RightShoulder = Vector3.new(-70, 0, 30),
+		RightElbow = Vector3.new(40, 0, 0),
+		RightHip = Vector3.new(95, 0, 0),
+		RightKnee = Vector3.new(-40, 0, 0),
+		RightAnkle = Vector3.new(10, 0, 0),
+		LeftHip = Vector3.new(-60, 0, 0),
+		LeftKnee = Vector3.new(-90, 0, 0),
+		LeftAnkle = Vector3.new(30, 0, 0),
+	},
 }
 
 -- the pose mirrored left / right (Left* and Right* joints swapped, turns about Y and Z negated): the same move to the other side
@@ -130,7 +146,10 @@ function Rig.build(look): Model
 	local rig = Players:CreateHumanoidModelFromDescription(d, Enum.HumanoidRigType.R15)
 	rig.Name = "Player"
 	for _, p in rig:GetDescendants() do
-		if p:IsA("BasePart") then
+		-- no scripts in a photo set: the Animate LocalScript made Argon sync the stashed sets to disk
+		if p:IsA("LuaSourceContainer") then
+			p:Destroy()
+		elseif p:IsA("BasePart") then
 			p.Anchored, p.CanCollide, p.CanTouch, p.CanQuery = true, false, false, false
 		end
 	end

@@ -146,7 +146,7 @@ C3 went from eight pets to three or four.
 - Testing needs real traffic: it starts with the public launch (or a soft launch with enough impressions to mean something).
 
 ## 7. Build approach
-- **Studio-only photo sets:** `ServerStorage.PhotoSet.<A|B|C><n>` (A1…C3, Icon). No scripts, so Argon never syncs them
+- **Studio-only photo sets:** `ServerStorage.PhotoSet.<A|B|C><n>` (A1…C3, Icon). No scripts, so Argon never syncs them (a rig's `Animate` LocalScript once did: `Rig.build` deletes scripts)
   (`$keepUnknowns` keeps them). A set is moved into Workspace only while shooting and back right after, so nothing shows in play.
   Pieces are cloned per set (variants never share instances). Built and edited through MCP `execute_luau` in Edit.
 - **Pets:** clone `ReplicatedStorage.PetModels[kind]`, dress it with `PetLook.Apply(model, kind, level, uid)` (a pure function of
@@ -180,7 +180,7 @@ Two passes: two thumbnails first (A3, C1; theme B waits for D1), the others only
 
 ## 9. As built
 **Tools** (run through MCP `execute_luau` in Edit; header comments say how):
-- `tools/photoset_lighting.luau`: `snapshot` / `apply` (per-set presets: `C1`, `A3`, `B1`, `C2`, `A2`) / `restore` / `status`. The snapshot lives in
+- `tools/photoset_lighting.luau`: `snapshot` / `apply` (per-set presets: `C1`, `A3`, `B1`, `C2`, `A1`, `A2`) / `restore` / `status`. The snapshot lives in
   `ServerStorage.PhotoSet.LightingSnapshot` and refuses to be overwritten, so a forgotten restore never loses the real look.
 - `tools/photoset_c1.luau`: builds `Workspace.PhotoSet_C1`, returns the camera for `screen_capture`; `stash` / `shoot` move it to and
   from `ServerStorage.PhotoSet.C1`. For iterating, its source sits in the StringValue `ServerStorage.PhotoSet.Builder_C1` and runs
@@ -189,7 +189,7 @@ Two passes: two thumbnails first (A3, C1; theme B waits for D1), the others only
 - `tools/photoset_b1.luau`: the same for `Workspace.PhotoSet_B1` (`ServerStorage.PhotoSet.B1`, iterating copy `Builder_B1`).
   Refuses a pet level above its kind's cap. Set-space +X is camera-left.
 - `tools/photoset_rig.luau`: the player rig, a library the set builders load from `ServerStorage.PhotoSet.Builder_Rig`:
-  `build` (the chosen look) and `pose` (named poses `stand` / `cheer` / `leap`, `mirror` flips one; forward kinematics down the joint chain, feet
+  `build` (the chosen look) and `pose` (named poses `stand` / `cheer` / `leap` / `dash`, `mirror` flips one; forward kinematics down the joint chain, feet
   set on a given floor).
 - `tools/photoset_a3.luau`: A3 in the stage itself (`ServerStorage.PhotoSet.A3`, iterating copy `Builder_A3`): nothing in the
   stage is moved; the reached pad is drawn on copies over it.
@@ -201,6 +201,10 @@ Two passes: two thumbnails first (A3, C1; theme B waits for D1), the others only
   every hazard as ObstacleKit would `T` seconds into a run (beams by `KitMath.Window`, sweepers turned on copies), hiding the
   originals only through `LocalTransparencyModifier` (not saved; `stash` resets it); `COLORS` shows colour-switch groups as
   pressed (other-colour plates ghosted, the group's wire lit). `POSE` takes a name or a pose table, `MIRROR` flips it.
+- `tools/photoset_a1.luau`: A1 in Stage 15 itself (`ServerStorage.PhotoSet.A1`, iterating copy `Builder_A1`, preset `A1`): an
+  untagged copy of the tide (with its `Crust`) at `LAVA_Y`, and the garden island copy (`GARDEN_*`: PlotView plots, cut at the
+  sea, moved along the camera's sight lines, its own sea disc); `HIDE` hides scene folders while shooting as A2 does.
+  Building the copy takes about a second (17 000 parts).
 - `tools/thumb_art.ps1` (PowerShell, Windows: headless Edge + System.Drawing): `render` (logo PNGs from `docs/art/logo/logo.html`),
   `grab` (a full-resolution 16:9 frame from Studio's viewport), `compose` (a logo onto a frame), `tiles` (320 / 200 / 150 px sheet).
 
@@ -257,6 +261,9 @@ halo clears the logo; build sets that camera.
   `build` / `shoot` (they leave the set's camera on, `Scriptable`); PrintWindow captures Studio without bringing it to the front. On this machine (3840×2160 at 150 %) the 1312×1013 viewport is 1968×1520 physical pixels at `-Rect "726,323,1968,1520"`
   (maximised Studio, current panel layout; re-read it after moving panels), and its middle 16:9 band is 1968×1107, enough for
   1920×1080.
+- **Stale grabs:** Studio's Edit camera can fall back to `Fixed` and an earlier view between `build` and the grab, and the grab
+  then shows that view (A1's drafts M / N were draft L's camera). A builder's `setCamera` sets `Camera.Focus` to the look-at
+  as well (photoset_a1: since then the camera holds); before a final, read `CameraType` / `LookVector` back right before the grab.
 - Still in the frame: the plot's small "Central Island" portal sign at the left edge (hide it in the set if it distracts).
 - **Level exception (2026-11-14):** a Bunny reaches Lv 14 at most (Uncommon cap), so C1's Lv 19 Bunny is above what a player
   can own. **The user keeps C1 as it is** (C1 is done); later sets stay within the cap (§4).
@@ -416,3 +423,43 @@ flying behind her. Lab space: origin on the floor under Sweeper1's hub, +X along
   narrower, on the player, the Dog and the button (lab space {-6, 6.7, 33.8} look {-6, 6.7, 0}, FOV 40; cam {-332.40, 92.85,
   -618.80} look {-332.40, 92.85, -585.00}); the floor spikes fall outside it, the spike on the switch block stays. Grabbed with
   `-Rect "726,323,1968,1330" -Aspect 1:1`: at height 1360 the view gizmo's green "Y" showed at the bottom edge.
+
+**A1 (draft N, 2026-11-15, TH2; the builder's defaults rebuild it).** **Stage 15 (Rising Tide), Dash Run's 34-stud Long Dash gap
+D1 -> D2**, the tide risen to 137.5 (5 under D1's top: about 14 s behind a clean run from 1303), the player (look `updo`, pose
+`dash` mirrored, yaw 122) near the end of the dash, 2 studs above **D2's stud top, which fills the lower left with Stage 15's
+gold coin on it** (the user: without the landing "a happy player jumping into lava"), the **Dragon uid 1 at Lv 18** (its cap;
+FlameTail) trailing at draft K's distance (the user's pick) and fully in frame, the garden island beyond the lava. Camera
+20 studs out on the course's east side, 8.5 above the pillar-top level, looking west-north-west along the line jump ->
+garden and down onto D2 (look-at {-3.5, 5.7, 0} from the player), FOV 42, rolled -7°; Stage 14 hidden while shooting (`HIDE`: its lab panels stood as grey slabs
+behind the Dragon; `LocalTransparencyModifier`, reset by `stash`); preset **A1** (ClockTime 7: a low warm sun to camera-right lights her face and
+the island; thin haze so the island stays clear, a warm decay so the horizon reads gold). Logo top left at 30 % over the sky.
+- **The real view does not work** (drafts `a1-a`..`c`): the Laser Lab's back wall (Stage 14 BeamHall, z -581, y 62-136) lies
+  on the line from Stage 15 to the garden's centre and covers half the island from anywhere in Stage 15; from the Shore the
+  line runs through Stages 13 / 14. Edit draws no plots (PlotView runs on clients), so the island was a bare green disc. And
+  the island shows above the lava's far edge only while the camera stands well above the lava (a low camera loses it).
+- **The garden copy (the user, 2026-11-15):** Workspace.Garden cloned (scripts, labels and prompts removed), the 12 ring-1
+  plots drawn by PlotView at `mid` detail with ripe crops (corn, pumpkin, pineapple, giant melon, sweet potato, a golden
+  carrot now and then; no Sunflower: draft art), cut at the sea (y 0), then scaled by k and moved to camera + k x (island -
+  camera), k = 420 / distance: from the camera it is the real island, now in front of the Laser Lab. Drawn 1.8x bigger
+  (`GARDEN_SIZE`, about its centre at the waterline). Its waterline is a plane far above the real sea, so without water the
+  island floated: a sea disc (DebugBaseplate's material and colour, radius 2000) sits at the copy's waterline.
+- **The lava (the user: flat orange was not appealing):** the real tide got a `CrackedLava` crust (STAGES §7.13), which KitTide
+  moves and hides with the slab; CrackedLava alone was dark rock (a dark floor can read as walkable), over the Neon at 0.15 it
+  reads as red-hot crust with glowing cracks.
+- Drafts `docs/art/thumbnails/drafts/`: `a1-a`..`c` (the real view: flat lava, island half hidden), `a1-h(-logo)` + `-tiles`
+  (first composition with the copy: the Laser Lab corner and Studio's view gizmo at the edges), `a1-i` (closer: heads cut),
+  `a1-j(-logo)` + `-tiles` (the defaults), `a1-k(-logo)` + `-tiles` (`PET_AT {7.5, 6.6, -6}`, `PET_YAW 135`: the Dragon
+  covers more of the Laser Lab corner but stands on the island instead of flying behind her), `a1-l(-logo)` + `-tiles`
+  (reframed onto D2: the landing shows; the Dragon cut by the right edge, Laser Lab panels behind it), `a1-m` (Dragon moved
+  in), `a1-n(-logo)` + `-tiles` (Stage 14 hidden: the defaults). M and N were grabbed with L's camera still on (look-at
+  -3.5, not the -2.8 they were built with: stale grabs, §9 tools), so the defaults use -3.5; the release candidate matches N.
+- Tile test of N (320 / 200 / 150 px, by Claude): the player, the Dragon, the island, the coin and the wordmark read at 150 px;
+  D2's sand top reads as the floor she lands on; the lava is a red band between it and the island.
+- **Release candidate (2026-11-15, the user's call: draft N; final after the grid tile test and the kid test, §8 TH1).** The
+  builder's defaults. Files in `docs/art/thumbnails/`: `a1.jpg` (1920×1080, light wordmark top left at 30 %, the upload) and
+  `a1-clean.jpg`; the 512×512 squares: `a1-square.jpg` (wordmark at 44 % top left, over the sky), `a1-square-mark.jpg`
+  (pawprint mark at 20 %), `a1-square-clean.jpg` (1360×1360 master). Square camera: N's camera, wider and turned right so the
+  coin, the player, the Dragon and the island fit (`FOV = 50, LOOK = R + {-0.6, 5.2, 0}`; cam {-132.38, 152.00, -245.59} look
+  {-150.35, 148.70, -254.38}); D2's corner fills the lower left. Grabbed with `-Rect "726,323,2237,1360" -Aspect 1:1`.
+- Grabs: Studio's viewport is now 2237 x 1520 physical pixels at 726, 323 (re-read after the panel layout changed);
+  `-Rect "726,323,2237,1360"` keeps the view gizmo out of the 16:9 band.

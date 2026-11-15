@@ -916,7 +916,9 @@ Out and back: the high return leg looks down on the drowned outbound course.
 - **Slot:** the south (finale) opening of the World 3 courtyard (x -165..-135, z -532..-528); the course runs south (+z) inside x -200..-40,
   z -528..-140. Coordinates: u = south of the gate line (z = -528 + u), v = east of the gate's centre (x = -150 + v), heights as world y (plaza top
   78, plate tops 78.5). Folder `Stage15`, checkpoints `1301`-`1306`, coins `Stage15_1..8`. Requires Triple Jump + Long Dash; numbers in `StageConfig`.
-- **The tide (`KitTide.client.luau`, Studio part `Stage15.Tide`, tag `KitTide`):** a Neon slab (255, 85, 20) over the whole footprint, no collision;
+- **The tide (`KitTide.client.luau`, Studio part `Stage15.Tide`, tag `KitTide`):** a Neon slab (255, 85, 20) over the whole footprint, no collision,
+  under a `Crust` child (2026-11-15, for A1: the flat orange read as a floor colour): a 0.2-thick `CrackedLava` sheet (255, 120, 0) at
+  transparency 0.15, its top 0.05 above the slab's, so the glow shows through its cracks (the kill test uses the slab only);
   only its height moves, only on the running player's client (each player races their own tide). **Each checkpoint resets it** (D1 A): reaching a
   checkpoint (the gate's `TimerStart` counts as the first) and every respawn there set it to that plate's `TideFloor` (world y, attribute on the `C`
   plate), and it rises at the plate's `TideSpeed`; re-touching a plate does nothing; a plate without the attributes parks it. No run = no tide;
