@@ -11,7 +11,7 @@
 --   * PanelFocus "Barn": opening it closes the other panels, walking 32 studs away closes it.
 -- Display only: Sell names a crop and a count; GardenField checks the count and pays (answer toasted by FieldClient).
 -- Hook (ScreenGui BarnGui attribute, cleared after use): Open = true opens the panel. Buttons by path (under PlayerGui.BarnGui):
--- Open (the HUD button), Panel.Content.Crops.<CropId>.Sell / .Feed, Panel.Chooser.List.<uid>; Panel.Close.
+-- Open (the HUD button), Panel.Content.Crops.Content.<CropId>.Sell / .Feed, Panel.Chooser.List.<uid>; Panel.Close.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -42,12 +42,9 @@ local COLOR_PANEL = StudStyle.Colors.Wood
 local COLOR_ROW = StudStyle.PetRowColor(COLOR_PANEL)
 
 local ui = GardenUi.Panel("BarnGui", COLOR_PANEL, WIDTH, HEIGHT)
-local headerSection = GardenUi.Section("Header", 1)
-local seedsSection = GardenUi.Section("Seeds", 2)
-local cropsSection = GardenUi.Section("Crops", 3)
-headerSection.Parent = ui.content
-seedsSection.Parent = ui.content
-cropsSection.Parent = ui.content
+local headerSection, forecastLegend = GardenUi.GroupBox(ui.content, "Header", 1, COLOR_PANEL)
+local seedsSection, seedsLegend = GardenUi.GroupBox(ui.content, "Seeds", 2, COLOR_PANEL)
+local cropsSection, harvestLegend = GardenUi.GroupBox(ui.content, "Crops", 3, COLOR_PANEL)
 
 -- the pet chooser for Feed: a page over the panel's content
 local chooser = GardenUi.Create("Frame", {
@@ -121,7 +118,6 @@ end
 
 local function renderSeeds(field)
 	GardenUi.Clear(seedsSection)
-	GardenUi.Heading(seedsSection, 1, Locale.T("field.section.seeds"), COLOR_PANEL)
 	local any = false
 	for index, crop in CropConfig.Crops do
 		local stock = field.seeds[crop.id] or 0
@@ -157,7 +153,6 @@ end
 
 local function renderCrops(field, tap: number)
 	GardenUi.Clear(cropsSection)
-	GardenUi.Heading(cropsSection, 1, Locale.T("field.section.crops"), COLOR_PANEL)
 	local any = false
 	for index, crop in CropConfig.Crops do
 		local owned = field.items[crop.id] or 0
@@ -210,6 +205,11 @@ function renderChooser()
 	chooserTitle.Text = Locale.T("barn.feed.title", { crop = GardenUi.CropTitle(crop) })
 	chooserBack.Text = Locale.T("barn.feed.back")
 	local tap = ui.TapHeight()
+	chooser.Position = UDim2.fromOffset(8, tap + 10)
+	chooser.Size = UDim2.new(1, -16, 1, -(tap + 18))
+	chooserBack.Size = UDim2.fromOffset(100, tap)
+	chooserList.Position = UDim2.fromOffset(0, tap + 10)
+	chooserList.Size = UDim2.new(1, 0, 1, -(tap + 10))
 	local pets = {}
 	for _, pet in PetClient.Inventory() do
 		if pet.care then -- something left to train (P4: PetConfig.CareTarget)
@@ -250,6 +250,9 @@ end
 
 local function render()
 	ui.title.Text = Locale.T("barn.title")
+	forecastLegend.Text = Locale.T("barn.group.forecast")
+	seedsLegend.Text = Locale.T("field.section.seeds")
+	harvestLegend.Text = Locale.T("field.section.crops")
 	openButton.Text = Locale.T("barn.button")
 	if not isOpen then
 		return
@@ -364,7 +367,7 @@ RunService.Heartbeat:Connect(function(dt)
 	local field = GardenView.OwnField()
 	local crops = cropsHeld(field)
 	local focus = PanelFocus.Current()
-	openButton.Visible = (focus == nil or focus == "Barn") and (near or (crops > 0 and not Hints.Running))
+	openButton.Visible = not isOpen and (focus == nil or focus == "Barn") and (near or (crops > 0 and not Hints.Running))
 	local young = type(field) == "table" and (tonumber(field.level) or math.huge) <= SELL_HINT_LEVEL
 	if field then
 		if shownCrops and crops > shownCrops and young and not sellHintShown then
@@ -381,5 +384,6 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 end)
 
+ui.OnResize(render)
 render()
 ui.gui.Parent = player:WaitForChild("PlayerGui")

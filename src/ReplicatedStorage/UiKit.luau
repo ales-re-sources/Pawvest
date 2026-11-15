@@ -3,7 +3,8 @@
 --   * Create(className, props, children): an instance with its properties and children set;
 --   * Label (a transparent left-aligned TextLabel in StudStyle.Font), Button (a StudStyle brick: colour and text keep being
 --     set on the button itself), Paragraph (a label that wraps and grows downwards), Section (a list frame that grows),
---     Clear (removes a list's children but its layout / padding);
+--     Clear (removes a list's content, keeping UIComponent layout / chrome);
+--   * BlocksWorld(playerGui, point): hit-test active UI / controls (including their passive children) before world tap / hover;
 --   * Bar(name, opts): a rounded progress bar (track, fill and an optional centred text) → (track, fill, text?);
 --     SetShare(fill, share) moves its fill;
 --   * Latest(): "only the latest call acts" → { After(seconds, fn), Cancel() }: a new After (or Cancel) drops the pending one
@@ -29,6 +30,19 @@ function UiKit.Create(className: string, props, children)
 	return instance
 end
 local create = UiKit.Create
+
+function UiKit.BlocksWorld(playerGui: PlayerGui, point: Vector2): boolean
+	for _, object in playerGui:GetGuiObjectsAtPosition(point.X, point.Y) do
+		local node: Instance? = object
+		while node and node ~= playerGui do
+			if node:IsA("GuiObject") and (node.Active or node:IsA("GuiButton") or node:IsA("TextBox")) then
+				return true
+			end
+			node = node.Parent
+		end
+	end
+	return false
+end
 
 function UiKit.Label(name: string, props)
 	props.Name = name
@@ -60,7 +74,7 @@ end
 
 function UiKit.Clear(section: Instance)
 	for _, child in section:GetChildren() do
-		if not child:IsA("UIListLayout") and not child:IsA("UIPadding") then
+		if not child:IsA("UIComponent") then
 			child:Destroy()
 		end
 	end

@@ -239,7 +239,7 @@ hatchery.prompt.action,"Action text of the prompt at the hatchery on the own gar
 hatchery.prompt.object,"Object text of that prompt: the hatchery (nominative, no emoji)",Hatchery,Líheň,new,he4cf0f4f
 hatchery.nest.empty,"Hatchery panel, incubator row: info line of an owned incubator without an egg (the egg cards are below it)",Empty: pick an egg below,Prázdný: vyber vejce níž,new,h7b7f8db2
 hatchery.unlock,"Hatchery panel, button on the row of the next incubator to buy (132 px brick, may wrap); {count} = price in Coins",Unlock · 💰 {count},Odemknout · 💰 {count},new,h6f96b259
-hatchery.eggs,"Hatchery panel, heading over the egg cards",Eggs,Vejce,new,h76fd936d
+hatchery.eggs,"Hatchery group-box legend: egg catalogue and Buy actions, separate from nests already working",Eggs to buy,Vejce ke koupi,new,hc14c3641
 hatchery.eggs.hint,"Hatchery panel, small line under the Eggs heading; {n} = the incubator the egg will go into (the first empty one)",The egg goes into incubator {n},Vejce půjde do inkubátoru {n},new,h7727c321
 hatchery.busy,"Hatchery panel, under the Eggs heading when every owned incubator holds an egg",Every incubator holds an egg. Hatch one to start another.,Ve všech inkubátorech je vejce. Vylíhni jedno a můžeš dát další.,new,h67f92233
 hatchery.egg.time,"Hatchery panel, egg card: how long the egg takes to hatch; {time} = ""5 min"", ""1 hour""",⏱ {time},⏱ {time},new,ha39f96d6
@@ -596,3 +596,5 @@ field.hand.placing,"Submitted pet placement, awaiting server result; Cancel hidd
 field.card.title,Selected soil dialog title; crop and pet controls are in labelled groups,This spot,Tohle místo,new,h2b31d9c5
 field.card.cropGroup,Soil dialog group-box legend enclosing crop status and Plant or Harvest,Crop,Plodina,new,h0bb43346
 field.card.petsGroup,"Soil dialog group-box legend enclosing help, resident and pet controls",Pets,Mazlíčci,new,he7accae6
+barn.group.forecast,Barn group-box legend enclosing the field crow forecast,Field forecast,Předpověď pro pole,new,h41de9af5
+hatchery.group.nests,Hatchery group-box legend enclosing the owned and locked incubator nests,Your nests,Tvoje hnízda,new,hff15f2f2

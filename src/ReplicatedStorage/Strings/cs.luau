@@ -198,7 +198,7 @@ return {
 	["hatchery.prompt.object"] = "Líheň",
 	["hatchery.nest.empty"] = "Prázdný: vyber vejce níž",
 	["hatchery.unlock"] = "Odemknout · 💰 {count}",
-	["hatchery.eggs"] = "Vejce",
+	["hatchery.eggs"] = "Vejce ke koupi",
 	["hatchery.eggs.hint"] = "Vejce půjde do inkubátoru {n}",
 	["hatchery.busy"] = "Ve všech inkubátorech je vejce. Vylíhni jedno a můžeš dát další.",
 	["hatchery.egg.time"] = "⏱ {time}",
@@ -511,4 +511,6 @@ return {
 	["field.card.title"] = "Tohle místo",
 	["field.card.cropGroup"] = "Plodina",
 	["field.card.petsGroup"] = "Mazlíčci",
+	["barn.group.forecast"] = "Předpověď pro pole",
+	["hatchery.group.nests"] = "Tvoje hnízda",
 }

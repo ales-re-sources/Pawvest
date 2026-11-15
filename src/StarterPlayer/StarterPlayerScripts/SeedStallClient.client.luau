@@ -58,8 +58,7 @@ seedsSection.Parent = ui.content
 sellSection.Parent = ui.content
 
 local TABS_TOP = 44 -- under the title strip
-local CONTENT_TOP = 46 -- GardenUi.Panel's Content
-local CONTENT_BOTTOM = 54
+local CONTENT_TOP = 46 -- initial tab position; render follows the live header height
 local tabs = GardenUi.Create("Frame", {
 	Name = "Tabs",
 	Position = UDim2.new(0, 8, 0, TABS_TOP),
@@ -235,9 +234,11 @@ local function render()
 		return
 	end
 	local tap = ui.TapHeight()
+	local top = tap + 10
 	tabs.Size = UDim2.new(1, -16, 0, tap)
-	ui.content.Position = UDim2.new(0, 8, 0, CONTENT_TOP + tap + GAP)
-	ui.content.Size = UDim2.new(1, -16, 1, -(CONTENT_BOTTOM + tap + GAP))
+	tabs.Position = UDim2.fromOffset(8, top)
+	ui.content.Position = UDim2.fromOffset(8, top + tap + GAP)
+	ui.content.Size = UDim2.new(1, -16, 1, -(top + tap + GAP + 8))
 	buyTab.BackgroundColor3 = if activeTab == "buy" then GardenUi.COLOR_BUY else GardenUi.COLOR_LOCKED
 	sellTab.BackgroundColor3 = if activeTab == "sell" then GardenUi.COLOR_SELL else GardenUi.COLOR_LOCKED
 	cartSection.Visible = activeTab == "buy"
@@ -413,5 +414,6 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 end)
 
+ui.OnResize(render)
 render()
 ui.gui.Parent = player:WaitForChild("PlayerGui")

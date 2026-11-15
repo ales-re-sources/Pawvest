@@ -90,7 +90,6 @@ local LIST_MAX = 300 -- px: the pickers' list scrolls beyond this
 
 local COLOR_PANEL = StudStyle.PanelColors.Field
 local COLOR_ROW = StudStyle.PetRowColor(COLOR_PANEL)
-local COLOR_GROUP = StudStyle.Shade(COLOR_PANEL, 0.35)
 local COLOR_GROUP_BORDER = StudStyle.Shade(COLOR_PANEL, 0.8)
 local COLOR_GO = StudStyle.Colors.Green
 local COLOR_PET = StudStyle.Colors.Blue
@@ -397,42 +396,9 @@ local function buttonRow(order: number, specs, parent: Instance?)
 	return row
 end
 
--- The legend interrupts the border; everything inside a group, including its buttons, shares the inset surface.
 local function groupBox(name: string, order: number, key: string): Frame
-	local group = create("Frame", {
-		Name = name,
-		LayoutOrder = order,
-		Size = UDim2.new(1, 0, 0, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
-		BackgroundTransparency = 1,
-		Parent = body,
-	})
-	local content = UiKit.Section("Content", 1, GAP)
-	content.Position = UDim2.fromOffset(0, 12)
-	content.BackgroundTransparency = 0
-	content.BackgroundColor3 = COLOR_GROUP
-	content.BorderSizePixel = 0
-	content.Parent = group
-	create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = content })
-	create("UIStroke", { ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = COLOR_GROUP_BORDER, Thickness = 1, Parent = content })
-	create("UIPadding", {
-		PaddingTop = UDim.new(0, 16), PaddingBottom = UDim.new(0, 12),
-		PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10), Parent = content,
-	})
-	local legend = label("Legend", {
-		Position = UDim2.fromOffset(12, 0),
-		Size = UDim2.fromOffset(0, 24),
-		AutomaticSize = Enum.AutomaticSize.X,
-		BackgroundTransparency = 0,
-		BackgroundColor3 = StudStyle.Shade(COLOR_PANEL, 0.42),
-		BorderSizePixel = 0,
-		TextColor3 = COLOR_INFO,
-		TextSize = 18,
-		Text = Locale.T(key),
-		ZIndex = 2,
-		Parent = group,
-	})
-	create("UIPadding", { PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6), Parent = legend })
+	local content, legend = GardenUi.GroupBox(body, name, order, COLOR_PANEL)
+	legend.Text = Locale.T(key)
 	return content
 end
 
@@ -863,19 +829,14 @@ end
 local rayParams = RaycastParams.new()
 rayParams.FilterType = Enum.RaycastFilterType.Include
 
--- Non-button frames and labels are UI too. Check both tap and hover paths before raycasting the field.
-local function overFieldUi(point: Vector2): boolean
-	for _, object in player.PlayerGui:GetGuiObjectsAtPosition(point.X, point.Y) do
-		if object:IsDescendantOf(screenGui) then
-			return true
-		end
-	end
-	return false
+-- Active panels in any ScreenGui, including passive labels inside them, block world input.
+local function overUi(point: Vector2): boolean
+	return UiKit.BlocksWorld(player.PlayerGui, point)
 end
 
 -- The own square under screen point `point` (InputObject / TouchTapInWorld coordinates), or nil.
 local function squareUnder(point: Vector2): number?
-	if overFieldUi(point) then
+	if overUi(point) then
 		return nil
 	end
 	local camera = workspace.CurrentCamera
@@ -1282,7 +1243,7 @@ local function handTap(square: number, touch: boolean): boolean
 end
 
 local function onTap(point: Vector2, touch: boolean)
-	if overFieldUi(point) or placing or not (fieldState and inRange()) then
+	if overUi(point) or placing or not (fieldState and inRange()) then
 		return
 	end
 	local square = squareUnder(point)
@@ -1319,7 +1280,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		pressAt = nil
 		local point = Vector2.new(input.Position.X, input.Position.Y)
-		if not gameProcessed and not overFieldUi(point) then
+		if not gameProcessed and not overUi(point) then
 			pressAt = point
 			pressClock = os.clock()
 		end

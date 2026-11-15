@@ -64,6 +64,9 @@ hint until the first tap, are built; whether rings / pulses need more is to be d
   keeps the held pet instead of picking up another; submitted placement waits for the server answer before finishing.
 
 ## 6. Splitting the Garden panel
+
+**Grouping (2026-11-15):** Barn = Field forecast / Seeds / Harvest; Hatchery = Your nests / Eggs to buy. Each box encloses the actions it explains.
+
 **Built in U4 (2026-11-07)**: the Garden panel is gone. Upgrades / tools / Renown are in the Skills panel's Garden tab (buyable anywhere),
 field pet slots are a line in the Pets panel, the barn is a panel behind the bottom-centre "🧺 Barn" HUD button at the own plot (seeds, crops
 with size / record, Feed / Sell, crow forecast), and seeds and the market cart are bought at the seed stall on the plaza (its board shows the
@@ -105,6 +108,7 @@ The seed stall stands beside it as its own stall (**built in U4**, GDD §7.9); t
   (`ConfirmTap`; the food buttons keep their own); hold prompts only in the world.
 - **Next-step hint in the garden:** an empty field pulses Seeds, a ripe one the Basket: **built in U3b** (E5's onboarding builds on it).
 - **Locked squares** look different from empty soil (grass tufts; the price only in the square card): **built in U3a**.
+- **Input (2026-11-15):** garden dialog surfaces consume input; field tap / hover uses the shared UI hit-test across dialogs. Shared panels refit to the live safe area and reflow on resize.
 - **Panel focus:** opening one panel closes the others (Pets, Skills, Barn, Seed stall, Food); panels close when walking away (32 studs; the
   stalls at their own 20): **built in U4** (`PanelFocus`).
 - **Phone check** of every new piece is part of its milestone (MU's checklist), Czech widths included.

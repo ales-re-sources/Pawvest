@@ -198,7 +198,7 @@ return {
 	["hatchery.prompt.object"] = "[!! Háťčhěřý ~~~ !!]",
 	["hatchery.nest.empty"] = "[!! Ěmpťý: píčk áň ěgg bělöw ~~~~~~~~~~ !!]",
 	["hatchery.unlock"] = "[!! Ůňlöčk · 💰 {count} ~~~~ !!]",
-	["hatchery.eggs"] = "[!! Ěggš ~~ !!]",
+	["hatchery.eggs"] = "[!! Ěggš ťö bůý ~~~~ !!]",
 	["hatchery.eggs.hint"] = "[!! Ťhě ěgg göěš íňťö íňčůbáťöř {n} ~~~~~~~~~~~ !!]",
 	["hatchery.busy"] = "[!! Ěvěřý íňčůbáťöř hölďš áň ěgg. Háťčh öňě ťö šťářť áňöťhěř. ~~~~~~~~~~~~~~~~~~~~~~~ !!]",
 	["hatchery.egg.time"] = "[!! ⏱ {time} ~~ !!]",
@@ -511,4 +511,6 @@ return {
 	["field.card.title"] = "[!! Ťhíš špöť ~~~~ !!]",
 	["field.card.cropGroup"] = "[!! Čřöp ~~ !!]",
 	["field.card.petsGroup"] = "[!! Pěťš ~~ !!]",
+	["barn.group.forecast"] = "[!! Fíělď föřěčášť ~~~~~~ !!]",
+	["hatchery.group.nests"] = "[!! Ýöůř ňěšťš ~~~~ !!]",
 }

@@ -485,7 +485,7 @@ collecting and caring over obby runs.
   egg waits until the owner taps **Hatch**; the pet is rolled then and equipped automatically
   when a slot is free (§7.3).
   - **Hatchery panel (U5b).** The three incubators stand as nests under the hatchery's roof (§7.6 Layout) with one "Open hatchery"
-    prompt. The panel lists each incubator: its egg and a live countdown, **Hatch** when ready, the next one's Unlock brick with its
+    prompt. Group boxes separate **Your nests** from **Eggs to buy** (2026-11-15). The panel lists each incubator: its egg and a live countdown, **Hatch** when ready, the next one's Unlock brick with its
     price (two taps over 1 000 Coins), "unlock incubator n first" for the later one. While an owned incubator is empty, **egg cards**
     show each egg (drawn in its colour, name, hatch time, a price brick; Golden takes two taps) and a **?** brick that shows its odds;
     a card starts the egg in the first empty incubator. Hatching shows a **reveal** in the panel: the pet's portrait, its kind in the
@@ -578,7 +578,7 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   - **Barn** (own plot): the barn building on the front strip (U5a). It does not show the stock (the seed sacks and crop crates it
     drew on the own plot until 2026-11-12 only repeated the panel, less exactly, and nobody else saw them). Its "Open barn" prompt
     and the bottom-centre HUD brick "🧺 Barn" (shown
-    within 45 studs of the own plot) both open the barn panel: the crow
+    within 45 studs of the own plot) both open the barn panel, grouped as **Field forecast / Seeds / Harvest** (2026-11-15): the crow
     forecast line (ticking), the seeds held with their grow time (Growth upgrade included) and the barn's fill ("18 / 40 seeds"), the crops
     held with count, average size and record, **Feed** (a page of the player's pets that can still learn from food, equipped first; a tap
     opens that pet's page at its harvest-feeding section) and **Sell** (all of that crop, always two taps; since 2026-11-08 the button
@@ -595,7 +595,7 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   - The crow forecast also shows in the summary bubble over the own sign ("🐦 0:45" within an hour of crows, "🐦 now!" while they are on).
     The join notice stays a toast.
   - **Confirm and focus (all panels).** A spend over 1 000 Coins and every Sell take two taps: the first turns the button orange ("Tap
-    again") for 3 s. Opening the Pets, Skills, Barn, Seed stall or Food panel closes the one open before; Pets, Skills and Barn close when
+    again") for 3 s. Garden dialogs consume blank-area input and refit / reflow when the safe area changes (2026-11-15). Opening the Pets, Skills, Barn, Seed stall or Food panel closes the one open before; Pets, Skills and Barn close when
     the player walks 32 studs from where they were opened, the two stalls beyond 20 studs from their counter.
 - **Seeing the field (U3a, 2026-11-07).** Within 30 studs of the own field every planted square shows a ring (own plot only, ≤ 36): a dark
   disc whose pie fills as the crop grows, the crop icon inside; a ripe crop gets a full green pie, a ✓ badge and a small bounce; the 4 growing

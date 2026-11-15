@@ -11,7 +11,7 @@
 -- GardenView draws the eggs and their countdowns above every plot's nests (E1a1). Display only: a click names an incubator and an
 -- egg; GardenIncubators validates ownership, price, the inventory cap and the hatch time against the server's os.time(). Countdowns use
 -- workspace:GetServerTimeNow(). Hook (HatcheryGui attribute, cleared after use): Open = true opens the panel. Buttons by path (under
--- PlayerGui.HatcheryGui.Panel): Content.Nests.Nest<n>.Action, Content.Eggs.Cards.<EggId>.Buy / .Odds, Reveal.Ok, Close.
+-- PlayerGui.HatcheryGui.Panel): Content.Nests.Content.Nest<n>.Action, Content.Eggs.Content.Cards.<EggId>.Buy / .Odds, Reveal.Ok, Close.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -86,11 +86,9 @@ end
 
 local ui = GardenUi.Panel("HatcheryGui", COLOR_PANEL, WIDTH, HEIGHT)
 local statusSection = GardenUi.Section("Status", 1)
-local nestsSection = GardenUi.Section("Nests", 2)
-local eggsSection = GardenUi.Section("Eggs", 3)
+local nestsSection, nestsLegend = GardenUi.GroupBox(ui.content, "Nests", 2, COLOR_PANEL)
+local eggsSection, eggsLegend = GardenUi.GroupBox(ui.content, "Eggs", 3, COLOR_PANEL)
 statusSection.Parent = ui.content
-nestsSection.Parent = ui.content
-eggsSection.Parent = ui.content
 
 -- the reveal: a page over the panel's content
 local reveal = GardenUi.Create("Frame", {
@@ -294,7 +292,6 @@ end
 local function renderEggs(state, tap: number)
 	GardenUi.Clear(eggsSection)
 	local target = firstEmpty(state)
-	GardenUi.Heading(eggsSection, 1, Locale.T("hatchery.eggs"), COLOR_PANEL)
 	if not target then
 		GardenUi.Paragraph("Busy", { LayoutOrder = 2, Text = Locale.T("hatchery.busy") }).Parent = eggsSection
 		return
@@ -401,7 +398,12 @@ end
 
 render = function()
 	ui.title.Text = Locale.T("hatchery.title")
+	nestsLegend.Text = Locale.T("hatchery.group.nests")
+	eggsLegend.Text = Locale.T("hatchery.eggs")
 	revealOk.Text = Locale.T("hatchery.reveal.ok")
+	revealOk.Size = UDim2.fromOffset(160, math.max(48, ui.TapHeight()))
+	reveal.Position = UDim2.fromOffset(8, ui.TapHeight() + 10)
+	reveal.Size = UDim2.new(1, -16, 1, -(ui.TapHeight() + 18))
 	if not isOpen then
 		return
 	end
@@ -590,5 +592,6 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 end)
 
+ui.OnResize(render)
 ui.gui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 render()

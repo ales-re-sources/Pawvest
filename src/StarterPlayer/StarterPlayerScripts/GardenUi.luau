@@ -1,5 +1,5 @@
 -- GardenUi (U4): what the garden's panels share (Seed stall: SeedStallClient, Barn: BarnClient). Client only.
---   * builders: Create, Label, Button, Paragraph, Section, Clear, Latest, Pulse (re-exported from UiKit), Heading, Row + TextColumn (a text column
+--   * builders: Create, Label, Button, Paragraph, Section, Clear, Latest, Pulse (re-exported from UiKit), Heading, GroupBox (content + legend), Row + TextColumn (a text column
 --     that wraps, then the buttons), SellButton (a crop row's Sell);
 --   * Panel(name, color, width, height): a ScreenGui (Sibling ZIndex, AutoLocalize off) with a centred stud panel (title strip,
 --     X button, a scrolling Content list unless opts.content is false) that Fit() scales down to the screen (UIScale, Scale();
@@ -11,14 +11,12 @@
 --     open(counter part); opts.prompt = { action, object } Locale keys of the prompt, opts.onStand(stand model) once found.
 -- Display only: nothing here talks to the server.
 
-local GuiService = game:GetService("GuiService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
-local PanelFit = require(ReplicatedStorage:WaitForChild("PanelFit"))
 local ConfirmTap = require(ReplicatedStorage:WaitForChild("ConfirmTap"))
 local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
 local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
@@ -57,6 +55,33 @@ function GardenUi.Heading(parent: Instance, order: number, text: string, color: 
 	StudStyle.Title(title, color)
 	title.Parent = parent
 	return title
+end
+
+-- A labelled inset enclosing both information and controls. Clear the returned content; the legend stays outside it.
+function GardenUi.GroupBox(parent: Instance, name: string, order: number, color: Color3): (Frame, TextLabel)
+	local group = create("Frame", {
+		Name = name, LayoutOrder = order, Size = UDim2.new(1, 0, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Parent = parent,
+	})
+	local content = UiKit.Section("Content", 1, GardenUi.GAP)
+	content.Position = UDim2.fromOffset(0, 12)
+	content.BackgroundTransparency = 0
+	content.BackgroundColor3 = StudStyle.Shade(color, 0.35)
+	content.BorderSizePixel = 0
+	content.Parent = group
+	create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = content })
+	create("UIStroke", { ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = StudStyle.Shade(color, 0.8), Thickness = 1, Parent = content })
+	create("UIPadding", {
+		PaddingTop = UDim.new(0, 16), PaddingBottom = UDim.new(0, 12),
+		PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10), Parent = content,
+	})
+	local legend = UiKit.Label("Legend", {
+		Position = UDim2.fromOffset(12, 0), Size = UDim2.fromOffset(0, 24), AutomaticSize = Enum.AutomaticSize.X,
+		BackgroundTransparency = 0, BackgroundColor3 = StudStyle.Shade(color, 0.42), BorderSizePixel = 0,
+		TextColor3 = GardenUi.COLOR_INFO, TextSize = 18, Text = "", ZIndex = 2, Parent = group,
+	})
+	create("UIPadding", { PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6), Parent = legend })
+	return content, legend
 end
 
 -- A row: a text column that wraps and grows, then the buttons (TextColumn's `reserved` = their widths plus gaps).
@@ -130,7 +155,7 @@ function GardenUi.SellButton(row: Instance, crop, field, petState, width: number
 end
 
 -- A centred panel in its own ScreenGui. Returns a table: gui, panel, content (ScrollingFrame with a list), title, close,
--- Fit() (scale to the screen; call on open), TapHeight().
+-- Fit() (live safe area), TapHeight(), OnResize(callback) (reflow controls after a safe-area change).
 -- opts.content = false: no Content list (the caller lays out its own children; FoodShop)
 function GardenUi.Panel(name: string, color: Color3, width: number, height: number, opts: { content: boolean? }?)
 	local title = GardenUi.Label("TitleLabel", {
@@ -149,6 +174,7 @@ function GardenUi.Panel(name: string, color: Color3, width: number, height: numb
 	}, 1)
 	local content = if opts and opts.content == false then nil else create("ScrollingFrame", {
 		Name = "Content",
+		Active = true,
 		Position = UDim2.new(0, 8, 0, 46),
 		Size = UDim2.new(1, -16, 1, -54),
 		BackgroundTransparency = 1,
@@ -163,12 +189,14 @@ function GardenUi.Panel(name: string, color: Color3, width: number, height: numb
 	local fit = create("UIScale", { Scale = 1 })
 	local panel = create("Frame", {
 		Name = "Panel",
+		Active = true,
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.new(0.5, 0, 0.5, 18),
+		Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(width, height),
 		Visible = false,
 	}, { fit, title, close, content })
 	StudStyle.Panel(panel, color)
+	local titlePadding = create("UIPadding", { Parent = title })
 	panel.AutomaticSize = Enum.AutomaticSize.None -- StudStyle.Panel fits a listed panel; this one has a fixed size
 	panel.Size = UDim2.fromOffset(width, height)
 	local gui = create("ScreenGui", {
@@ -179,12 +207,38 @@ function GardenUi.Panel(name: string, color: Color3, width: number, height: numb
 		AutoLocalize = false, -- translated by Locale (L2)
 	}, { panel })
 	local self = { gui = gui, panel = panel, content = content, title = title, close = close }
+	local resizeCallbacks = {}
 	function self.Fit()
-		local viewport = workspace.CurrentCamera.ViewportSize
-		local inset = math.max(GuiService.TopbarInset.Height, 58)
-		local scale = math.min(1, (PanelFit.ViewportHeight() - inset - MARGIN) / height, (viewport.X - 2 * MARGIN) / width)
+		local size = gui.AbsoluteSize
+		if size.X <= 100 or size.Y <= 100 then
+			return -- wait for the real safe area after parenting / device changes
+		end
+		local scale = math.min(1, (size.Y - 2 * MARGIN) / height, (size.X - 2 * MARGIN) / width)
 		fit.Scale = math.max(scale, 0.5)
+		local tap = math.max(44, math.ceil(44 / fit.Scale))
+		close.Size = UDim2.fromOffset(tap, tap)
+		if content then
+			content.Position = UDim2.fromOffset(8, tap + 10)
+			content.Size = UDim2.new(1, -16, 1, -(tap + 18))
+		end
+		title.Size = UDim2.new(1, 0, 0, tap)
+		title.Position = UDim2.fromOffset(0, 0)
+		titlePadding.PaddingLeft = UDim.new(0, tap + 8)
+		titlePadding.PaddingRight = UDim.new(0, tap + 8)
 	end
+	function self.OnResize(callback: () -> ())
+		table.insert(resizeCallbacks, callback)
+	end
+	local resizeQueued = false
+	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+		if resizeQueued then return end
+		resizeQueued = true
+		task.defer(function()
+			resizeQueued = false
+			self.Fit()
+			for _, callback in resizeCallbacks do callback() end
+		end)
+	end)
 	function self.Scale(): number
 		return fit.Scale
 	end

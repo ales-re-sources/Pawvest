@@ -198,7 +198,7 @@ return {
 	["hatchery.prompt.object"] = "Hatchery",
 	["hatchery.nest.empty"] = "Empty: pick an egg below",
 	["hatchery.unlock"] = "Unlock · 💰 {count}",
-	["hatchery.eggs"] = "Eggs",
+	["hatchery.eggs"] = "Eggs to buy",
 	["hatchery.eggs.hint"] = "The egg goes into incubator {n}",
 	["hatchery.busy"] = "Every incubator holds an egg. Hatch one to start another.",
 	["hatchery.egg.time"] = "⏱ {time}",
@@ -511,4 +511,6 @@ return {
 	["field.card.title"] = "This spot",
 	["field.card.cropGroup"] = "Crop",
 	["field.card.petsGroup"] = "Pets",
+	["barn.group.forecast"] = "Field forecast",
+	["hatchery.group.nests"] = "Your nests",
 }

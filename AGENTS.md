@@ -156,7 +156,7 @@ src/Workspace/                StartLocation (hub), Tutorial, World1 (Stage1-5), 
 - Debounces in timer, portal and checkpoint code are per player; a kill part kills a living character once (no debounce). The timer uses
   `os.clock()`; times are floored to tenths (`TimeFormat.Tenths`) before storing.
 - A ScreenGui built in code gets `ZIndexBehavior = Sibling` (with Global its children drew under later pages / pickers).
-- GUI panels over world controls use `Active = true`; custom world tap / hover handlers also exclude hits on their GUI, including blank frames.
+- GUI panels over world controls use `Active = true`; custom world tap / hover handlers use `UiKit.BlocksWorld` to exclude UI hits, including blank frames.
 - **Shared helpers before local copies:** countdowns `TimeFormat.Clock`, client / stored number checks `Num`, id-set
   attributes `IdSet`, status colours `StudStyle.Text`, refusal texts `Locale.Reject(reason, specific)` (falls back to
   `common.reject.*`), stage lookups `StageConfig.TryForInstance` / `AreaOf` / `MedalsFromAttributes` / `AnyUnlocked`.

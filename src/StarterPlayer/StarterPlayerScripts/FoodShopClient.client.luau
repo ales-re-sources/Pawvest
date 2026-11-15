@@ -124,8 +124,11 @@ local filterBar = PetFilterBar.Mount(panel, {
 
 -- the chips take a row above the pet list; their height keeps a finger target of at least 36 px on screen
 local function layoutList()
-	local listTop = FILTER_TOP + chipHeight + 6
-	filterBar.SetLayout(FILTER_TOP, chipHeight)
+	local statusTop = shell.TapHeight() + 6
+	statusLabel.Position = UDim2.fromOffset(12, statusTop)
+	local filterTop = statusTop + statusLabel.Size.Y.Offset + 6
+	local listTop = filterTop + chipHeight + 6
+	filterBar.SetLayout(filterTop, chipHeight)
 	list.Position = UDim2.new(0, 8, 0, listTop)
 	list.Size = UDim2.new(1, -16, 1, -listTop - 8)
 	emptyLabel.Position = UDim2.new(0, 12, 0, listTop + 6)
@@ -483,4 +486,8 @@ end)
 -- Prompt -----------------------------------------------------------------------------------------------------------------
 
 GardenUi.BindStand(screenGui, GardenConfig.FoodStandName, openPanel)
+shell.OnResize(function()
+	fitToScreen()
+	if openStand then refresh() end
+end)
 screenGui.Parent = player:WaitForChild("PlayerGui")

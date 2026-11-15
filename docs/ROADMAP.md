@@ -100,6 +100,7 @@ player has the crop field, so the rest of the garden MVP (EXPANSION §14) is bui
    built and Studio-checked (2026-11-07); E5's onboarding teaches the new controls. Soil-card / pet-placement clarity follow-up
    **Studio-checked 2026-11-14; group boxes / Take off field checked 2026-11-15** (desktop controls, Czech phone layout; physical touch remains open): [UI_GARDEN_PETS.md §5.1](UI_GARDEN_PETS.md#51-soil-card-and-pet-placement--decided-2026-11-14).
    **Click-through fixed 2026-11-15:** blank card / hand UI blocks field selection and hover; buttons and outside field clicks Studio-checked.
+   **Shared UI follow-up Studio-checked 2026-11-15:** garden panel input guards, Barn / Hatchery group boxes, live safe-area refit; physical touch remains open.
 7. **Drops D1–D10** after the MVP (EXPANSION §14), one every 1–2 weeks: Critters, Comfort shop (M7), Weekly, Variants, Kitchen (the first
    restoration landmark), Neighbours, Mastery, World 4 (S9 / S10), the Estate, Season 1. Restoration bundles (E6, D5) and estate tiers / decor /
    cottage (E7, D9) are the long-term Coin sinks; E0 holds a placeholder for their size until they are designed.
