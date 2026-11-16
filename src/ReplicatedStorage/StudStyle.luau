@@ -5,7 +5,7 @@
 --                           colour and its Text the glyph: both stay the source of truth (the button's own text is only
 --                           made invisible), so scripts that set them keep working. Hover lifts the Top, a press sinks it.
 --                           Calling it again (e.g. on a clone of a styled button) rebuilds the look.
---   Panel(frame, color)     slide-in panel: deep tone of the colour, dark outline, TitleLabel as a smooth brick strip
+--   Panel(frame, color)     slide-in panel: deep tone of the colour, dark outline, TitleLabel as a flat stud-textured strip
 --   Row(frame, panelName)   a row inside a panel: a lighter tone of that panel's colour
 --   Plate(frame, color)     a free-standing plate (coin counter, status card): colour, outline, shine
 --   Title(label, color)     chunky white text with a dark outline in the colour's shade
@@ -100,6 +100,72 @@ function StudStyle.Title(label: TextLabel | TextButton, color: Color3)
 	label.TextColor3 = Color3.new(1, 1, 1)
 	label.TextStrokeColor3 = shade(color, 0.35)
 	label.TextStrokeTransparency = 0.2
+end
+
+-- Reuse StudPack's colour map as a faint, flat pattern. The original label still owns text / sizing;
+-- a foreground copy keeps the texture behind the words, including after a language or layout change.
+local function textureTitle(title: TextLabel)
+	local texture = title:FindFirstChild("HeaderTexture") :: ImageLabel?
+	if not texture then
+		texture = Instance.new("ImageLabel")
+		texture.Name = "HeaderTexture"
+		texture.BackgroundTransparency = 1
+		texture.Image = "rbxassetid://10509831729" -- MaterialService.StudPack.Studs.ColorMap
+		texture.ImageTransparency = 0.65
+		texture.ScaleType = Enum.ScaleType.Tile
+		texture.TileSize = UDim2.fromOffset(32, 32)
+		texture.ZIndex = 0
+		corner(texture, 10)
+		texture.Parent = title
+
+		local caption = Instance.new("TextLabel")
+		caption.Name = "HeaderText"
+		caption.BackgroundTransparency = 1
+		caption.Size = UDim2.fromScale(1, 1)
+		caption.AutoLocalize = false
+		caption.TextStrokeTransparency = 0.2
+		caption.ZIndex = 2
+		caption.Parent = title
+		for _, property in {
+			"Text", "FontFace", "TextSize", "TextScaled", "TextWrapped", "RichText",
+			"TextXAlignment", "TextYAlignment", "TextColor3", "TextStrokeColor3", "TextTruncate", "LineHeight",
+		} do
+			local function sync()
+				(caption :: any)[property] = (title :: any)[property]
+			end
+			title:GetPropertyChangedSignal(property):Connect(sync)
+			sync()
+		end
+
+		-- Padding belongs to the title's text and close button. Extend the texture back across the entire strip.
+		local function fitTexture()
+			local padding = title:FindFirstChildOfClass("UIPadding")
+			local left = if padding then padding.PaddingLeft else UDim.new()
+			local right = if padding then padding.PaddingRight else UDim.new()
+			local top = if padding then padding.PaddingTop else UDim.new()
+			local bottom = if padding then padding.PaddingBottom else UDim.new()
+			texture.Position = UDim2.new(-left.Scale, -left.Offset, -top.Scale, -top.Offset)
+			texture.Size = UDim2.new(1 + left.Scale + right.Scale, left.Offset + right.Offset,
+				1 + top.Scale + bottom.Scale, top.Offset + bottom.Offset)
+		end
+		local function watchPadding(child: Instance)
+			if child:IsA("UIPadding") then
+				for _, property in { "PaddingLeft", "PaddingRight", "PaddingTop", "PaddingBottom" } do
+					child:GetPropertyChangedSignal(property):Connect(fitTexture)
+				end
+				fitTexture()
+			end
+		end
+		title.ChildAdded:Connect(watchPadding)
+		title.ChildRemoved:Connect(fitTexture)
+		for _, child in title:GetChildren() do
+			watchPadding(child)
+		end
+		fitTexture()
+	end
+	texture.ImageColor3 = title.BackgroundColor3
+	title.TextTransparency = 1
+	title.TextStrokeTransparency = 1
 end
 
 -- Legacy stud counts remain accepted for existing callers; controls now have smooth top edges.
@@ -331,6 +397,7 @@ function StudStyle.Panel(frame: GuiObject, color: Color3)
 		corner(title, 10)
 		shine(title)
 		StudStyle.Title(title, color)
+		textureTitle(title)
 	end
 end
 

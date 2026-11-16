@@ -1044,6 +1044,10 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
 
+**Textured dialog headers** (2026-11-16; GDD §11). Shared dialog title strips reuse the world stud texture as a faint flat pattern;
+titles draw above it and keep following localization / layout. Studio-validated: Pets, Settings and the field square in English/Czech,
+foreground TextFits, smooth borders and no square-card scrollbar regression, clean server/client logs. No changed Czech texts.
+
 **Field square dialog** (2026-11-16; GDD §7.9). Fixed the subpixel height mismatch that showed a scrollbar on short content;
 added the shared colored header with a fixed close button and renamed the title from "This spot" to "Field square" (Czech: "Políčko").
 Studio-validated: empty and growing squares without residents, Czech TextFits, real seed/pet picker and close buttons, locked square,
