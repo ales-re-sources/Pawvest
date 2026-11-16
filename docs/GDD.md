@@ -614,7 +614,10 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   field slots used, job/reach, origin and consequence; every eligible row uses **Place pet**, including followers. Capacity blocks before
   the following explanation; field pets reuse their slot. The server validates first, then unequips and assigns together. No square
   numbers in the picker, location or placement toasts. Buy square retains its price / Renown and two-tap spend confirmation.
-  The selected square again, a tap off-field or walking away closes the card. Width is at most 400 px; on touch it clears the controls,
+  **Compact picker rows (2026-11-16):** the pet picker widens to 600 px (at most 450 px tall); one bordered inset encloses the portrait,
+  description and Place pet action. At widths ≥ 440 px the action sits on the right; narrower layouts stack it below. The complete picker
+  scrolls beneath the fixed header, with no nested pet-list scrollbar. Job effects share a line where they fit; all descriptions wrap.
+  The selected square again, a tap off-field or walking away closes the card. Other pages stay at most 400 px wide; on touch it clears the controls,
   and its contents scroll when taller than the safe area. The client sends only square / crop / pet ids; the server validates everything.
 - **Hand bar (U3b, 2026-11-07).** While the tap range applies, four bricks: 🌱 Seeds, 🧺 Basket, 🐾 Pets, ✋ Look (default); a row at the
   bottom right with a mouse, a 2 x 2 block above the jump button on a touch screen without a keyboard (the card then keeps clear of it). The

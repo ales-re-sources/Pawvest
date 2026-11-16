@@ -59,6 +59,8 @@ hint until the first tap, are built; whether rings / pulses need more is to be d
 - Picker: **Choose a pet for this spot**, field slots used, job/reach, current location and **Place pet** for every eligible pet.
   Consequence text explains resting / moving from another spot / stopping following; capacity blocks first. Existing field pets reuse
   their slot. Equipped pets transfer directly after all server checks pass; no separate trip to Pets. No square numbers in UI labels.
+  **Compact rows (2026-11-16):** picker up to 600 px wide; each bordered row encloses its portrait, description and right-side action
+  (stacked below on narrow screens). One scrolling body keeps the fixed header and lets phone users scroll past the capacity explanation.
 - Moving uses the **real field**, with a compact hint + **Cancel** by the hand bar (above on desktop, beside on touch); no grid dialog.
   Cancel / Escape leaves the assignment unchanged and restores the source card when applicable. Touch retains preview then second tap. An occupied destination
   keeps the held pet instead of picking up another; submitted placement waits for the server answer before finishing.

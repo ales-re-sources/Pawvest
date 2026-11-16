@@ -1044,6 +1044,10 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
 
+**Pet picker compact rows** (2026-11-16; GDD §7.9). Wider picker, bordered whole-pet rows and right-side Place pet buttons; narrow layouts stack
+the action and use one scrolling body. Studio-validated: real open/back/place, English/Czech TextFits, emulated phone swipe and desktop reflow,
+clean server/client logs. Placement profile snapshot restored and verified. Physical phone remains open; no changed Czech texts.
+
 **Textured dialog headers** (2026-11-16; GDD §11). Shared dialog title strips reuse the world stud texture as a faint flat pattern;
 titles draw above it and keep following localization / layout. Studio-validated: Pets, Settings and the field square in English/Czech,
 foreground TextFits, smooth borders and no square-card scrollbar regression, clean server/client logs. No changed Czech texts.

@@ -69,6 +69,9 @@ local TAP_SECONDS = 0.3
 local TAP_PIXELS = 8
 local RAY_LENGTH = 300
 local CARD_WIDTH = 400
+local PET_PICKER_WIDTH = 600
+local PET_PICKER_HEIGHT = 450
+local PET_ACTION_WIDTH = 112
 local HEADER_HEIGHT = 50
 local TOUCH_SIDE = 110 -- px kept free on each side on a touch screen (thumbstick, jump button)
 local CARD_BOTTOM = 76 -- px from the bottom: above the Field button (48 px at 20 px)
@@ -309,7 +312,7 @@ local body = create("ScrollingFrame", {
 local function fitCard()
 	local camera = workspace.CurrentCamera
 	local available = if screenGui.AbsoluteSize.Y > 0 then screenGui.AbsoluteSize.Y else if camera then camera.ViewportSize.Y else 600
-	local room = available - CARD_BOTTOM - 16
+	local room = math.min(available - CARD_BOTTOM - 16, if page == "pets" then PET_PICKER_HEIGHT else math.huge)
 	-- Text and automatic layouts can measure in fractional pixels. Round up both the canvas and its window
 	-- together so a subpixel remainder cannot create a scrollbar on a card whose content fits.
 	local height = math.ceil(body.UIListLayout.AbsoluteContentSize.Y + 18)
@@ -340,7 +343,8 @@ local function cardWidth(): number
 			side = math.max(side, viewport - score.AbsolutePosition.X + GAP) -- keep the close button clear of the stage HUD
 		end
 	end
-	return math.floor(math.max(200, math.min(CARD_WIDTH, viewport - 2 * side)))
+	local width = if page == "pets" then PET_PICKER_WIDTH else CARD_WIDTH
+	return math.floor(math.max(200, math.min(width, viewport - 2 * side)))
 end
 
 local function clearBody()
@@ -748,7 +752,10 @@ local function renderPets()
 		paragraph("None", 4, { Text = Locale.T("field.petPicker.none") }).Parent = body
 		return
 	end
-	local list = pickerList(4)
+	-- Let Body scroll the complete picker; nested scrolling would trap the action below the capacity text on phones.
+	local list = UiKit.Section("List", 4, 6)
+	list.Parent = body
+	local wide = card.Size.X.Offset >= 440
 	for index, pet in candidates do
 		local reach = reachOf(square, math.max(pet.tending, pet.guard))
 		local hasSlot = pet.field ~= nil or used < (fieldState.slots or 1)
@@ -763,15 +770,25 @@ local function renderPets()
 			table.insert(effects, Locale.T("field.petPicker.guard", { level = pet.guard, count = #reachOf(square, pet.guard) }))
 		end
 		local title = petName(pet.uid, pet.kind) .. "  " .. PlotView.JobIcons(pet.tending, pet.guard)
-		local row = UiKit.Section("Pet_" .. pet.uid, index, 4)
+		-- One inset contains the entire pet and its action, so the button cannot read as the next pet's heading.
+		local row = GardenUi.Row(list, "Pet_" .. pet.uid, index, COLOR_ROW)
 		row.Size = UDim2.new(1, -8, 0, 0)
-		row.Parent = list
-		local identity = GardenUi.Row(row, "Identity", 1, COLOR_ROW)
+		row.UIListLayout.FillDirection = if wide then Enum.FillDirection.Horizontal else Enum.FillDirection.Vertical
+		row.UIListLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+		create("UIStroke", { ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = COLOR_GROUP_BORDER, Thickness = 1, Parent = row })
+		local identity = create("Frame", {
+			Name = "Identity", LayoutOrder = 1, Size = UDim2.new(1, if wide then -PET_ACTION_WIDTH - GardenUi.GAP else 0, 0, 0),
+			AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Parent = row,
+		}, { create("UIListLayout", {
+			FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder,
+			Padding = UDim.new(0, GardenUi.GAP), VerticalAlignment = Enum.VerticalAlignment.Top,
+		}) })
 		PetPortrait.Holder({ LayoutOrder = 1, Size = UDim2.fromOffset(44, 44), BackgroundColor3 = StudStyle.Shade(COLOR_ROW, 0.6) }, portraits(pet)).Parent = identity
-		GardenUi.TextColumn(identity, 58, title, location).LayoutOrder = 2
-		paragraph("Effects", 2, { TextSize = 13, Text = table.concat(effects, "\n") }).Parent = row
-		paragraph("Info", 3, { TextSize = 14, Text = info }).Parent = row
-		local action = brick("PlacePet", { LayoutOrder = 4, Size = UDim2.new(1, 0, 0, BUTTON_HEIGHT), BackgroundColor3 = if enabled then COLOR_PET else COLOR_OFF, TextSize = 17,
+		local description = GardenUi.TextColumn(identity, 44 + GardenUi.GAP, title, location)
+		description.LayoutOrder = 2
+		paragraph("Effects", 3, { TextSize = 13, Text = table.concat(effects, " · ") }).Parent = description
+		paragraph("Consequence", 4, { TextSize = 13, Text = info }).Parent = description
+		local action = brick("PlacePet", { LayoutOrder = 2, Size = if wide then UDim2.fromOffset(PET_ACTION_WIDTH, BUTTON_HEIGHT) else UDim2.new(1, 0, 0, BUTTON_HEIGHT), BackgroundColor3 = if enabled then COLOR_PET else COLOR_OFF, TextSize = 17,
 			Text = Locale.T(if placing and placing.uid == pet.uid then "field.hand.placing" else "field.card.placePet"), Active = enabled, AutoButtonColor = enabled, Parent = row }, 2)
 		row.MouseEnter:Connect(function()
 			GardenView.ShowReach(reach)
@@ -785,7 +802,6 @@ local function renderPets()
 			end)
 		end
 	end
-	fitList(list, #candidates * 4)
 end
 
 function render()
@@ -1482,11 +1498,10 @@ screenGui:GetAttributeChangedSignal("HoldPet"):Connect(function()
 end)
 
 local function resize()
-	if cardOpen then
-		card.Size = UDim2.fromOffset(cardWidth(), card.Size.Y.Offset)
-		fitCard()
-	end
 	layoutBar()
+	if cardOpen then
+		render() -- pet rows reflow between side-by-side and stacked actions with the available width
+	end
 end
 local function watchCamera()
 	local camera = workspace.CurrentCamera
