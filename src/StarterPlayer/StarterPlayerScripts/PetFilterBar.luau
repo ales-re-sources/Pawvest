@@ -50,7 +50,7 @@ function PetFilterBar.Mount(panel: Frame, opts)
 			BackgroundColor3 = colorFilter,
 			TextSize = 14,
 			TextWrapped = true,
-		}, 2)
+		}, { compact = true })
 		chip:SetAttribute("UiSound", "Tab") -- filters are tabs (UiSoundsClient)
 		chip.Parent = panel
 		chips[id] = chip

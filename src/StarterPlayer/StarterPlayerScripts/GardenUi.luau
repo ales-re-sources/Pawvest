@@ -155,7 +155,7 @@ function GardenUi.SellButton(row: Instance, crop, field, petState, width: number
 end
 
 -- A centred panel in its own ScreenGui. Returns a table: gui, panel, content (ScrollingFrame with a list), title, close,
--- Fit() (live safe area), TapHeight(), OnResize(callback) (reflow controls after a safe-area change).
+-- Fit() (live safe area), TapHeight(), HeaderHeight(), TabHeight(), OnResize(callback) (reflow after a safe-area change).
 -- opts.content = false: no Content list (the caller lays out its own children; FoodShop)
 function GardenUi.Panel(name: string, color: Color3, width: number, height: number, opts: { content: boolean? }?)
 	local title = GardenUi.Label("TitleLabel", {
@@ -171,7 +171,7 @@ function GardenUi.Panel(name: string, color: Color3, width: number, height: numb
 		BackgroundColor3 = StudStyle.Shade(StudStyle.Colors.Red, 0.75),
 		TextSize = 18,
 		Text = "X",
-	}, 1)
+	}, { compact = true })
 	local content = if opts and opts.content == false then nil else create("ScrollingFrame", {
 		Name = "Content",
 		Active = true,
@@ -215,16 +215,17 @@ function GardenUi.Panel(name: string, color: Color3, width: number, height: numb
 		end
 		local scale = math.min(1, (size.Y - 2 * MARGIN) / height, (size.X - 2 * MARGIN) / width)
 		fit.Scale = math.max(scale, 0.5)
-		local tap = math.max(44, math.ceil(44 / fit.Scale))
-		close.Size = UDim2.fromOffset(tap, tap)
+		local header = self.HeaderHeight()
+		close.Size = UDim2.fromOffset(header, header)
+		close.Position = UDim2.new(1, -6, 0, 0)
 		if content then
-			content.Position = UDim2.fromOffset(8, tap + 10)
-			content.Size = UDim2.new(1, -16, 1, -(tap + 18))
+			content.Position = UDim2.fromOffset(8, header + 6)
+			content.Size = UDim2.new(1, -16, 1, -(header + 14))
 		end
-		title.Size = UDim2.new(1, 0, 0, tap)
+		title.Size = UDim2.new(1, 0, 0, header)
 		title.Position = UDim2.fromOffset(0, 0)
-		titlePadding.PaddingLeft = UDim.new(0, tap + 8)
-		titlePadding.PaddingRight = UDim.new(0, tap + 8)
+		titlePadding.PaddingLeft = UDim.new(0, header + 8)
+		titlePadding.PaddingRight = UDim.new(0, header + 8)
 	end
 	function self.OnResize(callback: () -> ())
 		table.insert(resizeCallbacks, callback)
@@ -244,6 +245,12 @@ function GardenUi.Panel(name: string, color: Color3, width: number, height: numb
 	end
 	function self.TapHeight(): number
 		return math.max(44, math.ceil(44 / fit.Scale))
+	end
+	function self.HeaderHeight(): number
+		return math.ceil(StudStyle.Sizes.Header / fit.Scale)
+	end
+	function self.TabHeight(): number
+		return math.ceil(StudStyle.Sizes.Tab / fit.Scale)
 	end
 	return self
 end

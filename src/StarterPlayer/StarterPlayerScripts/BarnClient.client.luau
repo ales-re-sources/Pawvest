@@ -90,11 +90,11 @@ local chooserList = GardenUi.Create("ScrollingFrame", {
 local openButton = GardenUi.Button("Open", {
 	AnchorPoint = Vector2.new(0.5, 1),
 	Position = UDim2.new(0.5, 0, 1, -20),
-	Size = UDim2.fromOffset(112, 48),
+	Size = UDim2.fromOffset(112, StudStyle.Sizes.HudButton),
 	BackgroundColor3 = COLOR_PANEL,
 	TextSize = 18,
 	Visible = false,
-}, 2)
+}, { compact = true })
 openButton.Parent = ui.gui
 
 local renderChooser, closePanel -- defined below (rows and the chooser call them)
@@ -205,8 +205,8 @@ function renderChooser()
 	chooserTitle.Text = Locale.T("barn.feed.title", { crop = GardenUi.CropTitle(crop) })
 	chooserBack.Text = Locale.T("barn.feed.back")
 	local tap = ui.TapHeight()
-	chooser.Position = UDim2.fromOffset(8, tap + 10)
-	chooser.Size = UDim2.new(1, -16, 1, -(tap + 18))
+	chooser.Position = UDim2.fromOffset(8, ui.HeaderHeight() + 6)
+	chooser.Size = UDim2.new(1, -16, 1, -(ui.HeaderHeight() + 14))
 	chooserBack.Size = UDim2.fromOffset(100, tap)
 	chooserList.Position = UDim2.fromOffset(0, tap + 10)
 	chooserList.Size = UDim2.new(1, 0, 1, -(tap + 10))

@@ -402,8 +402,8 @@ render = function()
 	eggsLegend.Text = Locale.T("hatchery.eggs")
 	revealOk.Text = Locale.T("hatchery.reveal.ok")
 	revealOk.Size = UDim2.fromOffset(160, math.max(48, ui.TapHeight()))
-	reveal.Position = UDim2.fromOffset(8, ui.TapHeight() + 10)
-	reveal.Size = UDim2.new(1, -16, 1, -(ui.TapHeight() + 18))
+	reveal.Position = UDim2.fromOffset(8, ui.HeaderHeight() + 6)
+	reveal.Size = UDim2.new(1, -16, 1, -(ui.HeaderHeight() + 14))
 	if not isOpen then
 		return
 	end

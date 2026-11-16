@@ -142,22 +142,22 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		TextXAlignment = Enum.TextXAlignment.Center,
 	})
 	local backButton = button("Back", {
-		Position = UDim2.new(0, 6, 0, 4),
+		Position = UDim2.new(0, 6, 0, 0),
 		Size = UDim2.fromOffset(30, 28),
 		ZIndex = 2,
 		BackgroundColor3 = StudStyle.Colors.Wood,
 		TextSize = 16,
 		Text = "<",
-	}, 1)
+	}, { compact = true })
 	local closeButton = button("Close", {
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -6, 0, 4),
+		Position = UDim2.new(1, -6, 0, 0),
 		Size = UDim2.fromOffset(30, 28),
 		ZIndex = 2,
 		BackgroundColor3 = COLOR_SELL,
 		TextSize = 16,
 		Text = "X",
-	}, 1)
+	}, { compact = true })
 	local content = create("ScrollingFrame", {
 		Name = "Content",
 		Position = UDim2.new(0, 8, 0, 42),
@@ -686,13 +686,13 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 	local api = {}
 
 	function api.Resize(scale: number)
-		local target = math.ceil(44 / scale)
-		local header = target + 8
+		local target = math.ceil(StudStyle.Sizes.Header / scale)
+		local header = target
 		titleLabel.Size = UDim2.new(1, 0, 0, header)
 		backButton.Size = UDim2.fromOffset(target, target)
 		closeButton.Size = UDim2.fromOffset(target, target)
-		content.Position = UDim2.fromOffset(8, header + 8)
-		content.Size = UDim2.new(1, -16, 1, -(header + 16))
+		content.Position = UDim2.fromOffset(8, header + 6)
+		content.Size = UDim2.new(1, -16, 1, -(header + 14))
 	end
 
 	function api.IsOpen(): boolean

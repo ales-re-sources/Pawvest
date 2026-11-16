@@ -72,7 +72,7 @@ local CARD_WIDTH = 400
 local PET_PICKER_WIDTH = 600
 local PET_PICKER_HEIGHT = 450
 local PET_ACTION_WIDTH = 112
-local HEADER_HEIGHT = 50
+local HEADER_HEIGHT = StudStyle.Sizes.Header
 local TOUCH_SIDE = 110 -- px kept free on each side on a touch screen (thumbstick, jump button)
 local CARD_BOTTOM = 76 -- px from the bottom: above the Field button (48 px at 20 px)
 local BUTTON_HEIGHT = 48
@@ -119,7 +119,7 @@ local function paragraph(name: string, order: number, props)
 end
 
 -- a brick button (StudStyle.Brick: colour and text keep being set on the button itself)
-local function brick(name: string, props, studs: number?)
+local function brick(name: string, props, studs: (number | { compact: boolean? })?)
 	props.TextWrapped = true
 	return UiKit.Button(name, props, studs)
 end
@@ -274,14 +274,14 @@ StudStyle.Panel(card, COLOR_PANEL)
 local closeHeader: (() -> ())? = nil
 local cardClose = brick("Close", {
 	AnchorPoint = Vector2.new(1, 0),
-	Position = UDim2.new(1, -6, 0, 3),
-	Size = UDim2.fromOffset(44, 44),
+	Position = UDim2.new(1, -6, 0, 0),
+	Size = UDim2.fromOffset(HEADER_HEIGHT, HEADER_HEIGHT),
 	ZIndex = 2,
 	BackgroundColor3 = COLOR_CLOSE,
 	TextSize = 18,
 	Text = "X",
 	Parent = card,
-}, 1)
+}, { compact = true })
 cardClose.Activated:Connect(function()
 	if closeHeader then
 		closeHeader()

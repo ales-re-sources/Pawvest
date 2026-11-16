@@ -15,6 +15,9 @@ local TweenService = game:GetService("TweenService")
 
 local StudStyle = {}
 
+-- Desired on-screen sizes; callers divide by their UIScale before laying out controls.
+StudStyle.Sizes = { Header = 40, Tab = 36, HudButton = 40 }
+
 StudStyle.Colors = {
 	Red = Color3.fromRGB(229, 83, 61),
 	Yellow = Color3.fromRGB(245, 180, 0),
@@ -56,7 +59,6 @@ StudStyle.Font = Enum.Font.BuilderSansBold
 
 local LIP = 5 -- pixels of brick side under the face
 local LIFT_HOVER = -2
-local LIFT_PRESS = LIP - 2
 local LIFT_TWEEN = TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 local EDGE = 0.62 -- shade of outlines, lips and stud rims
 local PANEL_BODY = 0.42
@@ -173,8 +175,9 @@ local function textureTitle(title: TextLabel)
 end
 
 -- Legacy stud counts remain accepted for existing callers; controls now have smooth top edges.
-function StudStyle.Brick(button: GuiButton, options: { studs: number?, socket: boolean? }?)
+function StudStyle.Brick(button: GuiButton, options: { studs: number?, socket: boolean?, compact: boolean? }?)
 	local opts = options or {}
+	local lipHeight = if opts.compact then 3 else LIP
 	for _, name in { "Lip", "Top" } do
 		local old = button:FindFirstChild(name)
 		if old then
@@ -204,7 +207,7 @@ function StudStyle.Brick(button: GuiButton, options: { studs: number?, socket: b
 
 	local top = Instance.new("Frame")
 	top.Name = "Top"
-	top.Size = UDim2.new(1, 0, 1, -LIP)
+	top.Size = UDim2.new(1, 0, 1, -lipHeight)
 	top.BackgroundTransparency = 1
 	top.Parent = button
 
@@ -271,7 +274,7 @@ function StudStyle.Brick(button: GuiButton, options: { studs: number?, socket: b
 
 	local hovering, pressed = false, false
 	local function lift()
-		local y = pressed and LIFT_PRESS or (hovering and LIFT_HOVER or 0)
+		local y = pressed and (lipHeight - 2) or (hovering and LIFT_HOVER or 0)
 		TweenService:Create(top, LIFT_TWEEN, { Position = UDim2.fromOffset(0, y) }):Play()
 	end
 	button.MouseEnter:Connect(function()

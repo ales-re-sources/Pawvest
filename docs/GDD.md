@@ -721,6 +721,11 @@ On narrower or portrait screens a panel replaces the block; its close button res
 their lists scroll, and layout updates when the screen rotates. Badges stay attached to their buttons.
 Skills, Settings and Admin start closed on joining. Within that session, the player's open or closed panel choice survives respawns.
 
+**Compact dialog chrome (2026-11-16).** Titles and square X/back controls target 40 px on screen after UIScale; Skills / Seed stall tabs
+and pet filters target 36 px. Barn's bottom HUD button is 40 px high. These controls use a shallower 3 px brick lip; headers retain two
+complete square-stud texture rows. Content starts closer below the header and uses the recovered height. Purchase and two-line action
+buttons retain their existing heights; fonts and translations are unchanged.
+
 Decided 2026-10-27. A player who finishes a stage, earns Coins or waits for an egg should always see what they can do next
 without reading anything. One client-side system (milestone G1) draws every such hint, so the game speaks one visual
 language. Hints are local to the player and display only: they read state the client already has (attributes, leaderstats,

@@ -41,7 +41,7 @@ local player = Players.LocalPlayer
 -- Reflow the same panel on rotation; preserve its selected pet, filter and open state.
 PanelFit.ViewportHeight() -- wait for the initial camera to settle
 local layout = HudLayout.Get(player:WaitForChild("PlayerGui"):WaitForChild("ScreenGui"))
-local FIT_SCALE, HEIGHT, WIDTH, COMPACT, BRICK, ROW_HEIGHT
+local FIT_SCALE, HEIGHT, WIDTH, COMPACT, BRICK, ROW_HEIGHT, FILTER_HEIGHT
 local SLOT_SIZE, SLOT_GAP, SUMMARY_TOP, FILTER_TOP, INFO_TOP, LIST_TOP, FIELD_TOP, SLOTS_TOP
 local POS_OPEN, POS_CLOSED
 local EQUIP_WIDTH = 84
@@ -54,14 +54,15 @@ local function measure(nextLayout)
 	WIDTH = math.floor(math.min(460, layout.width / FIT_SCALE))
 	COMPACT = HEIGHT < 480
 	BRICK = math.max(44, math.ceil(44 / FIT_SCALE))
+	FILTER_HEIGHT = math.ceil(StudStyle.Sizes.Tab / FIT_SCALE)
 	ROW_HEIGHT = math.max(64, BRICK + 12)
 	SLOT_GAP = if COMPACT then 12 else 16
 	SLOT_SIZE = math.min(if COMPACT then BRICK else 96, math.floor((WIDTH - 20 - SLOT_GAP * 2) / 3))
-	local header = math.ceil(44 / FIT_SCALE) + 8
+	local header = math.ceil(StudStyle.Sizes.Header / FIT_SCALE)
 	SUMMARY_TOP = header + 4
 	FILTER_TOP = SUMMARY_TOP + 24
-	INFO_TOP = FILTER_TOP + BRICK + 6
-	LIST_TOP = if COMPACT then FILTER_TOP + BRICK + 6 else INFO_TOP + 24
+	INFO_TOP = FILTER_TOP + FILTER_HEIGHT + 6
+	LIST_TOP = if COMPACT then FILTER_TOP + FILTER_HEIGHT + 6 else INFO_TOP + 24
 	FIELD_TOP = HEIGHT - 10 - BRICK
 	SLOTS_TOP = FIELD_TOP - 8 - SLOT_SIZE
 	POS_OPEN = UDim2.fromOffset(layout.left, layout.top)
@@ -122,13 +123,13 @@ local titleLabel = label("TitleLabel", {
 })
 local closeButton = button("Close", {
 	AnchorPoint = Vector2.new(1, 0),
-	Position = UDim2.new(1, -6, 0, 4),
+	Position = UDim2.new(1, -6, 0, 0),
 	Size = UDim2.fromOffset(30, 28),
 	ZIndex = 2,
 	BackgroundColor3 = COLOR_CLOSE,
 	TextSize = 16,
 	Text = "X",
-}, 1)
+}, { compact = true })
 local summaryLabel = label("Summary", {
 	Position = UDim2.new(0, 12, 0, SUMMARY_TOP),
 	Size = UDim2.new(1, -24, 0, 20),
@@ -288,7 +289,7 @@ local filterBar = PetFilterBar.Mount(panel, {
 	color = COLOR_PANEL,
 	width = WIDTH,
 	top = FILTER_TOP,
-	height = BRICK,
+	height = FILTER_HEIGHT,
 	onPress = function()
 		chipTooltip.Hide()
 	end,
@@ -736,8 +737,8 @@ HudLayout.Watch(screenGui, function(nextLayout)
 	detail.Reflow(function()
 		panelScale.Scale = FIT_SCALE
 		panel.Size = UDim2.fromOffset(WIDTH, HEIGHT)
-		local closeSize = math.ceil(44 / FIT_SCALE)
-		titleLabel.Size = UDim2.new(1, 0, 0, closeSize + 8)
+		local closeSize = math.ceil(StudStyle.Sizes.Header / FIT_SCALE)
+		titleLabel.Size = UDim2.new(1, 0, 0, closeSize)
 		closeButton.Size = UDim2.fromOffset(closeSize, closeSize)
 		summaryLabel.Position = UDim2.fromOffset(12, SUMMARY_TOP)
 		infoLabel.Position = UDim2.fromOffset(12, INFO_TOP)
@@ -754,7 +755,7 @@ HudLayout.Watch(screenGui, function(nextLayout)
 		fieldLine.Position = UDim2.fromOffset(10, FIELD_TOP)
 		fieldLine.Size = UDim2.new(1, -20, 0, BRICK)
 		filterBar.HideMenu()
-		filterBar.SetLayout(FILTER_TOP, BRICK, WIDTH)
+		filterBar.SetLayout(FILTER_TOP, FILTER_HEIGHT, WIDTH)
 		chipTooltip.Hide()
 		detail.Resize(FIT_SCALE)
 		positionPanel(screenGui:GetAttribute("Open") == true, false)

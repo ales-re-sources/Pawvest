@@ -53,11 +53,12 @@ function UiKit.Label(name: string, props)
 	return create("TextLabel", props)
 end
 
-function UiKit.Button(name: string, props, studs: number?)
+-- Legacy stud counts or explicit brick options (e.g. { compact = true }).
+function UiKit.Button(name: string, props, studs: (number | { compact: boolean? })?)
 	props.Name = name
 	props.TextColor3 = Color3.new(1, 1, 1)
 	local instance = create("TextButton", props)
-	StudStyle.Brick(instance, { studs = studs })
+	StudStyle.Brick(instance, if type(studs) == "table" then studs else { studs = studs })
 	return instance
 end
 

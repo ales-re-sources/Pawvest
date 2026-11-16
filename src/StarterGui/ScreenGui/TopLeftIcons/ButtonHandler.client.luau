@@ -191,7 +191,7 @@ for _, panel in { skillsPanel, settingsPanel, adminPanel } do
 		TextSize = 24,
 		ZIndex = 10,
 		AutoLocalize = false,
-	}, 1)
+	}, { compact = true })
 	close.Parent = panel:WaitForChild("TitleLabel")
 	close.Activated:Connect(function() closePanel(panel) end)
 end
@@ -206,10 +206,10 @@ HudLayout.Watch(screenGui.Parent, function(nextLayout)
 		local width = if panel == skillsPanel then 300 else 250
 		panel.Size = UDim2.new(0, math.min(width, layout.width / layout.scale), panel.Size.Y.Scale, panel.Size.Y.Offset)
 		local title = panel.TitleLabel
-		local closeSize = math.ceil(44 / layout.scale)
-		title.Size = UDim2.new(1, 0, 0, closeSize + 8)
+		local closeSize = math.ceil(StudStyle.Sizes.Header / layout.scale)
+		title.Size = UDim2.new(1, 0, 0, closeSize)
 		title.Close.Size = UDim2.fromOffset(closeSize, closeSize)
-		title.Close.Position = UDim2.new(1, closeSize + 6, 0, 4) -- compensate the title's text padding
+		title.Close.Position = UDim2.new(1, closeSize + 6, 0, 0) -- compensate the title's text padding
 		local padding = title:FindFirstChildOfClass("UIPadding") or Instance.new("UIPadding")
 		padding.PaddingRight = UDim.new(0, closeSize + 10)
 		padding.PaddingLeft = UDim.new(0, 6)

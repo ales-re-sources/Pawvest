@@ -73,7 +73,7 @@ local function tabButton(name: string, x: number)
 		TextSize = 17,
 		BackgroundColor3 = GardenUi.COLOR_LOCKED,
 		Parent = tabs,
-	}, 2)
+	}, { compact = true })
 end
 local buyTab, sellTab = tabButton("Buy", 0), tabButton("Sell", 0.5)
 local activeTab = "buy"
@@ -233,12 +233,12 @@ local function render()
 	if not openCounter then
 		return
 	end
-	local tap = ui.TapHeight()
-	local top = tap + 10
-	tabs.Size = UDim2.new(1, -16, 0, tap)
+	local tab = ui.TabHeight()
+	local top = ui.HeaderHeight() + 6
+	tabs.Size = UDim2.new(1, -16, 0, tab)
 	tabs.Position = UDim2.fromOffset(8, top)
-	ui.content.Position = UDim2.fromOffset(8, top + tap + GAP)
-	ui.content.Size = UDim2.new(1, -16, 1, -(top + tap + GAP + 8))
+	ui.content.Position = UDim2.fromOffset(8, top + tab + GAP)
+	ui.content.Size = UDim2.new(1, -16, 1, -(top + tab + GAP + 8))
 	buyTab.BackgroundColor3 = if activeTab == "buy" then GardenUi.COLOR_BUY else GardenUi.COLOR_LOCKED
 	sellTab.BackgroundColor3 = if activeTab == "sell" then GardenUi.COLOR_SELL else GardenUi.COLOR_LOCKED
 	cartSection.Visible = activeTab == "buy"

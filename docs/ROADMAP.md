@@ -1044,6 +1044,11 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
 
+**Compact dialog chrome** (2026-11-16; GDD §11). On-screen 40 px titles and square X/back controls, 36 px Skills / Seed stall tabs and pet
+filters, 40 px Barn HUD button, shallower brick lips and reclaimed content space. Studio-validated: desktop + landscape phone emulator,
+real tabs/filters/open/close/back, English/Czech foreground TextFits and two square-stud rows, clean game logs. Original pet loadout
+restored after a misdirected test click. Physical phone remains open; no changed Czech texts.
+
 **Pet picker compact rows** (2026-11-16; GDD §7.9). Wider picker, bordered whole-pet rows and right-side Place pet buttons; narrow layouts stack
 the action and use one scrolling body. Studio-validated: real open/back/place, English/Czech TextFits, emulated phone swipe and desktop reflow,
 clean server/client logs. Placement profile snapshot restored and verified. Physical phone remains open; no changed Czech texts.

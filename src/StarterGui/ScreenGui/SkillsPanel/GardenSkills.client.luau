@@ -57,12 +57,13 @@ end
 -- Layout -------------------------------------------------------------------------------------------------------------------
 
 local fitScale = HudLayout.Get(panel.Parent).scale
-local tapHeight = math.ceil(44 / fitScale) -- tabs and Buy bricks stay at least 44 px tall on screen
+local tapHeight = math.ceil(44 / fitScale) -- Buy bricks stay at least 44 px tall on screen
+local tabHeight = math.ceil(StudStyle.Sizes.Tab / fitScale)
 panel.Size = UDim2.new(0, PANEL_WIDTH, panel.Size.Y.Scale, panel.Size.Y.Offset)
 
 local rows = panel:WaitForChild("Rows", 10) -- TalentRows' list (the Obby tab)
 local obbyHeight = rows and rows.Size.Y.Offset or 430
-local listCap = HudLayout.Get(panel.Parent).height / fitScale - 55 - (tapHeight + 10)
+local listCap = HudLayout.Get(panel.Parent).height / fitScale - math.ceil(StudStyle.Sizes.Header / fitScale) - tabHeight - 40
 if rows then
 	rows.LayoutOrder = 2
 	rows.Size = UDim2.new(1, 0, 0, math.min(rows.Size.Y.Offset, listCap))
@@ -72,7 +73,7 @@ local function tabButton(name: string, order: number)
 	local button = create("TextButton", {
 		Name = name,
 		LayoutOrder = order,
-		Size = UDim2.new(0.5, -4, 0, tapHeight),
+		Size = UDim2.new(0.5, -4, 0, tabHeight),
 		Font = Enum.Font.SourceSansBold,
 		TextSize = 17,
 		TextColor3 = Color3.new(1, 1, 1),
@@ -80,7 +81,7 @@ local function tabButton(name: string, order: number)
 		AutoButtonColor = false,
 	})
 	button:SetAttribute("UiSound", "Tab")
-	StudStyle.Brick(button)
+	StudStyle.Brick(button, { compact = true })
 	return button
 end
 local obbyTab = tabButton("Obby", 1)
@@ -88,7 +89,7 @@ local gardenTab = tabButton("Garden", 2)
 create("Frame", {
 	Name = "Tabs",
 	LayoutOrder = 1,
-	Size = UDim2.new(1, -10, 0, tapHeight),
+	Size = UDim2.new(1, -10, 0, tabHeight),
 	BackgroundTransparency = 1,
 	Parent = panel,
 }, {
@@ -345,11 +346,12 @@ showTab()
 HudLayout.Watch(panel.Parent, function(layout)
 	fitScale = layout.scale
 	tapHeight = math.ceil(44 / fitScale)
-	local titleHeight = tapHeight + 8 -- ButtonHandler's title and 44 px close button
-	listCap = math.max(1, layout.height / fitScale - titleHeight - tapHeight - 40)
-	panel.Tabs.Size = UDim2.new(1, -10, 0, tapHeight)
-	obbyTab.Size = UDim2.new(0.5, -4, 0, tapHeight)
-	gardenTab.Size = UDim2.new(0.5, -4, 0, tapHeight)
+	tabHeight = math.ceil(StudStyle.Sizes.Tab / fitScale)
+	local titleHeight = math.ceil(StudStyle.Sizes.Header / fitScale)
+	listCap = math.max(1, layout.height / fitScale - titleHeight - tabHeight - 40)
+	panel.Tabs.Size = UDim2.new(1, -10, 0, tabHeight)
+	obbyTab.Size = UDim2.new(0.5, -4, 0, tabHeight)
+	gardenTab.Size = UDim2.new(0.5, -4, 0, tabHeight)
 	if rows then rows.Size = UDim2.new(1, 0, 0, math.min(obbyHeight, listCap)) end
 	gardenList.Size = UDim2.new(1, 0, 0, math.min(430, listCap))
 	renderIfShown()

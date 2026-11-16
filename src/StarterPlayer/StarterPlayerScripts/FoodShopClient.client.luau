@@ -107,7 +107,7 @@ local chipTooltip = PetRow.Tooltip(panel, COLOR_PANEL)
 local foodTooltip = PetRow.Tooltip(panel, COLOR_PANEL, { name = "Tooltip", room = 130 })
 
 local refresh -- defined below; a filter pick calls it
-local chipHeight = 36
+local chipHeight = StudStyle.Sizes.Tab
 local filterBar = PetFilterBar.Mount(panel, {
 	color = COLOR_PANEL,
 	width = WIDTH,
@@ -124,7 +124,7 @@ local filterBar = PetFilterBar.Mount(panel, {
 
 -- the chips take a row above the pet list; their height keeps a finger target of at least 36 px on screen
 local function layoutList()
-	local statusTop = shell.TapHeight() + 6
+	local statusTop = shell.HeaderHeight() + 6
 	statusLabel.Position = UDim2.fromOffset(12, statusTop)
 	local filterTop = statusTop + statusLabel.Size.Y.Offset + 6
 	local listTop = filterTop + chipHeight + 6
@@ -144,7 +144,7 @@ local function fitToScreen()
 	local scale = shell.Scale()
 	buttonHeight = math.min(60, math.max(46, math.ceil(36 / scale)))
 	rowHeight = math.max(62, buttonHeight + 10)
-	chipHeight = math.max(36, math.ceil(36 / scale))
+	chipHeight = shell.TabHeight()
 	layoutList()
 end
 
