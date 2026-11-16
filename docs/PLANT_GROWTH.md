@@ -1,30 +1,36 @@
 # Plant growth art
 
 This document owns the shared authoring workflow and Studio player. [EXPANSION §5.1](EXPANSION.md#51-plant-growth-art) holds
-the high-level direction; [ROADMAP](ROADMAP.md) owns status and next steps. Read only the relevant crop page for its anatomy,
-selected silhouette, growth poses and geometry budget.
+the high-level direction; [ROADMAP](ROADMAP.md) owns the order and next steps; the table below holds each crop's status. Read only
+the relevant crop page for its anatomy, selected silhouette, growth poses and geometry budget.
 
-| Crop | Design | Full-detail Parts |
-|---|---|---|
-| Tomato | [Classic staked tomato](plants/TOMATO.md) | 71 |
-| Potato | [Upright compound foliage](plants/POTATO.md) | 65 |
-| Frost Grape | [Tall vineyard trellis](plants/FROST_GRAPE.md) | 115 |
-| Corn | [Tall two-ear stalk](plants/CORN.md) | 99 |
-| Lettuce | [Crisp head](plants/LETTUCE.md) | 70 |
-| Pepper | [Upright red chilli-pepper bush](plants/PEPPER.md) | 84 |
-| Glow Mushroom | [Glowing chestnut bolete pair](plants/GLOW_MUSHROOM.md) | 60 |
-| Golden Carrot | [Buried pointed root and tall feathery crown](plants/GOLDEN_CARROT.md) | 72 |
-| Onion | [Half-buried brown bulb, tall quills and flower umbel](plants/ONION.md) | 59 |
-| Cucumber | [Ladder-trellis vine with hanging dark cucumbers](plants/CUCUMBER.md) | 79 |
-| Garlic | [Half-buried ivory head, flat leaves and curled scape](plants/GARLIC.md) | 54 |
-| Broccoli | [Lobed blue-green foliage and a domed floret crown](plants/BROCCOLI.md) | 108 |
-| Pumpkin | [Arching vine, broad leaves, big ribbed orange fruit](plants/PUMPKIN.md) | 96 |
-| Eggplant | [Tall open plant with three long hanging purple fruit](plants/EGGPLANT.md) | 113 |
-| Blueberry | [Round highbush with ten berry bunches over the whole bush](plants/BLUEBERRY.md) | 134 |
-| Sweet potato | [Trained fan with broad heart leaves and reddish root shoulders](plants/SWEET_POTATO.md) | 169 |
-| Giant melon | [Arching vine, lobed leaves, big striped green melon](plants/GIANT_MELON.md) | 97 |
-| Sunflower | [A1 spiral foliage + H2 layered head; growth draft](plants/SUNFLOWER.md) | 192 (draft) |
-| Pineapple | [Tall stalk lifting a diamond-eyed fruit over a leaf rosette](plants/PINEAPPLE.md) | 155 |
+## Crops and status
+Every registered crop passed the Studio geometry checks (six seeds × three masses × 101 ages, radius, seeks, proxies) and the production
+`PlotView` lifecycle (corrections, exact ripeness, selection, detail transitions, harvest / replant), boot clean. **Open** lists what is
+left: *stills* = five stills await Ales's review; *perf* = full-field / 24-plot CPU (Parts per full field of 36 in brackets); *phone* =
+a real phone; *2nd* = a second client. Live validation is open for all.
+
+| Crop | Design | Parts | Status (milestone) | Open |
+|---|---|---|---|---|
+| Tomato | [Classic staked tomato](plants/TOMATO.md) | 71 | CG1e: tall staked classic (2026-11-09, a tester wanted a taller plant); variants (two floors, cherry spiral) after GA | stills, perf (2 556), phone, 2nd |
+| Potato | [Upright compound foliage](plants/POTATO.md) | 65 | CG3, desktop CPU done | phone, 2nd |
+| Frost Grape | [Tall vineyard trellis](plants/FROST_GRAPE.md) | 115 | CG5c: frost flecks on ripe bunches, harvest burst (2026-11-11) | CG5d perf (4 140 + particles), phone, 2nd |
+| Corn | [Tall two-ear stalk](plants/CORN.md) | 99 | CG6 complete (phone and 2nd confirmed 2026-11-09) | – |
+| Lettuce | [Crisp head](plants/LETTUCE.md) | 70 | CG7, stills approved 2026-11-09 | phone, 2nd |
+| Pepper | [Upright red chilli-pepper bush](plants/PEPPER.md) | 84 | CG8: slender pointed chillies (Ales's correction), revalidated | stills, perf, phone, 2nd |
+| Glow Mushroom | [Glowing chestnut bolete pair](plants/GLOW_MUSHROOM.md) | 60 | CG9, stills approved 2026-11-09 | perf, phone, 2nd |
+| Golden Carrot | [Buried pointed root and tall feathery crown](plants/GOLDEN_CARROT.md) | 72 | CG10, approved 2026-11-10; owner-harvest burst; desktop CPU done | phone, 2nd |
+| Onion | [Half-buried brown bulb, tall quills and flower umbel](plants/ONION.md) | 59 | CG11, approved 2026-11-10 | perf, phone, 2nd |
+| Cucumber | [Ladder-trellis vine with hanging dark cucumbers](plants/CUCUMBER.md) | 79 | CG13, approved 2026-11-10 | perf, phone, 2nd |
+| Garlic | [Half-buried ivory head, flat leaves and curled scape](plants/GARLIC.md) | 54 | CG12, approved 2026-11-10; desktop CPU done (1 944) | phone, 2nd |
+| Broccoli | [Lobed blue-green foliage and a domed floret crown](plants/BROCCOLI.md) | 108 | CG14, longer leaves approved 2026-11-11 | perf, phone, 2nd |
+| Pumpkin | [Arching vine, broad leaves, big ribbed orange fruit](plants/PUMPKIN.md) | 96 | CG15 registered | stills, perf (3 456), phone, 2nd |
+| Eggplant | [Tall open plant with three long hanging purple fruit](plants/EGGPLANT.md) | 113 | CG16e: cross fork round the stem, approved 2026-11-14 | perf (4 068), phone, 2nd |
+| Blueberry | [Round highbush with ten berry bunches over the whole bush](plants/BLUEBERRY.md) | 134 | CG17, approved 2026-11-12 | perf (4 824), phone, 2nd |
+| Sweet potato | [Trained fan with broad heart leaves and reddish root shoulders](plants/SWEET_POTATO.md) | 169 | CG18, approved 2026-11-12 | perf (6 084), phone, 2nd |
+| Giant melon | [Arching vine, lobed leaves, big striped green melon](plants/GIANT_MELON.md) | 97 | CG19, approved 2026-11-12 | perf (3 492), phone, 2nd |
+| Sunflower | [A1 spiral foliage + H2 layered head; growth draft](plants/SUNFLOWER.md) | 192 (draft) | CG20b draft, art approved 2026-11-12; reviewer checks pass | CG20c field registration, then CG20d perf / phone |
+| Pineapple | [Tall stalk lifting a diamond-eyed fruit over a leaf rosette](plants/PINEAPPLE.md) | 155 | CG21, approved 2026-11-12 | perf (5 580), phone, 2nd |
 
 ## Studio growth player
 
@@ -60,6 +66,12 @@ without reopening the reviewer; Close the existing reviewer before calling `Open
 plot and restores the camera/HUD. These are Studio-only English controls. User review deliverables remain the five stills below.
 
 [Plant picker](art/plant-review/crop-picker.jpg)
+
+**Hybrid look prototype (HX0):** `PlantGrowthReview.OpenCross("Tomato", "Blueberry")` reviews one cross of two generated
+plants (`GenePlant`, parents = `PlantGenome.Presets` ids or genomes; optional seconds, mutagen list `{ "Violet" }`, cross seed).
+**Six seeds** shows parent A, four children and parent B; **Seed** picks one of them for the other modes.
+`OpenPresets({ "Palm", "AppleTree", "Cactus" })` shows up to six presets side by side. When any plant of the row is big
+(`bulk` ≥ 1.5), the whole field opens and the six spots become 2×2 blocks. See [HYBRID_PROTOTYPE.md](HYBRID_PROTOTYPE.md).
 
 ## Review deliverable
 
@@ -197,5 +209,5 @@ and future perennial behavior clearly distinguished in status reports.
 ## Historical evidence
 
 Alternative-study details, acceptance counts and desktop CPU logs from CG1–CG6 are archived in git:
-`git show d73a9aa:docs/EXPANSION.md`. Keep durable design decisions in the crop pages and current open checks in ROADMAP;
+`git show d73a9aa:docs/EXPANSION.md`. Keep durable design decisions in the crop pages and current open checks in the status table above;
 do not copy those validation narratives back into EXPANSION or this guide.

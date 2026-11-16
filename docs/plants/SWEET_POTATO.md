@@ -1,6 +1,6 @@
 # Sweet potato growth art
 
-[Shared authoring workflow](../PLANT_GROWTH.md) · [Status](../ROADMAP.md)
+[Shared authoring workflow](../PLANT_GROWTH.md) · [Status](../PLANT_GROWTH.md#crops-and-status)
 
 ## Selected design
 

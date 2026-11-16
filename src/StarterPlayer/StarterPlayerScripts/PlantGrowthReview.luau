@@ -5,7 +5,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Input = game:GetService("UserInputService")
 
-local function open(cropId: string?, seconds: number?)
+-- `extra` = { crop, recipe }: one more entry that is not in the catalogue (OpenCross).
+local function open(cropId: string?, seconds: number?, extra)
 	assert(RunService:IsStudio() and RunService:IsClient(), "Use the Studio playtest Client command bar")
 
 	local player = Players.LocalPlayer
@@ -22,10 +23,20 @@ local function open(cropId: string?, seconds: number?)
 			modules[candidate.id] = module
 		end
 	end
+	if extra then
+		table.insert(choices, 1, extra.crop)
+	end
 	assert(#choices > 0, "No plant recipes to review")
-	local crop = assert(CropConfig.ById[cropId or choices[1].id], "Unknown review crop")
+	local function recipeOf(id: string)
+		if extra and id == extra.crop.id then
+			return extra.recipe
+		end
+		return require(assert(modules[id], "No art recipe for " .. id))
+	end
+	local crop = if extra and cropId == extra.crop.id then extra.crop
+		else assert(CropConfig.ById[cropId or choices[1].id], "Unknown review crop")
 	local Growth = require(ReplicatedStorage.PlantGrowth)
-	local recipe = require(assert(modules[crop.id], "No art recipe for " .. crop.id))
+	local recipe = recipeOf(crop.id)
 	local duration = seconds or math.min(crop.growSeconds, 10)
 	local elapsed = 0
 	assert(duration > 0, "Review duration must be positive")
@@ -43,11 +54,21 @@ local function open(cropId: string?, seconds: number?)
 	local root = Instance.new("Folder")
 	root.Name = name
 	local view = PlotView.new(slot, root)
-	local cells = table.create(CropConfig.MaxSquares, "#0")
-	for i = 1, 12 do cells[i] = ".0" end
-	cells[2] = if crop.id == "Potato" then "k3" else "a2"
-	view:SetState({name = player.DisplayName, incCount = 1, eggs = {},
-		field = {crops = table.concat(cells), pets = {"Cat:3:review:4:1:1"}}})
+	-- A big generated plant (recipe.Footprint == 2, HX) stands on a 2 x 2 block: the whole field opens, without a neighbour.
+	local function wide()
+		return recipe.Footprint == 2
+	end
+	local function showField()
+		local cells = table.create(CropConfig.MaxSquares, if wide() then ".0" else "#0")
+		if not wide() then
+			for i = 1, 12 do cells[i] = ".0" end
+			-- Keep the comparison neighbour distinct from the selected crop.
+			cells[2] = if crop.id == "Potato" then "k3" else "a2"
+		end
+		view:SetState({name = player.DisplayName, incCount = 1, eggs = {},
+			field = {crops = table.concat(cells), pets = {"Cat:3:review:4:1:1"}}})
+	end
+	showField()
 	view:SetDetail("full")
 	while view:Step(os.clock() + 0.006) do task.wait() end
 
@@ -61,10 +82,22 @@ local function open(cropId: string?, seconds: number?)
 	local fieldAnchor = workspace:FindFirstChild("FieldRings")
 	local template = fieldAnchor and fieldAnchor:FindFirstChildWhichIsA("BillboardGui", true)
 
-	local function addRing(square)
+	-- Review spot 1..6: a square of the second row, or one of six 2 x 2 blocks (three across rows 1-2, three across
+	-- rows 3-4). Returns the soil CFrame at its centre and a square of it.
+	local function spot(index)
+		if not wide() then
+			return view:SquareCFrame(6 + index), 6 + index
+		end
+		local first = if index <= 3 then index * 2 - 1 else 12 + (index - 3) * 2
+		local opposite = first + (if index <= 3 then 7 else 9)
+		return view:SquareCFrame(first):Lerp(view:SquareCFrame(opposite), 0.5), first
+	end
+
+	local function addRing(index)
+		local at, square = spot(index)
 		local attachment = Instance.new("Attachment")
 		attachment.Parent = view.pieces["sq" .. square]:FindFirstChild("Soil" .. square)
-		attachment.WorldCFrame = view:SquareCFrame(square)
+		attachment.WorldCFrame = at
 		local gui
 		if template then
 			gui = template:Clone()
@@ -104,12 +137,12 @@ local function open(cropId: string?, seconds: number?)
 		end
 	end
 
-	local function addPlant(square, seed, progress)
-		local frame = Growth.PlantCFrame(view:SquareCFrame(square), seed, recipe)
+	local function addPlant(index, seed, progress)
+		local frame = Growth.PlantCFrame((spot(index)), seed, recipe)
 		local plant = recipe.new(root, frame, seed, root:GetAttribute("SizeFactor"))
 		plant:SetGrowth(progress)
 		table.insert(plants, plant)
-		addRing(square)
+		addRing(index)
 		fillRing(rings[#rings], progress)
 	end
 
@@ -123,17 +156,24 @@ local function open(cropId: string?, seconds: number?)
 		table.clear(rings)
 		local mode = root:GetAttribute("View")
 		local seed = root:GetAttribute("Seed")
-		local base = view:SquareCFrame(9)
+		local big = wide()
+		local single = if big then 2 else 3
+		local base = (spot(single))
 		local center, distance, height
 		if mode == "Plant" then
-			addPlant(9, seed, root:GetAttribute("Growth"))
+			addPlant(single, seed, root:GetAttribute("Growth"))
 			center, distance, height = 0, 7.5, 3.2
+			if big then distance, height = 17, 8 end
 		elseif mode == "Poses" then
-			for i, progress in poses do addPlant(6+i, seed, progress) end
+			for i, progress in poses do addPlant(i, seed, progress) end
 			center, distance, height = 0, 18, 6
 		else
-			for i = 1, 6 do addPlant(6+i, i, 1) end
+			for i = 1, 6 do addPlant(i, i, 1) end
 			center, distance, height = 2.75, 21, 7
+		end
+		if big and mode ~= "Plant" then -- two rows of blocks
+			base = (spot(2)):Lerp((spot(5)), 0.5)
+			center, distance, height = 0, 25, 11
 		end
 		local reviewHeight = recipe.ReviewHeight
 		local targetHeight = 1.25
@@ -341,15 +381,12 @@ local function open(cropId: string?, seconds: number?)
 	chooseCrop = function(nextCrop)
 		picker.Visible = false
 		if nextCrop.id == crop.id then return end
-		local nextRecipe = require(modules[nextCrop.id])
+		local nextRecipe = recipeOf(nextCrop.id)
 		crop, recipe = nextCrop, nextRecipe
 		duration = seconds or math.min(crop.growSeconds,10)
 		elapsed = root:GetAttribute("Growth")*duration
 		root:SetAttribute("CropId",crop.id)
-		-- Keep the comparison neighbour distinct from the selected crop, without replacing soil or the field pet.
-		cells[2] = if crop.id == "Potato" then "k3" else "a2"
-		view:SetState({name = player.DisplayName,incCount = 1,eggs = {},
-			field = {crops = table.concat(cells),pets = {"Cat:3:review:4:1:1"}}})
+		showField() -- keeps the soil and the field pet
 		view:Step(math.huge)
 		refreshStudy()
 	end
@@ -429,4 +466,22 @@ local function open(cropId: string?, seconds: number?)
 	return root:GetFullName()
 end
 
-return {Open = open}
+-- HX0: reviews one cross of two generated plants (parents = PlantGenome preset ids or genomes). In "Six seeds" seed 1 is
+-- parent A, seeds 2-5 are four children and seed 6 is parent B; "Five poses" and "One plant" show the chosen seed.
+local function openCross(parentA, parentB, seconds: number?, mutagens: { string }?, crossSeed: number?)
+	local GenePlant = require(ReplicatedStorage.GenePlant)
+	local function label(parent)
+		return if type(parent) == "string" then parent else "custom" -- loc: ignore (Studio review)
+	end
+	local crop = { id = "GeneCross", name = label(parentA) .. " × " .. label(parentB), icon = "🧬", growSeconds = 10 } -- loc: ignore (Studio review)
+	return open(crop.id, seconds, { crop = crop, recipe = GenePlant.cross(parentA, parentB, mutagens, crossSeed) })
+end
+
+-- HX: reviews up to six PlantGenome presets side by side ("Six seeds"; "Seed" picks one for the other modes).
+local function openPresets(ids: { string }, seconds: number?)
+	local GenePlant = require(ReplicatedStorage.GenePlant)
+	local crop = { id = "GenePresets", name = table.concat(ids, ", "), icon = "🧬", growSeconds = 10 } -- loc: ignore (Studio review)
+	return open(crop.id, seconds, { crop = crop, recipe = GenePlant.presets(ids) })
+end
+
+return {Open = open, OpenCross = openCross, OpenPresets = openPresets}

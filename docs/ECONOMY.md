@@ -158,6 +158,35 @@ Obby main 36 M, R150; Garden main 29 M, R138; Spender 51 M. Obby Coins are 0 % o
   47) but those are 0.02–0.18 % of the total Coin price; the rest (550 k → 750 M) is a day or more each. The model's longer horizon leans on
   parts not built (trees, requests, Sunshine, placeholder eggs, reserved sinks); in the game a 24 h crop and logging off is the best play.
 
+## EV3 — design draft (2026-11-14, rewritten the same day after the user's review; awaits sign-off; build parts: ROADMAP → EV3)
+**Why (the user, 2026-11-14).** Two 12-year-old players did not know what Renown is; a concept that needs explaining is out. Renown also
+rewards spam-clicking Potatoes, old crops have no use once a newer one opens, the late game is a list of "+1 square for 4 M", and early
+obby first clears outpay the farm they should feed (findings above).
+
+**Direction (the user: not a quest per crop; upgradeable crops).**
+- **Crop levels (★):** every crop has its own level, earned by growing that crop. It replaces Renown and sits on the crop itself
+  ("Garlic ★2"), where a kid already looks.
+- **Unlocks mostly happen by playing:** the next crop opens when the previous one reaches ★1 (the seed stall shows the bar). Nothing is
+  used up.
+- **Quests only at milestones:** Corn, Pumpkin, Giant melon (the original crops; the model may move them): "bring 20 Cucumbers + 30 Garlic"
+  (taken at once, EV2b's `TakeCrops`). They keep obby Coins from buying the farm and feel like events, not chores.
+- **Crop upgrades:** each crop level gives a point to invest in that crop's lines **Value** (sells for more), **Size** (grows bigger:
+  look, size records, the sale through the size factor), **Speed** (grows faster). Points come only from growing that crop, so upgrading
+  Potato means planting Potatoes: old crops become a choice, and 16 crops × 3 lines is a long goal that needs no bigger Coin numbers.
+
+**Rules for the first cut (the model tunes the numbers):**
+1. **Crop XP = growing time of that crop** (each harvest adds its grow minutes), not harvests: a harvest count would bring the spam-click
+   back. Level thresholds per crop are set so a level takes about the same play time on the squares the player has then; ★1 is small for
+   the first crops (G7: something new every ≤ 10 min). The player sees a bar, not minutes.
+2. **Caps:** a fully upgraded crop matches a fresh crop 2–3 steps above it, never the top one (point sizes: findings below). Every line can
+   be maxed in the end (completion, not a forced build); the choice is the order.
+3. **Global upgrades stay** (Growth, Barn, Sorter, Cloches, Shears) and stack with crop upgrades: the global ones are the Coin sinks, crop
+   upgrades the time sink.
+4. **Squares, upgrades, tools, field pet slots:** Coins only, no gate (the user, 2026-11-14); the ×1.33 / ×1.93 price ladder paces them.
+5. **Other Renown uses:** the market cart's taste and crows (both from Renown 3) start with the Garlic unlock.
+6. **Obby one-time Coins:** first finish + medal Coins of the Tutorial and World 1 resized; part of a first clear paid as a seed pack of an
+   unlocked crop (seeds of a locked crop would skip its unlock). Repeat-run Coins stay until EV2c.
+
 ## Findings (EV3a, 2026-11-14; `economy.py proposal` prints the old → new tables)
 - **The draft's upgrade sizes broke its own cap:** +10 % Value, +10 % Size, −6 % Speed per point make a maxed crop ×3.7 per square-hour
   (~7 steps; the draft's "≈ 4 900 for Potato" left out Size). At 3 steps (+3 / +3 / −3 %) the extra income bought the shop out early (G5,
@@ -213,7 +242,7 @@ Obby main 36 M, R150; Garden main 29 M, R138; Spender 51 M. Obby Coins are 0 % o
    garden off): talents need the farm by design, G4 replaces it.
 2. Whether the placeholder eggs become real egg kinds (needed for Legendary scarcity past week 3).
 3. The real landmark / estate sinks (E6 / E7) that replace the reserved ladder.
-4. **EV3** (ROADMAP → EV3, draft 2026-11-14; EV3a model built the same day, findings above): crop levels replace Renown, next crop at the
+4. **EV3** ("EV3 — design draft" above, build parts in ROADMAP → EV3, draft 2026-11-14; EV3a model built the same day, findings above): crop levels replace Renown, next crop at the
    previous one's ★1, quests only at milestones, crop upgrades (Value / Size / Speed, capped at a crop 2–3 steps up), sinks on Coins alone;
    G10–G12 bands; the obby's first-hour payouts. To sign off: the star formula, the point sizes (+2 / +2 / −2.5 % instead of the draft's),
    the quest contents, the payouts; whether G11 changes; the thin margins (accept, per-crop star-1 counts, or an earlier long crop); the

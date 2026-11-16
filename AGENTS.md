@@ -23,7 +23,8 @@ boards, challenge coins, talents), pets, and a garden island with plots, incubat
 | [docs/TELEMETRY.md](docs/TELEMETRY.md) | telemetry events and how to read them on the Creator Dashboard |
 | [docs/PET_GROWTH.md](docs/PET_GROWTH.md) | how PetLook derives a pet's look, how pet models are authored |
 | [docs/THUMBNAILS.md](docs/THUMBNAILS.md) | store thumbnails (TH): themes and variants, Roblox thumbnail testing, Studio-only photo sets |
-| [docs/PLANT_GROWTH.md](docs/PLANT_GROWTH.md) | plant art authoring, Studio player commands and recipe contracts; links to crop designs in `docs/plants/` |
+| [docs/PLANT_GROWTH.md](docs/PLANT_GROWTH.md) | plant art authoring, Studio player commands and recipe contracts; per-crop status table; links to crop designs in `docs/plants/` |
+| [docs/HYBRIDS.md](docs/HYBRIDS.md) | hybrid plants / breeding: decisions, proposals and open points (design only, HX1); the HX0 prototype as built is in `docs/HYBRID_PROTOTYPE.md` |
 
 **Before designing a crop:** read `docs/PLANT_GROWTH.md`. The standard art review is five snapshots (0/20/50/75/100%); historical GIF links do not require new animation captures.
 

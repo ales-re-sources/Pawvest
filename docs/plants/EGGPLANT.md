@@ -1,6 +1,6 @@
 # Eggplant growth art
 
-[Shared authoring and Studio player](../PLANT_GROWTH.md) · [Status](../ROADMAP.md)
+[Shared authoring and Studio player](../PLANT_GROWTH.md) · [Status](../PLANT_GROWTH.md#crops-and-status)
 
 ## Selected design (CG16a, 2026-11-11)
 

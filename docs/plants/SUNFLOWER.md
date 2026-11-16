@@ -1,6 +1,6 @@
 # Sunflower growth art
 
-[Shared authoring workflow](../PLANT_GROWTH.md) · [Status](../ROADMAP.md)
+[Shared authoring workflow](../PLANT_GROWTH.md) · [Status](../PLANT_GROWTH.md#crops-and-status)
 
 ## Selected: A1 stem and foliage with H2 head
 

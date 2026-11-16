@@ -1,6 +1,6 @@
 # Golden Carrot growth art
 
-[Shared authoring and Studio player](../PLANT_GROWTH.md) · [Status](../ROADMAP.md)
+[Shared authoring and Studio player](../PLANT_GROWTH.md) · [Status](../PLANT_GROWTH.md#crops-and-status)
 
 Mature silhouette approved by Ales, 2026-11-09: one pointed golden root with two-thirds of its length buried, tall divided
 foliage, a gentle sheen and sparse ripe glints. Ales approved the five growth stills on 2026-11-10. The recipe is registered in
