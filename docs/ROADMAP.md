@@ -220,7 +220,7 @@ take a 2×2 block, its footprint from the blended `bulk` gene. Next: HX1.
 
 **Hatchery redesign** (2026-11-16; GDD §7.6). Cross-lapped stud egg shells and 3D egg cards, stud-textured foundations, a tall pavilion with
 a front prompt, a passive dialog cursor with world-input guards, owner-only nest labels fading at 24–30 studs. Studio-validated; physical
-phone touch open. Incubator body concepts: [INCUBATOR_REDESIGN.md](INCUBATOR_REDESIGN.md#incubator-body-follow-up).
+phone touch open. Open hatch pod body selected and Studio-validated: stepped cheeks, rear heater, front / side controls; amber while growing, green when ready; 17 / 6 / 3 body Parts. [Studio view](INCUBATOR_REDESIGN.md).
 
 **Garden UI follow-ups** (2026-11-14 / 15; [UI_GARDEN_PETS.md §5.1](UI_GARDEN_PETS.md#51-soil-card-and-pet-placement--decided-2026-11-14),
 GDD §11). Soil card and pet placement clarity, group boxes in the card, Barn and Hatchery, Take off field; blank card / hand UI blocks field

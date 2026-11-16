@@ -459,7 +459,7 @@ collecting and caring over obby runs.
 - **Layout.** A central plaza (food shop) surrounded by a ring of **12 plots** (a second ring of 18 is ready for bigger servers), about
   40 × 40 studs each, with an owner name sign (stud look, raised on two posts so players walk under it and see the plot past it) over a
   40 × 16 front strip, the field behind it. The strip (U5a) holds, as seen from the plaza, the **hatchery** on the left (the 3 incubators
-  as nests in a triangle under one stud roof on four posts; tall pavilion since 2026-11-16: 12-stud underside, three 0.4-stud roof courses,
+  as open hatch pods in a triangle under one stud roof on four posts; tall pavilion since 2026-11-16: 12-stud underside, three 0.4-stud roof courses,
   one prompt 1.5 studs ahead of the front post line at height 2.5), the **barn** on the right (a red stud barn, 2026-11-13: a stepped gable under slate caps, white X-brace door leaves swung open towards the plaza, a hayloft window, a weathervane with a pet, hay bales, milk cans and a pitchfork in front;
   it shows no stock since 2026-11-12, the barn panel lists it) and a gravel **path** between them from the sign to the field, so the field shows from the plaza. Servers hold **12 players** (one plot per slot). Each player's
   client draws the plots from the server's data (E1a1); free plots of the inner ring show "Free plot".
@@ -489,8 +489,13 @@ collecting and caring over obby runs.
     StudsSmall faces (cream / gold; Golden keeps its light). EggLook supplies both the world nests and passive 3D shop
     previews. Full / mid / low world detail uses 27 / 9 / 5 bricks; the full shell is 3.15 studs high and rests on the nest.
     The 6 × 6 foundation and yellow pad also use Plastic with Studs / StudsSmall, including free and locked nests.
-    A body that resembles an incubator is still in design review ([concepts](INCUBATOR_REDESIGN.md#incubator-body-follow-up)).
-  - **Hatchery panel (U5b).** The three incubators stand as nests under the hatchery's roof (§7.6 Layout) with one "Open hatchery"
+  - **Incubator body (2026-11-16).** The selected open hatch pod has stepped cream / steel stud-brick cheeks, a rear heater,
+    a side control module and a front thermostat on the foundation's lip. The egg remains open to the front and above;
+    footprint 6 × 6, top 5.2 studs above the plot origin. Full / mid / low detail uses 17 / 6 / 3 body Parts (excluding the egg).
+    Empty, free and locked pods are unlit; growing eggs show amber, ready eggs green (heater off). The timer updates the
+    lights without rebuilding the body. Locked trim is muted; the original base / pad collision stays, other hardware does not collide.
+    Empty / locked labels sit above the heater. [Studio view and archived design options](INCUBATOR_REDESIGN.md).
+  - **Hatchery panel (U5b).** The three open hatch pods stand under the hatchery's roof (§7.6 Layout) with one "Open hatchery"
     prompt. Group boxes separate **Your nests** from **Eggs to buy** (2026-11-15). The panel lists each incubator: its egg and a live countdown, **Hatch** when ready, the next one's Unlock brick with its
     price (two taps over 1 000 Coins), "unlock incubator n first" for the later one. While an owned incubator is empty, **egg cards**
     show each egg (drawn in its colour, name, hatch time, a price brick; Golden takes two taps) and a **?** brick that shows its odds;

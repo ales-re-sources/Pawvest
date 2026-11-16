@@ -28,6 +28,7 @@ local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local PetLook = require(ReplicatedStorage:WaitForChild("PetLook"))
 local EggLook = require(ReplicatedStorage:WaitForChild("EggLook"))
+local IncubatorLook = require(ReplicatedStorage:WaitForChild("IncubatorLook"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
@@ -66,7 +67,6 @@ local COLORS = {
 	signCollar = Color3.fromRGB(100, 133, 147),
 	signText = Color3.fromRGB(255, 240, 210),
 	signNumber = Color3.fromRGB(255, 205, 150),
-	padLocked = Color3.fromRGB(80, 80, 80),
 	path = Color3.fromRGB(196, 178, 140),
 	post = Color3.fromRGB(157, 84, 45),
 	roof = Color3.fromRGB(196, 72, 56),
@@ -82,8 +82,6 @@ local COLORS = {
 	can = Color3.fromRGB(200, 208, 212),
 	lantern = Color3.fromRGB(255, 214, 120),
 	leaf = Color3.fromRGB(97, 149, 0),
-	base = Color3.fromRGB(150, 100, 60),
-	nest = Color3.fromRGB(225, 195, 110),
 	soil = Color3.fromRGB(105, 70, 45),
 	overgrown = Color3.fromRGB(78, 120, 52), -- the field's row plates: locked squares and the paths between squares
 }
@@ -243,6 +241,7 @@ function PlotView.new(slot: number, parent: Instance, options)
 	self.petMap = {} -- [square] = field pet of the current state (fieldPets)
 	self.labels = {} -- [incubator] = { gui, label, egg?, readyAt? }; own-nest info, including empty / locked
 	self.incubatorNear = false
+	self.incubatorLights = {} -- occupied full-detail pods; update lights at ReadyAt without rebuilding the body
 	self.plants = {} -- full-detail plants, separate from soil and field pets
 	self.plantCursor = 0
 	self.plantNextAt = math.huge
@@ -733,34 +732,33 @@ function PlotView:buildIncubator(model: Model, n: number)
 	local state = self.state
 	local spot = INCUBATOR_SPOTS[n]
 	self.labels[n] = nil
-	local baseCFrame = self:at(spot + Vector3.new(0, 0.85, 0))
-	local nestCFrame = self:at(spot + Vector3.new(0, 1.65, 0))
-	if state.free then
-		part({ Name = "Base", Size = Vector3.new(6, 1.2, 6), CFrame = baseCFrame, Color = COLORS.base, Material = Enum.Material.Plastic, MaterialVariant = "Studs" }).Parent = model
-		part({ Name = "Nest", Size = Vector3.new(4.4, 0.4, 4.4), CFrame = nestCFrame, Color = COLORS.nest, Material = Enum.Material.Plastic, MaterialVariant = "StudsSmall" }).Parent = model
-		return
-	end
-	local eggId, readyAt = parseEgg(state.eggs[n])
+	self.incubatorLights[n] = nil
+	local eggId, readyAt = parseEgg(not state.free and state.eggs[n] or nil)
 	local egg = eggId and PetConfig.Eggs[eggId]
+	local locked = not state.free and n > state.incCount
+	local status = if state.free then "free" elseif locked then "locked" elseif not eggId then "empty"
+		elseif (readyAt or math.huge) <= (self.tickNow or workspace:GetServerTimeNow()) then "ready" else "growing"
+	local setState = IncubatorLook.Build(model, self:at(spot), self.detail, status)
+	if state.free then return end
 	if self.detail == "low" then
 		if eggId then
 			EggLook.Make(eggId, self:at(spot + Vector3.new(0, 1.85, 0)), "low").Parent = model
 		end
 		return
 	end
-	local locked = n > state.incCount
-	local base = part({ Name = "Base", Size = Vector3.new(6, 1.2, 6), CFrame = baseCFrame, Color = if locked then COLORS.padLocked else COLORS.base, Material = Enum.Material.Plastic, MaterialVariant = "Studs" })
-	base.Parent = model
-	part({ Name = "Nest", Size = Vector3.new(4.4, 0.4, 4.4), CFrame = nestCFrame, Color = COLORS.nest, Material = Enum.Material.Plastic, MaterialVariant = "StudsSmall" }).Parent = model
+	local base = model:FindFirstChild("Base") :: BasePart
 	if not eggId then
 		if self.own and self.detail == "full" then
-			local label = info(base, UDim2.new(6, 0, 2.2, 0), 3, Locale.T(if locked then "garden.sign.incubator.locked" else "garden.sign.incubator.empty", { n = n }))
+			local label = info(base, UDim2.new(6, 0, 2.2, 0), 5.7, Locale.T(if locked then "garden.sign.incubator.locked" else "garden.sign.incubator.empty", { n = n }))
 			self.labels[n] = { gui = label.Parent, label = label }
 		end
 		return
 	end
 	local shell = EggLook.Make(eggId, self:at(spot + Vector3.new(0, 1.85, 0)), self.detail)
 	shell.Parent = model
+	if self.detail == "full" then
+		self.incubatorLights[n] = { setState = setState, readyAt = readyAt or math.huge }
+	end
 	if self.detail ~= "full" or not self.own then
 		return
 	end
@@ -1008,7 +1006,9 @@ function PlotView:Step(deadline: number): boolean
 				self.plants[square] = nil
 			end
 			if string.sub(key, 1, 3) == "inc" then
-				self.labels[tonumber(string.sub(key, 4)) :: number] = nil
+				local n = tonumber(string.sub(key, 4)) :: number
+				self.labels[n] = nil
+				self.incubatorLights[n] = nil
 			end
 			local model = self:build(key)
 			if self.pieces[key] then
@@ -1251,6 +1251,9 @@ function PlotView:Tick(now: number)
 			end
 		end
 	end
+	for _, body in self.incubatorLights do
+		body.setState(if body.readyAt <= now then "ready" else "growing")
+	end
 	for _, entry in self.labels do
 		if entry.egg then
 			local remaining = (entry.readyAt or 0) - now
@@ -1266,6 +1269,7 @@ function PlotView:Destroy()
 	self.pieces = {}
 	self.pending = {}
 	self.labels = {}
+	self.incubatorLights = {}
 end
 
 return PlotView
