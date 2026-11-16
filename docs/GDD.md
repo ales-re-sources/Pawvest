@@ -488,6 +488,8 @@ collecting and caring over obby runs.
   - **Egg art (2026-11-16).** Basic and Golden share a portal-style cross-lapped brick shell, with nine tapered courses and
     StudsSmall faces (cream / gold; Golden keeps its light). EggLook supplies both the world nests and passive 3D shop
     previews. Full / mid / low world detail uses 27 / 9 / 5 bricks; the full shell is 3.15 studs high and rests on the nest.
+    The 6 × 6 foundation and yellow pad also use Plastic with Studs / StudsSmall, including free and locked nests.
+    A body that resembles an incubator is still in design review ([concepts](INCUBATOR_REDESIGN.md#incubator-body-follow-up)).
   - **Hatchery panel (U5b).** The three incubators stand as nests under the hatchery's roof (§7.6 Layout) with one "Open hatchery"
     prompt. Group boxes separate **Your nests** from **Eggs to buy** (2026-11-15). The panel lists each incubator: its egg and a live countdown, **Hatch** when ready, the next one's Unlock brick with its
     price (two taps over 1 000 Coins), "unlock incubator n first" for the later one. While an owned incubator is empty, **egg cards**

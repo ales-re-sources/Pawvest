@@ -736,8 +736,8 @@ function PlotView:buildIncubator(model: Model, n: number)
 	local baseCFrame = self:at(spot + Vector3.new(0, 0.85, 0))
 	local nestCFrame = self:at(spot + Vector3.new(0, 1.65, 0))
 	if state.free then
-		part({ Name = "Base", Size = Vector3.new(6, 1.2, 6), CFrame = baseCFrame, Color = COLORS.base, Material = Enum.Material.WoodPlanks }).Parent = model
-		part({ Name = "Nest", Size = Vector3.new(4.4, 0.4, 4.4), CFrame = nestCFrame, Color = COLORS.nest, Material = Enum.Material.Fabric }).Parent = model
+		part({ Name = "Base", Size = Vector3.new(6, 1.2, 6), CFrame = baseCFrame, Color = COLORS.base, Material = Enum.Material.Plastic, MaterialVariant = "Studs" }).Parent = model
+		part({ Name = "Nest", Size = Vector3.new(4.4, 0.4, 4.4), CFrame = nestCFrame, Color = COLORS.nest, Material = Enum.Material.Plastic, MaterialVariant = "StudsSmall" }).Parent = model
 		return
 	end
 	local eggId, readyAt = parseEgg(state.eggs[n])
@@ -749,9 +749,9 @@ function PlotView:buildIncubator(model: Model, n: number)
 		return
 	end
 	local locked = n > state.incCount
-	local base = part({ Name = "Base", Size = Vector3.new(6, 1.2, 6), CFrame = baseCFrame, Color = if locked then COLORS.padLocked else COLORS.base, Material = Enum.Material.WoodPlanks })
+	local base = part({ Name = "Base", Size = Vector3.new(6, 1.2, 6), CFrame = baseCFrame, Color = if locked then COLORS.padLocked else COLORS.base, Material = Enum.Material.Plastic, MaterialVariant = "Studs" })
 	base.Parent = model
-	part({ Name = "Nest", Size = Vector3.new(4.4, 0.4, 4.4), CFrame = nestCFrame, Color = COLORS.nest, Material = Enum.Material.Fabric }).Parent = model
+	part({ Name = "Nest", Size = Vector3.new(4.4, 0.4, 4.4), CFrame = nestCFrame, Color = COLORS.nest, Material = Enum.Material.Plastic, MaterialVariant = "StudsSmall" }).Parent = model
 	if not eggId then
 		if self.own and self.detail == "full" then
 			local label = info(base, UDim2.new(6, 0, 2.2, 0), 3, Locale.T(if locked then "garden.sign.incubator.locked" else "garden.sign.incubator.empty", { n = n }))
