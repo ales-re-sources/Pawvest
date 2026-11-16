@@ -19,6 +19,7 @@ local RunService = game:GetService("RunService")
 
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
+local EggLook = require(ReplicatedStorage:WaitForChild("EggLook"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PanelFocus = require(ReplicatedStorage:WaitForChild("PanelFocus"))
@@ -39,7 +40,7 @@ local WIDTH = 420
 local HEIGHT = 500
 local GAP = GardenUi.GAP
 local ACTION_WIDTH = 132 -- the row's brick (Hatch / Unlock)
-local EGG_W, EGG_H = 44, 56 -- the drawn egg on a card
+local EGG_W, EGG_H = 64, 76 -- the shared 3D egg on a card
 local CHIP_DELAY = 0.4 -- seconds between the reveal's trait chips
 local PORTRAIT = 132
 
@@ -262,30 +263,10 @@ local function renderNests(state, tap: number)
 	end
 end
 
--- An egg drawn as a rounded oval in the egg's colour.
-local function eggPicture(eggId: string): Frame
-	local egg = PetConfig.Eggs[eggId]
-	local look = egg and egg.look
-	local picture = GardenUi.Create("Frame", {
-		Name = "Picture",
-		LayoutOrder = 1,
-		Size = UDim2.fromOffset(EGG_W, EGG_H),
-		BackgroundColor3 = if look then look.color else Color3.fromRGB(236, 228, 208),
-	}, {
-		GardenUi.Create("UICorner", { CornerRadius = UDim.new(0.5, 0) }),
-		GardenUi.Create("UIStroke", { Color = Color3.new(0, 0, 0), Transparency = 0.5, Thickness = 2 }),
-		-- a highlight on the upper left
-		GardenUi.Create("Frame", {
-			Name = "Shine",
-			Position = UDim2.fromScale(0.22, 0.16),
-			Size = UDim2.fromScale(0.22, 0.2),
-			BackgroundColor3 = Color3.new(1, 1, 1),
-			BackgroundTransparency = 0.45,
-		}, { GardenUi.Create("UICorner", { CornerRadius = UDim.new(0.5, 0) }) }),
-	})
-	if look and look.glow then
-		GardenUi.Create("UIStroke", { Color = look.color, Thickness = 3, Transparency = 0.2, Parent = picture })
-	end
+-- The same cross-lapped brick recipe as the world nests.
+local function eggPicture(eggId: string): ViewportFrame
+	local picture = EggLook.Portrait(eggId, UDim2.fromOffset(EGG_W, EGG_H))
+	picture.LayoutOrder = 1
 	return picture
 end
 

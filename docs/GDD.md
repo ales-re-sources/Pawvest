@@ -484,6 +484,9 @@ collecting and caring over obby runs.
   ready **1 hour** later, server time); free eggs start there by themselves (§7.2). A ready
   egg waits until the owner taps **Hatch**; the pet is rolled then and equipped automatically
   when a slot is free (§7.3).
+  - **Egg art (2026-11-16).** Basic and Golden share a portal-style cross-lapped brick shell, with nine tapered courses and
+    StudsSmall faces (cream / gold; Golden keeps its light). EggLook supplies both the world nests and passive 3D shop
+    previews. Full / mid / low world detail uses 27 / 9 / 5 bricks; the full shell is 3.15 studs high and rests on the nest.
   - **Hatchery panel (U5b).** The three incubators stand as nests under the hatchery's roof (§7.6 Layout) with one "Open hatchery"
     prompt. Group boxes separate **Your nests** from **Eggs to buy** (2026-11-15). The panel lists each incubator: its egg and a live countdown, **Hatch** when ready, the next one's Unlock brick with its
     price (two taps over 1 000 Coins), "unlock incubator n first" for the later one. While an owned incubator is empty, **egg cards**

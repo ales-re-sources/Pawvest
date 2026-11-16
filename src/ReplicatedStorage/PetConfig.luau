@@ -20,7 +20,7 @@ export type Egg = {
 	name: string,
 	price: number,
 	hatchSeconds: number, -- real (server) time from start to ready in a garden incubator (every egg hatches there)
-	look: { color: Color3, material: Enum.Material, glow: boolean }, -- the egg ball in an incubator (GardenIncubators)
+	look: { color: Color3, material: Enum.Material, glow: boolean }, -- shell colour / glow for EggLook; legacy material retained
 	weights: { [string]: number }, -- rarity id → weight per 1000
 }
 

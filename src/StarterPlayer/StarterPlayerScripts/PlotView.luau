@@ -27,6 +27,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local PetLook = require(ReplicatedStorage:WaitForChild("PetLook"))
+local EggLook = require(ReplicatedStorage:WaitForChild("EggLook"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
@@ -738,11 +739,9 @@ function PlotView:buildIncubator(model: Model, n: number)
 	end
 	local eggId, readyAt = parseEgg(state.eggs[n])
 	local egg = eggId and PetConfig.Eggs[eggId]
-	local look = egg and egg.look
-	local eggColor = if look then look.color else Color3.fromRGB(236, 228, 208)
 	if self.detail == "low" then
 		if eggId then
-			part({ Name = "Egg", Shape = Enum.PartType.Ball, Size = Vector3.new(2.8, 2.8, 2.8), CFrame = nestCFrame, Color = eggColor }).Parent = model
+			EggLook.Make(eggId, self:at(spot + Vector3.new(0, 1.85, 0)), "low").Parent = model
 		end
 		return
 	end
@@ -756,24 +755,10 @@ function PlotView:buildIncubator(model: Model, n: number)
 		end
 		return
 	end
-	local ball = part({
-		Name = "Egg",
-		Shape = Enum.PartType.Ball,
-		Size = Vector3.new(2.8, 2.8, 2.8),
-		CFrame = self:at(spot + Vector3.new(0, 3.25, 0)),
-		Color = eggColor,
-		Material = if look and look.material then look.material else Enum.Material.SmoothPlastic,
-	})
-	ball.Parent = model
+	local shell = EggLook.Make(eggId, self:at(spot + Vector3.new(0, 1.85, 0)), self.detail)
+	shell.Parent = model
 	if self.detail ~= "full" then
 		return
-	end
-	if look and look.glow then
-		local light = Instance.new("PointLight")
-		light.Color = look.color
-		light.Range = 8
-		light.Brightness = 1.5
-		light.Parent = ball
 	end
 	local gui = Instance.new("BillboardGui")
 	gui.Name = "Info"
@@ -782,7 +767,7 @@ function PlotView:buildIncubator(model: Model, n: number)
 	gui.StudsOffset = Vector3.new(0, 2.6, 0)
 	gui.MaxDistance = INFO_DISTANCE + 30
 	local label = textLabel(gui, { Font = StudStyle.Font })
-	gui.Parent = ball
+	gui.Parent = shell.PrimaryPart
 	self.labels[n] = { label = label, egg = egg, readyAt = readyAt }
 end
 
