@@ -1044,6 +1044,10 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
 
+**Compact skill purchases** (2026-11-16; GDD §11). Obby / Garden skill buttons target 40 px with shallow lips; symmetric Obby row padding
+fixes their vertical centring. Studio-validated: all ten button centres, desktop / landscape phone scaling, English/Czech including two-line
+Coin/crop prices, real MAX and first-tap confirm controls, clean client/server logs. No profile fixtures or changed Czech texts.
+
 **Compact dialog chrome** (2026-11-16; GDD §11). On-screen 40 px titles and square X/back controls, 36 px Skills / Seed stall tabs and pet
 filters, 40 px Barn HUD button, shallower brick lips and reclaimed content space. Studio-validated: desktop + landscape phone emulator,
 real tabs/filters/open/close/back, English/Czech foreground TextFits and two square-stud rows, clean game logs. Original pet loadout

@@ -57,7 +57,7 @@ end
 -- Layout -------------------------------------------------------------------------------------------------------------------
 
 local fitScale = HudLayout.Get(panel.Parent).scale
-local tapHeight = math.ceil(44 / fitScale) -- Buy bricks stay at least 44 px tall on screen
+local tapHeight = math.ceil(StudStyle.Sizes.Action / fitScale)
 local tabHeight = math.ceil(StudStyle.Sizes.Tab / fitScale)
 panel.Size = UDim2.new(0, PANEL_WIDTH, panel.Size.Y.Scale, panel.Size.Y.Offset)
 
@@ -205,7 +205,7 @@ local function renderRow(order: number, id: string, title: string, info: string,
 		BackgroundColor3 = if price and canBuy then COLOR_BUY else COLOR_LOCKED,
 		Text = if price then Locale.T("field.upgrade.price", { count = price }) else Locale.T("field.upgrade.maxed"),
 	})
-	StudStyle.Brick(button)
+	StudStyle.Brick(button, { compact = true })
 	button.Parent = row
 	if price then
 		ConfirmTap.Wrap(button, "Skill" .. id, function()
@@ -345,7 +345,7 @@ showTab()
 
 HudLayout.Watch(panel.Parent, function(layout)
 	fitScale = layout.scale
-	tapHeight = math.ceil(44 / fitScale)
+	tapHeight = math.ceil(StudStyle.Sizes.Action / fitScale)
 	tabHeight = math.ceil(StudStyle.Sizes.Tab / fitScale)
 	local titleHeight = math.ceil(StudStyle.Sizes.Header / fitScale)
 	listCap = math.max(1, layout.height / fitScale - titleHeight - tabHeight - 40)

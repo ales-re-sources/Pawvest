@@ -16,7 +16,7 @@ local TweenService = game:GetService("TweenService")
 local StudStyle = {}
 
 -- Desired on-screen sizes; callers divide by their UIScale before laying out controls.
-StudStyle.Sizes = { Header = 40, Tab = 36, HudButton = 40 }
+StudStyle.Sizes = { Header = 40, Tab = 36, HudButton = 40, Action = 40 }
 
 StudStyle.Colors = {
 	Red = Color3.fromRGB(229, 83, 61),

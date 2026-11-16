@@ -12,6 +12,7 @@ local TalentConfig = require(ReplicatedStorage:WaitForChild("TalentConfig"))
 local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
+local HudLayout = require(ReplicatedStorage:WaitForChild("HudLayout"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local remotes = ReplicatedStorage:WaitForChild("TalentRemotes")
@@ -24,7 +25,7 @@ local GardenView = require(player:WaitForChild("PlayerScripts"):WaitForChild("Ga
 
 local ROW_HEIGHT = 58
 local BUTTON_WIDTH = 92 -- fits 💰 16,000 over 🥒20/20  🍇2/2 (GardenSkills' buy bricks have the same width)
-local BUTTON_HEIGHT = 48
+local BUTTON_HEIGHT = StudStyle.Sizes.Action
 local TEXT_INSET = BUTTON_WIDTH + 16
 local COLOR_BUY = StudStyle.Colors.Green
 local COLOR_LOCKED = StudStyle.Colors.Grey
@@ -198,7 +199,7 @@ for index, talent in TalentConfig.List do
 		TextColor3 = Color3.new(1, 1, 1),
 		BackgroundColor3 = COLOR_LOCKED,
 	})
-	StudStyle.Brick(button) -- refreshRow recolours it through BackgroundColor3 / Text
+	StudStyle.Brick(button, { compact = true }) -- refreshRow recolours it through BackgroundColor3 / Text
 	local function costLine(name: string, order: number, size: number)
 		return create("TextLabel", {
 			Name = name,
@@ -237,11 +238,11 @@ for index, talent in TalentConfig.List do
 		LayoutOrder = index,
 		Size = UDim2.new(1, -10, 0, ROW_HEIGHT), -- the panel's width (GardenSkills widens it for the Garden tab)
 		AutomaticSize = Enum.AutomaticSize.Y, -- grows when the info line wraps
-	}, { title, info, button, create("UIPadding", { PaddingBottom = UDim.new(0, 6) }) })
+	}, { title, info, button, create("UIPadding", { PaddingTop = UDim.new(0, 3), PaddingBottom = UDim.new(0, 3) }) })
 	StudStyle.Row(rowFrame, panel.Name)
 	rowFrame.Parent = rowList
 
-	local row = { talent = talent, title = title, info = info, button = button, cost = cost, costCoins = costCoins, costCrops = costCrops, flash = 0 }
+	local row = { talent = talent, frame = rowFrame, title = title, info = info, button = button, cost = cost, costCoins = costCoins, costCrops = costCrops, flash = 0 }
 	rows[talent.id] = row
 
 	button.Activated:Connect(function()
@@ -260,6 +261,16 @@ for index, talent in TalentConfig.List do
 		refreshRow(row)
 	end)
 end
+
+-- Symmetric row padding keeps the brick centred even when translated info grows the row.
+-- Size in on-screen pixels, including after a rotation changes the panel's UIScale.
+HudLayout.Watch(panel.Parent, function(layout)
+	local height = math.ceil(StudStyle.Sizes.Action / layout.scale)
+	for _, row in rows do
+		row.button.Size = UDim2.fromOffset(BUTTON_WIDTH, height)
+		row.frame.Size = UDim2.new(1, -10, 0, math.max(ROW_HEIGHT, height + 6))
+	end
+end)
 
 resultEvent.OnClientEvent:Connect(function(id, ok, detail)
 	local row = rows[id]
