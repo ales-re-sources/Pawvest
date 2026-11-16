@@ -1049,7 +1049,8 @@ the action and use one scrolling body. Studio-validated: real open/back/place, E
 clean server/client logs. Placement profile snapshot restored and verified. Physical phone remains open; no changed Czech texts.
 
 **Textured dialog headers** (2026-11-16; GDD §11). Shared dialog title strips reuse the world stud texture as a faint flat pattern;
-titles draw above it and keep following localization / layout. Studio-validated: Pets, Settings and the field square in English/Czech,
+titles draw above it and keep following localization / layout. The texture fits two complete square-stud rows at any header height
+(50 / 80 px and UIScale checked; 2026-11-16). Studio-validated: Pets, Settings and the field square in English/Czech,
 foreground TextFits, smooth borders and no square-card scrollbar regression, clean server/client logs. No changed Czech texts.
 
 **Field square dialog** (2026-11-16; GDD §7.9). Fixed the subpixel height mismatch that showed a scrollbar on short content;

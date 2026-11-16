@@ -113,7 +113,7 @@ local function textureTitle(title: TextLabel)
 		texture.Image = "rbxassetid://10509831729" -- MaterialService.StudPack.Studs.ColorMap
 		texture.ImageTransparency = 0.65
 		texture.ScaleType = Enum.ScaleType.Tile
-		texture.TileSize = UDim2.fromOffset(32, 32)
+		texture.TileSize = UDim2.fromScale(0.5, 0.5)
 		texture.ZIndex = 0
 		corner(texture, 10)
 		texture.Parent = title
@@ -147,6 +147,9 @@ local function textureTitle(title: TextLabel)
 			texture.Position = UDim2.new(-left.Scale, -left.Offset, -top.Scale, -top.Offset)
 			texture.Size = UDim2.new(1 + left.Scale + right.Scale, left.Offset + right.Offset,
 				1 + top.Scale + bottom.Scale, top.Offset + bottom.Offset)
+			-- Two complete rows at every header height; the aspect ratio keeps each stud square under UIScale.
+			local size = title.AbsoluteSize
+			texture.TileSize = UDim2.fromScale(if size.X > 0 then size.Y / (2 * size.X) else 0.5, 0.5)
 		end
 		local function watchPadding(child: Instance)
 			if child:IsA("UIPadding") then
@@ -158,6 +161,7 @@ local function textureTitle(title: TextLabel)
 		end
 		title.ChildAdded:Connect(watchPadding)
 		title.ChildRemoved:Connect(fitTexture)
+		title:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitTexture)
 		for _, child in title:GetChildren() do
 			watchPadding(child)
 		end
