@@ -508,7 +508,7 @@ return {
 	["field.hand.cancel"] = "Zrušit",
 	["field.hand.place"] = "Umístění: {pet} · Vyber místo",
 	["field.hand.placing"] = "Umisťování…",
-	["field.card.title"] = "Tohle místo",
+	["field.card.title"] = "Políčko",
 	["field.card.cropGroup"] = "Plodina",
 	["field.card.petsGroup"] = "Mazlíčci",
 	["barn.group.forecast"] = "Předpověď pro pole",

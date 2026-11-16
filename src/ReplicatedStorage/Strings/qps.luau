@@ -508,7 +508,7 @@ return {
 	["field.hand.cancel"] = "[!! Čáňčěl ~~ !!]",
 	["field.hand.place"] = "[!! Pláčíňg {pet} · Čhööšě á špöť ~~~~~~~~~~ !!]",
 	["field.hand.placing"] = "[!! Pláčíňg… ~~~ !!]",
-	["field.card.title"] = "[!! Ťhíš špöť ~~~~ !!]",
+	["field.card.title"] = "[!! Fíělď šqůářě ~~~~~ !!]",
 	["field.card.cropGroup"] = "[!! Čřöp ~~ !!]",
 	["field.card.petsGroup"] = "[!! Pěťš ~~ !!]",
 	["barn.group.forecast"] = "[!! Fíělď föřěčášť ~~~~~~ !!]",

@@ -508,7 +508,7 @@ return {
 	["field.hand.cancel"] = "Cancel",
 	["field.hand.place"] = "Placing {pet} · Choose a spot",
 	["field.hand.placing"] = "Placing…",
-	["field.card.title"] = "This spot",
+	["field.card.title"] = "Field square",
 	["field.card.cropGroup"] = "Crop",
 	["field.card.petsGroup"] = "Pets",
 	["barn.group.forecast"] = "Field forecast",

@@ -28,7 +28,7 @@
 -- FieldHandGui attributes: Select = square selects it as a tap would (test hook, cleared after use); HoldPet = uid takes that
 -- pet in hand in Pets mode (the pet page's "Place on field", cleared after use); HandShown (set here) = whether the bar shows.
 -- Buttons: Card.Body.CropGroup.Content.Buttons.<Plant|Harvest>, .PetsGroup.Content.Resident.Buttons.<PlacePet|MovePet|TakeBack>;
--- locked square .Body.Buttons.Buy; .Body.Header.Close;
+-- locked square .Body.Buttons.Buy; Card.Close (fixed beside Card.TitleLabel);
 -- pet picker .Body.List.Pet_<uid>.PlacePet; HandBar.<Seeds|Basket|Pets|Look>; Placement.<Hint|Cancel>.
 
 local Players = game:GetService("Players")
@@ -69,6 +69,7 @@ local TAP_SECONDS = 0.3
 local TAP_PIXELS = 8
 local RAY_LENGTH = 300
 local CARD_WIDTH = 400
+local HEADER_HEIGHT = 50
 local TOUCH_SIDE = 110 -- px kept free on each side on a touch screen (thumbstick, jump button)
 local CARD_BOTTOM = 76 -- px from the bottom: above the Field button (48 px at 20 px)
 local BUTTON_HEIGHT = 48
@@ -254,12 +255,42 @@ local card = create("Frame", {
 	Visible = false,
 	Parent = screenGui,
 })
+local cardTitle = label("TitleLabel", {
+	Size = UDim2.new(1, 0, 0, HEADER_HEIGHT),
+	AutomaticSize = Enum.AutomaticSize.Y,
+	TextSize = 20,
+	TextWrapped = true,
+	TextXAlignment = Enum.TextXAlignment.Center,
+	Text = "",
+	Parent = card,
+})
+create("UIPadding", {
+	PaddingLeft = UDim.new(0, 54), PaddingRight = UDim.new(0, 54), Parent = cardTitle,
+})
 StudStyle.Panel(card, COLOR_PANEL)
+local closeHeader: (() -> ())? = nil
+local cardClose = brick("Close", {
+	AnchorPoint = Vector2.new(1, 0),
+	Position = UDim2.new(1, -6, 0, 3),
+	Size = UDim2.fromOffset(44, 44),
+	ZIndex = 2,
+	BackgroundColor3 = COLOR_CLOSE,
+	TextSize = 18,
+	Text = "X",
+	Parent = card,
+}, 1)
+cardClose.Activated:Connect(function()
+	if closeHeader then
+		closeHeader()
+	end
+end)
 local body = create("ScrollingFrame", {
 	Name = "Body",
-	Size = UDim2.fromScale(1, 1),
+	Position = UDim2.fromOffset(0, HEADER_HEIGHT),
+	Size = UDim2.new(1, 0, 1, -HEADER_HEIGHT),
 	CanvasSize = UDim2.new(),
-	AutomaticCanvasSize = Enum.AutomaticSize.Y,
+	AutomaticCanvasSize = Enum.AutomaticSize.None,
+	ScrollingDirection = Enum.ScrollingDirection.Y,
 	Active = true,
 	ScrollBarThickness = 4,
 	BorderSizePixel = 0,
@@ -279,10 +310,17 @@ local function fitCard()
 	local camera = workspace.CurrentCamera
 	local available = if screenGui.AbsoluteSize.Y > 0 then screenGui.AbsoluteSize.Y else if camera then camera.ViewportSize.Y else 600
 	local room = available - CARD_BOTTOM - 16
-	local height = body.UIListLayout.AbsoluteContentSize.Y + 18
-	card.Size = UDim2.fromOffset(card.Size.X.Offset, math.max(44, math.min(height, room)))
+	-- Text and automatic layouts can measure in fractional pixels. Round up both the canvas and its window
+	-- together so a subpixel remainder cannot create a scrollbar on a card whose content fits.
+	local height = math.ceil(body.UIListLayout.AbsoluteContentSize.Y + 18)
+	local headerHeight = math.ceil(cardTitle.AbsoluteSize.Y)
+	body.CanvasSize = UDim2.fromOffset(0, height)
+	body.Position = UDim2.fromOffset(0, headerHeight)
+	body.Size = UDim2.new(1, 0, 1, -headerHeight)
+	card.Size = UDim2.fromOffset(card.Size.X.Offset, math.max(headerHeight + 44, math.min(headerHeight + height, room)))
 end
 body.UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(fitCard)
+cardTitle:GetPropertyChangedSignal("AbsoluteSize"):Connect(fitCard)
 
 local portraits = PetPortrait.Cache()
 
@@ -313,37 +351,13 @@ local function clearBody()
 		end
 	end
 	barFill, barText = nil, nil
+	body.CanvasPosition = Vector2.zero
 end
 
--- the title row: a title that wraps and a close button
+-- Shared panel chrome stays fixed while long content scrolls beneath it.
 local function header(title: string, onClose: () -> ())
-	local row = create("Frame", {
-		Name = "Header",
-		LayoutOrder = 1,
-		Size = UDim2.new(1, 0, 0, 44),
-		AutomaticSize = Enum.AutomaticSize.Y,
-		BackgroundTransparency = 1,
-		Parent = body,
-	})
-	local text = label("Title", {
-		Size = UDim2.new(1, -54, 0, 44),
-		AutomaticSize = Enum.AutomaticSize.Y,
-		TextSize = 22,
-		TextWrapped = true,
-		Text = title,
-		Parent = row,
-	})
-	StudStyle.Title(text, COLOR_PANEL)
-	local close = brick("Close", {
-		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, 0, 0, 0),
-		Size = UDim2.fromOffset(44, 44),
-		BackgroundColor3 = COLOR_CLOSE,
-		TextSize = 18,
-		Text = "X",
-		Parent = row,
-	}, 1)
-	close.Activated:Connect(onClose)
+	cardTitle.Text = title
+	closeHeader = onClose
 end
 
 -- the progress bar with the time left inside
@@ -990,7 +1004,7 @@ local function layoutBar()
 		placementStrip.AnchorPoint = Vector2.new(1, 1)
 		placementStrip.Position = UDim2.fromOffset(handBar.AbsolutePosition.X + handBar.AbsoluteSize.X, handBar.AbsolutePosition.Y - HINT_GAP)
 	end
-	if cardOpen and card.Size.X.Offset ~= cardWidth() then
+	if cardOpen then
 		card.Size = UDim2.fromOffset(cardWidth(), card.Size.Y.Offset)
 		fitCard()
 	end

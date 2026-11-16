@@ -593,7 +593,7 @@ field.petPicker.rest,Consequence for resting pet when capacity is available,Will
 field.hand.cancel,"Always visible while holding a pet, cancels preview without moving or unequipping",Cancel,Zrušit,new,ha96c5cb1
 field.hand.place,"Placement strip for a pet not on field; {pet} = name/kind, nominative after colon in Czech",Placing {pet} · Choose a spot,Umístění: {pet} · Vyber místo,new,h014462b8
 field.hand.placing,"Submitted pet placement, awaiting server result; Cancel hidden until answer",Placing…,Umisťování…,new,h1600f3d9
-field.card.title,Selected soil dialog title; crop and pet controls are in labelled groups,This spot,Tohle místo,new,h2b31d9c5
+field.card.title,Selected field square dialog header; crop and pet controls are in labelled groups,Field square,Políčko,new,h2e43babb
 field.card.cropGroup,Soil dialog group-box legend enclosing crop status and Plant or Harvest,Crop,Plodina,new,h0bb43346
 field.card.petsGroup,"Soil dialog group-box legend enclosing help, resident and pet controls",Pets,Mazlíčci,new,he7accae6
 barn.group.forecast,Barn group-box legend enclosing the field crow forecast,Field forecast,Předpověď pro pole,new,h41de9af5

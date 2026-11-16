@@ -1044,6 +1044,11 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
 
+**Field square dialog** (2026-11-16; GDD §7.9). Fixed the subpixel height mismatch that showed a scrollbar on short content;
+added the shared colored header with a fixed close button and renamed the title from "This spot" to "Field square" (Czech: "Políčko").
+Studio-validated: empty and growing squares without residents, Czech TextFits, real seed/pet picker and close buttons, locked square,
+real scrolling with overflowing display content and a fixed header, clean server/client logs.
+
 **Smooth UI borders** (2026-11-16; GDD §11). Removed top-edge studs from shared buttons, dialog title strips and HUD plates.
 Studio-validated: fresh boot, Settings / Pets / Barn visual review, 108 styled buttons with no top-edge stud frames, clean server/client logs.
 
