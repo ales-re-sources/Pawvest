@@ -712,6 +712,7 @@ touch screen whose safe short edge is at most 600 px, the same 50 px buttons for
 the admin row). On landscape screens at least 600 px wide, panels align with the block's top and open to its right (x = 130).
 On narrower or portrait screens a panel replaces the block; its close button restores navigation. Panels fit the safe area,
 their lists scroll, and layout updates when the screen rotates. Badges stay attached to their buttons.
+Skills, Settings and Admin start closed on joining. Within that session, the player's open or closed panel choice survives respawns.
 
 Decided 2026-10-27. A player who finishes a stage, earns Coins or waits for an egg should always see what they can do next
 without reading anything. One client-side system (milestone G1) draws every such hint, so the game speaks one visual

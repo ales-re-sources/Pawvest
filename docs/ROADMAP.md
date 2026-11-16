@@ -1044,6 +1044,11 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
 
+**HUD panels closed on join** (2026-11-16; GDD §11). Skills, Settings and Admin now start closed independently of authored visibility;
+the session's panel choice still survives respawns. Studio-only: `StarterGui.ScreenGui.SkillsPanel.Visible = false` prevents a startup flash.
+Studio-validated: fresh boot closed, real Skills open/close, respawns with Skills open and closed, Settings → Admin switching, clean server/client logs.
+Plant growth remains intentionally Studio-only (PLANT_GROWTH.md). Publishing and live confirmation remain open; no changed Czech texts.
+
 **Checkpoint respawn timing fix** (2026-11-14; GDD §3, STAGES §6.2.1). Removed the early `CharacterAdded` placement race:
 `RespawnService` restores the checkpoint after `LoadCharacter` returns. Studio-validated: garden join, real touches and
 deaths at all nine Stage 2 pads, Stage 1 regression, walking onto a Stage 2 laser and retaining the timer, clean server /

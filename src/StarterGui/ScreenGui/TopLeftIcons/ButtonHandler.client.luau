@@ -23,6 +23,20 @@ local adminPanel = screenGui.Parent:WaitForChild("AdminPanel")
 local skillsPanel = screenGui.Parent:WaitForChild("SkillsPanel")
 local settingsPanel = screenGui.Parent:WaitForChild("SettingsPanel")
 
+-- Start closed on a fresh join; restore the player's choice when this GUI is re-created on respawn.
+-- Apply before waiting for other GUIs so an authored-visible panel cannot linger during startup.
+local OPEN_PANEL_ATTRIBUTE = "OpenPanel"
+local lastOpenPanel = nil
+local remembered = player:GetAttribute(OPEN_PANEL_ATTRIBUTE)
+for _, panel in { skillsPanel, settingsPanel, adminPanel } do
+	local open = panel.Name == remembered and (panel ~= adminPanel or AdminConfig.IsAdmin(player.UserId))
+	panel.Visible = open
+	if open then
+		lastOpenPanel = panel
+	end
+end
+player:SetAttribute(OPEN_PANEL_ATTRIBUTE, if lastOpenPanel then lastOpenPanel.Name else "")
+
 -- 🐶 Pets button: a Studio placeholder like the other icons (mixed mode: Studio holds the buttons, this script styles
 -- them); a copy of the Skills button stands in if the placeholder is missing. The panel itself is built by
 -- PetsPanel.client.luau in its own ScreenGui "PetsGui" and opened through its SetOpen event / Open attribute.
@@ -88,25 +102,6 @@ end
 local isAdmin = AdminConfig.IsAdmin(player.UserId)
 adminButton.Visible = isAdmin
 
-
--- Panel state tracking
--- This ScreenGui is re-created on every respawn, with the Skills panel visible as authored. The first spawn keeps that
--- (it counts as the open panel: opening another one closes it); after that the player's own choice is restored, so a
--- panel they closed stays closed through a death. The choice lives in a player attribute ("" = none open).
-local OPEN_PANEL_ATTRIBUTE = "OpenPanel"
-local lastOpenPanel = skillsPanel.Visible and skillsPanel or nil
-local remembered = player:GetAttribute(OPEN_PANEL_ATTRIBUTE)
-if remembered ~= nil then
-	lastOpenPanel = nil
-	for _, panel in { skillsPanel, settingsPanel, adminPanel } do
-		local open = panel.Name == remembered and (panel ~= adminPanel or AdminConfig.IsAdmin(player.UserId))
-		panel.Visible = open
-		if open then
-			lastOpenPanel = panel
-		end
-	end
-end
-player:SetAttribute(OPEN_PANEL_ATTRIBUTE, if lastOpenPanel then lastOpenPanel.Name else "")
 
 local function petsOpen()
 	return petsGui ~= nil and petsGui:GetAttribute("Open") == true
@@ -225,7 +220,7 @@ HudLayout.Watch(screenGui.Parent, function(nextLayout)
 	updateNavigation()
 end)
 
--- the panel open at start (authored visible on the first spawn, or restored through a death) takes the focus
+-- A panel restored through a death takes the focus.
 if lastOpenPanel then
 	local panel = lastOpenPanel
 	PanelFocus.Open(FOCUS[panel.Name].name, function()
