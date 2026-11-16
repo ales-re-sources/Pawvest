@@ -1044,6 +1044,9 @@ minutes, the T1a platform split. The phone layouts of the field panel, the pet p
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
 
+**Smooth UI borders** (2026-11-16; GDD §11). Removed top-edge studs from shared buttons, dialog title strips and HUD plates.
+Studio-validated: fresh boot, Settings / Pets / Barn visual review, 108 styled buttons with no top-edge stud frames, clean server/client logs.
+
 **HUD panels closed on join** (2026-11-16; GDD §11). Skills, Settings and Admin now start closed independently of authored visibility;
 the session's panel choice still survives respawns. Studio-only: `StarterGui.ScreenGui.SkillsPanel.Visible = false` prevents a startup flash.
 Studio-validated: fresh boot closed, real Skills open/close, respawns with Skills open and closed, Settings → Admin switching, clean server/client logs.

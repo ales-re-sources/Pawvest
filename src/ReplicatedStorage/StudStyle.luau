@@ -1,13 +1,13 @@
--- StudStyle: the stud-brick look of the screen GUI (top-left icons, panels, coin counter, status card), built in code
+-- StudStyle: the rounded brick look of the screen GUI (top-left icons, panels, coin counter, status card), built in code
 -- so no Studio layout edit is needed.
 --   Brick(button, options)  a button becomes a brick: dark Lip (the brick's side) under a Top frame with the coloured
---                           Face, studs on its upper edge and a Glyph label. The button's BackgroundColor3 is the brick
+--                           Face and a Glyph label. The button's BackgroundColor3 is the brick
 --                           colour and its Text the glyph: both stay the source of truth (the button's own text is only
 --                           made invisible), so scripts that set them keep working. Hover lifts the Top, a press sinks it.
 --                           Calling it again (e.g. on a clone of a styled button) rebuilds the look.
---   Panel(frame, color)     slide-in panel: deep tone of the colour, dark outline, TitleLabel as a brick strip with studs
+--   Panel(frame, color)     slide-in panel: deep tone of the colour, dark outline, TitleLabel as a smooth brick strip
 --   Row(frame, panelName)   a row inside a panel: a lighter tone of that panel's colour
---   Plate(frame, color)     a free-standing plate (coin counter, status card): colour, outline, shine, studs on top
+--   Plate(frame, color)     a free-standing plate (coin counter, status card): colour, outline, shine
 --   Title(label, color)     chunky white text with a dark outline in the colour's shade
 --   Coin(holder, color?)    stud coin icon (gold disc, beaded border, one embossed stud) drawn inside an ImageLabel / Frame
 
@@ -95,32 +95,6 @@ local function shine(parent: Instance)
 	g.Parent = parent
 end
 
--- `count` studs evenly spread along the top edge of `parent`, sticking out above it
-local function addStuds(parent: Instance, color: Color3, count: number, width: number?)
-	local old = parent:FindFirstChild("Studs")
-	if old then
-		old:Destroy()
-	end
-	local holder = Instance.new("Frame")
-	holder.Name = "Studs"
-	holder.BackgroundTransparency = 1
-	holder.Size = UDim2.new(1, 0, 0, 0)
-	for i = 1, count do
-		local stud = Instance.new("Frame")
-		stud.Name = "Stud" .. i
-		stud.AnchorPoint = Vector2.new(0.5, 1)
-		stud.Position = UDim2.new((i - 0.5) / count, 0, 0, 2)
-		stud.Size = UDim2.fromOffset(width or 14, 7)
-		stud.BackgroundColor3 = shade(color, 1.12)
-		stud.BorderSizePixel = 0
-		corner(stud, 3)
-		outline(stud, shade(color, EDGE), 1.5)
-		stud.Parent = holder
-	end
-	holder.Parent = parent
-	return holder
-end
-
 function StudStyle.Title(label: TextLabel | TextButton, color: Color3)
 	label.Font = StudStyle.Font
 	label.TextColor3 = Color3.new(1, 1, 1)
@@ -128,6 +102,7 @@ function StudStyle.Title(label: TextLabel | TextButton, color: Color3)
 	label.TextStrokeTransparency = 0.2
 end
 
+-- Legacy stud counts remain accepted for existing callers; controls now have smooth top edges.
 function StudStyle.Brick(button: GuiButton, options: { studs: number?, socket: boolean? }?)
 	local opts = options or {}
 	for _, name in { "Lip", "Top" } do
@@ -209,7 +184,6 @@ function StudStyle.Brick(button: GuiButton, options: { studs: number?, socket: b
 		syncText()
 	end
 
-	local studs
 	local function recolor()
 		local color = button.BackgroundColor3
 		lip.BackgroundColor3 = shade(color, EDGE)
@@ -221,8 +195,6 @@ function StudStyle.Brick(button: GuiButton, options: { studs: number?, socket: b
 		if glyph then
 			glyph.TextStrokeColor3 = shade(color, 0.35)
 		end
-		studs = addStuds(top, color, opts.studs or 2)
-		studs.ZIndex = 0
 	end
 	button:GetPropertyChangedSignal("BackgroundColor3"):Connect(recolor)
 	recolor()
@@ -250,14 +222,13 @@ function StudStyle.Brick(button: GuiButton, options: { studs: number?, socket: b
 	end)
 end
 
-function StudStyle.Plate(frame: GuiObject, color: Color3, studs: number?)
+function StudStyle.Plate(frame: GuiObject, color: Color3, _studs: number?)
 	frame.BackgroundColor3 = color
 	frame.BackgroundTransparency = 0
 	frame.ClipsDescendants = false
 	corner(frame, 10)
 	outline(frame, shade(color, EDGE), 3)
 	shine(frame)
-	addStuds(frame, color, studs or 3, 18)
 end
 
 -- round disc filling `parent` (scale sizes, so it follows the holder)
@@ -360,7 +331,6 @@ function StudStyle.Panel(frame: GuiObject, color: Color3)
 		corner(title, 10)
 		shine(title)
 		StudStyle.Title(title, color)
-		addStuds(title, color, 6, 18)
 	end
 end
 
