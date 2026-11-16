@@ -85,7 +85,7 @@ end
 
 -- Panel ----------------------------------------------------------------------------------------------------------------------
 
-local ui = GardenUi.Panel("HatcheryGui", COLOR_PANEL, WIDTH, HEIGHT)
+local ui = GardenUi.Panel("HatcheryGui", COLOR_PANEL, WIDTH, HEIGHT, { passiveCursor = true })
 local statusSection = GardenUi.Section("Status", 1)
 local nestsSection, nestsLegend = GardenUi.GroupBox(ui.content, "Nests", 2, COLOR_PANEL)
 local eggsSection, eggsLegend = GardenUi.GroupBox(ui.content, "Eggs", 3, COLOR_PANEL)

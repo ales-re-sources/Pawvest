@@ -440,6 +440,11 @@ RunService.Heartbeat:Connect(function(dt)
 		updateDetail()
 	end
 	step()
+	local ownView = views[ownSlot()]
+	if ownView then
+		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		ownView:UpdateIncubatorLabels(root and root.Position)
+	end
 	if tickClock >= TICK_INTERVAL then
 		tickClock = 0
 		local now = workspace:GetServerTimeNow()

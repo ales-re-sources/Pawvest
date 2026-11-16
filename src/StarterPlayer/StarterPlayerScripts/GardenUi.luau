@@ -157,7 +157,9 @@ end
 -- A centred panel in its own ScreenGui. Returns a table: gui, panel, content (ScrollingFrame with a list), title, close,
 -- Fit() (live safe area), TapHeight(), HeaderHeight(), TabHeight(), OnResize(callback) (reflow after a safe-area change).
 -- opts.content = false: no Content list (the caller lays out its own children; FoodShop)
-function GardenUi.Panel(name: string, color: Color3, width: number, height: number, opts: { content: boolean? }?)
+-- opts.passiveCursor = true: passive containers sink input without Active's clickable cursor.
+function GardenUi.Panel(name: string, color: Color3, width: number, height: number, opts: { content: boolean?, passiveCursor: boolean? }?)
+	local passiveCursor = opts and opts.passiveCursor == true
 	local title = GardenUi.Label("TitleLabel", {
 		Size = UDim2.new(1, 0, 0, 34),
 		TextSize = 20,
@@ -174,7 +176,8 @@ function GardenUi.Panel(name: string, color: Color3, width: number, height: numb
 	}, { compact = true })
 	local content = if opts and opts.content == false then nil else create("ScrollingFrame", {
 		Name = "Content",
-		Active = true,
+		Active = not passiveCursor,
+		InputSink = if passiveCursor then Enum.InputSink.All else Enum.InputSink.None,
 		Position = UDim2.new(0, 8, 0, 46),
 		Size = UDim2.new(1, -16, 1, -54),
 		BackgroundTransparency = 1,
@@ -189,7 +192,8 @@ function GardenUi.Panel(name: string, color: Color3, width: number, height: numb
 	local fit = create("UIScale", { Scale = 1 })
 	local panel = create("Frame", {
 		Name = "Panel",
-		Active = true,
+		Active = not passiveCursor,
+		InputSink = if passiveCursor then Enum.InputSink.All else Enum.InputSink.None,
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.5),
 		Size = UDim2.fromOffset(width, height),

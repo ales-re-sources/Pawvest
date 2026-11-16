@@ -459,7 +459,8 @@ collecting and caring over obby runs.
 - **Layout.** A central plaza (food shop) surrounded by a ring of **12 plots** (a second ring of 18 is ready for bigger servers), about
   40 × 40 studs each, with an owner name sign (stud look, raised on two posts so players walk under it and see the plot past it) over a
   40 × 16 front strip, the field behind it. The strip (U5a) holds, as seen from the plaza, the **hatchery** on the left (the 3 incubators
-  as nests in a triangle under one stud roof on four posts), the **barn** on the right (a red stud barn, 2026-11-13: a stepped gable under slate caps, white X-brace door leaves swung open towards the plaza, a hayloft window, a weathervane with a pet, hay bales, milk cans and a pitchfork in front;
+  as nests in a triangle under one stud roof on four posts; tall pavilion since 2026-11-16: 12-stud underside, three 0.4-stud roof courses,
+  one prompt 1.5 studs ahead of the front post line at height 2.5), the **barn** on the right (a red stud barn, 2026-11-13: a stepped gable under slate caps, white X-brace door leaves swung open towards the plaza, a hayloft window, a weathervane with a pet, hay bales, milk cans and a pitchfork in front;
   it shows no stock since 2026-11-12, the barn panel lists it) and a gravel **path** between them from the sign to the field, so the field shows from the plaza. Servers hold **12 players** (one plot per slot). Each player's
   client draws the plots from the server's data (E1a1); free plots of the inner ring show "Free plot".
 - **Getting there and seeing what waits (U2; Home since 2026-11-13).** The leftmost **🏠 Home** icon (red brick) puts the player
@@ -494,8 +495,12 @@ collecting and caring over obby runs.
     a card starts the egg in the first empty incubator. Hatching shows a **reveal** in the panel: the pet's portrait, its kind in the
     rarity colour and the rarity, where it went (with you / the Pets panel), then the traits it was born with as chips, one every
     0.4 s. Opening it closes the other panels; walking 32 studs away closes it. An egg can only be started while the pets plus the eggs already incubating stay below the
-  inventory cap (50), and a ready egg does not hatch into a full inventory (it waits). Other players see the eggs and their
-  countdown but cannot use them.
+  inventory cap (50), and a ready egg does not hatch into a full inventory (it waits). The dialog keeps its existing rows;
+  passive containers block world input with InputSink.All and Active false, keeping the clickable affordance on action buttons.
+  - **Nearby nest text (2026-11-16).** Empty / locked labels and egg countdowns appear only on the own plot, while the character
+    is near its nests: enter at 28 horizontal studs from the nearest nest, exit beyond 30. Text is opaque through 24, fades to
+    hidden at 30, independently of camera zoom (existing camera caps remain). Other players see the egg models without status
+    text and cannot use them. The separate ready-egg hint and Home badge keep their existing rules.
 - **Feeding.** Food bought for Coins gives a pet XP: an alternative to leveling by playing the obby, and a Coin sink.
   Food is sold at the **food stand** in the middle of the plaza (a four-sided stud kiosk, readable from every plot, a big strawberry on top) and fed at once to one chosen pet (equipped, on the field or resting in the
   inventory); there is no food inventory. Only the fed pet gains the XP, as care XP (§7.4: Cuteness first). A pet with nothing left

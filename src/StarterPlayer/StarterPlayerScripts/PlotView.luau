@@ -42,7 +42,7 @@ local INCUBATOR_SPOTS = { Vector3.new(8.5, 0, -15), Vector3.new(16.2, 0, -15), V
 local PATH_HALF = 4.8 -- the gravel path: half its width (the strip's front and back edges leave a gap of EDGE_GAP each side of x = 0)
 local EDGE_GAP = 5
 local HATCH_X0, HATCH_X1, HATCH_Z0, HATCH_Z1 = 5.6, 19.3, -19.3, -4.7 -- hatchery: centres of its corner posts
-local HATCH_ROOF = 8 -- hatchery: height of the posts' tops (the roof's underside)
+local HATCH_ROOF = 12 -- tall pavilion: roof underside, clear of the eggs and approach camera
 local BARN_X0, BARN_X1, BARN_Z0, BARN_Z1 = -19, -6, -15, -5 -- barn: outer faces of its walls (the door faces −Z, the plaza)
 local BARN_WALL, BARN_HEIGHT = 0.6, 8 -- barn: wall thickness, wall height over the floor
 local BARN_DOOR_HALF, BARN_DOOR_HEIGHT = 3.5, 7 -- barn: half the door opening's width, its height over the floor (a character fits with room)
@@ -52,6 +52,7 @@ local STRIP_FRONT, STRIP_BACK = -20, -4 -- a plot's floor: the strip that holds 
 local FIELD_FRONT = -2 -- the field lies behind the strip (floor +Z), from this far behind the centre
 local FIELD_PITCH = 5.5 -- studs per square
 local INFO_DISTANCE = 60 -- studs: pad / incubator billboards and pet labels
+local INCUBATOR_NEAR_IN, INCUBATOR_NEAR_OUT, INCUBATOR_FADE = 28, 30, 24
 local SIGN_CLEAR = 8 -- name sign: height of the lower frame bar's centre over the floor centre (a player walks under it)
 local SIGN_TOP = 12.4 -- name sign: height of the upper frame bar's centre (1.5x the old 8.25-stud sign)
 
@@ -159,6 +160,7 @@ local function info(parentPart: BasePart, size: UDim2, offset: number, text: str
 	gui.Size = size
 	gui.StudsOffset = Vector3.new(0, offset, 0)
 	gui.MaxDistance = INFO_DISTANCE
+	gui.Enabled = false -- own-nest proximity enables it after construction
 	local label = textLabel(gui, { Text = text })
 	gui.Parent = parentPart
 	return label
@@ -239,7 +241,8 @@ function PlotView.new(slot: number, parent: Instance, options)
 	self.marked = {} -- [key] = true while pending
 	self.squares = 0 -- most field squares ever drawn (squares beyond the current field are cleared)
 	self.petMap = {} -- [square] = field pet of the current state (fieldPets)
-	self.labels = {} -- [incubator] = { label, egg, readyAt } of drawn countdowns
+	self.labels = {} -- [incubator] = { gui, label, egg?, readyAt? }; own-nest info, including empty / locked
+	self.incubatorNear = false
 	self.plants = {} -- full-detail plants, separate from soil and field pets
 	self.plantCursor = 0
 	self.plantNextAt = math.huge
@@ -486,11 +489,11 @@ function PlotView:buildHatchery(model: Model)
 		p.Parent = model
 		return p
 	end
-	-- the roof: three steps, each smaller and higher (the lowest overhangs the posts by 0.6)
+	-- Three thinner courses keep the pavilion light while leaving its footprint unchanged.
 	local roof = HATCH_ROOF
-	add("Roof", Vector3.new(w + 1.8, 0.6, d + 1.8), Vector3.new(cx, roof + 0.3, cz), COLORS.roof)
-	add("Roof", Vector3.new(w - 2.6, 0.6, d - 2.6), Vector3.new(cx, roof + 0.9, cz), COLORS.roofTop)
-	add("Roof", Vector3.new(w - 7, 0.6, d - 7), Vector3.new(cx, roof + 1.5, cz), COLORS.roof)
+	add("Roof", Vector3.new(w + 1.8, 0.4, d + 1.8), Vector3.new(cx, roof + 0.2, cz), COLORS.roof)
+	add("Roof", Vector3.new(w - 2.6, 0.4, d - 2.6), Vector3.new(cx, roof + 0.6, cz), COLORS.roofTop)
+	add("Roof", Vector3.new(w - 7, 0.4, d - 7), Vector3.new(cx, roof + 1, cz), COLORS.roof)
 	if self.detail == "low" then
 		return
 	end
@@ -500,9 +503,9 @@ function PlotView:buildHatchery(model: Model)
 			add("Post", Vector3.new(1, height, 1), Vector3.new(x, 0.25 + height / 2, z), COLORS.post).CanCollide = true
 		end
 	end
-	-- the own hatchery's one prompt (U5b), on an invisible anchor at the front centre of the shelter
+	-- One prompt on the open approach, in front of the post line.
 	if self.own and self.onHatchery and self.detail == "full" and not self.state.free then
-		local anchor = part({ Name = "PromptAnchor", Size = Vector3.new(1, 1, 1), CFrame = self:at(Vector3.new(cx, 1.5, z0 + 3)), Transparency = 1, CanCollide = false })
+		local anchor = part({ Name = "PromptAnchor", Size = Vector3.new(1, 1, 1), CFrame = self:at(Vector3.new(cx, 2.5, z0 - 1.5)), Transparency = 1, CanCollide = false })
 		anchor.Parent = model
 		prompt(anchor, Locale.T("hatchery.prompt.action"), Locale.T("hatchery.prompt.object"), 10, function()
 			self.onHatchery()
@@ -750,14 +753,15 @@ function PlotView:buildIncubator(model: Model, n: number)
 	base.Parent = model
 	part({ Name = "Nest", Size = Vector3.new(4.4, 0.4, 4.4), CFrame = nestCFrame, Color = COLORS.nest, Material = Enum.Material.Fabric }).Parent = model
 	if not eggId then
-		if self.detail == "full" then
-			info(base, UDim2.new(6, 0, 2.2, 0), 3, Locale.T(if locked then "garden.sign.incubator.locked" else "garden.sign.incubator.empty", { n = n }))
+		if self.own and self.detail == "full" then
+			local label = info(base, UDim2.new(6, 0, 2.2, 0), 3, Locale.T(if locked then "garden.sign.incubator.locked" else "garden.sign.incubator.empty", { n = n }))
+			self.labels[n] = { gui = label.Parent, label = label }
 		end
 		return
 	end
 	local shell = EggLook.Make(eggId, self:at(spot + Vector3.new(0, 1.85, 0)), self.detail)
 	shell.Parent = model
-	if self.detail ~= "full" then
+	if self.detail ~= "full" or not self.own then
 		return
 	end
 	local gui = Instance.new("BillboardGui")
@@ -766,9 +770,28 @@ function PlotView:buildIncubator(model: Model, n: number)
 	gui.Size = UDim2.new(6, 0, 1.6, 0)
 	gui.StudsOffset = Vector3.new(0, 2.6, 0)
 	gui.MaxDistance = INFO_DISTANCE + 30
+	gui.Enabled = false
 	local label = textLabel(gui, { Font = StudStyle.Font })
 	gui.Parent = shell.PrimaryPart
-	self.labels[n] = { label = label, egg = egg, readyAt = readyAt }
+	self.labels[n] = { gui = gui, label = label, egg = egg, readyAt = readyAt }
+end
+
+-- Character proximity is independent of camera zoom. Only the owner's full-detail labels are built.
+function PlotView:UpdateIncubatorLabels(position: Vector3?)
+	local distance = math.huge
+	if self.own and self.detail == "full" and position then
+		local at = self.floor:PointToObjectSpace(position)
+		for _, spot in INCUBATOR_SPOTS do
+			distance = math.min(distance, Vector3.new(at.X - spot.X, 0, at.Z - spot.Z).Magnitude)
+		end
+	end
+	self.incubatorNear = distance <= (if self.incubatorNear then INCUBATOR_NEAR_OUT else INCUBATOR_NEAR_IN)
+	local fade = if self.incubatorNear then math.clamp((distance - INCUBATOR_FADE) / (INCUBATOR_NEAR_OUT - INCUBATOR_FADE), 0, 1) else 1
+	for _, entry in self.labels do
+		entry.gui.Enabled = fade < 1
+		entry.label.TextTransparency = fade
+		entry.label.TextStrokeTransparency = 0.3 + 0.7 * fade
+	end
 end
 
 -- The field's row plates (every detail): overgrown grass under the whole shape, below the soil (no shared face).
@@ -1229,9 +1252,10 @@ function PlotView:Tick(now: number)
 		end
 	end
 	for _, entry in self.labels do
-		local name = if entry.egg then Locale.EggName(entry.egg) else ""
-		local remaining = (entry.readyAt or 0) - now
-		entry.label.Text = name .. "\n" .. (if remaining > 0 then TimeFormat.Clock(remaining) else Locale.T("incubator.label.ready"))
+		if entry.egg then
+			local remaining = (entry.readyAt or 0) - now
+			entry.label.Text = Locale.EggName(entry.egg) .. "\n" .. (if remaining > 0 then TimeFormat.Clock(remaining) else Locale.T("incubator.label.ready"))
+		end
 	end
 end
 
