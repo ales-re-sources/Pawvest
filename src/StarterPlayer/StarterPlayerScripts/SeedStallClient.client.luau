@@ -234,6 +234,7 @@ local function render()
 		return
 	end
 	local tab = ui.TabHeight()
+	local tap = ui.TapHeight()
 	local top = ui.HeaderHeight() + 6
 	tabs.Size = UDim2.new(1, -16, 0, tab)
 	tabs.Position = UDim2.fromOffset(8, top)

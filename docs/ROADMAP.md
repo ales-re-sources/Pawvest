@@ -288,6 +288,9 @@ Tagged **[1.0]** (needed before 1.0 goes public) or **[later]**.
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
 
+**Seed stall button height fix** (2026-11-17; UI Studio-validated). Restored the missing `TapHeight()` binding so cart, seed-buy and
+crop-sell bricks keep their 44 px touch targets after panel scaling. Transaction completion not revalidated (MCP snapshot access refused).
+
 **HX0 — Hybrid plants: look prototype** (2026-11-16; as built: [HYBRID_PROTOTYPE.md](HYBRID_PROTOTYPE.md); design: [HYBRIDS.md](HYBRIDS.md)). *Why:* the user's breeding idea (cross two plants into
 one that mixes both, crafted mutagens bias a trait, unique to its breeder, visible to visitors) needs generated plants that look good before
 any mechanic. *What:* `PlantGenome` (genome v2: 49 genes, cross, mutagens, 49-byte pack, presets for the 19 crops and 8 new plant types),
