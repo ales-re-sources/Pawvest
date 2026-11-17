@@ -3,7 +3,7 @@
 -- GardenRemotes.Plot (server → client): (userId, state) after every publish of that player's garden (only when the state
 -- changed) and (userId, nil) when the player leaves. GardenRemotes.RequestPlots (client → server, no arguments) re-sends every
 -- plot to the caller (a client that was still loading missed the broadcasts); 1 s cooldown.
--- State: { slot, name, incCount, eggs = { [1..3] = "EggId:readyAt" or "" }, field = GardenField.PlotField or nil } (readyAt in
+-- State: { slot, name, incCount, eggs = { [1..3] = "EggId:readyAt:startedAt" or "" }, field = GardenField.PlotField or nil } (readyAt in
 -- server os.time(), for the countdowns only).
 
 local HttpService = game:GetService("HttpService")
@@ -38,7 +38,7 @@ local function plotState(player: Player)
 	local eggs = {}
 	for n = 1, GardenConfig.MaxIncubators do
 		local entry = type(garden.Incubators) == "table" and garden.Incubators[tostring(n)]
-		eggs[n] = if type(entry) == "table" then string.format("%s:%d", tostring(entry.Egg), entry.ReadyAt or 0) else ""
+		eggs[n] = if type(entry) == "table" then string.format("%s:%d:%d", tostring(entry.Egg), entry.ReadyAt or 0, entry.StartedAt or 0) else ""
 	end
 	return {
 		slot = slot,

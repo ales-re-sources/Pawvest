@@ -364,7 +364,7 @@ A free egg starts by itself (no Coins) in the lowest empty incubator as soon as 
 earned, after a hatch or cancellation and after an incubator is bought. While every incubator is busy (or the inventory cap is reached) it
 waits in the profile; the Pets panel and the incubator panel show how many wait. Its pet is chosen when it enters a nest.
 
-The nest row shows only the egg and remaining time; the pet kind and rarity stay server-only until **Hatch**. Shared
+The nest row shows the egg with **Scanning…** for its first 30 s, then the remaining time; the pet kind and rarity stay server-only until **Hatch**. Shared
 time tiers keep the exact rarity uncertain. A small square **trash** button uses the shared ConfirmTap pattern: first tap
 turns it orange with **OK?**, second tap within 3 s discards the egg without returning Coins or a free egg. Waiting or closing
 the panel disarms it. A waiting free egg can immediately occupy the freed nest. Existing eggs from before EV2e
@@ -497,9 +497,13 @@ collecting and caring over obby runs.
     The 6 × 6 foundation and yellow pad also use Plastic with Studs / StudsSmall, including free and locked nests.
   - **Incubator body (2026-11-16).** The selected open hatch pod has stepped cream / steel stud-brick cheeks, a rear heater,
     a side control module and a front thermostat on the foundation's lip. The egg remains open to the front and above;
-    footprint 6 × 6, top 5.2 studs above the plot origin. Full / mid / low detail uses 17 / 6 / 3 body Parts (excluding the egg).
-    Empty, free and locked pods are unlit; growing eggs show amber, ready eggs green (heater off). The timer updates the
-    lights without rebuilding the body. Locked trim is muted; the original base / pad collision stays, other hardware does not collide.
+    footprint 6 × 6, top 5.2 studs above the plot origin. Full / mid / low detail uses 21 / 7 / 3 body Parts (excluding the egg).
+    Empty, free and locked pods are unlit. The first **30 seconds** within the existing hatch duration scan with a cyan band
+    sweeping vertically around the egg and **Scanning…** above it (also in the menu); no countdown is shown in this phase.
+    Then an amber nest outline / soft local light pulse together with the hatch countdown; ready eggs keep green indicators
+    with the heater / glow off. Full detail animates four thin band Parts and a shadowless light; mid has a static phase strip,
+    low stays simple. StartedAt / ReadyAt keep phases aligned across reconnects; instant-ready eggs skip scanning. The timer
+    changes phases without rebuilding the body. Locked trim is muted; the original base / pad collision stays, other hardware does not collide.
     Empty / locked labels sit above the heater. [Studio view and archived design options](INCUBATOR_REDESIGN.md).
     Since 2026-11-17 every pod's open front and controls face the central path towards the barn (plot-local −X);
     the egg uses the same 90° turn, with all three pod centres unchanged.

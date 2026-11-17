@@ -1,6 +1,6 @@
 -- Open hatch pod: the selected stud-brick body, built directly into a plot piece so Base remains discoverable.
--- Build(parent, floorCFrame, detail, state) -> setState(state). Full / mid / low: 17 / 6 / 3 body Parts.
--- States: free / locked / empty (unlit), growing (amber), ready (green). Display only; no remotes or persistence.
+-- Build(...) -> setState(state), animate(serverNow, startedAt?). Full / mid / low: 21 / 7 / 3 body Parts.
+-- States: free / locked / empty (unlit), scanning (cyan sweep), growing (warm amber pulse), ready (green).
 local IncubatorLook = {}
 
 local BROWN = Color3.fromRGB(150, 100, 60)
@@ -11,8 +11,9 @@ local DARK = Color3.fromRGB(50, 66, 72)
 local LOCKED = Color3.fromRGB(80, 80, 80)
 local WARM = Color3.fromRGB(255, 183, 63)
 local READY = Color3.fromRGB(108, 209, 110)
+local SCAN = Color3.fromRGB(81, 216, 240)
 
-function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string, state: string): (string) -> ()
+function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string, state: string)
 	local muted = state == "locked" or state == "free"
 	local trim = if muted then STEEL else CREAM
 	local function add(name: string, size: Vector3, at: Vector3, color: Color3, variant: string?, collide: boolean?)
@@ -61,6 +62,34 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 		temperature = add("Temperature", Vector3.new(0.75, 0.18, 0.04), Vector3.new(-0.4, 1.855, -2.81), DARK, "")
 		status = add("Status", Vector3.new(0.18, 0.18, 0.04), Vector3.new(0.3, 1.855, -2.81), DARK, "")
 	end
+	local bands = {}
+	if detail == "full" then
+		for _, segment in {
+			{ "Front", Vector3.new(3.4, 0.06, 0.06), Vector3.new(0, 1.95, -1.48) },
+			{ "Back", Vector3.new(3.4, 0.06, 0.06), Vector3.new(0, 1.95, 1.48) },
+			{ "Left", Vector3.new(0.06, 0.06, 2.9), Vector3.new(-1.67, 1.95, 0) },
+			{ "Right", Vector3.new(0.06, 0.06, 2.9), Vector3.new(1.67, 1.95, 0) },
+		} do
+			local p = add("PhaseBand" .. segment[1], segment[2], segment[3], SCAN, "")
+			p.Material = Enum.Material.Neon
+			p.Transparency = 1
+			table.insert(bands, { part = p, at = segment[3] })
+		end
+	elseif detail == "mid" then
+		local p = add("PhaseStrip", Vector3.new(3.4, 0.08, 0.1), Vector3.new(0, 1.95, -1.48), SCAN, "")
+		p.Material = Enum.Material.Neon
+		p.Transparency = 1
+		table.insert(bands, { part = p, at = Vector3.new(0, 1.95, -1.48) })
+	end
+	local glow = nil
+	if detail == "full" then
+		glow = Instance.new("PointLight")
+		glow.Name = "NestGlow"
+		glow.Range = 6
+		glow.Shadows = false
+		glow.Enabled = false
+		glow.Parent = parent:FindFirstChild("Nest")
+	end
 	local current = nil
 	local function lamp(p: BasePart?, color: Color3, on: boolean)
 		if p then
@@ -71,15 +100,39 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 	local function setState(nextState: string)
 		if nextState == current then return end
 		current = nextState
-		local growing, ready = nextState == "growing", nextState == "ready"
-		local color = if ready then READY else WARM
+		local growing, ready, scanning = nextState == "growing", nextState == "ready", nextState == "scanning"
+		local color = if ready then READY elseif scanning then SCAN else WARM
 		lamp(heater, WARM, growing)
-		lamp(temperature, color, growing or ready)
-		lamp(podStatus, color, growing or ready)
-		lamp(status, color, growing or ready)
+		lamp(temperature, color, growing or ready or scanning)
+		lamp(podStatus, color, growing or ready or scanning)
+		lamp(status, color, growing or ready or scanning)
+		for _, band in bands do
+			band.part.Color = color
+			band.part.Transparency = if scanning then 0.25 elseif growing then 0.55 else 1
+			band.part.CFrame = floorCFrame * CFrame.new(band.at)
+		end
+		if glow then
+			glow.Enabled = growing or scanning
+			glow.Color = color
+			glow.Brightness = if scanning then 0.4 else 0.6
+		end
+	end
+	local function animate(now: number, startedAt: number?)
+		if detail ~= "full" then return end
+		local age = now - (startedAt or 0)
+		if current == "scanning" then
+			local wave = 1 - math.abs((age % 4) / 2 - 1)
+			for _, band in bands do
+				band.part.CFrame = floorCFrame * CFrame.new(band.at.X, 2 + 3.15 * wave, band.at.Z)
+			end
+		elseif current == "growing" then
+			local pulse = math.sin(age * math.pi / 2)
+			for _, band in bands do band.part.Transparency = 0.55 - 0.15 * pulse end
+			if glow then glow.Brightness = 0.6 + 0.15 * pulse end
+		end
 	end
 	setState(state)
-	return setState
+	return setState, animate
 end
 
 return IncubatorLook

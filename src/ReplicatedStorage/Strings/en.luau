@@ -212,7 +212,7 @@ return {
 	["incubator.hatch"] = "Hatch",
 	["incubator.freeEggs"] = { "🎁 {count} free egg will start in the next empty incubator", "🎁 {count} free eggs will start in the next empty incubators" },
 	["incubator.unlocked"] = "Incubator {n} unlocked",
-	["incubator.started"] = "The egg is warming up. Your pet stays a surprise until it hatches!",
+	["incubator.started"] = "Your egg is in the incubator!",
 	["incubator.label.ready"] = "✨ Ready!",
 	["incubator.reject.maxed"] = "All incubators unlocked",
 	["incubator.reject.locked"] = "Unlock this incubator first",
@@ -514,4 +514,5 @@ return {
 	["incubator.cancel.tapAgain"] = "OK?",
 	["hatchery.odds.chance"] = "{chance}%",
 	["hatchery.button"] = "🥚 Hatchery",
+	["incubator.scanning"] = "Scanning…",
 }

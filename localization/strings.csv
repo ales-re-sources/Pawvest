@@ -255,7 +255,7 @@ incubator.freeEggs[one],Status: free eggs start by themselves in the next empty 
 incubator.freeEggs[few],Form for 2-4 (Czech only),,🎁 {count} vejce zdarma čekají na volný inkubátor,ok,h5f21d558
 incubator.freeEggs[other],Form for 0 and 5+,🎁 {count} free eggs will start in the next empty incubators,🎁 {count} vajec zdarma čeká na volný inkubátor,ok,h5f21d558
 incubator.unlocked,Message after buying an incubator,Incubator {n} unlocked,Inkubátor {n} odemčen,ok,h071ed29e
-incubator.started,Purchase success; pet identity stays hidden until Hatch.,The egg is warming up. Your pet stays a surprise until it hatches!,Vejce se zahřívá. Mazlíček zůstane překvapením až do vylíhnutí!,new,hc52cba20
+incubator.started,Purchase success before scan; pet identity stays hidden until Hatch.,Your egg is in the incubator!,Vejce je v inkubátoru!,new,h3fbd7f37
 incubator.label.ready,Text over an egg in a plot's incubator once it can hatch,✨ Ready!,✨ Hotovo!,ok,hd37ff7a0
 incubator.reject.maxed,Refused: every incubator is bought,All incubators unlocked,Všechny inkubátory jsou odemčené,ok,h30705bfa
 incubator.reject.locked,Refused: the incubator is not bought,Unlock this incubator first,Nejdřív tenhle inkubátor odemkni,ok,h1ea71739
@@ -599,3 +599,4 @@ incubator.cancelled,Success after egg discarded; no Coins or free egg credit ret
 incubator.cancel.tapAgain,Orange armed trash button; second tap within shared ConfirmTap window discards egg. Short text must fit a square.,OK?,OK?,new,h6d41df1b
 hatchery.odds.chance,"Right-aligned percentage in each egg odds row; {chance} = localized decimal number, e.g. 12.7 / 12,7.",{chance}%,{chance} %,new,h56825d3d
 hatchery.button,"Farm HUD button beside Barn, visible near the own plot; opens the hatchery. Ready-egg count is a separate badge.",🥚 Hatchery,🥚 Líheň,new,hbedeaa6f
+incubator.scanning,"Label above an egg and in its hatchery row during the initial scan phase. No time, kind or rarity shown.",Scanning…,Skenování…,new,he6fc6578

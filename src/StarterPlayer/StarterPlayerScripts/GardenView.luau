@@ -440,6 +440,8 @@ RunService.Heartbeat:Connect(function(dt)
 		updateDetail()
 	end
 	step()
+	local animationNow = workspace:GetServerTimeNow()
+	for _, view in views do view:AnimateIncubators(animationNow) end
 	local ownView = views[ownSlot()]
 	if ownView then
 		local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart") :: BasePart?

@@ -212,7 +212,7 @@ return {
 	["incubator.hatch"] = "Vylíhnout",
 	["incubator.freeEggs"] = { "🎁 {count} vejce zdarma čeká na volný inkubátor", "🎁 {count} vejce zdarma čekají na volný inkubátor", "🎁 {count} vajec zdarma čeká na volný inkubátor" },
 	["incubator.unlocked"] = "Inkubátor {n} odemčen",
-	["incubator.started"] = "Vejce se zahřívá. Mazlíček zůstane překvapením až do vylíhnutí!",
+	["incubator.started"] = "Vejce je v inkubátoru!",
 	["incubator.label.ready"] = "✨ Hotovo!",
 	["incubator.reject.maxed"] = "Všechny inkubátory jsou odemčené",
 	["incubator.reject.locked"] = "Nejdřív tenhle inkubátor odemkni",
@@ -514,4 +514,5 @@ return {
 	["incubator.cancel.tapAgain"] = "OK?",
 	["hatchery.odds.chance"] = "{chance} %",
 	["hatchery.button"] = "🥚 Líheň",
+	["incubator.scanning"] = "Skenování…",
 }

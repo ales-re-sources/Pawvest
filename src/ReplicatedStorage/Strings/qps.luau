@@ -212,7 +212,7 @@ return {
 	["incubator.hatch"] = "[!! Háťčh ~~ !!]",
 	["incubator.freeEggs"] = { "[!! 🎁 {count} fřěě ěgg wíll šťářť íň ťhě ňěxť ěmpťý íňčůbáťöř ~~~~~~~~~~~~~~~~~~~~ !!]", "[!! 🎁 {count} fřěě ěggš wíll šťářť íň ťhě ňěxť ěmpťý íňčůbáťöřš ~~~~~~~~~~~~~~~~~~~~~ !!]" },
 	["incubator.unlocked"] = "[!! Íňčůbáťöř {n} ůňlöčkěď ~~~~~~~~ !!]",
-	["incubator.started"] = "[!! Ťhě ěgg íš wářmíňg ůp. Ýöůř pěť šťáýš á šůřpříšě ůňťíl íť háťčhěš! ~~~~~~~~~~~~~~~~~~~~~~~~~~ !!]",
+	["incubator.started"] = "[!! Ýöůř ěgg íš íň ťhě íňčůbáťöř! ~~~~~~~~~~~~ !!]",
 	["incubator.label.ready"] = "[!! ✨ Řěáďý! ~~~ !!]",
 	["incubator.reject.maxed"] = "[!! Áll íňčůbáťöřš ůňlöčkěď ~~~~~~~~~ !!]",
 	["incubator.reject.locked"] = "[!! Ůňlöčk ťhíš íňčůbáťöř fířšť ~~~~~~~~~~~ !!]",
@@ -514,4 +514,5 @@ return {
 	["incubator.cancel.tapAgain"] = "[!! ÖK? ~~ !!]",
 	["hatchery.odds.chance"] = "[!! {chance}% ~~ !!]",
 	["hatchery.button"] = "[!! 🥚 Háťčhěřý ~~~~ !!]",
+	["incubator.scanning"] = "[!! Ščáňňíňg… ~~~~ !!]",
 }

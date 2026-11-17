@@ -298,8 +298,10 @@ local function renderNests(state, tap: number)
 			local egg = PetConfig.Eggs[entry.egg]
 			local title = string.format("%s · %s", Locale.T("incubator.title", { n = n }), eggName(entry.egg))
 			if remaining > 0 then
-				local column = GardenUi.TextColumn(row, tap + GAP, title, Locale.T("incubator.hatchesIn", { time = GardenUi.Countdown(remaining) }))
-				table.insert(countdowns, { label = column:FindFirstChild("Info"), readyAt = entry.readyAt })
+				local scanning = GardenConfig.EggPhase(entry.startedAt, entry.readyAt, now) == "scanning"
+				local column = GardenUi.TextColumn(row, tap + GAP, title, if scanning then Locale.T("incubator.scanning")
+					else Locale.T("incubator.hatchesIn", { time = GardenUi.Countdown(remaining) }))
+				table.insert(countdowns, { label = column:FindFirstChild("Info"), readyAt = entry.readyAt, startedAt = entry.startedAt })
 				local key = "CancelEgg" .. entry.id
 				local armed = ConfirmTap.IsArmed(key)
 				local cancel = action(if armed then Locale.T("incubator.cancel.tapAgain") else "",
@@ -686,7 +688,8 @@ RunService.Heartbeat:Connect(function(dt)
 			return
 		end
 		if entry.label then
-			entry.label.Text = Locale.T("incubator.hatchesIn", { time = GardenUi.Countdown(remaining) })
+			entry.label.Text = if GardenConfig.EggPhase(entry.startedAt, entry.readyAt, now) == "scanning" then Locale.T("incubator.scanning")
+				else Locale.T("incubator.hatchesIn", { time = GardenUi.Countdown(remaining) })
 		end
 	end
 end)

@@ -8,7 +8,7 @@
 -- barn with a stepped gable and its decoration; on the own plot the "Open barn" prompt, which calls options.onBarn).
 -- A plot is split into pieces (base, hatch, barn, inc1..3, field = row plates, sq1..36, grow1..36). SetState / SetDetail / Relabel only
 -- mark the pieces whose look changed; Step builds marked pieces until a deadline, so a build is spread over frames by the caller.
--- State: { name, incCount, eggs = { [1..3] = "EggId:readyAt" or "" },
+-- State: { name, incCount, eggs = { [1..3] = "EggId:readyAt:startedAt" or "" },
 -- field = { crops = two characters per square 1..CropConfig.MaxSquares: crop letter (CropConfig, a-s; a-f in synthetic plots) +
 -- stage 1-3 (3 = ripe), ".0" an empty open square, "#0" a locked one, pets = { "Kind:Level:uid:square:tending:guard" } (E1b field pets,
 -- tending / guard = Tending / Pest-control level, 0 without it; E4b; a feed without guard reads as 0),
@@ -185,13 +185,14 @@ local function nameOf(state, uid: string?): string?
 	return if names and uid then names[uid] else nil
 end
 
--- "EggId:readyAt" → egg id, readyAt (nil for "")
-local function parseEgg(text: string?): (string?, number?)
+-- "EggId:readyAt:startedAt" → egg id, readyAt, startedAt; accept the older two-field payload too.
+local function parseEgg(text: string?): (string?, number?, number?)
 	if type(text) ~= "string" or text == "" then
 		return nil, nil
 	end
-	local egg, readyAt = string.match(text, "^([^:]+):(%d+)$")
-	return egg, tonumber(readyAt)
+	local egg, readyAt, startedAt = string.match(text, "^([^:]+):(%d+):(%d+)$")
+	if not egg then egg, readyAt = string.match(text, "^([^:]+):(%d+)$") end
+	return egg, tonumber(readyAt), tonumber(startedAt)
 end
 PlotView.ParseEgg = parseEgg
 
@@ -728,12 +729,12 @@ function PlotView:buildIncubator(model: Model, n: number)
 	local podCFrame = self:at(spot) * CFrame.Angles(0, math.pi / 2, 0) -- front (-Z) faces the central path (-X)
 	self.labels[n] = nil
 	self.incubatorLights[n] = nil
-	local eggId, readyAt = parseEgg(not state.free and state.eggs[n] or nil)
+	local eggId, readyAt, startedAt = parseEgg(not state.free and state.eggs[n] or nil)
 	local egg = eggId and PetConfig.Eggs[eggId]
 	local locked = not state.free and n > state.incCount
 	local status = if state.free then "free" elseif locked then "locked" elseif not eggId then "empty"
-		elseif (readyAt or math.huge) <= (self.tickNow or workspace:GetServerTimeNow()) then "ready" else "growing"
-	local setState = IncubatorLook.Build(model, podCFrame, self.detail, status)
+		else GardenConfig.EggPhase(startedAt, readyAt or math.huge, self.tickNow or workspace:GetServerTimeNow())
+	local setState, animate = IncubatorLook.Build(model, podCFrame, self.detail, status)
 	if self.own and self.onHatchery and self.detail == "full" and not state.free then
 		local target = part({
 			Name = "ClickTarget", Size = Vector3.new(7, 6, 7), CFrame = podCFrame * CFrame.new(0, 3, 0),
@@ -783,9 +784,8 @@ function PlotView:buildIncubator(model: Model, n: number)
 	end
 	local shell = EggLook.Make(eggId, podCFrame * CFrame.new(0, 1.85, 0), self.detail)
 	shell.Parent = model
-	if self.detail == "full" then
-		self.incubatorLights[n] = { setState = setState, readyAt = readyAt or math.huge }
-	end
+	self.incubatorLights[n] = { setState = setState, animate = animate, startedAt = startedAt, readyAt = readyAt or math.huge }
+	animate(self.tickNow or workspace:GetServerTimeNow(), startedAt)
 	if self.detail ~= "full" or not self.own then
 		return
 	end
@@ -798,7 +798,7 @@ function PlotView:buildIncubator(model: Model, n: number)
 	gui.Enabled = false
 	local label = textLabel(gui, { Font = StudStyle.Font })
 	gui.Parent = shell.PrimaryPart
-	self.labels[n] = { gui = gui, label = label, egg = egg, readyAt = readyAt }
+	self.labels[n] = { gui = gui, label = label, egg = egg, readyAt = readyAt, startedAt = startedAt }
 end
 
 -- Character proximity is independent of camera zoom. Only the owner's full-detail labels are built.
@@ -1279,13 +1279,21 @@ function PlotView:Tick(now: number)
 		end
 	end
 	for _, body in self.incubatorLights do
-		body.setState(if body.readyAt <= now then "ready" else "growing")
+		body.setState(GardenConfig.EggPhase(body.startedAt, body.readyAt, now))
 	end
 	for _, entry in self.labels do
 		if entry.egg then
 			local remaining = (entry.readyAt or 0) - now
-			entry.label.Text = Locale.EggName(entry.egg) .. "\n" .. (if remaining > 0 then TimeFormat.Clock(remaining) else Locale.T("incubator.label.ready"))
+			local phase = GardenConfig.EggPhase(entry.startedAt, entry.readyAt or 0, now)
+			entry.label.Text = Locale.EggName(entry.egg) .. "\n" .. (if phase == "scanning" then Locale.T("incubator.scanning")
+				elseif remaining > 0 then TimeFormat.Clock(remaining) else Locale.T("incubator.label.ready"))
 		end
+	end
+end
+
+function PlotView:AnimateIncubators(now: number)
+	for _, body in self.incubatorLights do
+		body.animate(now, body.startedAt)
 	end
 end
 

@@ -87,7 +87,7 @@ plaza.
   to the Estate drop (decor placement, D9, E7). The fixed layout keeps the slots that drop can use later.
 - The hatchery panel gets K1's proposed egg cards (picture, price, possible hatch-time range; odds behind "?";
   reveal on hatch). Since EV2e (2026-11-17), the pet is fixed at purchase / free placement and its rarity sets the timer;
-  the nest shows only time remaining, with the pet hidden until hatch. Growing eggs have a tap-sized square trash button
+  the nest shows Scanning… for the first 30 s of the existing timer, then time remaining, with the pet hidden until hatch. Growing eggs have a tap-sized square trash button
   using ConfirmTap: orange OK? then second tap within 3 s (discard without refund). Odds are separate rarity / percentage rows;
   the info tip mentions only offline hatching and no refund. P4's reveal lists the rolled
   traits as text; U5 shows them as chips one by one (a cute pet is a lucky roll: worth its own moment).

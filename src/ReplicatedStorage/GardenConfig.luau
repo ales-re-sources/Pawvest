@@ -74,11 +74,19 @@ end
 -- rarity sets real hatch time, also offline. Stored as Incubators["1".."3"] = { Id, Egg, Kind, StartedAt, ReadyAt } (server
 -- os.time()) and Garden.IncubatorCount (owned incubators, unlocked in order).
 GardenConfig.MaxIncubators = 3
+GardenConfig.ScanSeconds = 30 -- visual phase within the existing hatch duration; never adds time
 GardenConfig.IncubatorPrices = { 0, 500, 2800 } -- EV2a (was 5000 / 12000); IncubatorPrices[n] = price of the n-th incubator (incubator 1 is free)
 
 -- True when the incubator entry's egg may hatch at server time `now`.
 function GardenConfig.EggReady(entry, now: number): boolean
 	return type(entry) == "table" and type(entry.ReadyAt) == "number" and now >= entry.ReadyAt
+end
+
+-- Shared display phase. Ready wins for instant / accelerated eggs; old plot payloads omit StartedAt and skip scanning.
+function GardenConfig.EggPhase(startedAt: number?, readyAt: number, now: number): string
+	if now >= readyAt then return "ready" end
+	if startedAt and now < startedAt + GardenConfig.ScanSeconds then return "scanning" end
+	return "growing"
 end
 
 -- Number of eggs incubating in `garden` (they count towards the inventory cap when a new egg is started).
