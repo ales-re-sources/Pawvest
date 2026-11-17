@@ -498,13 +498,13 @@ collecting and caring over obby runs.
   - **Incubator body (2026-11-16).** The selected open hatch pod has stepped cream / steel stud-brick cheeks, a rear heater,
     a side control module and a front thermostat on the foundation's lip. A small two-sided number plate rises from the rear
     heater at full / mid detail. The egg remains open to the front and above; footprint 6 × 6, plate top 6.275 studs above
-    the plot origin. Full / mid / low detail uses 28 / 8 / 3 body Parts (excluding the egg).
-    Empty, free and locked pods are unlit. The first **30 seconds** within the existing hatch duration scan with a cyan band
-    sweeping vertically around the egg, a bright light travelling around its perimeter with two fading trail points, and
-    **Scanning…** above it (also in the menu); no countdown is shown in this phase.
+    the plot origin. Full / mid / low detail uses 25 / 8 / 3 body Parts (excluding the egg).
+    Empty, free and locked pods are unlit. The first **30 seconds** within the existing hatch duration scan with a rear
+    scanner: a bright emitter bar on the heater case projects a see-through cyan sheet down to a bright line that sweeps the
+    nest from back to front and back (eased, 3 s), and **Scanning…** above it (also in the menu); no countdown is shown in this phase.
     Then an amber nest outline / soft local light pulse together with the hatch countdown; ready eggs keep green indicators
-    with the heater / glow off. Full detail animates four thin band Parts, a corner-clipped travelling highlight / two trail
-    points and a shadowless light; mid has a static phase strip,
+    with the heater / glow off. Full detail animates the scanner sheet / line (four thin amber band Parts pulse while growing)
+    and a shadowless light; mid has a static phase strip,
     low stays simple. StartedAt / ReadyAt keep phases aligned across reconnects; instant-ready eggs skip scanning. The timer
     changes phases without rebuilding the body. Locked trim is muted; the original base / pad collision stays, other hardware does not collide.
     Empty / locked labels show only status above the plate; the number stays on the model. The plot strip's foundation edges

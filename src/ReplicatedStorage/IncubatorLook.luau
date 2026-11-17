@@ -1,6 +1,6 @@
 -- Open hatch pod: the selected stud-brick body, built directly into a plot piece so Base remains discoverable.
--- Build(...) -> setState(state), animate(serverNow, startedAt?). Full / mid / low: 28 / 8 / 3 body Parts.
--- States: free / locked / empty (unlit), scanning (cyan sweep), growing (warm amber pulse), ready (green).
+-- Build(...) -> setState(state), animate(serverNow, startedAt?). Full / mid / low: 25 / 8 / 3 body Parts.
+-- States: free / locked / empty (unlit), scanning (cyan rear scanner), growing (warm amber pulse), ready (green).
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
@@ -15,6 +15,9 @@ local LOCKED = Color3.fromRGB(80, 80, 80)
 local WARM = Color3.fromRGB(255, 183, 63)
 local READY = Color3.fromRGB(108, 209, 110)
 local SCAN = Color3.fromRGB(81, 216, 240)
+local SCAN_LIGHT = Color3.fromRGB(165, 250, 255)
+local SCAN_TOP = Vector3.new(0, 4.2, 1.86) -- the emitter's front face
+local SCAN_BACK, SCAN_FRONT, SCAN_PERIOD = 1.5, -1.8, 3 -- scan line z range on the nest; seconds per back-front-back
 
 function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string, state: string, number: number)
 	local muted = state == "locked" or state == "free"
@@ -92,15 +95,7 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 		status = add("Status", Vector3.new(0.18, 0.18, 0.04), Vector3.new(0.3, 1.855, -2.81), DARK, "")
 	end
 	local bands = {}
-	local tracer = {}
-	local trail = {}
-	local perimeter = 12.6
-	local edges = {
-		{ at = Vector3.new(-1.67, 0, -1.48), direction = Vector3.xAxis, length = 3.34 },
-		{ at = Vector3.new(1.67, 0, -1.48), direction = Vector3.zAxis, length = 2.96 },
-		{ at = Vector3.new(1.67, 0, 1.48), direction = -Vector3.xAxis, length = 3.34 },
-		{ at = Vector3.new(-1.67, 0, 1.48), direction = -Vector3.zAxis, length = 2.96 },
-	}
+	local emitter, sheet, scanLine
 	if detail == "full" then
 		for _, segment in {
 			{ "Front", Vector3.new(3.4, 0.06, 0.06), Vector3.new(0, 1.95, -1.48) },
@@ -111,27 +106,22 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 			local p = add("PhaseBand" .. segment[1], segment[2], segment[3], SCAN, "")
 			p.Material = Enum.Material.Neon
 			p.Transparency = 1
-			table.insert(bands, { part = p, at = segment[3] })
+			table.insert(bands, p)
 		end
-		-- Split a moving highlight at corners so it never protrudes beyond the square.
-		for n = 1, 4 do
-			local p = add("ScanTrace" .. n, Vector3.new(0.85, 0.12, 0.12), Vector3.new(0, 1.95, 0), Color3.fromRGB(165, 250, 255), "")
-			p.Material = Enum.Material.Neon
-			p.Transparency = 1
-			table.insert(tracer, p)
-		end
-		for n, size in { 0.14, 0.1 } do
-			local p = add("ScanTrail" .. n, Vector3.one * size, Vector3.new(0, 1.95, 0), Color3.fromRGB(165, 250, 255), "")
-			p.Shape = Enum.PartType.Ball
-			p.Material = Enum.Material.Neon
-			p.Transparency = 1
-			table.insert(trail, p)
-		end
+		-- Rear scanner: the bar is embedded in the heater case's front face; a see-through sheet runs from it to a bright line
+		-- that sweeps the nest (just above its top face) back to front and back again.
+		emitter = add("ScanEmitter", Vector3.new(3, 0.14, 0.1), Vector3.new(0, 4.2, 1.91), DARK, "")
+		sheet = add("ScanSheet", Vector3.new(3, 0.04, 1), Vector3.new(0, 3, 0), SCAN, "")
+		sheet.Material = Enum.Material.Neon
+		sheet.Transparency = 1
+		scanLine = add("ScanLine", Vector3.new(3.3, 0.08, 0.14), Vector3.new(0, 1.9, SCAN_BACK), SCAN_LIGHT, "")
+		scanLine.Material = Enum.Material.Neon
+		scanLine.Transparency = 1
 	elseif detail == "mid" then
 		local p = add("PhaseStrip", Vector3.new(3.4, 0.08, 0.1), Vector3.new(0, 1.95, -1.48), SCAN, "")
 		p.Material = Enum.Material.Neon
 		p.Transparency = 1
-		table.insert(bands, { part = p, at = Vector3.new(0, 1.95, -1.48) })
+		table.insert(bands, p)
 	end
 	local glow = nil
 	if detail == "full" then
@@ -141,6 +131,15 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 		glow.Shadows = false
 		glow.Enabled = false
 		glow.Parent = parent:FindFirstChild("Nest")
+	end
+	local function sweep(z: number)
+		if not sheet then return end
+		local top = floorCFrame * SCAN_TOP
+		local bottom = floorCFrame * Vector3.new(0, 1.9, z)
+		local back = (top - bottom).Unit -- the sheet's local Z runs from its scan line up to the emitter
+		sheet.Size = Vector3.new(3, 0.04, (top - bottom).Magnitude)
+		sheet.CFrame = CFrame.fromMatrix((top + bottom) / 2, floorCFrame.RightVector, back:Cross(floorCFrame.RightVector), back)
+		scanLine.CFrame = floorCFrame * CFrame.new(0, 1.9, z)
 	end
 	local current = nil
 	local function lamp(p: BasePart?, color: Color3, on: boolean)
@@ -155,16 +154,20 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 		local growing, ready, scanning = nextState == "growing", nextState == "ready", nextState == "scanning"
 		local color = if ready then READY elseif scanning then SCAN else WARM
 		lamp(heater, WARM, growing)
+		lamp(emitter, SCAN_LIGHT, scanning)
 		lamp(temperature, color, growing or ready or scanning)
 		lamp(podStatus, color, growing or ready or scanning)
 		lamp(status, color, growing or ready or scanning)
 		for _, band in bands do
-			band.part.Color = color
-			band.part.Transparency = if scanning then 0.25 elseif growing then 0.55 else 1
-			band.part.CFrame = floorCFrame * CFrame.new(band.at)
+			band.Color = color
+			-- Full detail scans with the rear scanner; mid keeps its static strip.
+			band.Transparency = if scanning and not sheet then 0.25 elseif growing then 0.55 else 1
 		end
-		for _, p in tracer do p.Transparency = 1 end
-		for _, p in trail do p.Transparency = 1 end
+		if sheet then
+			sheet.Transparency = if scanning then 0.72 else 1
+			scanLine.Transparency = if scanning then 0 else 1
+			sweep(SCAN_BACK)
+		end
 		if glow then
 			glow.Enabled = growing or scanning
 			glow.Color = color
@@ -175,43 +178,11 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 		if detail ~= "full" then return end
 		local age = now - (startedAt or 0)
 		if current == "scanning" then
-			local wave = 1 - math.abs((age % 4) / 2 - 1)
-			local height = 2 + 3.15 * wave
-			for _, band in bands do
-				band.part.CFrame = floorCFrame * CFrame.new(band.at.X, height, band.at.Z)
-			end
-			local head = (age % 3) / 3 * perimeter
-			local offset = 0
-			for n, edge in edges do
-				local lo, hi = math.max(offset, head - 0.85), math.min(offset + edge.length, head)
-				if hi <= lo then -- wrap the short tail across the last / first edge
-					lo, hi = math.max(offset, head + perimeter - 0.85), math.min(offset + edge.length, head + perimeter)
-				end
-				local p = tracer[n]
-				if hi > lo + 0.001 then
-					local at = edge.at + edge.direction * ((lo + hi) / 2 - offset) + Vector3.yAxis * height
-					p.Size = if edge.direction.X ~= 0 then Vector3.new(hi - lo, 0.12, 0.12) else Vector3.new(0.12, 0.12, hi - lo)
-					p.CFrame = floorCFrame * CFrame.new(at)
-					p.Transparency = 0.04
-				else
-					p.Transparency = 1
-				end
-				offset += edge.length
-			end
-			for n, p in trail do
-				local position = (head - 0.8 - 0.25 * n) % perimeter
-				for _, edge in edges do
-					if position <= edge.length then
-						p.CFrame = floorCFrame * CFrame.new(edge.at + edge.direction * position + Vector3.yAxis * height)
-						break
-					end
-					position -= edge.length
-				end
-				p.Transparency = if n == 1 then 0.3 else 0.6
-			end
+			-- Eased ping-pong: start at the back, reach the front after half a period.
+			sweep(SCAN_BACK + (SCAN_FRONT - SCAN_BACK) * (1 - math.cos(age * 2 * math.pi / SCAN_PERIOD)) / 2)
 		elseif current == "growing" then
 			local pulse = math.sin(age * math.pi / 2)
-			for _, band in bands do band.part.Transparency = 0.55 - 0.15 * pulse end
+			for _, band in bands do band.Transparency = 0.55 - 0.15 * pulse end
 			if glow then glow.Brightness = 0.6 + 0.15 * pulse end
 		end
 	end
