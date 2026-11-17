@@ -194,8 +194,6 @@ return {
 	["common.hours"] = { "[!! {count} höůř ~~ !!]", "[!! {count} höůřš ~~ !!]" },
 	["incubator.title"] = "[!! 🥚 Íňčůbáťöř {n} ~~~~~ !!]",
 	["hatchery.title"] = "[!! 🥚 Háťčhěřý ~~~~ !!]",
-	["hatchery.prompt.action"] = "[!! Öpěň háťčhěřý ~~~~~ !!]",
-	["hatchery.prompt.object"] = "[!! Háťčhěřý ~~~ !!]",
 	["hatchery.nest.empty"] = "[!! Ěmpťý: píčk áň ěgg bělöw ~~~~~~~~~~ !!]",
 	["hatchery.unlock"] = "[!! Ůňlöčk · 💰 {count} ~~~~ !!]",
 	["hatchery.eggs"] = "[!! Ěggš ťö bůý ~~~~ !!]",
@@ -515,4 +513,5 @@ return {
 	["incubator.cancelled"] = "[!! Ěgg ďíščářďěď. Ňö Čöíňš řěfůňďěď. ~~~~~~~~~~~~~ !!]",
 	["incubator.cancel.tapAgain"] = "[!! ÖK? ~~ !!]",
 	["hatchery.odds.chance"] = "[!! {chance}% ~~ !!]",
+	["hatchery.button"] = "[!! 🥚 Háťčhěřý ~~~~ !!]",
 }

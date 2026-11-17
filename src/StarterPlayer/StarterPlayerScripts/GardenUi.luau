@@ -5,6 +5,7 @@
 --     X button, a scrolling Content list unless opts.content is false) that Fit() scales down to the screen (UIScale, Scale();
 --     never below 0.5); TapHeight() = a brick
 --     height that stays at least 44 px on screen;
+--   * FarmButton(button, order): center the visible farm HUD buttons together, preserving their ScreenGui parents;
 --   * texts: Countdown ("1:00:00"), GrowTime ("3 hours"), CropTitle (icon + name), GrowSecondsOn (with the Growth upgrade),
 --     KgText, BarnOf (seeds the barn holds), CrowLine (the crow forecast's text and colour, E4b);
 --   * BindStand(gui, standName, open, opts?): a garden stand's prompt and the gui's Open attribute (a test hook) call
@@ -44,6 +45,39 @@ GardenUi.Section = UiKit.Section
 GardenUi.Latest = UiKit.Latest
 GardenUi.Pulse = UiKit.Pulse
 local create = UiKit.Create
+
+-- Farm HUD buttons keep their own ScreenGui / Open paths, but share one centered row.
+local farmButtons = {} -- [GuiButton] = order
+local function layoutFarmButtons()
+	local shown, width = {}, 0
+	for button, order in farmButtons do
+		if button.Parent and button.Visible then
+			table.insert(shown, { button = button, order = order })
+			width += button.Size.X.Offset
+		end
+	end
+	table.sort(shown, function(a, b) return a.order < b.order end)
+	local gap = 12
+	width += math.max(0, #shown - 1) * gap
+	local x = -width / 2
+	for _, entry in shown do
+		local button = entry.button
+		button.AnchorPoint = Vector2.new(0.5, 1)
+		button.Position = UDim2.new(0.5, x + button.Size.X.Offset / 2, 1, -20)
+		x += button.Size.X.Offset + gap
+	end
+end
+
+function GardenUi.FarmButton(button: GuiButton, order: number)
+	farmButtons[button] = order
+	button:GetPropertyChangedSignal("Visible"):Connect(layoutFarmButtons)
+	button:GetPropertyChangedSignal("Size"):Connect(layoutFarmButtons)
+	button.Destroying:Connect(function()
+		farmButtons[button] = nil
+		layoutFarmButtons()
+	end)
+	layoutFarmButtons()
+end
 
 function GardenUi.Heading(parent: Instance, order: number, text: string, color: Color3)
 	local title = GardenUi.Label("Heading", {

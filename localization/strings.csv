@@ -235,8 +235,6 @@ common.hours[other],Form for 0 and 5+,{count} hours,{count} hodin,new,h8c6097ee
 # Incubator panel,,,,,
 incubator.title,Incubator panel title; {n} = incubator number 1-3,🥚 Incubator {n},🥚 Inkubátor {n},ok,hd5e8d5be
 hatchery.title,"Title strip of the hatchery panel (the 3 incubators of the own garden plot under one roof; eggs to buy, hatching)",🥚 Hatchery,🥚 Líheň,new,hbedeaa6f
-hatchery.prompt.action,"Action text of the prompt at the hatchery on the own garden plot (opens the hatchery panel); imperative, short",Open hatchery,Otevřít líheň,new,h1822c500
-hatchery.prompt.object,"Object text of that prompt: the hatchery (nominative, no emoji)",Hatchery,Líheň,new,he4cf0f4f
 hatchery.nest.empty,"Hatchery panel, incubator row: info line of an owned incubator without an egg (the egg cards are below it)",Empty: pick an egg below,Prázdný: vyber vejce níž,new,h7b7f8db2
 hatchery.unlock,"Hatchery panel, button on the row of the next incubator to buy (132 px brick, may wrap); {count} = price in Coins",Unlock · 💰 {count},Odemknout · 💰 {count},new,h6f96b259
 hatchery.eggs,"Hatchery group-box legend: egg catalogue and Buy actions, separate from nests already working",Eggs to buy,Vejce ke koupi,new,hc14c3641
@@ -600,3 +598,4 @@ hatchery.odds.rules,"Egg info tip after the odds table; only offline hatching an
 incubator.cancelled,Success after egg discarded; no Coins or free egg credit returned.,Egg discarded. No Coins refunded.,Vejce je pryč. Mince se nevracejí.,new,ha7b975e9
 incubator.cancel.tapAgain,Orange armed trash button; second tap within shared ConfirmTap window discards egg. Short text must fit a square.,OK?,OK?,new,h6d41df1b
 hatchery.odds.chance,"Right-aligned percentage in each egg odds row; {chance} = localized decimal number, e.g. 12.7 / 12,7.",{chance}%,{chance} %,new,h56825d3d
+hatchery.button,"Farm HUD button beside Barn, visible near the own plot; opens the hatchery. Ready-egg count is a separate badge.",🥚 Hatchery,🥚 Líheň,new,hbedeaa6f

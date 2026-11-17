@@ -194,8 +194,6 @@ return {
 	["common.hours"] = { "{count} hodina", "{count} hodiny", "{count} hodin" },
 	["incubator.title"] = "🥚 Inkubátor {n}",
 	["hatchery.title"] = "🥚 Líheň",
-	["hatchery.prompt.action"] = "Otevřít líheň",
-	["hatchery.prompt.object"] = "Líheň",
 	["hatchery.nest.empty"] = "Prázdný: vyber vejce níž",
 	["hatchery.unlock"] = "Odemknout · 💰 {count}",
 	["hatchery.eggs"] = "Vejce ke koupi",
@@ -515,4 +513,5 @@ return {
 	["incubator.cancelled"] = "Vejce je pryč. Mince se nevracejí.",
 	["incubator.cancel.tapAgain"] = "OK?",
 	["hatchery.odds.chance"] = "{chance} %",
+	["hatchery.button"] = "🥚 Líheň",
 }

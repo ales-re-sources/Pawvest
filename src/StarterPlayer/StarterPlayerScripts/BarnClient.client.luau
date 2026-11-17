@@ -96,6 +96,7 @@ local openButton = GardenUi.Button("Open", {
 	Visible = false,
 }, { compact = true })
 openButton.Parent = ui.gui
+GardenUi.FarmButton(openButton, 1)
 
 local renderChooser, closePanel -- defined below (rows and the chooser call them)
 local isOpen = false

@@ -1,5 +1,5 @@
--- Hatchery panel (U5b, docs/UI_GARDEN_PETS.md §7; was the per-incubator panel of P2b1 / P2b3): the own plot's hatchery has one
--- "Open hatchery" prompt (PlotView, GardenView.OnHatchery) that opens this panel (ScreenGui HatcheryGui, GardenUi.Panel):
+-- Hatchery panel: the farm HUD button beside Barn (ready-egg badge) or a click/tap on any own pod opens this panel.
+-- World entry: PlotView → GardenView.OnHatchery; no hatchery E prompt. ScreenGui HatcheryGui, GardenUi.Panel:
 --   * one row per incubator: egg + countdown, small trash brick → orange OK? → discard (ConfirmTap), Hatch when ready;
 --     empty; the next one to buy
 --     (Unlock brick with the price, two taps over ConfirmTap.THRESHOLD); later ones "unlock incubator n first";
@@ -17,6 +17,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
@@ -30,6 +31,7 @@ local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
 local PetRow = require(script.Parent:WaitForChild("PetRow"))
 local GardenView = require(script.Parent:WaitForChild("GardenView"))
 local GardenUi = require(script.Parent:WaitForChild("GardenUi"))
+local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
 -- looked up by name (never `remotes.X`: a name like Remove would resolve to an Instance method)
@@ -130,6 +132,17 @@ end
 -- Panel ----------------------------------------------------------------------------------------------------------------------
 
 local ui = GardenUi.Panel("HatcheryGui", COLOR_PANEL, WIDTH, HEIGHT, { passiveCursor = true })
+local openButton = GardenUi.Button("Open", {
+	Size = UDim2.fromOffset(132, StudStyle.Sizes.HudButton), BackgroundColor3 = COLOR_PANEL,
+	TextSize = 18, Visible = false, Parent = ui.gui,
+}, { compact = true })
+GardenUi.FarmButton(openButton, 2)
+local readyBadge = GardenUi.Label("ReadyBadge", {
+	AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -2, 0, 0), Size = UDim2.fromOffset(22, 22),
+	BackgroundTransparency = 0, BackgroundColor3 = StudStyle.Colors.Red, TextSize = 15,
+	TextXAlignment = Enum.TextXAlignment.Center, Text = "", Visible = false, ZIndex = 5, Parent = openButton,
+})
+GardenUi.Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = readyBadge })
 local statusSection = GardenUi.Section("Status", 1)
 local nestsSection, nestsLegend = GardenUi.GroupBox(ui.content, "Nests", 2, COLOR_PANEL)
 local eggsSection, eggsLegend = GardenUi.GroupBox(ui.content, "Eggs", 3, COLOR_PANEL)
@@ -444,6 +457,7 @@ local function renderEggs(state, tap: number)
 end
 
 render = function()
+	openButton.Text = Locale.T("hatchery.button")
 	ui.title.Text = Locale.T("hatchery.title")
 	nestsLegend.Text = Locale.T("hatchery.group.nests")
 	eggsLegend.Text = Locale.T("hatchery.eggs")
@@ -567,6 +581,8 @@ local function openPanel()
 	render()
 end
 
+openButton.Activated:Connect(openPanel)
+
 ui.close.Activated:Connect(closePanel)
 revealOk.Activated:Connect(function()
 	showContent()
@@ -606,7 +622,8 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 end)
 
 GardenView.OnHatchery(function()
-	if not isOpen then
+	local distance = GardenView.FlatDistanceToPlot()
+	if not isOpen and distance and distance <= 45 then
 		openPanel()
 	end
 end)
@@ -618,15 +635,48 @@ ui.gui:GetAttributeChangedSignal("Open"):Connect(function()
 	end
 end)
 
--- Every 0.5 s while open: the countdowns; a row that reached its time redraws (Hatch appears)
+-- Own-pod hover each frame; HUD / ready badge and open-panel countdowns every 0.25 s.
+local hoverParams = RaycastParams.new()
+hoverParams.FilterType = Enum.RaycastFilterType.Include
+local function updatePodHover()
+	local root = GardenView.OwnRoot()
+	if not root then return end
+	local hit = nil
+	local camera = workspace.CurrentCamera
+	local distance = GardenView.FlatDistanceToPlot()
+	local point = UserInputService:GetMouseLocation()
+	if camera and distance and distance <= 45 and PanelFocus.Current() == nil and UserInputService.MouseEnabled
+		and UserInputService:GetLastInputType() ~= Enum.UserInputType.Touch and not UiKit.BlocksWorld(Players.LocalPlayer.PlayerGui, UiKit.PointerPosition()) then
+		hoverParams.FilterDescendantsInstances = { root }
+		local ray = camera:ViewportPointToRay(point.X, point.Y)
+		hit = workspace:Raycast(ray.Origin, ray.Direction * 300, hoverParams)
+	end
+	for n = 1, GardenConfig.MaxIncubators do
+		local piece = GardenView.OwnPiece("inc" .. n)
+		local hover = piece and piece:FindFirstChild("Hover")
+		if hover then hover.Enabled = hit ~= nil and hit.Instance:IsDescendantOf(piece) end
+	end
+end
 local elapsed = 0
 RunService.Heartbeat:Connect(function(dt)
+	updatePodHover()
 	elapsed += dt
-	if elapsed < 0.5 or not isOpen then
+	if elapsed < 0.25 then
 		return
 	end
 	elapsed = 0
 	local now = workspace:GetServerTimeNow()
+	local distance = GardenView.FlatDistanceToPlot()
+	openButton.Visible = not isOpen and PanelFocus.Current() == nil and distance ~= nil and distance <= 45
+	local ready = 0
+	if incubators then
+		for _, egg in incubators.eggs do
+			if egg.readyAt <= now then ready += 1 end
+		end
+	end
+	readyBadge.Text = Locale.Number(ready)
+	readyBadge.Visible = ready > 0
+	if not isOpen then return end
 	for _, entry in countdowns do
 		local remaining = entry.readyAt - now
 		if remaining <= 0 then

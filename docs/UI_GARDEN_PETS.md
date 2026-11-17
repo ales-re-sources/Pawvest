@@ -78,7 +78,7 @@ HUD button stays). The seed sacks and crop crates that showed the own stock were
 only the owner saw them. A barn display worth building would be public (a shelf of record crops in their grown art, for visitors).
 
 ## 7. Plot layout
-**Built in U5a / U5b (2026-11-07)** as described here (GDD §7.6, §7.9): the layout in U5a, the hatchery panel (one prompt, egg cards,
+**Built in U5a / U5b (2026-11-07)** as described here (GDD §7.6, §7.9): the layout in U5a, the hatchery panel (farm HUD / pod click access since 2026-11-17, egg cards,
 the reveal with trait chips one by one) in U5b.
 Before U5a the front strip held the sign and three incubators across. Decided: **hatchery** (3 nests under one small roof) on the left of the
 strip, **barn** on the right, the sign raised over a **path** in the middle into the field. The field becomes the first thing seen from the
@@ -92,6 +92,9 @@ plaza.
   the info tip mentions only offline hatching and no refund. P4's reveal lists the rolled
   traits as text; U5 shows them as chips one by one (a cute pet is a lucky roll: worth its own moment).
 - Studio check: plots stand 9 studs apart; the barn and hatchery stay inside the plot's 40-stud width.
+- **Access (2026-11-17):** Hatchery HUD beside Barn near the own plot (45 studs), with a ready-egg count; click/tap any own
+  pod from either side to open the same menu. The hatchery E prompt is removed. Full-pod hover and generous targets aid selection;
+  UI blocks world input. Barn retains its original availability, with the visible farm buttons centered together.
 
 ## 8. Getting there
 **Built in U2 (2026-11-06)**: the farm shortcut with its badge (ripe crops + ready eggs) and the summary bubble; since 2026-11-13
@@ -128,7 +131,7 @@ The seed stall stands beside it as its own stall (**built in U4**, GDD §7.9); t
 | U3b | Hand bar (Seeds / Basket / Pets / Look), pet reach borders, next-step hint on the bar, pet page "Place on field" (§4, §5, §10): **built 2026-11-07** | U3a |
 | U4 | Panel split: Skills → Garden tab, Barn panel, Seed stall; Garden panel removed (§6, §10): **built 2026-11-07** | U3b |
 | U5a | Plot layout: hatchery left, barn right (fill, prompt), path (§6, §7): **built 2026-11-07** | U4 (barn) |
-| U5b | Hatchery panel: one prompt, nest rows, K1 egg cards, reveal with trait chips (§7): **built 2026-11-07** | U5a |
+| U5b | Hatchery panel: HUD / pod clicks, nest rows, K1 egg cards, reveal with trait chips (§7): **built 2026-11-07** | U5a |
 
 Order proposed: U1 before M6a; U2–U5 before E5's onboarding (it teaches the new controls).
 

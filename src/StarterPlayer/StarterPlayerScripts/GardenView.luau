@@ -7,7 +7,7 @@
 --     ROADMAP E1a1 check 5).
 -- Detail by horizontal distance from the character to the plot centre: full ≤ 60 studs, mid ≤ 120 (pets as blocks), low ≤ 300,
 -- nothing beyond (10 studs of hysteresis). Builds run on Heartbeat within BUDGET seconds per frame, the own plot first, then the
--- nearest. The own plot's hatchery carries a prompt that calls the handler registered with OnHatchery (U5b), its barn one OnBarn (U5a;
+-- nearest. The own plot's pods click/tap to call OnHatchery; its barn prompt calls OnBarn (U5a;
 -- the barn shows no stock since 2026-11-12: the barn panel lists it); the field has none since
 -- U3a: SquareAt / SquareCFrame / ShowSelect / OwnRoot serve FieldHand's tap and FieldRings; U3b: ShowBorders, ShowHover). OwnState / OwnField return the own
 -- plot and the owner's field state as last received (GardenSummary, U2).
@@ -50,7 +50,7 @@ local GardenView = {}
 
 GardenView.Folder = folder
 
--- fn() when the own hatchery's prompt is triggered (U5b; the three nests share it).
+-- fn() when any own incubator is clicked/tapped (the three nests share one panel).
 function GardenView.OnHatchery(fn: () -> ())
 	handlers.hatchery = fn
 end

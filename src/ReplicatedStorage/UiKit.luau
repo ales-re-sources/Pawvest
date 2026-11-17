@@ -4,6 +4,7 @@
 --   * Label (a transparent left-aligned TextLabel in StudStyle.Font), Button (a StudStyle brick: colour and text keep being
 --     set on the button itself), Paragraph (a label that wraps and grows downwards), Section (a list frame that grows),
 --     Clear (removes a list's content, keeping UIComponent layout / chrome);
+--   * PointerPosition(): current pointer in GUI-inset coordinates, for native world click events with no position argument;
 --   * BlocksWorld(playerGui, point): hit-test Active / InputSink UI and controls (including passive children) before world tap / hover;
 --   * Bar(name, opts): a rounded progress bar (track, fill and an optional centred text) → (track, fill, text?);
 --     SetShare(fill, share) moves its fill;
@@ -14,10 +15,30 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
 
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 
 local UiKit = {}
+
+-- Native world click events do not carry a position; retain the current touch for the shared GUI guard.
+local touchPoint: Vector2? = nil
+local function rememberTouch(input: InputObject)
+	if input.UserInputType == Enum.UserInputType.Touch then
+		touchPoint = Vector2.new(input.Position.X, input.Position.Y)
+	end
+end
+UserInputService.InputBegan:Connect(rememberTouch)
+UserInputService.InputChanged:Connect(rememberTouch)
+
+function UiKit.PointerPosition(): Vector2
+	if UserInputService:GetLastInputType() == Enum.UserInputType.Touch and touchPoint then
+		return touchPoint
+	end
+	local inset = GuiService:GetGuiInset()
+	return UserInputService:GetMouseLocation() - inset
+end
 
 function UiKit.Create(className: string, props, children)
 	local instance = Instance.new(className)

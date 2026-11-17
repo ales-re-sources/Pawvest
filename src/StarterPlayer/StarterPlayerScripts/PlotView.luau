@@ -1,10 +1,10 @@
 -- PlotView (E1a1, docs/EXPANSION.md §16): draws one garden plot on the client from a plain state table (GardenRemotes.Plot,
 -- GardenPlotFeed), at its slot's position (GardenConfig.PlotCFrame), in one of four details: "full" (floor, edges, sign,
--- incubators with egg and live countdown, incubator billboards, field pets with models and labels, the hatchery and barn prompts
+-- incubators with egg and live countdown, incubator billboards, field pets with models and labels, clickable own incubators and the barn prompt
 -- on the own plot), "mid" (the same without billboards and prompts, each pet one block in its rarity colour), "low" (floor, one block per egg,
 -- the field as its row plates) or "none". Registered crops use seeded growth art; other crops remain blocks.
 -- The front strip (U5a): the path in the middle (base), the hatchery on the plaza's left (hatch: posts and roof over the nests
--- inc1..3; on the own plot its one "Open hatchery" prompt, U5b, which calls options.onHatchery), the barn on its right (barn: a red stud
+-- inc1..3; own pods click/tap to call options.onHatchery), the barn on its right (barn: a red stud
 -- barn with a stepped gable and its decoration; on the own plot the "Open barn" prompt, which calls options.onBarn).
 -- A plot is split into pieces (base, hatch, barn, inc1..3, field = row plates, sq1..36, grow1..36). SetState / SetDetail / Relabel only
 -- mark the pieces whose look changed; Step builds marked pieces until a deadline, so a build is spread over frames by the caller.
@@ -33,6 +33,8 @@ local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
+local PanelFocus = require(ReplicatedStorage:WaitForChild("PanelFocus"))
+local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
 local PlantGrowth = require(ReplicatedStorage:WaitForChild("PlantGrowth"))
 
 local PetModels = ReplicatedStorage:WaitForChild("PetModels")
@@ -221,7 +223,7 @@ local function squareSpot(square: number): (number, number)
 	return ((col :: number) - 0.5 - CropConfig.GridColumns / 2) * FIELD_PITCH, FIELD_FRONT + ((row :: number) - 0.5) * FIELD_PITCH
 end
 
--- New view of plot slot `slot` under `parent`. options: { own = boolean, onHatchery = fn(), onBarn = fn() } (prompts on the own
+-- New view of plot slot `slot` under `parent`. options: { own = boolean, onHatchery = fn(), onBarn = fn() } (interactions on the own
 -- plot only).
 function PlotView.new(slot: number, parent: Instance, options)
 	local self = setmetatable({}, PlotView)
@@ -502,14 +504,6 @@ function PlotView:buildHatchery(model: Model)
 			add("Post", Vector3.new(1, height, 1), Vector3.new(x, 0.25 + height / 2, z), COLORS.post).CanCollide = true
 		end
 	end
-	-- One prompt on the open approach, in front of the post line.
-	if self.own and self.onHatchery and self.detail == "full" and not self.state.free then
-		local anchor = part({ Name = "PromptAnchor", Size = Vector3.new(1, 1, 1), CFrame = self:at(Vector3.new(cx, 2.5, z0 - 1.5)), Transparency = 1, CanCollide = false })
-		anchor.Parent = model
-		prompt(anchor, Locale.T("hatchery.prompt.action"), Locale.T("hatchery.prompt.object"), 10, function()
-			self.onHatchery()
-		end)
-	end
 end
 
 -- The barn (U5a; stud look since 2026-11-13, the user's pick "classic red barn"): red Inlets walls with a door opening towards the
@@ -740,6 +734,38 @@ function PlotView:buildIncubator(model: Model, n: number)
 	local status = if state.free then "free" elseif locked then "locked" elseif not eggId then "empty"
 		elseif (readyAt or math.huge) <= (self.tickNow or workspace:GetServerTimeNow()) then "ready" else "growing"
 	local setState = IncubatorLook.Build(model, podCFrame, self.detail, status)
+	if self.own and self.onHatchery and self.detail == "full" and not state.free then
+		local target = part({
+			Name = "ClickTarget", Size = Vector3.new(7, 6, 7), CFrame = podCFrame * CFrame.new(0, 3, 0),
+			Transparency = 1, CanCollide = false, CanQuery = true,
+		})
+		target.Parent = model
+		local hover = Instance.new("Highlight")
+		hover.Name = "Hover"
+		hover.Adornee = model
+		hover.FillTransparency = 1
+		hover.OutlineColor = Color3.new(1, 1, 1)
+		hover.OutlineTransparency = 0.15
+		hover.DepthMode = Enum.HighlightDepthMode.Occluded
+		hover.Enabled = false
+		hover.Parent = model
+		local click = Instance.new("ClickDetector")
+		click.Name = "OpenHatchery"
+		click.MaxActivationDistance = 60
+		click.CursorIcon = "rbxasset://textures/Cursors/DragDetector/HoverCursor.png"
+		local function canOpen()
+			local player = game:GetService("Players").LocalPlayer
+			local root = player and player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+			if not root or PanelFocus.Current() ~= nil or UiKit.BlocksWorld(player.PlayerGui, UiKit.PointerPosition()) then return false end
+			local offset = root.Position - self.floor.Position
+			return Vector3.new(offset.X, 0, offset.Z).Magnitude <= 45
+		end
+		click.MouseClick:Connect(function()
+			hover.Enabled = false
+			if canOpen() then self.onHatchery() end
+		end)
+		click.Parent = target
+	end
 	if state.free then return end
 	if self.detail == "low" then
 		if eggId then

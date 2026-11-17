@@ -194,8 +194,6 @@ return {
 	["common.hours"] = { "{count} hour", "{count} hours" },
 	["incubator.title"] = "🥚 Incubator {n}",
 	["hatchery.title"] = "🥚 Hatchery",
-	["hatchery.prompt.action"] = "Open hatchery",
-	["hatchery.prompt.object"] = "Hatchery",
 	["hatchery.nest.empty"] = "Empty: pick an egg below",
 	["hatchery.unlock"] = "Unlock · 💰 {count}",
 	["hatchery.eggs"] = "Eggs to buy",
@@ -515,4 +513,5 @@ return {
 	["incubator.cancelled"] = "Egg discarded. No Coins refunded.",
 	["incubator.cancel.tapAgain"] = "OK?",
 	["hatchery.odds.chance"] = "{chance}%",
+	["hatchery.button"] = "🥚 Hatchery",
 }
