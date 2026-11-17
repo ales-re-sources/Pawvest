@@ -8,7 +8,6 @@ Full / mid / low body Parts 59 / 13 / 8. Desktop Studio-validated: no part witho
 coplanar faces at full / mid / low and 0° / 90°; 1 402 ring / heart poses per yaw without touching the body (the ring head
 passes within 0.05 of the walls, as before); playtest boot clean with three own pods drawn. One steel arch piece shows a
 sheen from a distance at some view angles (normal up close). Physical touch and live checks remain open.
-[Capture](art/incubator-review/arch-body.jpg).
 
 2026-11-17 owned pods only: unpurchased incubators are absent at every detail level; unclaimed plots have none. Unlock rows
 remain in the hatchery menu; the purchased pod appears immediately. Desktop Studio-validated. Scope and validation:
@@ -18,18 +17,18 @@ remain in the hatchery menu; the purchased pod appears immediately. Desktop Stud
 detail, the heater flickers like embers and lights the egg (SpotLight), amber sparkles rise from the egg top and two pink
 5 × 4-stud hearts float up in turn. Full body Parts 44. Desktop Studio-validated (no heart intersections at three yaws,
 states, coplanar audit, boot, the real growing pod animates); the sparks' look is not visually checked (Edit captures show no
-particles). [Capture](art/incubator-review/warm-hearts.jpg). Scope and validation: `git show 08d3c94:docs/INCUBATOR_REDESIGN.md`.
+particles). Scope and validation: `git show 08d3c94:docs/INCUBATOR_REDESIGN.md`.
 
 2026-11-17 contour ring A (chosen after trying rear scanner B in game): at full detail an eight-sided cyan ring rises and
 falls on the egg (4 s, eased), sized from `EggLook.Reach` to clear every brick, with a corner-clipped head and two trail
 points (3 s lap); the scanner is removed and bands stay for the amber pulse. Full body Parts 34. Desktop Studio-validated
 (3 600 poses without intersections at three yaws, states, coplanar audit, boot); a live scanning egg was not placed.
-[Capture](art/incubator-review/contour-ring.jpg). Scope and validation: `git show 4ca8901:docs/INCUBATOR_REDESIGN.md`.
+Scope and validation: `git show 4ca8901:docs/INCUBATOR_REDESIGN.md`.
 
 2026-11-17 rear scanner B (chosen over contour ring A and rising ripples D; replaced by A above the same day): at full detail a heater emitter bar projects a
 see-through cyan sheet to a scan line sweeping the nest back / front (eased, 3 s), replacing the scan square, travelling light
 and trail; bands stay for the amber pulse. Full body Parts 25. Desktop Studio-validated (geometry at three yaws, states, coplanar
-audit, boot); a live scanning egg was not placed. [Capture](art/incubator-review/rear-scanner.jpg). Scope and validation:
+audit, boot); a live scanning egg was not placed. Scope and validation:
 `git show 73ae4d7:docs/INCUBATOR_REDESIGN.md`.
 
 2026-11-17 number plates: two-sided plates above the rear heaters at full / mid detail; floating labels show only status.
@@ -63,6 +62,6 @@ plot orientations and at all detail levels. Centres, footprints and label anchor
 
 Implemented and Studio-validated on desktop, 2026-11-16: Cross-lapped oval eggs + Tall pavilion + Quiet rows + Nearby labels + Open hatch pod bodies (selected by the user). As-built behavior is in [GDD §7.6](GDD.md#76-pet-garden-minigame-p2), script APIs in [LAYOUT](LAYOUT.md). Physical phone touch and live validation remain open.
 
-![Path-facing open hatch pod viewed from the central path](art/incubator-review/open-pod-path-facing.jpg)
+Review images are archived in git: `git show f8de56d:docs/art/incubator-review/<filename>.jpg`.
 
 Earlier design options / acceptance checks: `git show d24f132:docs/INCUBATOR_REDESIGN.md`. The three body concepts and their disposable Studio builder are archived at `git show 44431fe:docs/INCUBATOR_REDESIGN.md` and `git show 44431fe:tools/incubator_body_review.luau`.

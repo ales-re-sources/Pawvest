@@ -523,7 +523,7 @@ collecting and caring over obby runs.
     changes phases without rebuilding the body. The original base / pad collision stays, other hardware does not collide.
     Empty labels show only status above the plate; the number stays on the model. All pod labels draw on top of the
     world (AlwaysOnTop: plates and walls hid them from a high camera); they show only near the own pods. The plot strip's foundation edges
-    use Plastic / Inlets to match the hatchery pavilion. [Studio view and archived design options](INCUBATOR_REDESIGN.md).
+    use Plastic / Inlets to match the hatchery pavilion. [Archived redesign notes](INCUBATOR_REDESIGN.md).
     Since 2026-11-17 every pod's open front and controls face the central path towards the barn (plot-local −X);
     the egg uses the same 90° turn, with all three pod centres unchanged.
   - **Hatchery panel (U5b; access updated 2026-11-17).** Open from the **🥚 Hatchery** farm HUD button beside Barn
