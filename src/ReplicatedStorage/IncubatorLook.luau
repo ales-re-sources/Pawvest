@@ -1,5 +1,5 @@
 -- Open hatch pod: the selected stud-brick body, built directly into a plot piece so Base remains discoverable.
--- Build(...) -> setState(state), animate(serverNow, startedAt?). Full / mid / low: 21 / 7 / 3 body Parts.
+-- Build(...) -> setState(state), animate(serverNow, startedAt?). Full / mid / low: 27 / 7 / 3 body Parts.
 -- States: free / locked / empty (unlit), scanning (cyan sweep), growing (warm amber pulse), ready (green).
 local IncubatorLook = {}
 
@@ -65,6 +65,15 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 		status = add("Status", Vector3.new(0.18, 0.18, 0.04), Vector3.new(0.3, 1.855, -2.81), DARK, "")
 	end
 	local bands = {}
+	local tracer = {}
+	local trail = {}
+	local perimeter = 12.6
+	local edges = {
+		{ at = Vector3.new(-1.67, 0, -1.48), direction = Vector3.xAxis, length = 3.34 },
+		{ at = Vector3.new(1.67, 0, -1.48), direction = Vector3.zAxis, length = 2.96 },
+		{ at = Vector3.new(1.67, 0, 1.48), direction = -Vector3.xAxis, length = 3.34 },
+		{ at = Vector3.new(-1.67, 0, 1.48), direction = -Vector3.zAxis, length = 2.96 },
+	}
 	if detail == "full" then
 		for _, segment in {
 			{ "Front", Vector3.new(3.4, 0.06, 0.06), Vector3.new(0, 1.95, -1.48) },
@@ -76,6 +85,20 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 			p.Material = Enum.Material.Neon
 			p.Transparency = 1
 			table.insert(bands, { part = p, at = segment[3] })
+		end
+		-- Split a moving highlight at corners so it never protrudes beyond the square.
+		for n = 1, 4 do
+			local p = add("ScanTrace" .. n, Vector3.new(0.85, 0.12, 0.12), Vector3.new(0, 1.95, 0), Color3.fromRGB(165, 250, 255), "")
+			p.Material = Enum.Material.Neon
+			p.Transparency = 1
+			table.insert(tracer, p)
+		end
+		for n, size in { 0.14, 0.1 } do
+			local p = add("ScanTrail" .. n, Vector3.one * size, Vector3.new(0, 1.95, 0), Color3.fromRGB(165, 250, 255), "")
+			p.Shape = Enum.PartType.Ball
+			p.Material = Enum.Material.Neon
+			p.Transparency = 1
+			table.insert(trail, p)
 		end
 	elseif detail == "mid" then
 		local p = add("PhaseStrip", Vector3.new(3.4, 0.08, 0.1), Vector3.new(0, 1.95, -1.48), SCAN, "")
@@ -113,6 +136,8 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 			band.part.Transparency = if scanning then 0.25 elseif growing then 0.55 else 1
 			band.part.CFrame = floorCFrame * CFrame.new(band.at)
 		end
+		for _, p in tracer do p.Transparency = 1 end
+		for _, p in trail do p.Transparency = 1 end
 		if glow then
 			glow.Enabled = growing or scanning
 			glow.Color = color
@@ -124,8 +149,38 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 		local age = now - (startedAt or 0)
 		if current == "scanning" then
 			local wave = 1 - math.abs((age % 4) / 2 - 1)
+			local height = 2 + 3.15 * wave
 			for _, band in bands do
-				band.part.CFrame = floorCFrame * CFrame.new(band.at.X, 2 + 3.15 * wave, band.at.Z)
+				band.part.CFrame = floorCFrame * CFrame.new(band.at.X, height, band.at.Z)
+			end
+			local head = (age % 3) / 3 * perimeter
+			local offset = 0
+			for n, edge in edges do
+				local lo, hi = math.max(offset, head - 0.85), math.min(offset + edge.length, head)
+				if hi <= lo then -- wrap the short tail across the last / first edge
+					lo, hi = math.max(offset, head + perimeter - 0.85), math.min(offset + edge.length, head + perimeter)
+				end
+				local p = tracer[n]
+				if hi > lo + 0.001 then
+					local at = edge.at + edge.direction * ((lo + hi) / 2 - offset) + Vector3.yAxis * height
+					p.Size = if edge.direction.X ~= 0 then Vector3.new(hi - lo, 0.12, 0.12) else Vector3.new(0.12, 0.12, hi - lo)
+					p.CFrame = floorCFrame * CFrame.new(at)
+					p.Transparency = 0.04
+				else
+					p.Transparency = 1
+				end
+				offset += edge.length
+			end
+			for n, p in trail do
+				local position = (head - 0.8 - 0.25 * n) % perimeter
+				for _, edge in edges do
+					if position <= edge.length then
+						p.CFrame = floorCFrame * CFrame.new(edge.at + edge.direction * position + Vector3.yAxis * height)
+						break
+					end
+					position -= edge.length
+				end
+				p.Transparency = if n == 1 then 0.3 else 0.6
 			end
 		elseif current == "growing" then
 			local pulse = math.sin(age * math.pi / 2)

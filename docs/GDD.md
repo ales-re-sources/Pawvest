@@ -497,11 +497,13 @@ collecting and caring over obby runs.
     The 6 × 6 foundation and yellow pad also use Plastic with Studs / StudsSmall, including free and locked nests.
   - **Incubator body (2026-11-16).** The selected open hatch pod has stepped cream / steel stud-brick cheeks, a rear heater,
     a side control module and a front thermostat on the foundation's lip. The egg remains open to the front and above;
-    footprint 6 × 6, top 5.2 studs above the plot origin. Full / mid / low detail uses 21 / 7 / 3 body Parts (excluding the egg).
+    footprint 6 × 6, top 5.2 studs above the plot origin. Full / mid / low detail uses 27 / 7 / 3 body Parts (excluding the egg).
     Empty, free and locked pods are unlit. The first **30 seconds** within the existing hatch duration scan with a cyan band
-    sweeping vertically around the egg and **Scanning…** above it (also in the menu); no countdown is shown in this phase.
+    sweeping vertically around the egg, a bright light travelling around its perimeter with two fading trail points, and
+    **Scanning…** above it (also in the menu); no countdown is shown in this phase.
     Then an amber nest outline / soft local light pulse together with the hatch countdown; ready eggs keep green indicators
-    with the heater / glow off. Full detail animates four thin band Parts and a shadowless light; mid has a static phase strip,
+    with the heater / glow off. Full detail animates four thin band Parts, a corner-clipped travelling highlight / two trail
+    points and a shadowless light; mid has a static phase strip,
     low stays simple. StartedAt / ReadyAt keep phases aligned across reconnects; instant-ready eggs skip scanning. The timer
     changes phases without rebuilding the body. Locked trim is muted; the original base / pad collision stays, other hardware does not collide.
     Empty / locked labels sit above the heater. [Studio view and archived design options](INCUBATOR_REDESIGN.md).

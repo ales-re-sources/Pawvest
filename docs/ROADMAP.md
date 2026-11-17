@@ -297,8 +297,8 @@ Square trash uses ConfirmTap (orange OK? → second tap, discard without refund)
 live validation remain open.
 
 **Incubator scan and warmth** (2026-11-17; GDD §7.2, §7.6). Desktop Studio-validated: first 30 s of the existing timer
-scan with a cyan sweep and Scanning… label; then a soft pulsing amber nest glow / countdown; ready stays green. Offline /
-rejoin uses stored anchors; instant-ready eggs skip scanning. Full / mid / low body Parts 21 / 7 / 3; physical touch / live open.
+scan with a cyan sweep, travelling perimeter light / fading trail and Scanning… label; then a soft pulsing amber nest glow / countdown; ready stays green. Offline /
+rejoin uses stored anchors; instant-ready eggs skip scanning. Full / mid / low body Parts 27 / 7 / 3; physical touch / live open.
 
 **Hatchery access** (2026-11-17; GDD §7.6). Desktop Studio-validated: Hatchery HUD beside Barn with a ready-egg badge;
 click/tap any own pod from either side, including empty / locked pods, with whole-pod hover. Hatchery E prompt removed.
