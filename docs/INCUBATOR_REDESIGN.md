@@ -1,5 +1,9 @@
 # Incubator redesign
 
+2026-11-17 surface fix: control housing width 0.68 leaves its inner face 0.06 studs clear of the lower cheek; simplified side
+bottoms embed in the base instead of sharing the nest's bottom plane. Coplanar audit clean for full / mid / low at 0° / 90° / 180°;
+Studio boot checked. The visible top edges, footprint and part counts are unchanged.
+
 2026-11-17 phases: 30 s cyan scanning sweep + Scanning… (inside the existing hatch timer), then a soft pulsing amber nest glow
 and countdown; ready stays green with warming off. Stored anchors survive rejoin; instant-ready eggs skip the scan.
 Desktop Studio-validated. Phase scope, visual review and validation: `git show f636dd0:docs/INCUBATOR_REDESIGN.md`.

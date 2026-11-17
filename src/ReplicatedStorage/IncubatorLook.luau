@@ -46,12 +46,14 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 					Vector3.new(x, 1.7 + tier * 0.55, 0.3 + tier * 0.18), if tier % 2 == 0 then trim else STEEL)
 			end
 		else
-			add(side .. "Side", Vector3.new(0.7, 2.6, 3), Vector3.new(x, 2.75, 0.75), trim)
+			-- Keep the same top edge, embedding the bottom in the base instead of sharing the nest's bottom face.
+			add(side .. "Side", Vector3.new(0.7, 2.7, 3), Vector3.new(x, 2.7, 0.75), trim)
 		end
 	end
 	if detail ~= "low" then
 		add("RearHeaterCase", Vector3.new(3.5, 1.5, 0.5), Vector3.new(0, 4.45, 2.2), trim)
-		add("ControlPod", Vector3.new(0.8, 1.9, 1.3), Vector3.new(2.25, 2.45, -1.45), trim)
+		-- Its inner face must stand clear of the cheek's inner face (x = 1.85), or the two stud textures flicker.
+		add("ControlPod", Vector3.new(0.68, 1.9, 1.3), Vector3.new(2.25, 2.45, -1.45), trim)
 	end
 	local heater, temperature, podStatus, status
 	if detail == "full" then
