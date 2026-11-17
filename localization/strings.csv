@@ -54,7 +54,7 @@ hud.score.record,"Second line on a stage; {time} = personal best, e.g. 1:23.4",Y
 hud.score.firstTry,Second line on a stage the player has never finished,First try!,První pokus!,ok,h37b1e26c
 # Goals: tracker line and Goals panel (EV3b2),,,,,
 goals.line,"Tracker line on the HUD (top right, one short line, shrinks to fit about 230 px) outside a stage: the next crop to unlock; {icon} = emoji of the crop being counted, {have} / {need} = plants grown or crops brought / needed, {crop} = emoji + name of the crop it unlocks (Czech: nominative)",{icon} {have} / {need} → {crop},{icon} {have} / {need} → {crop},new,hf95988e2
-goals.title,Title of the Goals panel (opened by tapping the tracker line),Goals,Cíle,new,h2b289e99
+goals.title,"Title of the quests panel (opened by tapping the tracker line; later also daily requests, unlocks, collection: a quest book)",Quests,Úkoly,new,he311e989
 goals.next.heading,"Goals panel, section heading: the next crop to unlock",Next crop,Další plodina,new,h63363d96
 goals.next.countHint,"Goals panel, row of the next crop, under its name: how it unlocks; {need} = plants needed, {crop} = the previous crop's name (Czech: nominative after ×)",Grow {need} × {crop} to unlock it,"Odemkneš, až vypěstuješ {need} × {crop}",new,h8b58c1e7
 goals.next.bar,"Goals panel, progress bar text under the next crop: {icon} = emoji of the crop being counted, {have} / {need} = plants grown / needed",{icon} {have} / {need},{icon} {have} / {need},new,hd92e621c
@@ -361,7 +361,7 @@ field.seed.info,"Seed row, second and third line (\n = line break); {time} = gro
 field.seed.rareInfo,"Seed row of a rare crop (E2: seeds only from obby medals), second and third line (
  = line break); {time} = grow time, {sale} = Coins one crop sells for, {stock} = seeds the player has","Grows in {time}
 Sells for {sale} · You have {stock}","Zraje {time}
-Prodej {sale} · Máš {stock}",new,hf8f7e61e
+Prodej {sale} · Máš {stock}",new,h7f8b071a
 field.seed.fromWorld,"Seed row of a rare crop, replaces the buy buttons (narrow, wraps): its seeds are earned with medals on the stages of {world} (world.name.*, Czech: nominative ""1. svět"")",⭐ Medals in {world},⭐ Za medaile: {world},new,h52450e9e
 field.barn,"Line under the seed list; {total} = seeds held, {capacity} = what the barn holds",Barn: {total} / {capacity} seeds,Stodola: {total} / {capacity} semínek,new,hdfd10ae1
 field.seed.note,Small note under the seed list,Prices are in Coins.,Ceny jsou v mincích.,new,hd2ae55c1
@@ -450,7 +450,7 @@ field.reason.items,Refused: the player has fewer crops than asked to sell,You do
 field.reason.maxed,Refused: all squares are bought,Your field is complete,Tvoje pole je kompletní,new,hda4eabde
 field.pet.label,"Label over a pet working on a field square, only for a pet with a given name (rich text, green second line). {name} = the pet's name (user text), {jobs} = its job icons and levels, ""🌱4 🛡2"" (field.job.*). Never the pet's level (U3a)","{name}
 <font color='#a8e6a0'>{jobs}</font>","{name}
-<font color='#a8e6a0'>{jobs}</font>",new,h385549f1
+<font color='#a8e6a0'>{jobs}</font>",new,hceea6416
 field.section.pets,"Heading of the field panel's pet section; {used} = pets on the field, {slots} = field pet slots owned",Field pets {used} / {slots},Mazlíčci na poli {used} / {slots},new,ha5e701a6
 field.slot.done,Field panel: every field pet slot is bought,All field pet slots bought.,Máš všechna místa pro mazlíčky na poli.,new,hadffe186
 field.petPicker.title,Pet picker for the selected soil; no square number,Choose a pet for this spot,Vyber mazlíčka pro tohle místo,new,h330fe518
