@@ -59,7 +59,7 @@ local function newProfile()
 		NextPetUid = 1, -- next uid to hand out, never reused (P1a)
 		FreeEggs = {}, -- [eggId] = free eggs waiting to be opened (P1a)
 		LaunchEgg = false, -- true once the pets-launch free egg was granted (P1a)
-		-- Pet garden (P2b1): Incubators["1".."3"] = { Egg, StartedAt, ReadyAt } (server os.time()), IncubatorCount = incubators
+		-- Pet garden (P2b1 / EV2e): Incubators["1".."3"] = { Id, Egg, Kind, StartedAt, ReadyAt } (server os.time()), IncubatorCount = incubators
 		-- owned; the field and field pets are added by GardenField on the first join (the P2 pens are gone since FA)
 		Garden = { Incubators = {}, IncubatorCount = 1 },
 		LastQuit = {}, -- { Stage, Segment, At = os.time() } of the last leave, cleared on the next join (Telemetry, T1a)

@@ -115,7 +115,7 @@ in steps of 5 (120, 2 900, 35 000, 750 M). The checks run on the rounded prices;
 | Talents | 22 300 in all, Coins only | 3.4 M in all + crop bundles: Run Speed L1: 800; Double Jump L2: 16 000 + 20 FP5 + 2 Frost grapes; Dash L2: 29 000 + 20 FP6 + 1 Glow mushroom; Wall Jump L1: 700 000 + 20 FP9 + 3 Glow mushrooms; Glide L1: 2.6 M + 25 FP9 + 4 Glow mushrooms |
 | Upgrades / tools | Growth 28 000 …, Barn 14 000 …, Sorter / Cloches / Shears 37 300–420 000 | Growth 3 000 → 22 M, Barn 1 200 → 15 M, Sorter 10 000 → 45 M, Cloches 4 000 → 6 M, Shears 18 000 → 160 M |
 | Slots | field pet 23 300 …, equip 2 000 / 5 000, incubators 5 000 / 12 000 | field pet 2 400 → 11 M, equip 700 / 4 000, incubators 500 / 2 800 |
-| Eggs | Basic 500 / 5 m, Golden 4 000 / 1 h, rolled at hatch | Basic 120, Golden 4 000 (weights U500 R370 E127 L3; FutureEgg1 L 4 ‰ since Sunshine also speeds incubators), rolled at purchase, hatch by rarity |
+| Eggs | Basic 120, Golden 4 000, rolled at purchase; rarity hatch timers (EV2e, 2026-11-17) | Basic 120, Golden 4 000 (weights U500 R370 E127 L3; FutureEgg1 L 4 ‰ since Sunshine also speeds incubators), rolled at purchase, hatch by rarity |
 | Obby repeat runs | 50 × factor × medal × 0.8^n Coins | 0 Coins; Sunshine 16 / 24 / 32 s × 0.8^n (Casual: ~31 min of skip per obby hour, ~24 min a day) |
 | Scouting | 15 min XP per medal finish (frozen: ~40 finishes for level 2) | XP = timer seconds; level 2 after 45 min of runs |
 
@@ -236,9 +236,15 @@ obby first clears outpay the farm they should feed (findings above).
 - **Model fix (both modes):** rare crops are kept for the next level of every talent (Quick Respawn 2 led the queue and the Frost grapes
   Double Jump 2 needs were sold); the Renown model still passes its 14 checks.
 
+EV2e (2026-11-17): the game now stores a pet kind at purchase / free placement, uses the approved rarity timers and
+allows two-tap cancellation (discard without refund). First free pet remains instant. Old eggs keep their deadlines.
+`economy.py` reads and pins the rarity timer table; its per-egg `hatch_s` is the weighted mean (Basic 1 057.2 s, Golden 3 590.4 s),
+used for report comparison, not a fixed gameplay timer. `economy_ev.py` checks the table against the proposal.
+
 ## Open decisions for the user
 1. The EV bands (table above) and the proposal itself: approved; EV2a (numbers) and EV2b (talent bundles) are built (2026-11-07); EV2e
-   (eggs at purchase), EV2c (Sunshine), EV2d (Scouting) are scoped when each starts. EV2b retired E0's check 3 (the no-grind required set,
+   (eggs at purchase + rarity timers + no-refund cancellation) is implemented (2026-11-17); EV2c (Sunshine), EV2d (Scouting)
+   are scoped when each starts. EV2b retired E0's check 3 (the no-grind required set,
    garden off): talents need the farm by design, G4 replaces it.
 2. Whether the placeholder eggs become real egg kinds (needed for Legendary scarcity past week 3).
 3. The real landmark / estate sinks (E6 / E7) that replace the reserved ladder.

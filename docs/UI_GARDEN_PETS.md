@@ -85,7 +85,9 @@ strip, **barn** on the right, the sign raised over a **path** in the middle into
 plaza.
 - Free-to-move incubators / barn: not now. Moving objects needs a placement system, saved positions and collision with the field; it belongs
   to the Estate drop (decor placement, D9, E7). The fixed layout keeps the slots that drop can use later.
-- The hatchery panel gets K1's proposed egg cards (picture, price, time; odds behind "?"; reveal on hatch). P4's reveal lists the rolled
+- The hatchery panel gets K1's proposed egg cards (picture, price, possible hatch-time range; odds and rarity timers behind "?";
+  reveal on hatch). Since EV2e (2026-11-17), the pet is fixed at purchase / free placement and its rarity sets the timer;
+  the nest shows it immediately. Growing eggs have a two-tap Cancel (discard without refund). P4's reveal lists the rolled
   traits as text; U5 shows them as chips one by one (a cute pet is a lucky roll: worth its own moment).
 - Studio check: plots stand 9 studs apart; the barn and hatchery stay inside the plot's 40-stud width.
 

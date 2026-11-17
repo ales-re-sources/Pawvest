@@ -70,8 +70,8 @@ function GardenConfig.FieldSquare(profile, uid: string): number?
 	return if type(entry) == "table" and type(entry.Square) == "number" then entry.Square else nil
 end
 
--- Incubators (P2b1, docs/GDD.md §7.6): garden eggs (PetConfig.Eggs with hatchSeconds) bought at an empty incubator hatch
--- in real server time, also offline. Stored as profile.Garden.Incubators["1".."3"] = { Egg, StartedAt, ReadyAt } (server
+-- Incubators (P2b1 / EV2e, docs/GDD.md §7.6): eggs bought at an empty incubator roll their kind at purchase;
+-- rarity sets real hatch time, also offline. Stored as Incubators["1".."3"] = { Id, Egg, Kind, StartedAt, ReadyAt } (server
 -- os.time()) and Garden.IncubatorCount (owned incubators, unlocked in order).
 GardenConfig.MaxIncubators = 3
 GardenConfig.IncubatorPrices = { 0, 500, 2800 } -- EV2a (was 5000 / 12000); IncubatorPrices[n] = price of the n-th incubator (incubator 1 is free)

@@ -1,9 +1,10 @@
 -- Hatchery panel (U5b, docs/UI_GARDEN_PETS.md §7; was the per-incubator panel of P2b1 / P2b3): the own plot's hatchery has one
 -- "Open hatchery" prompt (PlotView, GardenView.OnHatchery) that opens this panel (ScreenGui HatcheryGui, GardenUi.Panel):
---   * one row per incubator (the hatchery's nests): its egg with a live countdown and Hatch when ready; empty; the next one to buy
+--   * one row per incubator: its fixed pet + rarity, live countdown, two-tap Cancel (discard, no refund), Hatch when ready;
+--     empty; the next one to buy
 --     (Unlock brick with the price, two taps over ConfirmTap.THRESHOLD); later ones "unlock incubator n first";
 --   * egg cards (K1) while an owned incubator is empty: the egg drawn in its colour, name, hatch time, a buy brick with the price
---     (two taps over the threshold) that starts it in the first empty incubator, and a "?" brick that shows its odds;
+--     (two taps over the threshold) that starts it in the first empty incubator, and "?" for odds, rarity times and rules;
 --   * the reveal on a Hatch answer: the pet's portrait, its kind in the rarity colour, where it went, then its traits as chips one
 --     by one (P4: a cute pet is a lucky roll);
 --   * waiting free eggs (the server starts them on its own); answers and refusals in a status line at the top;
@@ -34,6 +35,7 @@ local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
 -- looked up by name (never `remotes.X`: a name like Remove would resolve to an Instance method)
 local startEggEvent = remotes:WaitForChild("StartEgg")
 local hatchEvent = remotes:WaitForChild("Hatch")
+local cancelEggEvent = remotes:WaitForChild("CancelEgg")
 local buyIncubatorEvent = remotes:WaitForChild("BuyIncubator")
 
 local WIDTH = 420
@@ -76,7 +78,11 @@ local function odds(eggId: string): string
 		if weight and weight > 0 then
 			table.insert(
 				parts,
-				string.format("<font color='%s'>%s %s %%</font>", hex(rarity.color), Locale.RarityName(rarity.id), Locale.Decimal(PetClient.Percent(weight)))
+				Locale.T("hatchery.odds.rarity", {
+					rarity = string.format("<font color='%s'>%s</font>", hex(rarity.color), Locale.RarityName(rarity.id)),
+					chance = Locale.Decimal(PetClient.Percent(weight)),
+					time = GardenUi.GrowTime(PetConfig.HatchSeconds[rarity.id]),
+				})
 			)
 		end
 	end
@@ -151,7 +157,7 @@ local revealOk = GardenUi.Button("Ok", {
 }, 3)
 
 local isOpen = false
-local incubators = nil -- last GardenRemotes.State.incubators: { count, eggs = { ["n"] = { egg, readyAt } } }
+local incubators = nil -- private State: { count, eggs = { ["n"] = { id, egg, kind, startedAt, readyAt } } }
 local status: { text: string, color: Color3 }? = nil -- the last answer, shown for STATUS_SECONDS
 local statusTimer = GardenUi.Latest()
 local oddsShown: string? = nil -- egg id whose odds are shown
@@ -239,10 +245,21 @@ local function renderNests(state, tap: number)
 		elseif entry then
 			local remaining = entry.readyAt - now
 			local egg = PetConfig.Eggs[entry.egg]
-			local title = string.format("%s · %s", Locale.T("incubator.title", { n = n }), eggName(entry.egg))
+			local rarity = PetConfig.RarityOf(entry.kind)
+			local title = string.format(
+				"%s · %s\n%s · %s",
+				Locale.T("incubator.title", { n = n }), eggName(entry.egg),
+				Locale.PetKindName(entry.kind), Locale.RarityName(PetConfig.Kinds[entry.kind])
+			)
 			if remaining > 0 then
-				local column = GardenUi.TextColumn(row, 0, title, Locale.T("incubator.hatchesIn", { time = GardenUi.Countdown(remaining) }))
+				local column = GardenUi.TextColumn(row, ACTION_WIDTH + GAP, title, Locale.T("incubator.hatchesIn", { time = GardenUi.Countdown(remaining) }))
 				table.insert(countdowns, { label = column:FindFirstChild("Info"), readyAt = entry.readyAt })
+				local cancel = action(Locale.T("incubator.cancel"), StudStyle.Colors.Red)
+				ConfirmTap.Wrap(cancel, "CancelEgg" .. entry.id, function()
+					return true
+				end, function()
+					cancelEggEvent:FireServer(n, entry.id)
+				end, Locale.T("incubator.cancel.confirm"))
 			else
 				local column = GardenUi.TextColumn(row, ACTION_WIDTH + GAP, title, Locale.T("incubator.ready"))
 				local info = column:FindFirstChild("Info") :: TextLabel?
@@ -253,6 +270,13 @@ local function renderNests(state, tap: number)
 				hatch.Activated:Connect(function()
 					hatchEvent:FireServer(n) -- the server checks the time itself
 				end)
+			end
+			if rarity then
+				local column = row:FindFirstChild("Text")
+				local label = column and column:FindFirstChild("Name")
+				if label then
+					label.TextColor3 = rarity.color
+				end
 			end
 			if egg and egg.look then
 				row.BackgroundColor3 = COLOR_ROW:Lerp(egg.look.color, 0.18)
@@ -292,6 +316,13 @@ local function renderEggs(state, tap: number)
 	local count = #PetConfig.EggOrder
 	for order, eggId in PetConfig.EggOrder do
 		local egg = PetConfig.Eggs[eggId]
+		local shortest, longest = math.huge, 0
+		for rarity, weight in egg.weights do
+			if weight > 0 then
+				shortest = math.min(shortest, PetConfig.HatchSeconds[rarity])
+				longest = math.max(longest, PetConfig.HatchSeconds[rarity])
+			end
+		end
 		local card = GardenUi.Create("Frame", {
 			Name = eggId,
 			LayoutOrder = order,
@@ -326,7 +357,7 @@ local function renderEggs(state, tap: number)
 			LayoutOrder = 3,
 			TextSize = 13,
 			TextXAlignment = Enum.TextXAlignment.Center,
-			Text = Locale.T("hatchery.egg.time", { time = GardenUi.GrowTime(egg.hatchSeconds) }),
+			Text = Locale.T("hatchery.egg.time", { time = GardenUi.GrowTime(shortest), max = GardenUi.GrowTime(longest) }),
 		}).Parent = card
 		local bricks = GardenUi.Create("Frame", {
 			Name = "Bricks",
@@ -374,6 +405,7 @@ local function renderEggs(state, tap: number)
 			RichText = true,
 			Text = Locale.T("hatchery.odds", { egg = eggName(oddsShown), odds = odds(oddsShown) }),
 		}).Parent = eggsSection
+		GardenUi.Paragraph("Rules", { LayoutOrder = 5, TextSize = 14, Text = Locale.T("hatchery.odds.rules") }).Parent = eggsSection
 	end
 end
 
@@ -523,7 +555,7 @@ end)
 Locale.Changed:Connect(render)
 
 remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail)
-	if action ~= "StartEgg" and action ~= "Hatch" and action ~= "BuyIncubator" then
+	if action ~= "StartEgg" and action ~= "Hatch" and action ~= "BuyIncubator" and action ~= "CancelEgg" then
 		return
 	end
 	if not ok then
@@ -532,6 +564,8 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 		setStatus(Locale.T("incubator.unlocked", { n = detail }), GardenUi.COLOR_OK)
 	elseif action == "StartEgg" then
 		setStatus(Locale.T("incubator.started"), GardenUi.COLOR_OK)
+	elseif action == "CancelEgg" then
+		setStatus(Locale.T("incubator.cancelled"), GardenUi.COLOR_OK)
 	elseif action == "Hatch" and type(detail) == "table" and isOpen then
 		showReveal(detail)
 	end

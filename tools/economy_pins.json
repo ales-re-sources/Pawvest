@@ -576,7 +576,7 @@
  "eggs": {
   "Basic": [
    120,
-   300,
+   1057.2,
    {
     "Common": 600,
     "Epic": 27,
@@ -587,7 +587,7 @@
   ],
   "Golden": [
    4000,
-   3600,
+   3590.4,
    {
     "Epic": 127,
     "Legendary": 3,
@@ -661,6 +661,13 @@
    1000
   ]
  ],
+ "hatch_by_rarity": {
+  "Common": 120,
+  "Epic": 14400,
+  "Legendary": 43200,
+  "Rare": 3600,
+  "Uncommon": 600
+ },
  "incubator_prices": [
   0,
   500,

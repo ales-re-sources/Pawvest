@@ -104,7 +104,7 @@ pet on day 7; perennials; free play scarce enough that comfort products are wort
 model, not decided. Long term (recorded only): gifts / buying for a friend, a pet auction, quests.
 
 Still to build, each scoped when it starts: **EV2c** Sunshine (repeat-run Coins → 0), **EV2d** Scouting XP (today 15 min of XP per medal
-finish against 10 h for level 2), **EV2e** eggs rolled at purchase, **EV2f** field pets (Tending as growth speed, guards make their squares
+finish against 10 h for level 2), **EV2f** field pets (Tending as growth speed, guards make their squares
 safe, crows scale with the field: a mechanics change the model assumes). Trees, requests and the streak come with E5 / the drops.
 
 ### EV3 — Crop levels replace Renown; milestone quests; crop upgrades; first-hour obby payouts (draft 2026-11-14; awaits sign-off)
@@ -180,7 +180,7 @@ and dialogs on a physical phone.
 
 ### Later milestones (scope when they start)
 - **M6b — Final balancing:** measured `T_base` per stage from telemetry, tuned numbers in GDD and the configs; GDD §6 table still all ✔. Known
-  items: the repeat-reward floor (a Tutorial loop pays ~1 400 Coins / h, until EV2c), pet bonus values, slot prices, the Basic egg's hatch
+  items: the repeat-reward floor (a Tutorial loop pays ~1 400 Coins / h, until EV2c), pet bonus values, slot prices, rarity-based hatch
   time, food prices against field income.
 - **S9 / S10 — Wall Jump + Glide, World 4** (STAGES §8), drop D8; re-check World 4's star bar (World 3's tighter Silver / Gold make 10 of 15
   stars harder).
@@ -217,6 +217,11 @@ any mechanic. *What:* `PlantGenome` (genome v2: 49 genes, cross, mutagens, 49-by
 Studio checks: 347 genomes, 122 of them 2×2 (≤ 140 / 400 Parts, 2.38 / 5.13 radius), seeks, proxies; stills in
 [art/plant-review/hx0](art/plant-review/hx0). *Decided (Ales):* go, fully parametric (no organ library for now); trees and other big plants
 take a 2×2 block, its footprint from the blended `bulk` gene. Next: HX1.
+
+**EV2e — Egg timing and cancellation** (2026-11-17; GDD §7.2, §7.6). Implemented and desktop Studio-validated: pet fixed at
+purchase / free placement, rarity timers (2 m / 10 m / 1 h / 4 h / 12 h), chosen pet shown in its nest, two-tap Cancel discards
+without refund; updated egg info tips. Existing eggs keep their deadlines; first free pet stays instant. Physical touch and
+live validation remain open.
 
 **Hatchery redesign** (2026-11-16; GDD §7.6). Cross-lapped stud egg shells and 3D egg cards, stud-textured foundations, a tall pavilion with
 a front prompt, a passive dialog cursor with world-input guards, owner-only nest labels fading at 24–30 studs. Studio-validated; physical

@@ -19,7 +19,6 @@ export type Egg = {
 	id: string,
 	name: string,
 	price: number,
-	hatchSeconds: number, -- real (server) time from start to ready in a garden incubator (every egg hatches there)
 	look: { color: Color3, material: Enum.Material, glow: boolean }, -- shell colour / glow for EggLook; legacy material retained
 	weights: { [string]: number }, -- rarity id → weight per 1000
 }
@@ -49,6 +48,9 @@ PetConfig.Kinds = {
 	Phoenix = "Legendary",
 }
 
+-- EV2e: kind is fixed when the egg enters a nest; rarity sets the real-time wait (also offline).
+PetConfig.HatchSeconds = { Common = 120, Uncommon = 600, Rare = 3600, Epic = 14400, Legendary = 43200 }
+
 -- Rarity id → kinds of that rarity, sorted (Roll picks one uniformly)
 PetConfig.KindsByRarity = {} :: { [string]: { string } }
 for _, rarity in PetConfig.Rarities do
@@ -66,7 +68,6 @@ PetConfig.Eggs = {
 		id = "Basic",
 		name = "Basic egg", -- loc: ignore (English source and fallback; players see Locale)
 		price = 120, -- EV2a (docs/ECONOMY.md → "EV"; was 500)
-		hatchSeconds = 300,
 		look = { color = Color3.fromRGB(236, 228, 208), material = Enum.Material.SmoothPlastic, glow = false }, -- plain cream
 		weights = { Common = 600, Uncommon = 262, Rare = 110, Epic = 27, Legendary = 1 },
 	},
@@ -74,7 +75,6 @@ PetConfig.Eggs = {
 		id = "Golden",
 		name = "Golden egg", -- loc: ignore (English source and fallback; players see Locale)
 		price = 4000, -- EV2a (unchanged)
-		hatchSeconds = 3600,
 		look = { color = Color3.fromRGB(255, 200, 40), material = Enum.Material.SmoothPlastic, glow = true }, -- shiny gold
 		weights = { Uncommon = 500, Rare = 370, Epic = 127, Legendary = 3 }, -- EV2a: Legendaries a multi-week goal (G9)
 	},

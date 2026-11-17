@@ -2002,6 +2002,8 @@ def config_match(M):
         e, o = M["eggs"][k], P["eggs"].get(k)
         if o is None or round(e["price"]) != o["price"] or {r: w for r, w in e["w"].items() if w} != {r: w for r, w in o["weights"].items() if w}:
             out.append(f"egg {k}: config {o and [o['price'], o['weights']]} vs proposal {[e['price'], e['w']]}")
+    if P["hatch_by_rarity"] != M["c"]["hatch"]:
+        out.append(f"hatch times: config {P['hatch_by_rarity']} vs proposal {M['c']['hatch']}")
     return out
 
 

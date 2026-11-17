@@ -388,7 +388,9 @@ def load():
 
     P["rarities"] = {r["id"]: {"order": r["order"], "bonus": r["bonus"], "sell": r["sellValue"]}
                      for r in luau("PetConfig.luau", "PetConfig.Rarities")}
-    P["eggs"] = {k: {"price": e["price"], "hatch_s": e["hatchSeconds"], "weights": e["weights"]}
+    P["hatch_by_rarity"] = luau("PetConfig.luau", "PetConfig.HatchSeconds")
+    P["eggs"] = {k: {"price": e["price"], "weights": e["weights"],
+                     "hatch_s": sum(P["hatch_by_rarity"][r] * w for r, w in e["weights"].items()) / sum(e["weights"].values())}
                  for k, e in luau("PetConfig.luau", "PetConfig.Eggs").items()}
     P["slot_prices"] = luau("PetConfig.luau", "PetConfig.SlotPrices")
     P["rename_price"] = luau("PetConfig.luau", "PetConfig.RenamePrice")  # P3b: every pet name after the first
@@ -429,6 +431,7 @@ def pin_values(P):
         "talent_costs": {k: t["costs"] for k, t in P["talents"].items() if t["built"]},
         "rarities": {k: [r["bonus"], r["sell"]] for k, r in P["rarities"].items()},
         "eggs": {k: [e["price"], e["hatch_s"], e["weights"]] for k, e in P["eggs"].items()},
+        "hatch_by_rarity": P["hatch_by_rarity"],
         "slot_prices": P["slot_prices"],
         "rename_price": P["rename_price"],
         "pet_levels": [P["max_level"], P["cute_step"], P["max_bonus"]],

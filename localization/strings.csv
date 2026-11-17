@@ -47,8 +47,8 @@ talent.name.QuickRespawn,"Talent (skill) name: Skills panel, ""Needs:"" lines of
 talent.name.DoubleJump.2,"Name of Double Jump level 2 (two jumps in the air): the Skills row once Double Jump is owned, ""Needs:"" lines",Triple Jump,Trojitý skok,ok,hd4bc2346
 talent.name.Dash,"Talent (skill) name: Skills panel, ""Needs:"" lines of the arrival popup",Dash,Výpad,ok,h76f645c2
 talent.name.Dash.2,"Name of Dash level 2 (a longer burst in the air): the Skills row once Dash is owned, ""Needs:"" lines",Long Dash,Dlouhý výpad,ok,h3fb79f5f
-pet.egg.Basic,"Egg name (cheap egg, 5 min to hatch); results popup free egg line, incubators",Basic egg,Obyčejné vejce,ok,h34aaec11
-pet.egg.Golden,"Egg name (expensive egg, 1 h to hatch)",Golden egg,Zlaté vejce,ok,hf543d666
+pet.egg.Basic,Egg name (cheap egg; hatch duration depends on chosen pet rarity),Basic egg,Obyčejné vejce,ok,h34aaec11
+pet.egg.Golden,Egg name (expensive egg; hatch duration depends on chosen pet rarity),Golden egg,Zlaté vejce,ok,hf543d666
 # Score panel (top right),,,,,
 hud.score.record,"Second line on a stage; {time} = personal best, e.g. 1:23.4",Your record: {time},Tvůj rekord: {time},ok,h843f7a81
 hud.score.firstTry,Second line on a stage the player has never finished,First try!,První pokus!,ok,h37b1e26c
@@ -241,8 +241,8 @@ hatchery.nest.empty,"Hatchery panel, incubator row: info line of an owned incuba
 hatchery.unlock,"Hatchery panel, button on the row of the next incubator to buy (132 px brick, may wrap); {count} = price in Coins",Unlock · 💰 {count},Odemknout · 💰 {count},new,h6f96b259
 hatchery.eggs,"Hatchery group-box legend: egg catalogue and Buy actions, separate from nests already working",Eggs to buy,Vejce ke koupi,new,hc14c3641
 hatchery.eggs.hint,"Hatchery panel, small line under the Eggs heading; {n} = the incubator the egg will go into (the first empty one)",The egg goes into incubator {n},Vejce půjde do inkubátoru {n},new,h7727c321
-hatchery.busy,"Hatchery panel, under the Eggs heading when every owned incubator holds an egg",Every incubator holds an egg. Hatch one to start another.,Ve všech inkubátorech je vejce. Vylíhni jedno a můžeš dát další.,new,h67f92233
-hatchery.egg.time,"Hatchery panel, egg card: how long the egg takes to hatch; {time} = ""5 min"", ""1 hour""",⏱ {time},⏱ {time},new,ha39f96d6
+hatchery.busy,Hatchery catalogue when all nests are occupied,Every incubator holds an egg. Hatch one or cancel a hatch to make room.,Ve všech inkubátorech je vejce. Vylíhni jedno nebo zruš líhnutí a uvolni místo.,new,he734fad8
+hatchery.egg.time,"Egg card before purchase; {time} = shortest possible wait, {max} = longest. Both localized durations.",⏱ {time}–{max},⏱ {time}–{max},new,h1ddd4321
 hatchery.egg.buy,"Hatchery panel, egg card: the buy button (half the panel minus the ? button); {count} = price in Coins",💰 {count},💰 {count},new,h5b33c8c5
 hatchery.odds.button,"Hatchery panel, egg card: square button that shows the egg's chances (one character)",?,?,new,h9f64d1d4
 hatchery.odds,"Hatchery panel, under the egg cards after ? was tapped; {egg} = egg name, {odds} = coloured list ""Common 60 % · Rare 30 % · …""",{egg}: {odds},{egg}: {odds},new,ha2013ce2
@@ -259,7 +259,7 @@ incubator.freeEggs[one],Status: free eggs start by themselves in the next empty 
 incubator.freeEggs[few],Form for 2-4 (Czech only),,🎁 {count} vejce zdarma čekají na volný inkubátor,ok,h5f21d558
 incubator.freeEggs[other],Form for 0 and 5+,🎁 {count} free eggs will start in the next empty incubators,🎁 {count} vajec zdarma čeká na volný inkubátor,ok,h5f21d558
 incubator.unlocked,Message after buying an incubator,Incubator {n} unlocked,Inkubátor {n} odemčen,ok,h071ed29e
-incubator.started,Message after putting an egg in,The egg is warming up. Come back when it is ready!,"Vejce se zahřívá. Vrať se, až bude připravené!",ok,h0ea3ff6d
+incubator.started,Purchase success; chosen pet and remaining time are visible in its nest row.,Your pet is chosen! Its rarity sets the hatch time.,Mazlíček je vybraný! Doba líhnutí závisí na jeho vzácnosti.,new,h48392bd1
 incubator.label.ready,Text over an egg in a plot's incubator once it can hatch,✨ Ready!,✨ Hotovo!,ok,hd37ff7a0
 incubator.reject.maxed,Refused: every incubator is bought,All incubators unlocked,Všechny inkubátory jsou odemčené,ok,h30705bfa
 incubator.reject.locked,Refused: the incubator is not bought,Unlock this incubator first,Nejdřív tenhle inkubátor odemkni,ok,h1ea71739
@@ -598,3 +598,8 @@ field.card.cropGroup,Soil dialog group-box legend enclosing crop status and Plan
 field.card.petsGroup,"Soil dialog group-box legend enclosing help, resident and pet controls",Pets,Mazlíčci,new,he7accae6
 barn.group.forecast,Barn group-box legend enclosing the field crow forecast,Field forecast,Předpověď pro pole,new,h41de9af5
 hatchery.group.nests,Hatchery group-box legend enclosing the owned and locked incubator nests,Your nests,Tvoje hnízda,new,hff15f2f2
+hatchery.odds.rarity,"One rarity in the egg info tip; {rarity} = colored localized rarity, {chance} = localized percent number, {time} = localized duration.",{rarity}: {chance}% · {time},{rarity}: {chance} % · {time},new,hc9f42b46
+hatchery.odds.rules,Egg ? info tip explaining purchase roll and cancellation. Applies to both egg types; no refund on cancellation.,"Your pet is chosen when you buy the egg. Rarer pets take longer to hatch, even while you are away. Traits appear at hatch. Cancelling discards the egg without a refund.","Mazlíček se vybere při koupi vejce. Vzácnější mazlíčci se líhnou déle, i když nejsi ve hře. Vlastnosti se ukážou při vylíhnutí. Zrušením vejce zahodíš bez vrácení mincí.",new,h609545ba
+incubator.cancel,Growing nest action; always two taps; second line warns no refund.,Cancel\nNo refund,Zrušit\nBez náhrady,new,hcf67fe91
+incubator.cancel.confirm,"Second tap discards current egg; button 132 px, may wrap.",Discard egg?,Zahodit vejce?,new,he3cbe7ce
+incubator.cancelled,Success after egg discarded; no Coins or free egg credit returned.,Egg discarded. No Coins refunded.,Vejce je pryč. Mince se nevracejí.,new,ha7b975e9
