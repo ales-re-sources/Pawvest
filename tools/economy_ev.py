@@ -66,6 +66,9 @@ CAND = {
     # mastery "count": a level needs plants of that crop (star 1 = round(star_n0 x star_g^k) plants, level L = star 1 x m_mult[L - 1]);
     # "time": XP = grow minutes (the draft). With pt_cap 1 there are 3 levels and a level-3 crop is fully upgraded.
     "mastery": "count", "m_mult": (1, 4, 25),
+    # m_levels (count mode): the same plant counts for every crop's levels (e.g. (50, 100, 200)); the next crop then opens at the old
+    # level-1 count (star_n0 x star_g^k plants of the previous crop), not at a level. None = levels from m_mult, unlock at level 1.
+    "m_levels": (25, 75, 200),  # the user, 2026-11-17
     # quest_partial: crops are handed in as they come and the progress is kept (no barn space held, no expiry)
     "quest_partial": True,
     # req_auto: requests track crops grown ("grow 6 Tomatoes"), nothing is handed in, the bonus is req_bonus x the sale of the count;
@@ -291,7 +294,7 @@ def star_need(crop, L, c):
     """XP a crop needs in all for star L. "time": grow minutes, star1 (the unlock pace), then star_u x minutes^star_b x (L - 1)^star_p;
     "count": plants, star1 x m_mult[L - 1]."""
     if c["mastery"] == "count":
-        return crop["star1"] * c["m_mult"][L - 1]
+        return c["m_levels"][L - 1] if c["m_levels"] else crop["star1"] * c["m_mult"][L - 1]
     if L <= 1:
         return crop["star1"] * L
     return crop["star1"] + c["star_u"] * (crop["t"] / 60.0) ** c["star_b"] * (L - 1) ** c["star_p"]
@@ -307,6 +310,11 @@ def maxed_mult(c, seed_frac=None):
     s = c["seed_frac"] if seed_frac is None else seed_frac
     a, g = pt_mults({"Value": c["pt_cap"], "Size": c["pt_cap"], "Speed": c["pt_cap"]}, c)
     return (a - s) / (1 - s) / g
+
+
+def unlock_need(crop, c):
+    """XP of a crop that opens the next one: its level 1, or (m_levels) the old level-1 count."""
+    return crop["star1"] if c["mastery"] == "count" and c["m_levels"] else star_need(crop, 1, c)
 
 
 def xp_unit(crop, c):
@@ -646,9 +654,10 @@ class Sim:
                 if self.cpts[k][line] < self.c["pt_cap"]:
                     self.cpts[k][line] += 1
                     break
-            nxt = k + 1
-            if self.star[k] == 1 and nxt < len(self.M["crops"]) and not self.M["crops"][nxt]["quest"] and self.chain_rule(nxt):
-                self.unlock(t, nxt)
+        nxt = k + 1
+        if (nxt not in self.unl and self.xp[k] >= unlock_need(crop, self.c) - 1e-9 and nxt < len(self.M["crops"])
+                and not self.M["crops"][nxt]["quest"] and self.chain_rule(nxt)):
+            self.unlock(t, nxt)
 
     def chain_rule(self, k):
         """Does crop k open at the previous crop's star 1 (else at a crop XP total)?"""
@@ -827,11 +836,11 @@ class Sim:
         if not self.stars_on or self.free_sq <= 0 or not self.chain_rule(max(self.unl) + 1):
             return
         new = self.M["crops"][max(self.unl)]
-        if self.star[new["k"]] > 0:
+        if self.xp[new["k"]] >= unlock_need(new, self.c) - 1e-9:
             return
         growing = sum(b["n"] for b in self.batches if b["crop"] is new)
         u = xp_unit(new, self.c)
-        short = star_need(new, 1, self.c) - self.xp[new["k"]] - growing * u
+        short = unlock_need(new, self.c) - self.xp[new["k"]] - growing * u
         n = min(self.free_sq, math.ceil(short / u - 1e-9), int(self.coins // max(1, new["seed"])))
         if n <= 0:
             return
@@ -1343,7 +1352,7 @@ class Sim:
             return self.M["crops"][self.c["stall_staples"] - 1]["seed"] * self.open_sq
         if self.stars_on and self.chain_rule(max(self.unl) + 1):
             new = self.M["crops"][max(self.unl)]
-            if self.star[new["k"]] == 0:
+            if self.xp[new["k"]] < unlock_need(new, self.c) - 1e-9:
                 seed = max(seed, new["seed"])
         return seed * self.open_sq
 
@@ -2185,12 +2194,14 @@ def ev3_tables(M, days=60):
         elif cr["quest"]:
             how = "quest: " + " + ".join(f"{q} {cfg_id(cid)}" for cid, q in cr["quest"].items())
         else:
-            how = f"{cfg_id(M['crops'][k - 1]['id'])} star 1"
-        top = star_need(cr, L, c)
+            prev = M["crops"][k - 1]
+            how = (f"{round(unlock_need(prev, c))} {cfg_id(prev['id'])}" if cnt and c["m_levels"]
+                   else f"{cfg_id(prev['id'])} star 1")
+        levels = " / ".join(E.n(star_need(cr, x, c)) for x in range(1, L + 1)) if cnt else E.n(star_need(cr, L, c) / 60.0)
         rows.append([cfg_id(cr["id"]), fmt_t(cr["t"]), str(cr["tier"] + 1), E.n(cr["seed"]), E.n(cr["sale"]), f"R{cr['gate']}", how,
-                     str(round(c["star_n0"] * c["star_g"] ** k)), E.n(top) if cnt else E.n(top / 60.0)])
-    print(E.table(["crop", "grow", "tier", "seed", "sale", "old gate", "new: opens at", "star 1",
-                   f"level {L} (plants)" if cnt else f"star {L} (sq-h)"], rows))
+                     levels])
+    print(E.table(["crop", "grow", "tier", "seed", "sale", "old gate", "new: opens at",
+                   "levels (plants)" if cnt else f"star {L} (sq-h)"], rows))
     a, g = pt_mults({"Value": c["pt_cap"], "Size": c["pt_cap"], "Speed": c["pt_cap"]}, c)
     print(f"Points: a star = 1 point, {c['pt_cap']} per line (Value +{c['pt_value']:.0%} sale, Size +{c['pt_size']:.0%} size factor, Speed "
           f"-{c['pt_speed']:.1%} grow time each; policy {' > '.join(c['pt_order'])}); maxed: sale x{a:.2f}, grow time x{g:.3f}, net per "

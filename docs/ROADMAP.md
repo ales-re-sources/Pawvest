@@ -86,7 +86,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
    sizes.
 4. **FB — player feedback** (section below): small, alongside ST or SH.
 5. **E5 — the online loop** (scope when it starts; EXPANSION §14): request board (rules: ECONOMY.md → EV "Requests": tracked "grow 6 Tomatoes",
-   no hand-in and no accept step, an unfinished request stays, the board opens on day 0; decided 2026-11-17), the ledger on join
+   no hand-in and no accept step, an unfinished request stays, the board opens on day 0; decided 2026-11-17; shown as the Goals panel's
+   *Today's requests* and the second tracker line, no board stand: UI_GARDEN_PETS §13), the ledger on join
    (the join notice grows into it), onboarding for the first ten minutes (teaches the U1–U5 controls, mastery, the stall, the Hall),
    garden funnel telemetry.
 6. **Release gates, then public:** MU (section below; adds the Hall and a full field on a real phone), TH1 + THU, the Czech review of
@@ -127,31 +128,33 @@ safe, crows scale with the field: a mechanics change the model assumes). Trees, 
 ### EV3 — Crop mastery replaces Renown; milestone quests; crop upgrades; first-hour obby payouts (revised 2026-11-17; numbers await sign-off)
 Why, direction and rules: [ECONOMY.md](ECONOMY.md) → "EV3 — design draft" and its revision (2026-11-17); findings and what to sign off:
 ECONOMY.md → Findings (EV3a, EV3 revision) and open decision 4. *Revision (the user, 2026-11-17):* mastery = plants grown of that crop,
-3 levels (one upgrade point each, one per line: a ★3 crop is fully upgraded), 16 crops in 6 price tiers, the third quest on Sweet potato,
+3 levels at 25 / 75 / 200 plants for every crop (one upgrade point each, one per line: a ★3 crop is fully upgraded); the next crop opens
+at 12–25 plants of the previous one; 16 crops in 6 price tiers, the third quest on Sweet potato,
 quests handed in piece by piece without expiry, rested mastery after a day away.
 
 **EV3a — model (no game code).** Built 2026-11-14, revised 2026-11-17: `economy_ev.py` `CAND` carries the revision (`tier_of`,
-`mastery: "count"`, `quest_partial`, `req_auto`, `rest_per_day`; the draft via `--set`, seeds via `--seed`); `evcheck` 13–15 / 18 on seeds
-1–4 (EV0 fails until EV3b); `economy.py proposal` prints the EV3 tables. Acceptance: the user signs off the tier prices, level counts,
+`mastery: "count"`, `m_levels`, `quest_partial`, `req_auto`, `rest_per_day`; the draft via `--set`, seeds via `--seed`); `evcheck` 12–14 / 18
+on seeds 1–4 (EV0 fails until EV3b; G4 on every seed); `economy.py proposal` prints the EV3 tables. Acceptance: the user signs off the tier prices, unlock counts,
 point size, quests and the near-misses (ECONOMY.md → open decision 4).
 
 **EV3b — levels, unlocks, Renown out (scope after EV3a's review).** Fixes the first hour.
-1. **Config:** `CropConfig` crops get the tier prices (`sale` / `seed`), level counts and, for milestones, `quest = { [cropId] = n }`
+1. **Config:** `CropConfig` crops get the tier prices (`sale` / `seed`), their unlock count (`LevelCounts` 25 / 75 / 200 shared) and, for milestones, `quest = { [cropId] = n }`
    (Corn, Pumpkin, Sweet potato); the `renown` gates of `Expansions`,
    `Upgrades`, `Tools` go (prices stay); `RenownK` / `RenownP` / `points` go; `StageConfig` payouts + seed packs.
 2. **Server:** `Garden.Crops[cropId] = { N }` (plants grown) and `Garden.Unlocked` (IdSet; stored ids never reused); a harvest adds its
-   plants (double while `Garden.Rested` lasts, filled by days away past the first) and unlocks the next crop at ★1 (answer `{ …, cropLevel,
-   levelUp, unlocked? }`); `GardenRemotes.Quest(cropId, cropIdGiven, n)` at the seed stall hands in crops toward the open milestone
+   plants (double while `Garden.Rested` lasts, filled by days away past the first) and unlocks the next crop at its unlock count (answer `{ …, cropLevel,
+   levelUp, unlocked? }`); `GardenRemotes.Quest(cropId, cropIdGiven, n)` (from the Goals panel or the seed stall) hands in crops toward the open milestone
    (progress in `Garden.Quest`, no expiry, reject `crops`); the last piece unlocks the crop and gives a seed pack of it; `BuySeeds` checks `Unlocked`; `BuySquare` / `BuyUpgrade` / `BuyTool` lose the `renown` check and reject.
 3. **Migration** (`Version = 7`): `Unlocked` = every crop whose old gate ≤ the profile's Renown level (no player loses a crop); crop XP
    starts at 0 (or from `Plantings` if the live profiles show it fair); `Renown` stays as a field, unused. Read the live profiles first.
-4. **Client:** seed stall: a locked crop shows the previous crop's count ("Potato 32 / 50") or the quest `{crop} {have}/{need}` with a
-   Bring button per crop (the player chooses what to hand in); the
+4. **Client:** seed stall: a locked crop shows the previous crop's count toward it ("Potato 8 / 12") or the quest `{crop} {have}/{need}` with a
+   Bring button per crop (the player chooses what to hand in); the **tracker line** and the Goals panel's *Next crop* section replace
+   the score panel's hub / world view ([UI_GARDEN_PETS.md](UI_GARDEN_PETS.md) §13); the
    crop's ★ on the seed row, square card and barn row; a level-up toast "Garlic ★2"; the Renown bar / level go (FieldHand, FieldClient,
    BarnClient, GardenSkills, SeedStallClient); sink tiles show only the price.
 5. **Docs and text:** GDD §7.9, PROTOCOL, ECONOMY.md, strings (the `renown` keys removed, new ones with Czech).
 - **Acceptance (draft):** `economy.py check` exit 0 (drift 0 after `pin`); `loc.py build / check / lint`; a boot without errors or
-  warnings; in Studio (snapshot first) on a fresh test profile Lettuce opens when Potato reaches ★1, the Corn quest handed in through the
+  warnings; in Studio (snapshot first) on a fresh test profile Lettuce opens at 12 Potatoes and Potato ★1 at 25, the Corn quest handed in through the
   real seed stall in two visits (the progress kept between them), one refusal for missing crops (nothing taken), a square and an upgrade bought on Coins alone; a migrated live profile keeps every
   crop it could buy; the word Renown nowhere on screen in English or Czech (pseudo-language pass, `strings.csv` grep); the Tutorial's
   first clear pays the new amount and the seed pack; Czech fits on the stall and the square card.

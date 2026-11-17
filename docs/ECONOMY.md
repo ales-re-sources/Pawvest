@@ -42,7 +42,7 @@ drops. Something is always growing, hatching or nearly affordable ("one more thi
 8. **No regret (for M7):** after launch prices never go down; nothing sold is later handed out free in bulk; a capacity product never exceeds
    the earnable maximum. Free play is scarce enough that a comfort purchase is worth 1.2–1.5× (G8), never more.
 
-## EV checks (`evcheck`; on the EV3 revision `CAND` (2026-11-17) 13–15 of 18 pass on seeds 1–4, EV0 failing by design until EV3b moves the crop prices into the configs; EV0 compares the configs, talent bundles included since EV2b)
+## EV checks (`evcheck`; on the EV3 revision `CAND` (2026-11-17) 12–14 of 18 pass on seeds 1–4, EV0 failing by design until EV3b moves the crop prices into the configs; EV0 compares the configs, talent bundles included since EV2b)
 Bands are provisional, for the user to confirm with the proposal. Archetypes: Obby main (7:00 / 12:30 / 18:00, 2 h obby), Casual (8:00 / 19:00,
 45 min obby), Garden main (7 / 12 / 17 / 21, 15 min obby), Binge (one 6 h day a week), Spender (Casual's schedule, paid comforts).
 
@@ -75,11 +75,12 @@ Bands are provisional, for the user to confirm with the proposal. Archetypes: Ob
   gate ladder (R0 … R68); squares and other sinks have gates.
 - **EV3 revision (2026-11-17, the defaults in `CAND`; the 2026-11-14 draft below stays reachable with `--set`):** crops in **price tiers**
   (`tier_of`: Potato–Onion, Garlic–Cucumber, Corn–Broccoli, Pumpkin–Blueberry, Sweet potato–Giant melon, Sunflower–Pineapple; a tier
-  shares one net Coins per square-hour, 2 500 × 1.727^tier). **Mastery = plants grown** of that crop (`mastery: "count"`): level 1 =
-  12 × 1.05^k plants, level 2 = 4 ×, level 3 = 25 × that; 3 levels, each a point, one point per line (Value +11 %, Size +11 %, Speed
-  −11 %), so a level-3 crop is fully upgraded (× 1.47). The next crop opens at the previous one's level 1; Corn, Pumpkin and **Sweet
+  shares one net Coins per square-hour, 2 500 × 1.727^tier). **Mastery = plants grown** of that crop (`mastery: "count"`): levels at 25 / 75 /
+  200 plants for every crop (`m_levels`); 3 levels, each a point, one point per line (Value +11 %, Size +11 %, Speed −11 %), so a
+  level-3 crop is fully upgraded (× 1.47). The next crop opens at 12 × 1.05^k plants of the previous one (12 Potato … 25 Sunflower, the
+  draft's star-1 counts), apart from the levels; Corn, Pumpkin and **Sweet
   potato** by a quest handed in **piece by piece** (`quest_partial`; the policy keeps what the next talent bundle needs). **Rested:** each
-  full day away past the first adds 0.5 "level 1s" of plants that count double (cap 3). **Requests** are tracked (below).
+  full day away past the first adds 0.5 "unlock counts" of plants that count double (cap 3). **Requests** are tracked (below).
 - **Crop levels (`mode: "stars"`, EV3a draft 2026-11-14):** XP = grow minutes of each harvest of that crop. Star 1 needs 12 × 1.05^k square-harvests of crop k
   (k = 0 Potato … 15 Pineapple); star L > 1 needs star 1 + 40 × minutes^0.7 × (L − 1)^1.5 XP in all; 15 stars, each a point (Value +2 % sale,
   Size +2 % size factor, Speed −2.5 % grow time; 5 per line; Value first, then Speed, Size). The next crop opens at the previous one's star 1;
@@ -198,11 +199,12 @@ obby first clears outpay the farm they should feed (findings above).
    unlocked crop (seeds of a locked crop would skip its unlock). Repeat-run Coins stay until EV2c.
 
 **Revision (the user, 2026-11-17; replaces rules 1–2 and the quest form above; model defaults since then):**
-- **Mastery = plants grown of that crop** ("Potato 32 / 50"), shown as the crop's ★. A long, expensive crop needs more time per level.
+- **Mastery = plants grown of that crop** ("Potato 32 / 75"), shown as the crop's ★. A long, expensive crop needs more time per level.
   Rule 1's spam worry does not apply: the count is per crop, so quick Potatoes level only Potato.
 - **Three levels per crop** (like the stage medals), never infinite. Each level gives one upgrade point and each line (Value, Size,
   Speed) takes one, so a ★3 crop is fully upgraded and the order is the choice; a point is a step a player notices (+11 %).
-  Level 1 opens the next crop.
+  The same counts for every crop: **25 / 75 / 200 plants** (the user, 2026-11-17). The next crop opens at a smaller, rising count of
+  the previous one (12 Potatoes … 25 Sunflowers), apart from the levels.
 - **Price tiers:** the 16 crops form 6 tiers of 2–3 with one net Coins per square-hour each; inside a tier the crops differ in grow time
   (and look), so a rotating stall (ST) can offer any of them fairly. Tier 1 Potato–Onion, 2 Garlic–Cucumber, 3 Corn–Broccoli, 4 Pumpkin–
   Blueberry, 5 Sweet potato–Giant melon, 6 Sunflower–Pineapple. The milestone quests sit at tier starts: Corn, Pumpkin and **Sweet
@@ -263,8 +265,10 @@ obby first clears outpay the farm they should feed (findings above).
   Double Jump 2 needs were sold); the Renown model still passes its 14 checks.
 
 ## Findings (EV3 revision, 2026-11-17; seeds 1–4; `economy.py proposal` prints the crop table)
-- **Pass rate:** 13 / 15 / 15 / 13 of 18 on seeds 1–4, against the draft's 16 / 11 / 12 / 13. EV0 fails by design (the tier prices are not
-  in the configs until EV3b), so 14–16 of the 17 others pass. G7 and G9, which failed since EV2e, pass on every seed but one (G9 seed 3:
+- **Pass rate (levels 25 / 75 / 200):** 14 / 14 / 13 / 12 of 18 on seeds 1–4, against the draft's 16 / 11 / 12 / 13. EV0 fails by
+  design (the tier prices are not in the configs until EV3b), so 12–14 of the 17 others pass. **G4 fails on every seed:** Obby main buys
+  Triple Jump 1.2 d after Stage 11 (limit 1), Casual 2–3 d (limit 2); fewer early upgrade points mean slower income. To tune with the
+  bundle sizes. (With the first cut, levels at 12–25 × 1 / 4 / 25: 13 / 15 / 15 / 13.) G7 and G9, which failed since EV2e, pass on every seed but one (G9 seed 3:
   top crop day 13.8). Near-misses left: G4 (seed 1 Casual Triple Jump 3.0 d after Stage 11, limit 2; other seeds 1.0 d against a
   1-day limit), R (Casual / Spender rare share 71–78 % on days 0–3, limit 70), G8 (Spender median below 1.2 on seeds 1, 4), B2 (a guard
   0.99× a tender on seed 1), G11 (Obby main 0 % of 8 levels on seeds 1, 4: too few levels in days 3–30 to measure).
@@ -275,9 +279,14 @@ obby first clears outpay the farm they should feed (findings above).
   Corn 1.9 → 1.8, Pumpkin 4.3 → 4.7, Sweet potato 8.3 → 7.8, Pineapple 14.1 → 15.1; Garden main Pineapple 9.5 → 9.7).
 - **Partial quests took a bundle's crops:** handing in every kept Cucumber delayed Triple Jump by up to 5 days (G4); the policy now keeps
   what the next talent bundle needs. The game's quest UI should let the player choose what to hand in.
-- **Level 3 sets the long goal:** at 12 × level 1 Garlic was maxed on day 1.9 (G12); at 25 × the first crop is maxed on day 46–60
-  (Garden main, Sunflower) and Casual has 21–23 of 48 levels on day 60. Level 3 of a long crop is 600–625 plants (17 field-days of
-  Pineapple): to review with the counts.
+- **Level counts (2026-11-17):** one count does two jobs badly: at 50 / 100 / 200 with level 1 opening the next crop, the first hour
+  had 5 crops (G7) and the top crop came on day ~23 with Casual's overnight hook at 84–88 % (G2); quick crops max at once (Garlic on day
+  1.9). Split: the next crop opens at the old rising count (12–25 plants), the levels use flat counts. A flat unlock count (15 for every
+  crop) brought the top crop on day 11–12 (G9) and emptied Garden main's shop (G5): the unlock count must rise with the crop.
+  Levels by day 7 / 30 / 60 (Casual, means of seeds 1–4): first cut 13 / 20 / 22; 50 / 100 / 200: 5 / 10 / 14 (the weekly player 1 level
+  in week 1, Pumpkin day 4.0 → 7.5); **25 / 75 / 200: 8 / 16 / 18** (weekly player 4 by day 7, 22 by day 60). With 25 / 75 / 200 the
+  first crop is maxed on day 23–25 (Garden main, Sunflower) and Casual has 17–19 of 48 levels on day 60; 200 Potatoes is quick, 200
+  Pineapples a long goal.
 - **Tiers flatten tier 1 and lift the tier starts:** Lettuce sells 28 (was 35), Onion 55 (80), Tomato 750 (900), Cucumber 1 400
   (2 100), Pepper 10 000 (12 000), Broccoli 20 000 (29 000), Eggplant 70 000 (85 000), Blueberry 100 000 (150 000), Giant melon
   350 000 (450 000), Sunflower 900 000 (750 000); Potato, Garlic, Corn, Pumpkin, Sweet potato and Pineapple keep their prices.
@@ -306,7 +315,7 @@ of the game's instant first pet.
 4. **EV3** ("EV3 — design draft" and its revision above, build parts in ROADMAP → EV3): *direction decided (the user, 2026-11-17):*
    mastery by plants grown, three levels with one point per line, price tiers, quests piece by piece without expiry, rested mastery,
    tracked requests (E5); crop XP = time, 15 stars and the old G11 are out. *To sign off:* the tier table and its prices (Findings →
-   EV3 revision), the level counts (level 1 as the draft's star 1; level 2 = 4 ×, level 3 = 25 ×, i.e. 300–625 plants), the point
+   EV3 revision), the unlock counts (12–25 plants of the previous crop; level counts 25 / 75 / 200 decided 2026-11-17), G4 (fails on every seed), the point
    size (+11 % per line), the Sweet potato quest (5 Blueberry + 4 Eggplant), the rested rate (0.5 per extra day, cap 3), the obby
    payouts (rule 6, unchanged), and the near-misses listed in the findings (accept, or tune in the ST model, which re-runs the chain).
 5. **A flatter curve** (shorter grow-time span, value steps ~1.5–2× per crop, a slower square ladder): probe in the model after EV3a,
