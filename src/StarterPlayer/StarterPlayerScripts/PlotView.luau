@@ -404,7 +404,8 @@ function PlotView:buildBase(model: Model)
 		end
 	end
 	for _, edge in edges do
-		part({ Name = "Edge", Size = edge[2], CFrame = self:at(edge[1]), Color = COLORS.edge, Material = Enum.Material.Wood }).Parent = model
+		part({ Name = "Edge", Size = edge[2], CFrame = self:at(edge[1]), Color = COLORS.edge,
+			Material = Enum.Material.Plastic, MaterialVariant = "Inlets" }).Parent = model
 	end
 	part({
 		Name = "Path",
@@ -734,10 +735,10 @@ function PlotView:buildIncubator(model: Model, n: number)
 	local locked = not state.free and n > state.incCount
 	local status = if state.free then "free" elseif locked then "locked" elseif not eggId then "empty"
 		else GardenConfig.EggPhase(startedAt, readyAt or math.huge, self.tickNow or workspace:GetServerTimeNow())
-	local setState, animate = IncubatorLook.Build(model, podCFrame, self.detail, status)
+	local setState, animate = IncubatorLook.Build(model, podCFrame, self.detail, status, n)
 	if self.own and self.onHatchery and self.detail == "full" and not state.free then
 		local target = part({
-			Name = "ClickTarget", Size = Vector3.new(7, 6, 7), CFrame = podCFrame * CFrame.new(0, 3, 0),
+			Name = "ClickTarget", Size = Vector3.new(7, 6.5, 7), CFrame = podCFrame * CFrame.new(0, 3.25, 0),
 			Transparency = 1, CanCollide = false, CanQuery = true,
 		})
 		target.Parent = model
@@ -777,7 +778,7 @@ function PlotView:buildIncubator(model: Model, n: number)
 	local base = model:FindFirstChild("Base") :: BasePart
 	if not eggId then
 		if self.own and self.detail == "full" then
-			local label = info(base, UDim2.new(6, 0, 2.2, 0), 5.7, Locale.T(if locked then "garden.sign.incubator.locked" else "garden.sign.incubator.empty", { n = n }))
+			local label = info(base, UDim2.new(6, 0, 1, 0), 6.9, Locale.T(if locked then "garden.sign.incubator.locked" else "garden.sign.incubator.empty"))
 			self.labels[n] = { gui = label.Parent, label = label }
 		end
 		return
@@ -793,7 +794,7 @@ function PlotView:buildIncubator(model: Model, n: number)
 	gui.Name = "Info"
 	gui.AutoLocalize = false
 	gui.Size = UDim2.new(6, 0, 1.6, 0)
-	gui.StudsOffset = Vector3.new(0, 2.6, 0)
+	gui.StudsOffset = Vector3.new(0, 3.9, 0) -- status clears the rear number plate
 	gui.MaxDistance = INFO_DISTANCE + 30
 	gui.Enabled = false
 	local label = textLabel(gui, { Font = StudStyle.Font })

@@ -496,8 +496,9 @@ collecting and caring over obby runs.
     previews. Full / mid / low world detail uses 27 / 9 / 5 bricks; the full shell is 3.15 studs high and rests on the nest.
     The 6 × 6 foundation and yellow pad also use Plastic with Studs / StudsSmall, including free and locked nests.
   - **Incubator body (2026-11-16).** The selected open hatch pod has stepped cream / steel stud-brick cheeks, a rear heater,
-    a side control module and a front thermostat on the foundation's lip. The egg remains open to the front and above;
-    footprint 6 × 6, top 5.2 studs above the plot origin. Full / mid / low detail uses 27 / 7 / 3 body Parts (excluding the egg).
+    a side control module and a front thermostat on the foundation's lip. A small two-sided number plate rises from the rear
+    heater at full / mid detail. The egg remains open to the front and above; footprint 6 × 6, plate top 6.275 studs above
+    the plot origin. Full / mid / low detail uses 28 / 8 / 3 body Parts (excluding the egg).
     Empty, free and locked pods are unlit. The first **30 seconds** within the existing hatch duration scan with a cyan band
     sweeping vertically around the egg, a bright light travelling around its perimeter with two fading trail points, and
     **Scanning…** above it (also in the menu); no countdown is shown in this phase.
@@ -506,12 +507,13 @@ collecting and caring over obby runs.
     points and a shadowless light; mid has a static phase strip,
     low stays simple. StartedAt / ReadyAt keep phases aligned across reconnects; instant-ready eggs skip scanning. The timer
     changes phases without rebuilding the body. Locked trim is muted; the original base / pad collision stays, other hardware does not collide.
-    Empty / locked labels sit above the heater. [Studio view and archived design options](INCUBATOR_REDESIGN.md).
+    Empty / locked labels show only status above the plate; the number stays on the model. The plot strip's foundation edges
+    use Plastic / Inlets to match the hatchery pavilion. [Studio view and archived design options](INCUBATOR_REDESIGN.md).
     Since 2026-11-17 every pod's open front and controls face the central path towards the barn (plot-local −X);
     the egg uses the same 90° turn, with all three pod centres unchanged.
   - **Hatchery panel (U5b; access updated 2026-11-17).** Open from the **🥚 Hatchery** farm HUD button beside Barn
     within 45 horizontal studs of the own plot, or click/tap any own pod (growing, ready, empty or locked) from either side.
-    The HUD badge counts ready eggs; opening never hatches an egg. A generous 7 × 6 × 7 target and whole-pod hover outline
+    The HUD badge counts ready eggs; opening never hatches an egg. A generous 7 × 6.5 × 7 target and whole-pod hover outline
     support direct interaction. GUI and range checks block world clicks; other players' pods have no click target.
     The hatchery E prompt is removed. Visible farm buttons stay centered together; Barn keeps its existing availability.
     Group boxes separate **Your nests** from **Eggs to buy** (2026-11-15). The panel lists each incubator: its egg,

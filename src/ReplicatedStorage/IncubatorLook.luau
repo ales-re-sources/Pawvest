@@ -1,6 +1,9 @@
 -- Open hatch pod: the selected stud-brick body, built directly into a plot piece so Base remains discoverable.
--- Build(...) -> setState(state), animate(serverNow, startedAt?). Full / mid / low: 27 / 7 / 3 body Parts.
+-- Build(...) -> setState(state), animate(serverNow, startedAt?). Full / mid / low: 28 / 8 / 3 body Parts.
 -- States: free / locked / empty (unlit), scanning (cyan sweep), growing (warm amber pulse), ready (green).
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
+local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local IncubatorLook = {}
 
 local BROWN = Color3.fromRGB(150, 100, 60)
@@ -13,7 +16,7 @@ local WARM = Color3.fromRGB(255, 183, 63)
 local READY = Color3.fromRGB(108, 209, 110)
 local SCAN = Color3.fromRGB(81, 216, 240)
 
-function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string, state: string)
+function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string, state: string, number: number)
 	local muted = state == "locked" or state == "free"
 	local trim = if muted then STEEL else CREAM
 	local function add(name: string, size: Vector3, at: Vector3, color: Color3, variant: string?, collide: boolean?)
@@ -52,6 +55,30 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 	end
 	if detail ~= "low" then
 		add("RearHeaterCase", Vector3.new(3.5, 1.5, 0.5), Vector3.new(0, 4.45, 2.2), trim)
+		-- Embed the plate's foot in the heater case; front and back remain readable from either approach.
+		local plate = add("NumberPlate", Vector3.new(1.4, 1.15, 0.3), Vector3.new(0, 5.7, 2.2), DARK)
+		for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
+			local gui = Instance.new("SurfaceGui")
+			gui.Name = "Number" .. face.Name
+			gui.Face = face
+			gui.AutoLocalize = false
+			gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+			gui.PixelsPerStud = 60
+			gui.LightInfluence = 0.2
+			gui.MaxDistance = 100
+			local label = Instance.new("TextLabel")
+			label.Name = "Number"
+			label.AutoLocalize = false
+			label.BackgroundTransparency = 1
+			label.Position = UDim2.fromScale(0.1, 0.06)
+			label.Size = UDim2.fromScale(0.8, 0.88)
+			label.Font = StudStyle.Font
+			label.TextScaled = true
+			label.TextColor3 = CREAM
+			Locale.SetText(label, Locale.Number(number))
+			label.Parent = gui
+			gui.Parent = plate
+		end
 		-- Its inner face must stand clear of the cheek's inner face (x = 1.85), or the two stud textures flicker.
 		add("ControlPod", Vector3.new(0.68, 1.9, 1.3), Vector3.new(2.25, 2.45, -1.45), trim)
 	end
