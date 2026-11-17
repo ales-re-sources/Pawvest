@@ -731,6 +731,7 @@ end
 function PlotView:buildIncubator(model: Model, n: number)
 	local state = self.state
 	local spot = INCUBATOR_SPOTS[n]
+	local podCFrame = self:at(spot) * CFrame.Angles(0, math.pi / 2, 0) -- front (-Z) faces the central path (-X)
 	self.labels[n] = nil
 	self.incubatorLights[n] = nil
 	local eggId, readyAt = parseEgg(not state.free and state.eggs[n] or nil)
@@ -738,11 +739,11 @@ function PlotView:buildIncubator(model: Model, n: number)
 	local locked = not state.free and n > state.incCount
 	local status = if state.free then "free" elseif locked then "locked" elseif not eggId then "empty"
 		elseif (readyAt or math.huge) <= (self.tickNow or workspace:GetServerTimeNow()) then "ready" else "growing"
-	local setState = IncubatorLook.Build(model, self:at(spot), self.detail, status)
+	local setState = IncubatorLook.Build(model, podCFrame, self.detail, status)
 	if state.free then return end
 	if self.detail == "low" then
 		if eggId then
-			EggLook.Make(eggId, self:at(spot + Vector3.new(0, 1.85, 0)), "low").Parent = model
+			EggLook.Make(eggId, podCFrame * CFrame.new(0, 1.85, 0), "low").Parent = model
 		end
 		return
 	end
@@ -754,7 +755,7 @@ function PlotView:buildIncubator(model: Model, n: number)
 		end
 		return
 	end
-	local shell = EggLook.Make(eggId, self:at(spot + Vector3.new(0, 1.85, 0)), self.detail)
+	local shell = EggLook.Make(eggId, podCFrame * CFrame.new(0, 1.85, 0), self.detail)
 	shell.Parent = model
 	if self.detail == "full" then
 		self.incubatorLights[n] = { setState = setState, readyAt = readyAt or math.huge }

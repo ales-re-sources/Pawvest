@@ -495,6 +495,8 @@ collecting and caring over obby runs.
     Empty, free and locked pods are unlit; growing eggs show amber, ready eggs green (heater off). The timer updates the
     lights without rebuilding the body. Locked trim is muted; the original base / pad collision stays, other hardware does not collide.
     Empty / locked labels sit above the heater. [Studio view and archived design options](INCUBATOR_REDESIGN.md).
+    Since 2026-11-17 every pod's open front and controls face the central path towards the barn (plot-local −X);
+    the egg uses the same 90° turn, with all three pod centres unchanged.
   - **Hatchery panel (U5b).** The three open hatch pods stand under the hatchery's roof (§7.6 Layout) with one "Open hatchery"
     prompt. Group boxes separate **Your nests** from **Eggs to buy** (2026-11-15). The panel lists each incubator: its egg and a live countdown, **Hatch** when ready, the next one's Unlock brick with its
     price (two taps over 1 000 Coins), "unlock incubator n first" for the later one. While an owned incubator is empty, **egg cards**
