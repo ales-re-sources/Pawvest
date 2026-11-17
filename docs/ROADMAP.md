@@ -206,15 +206,47 @@ cart taste), AhojRupert level 5 (Potato … Cucumber), test records `user_-1` / 
 - **Open (the user):** the quest's seed pack (4 seeds of the new crop, a first guess like the first clears' packs); the cart taste of a
   locked crop stays until ST decides the cart (tasted plants count toward that crop's ★ but do not unlock it).
 
-**EV3c — crop upgrades (scope after EV3b; can ship as a drop).** The endgame layer.
-1. **Server:** `Garden.Crops[cropId].Pts = { Value, Size, Speed }` (0 or 1 each, +11 % per point); `GardenRemotes.CropPoint(cropId, line)` (free points = level − spent;
-   reject `points` / `maxed`); sale, size roll and grow time read the crop's points (grow time settled server-side as now).
-2. **Client:** a crop page (from the seed stall row and the barn row): ★ level and count, the three lines with the effect as a number
-   ("sells 1 400 → 1 550", "ready 15:00 → 13:21"), a + per line; the square card's ready time uses the crop's speed.
-3. **Docs and text** as EV3b.
-- **Acceptance (draft):** model and loc checks as EV3b; in Studio a point spent in each line through the real crop page, its effect
-  seen (sale price, size factor, ready time); a refusal without free points.
-- **Open:** whether points can be moved later (a reset); whether the crop page shows a collection total (all crops' ★, a garden score).
+**EV3c — crop upgrades (scoped 2026-11-17; can ship as a drop).** The endgame layer. Numbers: `economy_ev.CAND` (`pt_cap` 1,
+`pt_value` / `pt_size` / `pt_speed` 0.11, signed off 2026-11-17): a ★3 crop sells × 1.11 (Value) × 1.11 (Size, through the size
+factor) and grows in × 0.89 of the time (Speed). Common crops only (rare crops have no mastery).
+1. **Config.** `CropConfig.Mastery.Points = { Value = 0.11, Size = 0.11, Speed = 0.11 }` and helpers on a crop's points table
+   (`{ Value = 0|1, Size = 0|1, Speed = 0|1 }`, missing = 0): `SaleMult(pts)`, `SizeMult(pts)`, `SpeedMult(pts)` (growth rate ×
+   1 / (1 − 0.11), so the grow time is × 0.89 as in the model), `FreePoints(n, pts)` (= level − spent). `SizeBounds()` grows by the Size
+   point (else the load clamp cuts stored sizes / records); `SizeBounds(false)` = the old maximum, which the **plant look** keeps (PlotView
+   clamps the factor it passes to the art there: the art contracts, e.g. PotatoPlant's tuber clearance, stay valid; sale and records use
+   the full factor).
+2. **Server (GardenField).** Profile `Garden.Crops[cropId].Pts` (cleaned on load: each line 0 / 1; no `Version` step, missing = none).
+   New remote `GardenRemotes.CropPoint(cropId, line)`, accepted anywhere (like Sell / Quest): settles the field first, then takes one
+   point; rejects `crop` (rare / not unlocked), `points` (no free point), `maxed` (that line already taken); answer `{ crop, line }`.
+   Effects: **Value** at sale time (`Sell`: also on crops already in the barn); **Size** in `harvestSize` (harvests from then on, the
+   square's `size` in the state and the plot feed: a growing crop shows it at once); **Speed** in `settle` (that crop's growth × its
+   SpeedMult, Tending replants and the crow ripe time included) and in `growthWindow` (`readyAt` in the state and the plot feed: growing
+   crops of that kind finish sooner from the moment the point is spent). State `field.mastery.points = { [crop] = { Value = 1, … } }`
+   (a new key: `crops` stays plants grown). Telemetry `crop_point` (crop, line).
+3. **Client.** A **crop page** (`CropPageClient`, GardenUi.Panel, PanelFocus "CropPage", re-renders on State and `Locale.Changed`):
+   opened by tapping the crop title on a seed stall row or a barn row (a ★ button there; a "+" badge on it while a point is free).
+   Shows the icon, name, ★ level, the mastery line, "1 point to spend" and the three lines, each with its effect as a number from the
+   real values (Value "sells 1 400 → 1 554"; Size "average 0.30 → 0.33 kg"; Speed "ready in 15:00 → 13:21" with the Growth upgrade) and a
+   **+** brick (two taps, ConfirmTap; grey without a free point; a taken line shows ✓ and only the new value). Elsewhere the values follow
+   the points: seed stall info (sale, grow time), barn sell button (SellButton), the square card / seed picker grow time
+   (`GrowSecondsOn` × speed). The level-up toast adds "A point to spend: tap ★ at the barn". The Goals panel gets a section *Upgrades*
+   (crops with a free point, a row each opening the crop page) when there is one.
+4. **Tools.** `economy.py` reads `Mastery.Points` (pin), EV0 compares it with `CAND` (`pt_value` / `pt_size` / `pt_speed`, `pt_cap` 1).
+5. **Docs and text.** GDD §7.9 (upgrades), PROTOCOL (remote, profile `Pts`, state `points`), TELEMETRY (`crop_point`), LAYOUT
+   (CropPageClient), UI_GARDEN_PETS §13 (the Upgrades section); strings with Czech.
+- **Not in EV3c (recommended):** no reset (★3 takes every line, so the order is the only choice and a reset would only undo it); no
+  collection total (it belongs to the quest book's mastery section after 1.0, §13).
+- **Acceptance:**
+  - `economy.py check` exit 0 (EV0 PASS, after `pin`); `loc.py build` / `check` (0 errors) / `lint` (within the baseline).
+  - One playtest boot without errors or warnings (server and client).
+  - Studio, on a fixture of Lekzdrh's profile (snapshot first, restored after) with Cucumber at 75 plants (★2) and no points: through the
+    real crop page, opened from the barn row and from the seed stall row, spend Value → the barn's Sell button and the stall row show
+    × 1.11 and a real sale pays it; spend Speed while a Cucumber grows → its `readyAt` moves to the × 0.89 time and the square card shows
+    the shorter time; a third + is refused (`points`) with the barn / coins unchanged; a repeated line refused (`maxed`, by firing the remote).
+  - Size: a fixture with the Size point → the next harvest's size factor = the roll × Sorter × 1.11 (toast kg, `BestSize`); the plant look
+    gets at most the old maximum (PlotView, checked in code with z = 4).
+  - Points survive a rejoin; the Goals panel shows *Upgrades* while a point is free and drops it after the last one is spent.
+  - Pseudo-language and Czech pass on the crop page (all three lines fit on a phone-sized viewport) and the stall / barn rows with the ★ button.
 
 **Not in EV3:** repeat-run Coins → Sunshine (EV2c); requests and trees (the online loop, E5); a flatter price curve (ECONOMY.md → open
 decision 5).
