@@ -1,23 +1,5 @@
 # Incubator redesign
 
-## Travelling scan light C (2026-11-17, implemented and desktop Studio-validated)
-
-Selected: bright segment travels around the existing scanning square, with two fading trail points. Keep the vertical sweep.
-Split the segment at corners rather than protruding outside the square. Full-detail only; scan timing / warmth unchanged.
-Acceptance: all four edges and wrap have the same 0.85-stud total highlight length, remain on the moving scan plane, and
-follow plot rotation. Segment / trail disappear during hatching, ready and empty; full / mid / low counts 27 / 7 / 3.
-Run a fresh boot, sample motion / phase reset, and keep the fixed body faces free of coplanar overlap.
-
-Validation (desktop Studio, 2026-11-17):
-- The user selected C from the three temporary visual concepts. Only C was added to the recipe; all review models removed.
-- 300 poses around one lap, repeated at yaw 0 / 90 / 180: total highlight length 0.84999997–0.85000003; all visible
-  segments remain at the scanning square's Y. Full / mid / low counts 27 / 7 / 3; no new tracer in mid or low.
-- All tracer and trail Parts hide in growing, ready and empty states. Live plot sample: trail moved over 0.5 s; one or two
-  clipped edge segments visible; trail transparency 0.3 / 0.6. Existing vertical sweep and 30-second phase unchanged.
-- Final boot and action logs: no client/server warnings or errors. No production strings, profile fields or hatch timings changed.
-  Surface fix is committed separately as 5ca5599; its static coplanar audit was clean at all details / three rotations.
-
-
 2026-11-17 surface fix: control housing width 0.68 leaves its inner face 0.06 studs clear of the lower cheek; simplified side
 bottoms embed in the base instead of sharing the nest's bottom plane. Coplanar audit clean for full / mid / low at 0° / 90° / 180°;
 Studio boot checked. The visible top edges, footprint and part counts are unchanged.
@@ -25,6 +7,7 @@ Studio boot checked. The visible top edges, footprint and part counts are unchan
 2026-11-17 phases: 30 s cyan scanning sweep + travelling edge light / fading trail + Scanning… (inside the existing hatch timer), then a soft pulsing amber nest glow
 and countdown; ready stays green with warming off. Stored anchors survive rejoin; instant-ready eggs skip the scan.
 Desktop Studio-validated. Phase scope, visual review and validation: `git show f636dd0:docs/INCUBATOR_REDESIGN.md`.
+Travelling-light C scope and validation: `git show 0a76951:docs/INCUBATOR_REDESIGN.md`.
 
 2026-11-17 access: Hatchery HUD beside Barn (ready-egg badge) near the own plot, or click/tap any own incubator from either side.
 Whole-pod hover; no hatchery E prompt. Barn keeps its existing availability; visible farm buttons center together.
