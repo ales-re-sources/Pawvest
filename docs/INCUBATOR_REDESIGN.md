@@ -1,20 +1,8 @@
 # Incubator redesign
 
-## Number plates and foundation (2026-11-17, desktop Studio-validated)
-
-Mount a small two-sided number plate above each pod's rear heater at full / mid detail; distant low detail stays simple.
-Floating empty / locked labels retain only status. Convert the plot strip's wooden edge beams to Plastic / Inlets to match
-the hatchery pavilion. Keep footprints, collision, timers and interaction unchanged.
-Acceptance: numbers 1–3 readable from front / rear, including occupied / locked nests; no floating incubator numbers;
-clean plate joints at three plot rotations; no Wood / WoodPlanks in the drawn strip; fresh Studio boot without errors.
-
-Validation: full / mid / low at yaw 0 / 90 / 180 use 28 / 8 / 3 body Parts; two-sided numbers match and the static coplanar
-audit is clean. Front / rear views checked with occupied, empty and locked pods; number text fits both faces. Raised busy
-status to clear the plate, and extended the click target to 7 × 6.5 × 7. Fresh boot confirms final offsets; clicking the upper
-plate opens the hatchery, and Close works. All six strip edges are Plastic / Inlets, with no wooden parts in the strip or
-pavilion. Both boots have no client / server errors or warnings. Visual fixtures changed only the client's public plot,
-without profile writes; removed all temporary review models and stopped playtests. Localization build / check / lint pass.
-Changed Czech: `🔒 Zamčeno`, `Prázdný` (floating statuses; number is now on the model).
+2026-11-17 number plates: two-sided plates above the rear heaters at full / mid detail; floating labels show only status.
+The plot strip's six edge beams now match the pavilion's Plastic / Inlets. Desktop Studio-validated, including plate clicks.
+Scope and validation: `git show a535c0e:docs/INCUBATOR_REDESIGN.md`.
 
 2026-11-17 surface fix: control housing width 0.68 leaves its inner face 0.06 studs clear of the lower cheek; simplified side
 bottoms embed in the base instead of sharing the nest's bottom plane. Coplanar audit clean for full / mid / low at 0° / 90° / 180°;
