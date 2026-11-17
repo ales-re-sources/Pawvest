@@ -41,8 +41,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | G1 | Player guidance hints (awaits the user's check in play) | ✔ | ✔ | – |
 | K1 | First-hour fixes (kid playtest 2026-11-01): Stage 5, G1 fallback, Double Jump world reward, hatch panel done; the rest is measured in M6a | partial | partial | – |
 | E0 | Economy model (its repricing replaced by EV) | ✔ | – | – |
-| EV | Engagement-first economy: EV1 model, EV2a numbers, EV2b talent bundles | EV1–EV2b ✔; EV2c–f open | EV2a, EV2b ✔ | – |
-| EV3 | Crop levels replace Renown, milestone quests, crop upgrades, first-hour obby payouts | EV3a model built; awaits sign-off | – | – |
+| EV | Engagement-first economy: EV1 model, EV2a numbers, EV2b talent bundles | EV1–EV2b, EV2e ✔; EV2c, EV2d, EV2f after 1.0 | EV2a, EV2b ✔ | – |
+| EV3 | Crop mastery: crop levels replace Renown, milestone quests, crop upgrades, first-hour obby payouts (1.0) | EV3a model revised 2026-11-17; numbers await sign-off | – | – |
 | E1.0, E1a–E1d | Client-drawn plots; crop field (every player's since FA), field pets, crops as pet food, size roll, upgrades, tools, market cart, 36 squares | ✔ | ✔ | – |
 | E2, E4-thin | Obby seeds (rare crops, meters, pouch, Scouting); crows and Pest-control guards | ✔ | ✔ | – |
 | OG | Offline crop growth 0.5 / 24 h | ✔ | pending | – |
@@ -53,36 +53,52 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | HX0 | Hybrid plants: look prototype (Studio reviewer only) | ✔ | ✔ (look approved 2026-11-16) | – |
 | HX1 | Hybrid plants: breeding mechanic design ([HYBRIDS.md](HYBRIDS.md)) | main rules decided 2026-11-16; numbers and rules open | – | – |
 | TH | Store thumbnails ([THUMBNAILS.md](THUMBNAILS.md) §8–9) | logo; release candidates A1, A2, A3, C1, C2, C3; B1 parked until D1 | stud sign decision, grid tile test, kid test open | – |
-| E5 | Garden MVP rest: request board, ledger on join, onboarding, garden telemetry | – | – | – |
+| ST | Rotating seed stall: slow UTC rotation, stock by mastery (1.0) | – | – | – |
+| SH | Harvest Hall (weekly biggest crop per kind) and plot likes (1.0) | – | – | – |
+| FB | Player feedback: stage rating, feedback box (1.0) | – | – | – |
+| E5 | Garden MVP rest: request board, ledger on join, onboarding, garden telemetry (1.0) | – | – | – |
 | M6a | Soft launch + World 1 balancing (balanced by feel 2026-10-30; live test open) | – | – | – |
 | MU | Mobile UX check | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
-| M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading | – | – | – |
+| M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading (after 1.0) | – | – | – |
 
 ## Next
-**Order (2026-10-30, updated 2026-11-06 and 2026-11-14).** The soft launch takes the obby (15 stages) and the garden as built: since FA
-(2026-11-06) every player has the crop field, so the rest of the garden MVP (EXPANSION §14) is built in the open game. World 4 waits until
-after the MVP.
+**1.0 (decided 2026-11-17, the user).** 1.0 = a long engagement loop + basic social competition; then the game goes public.
+- **Long loop:** crop mastery (EV3), a slowly rotating seed stall (ST), the request board and the ledger (E5).
+- **Social:** the Harvest Hall (weekly biggest crop of every kind) and likes on plots (SH).
+- **Player feedback** to us: stage ratings and a feedback box (FB).
+- **Not in 1.0:** obby time calibration (M6b; the obby stays as built), the comfort shop (D2: 1.0 ships without monetization),
+  Sunshine (EV2c), World 4, hybrids (HX1 build).
 
-1. **M6a soft launch** (friends, then unlisted) with 15 stages, pets and the garden: real finish times, T1a / T1b on the Creator Dashboard
-   and a first retention baseline (the obby-only baseline is dropped: the garden is in from the start). Includes the live-test checks under
-   "Open items". The store page needs **TH** before going public; an unlisted soft launch can start without it.
-2. **Offline growth (OG) validation:** a 24 h-back `SettledAt` must give `Grown` = 43 200 for a pumpkin (ripe at 28 800). The same test
-   explains the user's pumpkin that still had 5 h 47 min left after 24 h away (at most about 4 h was expected under the old 0.33 / 12 h rules).
-3. **EV3** sign-off, then EV3b (fixes the first hour) and EV3c; EV2c–f each scoped when it starts (section below).
-4. **E5 + rest of the garden MVP** (scope when it starts; EXPANSION §14): request board, the ledger on join (the join notice grows into it),
-   onboarding for the first ten minutes (it teaches the U1–U5 controls), garden telemetry. Before going public Max Players goes to 24 (a
-   place setting) and "Before Max Players 24" under "Open items" is checked.
-   **Gates before going public:** M6a, the balancing pass, the Czech review of the new texts, MU, TH1 + THU, EV3 (no Renown in the first
-   hour), an online loop from day 2 (requests, E5), and the comfort shop (D2) or a decision to launch without it. Whether the content horizon
-   (~5 days for a heavy player) is a gate too: ECONOMY.md → open decision 6.
-5. **MU** before anything goes public.
-6. **Drops D1–D10** after the MVP (EXPANSION §14), one every 1–2 weeks: Critters, Comfort shop (M7), Weekly, Variants, Kitchen (the first
-   restoration landmark), Neighbours, Mastery, World 4 (S9 / S10), the Estate, Season 1. Restoration bundles (E6, D5) and estate tiers / decor /
-   cottage (E7, D9) are the long-term Coin sinks; the model holds a placeholder for their size until they are designed.
+**Start here:** EV3a sign-off of the revised numbers (ECONOMY.md → open decision 4), then EV3b. Alongside: OG validation and the M6a friends test (step 0).
+*Update this line whenever a milestone finishes.*
 
-**Alongside:** plant growth art (open crops and checks: [PLANT_GROWTH.md](PLANT_GROWTH.md#crops-and-status); review = five snapshots, no
-animation capture), HX1 (design only), TH.
+**Road to 1.0** (in order; one milestone at a time unless marked "alongside"):
+0. **Alongside, now.** **OG validation:** a 24 h-back `SettledAt` must give `Grown` = 43 200 for a pumpkin (ripe at 28 800); the same
+   test explains the user's pumpkin that still had 5 h 47 min left after 24 h away. **M6a soft launch** (friends, then unlisted) on the
+   current build: real finish times, T1a / T1b on the Creator Dashboard, a first retention baseline and the live checks under "Open items"
+   tagged [1.0]. Unlisted needs no TH.
+1. **EV3 — crop mastery** (section below; player-facing name "Mastery ★"): sign-off → EV3b (levels, unlocks, Renown out) → EV3c (crop
+   upgrade points). *State:* direction decided 2026-11-17 (mastery by plants grown, 3 levels, price tiers); the revised EV3a model
+   awaits sign-off of its numbers.
+2. **ST — rotating seed stall** (section below): model, then build. *Needs* EV3b (★ decides which crops can appear).
+3. **SH — Harvest Hall and plot likes** (section below). *Needs* only the size records (built); best after EV3c, whose Size line changes
+   sizes.
+4. **FB — player feedback** (section below): small, alongside ST or SH.
+5. **E5 — the online loop** (scope when it starts; EXPANSION §14): request board (rules: ECONOMY.md → EV "Requests": tracked "grow 6 Tomatoes",
+   no hand-in and no accept step, an unfinished request stays, the board opens on day 0; decided 2026-11-17), the ledger on join
+   (the join notice grows into it), onboarding for the first ten minutes (teaches the U1–U5 controls, mastery, the stall, the Hall),
+   garden funnel telemetry.
+6. **Release gates, then public:** MU (section below; adds the Hall and a full field on a real phone), TH1 + THU, the Czech review of
+   every new text, the M6a live checks, "Before Max Players 24" under "Open items", then Max Players → 24 (a place setting).
+
+**After 1.0** (a drop every 1–2 weeks, EXPANSION §14; order provisional): D2 Comfort shop (M7) together with EV2c Sunshine, then M6b
+obby time calibration, D1 Critters, D3 Weekly, D4 Variants, D5 Kitchen, D6 Neighbours, D7 Pet depth, D8 World 4 (S9 / S10), D9 Estate,
+D10 Season 1; EV2d, EV2f and the HX1 build when they fit. **Accepted risk until EV2c:** the Tutorial repeat loop pays ~1 400 Coins / h
+(watch it in M6a telemetry).
+
+**Alongside, any time:** plant growth art (open crops and checks: [PLANT_GROWTH.md](PLANT_GROWTH.md#crops-and-status); review = five
+snapshots, no animation capture), HX1 (design only), TH.
 
 ### K1 — First-hour fixes, open part (kid playtest 2026-11-01)
 A 9-year-old on a phone, fresh progress, got stuck after about 20 minutes. Target: a new player who does not pay always has a next step for
@@ -91,8 +107,9 @@ the first hour; World 1 and the garden are tuned for 8–10 year olds on a phone
 him. Done: see "Done" → K1.
 - **World 2's star bar** stays at 10 of 15 until the wider test (the user, 2026-11-01); a checkpoint inside Stage 5's tightrope: not now
   (telemetry first).
-- **Key talents as world rewards:** done for Double Jump (GDD §6). Open: Triple Jump / Long Dash for World 3 — since EV2b Triple Jump
-  (World 3's hard gate) needs farm crops, so a kid who ignores the garden is blocked. The lost Coin sinks are made up in the balancing pass.
+- **Key talents as world rewards:** done for Double Jump (GDD §6). *Decided (the user, 2026-11-17):* World 3 gives no talent; Triple Jump,
+  Dash and Long Dash stay bought (with crops), so from World 3 on the farm feeds the obby. Open (the user): whether Double Jump stops being
+  World 2's reward (it was the fix for the kid who quit at World 2, K1).
 - **Measure it in M6a:** T1a fails per segment on Stage 5, quits per stage, session length of new players; whether the faster first pet
   level-ups (20 levels since 2026-11-12) feel right.
 
@@ -103,41 +120,47 @@ purchase** and the rarity sets the hatch time; a semi-random request board (crop
 pet on day 7; perennials; free play scarce enough that comfort products are worth buying (headroom 1.2–1.5×). Rebirth is evaluated by the
 model, not decided. Long term (recorded only): gifts / buying for a friend, a pet auction, quests.
 
-Still to build, each scoped when it starts: **EV2c** Sunshine (repeat-run Coins → 0), **EV2d** Scouting XP (today 15 min of XP per medal
+Still to build after 1.0, each scoped when it starts: **EV2c** Sunshine (repeat-run Coins → 0), **EV2d** Scouting XP (today 15 min of XP per medal
 finish against 10 h for level 2), **EV2f** field pets (Tending as growth speed, guards make their squares
 safe, crows scale with the field: a mechanics change the model assumes). Trees, requests and the streak come with E5 / the drops.
 
-### EV3 — Crop levels replace Renown; milestone quests; crop upgrades; first-hour obby payouts (draft 2026-11-14; awaits sign-off)
-Why, direction and rules: [ECONOMY.md](ECONOMY.md) → "EV3 — design draft"; findings and what to sign off: ECONOMY.md → Findings (EV3a) and
-open decision 4.
+### EV3 — Crop mastery replaces Renown; milestone quests; crop upgrades; first-hour obby payouts (revised 2026-11-17; numbers await sign-off)
+Why, direction and rules: [ECONOMY.md](ECONOMY.md) → "EV3 — design draft" and its revision (2026-11-17); findings and what to sign off:
+ECONOMY.md → Findings (EV3a, EV3 revision) and open decision 4. *Revision (the user, 2026-11-17):* mastery = plants grown of that crop,
+3 levels (one upgrade point each, one per line: a ★3 crop is fully upgraded), 16 crops in 6 price tiers, the third quest on Sweet potato,
+quests handed in piece by piece without expiry, rested mastery after a day away.
 
-**EV3a — model (no game code).** Built 2026-11-14: `economy_ev.py` with `CAND["mode"] = "stars"` (`"renown"` = as built) simulates crop XP,
-levels, unlocks, milestone quests and point spending; `evcheck` 18 / 18 (G10–G12 and U added); `economy.py proposal` prints the EV3 tables.
-Acceptance: the user signs off the thresholds, caps, quests and bands.
+**EV3a — model (no game code).** Built 2026-11-14, revised 2026-11-17: `economy_ev.py` `CAND` carries the revision (`tier_of`,
+`mastery: "count"`, `quest_partial`, `req_auto`, `rest_per_day`; the draft via `--set`, seeds via `--seed`); `evcheck` 13–15 / 18 on seeds
+1–4 (EV0 fails until EV3b); `economy.py proposal` prints the EV3 tables. Acceptance: the user signs off the tier prices, level counts,
+point size, quests and the near-misses (ECONOMY.md → open decision 4).
 
 **EV3b — levels, unlocks, Renown out (scope after EV3a's review).** Fixes the first hour.
-1. **Config:** `CropConfig` crops get level thresholds and, for milestones, `quest = { [cropId] = n }`; the `renown` gates of `Expansions`,
+1. **Config:** `CropConfig` crops get the tier prices (`sale` / `seed`), level counts and, for milestones, `quest = { [cropId] = n }`
+   (Corn, Pumpkin, Sweet potato); the `renown` gates of `Expansions`,
    `Upgrades`, `Tools` go (prices stay); `RenownK` / `RenownP` / `points` go; `StageConfig` payouts + seed packs.
-2. **Server:** `Garden.Crops[cropId] = { XP }` and `Garden.Unlocked` (IdSet; stored ids never reused); harvest adds XP and unlocks the
-   next crop at ★1 (answer `{ …, cropLevel, levelUp, unlocked? }`); `GardenRemotes.Quest(cropId)` at the seed stall takes a milestone bundle
-   (all or nothing, reject `crops`); `BuySeeds` checks `Unlocked`; `BuySquare` / `BuyUpgrade` / `BuyTool` lose the `renown` check and reject.
+2. **Server:** `Garden.Crops[cropId] = { N }` (plants grown) and `Garden.Unlocked` (IdSet; stored ids never reused); a harvest adds its
+   plants (double while `Garden.Rested` lasts, filled by days away past the first) and unlocks the next crop at ★1 (answer `{ …, cropLevel,
+   levelUp, unlocked? }`); `GardenRemotes.Quest(cropId, cropIdGiven, n)` at the seed stall hands in crops toward the open milestone
+   (progress in `Garden.Quest`, no expiry, reject `crops`); the last piece unlocks the crop and gives a seed pack of it; `BuySeeds` checks `Unlocked`; `BuySquare` / `BuyUpgrade` / `BuyTool` lose the `renown` check and reject.
 3. **Migration** (`Version = 7`): `Unlocked` = every crop whose old gate ≤ the profile's Renown level (no player loses a crop); crop XP
    starts at 0 (or from `Plantings` if the live profiles show it fair); `Renown` stays as a field, unused. Read the live profiles first.
-4. **Client:** seed stall: a locked crop shows the previous crop's ★ bar or the quest `{crop} {have}/{need}` with a Bring button; the
+4. **Client:** seed stall: a locked crop shows the previous crop's count ("Potato 32 / 50") or the quest `{crop} {have}/{need}` with a
+   Bring button per crop (the player chooses what to hand in); the
    crop's ★ on the seed row, square card and barn row; a level-up toast "Garlic ★2"; the Renown bar / level go (FieldHand, FieldClient,
    BarnClient, GardenSkills, SeedStallClient); sink tiles show only the price.
 5. **Docs and text:** GDD §7.9, PROTOCOL, ECONOMY.md, strings (the `renown` keys removed, new ones with Czech).
 - **Acceptance (draft):** `economy.py check` exit 0 (drift 0 after `pin`); `loc.py build / check / lint`; a boot without errors or
-  warnings; in Studio (snapshot first) on a fresh test profile Lettuce opens when Potato reaches ★1, the Corn quest done through the real
-  seed stall, one refusal for missing crops (nothing taken), a square and an upgrade bought on Coins alone; a migrated live profile keeps every
+  warnings; in Studio (snapshot first) on a fresh test profile Lettuce opens when Potato reaches ★1, the Corn quest handed in through the
+  real seed stall in two visits (the progress kept between them), one refusal for missing crops (nothing taken), a square and an upgrade bought on Coins alone; a migrated live profile keeps every
   crop it could buy; the word Renown nowhere on screen in English or Czech (pseudo-language pass, `strings.csv` grep); the Tutorial's
   first clear pays the new amount and the seed pack; Czech fits on the stall and the square card.
 
 **EV3c — crop upgrades (scope after EV3b; can ship as a drop).** The endgame layer.
-1. **Server:** `Garden.Crops[cropId].Pts = { Value, Size, Speed }`; `GardenRemotes.CropPoint(cropId, line)` (free points = level − spent;
+1. **Server:** `Garden.Crops[cropId].Pts = { Value, Size, Speed }` (0 or 1 each, +11 % per point); `GardenRemotes.CropPoint(cropId, line)` (free points = level − spent;
    reject `points` / `maxed`); sale, size roll and grow time read the crop's points (grow time settled server-side as now).
-2. **Client:** a crop page (from the seed stall row and the barn row): ★ level and bar, the three lines with their dots and the next
-   effect, a + per line; the square card's ready time uses the crop's speed.
+2. **Client:** a crop page (from the seed stall row and the barn row): ★ level and count, the three lines with the effect as a number
+   ("sells 1 400 → 1 550", "ready 15:00 → 13:21"), a + per line; the square card's ready time uses the crop's speed.
 3. **Docs and text** as EV3b.
 - **Acceptance (draft):** model and loc checks as EV3b; in Studio a point spent in each line through the real crop page, its effect
   seen (sale price, size factor, ready time); a refusal without free points.
@@ -146,7 +169,55 @@ Acceptance: the user signs off the thresholds, caps, quests and bands.
 **Not in EV3:** repeat-run Coins → Sunshine (EV2c); requests and trees (the online loop, E5); a flatter price curve (ECONOMY.md → open
 decision 5).
 
-### HX1 — Hybrid plants: the breeding mechanic (design only; added 2026-11-16, not yet placed in the order above)
+### ST — Rotating seed stall (decided 2026-11-17; model first, then build; needs EV3b)
+*Why (the user):* planting is too linear; a stall that does not offer everything makes the player plant what is there and gives online
+news. EXPANSION §1.1 holds: a slow UTC rotation (hours), never a restock every few minutes. ECONOMY.md → Findings "Rotating stall and
+trees" probed a 10-minute stall (15 / 18 checks; the top crop became luck, talent-bundle crops waited on stock).
+1. **Model (no game code):** an `economy_ev.py` unlock mode = the EV3 chain (★ decides which crops can appear) + stall stock restocking
+   every 1–3 h on a UTC schedule. Always in stock: staples (Potato–Garlic), crops of an open talent bundle (G4), quest crops while the
+   quest is open. A pity rule shows the newest unlocked crop at least every N restocks (G9); the first hour keeps its news (G7).
+   Acceptance: `evcheck` 18 / 18 on seeds 1–4; the user signs off cadence and stock numbers (ECONOMY.md → open decision 8).
+2. **Server:** offers derived from the UTC block like the market cart (`CropConfig.CartDay` / `CartOffers`; per-player counts reset as
+   `cartToday` in GardenField does), no DataStore for stock; `BuySeeds` checks the block's stock (reject `stock`). Open: whether the
+   market cart merges into the stall.
+3. **Client:** the seed stall shows the stock per row and "restocks in" (`TimeFormat.Clock`); a sold-out row stays visible.
+4. **Docs and text:** GDD §7.9, PROTOCOL, ECONOMY.md, strings EN + CS.
+- **Acceptance (draft):** `economy.py check` exit 0; `loc.py build / check / lint`; a boot without errors; two servers show the same offers
+  in one block; a buy over stock is refused with nothing taken; the next block resets the counts; a talent-bundle crop is always buyable;
+  Czech fits on the stall row.
+
+### SH — Harvest Hall and plot likes (decided 2026-11-17; scope when it starts)
+*Why (the user):* players should feel competition, not play alone. Size records per crop exist (`Garden.BestSize`, GDD §7.9 size roll).
+1. **Server:** `Garden.WeekBest = { Week, [cropId] = factor }`; a better weekly size queues a write to an OrderedDataStore per week and
+   crop (an integer from the factor; the earlier time wins a tie), flushed at most once per crop per ~60 s per server (quick crops
+   harvest every 10 s); every server reads the top N per crop every few minutes; an all-time Top-10 per crop in a second store. Hook:
+   the record check in GardenField's `store`.
+2. **Hub (Studio scene):** a hall with a pedestal per crop showing this week's biggest in its grown art (`<CropId>Plant` at 100 % ×
+   factor), the owner's name, avatar and kg; an all-time board; a cosmetic ribbon for the week's #1 (no Coins). A server-wide toast
+   "{name} grew a Giant {crop}" (`HudPopup`). The own record shelf on the plot ("Open items" → Not built).
+3. **Plot likes** (taken from D6): a like at another player's plot sign, once per plot per day per liker, no self-likes (`RateLimit`); the
+   count on the sign and in the owner's join notice / ledger; a total `Garden.Likes` (the garden score uses it later, D9).
+4. **Docs and text:** GDD, PROTOCOL (stores, fields, remotes), TELEMETRY (Hall entry, like), strings EN + CS.
+- **Fairness:** size comes from the roll, the Seed sorter and EV3's Size line; nothing sold may ever touch size (EXPANSION §13).
+- **Acceptance (draft):** a harvest that beats the week's #1 shows on the pedestal on a second server within a few minutes; a smaller one
+  writes nothing; a new week starts empty (tested with a shifted week number, not the clock); 12 quick-crop harvests in a minute cause at
+  most 1 write per crop; a second like the same day and a self-like are refused; the Giant toast shows on another client.
+
+### FB — Player feedback (decided 2026-11-17; small, alongside ST or SH)
+*Why (the user):* we need to hear the players; kids rarely write reviews. Three channels, all to us.
+1. **Stage rating:** 👍 / 👎 on the stage results popup after a finish (optional, one per stage and player, changeable); not at the gate
+   (before a run there is nothing to rate). A `Telemetry` event (stage, medal, rating) and per-stage counts; input for M6b.
+2. **Plot likes** (SH) double as a signal of which gardens interest people.
+3. **"Send feedback"** in Settings: one box (≤ 300 characters), a category (bug / idea / other), the area / stage attached
+   automatically; filtered with `TextService:FilterStringAsync` before storing; 3 a day per player (`RateLimit`); a line "don't write your
+   name or contacts". Stored in a DataStore `PlayerFeedback` (key = time + UserId), read by us through the MCP or Open Cloud, never shown
+   to players. An admin-panel list is optional.
+4. **Docs and text:** PROTOCOL, TELEMETRY, strings EN + CS.
+- **Acceptance (draft):** a rating through the real popup reaches the telemetry log and the counts, a second rating replaces the first;
+  feedback through the real Settings box is stored filtered with its area; the 4th in a day, an empty and an over-long text are refused;
+  filtering is checked in the live test (Studio does not filter text).
+
+### HX1 — Hybrid plants: the breeding mechanic (design only; added 2026-11-16; the build comes after 1.0)
 Settle the game mechanic before any game code. Notes, decisions and open points: [HYBRIDS.md](HYBRIDS.md); the HX0 prototype: "Done".
 **Decided (Ales, 2026-11-16):** price = measured kg × inherited value per kg; grow time from plant mass; strains (not single
 fruits) are the unit of breeding; a hybrid can have two harvests or none; perennials; big plants take a 2×2 block. Still to settle:
@@ -172,7 +243,7 @@ photo-set scripts): THUMBNAILS.md §9.
 
 ### MU — Mobile UX check (scope when it starts)
 Pawvest is **mobile-first** (decided 2026-10-24). A checklist on a real phone and the Studio device emulator, before anything goes public and
-before M7: touch layout of every panel and popup at phone sizes, tap targets, safe areas, Czech text length, touch controls for the kit and
+before M7 (a 1.0 gate; add the Harvest Hall, the rotating stall and the feedback box to the list): touch layout of every panel and popup at phone sizes, tap targets, safe areas, Czech text length, touch controls for the kit and
 talents (the Dash button was never tried on a phone), performance on a mid-range phone (pets, a full garden, the plant art; no phone number
 yet), the first minutes, the T1a platform split. Collected from finished work: the field's tap-select and two-tap pet drop on touch (U3),
 whether squares are easy to hit from the default camera (decides the field camera button, UI_GARDEN_PETS §12.4), the hatchery, pet picker
@@ -190,22 +261,24 @@ and dialogs on a physical phone.
 - **M7 — Monetization:** comfort only (no paid random items, luck and weather never sold; EXPANSION §13), drop D2.
 
 ## Open items from finished work
-- **For the live test (M6a):** several real players at once (others' plots, pets, coins; checkpoint pads only for their own player); two servers
-  at once (boards and `MostStars`); gate prompts on a locked stage; a real 1-hour Golden egg and the inventory cap with free eggs waiting; every
+Tagged **[1.0]** (needed before 1.0 goes public) or **[later]**.
+- **[1.0] For the live test (M6a):** several real players at once (others' plots, pets, coins; checkpoint pads only for their own player); two servers
+  at once (boards, `MostStars` and, once built, the Harvest Hall); gate prompts on a locked stage; a real 1-hour Golden egg and the inventory cap with free eggs waiting; every
   telemetry event type on the Creator Dashboard (only then T1 is live-validated); a pet name the filter changes shows as `####` (Studio does
   not filter text); the checkpoint respawn fix (2026-11-14) and garden arrival on the published game.
-- **Before Max Players 24 (going public):** 24 plots with fields at once (the budget was checked with synthetic plots only; the plant art
+- **[1.0] Before Max Players 24 (going public):** 24 plots with fields at once (the budget was checked with synthetic plots only; the plant art
   adds up to 6 084 Parts per full field); a second client watching a square purchase.
-- **The user's checks:** G1 hints in play; a multi-client test (F7): each client sees the other's pets with their level look (P4 / U1), rings
+- **[1.0] The user's checks:** G1 hints in play; a multi-client test (F7): each client sees the other's pets with their level look (P4 / U1), rings
   only over the own field and no selection on a neighbour's (U3); the stills of Tomato (CG1e), Pepper and Pumpkin.
-- **Checked in code only:** the crow part of the summary bubble (`🐦 now` / `🐦 0:45`, U4); the first-harvest toast and the young-field pulse
+- **[1.0] Checked in code only** (check in the M6a playtests): the crow part of the summary bubble (`🐦 now` / `🐦 0:45`, U4); the first-harvest toast and the young-field pulse
   (playtest fixes 2026-11-08); the pet page's Feed card with held crops and its Czech width (20 levels, 2026-11-12).
-- **Localization:** Czech overflow screenshots of the panels (the font is BuilderSansBold, so re-check widths in Czech and the
+- **[1.0] Localization:** Czech overflow screenshots of the panels (the font is BuilderSansBold, so re-check widths in Czech and the
   pseudo-language), the Stage 9 exit-door label, the food stand's prompt ("Buy food" is a Studio literal: set its texts from
   `FoodShopClient` as `SeedStallClient` does).
-- **Not built:** the pet page's "hatched on … from a Basic egg" line (`Born` / `Egg`); "Show on field" on the pet page (U3b); a "barn full"
-  cue in the world and a public shelf of record crops in their grown art (Estate / decor drop).
-- **Housekeeping (Studio):** delete `ReplicatedStorage.StageTimerStopped` (unused).
+- **[1.0] Not built:** the own shelf of record crops in their grown art (part of SH).
+- **[later] Not built:** the pet page's "hatched on … from a Basic egg" line (`Born` / `Egg`); "Show on field" on the pet page (U3b); a
+  "barn full" cue in the world.
+- **[1.0] Housekeeping (Studio):** delete `ReplicatedStorage.StageTimerStopped` (unused).
 
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
@@ -222,6 +295,10 @@ take a 2×2 block, its footprint from the blended `bulk` gene. Next: HX1.
 purchase / free placement, shared rarity timers (Common / Uncommon 5 m, Rare 1 h, Epic / Legendary 4 h); pet hidden until hatch,
 Square trash uses ConfirmTap (orange OK? → second tap, discard without refund); aligned odds rows and short egg info tips. Existing eggs keep their deadlines; first free pet stays instant. Physical touch and
 live validation remain open.
+
+**Hatchery access** (2026-11-17; GDD §7.6). Desktop Studio-validated: Hatchery HUD beside Barn with a ready-egg badge;
+click/tap any own pod from either side, including empty / locked pods, with whole-pod hover. Hatchery E prompt removed.
+Passive GUI and range guards tested; physical phone touch remains open.
 
 **Hatchery redesign** (2026-11-16; GDD §7.6). Cross-lapped stud egg shells and 3D egg cards, stud-textured foundations, a tall pavilion with
 a front prompt, a passive dialog cursor with world-input guards, owner-only nest labels fading at 24–30 studs. Studio-validated; physical

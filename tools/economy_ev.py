@@ -16,6 +16,7 @@ Every number in CAND is a candidate for the user's review (the proposal table); 
 The checks G1-G12, R, B, B2, C, U read the simulation (ECONOMY.md -> "EV checks"). EV3a: CAND["mode"] "stars" (crop levels, quests, crop
 points, sinks on Coins alone) or "renown" (the game as built).
 """
+import ast
 import bisect
 import math
 import random
@@ -52,15 +53,34 @@ CAND = {
     # each star = one point in Value (sale x), Size (size factor x) or Speed (grow time x); pt_cap per line, so 3 x pt_cap stars per crop.
     # The draft's first cut (+10 % / +10 % / -6 %) made a maxed crop x3.7 per square-hour (~7 steps); the cap is 2-3 steps (check U).
     # At 3 steps (+3 % / +3 % / -3 %) the extra income bought the shop out early (G5, C, G8, B2 failed): about 2 steps
-    "pt_cap": 5, "pt_value": 0.02, "pt_size": 0.02, "pt_speed": 0.025,
+    # EV3 revision (2026-11-17): 3 levels, one point per level and per line (+11 % / +11 % / -11 %: x1.47, 2.1 steps); the draft had
+    # pt_cap 5 at +2 % / +2 % / -2.5 % (15 stars per crop, steps a player does not notice)
+    "pt_cap": 1, "pt_value": 0.11, "pt_size": 0.11, "pt_speed": 0.11,
     "pt_order": ("Value", "Speed", "Size"),  # policy: Value first
     "chase": 0.5,  # policy: just enough squares of the newest crop to fill its star 1, while it earns >= chase x the best crop's rate
+    # EV3 revision (the user, 2026-11-17; the 2026-11-14 draft = tier_of None, mastery "time", quest_partial / req_auto False,
+    # rest_per_day 0, pt_cap 5 at +2 / +2 / -2.5 %, the Giant melon quest; probe it with --set):
+    # tier_of: price tiers of 2-3 crops (ladder index -> tier); a tier shares one net Coins per square-hour (v1 x r_tier^tier), its crops
+    # differ in grow time, so the rotating stall (ST) can offer any of them. None = the smooth ladder (v1 x r^k).
+    "tier_of": [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5, 5], "r_tier": 1.727,
+    # mastery "count": a level needs plants of that crop (star 1 = round(star_n0 x star_g^k) plants, level L = star 1 x m_mult[L - 1]);
+    # "time": XP = grow minutes (the draft). With pt_cap 1 there are 3 levels and a level-3 crop is fully upgraded.
+    "mastery": "count", "m_mult": (1, 4, 25),
+    # quest_partial: crops are handed in as they come and the progress is kept (no barn space held, no expiry)
+    "quest_partial": True,
+    # req_auto: requests track crops grown ("grow 6 Tomatoes"), nothing is handed in, the bonus is req_bonus x the sale of the count;
+    # an unfinished request stays, only finished slots refill on the next UTC day
+    "req_auto": True, "req_bonus": 0.6,
+    # rested mastery: each full day away past the first adds rest_per_day "star 1s" of plants that count double (cap rest_cap)
+    "rest_per_day": 0.5, "rest_cap": 3.0,
     # milestone quests (taken at once from the barn, EV2b's TakeCrops); quest_star: the quest opens only at the previous crop's star 1
     # (False: as soon as the previous crop is unlocked; the strict chain made a 3-4 h crop come days later for a 2-visit player, G2)
     "quest_star": False,
     # (about one partial field harvest: 15 Broccoli + 15 Pepper took Casual ~2.5 days and ~615 000 Coins of sales; Broccoli in the Pumpkin
     # quest kept 2 h crops on a weekly player's squares through its first session, G1)
-    "quests": {"Corn": {"FP5": 6, "FP3": 10}, "Pumpkin": {"FP6": 5, "Corn": 8}, "GiantMelon": {"FP10": 4, "FP9": 5}},
+    # (2026-11-17: the third quest moved from Giant melon to Sweet potato, the first crop of price tier 5; the draft had Giant melon:
+    # 4 Sweet potato + 5 Blueberry)
+    "quests": {"Corn": {"FP5": 6, "FP3": 10}, "Pumpkin": {"FP6": 5, "Corn": 8}, "FP10": {"FP9": 5, "FP8": 4}},
     # unlock rule (EV3a comparison, 2026-11-14): "price" = no unlock: every crop is in the stall from the start and its seed price paces
     # it (the genre's way; a crop counts as "opened" at its first harvest, quests off); "chain" = a crop opens at the previous one's
     # star 1 (the draft); "total" = at a total of
@@ -190,12 +210,13 @@ def build(c=None):
     seed = c["seed_frac"]
     crops = []
     for k, (cid, secs) in enumerate(c["ladder"]):
-        v = c["v1"] * c["r"] ** k
+        v = c["v1"] * (c["r"] ** k if c["tier_of"] is None else c["r_tier"] ** c["tier_of"][k])
         sale = max(2, nice(v * secs / H / (1 - seed)))
         sd = max(1, nice(sale * seed))
         pts = max(1, round(c["pts_a"] * (secs / 60.0) ** c["pts_b"]))
         crops.append({"k": k, "id": cid, "t": float(secs), "sale": sale, "seed": sd, "net": sale - sd, "pts": pts, "gate": c["crop_gate"][k],
-                      "v": v, "rare": False, "star1": round(c["star_n0"] * c["star_g"] ** k) * secs / 60.0,
+                      "v": v, "rare": False, "tier": k if c["tier_of"] is None else c["tier_of"][k],
+                      "star1": round(c["star_n0"] * c["star_g"] ** k) * (1.0 if c["mastery"] == "count" else secs / 60.0),
                       "quest": dict(c["quests"].get(cid, {})), "total_need": c["total_k"] * c["crop_gate"][k] ** c["renown_p"]})
     M["crops"] = crops
     M["mode"] = c["mode"]
@@ -267,7 +288,10 @@ def renown_level(M, pts):
 
 
 def star_need(crop, L, c):
-    """XP (grow minutes) a crop needs in all for star L: star1 (the unlock pace), then star_u x minutes^star_b x (L - 1)^star_p."""
+    """XP a crop needs in all for star L. "time": grow minutes, star1 (the unlock pace), then star_u x minutes^star_b x (L - 1)^star_p;
+    "count": plants, star1 x m_mult[L - 1]."""
+    if c["mastery"] == "count":
+        return crop["star1"] * c["m_mult"][L - 1]
     if L <= 1:
         return crop["star1"] * L
     return crop["star1"] + c["star_u"] * (crop["t"] / 60.0) ** c["star_b"] * (L - 1) ** c["star_p"]
@@ -283,6 +307,11 @@ def maxed_mult(c, seed_frac=None):
     s = c["seed_frac"] if seed_frac is None else seed_frac
     a, g = pt_mults({"Value": c["pt_cap"], "Size": c["pt_cap"], "Speed": c["pt_cap"]}, c)
     return (a - s) / (1 - s) / g
+
+
+def xp_unit(crop, c):
+    """XP of one plant of `crop`: 1 ("count") or its grow minutes ("time")."""
+    return 1.0 if c["mastery"] == "count" else crop["t"] / 60.0
 
 
 def first_clear_coins(M, s):
@@ -342,6 +371,9 @@ class Sim:
         self.cpts = {cr["k"]: {"Value": 0, "Size": 0, "Speed": 0} for cr in M["crops"]}
         self.star_t = []  # (t, ladder index, star)
         self.quest_t = {}  # ladder index -> time its quest was done
+        self.qgot = {}  # quest_partial: crop id -> crops already handed in to the open quest
+        self.rest = 0.0  # rested mastery left, in "star 1s" of plants
+        self.star_newest = []  # (t, ladder index of the star's crop, newest unlocked index then): the revised G11
         self.harv = {}  # day -> [square-harvests, of crops >= 3 steps below the newest unlocked]
         self.clear_log = []  # (t, stage key, Coins + seed pack value, the farm's online Coins per minute)
         self.lvl = {"Growth": 0, "Barn": 0, "Sorter": 0, "Cloches": 0, "Shears": 0, "FieldSlot": 1, "EquipSlot": 1, "Incubator": 1, "Square": 0}
@@ -369,6 +401,8 @@ class Sim:
         self.meter = {}
         self.requests = []
         self.req_day = -1
+        self.board_day = -1  # the day the request board was last filled
+        self.req_done_t = []  # times requests were finished (news, G7)
         self.streak = 0
         self.streak_last = -1
         self.last_crop = M["crops"][0]
@@ -597,12 +631,17 @@ class Sim:
                 self.total_unlocks(t)
             return
         k = crop["k"]
-        self.xp[k] += n * crop["t"] / 60.0
+        bonus = 0.0
+        if self.rest > 0 and self.star[k] < self.M["levels"]:  # rested: plants count double while the pool lasts
+            bonus = min(n, self.rest * crop["star1"] / xp_unit(crop, self.c))
+            self.rest -= bonus * xp_unit(crop, self.c) / crop["star1"]
+        self.xp[k] += (n + bonus) * xp_unit(crop, self.c)
         self.xp_total += n * crop["t"] / 60.0
         self.total_unlocks(t)
         while self.star[k] < self.M["levels"] and self.xp[k] >= star_need(crop, self.star[k] + 1, self.c) - 1e-9:
             self.star[k] += 1
             self.star_t.append((t, k, self.star[k]))
+            self.star_newest.append((t, k, self.newest()))
             for line in self.c["pt_order"]:
                 if self.cpts[k][line] < self.c["pt_cap"]:
                     self.cpts[k][line] += 1
@@ -649,10 +688,22 @@ class Sim:
         crop = self.open_quest()
         if crop is None:
             return False
-        if any(self.kept.get(cid, 0) < n for cid, n in crop["quest"].items()):
+        if self.c["quest_partial"]:  # hand in what the barn holds beyond the next talent's bundle, keep the progress
+            nt = self.next_talent()
+            hold = {self.M["crops"][k - 1]["id"]: m for k, m in nt["crops"].items()} if nt else {}
+            for cid, n in crop["quest"].items():
+                give = min(self.kept.get(cid, 0) - hold.get(cid, 0), n - self.qgot.get(cid, 0))
+                if give > 0:
+                    self.kept[cid] -= give
+                    self.qgot[cid] = self.qgot.get(cid, 0) + give
+            if any(self.qgot.get(cid, 0) < n for cid, n in crop["quest"].items()):
+                return False
+            self.qgot = {}
+        elif any(self.kept.get(cid, 0) < n for cid, n in crop["quest"].items()):
             return False
-        for cid, n in crop["quest"].items():
-            self.kept[cid] -= n
+        else:
+            for cid, n in crop["quest"].items():
+                self.kept[cid] -= n
         self.quest_t[crop["k"]] = t
         self.unlock(t, crop["k"])
         return True
@@ -694,9 +745,11 @@ class Sim:
         q = self.open_quest()
         if q:
             for cid, n in q["quest"].items():
-                want[cid] = want.get(cid, 0) + n
+                left = n - self.qgot.get(cid, 0)
+                if left > 0:
+                    want[cid] = want.get(cid, 0) + left
         for rq in self.requests:
-            if rq["type"] == "crop" and not rq["done"]:
+            if rq["type"] == "crop" and not rq["done"] and not self.c["req_auto"]:
                 want[rq["crop"]["id"]] = want.get(rq["crop"]["id"], 0) + rq["q"]
         return want
 
@@ -736,7 +789,10 @@ class Sim:
         if self.first_harvest_t is None:
             self.first_harvest_t = t
         self.first_crop_t.setdefault(crop["id"], t)  # the first harvest of a crop kind is news too (G7)
-        self.check_requests(t)
+        if self.c["req_auto"]:
+            self.track_requests(t, crop, n)
+        else:
+            self.check_requests(t)
 
     def rate(self, t, crop, n, bonus=True):
         """Coins per wall-clock second of a square planted with `crop` at t until the player can harvest it."""
@@ -746,7 +802,9 @@ class Sim:
         if h == math.inf:
             return -1.0
         gain = (self.sale_of(crop) - crop["seed"]) * self.sale_mult() * self.mult
-        if bonus and self.wanted().get(crop["id"], 0) > self.kept.get(crop["id"], 0):
+        if bonus and self.c["req_auto"] and self.req_left(crop["id"]) > 0:
+            gain += self.sale_of(crop) * self.c["req_bonus"] * self.mult  # a tracked request pays its bonus on top of the sale
+        elif bonus and self.wanted().get(crop["id"], 0) > self.kept.get(crop["id"], 0):
             gain += self.sale_of(crop) * (self.c["req_mult"] - 1) * self.mult  # a request crop pays the premium
         return gain / max(1.0, h - t)
 
@@ -772,8 +830,9 @@ class Sim:
         if self.star[new["k"]] > 0:
             return
         growing = sum(b["n"] for b in self.batches if b["crop"] is new)
-        short = star_need(new, 1, self.c) - self.xp[new["k"]] - growing * new["t"] / 60.0
-        n = min(self.free_sq, math.ceil(short / (new["t"] / 60.0) - 1e-9), int(self.coins // max(1, new["seed"])))
+        u = xp_unit(new, self.c)
+        short = star_need(new, 1, self.c) - self.xp[new["k"]] - growing * u
+        n = min(self.free_sq, math.ceil(short / u - 1e-9), int(self.coins // max(1, new["seed"])))
         if n <= 0:
             return
         best = self.choose(t, n)
@@ -878,6 +937,10 @@ class Sim:
         # crops the barn still needs: the next talent's bundle (planted when it ripens by the next visit) and open requests (planted when
         # their premium beats the best crop's rate)
         want = self.wanted()
+        if self.c["req_auto"]:  # tracked requests: planted when their bonus beats the best crop's rate (nothing kept in the barn)
+            for rq in self.requests:
+                if rq["type"] == "crop" and not rq["done"]:
+                    want[rq["crop"]["id"]] = want.get(rq["crop"]["id"], 0) + rq["q"] - rq["have"]
         unl = {c["id"]: c for c in self.unlocked()}
         nt = self.next_talent()
         bundle = set()
@@ -1301,7 +1364,8 @@ class Sim:
             return
         self.req_day = d
         self.qrng = random.Random(self.seed * 1000003 + d)  # one stream per day: runs that differ elsewhere see the same requests
-        self.requests = []
+        if not self.c["req_auto"]:
+            self.requests = []
         want = self.wanted()
         for cid, n in list(self.kept.items()):  # crops kept for yesterday's requests are sold
             extra = n - want.get(cid, 0)
@@ -1311,20 +1375,33 @@ class Sim:
                 self.earn(t, extra * self.sale_of(crop) * self.sale_mult(), "rare" if crop["rare"] else "field")
         self.runs_today = {}
         self.first_today = set()
-        self.requests = []
+        self.fill_requests(t)
+        self.streak_day(t, d)
+
+    def fill_requests(self, t):
+        """The day's requests. req_auto: an unfinished request stays and only finished slots refill; the board opens (fills) on the
+        first visit with two eligible crops known, even mid-day (a fresh player's first board on day 0)."""
+        d = self.day(t)
+        carry = [rq for rq in self.requests if not rq["done"]] if self.c["req_auto"] else []
+        self.requests = list(carry)
         crops = [c for c in self.known() if c["t"] <= self.c["req_max_h"] * H and c["k"] >= 2]
         daily = max(self.daily_income(), 2000.0)
-        picked = set()
-        for slot in range(self.c["req_per_day"] if len(crops) >= 2 else 0):
-            if slot == self.c["req_per_day"] - 1 and self.cleared and self.qrng.random() < self.c["req_run_share"]:
+        picked = {rq["crop"]["id"] for rq in carry if rq["type"] == "crop"}
+        has_run = any(rq["type"] == "run" for rq in carry)
+        for slot in range(len(carry), self.c["req_per_day"] if len(crops) >= 2 else 0):
+            if slot == self.c["req_per_day"] - 1 and not has_run and self.cleared and self.qrng.random() < self.c["req_run_share"]:
                 self.requests.append({"type": "run", "done": False})
                 continue
             choices = [c for c in crops if c["id"] not in picked] or crops
             crop = self.qrng.choice(choices)
             picked.add(crop["id"])
             q = max(3, min(self.barn_cap() // 2, round(self.c["req_size"] * daily / max(1, crop["sale"] * self.mult))))
-            self.requests.append({"type": "crop", "crop": crop, "q": q, "done": False})
-        # streak (the day's first session)
+            self.requests.append({"type": "crop", "crop": crop, "q": q, "done": False, "have": 0})
+        if len(crops) >= 2:
+            self.board_day = d
+
+    def streak_day(self, t, d):
+        """The streak (the day's first session)."""
         if self.streak_last != d:
             self.streak_last = d
             self.streak = self.streak % 7 + 1
@@ -1345,6 +1422,24 @@ class Sim:
                 rq["done"] = True
                 self.earn(t, rq["q"] * self.sale_of(rq["crop"]) * self.c["req_mult"], "request")
                 self.add_points(t, rq["crop"]["pts"] * rq["q"])
+                self.request_drop(t)
+                self.mark(t)
+
+    def req_left(self, cid):
+        return sum(rq["q"] - rq["have"] for rq in self.requests if rq["type"] == "crop" and not rq["done"] and rq["crop"]["id"] == cid)
+
+    def track_requests(self, t, crop, n):
+        """req_auto: a harvest counts toward the open requests of its crop; a finished one pays its bonus (the crops were sold)."""
+        for rq in self.requests:
+            if rq["done"] or rq["type"] != "crop" or rq["crop"]["id"] != crop["id"] or n <= 0:
+                continue
+            use = min(n, rq["q"] - rq["have"])
+            rq["have"] += use
+            n -= use
+            if rq["have"] >= rq["q"]:
+                rq["done"] = True
+                self.req_done_t.append(t)
+                self.earn(t, rq["q"] * self.sale_of(crop) * self.c["req_bonus"], "request")
                 self.request_drop(t)
                 self.mark(t)
 
@@ -1372,6 +1467,8 @@ class Sim:
         self.apply_sun(t)
         got = self.collect(t, online)
         got = self.try_quest(t) or got
+        if self.c["req_auto"] and self.board_day != self.day(t) and self.req_day == self.day(t):
+            self.fill_requests(t)  # the board opens as soon as two eligible crops are known
         if got and online:
             self.mark(t)
         self.visit_stall(t)
@@ -1431,6 +1528,8 @@ class Sim:
                 self.add_points(b, crop["pts"] * extra)
                 self.add_xp(b, crop, extra)
                 self.tend_extra += extra * crop["net"]
+        if self.c["rest_per_day"] > 0 and b - a > DAY:  # rested mastery for the days away past the first
+            self.rest = min(self.c["rest_cap"], self.rest + (b - a - DAY) / DAY * self.c["rest_per_day"])
         hours = self.growth(a, b) / H
         for p in self.pets:
             if p["where"] == "field":
@@ -1655,7 +1754,11 @@ class Sim:
 _RUNS = {}
 
 
+SEED = [1]  # the default random seed of a run (`--seed N`)
+
+
 def run(M, arch, policy="talent-first", days=60, **kw):
+    kw.setdefault("seed", SEED[0])
     key = (id(M), arch["name"], policy, days, tuple(sorted(kw.items())))
     if key not in _RUNS:
         _RUNS[key] = Sim(M, arch, policy, days, **kw).run()
@@ -1676,7 +1779,7 @@ def first_hour(M):
     levels = [t for t, _, _ in s.star_t] if s.stars_on else s.level_t  # a crop's star (EV3) or a Renown level
     news = sorted(set(unl + [d * DAY for d in s.buy_day.values() if d * DAY <= 3600] + [t for t in s.hatch_t if t <= 3600]
                       + [t for t in levels if t <= 3600] + [t for t in s.first_crop_t.values() if t <= 3600]
-                      + [t for t in s.first_seed_t.values() if t <= 3600]))
+                      + [t for t in s.first_seed_t.values() if t <= 3600] + [t for t in s.req_done_t if t <= 3600]))
     gaps = [b - a for a, b in zip(news, news[1:] + [3600.0])]
     sq = s.buy_day.get("Square 5")
     return {"first_harvest_s": s.first_harvest_t, "crops_hour1": len(unl), "max_gap_min": round(max(gaps) / 60, 1),
@@ -1908,15 +2011,16 @@ def ev3_checks(M, sims, names, days):
             k, m = max(mm, key=lambda x: x[1])
             rows.append(f"{n} at most {m:.1f} ({k})")
     out.append(("G10 a Tutorial / World 1 first clear <= 3 min of the farm (Casual)", ok, "; ".join(rows)))
-    # G11 days 3-30: >= 15 % of square-harvests are crops >= 3 steps below the newest unlocked one
-    OM = old_model()
-    rows, ok, old_ok = [], True, True
+    # G11 (revised 2026-11-17: the harvest share passed the Renown model too): days 3-30, >= 15 % of the crop levels earned are on crops
+    # >= 3 steps below the newest unlocked one (old crops get levelled, not only planted); the harvest share is printed for reference
+    rows, ok = [], True
     for n in names:
-        sh, osh = old_share(sims[(n, "talent-first")]), old_share(run(OM, arch_by(n), "talent-first", days))
+        s = sims[(n, "talent-first")]
+        st = [(k, nw) for t, k, nw in s.star_newest if 3 * DAY <= t < 30 * DAY]
+        sh = sum(1 for k, nw in st if k <= nw - 3) / len(st) if st else 0.0
         ok &= sh >= 0.15
-        old_ok &= osh >= 0.15
-        rows.append(f"{n} {sh:.0%} (Renown model {osh:.0%})")
-    out.append(("G11 old crops are grown (days 3-30, >= 15 %)", ok, "; ".join(rows) + ("; the Renown model passes it too" if old_ok else "")))
+        rows.append(f"{n} {sh:.0%} of {len(st)} levels (harvests {old_share(s):.0%})")
+    out.append(("G11 old crops are levelled (days 3-30, >= 15 % of levels)", ok, "; ".join(rows)))
     # G12 the first crop fully upgraded not before day 7 (Garden main); Casual has >= 25 % of all stars still to earn on day 60
     gm, cas = sims[("Garden main", "talent-first")], sims[("Casual", "talent-first")]
     full = [(t / DAY, k) for t, k, L in gm.star_t if L == M["levels"]]
@@ -1930,9 +2034,10 @@ def ev3_checks(M, sims, names, days):
     # U a maxed crop matches a fresh crop 2-3 steps up (EV3 rule 2)
     mm = maxed_mult(c)
     steps = math.log(mm) / math.log(c["r"])
-    out.append(("U maxed crop = a fresh crop 2-3 steps up", 2 - 1e-9 <= steps <= 3 + 1e-9,
-                f"x{mm:.2f} net per square-hour = {steps:.1f} steps (per point: Value +{c['pt_value']:.0%}, Size +{c['pt_size']:.0%}, Speed "
-                f"-{c['pt_speed']:.0%}; {c['pt_cap']} per line)"))
+    tiers = "" if c["tier_of"] is None else f", {math.log(mm) / math.log(c['r_tier']):.2f} of a price tier"
+    out.append(("U maxed crop = a fresh crop 2-3 steps up (x1.2 ladder steps)", 2 - 1e-9 <= steps <= 3 + 1e-9,
+                f"x{mm:.2f} net per square-hour = {steps:.1f} steps{tiers} (per point: Value +{c['pt_value']:.0%}, Size +{c['pt_size']:.0%}, "
+                f"Speed -{c['pt_speed']:.0%}; {c['pt_cap']} per line)"))
     return out
 
 
@@ -2068,7 +2173,10 @@ def ev3_tables(M, days=60):
     names = ("Casual", "Garden main", "Obby main", "Binge")
     new = {n: run(M, arch_by(n), "talent-first", days) for n in names}
     old = {n: run(OM, arch_by(n), "talent-first", days) for n in names}
-    print("\n## EV3: crops, old -> new (star 1 in square-harvests: XP = grow minutes; star 15 in square-hours of that crop)")
+    L = M["levels"]
+    cnt = c["mastery"] == "count"
+    print("\n## EV3: crops, old -> new (" + ("levels in plants of that crop" if cnt else
+          f"star 1 in square-harvests: XP = grow minutes; star {L} in square-hours of that crop") + ")")
     rows = []
     for cr in M["crops"]:
         k = cr["k"]
@@ -2078,9 +2186,11 @@ def ev3_tables(M, days=60):
             how = "quest: " + " + ".join(f"{q} {cfg_id(cid)}" for cid, q in cr["quest"].items())
         else:
             how = f"{cfg_id(M['crops'][k - 1]['id'])} star 1"
-        rows.append([cfg_id(cr["id"]), fmt_t(cr["t"]), f"R{cr['gate']}", how, str(round(c["star_n0"] * c["star_g"] ** k)),
-                     E.n(star_need(cr, M["levels"], c) / 60.0)])
-    print(E.table(["crop", "grow", "old gate", "new: opens at", "star 1", "star 15 (sq-h)"], rows))
+        top = star_need(cr, L, c)
+        rows.append([cfg_id(cr["id"]), fmt_t(cr["t"]), str(cr["tier"] + 1), E.n(cr["seed"]), E.n(cr["sale"]), f"R{cr['gate']}", how,
+                     str(round(c["star_n0"] * c["star_g"] ** k)), E.n(top) if cnt else E.n(top / 60.0)])
+    print(E.table(["crop", "grow", "tier", "seed", "sale", "old gate", "new: opens at", "star 1",
+                   f"level {L} (plants)" if cnt else f"star {L} (sq-h)"], rows))
     a, g = pt_mults({"Value": c["pt_cap"], "Size": c["pt_cap"], "Speed": c["pt_cap"]}, c)
     print(f"Points: a star = 1 point, {c['pt_cap']} per line (Value +{c['pt_value']:.0%} sale, Size +{c['pt_size']:.0%} size factor, Speed "
           f"-{c['pt_speed']:.1%} grow time each; policy {' > '.join(c['pt_order'])}); maxed: sale x{a:.2f}, grow time x{g:.3f}, net per "
@@ -2092,7 +2202,7 @@ def ev3_tables(M, days=60):
         rows.append([cfg_id(cr["id"])] + [f"{fmt_short(old[n].unlock_t.get(k) and old[n].unlock_t[k] / DAY) if k else '0'} -> "
                                           f"{fmt_short(new[n].unlock_t.get(k) and new[n].unlock_t[k] / DAY) if k else '0'}" for n in names])
     print(E.table(["crop"] + list(names), rows))
-    print("\n## EV3: crop stars by day (all crops; maxed = star 15)")
+    print(f"\n## EV3: crop stars by day (all crops; maxed = star {L})")
     rows = []
     for d in (1, 3, 7, 14, 30, 60):
         if d > days:
@@ -2175,10 +2285,20 @@ def fmt_short(d):
 def main(argv):
     cmd = argv[0] if argv else "evcheck"
     days = 60
+    over = {}
     for i, a in enumerate(argv):
         if a == "--days":
             days = int(argv[i + 1])
-    M = build()
+        if a == "--seed":
+            SEED[0] = int(argv[i + 1])
+        if a == "--set":  # a probe: --set key=python-literal (e.g. --set "mastery='count'")
+            k, v = argv[i + 1].split("=", 1)
+            over[k] = ast.literal_eval(v)
+    unknown = [k for k in over if k not in CAND]
+    if unknown:
+        print(f"unknown CAND keys: {unknown}")
+        return 2
+    M = build(dict(CAND, **over))
     if cmd in ("evcheck", "ev"):
         res = checks(M, days)
         return 0 if all(ok for _, ok, _ in res) else 1

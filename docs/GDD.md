@@ -277,8 +277,8 @@ World 2 opens for the player (the star bar met or the world bought for Coins), w
 (`TalentConfig` `rewards = { [1] = 2 }`, cost 0). *Why:* it is World 2's only hard gate, and a young player spent the Coins
 on other things, reached World 2 without it and gave up without knowing why. Until then it cost 3 000 (1 500 until
 2026-10-23). It still opens the talent coins of World 1 (8 × 100) and the World 1 Gold sets below, now as a revisit once
-World 2 is open. Triple Jump (level 2) is still bought. Open: whether the talents World 3 requires (Triple Jump, Dash) become
-World 3 rewards too; the lost Coin sink is made up in the balancing pass (M6b).
+World 2 is open. Triple Jump (level 2) is still bought. The talents World 3 requires (Triple Jump, Long Dash) stay bought (the user,
+2026-11-17): from World 3 on the farm feeds the obby.
 
 **Planned talents** (P; STAGES §6.2; ids never renamed; all client-driven, level server-owned as `Talent_<id>`; Run Speed
 and Jump Height stay soft, never required). Only talents that are hard gates can be *required* by a stage.
@@ -300,7 +300,7 @@ Since EV2b the old **no-grind rule** (the required set affordable from the medal
 holds by design: talents need the farm. Its replacement is EV's check **G4** (ECONOMY.md → EV; `economy.py check`): obby-only Coins
 through World 2 cover at most 40 % of the World 1–2 tree, and every required level is affordable within 1 day (Obby main, Garden main)
 or 2 days (Casual) of reaching the stage that needs it, garden on. The old tables (World 1 Gold sets, required sets vs medals):
-`git show a128d26:docs/GDD.md`. Open (K1): whether Triple Jump / Long Dash become World 3 rewards, as Double Jump did for World 2.
+`git show a128d26:docs/GDD.md`. *Decided (the user, 2026-11-17):* Triple Jump / Long Dash stay bought; World 3 gives no talent (K1).
 
 ### Coins per hour (open income, provisional)
 | Source | Estimate | Notes |
@@ -466,7 +466,7 @@ collecting and caring over obby runs.
   40 × 40 studs each, with an owner name sign (stud look, raised on two posts so players walk under it and see the plot past it) over a
   40 × 16 front strip, the field behind it. The strip (U5a) holds, as seen from the plaza, the **hatchery** on the left (the 3 incubators
   as open hatch pods in a triangle under one stud roof on four posts; tall pavilion since 2026-11-16: 12-stud underside, three 0.4-stud roof courses,
-  one prompt 1.5 studs ahead of the front post line at height 2.5), the **barn** on the right (a red stud barn, 2026-11-13: a stepped gable under slate caps, white X-brace door leaves swung open towards the plaza, a hayloft window, a weathervane with a pet, hay bales, milk cans and a pitchfork in front;
+  click/tap access on each own pod, with no hatchery E prompt), the **barn** on the right (a red stud barn, 2026-11-13: a stepped gable under slate caps, white X-brace door leaves swung open towards the plaza, a hayloft window, a weathervane with a pet, hay bales, milk cans and a pitchfork in front;
   it shows no stock since 2026-11-12, the barn panel lists it) and a gravel **path** between them from the sign to the field, so the field shows from the plaza. Servers hold **12 players** (one plot per slot). Each player's
   client draws the plots from the server's data (E1a1); free plots of the inner ring show "Free plot".
 - **Getting there and seeing what waits (U2; Home since 2026-11-13).** The leftmost **🏠 Home** icon (red brick) puts the player
@@ -503,8 +503,12 @@ collecting and caring over obby runs.
     Empty / locked labels sit above the heater. [Studio view and archived design options](INCUBATOR_REDESIGN.md).
     Since 2026-11-17 every pod's open front and controls face the central path towards the barn (plot-local −X);
     the egg uses the same 90° turn, with all three pod centres unchanged.
-  - **Hatchery panel (U5b).** The three open hatch pods stand under the hatchery's roof (§7.6 Layout) with one "Open hatchery"
-    prompt. Group boxes separate **Your nests** from **Eggs to buy** (2026-11-15). The panel lists each incubator: its egg,
+  - **Hatchery panel (U5b; access updated 2026-11-17).** Open from the **🥚 Hatchery** farm HUD button beside Barn
+    within 45 horizontal studs of the own plot, or click/tap any own pod (growing, ready, empty or locked) from either side.
+    The HUD badge counts ready eggs; opening never hatches an egg. A generous 7 × 6 × 7 target and whole-pod hover outline
+    support direct interaction. GUI and range checks block world clicks; other players' pods have no click target.
+    The hatchery E prompt is removed. Visible farm buttons stay centered together; Barn keeps its existing availability.
+    Group boxes separate **Your nests** from **Eggs to buy** (2026-11-15). The panel lists each incubator: its egg,
     a live countdown, a small trash button while growing (orange OK? then second tap, no refund), **Hatch** when ready,
     the next one's Unlock brick with its
     price (two taps over 1 000 Coins), "unlock incubator n first" for the later one. While an owned incubator is empty, **egg cards**

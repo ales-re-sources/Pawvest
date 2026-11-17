@@ -42,7 +42,7 @@ drops. Something is always growing, hatching or nearly affordable ("one more thi
 8. **No regret (for M7):** after launch prices never go down; nothing sold is later handed out free in bulk; a capacity product never exceeds
    the earnable maximum. Free play is scarce enough that a comfort purchase is worth 1.2–1.5× (G8), never more.
 
-## EV checks (`evcheck`; all 18 pass on `CAND` as of 2026-11-14, stars mode; EV0 compares the configs, talent bundles included since EV2b)
+## EV checks (`evcheck`; on the EV3 revision `CAND` (2026-11-17) 13–15 of 18 pass on seeds 1–4, EV0 failing by design until EV3b moves the crop prices into the configs; EV0 compares the configs, talent bundles included since EV2b)
 Bands are provisional, for the user to confirm with the proposal. Archetypes: Obby main (7:00 / 12:30 / 18:00, 2 h obby), Casual (8:00 / 19:00,
 45 min obby), Garden main (7 / 12 / 17 / 21, 15 min obby), Binge (one 6 h day a week), Spender (Casual's schedule, paid comforts).
 
@@ -54,16 +54,16 @@ Bands are provisional, for the user to confirm with the proposal. Archetypes: Ob
 | G4 talents | obby-only Coins through World 2 ≤ 40 % of the World 1–2 tree; Double Jump 2 / Dash 2 bought within 1 day (Obby / Garden main) or 2 days (Casual) of reaching Stage 11 / 13 |
 | G5 horizon | Garden main's last purchase not before day 45, Casual's not before day 90 (or items left) |
 | G6 expedition | obby Coins ≤ 25 % of income after day 3; Sunshine ≤ 40 min of growth per obby hour (30 until the user raised it, 2026-11-07) |
-| G7 first hour | first harvest ≤ 30 s, ≥ 6 crops in hour 1, longest wait for something new (level, crop, first harvest of a kind, purchase, hatch) ≤ 10 min, first square ≤ 15 min, first hatch ≤ 5 min |
+| G7 first hour | first harvest ≤ 30 s, ≥ 6 crops in hour 1, longest wait for something new (level, crop, first harvest of a kind, purchase, hatch, a finished request) ≤ 10 min, first square ≤ 15 min, first hatch ≤ 5 min |
 | G8 Spender | headroom on Dash 2, Squares 20 / 28 / 36, Growth 4, Sorter 3: median 1.2–1.5×, max ≤ 1.6× |
 | G9 scarcity | Casual: the expected Legendary count reaches 0.5 not before day 14; top crop day 14–28 (talent-first), ≥ 14 (pets-first); last tool ≥ day 14 |
 | B | Tending pets earn more (guards and crows off in both runs) |
 | B2 | one field slot as a guard instead of a tender earns at least as much (Casual) |
 | C | sinks ≥ 60 % of the faucet by day 30, ≥ 78 % by day 60 |
 | G10 (EV3a) | a Tutorial / World 1 first clear (finish + medals + the seed pack at seed price) ≤ 3 min of the Casual farm's online income when Casual clears it |
-| G11 (EV3a) | days 3–30: ≥ 15 % of square-harvests are crops ≥ 3 steps below the newest unlocked one (every archetype; the Renown model passes it too) |
-| G12 (EV3a) | the first crop at star 15 not before day 7 (Garden main); Casual has ≥ 25 % of all stars (16 × 15) still to earn on day 60 |
-| U (EV3a) | a maxed crop (15 points) earns net per square-hour what a fresh crop 2–3 steps up earns |
+| G11 (EV3a, revised 2026-11-17) | days 3–30: ≥ 15 % of the crop levels earned are on crops ≥ 3 steps below the newest unlocked one (every archetype; the old harvest share passed the Renown model too and is printed for reference) |
+| G12 (EV3a) | the first crop at its top level not before day 7 (Garden main); Casual has ≥ 25 % of all levels (16 × 3) still to earn on day 60 |
+| U (EV3a) | a maxed crop earns net per square-hour what a fresh crop 2–3 steps up the old × 1.2 ladder earns (× 1.44–1.73) |
 
 ## EV — the rules as simulated
 - **Player:** sessions per archetype, the obby block in the middle of each session with garden checks every 5–10 min; between sessions the
@@ -73,7 +73,14 @@ Bands are provisional, for the user to confirm with the proposal. Archetypes: Ob
   skipped, saving goes to a blocking required talent first; seed reserve kept; eggs and food from 8 / 2 % of income (pets-first 25 / 8 %).
 - **Renown (`mode: "renown"`, the game as built):** level L needs 0.4 × L³ points; a harvest gives 4 × minutes^0.5 points; crops unlock on a
   gate ladder (R0 … R68); squares and other sinks have gates.
-- **Crop levels (`mode: "stars"`, EV3a):** XP = grow minutes of each harvest of that crop. Star 1 needs 12 × 1.05^k square-harvests of crop k
+- **EV3 revision (2026-11-17, the defaults in `CAND`; the 2026-11-14 draft below stays reachable with `--set`):** crops in **price tiers**
+  (`tier_of`: Potato–Onion, Garlic–Cucumber, Corn–Broccoli, Pumpkin–Blueberry, Sweet potato–Giant melon, Sunflower–Pineapple; a tier
+  shares one net Coins per square-hour, 2 500 × 1.727^tier). **Mastery = plants grown** of that crop (`mastery: "count"`): level 1 =
+  12 × 1.05^k plants, level 2 = 4 ×, level 3 = 25 × that; 3 levels, each a point, one point per line (Value +11 %, Size +11 %, Speed
+  −11 %), so a level-3 crop is fully upgraded (× 1.47). The next crop opens at the previous one's level 1; Corn, Pumpkin and **Sweet
+  potato** by a quest handed in **piece by piece** (`quest_partial`; the policy keeps what the next talent bundle needs). **Rested:** each
+  full day away past the first adds 0.5 "level 1s" of plants that count double (cap 3). **Requests** are tracked (below).
+- **Crop levels (`mode: "stars"`, EV3a draft 2026-11-14):** XP = grow minutes of each harvest of that crop. Star 1 needs 12 × 1.05^k square-harvests of crop k
   (k = 0 Potato … 15 Pineapple); star L > 1 needs star 1 + 40 × minutes^0.7 × (L − 1)^1.5 XP in all; 15 stars, each a point (Value +2 % sale,
   Size +2 % size factor, Speed −2.5 % grow time; 5 per line; Value first, then Speed, Size). The next crop opens at the previous one's star 1;
   Corn, Pumpkin and Giant melon by a quest taken from the barn (`unlock: "chain"`; `"total"` opens crops at a crop-XP total over all crops,
@@ -97,8 +104,11 @@ Bands are provisional, for the user to confirm with the proposal. Archetypes: Ob
   seed and pouch (free seeds) stay.
 - **Scouting:** XP = seconds of a running stage timer while equipped (level 2 after 45 min, × 2 per level); bonus min(0.5, 0.5 × strength)
   on Sunshine, meter and pouch.
-- **Requests:** 3 a day, per-day RNG (UTC day + user); crops of the unlocked set (grow ≤ 4 h), sized to 30 % of a day's income, paying 1.75×
-  the sale; on half of the days slot 3 is a timed run; one in three also drops Sunshine, a rare seed or an egg. **Streak:** Sunshine 10–30
+- **Requests (tracked, `req_auto`, 2026-11-17):** 3 slots, per-day RNG (UTC day + user); "grow 6 Tomatoes" counts harvests of that crop
+  (nothing handed in, the crops are sold as usual) and pays a bonus of 0.6 × the sale of the count; an unfinished request stays, only
+  finished slots refill on the next UTC day; the board opens on the first visit with two eligible crops (day 0 included). Crops of the
+  unlocked set (grow ≤ 4 h), sized to 30 % of a day's income; on half of the days slot 3 is a timed run; one in three also drops
+  Sunshine, a rare seed or an egg. (Until 2026-11-17: handed in from the barn, 1.75 × the sale, a new board every day.) **Streak:** Sunshine 10–30
   min on days 1–6, day 7 a pet (Epic 95 %, Legendary 5 %); a missed day pauses it.
 - **Crows and guards:** in a crow block a ripe crop may be eaten, up to one per 12 unguarded squares per absence; guarded squares are safe; a
   guard covers 18 / 30 / 42 squares by level band. **Tending** (growth mode): a tended square grows 50 % × strength faster.
@@ -187,6 +197,22 @@ obby first clears outpay the farm they should feed (findings above).
 6. **Obby one-time Coins:** first finish + medal Coins of the Tutorial and World 1 resized; part of a first clear paid as a seed pack of an
    unlocked crop (seeds of a locked crop would skip its unlock). Repeat-run Coins stay until EV2c.
 
+**Revision (the user, 2026-11-17; replaces rules 1–2 and the quest form above; model defaults since then):**
+- **Mastery = plants grown of that crop** ("Potato 32 / 50"), shown as the crop's ★. A long, expensive crop needs more time per level.
+  Rule 1's spam worry does not apply: the count is per crop, so quick Potatoes level only Potato.
+- **Three levels per crop** (like the stage medals), never infinite. Each level gives one upgrade point and each line (Value, Size,
+  Speed) takes one, so a ★3 crop is fully upgraded and the order is the choice; a point is a step a player notices (+11 %).
+  Level 1 opens the next crop.
+- **Price tiers:** the 16 crops form 6 tiers of 2–3 with one net Coins per square-hour each; inside a tier the crops differ in grow time
+  (and look), so a rotating stall (ST) can offer any of them fairly. Tier 1 Potato–Onion, 2 Garlic–Cucumber, 3 Corn–Broccoli, 4 Pumpkin–
+  Blueberry, 5 Sweet potato–Giant melon, 6 Sunflower–Pineapple. The milestone quests sit at tier starts: Corn, Pumpkin and **Sweet
+  potato** (moved from Giant melon).
+- **Quests:** no accept step and no expiry; crops are handed in piece by piece and the progress is kept; the reward is the unlock plus a
+  seed pack of the new crop (the pack is not in the model yet).
+- **Rested mastery:** after more than a day away, plants count double for a while (the weekly player's catch-up).
+- **Not changed:** quests only at milestones, the cap (a maxed crop ≈ a fresh crop 2–3 old steps up), global upgrades stay, sinks on
+  Coins alone, the obby payouts (rule 6).
+
 ## Findings (EV3a, 2026-11-14; `economy.py proposal` prints the old → new tables)
 - **The draft's upgrade sizes broke its own cap:** +10 % Value, +10 % Size, −6 % Speed per point make a maxed crop ×3.7 per square-hour
   (~7 steps; the draft's "≈ 4 900 for Potato" left out Size). At 3 steps (+3 / +3 / −3 %) the extra income bought the shop out early (G5,
@@ -236,6 +262,30 @@ obby first clears outpay the farm they should feed (findings above).
 - **Model fix (both modes):** rare crops are kept for the next level of every talent (Quick Respawn 2 led the queue and the Frost grapes
   Double Jump 2 needs were sold); the Renown model still passes its 14 checks.
 
+## Findings (EV3 revision, 2026-11-17; seeds 1–4; `economy.py proposal` prints the crop table)
+- **Pass rate:** 13 / 15 / 15 / 13 of 18 on seeds 1–4, against the draft's 16 / 11 / 12 / 13. EV0 fails by design (the tier prices are not
+  in the configs until EV3b), so 14–16 of the 17 others pass. G7 and G9, which failed since EV2e, pass on every seed but one (G9 seed 3:
+  top crop day 13.8). Near-misses left: G4 (seed 1 Casual Triple Jump 3.0 d after Stage 11, limit 2; other seeds 1.0 d against a
+  1-day limit), R (Casual / Spender rare share 71–78 % on days 0–3, limit 70), G8 (Spender median below 1.2 on seeds 1, 4), B2 (a guard
+  0.99× a tender on seed 1), G11 (Obby main 0 % of 8 levels on seeds 1, 4: too few levels in days 3–30 to measure).
+- **The first hour needs the request board:** with three levels per crop, levels are rare news; after the 6th crop (minute 32) nothing
+  happened for 27 min (G7 failed). The board opening on day 0 as soon as two crops qualify, and a finished request counting as news, give
+  a longest wait of 6.0 min and Corn's quest done at minute 58.
+- **Unlock pace stays near the draft's:** level-1 counts are the draft's star-1 counts (means of seeds 1–4, draft → revision: Casual
+  Corn 1.9 → 1.8, Pumpkin 4.3 → 4.7, Sweet potato 8.3 → 7.8, Pineapple 14.1 → 15.1; Garden main Pineapple 9.5 → 9.7).
+- **Partial quests took a bundle's crops:** handing in every kept Cucumber delayed Triple Jump by up to 5 days (G4); the policy now keeps
+  what the next talent bundle needs. The game's quest UI should let the player choose what to hand in.
+- **Level 3 sets the long goal:** at 12 × level 1 Garlic was maxed on day 1.9 (G12); at 25 × the first crop is maxed on day 46–60
+  (Garden main, Sunflower) and Casual has 21–23 of 48 levels on day 60. Level 3 of a long crop is 600–625 plants (17 field-days of
+  Pineapple): to review with the counts.
+- **Tiers flatten tier 1 and lift the tier starts:** Lettuce sells 28 (was 35), Onion 55 (80), Tomato 750 (900), Cucumber 1 400
+  (2 100), Pepper 10 000 (12 000), Broccoli 20 000 (29 000), Eggplant 70 000 (85 000), Blueberry 100 000 (150 000), Giant melon
+  350 000 (450 000), Sunflower 900 000 (750 000); Potato, Garlic, Corn, Pumpkin, Sweet potato and Pineapple keep their prices.
+- **Rested mastery helps only the weekly player:** at 0.5 "level 1s" per extra day (cap 3) Binge's Sweet potato comes on day 14.5 (no
+  rest 21.5, draft 26.7) and Pineapple on day 42.5 (none in 60 days before); daily players are unchanged; 1.0 per day (cap 5) adds
+  nothing more.
+- **Tracked requests** (bonus 0.6 × the sale, crops kept) leave every other check where it was; the bonus size is a first guess.
+
 EV2e (2026-11-17): the game now stores a pet kind at purchase / free placement, uses the approved rarity timers and
 uses shared time tiers to hide exact rarity and keeps the chosen pet server-only until hatch. Cancellation uses a small trash button
 with shared ConfirmTap (orange OK? → second tap; discard without refund). First free pet remains instant. Old eggs keep their deadlines.
@@ -253,17 +303,22 @@ of the game's instant first pet.
    garden off): talents need the farm by design, G4 replaces it.
 2. Whether the placeholder eggs become real egg kinds (needed for Legendary scarcity past week 3).
 3. The real landmark / estate sinks (E6 / E7) that replace the reserved ladder.
-4. **EV3** ("EV3 — design draft" above, build parts in ROADMAP → EV3, draft 2026-11-14; EV3a model built the same day, findings above): crop levels replace Renown, next crop at the
-   previous one's ★1, quests only at milestones, crop upgrades (Value / Size / Speed, capped at a crop 2–3 steps up), sinks on Coins alone;
-   G10–G12 bands; the obby's first-hour payouts. To sign off: the star formula, the point sizes (+2 / +2 / −2.5 % instead of the draft's),
-   the quest contents, the payouts; whether G11 changes; the thin margins (accept, per-crop star-1 counts, or an earlier long crop); the
-   weekly player's slower pace.
+4. **EV3** ("EV3 — design draft" and its revision above, build parts in ROADMAP → EV3): *direction decided (the user, 2026-11-17):*
+   mastery by plants grown, three levels with one point per line, price tiers, quests piece by piece without expiry, rested mastery,
+   tracked requests (E5); crop XP = time, 15 stars and the old G11 are out. *To sign off:* the tier table and its prices (Findings →
+   EV3 revision), the level counts (level 1 as the draft's star 1; level 2 = 4 ×, level 3 = 25 ×, i.e. 300–625 plants), the point
+   size (+11 % per line), the Sweet potato quest (5 Blueberry + 4 Eggplant), the rested rate (0.5 per extra day, cap 3), the obby
+   payouts (rule 6, unchanged), and the near-misses listed in the findings (accept, or tune in the ST model, which re-runs the chain).
 5. **A flatter curve** (shorter grow-time span, value steps ~1.5–2× per crop, a slower square ladder): probe in the model after EV3a,
    before M7 (after it prices never go down).
-6. **Going public with a ~5-day horizon:** the recommendation (2026-11-14) is that the first hour (EV3) and an online loop from day 2
-   (requests) gate it, not the horizon, if drops follow every 1–2 weeks; the user decides.
+6. **Going public with a ~5-day horizon:** *resolved (the user, 2026-11-17):* the horizon is not a gate. 1.0 is gated by crop mastery
+   (EV3), the rotating stall (ST), the online loop (requests, E5), the Harvest Hall (SH) and player feedback (FB); ROADMAP → Next.
+   The comfort shop (D2) and Sunshine (EV2c) come after 1.0.
 7. **Endgame:** drops (Weekly, Variants, Kitchen), landmark / estate sinks, a soft Replant if the queue empties, harvest boards; nothing
    needed now.
+8. **Rotating stall (ST, decided in principle 2026-11-17):** restock cadence (1–3 h, UTC, the same on every server), stock per crop, the
+   always-stocked set (staples, talent-bundle and quest crops), the pity rule for the newest crop. Probed in `economy_ev.py` before the
+   build (ROADMAP → ST); the 10-minute probe is in Findings → "Rotating stall and trees".
 
 ## E0 — checks of the game as built (until EV2a)
 | Check | Rule |
