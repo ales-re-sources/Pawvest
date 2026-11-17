@@ -143,7 +143,7 @@ Order proposed: U1 before M6a; U2–U5 before E5's onboarding (it teaches the ne
 5. ~~Seeds~~ — decided 2026-11-05: a seed stall on the plaza, with the market cart offers on its board (§6), beside the food stand
    (§9.1).
 
-## 13. Goals: tracker lines and the Goals panel (decided 2026-11-17; line 1 and *Next crop* built in EV3b2, 2026-11-17; the rest with E5)
+## 13. Goals: tracker lines and the Goals panel (decided 2026-11-17; line 1 and *Next crop* built in EV3b2, 2026-11-17; *Upgrades* in EV3c; the rest with E5)
 *Why:* 1.0 brings several "what can I do next" pieces (the next crop's unlock count and the milestone quests, EV3b; three daily
 requests, E5; later upgrade points, EV3c, and the ledger). A panel or stand for each clutters a phone screen, and kids do not read signs
 (K1). The brown score panel (`ScreenGui.ScorePanel`: the place, "Enter portal!" / "Choose a stage!", stars earned) no longer serves its
@@ -155,7 +155,8 @@ purpose outside a run (the user).
 - **On a stage** the run view stays (stage name, record or "First try!", medal limits: the run's target line).
 - **Goals panel** (player-facing title "Quests" / "Úkoly", 2026-11-17: "Cíle" read as the finish portal's "Cíl"; built in code, `UiKit`, re-renders on `Locale.Changed`): *Next crop* (the count, or the quest with a **Bring** button
   per crop: it works from the panel anywhere, the server takes from the barn) and *Today's requests* (three tracked requests with bars,
-  the timed-run line). It replaces a separate request board (no stand in the garden). The seed stall keeps the bar on the locked crop's
+  the timed-run line) and *Upgrades* (EV3c, built: only while a crop has a free upgrade point, a row per such crop with a button to its
+  crop page). It replaces a separate request board (no stand in the garden). The seed stall keeps the bar on the locked crop's
   row and the skills panel keeps the talent bundles: hints where they are used, not extra panels.
 - **After 1.0 the panel grows into the quest book:** sections for talent and world unlocks (the stars earned move there), the mastery
   collection, the streak (D3); a drop adds a section, not a panel.

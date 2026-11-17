@@ -116,7 +116,7 @@ function PotatoPlant.new(parent, soilCFrame, seed, sizeFactor)
 	radius = math.max(radius, flowerRadius + stalkRadius + 0.46 * self.dimensionScale)
 	-- Tubers retain full isotropic mass scaling and pre-fit centre spacing.
 	-- Their radius is <= (0.814 * 1.092 + 0.49) * dimensionScale:
-	-- below 2.01 studs at CropConfig.SizeBounds' current maximum (dimension <1.45).
+	-- below 2.01 studs at CropConfig.SizeBounds(true)'s maximum (dimension <1.45).
 	-- Canopy compression therefore never needs to shrink harvested tuber size.
 	self.tuberSpread = self.spread
 	self.tuberRadius = 0.814 * self.tuberSpread + 0.49 * self.dimensionScale

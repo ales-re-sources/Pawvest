@@ -83,9 +83,10 @@ run). Times and counts never go into custom fields (cardinality); they are event
 |---|---|---|
 | `CropUnlock` | `LogCustomEvent`, value = the crop's place on the ladder (`CropConfig` `order`, 2-16) | CF01 crop id · CF02 how (`count`: the previous crop's plants reached its `step`; `quest`: the last milestone piece) — not sent by the `Version = 7` migration |
 | `CropLevel` | `LogCustomEvent`, value = the new mastery level (1-3) | CF01 crop id |
+| `CropPoint` (EV3c) | `LogCustomEvent`, value = the crop's mastery level when the point is spent (1-3) | CF01 crop id · CF02 line (`Value`, `Size`, `Speed`) |
 
 Read: time to each unlock = `CropUnlock` per CF01 against `Session` `new`; where the first hour stalls = the share of players reaching
-order n. Combinations: 16 crops × 2 = 32 and 16 crops.
+order n; which line players take first = `CropPoint` with value 1 by CF02. Combinations: 16 crops × 2 = 32, 16 crops and 16 crops × 3 lines = 48.
 
 ## Reading the questions on the dashboard
 | Question | Where |

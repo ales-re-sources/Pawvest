@@ -42,7 +42,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | K1 | First-hour fixes (kid playtest 2026-11-01): Stage 5, G1 fallback, Double Jump world reward, hatch panel done; the rest is measured in M6a | partial | partial | – |
 | E0 | Economy model (its repricing replaced by EV) | ✔ | – | – |
 | EV | Engagement-first economy: EV1 model, EV2a numbers, EV2b talent bundles | EV1–EV2b, EV2e ✔; EV2c, EV2d, EV2f after 1.0 | EV2a, EV2b ✔ | – |
-| EV3 | Crop mastery: crop levels replace Renown, milestone quests, crop upgrades, first-hour obby payouts (1.0) | EV3a signed off; EV3b Studio-validated 2026-11-17 (EV3b1, EV3b2); EV3c next | – | – |
+| EV3 | Crop mastery: crop levels replace Renown, milestone quests, crop upgrades, first-hour obby payouts (1.0) | ✔ (EV3a signed off; EV3b1, EV3b2, EV3c Studio-validated 2026-11-17) | – | – |
 | E1.0, E1a–E1d | Client-drawn plots; crop field (every player's since FA), field pets, crops as pet food, size roll, upgrades, tools, market cart, 36 squares | ✔ | ✔ | – |
 | E2, E4-thin | Obby seeds (rare crops, meters, pouch, Scouting); crows and Pest-control guards | ✔ | ✔ | – |
 | OG | Offline crop growth 0.5 / 24 h | ✔ | pending | – |
@@ -70,7 +70,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 - **Not in 1.0:** obby time calibration (M6b; the obby stays as built), the comfort shop (D2: 1.0 ships without monetization),
   Sunshine (EV2c), World 4, hybrids (HX1 build).
 
-**Start here:** EV3c (EV3b Studio-validated 2026-11-17; open: the square card in Czech, the Goals line on a real phone). Alongside: OG validation and the M6a friends test (step 0).
+**Start here:** ST, the model first (EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: OG validation and the M6a friends test (step 0).
 *Update this line whenever a milestone finishes.*
 
 **Road to 1.0** (in order; one milestone at a time unless marked "alongside"):
@@ -79,11 +79,10 @@ A design change found while building goes docs → ROADMAP → code, in that ord
    current build: real finish times, T1a / T1b on the Creator Dashboard, a first retention baseline and the live checks under "Open items"
    tagged [1.0]. Unlisted needs no TH.
 1. **EV3 — crop mastery** (section below; player-facing name "Mastery ★"): sign-off → EV3b (levels, unlocks, Renown out) → EV3c (crop
-   upgrade points). *State:* EV3a numbers signed off 2026-11-17 (mastery by plants grown, 3 levels, price tiers, smaller Double Jump 2 /
-   Dash bundles); EV3b built and Studio-validated 2026-11-17; EV3c is next.
+   upgrade points). *State:* done: EV3a numbers signed off 2026-11-17 (mastery by plants grown, 3 levels, price tiers, smaller Double
+   Jump 2 / Dash bundles); EV3b and EV3c built and Studio-validated 2026-11-17.
 2. **ST — rotating seed stall** (section below): model, then build. *Needs* EV3b (★ decides which crops can appear).
-3. **SH — Harvest Hall and plot likes** (section below). *Needs* only the size records (built); best after EV3c, whose Size line changes
-   sizes.
+3. **SH — Harvest Hall and plot likes** (section below). *Needs* only the size records (built); EV3c's Size line (built) changes sizes.
 4. **FB — player feedback** (section below): small, alongside ST or SH.
 5. **E5 — the online loop** (scope when it starts; EXPANSION §14): request board (rules: ECONOMY.md → EV "Requests": tracked "grow 6 Tomatoes",
    no hand-in and no accept step, an unfinished request stays, the board opens on day 0; decided 2026-11-17; shown as the Goals panel's
@@ -206,47 +205,8 @@ cart taste), AhojRupert level 5 (Potato … Cucumber), test records `user_-1` / 
 - **Open (the user):** the quest's seed pack (4 seeds of the new crop, a first guess like the first clears' packs); the cart taste of a
   locked crop stays until ST decides the cart (tasted plants count toward that crop's ★ but do not unlock it).
 
-**EV3c — crop upgrades (scoped 2026-11-17; can ship as a drop).** The endgame layer. Numbers: `economy_ev.CAND` (`pt_cap` 1,
-`pt_value` / `pt_size` / `pt_speed` 0.11, signed off 2026-11-17): a ★3 crop sells × 1.11 (Value) × 1.11 (Size, through the size
-factor) and grows in × 0.89 of the time (Speed). Common crops only (rare crops have no mastery).
-1. **Config.** `CropConfig.Mastery.Points = { Value = 0.11, Size = 0.11, Speed = 0.11 }` and helpers on a crop's points table
-   (`{ Value = 0|1, Size = 0|1, Speed = 0|1 }`, missing = 0): `SaleMult(pts)`, `SizeMult(pts)`, `SpeedMult(pts)` (growth rate ×
-   1 / (1 − 0.11), so the grow time is × 0.89 as in the model), `FreePoints(n, pts)` (= level − spent). `SizeBounds()` grows by the Size
-   point (else the load clamp cuts stored sizes / records); `SizeBounds(false)` = the old maximum, which the **plant look** keeps (PlotView
-   clamps the factor it passes to the art there: the art contracts, e.g. PotatoPlant's tuber clearance, stay valid; sale and records use
-   the full factor).
-2. **Server (GardenField).** Profile `Garden.Crops[cropId].Pts` (cleaned on load: each line 0 / 1; no `Version` step, missing = none).
-   New remote `GardenRemotes.CropPoint(cropId, line)`, accepted anywhere (like Sell / Quest): settles the field first, then takes one
-   point; rejects `crop` (rare / not unlocked), `points` (no free point), `maxed` (that line already taken); answer `{ crop, line }`.
-   Effects: **Value** at sale time (`Sell`: also on crops already in the barn); **Size** in `harvestSize` (harvests from then on, the
-   square's `size` in the state and the plot feed: a growing crop shows it at once); **Speed** in `settle` (that crop's growth × its
-   SpeedMult, Tending replants and the crow ripe time included) and in `growthWindow` (`readyAt` in the state and the plot feed: growing
-   crops of that kind finish sooner from the moment the point is spent). State `field.mastery.points = { [crop] = { Value = 1, … } }`
-   (a new key: `crops` stays plants grown). Telemetry `crop_point` (crop, line).
-3. **Client.** A **crop page** (`CropPageClient`, GardenUi.Panel, PanelFocus "CropPage", re-renders on State and `Locale.Changed`):
-   opened by tapping the crop title on a seed stall row or a barn row (a ★ button there; a "+" badge on it while a point is free).
-   Shows the icon, name, ★ level, the mastery line, "1 point to spend" and the three lines, each with its effect as a number from the
-   real values (Value "sells 1 400 → 1 554"; Size "average 0.30 → 0.33 kg"; Speed "ready in 15:00 → 13:21" with the Growth upgrade) and a
-   **+** brick (two taps, ConfirmTap; grey without a free point; a taken line shows ✓ and only the new value). Elsewhere the values follow
-   the points: seed stall info (sale, grow time), barn sell button (SellButton), the square card / seed picker grow time
-   (`GrowSecondsOn` × speed). The level-up toast adds "A point to spend: tap ★ at the barn". The Goals panel gets a section *Upgrades*
-   (crops with a free point, a row each opening the crop page) when there is one.
-4. **Tools.** `economy.py` reads `Mastery.Points` (pin), EV0 compares it with `CAND` (`pt_value` / `pt_size` / `pt_speed`, `pt_cap` 1).
-5. **Docs and text.** GDD §7.9 (upgrades), PROTOCOL (remote, profile `Pts`, state `points`), TELEMETRY (`crop_point`), LAYOUT
-   (CropPageClient), UI_GARDEN_PETS §13 (the Upgrades section); strings with Czech.
-- **Not in EV3c (recommended):** no reset (★3 takes every line, so the order is the only choice and a reset would only undo it); no
-  collection total (it belongs to the quest book's mastery section after 1.0, §13).
-- **Acceptance:**
-  - `economy.py check` exit 0 (EV0 PASS, after `pin`); `loc.py build` / `check` (0 errors) / `lint` (within the baseline).
-  - One playtest boot without errors or warnings (server and client).
-  - Studio, on a fixture of Lekzdrh's profile (snapshot first, restored after) with Cucumber at 75 plants (★2) and no points: through the
-    real crop page, opened from the barn row and from the seed stall row, spend Value → the barn's Sell button and the stall row show
-    × 1.11 and a real sale pays it; spend Speed while a Cucumber grows → its `readyAt` moves to the × 0.89 time and the square card shows
-    the shorter time; a third + is refused (`points`) with the barn / coins unchanged; a repeated line refused (`maxed`, by firing the remote).
-  - Size: a fixture with the Size point → the next harvest's size factor = the roll × Sorter × 1.11 (toast kg, `BestSize`); the plant look
-    gets at most the old maximum (PlotView, checked in code with z = 4).
-  - Points survive a rejoin; the Goals panel shows *Upgrades* while a point is free and drops it after the last one is spent.
-  - Pseudo-language and Czech pass on the crop page (all three lines fit on a phone-sized viewport) and the stall / barn rows with the ★ button.
+**EV3c — crop upgrades:** done 2026-11-17 (Done; the scope: `git show d7a25a3:docs/ROADMAP.md`). Decided with it: no reset of points,
+no collection total (the quest book after 1.0).
 
 **Not in EV3:** repeat-run Coins → Sunshine (EV2c); requests and trees (the online loop, E5); a flatter price curve (ECONOMY.md → open
 decision 5).
@@ -364,6 +324,17 @@ Tagged **[1.0]** (needed before 1.0 goes public) or **[later]**.
 
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
+
+**EV3c — crop upgrades** (2026-11-17; Studio-validated on a fixture of Lekzdrh's profile, restored). *Why:* the endgame layer of crop
+mastery: every ★ gives a point for the crop's Price, Size or Speed line, so old crops stay worth growing (ECONOMY.md → EV3). *What:* GDD
+§7.9 (crop upgrades); `GardenRemotes.CropPoint`, profile `Crops[id].Pts`, state `mastery.points` (PROTOCOL); the crop page
+(`CropPageClient`) from ★ bricks on the stall and barn rows and the Goals panel's *Upgrades*; telemetry `CropPoint`; the plant look capped
+at the old size maximum; `economy.py` pins the point sizes, EV0 compares them. Checked (Czech): Value through the barn's page → Sell
+10 185 → 11 305 and a real sale paid it; Speed through the stall's page while a Cucumber grew → its rate × 1 / 0.89 and an earlier
+`readyAt`; Size through the Goals panel → the next Potato's factor = roll × Sorter × 1.11 (state and harvest alike); a third + refused
+(`points`, Coins unchanged), a repeated line `maxed`, a rare crop `crop`; points kept over a rejoin; *Upgrades* gone after the last
+point; the X returns to the panel the page came from. Not checked: the level-up toast's point line (in code); the barn's crop rows are
+narrow with the ★ brick (the Czech text column wraps to 5 lines: readable, to look at on a phone).
 
 **EV3b2 — tracker line and Goals panel** (2026-11-17; Studio-validated on fixtures of Lekzdrh's profile, restored). *Why:* the next
 unlock and the milestone quests need a "what next" outside the seed stall, and the brown score panel had nothing to say off a stage

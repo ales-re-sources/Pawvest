@@ -386,6 +386,11 @@ function Telemetry.CropLevel(player: Player, cropId: string, level: number)
 	send("LogCustomEvent", player, "CropLevel", level, fields(cropId))
 end
 
+-- GardenField (EV3c): a point of crop `cropId` spent on `line` (Value, Size, Speed) at mastery level `level`
+function Telemetry.CropPoint(player: Player, cropId: string, line: string, level: number)
+	send("LogCustomEvent", player, "CropPoint", level, fields(cropId, line))
+end
+
 -- PlayerTimerHandler: the player arrived on stage `stageKey` without the talents in `missing` ({ { id, level }, … })
 function Telemetry.ArrivalWithoutTalent(player: Player, stageKey: string, missing)
 	local names = {}

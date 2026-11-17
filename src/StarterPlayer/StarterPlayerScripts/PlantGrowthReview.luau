@@ -295,7 +295,7 @@ local function open(cropId: string?, seconds: number?, extra)
 	local ringsButton = control("Rings",3,4,75,function()
 		root:SetAttribute("Rings", not root:GetAttribute("Rings"))
 	end)
-	local lowSize, highSize = CropConfig.SizeBounds()
+	local lowSize, highSize = CropConfig.SizeBounds(true)
 	local sizes = {lowSize, 1, highSize}
 	local sizeIndex = 2
 	local sizeButton = control("Size",4,4,75,function()

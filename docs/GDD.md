@@ -719,6 +719,15 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   **Rested mastery** is silent (the user, 2026-11-17: never shown or announced): each day away past the first adds 0.5 (cap 3) to a pool
   in units of the harvested crop's `step`; while it lasts a plant counts double. Squares, upgrades and tools cost Coins only.
   Profiles before EV3b migrate once (`Version = 7`): unlocked = the crops their Renown level had opened plus every crop held or grown.
+- **Crop upgrades (EV3c, 2026-11-17; numbers in `CropConfig.Mastery.Points`, model `economy_ev` `pt_*`).** Every ★ of a common crop gives
+  one point, spent on one of the crop's three lines (one point per line, so a ★3 crop has all three; the order is the choice, no reset):
+  **Price** (Value: sale × 1.11, at sale time, also for crops already in the barn), **Size** (every harvest's size factor × 1.11 from then
+  on, also a growing crop's look; the plant art stops at the old maximum, `SizeBounds(true)`, sale and records keep the full factor) and
+  **Speed** (grow time × 0.89: that crop's growth rate × 1 / 0.89 from the moment the point is spent, growing crops included). A maxed crop
+  earns × 1.47 per square-hour, about 2 steps of the old ladder. The **crop page** (a ★ brick on the seed stall's and the barn's crop rows,
+  "★+" on green while a point is free; the Goals panel's *Upgrades* section lists such crops) shows the ★ line with a bar, the points and
+  each line's effect as numbers ("Sells for 1 400 → 1 554", "Ready in 12:45 → 11:21" with the Growth upgrade); + takes two taps. Prices on
+  the stall rows, the barn's Sell and grow times follow the points. The star toast adds "A point to spend: tap ★ in the barn".
 - **Tracker line and Goals panel (EV3b2, UI_GARDEN_PETS §13).** Outside a stage a wooden line under the coin plate shows the next crop's
   goal with a bar: "🥔 8 / 12 → 🥬 Lettuce" (the previous crop's plants), or for a quest crop its least-done piece (brought / needed);
   hidden once every crop is open. It pulses when the goal moves on (the unlock toast comes from the field toasts). A tap opens the

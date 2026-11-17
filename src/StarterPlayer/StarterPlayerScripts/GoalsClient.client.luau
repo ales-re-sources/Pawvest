@@ -6,10 +6,11 @@
 --     first field state and once every crop is open. A tap opens / closes the panel. Line 2 (the day's requests) comes with E5.
 --   * Goals panel (GardenUi.Panel, PanelFocus "Goals"): *Next crop*: the crop, how it opens and the count bar, or the quest's
 --     pieces with Bring buttons (GardenRemotes.Quest, accepted anywhere: the server takes from the barn; FieldClient toasts the
---     answer). Re-renders on every State, a language change and a resize.
+--     answer); *Upgrades* (EV3c, only while a crop has a point to spend): a row per such crop with a button to its crop page
+--     (GardenUi.OpenCropPage; its close comes back here). Re-renders on every State, a language change and a resize.
 -- Display only: the field state comes from GardenRemotes.State (GardenView keeps the last one).
 -- Hook (ScreenGui GoalsGui attribute, cleared after use): Open = true opens the panel. Paths: PlayerGui.GoalsLineGui.Line (.Goal its text)
--- (the line's button), PlayerGui.GoalsGui.Panel.Content.Next.Quest<CropId>.Bring.
+-- (the line's button), PlayerGui.GoalsGui.Panel.Content.Next.Quest<CropId>.Bring, PlayerGui.GoalsGui.Panel.Content.Upgrades.<CropId>.Upgrade.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -113,13 +114,48 @@ end
 local ui = GardenUi.Panel("GoalsGui", COLOR, PANEL_WIDTH, PANEL_HEIGHT)
 local nextSection = GardenUi.Section("Next", 1)
 nextSection.Parent = ui.content
+local upgradesSection = GardenUi.Section("Upgrades", 2)
+upgradesSection.Parent = ui.content
 local isOpen = false
+
+-- EV3c: the crops with a point to spend, a row each with a button to its crop page (shown only while there is one).
+local function renderUpgrades(field)
+	GardenUi.Clear(upgradesSection)
+	local crops = if field then GardenUi.CropsWithPoints(field) else {}
+	if #crops == 0 then
+		return
+	end
+	GardenUi.Heading(upgradesSection, 1, Locale.T("goals.upgrades.heading"), COLOR)
+	local tap = ui.TapHeight()
+	for index, crop in crops do
+		local row = GardenUi.Row(upgradesSection, crop.id, index + 1, COLOR_ROW)
+		GardenUi.TextColumn(
+			row,
+			BRING_WIDTH + GardenUi.GAP,
+			GardenUi.CropTitle(crop) .. GardenUi.Stars(field, crop),
+			Locale.T("field.cropPage.points", { count = GardenUi.FreePoints(field, crop) })
+		)
+		local button = GardenUi.Button("Upgrade", {
+			LayoutOrder = 2,
+			Size = UDim2.fromOffset(BRING_WIDTH, tap),
+			BackgroundColor3 = GardenUi.COLOR_BUY,
+			TextSize = 16,
+			Text = Locale.T("goals.upgrades.open"),
+			Parent = row,
+		}, 2)
+		local cropId = crop.id
+		button.Activated:Connect(function()
+			GardenUi.OpenCropPage(cropId, "GoalsGui")
+		end)
+	end
+end
 
 local function renderPanel()
 	ui.title.Text = Locale.T("goals.title")
 	if not isOpen then
 		return
 	end
+	renderUpgrades(GardenView.OwnField())
 	GardenUi.Clear(nextSection)
 	GardenUi.Heading(nextSection, 1, Locale.T("goals.next.heading"), COLOR)
 	local field = GardenView.OwnField()

@@ -1,7 +1,8 @@
 -- Seed stall (U4, docs/UI_GARDEN_PETS.md §6, §9.1): the plaza's seed shop beside the food stand, one shop for everyone.
 --   * the prompt on Workspace.Garden.SeedStall's Counter opens the panel (texts set here through Locale);
 --   * panel: the market cart's offers on top (E1c4: a row per offer, "New offers in 3:20:00", buys what is left of it), then the
---     seed catalogue (+1 / +10 per unlocked crop with its mastery ★ and line, EV3b; the next locked crop shows the previous crop's count
+--     seed catalogue (+1 / +10 per unlocked crop with its mastery ★ and line, EV3b, a ★ brick that opens its crop page and the sale
+--     with its Value point, EV3c; the next locked crop shows the previous crop's count
 --     toward it, or its quest with a Bring button per crop; later crops a plain lock; "from World n" for rare crops: E2a), the barn line;
 --     spends over ConfirmTap.THRESHOLD take two taps; walking SeedStallDistance away from the counter closes it (the server checks the
 --     same distance), PanelFocus "SeedStall" closes the other panels;
@@ -12,7 +13,7 @@
 -- unlocks and the barn and answers on GardenRemotes.Result (FieldClient toasts it). The field state comes from GardenRemotes.State
 -- (GardenView keeps the last one).
 -- Hook (ScreenGui SeedStallGui attribute, cleared after use): Open = true opens the panel (as the prompt does).
--- Buttons by path (under PlayerGui.SeedStallGui.Panel): Tabs.Buy / .Sell, Content.Cart.Offer<slot>.Buy, Content.Seeds.<CropId>.Buy1 / .Buy10,
+-- Buttons by path (under PlayerGui.SeedStallGui.Panel): Tabs.Buy / .Sell, Content.Cart.Offer<slot>.Buy, Content.Seeds.<CropId>.Buy1 / .Buy10 / .Star,
 -- Content.Seeds.Quest<CropId>.Bring (EV3b), Content.SellCrops.<CropId>.Sell; Close.
 
 local Players = game:GetService("Players")
@@ -44,6 +45,7 @@ local GAP = GardenUi.GAP
 local BUY1_WIDTH = 56
 local BUY10_WIDTH = 64
 local LOCK_WIDTH = 120
+local STAR_WIDTH = 44 -- EV3c: the ★ brick that opens the crop page
 local BRING_WIDTH = 110
 local CART_WIDTH = 110
 local SELL_WIDTH = 150
@@ -151,12 +153,12 @@ local function renderSeeds(field, tap: number)
 		local order = index * 10
 		local locked = not GardenUi.IsUnlocked(field, crop)
 		local stock = field.seeds[crop.id] or 0
-		local reserved = if locked or crop.rare then LOCK_WIDTH + GAP else BUY1_WIDTH + BUY10_WIDTH + GAP * 2
+		local reserved = if locked or crop.rare then LOCK_WIDTH + GAP else BUY1_WIDTH + BUY10_WIDTH + STAR_WIDTH + GAP * 3
 		local row = GardenUi.Row(seedsSection, crop.id, order, COLOR_ROW)
 		local grow = GardenUi.GrowTime(GardenUi.GrowSecondsOn(field, crop))
 		local info = if crop.rare
 			then Locale.T("field.seed.rareInfo", { time = grow, sale = crop.sale, stock = stock })
-			else Locale.T("field.seed.info", { time = grow, sale = crop.sale, seed = crop.seed, stock = stock })
+			else Locale.T("field.seed.info", { time = grow, sale = GardenUi.SalePrice(field, crop), seed = crop.seed, stock = stock })
 		local lockText = nil
 		local previous, need = nil, nil
 		if crop.rare then -- rare seeds come only from the obby (E2a): the row says from which world
@@ -179,6 +181,9 @@ local function renderSeeds(field, tap: number)
 			if mastery then
 				info ..= "\n" .. mastery
 			end
+		end
+		if not (locked or crop.rare) then
+			GardenUi.StarButton(row, field, crop, STAR_WIDTH, tap, 0, "SeedStallGui") -- EV3c: the crop page
 		end
 		GardenUi.TextColumn(row, reserved, GardenUi.CropTitle(crop) .. GardenUi.Stars(field, crop), info)
 		if lockText then

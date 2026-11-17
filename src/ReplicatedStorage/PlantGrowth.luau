@@ -5,6 +5,13 @@
 local CropConfig = require(script.Parent.CropConfig)
 
 local recipes = {}
+
+-- EV3c: the Size point lets a harvest grow past what the art is built for (CropConfig.SizeBounds(true)); the look stops there,
+-- the sale and the size records keep the full factor.
+local _, lookMax = CropConfig.SizeBounds(true)
+local function look(sizeFactor: number?): number?
+	return if sizeFactor then math.min(sizeFactor, lookMax) else nil
+end
 for _, crop in CropConfig.Crops do
 	local module = script.Parent:FindFirstChild(crop.id .. "Plant")
 	if module and module:IsA("ModuleScript") then
@@ -32,20 +39,20 @@ end
 function PlantGrowth.new(parent: Instance, soilCFrame: CFrame, cropId: string, seed: number, sizeFactor: number?)
 	local recipe = assert(recipes[cropId], "Missing growth recipe for " .. cropId)
 	local frame = PlantGrowth.PlantCFrame(soilCFrame, seed, recipe)
-	return recipe.new(parent, frame, seed, sizeFactor)
+	return recipe.new(parent, frame, seed, look(sizeFactor))
 end
 
 function PlantGrowth.BuildProxy(parent: Instance, soilCFrame: CFrame, cropId: string, stage: number, seed: number?, sizeFactor: number?)
 	local recipe = assert(recipes[cropId], "Missing growth recipe for " .. cropId)
 	local frame = PlantGrowth.PlantCFrame(soilCFrame, seed or 1, recipe)
-	recipe.BuildProxy(parent, frame, stage, seed, sizeFactor)
+	recipe.BuildProxy(parent, frame, stage, seed, look(sizeFactor))
 end
 
 -- Also accepts an unregistered recipe in the Studio reviewer.
 function PlantGrowth.RecipeRingHeight(recipe, sizeFactor: number?): number
 	if not recipe then return 1.3 end
 	local height = recipe.RingHeight or 1.3
-	return if recipe.FixedRingHeight then height else height * (sizeFactor or 1) ^ (1/3)
+	return if recipe.FixedRingHeight then height else height * (look(sizeFactor) or 1) ^ (1/3)
 end
 
 function PlantGrowth.RingHeight(cropId: string, sizeFactor: number?): number
@@ -57,7 +64,7 @@ end
 function PlantGrowth.PlayHarvest(cropId: string, parent: Instance, soilCFrame: CFrame, sizeFactor: number?)
 	local recipe = recipes[cropId]
 	if recipe and recipe.PlayHarvest then
-		return recipe.PlayHarvest(parent, soilCFrame, sizeFactor)
+		return recipe.PlayHarvest(parent, soilCFrame, look(sizeFactor))
 	end
 	return nil
 end

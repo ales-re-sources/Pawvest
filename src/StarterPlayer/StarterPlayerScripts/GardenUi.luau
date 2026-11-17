@@ -10,6 +10,8 @@
 --     KgText, BarnOf (seeds the barn holds), CrowLine (the crow forecast's text and colour, E4b);
 --   * mastery (EV3b): Mastery, PlantsOf, IsUnlocked, Stars, MasteryLine, NextGoal (the tracker line's goal), QuestGot, QuestRows
 --     (the quest's pieces with Bring buttons: seed stall and Goals panel);
+--   * crop upgrades (EV3c): PointsOf, FreePoints, CropsWithPoints, SalePrice, OpenCropPage (CropPageClient's hook), StarButton (a row's
+--     ★ brick that opens the crop page, "★+" while a point is free);
 --   * BindStand(gui, standName, open, opts?): a garden stand's prompt and the gui's Open attribute (a test hook) call
 --     open(counter part); opts.prompt = { action, object } Locale keys of the prompt, opts.onStand(stand model) once found.
 -- Display only: nothing here talks to the server.
@@ -170,7 +172,7 @@ end
 -- CoinRewards.Grant does. `fire(cropId, count)` asks the server.
 function GardenUi.SellButton(row: Instance, crop, field, petState, width: number, height: number, order: number, fire: (string, number) -> ())
 	local owned = field.items[crop.id] or 0
-	local base = CropConfig.SaleValue(crop, field.sizes and field.sizes[crop.id] or owned)
+	local base = CropConfig.SaleValue(crop, field.sizes and field.sizes[crop.id] or owned, GardenUi.PointsOf(field, crop)) -- EV3c Value
 	local multiplier = type(petState) == "table" and tonumber(petState.multiplier) or 1
 	local sell = GardenUi.Button("Sell", {
 		LayoutOrder = order,
@@ -305,10 +307,12 @@ function GardenUi.CropTitle(crop): string
 	return crop.icon .. " " .. Locale.CropName(crop)
 end
 
--- The crop's grow time on `field` (shortened by the Growth upgrade), whole seconds.
-function GardenUi.GrowSecondsOn(field, crop): number
+-- The crop's grow time on `field` (shortened by the Growth upgrade and the crop's Speed point, EV3c), whole seconds. `pts` replaces the
+-- crop's points (the crop page's preview).
+function GardenUi.GrowSecondsOn(field, crop, pts: any?): number
 	local level = CropConfig.UpgradeLevel(field and field.upgrades, "Growth")
-	return math.ceil(crop.growSeconds / CropConfig.GrowthSpeed(level) - 1e-6)
+	local speed = CropConfig.GrowthSpeed(level) * CropConfig.SpeedMult(if pts ~= nil then pts else GardenUi.PointsOf(field, crop))
+	return math.ceil(crop.growSeconds / speed - 1e-6)
 end
 
 -- "7.4" (Czech "7,4"): the weight of a crop of size `factor`, to 0.1 kg (E1c2).
@@ -359,6 +363,62 @@ function GardenUi.MasteryLine(field, crop): string?
 		return Locale.T("field.mastery.max", { level = level })
 	end
 	return Locale.T("field.mastery.line", { level = level, have = n, need = need })
+end
+
+-- EV3c: the crop's points from the state ({ Value = 1, … }; nil = none).
+function GardenUi.PointsOf(field, crop)
+	local points = GardenUi.Mastery(field).points
+	local pts = type(points) == "table" and points[crop.id]
+	return if type(pts) == "table" then pts else nil
+end
+
+-- Points of `crop` still to spend (0 for a rare crop).
+function GardenUi.FreePoints(field, crop): number
+	return if crop.rare then 0 else CropConfig.FreePoints(GardenUi.PlantsOf(field, crop), GardenUi.PointsOf(field, crop))
+end
+
+-- The common crops with a point to spend, in list order.
+function GardenUi.CropsWithPoints(field): { any }
+	local list = {}
+	for _, crop in CropConfig.Ladder do
+		if GardenUi.FreePoints(field, crop) > 0 then
+			table.insert(list, crop)
+		end
+	end
+	return list
+end
+
+-- The sale of one standard-size crop with the crop's points (`pts` replaces them: the crop page's preview).
+function GardenUi.SalePrice(field, crop, pts: any?): number
+	return CropConfig.SalePrice(crop, if pts ~= nil then pts else GardenUi.PointsOf(field, crop))
+end
+
+-- Opens the crop page of `cropId` (CropPageClient, hook CropPageGui attribute Open); its close reopens the ScreenGui named `back`
+-- (BarnGui, SeedStallGui, GoalsGui) through that gui's Open attribute.
+function GardenUi.OpenCropPage(cropId: string, back: string?)
+	local gui = Players.LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild("CropPageGui")
+	if gui then
+		gui:SetAttribute("Back", back)
+		gui:SetAttribute("Open", cropId)
+	end
+end
+
+-- A row's ★ brick (named "Star", LayoutOrder `order`) that opens the crop page of `crop`: "★+" on green while a point is free.
+function GardenUi.StarButton(row: Instance, field, crop, width: number, height: number, order: number, back: string)
+	local free = GardenUi.FreePoints(field, crop) > 0
+	local star = GardenUi.Button("Star", {
+		LayoutOrder = order,
+		Size = UDim2.fromOffset(width, height),
+		BackgroundColor3 = if free then GardenUi.COLOR_BUY else StudStyle.Colors.Wood,
+		TextSize = 18,
+		Text = if free then "★+" else "★",
+		Parent = row,
+	}, { compact = true })
+	local cropId = crop.id
+	star.Activated:Connect(function()
+		GardenUi.OpenCropPage(cropId, back)
+	end)
+	return star
 end
 
 -- The next goal of the mastery ladder (EV3b2, the tracker line): nil when every common crop is open, else

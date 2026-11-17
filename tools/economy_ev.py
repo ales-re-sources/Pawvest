@@ -2078,9 +2078,12 @@ def config_match(M):
         have = None if o is None else [o[1], o[2], o[3], o[4], o[5]]
         if have is None or any(a != b if not isinstance(a, float) else abs(a - b) > 1e-6 for a, b in zip(want, have)):
             out.append(f"crop {cfg_id(c['id'])}: config {have} vs proposal {want}")
-    levels, rest_day, rest_cap, _ = cc["mastery"]
+    levels, rest_day, rest_cap, _, pts = cc["mastery"]
     if [list(levels), rest_day, rest_cap] != [list(C["m_levels"]), C["rest_per_day"], C["rest_cap"]]:
         out.append(f"mastery: config {[levels, rest_day, rest_cap]} vs proposal {[list(C['m_levels']), C['rest_per_day'], C['rest_cap']]}")
+    want_pts = [C["pt_value"], C["pt_size"], C["pt_speed"]]  # EV3c: one point per line (pt_cap 1), its size per line
+    if list(pts) != want_pts or C["pt_cap"] != 1:
+        out.append(f"crop points (Value, Size, Speed): config {list(pts)} vs proposal {want_pts} (pt_cap {C['pt_cap']}, the game has 1)")
     if cc["crows"][4] != cfg_id(C["crows_from"]) or cc["cart"][1][2] != cfg_id(C["crows_from"]):
         out.append(f"crows / cart taste from: config {cc['crows'][4]} / {cc['cart'][1][2]} vs proposal {cfg_id(C['crows_from'])}")
     for s in M["stages"]:  # EV3 rule 6: the Tutorial / World 1 first clears

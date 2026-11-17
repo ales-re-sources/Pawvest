@@ -7,11 +7,12 @@
 --   * Seeds: every seed held (icon, name × count, grow time with the Growth upgrade); nothing → a hint to the plaza's seed stall;
 --   * Harvest: every crop held (name × count, record kg) with Feed (a chooser of the pets that can still eat → that pet's page, which
 --     feeds crops: PetsGui attribute OpenPet) and Sell (two taps, ConfirmTap; "Sell 2 · 3 787": the count and what the sale pays with the
---     pet bonus, PetClient.State.multiplier, rounded as CoinRewards.Grant rounds);
+--     pet bonus, PetClient.State.multiplier, rounded as CoinRewards.Grant rounds, with the crop's Value point); a common crop's row starts
+--     with a ★ brick that opens its crop page (EV3c, CropPageClient; "★+" while a point is free; its close comes back here);
 --   * PanelFocus "Barn": opening it closes the other panels, walking 32 studs away closes it.
 -- Display only: Sell names a crop and a count; GardenField checks the count and pays (answer toasted by FieldClient).
 -- Hook (ScreenGui BarnGui attribute, cleared after use): Open = true opens the panel. Buttons by path (under PlayerGui.BarnGui):
--- Open (the HUD button), Panel.Content.Crops.Content.<CropId>.Sell / .Feed, Panel.Chooser.List.<uid>; Panel.Close.
+-- Open (the HUD button), Panel.Content.Crops.Content.<CropId>.Sell / .Feed / .Star, Panel.Chooser.List.<uid>; Panel.Close.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -36,6 +37,7 @@ local GAP = GardenUi.GAP
 local SHOW_DISTANCE = 45 -- studs from the plot centre: the Barn button is visible within this
 local SELL_WIDTH = 116
 local FEED_WIDTH = 84
+local STAR_WIDTH = 44 -- EV3c: the ★ brick that opens the crop page
 local SELL_HINT_UNTIL = "Corn" -- the sell toast and the pulse are for a young field: until this crop is unlocked (EV3b; was Renown 5)
 
 local COLOR_PANEL = StudStyle.Colors.Wood
@@ -174,9 +176,12 @@ local function renderCrops(field, tap: number)
 			any = true
 			local row = GardenUi.Row(cropsSection, crop.id, index + 1, COLOR_ROW)
 			local best = field.best and field.best[crop.id]
+			if not crop.rare then
+				GardenUi.StarButton(row, field, crop, STAR_WIDTH, tap, 0, "BarnGui")
+			end
 			GardenUi.TextColumn(
 				row,
-				SELL_WIDTH + FEED_WIDTH + GAP * 2,
+				SELL_WIDTH + FEED_WIDTH + GAP * 2 + (if crop.rare then 0 else STAR_WIDTH + GAP),
 				string.format("%s%s × %s", GardenUi.CropTitle(crop), GardenUi.Stars(field, crop), Locale.Number(owned)),
 				infoOf(field, crop, best)
 			)

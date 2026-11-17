@@ -42,7 +42,7 @@ drops. Something is always growing, hatching or nearly affordable ("one more thi
 8. **No regret (for M7):** after launch prices never go down; nothing sold is later handed out free in bulk; a capacity product never exceeds
    the earnable maximum. Free play is scarce enough that a comfort purchase is worth 1.2–1.5× (G8), never more.
 
-## EV checks (`evcheck`; on the EV3 revision `CAND` (2026-11-17, smaller Double Jump 2 / Dash bundles) 12–15 of 18 pass on seeds 1–4 before EV3b; since EV3b1 (2026-11-17) EV0 passes and seed 1 passes 15 / 18 (R, B, G11 the known near-misses). EV0 compares the configs with `CAND`: crops (grow time, sale, seed, `step`, `quest`), `Mastery`, the crows / cart-taste crop, the Tutorial / World 1 `firstClear`, sinks in Coins only, talent bundles)
+## EV checks (`evcheck`; on the EV3 revision `CAND` (2026-11-17, smaller Double Jump 2 / Dash bundles) 12–15 of 18 pass on seeds 1–4 before EV3b; since EV3b1 (2026-11-17) EV0 passes and seed 1 passes 15 / 18 (R, B, G11 the known near-misses). EV0 compares the configs with `CAND`: crops (grow time, sale, seed, `step`, `quest`), `Mastery` (EV3c also its `Points` against `pt_value` / `pt_size` / `pt_speed`), the crows / cart-taste crop, the Tutorial / World 1 `firstClear`, sinks in Coins only, talent bundles)
 Bands are provisional, for the user to confirm with the proposal. Archetypes: Obby main (7:00 / 12:30 / 18:00, 2 h obby), Casual (8:00 / 19:00,
 45 min obby), Garden main (7 / 12 / 17 / 21, 15 min obby), Binge (one 6 h day a week), Spender (Casual's schedule, paid comforts).
 

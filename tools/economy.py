@@ -247,7 +247,8 @@ def crow_cfg(o):
 
 
 def mastery_cfg(o):
-    return [list(o["Levels"]), o["RestPerDay"], o["RestCap"], o["QuestSeeds"]]
+    pts = o["Points"]  # EV3c: the size of one upgrade point per line
+    return [list(o["Levels"]), o["RestPerDay"], o["RestCap"], o["QuestSeeds"], [pts["Value"], pts["Size"], pts["Speed"]]]
 
 
 def scout_cfg(o):
@@ -282,7 +283,7 @@ def apply_crop_config(P):
         # EV3b: [id, grow hours, sale, seed, step (plants that open the next crop; None for a rare crop), quest ({crop: n} or None)]
         # (EV2a: [id, Renown points, grow hours, sale, seed, renown level])
         "crops": [[c["id"], c["growSeconds"] / 3600, c["sale"], c["seed"], c.get("step"), c.get("quest")] for c in crops],
-        "mastery": mastery_cfg(luau(f, "CropConfig.Mastery")),  # EV3b: [levels, rested per day, rested cap, quest seeds]
+        "mastery": mastery_cfg(luau(f, "CropConfig.Mastery")),  # EV3b: [levels, rested per day, rested cap, quest seeds, EV3c points [Value, Size, Speed]]
         "xp": [[c["id"], c["xp"]] for c in crops],  # E1a3: pet XP of one crop fed to a pet
         "squares": [start, top],
         "rows": [list(rows), grid, list(start_open)],  # E1d2: the field's shape and the start block
@@ -452,7 +453,7 @@ def pin_values(P):
         "coin_counts": {k: len(c) for k, c in sorted(P["coins_by_stage"].items())},
         # CropConfig (E1a2), the crop field; grow time and offline cap in hours; read at load, so --offline-rate / --offline-cap do not show up as drift
         "crop_field_crops": P["crop_cfg"]["crops"],  # [id, grow hours, sale, seed, step, quest] (EV3b)
-        "crop_field_mastery": P["crop_cfg"]["mastery"],  # [levels, rested per day, rested cap, quest seeds] (EV3b)
+        "crop_field_mastery": P["crop_cfg"]["mastery"],  # [levels, rested per day, rested cap, quest seeds] (EV3b), [Value, Size, Speed] points (EV3c)
         "stage_first_clears": {s["key"]: s["first_clear"] for s in P["stages"] if s.get("first_clear")},  # EV3b
         "crop_field_squares": P["crop_cfg"]["squares"],  # [StartSquares, MaxSquares]
         "crop_field_expansions": P["crop_cfg"]["expansions"],  # price per extra square

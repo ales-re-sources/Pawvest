@@ -187,7 +187,11 @@ CropConfig.SettleSeconds = 60 -- online growth is settled at least this often (a
 -- plants, a crop with `quest` when the quest's crops are handed in (piece by piece, no expiry); the quest gives QuestSeeds seeds of the new
 -- crop. Rested mastery (silent: never shown): each day away past the first adds RestPerDay to Garden.Rested (cap RestCap); while it lasts
 -- a plant counts double and uses 1 / step of it.
-CropConfig.Mastery = { Levels = { 25, 75, 200 }, RestPerDay = 0.5, RestCap = 3, QuestSeeds = 4 }
+-- Crop upgrades (EV3c): every level gives one point, spent on one of the crop's lines (Garden.Crops[id].Pts = { [line] = 1 }; one point
+-- per line, so a crop at the top level has all three): Value (sale × 1 + Points.Value), Size (size factor × 1 + Points.Size), Speed (grow
+-- time × 1 - Points.Speed: the crop's growth rate × 1 / (1 - Points.Speed)).
+CropConfig.Mastery = { Levels = { 25, 75, 200 }, RestPerDay = 0.5, RestCap = 3, QuestSeeds = 4, Points = { Value = 0.11, Size = 0.11, Speed = 0.11 } }
+CropConfig.PointLines = { "Value", "Size", "Speed" } -- the crop page's order
 
 -- The common crops in unlock order (Potato first, always open).
 CropConfig.Ladder = {}
@@ -209,6 +213,36 @@ function CropConfig.MasteryLevel(n: number?): number
 		end
 	end
 	return level
+end
+
+-- EV3c: whether line `line` of the points table `pts` ({ Value = 1, … }, nil = none) is taken.
+function CropConfig.HasPoint(pts, line: string): boolean
+	return type(pts) == "table" and pts[line] == 1
+end
+
+-- Points spent in `pts`, and the free points of a crop with `n` plants grown and those points (never below 0).
+function CropConfig.SpentPoints(pts): number
+	local spent = 0
+	for _, line in CropConfig.PointLines do
+		if CropConfig.HasPoint(pts, line) then
+			spent += 1
+		end
+	end
+	return spent
+end
+function CropConfig.FreePoints(n: number?, pts): number
+	return math.max(0, CropConfig.MasteryLevel(n) - CropConfig.SpentPoints(pts))
+end
+
+-- The sale multiplier (Value), the size factor multiplier (Size) and the growth rate multiplier (Speed) of the points `pts`.
+function CropConfig.SaleMult(pts): number
+	return if CropConfig.HasPoint(pts, "Value") then 1 + CropConfig.Mastery.Points.Value else 1
+end
+function CropConfig.SizeMult(pts): number
+	return if CropConfig.HasPoint(pts, "Size") then 1 + CropConfig.Mastery.Points.Size else 1
+end
+function CropConfig.SpeedMult(pts): number
+	return if CropConfig.HasPoint(pts, "Speed") then 1 / (1 - CropConfig.Mastery.Points.Speed) else 1
 end
 
 -- Whether crop id `id` is open for a player with the unlocked set `unlocked` ({ [id] = true }): rare crops and Potato always are.
@@ -364,10 +398,12 @@ function CropConfig.SizeFactor(userId: number, planting: number): number
 	return sizeOf(math.clamp(z, -CropConfig.SizeZCap, CropConfig.SizeZCap))
 end
 
--- The smallest and the largest size factor a harvest can give (the largest with the top Seed sorter level).
-function CropConfig.SizeBounds(): (number, number)
+-- The smallest and the largest size factor a harvest can give (the largest with the top Seed sorter level and the Size point, EV3c).
+-- look = true: the largest the plant art is built for (without the Size point; PlantGrowth clamps a bigger factor's look to it).
+function CropConfig.SizeBounds(look: boolean?): (number, number)
 	local sorter = CropConfig.ToolById.Sorter
-	return sizeOf(-CropConfig.SizeZCap), sizeOf(CropConfig.SizeZCap) * (1 + sorter.effect[#sorter.effect])
+	local high = sizeOf(CropConfig.SizeZCap) * (1 + sorter.effect[#sorter.effect])
+	return sizeOf(-CropConfig.SizeZCap), if look then high else high * (1 + CropConfig.Mastery.Points.Size)
 end
 
 -- "Giant", "Big" or nil for a size factor.
@@ -378,9 +414,15 @@ function CropConfig.SizeLabel(factor: number): string?
 	return if factor >= sizeOf(CropConfig.SizeBigZ) then "Big" else nil
 end
 
--- Coins (before the pet bonus) for crops of `crop` whose size factors add up to `sizeSum`: the one rounding rule.
-function CropConfig.SaleValue(crop, sizeSum: number): number
-	return math.floor(crop.sale * sizeSum + 0.5)
+-- Coins (before the pet bonus) for crops of `crop` whose size factors add up to `sizeSum`, with the crop's points `pts` (EV3c Value):
+-- the one rounding rule.
+function CropConfig.SaleValue(crop, sizeSum: number, pts): number
+	return math.floor(crop.sale * CropConfig.SaleMult(pts) * sizeSum + 0.5)
+end
+
+-- The sale of one crop of standard size with the points `pts` (the price shown on rows and the crop page).
+function CropConfig.SalePrice(crop, pts): number
+	return CropConfig.SaleValue(crop, 1, pts)
 end
 
 -- Look stage 1..3 of a planted crop (3 = ripe), from its growth seconds.

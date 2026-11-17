@@ -4,7 +4,7 @@
 -- slots → the Pets panel.
 --   * toasts for the answers of the field actions on GardenRemotes.Result (eggs and food share that remote: ignored here): plant,
 --     harvest (size, record, Shears, mastery level-up, crop unlocked), seeds / cart bought, sale, square bought, quest pieces, upgrades and
---     tools, field pets;
+--     tools, crop upgrade points (EV3c), field pets;
 --   * once per session the notices of State.field.notice (an old profile's pen conversion, what the pets harvested while away, what
 --     the crows ate and which guards chased them off).
 -- The GUI is built here (ScreenGui FieldGui with the toast only), stud-brick wood look (StudStyle).
@@ -62,6 +62,14 @@ local QUEST_REJECT_KEYS = setmetatable({
 	crop = "field.reason.questCrop",
 	crops = "field.reason.items",
 }, { __index = REJECT_KEYS })
+-- EV3c: spending a crop's upgrade point
+local POINT_REJECT_KEYS = setmetatable({
+	points = "field.reason.points",
+	maxed = "field.reason.pointTaken",
+	crop = "field.reason.pointCrop",
+}, { __index = REJECT_KEYS })
+-- the upgrade lines' names (EV3c)
+local POINT_LINE_KEYS = { Value = "field.point.value", Size = "field.point.size", Speed = "field.point.speed" }
 local PET_ACTIONS = { PlacePet = true, LiftPet = true, BuyPetSlot = true }
 -- the field upgrades' texts (E1c1): name, effect now → next level, effect at the top level
 local UPGRADE_KEYS = {
@@ -217,12 +225,14 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 		and action ~= "Sell"
 		and action ~= "BuySquare"
 		and action ~= "Quest"
+		and action ~= "CropPoint"
 	then
 		return -- incubators and the food stand answer on the same remote
 	end
 	if not ok then
 		local keys = if action == "BuySeeds" or action == "BuyCart" then STALL_REJECT_KEYS
 			elseif action == "Quest" then QUEST_REJECT_KEYS
+			elseif action == "CropPoint" then POINT_REJECT_KEYS
 			else REJECT_KEYS
 		showToast(Locale.Reject(detail, keys), COLOR_ERROR)
 		return
@@ -249,6 +259,7 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 		local mastery = type(detail.mastery) == "table" and detail.mastery
 		if detail.levelUp and mastery then -- EV3b: "Garlic ★2!"
 			table.insert(lines, Locale.T("field.toast.masteryUp", { crop = name, level = mastery.level }))
+			table.insert(lines, Locale.T("field.toast.pointFree")) -- EV3c: every level gives a point
 		end
 		local opened = type(detail.unlocked) == "string" and CropConfig.ById[detail.unlocked]
 		if opened then
@@ -263,6 +274,9 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 			table.insert(lines, Locale.T("field.toast.seeds", { crop = Locale.CropName(opened), count = detail.seeds or 0 }))
 		end
 		showToast(table.concat(lines, "\n"), COLOR_OK)
+	elseif action == "CropPoint" then -- EV3c: "Upgraded: Cucumber · 💰 Price"
+		local line = POINT_LINE_KEYS[detail.line]
+		showToast(Locale.T("field.toast.point", { crop = name, line = if line then Locale.T(line) else "" }), COLOR_OK)
 	elseif action == "Sell" then
 		showToast(Locale.T("field.toast.sell", { count = detail.paid }), COLOR_OK)
 	elseif action == "BuySeeds" or action == "BuyCart" then

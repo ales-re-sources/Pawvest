@@ -50,16 +50,19 @@
 -- of a 4 x 3 field) move onto rows 1-3 (CropConfig.FromOldSquare), with their crops and field pets.
 -- Remotes (in GardenRemotes): Plant(square, crop), Harvest(square), BuySeeds(crop, count), Sell(crop, count),
 -- BuySquare(square, expectedOpen), PlacePet(square, uid) (also moves a placed pet), LiftPet(uid), BuyPetSlot(expectedSlots),
--- BuyUpgrade(id, expectedLevel), BuyTool(id, expectedLevel), BuyCart(slot, crop, count), FeedCrop(uid, crop, count), Quest(crop, count)
--- (client → server); answers on GardenRemotes.Result; GardenRemotes.State.field (the owner's panel).
+-- BuyUpgrade(id, expectedLevel), BuyTool(id, expectedLevel), BuyCart(slot, crop, count), FeedCrop(uid, crop, count), Quest(crop, count),
+-- CropPoint(crop, line) (client → server); answers on GardenRemotes.Result; GardenRemotes.State.field (the owner's panel).
 -- Where they are accepted: at the own plot (GardenService.Usable, 45 studs) for the field actions and Sell (the barn is on the plot);
 -- within GardenConfig.SeedStallDistance of the plaza's seed stall for BuySeeds and BuyCart (U4); anywhere for BuyUpgrade, BuyTool,
--- BuyPetSlot (U4: pure Coin buys from the Skills / Pets panels), FeedCrop and Quest.
+-- BuyPetSlot (U4: pure Coin buys from the Skills / Pets panels), FeedCrop, Quest and CropPoint.
 -- Crop mastery (EV3b, CropConfig.Mastery): Garden.Crops[crop] = { N = plants grown } (common crops; a harvest by hand or a Tending pet adds
 -- one, two while Garden.Rested lasts), Garden.Unlocked = { [crop] = true } (Potato and rare crops are always open). The next common crop
 -- opens when the previous one reaches its `step`; a crop with a `quest` opens through Garden.Quest = { Crop, Got = { [crop] = n } } (crops
 -- handed in piece by piece with Quest, kept without expiry; the last piece gives QuestSeeds seeds of it). Rested mastery is silent: the
 -- join settle adds (days away - 1) x RestPerDay to Garden.Rested (cap RestCap); it is never sent to the client.
+-- Crop upgrades (EV3c): Garden.Crops[crop].Pts = { [line] = 1 } (Value, Size, Speed; one point per mastery level, one per line), spent
+-- with CropPoint(crop, line) from anywhere. Value multiplies the sale (also of crops already in the barn), Size every harvest's size
+-- factor (and the growing square's look), Speed that crop's growth (from the moment the point is spent: settled first).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -89,6 +92,7 @@ local buyToolEvent = GardenService.Remote("BuyTool") -- client → server: (id: 
 local buyCartEvent = GardenService.Remote("BuyCart") -- client → server: (slot: number, crop: string, count: number)
 local feedCropEvent = GardenService.Remote("FeedCrop") -- client → server: (uid: string, crop: string, count: number)
 local questEvent = GardenService.Remote("Quest") -- client → server: (crop: string, count: number) (EV3b: hand in toward the open quest)
+local cropPointEvent = GardenService.Remote("CropPoint") -- client → server: (crop: string, line: string) (EV3c: spend a crop's point)
 
 local reject = GardenService.Reject
 
@@ -249,8 +253,16 @@ local function fieldOf(player: Player, profile)
 		for id, entry in garden.Crops do
 			local crop = CropConfig.ById[id]
 			if crop and not crop.rare and type(entry) == "table" and count(entry.N) > 0 then
-				local clean = table.clone(entry) -- EV3c adds Pts
+				local clean = table.clone(entry)
 				clean.N = count(entry.N)
+				local pts = nil -- EV3c: { [line] = 1 } for each line taken
+				for _, line in CropConfig.PointLines do
+					if CropConfig.HasPoint(entry.Pts, line) then
+						pts = pts or {}
+						pts[line] = 1
+					end
+				end
+				clean.Pts = pts
 				crops[id] = clean
 			end
 		end
@@ -422,14 +434,21 @@ local function shearsExtra(player: Player, garden, n: number): boolean
 	return chance > 0 and Random.new(player.UserId * 6271 + n * 15485863):NextNumber() < chance
 end
 
-local function harvestSize(player: Player, garden, planting: number): number
+-- The points table of `crop` (EV3c; nil = none).
+local function pointsOf(garden, crop)
+	local entry = garden.Crops[crop.id]
+	return entry and entry.Pts
+end
+
+local function harvestSize(player: Player, garden, crop, planting: number): number
 	return CropConfig.SizeFactor(player.UserId, planting) * (1 + CropConfig.ToolEffect(garden.Tools, "Sorter"))
+		* CropConfig.SizeMult(pointsOf(garden, crop))
 end
 
 -- Puts one harvested crop into the barn, with a second of the same size when extra.
 -- The plot feed and the harvest use the same deterministic size calculation.
 local function store(player: Player, garden, crop, planting: number, extra: boolean?): (number, boolean)
-	local factor = harvestSize(player, garden, planting)
+	local factor = harvestSize(player, garden, crop, planting)
 	local n = if extra then 2 else 1
 	garden.Items[crop.id] = (garden.Items[crop.id] or 0) + n
 	garden.ItemSize[crop.id] = (garden.ItemSize[crop.id] or 0) + factor * n
@@ -520,7 +539,8 @@ local function settle(player: Player, profile, field, open, absence: boolean): (
 		local square = field.Squares[key]
 		local crop = CropConfig.ById[square.Crop]
 		local before = CropConfig.Stage(crop, square.Grown)
-		square.Grown += cropGrowth
+		local growthOf = cropGrowth * CropConfig.SpeedMult(pointsOf(garden, crop)) -- EV3c Speed
+		square.Grown += growthOf
 		if square.Grown < crop.growSeconds and crop.growSeconds - square.Grown <= RIPEN_EPSILON then
 			square.Grown = crop.growSeconds
 		end
@@ -542,7 +562,7 @@ local function settle(player: Player, profile, field, open, absence: boolean): (
 			addPlant(player, garden, crop)
 			tended = tended or {}
 			tended[crop.id] = (tended[crop.id] or 0) + (if extra then 2 else 1)
-			local leftover = math.min(entry.Grown - crop.growSeconds, cropGrowth) -- growth from before this absence does not carry over
+			local leftover = math.min(entry.Grown - crop.growSeconds, growthOf) -- growth from before this absence does not carry over
 			if (garden.Seeds[crop.id] or 0) > 0 then
 				garden.Seeds[crop.id] -= 1
 				if garden.Seeds[crop.id] == 0 then
@@ -569,7 +589,7 @@ local function settle(player: Player, profile, field, open, absence: boolean): (
 	local raid = nil
 	local rules = CropConfig.Crows
 	if absence and CropConfig.IsUnlocked(garden.Unlocked, rules.FromCrop) then
-		local rate = CropConfig.OfflineRate * CropConfig.GrowthSpeed(CropConfig.UpgradeLevel(field.Upgrades, "Growth"))
+		local baseRate = CropConfig.OfflineRate * CropConfig.GrowthSpeed(CropConfig.UpgradeLevel(field.Upgrades, "Growth"))
 		local grownUntil = start + math.min(elapsed, CropConfig.OfflineCapSeconds) -- offline growth stops at the cap
 		local guards = guardStrength(profile, open)
 		local eaten = 0
@@ -577,6 +597,7 @@ local function settle(player: Player, profile, field, open, absence: boolean): (
 			local entry = field.Squares[key]
 			local crop = entry and CropConfig.ById[entry.Crop]
 			if crop and not crop.rare and not entry.Crow and entry.Grown >= crop.growSeconds then
+				local rate = baseRate * CropConfig.SpeedMult(pointsOf(garden, crop))
 				local ripeAt = math.max(start, grownUntil - (entry.Grown - crop.growSeconds) / rate)
 				if ripeAt < now and CropConfig.CrowsBetween(ripeAt, now) then
 					entry.Crow = true -- rolled: this planting faces crows only once
@@ -623,9 +644,10 @@ local function cartState(garden)
 	return { nextAt = (today + 1) * CropConfig.DaySeconds, offers = offers }
 end
 
-local function onlineSpeed(garden, field): number
+-- Growth seconds per second of `crop` while the owner is online (Cloches, Growth, the crop's Speed point).
+local function onlineSpeed(garden, field, crop): number
 	return CropConfig.OnlineRate * (1 + CropConfig.ToolEffect(garden.Tools, "Cloches"))
-		* CropConfig.GrowthSpeed(CropConfig.UpgradeLevel(field.Upgrades, "Growth"))
+		* CropConfig.GrowthSpeed(CropConfig.UpgradeLevel(field.Upgrades, "Growth")) * CropConfig.SpeedMult(pointsOf(garden, crop))
 end
 
 -- Grown was earned through SettledAt, even if a visitor requests this plot much later.
@@ -638,15 +660,17 @@ local function growthWindow(field, square, duration: number, speed: number): (nu
 	return startAt, field.SettledAt + math.ceil((duration - square.Grown - RIPEN_EPSILON) / speed)
 end
 
--- EV3b: the state's mastery part: { crops = { [crop] = plants grown }, unlocked = { [crop] = true }, quest = { crop, got }? }
--- (Garden.Rested stays server-only: rested mastery is silent).
+-- EV3b: the state's mastery part: { crops = { [crop] = plants grown }, points = { [crop] = { [line] = 1 } } (EV3c), unlocked =
+-- { [crop] = true }, quest = { crop, got }? } (Garden.Rested stays server-only: rested mastery is silent).
 local function masteryState(garden)
-	local crops = {}
+	local crops, points = {}, {}
 	for id, entry in garden.Crops do
 		crops[id] = entry.N
+		points[id] = if entry.Pts then table.clone(entry.Pts) else nil
 	end
 	return {
 		crops = crops,
+		points = points,
 		unlocked = table.clone(garden.Unlocked),
 		quest = if garden.Quest then { crop = garden.Quest.Crop, got = table.clone(garden.Quest.Got) } else nil,
 	}
@@ -673,17 +697,16 @@ GardenService.AddStateField("field", function(profile)
 	end
 	table.sort(list)
 	local now = os.time()
-	local speed = onlineSpeed(profile.Garden, field)
 	local squares = {}
 	for key, square in field.Squares do
 		local crop = CropConfig.ById[square.Crop]
 		-- server time when the crop is ripe if the owner stays online (the panel's countdown)
-		local startAt, finish = growthWindow(field, square, crop.growSeconds, speed)
+		local startAt, finish = growthWindow(field, square, crop.growSeconds, onlineSpeed(profile.Garden, field, crop))
 		local readyAt = if finish == 0 then now else finish
 		local grown = if finish == 0 then crop.growSeconds
 			else crop.growSeconds * math.clamp((now - startAt) / (finish - startAt), 0, 1)
 		squares[key] = { crop = square.Crop, grown = math.floor(grown), readyAt = readyAt,
-			size = harvestSize(owner, profile.Garden, square.N) }
+			size = harvestSize(owner, profile.Garden, crop, square.N) }
 	end
 	local garden = profile.Garden
 	local pets = {} -- [square] = the pet working there
@@ -754,17 +777,16 @@ function GardenField.PlotField(player: Player)
 	end
 	local cells = table.create(CropConfig.MaxSquares)
 	local plants
-	local speed = onlineSpeed(profile.Garden, field)
 	for n = 1, CropConfig.MaxSquares do
 		local key = tostring(n)
 		local square = field.Squares[key]
 		local crop = square and CropConfig.ById[square.Crop]
 		cells[n] = if not open[n] then "#0" elseif crop then crop.letter .. CropConfig.Stage(crop, square.Grown) else ".0"
 		if open[n] and crop then
-			local startAt, readyAt = growthWindow(field, square, crop.growSeconds, speed)
+			local startAt, readyAt = growthWindow(field, square, crop.growSeconds, onlineSpeed(profile.Garden, field, crop))
 			plants = plants or {}
 			plants[key] = { n = square.N, startAt = startAt, readyAt = readyAt,
-				size = harvestSize(player, profile.Garden, square.N) }
+				size = harvestSize(player, profile.Garden, crop, square.N) }
 		end
 	end
 	local pets = {} -- "Kind:Level:uid:square:tending:guard" per field pet, by square
@@ -941,7 +963,7 @@ sellEvent.OnServerEvent:Connect(function(player, cropId, amount)
 	end
 
 	local part = removeItems(garden, crop.id, amount) -- the average size of what is stored
-	local paid = CoinRewards.Grant(player, CropConfig.SaleValue(crop, part), "crop") or 0 -- the pet bonus at sale time
+	local paid = CoinRewards.Grant(player, CropConfig.SaleValue(crop, part, pointsOf(garden, crop)), "crop") or 0 -- the pet bonus at sale time
 	done(player, "Sell", { crop = crop.id, count = amount, paid = paid })
 end)
 
@@ -1147,6 +1169,35 @@ questEvent.OnServerEvent:Connect(function(player, cropId, amount)
 		openByCount(player, garden) -- moves the quest on (and opens a count crop already due)
 	end
 	done(player, "Quest", detail)
+end)
+
+-- EV3c: spends one of `cropId`'s free points (mastery level - points spent) on `line` (Value, Size, Speed). From anywhere; the field is
+-- settled first, so Speed counts from now. Rejects `crop` (a rare crop: no mastery), `maxed` (that line is taken), `points` (no free point).
+cropPointEvent.OnServerEvent:Connect(function(player, cropId, line)
+	local crop = type(cropId) == "string" and CropConfig.ById[cropId]
+	if not (crop and type(line) == "string" and table.find(CropConfig.PointLines, line)) or not GardenService.Allow(player) then
+		return
+	end
+	local profile, field = usableField(player, "CropPoint", true)
+	if not field then
+		return
+	end
+	if crop.rare then
+		return reject(player, "CropPoint", "crop")
+	end
+	local garden = profile.Garden
+	local entry = garden.Crops[crop.id]
+	local pts = entry and entry.Pts
+	if CropConfig.HasPoint(pts, line) then
+		return reject(player, "CropPoint", "maxed")
+	end
+	if not entry or CropConfig.FreePoints(entry.N, pts) < 1 then
+		return reject(player, "CropPoint", "points")
+	end
+	entry.Pts = pts or {}
+	entry.Pts[line] = 1
+	Telemetry.CropPoint(player, crop.id, line, CropConfig.MasteryLevel(entry.N))
+	done(player, "CropPoint", { crop = crop.id, line = line })
 end)
 
 local function placedCount(garden): number
