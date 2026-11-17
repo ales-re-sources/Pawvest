@@ -1,6 +1,6 @@
 -- Hatchery panel (U5b, docs/UI_GARDEN_PETS.md §7; was the per-incubator panel of P2b1 / P2b3): the own plot's hatchery has one
 -- "Open hatchery" prompt (PlotView, GardenView.OnHatchery) that opens this panel (ScreenGui HatcheryGui, GardenUi.Panel):
---   * one row per incubator: egg + countdown, Cancel opens a Keep / Discard confirmation, Hatch when ready;
+--   * one row per incubator: egg + countdown, small trash brick → orange OK? → discard (ConfirmTap), Hatch when ready;
 --     empty; the next one to buy
 --     (Unlock brick with the price, two taps over ConfirmTap.THRESHOLD); later ones "unlock incubator n first";
 --   * egg cards (K1) while an owned incubator is empty: the egg drawn in its colour, name, hatch time, a buy brick with the price
@@ -69,24 +69,39 @@ local function eggName(eggId: string): string
 	return if egg then Locale.EggName(egg) else eggId
 end
 
--- Odds of an egg as rich text: "<Uncommon 45 %> · <Rare 35 %> · …" in rarity colours.
-local function odds(eggId: string): string
-	local egg = PetConfig.Eggs[eggId]
-	local parts = {}
+-- Odds as separate rows: rarity, aligned chance, aligned hatch duration.
+local function renderOdds(eggId: string, parent: Instance)
+	local section = GardenUi.Section("Odds", 4)
+	section.Parent = parent
+	GardenUi.Paragraph("Title", { LayoutOrder = 0, Font = StudStyle.Font, TextSize = 16, Text = eggName(eggId), Parent = section })
 	for _, rarity in PetConfig.Rarities do
-		local weight = egg.weights[rarity.id]
+		local weight = PetConfig.Eggs[eggId].weights[rarity.id]
 		if weight and weight > 0 then
-			table.insert(
-				parts,
-				Locale.T("hatchery.odds.rarity", {
-					rarity = string.format("<font color='%s'>%s</font>", hex(rarity.color), Locale.RarityName(rarity.id)),
-					chance = Locale.Decimal(PetClient.Percent(weight)),
-					time = GardenUi.GrowTime(PetConfig.HatchSeconds[rarity.id]),
-				})
-			)
+			local row = GardenUi.Create("Frame", {
+				Name = rarity.id, LayoutOrder = rarity.order, Size = UDim2.new(1, 0, 0, 0),
+				AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Parent = section,
+			}, {
+				GardenUi.Create("UIListLayout", {
+					FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder,
+					VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, GAP),
+				}),
+			})
+			GardenUi.Paragraph("Rarity", {
+				LayoutOrder = 1, Size = UDim2.new(0.46, -GAP, 0, 0), TextSize = 14,
+				TextColor3 = rarity.color, Text = Locale.RarityName(rarity.id), Parent = row,
+			})
+			GardenUi.Paragraph("Chance", {
+				LayoutOrder = 2, Size = UDim2.new(0.22, 0, 0, 0), TextSize = 14, Font = StudStyle.Font,
+				TextXAlignment = Enum.TextXAlignment.Right,
+				Text = Locale.T("hatchery.odds.chance", { chance = Locale.Decimal(PetClient.Percent(weight)) }), Parent = row,
+			})
+			GardenUi.Paragraph("Time", {
+				LayoutOrder = 3, Size = UDim2.new(0.32, -GAP, 0, 0), TextSize = 14,
+				TextXAlignment = Enum.TextXAlignment.Right, TextColor3 = GardenUi.COLOR_DIM,
+				Text = GardenUi.GrowTime(PetConfig.HatchSeconds[rarity.id]), Parent = row,
+			})
 		end
 	end
-	return table.concat(parts, " · ")
 end
 
 -- Panel ----------------------------------------------------------------------------------------------------------------------
@@ -156,38 +171,8 @@ local revealOk = GardenUi.Button("Ok", {
 	Parent = reveal,
 }, 3)
 
--- A selected egg's warning gets its own page, with an explicit way to keep hatching.
-local cancelPage = GardenUi.Create("Frame", {
-	Name = "CancelConfirm",
-	BackgroundTransparency = 1,
-	Visible = false,
-	Parent = ui.panel,
-}, {
-	GardenUi.Create("UIListLayout", {
-		SortOrder = Enum.SortOrder.LayoutOrder,
-		HorizontalAlignment = Enum.HorizontalAlignment.Center,
-		Padding = UDim.new(0, 16),
-	}),
-	GardenUi.Create("UIPadding", { PaddingTop = UDim.new(0, 16) }),
-})
-local cancelTitle = GardenUi.Paragraph("Title", {
-	LayoutOrder = 1, TextSize = 22, Font = StudStyle.Font, TextXAlignment = Enum.TextXAlignment.Center, Parent = cancelPage,
-})
-local cancelWarning = GardenUi.Paragraph("Warning", {
-	LayoutOrder = 2, TextSize = 17, TextXAlignment = Enum.TextXAlignment.Center, Parent = cancelPage,
-})
-local keepEgg = GardenUi.Button("Keep", {
-	LayoutOrder = 3, Size = UDim2.new(1, -32, 0, 48), BackgroundColor3 = GardenUi.COLOR_BUY,
-	TextSize = 18, TextWrapped = true, Parent = cancelPage,
-}, 2)
-local discardEgg = GardenUi.Button("Discard", {
-	LayoutOrder = 4, Size = UDim2.new(1, -32, 0, 48), BackgroundColor3 = StudStyle.Colors.Red,
-	TextSize = 18, TextWrapped = true, Parent = cancelPage,
-}, 2)
-
 local isOpen = false
 local incubators = nil -- private State: { count, eggs = { ["n"] = { id, egg, startedAt, readyAt } } }; kind stays server-only
-local pendingCancel: { index: number, id: string }? = nil
 local status: { text: string, color: Color3 }? = nil -- the last answer, shown for STATUS_SECONDS
 local statusTimer = GardenUi.Latest()
 local oddsShown: string? = nil -- egg id whose odds are shown
@@ -277,11 +262,24 @@ local function renderNests(state, tap: number)
 			local egg = PetConfig.Eggs[entry.egg]
 			local title = string.format("%s · %s", Locale.T("incubator.title", { n = n }), eggName(entry.egg))
 			if remaining > 0 then
-				local column = GardenUi.TextColumn(row, ACTION_WIDTH + GAP, title, Locale.T("incubator.hatchesIn", { time = GardenUi.Countdown(remaining) }))
+				local column = GardenUi.TextColumn(row, tap + GAP, title, Locale.T("incubator.hatchesIn", { time = GardenUi.Countdown(remaining) }))
 				table.insert(countdowns, { label = column:FindFirstChild("Info"), readyAt = entry.readyAt })
-				local cancel = action(Locale.T("incubator.cancel"), StudStyle.Colors.Red)
+				local key = "CancelEgg" .. entry.id
+				local armed = ConfirmTap.IsArmed(key)
+				local cancel = action(Locale.T(if armed then "incubator.cancel.tapAgain" else "incubator.cancel"),
+					if armed then ConfirmTap.COLOR else GardenUi.COLOR_LOCKED)
+				cancel.Size = UDim2.fromOffset(tap, tap)
 				cancel.Activated:Connect(function()
-					pendingCancel = { index = n, id = entry.id }
+					local current = incubators and incubators.eggs[tostring(n)]
+					if current and current.id == entry.id and current.readyAt > workspace:GetServerTimeNow() then
+						if ConfirmTap.Tap(key, function()
+							if isOpen and not reveal.Visible then render() end
+						end) then
+							cancelEggEvent:FireServer(n, entry.id)
+						end
+					else
+						ConfirmTap.Disarm(key)
+					end
 					render()
 				end)
 			else
@@ -416,12 +414,7 @@ local function renderEggs(state, tap: number)
 		end)
 	end
 	if oddsShown and PetConfig.Eggs[oddsShown] then
-		GardenUi.Paragraph("Odds", {
-			LayoutOrder = 4,
-			TextSize = 14,
-			RichText = true,
-			Text = Locale.T("hatchery.odds", { egg = eggName(oddsShown), odds = odds(oddsShown) }),
-		}).Parent = eggsSection
+		renderOdds(oddsShown, eggsSection)
 		GardenUi.Paragraph("Rules", { LayoutOrder = 5, TextSize = 14, Text = Locale.T("hatchery.odds.rules") }).Parent = eggsSection
 	end
 end
@@ -434,28 +427,10 @@ render = function()
 	revealOk.Size = UDim2.fromOffset(160, math.max(48, ui.TapHeight()))
 	reveal.Position = UDim2.fromOffset(8, ui.HeaderHeight() + 6)
 	reveal.Size = UDim2.new(1, -16, 1, -(ui.HeaderHeight() + 14))
-	cancelPage.Position = reveal.Position
-	cancelPage.Size = reveal.Size
-	keepEgg.Size = UDim2.new(1, -32, 0, math.max(48, ui.TapHeight()))
-	discardEgg.Size = keepEgg.Size
-	cancelTitle.Text = Locale.T("incubator.cancel.confirm")
-	keepEgg.Text = Locale.T("incubator.cancel.keep")
-	discardEgg.Text = Locale.T("incubator.cancel.discard")
 	if not isOpen then
 		return
 	end
 	local state = incubators
-	if pendingCancel then
-		local entry = state and state.eggs[tostring(pendingCancel.index)]
-		if not entry or entry.id ~= pendingCancel.id or entry.readyAt <= workspace:GetServerTimeNow() then
-			pendingCancel = nil
-		end
-	end
-	cancelPage.Visible = pendingCancel ~= nil
-	ui.content.Visible = pendingCancel == nil and not reveal.Visible
-	if pendingCancel then
-		cancelWarning.Text = Locale.T("incubator.cancel.warning", { n = pendingCancel.index })
-	end
 	renderStatus()
 	if not state then
 		GardenUi.Clear(nestsSection)
@@ -495,28 +470,10 @@ end
 local function showContent()
 	revealToken += 1
 	reveal.Visible = false
-	pendingCancel = nil
-	cancelPage.Visible = false
 	ui.content.Visible = true
 end
 
-keepEgg.Activated:Connect(function()
-	showContent()
-	render()
-end)
-discardEgg.Activated:Connect(function()
-	local pending = pendingCancel
-	local entry = pending and incubators and incubators.eggs[tostring(pending.index)]
-	showContent()
-	if entry and entry.id == pending.id and entry.readyAt > workspace:GetServerTimeNow() then
-		cancelEggEvent:FireServer(pending.index, pending.id)
-	end
-	render()
-end)
-
 local function showReveal(detail)
-	pendingCancel = nil
-	cancelPage.Visible = false
 	revealToken += 1
 	local mine = revealToken
 	ui.content.Visible = false

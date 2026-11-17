@@ -245,7 +245,6 @@ hatchery.busy,Hatchery catalogue when all nests are occupied,Every incubator hol
 hatchery.egg.time,"Egg card before purchase; {time} = shortest possible wait, {max} = longest. Both localized durations.",⏱ {time}–{max},⏱ {time}–{max},new,h1ddd4321
 hatchery.egg.buy,"Hatchery panel, egg card: the buy button (half the panel minus the ? button); {count} = price in Coins",💰 {count},💰 {count},new,h5b33c8c5
 hatchery.odds.button,"Hatchery panel, egg card: square button that shows the egg's chances (one character)",?,?,new,h9f64d1d4
-hatchery.odds,"Hatchery panel, under the egg cards after ? was tapped; {egg} = egg name, {odds} = coloured list ""Common 60 % · Rare 30 % · …""",{egg}: {odds},{egg}: {odds},new,ha2013ce2
 hatchery.reveal.title,"Hatchery panel, hatch reveal: the big title over the new pet's picture",New pet!,Nový mazlíček!,new,h40c24a23
 hatchery.reveal.follows,"Hatchery panel, hatch reveal: line under the pet's name when it was equipped at once",It follows you now.,Teď půjde všude s tebou.,new,h3c4bd076
 hatchery.reveal.panel,"Hatchery panel, hatch reveal: line under the pet's name when no equip slot was free",It is waiting in your Pets panel.,Čeká na tebe v panelu Mazlíčci.,new,h29d03f2b
@@ -598,11 +597,8 @@ field.card.cropGroup,Soil dialog group-box legend enclosing crop status and Plan
 field.card.petsGroup,"Soil dialog group-box legend enclosing help, resident and pet controls",Pets,Mazlíčci,new,he7accae6
 barn.group.forecast,Barn group-box legend enclosing the field crow forecast,Field forecast,Předpověď pro pole,new,h41de9af5
 hatchery.group.nests,Hatchery group-box legend enclosing the owned and locked incubator nests,Your nests,Tvoje hnízda,new,hff15f2f2
-hatchery.odds.rarity,"One rarity in the egg info tip; {rarity} = colored localized rarity, {chance} = localized percent number, {time} = localized duration.",{rarity}: {chance}% · {time},{rarity}: {chance} % · {time},new,hc9f42b46
-hatchery.odds.rules,"Egg ? info tip: hidden purchase roll, shared hatch-time tiers, offline progress and no-refund discard.",Your pet is chosen when you buy the egg and revealed when it hatches. Some rarities share a hatch time. Hatching continues while you are away. Cancelling discards the egg without a refund.,"Mazlíček se vybere při koupi vejce a ukáže se až při vylíhnutí. Některé vzácnosti mají stejnou dobu líhnutí. Líhnutí pokračuje, i když nejsi ve hře. Zrušením vejce zahodíš bez vrácení mincí.",new,h5e99bcfa
-incubator.cancel,Growing nest action; opens a confirmation page only for this egg. No discard yet.,Cancel hatch,Zrušit líhnutí,new,h91a12e71
-incubator.cancel.confirm,Title of selected-egg cancellation page; Keep hatching and Discard egg are separate buttons.,Discard egg?,Zahodit vejce?,new,he3cbe7ce
+hatchery.odds.rules,"Egg info tip after the odds table; only offline hatching and no-refund cancellation, no hidden roll mechanics.",Hatching continues while you are away. Cancelling discards the egg without a refund.,"Líhnutí pokračuje, i když nejsi ve hře. Zrušením vejce zahodíš bez vrácení mincí.",new,h38f7fbdd
+incubator.cancel,"Tap-sized square trash button on growing nest; first tap arms only, orange OK? then confirms within 3 seconds.",🗑,🗑,new,h12952cf3
 incubator.cancelled,Success after egg discarded; no Coins or free egg credit returned.,Egg discarded. No Coins refunded.,Vejce je pryč. Mince se nevracejí.,new,ha7b975e9
-incubator.cancel.warning,Selected-egg confirmation body; {n} = incubator 1-3. Loss applies to purchased and free eggs.,The egg in incubator {n} will be lost. No Coins or free eggs are returned.,Vejce v inkubátoru {n} bude zahozeno. Mince ani vejce zdarma se nevracejí.,new,h6b88b3eb
-incubator.cancel.keep,Safe choice on cancellation page: dismiss warning and keep incubating.,Keep hatching,Pokračovat v líhnutí,new,h7ee53bf8
-incubator.cancel.discard,Destructive choice on selected-egg confirmation page: discards the egg without refund.,Discard egg,Zahodit vejce,new,h623d0b78
+incubator.cancel.tapAgain,Orange armed trash button; second tap within shared ConfirmTap window discards egg. Short text must fit a square.,OK?,OK?,new,h6d41df1b
+hatchery.odds.chance,"Right-aligned percentage in each egg odds row; {chance} = localized decimal number, e.g. 12.7 / 12,7.",{chance}%,{chance} %,new,h56825d3d

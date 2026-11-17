@@ -237,8 +237,8 @@ obby first clears outpay the farm they should feed (findings above).
   Double Jump 2 needs were sold); the Renown model still passes its 14 checks.
 
 EV2e (2026-11-17): the game now stores a pet kind at purchase / free placement, uses the approved rarity timers and
-uses shared time tiers to hide exact rarity and keeps the chosen pet server-only until hatch. Cancellation has an explicit
-Keep / Discard confirmation (discard without refund). First free pet remains instant. Old eggs keep their deadlines.
+uses shared time tiers to hide exact rarity and keeps the chosen pet server-only until hatch. Cancellation uses a small trash button
+with shared ConfirmTap (orange OK? → second tap; discard without refund). First free pet remains instant. Old eggs keep their deadlines.
 `economy.py` reads and pins the rarity timer table; its per-egg `hatch_s` is the weighted mean (Basic 1 057.8 s, Golden 3 354 s),
 used for report comparison, not a fixed gameplay timer. `economy_ev.py` checks the table against the proposal. The shared-tier
 forecast passes 16/18: G7's longest first-hour news gap is 15.9 m (target ≤ 10); G9's Casual talent-first top crop is day 13.3

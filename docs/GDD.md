@@ -365,9 +365,9 @@ earned, after a hatch or cancellation and after an incubator is bought. While ev
 waits in the profile; the Pets panel and the incubator panel show how many wait. Its pet is chosen when it enters a nest.
 
 The nest row shows only the egg and remaining time; the pet kind and rarity stay server-only until **Hatch**. Shared
-time tiers keep the exact rarity uncertain. **Cancel hatch** opens a warning for the selected egg with **Keep hatching**
-and **Discard egg** choices. Keeping it or closing the panel leaves it incubating. Discarding returns neither Coins nor a
-free egg. A waiting free egg can immediately occupy the freed nest. Existing eggs from before EV2e
+time tiers keep the exact rarity uncertain. A small square **trash** button uses the shared ConfirmTap pattern: first tap
+turns it orange with **OK?**, second tap within 3 s discards the egg without returning Coins or a free egg. Waiting or closing
+the panel disarms it. A waiting free egg can immediately occupy the freed nest. Existing eggs from before EV2e
 receive a fixed pet once on join and keep their original deadlines. Traits still roll only when the pet hatches.
 
 ### 7.3 Slots and Coin bonus
@@ -505,11 +505,12 @@ collecting and caring over obby runs.
     the egg uses the same 90° turn, with all three pod centres unchanged.
   - **Hatchery panel (U5b).** The three open hatch pods stand under the hatchery's roof (§7.6 Layout) with one "Open hatchery"
     prompt. Group boxes separate **Your nests** from **Eggs to buy** (2026-11-15). The panel lists each incubator: its egg,
-    a live countdown, **Cancel hatch** while growing (selected-egg Keep / Discard confirmation, no refund), **Hatch** when ready,
+    a live countdown, a small trash button while growing (orange OK? then second tap, no refund), **Hatch** when ready,
     the next one's Unlock brick with its
     price (two taps over 1 000 Coins), "unlock incubator n first" for the later one. While an owned incubator is empty, **egg cards**
     show each egg (drawn in its colour, name, possible hatch-time range, a price brick; Golden takes two taps) and a **?** brick that shows its odds,
-    the shared hatch times, hidden purchase-time selection, reveal at hatch and the no-refund cancellation rule;
+    a readable table of rarity / right-aligned percentage / hatch time and only the offline-hatching / no-refund tip;
+    hidden roll mechanics stay out of the player-facing explanation;
     a card starts the egg in the first empty incubator. Hatching shows a **reveal** in the panel: the pet's portrait, its kind in the
     rarity colour and the rarity, where it went (with you / the Pets panel), then the traits it was born with as chips, one every
     0.4 s. Opening it closes the other panels; walking 32 studs away closes it. An egg can only be started while the pets plus the eggs already incubating stay below the

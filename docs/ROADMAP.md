@@ -220,7 +220,7 @@ take a 2×2 block, its footprint from the blended `bulk` gene. Next: HX1.
 
 **EV2e — Egg timing and cancellation** (2026-11-17; GDD §7.2, §7.6). Implemented and desktop Studio-validated: pet fixed at
 purchase / free placement, shared rarity timers (Common / Uncommon 5 m, Rare 1 h, Epic / Legendary 4 h); pet hidden until hatch,
-Cancel hatch opens a selected-egg Keep / Discard confirmation (discard without refund); updated egg info tips. Existing eggs keep their deadlines; first free pet stays instant. Physical touch and
+Square trash uses ConfirmTap (orange OK? → second tap, discard without refund); aligned odds rows and short egg info tips. Existing eggs keep their deadlines; first free pet stays instant. Physical touch and
 live validation remain open.
 
 **Hatchery redesign** (2026-11-16; GDD §7.6). Cross-lapped stud egg shells and 3D egg cards, stud-textured foundations, a tall pavilion with
