@@ -262,7 +262,7 @@ local function renderNests(state, tap: number)
 				local key = "CancelEgg" .. entry.id
 				local armed = ConfirmTap.IsArmed(key)
 				local cancel = action(Locale.T(if armed then "incubator.cancel.tapAgain" else "incubator.cancel"),
-					if armed then ConfirmTap.COLOR else GardenUi.COLOR_LOCKED)
+					if armed then ConfirmTap.COLOR else StudStyle.Colors.Red)
 				cancel.Size = UDim2.fromOffset(tap, tap)
 				cancel.Activated:Connect(function()
 					local current = incubators and incubators.eggs[tostring(n)]
