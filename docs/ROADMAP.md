@@ -42,7 +42,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | K1 | First-hour fixes (kid playtest 2026-11-01): Stage 5, G1 fallback, Double Jump world reward, hatch panel done; the rest is measured in M6a | partial | partial | – |
 | E0 | Economy model (its repricing replaced by EV) | ✔ | – | – |
 | EV | Engagement-first economy: EV1 model, EV2a numbers, EV2b talent bundles | EV1–EV2b, EV2e ✔; EV2c, EV2d, EV2f after 1.0 | EV2a, EV2b ✔ | – |
-| EV3 | Crop mastery: crop levels replace Renown, milestone quests, crop upgrades, first-hour obby payouts (1.0) | EV3a signed off; EV3b1 Studio-validated 2026-11-17; EV3b2 next | – | – |
+| EV3 | Crop mastery: crop levels replace Renown, milestone quests, crop upgrades, first-hour obby payouts (1.0) | EV3a signed off; EV3b Studio-validated 2026-11-17 (EV3b1, EV3b2); EV3c next | – | – |
 | E1.0, E1a–E1d | Client-drawn plots; crop field (every player's since FA), field pets, crops as pet food, size roll, upgrades, tools, market cart, 36 squares | ✔ | ✔ | – |
 | E2, E4-thin | Obby seeds (rare crops, meters, pouch, Scouting); crows and Pest-control guards | ✔ | ✔ | – |
 | OG | Offline crop growth 0.5 / 24 h | ✔ | pending | – |
@@ -70,7 +70,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 - **Not in 1.0:** obby time calibration (M6b; the obby stays as built), the comfort shop (D2: 1.0 ships without monetization),
   Sunshine (EV2c), World 4, hybrids (HX1 build).
 
-**Start here:** EV3b2 (EV3b1 Studio-validated 2026-11-17: ROADMAP → EV3b; open: the square card in Czech). Alongside: OG validation and the M6a friends test (step 0).
+**Start here:** EV3c (EV3b Studio-validated 2026-11-17; open: the square card in Czech, the Goals line on a real phone). Alongside: OG validation and the M6a friends test (step 0).
 *Update this line whenever a milestone finishes.*
 
 **Road to 1.0** (in order; one milestone at a time unless marked "alongside"):
@@ -80,7 +80,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
    tagged [1.0]. Unlisted needs no TH.
 1. **EV3 — crop mastery** (section below; player-facing name "Mastery ★"): sign-off → EV3b (levels, unlocks, Renown out) → EV3c (crop
    upgrade points). *State:* EV3a numbers signed off 2026-11-17 (mastery by plants grown, 3 levels, price tiers, smaller Double Jump 2 /
-   Dash bundles); EV3b is next.
+   Dash bundles); EV3b built and Studio-validated 2026-11-17; EV3c is next.
 2. **ST — rotating seed stall** (section below): model, then build. *Needs* EV3b (★ decides which crops can appear).
 3. **SH — Harvest Hall and plot likes** (section below). *Needs* only the size records (built); best after EV3c, whose Size line changes
    sizes.
@@ -202,15 +202,7 @@ cart taste), AhojRupert level 5 (Potato … Cucumber), test records `user_-1` / 
   - Pseudo-language and Czech pass: no "Renown" on screen; Czech fits on the stall row with Bring buttons and on the square card.
   - The test records `user_-1` / `user_-2` removed.
 
-**EV3b2 — tracker line and Goals panel** (UI_GARDEN_PETS §13; after EV3b1)
-1. **Tracker line** in the score panel's place outside a stage: the next crop ("🥔 8 / 12 → 🥬", or the quest's least-done piece); a
-   finished goal toasts and the line moves on; a tap opens the Goals panel. On a stage the run view stays. Line 2 (requests) comes with E5.
-2. **Goals panel** (`UiKit`, built in code, re-renders on `Locale.Changed`): *Next crop* with the count or the quest pieces and their
-   **Bring** buttons (same remote as the stall). The world star count leaves the HUD (§13 open point: watch in M6a); unused `hud.score.*`
-   keys go.
-- **Acceptance (EV3b2):** loc checks as EV3b1; boot clean; through the real UI: the line follows a Potato harvest, a quest piece handed in
-  from the Goals panel away from the stall, the line moves on after an unlock; the run view unchanged on a stage; Czech fits on the line
-  and the panel (phone-size viewport).
+**EV3b2 — tracker line and Goals panel:** done 2026-11-17 (Done; the scope: `git show 5778797:docs/ROADMAP.md`).
 - **Open (the user):** the quest's seed pack (4 seeds of the new crop, a first guess like the first clears' packs); the cart taste of a
   locked crop stays until ST decides the cart (tasted plants count toward that crop's ★ but do not unlock it).
 
@@ -340,6 +332,14 @@ Tagged **[1.0]** (needed before 1.0 goes public) or **[later]**.
 
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
+
+**EV3b2 — tracker line and Goals panel** (2026-11-17; Studio-validated on fixtures of Lekzdrh's profile, restored). *Why:* the next
+unlock and the milestone quests need a "what next" outside the seed stall, and the brown score panel had nothing to say off a stage
+(UI_GARDEN_PETS §13). *What:* GDD §7.9 (tracker line, Goals panel); the score panel only on a stage (`HudStage`, PROTOCOL); the hub /
+world star count and three `hud.score.*` keys gone; the quest rows shared (`GardenUi.QuestRows`). Checked: the line followed Lettuce
+harvests (0 → 2 / 13) and moved on after the Lettuce and Corn unlocks, the Corn quest handed in through the panel 96 studs from the stall,
+the run view unchanged on Stage 1, Czech fits at a 496 × 319 viewport. Not checked: the touch HUD on a real phone (the desktop HUD's
+icon row covers the line in a very small window, as it did the score panel).
 
 **Hatch reveal** (2026-11-17; Studio-validated with Hatch answers sent to the client, no real hatch). *Why:* the reveal was a static
 page and its trait chips explained nothing. *What:* `HatchReveal` (GDD §7 hatchery): egg wobble with a rarity-colour hint, burst, pet pop

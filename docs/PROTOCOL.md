@@ -57,6 +57,8 @@ deductions (and pet sales) call `PlayerProfile.AddCoins` directly. The multiplie
 `PlayerCoins`) get `Coins × 10` once on load — never multiply stored Coins by hand. `RunsToday = { Day = <UTC day>, [stageKey] = medal finishes }` drives
 the diminishing repeat reward (`StageConfig.RunReward`).
 
+Player attribute `HudStage` = the stage key while the player is on a stage (set by `PlayerTimerHandler.UpdateScorePanel` on arrival,
+cleared on the hub, a world island or the garden; EV3b2): the score panel shows only then, the tracker line (GoalsClient) otherwise.
 Player attributes `Medal_<stage folder>` (0–3) mirror `PlayerProfile.Medals` for client displays; `Unlocked_<stage folder>`
 (bool) mirror `StageUnlocks` (bar met or `UnlockedStages[key]` bought; the bar is derived from medals, never stored).
 `EquippedPets` (`"Kind:Level:uid,…"`, Level = pet level = the highest shown trait level, P4; empty when none; `PetConfig.DecodeEquipped` also reads the old `Kind:Level` form) mirrors the equipped pets; `PetFollow` renders them on every client.

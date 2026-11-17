@@ -338,9 +338,12 @@ local function cardWidth(): number
 	end
 	if UserInputService.TouchEnabled then
 		local hud = player.PlayerGui:FindFirstChild("ScreenGui")
-		local score = hud and hud:FindFirstChild("ScorePanel")
-		if score and score:IsA("GuiObject") and score.Visible and score.AbsoluteSize.X > 0 then
-			side = math.max(side, viewport - score.AbsolutePosition.X + GAP) -- keep the close button clear of the stage HUD
+		local goals = player.PlayerGui:FindFirstChild("GoalsLineGui")
+		-- keep the close button clear of the stage HUD (the score panel on a stage, the tracker line elsewhere: EV3b2)
+		for _, plate in { hud and hud:FindFirstChild("ScorePanel"), goals and goals:FindFirstChild("Line") } do
+			if plate and plate:IsA("GuiObject") and plate.Visible and plate.AbsoluteSize.X > 0 then
+				side = math.max(side, viewport - plate.AbsolutePosition.X + GAP)
+			end
 		end
 	end
 	local width = if page == "pets" then PET_PICKER_WIDTH else CARD_WIDTH

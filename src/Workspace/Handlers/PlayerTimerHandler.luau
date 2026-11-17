@@ -188,6 +188,14 @@ local function updateScorePanel(player, stageKey)
 		stageKey = panelStages[player] or StageConfig.HubName
 	end
 
+	-- EV3b2: the panel is the run view of a stage only; on the hub, a world island or the garden the tracker line (GoalsClient)
+	-- takes its place. HudStage = the stage key while on a stage, nil elsewhere (ScorePanelClient / GoalsClient switch on it).
+	local stage = StageConfig.ByKey[stageKey]
+	player:SetAttribute("HudStage", if stage then stage.key else nil)
+	if not stage then
+		return
+	end
+
 	local gui = player:FindFirstChild("PlayerGui")
 	if not gui then return end
 	local screenGui = gui:FindFirstChild("ScreenGui")
@@ -201,30 +209,6 @@ local function updateScorePanel(player, stageKey)
 	local medals = if profile then profile.Medals else {}
 
 	-- texts are keys, rendered in each player's language by LocalizedText.client (L1)
-	-- a world island: the world's name and the stars earned in it
-	local world = StageConfig.WorldByName[stageKey]
-	if world then
-		Locale.SetKey(scorePanel.StageName, "world.name." .. world.index)
-		Locale.SetKey(scorePanel.StageRecord, "hud.score.chooseStage")
-		if medalsLabel then
-			Locale.SetKey(medalsLabel, "hud.score.starsEarned", {
-				n = StageConfig.WorldStars(medals, world.index),
-				max = StageConfig.MaxWorldStars(world.index),
-			})
-		end
-		return
-	end
-
-	local stage = StageConfig.ByKey[stageKey]
-	if not stage then
-		Locale.SetKey(scorePanel.StageName, "hub.name")
-		Locale.SetKey(scorePanel.StageRecord, "hud.score.enterPortal")
-		if medalsLabel then
-			Locale.SetKey(medalsLabel, "hud.score.starsEarned", { n = StageConfig.TotalStars(medals), max = StageConfig.MaxStars() })
-		end
-		return
-	end
-
 	Locale.SetKey(scorePanel.StageName, "stage.name." .. stage.key)
 	local best = profile and profile.BestTimes[stage.key]
 	if best then

@@ -166,7 +166,8 @@ Medal rules:
 
 Limits are visible before and during a run:
 - **Score panel** (on arriving at a stage): all three limits, e.g. `★ 1:52  ★★ 1:17  ★★★ 0:56`; tiers already
-  earned are gold. On the hub it shows the total stars earned.
+  earned are gold. It shows only on a stage; elsewhere the tracker line takes its place (§7.9, EV3b2: the hub's total stars
+  left the HUD; the world gates still show their star bar).
 - **Stage timer** (while running): next to the time, the best medal still reachable and its limit
   (`00:41.3  ★★★ 0:56`); when a limit passes it drops to the next tier, after Bronze to "no medal".
 - **Hub portals**: earned stars are drawn on the portal face itself (part of the gate, not camera-facing).
@@ -718,6 +719,11 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   **Rested mastery** is silent (the user, 2026-11-17: never shown or announced): each day away past the first adds 0.5 (cap 3) to a pool
   in units of the harvested crop's `step`; while it lasts a plant counts double. Squares, upgrades and tools cost Coins only.
   Profiles before EV3b migrate once (`Version = 7`): unlocked = the crops their Renown level had opened plus every crop held or grown.
+- **Tracker line and Goals panel (EV3b2, UI_GARDEN_PETS §13).** Outside a stage a wooden line under the coin plate shows the next crop's
+  goal with a bar: "🥔 8 / 12 → 🥬 Lettuce" (the previous crop's plants), or for a quest crop its least-done piece (brought / needed);
+  hidden once every crop is open. It pulses when the goal moves on (the unlock toast comes from the field toasts). A tap opens the
+  **Goals panel**: *Next crop* with how it opens and the count bar, or the quest's pieces with Bring buttons that work anywhere (the
+  server takes from the barn). Line 2 (the day's requests) and the panel's *Today's requests* come with E5.
 - **Upgrades and tools.** Growth (4 levels, -5 % grow time each) and Barn (5 levels, +20 each). Tools: Seed sorter
   (sizes x 1.05 / 1.10 / 1.15), Cloches (online growth +7 / 14 / 20 %), Pruning shears (5 / 10 / 15 % chance of a second crop of the same size,
   rolled per planting).

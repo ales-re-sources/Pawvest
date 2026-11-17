@@ -143,7 +143,7 @@ Order proposed: U1 before M6a; U2–U5 before E5's onboarding (it teaches the ne
 5. ~~Seeds~~ — decided 2026-11-05: a seed stall on the plaza, with the market cart offers on its board (§6), beside the food stand
    (§9.1).
 
-## 13. Goals: tracker lines and the Goals panel (decided 2026-11-17; built with EV3b and E5)
+## 13. Goals: tracker lines and the Goals panel (decided 2026-11-17; line 1 and *Next crop* built in EV3b2, 2026-11-17; the rest with E5)
 *Why:* 1.0 brings several "what can I do next" pieces (the next crop's unlock count and the milestone quests, EV3b; three daily
 requests, E5; later upgrade points, EV3c, and the ledger). A panel or stand for each clutters a phone screen, and kids do not read signs
 (K1). The brown score panel (`ScreenGui.ScorePanel`: the place, "Enter portal!" / "Choose a stage!", stars earned) no longer serves its
@@ -159,5 +159,6 @@ purpose outside a run (the user).
   row and the skills panel keeps the talent bundles: hints where they are used, not extra panels.
 - **After 1.0 the panel grows into the quest book:** sections for talent and world unlocks (the stars earned move there), the mastery
   collection, the streak (D3); a drop adds a section, not a panel.
-- **Open:** the world star count leaves the HUD until the quest book's worlds section (the world gates still show their star bar):
-  check in play that nobody misses it; which keys of `hud.score.*` go (the hub / world texts; `record` / `firstTry` stay for stages).
+- **Open:** the world star count left the HUD (EV3b2) until the quest book's worlds section (the world gates still show their star
+  bar): check in play (M6a) that nobody misses it. `hud.score.chooseStage` / `enterPortal` / `starsEarned` went; `record` / `firstTry`
+  stay for stages.

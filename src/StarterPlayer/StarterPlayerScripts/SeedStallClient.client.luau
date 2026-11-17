@@ -141,59 +141,6 @@ local function renderCart(field, tap: number)
 		cartSection
 end
 
--- EV3b: the rows of the open quest's pieces under the quest crop's row (order `order` + k): each crop with brought / needed / held
--- and a Bring button that hands in what the barn holds, up to what is still needed.
-local function renderQuest(target, field, order: number, tap: number)
-	local quest = GardenUi.Mastery(field).quest
-	local got = if type(quest) == "table" and quest.crop == target.id and type(quest.got) == "table" then quest.got else {}
-	local pieces = {}
-	for id, need in target.quest do
-		table.insert(pieces, { crop = CropConfig.ById[id], need = need })
-	end
-	table.sort(pieces, function(x, y)
-		return (x.crop.order or 0) < (y.crop.order or 0)
-	end)
-	for k, piece in pieces do
-		local crop = piece.crop
-		local brought = math.min(tonumber(got[crop.id]) or 0, piece.need)
-		local have = field.items[crop.id] or 0
-		local missing = piece.need - brought
-		local row = GardenUi.Row(seedsSection, "Quest" .. crop.id, order + k, StudStyle.Shade(COLOR_ROW, 0.85))
-		GardenUi.TextColumn(
-			row,
-			BRING_WIDTH + GAP,
-			GardenUi.CropTitle(crop),
-			Locale.T("field.quest.piece", { got = brought, need = piece.need, have = have })
-		)
-		if missing <= 0 then
-			GardenUi.Paragraph("Done", {
-				LayoutOrder = 2,
-				Size = UDim2.new(0, BRING_WIDTH, 0, 0),
-				Font = StudStyle.Font,
-				TextSize = 15,
-				TextColor3 = GardenUi.COLOR_OK,
-				TextXAlignment = Enum.TextXAlignment.Center,
-				Text = Locale.T("field.quest.done"),
-			}).Parent = row
-		else
-			local bring = GardenUi.Button("Bring", {
-				LayoutOrder = 2,
-				Size = UDim2.fromOffset(BRING_WIDTH, tap),
-				BackgroundColor3 = if have > 0 then GardenUi.COLOR_BUY else GardenUi.COLOR_LOCKED,
-				TextSize = 16,
-				Text = Locale.T("field.quest.bring"),
-				Parent = row,
-			}, 2)
-			if have > 0 then
-				local id, amount = crop.id, math.min(have, missing)
-				bring.Activated:Connect(function()
-					questEvent:FireServer(id, amount)
-				end)
-			end
-		end
-	end
-end
-
 local function renderSeeds(field, tap: number)
 	GardenUi.Clear(seedsSection)
 	GardenUi.Heading(seedsSection, 1, Locale.T("field.section.seeds"), COLOR_PANEL)
@@ -245,7 +192,9 @@ local function renderSeeds(field, tap: number)
 				Text = lockText,
 			}).Parent = row
 			if locked and crop == nextCrop and crop.quest then
-				renderQuest(crop, field, order, tap)
+				GardenUi.QuestRows(seedsSection, crop, field, order, { width = BRING_WIDTH, tap = tap, color = StudStyle.Shade(COLOR_ROW, 0.85) }, function(id, amount)
+					questEvent:FireServer(id, amount)
+				end)
 			end
 		else
 			for slot, option in { { name = "Buy1", amount = 1, width = BUY1_WIDTH }, { name = "Buy10", amount = 10, width = BUY10_WIDTH } } do

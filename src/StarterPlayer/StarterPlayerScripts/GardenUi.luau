@@ -8,6 +8,8 @@
 --   * FarmButton(button, order): center the visible farm HUD buttons together, preserving their ScreenGui parents;
 --   * texts: Countdown ("1:00:00"), GrowTime ("3 hours"), CropTitle (icon + name), GrowSecondsOn (with the Growth upgrade),
 --     KgText, BarnOf (seeds the barn holds), CrowLine (the crow forecast's text and colour, E4b);
+--   * mastery (EV3b): Mastery, PlantsOf, IsUnlocked, Stars, MasteryLine, NextGoal (the tracker line's goal), QuestGot, QuestRows
+--     (the quest's pieces with Bring buttons: seed stall and Goals panel);
 --   * BindStand(gui, standName, open, opts?): a garden stand's prompt and the gui's Open attribute (a test hook) call
 --     open(counter part); opts.prompt = { action, object } Locale keys of the prompt, opts.onStand(stand model) once found.
 -- Display only: nothing here talks to the server.
@@ -357,6 +359,101 @@ function GardenUi.MasteryLine(field, crop): string?
 		return Locale.T("field.mastery.max", { level = level })
 	end
 	return Locale.T("field.mastery.line", { level = level, have = n, need = need })
+end
+
+-- The next goal of the mastery ladder (EV3b2, the tracker line): nil when every common crop is open, else
+-- { crop = the next locked crop, from = the crop being counted, have, need } — for a count unlock the previous crop's plants
+-- (have capped at need), for a quest crop its least-done piece (brought / needed; ties: unlock order).
+function GardenUi.NextGoal(field)
+	local mastery = GardenUi.Mastery(field)
+	local target = CropConfig.NextLocked(mastery.unlocked)
+	if not target then
+		return nil
+	end
+	if not target.quest then
+		local previous, need = CropConfig.UnlockNeed(target)
+		if not previous or not need then
+			return nil
+		end
+		return { crop = target, from = previous, have = math.min(GardenUi.PlantsOf(field, previous), need), need = need }
+	end
+	local got = GardenUi.QuestGot(field, target)
+	local best = nil
+	for id, need in target.quest do
+		local crop = CropConfig.ById[id]
+		local have = math.min(got[id] or 0, need)
+		local share = have / need
+		if crop and have < need and (not best or share < best.share or (share == best.share and crop.order < best.from.order)) then
+			best = { crop = target, from = crop, have = have, need = need, share = share }
+		end
+	end
+	return best
+end
+
+-- The open quest's handed-in counts toward `target` ({ [cropId] = n }; empty when the quest is another crop's or not open yet).
+function GardenUi.QuestGot(field, target): { [string]: number }
+	local quest = GardenUi.Mastery(field).quest
+	local got = if type(quest) == "table" and quest.crop == target.id and type(quest.got) == "table" then quest.got else {}
+	local clean = {}
+	for id, n in got do
+		if type(n) == "number" then
+			clean[id] = n
+		end
+	end
+	return clean
+end
+
+-- The quest's pieces as rows under `parent` (EV3b; the seed stall and the Goals panel, EV3b2): each crop with brought / needed /
+-- held and a Bring button (named "Bring") that hands in what the barn holds, up to what is still needed, through fire(crop, n).
+-- Row names "Quest<CropId>", LayoutOrder order + k. opts: width (the Bring column), tap (its height), color (the rows).
+function GardenUi.QuestRows(parent: Instance, target, field, order: number, opts: { width: number, tap: number, color: Color3 }, fire: (string, number) -> ())
+	local got = GardenUi.QuestGot(field, target)
+	local pieces = {}
+	for id, need in target.quest do
+		table.insert(pieces, { crop = CropConfig.ById[id], need = need })
+	end
+	table.sort(pieces, function(x, y)
+		return (x.crop.order or 0) < (y.crop.order or 0)
+	end)
+	for k, piece in pieces do
+		local crop = piece.crop
+		local brought = math.min(got[crop.id] or 0, piece.need)
+		local have = (field and field.items and field.items[crop.id]) or 0
+		local missing = piece.need - brought
+		local row = GardenUi.Row(parent, "Quest" .. crop.id, order + k, opts.color)
+		GardenUi.TextColumn(
+			row,
+			opts.width + GardenUi.GAP,
+			GardenUi.CropTitle(crop),
+			Locale.T("field.quest.piece", { got = brought, need = piece.need, have = have })
+		)
+		if missing <= 0 then
+			GardenUi.Paragraph("Done", {
+				LayoutOrder = 2,
+				Size = UDim2.new(0, opts.width, 0, 0),
+				Font = StudStyle.Font,
+				TextSize = 15,
+				TextColor3 = GardenUi.COLOR_OK,
+				TextXAlignment = Enum.TextXAlignment.Center,
+				Text = Locale.T("field.quest.done"),
+			}).Parent = row
+		else
+			local bring = GardenUi.Button("Bring", {
+				LayoutOrder = 2,
+				Size = UDim2.fromOffset(opts.width, opts.tap),
+				BackgroundColor3 = if have > 0 then GardenUi.COLOR_BUY else GardenUi.COLOR_LOCKED,
+				TextSize = 16,
+				Text = Locale.T("field.quest.bring"),
+				Parent = row,
+			}, 2)
+			if have > 0 then
+				local id, amount = crop.id, math.min(have, missing)
+				bring.Activated:Connect(function()
+					fire(id, amount)
+				end)
+			end
+		end
+	end
 end
 
 -- The crow forecast (E4b) for the server time `now`: text and colour; from the fixed schedule (CropConfig.NextCrows).

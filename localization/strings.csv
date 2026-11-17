@@ -52,9 +52,14 @@ pet.egg.Golden,Egg name (expensive egg; hatch duration depends on chosen pet rar
 # Score panel (top right),,,,,
 hud.score.record,"Second line on a stage; {time} = personal best, e.g. 1:23.4",Your record: {time},Tvůj rekord: {time},ok,h843f7a81
 hud.score.firstTry,Second line on a stage the player has never finished,First try!,První pokus!,ok,h37b1e26c
-hud.score.chooseStage,Second line on a world courtyard (the stage gates are around),Choose a stage!,Vyber si úroveň!,ok,h7381cee7
-hud.score.enterPortal,Second line in the hub: go through a world gate,Enter portal!,Vstup do portálu!,ok,h77812350
-hud.score.starsEarned,Third line in the hub / a world; {n} stars earned of {max},Stars earned: {n} / {max},Získané hvězdy: {n} / {max},ok,h84a4d1aa
+# Goals: tracker line and Goals panel (EV3b2),,,,,
+goals.line,"Tracker line on the HUD (top right, one short line, shrinks to fit about 230 px) outside a stage: the next crop to unlock; {icon} = emoji of the crop being counted, {have} / {need} = plants grown or crops brought / needed, {crop} = emoji + name of the crop it unlocks (Czech: nominative)",{icon} {have} / {need} → {crop},{icon} {have} / {need} → {crop},new,hf95988e2
+goals.title,Title of the Goals panel (opened by tapping the tracker line),Goals,Cíle,new,h2b289e99
+goals.next.heading,"Goals panel, section heading: the next crop to unlock",Next crop,Další plodina,new,h63363d96
+goals.next.countHint,"Goals panel, row of the next crop, under its name: how it unlocks; {need} = plants needed, {crop} = the previous crop's name (Czech: nominative after ×)",Grow {need} × {crop} to unlock it,"Odemkneš, až vypěstuješ {need} × {crop}",new,h8b58c1e7
+goals.next.bar,"Goals panel, progress bar text under the next crop: {icon} = emoji of the crop being counted, {have} / {need} = plants grown / needed",{icon} {have} / {need},{icon} {have} / {need},new,hd92e621c
+goals.next.allOpen,"Goals panel, next-crop section when every crop is already unlocked",Every crop is unlocked!,Všechny plodiny jsou odemčené!,new,hf0213ba3
+goals.next.loading,"Goals panel, next-crop section before the garden state has arrived (a moment after joining)",Loading your garden…,Načítám tvou zahradu…,new,h259ac1c4
 # Stage timer and requirements,,,,,
 hud.timer.noMedal,"After the timer when no medal is reachable any more (lower case, follows the time)",no medal,bez medaile,ok,h66387c41
 hud.needs,Talents a stage needs; {list} = coloured talent names separated by commas,Needs: {list},Vyžaduje: {list},ok,h1d4c40fc
@@ -363,7 +368,7 @@ field.seed.note,Small note under the seed list,Prices are in Coins.,Ceny jsou v 
 field.seed.lockBar,"Seed stall, row of the next locked crop, replaces the buy buttons (narrow, about 120 px): plants of the previous crop grown toward the unlock; {icon} = that crop's emoji, {have} / {need} = plants grown / needed",🔒 {icon} {have} / {need},🔒 {icon} {have} / {need},new,hd2711c27
 field.seed.unlockHint,"Seed stall, row of the next locked crop, last line: how it unlocks; {crop} = the previous crop's name (Czech: nominative after a colon)",Grow {crop} to unlock it,Odemkneš pěstováním: {crop},new,hcb6da94d
 field.seed.questLock,"Seed stall, row of the next locked crop when it opens by a milestone quest, replaces the buy buttons (narrow, about 120 px)",🔒 Bring crops,🔒 Přines úrodu,new,h9e1323c9
-field.seed.questHint,"Seed stall, row of a quest crop, last line: the rows below list the crops to hand in",Bring the crops below to unlock it,"Odemkneš, až přineseš úrodu níže",new,h7a3b721c
+field.seed.questHint,"Seed stall row of a quest crop and the Goals panel's next-crop row, last line: the rows below list the crops to hand in",Bring the crops below to unlock it,"Odemkneš, až přineseš úrodu níže",new,h7a3b721c
 field.seed.lockedLater,"Seed stall, row of a crop that opens later (not the next one), replaces the buy buttons (narrow)",🔒 Later,🔒 Později,new,h87ec4c96
 field.quest.piece,"Seed stall, quest row under a locked crop: one crop the quest needs; {got} / {need} = brought so far / needed, {have} = how many the barn holds",Brought {got} / {need} · You have {have},Přineseno {got} / {need} · Máš {have},new,h6dba8198
 field.quest.bring,"Seed stall, quest row: button that hands in the crops from the barn (short, a narrow brick)",Bring,Přines,new,h0282c301

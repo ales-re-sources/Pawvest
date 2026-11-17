@@ -2,6 +2,8 @@
 -- it shows only the name row; tapping the name row toggles it. On a phone-sized screen it starts collapsed, is scaled
 -- down; everywhere it sits right under the coin plate, aligned with its right edge. The card is re-created with its
 -- ScreenGui on every respawn, so it is set up again each time and the chosen state is kept here.
+-- EV3b2: the card shows only on a stage (player attribute HudStage, PlayerTimerHandler); elsewhere the tracker line
+-- (GoalsClient) takes its place.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -21,6 +23,10 @@ local TOGGLE_TWEEN = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirect
 
 local collapsed = nil -- nil until the first card: then the default for this screen, afterwards the player's choice
 local current = nil -- { panel, scale, glyph, details } of the card now on screen
+
+local function showOnStage(card)
+	card.panel.Visible = player:GetAttribute("HudStage") ~= nil
+end
 
 local function layout(card)
 	card.scale.Scale = math.clamp(camera.ViewportSize.Y / 600, 0.7, 1)
@@ -96,6 +102,7 @@ local function setup(screenGui)
 	current = card
 	layout(card)
 	apply(card, false)
+	showOnStage(card)
 
 	hit.MouseButton1Click:Connect(function()
 		collapsed = not collapsed
@@ -112,6 +119,12 @@ local existing = playerGui:FindFirstChild("ScreenGui")
 if existing then
 	task.spawn(setup, existing)
 end
+
+player:GetAttributeChangedSignal("HudStage"):Connect(function()
+	if current and current.panel.Parent then
+		showOnStage(current)
+	end
+end)
 
 camera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
 	if current and current.panel.Parent then
