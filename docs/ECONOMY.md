@@ -88,8 +88,8 @@ Bands are provisional, for the user to confirm with the proposal. Archetypes: Ob
 - **Squares:** 36, price 290 × 1.33^(j−5) up to square 16, then × 1.93 (1.33 × 1.45); every other sink is anchored on a square's price × a factor, so it
   arrives when that square does. Reserved sinks (landmarks, estate, decor; not designed): 70 steps × 1.15 from square 12's price.
 - **Trees (model-only):** a sapling, first growth 2–24 h, then a fruit every 5–60 min up to a cap of 4–6 held, forever.
-- **Eggs:** the pet is rolled at purchase; the hatch time is set by its rarity (Common 2 m, Uncommon 10 m, Rare 1 h, Epic 4 h, Legendary
-  12 h). The player buys the dearest egg the egg fund covers. Two placeholder eggs (FutureEgg1 / 2) above Golden keep Legendaries scarce while
+- **Eggs:** the pet is rolled at purchase; the hatch time is set by its rarity (Common / Uncommon 5 m, Rare 1 h, Epic / Legendary
+  4 h). The player buys the dearest egg the egg fund covers. Two placeholder eggs (FutureEgg1 / 2) above Golden keep Legendaries scarce while
   income grows ~1000×.
 - **Obby:** first clears and medals pay their one-time Coins; repeat medal finishes pay Sunshine (16 / 24 / 32 s per Bronze / Silver /
   Gold, × 0.8^n per stage and day, floor 6 s) into a store of up to 3 h; spending it is a **time skip**: the whole store at once, each growing
@@ -237,9 +237,14 @@ obby first clears outpay the farm they should feed (findings above).
   Double Jump 2 needs were sold); the Renown model still passes its 14 checks.
 
 EV2e (2026-11-17): the game now stores a pet kind at purchase / free placement, uses the approved rarity timers and
-allows two-tap cancellation (discard without refund). First free pet remains instant. Old eggs keep their deadlines.
-`economy.py` reads and pins the rarity timer table; its per-egg `hatch_s` is the weighted mean (Basic 1 057.2 s, Golden 3 590.4 s),
-used for report comparison, not a fixed gameplay timer. `economy_ev.py` checks the table against the proposal.
+uses shared time tiers to hide exact rarity and keeps the chosen pet server-only until hatch. Cancellation has an explicit
+Keep / Discard confirmation (discard without refund). First free pet remains instant. Old eggs keep their deadlines.
+`economy.py` reads and pins the rarity timer table; its per-egg `hatch_s` is the weighted mean (Basic 1 057.8 s, Golden 3 354 s),
+used for report comparison, not a fixed gameplay timer. `economy_ev.py` checks the table against the proposal. The shared-tier
+forecast passes 16/18: G7's longest first-hour news gap is 15.9 m (target ≤ 10); G9's Casual talent-first top crop is day 13.3
+(target ≥ 14). Legendary expected-count timing stays in band. These targets need review at balancing; timers are the user's
+accepted values and check thresholds are unchanged. The forecast's timed common/uncommon starter is still an approximation
+of the game's instant first pet.
 
 ## Open decisions for the user
 1. The EV bands (table above) and the proposal itself: approved; EV2a (numbers) and EV2b (talent bundles) are built (2026-11-07); EV2e

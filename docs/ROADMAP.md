@@ -181,7 +181,7 @@ and dialogs on a physical phone.
 ### Later milestones (scope when they start)
 - **M6b — Final balancing:** measured `T_base` per stage from telemetry, tuned numbers in GDD and the configs; GDD §6 table still all ✔. Known
   items: the repeat-reward floor (a Tutorial loop pays ~1 400 Coins / h, until EV2c), pet bonus values, slot prices, rarity-based hatch
-  time, food prices against field income.
+  time, food prices against field income. Shared hatch tiers flag EV forecast G7 / G9 (ECONOMY → EV2e); review at balancing.
 - **S9 / S10 — Wall Jump + Glide, World 4** (STAGES §8), drop D8; re-check World 4's star bar (World 3's tighter Silver / Gold make 10 of 15
   stars harder).
 - **S11 — Bonus stages** (STAGES §5.3); the farm stages (EXPANSION §8.2) may use this slot.
@@ -219,8 +219,8 @@ Studio checks: 347 genomes, 122 of them 2×2 (≤ 140 / 400 Parts, 2.38 / 5.13 r
 take a 2×2 block, its footprint from the blended `bulk` gene. Next: HX1.
 
 **EV2e — Egg timing and cancellation** (2026-11-17; GDD §7.2, §7.6). Implemented and desktop Studio-validated: pet fixed at
-purchase / free placement, rarity timers (2 m / 10 m / 1 h / 4 h / 12 h), chosen pet shown in its nest, two-tap Cancel discards
-without refund; updated egg info tips. Existing eggs keep their deadlines; first free pet stays instant. Physical touch and
+purchase / free placement, shared rarity timers (Common / Uncommon 5 m, Rare 1 h, Epic / Legendary 4 h); pet hidden until hatch,
+Cancel hatch opens a selected-egg Keep / Discard confirmation (discard without refund); updated egg info tips. Existing eggs keep their deadlines; first free pet stays instant. Physical touch and
 live validation remain open.
 
 **Hatchery redesign** (2026-11-16; GDD §7.6). Cross-lapped stud egg shells and 3D egg cards, stud-textured foundations, a tall pavilion with

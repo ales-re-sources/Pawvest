@@ -49,7 +49,7 @@ PetConfig.Kinds = {
 }
 
 -- EV2e: kind is fixed when the egg enters a nest; rarity sets the real-time wait (also offline).
-PetConfig.HatchSeconds = { Common = 120, Uncommon = 600, Rare = 3600, Epic = 14400, Legendary = 43200 }
+PetConfig.HatchSeconds = { Common = 300, Uncommon = 300, Rare = 3600, Epic = 14400, Legendary = 14400 }
 
 -- Rarity id → kinds of that rarity, sorted (Roll picks one uniformly)
 PetConfig.KindsByRarity = {} :: { [string]: { string } }

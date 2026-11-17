@@ -130,7 +130,7 @@ CAND = {
              "Golden": (10, 1.0, {"Uncommon": 500, "Rare": 370, "Epic": 127, "Legendary": 3}),
              "FutureEgg1": (18, 1.0, {"Rare": 600, "Epic": 396, "Legendary": 4}),
              "FutureEgg2": (26, 1.0, {"Rare": 400, "Epic": 580, "Legendary": 20})},
-    "hatch": {"Common": 120, "Uncommon": 600, "Rare": 3600, "Epic": 4 * 3600, "Legendary": 12 * 3600},
+    "hatch": {"Common": 300, "Uncommon": 300, "Rare": 3600, "Epic": 4 * 3600, "Legendary": 4 * 3600},
     "starter_egg": {"Common": 70, "Uncommon": 30},  # the launch egg: hatches within 5 min (G7)
     "food_mult": 1.0,  # food prices x this (GardenConfig.Foods)
     # Sunshine: seconds per repeat medal finish (Bronze, Silver, Gold) x decay^n (n = earlier medal finishes of that stage today), floor, cap

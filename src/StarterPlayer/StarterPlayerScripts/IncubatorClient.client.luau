@@ -1,6 +1,6 @@
 -- Hatchery panel (U5b, docs/UI_GARDEN_PETS.md §7; was the per-incubator panel of P2b1 / P2b3): the own plot's hatchery has one
 -- "Open hatchery" prompt (PlotView, GardenView.OnHatchery) that opens this panel (ScreenGui HatcheryGui, GardenUi.Panel):
---   * one row per incubator: its fixed pet + rarity, live countdown, two-tap Cancel (discard, no refund), Hatch when ready;
+--   * one row per incubator: egg + countdown, Cancel opens a Keep / Discard confirmation, Hatch when ready;
 --     empty; the next one to buy
 --     (Unlock brick with the price, two taps over ConfirmTap.THRESHOLD); later ones "unlock incubator n first";
 --   * egg cards (K1) while an owned incubator is empty: the egg drawn in its colour, name, hatch time, a buy brick with the price
@@ -156,8 +156,38 @@ local revealOk = GardenUi.Button("Ok", {
 	Parent = reveal,
 }, 3)
 
+-- A selected egg's warning gets its own page, with an explicit way to keep hatching.
+local cancelPage = GardenUi.Create("Frame", {
+	Name = "CancelConfirm",
+	BackgroundTransparency = 1,
+	Visible = false,
+	Parent = ui.panel,
+}, {
+	GardenUi.Create("UIListLayout", {
+		SortOrder = Enum.SortOrder.LayoutOrder,
+		HorizontalAlignment = Enum.HorizontalAlignment.Center,
+		Padding = UDim.new(0, 16),
+	}),
+	GardenUi.Create("UIPadding", { PaddingTop = UDim.new(0, 16) }),
+})
+local cancelTitle = GardenUi.Paragraph("Title", {
+	LayoutOrder = 1, TextSize = 22, Font = StudStyle.Font, TextXAlignment = Enum.TextXAlignment.Center, Parent = cancelPage,
+})
+local cancelWarning = GardenUi.Paragraph("Warning", {
+	LayoutOrder = 2, TextSize = 17, TextXAlignment = Enum.TextXAlignment.Center, Parent = cancelPage,
+})
+local keepEgg = GardenUi.Button("Keep", {
+	LayoutOrder = 3, Size = UDim2.new(1, -32, 0, 48), BackgroundColor3 = GardenUi.COLOR_BUY,
+	TextSize = 18, TextWrapped = true, Parent = cancelPage,
+}, 2)
+local discardEgg = GardenUi.Button("Discard", {
+	LayoutOrder = 4, Size = UDim2.new(1, -32, 0, 48), BackgroundColor3 = StudStyle.Colors.Red,
+	TextSize = 18, TextWrapped = true, Parent = cancelPage,
+}, 2)
+
 local isOpen = false
-local incubators = nil -- private State: { count, eggs = { ["n"] = { id, egg, kind, startedAt, readyAt } } }
+local incubators = nil -- private State: { count, eggs = { ["n"] = { id, egg, startedAt, readyAt } } }; kind stays server-only
+local pendingCancel: { index: number, id: string }? = nil
 local status: { text: string, color: Color3 }? = nil -- the last answer, shown for STATUS_SECONDS
 local statusTimer = GardenUi.Latest()
 local oddsShown: string? = nil -- egg id whose odds are shown
@@ -245,21 +275,15 @@ local function renderNests(state, tap: number)
 		elseif entry then
 			local remaining = entry.readyAt - now
 			local egg = PetConfig.Eggs[entry.egg]
-			local rarity = PetConfig.RarityOf(entry.kind)
-			local title = string.format(
-				"%s · %s\n%s · %s",
-				Locale.T("incubator.title", { n = n }), eggName(entry.egg),
-				Locale.PetKindName(entry.kind), Locale.RarityName(PetConfig.Kinds[entry.kind])
-			)
+			local title = string.format("%s · %s", Locale.T("incubator.title", { n = n }), eggName(entry.egg))
 			if remaining > 0 then
 				local column = GardenUi.TextColumn(row, ACTION_WIDTH + GAP, title, Locale.T("incubator.hatchesIn", { time = GardenUi.Countdown(remaining) }))
 				table.insert(countdowns, { label = column:FindFirstChild("Info"), readyAt = entry.readyAt })
 				local cancel = action(Locale.T("incubator.cancel"), StudStyle.Colors.Red)
-				ConfirmTap.Wrap(cancel, "CancelEgg" .. entry.id, function()
-					return true
-				end, function()
-					cancelEggEvent:FireServer(n, entry.id)
-				end, Locale.T("incubator.cancel.confirm"))
+				cancel.Activated:Connect(function()
+					pendingCancel = { index = n, id = entry.id }
+					render()
+				end)
 			else
 				local column = GardenUi.TextColumn(row, ACTION_WIDTH + GAP, title, Locale.T("incubator.ready"))
 				local info = column:FindFirstChild("Info") :: TextLabel?
@@ -270,13 +294,6 @@ local function renderNests(state, tap: number)
 				hatch.Activated:Connect(function()
 					hatchEvent:FireServer(n) -- the server checks the time itself
 				end)
-			end
-			if rarity then
-				local column = row:FindFirstChild("Text")
-				local label = column and column:FindFirstChild("Name")
-				if label then
-					label.TextColor3 = rarity.color
-				end
 			end
 			if egg and egg.look then
 				row.BackgroundColor3 = COLOR_ROW:Lerp(egg.look.color, 0.18)
@@ -417,10 +434,28 @@ render = function()
 	revealOk.Size = UDim2.fromOffset(160, math.max(48, ui.TapHeight()))
 	reveal.Position = UDim2.fromOffset(8, ui.HeaderHeight() + 6)
 	reveal.Size = UDim2.new(1, -16, 1, -(ui.HeaderHeight() + 14))
+	cancelPage.Position = reveal.Position
+	cancelPage.Size = reveal.Size
+	keepEgg.Size = UDim2.new(1, -32, 0, math.max(48, ui.TapHeight()))
+	discardEgg.Size = keepEgg.Size
+	cancelTitle.Text = Locale.T("incubator.cancel.confirm")
+	keepEgg.Text = Locale.T("incubator.cancel.keep")
+	discardEgg.Text = Locale.T("incubator.cancel.discard")
 	if not isOpen then
 		return
 	end
 	local state = incubators
+	if pendingCancel then
+		local entry = state and state.eggs[tostring(pendingCancel.index)]
+		if not entry or entry.id ~= pendingCancel.id or entry.readyAt <= workspace:GetServerTimeNow() then
+			pendingCancel = nil
+		end
+	end
+	cancelPage.Visible = pendingCancel ~= nil
+	ui.content.Visible = pendingCancel == nil and not reveal.Visible
+	if pendingCancel then
+		cancelWarning.Text = Locale.T("incubator.cancel.warning", { n = pendingCancel.index })
+	end
 	renderStatus()
 	if not state then
 		GardenUi.Clear(nestsSection)
@@ -460,10 +495,28 @@ end
 local function showContent()
 	revealToken += 1
 	reveal.Visible = false
+	pendingCancel = nil
+	cancelPage.Visible = false
 	ui.content.Visible = true
 end
 
+keepEgg.Activated:Connect(function()
+	showContent()
+	render()
+end)
+discardEgg.Activated:Connect(function()
+	local pending = pendingCancel
+	local entry = pending and incubators and incubators.eggs[tostring(pending.index)]
+	showContent()
+	if entry and entry.id == pending.id and entry.readyAt > workspace:GetServerTimeNow() then
+		cancelEggEvent:FireServer(pending.index, pending.id)
+	end
+	render()
+end)
+
 local function showReveal(detail)
+	pendingCancel = nil
+	cancelPage.Visible = false
 	revealToken += 1
 	local mine = revealToken
 	ui.content.Visible = false

@@ -343,15 +343,15 @@ Every pet from before P4 got Cuteness once, on top of its traits (profile `Versi
 
 ### 7.2 Eggs
 *Implemented (EV2e, 2026-11-17; numbers in [ECONOMY.md](ECONOMY.md) → EV):* the pet (kind and rarity) is **rolled at purchase**; its rarity sets the hatch time
-(Common 2 m, Uncommon 10 m, Rare 1 h, Epic 4 h, Legendary 12 h); aptitudes still roll at hatch. Basic 120, Golden 4 000.
+(Common / Uncommon 5 m, Rare 1 h, Epic / Legendary 4 h); aptitudes still roll at hatch. Basic 120, Golden 4 000.
 
 Every egg hatches in an **incubator** of the player's garden plot (§7.6) in real time, also while the player is offline.
 There is no egg stand on the central island (removed 2026-10-18). The odds are always shown before buying.
 
 | Egg | Price | Common | Uncommon | Rare | Epic | Legendary | Where |
 |---|---|---|---|---|---|---|---|
-| Basic egg | 120 | 60 % | 26.2 % | 11 % | 2.7 % | 0.1 % | garden incubator, 2 minutes–12 hours by pet rarity |
-| Golden egg | 4 000 | – | 50 % | 37 % | 12.7 % | 0.3 % | garden incubator, 10 minutes–12 hours by pet rarity |
+| Basic egg | 120 | 60 % | 26.2 % | 11 % | 2.7 % | 0.1 % | garden incubator, 5 minutes–4 hours by pet rarity |
+| Golden egg | 4 000 | – | 50 % | 37 % | 12.7 % | 0.3 % | garden incubator, 5 minutes–4 hours by pet rarity |
 
 Free eggs:
 - one Basic egg on the first join after pets launch (also for existing players, and again after an admin reset); a free
@@ -364,8 +364,10 @@ A free egg starts by itself (no Coins) in the lowest empty incubator as soon as 
 earned, after a hatch or cancellation and after an incubator is bought. While every incubator is busy (or the inventory cap is reached) it
 waits in the profile; the Pets panel and the incubator panel show how many wait. Its pet is chosen when it enters a nest.
 
-The nest row shows the chosen pet, rarity and remaining time. **Cancel** takes two taps and discards a growing egg without
-returning Coins or a free egg. A waiting free egg can immediately occupy the freed nest. Existing eggs from before EV2e
+The nest row shows only the egg and remaining time; the pet kind and rarity stay server-only until **Hatch**. Shared
+time tiers keep the exact rarity uncertain. **Cancel hatch** opens a warning for the selected egg with **Keep hatching**
+and **Discard egg** choices. Keeping it or closing the panel leaves it incubating. Discarding returns neither Coins nor a
+free egg. A waiting free egg can immediately occupy the freed nest. Existing eggs from before EV2e
 receive a fixed pet once on join and keep their original deadlines. Traits still roll only when the pet hatches.
 
 ### 7.3 Slots and Coin bonus
@@ -503,11 +505,11 @@ collecting and caring over obby runs.
     the egg uses the same 90° turn, with all three pod centres unchanged.
   - **Hatchery panel (U5b).** The three open hatch pods stand under the hatchery's roof (§7.6 Layout) with one "Open hatchery"
     prompt. Group boxes separate **Your nests** from **Eggs to buy** (2026-11-15). The panel lists each incubator: its egg,
-    chosen pet and rarity, a live countdown, two-tap **Cancel** while growing (discard, no refund), **Hatch** when ready,
+    a live countdown, **Cancel hatch** while growing (selected-egg Keep / Discard confirmation, no refund), **Hatch** when ready,
     the next one's Unlock brick with its
     price (two taps over 1 000 Coins), "unlock incubator n first" for the later one. While an owned incubator is empty, **egg cards**
     show each egg (drawn in its colour, name, possible hatch-time range, a price brick; Golden takes two taps) and a **?** brick that shows its odds,
-    each rarity's hatch time, purchase-time selection, traits at hatch and the no-refund cancellation rule;
+    the shared hatch times, hidden purchase-time selection, reveal at hatch and the no-refund cancellation rule;
     a card starts the egg in the first empty incubator. Hatching shows a **reveal** in the panel: the pet's portrait, its kind in the
     rarity colour and the rarity, where it went (with you / the Pets panel), then the traits it was born with as chips, one every
     0.4 s. Opening it closes the other panels; walking 32 studs away closes it. An egg can only be started while the pets plus the eggs already incubating stay below the

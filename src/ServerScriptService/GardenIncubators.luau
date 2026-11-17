@@ -13,7 +13,7 @@
 -- hatched a pet (NextPetUid 1) and nothing incubates is ready at once (ReadyAt = now): a new player (or an admin after a
 -- reset) does not wait for the first pet.
 -- Remotes: StartEgg(incubator, eggId), Hatch(incubator), CancelEgg(incubator, id), BuyIncubator(expectedIncubator);
--- answers through GardenRemotes.Result; private State eggs carry id, egg, kind, startedAt, readyAt.
+-- answers through GardenRemotes.Result; private State eggs carry id, egg, startedAt, readyAt (kind stays server-only until Hatch).
 -- Drawing: every client draws the incubators and their countdowns from GardenRemotes.Plot (GardenPlotFeed, E1a1).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -81,7 +81,7 @@ GardenService.AddStateField("incubators", function(profile)
 	local eggs = {}
 	if garden then
 		for key, entry in garden.Incubators do
-			eggs[key] = { id = entry.Id, egg = entry.Egg, kind = entry.Kind, startedAt = entry.StartedAt, readyAt = entry.ReadyAt }
+			eggs[key] = { id = entry.Id, egg = entry.Egg, startedAt = entry.StartedAt, readyAt = entry.ReadyAt }
 		end
 	end
 	return { count = garden and garden.IncubatorCount or 1, eggs = eggs }

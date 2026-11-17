@@ -259,7 +259,7 @@ incubator.freeEggs[one],Status: free eggs start by themselves in the next empty 
 incubator.freeEggs[few],Form for 2-4 (Czech only),,🎁 {count} vejce zdarma čekají na volný inkubátor,ok,h5f21d558
 incubator.freeEggs[other],Form for 0 and 5+,🎁 {count} free eggs will start in the next empty incubators,🎁 {count} vajec zdarma čeká na volný inkubátor,ok,h5f21d558
 incubator.unlocked,Message after buying an incubator,Incubator {n} unlocked,Inkubátor {n} odemčen,ok,h071ed29e
-incubator.started,Purchase success; chosen pet and remaining time are visible in its nest row.,Your pet is chosen! Its rarity sets the hatch time.,Mazlíček je vybraný! Doba líhnutí závisí na jeho vzácnosti.,new,h48392bd1
+incubator.started,Purchase success; pet identity stays hidden until Hatch.,The egg is warming up. Your pet stays a surprise until it hatches!,Vejce se zahřívá. Mazlíček zůstane překvapením až do vylíhnutí!,new,hc52cba20
 incubator.label.ready,Text over an egg in a plot's incubator once it can hatch,✨ Ready!,✨ Hotovo!,ok,hd37ff7a0
 incubator.reject.maxed,Refused: every incubator is bought,All incubators unlocked,Všechny inkubátory jsou odemčené,ok,h30705bfa
 incubator.reject.locked,Refused: the incubator is not bought,Unlock this incubator first,Nejdřív tenhle inkubátor odemkni,ok,h1ea71739
@@ -599,7 +599,10 @@ field.card.petsGroup,"Soil dialog group-box legend enclosing help, resident and 
 barn.group.forecast,Barn group-box legend enclosing the field crow forecast,Field forecast,Předpověď pro pole,new,h41de9af5
 hatchery.group.nests,Hatchery group-box legend enclosing the owned and locked incubator nests,Your nests,Tvoje hnízda,new,hff15f2f2
 hatchery.odds.rarity,"One rarity in the egg info tip; {rarity} = colored localized rarity, {chance} = localized percent number, {time} = localized duration.",{rarity}: {chance}% · {time},{rarity}: {chance} % · {time},new,hc9f42b46
-hatchery.odds.rules,Egg ? info tip explaining purchase roll and cancellation. Applies to both egg types; no refund on cancellation.,"Your pet is chosen when you buy the egg. Rarer pets take longer to hatch, even while you are away. Traits appear at hatch. Cancelling discards the egg without a refund.","Mazlíček se vybere při koupi vejce. Vzácnější mazlíčci se líhnou déle, i když nejsi ve hře. Vlastnosti se ukážou při vylíhnutí. Zrušením vejce zahodíš bez vrácení mincí.",new,h609545ba
-incubator.cancel,Growing nest action; always two taps; second line warns no refund.,Cancel\nNo refund,Zrušit\nBez náhrady,new,hcf67fe91
-incubator.cancel.confirm,"Second tap discards current egg; button 132 px, may wrap.",Discard egg?,Zahodit vejce?,new,he3cbe7ce
+hatchery.odds.rules,"Egg ? info tip: hidden purchase roll, shared hatch-time tiers, offline progress and no-refund discard.",Your pet is chosen when you buy the egg and revealed when it hatches. Some rarities share a hatch time. Hatching continues while you are away. Cancelling discards the egg without a refund.,"Mazlíček se vybere při koupi vejce a ukáže se až při vylíhnutí. Některé vzácnosti mají stejnou dobu líhnutí. Líhnutí pokračuje, i když nejsi ve hře. Zrušením vejce zahodíš bez vrácení mincí.",new,h5e99bcfa
+incubator.cancel,Growing nest action; opens a confirmation page only for this egg. No discard yet.,Cancel hatch,Zrušit líhnutí,new,h91a12e71
+incubator.cancel.confirm,Title of selected-egg cancellation page; Keep hatching and Discard egg are separate buttons.,Discard egg?,Zahodit vejce?,new,he3cbe7ce
 incubator.cancelled,Success after egg discarded; no Coins or free egg credit returned.,Egg discarded. No Coins refunded.,Vejce je pryč. Mince se nevracejí.,new,ha7b975e9
+incubator.cancel.warning,Selected-egg confirmation body; {n} = incubator 1-3. Loss applies to purchased and free eggs.,The egg in incubator {n} will be lost. No Coins or free eggs are returned.,Vejce v inkubátoru {n} bude zahozeno. Mince ani vejce zdarma se nevracejí.,new,h6b88b3eb
+incubator.cancel.keep,Safe choice on cancellation page: dismiss warning and keep incubating.,Keep hatching,Pokračovat v líhnutí,new,h7ee53bf8
+incubator.cancel.discard,Destructive choice on selected-egg confirmation page: discards the egg without refund.,Discard egg,Zahodit vejce,new,h623d0b78
