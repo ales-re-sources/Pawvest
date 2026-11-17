@@ -1,9 +1,10 @@
 -- Open hatch pod: the selected stud-brick body, built directly into a plot piece so Base remains discoverable.
--- Build(...) -> setState(state), animate(serverNow, startedAt?). Full / mid / low: 25 / 8 / 3 body Parts.
--- States: free / locked / empty (unlit), scanning (cyan rear scanner), growing (warm amber pulse), ready (green).
+-- Build(...) -> setState(state), animate(serverNow, startedAt?). Full / mid / low: 34 / 8 / 3 body Parts.
+-- States: free / locked / empty (unlit), scanning (cyan contour ring), growing (warm amber pulse), ready (green).
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
+local EggLook = require(ReplicatedStorage:WaitForChild("EggLook"))
 local IncubatorLook = {}
 
 local BROWN = Color3.fromRGB(150, 100, 60)
@@ -16,8 +17,28 @@ local WARM = Color3.fromRGB(255, 183, 63)
 local READY = Color3.fromRGB(108, 209, 110)
 local SCAN = Color3.fromRGB(81, 216, 240)
 local SCAN_LIGHT = Color3.fromRGB(165, 250, 255)
-local SCAN_TOP = Vector3.new(0, 4.2, 1.86) -- the emitter's front face
-local SCAN_BACK, SCAN_FRONT, SCAN_PERIOD = 1.5, -1.8, 3 -- scan line z range on the nest; seconds per back-front-back
+local NEST_TOP = 1.85 -- the egg's base (PlotView places EggLook there)
+-- Ring thickness; gap between its inner face and the egg's bricks (the 0.22 head reaches 0.035 nearer); half-height of the
+-- head, the tallest ring piece. At the egg's widest course the head's outer face stays 0.03 inside the cheeks (x = 1.85).
+local RING_T, RING_CLEAR, RING_HALF = 0.15, 0.07, 0.11
+local RING_LOW, RING_HIGH, RING_PERIOD, RING_LAP = 0.15, 3.05, 4, 3 -- ring height range above the nest; seconds per up-down / lap
+local TAN8 = math.tan(math.pi / 8)
+
+-- The egg's reach at each course boundary (the larger of the two courses); linear between them it is at least the reach of
+-- the course it crosses. A piece spanning h ± RING_HALF meets each course it touches at one of its ends (courses are taller
+-- than the piece), so the larger value at the two ends is a smooth bound for every brick it passes.
+local ringBounds = {}
+for n = 0, EggLook.Courses do
+	ringBounds[n] = math.max(EggLook.Reach(math.max(n, 1)), EggLook.Reach(math.min(n + 1, EggLook.Courses)))
+end
+local function eggReach(h: number): number
+	local f = math.clamp(h / EggLook.Course, 0, EggLook.Courses)
+	local n = math.min(math.floor(f), EggLook.Courses - 1)
+	return ringBounds[n] + (ringBounds[n + 1] - ringBounds[n]) * (f - n)
+end
+local function ringRadius(h: number): number -- centreline apothem of the ring at height h above the nest
+	return math.max(eggReach(h - RING_HALF), eggReach(h + RING_HALF)) + RING_CLEAR + RING_T / 2
+end
 
 function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string, state: string, number: number)
 	local muted = state == "locked" or state == "free"
@@ -95,7 +116,14 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 		status = add("Status", Vector3.new(0.18, 0.18, 0.04), Vector3.new(0.3, 1.855, -2.81), DARK, "")
 	end
 	local bands = {}
-	local emitter, sheet, scanLine
+	local function glowPart(name: string, size: Vector3, at: Vector3, color: Color3, ball: boolean?)
+		local p = add(name, size, at, color, "")
+		p.Material = Enum.Material.Neon
+		p.Transparency = 1
+		if ball then p.Shape = Enum.PartType.Ball end
+		return p
+	end
+	local ring, ringHead, ringTrail = {}, {}, {}
 	if detail == "full" then
 		for _, segment in {
 			{ "Front", Vector3.new(3.4, 0.06, 0.06), Vector3.new(0, 1.95, -1.48) },
@@ -103,25 +131,21 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 			{ "Left", Vector3.new(0.06, 0.06, 2.9), Vector3.new(-1.67, 1.95, 0) },
 			{ "Right", Vector3.new(0.06, 0.06, 2.9), Vector3.new(1.67, 1.95, 0) },
 		} do
-			local p = add("PhaseBand" .. segment[1], segment[2], segment[3], SCAN, "")
-			p.Material = Enum.Material.Neon
-			p.Transparency = 1
-			table.insert(bands, p)
+			table.insert(bands, glowPart("PhaseBand" .. segment[1], segment[2], segment[3], SCAN))
 		end
-		-- Rear scanner: the bar is embedded in the heater case's front face; a see-through sheet runs from it to a bright line
-		-- that sweeps the nest (just above its top face) back to front and back again.
-		emitter = add("ScanEmitter", Vector3.new(3, 0.14, 0.1), Vector3.new(0, 4.2, 1.91), DARK, "")
-		sheet = add("ScanSheet", Vector3.new(3, 0.04, 1), Vector3.new(0, 3, 0), SCAN, "")
-		sheet.Material = Enum.Material.Neon
-		sheet.Transparency = 1
-		scanLine = add("ScanLine", Vector3.new(3.3, 0.08, 0.14), Vector3.new(0, 1.9, SCAN_BACK), SCAN_LIGHT, "")
-		scanLine.Material = Enum.Material.Neon
-		scanLine.Transparency = 1
+		-- Contour ring: eight segments that touch only along their inner edges (no overlapping coplanar faces), a bright head
+		-- clipped at the corners and two fading trail points.
+		for k = 1, 8 do
+			table.insert(ring, glowPart("ScanRing" .. k, Vector3.one * RING_T, Vector3.new(0, 3, 0), SCAN))
+		end
+		for n = 1, 2 do
+			table.insert(ringHead, glowPart("ScanRingHead" .. n, Vector3.one * 0.22, Vector3.new(0, 3, 0), SCAN_LIGHT))
+		end
+		for n, size in { 0.2, 0.15 } do
+			table.insert(ringTrail, glowPart("ScanRingTrail" .. n, Vector3.one * size, Vector3.new(0, 3, 0), SCAN_LIGHT, true))
+		end
 	elseif detail == "mid" then
-		local p = add("PhaseStrip", Vector3.new(3.4, 0.08, 0.1), Vector3.new(0, 1.95, -1.48), SCAN, "")
-		p.Material = Enum.Material.Neon
-		p.Transparency = 1
-		table.insert(bands, p)
+		table.insert(bands, glowPart("PhaseStrip", Vector3.new(3.4, 0.08, 0.1), Vector3.new(0, 1.95, -1.48), SCAN))
 	end
 	local glow = nil
 	if detail == "full" then
@@ -132,14 +156,45 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 		glow.Enabled = false
 		glow.Parent = parent:FindFirstChild("Nest")
 	end
-	local function sweep(z: number)
-		if not sheet then return end
-		local top = floorCFrame * SCAN_TOP
-		local bottom = floorCFrame * Vector3.new(0, 1.9, z)
-		local back = (top - bottom).Unit -- the sheet's local Z runs from its scan line up to the emitter
-		sheet.Size = Vector3.new(3, 0.04, (top - bottom).Magnitude)
-		sheet.CFrame = CFrame.fromMatrix((top + bottom) / 2, floorCFrame.RightVector, back:Cross(floorCFrame.RightVector), back)
-		scanLine.CFrame = floorCFrame * CFrame.new(0, 1.9, z)
+	local function poseRing(age: number)
+		if #ring == 0 then return end
+		local h = RING_LOW + (RING_HIGH - RING_LOW) * (1 - math.cos(age * 2 * math.pi / RING_PERIOD)) / 2
+		local r = ringRadius(h)
+		local level = floorCFrame * CFrame.new(0, NEST_TOP + h, 0)
+		local edge = 2 * r * TAN8 -- centreline edge length; each edge's frame has local X along it, travelled towards -X
+		local frames = {}
+		for k, p in ring do
+			frames[k] = level * CFrame.Angles(0, (k - 1) * math.pi / 4, 0) * CFrame.new(0, 0, -r)
+			p.Size = Vector3.new(2 * (r - RING_T / 2) * TAN8, RING_T, RING_T)
+			p.CFrame = frames[k]
+		end
+		local function along(s: number): CFrame -- a point s studs along the centreline from edge 1's start
+			local k = math.min(math.floor(s / edge), 7)
+			return frames[k + 1] * CFrame.new(edge / 2 - (s - k * edge), 0, 0)
+		end
+		local perimeter = 8 * edge
+		local length = math.min(0.6, edge) -- never spans more than two edges
+		local head = (age % RING_LAP) / RING_LAP * perimeter
+		local used = 0
+		for k = 0, 7 do
+			local from = k * edge
+			local lo, hi = math.max(from, head - length), math.min(from + edge, head)
+			if hi <= lo then -- wrap the tail across the last / first edge
+				lo, hi = math.max(from, head + perimeter - length), math.min(from + edge, head + perimeter)
+			end
+			if hi > lo + 0.001 and used < 2 then
+				used += 1
+				local p = ringHead[used]
+				p.Size = Vector3.new(hi - lo, 0.22, 0.22)
+				p.CFrame = frames[k + 1] * CFrame.new(edge / 2 - ((lo + hi) / 2 - from), 0, 0)
+				p.Transparency = 0.04
+			end
+		end
+		for n = used + 1, 2 do ringHead[n].Transparency = 1 end
+		for n, p in ringTrail do
+			p.CFrame = along((head - length - 0.2 * n) % perimeter)
+			p.Transparency = if n == 1 then 0.3 else 0.6
+		end
 	end
 	local current = nil
 	local function lamp(p: BasePart?, color: Color3, on: boolean)
@@ -154,19 +209,20 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 		local growing, ready, scanning = nextState == "growing", nextState == "ready", nextState == "scanning"
 		local color = if ready then READY elseif scanning then SCAN else WARM
 		lamp(heater, WARM, growing)
-		lamp(emitter, SCAN_LIGHT, scanning)
 		lamp(temperature, color, growing or ready or scanning)
 		lamp(podStatus, color, growing or ready or scanning)
 		lamp(status, color, growing or ready or scanning)
 		for _, band in bands do
 			band.Color = color
-			-- Full detail scans with the rear scanner; mid keeps its static strip.
-			band.Transparency = if scanning and not sheet then 0.25 elseif growing then 0.55 else 1
+			-- Full detail scans with the ring; mid keeps its static strip.
+			band.Transparency = if scanning and detail ~= "full" then 0.25 elseif growing then 0.55 else 1
 		end
-		if sheet then
-			sheet.Transparency = if scanning then 0.72 else 1
-			scanLine.Transparency = if scanning then 0 else 1
-			sweep(SCAN_BACK)
+		for _, p in ring do p.Transparency = if scanning then 0.15 else 1 end
+		if scanning then
+			poseRing(0)
+		else
+			for _, p in ringHead do p.Transparency = 1 end
+			for _, p in ringTrail do p.Transparency = 1 end
 		end
 		if glow then
 			glow.Enabled = growing or scanning
@@ -178,8 +234,7 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 		if detail ~= "full" then return end
 		local age = now - (startedAt or 0)
 		if current == "scanning" then
-			-- Eased ping-pong: start at the back, reach the front after half a period.
-			sweep(SCAN_BACK + (SCAN_FRONT - SCAN_BACK) * (1 - math.cos(age * 2 * math.pi / SCAN_PERIOD)) / 2)
+			poseRing(age) -- eased up-down ping-pong, starting at the bottom
 		elseif current == "growing" then
 			local pulse = math.sin(age * math.pi / 2)
 			for _, band in bands do band.Transparency = 0.55 - 0.15 * pulse end

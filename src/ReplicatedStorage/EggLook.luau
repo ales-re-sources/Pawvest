@@ -9,6 +9,16 @@ EggLook.Height = 3.15
 
 local COURSE = 0.35
 local WIDTHS = { 1.25, 1.95, 2.55, 2.85, 2.8, 2.5, 2.05, 1.5, 0.85 }
+EggLook.Course = COURSE
+EggLook.Courses = #WIDTHS
+
+-- How far full-detail course n (from the bottom) reaches from the egg's axis along its axes or diagonals (the incubator's
+-- octagonal scan ring keeps clear of it). Matches the three bricks in Make: w × 0.66d plus two 0.66w × 0.17d at ±0.415d.
+function EggLook.Reach(n: number): number
+	local w = WIDTHS[n]
+	local d = w * 0.84
+	return math.max(w / 2, math.max(w / 2 + d * 0.33, w * 0.33 + d / 2) / math.sqrt(2))
+end
 
 function EggLook.Make(eggId: string, baseCFrame: CFrame, detail: string?): Model
 	local egg = PetConfig.Eggs[eggId]
