@@ -78,6 +78,15 @@ run). Times and counts never go into custom fields (cardinality); they are event
 | `ArrivalWithoutTalent` | `LogCustomEvent` | CF01 stage · CF02 missing talent(s) as `<id><level>` joined by `+` (`DoubleJump1`) — from the existing `StageArrival` check in `PlayerTimerHandler`, i.e. on every gate entry without the talent; held back with the run's first events, so a ghost run's entry is dropped |
 | loadout on runs | the progression start / complete / fail events carry the loadout in CF03 | `Fail` keeps its 3 fields; the per-loadout view comes from progression |
 
+### EV3b — crop mastery
+| Event | API | Fields |
+|---|---|---|
+| `CropUnlock` | `LogCustomEvent`, value = the crop's place on the ladder (`CropConfig` `order`, 2-16) | CF01 crop id · CF02 how (`count`: the previous crop's plants reached its `step`; `quest`: the last milestone piece) — not sent by the `Version = 7` migration |
+| `CropLevel` | `LogCustomEvent`, value = the new mastery level (1-3) | CF01 crop id |
+
+Read: time to each unlock = `CropUnlock` per CF01 against `Session` `new`; where the first hour stalls = the share of players reaching
+order n. Combinations: 16 crops × 2 = 32 and 16 crops.
+
 ## Reading the questions on the dashboard
 | Question | Where |
 |---|---|

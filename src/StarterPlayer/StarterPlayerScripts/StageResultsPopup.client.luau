@@ -75,6 +75,11 @@ local function render(result)
 	eggLabel.Text = if freeEgg then Locale.T("results.freeEgg", { egg = Locale.EggName(freeEgg) }) else ""
 	local obby = result.obbySeeds
 	local lines = {}
+	local first = type(result.firstSeeds) == "table" and result.firstSeeds -- EV3b: the first clear's seed pack
+	local firstCrop = first and CropConfig.ById[first.crop]
+	if firstCrop and (tonumber(first.count) or 0) > 0 then
+		table.insert(lines, Locale.T("results.firstSeeds", { icon = firstCrop.icon, crop = Locale.CropName(firstCrop), count = first.count }))
+	end
 	for _, gain in (if type(obby) == "table" and type(obby.seeds) == "table" then obby.seeds else {}) do
 		local crop = CropConfig.ById[gain.crop]
 		if crop then

@@ -68,11 +68,12 @@ ARCHETYPES = [
 
 # Formulas of the Luau code that the model re-implements: the snippet must still be in the file (whitespace-insensitive).
 FORMULAS = [
-    ("StageConfig.luau", "math.floor(StageConfig.FinishPayoutBase * stage.rewardFactor + 0.5)"),
+    ("StageConfig.luau", "math.floor(StageConfig.FinishPayoutBase * StageConfig.OneTimeFactor(stage) + 0.5)"),
+    ("StageConfig.luau", "return first.coins / total"),
     ("StageConfig.luau", "StageConfig.RunRewardBase * stage.rewardFactor * StageConfig.Medals[medal].runMultiplier"),
     ("StageConfig.luau", "* StageConfig.RunRewardDecay ^ finishesToday"),
     ("StageConfig.luau", "math.max(StageConfig.RunRewardFloor, math.floor(raw + 0.5 + 1e-9))"),
-    ("StageConfig.luau", "coins += StageConfig.Medals[medal].basePayout * stage.rewardFactor"),
+    ("StageConfig.luau", "coins += StageConfig.Medals[medal].basePayout * StageConfig.OneTimeFactor(stage)"),
     ("PetConfig.luau", "math.floor(PetConfig.CuteXpFactor * level ^ 1.5 + 0.5)"),
     ("PetConfig.luau", "return rarity.bonus + PetConfig.CuteStep * (level - 1)"),
 ]
@@ -238,11 +239,15 @@ def lua_round(x):
 
 def cart_cfg(cart):
     t = cart["taste"]
-    return [[[b["count"], b["discount"]] for b in cart["bargains"]], [t["count"], t["price"], t["fromLevel"]]]
+    return [[[b["count"], b["discount"]] for b in cart["bargains"]], [t["count"], t["price"], t["fromCrop"]]]  # EV3b: from a crop's unlock
 
 
 def crow_cfg(o):
-    return [o["Share"], o["Chance"], o["Cap"], o["BlockSeconds"] / 3600, o["FromLevel"]]
+    return [o["Share"], o["Chance"], o["Cap"], o["BlockSeconds"] / 3600, o["FromCrop"]]  # EV3b: from a crop's unlock (was a Renown level)
+
+
+def mastery_cfg(o):
+    return [list(o["Levels"]), o["RestPerDay"], o["RestCap"], o["QuestSeeds"]]
 
 
 def scout_cfg(o):
@@ -274,16 +279,17 @@ def apply_crop_config(P):
     if sum(rows) != top or max(rows) > grid:
         raise ValueError(f"CropConfig: RowWidths {rows} must add up to MaxSquares {top} and fit GridColumns {grid}")
     cfg = {
-        # EV2a: [id, Renown points per harvest, grow hours, sale, seed, renown level] (was [id, tier, ...] with RenownPoints[tier])
-        "crops": [[c["id"], c["points"], c["growSeconds"] / 3600, c["sale"], c["seed"], c["renown"]] for c in crops],
+        # EV3b: [id, grow hours, sale, seed, step (plants that open the next crop; None for a rare crop), quest ({crop: n} or None)]
+        # (EV2a: [id, Renown points, grow hours, sale, seed, renown level])
+        "crops": [[c["id"], c["growSeconds"] / 3600, c["sale"], c["seed"], c.get("step"), c.get("quest")] for c in crops],
+        "mastery": mastery_cfg(luau(f, "CropConfig.Mastery")),  # EV3b: [levels, rested per day, rested cap, quest seeds]
         "xp": [[c["id"], c["xp"]] for c in crops],  # E1a3: pet XP of one crop fed to a pet
         "squares": [start, top],
         "rows": [list(rows), grid, list(start_open)],  # E1d2: the field's shape and the start block
-        "expansions": [[e["price"], e["renown"]] for e in exps],
-        "renown": [luau(f, "CropConfig.RenownK"), luau(f, "CropConfig.RenownP")],
+        "expansions": [e["price"] for e in exps],  # EV3b: Coins only (the Renown gates are gone)
         "barn_capacity": luau(f, "CropConfig.BarnCapacity"),
-        "upgrades": [[u["id"], u["step"], list(u["prices"]), list(u["renown"])] for u in luau(f, "CropConfig.Upgrades")],  # [id, step, prices, renown]
-        "tools": [[t["id"], list(t["effect"]), list(t["prices"]), list(t["renown"])] for t in luau(f, "CropConfig.Tools")],  # E1c3
+        "upgrades": [[u["id"], u["step"], list(u["prices"])] for u in luau(f, "CropConfig.Upgrades")],  # [id, step, prices]
+        "tools": [[t["id"], list(t["effect"]), list(t["prices"])] for t in luau(f, "CropConfig.Tools")],  # E1c3: [id, effect, prices]
         "cart": cart_cfg(luau(f, "CropConfig.Cart")),
         "obby_seeds": obby_cfg(luau(f, "CropConfig.ObbySeeds")),  # E2a: [first Gold from world, seeds per first Gold, daily seeds, meter size, points by medal, first-of-day factor, E2b pouch seeds by medal]  # E1c4: [[count, discount] per bargain, [taste count, price, fromLevel]]
         "size": [luau(f, "CropConfig.SizeSigma"), luau(f, "CropConfig.SizeZCap"), luau(f, "CropConfig.SizeBigZ"), luau(f, "CropConfig.SizeGiantZ")],  # E1c2
@@ -295,7 +301,7 @@ def apply_crop_config(P):
         "apt_caps": luau("PetConfig.luau", "PetConfig.AptitudeCaps"),
         "apt_strength": luau("PetConfig.luau", "PetConfig.AptitudeStrength"),
         "apt_xp": [luau("PetConfig.luau", "PetConfig.AptitudeXpFirst") / 3600, luau("PetConfig.luau", "PetConfig.AptitudeXpRatio")],  # hours, ratio
-        "crows": crow_cfg(luau(f, "CropConfig.Crows")),  # E4-thin: [block share, chance per ripe crop, cap per absence, block hours, from Renown level]
+        "crows": crow_cfg(luau(f, "CropConfig.Crows")),  # E4-thin: [block share, chance per ripe crop, cap per absence, block hours, from crop]
         "scouting": scout_cfg(luau("PetConfig.luau", "PetConfig.Scouting")),  # E2c: [XP hours per medal finish, per strength, cap, pouch +1 from]
     }
     P["crop_cfg"] = cfg
@@ -372,6 +378,8 @@ def load():
             "key": s["key"], "order": s["order"], "world": s["world"], "factor": s["rewardFactor"], "t_base": s["tBase"],
             "unlock_price": s.get("unlockPrice"), "built": True,
             "requires": [(r["id"], r["level"]) for r in s.get("requires", [])],
+            # EV3b: [Coins for the first finish + its medals, seed pack, up to crop] or None
+            "first_clear": [s["firstClear"]["coins"], s["firstClear"]["seeds"], s["firstClear"]["upTo"]] if s.get("firstClear") else None,
         })
     for n in range(len(stages), PLANNED["stage_count"] + 1):
         stages.append({
@@ -443,16 +451,17 @@ def pin_values(P):
         "coin_tiers": P["coin_tiers"],
         "coin_counts": {k: len(c) for k, c in sorted(P["coins_by_stage"].items())},
         # CropConfig (E1a2), the crop field; grow time and offline cap in hours; read at load, so --offline-rate / --offline-cap do not show up as drift
-        "crop_field_crops": P["crop_cfg"]["crops"],  # [id, Renown points, grow hours, sale, seed, renown level]
+        "crop_field_crops": P["crop_cfg"]["crops"],  # [id, grow hours, sale, seed, step, quest] (EV3b)
+        "crop_field_mastery": P["crop_cfg"]["mastery"],  # [levels, rested per day, rested cap, quest seeds] (EV3b)
+        "stage_first_clears": {s["key"]: s["first_clear"] for s in P["stages"] if s.get("first_clear")},  # EV3b
         "crop_field_squares": P["crop_cfg"]["squares"],  # [StartSquares, MaxSquares]
-        "crop_field_expansions": P["crop_cfg"]["expansions"],  # [price, renown level] per extra square
-        "crop_field_renown": P["crop_cfg"]["renown"],  # [RenownK, RenownP]
+        "crop_field_expansions": P["crop_cfg"]["expansions"],  # price per extra square
         "crop_field_barn_capacity": P["crop_cfg"]["barn_capacity"],
-        "crop_field_upgrades": P["crop_cfg"]["upgrades"],  # [id, step, prices, renown levels] (E1c1, gates EV2a)
-        "crop_field_tools": P["crop_cfg"]["tools"],  # [id, effect, prices, renown levels] (E1c3)
+        "crop_field_upgrades": P["crop_cfg"]["upgrades"],  # [id, step, prices] (E1c1)
+        "crop_field_tools": P["crop_cfg"]["tools"],  # [id, effect, prices] (E1c3)
         "crop_field_xp": P["crop_cfg"]["xp"],  # [id, pet XP per crop fed] (E1a3)
         "crop_field_cart": P["crop_cfg"]["cart"],
-        "crop_field_crows": P["crop_cfg"]["crows"],  # [block share, chance, cap per absence, block hours, from Renown level] (E4-thin)
+        "crop_field_crows": P["crop_cfg"]["crows"],  # [block share, chance, cap per absence, block hours, from crop] (E4-thin, EV3b)
         "pet_scouting": P["crop_cfg"]["scouting"],  # [XP hours per medal finish, per strength, cap, pouch +1 from] (E2c)
         "crop_field_obby_seeds": P["crop_cfg"]["obby_seeds"],  # [first Gold from world, per first Gold, daily, meter size, points, first-of-day x, pouch by medal] (E2a, E2b)  # [[count, discount] per bargain, [taste count, price, from level]] (E1c4)
         "crop_field_size": P["crop_cfg"]["size"],  # [sigma, z cap, Big z, Giant z] of the size roll (E1c2)
@@ -486,12 +495,20 @@ def drift(P):
 # --------------------------------------------------------------------------------------------------------------------
 # The model.
 # --------------------------------------------------------------------------------------------------------------------
+def one_time_factor(P, s):
+    """StageConfig.OneTimeFactor: a stage with `firstClear` (EV3b) spreads its Coins over the finish and the medals."""
+    fc = s.get("first_clear")
+    if not fc:
+        return s["factor"]
+    return fc[0] / (P["finish_base"] + sum(m["base"] for m in P["medals"]))
+
+
 def stage_medal_total(P, s):
-    return lua_round(sum(m["base"] * s["factor"] for m in P["medals"]))
+    return lua_round(sum(m["base"] * one_time_factor(P, s) for m in P["medals"]))
 
 
 def first_finish(P, s):
-    return lua_round(P["finish_base"] * s["factor"])
+    return lua_round(P["finish_base"] * one_time_factor(P, s))
 
 
 def run_reward(P, s, medal, n):
@@ -1652,10 +1669,11 @@ def reproduction(P):
     gold_day = lambda s: sum(run_reward(P, s, 3, k) for k in range(10))
     full_tree = sum(talent_total(P, t) for t in P["talents"])
     rows = [
-        ("Medals, Tutorial + stages 1-5 (GDD §5)", 9450, sum(stage_medal_total(P, s) for s in six)),
-        ("Medals, all 21 stages", 88200, sum(stage_medal_total(P, s) for s in S)),
-        ("First-finish payouts, all 21 stages", 6300, sum(first_finish(P, s) for s in S)),
-        ("Planned talent tree", 3394900, full_tree),  # Coins only; 44 300 until EV2b, 47 300 until Double Jump became a world reward (K1)
+        ("Medals, Tutorial + stages 1-5 (GDD §5)", 5040,  # EV3b1 first clears (9 450 before)
+         sum(stage_medal_total(P, s) for s in six)),
+        ("Medals, all 21 stages", 83790, sum(stage_medal_total(P, s) for s in S)),
+        ("First-finish payouts, all 21 stages", 5985, sum(first_finish(P, s) for s in S)),
+        ("Planned talent tree", 3374900, full_tree),  # Coins only; 3 394 900 until EV3b1; 44 300 until EV2b, 47 300 until Double Jump became a world reward (K1)
         ("Gold runs, first 10 of a day, factor 1.5", 668, gold_day(by_factor[1.5])),
         ("Gold runs, first 10 of a day, factor 1.0", 446, gold_day(by_factor[1.0])),
         ("Gold runs, first 10 of a day, factor 0.5 (Tutorial)", 227, gold_day(by_factor[0.5])),
@@ -1704,7 +1722,7 @@ def crop_xp_checks(P):
     """E1a3: a crop fed to a pet gives no more XP than its sale Coins would buy as the weakest food (the Kitchen, D5, stays the cheaper route)."""
     weakest = min(P["foods"], key=lambda f: f["xp"] / f["price"])
     per_coin = weakest["xp"] / weakest["price"]
-    sale = {c[0]: c[3] for c in P["crop_cfg"]["crops"]}
+    sale = {c[0]: c[2] for c in P["crop_cfg"]["crops"]}
     over = [f"{cid} {xp} > {sale[cid] * per_coin:g}" for cid, xp in P["crop_cfg"]["xp"] if xp > sale[cid] * per_coin or xp < 1]
     shown = ", ".join(f"{cid} {xp}" for cid, xp in P["crop_cfg"]["xp"])
     return [(f"13 Crop XP: 1 <= XP <= sale x {weakest['id']}'s XP per Coin ({per_coin:g})", not over, "; ".join(over) or shown)]

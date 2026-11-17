@@ -376,6 +376,16 @@ function Telemetry.TalentGranted(player: Player, talentId: string, level: number
 	send("LogCustomEvent", player, "TalentGranted", level, fields(talentId, bucketOf(STAR_BUCKETS, stars, "31+"), s.lastStage or "none"))
 end
 
+-- GardenField (EV3b crop mastery): crop `cropId` opened (`how` = "count" | "quest"); the value is the crop's place in the unlock order
+function Telemetry.CropUnlocked(player: Player, cropId: string, order: number, how: string)
+	send("LogCustomEvent", player, "CropUnlock", order, fields(cropId, how))
+end
+
+-- GardenField (EV3b): crop `cropId` reached mastery level `level` (1-3)
+function Telemetry.CropLevel(player: Player, cropId: string, level: number)
+	send("LogCustomEvent", player, "CropLevel", level, fields(cropId))
+end
+
 -- PlayerTimerHandler: the player arrived on stage `stageKey` without the talents in `missing` ({ { id, level }, … })
 function Telemetry.ArrivalWithoutTalent(player: Player, stageKey: string, missing)
 	local names = {}

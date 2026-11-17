@@ -2,7 +2,7 @@
 -- the own plot (U5a, PlotView via GardenView.OnBarn) and the bottom-centre HUD button "🧺 Barn" (shown within 45 studs of the own plot
 -- and, while the player holds crops, anywhere outside a stage run; a young field gets a toast at the first harvest of the session and
 -- the button pulses until the barn was opened: playtest 2026-11-08).
---   * header: the crow forecast (E4b, from CropConfig.NextCrows and the server time; "crows come from Renown n" on a young field) and
+--   * header: the crow forecast (E4b, from CropConfig.NextCrows and the server time; "crows come once you grow Garlic" on a young field) and
 --     the barn's seed capacity;
 --   * Seeds: every seed held (icon, name × count, grow time with the Growth upgrade); nothing → a hint to the plaza's seed stall;
 --   * Harvest: every crop held (name × count, record kg) with Feed (a chooser of the pets that can still eat → that pet's page, which
@@ -36,7 +36,7 @@ local GAP = GardenUi.GAP
 local SHOW_DISTANCE = 45 -- studs from the plot centre: the Barn button is visible within this
 local SELL_WIDTH = 116
 local FEED_WIDTH = 84
-local SELL_HINT_LEVEL = 5 -- the sell toast and the pulse are for a young field: up to this Renown level
+local SELL_HINT_UNTIL = "Corn" -- the sell toast and the pulse are for a young field: until this crop is unlocked (EV3b; was Renown 5)
 
 local COLOR_PANEL = StudStyle.Colors.Wood
 local COLOR_ROW = StudStyle.PetRowColor(COLOR_PANEL)
@@ -117,6 +117,19 @@ local function renderHeader(field)
 	end
 end
 
+-- A barn crop row's second line: the best size and the crop's mastery (EV3b), each when there is one.
+local function infoOf(field, crop, best: number?): string?
+	local lines = {}
+	if best then
+		table.insert(lines, Locale.T("field.crop.best", { kg = GardenUi.KgText(crop, best) }))
+	end
+	local mastery = GardenUi.MasteryLine(field, crop)
+	if mastery then
+		table.insert(lines, mastery)
+	end
+	return if #lines > 0 then table.concat(lines, "\n") else nil
+end
+
 local function renderSeeds(field)
 	GardenUi.Clear(seedsSection)
 	local any = false
@@ -164,8 +177,8 @@ local function renderCrops(field, tap: number)
 			GardenUi.TextColumn(
 				row,
 				SELL_WIDTH + FEED_WIDTH + GAP * 2,
-				string.format("%s × %s", GardenUi.CropTitle(crop), Locale.Number(owned)),
-				if best then Locale.T("field.crop.best", { kg = GardenUi.KgText(crop, best) }) else nil
+				string.format("%s%s × %s", GardenUi.CropTitle(crop), GardenUi.Stars(field, crop), Locale.Number(owned)),
+				infoOf(field, crop, best)
 			)
 			local feed = GardenUi.Button("Feed", {
 				LayoutOrder = 2,
@@ -369,7 +382,7 @@ RunService.Heartbeat:Connect(function(dt)
 	local crops = cropsHeld(field)
 	local focus = PanelFocus.Current()
 	openButton.Visible = not isOpen and (focus == nil or focus == "Barn") and (near or (crops > 0 and not Hints.Running))
-	local young = type(field) == "table" and (tonumber(field.level) or math.huge) <= SELL_HINT_LEVEL
+	local young = type(field) == "table" and not GardenUi.IsUnlocked(field, CropConfig.ById[SELL_HINT_UNTIL])
 	if field then
 		if shownCrops and crops > shownCrops and young and not sellHintShown then
 			sellHintShown = true

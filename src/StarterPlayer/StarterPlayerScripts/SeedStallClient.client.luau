@@ -1,18 +1,19 @@
 -- Seed stall (U4, docs/UI_GARDEN_PETS.md §6, §9.1): the plaza's seed shop beside the food stand, one shop for everyone.
 --   * the prompt on Workspace.Garden.SeedStall's Counter opens the panel (texts set here through Locale);
 --   * panel: the market cart's offers on top (E1c4: a row per offer, "New offers in 3:20:00", buys what is left of it), then the
---     seed catalogue (+1 / +10 per unlocked crop, the Renown lock or "from World n" for rare crops: E2a), the barn capacity line;
+--     seed catalogue (+1 / +10 per unlocked crop with its mastery ★ and line, EV3b; the next locked crop shows the previous crop's count
+--     toward it, or its quest with a Bring button per crop; later crops a plain lock; "from World n" for rare crops: E2a), the barn line;
 --     spends over ConfirmTap.THRESHOLD take two taps; walking SeedStallDistance away from the counter closes it (the server checks the
 --     same distance), PanelFocus "SeedStall" closes the other panels;
 --   * two tabs under the title (playtest 2026-11-08): Buy (the above) and Sell (every harvested crop with the Barn's Sell brick);
 --   * board: a SurfaceGui (in PlayerGui, Adornee = the stall's Board, both faces) with the local player's cart offers and the time to
 --     the next ones, redrawn on every State and language change.
--- Display only: a tap names a crop and a count (BuySeeds) or an offer (BuyCart); GardenField checks the stall distance, prices, Renown
--- and the barn and answers on GardenRemotes.Result (FieldClient toasts it). The field state comes from GardenRemotes.State
+-- Display only: a tap names a crop and a count (BuySeeds, Quest) or an offer (BuyCart); GardenField checks the stall distance, prices,
+-- unlocks and the barn and answers on GardenRemotes.Result (FieldClient toasts it). The field state comes from GardenRemotes.State
 -- (GardenView keeps the last one).
 -- Hook (ScreenGui SeedStallGui attribute, cleared after use): Open = true opens the panel (as the prompt does).
 -- Buttons by path (under PlayerGui.SeedStallGui.Panel): Tabs.Buy / .Sell, Content.Cart.Offer<slot>.Buy, Content.Seeds.<CropId>.Buy1 / .Buy10,
--- Content.SellCrops.<CropId>.Sell; Close.
+-- Content.Seeds.Quest<CropId>.Bring (EV3b), Content.SellCrops.<CropId>.Sell; Close.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -34,6 +35,7 @@ local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
 local buySeedsEvent = remotes:WaitForChild("BuySeeds")
 local buyCartEvent = remotes:WaitForChild("BuyCart")
 local sellEvent = remotes:WaitForChild("Sell")
+local questEvent = remotes:WaitForChild("Quest")
 local requestStateEvent = remotes:WaitForChild("RequestState")
 
 local WIDTH = 420
@@ -42,6 +44,7 @@ local GAP = GardenUi.GAP
 local BUY1_WIDTH = 56
 local BUY10_WIDTH = 64
 local LOCK_WIDTH = 120
+local BRING_WIDTH = 110
 local CART_WIDTH = 110
 local SELL_WIDTH = 150
 local BOARD_PPS = 40 -- board pixels per stud (10 x 3.6 studs → 400 x 144)
@@ -106,7 +109,7 @@ local function renderCart(field, tap: number)
 		if crop then
 			local row = GardenUi.Row(cartSection, "Offer" .. offer.slot, offer.slot + 2, COLOR_ROW)
 			local info = if offer.taste
-				then Locale.T("field.cart.taste", { level = crop.renown, price = offer.price })
+				then Locale.T("field.cart.taste", { price = offer.price })
 				else Locale.T("field.cart.bargain", {
 					percent = math.floor((offer.discount or 0) * 100 + 0.5),
 					price = offer.price,
@@ -138,37 +141,112 @@ local function renderCart(field, tap: number)
 		cartSection
 end
 
+-- EV3b: the rows of the open quest's pieces under the quest crop's row (order `order` + k): each crop with brought / needed / held
+-- and a Bring button that hands in what the barn holds, up to what is still needed.
+local function renderQuest(target, field, order: number, tap: number)
+	local quest = GardenUi.Mastery(field).quest
+	local got = if type(quest) == "table" and quest.crop == target.id and type(quest.got) == "table" then quest.got else {}
+	local pieces = {}
+	for id, need in target.quest do
+		table.insert(pieces, { crop = CropConfig.ById[id], need = need })
+	end
+	table.sort(pieces, function(x, y)
+		return (x.crop.order or 0) < (y.crop.order or 0)
+	end)
+	for k, piece in pieces do
+		local crop = piece.crop
+		local brought = math.min(tonumber(got[crop.id]) or 0, piece.need)
+		local have = field.items[crop.id] or 0
+		local missing = piece.need - brought
+		local row = GardenUi.Row(seedsSection, "Quest" .. crop.id, order + k, StudStyle.Shade(COLOR_ROW, 0.85))
+		GardenUi.TextColumn(
+			row,
+			BRING_WIDTH + GAP,
+			GardenUi.CropTitle(crop),
+			Locale.T("field.quest.piece", { got = brought, need = piece.need, have = have })
+		)
+		if missing <= 0 then
+			GardenUi.Paragraph("Done", {
+				LayoutOrder = 2,
+				Size = UDim2.new(0, BRING_WIDTH, 0, 0),
+				Font = StudStyle.Font,
+				TextSize = 15,
+				TextColor3 = GardenUi.COLOR_OK,
+				TextXAlignment = Enum.TextXAlignment.Center,
+				Text = Locale.T("field.quest.done"),
+			}).Parent = row
+		else
+			local bring = GardenUi.Button("Bring", {
+				LayoutOrder = 2,
+				Size = UDim2.fromOffset(BRING_WIDTH, tap),
+				BackgroundColor3 = if have > 0 then GardenUi.COLOR_BUY else GardenUi.COLOR_LOCKED,
+				TextSize = 16,
+				Text = Locale.T("field.quest.bring"),
+				Parent = row,
+			}, 2)
+			if have > 0 then
+				local id, amount = crop.id, math.min(have, missing)
+				bring.Activated:Connect(function()
+					questEvent:FireServer(id, amount)
+				end)
+			end
+		end
+	end
+end
+
 local function renderSeeds(field, tap: number)
 	GardenUi.Clear(seedsSection)
 	GardenUi.Heading(seedsSection, 1, Locale.T("field.section.seeds"), COLOR_PANEL)
 	local total = CropConfig.SeedTotal(field.seeds)
 	local capacity = GardenUi.BarnOf(field)
+	local nextCrop = CropConfig.NextLocked(GardenUi.Mastery(field).unlocked)
 	for index, crop in CropConfig.Crops do
-		local locked = field.level < crop.renown
+		local order = index * 10
+		local locked = not GardenUi.IsUnlocked(field, crop)
 		local stock = field.seeds[crop.id] or 0
 		local reserved = if locked or crop.rare then LOCK_WIDTH + GAP else BUY1_WIDTH + BUY10_WIDTH + GAP * 2
-		local row = GardenUi.Row(seedsSection, crop.id, index + 1, COLOR_ROW)
+		local row = GardenUi.Row(seedsSection, crop.id, order, COLOR_ROW)
 		local grow = GardenUi.GrowTime(GardenUi.GrowSecondsOn(field, crop))
-		GardenUi.TextColumn(
-			row,
-			reserved,
-			GardenUi.CropTitle(crop),
-			if crop.rare
-				then Locale.T("field.seed.rareInfo", { time = grow, sale = crop.sale, stock = stock })
-				else Locale.T("field.seed.info", { time = grow, sale = crop.sale, seed = crop.seed, stock = stock })
-		)
-		if locked or crop.rare then -- rare seeds come only from the obby (E2a): the row says from which world
+		local info = if crop.rare
+			then Locale.T("field.seed.rareInfo", { time = grow, sale = crop.sale, stock = stock })
+			else Locale.T("field.seed.info", { time = grow, sale = crop.sale, seed = crop.seed, stock = stock })
+		local lockText = nil
+		local previous, need = nil, nil
+		if crop.rare then -- rare seeds come only from the obby (E2a): the row says from which world
+			lockText = Locale.T("field.seed.fromWorld", { world = Locale.WorldName(StageConfig.Worlds[crop.world]) })
+		elseif locked and crop == nextCrop and crop.quest then
+			lockText = Locale.T("field.seed.questLock")
+			info ..= "\n" .. Locale.T("field.seed.questHint")
+		elseif locked and crop == nextCrop then
+			previous, need = CropConfig.UnlockNeed(crop)
+			lockText = Locale.T("field.seed.lockBar", {
+				icon = previous.icon,
+				have = math.min(GardenUi.PlantsOf(field, previous), need),
+				need = need,
+			})
+			info ..= "\n" .. Locale.T("field.seed.unlockHint", { crop = Locale.CropName(previous) })
+		elseif locked then
+			lockText = Locale.T("field.seed.lockedLater")
+		else
+			local mastery = GardenUi.MasteryLine(field, crop)
+			if mastery then
+				info ..= "\n" .. mastery
+			end
+		end
+		GardenUi.TextColumn(row, reserved, GardenUi.CropTitle(crop) .. GardenUi.Stars(field, crop), info)
+		if lockText then
 			GardenUi.Paragraph("Locked", {
 				LayoutOrder = 2,
 				Size = UDim2.new(0, LOCK_WIDTH, 0, 0),
 				Font = StudStyle.Font,
 				TextSize = 15,
-				TextColor3 = if crop.rare then GardenUi.COLOR_RARE else GardenUi.COLOR_DIM,
+				TextColor3 = if crop.rare then GardenUi.COLOR_RARE elseif crop == nextCrop then GardenUi.COLOR_INFO else GardenUi.COLOR_DIM,
 				TextXAlignment = Enum.TextXAlignment.Center,
-				Text = if crop.rare
-					then Locale.T("field.seed.fromWorld", { world = Locale.WorldName(StageConfig.Worlds[crop.world]) })
-					else Locale.T("field.seed.locked", { level = crop.renown }),
+				Text = lockText,
 			}).Parent = row
+			if locked and crop == nextCrop and crop.quest then
+				renderQuest(crop, field, order, tap)
+			end
 		else
 			for slot, option in { { name = "Buy1", amount = 1, width = BUY1_WIDTH }, { name = "Buy10", amount = 10, width = BUY10_WIDTH } } do
 				local price = crop.seed * option.amount
@@ -189,14 +267,15 @@ local function renderSeeds(field, tap: number)
 			end
 		end
 	end
+	local after = (#CropConfig.Crops + 1) * 10
 	GardenUi.Paragraph("Barn", {
-		LayoutOrder = #CropConfig.Crops + 2,
+		LayoutOrder = after,
 		Font = StudStyle.Font,
 		TextSize = 15,
 		TextColor3 = if total >= capacity then GardenUi.COLOR_ERROR else Color3.new(1, 1, 1),
 		Text = Locale.T("field.barn", { total = total, capacity = capacity }),
 	}).Parent = seedsSection
-	GardenUi.Paragraph("Note", { LayoutOrder = #CropConfig.Crops + 3, TextSize = 12, TextColor3 = GardenUi.COLOR_DIM, Text = Locale.T("field.seed.note") }).Parent =
+	GardenUi.Paragraph("Note", { LayoutOrder = after + 1, TextSize = 12, TextColor3 = GardenUi.COLOR_DIM, Text = Locale.T("field.seed.note") }).Parent =
 		seedsSection
 end
 

@@ -11,8 +11,9 @@ local DataStoreUtil = require(script.Parent:WaitForChild("DataStoreUtil"))
 local PetConfig = require(game:GetService("ReplicatedStorage"):WaitForChild("PetConfig"))
 local CropConfig = require(game:GetService("ReplicatedStorage"):WaitForChild("CropConfig"))
 
-local PROFILE_VERSION = 6 -- 2: pets (P1a); 3: Coin scale ×10 (R2); 4: pet traits, Cuteness for every older pet (P4);
--- 5: Renown points onto the EV2a curve, every player keeps the level; 6: trait levels 1..10 → 1..20, same XP (2026-11-12)
+local PROFILE_VERSION = 7 -- 2: pets (P1a); 3: Coin scale ×10 (R2); 4: pet traits, Cuteness for every older pet (P4);
+-- 5: Renown points onto the EV2a curve, every player keeps the level; 6: trait levels 1..10 → 1..20, same XP (2026-11-12);
+-- 7: crop mastery replaces Renown (EV3b): Garden.Unlocked from the old Renown gates and the crops held or grown
 local COIN_SCALE = 10 -- R2: Coins stored before version 3 (and legacy PlayerCoins) are multiplied once
 local AUTOSAVE_INTERVAL = 60
 local SHUTDOWN_TIMEOUT = 25
@@ -88,8 +89,32 @@ local function reconcile(data, userId: number)
 	end
 	if version < 5 and type(data.Garden) == "table" and type(data.Garden.Renown) == "number" then
 		-- EV2a: the Renown curve changed (3 x L ^ 1.6 -> 0.4 x L ^ 3); the stored points rise to the new curve's points for the old level
-		local level = CropConfig.LegacyRenownLevel(data.Garden.Renown)
-		data.Garden.Renown = math.max(data.Garden.Renown, CropConfig.PointsFor(level))
+		local level = CropConfig.Legacy.RenownLevelV4(data.Garden.Renown)
+		data.Garden.Renown = math.max(data.Garden.Renown, CropConfig.Legacy.PointsFor(level))
+	end
+	if version < 7 and type(data.Garden) == "table" then
+		-- EV3b: no player loses a crop. Unlocked = every common crop whose old Renown gate the stored Renown reached, plus every crop the
+		-- profile holds (seeds, barn) or has grown (a size record), e.g. from a cart taste. Plant counts start at 0 (no per-crop history
+		-- was kept); Garden.Renown stays, unused. GardenField opens the quest of the next crop on the first join.
+		local garden = data.Garden
+		local level = CropConfig.Legacy.RenownLevel(if type(garden.Renown) == "number" then garden.Renown else 0)
+		local unlocked = if type(garden.Unlocked) == "table" then garden.Unlocked else {}
+		for id, gate in CropConfig.Legacy.Gates do
+			if gate <= level then
+				unlocked[id] = true
+			end
+		end
+		for _, store in { garden.Seeds, garden.Items, garden.BestSize } do
+			if type(store) == "table" then
+				for id in store do
+					local crop = CropConfig.ById[id]
+					if crop and not crop.rare then
+						unlocked[id] = true
+					end
+				end
+			end
+		end
+		garden.Unlocked = unlocked
 	end
 	for field, default in newProfile() do
 		if data[field] == nil then

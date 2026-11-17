@@ -3,7 +3,8 @@
 -- and the crow forecast → the Barn panel (BarnClient), upgrades / tools → the Skills panel's Garden tab (GardenSkills), field pet
 -- slots → the Pets panel.
 --   * toasts for the answers of the field actions on GardenRemotes.Result (eggs and food share that remote: ignored here): plant,
---     harvest (size, record, Shears, Renown level-up), seeds / cart bought, sale, square bought, upgrades and tools, field pets;
+--     harvest (size, record, Shears, mastery level-up, crop unlocked), seeds / cart bought, sale, square bought, quest pieces, upgrades and
+--     tools, field pets;
 --   * once per session the notices of State.field.notice (an old profile's pen conversion, what the pets harvested while away, what
 --     the crows ate and which guards chased them off).
 -- The GUI is built here (ScreenGui FieldGui with the toast only), stud-brick wood look (StudStyle).
@@ -35,7 +36,7 @@ local REJECT_KEYS = { -- coins, stale, loading, noplot: Locale.Reject's common.r
 	far = "field.reason.far",
 	square = "field.reason.square",
 	occupied = "field.reason.occupied",
-	renown = "field.reason.renown",
+	locked = "field.reason.locked",
 	seeds = "field.reason.seeds",
 	empty = "field.reason.empty",
 	notripe = "field.reason.notripe",
@@ -55,6 +56,12 @@ local PET_REJECT_KEYS = setmetatable({
 }, { __index = REJECT_KEYS })
 local UPGRADE_REJECT_KEYS = setmetatable({ maxed = "field.reason.upgradeMaxed" }, { __index = REJECT_KEYS })
 local STALL_REJECT_KEYS = setmetatable({ far = "seedStall.reason.far" }, { __index = REJECT_KEYS })
+-- EV3b: handing crops in toward a milestone quest
+local QUEST_REJECT_KEYS = setmetatable({
+	none = "field.reason.questNone",
+	crop = "field.reason.questCrop",
+	crops = "field.reason.items",
+}, { __index = REJECT_KEYS })
 local PET_ACTIONS = { PlacePet = true, LiftPet = true, BuyPetSlot = true }
 -- the field upgrades' texts (E1c1): name, effect now → next level, effect at the top level
 local UPGRADE_KEYS = {
@@ -209,11 +216,15 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 		and action ~= "BuyCart"
 		and action ~= "Sell"
 		and action ~= "BuySquare"
+		and action ~= "Quest"
 	then
 		return -- incubators and the food stand answer on the same remote
 	end
 	if not ok then
-		showToast(Locale.Reject(detail, if action == "BuySeeds" or action == "BuyCart" then STALL_REJECT_KEYS else REJECT_KEYS), COLOR_ERROR)
+		local keys = if action == "BuySeeds" or action == "BuyCart" then STALL_REJECT_KEYS
+			elseif action == "Quest" then QUEST_REJECT_KEYS
+			else REJECT_KEYS
+		showToast(Locale.Reject(detail, keys), COLOR_ERROR)
 		return
 	end
 	local crop = type(detail) == "table" and detail.crop and CropConfig.ById[detail.crop]
@@ -235,8 +246,21 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 		if #extra > 0 then
 			table.insert(lines, table.concat(extra, " "))
 		end
-		if detail.levelUp then
-			table.insert(lines, Locale.T("field.toast.renownUp", { level = detail.level }))
+		local mastery = type(detail.mastery) == "table" and detail.mastery
+		if detail.levelUp and mastery then -- EV3b: "Garlic ★2!"
+			table.insert(lines, Locale.T("field.toast.masteryUp", { crop = name, level = mastery.level }))
+		end
+		local opened = type(detail.unlocked) == "string" and CropConfig.ById[detail.unlocked]
+		if opened then
+			table.insert(lines, Locale.T("field.toast.unlocked", { crop = GardenUi.CropTitle(opened) }))
+		end
+		showToast(table.concat(lines, "\n"), COLOR_OK)
+	elseif action == "Quest" then -- EV3b: a quest piece handed in; the last one opens the crop and gives its seeds
+		local lines = { Locale.T("field.toast.questPiece", { crop = name, count = detail.count }) }
+		local opened = type(detail.unlocked) == "string" and CropConfig.ById[detail.unlocked]
+		if opened then
+			table.insert(lines, Locale.T("field.toast.unlocked", { crop = GardenUi.CropTitle(opened) }))
+			table.insert(lines, Locale.T("field.toast.seeds", { crop = Locale.CropName(opened), count = detail.seeds or 0 }))
 		end
 		showToast(table.concat(lines, "\n"), COLOR_OK)
 	elseif action == "Sell" then

@@ -279,7 +279,8 @@ def build(c=None):
     M["tool_effect"] = {t[0]: t[1] for t in cc["tools"]}
     M["barn"] = cc["barn_capacity"]
     M["rates"] = cc["rates"]  # online, offline, cap h
-    M["crows"] = cc["crows"]  # share, chance, cap, block h, from level
+    share, chance, cap, block_h, _ = cc["crows"]  # the config's crow start is a crop (EV3b, `crows_from`); the Renown model keeps its level
+    M["crows"] = [share, chance, cap, block_h, c["crop_gate"][M["by_id"][c["crows_from"]]["k"]]]  # share, chance, cap, block h, from level
     M["apt"] = {"cap": cc["apt_caps"], "str": cc["apt_strength"], "first": cc["apt_xp"][0], "ratio": cc["apt_xp"][1], "tending": cc["tending"]}
     M["obby_seeds"] = cc["obby_seeds"]  # first Gold world, per first Gold, daily, meter size, pts, first mult, pouch
     M["stages"] = [s for s in sorted(P["stages"], key=lambda s: s["order"]) if s["built"]]
@@ -1806,11 +1807,6 @@ def checks(M, days=60, verbose=True):
 
     diff = config_match(M)
     ev3b = ""
-    if M["mode"] == "stars":  # the configs still carry Renown; EV3b takes it out (the Renown numbers in CAND are the game as built)
-        gated = sum(1 for it in M["items"] if it["gate"] > 0)
-        pay = sum(1 for k in M["c"]["obby_first"] if any(s["key"] == k for s in M["stages"]))
-        ev3b = (f" (Renown as built; EV3b removes the Renown points and gates of {len(M['crops'])} crops, the gates of {gated} sinks, "
-                f"Renown K / P, and resizes {pay} first-clear payouts)")
     add("EV0 configs carry the proposal (CAND)", not diff,
         ("; ".join(diff[:4]) + (f" ... ({len(diff)} in all)" if len(diff) > 4 else "") or "equal") + ev3b)
     g7 = first_hour(M)
@@ -2073,34 +2069,45 @@ def config_match(M):
     P, out = M["P"], []
     cc = P["crop_cfg"]
     cfg = {c[0]: c for c in cc["crops"]}
-    for c in M["crops"] + list(M["rares"].values()):
+    C = M["c"]
+    for c in M["crops"] + list(M["rares"].values()):  # EV3b: grow hours, sale, seed, step (the next crop's count), quest
         o = cfg.get(cfg_id(c["id"]))
-        want = [round(c["pts"]), c["t"] / 3600, round(c["sale"]), round(c["seed"]), c["gate"] if not c.get("rare") else 0]
+        rare = c.get("rare")
+        want = [c["t"] / 3600, round(c["sale"]), round(c["seed"]), None if rare else round(c["star1"]),
+                None if rare or not c["quest"] else {cfg_id(k): n for k, n in c["quest"].items()}]
         have = None if o is None else [o[1], o[2], o[3], o[4], o[5]]
-        if have is None or any(abs(a - b) > 1e-6 for a, b in zip(want, have)):
+        if have is None or any(a != b if not isinstance(a, float) else abs(a - b) > 1e-6 for a, b in zip(want, have)):
             out.append(f"crop {cfg_id(c['id'])}: config {have} vs proposal {want}")
-    if [cc["renown"][0], cc["renown"][1]] != [M["c"]["renown_k"], M["c"]["renown_p"]]:
-        out.append(f"Renown K / P: config {cc['renown']} vs proposal {[M['c']['renown_k'], M['c']['renown_p']]}")
+    levels, rest_day, rest_cap, _ = cc["mastery"]
+    if [list(levels), rest_day, rest_cap] != [list(C["m_levels"]), C["rest_per_day"], C["rest_cap"]]:
+        out.append(f"mastery: config {[levels, rest_day, rest_cap]} vs proposal {[list(C['m_levels']), C['rest_per_day'], C['rest_cap']]}")
+    if cc["crows"][4] != cfg_id(C["crows_from"]) or cc["cart"][1][2] != cfg_id(C["crows_from"]):
+        out.append(f"crows / cart taste from: config {cc['crows'][4]} / {cc['cart'][1][2]} vs proposal {cfg_id(C['crows_from'])}")
+    for s in M["stages"]:  # EV3 rule 6: the Tutorial / World 1 first clears
+        o = C["obby_first"].get(s["key"])
+        want_fc = None if o is None else [o[0], o[1], cfg_id(o[2])]
+        if s.get("first_clear") != want_fc:
+            out.append(f"first clear {s['key']}: config {s.get('first_clear')} vs proposal {want_fc}")
     items = {it["name"]: it for it in M["items"]}
-    def want(name):
+    def want(name):  # EV3b: sinks are priced in Coins alone (the model's `gate` is the Renown game, kept for the old-model tables)
         it = items.get(name)
-        return None if it is None else [round(it["price"]), it["gate"]]
-    for i, (price, gate) in enumerate(cc["expansions"]):
-        if want(f"Square {5 + i}") != [price, gate]:
-            out.append(f"Square {5 + i}: config {[price, gate]} vs proposal {want(f'Square {5 + i}')}")
-    for uid, step, prices, ren in cc["upgrades"]:
+        return None if it is None else round(it["price"])
+    for i, price in enumerate(cc["expansions"]):
+        if want(f"Square {5 + i}") != price:
+            out.append(f"Square {5 + i}: config {price} vs proposal {want(f'Square {5 + i}')}")
+    for uid, step, prices in cc["upgrades"]:
         for k, p in enumerate(prices):
-            if want(f"{uid} {k + 1}") != [p, ren[k]]:
-                out.append(f"{uid} {k + 1}: config {[p, ren[k]]} vs proposal {want(f'{uid} {k + 1}')}")
-    for tid, eff, prices, ren in cc["tools"]:
+            if want(f"{uid} {k + 1}") != p:
+                out.append(f"{uid} {k + 1}: config {p} vs proposal {want(f'{uid} {k + 1}')}")
+    for tid, eff, prices in cc["tools"]:
         for k, p in enumerate(prices):
-            if want(f"{tid} {k + 1}") != [p, ren[k]]:
-                out.append(f"{tid} {k + 1}: config {[p, ren[k]]} vs proposal {want(f'{tid} {k + 1}')}")
+            if want(f"{tid} {k + 1}") != p:
+                out.append(f"{tid} {k + 1}: config {p} vs proposal {want(f'{tid} {k + 1}')}")
     for fam, prices in (("FieldSlot", cc["pet_slots"]), ("EquipSlot", P["slot_prices"]), ("Incubator", P["incubator_prices"])):
         for k, p in enumerate(prices[1:], start=2):
             w = want(f"{fam} {k}")
-            if w is None or w[0] != p:
-                out.append(f"{fam} {k}: config {p} vs proposal {w and w[0]}")
+            if w != p:
+                out.append(f"{fam} {k}: config {p} vs proposal {w}")
     for tid, levels in M["talents"].items():  # EV2b: Coins + crop bundle per level (world rewards: None)
         o = P["talents"].get(tid)
         if o is None or not o["built"]:
@@ -2130,10 +2137,10 @@ def proposal(M, days=60):
     rows = []
     for c in M["crops"] + list(M["rares"].values()):
         o = old_crops.get(cfg_id(c["id"]))
-        old = f"{E.n(o[2] * 3600)} s / {E.n(o[3])} / {E.n(o[4])} / R{o[5]}" if o else "-"
+        old = f"{E.n(o[1] * 3600)} s / {E.n(o[2])} / {E.n(o[3])} / {o[4] if o[4] is not None else '-'}" if o else "-"
         rows.append([cfg_id(c["id"]), fmt_t(c["t"]), E.n(c["sale"]), E.n(c["seed"]), E.n(c["v"]), str(c["pts"]), f"R{c['gate']}", old])
-    print(E.table(["crop", "grow", "sale", "seed", "net/sq-h", "Renown pts", "gate", "config: grow / sale / seed / gate"], rows))
-    print(f"\nRenown: level L needs {M['c']['renown_k']} x L^{M['c']['renown_p']} points (config {P['crop_cfg']['renown'][0]} x L^{P['crop_cfg']['renown'][1]}).")
+    print(E.table(["crop", "grow", "sale", "seed", "net/sq-h", "Renown pts", "old gate", "config: grow / sale / seed / step"], rows))
+    print(f"\nRenown (the old model only, EV3b took it out of the game): level L needs {M['c']['renown_k']} x L^{M['c']['renown_p']} points.")
     print("\n## Perennials (model-only)")
     print(E.table(["tree", "first growth", "fruit every", "held", "fruit sale"],
                   [[t["id"], fmt_t(t["t0"]), fmt_t(t["f"]), str(t["cap"]), E.n(t["fruit"])] for t in M["trees"].values()]))
@@ -2257,14 +2264,14 @@ def ev3_tables(M, days=60):
 def old_price_map(P):
     m = {}
     exps = P["crop_cfg"]["expansions"]
-    for i, (price, gate) in enumerate(exps):
-        m[f"Square {5 + i}"] = f"{E.n(price)} R{gate}"
-    for uid, step, prices, ren in P["crop_cfg"]["upgrades"]:
+    for i, price in enumerate(exps):
+        m[f"Square {5 + i}"] = E.n(price)
+    for uid, step, prices in P["crop_cfg"]["upgrades"]:
         for k, p in enumerate(prices):
-            m[f"{uid} {k + 1}"] = f"{E.n(p)} R{ren[k]}"
-    for tid, eff, prices, ren in P["crop_cfg"]["tools"]:
+            m[f"{uid} {k + 1}"] = E.n(p)
+    for tid, eff, prices in P["crop_cfg"]["tools"]:
         for k, p in enumerate(prices):
-            m[f"{tid} {k + 1}"] = f"{E.n(p)} R{ren[k]}"
+            m[f"{tid} {k + 1}"] = E.n(p)
     for k, p in enumerate(P["crop_cfg"]["pet_slots"]):
         m[f"FieldSlot {k + 1}"] = E.n(p)
     for k, p in enumerate(P["slot_prices"]):

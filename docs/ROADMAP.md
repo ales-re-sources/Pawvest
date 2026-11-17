@@ -42,7 +42,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | K1 | First-hour fixes (kid playtest 2026-11-01): Stage 5, G1 fallback, Double Jump world reward, hatch panel done; the rest is measured in M6a | partial | partial | – |
 | E0 | Economy model (its repricing replaced by EV) | ✔ | – | – |
 | EV | Engagement-first economy: EV1 model, EV2a numbers, EV2b talent bundles | EV1–EV2b, EV2e ✔; EV2c, EV2d, EV2f after 1.0 | EV2a, EV2b ✔ | – |
-| EV3 | Crop mastery: crop levels replace Renown, milestone quests, crop upgrades, first-hour obby payouts (1.0) | EV3a signed off 2026-11-17; EV3b next | – | – |
+| EV3 | Crop mastery: crop levels replace Renown, milestone quests, crop upgrades, first-hour obby payouts (1.0) | EV3a signed off; EV3b1 Studio-validated 2026-11-17; EV3b2 next | – | – |
 | E1.0, E1a–E1d | Client-drawn plots; crop field (every player's since FA), field pets, crops as pet food, size roll, upgrades, tools, market cart, 36 squares | ✔ | ✔ | – |
 | E2, E4-thin | Obby seeds (rare crops, meters, pouch, Scouting); crows and Pest-control guards | ✔ | ✔ | – |
 | OG | Offline crop growth 0.5 / 24 h | ✔ | pending | – |
@@ -70,7 +70,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 - **Not in 1.0:** obby time calibration (M6b; the obby stays as built), the comfort shop (D2: 1.0 ships without monetization),
   Sunshine (EV2c), World 4, hybrids (HX1 build).
 
-**Start here:** EV3b scope (levels, unlocks, Renown out; EV3a signed off 2026-11-17): read the live profiles for the migration first. Alongside: OG validation and the M6a friends test (step 0).
+**Start here:** EV3b2 (EV3b1 Studio-validated 2026-11-17: ROADMAP → EV3b; open: the square card in Czech). Alongside: OG validation and the M6a friends test (step 0).
 *Update this line whenever a milestone finishes.*
 
 **Road to 1.0** (in order; one milestone at a time unless marked "alongside"):
@@ -138,28 +138,81 @@ quests handed in piece by piece without expiry, rested mastery after a day away 
 prints the EV3 tables. **Signed off (the user, 2026-11-17):** tier prices, unlock counts, talent bundles, point size, quests, the
 silent rested rate, obby payouts; the near-misses are accepted for now (ECONOMY.md → open decision 4).
 
-**EV3b — levels, unlocks, Renown out (scope after EV3a's review).** Fixes the first hour.
-1. **Config:** `CropConfig` crops get the tier prices (`sale` / `seed`), their unlock count (`LevelCounts` 25 / 75 / 200 shared) and, for milestones, `quest = { [cropId] = n }`
-   (Corn, Pumpkin, Sweet potato); the `renown` gates of `Expansions`,
-   `Upgrades`, `Tools` go (prices stay); `RenownK` / `RenownP` / `points` go; `StageConfig` payouts + seed packs; `TalentConfig`
-   Double Jump 2 / Dash 1 / Dash 2 get the smaller bundles and prices (ECONOMY.md → Findings → G4 probe).
-2. **Server:** `Garden.Crops[cropId] = { N }` (plants grown) and `Garden.Unlocked` (IdSet; stored ids never reused); a harvest adds its
-   plants (double while `Garden.Rested` lasts, filled by days away past the first) and unlocks the next crop at its unlock count (answer `{ …, cropLevel,
-   levelUp, unlocked? }`); `GardenRemotes.Quest(cropId, cropIdGiven, n)` (from the Goals panel or the seed stall) hands in crops toward the open milestone
-   (progress in `Garden.Quest`, no expiry, reject `crops`); the last piece unlocks the crop and gives a seed pack of it; `BuySeeds` checks `Unlocked`; `BuySquare` / `BuyUpgrade` / `BuyTool` lose the `renown` check and reject.
-3. **Migration** (`Version = 7`): `Unlocked` = every crop whose old gate ≤ the profile's Renown level (no player loses a crop); crop XP
-   starts at 0 (or from `Plantings` if the live profiles show it fair); `Renown` stays as a field, unused. Read the live profiles first.
-4. **Client:** seed stall: a locked crop shows the previous crop's count toward it ("Potato 8 / 12") or the quest `{crop} {have}/{need}` with a
-   Bring button per crop (the player chooses what to hand in); the **tracker line** and the Goals panel's *Next crop* section replace
-   the score panel's hub / world view ([UI_GARDEN_PETS.md](UI_GARDEN_PETS.md) §13); the
-   crop's ★ on the seed row, square card and barn row; a level-up toast "Garlic ★2"; the Renown bar / level go (FieldHand, FieldClient,
-   BarnClient, GardenSkills, SeedStallClient); sink tiles show only the price.
-5. **Docs and text:** GDD §7.9, PROTOCOL, ECONOMY.md, strings (the `renown` keys removed, new ones with Czech).
-- **Acceptance (draft):** `economy.py check` exit 0 (drift 0 after `pin`); `loc.py build / check / lint`; a boot without errors or
-  warnings; in Studio (snapshot first) on a fresh test profile Lettuce opens at 12 Potatoes and Potato ★1 at 25, the Corn quest handed in through the
-  real seed stall in two visits (the progress kept between them), one refusal for missing crops (nothing taken), a square and an upgrade bought on Coins alone; a migrated live profile keeps every
-  crop it could buy; the word Renown nowhere on screen in English or Czech (pseudo-language pass, `strings.csv` grep); the Tutorial's
-  first clear pays the new amount and the seed pack; Czech fits on the stall and the square card.
+**EV3b — levels, unlocks, Renown out (scoped 2026-11-17).** Fixes the first hour. Two parts, each shippable: **EV3b1** the mechanic
+(data, server, configs, migration, the existing panels) and **EV3b2** the tracker line and the Goals panel (UI_GARDEN_PETS §13). Numbers:
+`economy_ev.CAND` (signed off 2026-11-17); `economy.py proposal` prints them.
+*Live profiles (read 2026-11-17, one playtest):* 4 records. Lekzdrh Renown level 29 (Potato … Blueberry by gate; Sweet potato grown from a
+cart taste), AhojRupert level 5 (Potato … Cucumber), test records `user_-1` / `user_-2` (to remove). No per-crop history exists
+(`Field.Plantings` is one field total), so plant counts start at 0.
+
+**EV3b1 — the mechanic**
+1. **Config.** `CropConfig.Crops`: the tier prices (`sale` / `seed`: Lettuce 28 / 7, Onion 55 / 14, Tomato 750 / 190, Cucumber 1 400 /
+   350, Pepper 10 000 / 2 500, Broccoli 20 000 / 5 000, Eggplant 70 000 / 18 000, Blueberry 100 000 / 25 000, Giant melon 350 000 /
+   90 000, Sunflower 900 000 / 220 000; the rest unchanged); `renown` and `points` go; new `step` = plants of this crop that open the next
+   one (12, 13, 13, 14, 15, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25 in list order; also the rested unit); `quest` on Corn
+   `{ Cucumber = 6, Garlic = 10 }`, Pumpkin `{ Pepper = 5, Corn = 8 }`, Sweet potato `{ Blueberry = 5, Eggplant = 4 }` (a quest crop
+   opens by its quest, not by the previous crop's `step`). The unlock order is the list order of the common crops; rare crops have no
+   mastery. `CropConfig.Mastery = { Levels = { 25, 75, 200 }, RestPerDay = 0.5, RestCap = 3, QuestSeeds = 4 }` with helpers
+   (`MasteryLevel(n)`, `NextLocked(unlocked)`, `UnlockNeed(crop)`). `renown` goes from `Expansions`, `Upgrades`, `Tools` (prices stay);
+   `RenownK` / `RenownP` / `PointsFor` / `RenownLevel` move into a `CropConfig.Legacy` block used only by the migration. `Crows.FromLevel`
+   → `FromCrop = "Garlic"`, `Cart.taste.fromLevel` → `fromCrop = "Garlic"`; `CartOffers(day, unlocked)` (bargains on unlocked crops, the
+   taste = the next locked crop). `TalentConfig`: Double Jump 2 10 000 + 12 Cucumber + 1 Frost grape, Dash 1 8 000 + 12 Corn, Dash 2
+   19 000 + 12 Pepper + 1 Glow mushroom. `StageConfig`: Tutorial and Stage 1–5 get `firstClear = { coins, seeds = 4, upTo }` (250 /
+   600 / 800 / 1 000 / 1 250 / 1 500 Coins for the first finish + its medals together; `upTo` Garlic for the Tutorial, Tomato for World 1);
+   `rewardFactor` and repeat runs unchanged (EV2c).
+2. **Server (GardenField, StageResults).** Profile: `Garden.Crops[cropId] = { N }` (plants grown; a table so EV3c adds `Pts`),
+   `Garden.Unlocked = { [cropId] = true }`, `Garden.Quest = { Crop, Got = { [cropId] = n } }` (the open milestone), `Garden.Rested`
+   (number, in `step`s). A harvest (by hand or a Tending pet; not the Shears' extra crop, not a rare crop) adds 1 to `N`, +1 more while
+   `Rested` lasts (`Rested -= 1 / step`); reaching the previous crop's `step` unlocks the next crop; a quest crop opens `Garden.Quest`
+   instead. Harvest answer `{ …, mastery = { crop, n, level }, levelUp?, unlocked? }`. New remote `GardenRemotes.Quest(cropId, count)`
+   (hand in `count` of `cropId` toward the open quest, accepted anywhere; takes at most what the quest still needs; rejects `none` /
+   `crop` / `crops`, nothing taken); the last piece unlocks the crop and gives `QuestSeeds` seeds of it (past the barn limit, as rare
+   seeds). On join, before settling: an absence over a day adds `(away − 1 day) / day × RestPerDay` to `Rested` (cap `RestCap`; from
+   `Field.SettledAt`). **Rested is silent**: never in the state, a toast or a text. `BuySeeds` checks `Unlocked` (reject `locked`);
+   `BuySquare` / `BuyUpgrade` / `BuyTool` lose the `renown` check; crows and the cart taste from the Garlic unlock. First clears: Coins
+   per `firstClear`, and `GardenField.ObbyFinish` (first finish) adds 4 seeds of the newest unlocked common crop up to `upTo`. Telemetry:
+   `crop_unlock` (crop, how: count / quest / migration) and `crop_level` (crop, level).
+3. **Migration** (`PlayerProfile` `Version = 7`). `Unlocked` = every common crop whose old gate ≤ the profile's Renown level (EV2a curve),
+   plus every crop the profile holds or has grown (`Seeds`, `Items`, `BestSize`); a quest whose crop is already unlocked is done; `Crops`
+   = {}; `Rested` = 0; `Renown` stays, unused. Lekzdrh → Potato … Blueberry + Sweet potato (next: Giant melon at 22 Sweet potatoes);
+   AhojRupert → Potato … Cucumber (next: the Corn quest).
+4. **Client.** Seed stall: a ★ on each unlocked row; the next locked crop shows "🥔 8 / 12" or its quest pieces `{crop} {have}/{need}` with
+   a **Bring** button per crop (the player chooses what to hand in); further locked crops grey without a number. Square card and barn row:
+   the crop's ★; the square card's price line without Renown. Toasts: "Garlic ★2", "Lettuce unlocked!", a quest piece. Skills panel Garden
+   tab: the Renown header goes, rows show only the price. Barn's young-field sell hint: until Corn is unlocked (was Renown 5). Crow line:
+   "crows come after Garlic". (FieldHand, FieldClient, BarnClient, GardenSkills, SeedStallClient, GardenUi.)
+5. **Tools.** `economy.py`'s config reader and EV0 read the new fields (crops with `step` / `quest`, sinks without gates, `firstClear`,
+   talents); `evcheck` EV0 passes; `pin`.
+6. **Docs and text.** GDD §7.9 (Renown → mastery), PROTOCOL (remote, profile v7, Harvest answer), TELEMETRY (two events), ECONOMY
+   (EV0 note), strings: the 15 `renown` / gate keys reworded or removed, new ones with Czech.
+- **Acceptance (EV3b1):**
+  - `economy.py check` exit 0 with EV0 PASS (after `pin`, drift 0); `loc.py build` / `check` (0 errors) / `lint` (within the baseline);
+    `grep -ri renown src/` only in `PlayerProfile`'s migration and `CropConfig.Legacy`; no `renown` key in `strings.csv`.
+  - One playtest boot without errors or warnings (server and client).
+  - Studio, on a fresh fixture profile (snapshot first, restored after): Lettuce opens at the 12th Potato (toast), Potato ★1 at the 25th;
+    a locked crop's seeds refused (`locked`); the Corn quest handed in through the real seed stall in two visits with a rejoin between
+    (progress kept), one refusal for missing crops (barn unchanged), the last piece opens Corn and gives 4 Corn seeds; a square, a Growth
+    level and a Cloches level bought on Coins alone; the Tutorial's first finish pays 250 Coins with its medals and 4 seeds of the
+    newest crop up to Garlic.
+  - Rested: a fixture with `SettledAt` 3 days back → `Rested` = 1.0 after the join; the next 12 Potato harvests add 2 each, then 1; no
+    text about it anywhere.
+  - Migration: Lekzdrh's live profile (snapshot first) migrates on join to the set above, Seeds / Items / Coins unchanged; AhojRupert's
+    path reviewed in code (same rule; no fixture).
+  - Triple Jump in the skills panel costs 10 000 + 12 Cucumber + 1 Frost grape.
+  - Pseudo-language and Czech pass: no "Renown" on screen; Czech fits on the stall row with Bring buttons and on the square card.
+  - The test records `user_-1` / `user_-2` removed.
+
+**EV3b2 — tracker line and Goals panel** (UI_GARDEN_PETS §13; after EV3b1)
+1. **Tracker line** in the score panel's place outside a stage: the next crop ("🥔 8 / 12 → 🥬", or the quest's least-done piece); a
+   finished goal toasts and the line moves on; a tap opens the Goals panel. On a stage the run view stays. Line 2 (requests) comes with E5.
+2. **Goals panel** (`UiKit`, built in code, re-renders on `Locale.Changed`): *Next crop* with the count or the quest pieces and their
+   **Bring** buttons (same remote as the stall). The world star count leaves the HUD (§13 open point: watch in M6a); unused `hud.score.*`
+   keys go.
+- **Acceptance (EV3b2):** loc checks as EV3b1; boot clean; through the real UI: the line follows a Potato harvest, a quest piece handed in
+  from the Goals panel away from the stall, the line moves on after an unlock; the run view unchanged on a stage; Czech fits on the line
+  and the panel (phone-size viewport).
+- **Open (the user):** the quest's seed pack (4 seeds of the new crop, a first guess like the first clears' packs); the cart taste of a
+  locked crop stays until ST decides the cart (tasted plants count toward that crop's ★ but do not unlock it).
 
 **EV3c — crop upgrades (scope after EV3b; can ship as a drop).** The endgame layer.
 1. **Server:** `Garden.Crops[cropId].Pts = { Value, Size, Speed }` (0 or 1 each, +11 % per point); `GardenRemotes.CropPoint(cropId, line)` (free points = level − spent;

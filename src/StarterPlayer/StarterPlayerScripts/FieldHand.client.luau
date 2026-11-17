@@ -22,7 +22,7 @@
 --   * every field remote is fired through one queue at most every FIRE_GAP seconds (the server drops actions under 0.2 s apart);
 --     a harvest result pops "+1 <crop>" over its square for POP_SECONDS.
 -- Display only: the remotes carry a square number (and a crop id / pet uid); GardenField checks plot, distance, square, seeds,
--- Renown and Coins and answers on GardenRemotes.Result (FieldClient shows the toasts). Times: workspace:GetServerTimeNow().
+-- unlocks and Coins and answers on GardenRemotes.Result (FieldClient shows the toasts). Times: workspace:GetServerTimeNow().
 -- The GUI is built here (ScreenGui FieldHandGui; stud bricks, StudStyle). Card width: at most CARD_WIDTH, and on a touch screen
 -- clear of the thumbstick and the jump button (TOUCH_SIDE on each side); it sits above FieldClient's Field button.
 -- FieldHandGui attributes: Select = square selects it as a tap would (test hook, cleared after use); HoldPet = uid takes that
@@ -495,7 +495,7 @@ local function boostLine(): string?
 	return if #parts > 0 then table.concat(parts, " · ") else nil
 end
 
--- the next square's price, Renown and the button (grey with the reason when it cannot be bought)
+-- the next square's price and the button (grey with the reason when it cannot be bought; Coins only since EV3b)
 local function renderLocked(square: number)
 	header(Locale.T("field.card.locked"), closeCard)
 	local expansion = CropConfig.NextExpansion(#(fieldState.open or {}))
@@ -506,16 +506,10 @@ local function renderLocked(square: number)
 		Font = StudStyle.Font,
 		TextSize = 18,
 		TextColor3 = Color3.new(1, 1, 1),
-		Text = if expansion.renown > 0
-			then Locale.T("field.card.priceRenown", { count = expansion.price, level = expansion.renown })
-			else Locale.T("field.card.price", { count = expansion.price }),
+		Text = Locale.T("field.card.price", { count = expansion.price }),
 	}).Parent = body
 	local lines = {}
-	local renownShort = (fieldState.level or 0) < expansion.renown
 	local coins = PetClient.Coins or 0
-	if renownShort then
-		table.insert(lines, "<font color='#f06a5a'>" .. Locale.T("field.expand.needRenown", { level = expansion.renown }) .. "</font>")
-	end
 	if coins < expansion.price then
 		table.insert(lines, Locale.T("common.needMoreCoins", { count = expansion.price - coins }))
 	end
@@ -554,7 +548,7 @@ local function renderCard()
 	local cropGroup = groupBox("CropGroup", 2, "field.card.cropGroup")
 	paragraph("Title", 1, {
 		Font = StudStyle.Font, TextSize = 18, TextColor3 = Color3.new(1, 1, 1),
-		Text = if crop then GardenUi.CropTitle(crop) else Locale.T("field.card.empty"),
+		Text = if crop then GardenUi.CropTitle(crop) .. GardenUi.Stars(fieldState, crop) else Locale.T("field.card.empty"),
 	}).Parent = cropGroup
 	local ripe = false
 	if crop then
@@ -694,7 +688,7 @@ local function renderSeeds(square: number?)
 		if stock > 0 then
 			rows += 1
 			local seconds = GardenUi.GrowSecondsOn(fieldState, crop)
-			local row = pickerRow(list, crop.id, rows, GardenUi.CropTitle(crop), Locale.T("field.picker.info", { stock = stock, time = TimeFormat.GrowTime(seconds) }), true, COLOR_GO)
+			local row = pickerRow(list, crop.id, rows, GardenUi.CropTitle(crop) .. GardenUi.Stars(fieldState, crop), Locale.T("field.picker.info", { stock = stock, time = TimeFormat.GrowTime(seconds) }), true, COLOR_GO)
 			row.Activated:Connect(function()
 				if square then
 					fire(plantEvent, square, crop.id)

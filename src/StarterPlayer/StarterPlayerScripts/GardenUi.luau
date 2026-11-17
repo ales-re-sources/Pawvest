@@ -319,12 +319,52 @@ function GardenUi.BarnOf(field): number
 	return CropConfig.BarnFor(CropConfig.UpgradeLevel(field and field.upgrades, "Barn"))
 end
 
+-- EV3b crop mastery from the field state (GardenRemotes.State.field.mastery = { crops = { [id] = plants grown }, unlocked, quest? }).
+function GardenUi.Mastery(field)
+	local mastery = field and field.mastery
+	return if type(mastery) == "table" then mastery else { crops = {}, unlocked = {} }
+end
+
+-- Plants of `crop` grown (its mastery count).
+function GardenUi.PlantsOf(field, crop): number
+	local n = GardenUi.Mastery(field).crops[crop.id]
+	return if type(n) == "number" then n else 0
+end
+
+-- Whether `crop` is open on `field` (Potato and rare crops always are).
+function GardenUi.IsUnlocked(field, crop): boolean
+	return CropConfig.IsUnlocked(GardenUi.Mastery(field).unlocked, crop.id)
+end
+
+-- " ★2" to put after a common crop's title; empty below level 1 and for rare crops (no words, no Locale key).
+function GardenUi.Stars(field, crop): string
+	if crop.rare then
+		return ""
+	end
+	local level = CropConfig.MasteryLevel(GardenUi.PlantsOf(field, crop))
+	return if level > 0 then " ★" .. level else ""
+end
+
+-- The crop's mastery line ("Mastery ★1: 32 / 75", "Mastery ★3: complete"), nil for a rare crop.
+function GardenUi.MasteryLine(field, crop): string?
+	if crop.rare then
+		return nil
+	end
+	local n = GardenUi.PlantsOf(field, crop)
+	local level = CropConfig.MasteryLevel(n)
+	local need = CropConfig.Mastery.Levels[level + 1]
+	if not need then
+		return Locale.T("field.mastery.max", { level = level })
+	end
+	return Locale.T("field.mastery.line", { level = level, have = n, need = need })
+end
+
 -- The crow forecast (E4b) for the server time `now`: text and colour; from the fixed schedule (CropConfig.NextCrows).
--- `field.crows.active` false (a young field) → the "crows come from Renown n" line.
+-- `field.crows.active` false (a young field) → the "crows come once you grow Garlic" line (EV3b: CropConfig.Crows.FromCrop).
 function GardenUi.CrowLine(field, now: number): (string, Color3)
 	local crows = field and field.crows
 	if type(crows) ~= "table" or not crows.active then
-		return Locale.T("field.crows.later", { level = CropConfig.Crows.FromLevel }), GardenUi.COLOR_DIM
+		return Locale.T("field.crows.later", { crop = Locale.CropName(CropConfig.ById[CropConfig.Crows.FromCrop]) }), GardenUi.COLOR_DIM
 	end
 	local from, to = CropConfig.NextCrows(now, 24 * 3600)
 	if not from then

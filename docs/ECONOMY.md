@@ -2,8 +2,8 @@
 
 Two models live in `tools/` (Python stdlib):
 - **`economy_ev.py` (EV, the engagement-first economy, 2026-11-07):** the proposed numbers (`CAND`) and the checks they must pass (G1–G12,
-  R, B, B2, C, U). `CAND["mode"]` is `"stars"` (EV3a: crop levels replace Renown, not in the game yet) or `"renown"` (the game as built; the
-  old column of the EV3 tables and EV0's config comparison).
+  R, B, B2, C, U). `CAND["mode"]` is `"stars"` (EV3: crop levels replace Renown, in the game since EV3b1) or `"renown"` (the game before EV3b; the
+  old column of the EV3 tables).
 - **`economy.py` (E0):** reads every Coin number from the Luau configs, pins it (`tools/economy_pins.json`) and checks the game **as built**
   (parity targets, below). Its `check` also runs the EV checks; its parity / lead block goes when EV2a moves the configs onto the proposal,
   and the pins then hold the EV values.
@@ -42,7 +42,7 @@ drops. Something is always growing, hatching or nearly affordable ("one more thi
 8. **No regret (for M7):** after launch prices never go down; nothing sold is later handed out free in bulk; a capacity product never exceeds
    the earnable maximum. Free play is scarce enough that a comfort purchase is worth 1.2–1.5× (G8), never more.
 
-## EV checks (`evcheck`; on the EV3 revision `CAND` (2026-11-17, smaller Double Jump 2 / Dash bundles) 12–15 of 18 pass on seeds 1–4, EV0 failing by design until EV3b moves the crop prices into the configs; EV0 compares the configs, talent bundles included since EV2b)
+## EV checks (`evcheck`; on the EV3 revision `CAND` (2026-11-17, smaller Double Jump 2 / Dash bundles) 12–15 of 18 pass on seeds 1–4 before EV3b; since EV3b1 (2026-11-17) EV0 passes and seed 1 passes 15 / 18 (R, B, G11 the known near-misses). EV0 compares the configs with `CAND`: crops (grow time, sale, seed, `step`, `quest`), `Mastery`, the crows / cart-taste crop, the Tutorial / World 1 `firstClear`, sinks in Coins only, talent bundles)
 Bands are provisional, for the user to confirm with the proposal. Archetypes: Obby main (7:00 / 12:30 / 18:00, 2 h obby), Casual (8:00 / 19:00,
 45 min obby), Garden main (7 / 12 / 17 / 21, 15 min obby), Binge (one 6 h day a week), Spender (Casual's schedule, paid comforts).
 

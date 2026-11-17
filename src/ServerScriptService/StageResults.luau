@@ -42,7 +42,7 @@ end
 --   freeEgg? (egg id granted for the first Gold), petXp (XP each equipped pet received: medal or finish + movement),
 --   moveXp, petsLeveled (pets that
 --   gained it; 0 = none equipped or all maxed), nextMedal?, nextThreshold?, obbySeeds? (E2a: GardenField.ObbyFinish, the rare seeds
---   and the stage's meter; only with the field) }
+--   and the stage's meter; only with the field), firstSeeds? (EV3b: { crop, count } of the first clear's seed pack) }
 function StageResults.RecordFinish(player: Player, stageKey: string, elapsed: number, studs: number?)
 	local profile = PlayerProfile.Get(player)
 	local stage = StageConfig.ByKey[stageKey]
@@ -59,8 +59,10 @@ function StageResults.RecordFinish(player: Player, stageKey: string, elapsed: nu
 
 	-- the first finish pays once, medal or not (a stored best time = finished before)
 	local finishCoins = 0
+	local firstSeeds = nil
 	if firstFinish then
 		finishCoins = CoinRewards.Grant(player, StageConfig.FinishPayout(stage), "finish") or 0
+		firstSeeds = GardenField.FirstClearSeeds(player, stage) -- EV3b: a seed pack for the Tutorial's and World 1's first clears
 	end
 
 	-- each tier pays once: only tiers above the best medal so far are paid
@@ -111,6 +113,7 @@ function StageResults.RecordFinish(player: Player, stageKey: string, elapsed: nu
 		bestMedal = bestMedal,
 		coins = coins,
 		finishCoins = finishCoins,
+		firstSeeds = firstSeeds,
 		runCoins = runCoins,
 		runsToday = runs[stageKey] or 0,
 		freeEgg = freeEgg,

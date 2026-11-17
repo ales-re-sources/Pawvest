@@ -1,9 +1,9 @@
 -- Skills panel, tabs "Obby" / "Garden" (U4, docs/UI_GARDEN_PETS.md §6): the Obby tab is TalentRows' list ("Rows"); the Garden
--- tab is built here: the Renown header (level, a bar to the next level, the points still missing) and one row per field upgrade
--- (Growth, Barn) and garden tool (Seed sorter, Cloches, Pruning shears): icon, name, level / max, effect now → next, the Renown a
--- tool's next level needs (red while too low) and a Buy brick with the price. Buyable anywhere (the server dropped the plot check in
--- U4); every buy is over ConfirmTap.THRESHOLD, so it takes two taps. Display only: a tap names the id and the level it expects;
--- GardenField checks price, level and Renown and answers on GardenRemotes.Result (FieldClient toasts it).
+-- tab is built here: one row per field upgrade (Growth, Barn) and garden tool (Seed sorter, Cloches, Pruning shears): icon, name,
+-- level / max, effect now → next and a Buy brick with the price (Coins only since EV3b: the Renown header and gates are gone). Buyable
+-- anywhere (the server dropped the plot check in U4); every buy is over ConfirmTap.THRESHOLD, so it takes two taps. Display only: a
+-- tap names the id and the level it expects; GardenField checks price and level and answers on GardenRemotes.Result (FieldClient
+-- toasts it).
 -- The field state comes from GardenRemotes.State (GardenView keeps the last one: this script is re-created on every respawn).
 -- The chosen tab lives in the player attribute SkillsTab ("Obby" / "Garden") so it survives a respawn.
 -- Buttons by path (under PlayerGui.ScreenGui.SkillsPanel): Tabs.Obby / Tabs.Garden, GardenRows.<UpgradeId|ToolId>.Buy.
@@ -34,8 +34,6 @@ local COLOR_BUY = StudStyle.Colors.Green
 local COLOR_LOCKED = StudStyle.Colors.Grey
 local COLOR_TAB = StudStyle.Shade(StudStyle.PanelColors.SkillsPanel, 0.6)
 local COLOR_INFO = StudStyle.Text.Info
-local COLOR_ERROR = StudStyle.Text.Error
-local COLOR_OK = StudStyle.Text.Ok
 
 local UPGRADE_KEYS = {
 	Growth = { name = "field.upgrade.growth", effect = "field.upgrade.growth.effect", max = "field.upgrade.growth.max" },
@@ -135,35 +133,8 @@ local function clear()
 	end
 end
 
-local function renderHeader(field, order: number)
-	local header = create("Frame", {
-		Name = "Renown",
-		LayoutOrder = order,
-		Size = UDim2.new(1, -10, 0, 0),
-		AutomaticSize = Enum.AutomaticSize.Y,
-		BackgroundTransparency = 1,
-	}, {
-		create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 4) }),
-	})
-	text("Level", {
-		LayoutOrder = 1,
-		Font = StudStyle.Font,
-		TextSize = 22,
-		TextColor3 = COLOR_OK,
-		Text = Locale.T("field.renown.level", { level = field.level }),
-	}).Parent = header
-	local low, high = CropConfig.PointsFor(field.level), CropConfig.PointsFor(field.level + 1)
-	local fraction = if high > low then math.clamp((field.renown - low) / (high - low), 0, 1) else 1
-	UiKit.Bar("Bar", { order = 2, height = 12, track = Color3.fromRGB(60, 45, 20), fill = COLOR_OK, share = fraction, parent = header })
-	text("Next", {
-		LayoutOrder = 3,
-		Text = Locale.T("field.renown.next", { count = math.max(0, high - field.renown), level = field.level + 1 }),
-	}).Parent = header
-	header.Parent = gardenList
-end
-
--- One upgrade / tool row: title, effect line, an optional red Renown line, the Buy brick.
-local function renderRow(order: number, id: string, title: string, info: string, renownLine: string?, price: number?, canBuy: boolean, buy: () -> ())
+-- One upgrade / tool row: title, effect line, the Buy brick.
+local function renderRow(order: number, id: string, title: string, info: string, price: number?, canBuy: boolean, buy: () -> ())
 	local row = create("Frame", {
 		Name = id,
 		LayoutOrder = order,
@@ -189,9 +160,6 @@ local function renderRow(order: number, id: string, title: string, info: string,
 	})
 	text("Title", { LayoutOrder = 1, Font = StudStyle.Font, TextSize = 16, TextColor3 = Color3.new(1, 1, 1), Text = title }).Parent = column
 	text("Info", { LayoutOrder = 2, Text = info }).Parent = column
-	if renownLine then
-		text("Renown", { LayoutOrder = 3, TextSize = 13, TextColor3 = COLOR_ERROR, Text = renownLine }).Parent = column
-	end
 	column.Parent = row
 	local button = create("TextButton", {
 		Name = "Buy",
@@ -222,7 +190,6 @@ local function render()
 		text("Loading", { LayoutOrder = 1, Size = UDim2.new(1, -10, 0, 0), Text = Locale.T("common.loading") }).Parent = gardenList
 		return
 	end
-	renderHeader(field, 1)
 	for index, upgrade in CropConfig.Upgrades do
 		local keys = UPGRADE_KEYS[upgrade.id]
 		local level = CropConfig.UpgradeLevel(field.upgrades, upgrade.id)
@@ -230,7 +197,6 @@ local function render()
 		local function effect(at: number): number
 			return if upgrade.id == "Growth" then math.floor(upgrade.step * at * 100 + 0.5) else CropConfig.BarnFor(at)
 		end
-		local renownOk = not price or field.level >= (upgrade.renown[level + 1] or 0)
 		renderRow(
 			1 + index,
 			upgrade.id,
@@ -238,9 +204,8 @@ local function render()
 			if price
 				then Locale.T(keys.effect, { now = effect(level), next = effect(level + 1) })
 				else Locale.T(keys.max, { now = effect(level) }),
-			if renownOk then nil else Locale.T("field.expand.needRenown", { level = upgrade.renown[level + 1] }),
 			price,
-			price ~= nil and renownOk and coins >= price,
+			price ~= nil and coins >= price,
 			function()
 				buyUpgradeEvent:FireServer(upgrade.id, level)
 			end
@@ -253,7 +218,6 @@ local function render()
 		local function percent(at: number): number
 			return if at > 0 then math.floor(tool.effect[at] * 100 + 0.5) else 0
 		end
-		local renownOk = not price or field.level >= tool.renown[level + 1]
 		renderRow(
 			10 + index,
 			tool.id,
@@ -261,9 +225,8 @@ local function render()
 			if price
 				then Locale.T(keys.effect, { now = percent(level), next = percent(level + 1) })
 				else Locale.T(keys.max, { now = percent(level) }),
-			if renownOk then nil else Locale.T("field.expand.needRenown", { level = tool.renown[level + 1] }),
 			price,
-			price ~= nil and renownOk and coins >= price,
+			price ~= nil and coins >= price,
 			function()
 				buyToolEvent:FireServer(tool.id, level)
 			end

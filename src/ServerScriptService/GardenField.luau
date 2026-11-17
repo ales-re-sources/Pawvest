@@ -1,22 +1,22 @@
 -- GardenField: the crop field behind the player's plot (E1a2, docs/ROADMAP.md → E1a2, docs/EXPANSION.md §5). Server-only.
 -- Every player has a field (FA, 2026-11-06: the field access gate and the P2 pens are gone).
 -- State lives in PlayerProfile.Garden: Field = { Open = { ["n"] = true }, Squares["n"] = { Crop, Grown }, SettledAt }, Seeds[crop],
--- Items[crop], Renown (points; the level is derived, CropConfig.RenownLevel). Grown = growth seconds earned, SettledAt = the
+-- Items[crop], crop mastery (EV3b: Crops[crop] = { N }, Unlocked, Quest, Rested; below). Grown = growth seconds earned, SettledAt = the
 -- server os.time() up to which growth was counted. Growth is settled on join (the time since SettledAt is an absence:
 -- CropConfig.OfflineRate, capped), and while online (OnlineRate) every SettleSeconds, before every field action and on leave.
--- Ripe crops wait. The client only names a square, a crop or a count: prices, times and Renown come from here.
+-- Ripe crops wait. The client only names a square, a crop or a count: prices, times and unlocks come from here.
 -- Field pets (E1b): Garden.FieldPets[uid] = { Square, Job } (Job = "Tending", or "PestControl" for a pet without Tending: the stored
 -- primary job), Garden.FieldPetSlots. E4-thin: a pet does every field job it has (Tending and Pest control), each with the reach of its
 -- own level, and gains XP in both. A Tending pet works the squares
 -- in its reach (PetConfig.ReachShape, CropConfig.Reach; the strongest pet counts): during an absence (the join settle) a ripe crop
--- that was not tried yet is harvested by the pet with the chance PetConfig.Strength(level) (Items, Renown; only while the barn
+-- that was not tried yet is harvested by the pet with the chance PetConfig.Strength(level) (Items, mastery; only while the barn
 -- has room) and replanted from Seeds with the leftover growth; a failed roll marks the planting Tried (it waits for the owner).
 -- The roll is deterministic per owner and planting number (Squares[n].N from Field.Plantings), so a re-join never rerolls.
 -- Placed pets earn aptitude XP in their job by the weighted field time (the same seconds as growth).
 -- Crows (E4-thin, CropConfig.Crows): after Tending in the join settle, every common crop that was ripe during the absence while a crow
 -- block overlapped it is rolled once per planting (Squares[n].Crow); one that loses the roll is eaten (the square is emptied) unless a
 -- guard reaching the square wins its own roll (PetConfig.GuardChance; the strongest guard counts). At most Cap eaten per absence, only
--- from Renown level FromLevel; rare crops are never eaten. State.field.notice.crows = { ate = { [crop] = n }, chased = { [uid] = n } },
+-- once crop FromCrop is unlocked; rare crops are never eaten. State.field.notice.crows = { ate = { [crop] = n }, chased = { [uid] = n } },
 -- State.field.crows = { from, to, active } is the forecast (the next crow block within a day, server times).
 -- A profile from before the field converts once on join (Garden.Converted; E1b, kept by FA as the migration): the pets it had in
 -- the P2 pens back to the inventory, CropConfig.PetSlotsFromPens slots, the rest of the pen prices (LegacyPenPrices) refunded; the
@@ -27,17 +27,17 @@
 -- Field upgrades (E1c1): Field.Upgrades = { Growth, Barn } levels (CropConfig.Upgrades): Growth multiplies the growth crops
 -- earn (CropConfig.GrowthSpeed; pets' aptitude XP keeps the plain seconds), Barn raises the seed stock and the crops a Tending
 -- pet may store (CropConfig.BarnFor).
--- Garden tools (E1c3): Garden.Tools = { Sorter, Cloches, Shears } levels (CropConfig.Tools), each level gated by a Renown level.
+-- Garden tools (E1c3): Garden.Tools = { Sorter, Cloches, Shears } levels (CropConfig.Tools), bought with Coins.
 -- Sorter multiplies every harvest's size factor; Cloches multiply the growth earned while the owner is online (not the absence,
 -- not the pets' aptitude XP); Shears give a second crop of the same size with their chance, rolled per planting number like
--- Tending (no Renown or seed for it; a Tending pet's second crop needs room in the barn).
--- Market cart (E1c4): CropConfig.CartOffers(today's UTC day, Renown level) are today's offers; Garden.Cart = { Day, Bought = { [key] = n } }
+-- Tending (no mastery or seed for it; a Tending pet's second crop needs room in the barn).
+-- Market cart (E1c4): CropConfig.CartOffers(today's UTC day, Garden.Unlocked) are today's offers; Garden.Cart = { Day, Bought = { [key] = n } }
 -- counts what the player bought of each (key = crop id, + "*" for the taste), reset when the day changes. BuyCart(slot, crop, count) sells
--- at the offer's price; the seeds join Seeds (within the barn). Plant needs only the seeds: a taste crop can be planted before its Renown
--- gate (BuySeeds keeps the gate).
+-- at the offer's price; the seeds join Seeds (within the barn). Plant needs only the seeds: a taste crop can be planted while it is
+-- locked (BuySeeds keeps the lock; its plants count toward its own mastery, not toward an unlock).
 -- Crops as pet food (E1a3): FeedCrop(uid, crop, count) feeds held crops to any owned pet for CropConfig xp each (half the sale), anywhere
 -- (no plot distance: the Pets panel's detail page); at most as many as the pet needs for the max level (the last one may go past it),
--- the average size leaves the barn as in a sale. Renown stays (it is earned at harvest).
+-- the average size leaves the barn as in a sale. Mastery stays (it is earned at harvest).
 -- Rare seeds from the obby (E2a): StageResults calls GardenField.ObbyFinish for every finish; CropConfig.ObbySeeds gives the rare crop of
 -- the stage's world for a new Gold (World 2 on), the day's first medal finish (Garden.RareDay = that UTC day) and a full stage meter
 -- (Garden.Meters[stageKey] = points). Rare crops are never sold as seeds (BuySeeds: "obby").
@@ -46,14 +46,20 @@
 -- E2c Scouting: the equipped scouts' bonus (PetConfig.ScoutBonus) multiplies the meter points and adds a pouch seed at PouchExtraAt; each
 -- medal finish gives every equipped pet with Scouting PetConfig.Scouting.XpPerFinish of aptitude XP (after the bonus is taken).
 -- The field's shape is CropConfig.RowWidths (E1d2: 36 squares on a grid); the player opens any locked square (BuySquare), the price
--- and Renown gate come from the number already open (CropConfig.NextExpansion). Fields from before E1d2 (Count = the first squares
+-- comes from the number already open (CropConfig.NextExpansion). Fields from before E1d2 (Count = the first squares
 -- of a 4 x 3 field) move onto rows 1-3 (CropConfig.FromOldSquare), with their crops and field pets.
 -- Remotes (in GardenRemotes): Plant(square, crop), Harvest(square), BuySeeds(crop, count), Sell(crop, count),
 -- BuySquare(square, expectedOpen), PlacePet(square, uid) (also moves a placed pet), LiftPet(uid), BuyPetSlot(expectedSlots),
--- BuyUpgrade(id, expectedLevel), BuyTool(id, expectedLevel), BuyCart(slot, crop, count), FeedCrop(uid, crop, count) (client → server); answers on GardenRemotes.Result; GardenRemotes.State.field (the owner's panel).
+-- BuyUpgrade(id, expectedLevel), BuyTool(id, expectedLevel), BuyCart(slot, crop, count), FeedCrop(uid, crop, count), Quest(crop, count)
+-- (client → server); answers on GardenRemotes.Result; GardenRemotes.State.field (the owner's panel).
 -- Where they are accepted: at the own plot (GardenService.Usable, 45 studs) for the field actions and Sell (the barn is on the plot);
 -- within GardenConfig.SeedStallDistance of the plaza's seed stall for BuySeeds and BuyCart (U4); anywhere for BuyUpgrade, BuyTool,
--- BuyPetSlot (U4: pure Coin + Renown buys from the Skills / Pets panels) and FeedCrop.
+-- BuyPetSlot (U4: pure Coin buys from the Skills / Pets panels), FeedCrop and Quest.
+-- Crop mastery (EV3b, CropConfig.Mastery): Garden.Crops[crop] = { N = plants grown } (common crops; a harvest by hand or a Tending pet adds
+-- one, two while Garden.Rested lasts), Garden.Unlocked = { [crop] = true } (Potato and rare crops are always open). The next common crop
+-- opens when the previous one reaches its `step`; a crop with a `quest` opens through Garden.Quest = { Crop, Got = { [crop] = n } } (crops
+-- handed in piece by piece with Quest, kept without expiry; the last piece gives QuestSeeds seeds of it). Rested mastery is silent: the
+-- join settle adds (days away - 1) x RestPerDay to Garden.Rested (cap RestCap); it is never sent to the client.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -68,6 +74,7 @@ local CoinRewards = require(ServerScriptService.CoinRewards)
 local GardenService = require(ServerScriptService.GardenService)
 local StageConfig = require(ReplicatedStorage.StageConfig)
 local PetService = require(ServerScriptService.PetService)
+local Telemetry = require(ServerScriptService.Telemetry)
 
 local plantEvent = GardenService.Remote("Plant") -- client → server: (square: number, crop: string)
 local harvestEvent = GardenService.Remote("Harvest") -- client → server: (square: number)
@@ -81,6 +88,7 @@ local buyUpgradeEvent = GardenService.Remote("BuyUpgrade") -- client → server:
 local buyToolEvent = GardenService.Remote("BuyTool") -- client → server: (id: string, expectedLevel: number)
 local buyCartEvent = GardenService.Remote("BuyCart") -- client → server: (slot: number, crop: string, count: number)
 local feedCropEvent = GardenService.Remote("FeedCrop") -- client → server: (uid: string, crop: string, count: number)
+local questEvent = GardenService.Remote("Quest") -- client → server: (crop: string, count: number) (EV3b: hand in toward the open quest)
 
 local reject = GardenService.Reject
 
@@ -144,6 +152,24 @@ local function openSet(field): ({ [number]: boolean }, { [number]: number }?)
 	return open, moved
 end
 
+-- Garden.Quest for the next locked crop when that crop opens by a quest (progress kept, capped at the need), else nil.
+local function syncQuest(garden)
+	local target = CropConfig.NextLocked(garden.Unlocked)
+	local quest = type(garden.Quest) == "table" and garden.Quest
+	if not (target and target.quest) then
+		garden.Quest = nil
+		return
+	end
+	local got = {}
+	if quest and quest.Crop == target.id and type(quest.Got) == "table" then
+		for id, need in target.quest do
+			local n = math.min(count(quest.Got[id]), need)
+			got[id] = if n > 0 then n else nil
+		end
+	end
+	garden.Quest = { Crop = target.id, Got = got }
+end
+
 -- The profile's field, cleaned (idempotent), and its open set { [square] = true }, or nil without a garden table. A player gets
 -- a new field the first time: the StartOpen squares, empty, and StartSeeds.
 local function fieldOf(player: Player, profile)
@@ -158,7 +184,6 @@ local function fieldOf(player: Player, profile)
 		garden.Seeds = table.clone(CropConfig.StartSeeds)
 		garden.Items = {}
 		garden.ItemSize = {}
-		garden.Renown = 0
 	end
 	local open, moved = openSet(field)
 	field.Open = {}
@@ -218,7 +243,31 @@ local function fieldOf(player: Player, profile)
 	end
 	garden.ItemSize = sizes
 	garden.BestSize = best
-	garden.Renown = count(garden.Renown)
+	-- crop mastery (EV3b): counts of common crops, the unlocked set, the open quest (for the next locked crop only), the rested pool
+	local crops = {}
+	if type(garden.Crops) == "table" then
+		for id, entry in garden.Crops do
+			local crop = CropConfig.ById[id]
+			if crop and not crop.rare and type(entry) == "table" and count(entry.N) > 0 then
+				local clean = table.clone(entry) -- EV3c adds Pts
+				clean.N = count(entry.N)
+				crops[id] = clean
+			end
+		end
+	end
+	garden.Crops = crops
+	local unlocked = {}
+	if type(garden.Unlocked) == "table" then
+		for id, value in garden.Unlocked do
+			local crop = CropConfig.ById[id]
+			if crop and not crop.rare and value == true then
+				unlocked[id] = true
+			end
+		end
+	end
+	garden.Unlocked = unlocked
+	syncQuest(garden)
+	garden.Rested = if finite(garden.Rested) then math.clamp(garden.Rested, 0, CropConfig.Mastery.RestCap) else 0
 	local upgrades = {}
 	for _, upgrade in CropConfig.Upgrades do
 		local level = CropConfig.UpgradeLevel(field.Upgrades, upgrade.id)
@@ -304,6 +353,69 @@ local function cartKey(offer): string
 	return offer.crop.id .. (if offer.taste then "*" else "")
 end
 
+-- EV3b: opens every next crop whose previous crop has reached its `step` plants (a quest crop waits for its quest), then moves the
+-- quest along. Returns the last crop id opened, or nil.
+local function openByCount(player: Player, garden): string?
+	local opened = nil
+	while true do
+		local target = CropConfig.NextLocked(garden.Unlocked)
+		if not target or target.quest then
+			break
+		end
+		local previous, need = CropConfig.UnlockNeed(target)
+		local entry = previous and garden.Crops[previous.id]
+		if not need or not entry or entry.N < need then
+			break
+		end
+		garden.Unlocked[target.id] = true
+		Telemetry.CropUnlocked(player, target.id, target.order, "count")
+		opened = target.id
+	end
+	syncQuest(garden)
+	return opened
+end
+
+-- EV3b: one plant of `crop` grown (a harvest by hand or by a Tending pet). Rare crops have no mastery (nil). Returns the Harvest
+-- answer's part { mastery = { crop, n, level }, levelUp?, unlocked? }.
+local function addPlant(player: Player, garden, crop)
+	if crop.rare then
+		return nil
+	end
+	local entry = garden.Crops[crop.id]
+	if not entry then
+		entry = { N = 0 }
+		garden.Crops[crop.id] = entry
+	end
+	local before = CropConfig.MasteryLevel(entry.N)
+	local plants = 1
+	if garden.Rested > 1e-9 then -- rested mastery (silent): the plant counts double and uses 1 / step of the pool
+		plants = 2
+		garden.Rested -= 1 / crop.step
+		if garden.Rested < 1e-9 then
+			garden.Rested = 0
+		end
+	end
+	entry.N += plants
+	local level = CropConfig.MasteryLevel(entry.N)
+	if level > before then
+		Telemetry.CropLevel(player, crop.id, level)
+	end
+	return {
+		mastery = { crop = crop.id, n = entry.N, level = level },
+		levelUp = level > before or nil,
+		unlocked = openByCount(player, garden),
+	}
+end
+
+-- EV3b rested mastery: an absence of `away` seconds adds its days past the first x RestPerDay to Garden.Rested (cap RestCap).
+local function addRest(garden, away: number)
+	local rules = CropConfig.Mastery
+	local day = CropConfig.DaySeconds
+	if away > day then
+		garden.Rested = math.min(rules.RestCap, garden.Rested + (away - day) / day * rules.RestPerDay)
+	end
+end
+
 -- Whether the Shears give planting number `n` of `player` a second crop: the same planting always rolls the same.
 local function shearsExtra(player: Player, garden, n: number): boolean
 	local chance = CropConfig.ToolEffect(garden.Tools, "Shears")
@@ -385,6 +497,9 @@ local function settle(player: Player, profile, field, open, absence: boolean): (
 	local elapsed = if field.SettledAt <= now then now - field.SettledAt else 0
 	local growth = if absence then CropConfig.Growth(0, elapsed) else CropConfig.Growth(elapsed, 0)
 	field.SettledAt = now
+	if absence then
+		addRest(profile.Garden, elapsed)
+	end
 	if growth <= 0 then
 		return false, nil
 	end
@@ -424,7 +539,7 @@ local function settle(player: Player, profile, field, open, absence: boolean): (
 			end
 			local extra = shearsExtra(player, garden, entry.N) and CropConfig.SeedTotal(garden.Items) + 1 < barn
 			store(player, garden, crop, entry.N, extra)
-			garden.Renown += crop.points or 0
+			addPlant(player, garden, crop)
 			tended = tended or {}
 			tended[crop.id] = (tended[crop.id] or 0) + (if extra then 2 else 1)
 			local leftover = math.min(entry.Grown - crop.growSeconds, cropGrowth) -- growth from before this absence does not carry over
@@ -453,7 +568,7 @@ local function settle(player: Player, profile, field, open, absence: boolean): (
 	-- E4-thin crows: the crops that were ripe while a crow block overlapped the absence, in square order
 	local raid = nil
 	local rules = CropConfig.Crows
-	if absence and CropConfig.RenownLevel(garden.Renown) >= rules.FromLevel then
+	if absence and CropConfig.IsUnlocked(garden.Unlocked, rules.FromCrop) then
 		local rate = CropConfig.OfflineRate * CropConfig.GrowthSpeed(CropConfig.UpgradeLevel(field.Upgrades, "Growth"))
 		local grownUntil = start + math.min(elapsed, CropConfig.OfflineCapSeconds) -- offline growth stops at the cap
 		local guards = guardStrength(profile, open)
@@ -493,7 +608,7 @@ GardenField.Settle = settle
 local function cartState(garden)
 	local cart, today = cartToday(garden)
 	local offers = {}
-	for _, offer in CropConfig.CartOffers(today, CropConfig.RenownLevel(garden.Renown)) do
+	for _, offer in CropConfig.CartOffers(today, garden.Unlocked) do
 		table.insert(offers, {
 			slot = offer.slot,
 			crop = offer.crop.id,
@@ -521,6 +636,20 @@ local function growthWindow(field, square, duration: number, speed: number): (nu
 	end
 	local startAt = field.SettledAt - square.Grown / speed
 	return startAt, field.SettledAt + math.ceil((duration - square.Grown - RIPEN_EPSILON) / speed)
+end
+
+-- EV3b: the state's mastery part: { crops = { [crop] = plants grown }, unlocked = { [crop] = true }, quest = { crop, got }? }
+-- (Garden.Rested stays server-only: rested mastery is silent).
+local function masteryState(garden)
+	local crops = {}
+	for id, entry in garden.Crops do
+		crops[id] = entry.N
+	end
+	return {
+		crops = crops,
+		unlocked = table.clone(garden.Unlocked),
+		quest = if garden.Quest then { crop = garden.Quest.Crop, got = table.clone(garden.Quest.Got) } else nil,
+	}
 end
 
 -- What GardenRemotes.State.field holds for the owner's panel, or nil without a field.
@@ -593,8 +722,7 @@ GardenService.AddStateField("field", function(profile)
 		items = garden.Items,
 		sizes = garden.ItemSize,
 		best = garden.BestSize,
-		renown = garden.Renown,
-		level = CropConfig.RenownLevel(garden.Renown),
+		mastery = masteryState(garden),
 		pets = pets,
 		slots = garden.FieldPetSlots,
 		slotPrice = CropConfig.PetSlotPrices[garden.FieldPetSlots + 1],
@@ -606,7 +734,7 @@ GardenService.AddStateField("field", function(profile)
 		crows = {
 			from = crowsFrom,
 			to = crowsTo,
-			active = CropConfig.RenownLevel(garden.Renown) >= CropConfig.Crows.FromLevel,
+			active = CropConfig.IsUnlocked(garden.Unlocked, CropConfig.Crows.FromCrop),
 		},
 	}
 end)
@@ -718,7 +846,7 @@ plantEvent.OnServerEvent:Connect(function(player, square, cropId)
 	if field.Squares[tostring(square)] then
 		return reject(player, "Plant", "occupied")
 	end
-	if (garden.Seeds[crop.id] or 0) < 1 then -- no Renown gate: seeds held (the market cart's taste) can always be planted
+	if (garden.Seeds[crop.id] or 0) < 1 then -- no lock: seeds held (the market cart's taste) can always be planted
 		return reject(player, "Plant", "seeds")
 	end
 
@@ -755,14 +883,13 @@ harvestEvent.OnServerEvent:Connect(function(player, square)
 	field.Squares[tostring(square)] = nil
 	local extra = shearsExtra(player, garden, entry.N)
 	local size, record = store(player, garden, crop, entry.N, extra)
-	local before = CropConfig.RenownLevel(garden.Renown)
-	garden.Renown += crop.points or 0
-	local level = CropConfig.RenownLevel(garden.Renown)
+	local grown = addPlant(player, garden, crop) or {}
 	done(player, "Harvest", {
 		square = square,
 		crop = crop.id,
-		level = level,
-		levelUp = level > before,
+		mastery = grown.mastery,
+		levelUp = grown.levelUp,
+		unlocked = grown.unlocked,
 		size = size,
 		best = record or nil,
 		extra = extra or nil,
@@ -785,8 +912,8 @@ buySeedsEvent.OnServerEvent:Connect(function(player, cropId, amount)
 	if crop.rare then
 		return reject(player, "BuySeeds", "obby") -- rare seeds come only from the obby (E2)
 	end
-	if CropConfig.RenownLevel(garden.Renown) < crop.renown then
-		return reject(player, "BuySeeds", "renown")
+	if not CropConfig.IsUnlocked(garden.Unlocked, crop.id) then
+		return reject(player, "BuySeeds", "locked") -- EV3b: the crop opens by growing the previous one or by its quest
 	end
 	if CropConfig.SeedTotal(garden.Seeds) + amount > CropConfig.BarnFor(CropConfig.UpgradeLevel(field.Upgrades, "Barn")) then
 		return reject(player, "BuySeeds", "barn")
@@ -878,9 +1005,6 @@ buySquareEvent.OnServerEvent:Connect(function(player, square, expected)
 	if expected ~= opened then
 		return reject(player, "BuySquare", "stale") -- out-of-date prompt, double click or forged request
 	end
-	if CropConfig.RenownLevel(profile.Garden.Renown) < expansion.renown then
-		return reject(player, "BuySquare", "renown")
-	end
 	if not PlayerProfile.TrySpend(player, expansion.price) then
 		return reject(player, "BuySquare", "coins")
 	end
@@ -905,9 +1029,6 @@ buyUpgradeEvent.OnServerEvent:Connect(function(player, id, expected)
 	if expected ~= level then
 		return reject(player, "BuyUpgrade", "stale") -- out-of-date panel, double click or forged request
 	end
-	if CropConfig.RenownLevel(profile.Garden.Renown) < (upgrade.renown[level + 1] or 0) then
-		return reject(player, "BuyUpgrade", "renown")
-	end
 	if not PlayerProfile.TrySpend(player, price) then -- the field was settled at the old rate just now (usableField)
 		return reject(player, "BuyUpgrade", "coins")
 	end
@@ -931,9 +1052,9 @@ buyCartEvent.OnServerEvent:Connect(function(player, slot, cropId, amount)
 	end
 	local garden = profile.Garden
 	local cart, today = cartToday(garden)
-	local offer = CropConfig.CartOffers(today, CropConfig.RenownLevel(garden.Renown))[slot]
+	local offer = CropConfig.CartOffers(today, garden.Unlocked)[slot]
 	if not offer or offer.crop.id ~= cropId then
-		return reject(player, "BuyCart", "stale") -- a new day, a Renown level-up or an old panel
+		return reject(player, "BuyCart", "stale") -- a new day, a crop unlocked or an old panel
 	end
 	local key = cartKey(offer)
 	local left = offer.count - (cart.Bought[key] or 0)
@@ -973,14 +1094,59 @@ buyToolEvent.OnServerEvent:Connect(function(player, id, expected)
 	if expected ~= level then
 		return reject(player, "BuyTool", "stale") -- out-of-date panel, double click or forged request
 	end
-	if CropConfig.RenownLevel(garden.Renown) < tool.renown[level + 1] then
-		return reject(player, "BuyTool", "renown")
-	end
 	if not PlayerProfile.TrySpend(player, price) then -- the field was settled at the old rate just now (usableField)
 		return reject(player, "BuyTool", "coins")
 	end
 	garden.Tools[tool.id] = level + 1
 	done(player, "BuyTool", { id = tool.id, level = level + 1, price = price })
+end)
+
+-- EV3b: hands in `amount` held crops of `cropId` toward the open quest (from anywhere: the seed stall row, later the Goals panel). Takes
+-- at most what the quest still needs of that crop; the last piece opens the quest's crop and gives QuestSeeds seeds of it (past the barn
+-- limit, like rare seeds: an earned seed is never lost). Rejects `none` (no open quest), `crop` (not wanted or already given), `crops`
+-- (fewer in the barn than asked); nothing is taken then.
+questEvent.OnServerEvent:Connect(function(player, cropId, amount)
+	local given = type(cropId) == "string" and CropConfig.ById[cropId]
+	if not (given and GardenService.WholeNumber(amount) and amount >= 1) or not GardenService.Allow(player) then
+		return
+	end
+	local profile, field = usableField(player, "Quest", true)
+	if not field then
+		return
+	end
+	local garden = profile.Garden
+	local quest = garden.Quest
+	local target = quest and CropConfig.ById[quest.Crop]
+	if not (target and target.quest) then
+		return reject(player, "Quest", "none")
+	end
+	local need = (target.quest[given.id] or 0) - (quest.Got[given.id] or 0)
+	if need <= 0 then
+		return reject(player, "Quest", "crop")
+	end
+	local take = math.min(amount, need)
+	if (garden.Items[given.id] or 0) < take then
+		return reject(player, "Quest", "crops")
+	end
+	removeItems(garden, given.id, take)
+	quest.Got[given.id] = (quest.Got[given.id] or 0) + take
+	local detail = { target = target.id, crop = given.id, count = take, got = table.clone(quest.Got) }
+	local complete = true
+	for id, n in target.quest do
+		if (quest.Got[id] or 0) < n then
+			complete = false
+		end
+	end
+	if complete then
+		local seeds = CropConfig.Mastery.QuestSeeds
+		garden.Unlocked[target.id] = true
+		garden.Seeds[target.id] = (garden.Seeds[target.id] or 0) + seeds
+		Telemetry.CropUnlocked(player, target.id, target.order, "quest")
+		detail.unlocked = target.id
+		detail.seeds = seeds
+		openByCount(player, garden) -- moves the quest on (and opens a count crop already due)
+	end
+	done(player, "Quest", detail)
 end)
 
 local function placedCount(garden): number
@@ -1231,6 +1397,32 @@ function GardenField.ObbyFinish(player: Player, stage, medal: number, previousMe
 		meter = { crop = crop.id, points = points, size = rules.MeterSize },
 		scout = if bonus > 0 then bonus else nil,
 	}
+end
+
+-- EV3b first clear (StageConfig `firstClear`): StageResults calls this on a stage's first finish. Adds `seeds` seeds of the newest unlocked
+-- common crop up to `upTo` (a locked crop's seeds would skip its unlock), past the barn limit (an earned seed is never lost), and
+-- publishes the garden. Returns { crop, count } for the results popup, or nil (a stage without `firstClear`, no profile).
+function GardenField.FirstClearSeeds(player: Player, stage)
+	local first = stage.firstClear
+	local profile = PlayerProfile.Get(player)
+	local field = first and profile and fieldOf(player, profile)
+	local limit = first and CropConfig.ById[first.upTo]
+	if not (field and limit) then
+		return nil
+	end
+	local garden = profile.Garden
+	local crop = CropConfig.Ladder[1]
+	for _, candidate in CropConfig.Ladder do
+		if candidate.order > limit.order then
+			break
+		end
+		if CropConfig.IsUnlocked(garden.Unlocked, candidate.id) then
+			crop = candidate
+		end
+	end
+	garden.Seeds[crop.id] = (garden.Seeds[crop.id] or 0) + first.seeds
+	GardenService.PublishAll(player)
+	return { crop = crop.id, count = first.seeds }
 end
 
 -- EV2b talent bundles ({ [cropId] = count }, TalentConfig.crops) from the barn. TalentService calls HasCrops and, with no yield in

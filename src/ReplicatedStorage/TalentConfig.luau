@@ -23,8 +23,8 @@ TalentConfig.List = {
 	{
 		id = "DoubleJump",
 		name = "Double Jump", -- loc: ignore (English source and fallback; players see Locale)
-		costs = { 0, 16000 }, -- level 1 is a world reward (3 000 until 2026-11-01, 1 500 until 2026-10-23; GDD §6); level 2 = Triple Jump (S7; 5 000 until EV2b)
-		crops = { [2] = { Cucumber = 20, FrostGrape = 1 } },
+		costs = { 0, 10000 }, -- level 1 is a world reward (3 000 until 2026-11-01, 1 500 until 2026-10-23; GDD §6); level 2 = Triple Jump (S7; 5 000 until EV2b, 16 000 + 20 Cucumber until EV3b)
+		crops = { [2] = { Cucumber = 12, FrostGrape = 1 } },
 		rewards = { [1] = 2 }, -- granted when World 2 opens (K1)
 		perLevel = 1,
 		effect = "1 extra jump in the air", -- loc: ignore (English source and fallback; players see Locale)
@@ -44,8 +44,8 @@ TalentConfig.List = {
 	{
 		id = "Dash",
 		name = "Dash", -- loc: ignore (English source and fallback; players see Locale)
-		costs = { 12000, 29000 }, -- S7 (STAGES §6.2 / §7.10); 5 000 / 3 000 until EV2b (8 000 for level 1 until S8.2 added Long Dash, §7.12)
-		crops = { [1] = { Corn = 20 }, [2] = { Pepper = 20, GlowMushroom = 1 } },
+		costs = { 8000, 19000 }, -- S7 (STAGES §6.2 / §7.10); 5 000 / 3 000 until EV2b (8 000 for level 1 until S8.2 added Long Dash, §7.12); 12 000 / 29 000 + 20 crops until EV3b (G4)
+		crops = { [1] = { Corn = 12 }, [2] = { Pepper = 12, GlowMushroom = 1 } },
 		perLevel = 1,
 		effect = "A burst forward in the air (Q)", -- loc: ignore (English source and fallback; players see Locale)
 		effects = { "A burst forward in the air (Q)", "The burst goes farther" }, -- loc: ignore (English source and fallback; players see Locale)

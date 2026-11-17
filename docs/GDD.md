@@ -197,13 +197,18 @@ stages move along the curve: Stage 1 (n = 2) 1.0, Stage 2 (n = 4) 1.5, **Stage 3
 | 6–10 (P) | 2.0 … 3.0 | | | | 2 800 / 3 150 / 3 500 / 3 850 / 4 200 |
 | 11–15 (P) | 3.25 … 4.25 | | | | 4 550 / 4 900 / 5 250 / 5 600 / 5 950 |
 | 16–20 (P) | 4.5 … 5.5 | | | | 6 300 / 6 650 / 7 000 / 7 350 / 7 700 |
-| **All 21** | | | | | **88 200** (World 1 with the Tutorial, all six built stages: 9 450) |
+| **All 21** | | | | | **83 790** (since EV3b1; the six Tutorial / World 1 stages pay 5 040 by `firstClear`, not the rows above: 9 450 before) |
 
 ### First-finish payout (one-time per stage, per player)
 The first finish of a stage pays **100 × stage factor** (Tutorial 50, factor 3.0 → 300), medal or not (decided
 2026-10-23: a slow first finish should not go unrewarded). It is paid on top of any medal payout of that run. "First"
 means the profile has no best time for the stage yet, so players who finished a stage before this rule get nothing
-retroactively. All 21 planned stages: 6 300 Coins in total.
+retroactively. All 21 planned stages: 5 985 Coins in total (6 300 before EV3b1's first clears).
+
+**First clears of the Tutorial and World 1 (EV3b1, 2026-11-17).** These six stages carry `firstClear`: the first finish and its medals
+together pay 250 (Tutorial) / 600 / 800 / 1 000 / 1 250 / 1 500 Coins (Stage 1–5; `StageConfig.OneTimeFactor` spreads it over the finish
+and medal payouts, so a later medal still pays its share), plus 4 seeds of the newest unlocked common crop up to Garlic (Tutorial) or
+Tomato (World 1). Repeat rewards keep `rewardFactor`; the tables above are the other stages'.
 
 ### Repeat reward (every medal finish, diminishing)
 Every finish with a medal also pays
@@ -248,8 +253,8 @@ every stage** (decided 2026-10-21: no scaling with the stage factor). Planned st
 Talent-gated coins need Double Jump (placed out of reach of a Jump Height 3 jump). All six built stages have their coins
 (M4 first batch: Tutorial + Stage 1; M4.1: Stage 2 + Stage 3; S4.1: Island Hop; S4.2: Blink).
 
-**One-time total of the six built stages (Tutorial and Stages 1-5): 9 450 (medals) + 1 840 (coins) = 11 290 Coins** (all 21 planned stages:
-88 200 medals + roughly 8 000 coins at about 400 per stage), plus repeat rewards, the crop field and the pet bonus,
+**One-time total of the six built stages (Tutorial and Stages 1-5): 5 040 (medals) + 1 840 (coins) = 6 880 Coins** (EV3b1; all 21 planned stages:
+83 790 medals + roughly 8 000 coins at about 400 per stage), plus repeat rewards, the crop field and the pet bonus,
 which have no fixed cap.
 
 ## 6. Talents
@@ -286,13 +291,13 @@ and Jump Height stay soft, never required). Only talents that are hard gates can
 | Talent | Id | Effect | Levels | Cost (prov.) | Total | First required at |
 |---|---|---|---|---|---|---|
 | Quick Respawn (S2) | `QuickRespawn` | utility, **never required**: level 1 respawns after 1 s instead of 3 s, level 2 instantly and adds a fall reset to the checkpoint; the timer keeps running | 2 | 1 100 + 12 Tomato / 10 000 + 15 Broccoli | 11 100 | – |
-| Triple Jump (S7, built 2026-10-24) | `DoubleJump` level 2 | 2 air jumps (reach about 19 studs) | +1 level | 16 000 + 20 Cucumber + 2 Frost grapes (5 000 Coins until EV2b) | 16 000 | stage 11 |
-| Dash (S7, built 2026-10-24) | `Dash` | in the air, a short horizontal burst (about 10 studs in 0.2 s), once per air time; key + mobile button | 1 | 12 000 + 20 Corn (5 000 until EV2b) | 12 000 | – |
-| Long Dash (S8.2, 2026-10-26) | `Dash` level 2 | the burst lasts 0.32 s: about 16 studs (STAGES §1.0, §7.12) | +1 level | 29 000 + 20 Pepper + 1 Glow mushroom (3 000 until EV2b) | 29 000 | stage 13 |
+| Triple Jump (S7, built 2026-10-24) | `DoubleJump` level 2 | 2 air jumps (reach about 19 studs) | +1 level | 10 000 + 12 Cucumber + 1 Frost grape (EV3b; 5 000 Coins until EV2b) | 10 000 | stage 11 |
+| Dash (S7, built 2026-10-24) | `Dash` | in the air, a short horizontal burst (about 10 studs in 0.2 s), once per air time; key + mobile button | 1 | 8 000 + 12 Corn (EV3b; 5 000 until EV2b) | 8 000 | – |
+| Long Dash (S8.2, 2026-10-26) | `Dash` level 2 | the burst lasts 0.32 s: about 16 studs (STAGES §1.0, §7.12) | +1 level | 19 000 + 12 Pepper + 1 Glow mushroom (EV3b; 3 000 until EV2b) | 19 000 | stage 13 |
 | Wall Jump (P, S9) | `WallJump` | against a wall in the air, jump kicks up and away; does not refill air jumps | 1 | 700 000 + 20 Blueberry + 3 Glow mushrooms | 700 000 | stage 16 |
 | Glide (P, S9) | `Glide` | hold jump while falling: fall speed capped at about 8 studs/s | 1 | 2 600 000 + 25 Blueberry + 4 Glow mushrooms | 2 600 000 | stage 17 |
 
-**Full planned tree: 3 394 900 Coins** plus the crops (44 300 Coins only until EV2b). Talents compete with squares, upgrades, pets and
+**Full planned tree: 3 374 900 Coins** plus the crops (44 300 Coins only until EV2b). Talents compete with squares, upgrades, pets and
 incubators (§7.9) for the same Coins.
 
 ### Economy constraints (must hold after every rebalance)
@@ -615,7 +620,7 @@ and Studio-checked; [fuller-foliage growth art](plants/SWEET_POTATO.md) approved
 Performance, phone and second-client checks remain open.
 
 *Decided, not built (EV, the user, 2026-11-07; numbers in [ECONOMY.md](ECONOMY.md) → EV, applied in EV2a–e):* the parity goal below is replaced by engagement: the four crops move onto one ladder
-of 10 s … 24 h (Potato 10 s, Corn 30 m, Pumpkin 3 h, Giant melon 12 h; 12 more crops later), Renown 0.4 × L³, every sink priced on the
+of 10 s … 24 h (Potato 10 s, Corn 30 m, Pumpkin 3 h, Giant melon 12 h; 12 more crops later), crop mastery (EV3b, replaced Renown), every sink priced on the
 square ladder (290 → 750 M), Tending as growth speed, guards make their squares safe from crows, Scouting XP from timer seconds.
 
 *Built and Studio-validated 2026-10-30 – 11-04; every player has it since FA (2026-11-06; until then admins only); tap-and-card controls since U3a, the hand bar since U3b, the Garden panel split up since U4 (all 2026-11-07). Exact numbers live in `CropConfig` / `PetConfig` and are pinned by
@@ -626,7 +631,7 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
 - **Field.** Behind each plot (a 40 x 16 strip in front holds the sign, the hatchery, the barn and the path): 36 squares in rows 6-6-8-8-8 centred on an
   8-column grid, numbered row by row from the plot (the numbers are stored: never reorder the rows). A new field opens the 2 x 2 block at the
   front centre (squares 3, 4, 9, 10) with 4 free Potato seeds. Any locked square (overgrown: grass tufts, no price in the world) can be
-  bought from its square card; its price and Renown gate depend on how many are open (1 400 for the 5th up to 907 400 for the 36th).
+  bought from its square card; its price depends on how many are open (Coins only since EV3b).
 - **Where the field's panels are (U4, 2026-11-07).** There is no Garden panel; each piece sits where it is used:
   - **Barn** (own plot): the barn building on the front strip (U5a). It does not show the stock (the seed sacks and crop crates it
     drew on the own plot until 2026-11-12 only repeated the panel, less exactly, and nobody else saw them). Its "Open barn" prompt
@@ -638,12 +643,12 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
     shows the count and what the sale pays with the pet bonus, "Sell 2 · 3 787"). Sell is accepted at the own plot only.
   - **Seed stall** (`Workspace.Garden.SeedStall`, Studio-only, on the plaza beside the food stand, facing it): a green-and-white striped
     market stall with sacks and crates; its counter prompt "Buy seeds" (E, 10 studs) opens the stall panel: the market cart's offers (one
-    buy takes all that is left at the offer price) and the seed catalogue (+1 / +10 per crop; Renown-locked rows say from which level, the
-    rare crops from which world's medals) with the barn's fill. The board above the counter (both faces) lists the day's cart offers
+    buy takes all that is left at the offer price) and the seed catalogue (+1 / +10 per unlocked crop with its ★ and mastery line; the next
+    locked crop shows the previous crop's count toward it ("🔒 🥔 8 / 12") or, for a quest crop, one row per quest crop with brought / needed /
+    held and a **Bring** button; later crops a plain "🔒 Later"; the rare crops say from which world's medals) with the barn's fill. The board above the counter (both faces) lists the day's cart offers
     ("−30 % · 💰 1", "sold out") and the time to new ones. BuySeeds / BuyCart are accepted within 20 studs of the counter only; the panel
     closes beyond that.
-  - **Skills panel, Garden tab** (the Obby tab holds the talents): Renown level and bar, the Growth / Barn upgrades and the tools, buyable
-    anywhere (pure Coin + Renown buys).
+  - **Skills panel, Garden tab** (the Obby tab holds the talents): the Growth / Barn upgrades and the tools, buyable anywhere (Coins only).
   - **Pets panel:** the field pet slot line (pets on the field / slots) with "+1 slot" (buyable anywhere).
   - The crow forecast also shows in the summary bubble over the own sign ("🐦 0:45" within an hour of crows, "🐦 now!" while they are on).
     The join notice stays a toast.
@@ -666,7 +671,7 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   are separate so those controls have an unambiguous target (2026-11-14). With no resident, Place pet opens **Choose a pet for this spot**:
   field slots used, job/reach, origin and consequence; every eligible row uses **Place pet**, including followers. Capacity blocks before
   the following explanation; field pets reuse their slot. The server validates first, then unequips and assigns together. No square
-  numbers in the picker, location or placement toasts. Buy square retains its price / Renown and two-tap spend confirmation.
+  numbers in the picker, location or placement toasts. Buy square retains its price and two-tap spend confirmation.
   **Compact picker rows (2026-11-16):** the pet picker widens to 600 px (at most 450 px tall); one bordered inset encloses the portrait,
   description and Place pet action. At widths ≥ 440 px the action sits on the right; narrower layouts stack it below. The complete picker
   scrolls beneath the fixed header, with no nested pet-list scrollbar. Job effects share a line where they fit; all descriptions wrap.
@@ -694,23 +699,30 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   grey must not look like the white select outline): the squares it counts for under the field's rules, i.e. per square the strongest Tending
   pet and the strongest guard (ties to the lower uid). Regions that share an edge draw side by side (three lanes inset 0.45 / 0.8 / 1.15
   studs); strips meet at outer and inner corners.
-- **Crops.** Potato (5 min, so the first harvest comes in the first session), Corn, Pumpkin and Giant melon from the seed stall behind Renown
-  gates; three rare crops, one per world (Golden carrot 50 000, Frost grape 150 000, Glow mushroom 300 000 Coins; priced for the days a world is reached, ECONOMY.md), only from the obby (below), never sold as seeds, never
+- **Crops.** Potato (5 min, so the first harvest comes in the first session), Corn, Pumpkin and Giant melon from the seed stall behind
+  mastery unlocks; three rare crops, one per world (Golden carrot 50 000, Frost grape 150 000, Glow mushroom 300 000 Coins; priced for the days a world is reached, ECONOMY.md), only from the obby (below), never sold as seeds, never
   eaten by crows. Growth runs on server time only: online x 1.0, offline x 0.5 for at most 24 h per absence, settled on join, on leave, every
   60 s and before every action; ripe crops wait. The barn holds 40 seeds and 40 stored crops (+20 per Barn level). Seeds held can always be
-  planted; the stall keeps the Renown gate.
+  planted; the stall sells only unlocked crops (`locked`).
 - **Selling and feeding.** A crop is sold from anywhere (playtest 2026-11-08: the Barn button shows outside runs while crops are held, the seed stall has a Sell tab; a young field gets a toast and a pulsing button) (sale x its size, through `CoinRewards.Grant`) or fed to any pet (from its page or the barn's Feed) for XP = half the
   sale, so feeding is never better than selling and buying food (the Kitchen, D5, stays the better route later).
 - **Size roll.** Every planting rolls a size factor (lognormal, mean exactly 1, 0.36-2.64), fixed by owner and planting number so a re-join
   cannot reroll it; Big = top 20 %, Giant = top 3 %, a record per crop, weight shown as kg x factor. The barn keeps a count and the summed size
   per crop; selling k of n pays the average size.
-- **Renown.** Points per harvest by tier (1 / 3 / 6 / 12 for rare crops), level L at 3 x L^1.6 points; gates seeds in the shop, squares and
-  tool levels.
-- **Upgrades and tools.** Growth (4 levels, -5 % grow time each) and Barn (5 levels, +20 each). Tools with Renown-gated levels: Seed sorter
+- **Crop mastery (EV3b1, replaced Renown; numbers in `CropConfig`, why in ECONOMY.md → EV3).** Every harvest of a common crop (by hand or
+  a Tending pet; not the Shears' extra, not a rare crop) counts one plant of it (`Garden.Crops[id].N`); ★1 / ★2 / ★3 at 25 / 75 / 200
+  plants, shown as "Mastery ★" on the stall, barn and square card, a toast at each star. The common crops open in list order: the next crop
+  at the previous one's `step` plants (12 for Lettuce … 25), except Corn, Pumpkin and Sweet potato, which open by a **milestone quest**
+  (crops handed in piece by piece with Bring, from anywhere, no expiry; the last piece gives 4 seeds of the new crop, past the barn limit).
+  Seeds bought only for unlocked crops; seeds held (cart taste, obby) can always be planted and count toward that crop's ★, not its unlock.
+  **Rested mastery** is silent (the user, 2026-11-17: never shown or announced): each day away past the first adds 0.5 (cap 3) to a pool
+  in units of the harvested crop's `step`; while it lasts a plant counts double. Squares, upgrades and tools cost Coins only.
+  Profiles before EV3b migrate once (`Version = 7`): unlocked = the crops their Renown level had opened plus every crop held or grown.
+- **Upgrades and tools.** Growth (4 levels, -5 % grow time each) and Barn (5 levels, +20 each). Tools: Seed sorter
   (sizes x 1.05 / 1.10 / 1.15), Cloches (online growth +7 / 14 / 20 %), Pruning shears (5 / 10 / 15 % chance of a second crop of the same size,
   rolled per planting).
 - **Market cart.** Offers per UTC day, the same on every server, counts per player: 10 seeds of an unlocked crop at -30 %, 5 of another at -50 %,
-  and from Renown 3 a taste of 2 seeds of the next locked crop at the catalogue price.
+  and from the Garlic unlock a taste of 2 seeds of the next locked crop at the catalogue price.
 - **Field pets.** Every pet has aptitudes (traits, §7.1: Cuteness, Tending, Pest control, Scouting; stored but not yet rolled: Fertilising,
   Weeding, Crafting; levels 1-20 up to its rarity's cap (12-20)), rolled once from its uid (the count by rarity, the kind leans the draw) and never
   rerolled; a hatch while the owner has no Tending pet gets Tending. Food and obby XP also train the work traits up to level 5 (§7.4). A pet with Tending or Pest control can stand on a square (one per square, not equipped; 1 free field pet slot + 4 bought). Reach
@@ -724,7 +736,7 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   points = a seed). The **seed pouch**: the day's first medal finish on each stage gives 1 / 2 / 3 seeds of the common crop planted last, up to
   the barn. **Scouting** (equipped pets): 15 min of aptitude XP per medal finish; the scouts' bonus (up to +50 %) multiplies the meter points
   and at +50 % adds 1 pouch seed. The results popup lists every seed and the meter.
-- **Crows (E4-thin).** From Renown 3. The UTC day has four 6-hour blocks, a quarter of them crow blocks on a fixed schedule, shown as a
+- **Crows (E4-thin).** From the Garlic unlock. The UTC day has four 6-hour blocks, a quarter of them crow blocks on a fixed schedule, shown as a
   forecast in the barn panel (and the summary bubble within an hour). On the join settle, after Tending, every ripe common crop whose ripe time overlaps a crow block is rolled once
   (30 %); a lost roll eats it unless the strongest guard reaching the square wins its chance (50 % + half the Pest-control strength, doubled
   for the crow speciality). At most 1 crop is eaten per absence; crops ripe while the owner plays are safe. A pet with Tending and Pest control

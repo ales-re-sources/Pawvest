@@ -29,6 +29,9 @@ StageConfig.RunRewardFloor = 10
 
 -- One-time payout for the first finish of a stage, medal or not (GDD §5): round(FinishPayoutBase × factor)
 StageConfig.FinishPayoutBase = 100
+-- EV3b (rule 6, docs/ECONOMY.md → EV3): a stage with `firstClear = { coins, seeds, upTo }` pays `coins` for its first finish and all its
+-- medals together (each payout its share of FinishPayoutBase + the medals' basePayouts) and, on the first finish, `seeds` seeds of the
+-- newest unlocked common crop up to `upTo` (GardenField.ObbyFinish). Repeat runs keep `rewardFactor`.
 
 -- Medal thresholds as multiples of tBase (GDD §4); a stage may point `tiers` at its own table.
 -- Bronze unlocks the next stage, so it stays generous for first runs with deaths: 2.5 x tBase since 2026-10-30 (was 1.6).
@@ -54,6 +57,7 @@ StageConfig.Stages = {
 		unlock = nil, -- nil = always open; otherwise { stage = <key>, medal = <tier> }
 		unlockPrice = nil,
 		rewardFactor = 0.5,
+		firstClear = { coins = 250, seeds = 4, upTo = "Garlic" }, -- EV3b: first finish + its medals together, and a seed pack
 	},
 	{
 		key = "Stage1", -- Island Hop
@@ -67,6 +71,7 @@ StageConfig.Stages = {
 		unlock = { stage = "Tutorial", medal = "Bronze" },
 		unlockPrice = 200, -- a small price on purpose: Coins cannot be earned without a medal (a finish without one pays nothing), so this is a shortcut for later purchases (e.g. Coin packs), not a path for new players
 		rewardFactor = 0.75, -- curve 0.5 + 0.25 × order (GDD §5)
+		firstClear = { coins = 600, seeds = 4, upTo = "Tomato" }, -- EV3b: first finish + its medals together, and a seed pack
 	},
 	{
 		key = "Stage2", -- the variety stage (lasers, spinners, lava, choice steps)
@@ -80,6 +85,7 @@ StageConfig.Stages = {
 		unlock = { stage = "Stage1", medal = "Bronze" },
 		unlockPrice = 1000,
 		rewardFactor = 1.0,
+		firstClear = { coins = 800, seeds = 4, upTo = "Tomato" }, -- EV3b: first finish + its medals together, and a seed pack
 	},
 	{
 		key = "Stage3", -- bounce corridors (swapped with Blink 2026-11-08: the easier course comes first)
@@ -93,6 +99,7 @@ StageConfig.Stages = {
 		unlock = { stage = "Stage2", medal = "Bronze" },
 		unlockPrice = 1500,
 		rewardFactor = 1.25, -- curve 0.5 + 0.25 × order (GDD §5)
+		firstClear = { coins = 1000, seeds = 4, upTo = "Tomato" }, -- EV3b: first finish + its medals together, and a seed pack
 	},
 	{
 		key = "Stage4", -- Blink, the rhythm special (docs/STAGES.md §5.2, §7.7)
@@ -106,6 +113,7 @@ StageConfig.Stages = {
 		unlock = { stage = "Stage3", medal = "Bronze" },
 		unlockPrice = 2000,
 		rewardFactor = 1.5,
+		firstClear = { coins = 1250, seeds = 4, upTo = "Tomato" }, -- EV3b: first finish + its medals together, and a seed pack
 	},
 	{
 		key = "Stage5", -- the precision finale
@@ -119,6 +127,7 @@ StageConfig.Stages = {
 		unlock = { stage = "Stage4", medal = "Bronze" },
 		unlockPrice = 2000,
 		rewardFactor = 1.75, -- curve 0.5 + 0.25 × order (GDD §5)
+		firstClear = { coins = 1500, seeds = 4, upTo = "Tomato" }, -- EV3b: first finish + its medals together, and a seed pack
 		checkpointOrder = { "20", "26", "21" }, -- level.2/26 lies between 20 and 21; 22 (7 studs before the finish) was deleted 2026-11-07
 	},
 	{
@@ -432,14 +441,28 @@ end
 function StageConfig.Payout(stage, fromMedal: number, toMedal: number): number
 	local coins = 0
 	for medal = fromMedal + 1, toMedal do
-		coins += StageConfig.Medals[medal].basePayout * stage.rewardFactor
+		coins += StageConfig.Medals[medal].basePayout * StageConfig.OneTimeFactor(stage)
 	end
 	return math.floor(coins + 0.5)
 end
 
 -- One-time Coins for the first finish of `stage`, paid on top of any medal payout.
 function StageConfig.FinishPayout(stage): number
-	return math.floor(StageConfig.FinishPayoutBase * stage.rewardFactor + 0.5)
+	return math.floor(StageConfig.FinishPayoutBase * StageConfig.OneTimeFactor(stage) + 0.5)
+end
+
+-- The factor of a stage's one-time payouts (finish, medals): `firstClear.coins` spread over FinishPayoutBase + the medals' basePayouts, else
+-- the stage's rewardFactor.
+function StageConfig.OneTimeFactor(stage): number
+	local first = stage.firstClear
+	if not first then
+		return stage.rewardFactor
+	end
+	local total = StageConfig.FinishPayoutBase
+	for _, medal in StageConfig.Medals do
+		total += medal.basePayout
+	end
+	return first.coins / total
 end
 
 -- Repeat reward for a run with medal index `medal` after `finishesToday` earlier finishes of `stage` today; 0 without a medal.
