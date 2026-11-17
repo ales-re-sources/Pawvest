@@ -205,8 +205,9 @@ cart taste), AhojRupert level 5 (Potato … Cucumber), test records `user_-1` / 
 - **Open (the user):** the quest's seed pack (4 seeds of the new crop, a first guess like the first clears' packs); the cart taste of a
   locked crop stays until ST decides the cart (tasted plants count toward that crop's ★ but do not unlock it).
 
-**EV3c — crop upgrades:** done 2026-11-17 (Done; the scope: `git show d7a25a3:docs/ROADMAP.md`). Decided with it: no reset of points,
-no collection total (the quest book after 1.0).
+**EV3c — crop upgrades:** done 2026-11-17 (Done; the scope: `git show d7a25a3:docs/ROADMAP.md`). Decided with it: points stack, up to 3 in
+one line (changed the same day); no free reset (later a paid comfort in D2 or an event item: EXPANSION §13); no collection total (with a
+"farm book" review of crops / barn / quests: proposed 2026-11-17, timing open).
 
 **Not in EV3:** repeat-run Coins → Sunshine (EV2c); requests and trees (the online loop, E5); a flatter price curve (ECONOMY.md → open
 decision 5).
@@ -324,6 +325,16 @@ Tagged **[1.0]** (needed before 1.0 goes public) or **[later]**.
 
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
+
+**EV3c stacking — any line, up to 3** (2026-11-17; the user's change after EV3c). *Why:* the player chooses a build (all Speed on a quick
+crop, all Price on an overnight one) instead of only an order. *What:* `Mastery.Points.PerLine` 3, `Pts[line]` = 0–3, additive
+multipliers, Big / Giant labels from the roll without Size points, the crop page's dots and "now → one more point", `CropPoint` telemetry
+value = the line's points; model `pt_cap` 3 / `pt_total` 3 / policy "auto", U takes the best and the worst allocation, EV0 compares
+`PerLine` (ECONOMY.md → Stacking: G9 / G12 near-misses accepted). Checked on a fixture of Lekzdrh's profile (restored): three Price
+points on a ★3 Cucumber through the page's + → ●●○ "Sells for 1 708 → 1 862", then ●●● ✓ 1 862, the other lines without +, "Fully
+upgraded!", toast with the dots; a 4th Price `maxed`, Size `points`; Potato Speed 1 → 2, a 3rd `points`; the Czech page (dots, grey +);
+labels: 1.25 with 3 Size points none, 1.66 Big, 2.10 Giant; junk points clean to 0–3; no errors. Not checked: a real harvest toast with
+Size points (code and the label function only).
 
 **EV3c — crop upgrades** (2026-11-17; Studio-validated on a fixture of Lekzdrh's profile, restored). *Why:* the endgame layer of crop
 mastery: every ★ gives a point for the crop's Price, Size or Speed line, so old crops stay worth growing (ECONOMY.md → EV3). *What:* GDD

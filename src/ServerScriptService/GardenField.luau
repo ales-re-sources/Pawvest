@@ -255,11 +255,12 @@ local function fieldOf(player: Player, profile)
 			if crop and not crop.rare and type(entry) == "table" and count(entry.N) > 0 then
 				local clean = table.clone(entry)
 				clean.N = count(entry.N)
-				local pts = nil -- EV3c: { [line] = 1 } for each line taken
+				local pts = nil -- EV3c: { [line] = points } for each line with a point (whole numbers up to Points.PerLine)
 				for _, line in CropConfig.PointLines do
-					if CropConfig.HasPoint(entry.Pts, line) then
+					local n = CropConfig.PointsIn(entry.Pts, line)
+					if n > 0 then
 						pts = pts or {}
-						pts[line] = 1
+						pts[line] = n
 					end
 				end
 				clean.Pts = pts
@@ -1172,7 +1173,8 @@ questEvent.OnServerEvent:Connect(function(player, cropId, amount)
 end)
 
 -- EV3c: spends one of `cropId`'s free points (mastery level - points spent) on `line` (Value, Size, Speed). From anywhere; the field is
--- settled first, so Speed counts from now. Rejects `crop` (a rare crop: no mastery), `maxed` (that line is taken), `points` (no free point).
+-- settled first, so Speed counts from now. Rejects `crop` (a rare crop: no mastery), `maxed` (that line has Points.PerLine), `points` (no
+-- free point).
 cropPointEvent.OnServerEvent:Connect(function(player, cropId, line)
 	local crop = type(cropId) == "string" and CropConfig.ById[cropId]
 	if not (crop and type(line) == "string" and table.find(CropConfig.PointLines, line)) or not GardenService.Allow(player) then
@@ -1188,16 +1190,17 @@ cropPointEvent.OnServerEvent:Connect(function(player, cropId, line)
 	local garden = profile.Garden
 	local entry = garden.Crops[crop.id]
 	local pts = entry and entry.Pts
-	if CropConfig.HasPoint(pts, line) then
+	local had = CropConfig.PointsIn(pts, line)
+	if had >= CropConfig.Mastery.Points.PerLine then
 		return reject(player, "CropPoint", "maxed")
 	end
 	if not entry or CropConfig.FreePoints(entry.N, pts) < 1 then
 		return reject(player, "CropPoint", "points")
 	end
 	entry.Pts = pts or {}
-	entry.Pts[line] = 1
-	Telemetry.CropPoint(player, crop.id, line, CropConfig.MasteryLevel(entry.N))
-	done(player, "CropPoint", { crop = crop.id, line = line })
+	entry.Pts[line] = had + 1
+	Telemetry.CropPoint(player, crop.id, line, had + 1)
+	done(player, "CropPoint", { crop = crop.id, line = line, points = had + 1 })
 end)
 
 local function placedCount(garden): number

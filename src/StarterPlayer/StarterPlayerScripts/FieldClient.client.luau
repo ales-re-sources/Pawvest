@@ -21,6 +21,7 @@ local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local GardenUi = require(script.Parent:WaitForChild("GardenUi"))
+local GardenView = require(script.Parent:WaitForChild("GardenView"))
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
 local requestStateEvent = remotes:WaitForChild("RequestState")
@@ -245,7 +246,8 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 		if detail.extra then
 			table.insert(lines, Locale.T("field.toast.shears"))
 		end
-		local tag = CropConfig.SizeLabel(size)
+		local field = GardenView.OwnField()
+		local tag = CropConfig.SizeLabel(size, field and GardenUi.PointsOf(field, crop))
 		local extra = {}
 		if tag then
 			table.insert(extra, Locale.T(if tag == "Giant" then "field.size.giant" else "field.size.big"))
@@ -274,9 +276,11 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 			table.insert(lines, Locale.T("field.toast.seeds", { crop = Locale.CropName(opened), count = detail.seeds or 0 }))
 		end
 		showToast(table.concat(lines, "\n"), COLOR_OK)
-	elseif action == "CropPoint" then -- EV3c: "Upgraded: Cucumber · 💰 Price"
+	elseif action == "CropPoint" then -- EV3c: "Upgraded: Cucumber · 💰 Price ●●○"
 		local line = POINT_LINE_KEYS[detail.line]
-		showToast(Locale.T("field.toast.point", { crop = name, line = if line then Locale.T(line) else "" }), COLOR_OK)
+		local have = math.clamp(tonumber(detail.points) or 0, 0, CropConfig.Mastery.Points.PerLine)
+		local level = string.rep("●", have) .. string.rep("○", CropConfig.Mastery.Points.PerLine - have)
+		showToast(Locale.T("field.toast.point", { crop = name, line = if line then Locale.T(line) .. " " .. level else "" }), COLOR_OK)
 	elseif action == "Sell" then
 		showToast(Locale.T("field.toast.sell", { count = detail.paid }), COLOR_OK)
 	elseif action == "BuySeeds" or action == "BuyCart" then

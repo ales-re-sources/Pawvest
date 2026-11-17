@@ -382,21 +382,21 @@ field.cropPage.points[one],Crop page (EV3c) and the Goals panel's Upgrades row: 
 field.cropPage.points[few],Form for 2-4 (Czech only),,{count} body k utracení,new,hfbc4a926
 field.cropPage.points[other],Form for 0 and 5+,{count} points to spend,{count} bodů k utracení,new,hfbc4a926
 field.cropPage.noPoints,Crop page: no point to spend now; {left} = plants of this crop still to grow for the next mastery star (which gives a point),Next point: grow {left} more,Další bod: vypěstuj ještě {left},new,he160a8dd
-field.cropPage.allDone,Crop page: all three upgrades of this crop are taken (mastery ★3),Fully upgraded!,Vylepšeno naplno!,new,hf97b53b4
-field.cropPage.hint,"Crop page, small grey hint under the points: how points work (one per mastery star, one per upgrade line, three lines)","Every ★ gives one point. Each upgrade takes one, so ★3 gets all three.","Každá ★ dá jeden bod. Každé vylepšení stojí jeden, na ★3 máš všechna tři.",new,h2eb06103
+field.cropPage.allDone,Crop page: all three points of this crop are spent (mastery ★3),Fully upgraded!,Vylepšeno naplno!,new,hf97b53b4
+field.cropPage.hint,"Crop page, small grey hint under the points: how points work (one per mastery star, into any of the three lines, at most 3 in one line, no way to move them back)","Every ★ gives one point. Put it in any line, up to 3 in one. A spent point stays.","Každá ★ dá jeden bod. Dej ho do kterékoli řady, do jedné nejvýš 3. Utracený bod už zůstane.",new,h66375264
 field.point.value,"Crop page, name of the upgrade line that raises the sale price (also in the upgrade toast)",💰 Price,💰 Cena,new,h05320363
-field.point.value.effect,"Crop page, Price line not taken yet: {from} = Coins one crop sells for now, {to} = with the upgrade",Sells for {from} → {to},Prodá se za {from} → {to},new,hac49a2f8
-field.point.value.done,"Crop page, Price line taken: {to} = Coins one crop sells for",Sells for {to},Prodá se za {to},new,h3f1dd439
+field.point.value.effect,"Crop page, Price line below its maximum: {from} = Coins one crop sells for now, {to} = with one more point in it",Sells for {from} → {to},Prodá se za {from} → {to},new,hac49a2f8
+field.point.value.done,"Crop page, Price line at its maximum (3 points), or any line once all of the crop's points are spent: {to} = Coins one crop sells for",Sells for {to},Prodá se za {to},new,h3f1dd439
 field.point.size,"Crop page, name of the upgrade line that makes harvests bigger (also in the upgrade toast)",📏 Size,📏 Velikost,new,h4822f22c
-field.point.size.effect,"Crop page, Size line not taken yet: {from} / {to} = average weight of one harvested crop in kg now / with the upgrade (decimals)",Grows bigger: {from} → {to} kg on average (bigger sells for more),Roste větší: v průměru {from} → {to} kg (větší se prodá dráž),new,hf5a4b5ff
-field.point.size.done,"Crop page, Size line taken: {to} = average weight of one harvested crop in kg",Grows bigger: {to} kg on average,Roste větší: v průměru {to} kg,new,h5ac47c5a
+field.point.size.effect,"Crop page, Size line below its maximum: {from} / {to} = average weight of one harvested crop in kg now / with one more point (decimals)",Grows bigger: {from} → {to} kg on average (bigger sells for more),Roste větší: v průměru {from} → {to} kg (větší se prodá dráž),new,hf5a4b5ff
+field.point.size.done,"Crop page, Size line at its maximum (3 points), or any line once all of the crop's points are spent: {to} = average weight of one harvested crop in kg",Grows bigger: {to} kg on average,Roste větší: v průměru {to} kg,new,h5ac47c5a
 field.point.speed,"Crop page, name of the upgrade line that shortens the grow time (also in the upgrade toast)",⚡ Speed,⚡ Rychlost,new,h4cde2daf
-field.point.speed.effect,"Crop page, Speed line not taken yet: {from} / {to} = grow time now / with the upgrade (""15:00"", ""7:07:12"")",Ready in {from} → {to},Dozraje za {from} → {to},new,h26df31eb
-field.point.speed.done,"Crop page, Speed line taken: {to} = grow time (""13:21"")",Ready in {to},Dozraje za {to},new,habb85dfe
+field.point.speed.effect,"Crop page, Speed line below its maximum: {from} / {to} = grow time now / with one more point (""15:00"", ""7:07:12"")",Ready in {from} → {to},Dozraje za {from} → {to},new,h26df31eb
+field.point.speed.done,"Crop page, Speed line at its maximum (3 points), or any line once all of the crop's points are spent: {to} = grow time (""13:21"")",Ready in {to},Dozraje za {to},new,habb85dfe
 field.reason.points,Refused: the crop has no upgrade point to spend (the next mastery star gives one),No point to spend yet: grow more of it,Zatím nemáš bod: vypěstuj jich víc,new,hdd00db74
-field.reason.pointTaken,Refused: this upgrade line of the crop is already taken,Already upgraded,Už je vylepšené,new,he467f16f
+field.reason.pointTaken,Refused: this upgrade line of the crop already has its maximum of points (3),This line is already at its maximum,Tahle řada už je na maximu,new,h143917f0
 field.reason.pointCrop,Refused: rare crops have no mastery and no upgrades,This crop has no upgrades,Tahle plodina se nevylepšuje,new,h49eced10
-field.toast.point,"Toast after spending an upgrade point; {crop} = crop name, {line} = the line's name with its icon (""💰 Price"")",Upgraded: {crop} · {line},Vylepšeno: {crop} · {line},new,hbf1b4bea
+field.toast.point,"Toast after spending an upgrade point; {crop} = crop name, {line} = the line's name with its icon and its points as dots (""💰 Price ●●○"")",Upgraded: {crop} · {line},Vylepšeno: {crop} · {line},new,hbf1b4bea
 field.toast.pointFree,"Harvest toast, extra line under the new mastery star: the star gave an upgrade point; the ★ button sits on the barn's crop rows (Czech: stodola)",A point to spend: tap ★ in the barn,Máš bod k utracení: klepni na ★ ve stodole,new,h60c2a881
 field.toast.unlocked,Toast line: a new crop was unlocked (its seeds are now in the stall); {crop} = emoji + crop name (Czech: nominative before a colon),{crop} unlocked!,{crop}: odemčeno!,new,h69b1538d
 field.toast.questPiece,"Toast after handing crops in to a milestone quest; {crop} = crop name, {count} = how many",Brought: {crop} × {count},Přineseno: {crop} × {count},new,hd48c685c

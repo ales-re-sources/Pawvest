@@ -365,7 +365,7 @@ function GardenUi.MasteryLine(field, crop): string?
 	return Locale.T("field.mastery.line", { level = level, have = n, need = need })
 end
 
--- EV3c: the crop's points from the state ({ Value = 1, … }; nil = none).
+-- EV3c: the crop's points from the state ({ Value = 2, … }; nil = none).
 function GardenUi.PointsOf(field, crop)
 	local points = GardenUi.Mastery(field).points
 	local pts = type(points) == "table" and points[crop.id]

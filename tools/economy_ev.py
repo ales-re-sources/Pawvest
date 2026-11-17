@@ -50,13 +50,18 @@ CAND = {
     # crop costs less than its grow time suggests: long crops grow overnight, short ones in sessions). The next crop opens at the previous
     # one's star 1, a milestone by its quest.
     "star_n0": 12, "star_g": 1.05, "star_u": 40.0, "star_b": 0.7, "star_p": 1.5,
-    # each star = one point in Value (sale x), Size (size factor x) or Speed (grow time x); pt_cap per line, so 3 x pt_cap stars per crop.
+    # each star = one point in Value (sale x), Size (size factor x) or Speed (grow time x); up to pt_cap per line, pt_total per crop.
     # The draft's first cut (+10 % / +10 % / -6 %) made a maxed crop x3.7 per square-hour (~7 steps); the cap is 2-3 steps (check U).
     # At 3 steps (+3 % / +3 % / -3 %) the extra income bought the shop out early (G5, C, G8, B2 failed): about 2 steps
     # EV3 revision (2026-11-17): 3 levels, one point per level and per line (+11 % / +11 % / -11 %: x1.47, 2.1 steps); the draft had
-    # pt_cap 5 at +2 % / +2 % / -2.5 % (15 stars per crop, steps a player does not notice)
-    "pt_cap": 1, "pt_value": 0.11, "pt_size": 0.11, "pt_speed": 0.11,
-    "pt_order": ("Value", "Speed", "Size"),  # policy: Value first
+    # pt_cap 5 at +2 % / +2 % / -2.5 % (15 stars per crop, steps a player does not notice).
+    # EV3c revision (the user, 2026-11-17): the 3 points go into any line, up to 3 in one (pt_cap 3, pt_total 3): three in Speed = grow
+    # time x 0.67 (x1.49 net per square-hour), three in Price x1.44, one each x1.47 (all 2.0-2.2 steps). The game: Mastery.Points.PerLine.
+    "pt_cap": 3, "pt_value": 0.11, "pt_size": 0.11, "pt_speed": 0.11,
+    "pt_total": 3,  # points (= levels) per crop; None = 3 x pt_cap (every line filled)
+    # policy: a fill order of the lines, or "auto": every point in Speed for a crop that grows in a session (t <= pt_fast seconds:
+    # replanted as soon as it is ripe), in Value for one that grows overnight (a faster one only waits longer for the player)
+    "pt_order": "auto", "pt_fast": 3600,
     "chase": 0.5,  # policy: just enough squares of the newest crop to fill its star 1, while it earns >= chase x the best crop's rate
     # EV3 revision (the user, 2026-11-17; the 2026-11-14 draft = tier_of None, mastery "time", quest_partial / req_auto False,
     # rest_per_day 0, pt_cap 5 at +2 / +2 / -2.5 %, the Giant melon quest; probe it with --set):
@@ -64,7 +69,7 @@ CAND = {
     # differ in grow time, so the rotating stall (ST) can offer any of them. None = the smooth ladder (v1 x r^k).
     "tier_of": [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5, 5], "r_tier": 1.727,
     # mastery "count": a level needs plants of that crop (star 1 = round(star_n0 x star_g^k) plants, level L = star 1 x m_mult[L - 1]);
-    # "time": XP = grow minutes (the draft). With pt_cap 1 there are 3 levels and a level-3 crop is fully upgraded.
+    # "time": XP = grow minutes (the draft). pt_total 3: 3 levels, a level-3 crop is fully upgraded.
     "mastery": "count", "m_mult": (1, 4, 25),
     # m_levels (count mode): the same plant counts for every crop's levels (e.g. (50, 100, 200)); the next crop then opens at the old
     # level-1 count (star_n0 x star_g^k plants of the previous crop), not at a level. None = levels from m_mult, unlock at level 1.
@@ -225,7 +230,7 @@ def build(c=None):
     M["crops"] = crops
     M["mode"] = c["mode"]
     M["by_id"] = {cr["id"]: cr for cr in crops}
-    M["levels"] = 3 * c["pt_cap"]
+    M["levels"] = c["pt_total"] or 3 * c["pt_cap"]
     rares = {}
     for cid, world, secs, sale, pts in c["rare"]:
         rares[world] = {"k": None, "id": cid, "t": float(secs), "sale": sale, "seed": 0, "net": sale, "pts": pts,
@@ -307,11 +312,32 @@ def pt_mults(pts, c):
     return (1 + c["pt_value"] * pts["Value"]) * (1 + c["pt_size"] * pts["Size"]), 1 - c["pt_speed"] * pts["Speed"]
 
 
-def maxed_mult(c, seed_frac=None):
-    """Net Coins per square-hour of a maxed crop against the same crop fresh (seed price unchanged)."""
+def pt_allocations(c):
+    """Every way to spend a crop's points (pt_total or 3 x pt_cap, at most pt_cap per line), as {"Value", "Size", "Speed"} dicts."""
+    total, cap = c["pt_total"] or 3 * c["pt_cap"], c["pt_cap"]
+    return [{"Value": v, "Size": z, "Speed": total - v - z} for v in range(cap + 1) for z in range(cap + 1)
+            if 0 <= total - v - z <= cap]
+
+
+def maxed_mult(c, seed_frac=None, pts=None):
+    """Net Coins per square-hour of a maxed crop against the same crop fresh (seed price unchanged): with the points `pts`, or the best
+    way to spend them (pt_allocations)."""
     s = c["seed_frac"] if seed_frac is None else seed_frac
-    a, g = pt_mults({"Value": c["pt_cap"], "Size": c["pt_cap"], "Speed": c["pt_cap"]}, c)
-    return (a - s) / (1 - s) / g
+
+    def mult(p):
+        a, g = pt_mults(p, c)
+        return (a - s) / (1 - s) / g
+
+    return mult(pts) if pts else max(mult(p) for p in pt_allocations(c))
+
+
+def pt_line(crop, c, pts):
+    """The line the policy puts crop `crop`'s next point in (pts: its points so far), None when every line is full."""
+    order = c["pt_order"]
+    if order == "auto":
+        first = "Speed" if crop["t"] <= c["pt_fast"] else "Value"
+        order = (first, "Value" if first == "Speed" else "Speed", "Size")
+    return next((line for line in order if pts[line] < c["pt_cap"]), None)
 
 
 def unlock_need(crop, c):
@@ -652,10 +678,9 @@ class Sim:
             self.star[k] += 1
             self.star_t.append((t, k, self.star[k]))
             self.star_newest.append((t, k, self.newest()))
-            for line in self.c["pt_order"]:
-                if self.cpts[k][line] < self.c["pt_cap"]:
-                    self.cpts[k][line] += 1
-                    break
+            line = pt_line(crop, self.c, self.cpts[k])
+            if line:
+                self.cpts[k][line] += 1
         nxt = k + 1
         if (nxt not in self.unl and self.xp[k] >= unlock_need(crop, self.c) - 1e-9 and nxt < len(self.M["crops"])
                 and not self.M["crops"][nxt]["quest"] and self.chain_rule(nxt)):
@@ -2041,9 +2066,13 @@ def ev3_checks(M, sims, names, days):
     mm = maxed_mult(c)
     steps = math.log(mm) / math.log(c["r"])
     tiers = "" if c["tier_of"] is None else f", {math.log(mm) / math.log(c['r_tier']):.2f} of a price tier"
-    out.append(("U maxed crop = a fresh crop 2-3 steps up (x1.2 ladder steps)", 2 - 1e-9 <= steps <= 3 + 1e-9,
-                f"x{mm:.2f} net per square-hour = {steps:.1f} steps{tiers} (per point: Value +{c['pt_value']:.0%}, Size +{c['pt_size']:.0%}, "
-                f"Speed -{c['pt_speed']:.0%}; {c['pt_cap']} per line)"))
+    worst = min(maxed_mult(c, pts=p) for p in pt_allocations(c))
+    wsteps = math.log(worst) / math.log(c["r"])
+    out.append(("U maxed crop = a fresh crop 2-3 steps up (x1.2 ladder steps), however its points are spent",
+                2 - 1e-9 <= wsteps and steps <= 3 + 1e-9,
+                f"best x{mm:.2f} net per square-hour = {steps:.1f} steps{tiers}, worst x{worst:.2f} = {wsteps:.1f} steps (per point: Value "
+                f"+{c['pt_value']:.0%}, Size +{c['pt_size']:.0%}, Speed -{c['pt_speed']:.0%}; {c['pt_total'] or 3 * c['pt_cap']} points, "
+                f"up to {c['pt_cap']} per line)"))
     return out
 
 
@@ -2081,9 +2110,11 @@ def config_match(M):
     levels, rest_day, rest_cap, _, pts = cc["mastery"]
     if [list(levels), rest_day, rest_cap] != [list(C["m_levels"]), C["rest_per_day"], C["rest_cap"]]:
         out.append(f"mastery: config {[levels, rest_day, rest_cap]} vs proposal {[list(C['m_levels']), C['rest_per_day'], C['rest_cap']]}")
-    want_pts = [C["pt_value"], C["pt_size"], C["pt_speed"]]  # EV3c: one point per line (pt_cap 1), its size per line
-    if list(pts) != want_pts or C["pt_cap"] != 1:
-        out.append(f"crop points (Value, Size, Speed): config {list(pts)} vs proposal {want_pts} (pt_cap {C['pt_cap']}, the game has 1)")
+    want_pts = [C["pt_value"], C["pt_size"], C["pt_speed"], C["pt_cap"]]  # EV3c: the size of a point per line, then the points per line
+    total = C["pt_total"] or 3 * C["pt_cap"]
+    if list(pts) != want_pts or total != len(levels):
+        out.append(f"crop points (Value, Size, Speed, PerLine): config {list(pts)} vs proposal {want_pts} (proposal {total} points per "
+                   f"crop, the game {len(levels)} levels)")
     if cc["crows"][4] != cfg_id(C["crows_from"]) or cc["cart"][1][2] != cfg_id(C["crows_from"]):
         out.append(f"crows / cart taste from: config {cc['crows'][4]} / {cc['cart'][1][2]} vs proposal {cfg_id(C['crows_from'])}")
     for s in M["stages"]:  # EV3 rule 6: the Tutorial / World 1 first clears
@@ -2213,10 +2244,10 @@ def ev3_tables(M, days=60):
                      levels])
     print(E.table(["crop", "grow", "tier", "seed", "sale", "old gate", "new: opens at",
                    "levels (plants)" if cnt else f"star {L} (sq-h)"], rows))
-    a, g = pt_mults({"Value": c["pt_cap"], "Size": c["pt_cap"], "Speed": c["pt_cap"]}, c)
-    print(f"Points: a star = 1 point, {c['pt_cap']} per line (Value +{c['pt_value']:.0%} sale, Size +{c['pt_size']:.0%} size factor, Speed "
-          f"-{c['pt_speed']:.1%} grow time each; policy {' > '.join(c['pt_order'])}); maxed: sale x{a:.2f}, grow time x{g:.3f}, net per "
-          f"square-hour x{maxed_mult(c):.2f}. Unlock bar policy: the newest crop on just enough squares while it earns >= {c['chase']} x the best.")
+    policy = (f"Speed for crops up to {fmt_t(c['pt_fast'])}, else Value" if c["pt_order"] == "auto" else " > ".join(c["pt_order"]))
+    print(f"Points: a star = 1 point, up to {c['pt_cap']} per line (Value +{c['pt_value']:.0%} sale, Size +{c['pt_size']:.0%} size factor, "
+          f"Speed -{c['pt_speed']:.1%} grow time each; policy {policy}); maxed: net per square-hour x{maxed_mult(c):.2f} at best, "
+          f"x{min(maxed_mult(c, pts=p) for p in pt_allocations(c)):.2f} at worst. Unlock bar policy: the newest crop on just enough squares while it earns >= {c['chase']} x the best.")
     print("\n## EV3: unlock day per archetype, old (Renown) -> new (stars); h = hours on day 0")
     rows = []
     for cr in M["crops"]:

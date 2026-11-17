@@ -1349,7 +1349,8 @@ local function pop(square: number, crop, size: number?)
 		CFrame = cframe + Vector3.new(0, 2, 0),
 	})
 	local text = Locale.T("field.hand.pop", { count = 1, icon = crop.icon })
-	local tag = size and CropConfig.SizeLabel(size)
+	local field = GardenView.OwnField()
+	local tag = size and CropConfig.SizeLabel(size, field and GardenUi.PointsOf(field, crop))
 	if tag then
 		text ..= " " .. Locale.T(if tag == "Giant" then "field.size.giant" else "field.size.big")
 	end

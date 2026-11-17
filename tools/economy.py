@@ -247,8 +247,8 @@ def crow_cfg(o):
 
 
 def mastery_cfg(o):
-    pts = o["Points"]  # EV3c: the size of one upgrade point per line
-    return [list(o["Levels"]), o["RestPerDay"], o["RestCap"], o["QuestSeeds"], [pts["Value"], pts["Size"], pts["Speed"]]]
+    pts = o["Points"]  # EV3c: the size of one upgrade point per line, then the points one line takes
+    return [list(o["Levels"]), o["RestPerDay"], o["RestCap"], o["QuestSeeds"], [pts["Value"], pts["Size"], pts["Speed"], pts["PerLine"]]]
 
 
 def scout_cfg(o):

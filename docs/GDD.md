@@ -720,14 +720,19 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   in units of the harvested crop's `step`; while it lasts a plant counts double. Squares, upgrades and tools cost Coins only.
   Profiles before EV3b migrate once (`Version = 7`): unlocked = the crops their Renown level had opened plus every crop held or grown.
 - **Crop upgrades (EV3c, 2026-11-17; numbers in `CropConfig.Mastery.Points`, model `economy_ev` `pt_*`).** Every ★ of a common crop gives
-  one point, spent on one of the crop's three lines (one point per line, so a ★3 crop has all three; the order is the choice, no reset):
-  **Price** (Value: sale × 1.11, at sale time, also for crops already in the barn), **Size** (every harvest's size factor × 1.11 from then
-  on, also a growing crop's look; the plant art stops at the old maximum, `SizeBounds(true)`, sale and records keep the full factor) and
-  **Speed** (grow time × 0.89: that crop's growth rate × 1 / 0.89 from the moment the point is spent, growing crops included). A maxed crop
-  earns × 1.47 per square-hour, about 2 steps of the old ladder. The **crop page** (a ★ brick on the seed stall's and the barn's crop rows,
-  "★+" on green while a point is free; the Goals panel's *Upgrades* section lists such crops) shows the ★ line with a bar, the points and
-  each line's effect as numbers ("Sells for 1 400 → 1 554", "Ready in 12:45 → 11:21" with the Growth upgrade); + takes two taps. Prices on
-  the stall rows, the barn's Sell and grow times follow the points. The star toast adds "A point to spend: tap ★ in the barn".
+  one point, spent on any of the crop's three lines, up to 3 in one (`Points.PerLine`; the user, 2026-11-17: a ★3 crop can be all Speed;
+  no reset, see below). n points in a line: **Price** (Value: sale × (1 + 0.11 n), at sale time, also for crops already in the barn),
+  **Size** (every harvest's size factor × (1 + 0.11 n) from then on, also a growing crop's look; the plant art stops at the old maximum,
+  `SizeBounds(true)`, sale and records keep the full factor; the Big / Giant label comes from the roll with the Sorter, without the Size
+  points, else nearly every harvest would be Big) and **Speed** (grow time × (1 − 0.11 n): that crop's growth rate × 1 / (1 − 0.11 n) from
+  the moment the point is spent, growing crops included). A maxed crop earns × 1.44 (3 Price or 3 Size) to × 1.49 (3 Speed) per
+  square-hour, one point each × 1.47: 2.0–2.2 steps of the old ladder. The **crop page** (a ★ brick on the seed stall's and the barn's crop
+  rows, "★+" on green while a point is free; the Goals panel's *Upgrades* section lists such crops) shows the ★ line with a bar, the points
+  and each line with its points as dots (●●○) and its effect as numbers ("Sells for 1 400 → 1 554", "Ready in 12:45 → 11:21" with the
+  Growth upgrade); + takes two taps, a full line shows ✓. Prices on the stall rows, the barn's Sell and grow times follow the points. The
+  star toast adds "A point to spend: tap ★ in the barn"; the upgrade toast shows the line's dots.
+  **Reset (decided 2026-11-17, not built):** none for free. Later a paid comfort (the D2 comfort shop, after 1.0) or a special item from
+  events; by EXPANSION §13 rule 4 a paid reset needs that earnable path too. A reset only moves points, never adds any.
 - **Tracker line and Goals panel (EV3b2, UI_GARDEN_PETS §13).** Outside a stage a wooden line under the coin plate shows the next crop's
   goal with a bar: "🥔 8 / 12 → 🥬 Lettuce" (the previous crop's plants), or for a quest crop its least-done piece (brought / needed);
   hidden once every crop is open. It pulses when the goal moves on (the unlock toast comes from the field toasts). A tap opens the

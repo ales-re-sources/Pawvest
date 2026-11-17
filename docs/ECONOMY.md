@@ -201,8 +201,8 @@ obby first clears outpay the farm they should feed (findings above).
 **Revision (the user, 2026-11-17; replaces rules 1–2 and the quest form above; model defaults since then):**
 - **Mastery = plants grown of that crop** ("Potato 32 / 75"), shown as the crop's ★. A long, expensive crop needs more time per level.
   Rule 1's spam worry does not apply: the count is per crop, so quick Potatoes level only Potato.
-- **Three levels per crop** (like the stage medals), never infinite. Each level gives one upgrade point and each line (Value, Size,
-  Speed) takes one, so a ★3 crop is fully upgraded and the order is the choice; a point is a step a player notices (+11 %).
+- **Three levels per crop** (like the stage medals), never infinite. Each level gives one upgrade point, a step a player notices
+  (+11 %). EV3c shipped one point per line; then (the user, 2026-11-17) **any line, up to 3 in one**, no free reset (stacking, below).
   The same counts for every crop: **25 / 75 / 200 plants** (the user, 2026-11-17). The next crop opens at a smaller, rising count of
   the previous one (12 Potatoes … 25 Sunflowers), apart from the levels.
 - **Price tiers:** the 16 crops form 6 tiers of 2–3 with one net Coins per square-hour each; inside a tier the crops differ in grow time
@@ -214,6 +214,16 @@ obby first clears outpay the farm they should feed (findings above).
 - **Rested mastery:** after more than a day away, plants count double for a while (the weekly player's catch-up).
 - **Not changed:** quests only at milestones, the cap (a maxed crop ≈ a fresh crop 2–3 old steps up), global upgrades stay, sinks on
   Coins alone, the obby payouts (rule 6).
+
+**Stacking (the user, 2026-11-17; model `pt_cap` 3, `pt_total` 3, game `Points.PerLine` 3).** The three points go into any line, up to 3
+in one. A maxed crop: 3 Speed × 1.49 net per square-hour (2.2 steps), 3 Price or 3 Size × 1.44 (2.0), one each × 1.47; check U now takes
+the best and the worst way to spend them (both 2–3 steps). Model policy `pt_order` "auto": Speed for crops that grow in a session (≤ 1 h,
+`pt_fast`), Price for overnight crops. `evcheck` passes on seeds 1–4 (of 18): one per line 15 / 13 / 16 / 13; auto 13 / 13 / 14 / 13;
+all Price 14 / 12 / 15 / 14; all Speed 12 / 14 / 16 / 14; Speed only up to 15 min 16 / 13 / 15 / 15. Mostly noise; one structural effect:
+Speed on a short crop speeds that crop's own plants, so its mastery and the next unlocks come sooner: **G9** fails on all four seeds with
+auto (Casual's top crop on day 13.3–13.8, floor 14; before 14.3–16.3) and **G12** on single seeds (Garlic maxed on day 3.9 instead of
+Sunflower around day 24). Accepted as near-misses with the rule (ST remodels the unlocks next); if it shows in play, the lever is a smaller
+Speed point or the top crops' `step`.
 
 ## Findings (EV3a, 2026-11-14; `economy.py proposal` prints the old → new tables)
 - **The draft's upgrade sizes broke its own cap:** +10 % Value, +10 % Size, −6 % Speed per point make a maxed crop ×3.7 per square-hour

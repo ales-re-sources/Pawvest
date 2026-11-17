@@ -364,6 +364,7 @@ Decided 2026-10-25 (GDD §9 follows it):
 | Status | Pet dyes and outfits, decor packs, plot themes, fair-stand decorations, trails, a VIP tag | game pass / product |
 | Generosity | A cosmetic gift to a friend (decor, a pet outfit) | developer product |
 | Completion | Season pass premium track (§9.4) | product per season |
+| Second thoughts | Reset of a crop's upgrade points (EV3c; decided 2026-11-17, after 1.0): moves points, never adds any; also a special event item (rule 4) | developer product |
 | First purchase | Starter pack, one time: a decor set, +1 field pet slot, 3 days of Night shift | developer product |
 | Obby | Skip a stage / a checkpoint (rule 5) | developer product |
 

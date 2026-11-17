@@ -3,10 +3,11 @@
 -- crop id, Back = the ScreenGui to reopen on close).
 --   * header: the crop's mastery line with a bar toward the next level, then the points: "1 point to spend", the plants still needed
 --     for the next point, or "Fully upgraded!";
---   * three rows (CropConfig.PointLines: Value, Size, Speed), each with its effect as numbers from the real values: the sale of one
---     standard crop (GardenUi.SalePrice), the average harvest weight (Sorter included), the grow time (Growth upgrade included); a line
---     not taken shows "without → with the point" and a + brick (two taps, ConfirmTap; grey without a free point: the server refuses), a
---     taken line shows ✓ and its value.
+--   * three rows (CropConfig.PointLines: Value, Size, Speed), each with its points as dots (●●○, up to Points.PerLine) and its effect as
+--     numbers from the real values: the sale of one standard crop (GardenUi.SalePrice), the average harvest weight (Sorter included), the
+--     grow time (Growth upgrade included); a line below the maximum shows "now → with one more point" and a + brick (two taps, ConfirmTap;
+--     grey without a free point: the server refuses), a full line shows ✓ and its value; once every point is spent at ★3 the other
+--     lines show only their value.
 --   * PanelFocus "CropPage" (closes the other panels; walking away closes it). The X closes it and reopens the panel it came from.
 -- Display only: + names a crop and a line (GardenRemotes.CropPoint); GardenField checks the points and answers on GardenRemotes.Result
 -- (FieldClient toasts it). Re-renders on every State, a language change and a resize.
@@ -54,11 +55,16 @@ linesSection.Parent = ui.content
 local shown: string? = nil -- the crop id on the page
 local back: string? = nil -- the ScreenGui to reopen on close
 
--- `pts` with `line` taken (`taken` true) or not.
-local function withLine(pts, line: string, taken: boolean)
+-- `pts` with one more point in `line`.
+local function plusOne(pts, line: string)
 	local copy = if type(pts) == "table" then table.clone(pts) else {}
-	copy[line] = if taken then 1 else nil
+	copy[line] = CropConfig.PointsIn(pts, line) + 1
 	return copy
+end
+
+-- A line's points as dots: ● per point, ○ per point still open.
+local function dots(n: number): string
+	return string.rep("●", n) .. string.rep("○", CropConfig.Mastery.Points.PerLine - n)
 end
 
 -- The average harvest weight of `crop` with the points `pts`, as a { decimal } placeholder (two decimals: Garlic's 0.10 → 0.11 shows).
@@ -67,9 +73,9 @@ local function weight(field, crop, pts)
 	return { decimal = string.format("%.2f", crop.kg * factor) }
 end
 
--- { from, to } of `line`'s effect: without the line and with it (the crop's other points count in both).
+-- { from, to } of `line`'s effect: now and with one more point in it (the crop's other points count in both).
 local function effectArgs(field, crop, pts, line: string)
-	local without, with = withLine(pts, line, false), withLine(pts, line, true)
+	local without, with = pts, plusOne(pts, line)
 	if line == "Value" then
 		return { from = GardenUi.SalePrice(field, crop, without), to = GardenUi.SalePrice(field, crop, with) }
 	elseif line == "Size" then
@@ -108,7 +114,7 @@ local function renderHead(field, crop)
 	local text, color
 	if free > 0 then
 		text, color = Locale.T("field.cropPage.points", { count = free }), GardenUi.COLOR_OK
-	elseif spent >= #CropConfig.PointLines then
+	elseif spent >= #CropConfig.Mastery.Levels then
 		text, color = Locale.T("field.cropPage.allDone"), GardenUi.COLOR_OK
 	else
 		text, color = Locale.T("field.cropPage.noPoints", { left = (need or n) - n }), GardenUi.COLOR_INFO
@@ -122,13 +128,20 @@ end
 local function renderLines(field, crop)
 	local pts = GardenUi.PointsOf(field, crop)
 	local free = GardenUi.FreePoints(field, crop)
+	local final = CropConfig.SpentPoints(pts) >= #CropConfig.Mastery.Levels -- every point of the top level spent: no + any more
 	local tap = ui.TapHeight()
 	for index, line in CropConfig.PointLines do
 		local keys = LINE_KEYS[line]
-		local taken = CropConfig.HasPoint(pts, line)
-		local args = effectArgs(field, crop, pts, line)
+		local have = CropConfig.PointsIn(pts, line)
+		local taken = have >= CropConfig.Mastery.Points.PerLine
+		local args = if taken or final then { to = effectArgs(field, crop, pts, line).from } else effectArgs(field, crop, pts, line)
 		local row = GardenUi.Row(linesSection, line, index, COLOR_ROW)
-		GardenUi.TextColumn(row, ADD_WIDTH + GardenUi.GAP, Locale.T(keys.name), Locale.T(if taken then keys.done else keys.effect, args))
+		GardenUi.TextColumn(
+			row,
+			ADD_WIDTH + GardenUi.GAP,
+			Locale.T(keys.name) .. "  " .. dots(have),
+			Locale.T(if taken or final then keys.done else keys.effect, args)
+		)
 		if taken then
 			GardenUi.Paragraph("Done", {
 				LayoutOrder = 2,
@@ -139,7 +152,7 @@ local function renderLines(field, crop)
 				TextXAlignment = Enum.TextXAlignment.Center,
 				Text = "✓",
 			}).Parent = row
-		else
+		elseif not final then -- after the last point a line keeps what it has: no +
 			local add = GardenUi.Button("Add", {
 				LayoutOrder = 2,
 				Size = UDim2.fromOffset(ADD_WIDTH, tap),
