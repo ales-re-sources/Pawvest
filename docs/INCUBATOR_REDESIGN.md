@@ -1,5 +1,15 @@
 # Incubator redesign
 
+2026-11-17 arch body (user picked C Arch over A Grounded and B Cradle, built side by side in Studio): the open pod's rear
+heater case touched nothing (1.85 studs of air under it) and its side tiers hung 0.125 / 0.525 above the nest / base. Now
+steel side walls with cream caps step up to a headboard (rolled cream top, rear band), a seven-piece arch bridges the walls
+over the egg's back half and carries the plate, the control module stands outboard on the base, the base has an inset foot.
+Full / mid / low body Parts 59 / 13 / 8. Desktop Studio-validated: no part without support down to the base and no
+coplanar faces at full / mid / low and 0° / 90°; 1 402 ring / heart poses per yaw without touching the body (the ring head
+passes within 0.05 of the walls, as before); playtest boot clean with three own pods drawn. One steel arch piece shows a
+sheen from a distance at some view angles (normal up close). Physical touch and live checks remain open.
+[Capture](art/incubator-review/arch-body.jpg).
+
 2026-11-17 owned pods only: unpurchased incubators are absent at every detail level; unclaimed plots have none. Unlock rows
 remain in the hatchery menu; the purchased pod appears immediately. Desktop Studio-validated. Scope and validation:
 `git show 0beb61f:docs/INCUBATOR_REDESIGN.md`.

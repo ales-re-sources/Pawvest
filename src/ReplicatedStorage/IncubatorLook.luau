@@ -1,5 +1,5 @@
--- Open hatch pod: the selected stud-brick body, built directly into a plot piece so Base remains discoverable.
--- Build(...) -> setState(state), animate(serverNow, startedAt?). Full / mid / low: 44 / 8 / 3 body Parts.
+-- Arch hatch pod: the selected stud-brick body, built directly into a plot piece so Base remains discoverable.
+-- Build(...) -> setState(state), animate(serverNow, startedAt?). Full / mid / low: 59 / 13 / 8 body Parts.
 -- States: free / locked / empty (unlit), scanning (cyan contour ring), growing (amber pulse, heat lamp / embers, rising sparks and brick hearts), ready (green).
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
@@ -17,9 +17,20 @@ local WARM = Color3.fromRGB(255, 183, 63)
 local READY = Color3.fromRGB(108, 209, 110)
 local SCAN = Color3.fromRGB(81, 216, 240)
 local SCAN_LIGHT = Color3.fromRGB(165, 250, 255)
+local SKIRT = Color3.fromRGB(96, 63, 38)
 local NEST_TOP = 1.85 -- the egg's base (PlotView places EggLook there)
+-- Arch body (C, 2026-11-17): side walls step up to a headboard; z from, z to, top (studs above the plot floor).
+local SIDE_STEPS = {
+	full = { { -1.7, -0.7, 2.45 }, { -0.7, 0.3, 3.3 }, { 0.3, 2.35, 4.25 } },
+	mid = { { -1.7, 0.3, 2.9 }, { 0.3, 2.35, 4.25 } },
+	low = { { -1.7, 2.35, 4.25 } },
+}
+-- Arch: centre height, centreline radius, thickness, half angle from vertical (its ends meet the 4.25 wall tops at
+-- x = ±2.2, its crown is 5.6 high), depth range (the back half: the hearts rise in front of it), segments at full detail.
+local ARCH_YC, ARCH_R, ARCH_T, ARCH_HALF = 3.132, 2.468, 0.25, math.rad(63)
+local ARCH_Z0, ARCH_Z1, ARCH_SEGMENTS = 0.5, 2.35, 7
 -- Ring thickness; gap between its inner face and the egg's bricks (the 0.22 head reaches 0.035 nearer); half-height of the
--- head, the tallest ring piece. At the egg's widest course the head's outer face stays 0.03 inside the cheeks (x = 1.85).
+-- head, the tallest ring piece. At the egg's widest course the head's outer face stays 0.03 inside the walls (x = 1.85).
 local RING_T, RING_CLEAR, RING_HALF = 0.15, 0.07, 0.11
 local RING_LOW, RING_HIGH, RING_PERIOD, RING_LAP = 0.15, 3.05, 4, 3 -- ring height range above the nest; seconds per up-down / lap
 local TAN8 = math.tan(math.pi / 8)
@@ -58,11 +69,11 @@ end
 function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string, state: string, number: number)
 	local muted = state == "locked" or state == "free"
 	local trim = if muted then STEEL else CREAM
-	local function add(name: string, size: Vector3, at: Vector3, color: Color3, variant: string?, collide: boolean?)
+	local function add(name: string, size: Vector3, at: Vector3 | CFrame, color: Color3, variant: string?, collide: boolean?)
 		local p = Instance.new("Part")
 		p.Name = name
 		p.Size = size
-		p.CFrame = floorCFrame * CFrame.new(at)
+		p.CFrame = floorCFrame * (if typeof(at) == "CFrame" then at else CFrame.new(at))
 		p.Color = color
 		p.Material = Enum.Material.Plastic
 		p.MaterialVariant = variant or "StudsSmall"
@@ -77,25 +88,53 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 		return p
 	end
 
-	add("Base", Vector3.new(6, 1.2, 6), Vector3.new(0, 0.85, 0), if state == "locked" then LOCKED else BROWN, "Studs", true)
-	if detail ~= "low" then
-		add("Nest", Vector3.new(4.4, 0.4, 4.4), Vector3.new(0, 1.65, 0), PAD, nil, true)
+	-- Every body part rests on, or sinks into, the one below it: no part may hang in the air (the old pod's rear heater
+	-- and side tiers floated). Ranges are plot-local studs; front is -Z.
+	local function box(name: string, x0: number, x1: number, y0: number, y1: number, z0: number, z1: number,
+		color: Color3, variant: string?, collide: boolean?)
+		return add(name, Vector3.new(x1 - x0, y1 - y0, z1 - z0), Vector3.new((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2),
+			color, variant, collide)
 	end
-	for side, x in { Left = -2.2, Right = 2.2 } do
-		if detail == "full" then
-			for tier = 1, 4 do
-				add(side .. "Cheek" .. tier, Vector3.new(0.7, 0.55, 4.3 - tier * 0.6),
-					Vector3.new(x, 1.7 + tier * 0.55, 0.3 + tier * 0.18), if tier % 2 == 0 then trim else STEEL)
+	local full = detail == "full"
+	box("Base", -3, 3, if full then 0.75 else 0.25, 1.45, -3, 3, if state == "locked" then LOCKED else BROWN, "Studs", true)
+	if full then
+		box("Skirt", -2.7, 2.7, 0.25, 0.85, -2.7, 2.7, SKIRT, "Studs") -- set in under the base: the pod stands on a foot
+	end
+	-- The nest fits between the side walls (the egg's widest course stays inside x = 1.85); the low egg rests on it too.
+	box("Nest", -1.9, 1.9, 1.45, 1.85, -2.2, 2.2, PAD, nil, true)
+	for _, s in { -1, 1 } do
+		local side = if s < 0 then "Left" else "Right"
+		local inner, outer = 1.85 * s, 2.55 * s
+		for k, seg in SIDE_STEPS[detail] do
+			local z0, z1, top = seg[1], seg[2], seg[3]
+			if full then
+				box(side .. "Side" .. k, math.min(inner, outer), math.max(inner, outer), 1.35, top - 0.35, z0, z1, STEEL)
+				-- The cap overhangs only outwards: its inner face stays flush with the wall, clear of the scan ring.
+				box(side .. "Cap" .. k, math.min(inner, 2.6 * s), math.max(inner, 2.6 * s), top - 0.35, top, z0, z1, trim)
+			else
+				box(side .. "Side" .. k, math.min(inner, outer), math.max(inner, outer), 1.35, top, z0, z1, STEEL)
 			end
-		else
-			-- Keep the same top edge, embedding the bottom in the base instead of sharing the nest's bottom face.
-			add(side .. "Side", Vector3.new(0.7, 2.7, 3), Vector3.new(x, 2.7, 0.75), trim)
 		end
 	end
+	box("Headboard", -2.65, 2.65, 1.35, 4.75, 2.3, 2.85, STEEL)
+	if full then
+		local roll = add("HeadboardRoll", Vector3.new(5.5, 0.7, 0.7), Vector3.new(0, 4.75, 2.575), trim)
+		roll.Shape = Enum.PartType.Cylinder
+		-- A band round the back and sides, so the field side is not one blank wall.
+		box("HeadboardBand", -2.7, 2.7, 2.6, 2.95, 2.25, 2.9, trim)
+	end
+	-- The arch bridges the side walls over the egg's back half, its ends sunk into their 4.25 tops at x = ±2.2.
+	local segments = if full then ARCH_SEGMENTS else 3
+	local step = 2 * ARCH_HALF / segments
+	for k = 1, segments do
+		local phi = -ARCH_HALF + (k - 0.5) * step -- from vertical, positive towards +X
+		add("Arch" .. k, Vector3.new(2 * ARCH_R * math.sin(step / 2) + 0.06, ARCH_T, ARCH_Z1 - ARCH_Z0),
+			CFrame.new(ARCH_R * math.sin(phi), ARCH_YC + ARCH_R * math.cos(phi), (ARCH_Z0 + ARCH_Z1) / 2) * CFrame.Angles(0, 0, -phi),
+			if k % 2 == 1 then trim else STEEL)
+	end
 	if detail ~= "low" then
-		add("RearHeaterCase", Vector3.new(3.5, 1.5, 0.5), Vector3.new(0, 4.45, 2.2), trim)
-		-- Embed the plate's foot in the heater case; front and back remain readable from either approach.
-		local plate = add("NumberPlate", Vector3.new(1.4, 1.15, 0.3), Vector3.new(0, 5.7, 2.2), DARK)
+		-- The plate's foot sinks into the arch's crown; front and back remain readable from either approach.
+		local plate = box("NumberPlate", -0.7, 0.7, 5.55, 6.7, 1.275, 1.575, DARK)
 		for _, face in { Enum.NormalId.Front, Enum.NormalId.Back } do
 			local gui = Instance.new("SurfaceGui")
 			gui.Name = "Number" .. face.Name
@@ -118,13 +157,18 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 			label.Parent = gui
 			gui.Parent = plate
 		end
-		-- Its inner face must stand clear of the cheek's inner face (x = 1.85), or the two stud textures flicker.
-		add("ControlPod", Vector3.new(0.68, 1.9, 1.3), Vector3.new(2.25, 2.45, -1.45), trim)
+		-- The control module stands on the base ledge outside the right wall, its inner face sunk 0.05 into the wall.
+		if full then
+			box("ControlPod", 2.5, 2.95, 1.3, 2.9, -1.9, -0.6, STEEL)
+			box("ControlPodCap", 2.48, 2.97, 2.9, 3.2, -1.92, -0.58, trim)
+		else
+			box("ControlPod", 2.5, 2.95, 1.3, 3.2, -1.9, -0.6, STEEL)
+		end
 	end
 	local heater, temperature, podStatus, status
 	if detail == "full" then
-		heater = add("RearHeater", Vector3.new(2.7, 0.25, 0.16), Vector3.new(0, 4.65, 1.87), DARK, "")
-		podStatus = add("PodStatus", Vector3.new(0.35, 0.18, 0.08), Vector3.new(2.25, 2.9, -2.15), DARK, "")
+		heater = box("RearHeater", -1.35, 1.35, 3.85, 4.1, 2.14, 2.32, DARK, "") -- on the headboard, facing the egg
+		podStatus = box("PodStatus", 2.555, 2.895, 2.45, 2.63, -1.96, -1.88, DARK, "")
 		-- Stand the console on the front lip; a panel inside the solid plinth would be hidden.
 		add("Thermostat", Vector3.new(1.6, 0.65, 0.12), Vector3.new(-0.2, 1.775, -2.72), DARK)
 		temperature = add("Temperature", Vector3.new(0.75, 0.18, 0.04), Vector3.new(-0.4, 1.855, -2.81), DARK, "")

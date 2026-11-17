@@ -497,10 +497,14 @@ collecting and caring over obby runs.
     StudsSmall faces (cream / gold; Golden keeps its light). EggLook supplies both the world nests and passive 3D shop
     previews. Full / mid / low world detail uses 27 / 9 / 5 bricks; the full shell is 3.15 studs high and rests on the nest.
     The 6 × 6 foundation and yellow pad also use Plastic with Studs / StudsSmall.
-  - **Incubator body (2026-11-16).** The selected open hatch pod has stepped cream / steel stud-brick cheeks, a rear heater,
-    a side control module and a front thermostat on the foundation's lip. A small two-sided number plate rises from the rear
-    heater at full / mid detail. The egg remains open to the front and above; footprint 6 × 6, plate top 6.275 studs above
-    the plot origin. Full / mid / low detail uses 44 / 8 / 3 body Parts (excluding the egg).
+  - **Incubator body (arch, 2026-11-17).** Steel stud-brick side walls with cream caps step up from the front to a steel
+    headboard with a cream rolled top and a cream band round its back; a striped cream / steel arch bridges the walls over
+    the egg's back half, and the two-sided number plate stands on its crown (full / mid). The rear heater sits on the
+    headboard facing the egg, the control module stands on the base ledge outside the right wall, the thermostat on the
+    front lip; the base stands on a darker, inset foot. Every part rests on the one below it (the 2026-11-16 pod's rear heater
+    and side tiers floated). The egg remains open to the front and the front half above; footprint 6 × 6, plate top 6.7
+    studs above the plot origin. Full / mid / low detail uses 59 / 13 / 8 body Parts (excluding the egg); mid / low keep
+    the walls, headboard and a three-piece arch, and the low egg rests on the nest.
     Empty pods are unlit. The first **30 seconds** within the existing hatch duration scan with a cyan
     eight-sided ring that hugs the egg's bricks while it rises and falls (eased, 4 s), a bright head with two fading trail
     points circling it (3 s per lap), and **Scanning…** above it (also in the menu); no countdown is shown in this phase.
@@ -512,7 +516,7 @@ collecting and caring over obby runs.
     low stays simple. StartedAt / ReadyAt keep phases aligned across reconnects; instant-ready eggs skip scanning. The timer
     changes phases without rebuilding the body. The original base / pad collision stays, other hardware does not collide.
     Empty labels show only status above the plate; the number stays on the model. All pod labels draw on top of the
-    world (AlwaysOnTop: plates and cheeks hid them from a high camera); they show only near the own pods. The plot strip's foundation edges
+    world (AlwaysOnTop: plates and walls hid them from a high camera); they show only near the own pods. The plot strip's foundation edges
     use Plastic / Inlets to match the hatchery pavilion. [Studio view and archived design options](INCUBATOR_REDESIGN.md).
     Since 2026-11-17 every pod's open front and controls face the central path towards the barn (plot-local −X);
     the egg uses the same 90° turn, with all three pod centres unchanged.
