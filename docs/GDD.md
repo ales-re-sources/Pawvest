@@ -498,11 +498,13 @@ collecting and caring over obby runs.
   - **Incubator body (2026-11-16).** The selected open hatch pod has stepped cream / steel stud-brick cheeks, a rear heater,
     a side control module and a front thermostat on the foundation's lip. A small two-sided number plate rises from the rear
     heater at full / mid detail. The egg remains open to the front and above; footprint 6 × 6, plate top 6.275 studs above
-    the plot origin. Full / mid / low detail uses 34 / 8 / 3 body Parts (excluding the egg).
+    the plot origin. Full / mid / low detail uses 44 / 8 / 3 body Parts (excluding the egg).
     Empty, free and locked pods are unlit. The first **30 seconds** within the existing hatch duration scan with a cyan
     eight-sided ring that hugs the egg's bricks while it rises and falls (eased, 4 s), a bright head with two fading trail
     points circling it (3 s per lap), and **Scanning…** above it (also in the menu); no countdown is shown in this phase.
-    Then an amber nest outline / soft local light pulse together with the hatch countdown; ready eggs keep green indicators
+    Then an amber nest outline / soft local light pulse together with the hatch countdown. At full detail the egg also
+    looks warm and cared for: the heater strip flickers like embers and lights the egg as a heat lamp, amber sparks drift up
+    from its top, and two small pink brick hearts float up from it in turn (4 s each). Ready eggs keep green indicators
     with the heater / glow off. Full detail animates the ring / head / trail (four thin amber band Parts pulse while growing)
     and a shadowless light; mid has a static phase strip,
     low stays simple. StartedAt / ReadyAt keep phases aligned across reconnects; instant-ready eggs skip scanning. The timer

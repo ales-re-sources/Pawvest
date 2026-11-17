@@ -1,6 +1,6 @@
 -- Open hatch pod: the selected stud-brick body, built directly into a plot piece so Base remains discoverable.
--- Build(...) -> setState(state), animate(serverNow, startedAt?). Full / mid / low: 34 / 8 / 3 body Parts.
--- States: free / locked / empty (unlit), scanning (cyan contour ring), growing (warm amber pulse), ready (green).
+-- Build(...) -> setState(state), animate(serverNow, startedAt?). Full / mid / low: 44 / 8 / 3 body Parts.
+-- States: free / locked / empty (unlit), scanning (cyan contour ring), growing (amber pulse, heat lamp / embers, rising sparks and brick hearts), ready (green).
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
@@ -23,6 +23,21 @@ local NEST_TOP = 1.85 -- the egg's base (PlotView places EggLook there)
 local RING_T, RING_CLEAR, RING_HALF = 0.15, 0.07, 0.11
 local RING_LOW, RING_HIGH, RING_PERIOD, RING_LAP = 0.15, 3.05, 4, 3 -- ring height range above the nest; seconds per up-down / lap
 local TAN8 = math.tan(math.pi / 8)
+local EMBER = Color3.fromRGB(255, 118, 40) -- the heater strip flickers between WARM and this while growing
+local HEART = Color3.fromRGB(255, 85, 125)
+local EGG_TOP = NEST_TOP + EggLook.Height
+-- Hearts: stud size; rise above the egg top; seconds each; two in flight half a life apart.
+local HEART_STUD, HEART_RISE, HEART_LIFE = 0.11, 1.6, 4
+local HEART_PIECES = { -- 5 × 4 studs "XX XX / XXXXX / XXX / X": offsets / sizes in studs, rows touch but never overlap
+	{ Vector3.new(-1.5, 1.5, 0), Vector3.new(2, 1, 1) },
+	{ Vector3.new(1.5, 1.5, 0), Vector3.new(2, 1, 1) },
+	{ Vector3.new(0, 0.5, 0), Vector3.new(5, 1, 1) },
+	{ Vector3.new(0, -0.5, 0), Vector3.new(3, 1, 1) },
+	{ Vector3.new(0, -1.5, 0), Vector3.one },
+}
+local function hash(a: number, b: number): number -- stable 0..1 for a heart's cycle
+	return (math.sin(a * 12.9898 + b * 78.233) * 43758.5453) % 1
+end
 
 -- The egg's reach at each course boundary (the larger of the two courses); linear between them it is at least the reach of
 -- the course it crosses. A piece spanning h ± RING_HALF meets each course it touches at one of its ends (courses are taller
@@ -124,6 +139,8 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 		return p
 	end
 	local ring, ringHead, ringTrail = {}, {}, {}
+	local hearts = {} -- [heart] = { { part, at } }
+	local sparks: ParticleEmitter?, lamp: SpotLight? = nil, nil
 	if detail == "full" then
 		for _, segment in {
 			{ "Front", Vector3.new(3.4, 0.06, 0.06), Vector3.new(0, 1.95, -1.48) },
@@ -144,6 +161,41 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 		for n, size in { 0.2, 0.15 } do
 			table.insert(ringTrail, glowPart("ScanRingTrail" .. n, Vector3.one * size, Vector3.new(0, 3, 0), SCAN_LIGHT, true))
 		end
+		-- Warming: brick hearts float up from the egg; sparks rise from its top; the heater lights it like a lamp.
+		for h = 1, 2 do
+			local pieces = {}
+			for n, piece in HEART_PIECES do
+				table.insert(pieces, { part = glowPart(string.format("WarmHeart%d_%d", h, n), piece[2] * HEART_STUD, Vector3.new(0, 3, 0), HEART),
+					at = piece[1] * HEART_STUD })
+			end
+			table.insert(hearts, pieces)
+		end
+		local nest = parent:FindFirstChild("Nest") :: BasePart
+		local top = Instance.new("Attachment")
+		top.Name = "WarmSparks"
+		top.Position = Vector3.new(0, EGG_TOP + 0.05 - 1.65, 0) -- in the nest's space (its centre is 1.65 above the floor)
+		top.Parent = nest
+		sparks = Instance.new("ParticleEmitter")
+		sparks.Name = "WarmSparks"
+		sparks.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+		sparks.Color = ColorSequence.new(Color3.fromRGB(255, 205, 120), Color3.fromRGB(255, 150, 90))
+		sparks.LightEmission, sparks.LightInfluence = 0.8, 0
+		sparks.Rate, sparks.Lifetime = 3, NumberRange.new(2, 3)
+		sparks.Speed, sparks.SpreadAngle = NumberRange.new(0.35, 0.65), Vector2.new(35, 35)
+		sparks.Acceleration, sparks.Drag = Vector3.new(0, 0.15, 0), 0.4
+		sparks.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.25, 0.4), NumberSequenceKeypoint.new(1, 0) })
+		sparks.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.2, 0.1), NumberSequenceKeypoint.new(1, 1) })
+		sparks.Rotation, sparks.RotSpeed = NumberRange.new(0, 90), NumberRange.new(-15, 15)
+		sparks.Enabled = false
+		sparks.Parent = top
+		lamp = Instance.new("SpotLight")
+		lamp.Name = "HeatLamp"
+		lamp.Face = Enum.NormalId.Front -- the strip's front faces the egg
+		lamp.Angle, lamp.Range, lamp.Brightness = 80, 7, 1.5
+		lamp.Color = WARM
+		lamp.Shadows = false
+		lamp.Enabled = false
+		lamp.Parent = heater
 	elseif detail == "mid" then
 		table.insert(bands, glowPart("PhaseStrip", Vector3.new(3.4, 0.08, 0.1), Vector3.new(0, 1.95, -1.48), SCAN))
 	end
@@ -196,8 +248,25 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 			p.Transparency = if n == 1 then 0.3 else 0.6
 		end
 	end
+	local function poseHearts(age: number)
+		for h, pieces in hearts do
+			local t = age / HEART_LIFE + (h - 1) / 2
+			local cycle = math.floor(t)
+			local f = t - cycle
+			local x = (hash(cycle, h) - 0.5) * 1.0 + 0.12 * math.sin(f * 2 * math.pi + h)
+			local z = -0.3 + (hash(cycle, h + 7) - 0.5) * 0.6 -- the front half, clear of the number plate behind
+			local frame = floorCFrame * CFrame.new(x, EGG_TOP + 0.25 + HEART_RISE * f, z)
+				* CFrame.Angles(0, 0, 0.15 * math.sin(f * 3 * math.pi))
+			-- fade in over the first 15 %, out over the last 40 %
+			local fade = if f < 0.15 then 1 - f / 0.15 * 0.85 elseif f > 0.6 then 0.15 + (f - 0.6) / 0.4 * 0.85 else 0.15
+			for _, piece in pieces do
+				piece.part.CFrame = frame * CFrame.new(piece.at)
+				piece.part.Transparency = fade
+			end
+		end
+	end
 	local current = nil
-	local function lamp(p: BasePart?, color: Color3, on: boolean)
+	local function light(p: BasePart?, color: Color3, on: boolean)
 		if p then
 			p.Color = if on then color else DARK
 			p.Material = if on then Enum.Material.Neon else Enum.Material.Plastic
@@ -208,10 +277,10 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 		current = nextState
 		local growing, ready, scanning = nextState == "growing", nextState == "ready", nextState == "scanning"
 		local color = if ready then READY elseif scanning then SCAN else WARM
-		lamp(heater, WARM, growing)
-		lamp(temperature, color, growing or ready or scanning)
-		lamp(podStatus, color, growing or ready or scanning)
-		lamp(status, color, growing or ready or scanning)
+		light(heater, WARM, growing)
+		light(temperature, color, growing or ready or scanning)
+		light(podStatus, color, growing or ready or scanning)
+		light(status, color, growing or ready or scanning)
 		for _, band in bands do
 			band.Color = color
 			-- Full detail scans with the ring; mid keeps its static strip.
@@ -223,6 +292,13 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 		else
 			for _, p in ringHead do p.Transparency = 1 end
 			for _, p in ringTrail do p.Transparency = 1 end
+		end
+		if sparks then sparks.Enabled = growing end
+		if lamp then lamp.Enabled = growing end
+		if not growing then
+			for _, pieces in hearts do
+				for _, piece in pieces do piece.part.Transparency = 1 end
+			end
 		end
 		if glow then
 			glow.Enabled = growing or scanning
@@ -239,6 +315,13 @@ function IncubatorLook.Build(parent: Model, floorCFrame: CFrame, detail: string,
 			local pulse = math.sin(age * math.pi / 2)
 			for _, band in bands do band.Transparency = 0.55 - 0.15 * pulse end
 			if glow then glow.Brightness = 0.6 + 0.15 * pulse end
+			if heater then
+				-- Embers: slow noise per pod (the number desyncs neighbours), lamp brightness follows.
+				local ember = math.clamp(0.5 + 0.6 * math.noise(age * 0.7, number * 3.1), 0, 1)
+				heater.Color = WARM:Lerp(EMBER, ember)
+				if lamp then lamp.Brightness = 1.6 - 0.5 * ember end
+			end
+			poseHearts(age)
 		end
 	end
 	setState(state)

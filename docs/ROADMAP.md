@@ -300,8 +300,8 @@ Square trash uses ConfirmTap (orange OK? → second tap, discard without refund)
 live validation remain open.
 
 **Incubator scan and warmth** (2026-11-17; GDD §7.2, §7.6). Desktop Studio-validated: first 30 s of the existing timer
-scan with a cyan contour ring (rises / falls on the egg, circling head and trail) and Scanning… label; then a soft pulsing amber nest glow / countdown; ready stays green. Offline /
-rejoin uses stored anchors; instant-ready eggs skip scanning. Full / mid / low body Parts 34 / 8 / 3; physical touch / live open.
+scan with a cyan contour ring (rises / falls on the egg, circling head and trail) and Scanning… label; then a soft pulsing amber nest glow / countdown with ember heater / heat lamp, rising sparks and brick hearts; ready stays green. Offline /
+rejoin uses stored anchors; instant-ready eggs skip scanning. Full / mid / low body Parts 44 / 8 / 3; physical touch / live open.
 
 **Incubator number plates / foundation** (2026-11-17; GDD §7.6). Desktop Studio-validated: two-sided rear plates carry numbers
 at full / mid detail; floating labels show status only. Foundation edge beams use the pavilion's Plastic / Inlets.

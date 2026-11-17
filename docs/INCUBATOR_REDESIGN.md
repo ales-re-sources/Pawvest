@@ -1,5 +1,32 @@
 # Incubator redesign
 
+## Warm and cozy hatching (2026-11-17, implemented and desktop Studio-validated)
+
+The user chose to combine three of five options (A rising sparks, C brick hearts, D heat lamp; B steam and E egg wiggle not
+built). Full detail, growing state only; scanning / ready / empty unchanged and every new effect off outside growing.
+- D: the rear heater strip flickers between WARM and a deeper ember orange (slow noise per pod, desynced by the pod number);
+  a SpotLight on its front face (Angle 80, Range 7) lights the egg, brightness following the embers.
+- A: a ParticleEmitter on an attachment just above the egg top (built-in sparkles texture, amber → peach, rate 3, 2–3 s life,
+  slow rise with 35° spread, size peak 0.4).
+- C: two pink Neon hearts (5 × 4 studs of 0.11: "XX XX / XXXXX / XXX / X", 5 touching Parts each) rise 1.6 studs over 4 s,
+  half a life apart, with a small sway and roll, fading in / out; start position per cycle from a stable hash, in the front
+  half of the pod so they stay clear of the number plate.
+Full body Parts 34 → 44; mid / low unchanged. First 3-row heart read as a cup and drifted over the number plate (reworked).
+Acceptance: no heart intersection with egg / body at three yaws; hearts above the egg top; coplanar audit clean; effects
+only while growing; boot clean; the real growing pod animates.
+
+Validation (desktop Studio, 2026-11-17):
+- Counts full / mid / low 44 / 8 / 3. 1 200 poses at yaw 0 / 90 / 180 (Golden egg): no heart intersection; heart bottoms
+  ≥ 5.03 (egg top 5.00), z −0.59 … −0.02; spark attachment exactly 0.05 above the egg top at every yaw; heater green
+  channel 128–173 (between EMBER 118 and WARM 183).
+- States: scanning / ready / empty → no hearts, sparks / lamp off, heater Plastic; growing → 10 heart parts, sparks / lamp on,
+  heater Neon; switching back and forth restores both.
+- Static coplanar audit (CanQuery on disposable pods, min area 0.002 for the small studs): 12 pods, 708 parts, clean.
+- [Capture](art/incubator-review/warm-hearts.jpg) (hearts, ember heater). Edit captures do not render particles (a large red
+  probe emitter was invisible too) and Studio screen access was declined, so the sparks' look is not visually checked.
+- Playtest: no server / client warnings or errors; the developer's real growing pod (Slot_01 inc1) had sparks and heat lamp
+  on, hearts moving; empty pods had all effects off.
+
 2026-11-17 contour ring A (chosen after trying rear scanner B in game): at full detail an eight-sided cyan ring rises and
 falls on the egg (4 s, eased), sized from `EggLook.Reach` to clear every brick, with a corner-clipped head and two trail
 points (3 s lap); the scanner is removed and bands stay for the amber pulse. Full body Parts 34. Desktop Studio-validated
