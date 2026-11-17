@@ -1,30 +1,10 @@
 # Incubator redesign
 
-## Contour ring A (2026-11-17, implemented and desktop Studio-validated)
-
-After trying B in game, the user chose A instead (A, B and both were built behind a temporary style switch; only A is kept).
-Full detail only: replaces the rear scanner. Eight Neon segments (0.15 thick, transparency 0.15) form an octagon that rises
-from 0.15 to 3.05 studs above the nest and back every 4 s (cosine ease, starting at the bottom). Its size follows the egg:
-`EggLook.Reach(n)` gives each full-detail course's reach along the axes / diagonals; the ring uses the larger reach at the two
-ends of the head's height (±0.11) so it changes size smoothly and clears every brick it passes, plus a 0.07 gap.
-Segments touch only along their inner edges (no overlapping coplanar faces). A bright 0.22 head (≤ 0.6 long, never more
-than two edges) is clipped at the corners and laps in 3 s; two trail balls follow. Bands remain for the amber growing pulse.
-Mid strip / low unchanged. Full body Parts 25 → 34. B's scan line fix (raised to clear the egg's bottom face) left with B.
-Acceptance: no ring / head / trail intersection with egg or body at three yaws; head never outside the cheeks; head length
-constant; ring hidden outside scanning and restored on a new scan; coplanar audit clean; boot clean.
-
-Validation (desktop Studio, 2026-11-17):
-- Counts full / mid / low 34 / 8 / 3. 2 400 poses (ring and both, yaw 0 / 90 / 180, Golden egg) and 1 200 more after B was
-  removed (Basic egg): GetPartsInPart found no intersection of any ring segment, head or trail with egg bricks or body parts.
-  Head in 1–2 pieces, total length error ≤ 0.00007; ring Y 2.000–4.900; widest ring outer apothem 1.786 (cheeks at 1.85).
-- First try (0.12 gap, plain interpolation) put the head into the cheeks and once into course 8; fixed by the gap 0.07 and the
-  two-ends reach bound before the counts above.
-- States: empty → scanning (12 ring parts visible, bands hidden, cyan glow) → growing (ring hidden, heater on, amber bands)
-  → ready (all off) → scanning (restored) → empty.
-- Static coplanar audit (CanQuery on disposable pods): 12 pods, three yaws × four poses, 660 visible parts, clean.
-- [Capture](art/incubator-review/contour-ring.jpg): ring low and high; the right pod shows the rejected ring + scanner mix.
-- Playtest boot: no server / client warnings or errors; 48 ring segments on six full-detail pods, no scanner parts.
-  A live scanning egg was not placed (no profile writes).
+2026-11-17 contour ring A (chosen after trying rear scanner B in game): at full detail an eight-sided cyan ring rises and
+falls on the egg (4 s, eased), sized from `EggLook.Reach` to clear every brick, with a corner-clipped head and two trail
+points (3 s lap); the scanner is removed and bands stay for the amber pulse. Full body Parts 34. Desktop Studio-validated
+(3 600 poses without intersections at three yaws, states, coplanar audit, boot); a live scanning egg was not placed.
+[Capture](art/incubator-review/contour-ring.jpg). Scope and validation: `git show 4ca8901:docs/INCUBATOR_REDESIGN.md`.
 
 2026-11-17 rear scanner B (chosen over contour ring A and rising ripples D; replaced by A above the same day): at full detail a heater emitter bar projects a
 see-through cyan sheet to a scan line sweeping the nest back / front (eased, 3 s), replacing the scan square, travelling light
