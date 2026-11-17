@@ -262,6 +262,17 @@ Speed point or the top crops' `step`.
   day 60. Binge's day-1 cadence 3.6–4.5 min. With the quests as garden levels (`price_quests`) 11 / 18 (also R, G8, B): the first hour
   waits 54 min for news and Pumpkin comes later than in the chain. Price paces Coins, not attention: a cheap gate (seed price ∝ income)
   is passed on the day the income arrives, so the order of crops and the news stream need an unlock of some kind.
+- **ST — the rotating stall on the EV3 chain (2026-11-17; `CAND` `st_*`, the candidate since then):** the chain decides which crops
+  exist for the player; the stall restocks on a UTC schedule (the same draw on every server, counts per player). Always in stock: the
+  staples, the newest unlocked crop, the next talent's bundle crops and the open quest's crops. Every other unlocked crop shows with chance
+  `st_p`, and at least every `st_pity` restocks (staggered by crop), with `st_n` seeds per restock. `evcheck` passes (of 18, seeds 1–4):
+  the chain alone 13 / 13 / 13 / 13; the candidate (1 h, staples Potato–Onion, 0.5, pity 3, 12 seeds) 16 / 16 / 16 / 17, fails only the
+  known R, B2, G8, G11. Grid (sums of 72): 1 h 61–65, 2 h 56–64, 3 h 59–63; staples Potato–Onion beat Potato–Garlic by 1–6; 12 / 24 / 40
+  seeds 63–65 / 64 / 61 (stock size hardly matters: a player buys what one field needs). What it changes: progress is slower (Casual's top
+  crop day 17.8–19.3 instead of 13.3, Garden main's Sorter 3 day ~35 instead of 29), which fixes G9 and mostly G12 (Garlic no longer the
+  first crop maxed: it rotates). **The newest crop must always be in stock:** without it the first hour loses its news (G7 failed on every
+  seed), and G2 / G12 fail. The model player keeps Coins for the unlock bar before buying stall seeds (spending everything on the bag left
+  Casual's Pumpkin bar unfunded for 50 days: a hint for the UI, the bar's crop is always buyable).
 - **Rotating stall and trees (2026-11-15):** `unlock: "stall"` with its six tree kinds in place of the four (first growth 0.5 / 2 / 6 / 12 / 24 / 24 h, a fruit every 5 / 30 / 90 / 180 / 360 / 360 min, 4 held, valued as
   crop 6 / 8 / 10 / 12 / 14 / 16, saplings anchored to squares 6 / 10 / 14 / 18 / 22 / 26) passes 15 / 18 on seed 1. What it fixes: the
   first hour has news every ≤ 5.2 min (restocks and first purchases; price-only 33 min); every square of the field is not the top crop
@@ -350,8 +361,9 @@ of the game's instant first pet.
 7. **Endgame:** drops (Weekly, Variants, Kitchen), landmark / estate sinks, a soft Replant if the queue empties, harvest boards; nothing
    needed now.
 8. **Rotating stall (ST, decided in principle 2026-11-17):** restock cadence (1–3 h, UTC, the same on every server), stock per crop, the
-   always-stocked set (staples, talent-bundle and quest crops), the pity rule for the newest crop. Probed in `economy_ev.py` before the
-   build (ROADMAP → ST); the 10-minute probe is in Findings → "Rotating stall and trees".
+   always-stocked set (staples, talent-bundle and quest crops), the pity rule for the newest crop. *Modelled 2026-11-17* (Findings → "ST");
+   the candidate (hourly, staples Potato–Onion, half of the other crops per restock and each at least every 3rd, 12 seeds, the newest
+   crop always) waits for the user's sign-off.
 
 ## E0 — checks of the game as built (until EV2a)
 | Check | Rule |

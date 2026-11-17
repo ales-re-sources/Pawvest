@@ -103,7 +103,15 @@ CAND = {
     # in stock; crop k above them shows with chance stall_p0 x stall_pd^(k - staples), 1..round(stall_n0 x stall_nd^(k - staples)) seeds.
     # Bought seeds wait in the seed bag (non-staple seeds: at most stall_bag x open squares and one field of a kind, bundle / request
     # crops on top).
-    "stall_every": 600, "stall_staples": 4, "stall_p0": 0.7, "stall_pd": 0.7, "stall_n0": 4.0, "stall_nd": 0.85, "stall_bag": 2.0,
+    # ST (ROADMAP → ST, 2026-11-17): the EV3 chain decides which crops exist for the player; a stall restocks every st_every seconds on a
+    # UTC schedule (the same draw on every server, counts per player). Always in stock (bought on planting, like the staples): the
+    # staples (ladder index < stall_staples), the next talent's bundle crops, the open quest's crops and (st_newest) the newest unlocked
+    # crop. Every other unlocked crop shows with chance st_p, and at least every st_pity restocks (staggered by crop), with st_n seeds.
+    # The ST candidate (2026-11-17, ECONOMY.md → Findings "ST"): hourly restocks, staples Potato-Onion (stall_staples 3), 12 seeds.
+    # Without st_newest the first hour loses its news (G7 failed on every seed).
+    "st": True, "st_every": 3600, "st_p": 0.5, "st_pity": 3, "st_n": 12, "st_newest": True,
+    # stall_staples: ST's staples; the 2026-11-15 probe ("stall" unlock rule) ran with 4
+    "stall_every": 600, "stall_staples": 3, "stall_p0": 0.7, "stall_pd": 0.7, "stall_n0": 4.0, "stall_nd": 0.85, "stall_bag": 2.0,
     # the stall rule's trees (replace "trees"): timers from a session to a day, the overnight hook the stall's random bag cannot give
     "stall_trees": [("Tree1", 6, 3, 1800, 300, 4, 6), ("Tree2", 10, 3, 7200, 1800, 4, 8), ("Tree3", 14, 3, 21600, 5400, 4, 10),
                     ("Tree4", 18, 3, 43200, 10800, 4, 12), ("Tree5", 22, 3, 86400, 21600, 4, 14), ("Tree6", 26, 3, 86400, 21600, 4, 16)],
@@ -394,10 +402,12 @@ class Sim:
         self.level = 0
         self.stars_on = M["mode"] == "stars"
         self.price_rule = M["mode"] == "stars" and M["c"]["unlock"] in ("price", "stall")
-        self.stall_on = self.price_rule and M["c"]["unlock"] == "stall"
+        self.stall_on = (self.price_rule and M["c"]["unlock"] == "stall") or (self.stars_on and M["c"]["st"])
+        self.st = self.stars_on and M["c"]["st"] and not self.price_rule
         self.bag = {}  # stall: ladder index -> seeds bought, not planted yet
         self.stall_slot, self.stall_left = -1, {}
         self.first_seed_t = {}  # stall: ladder index -> first purchase of its seeds (news, G7)
+        self.st_seen = []  # ST: (t, unlocked non-staple crops in stock) per restock the player saw
         self.unl = {0}  # ladder indexes the player may plant
         if self.price_rule:
             self.unl = set(self.group_from(0))
@@ -868,13 +878,14 @@ class Sim:
         growing = sum(b["n"] for b in self.batches if b["crop"] is new)
         u = xp_unit(new, self.c)
         short = unlock_need(new, self.c) - self.xp[new["k"]] - growing * u
-        n = min(self.free_sq, math.ceil(short / u - 1e-9), int(self.coins // max(1, new["seed"])))
+        a = self.avail(new)
+        n = min(self.free_sq, math.ceil(short / u - 1e-9), a if a < math.inf else int(self.coins // max(1, new["seed"])))
         if n <= 0:
             return
         best = self.choose(t, n)
         if best is not new and best is not None and self.rate(t, new, n) < self.c["chase"] * self.rate(t, best, n):
             return
-        self.spend(t, new["seed"] * n)
+        self.take_seeds(t, new, n)
         at = t + n * self.c["act_s"]
         g = self.grow_of(new)
         self.batches.append({"crop": new, "n": n, "need": g, "grown": 0.0, "at": at, "ready": self.ready_at(at, g)})
@@ -884,15 +895,33 @@ class Sim:
         """The stall's stock in restock slot `slot`: {ladder index: seeds} of the non-staple crops (staples are always there)."""
         c, rng = self.c, random.Random(self.seed * 1299709 + slot * 7919 + 11)
         out = {}
+        if self.st:  # ST: every non-staple crop with chance st_p, at least every st_pity slots (staggered); the player sees the unlocked
+            for crop in self.M["crops"][c["stall_staples"]:]:
+                if rng.random() < c["st_p"] or (slot + crop["k"]) % max(1, c["st_pity"]) == 0:
+                    out[crop["k"]] = c["st_n"]
+            return out
         for crop in self.M["crops"][c["stall_staples"]:]:
             j = crop["k"] - c["stall_staples"]
             if rng.random() < c["stall_p0"] * c["stall_pd"] ** j:
                 out[crop["k"]] = 1 + rng.randrange(max(1, round(c["stall_n0"] * c["stall_nd"] ** j)))
         return out
 
+    def st_always(self, crop):
+        """ST: is `crop` always in stock for this player now (a talent-bundle or open-quest crop, or the newest unlocked one)?"""
+        if not self.st:
+            return False
+        k = crop["k"]
+        if self.c["st_newest"] and k == max(self.unl):
+            return True
+        nt = self.next_talent()
+        if nt and k + 1 in nt["crops"]:
+            return True
+        q = self.open_quest()
+        return bool(q) and crop["id"] in q["quest"]
+
     def avail(self, crop):
         """Seeds of `crop` the player can plant now without the Coins check (math.inf = a staple, bought on planting)."""
-        if not self.stall_on or crop["k"] < self.c["stall_staples"]:
+        if not self.stall_on or crop["k"] < self.c["stall_staples"] or self.st_always(crop):
             return math.inf
         return self.bag.get(crop["k"], 0) + self.pouch.get(crop["id"], 0)
 
@@ -902,8 +931,8 @@ class Sim:
         if free:
             self.pouch[crop["id"]] -= free
         n -= free
-        if self.stall_on and crop["k"] >= self.c["stall_staples"]:
-            self.bag[crop["k"]] -= n
+        if self.stall_on and crop["k"] >= self.c["stall_staples"] and not self.st_always(crop):
+            self.bag[crop["k"]] = self.bag.get(crop["k"], 0) - n
             return
         self.spend(t, crop["seed"] * n)
 
@@ -911,14 +940,18 @@ class Sim:
         """Stall rule: buy the current restock, rarest first, into the seed bag (keeping a staple replant)."""
         if not self.stall_on:
             return
-        slot = int(t // self.c["stall_every"])
+        slot = int(t // (self.c["st_every"] if self.st else self.c["stall_every"]))
         if slot != self.stall_slot:
             self.stall_slot, self.stall_left = slot, self.stall_stock(slot)
+            if self.st:
+                self.st_seen.append((t, sorted(k for k in self.stall_left if k in self.unl)))
         want = self.wanted()
-        keep = self.M["crops"][self.c["stall_staples"] - 1]["seed"] * self.open_sq
+        keep = self.reserve() if self.st else self.M["crops"][self.c["stall_staples"] - 1]["seed"] * self.open_sq
         cap = self.c["stall_bag"] * self.open_sq
         for k in sorted(self.stall_left, reverse=True):
             crop = self.M["crops"][k]
+            if self.st and (k not in self.unl or self.st_always(crop)):
+                continue  # ST: a locked crop is not shown; an always-stocked one is bought on planting
             left = self.stall_left[k]
             extra = max(0, want.get(crop["id"], 0) - self.kept.get(crop["id"], 0) - self.bag.get(k, 0))
             room = min(max(0, cap - sum(self.bag.values())), max(0, self.open_sq - self.bag.get(k, 0))) + extra  # one field of a kind
@@ -1375,8 +1408,10 @@ class Sim:
     def reserve(self):
         """Coins kept for the next replant: the last crop on every square, or (EV3) the newest crop while its bar is open."""
         seed = self.last_crop["seed"]
-        if self.stall_on:
+        if self.stall_on and not self.st:
             return self.M["crops"][self.c["stall_staples"] - 1]["seed"] * self.open_sq
+        if self.st:  # ST: a staple replant, or the newest crop while its bar is open (stall seeds come out of what is left)
+            seed = self.M["crops"][self.c["stall_staples"] - 1]["seed"]
         if self.stars_on and self.chain_rule(max(self.unl) + 1):
             new = self.M["crops"][max(self.unl)]
             if self.xp[new["k"]] < unlock_need(new, self.c) - 1e-9:
@@ -1765,7 +1800,7 @@ class Sim:
         while t < b:
             nxt = min([bt["ready"] for bt in self.batches] + [inc["end"] for inc in self.incs] + [self.next_fruit(t), b])
             if self.stall_on:  # the player looks at every restock while online
-                e = self.c["stall_every"]
+                e = self.c["st_every"] if self.st else self.c["stall_every"]
                 nxt = min(nxt, (int(t // e) + 1) * e)
             if nxt >= b:
                 break
