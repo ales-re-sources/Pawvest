@@ -5,14 +5,15 @@
 --     (Unlock brick with the price, two taps over ConfirmTap.THRESHOLD); later ones "unlock incubator n first";
 --   * egg cards (K1) while an owned incubator is empty: the egg drawn in its colour, name, hatch time, a buy brick with the price
 --     (two taps over the threshold) that starts it in the first empty incubator, and "?" for odds, rarity times and rules;
---   * the reveal on a Hatch answer: the pet's portrait, its kind in the rarity colour, where it went, then its traits as chips one
---     by one (P4: a cute pet is a lucky roll);
+--   * on a Hatch answer, HatchReveal over the content: the egg wobbles and bursts, the pet pops in, then a summary (rarity and the
+--     egg's chance of it, where it went, every trait it was born with and what it does) with View pet / Great!;
 --   * waiting free eggs (the server starts them on its own); answers and refusals in a status line at the top;
 --   * PanelFocus "Hatchery": opening it closes the other panels, walking 32 studs away closes it.
 -- GardenView draws the eggs and their countdowns above every plot's nests (E1a1). Display only: a click names an incubator and an
 -- egg; GardenIncubators validates ownership, price, the inventory cap and the hatch time against the server's os.time(). Countdowns use
 -- workspace:GetServerTimeNow(). Hook (HatcheryGui attribute, cleared after use): Open = true opens the panel. Buttons by path (under
--- PlayerGui.HatcheryGui.Panel): Content.Nests.Content.Nest<n>.Action, Content.Eggs.Content.Cards.<EggId>.Buy / .Odds, Reveal.Ok, Close.
+-- PlayerGui.HatcheryGui.Panel): Content.Nests.Content.Nest<n>.Action, Content.Eggs.Content.Cards.<EggId>.Buy / .Odds,
+-- Reveal.Buttons.Ok / .View, Reveal.Skip, Close.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -27,8 +28,7 @@ local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PanelFocus = require(ReplicatedStorage:WaitForChild("PanelFocus"))
 local ConfirmTap = require(ReplicatedStorage:WaitForChild("ConfirmTap"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
-local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
-local PetRow = require(script.Parent:WaitForChild("PetRow"))
+local HatchReveal = require(script.Parent:WaitForChild("HatchReveal"))
 local GardenView = require(script.Parent:WaitForChild("GardenView"))
 local GardenUi = require(script.Parent:WaitForChild("GardenUi"))
 local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
@@ -45,13 +45,10 @@ local HEIGHT = 500
 local GAP = GardenUi.GAP
 local ACTION_WIDTH = 132 -- the row's brick (Hatch / Unlock)
 local EGG_W, EGG_H = 64, 76 -- the shared 3D egg on a card
-local CHIP_DELAY = 0.4 -- seconds between the reveal's trait chips
-local PORTRAIT = 132
 
 local COLOR_PANEL = StudStyle.PanelColors.Incubator
 local COLOR_ROW = StudStyle.PetRowColor(COLOR_PANEL)
 local COLOR_HATCH = StudStyle.Colors.Purple -- stands out on the yellow panel
-local COLOR_CHIP = Color3.fromRGB(28, 28, 28)
 
 local REJECT_KEYS = { -- the rest: Locale.Reject's common.reject.*
 	maxed = "incubator.reject.maxed",
@@ -61,10 +58,6 @@ local REJECT_KEYS = { -- the rest: Locale.Reject's common.reject.*
 	empty = "incubator.reject.empty",
 	notready = "incubator.reject.notready",
 }
-
-local function hex(color: Color3): string
-	return "#" .. color:ToHex()
-end
 
 local function eggName(eggId: string): string
 	local egg = PetConfig.Eggs[eggId]
@@ -148,64 +141,18 @@ local nestsSection, nestsLegend = GardenUi.GroupBox(ui.content, "Nests", 2, COLO
 local eggsSection, eggsLegend = GardenUi.GroupBox(ui.content, "Eggs", 3, COLOR_PANEL)
 statusSection.Parent = ui.content
 
--- the reveal: a page over the panel's content
-local reveal = GardenUi.Create("Frame", {
-	Name = "Reveal",
-	Position = UDim2.new(0, 8, 0, 46),
-	Size = UDim2.new(1, -16, 1, -54),
-	BackgroundTransparency = 1,
-	Visible = false,
-	Parent = ui.panel,
-}, {
-	GardenUi.Create("UIListLayout", {
-		SortOrder = Enum.SortOrder.LayoutOrder,
-		HorizontalAlignment = Enum.HorizontalAlignment.Center,
-		Padding = UDim.new(0, 10),
-	}),
-	GardenUi.Create("UIPadding", { PaddingTop = UDim.new(0, 6) }),
+-- the reveal: a page over the panel's content (HatchReveal); callbacks below
+local render, showContent, viewPet -- defined below
+local hatchReveal = HatchReveal.new(ui.panel, {
+	onDone = function()
+		showContent()
+		render()
+	end,
+	onViewPet = function(uid: string)
+		viewPet(uid)
+	end,
 })
-local revealTitle = GardenUi.Label("Title", {
-	LayoutOrder = 1,
-	Size = UDim2.new(1, 0, 0, 30),
-	TextSize = 24,
-	TextXAlignment = Enum.TextXAlignment.Center,
-	Text = "",
-	Parent = reveal,
-})
-local revealHolder: Frame? = nil -- PetPortrait.Holder, LayoutOrder 2 (rebuilt per hatch)
-local revealName = GardenUi.Paragraph("PetName", {
-	LayoutOrder = 3,
-	Font = StudStyle.Font,
-	TextSize = 22,
-	TextXAlignment = Enum.TextXAlignment.Center,
-	RichText = true,
-	Text = "",
-	Parent = reveal,
-})
-local revealLine = GardenUi.Paragraph("Line", { LayoutOrder = 4, TextSize = 15, TextXAlignment = Enum.TextXAlignment.Center, Text = "", Parent = reveal })
-local revealChips = GardenUi.Create("Frame", {
-	Name = "Chips",
-	LayoutOrder = 5,
-	Size = UDim2.new(1, 0, 0, 0),
-	AutomaticSize = Enum.AutomaticSize.Y,
-	BackgroundTransparency = 1,
-	Parent = reveal,
-}, {
-	GardenUi.Create("UIListLayout", {
-		FillDirection = Enum.FillDirection.Horizontal,
-		HorizontalAlignment = Enum.HorizontalAlignment.Center,
-		SortOrder = Enum.SortOrder.LayoutOrder,
-		Wraps = true,
-		Padding = UDim.new(0, GAP),
-	}),
-})
-local revealOk = GardenUi.Button("Ok", {
-	LayoutOrder = 6,
-	Size = UDim2.fromOffset(160, 48),
-	BackgroundColor3 = GardenUi.COLOR_BUY,
-	TextSize = 18,
-	Parent = reveal,
-}, 3)
+local reveal = hatchReveal.frame
 
 local isOpen = false
 local incubators = nil -- private State: { count, eggs = { ["n"] = { id, egg, startedAt, readyAt } } }; kind stays server-only
@@ -213,10 +160,8 @@ local status: { text: string, color: Color3 }? = nil -- the last answer, shown f
 local statusTimer = GardenUi.Latest()
 local oddsShown: string? = nil -- egg id whose odds are shown
 local countdowns = {} -- { { label, readyAt } } of the drawn rows
-local revealToken = 0
 local STATUS_SECONDS = 5
 
-local render -- defined below
 
 -- Free eggs still waiting for an empty incubator (the server starts them on its own).
 local function waitingFreeEggs(): number
@@ -463,8 +408,7 @@ render = function()
 	ui.title.Text = Locale.T("hatchery.title")
 	nestsLegend.Text = Locale.T("hatchery.group.nests")
 	eggsLegend.Text = Locale.T("hatchery.eggs")
-	revealOk.Text = Locale.T("hatchery.reveal.ok")
-	revealOk.Size = UDim2.fromOffset(160, math.max(48, ui.TapHeight()))
+	hatchReveal.Layout(math.max(48, ui.TapHeight()))
 	reveal.Position = UDim2.fromOffset(8, ui.HeaderHeight() + 6)
 	reveal.Size = UDim2.new(1, -16, 1, -(ui.HeaderHeight() + 14))
 	if not isOpen then
@@ -485,83 +429,14 @@ end
 
 -- Reveal ---------------------------------------------------------------------------------------------------------------------
 
-local function chip(trait, level: number, order: number): Frame
-	return GardenUi.Create("Frame", {
-		Name = "Chip_" .. trait.id,
-		LayoutOrder = order,
-		Size = UDim2.fromOffset(0, 34),
-		AutomaticSize = Enum.AutomaticSize.X,
-		BackgroundColor3 = COLOR_CHIP,
-	}, {
-		GardenUi.Create("UICorner", { CornerRadius = UDim.new(0, 8) }),
-		GardenUi.Create("UIStroke", { Color = trait.color, Thickness = 2 }),
-		GardenUi.Create("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10) }),
-		GardenUi.Label("Text", {
-			Size = UDim2.fromScale(0, 1),
-			AutomaticSize = Enum.AutomaticSize.X,
-			TextSize = 17,
-			TextColor3 = trait.color,
-			TextStrokeTransparency = 0.6,
-			Text = string.format("%s %s %s", trait.icon, Locale.T("pet.apt." .. trait.id), Locale.Number(level)),
-		}),
-	})
-end
-
-local function showContent()
-	revealToken += 1
-	reveal.Visible = false
+showContent = function()
+	hatchReveal.Hide()
 	ui.content.Visible = true
 end
 
 local function showReveal(detail)
-	revealToken += 1
-	local mine = revealToken
 	ui.content.Visible = false
-	reveal.Visible = true
-	local rarity = PetConfig.RarityById[detail.rarity]
-	local stored = PetClient.State and PetClient.State.pets[detail.uid]
-	revealTitle.Text = Locale.T("hatchery.reveal.title")
-	revealName.Text = string.format(
-		"<font color='%s'>%s</font>\n<font size='15' color='%s'>%s</font>",
-		hex(if rarity then rarity.color else Color3.new(1, 1, 1)),
-		Locale.PetKindName(tostring(detail.kind)),
-		hex(if rarity then rarity.color else Color3.new(1, 1, 1)),
-		Locale.RarityName(tostring(detail.rarity))
-	)
-	revealLine.Text = Locale.T(if detail.equipped then "hatchery.reveal.follows" else "hatchery.reveal.panel")
-	if revealHolder then
-		revealHolder:Destroy()
-	end
-	local level = if stored then PetConfig.PetLevel(stored) else 1
-	revealHolder = PetPortrait.Holder({
-		LayoutOrder = 2,
-		Size = UDim2.fromOffset(PORTRAIT, PORTRAIT),
-		BackgroundColor3 = Color3.fromRGB(30, 30, 30),
-	}, PetPortrait.Make(tostring(detail.kind), level, detail.uid))
-	local stroke = Instance.new("UIStroke")
-	stroke.Color = if rarity then rarity.color else Color3.new(1, 1, 1)
-	stroke.Thickness = 3
-	stroke.Parent = revealHolder
-	revealHolder.Parent = reveal
-	for _, child in revealChips:GetChildren() do
-		if child:IsA("GuiObject") then
-			child:Destroy()
-		end
-	end
-	local traits = if type(detail.traits) == "table" then detail.traits else {}
-	task.spawn(function()
-		for order, id in traits do
-			local trait = PetRow.ByTrait[id]
-			if trait then
-				task.wait(CHIP_DELAY)
-				if revealToken ~= mine then
-					return
-				end
-				local now = PetClient.State and PetClient.State.pets[detail.uid]
-				chip(trait, if now then math.max(1, PetConfig.AptitudeLevel(now, id)) else 1, order).Parent = revealChips
-			end
-		end
-	end)
+	hatchReveal.Show(detail)
 end
 
 -- Open / close ---------------------------------------------------------------------------------------------------------------
@@ -586,10 +461,13 @@ end
 openButton.Activated:Connect(openPanel)
 
 ui.close.Activated:Connect(closePanel)
-revealOk.Activated:Connect(function()
-	showContent()
-	render()
-end)
+-- View pet: the Pets panel opens at the pet's page (PanelFocus closes this panel)
+viewPet = function(uid: string)
+	local petsGui = Players.LocalPlayer.PlayerGui:FindFirstChild("PetsGui")
+	if petsGui then
+		petsGui:SetAttribute("OpenPet", uid)
+	end
+end
 
 -- Events ---------------------------------------------------------------------------------------------------------------------
 

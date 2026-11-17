@@ -199,6 +199,7 @@ hatchEvent.OnServerEvent:Connect(function(player, index)
 	end
 
 	local kind = entry.Kind
+	local eggId = entry.Egg
 	local rarityId = PetConfig.Kinds[kind]
 	garden.Incubators[key] = nil
 	local uid, equipped = PetService.AddPet(player, kind)
@@ -209,7 +210,7 @@ hatchEvent.OnServerEvent:Connect(function(player, index)
 			table.insert(traits, id)
 		end
 	end
-	GardenService.Done(player, "Hatch", { incubator = index, uid = uid, kind = kind, rarity = rarityId, equipped = equipped, traits = traits })
+	GardenService.Done(player, "Hatch", { incubator = index, egg = eggId, uid = uid, kind = kind, rarity = rarityId, equipped = equipped, traits = traits })
 end)
 
 cancelEggEvent.OnServerEvent:Connect(function(player, index, id)

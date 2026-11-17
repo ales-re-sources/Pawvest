@@ -288,6 +288,12 @@ Tagged **[1.0]** (needed before 1.0 goes public) or **[later]**.
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
 
+**Hatch reveal** (2026-11-17; Studio-validated with Hatch answers sent to the client, no real hatch). *Why:* the reveal was a static
+page and its trait chips explained nothing. *What:* `HatchReveal` (GDD §7 hatchery): egg wobble with a rarity-colour hint, burst, pet pop
+with rays / rarity stamp / confetti from Rare, sounds; then a summary (egg's chance of the rarity, where it went, pet count, one row per
+trait with level / cap and what it does) and View pet / Great!. The Hatch answer carries `egg`. Fixed on the way: the pet page opened
+through `PetsGui.OpenPet` from a closed panel drew its trait cards too short.
+
 **Seed stall button height fix** (2026-11-17; UI Studio-validated). Restored the missing `TapHeight()` binding so cart, seed-buy and
 crop-sell bricks keep their 44 px touch targets after panel scaling. Transaction completion not revalidated (MCP snapshot access refused).
 

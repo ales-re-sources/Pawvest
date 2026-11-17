@@ -246,6 +246,14 @@ hatchery.reveal.title,"Hatchery panel, hatch reveal: the big title over the new 
 hatchery.reveal.follows,"Hatchery panel, hatch reveal: line under the pet's name when it was equipped at once",It follows you now.,Teď půjde všude s tebou.,new,h3c4bd076
 hatchery.reveal.panel,"Hatchery panel, hatch reveal: line under the pet's name when no equip slot was free",It is waiting in your Pets panel.,Čeká na tebe v panelu Mazlíčci.,new,h29d03f2b
 hatchery.reveal.ok,"Hatchery panel, hatch reveal: button back to the incubators (160 px)",Great!,Super!,new,h9f4027a3
+hatchery.reveal.hatching,"Hatchery hatch animation: the title while the egg wobbles, before it bursts (then hatchery.reveal.title)",Hatching…,Líhne se…,new,h5e95ec0f
+hatchery.reveal.skip,Hatch animation: small grey hint at the bottom; a click / tap anywhere jumps straight to the summary,Skip »,Přeskočit »,new,h0b5ba695
+hatchery.reveal.odds,"Hatch summary, after the rarity name in the rarity colour (""Epic · …""): how likely that rarity was from this egg; {egg} = egg name (pet.egg.*, nominative), {chance} = localized decimal, e.g. 12.7 / 12,7",{egg}: {chance}% chance,{egg}: šance {chance} %,new,h50f54d1c
+hatchery.reveal.count,"Hatch summary, small line under where the pet went: pets owned / the most a player can own (50)",Pets: {count} / {max},Mazlíčci: {count} / {max},new,h73bc5252
+hatchery.reveal.traits,"Hatch summary: heading over the rows of the traits the pet was born with (Cuteness, Tending, …)",Born with these traits,Vrozené vlastnosti,new,hb6e25829
+hatchery.reveal.field,"Hatch summary, trait row of Tending / Pest control, small line: the trait only works when the pet stands on the player's crop field",🌾 Works when you place it on your crop field,"🌾 Pracuje, když ho dáš na pole",new,h95d557d6
+hatchery.reveal.grow,"Hatch summary: footnote under the trait rows. Each row shows ""Lv 1 / 12"": the number after / is the highest level for the pet's rarity","Traits level up with treats, adventures with you and work on the field, up to the max for its rarity (the number after /).","Vlastnosti rostou s jídlem, dobrodružstvími s tebou a prací na poli, až po maximum pro jeho vzácnost (číslo za /).",new,h5cd295c8
+hatchery.reveal.view,"Hatch summary: button (160 px brick, next to hatchery.reveal.ok) that opens the Pets panel at the new pet's page",View pet,Zobrazit,new,h1d99ed3a
 incubator.body.locked,Text of an incubator not bought yet,"Incubators hatch eggs in real time, even while you are away.",Inkubátory líhnou vejce ve skutečném čase. I když nejsi ve hře.,ok,h480d0efc
 incubator.unlockFirst,"Hatchery panel, info line of an incubator after the next one to buy (they are bought in order); {n} = the next one's number",Unlock incubator {n} first,Nejdřív odemkni inkubátor {n},ok,h63e7c68e
 incubator.hatchesIn,"Status while an egg incubates; {time} = countdown ""42:07""",Hatches in {time},Vylíhne se za {time},ok,hbfaf5215

@@ -1,7 +1,7 @@
 --!strict
 -- Short UI cues (Creator Store, creator AmbientSorcery, the "ui-simple-*" set; free to use). Client only.
 --
---   UiSounds.Play(cue)   cue = "Click" | "Tab" | "Hover" | "Notify"; plays locally (not positional), overlapping itself if needed
+--   UiSounds.Play(cue)   cue = "Click" | "Tab" | "Hover" | "Notify" | "EggWobble" | "EggCrack" | "EggReveal"; plays locally (not positional), overlapping itself if needed
 --
 -- Buttons are wired by UiSoundsClient.client.luau (every GuiButton in PlayerGui plays "Click" when activated); a button picks another
 -- cue, or none, with the attribute `UiSound` ("Tab", "Hover", "Notify", or "None" for a button that has its own sound).
@@ -19,6 +19,10 @@ local CUES = {
 	Tab = { id = 76353543802706, volume = 0.5, gap = 0.04 }, -- ui-simple-tab-switch
 	Hover = { id = 139800881181209, volume = 0.3, gap = 0.08 }, -- ui-simple-button-hover
 	Notify = { id = 105983221709653, volume = 0.5, gap = 0.5 }, -- ui-simple-notification
+	-- the hatch reveal (IncubatorClient → HatchReveal)
+	EggWobble = { id = 9120784531, volume = 0.45, gap = 0.1 }, -- ProSoundEffects "Wobble Board 20"
+	EggCrack = { id = 9113959343, volume = 0.6, gap = 0.3 }, -- ProSoundEffects "Crack Egg Crunchy 11"
+	EggReveal = { id = 88130568524452, volume = 0.55, gap = 0.5 }, -- RBLXEssentials "rewards Rise01"
 }
 
 local folder: Folder? = nil

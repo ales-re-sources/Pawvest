@@ -532,9 +532,14 @@ collecting and caring over obby runs.
     show each egg (drawn in its colour, name, possible hatch-time range, a price brick; Golden takes two taps) and a **?** brick that shows its odds,
     a readable table of rarity / right-aligned percentage and only the offline-hatching / no-refund tip;
     hidden roll mechanics stay out of the player-facing explanation;
-    a card starts the egg in the first empty incubator. Hatching shows a **reveal** in the panel: the pet's portrait, its kind in the
-    rarity colour and the rarity, where it went (with you / the Pets panel), then the traits it was born with as chips, one every
-    0.4 s. Opening it closes the other panels; walking 32 studs away closes it. An egg can only be started while the pets plus the eggs already incubating stay below the
+    a card starts the egg in the first empty incubator. Hatching plays a **hatch reveal** in the panel (`HatchReveal`, 2026-11-17, about 4 s, a click / tap
+    skips to the summary): the bought egg wobbles and hops, harder each time (Epic / Legendary once more), the last wobble glowing in
+    the rarity colour; a white flash and the shell's upper bricks fly off; the pet's portrait pops in with rays in the rarity colour,
+    the rarity name stamps in, confetti from Rare up (sounds: wobble, crack, reward). The **summary** then shows the portrait in the
+    corner, the kind in the rarity colour, the rarity with the egg's chance of it ("Epic · Golden egg: 12.7 % chance"), where it went
+    (with you / the Pets panel), the pet count (n / 50), and one row per trait it was born with: level / rarity cap and what it does
+    (Cuteness: this pet's Coin bonus; Tending / Pest control: works when placed on the crop field), a line on how traits grow, and
+    **View pet** (the Pets panel at its page) / **Great!**. Opening it closes the other panels; walking 32 studs away closes it. An egg can only be started while the pets plus the eggs already incubating stay below the
   inventory cap (50), and a ready egg does not hatch into a full inventory (it waits). The dialog keeps its existing rows;
   passive containers block world input with InputSink.All and Active false, keeping the clickable affordance on action buttons.
   - **Nearby nest text (2026-11-16).** Empty / locked labels and egg countdowns appear only on the own plot, while the character

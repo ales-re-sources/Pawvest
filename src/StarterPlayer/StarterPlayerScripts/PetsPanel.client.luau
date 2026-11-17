@@ -712,13 +712,23 @@ function setOpen(open: boolean)
 end
 screenGui:SetAttribute("Open", false)
 setOpenEvent.Event:Connect(setOpen)
--- OpenPet = uid (FieldHand's square card, U3a): opens the panel at that pet's page; cleared after use
+-- OpenPet = uid (FieldHand's square card U3a, the hatch summary's View pet): opens the panel at that pet's page; cleared after use
 screenGui:GetAttributeChangedSignal("OpenPet"):Connect(function()
 	local uid = screenGui:GetAttribute("OpenPet")
 	if type(uid) == "string" then
 		screenGui:SetAttribute("OpenPet", nil)
+		local wasOpen = screenGui:GetAttribute("Open") == true
 		setOpen(true)
 		detail.Open(uid)
+		if not wasOpen then
+			-- built in the frame the panel appears, the page's cards keep a too small AutomaticSize: lay it out once more
+			task.defer(function()
+				game:GetService("RunService").Heartbeat:Wait()
+				if screenGui:GetAttribute("Open") == true then
+					detail.Open(uid)
+				end
+			end)
+		end
 	end
 end)
 closeButton.Activated:Connect(function()
