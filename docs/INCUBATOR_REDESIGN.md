@@ -1,5 +1,19 @@
 # Incubator redesign
 
+## Owned pods only (2026-11-17, desktop Studio-validated)
+
+Only purchased incubators are drawn, including their bases, eggs, number plates, labels and click targets. Unclaimed plots
+have no pods. Unlock rows remain in the hatchery menu; the next pod appears when the count update arrives.
+Acceptance: counts 1 / 2 / 3 render exactly that many pods at full / mid / low; reducing the count or freeing a plot clears
+old models / labels / animation entries. An unlock update adds its pod without disturbing an existing egg. No profile writes
+are needed for visual fixtures. Fresh boot and look at the one-incubator world view and menu; inspect both boot logs.
+
+Validation: full / mid / low counts 1 → 2 → 3 → 1 draw exactly the owned pods; an existing occupied pod keeps its Model
+through every count update. Hidden pods have no labels or animation entries; releasing the plot clears all three.
+One-incubator world view and menu visually checked: only pod 1 is present, row 2 retains Unlock · 500 and row 3 says to
+unlock 2 first. HUD opens the panel and Close works. Both boot logs have no client / server warnings or errors. Fixtures
+changed only client visual state, with no profile writes; review models removed and playtest stopped. No strings changed.
+
 2026-11-17 warm hatching (user combined sparks A, brick hearts C and heat lamp D of five options): while growing, at full
 detail, the heater flickers like embers and lights the egg (SpotLight), amber sparkles rise from the egg top and two pink
 5 × 4-stud hearts float up in turn. Full body Parts 44. Desktop Studio-validated (no heart intersections at three yaws,

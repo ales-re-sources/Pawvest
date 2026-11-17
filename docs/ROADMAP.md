@@ -306,8 +306,11 @@ rejoin uses stored anchors; instant-ready eggs skip scanning. Full / mid / low b
 **Incubator number plates / foundation** (2026-11-17; GDD §7.6). Desktop Studio-validated: two-sided rear plates carry numbers
 at full / mid detail; floating labels show status only. Foundation edge beams use the pavilion's Plastic / Inlets.
 
+**Owned incubators only** (2026-11-17; GDD §7.6). Desktop Studio-validated: unpurchased pods are absent at all details;
+unclaimed plots have none. Unlock remains in the hatchery panel; successful purchases add their pod immediately.
+
 **Hatchery access** (2026-11-17; GDD §7.6). Desktop Studio-validated: Hatchery HUD beside Barn with a ready-egg badge;
-click/tap any own pod from either side, including empty / locked pods, with whole-pod hover. Hatchery E prompt removed.
+click/tap any owned pod from either side, including empty pods, with whole-pod hover. Hatchery E prompt removed.
 Passive GUI and range guards tested; physical phone touch remains open.
 
 **Hatchery redesign** (2026-11-16; GDD §7.6). Cross-lapped stud egg shells and 3D egg cards, stud-textured foundations, a tall pavilion with

@@ -486,7 +486,9 @@ collecting and caring over obby runs.
 - **Other players.** Everyone can walk through the garden and look at all plots and pets; only the owner can use their
   own plot (no stealing, no shared fields).
 - **Incubators.** Every egg hatches here, in real time, and keeps hatching offline. Each plot has
-  **3 incubators**, unlocked in order for 0 / 500 / 2 800 Coins (incubator 1 free; 3 300 in total; EV2a). An egg is
+  **up to 3 incubators**, unlocked in order for 0 / 500 / 2 800 Coins (incubator 1 free; 3 300 in total; EV2a).
+  Only owned incubators appear in the world, at every detail level; unclaimed plots have none. Unlock the next one in the
+  hatchery panel; its pod appears as soon as the purchase succeeds. An egg is
   bought for an empty incubator of the player's own plot (Basic 120 Coins; Golden 4 000 Coins). Its kind is rolled and stored
   at purchase, and its rarity sets the wait (§7.2); free eggs start there by themselves. A ready
   egg waits until the owner taps **Hatch**; the stored pet is granted and equipped automatically
@@ -494,12 +496,12 @@ collecting and caring over obby runs.
   - **Egg art (2026-11-16).** Basic and Golden share a portal-style cross-lapped brick shell, with nine tapered courses and
     StudsSmall faces (cream / gold; Golden keeps its light). EggLook supplies both the world nests and passive 3D shop
     previews. Full / mid / low world detail uses 27 / 9 / 5 bricks; the full shell is 3.15 studs high and rests on the nest.
-    The 6 × 6 foundation and yellow pad also use Plastic with Studs / StudsSmall, including free and locked nests.
+    The 6 × 6 foundation and yellow pad also use Plastic with Studs / StudsSmall.
   - **Incubator body (2026-11-16).** The selected open hatch pod has stepped cream / steel stud-brick cheeks, a rear heater,
     a side control module and a front thermostat on the foundation's lip. A small two-sided number plate rises from the rear
     heater at full / mid detail. The egg remains open to the front and above; footprint 6 × 6, plate top 6.275 studs above
     the plot origin. Full / mid / low detail uses 44 / 8 / 3 body Parts (excluding the egg).
-    Empty, free and locked pods are unlit. The first **30 seconds** within the existing hatch duration scan with a cyan
+    Empty pods are unlit. The first **30 seconds** within the existing hatch duration scan with a cyan
     eight-sided ring that hugs the egg's bricks while it rises and falls (eased, 4 s), a bright head with two fading trail
     points circling it (3 s per lap), and **Scanning…** above it (also in the menu); no countdown is shown in this phase.
     Then an amber nest outline / soft local light pulse together with the hatch countdown. At full detail the egg also
@@ -508,14 +510,14 @@ collecting and caring over obby runs.
     with the heater / glow off. Full detail animates the ring / head / trail (four thin amber band Parts pulse while growing)
     and a shadowless light; mid has a static phase strip,
     low stays simple. StartedAt / ReadyAt keep phases aligned across reconnects; instant-ready eggs skip scanning. The timer
-    changes phases without rebuilding the body. Locked trim is muted; the original base / pad collision stays, other hardware does not collide.
-    Empty / locked labels show only status above the plate; the number stays on the model. All pod labels draw on top of the
+    changes phases without rebuilding the body. The original base / pad collision stays, other hardware does not collide.
+    Empty labels show only status above the plate; the number stays on the model. All pod labels draw on top of the
     world (AlwaysOnTop: plates and cheeks hid them from a high camera); they show only near the own pods. The plot strip's foundation edges
     use Plastic / Inlets to match the hatchery pavilion. [Studio view and archived design options](INCUBATOR_REDESIGN.md).
     Since 2026-11-17 every pod's open front and controls face the central path towards the barn (plot-local −X);
     the egg uses the same 90° turn, with all three pod centres unchanged.
   - **Hatchery panel (U5b; access updated 2026-11-17).** Open from the **🥚 Hatchery** farm HUD button beside Barn
-    within 45 horizontal studs of the own plot, or click/tap any own pod (growing, ready, empty or locked) from either side.
+    within 45 horizontal studs of the own plot, or click/tap any owned pod (growing, ready or empty) from either side.
     The HUD badge counts ready eggs; opening never hatches an egg. A generous 7 × 6.5 × 7 target and whole-pod hover outline
     support direct interaction. GUI and range checks block world clicks; other players' pods have no click target.
     The hatchery E prompt is removed. Visible farm buttons stay centered together; Barn keeps its existing availability.

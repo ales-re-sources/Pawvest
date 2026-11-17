@@ -243,7 +243,7 @@ function PlotView.new(slot: number, parent: Instance, options)
 	self.marked = {} -- [key] = true while pending
 	self.squares = 0 -- most field squares ever drawn (squares beyond the current field are cleared)
 	self.petMap = {} -- [square] = field pet of the current state (fieldPets)
-	self.labels = {} -- [incubator] = { gui, label, egg?, readyAt? }; own-nest info, including empty / locked
+	self.labels = {} -- [incubator] = { gui, label, egg?, readyAt? }; owned-nest info, including empty
 	self.incubatorNear = false
 	self.incubatorLights = {} -- occupied full-detail pods; update lights at ReadyAt without rebuilding the body
 	self.plants = {} -- full-detail plants, separate from soil and field pets
@@ -298,10 +298,11 @@ function PlotView:signature(key: string): string
 	local kind, number = string.match(key, "^(%a+)(%d+)$")
 	local n = tonumber(number) :: number
 	if state.free then
-		return if kind == "sq" or kind == "grow" or detail == "low" then "none" else detail .. "|free"
+		return if kind == "inc" or kind == "sq" or kind == "grow" or detail == "low" then "none" else detail .. "|free"
 	end
 	if kind == "inc" then
-		return table.concat({ detail, state.eggs[n] or "", tostring(n <= state.incCount), tostring(self.own), self.lang }, "|")
+		if n > state.incCount then return "none" end -- unpurchased pods have no model, labels or click target
+		return table.concat({ detail, state.eggs[n] or "", tostring(self.own), self.lang }, "|")
 	end
 	local field = state.field
 	if not field or n > CropConfig.MaxSquares or detail == "low" then
@@ -731,13 +732,12 @@ function PlotView:buildIncubator(model: Model, n: number)
 	local podCFrame = self:at(spot) * CFrame.Angles(0, math.pi / 2, 0) -- front (-Z) faces the central path (-X)
 	self.labels[n] = nil
 	self.incubatorLights[n] = nil
-	local eggId, readyAt, startedAt = parseEgg(not state.free and state.eggs[n] or nil)
+	local eggId, readyAt, startedAt = parseEgg(state.eggs[n])
 	local egg = eggId and PetConfig.Eggs[eggId]
-	local locked = not state.free and n > state.incCount
-	local status = if state.free then "free" elseif locked then "locked" elseif not eggId then "empty"
+	local status = if not eggId then "empty"
 		else GardenConfig.EggPhase(startedAt, readyAt or math.huge, self.tickNow or workspace:GetServerTimeNow())
 	local setState, animate = IncubatorLook.Build(model, podCFrame, self.detail, status, n)
-	if self.own and self.onHatchery and self.detail == "full" and not state.free then
+	if self.own and self.onHatchery and self.detail == "full" then
 		local target = part({
 			Name = "ClickTarget", Size = Vector3.new(7, 6.5, 7), CFrame = podCFrame * CFrame.new(0, 3.25, 0),
 			Transparency = 1, CanCollide = false, CanQuery = true,
@@ -769,7 +769,6 @@ function PlotView:buildIncubator(model: Model, n: number)
 		end)
 		click.Parent = target
 	end
-	if state.free then return end
 	if self.detail == "low" then
 		if eggId then
 			EggLook.Make(eggId, podCFrame * CFrame.new(0, 1.85, 0), "low").Parent = model
@@ -779,7 +778,7 @@ function PlotView:buildIncubator(model: Model, n: number)
 	local base = model:FindFirstChild("Base") :: BasePart
 	if not eggId then
 		if self.own and self.detail == "full" then
-			local label = info(base, UDim2.new(6, 0, 1, 0), 6.9, Locale.T(if locked then "garden.sign.incubator.locked" else "garden.sign.incubator.empty"))
+			local label = info(base, UDim2.new(6, 0, 1, 0), 6.9, Locale.T("garden.sign.incubator.empty"))
 			self.labels[n] = { gui = label.Parent, label = label }
 		end
 		return
