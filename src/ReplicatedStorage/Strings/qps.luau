@@ -512,7 +512,6 @@ return {
 	["barn.group.forecast"] = "[!! Fíělď föřěčášť ~~~~~~ !!]",
 	["hatchery.group.nests"] = "[!! Ýöůř ňěšťš ~~~~ !!]",
 	["hatchery.odds.rules"] = "[!! Háťčhíňg čöňťíňůěš whílě ýöů ářě áwáý. Čáňčěllíňg ďíščářďš ťhě ěgg wíťhöůť á řěfůňď. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!]",
-	["incubator.cancel"] = "[!! 🗑 ~~ !!]",
 	["incubator.cancelled"] = "[!! Ěgg ďíščářďěď. Ňö Čöíňš řěfůňďěď. ~~~~~~~~~~~~~ !!]",
 	["incubator.cancel.tapAgain"] = "[!! ÖK? ~~ !!]",
 	["hatchery.odds.chance"] = "[!! {chance}% ~~ !!]",

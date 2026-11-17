@@ -512,7 +512,6 @@ return {
 	["barn.group.forecast"] = "Předpověď pro pole",
 	["hatchery.group.nests"] = "Tvoje hnízda",
 	["hatchery.odds.rules"] = "Líhnutí pokračuje, i když nejsi ve hře. Zrušením vejce zahodíš bez vrácení mincí.",
-	["incubator.cancel"] = "🗑",
 	["incubator.cancelled"] = "Vejce je pryč. Mince se nevracejí.",
 	["incubator.cancel.tapAgain"] = "OK?",
 	["hatchery.odds.chance"] = "{chance} %",

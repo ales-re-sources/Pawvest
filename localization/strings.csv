@@ -597,7 +597,6 @@ field.card.petsGroup,"Soil dialog group-box legend enclosing help, resident and 
 barn.group.forecast,Barn group-box legend enclosing the field crow forecast,Field forecast,Předpověď pro pole,new,h41de9af5
 hatchery.group.nests,Hatchery group-box legend enclosing the owned and locked incubator nests,Your nests,Tvoje hnízda,new,hff15f2f2
 hatchery.odds.rules,"Egg info tip after the odds table; only offline hatching and no-refund cancellation, no hidden roll mechanics.",Hatching continues while you are away. Cancelling discards the egg without a refund.,"Líhnutí pokračuje, i když nejsi ve hře. Zrušením vejce zahodíš bez vrácení mincí.",new,h38f7fbdd
-incubator.cancel,"Tap-sized square trash button on growing nest; first tap arms only, orange OK? then confirms within 3 seconds.",🗑,🗑,new,h12952cf3
 incubator.cancelled,Success after egg discarded; no Coins or free egg credit returned.,Egg discarded. No Coins refunded.,Vejce je pryč. Mince se nevracejí.,new,ha7b975e9
 incubator.cancel.tapAgain,Orange armed trash button; second tap within shared ConfirmTap window discards egg. Short text must fit a square.,OK?,OK?,new,h6d41df1b
 hatchery.odds.chance,"Right-aligned percentage in each egg odds row; {chance} = localized decimal number, e.g. 12.7 / 12,7.",{chance}%,{chance} %,new,h56825d3d

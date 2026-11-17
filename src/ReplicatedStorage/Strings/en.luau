@@ -512,7 +512,6 @@ return {
 	["barn.group.forecast"] = "Field forecast",
 	["hatchery.group.nests"] = "Your nests",
 	["hatchery.odds.rules"] = "Hatching continues while you are away. Cancelling discards the egg without a refund.",
-	["incubator.cancel"] = "🗑",
 	["incubator.cancelled"] = "Egg discarded. No Coins refunded.",
 	["incubator.cancel.tapAgain"] = "OK?",
 	["hatchery.odds.chance"] = "{chance}%",

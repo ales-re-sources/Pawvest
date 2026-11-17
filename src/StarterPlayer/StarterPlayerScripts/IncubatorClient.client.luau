@@ -69,6 +69,34 @@ local function eggName(eggId: string): string
 	return if egg then Locale.EggName(egg) else eggId
 end
 
+-- Solid white silhouette, independent of emoji/font rendering; follows the brick's moving face.
+local function drawTrash(button: TextButton)
+	local icon = GardenUi.Create("Frame", {
+		Name = "TrashIcon", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromScale(0.44, 0.54), BackgroundTransparency = 1, ZIndex = 3,
+		Parent = button.Top.Face,
+	})
+	for _, rect in {
+		{ "Body", 0.24, 0.36, 0.52, 0.58 },
+		{ "Lid", 0.12, 0.2, 0.76, 0.08 },
+		{ "Handle", 0.38, 0.08, 0.24, 0.1 },
+	} do
+		local part = GardenUi.Create("Frame", {
+			Name = rect[1], Position = UDim2.fromScale(rect[2], rect[3]), Size = UDim2.fromScale(rect[4], rect[5]),
+			BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0, BorderSizePixel = 0, ZIndex = 3, Parent = icon,
+		})
+		if rect[1] == "Body" then
+			GardenUi.Create("UICorner", { CornerRadius = UDim.new(0.12, 0), Parent = part })
+			for _, x in { 0.3, 0.62 } do
+				GardenUi.Create("Frame", {
+					Name = "Slot", Position = UDim2.fromScale(x, 0.18), Size = UDim2.fromScale(0.08, 0.64),
+					BackgroundColor3 = button.BackgroundColor3, BorderSizePixel = 0, ZIndex = 4, Parent = part,
+				})
+			end
+		end
+	end
+end
+
 -- Odds as separate rows: rarity and aligned chance. Hatch duration stays out of this table.
 local function renderOdds(eggId: string, parent: Instance)
 	local section = GardenUi.Section("Odds", 4)
@@ -261,9 +289,12 @@ local function renderNests(state, tap: number)
 				table.insert(countdowns, { label = column:FindFirstChild("Info"), readyAt = entry.readyAt })
 				local key = "CancelEgg" .. entry.id
 				local armed = ConfirmTap.IsArmed(key)
-				local cancel = action(Locale.T(if armed then "incubator.cancel.tapAgain" else "incubator.cancel"),
+				local cancel = action(if armed then Locale.T("incubator.cancel.tapAgain") else "",
 					if armed then ConfirmTap.COLOR else StudStyle.Colors.Red)
 				cancel.Size = UDim2.fromOffset(tap, tap)
+				if not armed then
+					drawTrash(cancel)
+				end
 				cancel.Activated:Connect(function()
 					local current = incubators and incubators.eggs[tostring(n)]
 					if current and current.id == entry.id and current.readyAt > workspace:GetServerTimeNow() then
