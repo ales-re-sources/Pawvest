@@ -509,7 +509,8 @@ collecting and caring over obby runs.
     and a shadowless light; mid has a static phase strip,
     low stays simple. StartedAt / ReadyAt keep phases aligned across reconnects; instant-ready eggs skip scanning. The timer
     changes phases without rebuilding the body. Locked trim is muted; the original base / pad collision stays, other hardware does not collide.
-    Empty / locked labels show only status above the plate; the number stays on the model. The plot strip's foundation edges
+    Empty / locked labels show only status above the plate; the number stays on the model. All pod labels draw on top of the
+    world (AlwaysOnTop: plates and cheeks hid them from a high camera); they show only near the own pods. The plot strip's foundation edges
     use Plastic / Inlets to match the hatchery pavilion. [Studio view and archived design options](INCUBATOR_REDESIGN.md).
     Since 2026-11-17 every pod's open front and controls face the central path towards the barn (plot-local −X);
     the egg uses the same 90° turn, with all three pod centres unchanged.

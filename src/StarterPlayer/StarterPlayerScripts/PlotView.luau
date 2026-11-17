@@ -160,6 +160,7 @@ local function info(parentPart: BasePart, size: UDim2, offset: number, text: str
 	gui.Size = size
 	gui.StudsOffset = Vector3.new(0, offset, 0)
 	gui.MaxDistance = INFO_DISTANCE
+	gui.AlwaysOnTop = true -- own pods only and only when near; without it number plates and cheeks hid the text
 	gui.Enabled = false -- own-nest proximity enables it after construction
 	local label = textLabel(gui, { Text = text })
 	gui.Parent = parentPart
@@ -796,6 +797,7 @@ function PlotView:buildIncubator(model: Model, n: number)
 	gui.Size = UDim2.new(6, 0, 1.6, 0)
 	gui.StudsOffset = Vector3.new(0, 3.9, 0) -- status clears the rear number plate
 	gui.MaxDistance = INFO_DISTANCE + 30
+	gui.AlwaysOnTop = true -- as in info(): a nearer pod's plate or cheeks must not hide the status
 	gui.Enabled = false
 	local label = textLabel(gui, { Font = StudStyle.Font })
 	gui.Parent = shell.PrimaryPart
