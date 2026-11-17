@@ -42,7 +42,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | K1 | First-hour fixes (kid playtest 2026-11-01): Stage 5, G1 fallback, Double Jump world reward, hatch panel done; the rest is measured in M6a | partial | partial | – |
 | E0 | Economy model (its repricing replaced by EV) | ✔ | – | – |
 | EV | Engagement-first economy: EV1 model, EV2a numbers, EV2b talent bundles | EV1–EV2b, EV2e ✔; EV2c, EV2d, EV2f after 1.0 | EV2a, EV2b ✔ | – |
-| EV3 | Crop mastery: crop levels replace Renown, milestone quests, crop upgrades, first-hour obby payouts (1.0) | EV3a model revised 2026-11-17; numbers await sign-off | – | – |
+| EV3 | Crop mastery: crop levels replace Renown, milestone quests, crop upgrades, first-hour obby payouts (1.0) | EV3a signed off 2026-11-17; EV3b next | – | – |
 | E1.0, E1a–E1d | Client-drawn plots; crop field (every player's since FA), field pets, crops as pet food, size roll, upgrades, tools, market cart, 36 squares | ✔ | ✔ | – |
 | E2, E4-thin | Obby seeds (rare crops, meters, pouch, Scouting); crows and Pest-control guards | ✔ | ✔ | – |
 | OG | Offline crop growth 0.5 / 24 h | ✔ | pending | – |
@@ -70,7 +70,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 - **Not in 1.0:** obby time calibration (M6b; the obby stays as built), the comfort shop (D2: 1.0 ships without monetization),
   Sunshine (EV2c), World 4, hybrids (HX1 build).
 
-**Start here:** EV3a sign-off of the revised numbers (ECONOMY.md → open decision 4), then EV3b. Alongside: OG validation and the M6a friends test (step 0).
+**Start here:** EV3b scope (levels, unlocks, Renown out; EV3a signed off 2026-11-17): read the live profiles for the migration first. Alongside: OG validation and the M6a friends test (step 0).
 *Update this line whenever a milestone finishes.*
 
 **Road to 1.0** (in order; one milestone at a time unless marked "alongside"):
@@ -79,8 +79,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
    current build: real finish times, T1a / T1b on the Creator Dashboard, a first retention baseline and the live checks under "Open items"
    tagged [1.0]. Unlisted needs no TH.
 1. **EV3 — crop mastery** (section below; player-facing name "Mastery ★"): sign-off → EV3b (levels, unlocks, Renown out) → EV3c (crop
-   upgrade points). *State:* direction decided 2026-11-17 (mastery by plants grown, 3 levels, price tiers); the revised EV3a model
-   awaits sign-off of its numbers.
+   upgrade points). *State:* EV3a numbers signed off 2026-11-17 (mastery by plants grown, 3 levels, price tiers, smaller Double Jump 2 /
+   Dash bundles); EV3b is next.
 2. **ST — rotating seed stall** (section below): model, then build. *Needs* EV3b (★ decides which crops can appear).
 3. **SH — Harvest Hall and plot likes** (section below). *Needs* only the size records (built); best after EV3c, whose Size line changes
    sizes.
@@ -125,22 +125,24 @@ Still to build after 1.0, each scoped when it starts: **EV2c** Sunshine (repeat-
 finish against 10 h for level 2), **EV2f** field pets (Tending as growth speed, guards make their squares
 safe, crows scale with the field: a mechanics change the model assumes). Trees, requests and the streak come with E5 / the drops.
 
-### EV3 — Crop mastery replaces Renown; milestone quests; crop upgrades; first-hour obby payouts (revised 2026-11-17; numbers await sign-off)
-Why, direction and rules: [ECONOMY.md](ECONOMY.md) → "EV3 — design draft" and its revision (2026-11-17); findings and what to sign off:
+### EV3 — Crop mastery replaces Renown; milestone quests; crop upgrades; first-hour obby payouts (revised 2026-11-17; EV3a signed off)
+Why, direction and rules: [ECONOMY.md](ECONOMY.md) → "EV3 — design draft" and its revision (2026-11-17); findings and what was signed off:
 ECONOMY.md → Findings (EV3a, EV3 revision) and open decision 4. *Revision (the user, 2026-11-17):* mastery = plants grown of that crop,
 3 levels at 25 / 75 / 200 plants for every crop (one upgrade point each, one per line: a ★3 crop is fully upgraded); the next crop opens
 at 12–25 plants of the previous one; 16 crops in 6 price tiers, the third quest on Sweet potato,
-quests handed in piece by piece without expiry, rested mastery after a day away.
+quests handed in piece by piece without expiry, rested mastery after a day away (silent: never shown to the player).
 
 **EV3a — model (no game code).** Built 2026-11-14, revised 2026-11-17: `economy_ev.py` `CAND` carries the revision (`tier_of`,
-`mastery: "count"`, `m_levels`, `quest_partial`, `req_auto`, `rest_per_day`; the draft via `--set`, seeds via `--seed`); `evcheck` 12–14 / 18
-on seeds 1–4 (EV0 fails until EV3b; G4 on every seed); `economy.py proposal` prints the EV3 tables. Acceptance: the user signs off the tier prices, unlock counts,
-point size, quests and the near-misses (ECONOMY.md → open decision 4).
+`mastery: "count"`, `m_levels`, `quest_partial`, `req_auto`, `rest_per_day`, smaller Double Jump 2 / Dash bundles for G4; the draft via
+`--set`, seeds via `--seed`); `evcheck` 12–15 / 18 on seeds 1–4 (EV0 fails until EV3b; G4 passes on 3 of 4); `economy.py proposal`
+prints the EV3 tables. **Signed off (the user, 2026-11-17):** tier prices, unlock counts, talent bundles, point size, quests, the
+silent rested rate, obby payouts; the near-misses are accepted for now (ECONOMY.md → open decision 4).
 
 **EV3b — levels, unlocks, Renown out (scope after EV3a's review).** Fixes the first hour.
 1. **Config:** `CropConfig` crops get the tier prices (`sale` / `seed`), their unlock count (`LevelCounts` 25 / 75 / 200 shared) and, for milestones, `quest = { [cropId] = n }`
    (Corn, Pumpkin, Sweet potato); the `renown` gates of `Expansions`,
-   `Upgrades`, `Tools` go (prices stay); `RenownK` / `RenownP` / `points` go; `StageConfig` payouts + seed packs.
+   `Upgrades`, `Tools` go (prices stay); `RenownK` / `RenownP` / `points` go; `StageConfig` payouts + seed packs; `TalentConfig`
+   Double Jump 2 / Dash 1 / Dash 2 get the smaller bundles and prices (ECONOMY.md → Findings → G4 probe).
 2. **Server:** `Garden.Crops[cropId] = { N }` (plants grown) and `Garden.Unlocked` (IdSet; stored ids never reused); a harvest adds its
    plants (double while `Garden.Rested` lasts, filled by days away past the first) and unlocks the next crop at its unlock count (answer `{ …, cropLevel,
    levelUp, unlocked? }`); `GardenRemotes.Quest(cropId, cropIdGiven, n)` (from the Goals panel or the seed stall) hands in crops toward the open milestone
@@ -298,6 +300,10 @@ take a 2×2 block, its footprint from the blended `bulk` gene. Next: HX1.
 purchase / free placement, shared rarity timers (Common / Uncommon 5 m, Rare 1 h, Epic / Legendary 4 h); pet hidden until hatch,
 Square trash uses ConfirmTap (orange OK? → second tap, discard without refund); aligned odds rows and short egg info tips. Existing eggs keep their deadlines; first free pet stays instant. Physical touch and
 live validation remain open.
+
+**Incubator arch body** (2026-11-17; GDD §7.6). Desktop Studio-validated: the rear heater and side tiers no longer float;
+side walls step up to a headboard and a cream / steel arch over the egg's back half carries the plate (user picked C Arch of
+three options). Full / mid / low body Parts 59 / 13 / 8; scan ring and hearts clear the body; physical touch / live open.
 
 **Incubator scan and warmth** (2026-11-17; GDD §7.2, §7.6). Desktop Studio-validated: first 30 s of the existing timer
 scan with a cyan contour ring (rises / falls on the egg, circling head and trail) and Scanning… label; then a soft pulsing amber nest glow / countdown with ember heater / heat lamp, rising sparks and brick hearts; ready stays green. Offline /

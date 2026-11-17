@@ -42,7 +42,7 @@ drops. Something is always growing, hatching or nearly affordable ("one more thi
 8. **No regret (for M7):** after launch prices never go down; nothing sold is later handed out free in bulk; a capacity product never exceeds
    the earnable maximum. Free play is scarce enough that a comfort purchase is worth 1.2–1.5× (G8), never more.
 
-## EV checks (`evcheck`; on the EV3 revision `CAND` (2026-11-17) 12–14 of 18 pass on seeds 1–4, EV0 failing by design until EV3b moves the crop prices into the configs; EV0 compares the configs, talent bundles included since EV2b)
+## EV checks (`evcheck`; on the EV3 revision `CAND` (2026-11-17, smaller Double Jump 2 / Dash bundles) 12–15 of 18 pass on seeds 1–4, EV0 failing by design until EV3b moves the crop prices into the configs; EV0 compares the configs, talent bundles included since EV2b)
 Bands are provisional, for the user to confirm with the proposal. Archetypes: Obby main (7:00 / 12:30 / 18:00, 2 h obby), Casual (8:00 / 19:00,
 45 min obby), Garden main (7 / 12 / 17 / 21, 15 min obby), Binge (one 6 h day a week), Spender (Casual's schedule, paid comforts).
 
@@ -169,7 +169,7 @@ Obby main 36 M, R150; Garden main 29 M, R138; Spender 51 M. Obby Coins are 0 % o
   47) but those are 0.02–0.18 % of the total Coin price; the rest (550 k → 750 M) is a day or more each. The model's longer horizon leans on
   parts not built (trees, requests, Sunshine, placeholder eggs, reserved sinks); in the game a 24 h crop and logging off is the best play.
 
-## EV3 — design draft (2026-11-14, rewritten the same day after the user's review; awaits sign-off; build parts: ROADMAP → EV3)
+## EV3 — design draft (2026-11-14, rewritten the same day after the user's review; signed off with its revision 2026-11-17; build parts: ROADMAP → EV3)
 **Why (the user, 2026-11-14).** Two 12-year-old players did not know what Renown is; a concept that needs explaining is out. Renown also
 rewards spam-clicking Potatoes, old crops have no use once a newer one opens, the late game is a list of "+1 square for 4 M", and early
 obby first clears outpay the farm they should feed (findings above).
@@ -294,6 +294,17 @@ obby first clears outpay the farm they should feed (findings above).
   rest 21.5, draft 26.7) and Pineapple on day 42.5 (none in 60 days before); daily players are unchanged; 1.0 per day (cap 5) adds
   nothing more.
 - **Tracked requests** (bonus 0.6 × the sale, crops kept) leave every other check where it was; the bonus size is a first guess.
+- **G4 probe (2026-11-17, the user: "fewer plants, easier to obtain"):** two separate bottlenecks. Fewer crops (20 → 12) helped Casual,
+  and lower Coin prices (factor 1.5 → 1.0) helped Obby main; removing the rare crop barely helped. No variant passes on all four seeds:
+  the miss moves between seeds (1.0–1.4 d against Obby main's 1-day limit). **New candidate (in `CAND`):** Double Jump 2 10 000 + 12
+  Cucumber + 1 Frost grape (was 16 000 + 20), Dash 1 8 000 + 12 Corn (12 000 + 20), Dash 2 19 000 + 12 Pepper + 1 Glow mushroom
+  (29 000 + 20). G4 passes on seeds 1, 3, 4 (seed 2: Obby main Double Jump 2 1.4 d after Stage 11); Casual buys Dash 1 / Double Jump 2 /
+  Dash 2 on day 2.8 / 5.8 / 7.8 (was 6.8 / 7.8 / 10.8, seed 1); obby-only Coins to World 2 = 37 % of the tree (limit 40). Passes 14 / 12 /
+  15 / 12 on seeds 1–4 (was 14 / 14 / 13 / 12). B (Tending pays) now fails on seeds 1, 3, 4 with one archetype at 0.94–0.97×: a
+  two-run comparison that flips with purchase timing (it flipped in most probe variants), so read as noise. G8 on seed 2: Spender's
+  Dash 2 headroom 1.08× (cheaper Dash 2).
+- **Rested mastery works (2026-11-17 re-run):** the weekly player (Binge) gets Sweet potato on day 14.7–21.4 with it, 21.4–28.4 without, and
+  Pineapple on day 42.5–49.5, never within 60 days without. The earlier "14.5" was seed 3's number. Daily players are unchanged.
 
 EV2e (2026-11-17): the game now stores a pet kind at purchase / free placement, uses the approved rarity timers and
 uses shared time tiers to hide exact rarity and keeps the chosen pet server-only until hatch. Cancellation uses a small trash button
@@ -314,10 +325,13 @@ of the game's instant first pet.
 3. The real landmark / estate sinks (E6 / E7) that replace the reserved ladder.
 4. **EV3** ("EV3 — design draft" and its revision above, build parts in ROADMAP → EV3): *direction decided (the user, 2026-11-17):*
    mastery by plants grown, three levels with one point per line, price tiers, quests piece by piece without expiry, rested mastery,
-   tracked requests (E5); crop XP = time, 15 stars and the old G11 are out. *To sign off:* the tier table and its prices (Findings →
-   EV3 revision), the unlock counts (12–25 plants of the previous crop; level counts 25 / 75 / 200 decided 2026-11-17), G4 (fails on every seed), the point
-   size (+11 % per line), the Sweet potato quest (5 Blueberry + 4 Eggplant), the rested rate (0.5 per extra day, cap 3), the obby
-   payouts (rule 6, unchanged), and the near-misses listed in the findings (accept, or tune in the ST model, which re-runs the chain).
+   tracked requests (E5); crop XP = time, 15 stars and the old G11 are out. **Rested mastery is silent** (the user, 2026-11-17): no
+   text, bar or icon tells the player; their plants simply count double after a long absence. G4: make the bundles easier (the user,
+   2026-11-17); the candidate is in `CAND` (Findings → G4 probe). **Signed off (the user, 2026-11-17):** the tier table and its prices (Findings →
+   EV3 revision), the unlock counts (12–24 plants of the previous crop; level counts 25 / 75 / 200 decided 2026-11-17), the new Double
+   Jump 2 / Dash bundles, the point size (+11 % per line), the Sweet potato quest (5 Blueberry + 4 Eggplant), the rested rate (0.5 per
+   extra day, cap 3), the obby payouts (rule 6, unchanged), and the near-misses listed in the findings (accept, or tune in the ST model,
+   which re-runs the chain): the near-misses are accepted for now, to revisit in the ST model.
 5. **A flatter curve** (shorter grow-time span, value steps ~1.5–2× per crop, a slower square ladder): probe in the model after EV3a,
    before M7 (after it prices never go down).
 6. **Going public with a ~5-day horizon:** *resolved (the user, 2026-11-17):* the horizon is not a gate. 1.0 is gated by crop mastery
