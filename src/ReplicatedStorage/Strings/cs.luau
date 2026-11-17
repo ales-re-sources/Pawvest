@@ -199,7 +199,6 @@ return {
 	["hatchery.nest.empty"] = "Prázdný: vyber vejce níž",
 	["hatchery.unlock"] = "Odemknout · 💰 {count}",
 	["hatchery.eggs"] = "Vejce ke koupi",
-	["hatchery.eggs.hint"] = "Vejce půjde do inkubátoru {n}",
 	["hatchery.busy"] = "Ve všech inkubátorech je vejce. Vylíhni jedno nebo zruš líhnutí a uvolni místo.",
 	["hatchery.egg.time"] = "⏱ {time}–{max}",
 	["hatchery.egg.buy"] = "💰 {count}",

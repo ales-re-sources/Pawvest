@@ -199,7 +199,6 @@ return {
 	["hatchery.nest.empty"] = "[!! Ěmpťý: píčk áň ěgg bělöw ~~~~~~~~~~ !!]",
 	["hatchery.unlock"] = "[!! Ůňlöčk · 💰 {count} ~~~~ !!]",
 	["hatchery.eggs"] = "[!! Ěggš ťö bůý ~~~~ !!]",
-	["hatchery.eggs.hint"] = "[!! Ťhě ěgg göěš íňťö íňčůbáťöř {n} ~~~~~~~~~~~ !!]",
 	["hatchery.busy"] = "[!! Ěvěřý íňčůbáťöř hölďš áň ěgg. Háťčh öňě öř čáňčěl á háťčh ťö mákě řööm. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!]",
 	["hatchery.egg.time"] = "[!! ⏱ {time}–{max} ~~ !!]",
 	["hatchery.egg.buy"] = "[!! 💰 {count} ~~ !!]",

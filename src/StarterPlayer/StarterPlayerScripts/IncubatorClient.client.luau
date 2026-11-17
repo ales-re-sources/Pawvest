@@ -69,7 +69,7 @@ local function eggName(eggId: string): string
 	return if egg then Locale.EggName(egg) else eggId
 end
 
--- Odds as separate rows: rarity, aligned chance, aligned hatch duration.
+-- Odds as separate rows: rarity and aligned chance. Hatch duration stays out of this table.
 local function renderOdds(eggId: string, parent: Instance)
 	local section = GardenUi.Section("Odds", 4)
 	section.Parent = parent
@@ -87,18 +87,13 @@ local function renderOdds(eggId: string, parent: Instance)
 				}),
 			})
 			GardenUi.Paragraph("Rarity", {
-				LayoutOrder = 1, Size = UDim2.new(0.46, -GAP, 0, 0), TextSize = 14,
+				LayoutOrder = 1, Size = UDim2.new(0.7, -GAP, 0, 0), TextSize = 14,
 				TextColor3 = rarity.color, Text = Locale.RarityName(rarity.id), Parent = row,
 			})
 			GardenUi.Paragraph("Chance", {
-				LayoutOrder = 2, Size = UDim2.new(0.22, 0, 0, 0), TextSize = 14, Font = StudStyle.Font,
+				LayoutOrder = 2, Size = UDim2.new(0.3, 0, 0, 0), TextSize = 14, Font = StudStyle.Font,
 				TextXAlignment = Enum.TextXAlignment.Right,
 				Text = Locale.T("hatchery.odds.chance", { chance = Locale.Decimal(PetClient.Percent(weight)) }), Parent = row,
-			})
-			GardenUi.Paragraph("Time", {
-				LayoutOrder = 3, Size = UDim2.new(0.32, -GAP, 0, 0), TextSize = 14,
-				TextXAlignment = Enum.TextXAlignment.Right, TextColor3 = GardenUi.COLOR_DIM,
-				Text = GardenUi.GrowTime(PetConfig.HatchSeconds[rarity.id]), Parent = row,
 			})
 		end
 	end
@@ -316,8 +311,6 @@ local function renderEggs(state, tap: number)
 		GardenUi.Paragraph("Busy", { LayoutOrder = 2, Text = Locale.T("hatchery.busy") }).Parent = eggsSection
 		return
 	end
-	GardenUi.Paragraph("Hint", { LayoutOrder = 2, TextSize = 13, TextColor3 = GardenUi.COLOR_DIM, Text = Locale.T("hatchery.eggs.hint", { n = target }) }).Parent =
-		eggsSection
 	local cards = GardenUi.Create("Frame", {
 		Name = "Cards",
 		LayoutOrder = 3,

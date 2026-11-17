@@ -240,7 +240,6 @@ hatchery.prompt.object,"Object text of that prompt: the hatchery (nominative, no
 hatchery.nest.empty,"Hatchery panel, incubator row: info line of an owned incubator without an egg (the egg cards are below it)",Empty: pick an egg below,Prázdný: vyber vejce níž,new,h7b7f8db2
 hatchery.unlock,"Hatchery panel, button on the row of the next incubator to buy (132 px brick, may wrap); {count} = price in Coins",Unlock · 💰 {count},Odemknout · 💰 {count},new,h6f96b259
 hatchery.eggs,"Hatchery group-box legend: egg catalogue and Buy actions, separate from nests already working",Eggs to buy,Vejce ke koupi,new,hc14c3641
-hatchery.eggs.hint,"Hatchery panel, small line under the Eggs heading; {n} = the incubator the egg will go into (the first empty one)",The egg goes into incubator {n},Vejce půjde do inkubátoru {n},new,h7727c321
 hatchery.busy,Hatchery catalogue when all nests are occupied,Every incubator holds an egg. Hatch one or cancel a hatch to make room.,Ve všech inkubátorech je vejce. Vylíhni jedno nebo zruš líhnutí a uvolni místo.,new,he734fad8
 hatchery.egg.time,"Egg card before purchase; {time} = shortest possible wait, {max} = longest. Both localized durations.",⏱ {time}–{max},⏱ {time}–{max},new,h1ddd4321
 hatchery.egg.buy,"Hatchery panel, egg card: the buy button (half the panel minus the ? button); {count} = price in Coins",💰 {count},💰 {count},new,h5b33c8c5

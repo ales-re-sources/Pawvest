@@ -509,7 +509,7 @@ collecting and caring over obby runs.
     the next one's Unlock brick with its
     price (two taps over 1 000 Coins), "unlock incubator n first" for the later one. While an owned incubator is empty, **egg cards**
     show each egg (drawn in its colour, name, possible hatch-time range, a price brick; Golden takes two taps) and a **?** brick that shows its odds,
-    a readable table of rarity / right-aligned percentage / hatch time and only the offline-hatching / no-refund tip;
+    a readable table of rarity / right-aligned percentage and only the offline-hatching / no-refund tip;
     hidden roll mechanics stay out of the player-facing explanation;
     a card starts the egg in the first empty incubator. Hatching shows a **reveal** in the panel: the pet's portrait, its kind in the
     rarity colour and the rarity, where it went (with you / the Pets panel), then the traits it was born with as chips, one every

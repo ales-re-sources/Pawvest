@@ -199,7 +199,6 @@ return {
 	["hatchery.nest.empty"] = "Empty: pick an egg below",
 	["hatchery.unlock"] = "Unlock · 💰 {count}",
 	["hatchery.eggs"] = "Eggs to buy",
-	["hatchery.eggs.hint"] = "The egg goes into incubator {n}",
 	["hatchery.busy"] = "Every incubator holds an egg. Hatch one or cancel a hatch to make room.",
 	["hatchery.egg.time"] = "⏱ {time}–{max}",
 	["hatchery.egg.buy"] = "💰 {count}",
