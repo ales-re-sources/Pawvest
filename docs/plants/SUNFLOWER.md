@@ -71,8 +71,15 @@ the square and a replant starts young; the 18 h crop is sampled every 30 s (the 
 
 Desktop CPU (2026-11-18, `tools/plant_perf_probe.luau` with `CROP_ID = "Sunflower"`, growing at 45%): one plot 13,081 objects,
 frame p95 18.1 ms, build work max 6.3 ms (the 6 ms budget); 24 plots (3 full / 4 mid / 17 low) 43,644 objects, frame p95 18.1 ms,
-work p95 0.54 ms / max 6.5 ms, posing 14 ms per second. Open: real phone (Admin → 🧪 Field test, [PLANT_GROWTH](../PLANT_GROWTH.md#phone-and-performance-test)),
-second client.
+work p95 0.54 ms / max 6.5 ms, posing 14 ms per second.
+
+Real phone (Ales, 2026-11-18, published build, Admin → 🧪 Field test, [PLANT_GROWTH](../PLANT_GROWTH.md#phone-and-performance-test)):
+**passed.** Sunflower in all 12 ring-1 plots: a stutter when the test switches on, then a steady 60 FPS standing on the own plot.
+Stress case, running round the ring through every field: 35-40 FPS (Garlic, the same run: above 50; elsewhere 60), one 80 ms
+frame taken as an outlier. The drop is the full-detail build / teardown as plots cross the 60-stud line (one plant is one build
+step: about 330 instances against Garlic's ~100), not steady drawing. Accepted: 12 full Sunflower fields are far beyond a real
+server. In reserve if real servers show it: a shorter full-detail distance for neighbouring plots on phones, or a lighter head.
+Open: second client.
 
 ## Earlier natural refinements of A
 
