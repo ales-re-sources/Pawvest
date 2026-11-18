@@ -2,9 +2,11 @@
 -- Workspace.GardenView (the server keeps only data). Starts when first required (IncubatorClient, FieldClient, HintSources).
 --   * owned plots: GardenRemotes.Plot (GardenPlotFeed), one state per player; RequestPlots on start;
 --   * free slots 1..GardenConfig.ShownFreeSlots nobody holds: an empty "Free plot";
---   * Studio test hook: Workspace attribute GardenViewFake = N fills slots 1..N nobody holds with synthetic full plots, and
---     GardenViewField = open squares (0 = none, at most CropConfig.MaxSquares) adds a stand-in field to every plot (budget checks,
---     ROADMAP E1a1 check 5).
+--   * Test hook (Studio, and admins in a live game: AdminFieldTest): Workspace attribute GardenViewFake = N fills slots 1..N
+--     nobody holds with synthetic full plots, and GardenViewField = open squares (0 = none, at most CropConfig.MaxSquares) adds a
+--     stand-in field to every plot, the own one included (budget checks, ROADMAP E1a1 check 5). GardenViewCrop = a registered
+--     crop id fills those squares with that crop, ripe, with growth art (CG perf / phone checks); unset: a random mix of the
+--     first six crops at random stages. Drawing only: no remotes, the real field stays as it is.
 -- Detail by horizontal distance from the character to the plot centre: full ≤ 60 studs, mid ≤ 120 (pets as blocks), low ≤ 300,
 -- nothing beyond (10 studs of hysteresis). Builds run on Heartbeat within BUDGET seconds per frame, the own plot first, then the
 -- nearest. The own plot's pods click/tap to call OnHatchery; its barn prompt calls OnBarn (U5a;
@@ -36,6 +38,7 @@ local TICK_INTERVAL = 0.5
 
 local player = Players.LocalPlayer
 local studio = RunService:IsStudio()
+local tester = studio or require(ReplicatedStorage:WaitForChild("AdminConfig")).IsAdmin(player.UserId) -- the test hook
 
 local folder = Instance.new("Folder")
 folder.Name = "GardenView"
@@ -163,12 +166,16 @@ for kind in PetConfig.Kinds do
 end
 table.sort(KINDS)
 
--- a field with its first `squares` squares open (CropConfig's shape; the rest locked)
-local function syntheticField(slot: number, squares: number)
+-- a field with its first `squares` squares open (CropConfig's shape; the rest locked); `crop` (registered) fills them ripe
+local function syntheticField(slot: number, squares: number, crop)
 	local crops = table.create(CropConfig.MaxSquares)
+	local plants = if crop then {} else nil
 	for i = 1, CropConfig.MaxSquares do
 		if i > squares then
 			crops[i] = "#0"
+		elseif crop then
+			crops[i] = crop.letter .. "3"
+			plants[tostring(i)] = { n = slot * 100 + i, size = 1, startAt = 0, readyAt = 0 } -- 0 / 0: ripe (PlotView)
 		else
 			local r = noise(slot, i)
 			crops[i] = string.char(string.byte("a") + math.floor(r * 6)) .. tostring(math.floor(noise(i, slot) * 4))
@@ -179,7 +186,7 @@ local function syntheticField(slot: number, squares: number)
 		local kind = KINDS[(slot + i) % #KINDS + 1]
 		table.insert(pets, string.format("%s:%d:f%d_s%d:%d:%d", kind, 1 + math.floor(noise(slot, i + 90) * 20), slot, i, i, 1 + math.floor(noise(i, slot + 7) * 9)))
 	end
-	return { crops = table.concat(crops), squares = squares, pets = pets }
+	return { crops = table.concat(crops), squares = squares, pets = pets, plants = plants, testCrop = crop and crop.id }
 end
 
 local function syntheticPlot(slot: number)
@@ -193,6 +200,7 @@ end
 
 local FREE = table.freeze({ free = true })
 local fakeCache = {} -- [slot] = synthetic state (kept so countdowns do not restart)
+local fieldCache = {} -- [slot] = synthetic field (kept so a refresh does not rebuild the plants)
 
 -- state of every slot that is drawn now: [slot] = state
 local function states()
@@ -202,7 +210,7 @@ local function states()
 			result[state.slot] = state
 		end
 	end
-	if studio then
+	if tester then
 		local fake = math.min(tonumber(workspace:GetAttribute("GardenViewFake")) or 0, GardenConfig.PlotSlots)
 		for slot = 1, fake do
 			if not result[slot] then
@@ -211,10 +219,14 @@ local function states()
 			end
 		end
 		local squares = math.clamp(tonumber(workspace:GetAttribute("GardenViewField")) or 0, 0, CropConfig.MaxSquares)
+		local crop = CropConfig.ById[workspace:GetAttribute("GardenViewCrop") or ""]
+		crop = if crop and PlantGrowth.Supports(crop.id) then crop else nil
 		for slot, state in result do
-			if squares > 0 and not (state.field and state.field.squares == squares) then
+			local field = state.field
+			if squares > 0 and not (field and field.squares == squares and field.testCrop == (crop and crop.id)) then
 				state = table.clone(state)
-				state.field = syntheticField(slot, squares)
+				fieldCache[slot] = fieldCache[slot] or syntheticField(slot, squares, crop) -- one table: SetState runs once
+				state.field = fieldCache[slot]
 				result[slot] = state
 			end
 		end
@@ -437,10 +449,10 @@ local function relike() -- SH: the Like prompts follow the plots liked today
 end
 player:GetAttributeChangedSignal("LikedToday"):Connect(relike)
 player:GetAttributeChangedSignal("LikedDay"):Connect(relike)
-if studio then
-	for _, name in { "GardenViewFake", "GardenViewField" } do
+if tester then
+	for _, name in { "GardenViewFake", "GardenViewField", "GardenViewCrop" } do
 		workspace:GetAttributeChangedSignal(name):Connect(function()
-			fakeCache = {}
+			fakeCache, fieldCache = {}, {}
 			refresh()
 		end)
 	end

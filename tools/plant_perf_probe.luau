@@ -13,7 +13,7 @@ local baseline
 for _, candidate in CropConfig.Crops do
 	if not Registry.Supports(candidate.id) then baseline = candidate; break end
 end
-assert(baseline, "Probe needs an unregistered one-block crop baseline")
+-- Since CG20c every crop has art: no one-block baseline is left, so only the animated runs are measured.
 local Growth = require(game.ReplicatedStorage[CROP_ID .. "Plant"])
 local GardenConfig = require(game.ReplicatedStorage.GardenConfig)
 local root = Instance.new("Folder")
@@ -84,7 +84,7 @@ local function measure(count, animated)
 	until os.clock()-start>=4
 	local elapsed=os.clock()-start
 	local instances=#root:GetDescendants()
-	local result={plots=count,crop=CROP_ID,baselineCrop=baseline.id,animated=animated,tiers=tiers,instances=instances,
+	local result={plots=count,crop=CROP_ID,baselineCrop=baseline and baseline.id,animated=animated,tiers=tiers,instances=instances,
 		poseCalls=poseCalls,poseMsPerSecond=poseSeconds*1000/elapsed,
 		workP95=percentile(workMs,.95),workMax=workMs[#workMs],
 		frameP95=percentile(frameMs,.95)}
@@ -94,7 +94,7 @@ end
 local ok,results=xpcall(function()
 	local out={}
 	for _,count in {1,24} do
-		table.insert(out,measure(count,false))
+		if baseline then table.insert(out,measure(count,false)) end
 		table.insert(out,measure(count,true))
 	end
 	return out

@@ -29,8 +29,21 @@ a real phone; *2nd* = a second client. Live validation is open for all.
 | Blueberry | [Round highbush with ten berry bunches over the whole bush](plants/BLUEBERRY.md) | 134 | CG17, approved 2026-11-12 | perf (4 824), phone, 2nd |
 | Sweet potato | [Trained fan with broad heart leaves and reddish root shoulders](plants/SWEET_POTATO.md) | 169 | CG18, approved 2026-11-12 | perf (6 084), phone, 2nd |
 | Giant melon | [Arching vine, lobed leaves, big striped green melon](plants/GIANT_MELON.md) | 97 | CG19, approved 2026-11-12 | perf (3 492), phone, 2nd |
-| Sunflower | [A1 spiral foliage + H2 layered head](plants/SUNFLOWER.md) | 192 (+141 meshes) | CG20c registered 2026-11-18; art approved 2026-11-12 | perf (6 912 + 5 076 meshes), phone, 2nd |
+| Sunflower | [A1 spiral foliage + H2 layered head](plants/SUNFLOWER.md) | 192 (+141 meshes) | CG20c registered 2026-11-18; art approved 2026-11-12; desktop CPU done | phone (Field test), 2nd |
 | Pineapple | [Tall stalk lifting a diamond-eyed fruit over a leaf rosette](plants/PINEAPPLE.md) | 155 | CG21, approved 2026-11-12 | perf (5 580), phone, 2nd |
+
+## Phone and performance test
+
+**Admin → 🧪 Field test** (`AdminFieldTest`, admins only, works in a published game) fills the own plot and every free plot of
+ring 1 (12, a full server) with 36 ripe plants of one crop with growth art. Each tap moves on: off → Sunflower (heaviest, 192
+Parts + 141 meshes) → Garlic (lightest, 54 Parts) → off. A readout at the top shows frames in the last second, the slowest frame
+of the last 5 s and the objects GardenView draws. Drawing only: no remotes, no saved data; the real field's rings and taps keep
+working on the real crops underneath.
+
+Phone check: publish, join on the phone with an admin account, stand on the own plot, then compare Sunflower with Garlic (and
+off) at the same spot: standing still, turning the camera across the field, and walking in from the hub (the full-detail build
+hitch shows as the slowest frame). Desktop Studio reference (2026-11-18, own plot 1): Sunflower 61 FPS, slowest 19-24 ms, 45 943
+objects (three fields at full detail, the rest proxies); Garlic 60 FPS, 20 ms, 12 067 objects.
 
 ## Studio growth player
 

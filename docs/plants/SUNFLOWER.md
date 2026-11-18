@@ -67,8 +67,12 @@ the production `PlotView` with disposable public-feed fixtures and no remotes or
 server-time correction keeps the same plant, soil and pet; the exact ripe moment is not missed and a backward correction clears the
 ripe state; the soil selection ray is not blocked; full → mid (12 / 45 / 45) → low → full keeps the seed's identity; harvest clears
 the square and a replant starts young; the 18 h crop is sampled every 30 s (the cap). No harvest effect. Playtest boot clean
-(server and client). Open: performance (full field and the 24-plot route; the heaviest crop at 6,912 Parts + 5,076 meshes per
-full field), real phone, second client.
+(server and client).
+
+Desktop CPU (2026-11-18, `tools/plant_perf_probe.luau` with `CROP_ID = "Sunflower"`, growing at 45%): one plot 13,081 objects,
+frame p95 18.1 ms, build work max 6.3 ms (the 6 ms budget); 24 plots (3 full / 4 mid / 17 low) 43,644 objects, frame p95 18.1 ms,
+work p95 0.54 ms / max 6.5 ms, posing 14 ms per second. Open: real phone (Admin → 🧪 Field test, [PLANT_GROWTH](../PLANT_GROWTH.md#phone-and-performance-test)),
+second client.
 
 ## Earlier natural refinements of A
 
