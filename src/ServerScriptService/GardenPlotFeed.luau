@@ -3,8 +3,8 @@
 -- GardenRemotes.Plot (server → client): (userId, state) after every publish of that player's garden (only when the state
 -- changed) and (userId, nil) when the player leaves. GardenRemotes.RequestPlots (client → server, no arguments) re-sends every
 -- plot to the caller (a client that was still loading missed the broadcasts); 1 s cooldown.
--- State: { slot, name, incCount, eggs = { [1..3] = "EggId:readyAt:startedAt" or "" }, field = GardenField.PlotField or nil } (readyAt in
--- server os.time(), for the countdowns only).
+-- State: { slot, name, incCount, eggs = { [1..3] = "EggId:readyAt:startedAt" or "" }, field = GardenField.PlotField or nil,
+-- likes, ribbons } (readyAt in server os.time(), for the countdowns only; likes and ribbons: the plot sign, SH).
 
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
@@ -16,6 +16,8 @@ local PlayerProfile = require(ServerScriptService.PlayerProfile)
 local GardenPlots = require(ServerScriptService.GardenPlots)
 local GardenService = require(ServerScriptService.GardenService)
 local GardenField = require(ServerScriptService.GardenField)
+local GardenLikes = require(ServerScriptService.GardenLikes)
+local HarvestHall = require(ServerScriptService.HarvestHall)
 local RateLimit = require(ServerScriptService.RateLimit)
 
 local allowRequest = RateLimit.new(1) -- seconds per player
@@ -46,6 +48,8 @@ local function plotState(player: Player)
 		incCount = garden.IncubatorCount or 1,
 		eggs = eggs,
 		field = GardenField.PlotField(player),
+		likes = GardenLikes.Count(garden), -- SH: the plot sign
+		ribbons = HarvestHall.RibbonCount(garden),
 	}
 end
 

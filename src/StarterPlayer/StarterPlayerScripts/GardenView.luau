@@ -22,6 +22,8 @@ local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local PlantGrowth = require(ReplicatedStorage:WaitForChild("PlantGrowth"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
+local IdSet = require(ReplicatedStorage:WaitForChild("IdSet"))
+local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
 local PlotView = require(script.Parent:WaitForChild("PlotView"))
 
 local FULL_DISTANCE = 60
@@ -305,6 +307,13 @@ local function refresh()
 							handlers.barn()
 						end
 					end,
+					onLike = function(likedSlot: number) -- SH: GardenLikes answers on GardenRemotes.Result ("Like")
+						local gardenRemotes = ReplicatedStorage:FindFirstChild("GardenRemotes")
+						local like = gardenRemotes and gardenRemotes:FindFirstChild("Like")
+						if like then
+							like:FireServer(likedSlot)
+						end
+					end,
 				})
 				views[slot] = view
 			end
@@ -385,6 +394,9 @@ local function withNames(userId: number)
 	local copy = table.clone(state)
 	copy.ownerId = userId -- planting appearance is stable for owner and visitors
 	copy.names = PetConfig.DecodeNames(owner and owner:GetAttribute(PetConfig.NamesAttribute))
+	-- SH: whether this player liked that plot today (GardenLikes' LikedToday / LikedDay; another UTC day = not yet)
+	local today = TimeFormat.UtcDay(workspace:GetServerTimeNow())
+	copy.liked = player:GetAttribute("LikedDay") == today and IdSet.Decode(player:GetAttribute("LikedToday"))[tostring(userId)] == true
 	real[userId] = copy
 end
 
@@ -417,6 +429,14 @@ remotes:WaitForChild("Plot").OnClientEvent:Connect(function(userId, state)
 	refresh()
 end)
 player:GetAttributeChangedSignal(GardenConfig.PlotAttribute):Connect(refresh)
+local function relike() -- SH: the Like prompts follow the plots liked today
+	for userId in received do
+		withNames(userId)
+	end
+	refresh()
+end
+player:GetAttributeChangedSignal("LikedToday"):Connect(relike)
+player:GetAttributeChangedSignal("LikedDay"):Connect(relike)
 if studio then
 	for _, name in { "GardenViewFake", "GardenViewField" } do
 		workspace:GetAttributeChangedSignal(name):Connect(function()

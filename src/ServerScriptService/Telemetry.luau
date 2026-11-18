@@ -391,6 +391,16 @@ function Telemetry.CropPoint(player: Player, cropId: string, line: string, point
 	send("LogCustomEvent", player, "CropPoint", points, fields(cropId, line))
 end
 
+-- HarvestHall (SH): a harvest of `cropId` got onto the week's board at place `rank` (1-3)
+function Telemetry.HallEntry(player: Player, cropId: string, rank: number)
+	send("LogCustomEvent", player, "HallEntry", rank, fields(cropId))
+end
+
+-- GardenLikes (SH): the player liked another player's plot; `total` = the owner's likes after it
+function Telemetry.PlotLike(player: Player, total: number)
+	send("LogCustomEvent", player, "PlotLike", total)
+end
+
 -- PlayerTimerHandler: the player arrived on stage `stageKey` without the talents in `missing` ({ { id, level }, … })
 function Telemetry.ArrivalWithoutTalent(player: Player, stageKey: string, missing)
 	local names = {}

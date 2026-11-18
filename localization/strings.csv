@@ -308,6 +308,17 @@ board.hubStars,Title of the hub's most-stars board; {rows} = 10,Most stars - top
 garden.sign.plotFree,Sign of a garden plot nobody owns right now (an owned plot shows the owner's name),Free plot,Volný pozemek,new,h456835a7
 garden.sign.incubator.locked,Status above an incubator not bought yet; the number is on its physical plate,🔒 Locked,🔒 Zamčeno,new,h5dfd31c3
 garden.sign.incubator.empty,Status above a bought incubator without an egg; the number is on its physical plate,Empty,Prázdný,new,hc1e47bd8
+garden.sign.likes,"Plot sign, bottom line (SH): likes the plot got from other players in all; {count} = the number; may stand beside the ribbons",❤ {count},❤ {count},new,h47f37a89
+garden.sign.ribbons,"Plot sign, bottom line (SH): ribbons won as a week's biggest crop in the Harvest Hall; {count} = the number",🎀 {count},🎀 {count},new,haefdeaa5
+garden.like.action,Prompt on another player's plot sign (SH): the button text to like that garden (once a day),Like ❤,Líbí se mi ❤,new,h26baffe1
+garden.like.done,Prompt on another player's plot sign after the player liked it today (tapping it again only says it was liked),Liked today ❤,Dnes už se ti líbí ❤,new,h343546ea
+garden.like.object,"Prompt on another player's plot sign, the line above the button; {name} = the plot owner's Roblox name (never translated)",{name}'s garden,Zahrada hráče {name},new,h4b0ffbbe
+garden.like.sent,Toast after the player liked another plot; {name} = its owner's Roblox name,You liked {name}'s garden ❤,Zahrada hráče {name} se ti líbí ❤,new,heb3eec73
+garden.like.got,"Toast for the plot owner when another player liked their plot; {name} = the liker's Roblox name (Czech: dative 'hráči' + name, the name itself stays)",{name} likes your garden ❤,Hráči {name} se líbí tvoje zahrada ❤,new,hcdad6bd3
+garden.like.reason.self,Toast: a like was refused because it is the player's own plot,That is your own garden,Tohle je tvoje zahrada,new,ha93c641b
+garden.like.reason.free,Toast: a like was refused because nobody owns that plot right now,Nobody owns this plot,Tenhle pozemek nikomu nepatří,new,h88fb7ce2
+garden.like.reason.liked,Toast: a like was refused because the player already liked this plot today (one like per plot per day),You already liked this garden today,Tahle zahrada se ti dnes už líbila,new,hf0374114
+garden.like.reason.far,Toast: a like was refused because the player stands too far from that plot,Walk closer to that garden,Přijď k té zahradě blíž,new,ha51f7552
 # Garden icon and summary bubble (U2),,,,,
 garden.go.notReady,Toast at the bottom of the screen after a tap on the 🌱 Garden icon (top left) when the player's garden plot is not assigned yet (just joined),Your garden plot is not ready yet,Tvoje zahrádka ještě není připravená,new,h1b30371e
 garden.bubble.plant,Summary bubble over the player's own garden plot sign (seen from the garden plaza): nothing is planted on the field. Short; parts of the bubble are joined with · (e.g. 🌱 Plant seeds · 🥚 Ready!),🌱 Plant seeds,🌱 Zasaď semínka,new,h77b32ae7
@@ -651,3 +662,16 @@ incubator.cancel.tapAgain,Orange armed trash button; second tap within shared Co
 hatchery.odds.chance,"Right-aligned percentage in each egg odds row; {chance} = localized decimal number, e.g. 12.7 / 12,7.",{chance}%,{chance} %,new,h56825d3d
 hatchery.button,"Farm HUD button beside Barn, visible near the own plot; opens the hatchery. Ready-egg count is a separate badge.",🥚 Hatchery,🥚 Líheň,new,hbedeaa6f
 incubator.scanning,"Label above an egg and in its hatchery row during the initial scan phase. No time, kind or rarity shown.",Scanning…,Skenování…,new,he6fc6578
+"# Harvest Hall (SH; hub pedestals and the record board, drawn by HallClient)",,,,,
+hall.title,"Record board at the hub, title over the Harvest Hall (the pedestals with the biggest crops of the week)",🏆 Harvest Hall,🏆 Síň sklizně,new,h2ee0319c
+hall.weekEnds,"Record board, line under the title: when this week's Hall starts over (Monday 00:00 UTC); {time} = ""3 d 4 h"" or ""7 h 59 min""",This week ends in {time},Týden končí za {time},new,hd6cb3147
+hall.duration.dh,"A time span of days and hours on the record board, e.g. ""3 d 4 h""; {d} = days, {h} = hours",{d} d {h} h,{d} d {h} h,new,h8a0dd0a2
+hall.allTime,"Record board, heading of the list of all-time records (one row per crop: crop, holder, weight)",All-time records,Rekordy všech dob,new,h9b3fbe99
+hall.none,"Record board, a crop row nobody has grown yet (in place of the holder's name)",nobody yet,zatím nikdo,new,h334e3199
+hall.crop,"Pedestal plaque and record board row: {icon} = the crop's emoji, {crop} = the crop name",{icon} {crop},{icon} {crop},new,h4d445cae
+hall.first,"Label over a Hall pedestal, first line: the week's #1 of that crop; {name} = their Roblox name",🥇 {name},🥇 {name},new,h084f7658
+hall.kg,"A crop's weight in kilograms; {kg} = ""0.31"" / ""7.4"" (Czech decimal comma)",{kg} kg,{kg} kg,new,h1bad042b
+hall.rank,"Label over a Hall pedestal, small lines: the week's #2 and #3; {rank} = 2 or 3, {name} = Roblox name, {kg} = weight",#{rank} {name} · {kg} kg,{rank}. {name} · {kg} kg,new,h0358a4e7
+hall.you,"Label over a Hall pedestal, last line: the player's own biggest crop of this kind this week; {kg} = weight",You: {kg} kg,Ty: {kg} kg,new,hae7095cd
+hall.empty,Second line of a Hall pedestal's plaque (under the crop name) while nobody has grown this crop this week; the plaque is small: keep it short,Grow the biggest!,Vypěstuj největší!,new,hacd7764f
+hall.toast,"Popup for everyone on the server when a harvest becomes the week's biggest of its crop (Big or Giant only); {name} = Roblox name, {crop} = crop name (nominative), {kg} = weight (Czech keeps {crop} in the nominative: ""Největší {crop} týdne"")",🏆 {name} grew the week's biggest {crop}: {kg} kg!,"🏆 Největší {crop} týdne: {name}, {kg} kg!",new,he51c37e5

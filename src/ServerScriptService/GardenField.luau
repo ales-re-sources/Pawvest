@@ -24,6 +24,7 @@
 -- Size roll (E1c2): every harvest (the owner's or a Tending pet's) rolls CropConfig.SizeFactor from the planting number; the
 -- barn keeps per crop the count (Items) and the summed factors (ItemSize; crops from before E1c2 count as 1 each), BestSize[crop]
 -- = the best factor harvested. A sale of k of n pays CropConfig.SaleValue for k × ItemSize / n.
+-- Harvest Hall (SH): `store` hands every crop that goes into the barn to HarvestHall.Harvested (the week's best, the Hall's boards).
 -- Field upgrades (E1c1): Field.Upgrades = { Growth, Barn } levels (CropConfig.Upgrades): Growth multiplies the growth crops
 -- earn (CropConfig.GrowthSpeed; pets' aptitude XP keeps the plain seconds), Barn raises the seed stock and the crops a Tending
 -- pet may store (CropConfig.BarnFor).
@@ -82,6 +83,7 @@ local StageConfig = require(ReplicatedStorage.StageConfig)
 local PetService = require(ServerScriptService.PetService)
 local Telemetry = require(ServerScriptService.Telemetry)
 local TalentConfig = require(ReplicatedStorage.TalentConfig)
+local HarvestHall = require(ServerScriptService.HarvestHall)
 
 local plantEvent = GardenService.Remote("Plant") -- client → server: (square: number, crop: string)
 local harvestEvent = GardenService.Remote("Harvest") -- client → server: (square: number)
@@ -510,6 +512,7 @@ local function store(player: Player, garden, crop, planting: number, extra: bool
 	if record then
 		garden.BestSize[crop.id] = factor
 	end
+	HarvestHall.Harvested(player, crop, factor, pointsOf(garden, crop)) -- SH: the week's best and the Hall's boards
 	return factor, record
 end
 

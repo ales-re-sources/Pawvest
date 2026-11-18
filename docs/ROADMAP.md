@@ -54,7 +54,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | HX1 | Hybrid plants: breeding mechanic design ([HYBRIDS.md](HYBRIDS.md)) | main rules decided 2026-11-16; numbers and rules open | – | – |
 | TH | Store thumbnails ([THUMBNAILS.md](THUMBNAILS.md) §8–9) | logo; release candidates A1, A2, A3, C1, C2, C3; B1 parked until D1 | stud sign decision, grid tile test, kid test open | – |
 | ST | Rotating seed stall: slow UTC rotation, stock by mastery (1.0) | ✔ Studio-validated 2026-11-18 | – | – |
-| SH | Harvest Hall (weekly biggest crop per kind) and plot likes (1.0) | – | – | – |
+| SH | Harvest Hall (weekly biggest crop per kind) and plot likes (1.0) | ✔ | Hall ✔ 2026-11-18; likes: refusals ✔, multi-client test open | – |
 | FB | Player feedback: stage rating, feedback box (1.0) | – | – | – |
 | E5 | Garden MVP rest: request board, ledger on join, onboarding, garden telemetry (1.0) | – | – | – |
 | M6a | Soft launch + World 1 balancing (balanced by feel 2026-10-30; live test open) | – | – | – |
@@ -70,7 +70,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 - **Not in 1.0:** obby time calibration (M6b; the obby stays as built), the comfort shop (D2: 1.0 ships without monetization),
   Sunshine (EV2c), World 4, hybrids (HX1 build).
 
-**Start here:** SH (ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: OG validation and the M6a friends test (step 0).
+**Start here:** SH's last check: the likes in a multi-client test (F7, the user starts it; SH built and the Hall Studio-validated 2026-11-18), then FB. (ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: OG validation and the M6a friends test (step 0).
 *Update this line whenever a milestone finishes.*
 
 **Road to 1.0** (in order; one milestone at a time unless marked "alongside"):
@@ -217,22 +217,86 @@ Done 2026-11-18 (Done; the scope: `git show df15e8f:docs/ROADMAP.md`). Decided w
 chance 0.5, pity 3, 12 seeds, the newest crop always; the user, 2026-11-18); the market cart stays apart; the restock note is a garden
 toast, not a HudPopup.
 
-### SH — Harvest Hall and plot likes (decided 2026-11-17; scope when it starts)
+### SH — Harvest Hall and plot likes (decided 2026-11-17; signed off and built 2026-11-18; the likes' multi-client test open)
 *Why (the user):* players should feel competition, not play alone. Size records per crop exist (`Garden.BestSize`, GDD §7.9 size roll).
-1. **Server:** `Garden.WeekBest = { Week, [cropId] = factor }`; a better weekly size queues a write to an OrderedDataStore per week and
-   crop (an integer from the factor; the earlier time wins a tie), flushed at most once per crop per ~60 s per server (quick crops
-   harvest every 10 s); every server reads the top N per crop every few minutes; an all-time Top-10 per crop in a second store. Hook:
-   the record check in GardenField's `store`.
-2. **Hub (Studio scene):** a hall with a pedestal per crop showing this week's biggest in its grown art (`<CropId>Plant` at 100 % ×
-   factor), the owner's name, avatar and kg; an all-time board; a cosmetic ribbon for the week's #1 (no Coins). A server-wide toast
-   "{name} grew a Giant {crop}" (`HudPopup`). The own record shelf on the plot ("Open items" → Not built).
-3. **Plot likes** (taken from D6): a like at another player's plot sign, once per plot per day per liker, no self-likes (`RateLimit`); the
-   count on the sign and in the owner's join notice / ledger; a total `Garden.Likes` (the garden score uses it later, D9).
-4. **Docs and text:** GDD, PROTOCOL (stores, fields, remotes), TELEMETRY (Hall entry, like), strings EN + CS.
+*Design check (2026-11-18), changes against the decided draft (the user signs off):*
+- **Storage: two plain DataStore keys, not ordered stores.** One ordered store per week and crop means 18–19 `GetSortedAsync` reads per
+  refresh (38 with the all-time boards) against a budget of 5 + 2 × players per minute per server (shared with `MostStars`): a 1-player
+  server could refresh the Hall only every ~6 min. Instead one key per week holds the top 3 of every crop (~2 KB) and one key the
+  all-time top 3: one `GetAsync` refreshes the whole Hall; writes are `UpdateAsync` merges, so two servers never lose each other's entry.
+- **All-time: top 3 per crop, the board shows the record (#1).** A Top-10 per crop (190 rows) has no place to show in the hub; 3 keep
+  the write rate low and leave a "your rank" for later.
+- **The own record shelf on the plot leaves SH** (stays "Open items" → Not built, revisit after MU): up to 19 grown plants per plot × 24
+  plots on top of full fields (≤ 6 084 Parts each) is a phone risk nobody has measured yet.
+- **Toast:** only for a harvest that becomes a week's #1 *and* is Big or Giant, at most one per server per 60 s ("Giant" alone would fire
+  every ~30 Potato harvests; every first harvest of a week takes a #1). This server only (no `MessagingService`).
+- **Ribbon:** a week's #1 earns `Garden.Ribbons[crop]` +1 once that week is over (read on join / at the week change), shown on the plot
+  sign as "🎀 3"; no Coins.
+- **Place:** the open west half of the hub plaza (the star board stands there, the gates take the east half): an arc of pedestals with
+  the all-time board at its middle; no new island.
+
+*As built (2026-11-18), changed from the steps below:* the owner of a liked plot is always on the server (plots exist only for present
+players), so a like gives the owner a live toast ("{name} likes your garden ❤") instead of a join-notice line (no `LikesNew`); the sign's
+counts come in the plot state (`likes`, `ribbons`), not in `PlotLikes` / `Ribbons` attributes; every crop has a pedestal (Sunflower shows its
+icon until its art leaves draft); an empty pedestal has no label (19 labels crowded the plaza), its plaque says "Grow the biggest!"; the star
+board moved onto the grass at r 59 beside the record board. *Studio validation (2026-11-18, test keys, Lekzdrh's profile snapshot
+`profile_9892673032_SH_1`, restored and checked):* boot clean on server and client; `Merge` cases pass; 12 Potato harvests in 55 s made one
+`UpdateAsync` per key, the bigger later ones went with the next flush; the pedestal showed the plant, avatar, name and kg; an entry written
+by "another server" showed after 51 s, a second playtest booted with the board; the toast shows (Czech reworded to the nominative); week
+shift + 1 emptied the board and reset the week's best, the finished week's #1 got 🎀 1 on the sign, a rejoin added none; Like refusals
+`self` and `free` show their toasts; the live keys were never written, the test keys were removed. **Open:** the likes through the real
+prompt between two clients (a like, "Liked today ❤", `liked` on the second, the owner's toast), the Hall toast on a second client, the
+pseudo-language pass.
+
+1. **Config (`HallConfig`, ReplicatedStorage):** `Rows = 3`, `RefreshSeconds = 120`, `FlushSeconds = 60` (+ random 0–30 s per server),
+   `ToastGap = 60`; `HallConfig.Week(now)` = whole weeks since Monday 1970-01-05 00:00 UTC (the weekly board reset of EXPANSION §9.2),
+   plus the Studio-only server attribute `HallWeekShift`; `HallConfig.Merge(board, entries)` (pure: per crop keeps one entry per UserId,
+   the bigger factor first, the earlier `At` on a tie, at most `Rows`) and `HallConfig.Qualifies(board, crop, factor)`. Keys of DataStore
+   `HarvestHall`: `week_<n>` and `alltime`; with the Studio-only attribute `HallTest` they become `test_week_<n>` / `test_alltime`, so tests
+   never touch the live Hall. The crops shown: every crop with a `<CropId>Plant` module not `Draft` (rare crops included).
+2. **Server (`HarvestHall` service; hook in GardenField `store`):** a harvest (by hand, Tending pet or the Shears' extra) of size `f`
+   updates profile `Garden.WeekBest = { Week, [cropId] = f }` (reset when `Week` changes; missing = empty, no `Version` step) when it is the
+   player's best of the week, and if `Qualifies` for the cached week or all-time board queues `{ UserId, Name, F, At }`. A flush (at most
+   once per `FlushSeconds` per server, nothing queued = no call) merges the queue into both keys with one `UpdateAsync` each and fires a
+   refresh; a failed write keeps the queue. Every `RefreshSeconds` (and at boot) one `GetAsync` per key; the board goes to clients as JSON
+   attribute `Board` (`{ week, endsAt, crops = { [cropId] = { { u, n, f }, … } }, best = { [cropId] = { u, n, f, w } } }`) on
+   `ReplicatedStorage.HarvestHall`, this server's queued entries layered on top at once (as `StarBoard`'s overrides). On join and at a week
+   change: wins of the previous week's key (read once per week per server) add a ribbon, `Garden.RibbonWeek` keeps it to once. A new
+   week's #1 that is Big / Giant fires the toast to all players of the server. Mirrors (`PlayerProfile.OnReady`): player attributes
+   `PlotLikes` (total), `Ribbons` (count) and `HallWeekBest` (JSON `{ [cropId] = f }`).
+3. **Hub scene (Studio, built by an MCP script, kept in the place):** `Workspace.StartLocation.HarvestHall`: one pedestal per shown crop
+   (tag `HallPedestal`, attribute `Crop`; Sunflower's pedestal stays hidden while its plant is `Draft`), a plaque part per pedestal and the
+   all-time board part; stud style as the hub, no parts in the gates' approach, coplanar audit clean. No scripts in the scene.
+4. **Client (`HallClient`):** per pedestal the week's #1 in its grown art (the crop's plant module at 100 % growth × `f`, clamped by
+   `SizeBounds(true)` like the field), its plaque: the owner's avatar (headshot thumbnail), name, kg (`kg × f`, `Locale.Number`), #2 and #3
+   as small lines, and the viewer's own best ("You: 0.31 kg"); an empty pedestal: the crop's icon and "Grow the biggest one this week!";
+   a header "This week ends in 3 d 4 h". All-time board: a row per crop (icon, holder, kg). Redraws on `Board` changes and `Locale.Changed`;
+   plants only within ~120 studs (draw distance like PlotView's low detail). Toast "{name} grew the week's biggest {crop}: {kg} kg!"
+   (`HudPopup`).
+5. **Plot likes (GardenRemotes `Like(slot)`, owner derived from the slot):** a ProximityPrompt "Like ❤" on every other player's plot
+   sign; refuses `self`, `free` (no owner), `liked` (once per owner per UTC day per liker: `Garden.Liked = { Day, [ownerId] = true }`),
+   rate `RateLimit` 1 per 2 s. The owner (always on this server: plots exist only for present players) gets `Garden.Likes` +1 and
+   `Garden.LikesNew` +1; the sign shows "❤ 12" and "🎀 3" (from the mirrors); a liked plot's prompt reads "Liked ❤" (disabled) for the rest
+   of the day (liker attribute `LikedToday`, `IdSet`). The join notice gets "❤ 4 likes while you were away" from `LikesNew` (then 0).
+   Telemetry: `plot_like` (the owner's total after); `hall_entry` (crop, rank 1–3) when a flushed entry lands on the week's board.
+6. **Docs and text:** GDD (§7.9 Hall and likes, §8 hub), PROTOCOL (store keys, profile fields, `Like`, attributes, the `Board` JSON),
+   TELEMETRY (two events), LAYOUT (service, client, scene folder), EXPANSION §9.3 / §10 (Hall and likes built), strings EN + CS.
 - **Fairness:** size comes from the roll, the Seed sorter and EV3's Size line; nothing sold may ever touch size (EXPANSION §13).
-- **Acceptance (draft):** a harvest that beats the week's #1 shows on the pedestal on a second server within a few minutes; a smaller one
-  writes nothing; a new week starts empty (tested with a shifted week number, not the clock); 12 quick-crop harvests in a minute cause at
-  most 1 write per crop; a second like the same day and a self-like are refused; the Giant toast shows on another client.
+- **Acceptance:**
+  - `loc.py build / check (0 errors) / lint`; one playtest boot without errors or warnings; `kit_coplanar_audit` clean with `STATIC_ROOT`
+    = the HarvestHall folder.
+  - `Merge` in the Edit context: a bigger factor replaces the player's own entry, a smaller one changes nothing, a tie keeps the earlier
+    `At`, a 4th entry drops the smallest (printed cases).
+  - All on test keys (`HallTest`, snapshot of the profile first, test keys removed and profile restored after): a harvest that beats the
+    week's #1 shows on its pedestal (plant, name, avatar, kg) after one flush, with the toast; a harvest that does not qualify queues
+    nothing; 12 Potato harvests in a minute make at most 1 `UpdateAsync` per key (counter printed); an entry written from the Edit context
+    (another server) shows on the running server within `RefreshSeconds`; a second playtest boots with the board from the store.
+  - `HallWeekShift` + 1: pedestals empty, the header counts down the new week, `WeekBest` reset; the fixture's #1 of the shifted-out
+    week earns 1 ribbon on join, a rejoin adds none, "🎀 1" on the sign.
+  - Likes, in a multi-client test (F7, the user starts it): Client 1 likes Client 2's plot through the real prompt (sign "❤ 1", prompt
+    "Liked ❤"); a second like the same day and a fired self-like are refused (`liked`, `self`), counts unchanged; Client 2's rejoin
+    shows the like in the join notice. The toast shows on the other client. Test records `user_-1` / `user_-2` removed.
+  - Czech and the pseudo-language on the plaque, the board, the header, the toast, the prompt and the sign line.
 
 ### FB — Player feedback (decided 2026-11-17; small, alongside ST or SH)
 *Why (the user):* we need to hear the players; kids rarely write reviews. Three channels, all to us.
@@ -306,7 +370,7 @@ Tagged **[1.0]** (needed before 1.0 goes public) or **[later]**.
 - **[1.0] Localization:** Czech overflow screenshots of the panels (the font is BuilderSansBold, so re-check widths in Czech and the
   pseudo-language), the Stage 9 exit-door label, the food stand's prompt ("Buy food" is a Studio literal: set its texts from
   `FoodShopClient` as `SeedStallClient` does).
-- **[1.0] Not built:** the own shelf of record crops in their grown art (part of SH).
+- **[1.0] Not built:** the own shelf of record crops in their grown art (moved out of SH 2026-11-18: phone performance; revisit after MU).
 - **[later] Not built:** the pet page's "hatched on … from a Basic egg" line (`Born` / `Egg`); "Show on field" on the pet page (U3b); a
   "barn full" cue in the world.
 - **[1.0] Housekeeping (Studio):** delete `ReplicatedStorage.StageTimerStopped` (unused).

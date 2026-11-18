@@ -771,12 +771,25 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   for the crow speciality). At most 1 crop is eaten per absence; crops ripe while the owner plays are safe. A pet with Tending and Pest control
   does both jobs.
 - **Join notice.** What the pets harvested (and the shears' extras), what the crows ate and who chased them off, an old profile's pen conversion.
+- **Harvest Hall (SH, 2026-11-18; rules in `HallConfig`).** On the west half of the hub plaza: a pedestal per crop (two staggered arcs,
+  the ladder in order, the rare crops last) and, on the grass behind them, the all-time record board beside the star board. Every crop
+  that goes into a barn (by hand, a Tending pet, the Shears' extra) counts: the **week's biggest** of each crop (top 3, Monday 00:00 UTC to
+  Monday) and the **all-time** top 3, shared by every server. A pedestal shows the week's #1 in its grown art at its size (a crop without art:
+  its icon) with a label: avatar, name, kg, #2 and #3 and the viewer's own best of the week when it is not on the list; an empty pedestal
+  has no label, its plaque says "Grow the biggest!". The board shows the title, the week's countdown and every crop's all-time record. A
+  harvest that takes a week's #1 and is Big or Giant pops a toast for everyone on the server (at most one a minute). A week's #1 earns a
+  **ribbon** (`Garden.Ribbons[crop]`) once that week is over, shown on the plot sign as "🎀 3"; no Coins. Size comes only from the roll,
+  the Seed sorter and the Size line (EXPANSION §13: nothing sold touches size).
+- **Plot likes (SH).** Another player's plot sign has a "Like ❤" prompt: once per plot per UTC day per player, never the own plot. The
+  owner (always on the same server: plots exist only for present players) gets a toast "{name} likes your garden ❤", and the count shows on
+  the sign ("❤ 12"); `Garden.Likes` is the total (the garden score uses it later, D9).
 
 ## 8. Leaderboards
 - **Per stage:** Top-10 fastest times (exists for Stage 1 and 2; add Stage 3 and Tutorial).
 - **Hub:** global "most stars" Top-10 (max 12★ with four stages; 63★ with the Tutorial and all 20 stages, +3 per bonus stage;
   each world island gets a world board with the stars in that world). The leaderstats column "Stage" (checkpoint number)
-  is replaced by "Stars" in S1.2.
+  is replaced by "Stars" in S1.2. Since SH it stands on the grass behind the Harvest Hall, beside the all-time record board (§7.9).
+- **Harvest Hall (SH):** the week's biggest crop of every kind and the all-time records (§7.9).
 - Open question: show the talents used next to a time, or keep a separate "no-talent" board?
 - Possible later: "rarest pets" / "highest pet level" board.
 

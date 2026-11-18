@@ -281,7 +281,7 @@ Each mini-game is 1–3 minutes (GDD pillar 1) and passes the mobile check (ROAD
 - Rewards: a finish gives a rare seed; the weekly Top-10 gets a cosmetic yard trophy. Same talent and pet rules (pillar 3).
 
 ### 9.3 Harvest Fair
-- *First form in 1.0:* the **Harvest Hall** (ROADMAP → SH): the week's biggest crop of every kind, global, on pedestals at the hub.
+- *First form in 1.0:* the **Harvest Hall** (built in SH, GDD §7.9): the week's biggest crop of every kind, global, on pedestals at the hub.
 - A weekly prize-vegetable fair at the hub: one crop per player per category (rotating: pumpkin, melon, a farm-stage crop…).
 - Ranked by size factor (every tier can compete); the top entries get a ribbon trophy, every entrant Renown; the entered crop is kept.
 - Size gets a social stage without a gamble: the roll is free, the Seed sorter and the choice of entry are the skill.
@@ -298,7 +298,7 @@ Each mini-game is 1–3 minutes (GDD pillar 1) and passes the mobile check (ROAD
 A 7-day loop of small rewards; a missed day **pauses** the streak instead of resetting it (no guilt).
 
 ## 10. Social
-*1.0 (the user, 2026-11-17):* the Harvest Hall (§9.3) and likes on plots (ROADMAP → SH); the rest of this section is D6.
+*1.0 (the user, 2026-11-17):* the Harvest Hall (§9.3) and likes on plots (built in SH, GDD §7.9); the rest of this section is D6.
 
 *Later (the user, 2026-11-07): gifts / buying something for a friend, a pet auction (needs trading's session locking).*
 
@@ -388,7 +388,7 @@ likes) + player feedback; the order and state live in ROADMAP → Next. After it
 | Aptitude data for every pet, only working aptitudes shown | built |
 | EV3 crop mastery: crop levels (★) replace Renown, milestone quests, crop upgrade points | **to build** (ROADMAP → EV3) |
 | ST rotating seed stall: a subset of the unlocked crops, restocked every 1–3 h on a UTC schedule | **to build** (ROADMAP → ST) |
-| SH Harvest Hall (the week's biggest crop of every kind, all-time board) and likes on plots | **to build** (ROADMAP → SH) |
+| SH Harvest Hall (the week's biggest crop of every kind, all-time board) and likes on plots | built 2026-11-18 (GDD §7.9); the likes' multi-client test open (ROADMAP → SH) |
 | FB player feedback: stage rating, feedback box | **to build** (ROADMAP → FB) |
 | E5 request board, ledger on join (the join notice grows into it), onboarding for the first ten minutes, garden funnel telemetry | **to build** (ROADMAP → Next) |
 

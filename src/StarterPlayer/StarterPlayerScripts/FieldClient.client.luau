@@ -77,6 +77,12 @@ local POINT_REJECT_KEYS = setmetatable({
 -- the upgrade lines' names (EV3c)
 local POINT_LINE_KEYS = { Value = "field.point.value", Size = "field.point.size", Speed = "field.point.speed" }
 local PET_ACTIONS = { PlacePet = true, LiftPet = true, BuyPetSlot = true }
+local LIKE_REJECT_KEYS = { -- SH: GardenLikes' refusals (loading: common.reject.loading)
+	self = "garden.like.reason.self",
+	free = "garden.like.reason.free",
+	liked = "garden.like.reason.liked",
+	far = "garden.like.reason.far",
+}
 -- the field upgrades' texts (E1c1): name, effect now → next level, effect at the top level
 local UPGRADE_KEYS = {
 	Growth = { name = "field.upgrade.growth", effect = "field.upgrade.growth.effect", max = "field.upgrade.growth.max" },
@@ -246,6 +252,14 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 	if PET_ACTIONS[action] then
 		return petResult(action, ok, detail)
 	end
+	if action == "Like" then -- SH
+		if not ok then
+			showToast(Locale.Reject(detail, LIKE_REJECT_KEYS), COLOR_ERROR)
+		elseif type(detail) == "table" and type(detail.name) == "string" then
+			showToast(Locale.T("garden.like.sent", { name = detail.name }), COLOR_OK)
+		end
+		return
+	end
 	if action == "BuyUpgrade" or action == "BuyTool" then
 		local names = if action == "BuyTool" then TOOL_KEYS else UPGRADE_KEYS
 		if not ok then
@@ -331,3 +345,10 @@ end)
 
 requestStateEvent:FireServer()
 screenGui.Parent = player:WaitForChild("PlayerGui")
+
+-- SH: another player liked this player's plot (GardenLikes)
+remotes:WaitForChild("Liked").OnClientEvent:Connect(function(name)
+	if type(name) == "string" then
+		showToast(Locale.T("garden.like.got", { name = name }), COLOR_OK)
+	end
+end)

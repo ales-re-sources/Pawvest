@@ -226,7 +226,7 @@ local function squareSpot(square: number): (number, number)
 end
 
 -- New view of plot slot `slot` under `parent`. options: { own = boolean, onHatchery = fn(), onBarn = fn() } (interactions on the own
--- plot only).
+-- plot only), onLike = fn(slot) (SH: the Like prompt on another player's sign).
 function PlotView.new(slot: number, parent: Instance, options)
 	local self = setmetatable({}, PlotView)
 	self.slot = slot
@@ -234,6 +234,7 @@ function PlotView.new(slot: number, parent: Instance, options)
 	self.own = options and options.own or false
 	self.onHatchery = options and options.onHatchery
 	self.onBarn = options and options.onBarn
+	self.onLike = options and options.onLike
 	self.detail = "none"
 	self.state = nil
 	self.lang = Locale.Current()
@@ -284,7 +285,12 @@ function PlotView:signature(key: string): string
 		return "none"
 	end
 	if key == "base" then
-		return table.concat({ detail, if state.free then "" else tostring(state.name), self.lang }, "|")
+		if state.free then
+			return table.concat({ detail, "", self.lang }, "|")
+		end
+		-- SH: the sign's likes and ribbons, and whether the viewer liked this plot today (the prompt)
+		return table.concat({ detail, tostring(state.name), self.lang, tostring(state.likes or 0), tostring(state.ribbons or 0),
+			tostring(state.liked == true) }, "|")
 	end
 	if key == "field" then
 		return if not state.free and state.field then detail else "none"
@@ -467,10 +473,19 @@ function PlotView:buildSign(model: Model)
 		TextStrokeTransparency = 0.6,
 		Text = Locale.T("sign.plot", { n = self.slot }),
 	})
+	local social = {} -- SH: "❤ 12   🎀 3" under the name (only what is above zero)
+	local likes = if self.state.free then 0 else self.state.likes
+	local ribbons = if self.state.free then 0 else self.state.ribbons
+	if type(likes) == "number" and likes > 0 then
+		table.insert(social, Locale.T("garden.sign.likes", { count = likes }))
+	end
+	if type(ribbons) == "number" and ribbons > 0 then
+		table.insert(social, Locale.T("garden.sign.ribbons", { count = ribbons }))
+	end
 	textLabel(gui, {
 		Name = "Name",
 		Position = UDim2.new(0, 14, 0, 36),
-		Size = UDim2.new(1, -28, 1, -44),
+		Size = UDim2.new(1, -28, 1, if #social > 0 then -70 else -44),
 		Font = StudStyle.Font,
 		TextColor3 = COLORS.signText,
 		TextStrokeColor3 = Color3.new(0, 0, 0),
@@ -478,7 +493,40 @@ function PlotView:buildSign(model: Model)
 		-- a player name (no translation)
 		Text = if self.state.free then Locale.T("garden.sign.plotFree") else tostring(self.state.name),
 	})
+	if #social > 0 then
+		textLabel(gui, {
+			Name = "Social",
+			Position = UDim2.new(0, 14, 1, -32),
+			Size = UDim2.new(1, -28, 0, 26),
+			TextScaled = false,
+			TextSize = 22,
+			Font = StudStyle.Font,
+			TextColor3 = COLORS.signNumber,
+			TextStrokeColor3 = Color3.new(0, 0, 0),
+			TextStrokeTransparency = 0.6,
+			Text = table.concat(social, "   "),
+		})
+	end
 	gui.Parent = sign
+	-- SH: another player's plot gets a Like prompt at the board's lower edge (once a day per plot; "Liked" after that)
+	if not self.own and not self.state.free and self.onLike and self.detail == "full" then
+		local spot = Instance.new("Attachment")
+		spot.Name = "LikeSpot"
+		spot.Position = Vector3.new(0, -(boardHigh - boardLow) / 2, 0)
+		spot.Parent = sign
+		local liked = self.state.liked == true
+		local like = Instance.new("ProximityPrompt")
+		like.Name = "LikePrompt"
+		like.ActionText = Locale.T(if liked then "garden.like.done" else "garden.like.action")
+		like.ObjectText = Locale.T("garden.like.object", { name = tostring(self.state.name) })
+		like.HoldDuration = 0
+		like.MaxActivationDistance = 12
+		like.RequiresLineOfSight = false
+		like.Triggered:Connect(function()
+			self.onLike(self.slot)
+		end)
+		like.Parent = spot
+	end
 end
 
 -- Pet model standing at `at` (its pivot's horizontal position) on a surface whose top is at height `top` (full detail): a PetModels
