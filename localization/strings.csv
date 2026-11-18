@@ -328,6 +328,14 @@ seedStall.tab.sell,Seed stall panel: tab brick that shows the harvested crops to
 seedStall.prompt.action,Action text of the prompt on the seed stall's counter (opens the panel: buying seeds and selling crops),Buy & sell,Nákup a prodej,new,h075fea25
 seedStall.prompt.object,Object text of that prompt (the name of the stall),Seed stall,Stánek se semínky,new,ha23e66c1
 seedStall.reason.far,Toast: buying seeds was refused because the player walked away from the seed stall,Walk to the seed stall first,Nejdřív dojdi ke stánku se semínky,new,hb2c275ea
+seedStall.reason.stock,"Toast: buying seeds was refused because this crop is not in the seed stall's stock this hour (the stall restocks every hour, crops rotate)",Not in stock now: look again after the next restock,Teď není na skladě: mrkni po dalším závozu,new,hd2a2a835
+seedStall.reason.soldOut,Toast: buying seeds was refused because the player already bought all of this crop's seeds in this restock (each rotating crop has a fixed number per hour),Sold out until the next restock,Vyprodáno až do dalšího závozu,new,he0d35c22
+seedStall.restock,"Seed stall panel, small grey line under the Seeds heading; {time} = countdown to the next restock (""42:10""); the rotating crops change then",New seeds in {time},Nová semínka za {time},new,h8706f8bd
+seedStall.left[one],"Seed stall row, extra line of a rotating crop: seeds of it still for sale in this restock; {count} = seeds (1-12). Form for 1. Czech: verb agrees (zbývá 1, zbývají 2-4, zbývá 5+)",{count} left this hour,Zbývá {count} v této hodině,new,h0572f501
+seedStall.left[few],Form for 2-4 (Czech only),,Zbývají {count} v této hodině,new,h0572f501
+seedStall.left[other],Form for 0 and 5+,{count} left this hour,Zbývá {count} v této hodině,new,h0572f501
+seedStall.backSoon,Seed stall row: in place of the +1 / +10 bricks (~126 px) when a rotating crop is not in stock this hour or sold out,Back soon,Brzy zase,new,ha98f580e
+seedStall.toast.restock,"Toast in the garden when the seed stall restocks (once an hour, only when a crop the player has rotated back in)",New seeds at the seed stall!,Ve stánku jsou nová semínka!,new,hb71c09eb
 seedStall.board.bargain,"Board over the seed stall, one market cart offer per line (big letters, one short line); {crop} = icon + crop name, {percent} = discount (30, 50), {price} = Coins per seed",{crop} −{percent} % · 💰 {price},{crop} −{percent} % · 💰 {price},new,hff0255de
 seedStall.board.taste,"Board over the seed stall: the offer of seeds the player has not unlocked yet (one short line); {crop} = icon + crop name, {price} = Coins per seed",{crop} · new! · 💰 {price},{crop} · novinka! · 💰 {price},new,hb734592f
 seedStall.board.soldOut,Board over the seed stall: an offer the player bought up today (greyed line); {crop} = icon + crop name,{crop} · sold out,{crop} · vyprodáno,new,ha12b1054

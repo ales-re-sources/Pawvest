@@ -31,6 +31,9 @@
 -- Sorter multiplies every harvest's size factor; Cloches multiply the growth earned while the owner is online (not the absence,
 -- not the pets' aptitude XP); Shears give a second crop of the same size with their chance, rolled per planting number like
 -- Tending (no mastery or seed for it; a Tending pet's second crop needs room in the barn).
+-- Seed stall stock (ST): CropConfig.StallRotating(the restock block, Garden.Unlocked, the always set) says which rotating crops are in
+-- stock; Garden.Stall = { Block, Bought = { [cropId] = n } } counts what the player bought of them in that block (reset when the block
+-- changes); BuySeeds refuses `stock` (a rotating crop not in this block) and `soldOut` (more than CropConfig.Stall.Count - bought).
 -- Market cart (E1c4): CropConfig.CartOffers(today's UTC day, Garden.Unlocked) are today's offers; Garden.Cart = { Day, Bought = { [key] = n } }
 -- counts what the player bought of each (key = crop id, + "*" for the taste), reset when the day changes. BuyCart(slot, crop, count) sells
 -- at the offer's price; the seeds join Seeds (within the barn). Plant needs only the seeds: a taste crop can be planted while it is
@@ -78,6 +81,7 @@ local GardenService = require(ServerScriptService.GardenService)
 local StageConfig = require(ReplicatedStorage.StageConfig)
 local PetService = require(ServerScriptService.PetService)
 local Telemetry = require(ServerScriptService.Telemetry)
+local TalentConfig = require(ReplicatedStorage.TalentConfig)
 
 local plantEvent = GardenService.Remote("Plant") -- client → server: (square: number, crop: string)
 local harvestEvent = GardenService.Remote("Harvest") -- client → server: (square: number)
@@ -303,6 +307,16 @@ local function fieldOf(player: Player, profile)
 		end
 	end
 	garden.Cart = { Day = if cart and type(cart.Day) == "number" then cart.Day else 0, Bought = bought }
+	local stall = type(garden.Stall) == "table" and garden.Stall
+	local stallBought = {}
+	if stall and type(stall.Block) == "number" and type(stall.Bought) == "table" then
+		for id, n in stall.Bought do
+			if type(id) == "string" and CropConfig.ById[id] and count(n) > 0 then
+				stallBought[id] = count(n)
+			end
+		end
+	end
+	garden.Stall = { Block = if stall and type(stall.Block) == "number" then stall.Block else 0, Bought = stallBought }
 	local meters = {}
 	if type(garden.Meters) == "table" then
 		for key, points in garden.Meters do
@@ -364,6 +378,45 @@ local function cartToday(garden)
 end
 local function cartKey(offer): string
 	return offer.crop.id .. (if offer.taste then "*" else "")
+end
+
+-- ST: Garden.Stall for the current restock block (a new block starts with nothing bought), and the block.
+local function stallNow(garden)
+	local block = CropConfig.StallBlock(os.time())
+	if garden.Stall.Block ~= block then
+		garden.Stall = { Block = block, Bought = {} }
+	end
+	return garden.Stall, block
+end
+
+-- ST: the crops always in stock for this profile: the staples, the newest crop, the common crops of every talent's next level and of
+-- the open quest.
+local function stallAlways(profile)
+	local garden = profile.Garden
+	local extra = {}
+	for _, talent in TalentConfig.List do
+		for id in TalentConfig.NextCrops(talent.id, TalentConfig.LevelOf(profile, talent.id)) do
+			table.insert(extra, id)
+		end
+	end
+	local quest = type(garden.Quest) == "table" and CropConfig.ById[garden.Quest.Crop]
+	if quest and type(quest.quest) == "table" then
+		for id in quest.quest do
+			table.insert(extra, id)
+		end
+	end
+	return CropConfig.StallAlways(garden.Unlocked, extra)
+end
+
+-- ST: the stall for the panel: { block, endsAt, left = { [cropId] = seeds left } } for the rotating crops (0 = not in this block or
+-- sold out); a crop not in `left` is always in stock.
+local function stallState(profile)
+	local stall, block = stallNow(profile.Garden)
+	local left = {}
+	for id, inStock in CropConfig.StallRotating(block, profile.Garden.Unlocked, stallAlways(profile)) do
+		left[id] = if inStock then math.max(0, CropConfig.Stall.Count - (stall.Bought[id] or 0)) else 0
+	end
+	return { block = block, endsAt = CropConfig.StallEnds(block), left = left }
 end
 
 -- EV3b: opens every next crop whose previous crop has reached its `step` plants (a quest crop waits for its quest), then moves the
@@ -754,6 +807,7 @@ GardenService.AddStateField("field", function(profile)
 		barn = CropConfig.BarnFor(CropConfig.UpgradeLevel(field.Upgrades, "Barn")),
 		tools = table.clone(garden.Tools),
 		cart = cartState(garden),
+		stall = stallState(profile),
 		notice = notices[owner],
 		crows = {
 			from = crowsFrom,
@@ -938,12 +992,23 @@ buySeedsEvent.OnServerEvent:Connect(function(player, cropId, amount)
 	if not CropConfig.IsUnlocked(garden.Unlocked, crop.id) then
 		return reject(player, "BuySeeds", "locked") -- EV3b: the crop opens by growing the previous one or by its quest
 	end
+	local stall, block = stallNow(garden)
+	local rotating = not stallAlways(profile)[crop.id] -- ST: a rotating crop is sold only in its blocks, Count per block
+	if rotating and not CropConfig.StallStock(block, crop) then
+		return reject(player, "BuySeeds", "stock")
+	end
+	if rotating and amount > CropConfig.Stall.Count - (stall.Bought[crop.id] or 0) then
+		return reject(player, "BuySeeds", "soldOut")
+	end
 	if CropConfig.SeedTotal(garden.Seeds) + amount > CropConfig.BarnFor(CropConfig.UpgradeLevel(field.Upgrades, "Barn")) then
 		return reject(player, "BuySeeds", "barn")
 	end
 	local price = crop.seed * amount
 	if not PlayerProfile.TrySpend(player, price) then
 		return reject(player, "BuySeeds", "coins")
+	end
+	if rotating then
+		stall.Bought[crop.id] = (stall.Bought[crop.id] or 0) + amount
 	end
 	garden.Seeds[crop.id] = (garden.Seeds[crop.id] or 0) + amount
 	done(player, "BuySeeds", { crop = crop.id, count = amount, price = price })

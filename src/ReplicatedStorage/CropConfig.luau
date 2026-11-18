@@ -145,6 +145,13 @@ CropConfig.Cart = {
 }
 CropConfig.DaySeconds = TimeFormat.DAY
 
+-- The rotating seed stall (ST, docs/GDD.md §7.9; model economy_ev `st_*`, ECONOMY.md → Findings "ST"). A restock block is
+-- floor(os.time() / Seconds) (UTC hours). Always in stock, without a count: the first `Staples` crops of the ladder, the newest unlocked
+-- crop and the crops a next talent level or the open quest asks for (CropConfig.StallAlways). Every other unlocked common crop is in
+-- stock in a block when its draw (StallStock) says so: chance `Chance`, and at least every `Pity` blocks; then `Count` seeds per player
+-- per block (Garden.Stall).
+CropConfig.Stall = { Seconds = 3600, Staples = 3, Chance = 0.5, Pity = 3, Count = 12 }
+
 -- Garden tools (E1c3, docs/EXPANSION.md §6; numbers approved 2026-11-03, docs/ECONOMY.md → "Garden tools at F2"): levels bought with
 -- Coins; Garden.Tools[id] = level. effect[n] at level n: Sorter = a harvest's size factor x (1 + effect)
 -- (owner and Tending pets alike); Cloches = growth while the owner is online x (1 + effect), nothing offline; Shears = the chance of a second
@@ -567,6 +574,55 @@ function CropConfig.CartOffers(day: number, unlockedSet)
 		})
 	end
 	return offers
+end
+
+-- The seed stall's restock block for server time `now`, and the server time at which block `block` ends.
+function CropConfig.StallBlock(now: number): number
+	return math.floor(now / CropConfig.Stall.Seconds)
+end
+function CropConfig.StallEnds(block: number): number
+	return (block + 1) * CropConfig.Stall.Seconds
+end
+
+-- Whether a rotating crop is in stock in block `block`: a draw seeded by the block and the crop's ladder position only (the same on every
+-- server and for every player who has it), or the pity turn (block + position) % Pity == 0 (never out more than Pity - 1 blocks in a row).
+function CropConfig.StallStock(block: number, crop): boolean
+	local stall = CropConfig.Stall
+	local order = crop.order or 0
+	return Random.new(block * 7919 + order * 104729):NextNumber() < stall.Chance or (block + order) % stall.Pity == 0
+end
+
+-- The crops always in stock for a player with the unlocked set `unlocked`: the staples, the newest unlocked crop (the last one in ladder
+-- order) and the ids in `extra` (the next talent levels' and the open quest's crops) -> { [cropId] = true }.
+function CropConfig.StallAlways(unlocked, extra: { string }?)
+	local always = {}
+	local newest = nil
+	for _, crop in CropConfig.Ladder do
+		if crop.order <= CropConfig.Stall.Staples then
+			always[crop.id] = true
+		end
+		if CropConfig.IsUnlocked(unlocked, crop.id) then
+			newest = crop
+		end
+	end
+	if newest then
+		always[newest.id] = true
+	end
+	for _, id in extra or {} do
+		always[id] = true
+	end
+	return always
+end
+
+-- The rotating crops of a player in block `block`: { [cropId] = in stock } for every unlocked common crop not in `always`.
+function CropConfig.StallRotating(block: number, unlocked, always): { [string]: boolean }
+	local rotating = {}
+	for _, crop in CropConfig.Ladder do
+		if CropConfig.IsUnlocked(unlocked, crop.id) and not always[crop.id] then
+			rotating[crop.id] = CropConfig.StallStock(block, crop)
+		end
+	end
+	return rotating
 end
 
 return CropConfig

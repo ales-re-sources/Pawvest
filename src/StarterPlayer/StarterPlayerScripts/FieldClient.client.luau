@@ -16,6 +16,7 @@ local player = Players.LocalPlayer
 
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
+local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
@@ -56,7 +57,11 @@ local PET_REJECT_KEYS = setmetatable({
 	maxed = "field.reason.slotsMaxed",
 }, { __index = REJECT_KEYS })
 local UPGRADE_REJECT_KEYS = setmetatable({ maxed = "field.reason.upgradeMaxed" }, { __index = REJECT_KEYS })
-local STALL_REJECT_KEYS = setmetatable({ far = "seedStall.reason.far" }, { __index = REJECT_KEYS })
+local STALL_REJECT_KEYS = setmetatable({
+	far = "seedStall.reason.far",
+	stock = "seedStall.reason.stock", -- ST: a rotating crop not in this restock
+	soldOut = "seedStall.reason.soldOut", -- ST: this restock's seeds of it are bought
+}, { __index = REJECT_KEYS })
 -- EV3b: handing crops in toward a milestone quest
 local QUEST_REJECT_KEYS = setmetatable({
 	none = "field.reason.questNone",
@@ -180,9 +185,30 @@ local function showNotices(field)
 	end
 end
 
+-- ST: once per restock block, while the player is in the garden, "New seeds at the stall" when a rotating crop of theirs is in stock
+-- (not on join: the first State only sets the block).
+local stallBlock = nil
+local function stallRestock(field)
+	local stall = field and field.stall
+	if type(stall) ~= "table" or stall.block == stallBlock then
+		return
+	end
+	local first = stallBlock == nil
+	stallBlock = stall.block
+	local any = false
+	for _, left in stall.left do
+		any = any or left > 0
+	end
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	if not first and any and root and StageConfig.AreaOf(root).Name == "Garden" then
+		showToast(Locale.T("seedStall.toast.restock"), COLOR_OK)
+	end
+end
+
 remotes:WaitForChild("State").OnClientEvent:Connect(function(state)
 	fieldState = if type(state) == "table" then state.field else nil
 	showNotices(fieldState)
+	stallRestock(fieldState)
 end)
 
 PetClient.Changed:Connect(function()

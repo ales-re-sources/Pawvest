@@ -2150,6 +2150,10 @@ def config_match(M):
     if list(pts) != want_pts or total != len(levels):
         out.append(f"crop points (Value, Size, Speed, PerLine): config {list(pts)} vs proposal {want_pts} (proposal {total} points per "
                    f"crop, the game {len(levels)} levels)")
+    want_stall = [C["st_every"], C["stall_staples"], C["st_p"], C["st_pity"], C["st_n"]]  # ST: the rotating stall (the game always has it)
+    if not C["st"] or list(cc["stall"]) != want_stall or not C["st_newest"]:
+        out.append(f"stall (Seconds, Staples, Chance, Pity, Count): config {list(cc['stall'])} vs proposal {want_stall} (st {C['st']}, "
+                   f"st_newest {C['st_newest']}: the game has both)")
     if cc["crows"][4] != cfg_id(C["crows_from"]) or cc["cart"][1][2] != cfg_id(C["crows_from"]):
         out.append(f"crows / cart taste from: config {cc['crows'][4]} / {cc['cart'][1][2]} vs proposal {cfg_id(C['crows_from'])}")
     for s in M["stages"]:  # EV3 rule 6: the Tutorial / World 1 first clears

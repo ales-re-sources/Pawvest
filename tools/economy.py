@@ -251,6 +251,10 @@ def mastery_cfg(o):
     return [list(o["Levels"]), o["RestPerDay"], o["RestCap"], o["QuestSeeds"], [pts["Value"], pts["Size"], pts["Speed"], pts["PerLine"]]]
 
 
+def stall_cfg(o):
+    return [o["Seconds"], o["Staples"], o["Chance"], o["Pity"], o["Count"]]
+
+
 def scout_cfg(o):
     return [o["XpPerFinish"] / 3600, o["PerStrength"], o["Cap"], o["PouchExtraAt"]]
 
@@ -292,6 +296,7 @@ def apply_crop_config(P):
         "upgrades": [[u["id"], u["step"], list(u["prices"])] for u in luau(f, "CropConfig.Upgrades")],  # [id, step, prices]
         "tools": [[t["id"], list(t["effect"]), list(t["prices"])] for t in luau(f, "CropConfig.Tools")],  # E1c3: [id, effect, prices]
         "cart": cart_cfg(luau(f, "CropConfig.Cart")),
+        "stall": stall_cfg(luau(f, "CropConfig.Stall")),  # ST: [Seconds, Staples, Chance, Pity, Count]
         "obby_seeds": obby_cfg(luau(f, "CropConfig.ObbySeeds")),  # E2a: [first Gold from world, seeds per first Gold, daily seeds, meter size, points by medal, first-of-day factor, E2b pouch seeds by medal]  # E1c4: [[count, discount] per bargain, [taste count, price, fromLevel]]
         "size": [luau(f, "CropConfig.SizeSigma"), luau(f, "CropConfig.SizeZCap"), luau(f, "CropConfig.SizeBigZ"), luau(f, "CropConfig.SizeGiantZ")],  # E1c2
         "rates": [luau(f, "CropConfig.OnlineRate"), luau(f, "CropConfig.OfflineRate"), luau(f, "CropConfig.OfflineCapSeconds") / 3600],  # hours
@@ -462,6 +467,7 @@ def pin_values(P):
         "crop_field_tools": P["crop_cfg"]["tools"],  # [id, effect, prices] (E1c3)
         "crop_field_xp": P["crop_cfg"]["xp"],  # [id, pet XP per crop fed] (E1a3)
         "crop_field_cart": P["crop_cfg"]["cart"],
+        "crop_field_stall": P["crop_cfg"]["stall"],
         "crop_field_crows": P["crop_cfg"]["crows"],  # [block share, chance, cap per absence, block hours, from crop] (E4-thin, EV3b)
         "pet_scouting": P["crop_cfg"]["scouting"],  # [XP hours per medal finish, per strength, cap, pouch +1 from] (E2c)
         "crop_field_obby_seeds": P["crop_cfg"]["obby_seeds"],  # [first Gold from world, per first Gold, daily, meter size, points, first-of-day x, pouch by medal] (E2a, E2b)  # [[count, discount] per bargain, [taste count, price, from level]] (E1c4)

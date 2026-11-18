@@ -649,6 +649,15 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
     held and a **Bring** button; later crops a plain "🔒 Later"; the rare crops say from which world's medals) with the barn's fill. The board above the counter (both faces) lists the day's cart offers
     ("−30 % · 💰 1", "sold out") and the time to new ones. BuySeeds / BuyCart are accepted within 20 studs of the counter only; the panel
     closes beyond that.
+  - **Rotating stock (ST, 2026-11-18; numbers `CropConfig.Stall`, model `economy_ev` `st_*`, ECONOMY.md → Findings "ST").** The stall
+    restocks every UTC hour, the same on every server. Always in stock, without a count: Potato, Lettuce, Onion, the newest unlocked crop
+    (the one whose bar opens the next) and every crop a talent's next level or the open quest asks for. Every other unlocked crop rotates:
+    in stock in about 2 of 3 hours (a draw from the hour and the crop, and at least every 3rd hour), then 12 seeds per player for that
+    hour ("12 left this hour"; +10 takes what is left). Out of stock or sold out, its row stays with a grey "Back soon" in place of the
+    buy bricks. Under the Seeds heading "New seeds in 42:10"; when the hour turns the panel changes without a rejoin, and a player in the
+    garden gets the toast "New seeds at the seed stall!" if a crop of theirs rotated in. Seeds already bought keep (the barn holds them).
+    Why: planting was too linear; a stall that does not offer everything makes the player plant what is there and gives online news, and
+    it slows the mid game (the model's Casual top crop ~day 18 instead of 13). The market cart stays apart (daily bargains, the taste).
   - **Skills panel, Garden tab** (the Obby tab holds the talents): the Growth / Barn upgrades and the tools, buyable anywhere (Coins only).
   - **Pets panel:** the field pet slot line (pets on the field / slots) with "+1 slot" (buyable anywhere).
   - The crow forecast also shows in the summary bubble over the own sign ("🐦 0:45" within an hour of crows, "🐦 now!" while they are on).

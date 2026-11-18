@@ -292,6 +292,13 @@
   4,
   36
  ],
+ "crop_field_stall": [
+  3600,
+  3,
+  0.5,
+  3,
+  12
+ ],
  "crop_field_tools": [
   [
    "Sorter",

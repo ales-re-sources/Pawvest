@@ -4,6 +4,8 @@
 --     seed catalogue (+1 / +10 per unlocked crop with its mastery ★ and line, EV3b, a ★ brick that opens its crop page and the sale
 --     with its Value point, EV3c; the next locked crop shows the previous crop's count
 --     toward it, or its quest with a Bring button per crop; later crops a plain lock; "from World n" for rare crops: E2a), the barn line;
+--     ST: under the seeds heading "New seeds in 42:10" (the restock block's end); a rotating crop (field.stall.left) shows "12 left" and
+--     its +10 buys what is left when fewer; out of stock or sold out its buy bricks give way to a grey "Back soon" (the ★ brick stays);
 --     spends over ConfirmTap.THRESHOLD take two taps; walking SeedStallDistance away from the counter closes it (the server checks the
 --     same distance), PanelFocus "SeedStall" closes the other panels;
 --   * two tabs under the title (playtest 2026-11-08): Buy (the above) and Sell (every harvested crop with the Barn's Sell brick);
@@ -85,7 +87,9 @@ local activeTab = "buy"
 
 local openCounter: BasePart? = nil
 local cartTimer = nil -- { label, at }
+local stallTimer = nil -- ST: { label, at } of the "new seeds in" line
 local askedAt = nil -- the cart's nextAt for which a new State was asked once
+local askedStall = nil -- ST: the restock end for which a new State was asked once
 
 local function coinsNow(): number
 	return PetClient.Coins or 0
@@ -146,6 +150,14 @@ end
 local function renderSeeds(field, tap: number)
 	GardenUi.Clear(seedsSection)
 	GardenUi.Heading(seedsSection, 1, Locale.T("field.section.seeds"), COLOR_PANEL)
+	stallTimer = nil
+	local stall = field.stall
+	if stall then -- ST: the restock countdown
+		local line = GardenUi.Paragraph("Restock", { LayoutOrder = 2, TextSize = 13, TextColor3 = GardenUi.COLOR_DIM, Text = "" })
+		line.Parent = seedsSection
+		stallTimer = { label = line, at = stall.endsAt }
+		line.Text = Locale.T("seedStall.restock", { time = GardenUi.Countdown(stall.endsAt - workspace:GetServerTimeNow()) })
+	end
 	local total = CropConfig.SeedTotal(field.seeds)
 	local capacity = GardenUi.BarnOf(field)
 	local nextCrop = CropConfig.NextLocked(GardenUi.Mastery(field).unlocked)
@@ -159,6 +171,10 @@ local function renderSeeds(field, tap: number)
 		local info = if crop.rare
 			then Locale.T("field.seed.rareInfo", { time = grow, sale = crop.sale, stock = stock })
 			else Locale.T("field.seed.info", { time = grow, sale = GardenUi.SalePrice(field, crop), seed = crop.seed, stock = stock })
+		local left = if stall and not locked then stall.left[crop.id] else nil -- ST: nil = always in stock
+		if left and left > 0 then
+			info ..= "\n" .. Locale.T("seedStall.left", { count = left })
+		end
 		local lockText = nil
 		local previous, need = nil, nil
 		if crop.rare then -- rare seeds come only from the obby (E2a): the row says from which world
@@ -201,8 +217,18 @@ local function renderSeeds(field, tap: number)
 					questEvent:FireServer(id, amount)
 				end)
 			end
+		elseif left and left <= 0 then -- ST: out of stock in this block, or sold out
+			GardenUi.Paragraph("Out", {
+				LayoutOrder = 2,
+				Size = UDim2.new(0, BUY1_WIDTH + BUY10_WIDTH + GAP, 0, 0),
+				Font = StudStyle.Font,
+				TextSize = 15,
+				TextColor3 = GardenUi.COLOR_DIM,
+				TextXAlignment = Enum.TextXAlignment.Center,
+				Text = Locale.T("seedStall.backSoon"),
+			}).Parent = row
 		else
-			for slot, option in { { name = "Buy1", amount = 1, width = BUY1_WIDTH }, { name = "Buy10", amount = 10, width = BUY10_WIDTH } } do
+			for slot, option in { { name = "Buy1", amount = 1, width = BUY1_WIDTH }, { name = "Buy10", amount = math.min(10, left or 10), width = BUY10_WIDTH } } do
 				local price = crop.seed * option.amount
 				local affordable = coinsNow() >= price and total + option.amount <= capacity
 				local buy = GardenUi.Button(option.name, {
@@ -424,7 +450,7 @@ Locale.Changed:Connect(function()
 	renderBoard()
 end)
 
--- Every 0.25 s: the cart countdowns (panel and board), a new State once the offers change
+-- Every 0.25 s: the cart and stall countdowns (panel and board), a new State once the offers or the stall's block change
 local elapsed = 0
 RunService.Heartbeat:Connect(function(dt)
 	elapsed += dt
@@ -442,8 +468,17 @@ RunService.Heartbeat:Connect(function(dt)
 		timer.label.Text = Locale.T("field.cart.next", { time = GardenUi.Countdown(timer.at - now) })
 		nextAt = timer.at
 	end
+	if stallTimer then
+		stallTimer.label.Text = Locale.T("seedStall.restock", { time = GardenUi.Countdown(stallTimer.at - now) })
+	end
 	if nextAt and now >= nextAt and askedAt ~= nextAt then
 		askedAt = nextAt -- the new day's offers come with the next State
+		requestStateEvent:FireServer()
+	end
+	local field = GardenView.OwnField()
+	local stallEnds = field and field.stall and field.stall.endsAt
+	if stallEnds and now >= stallEnds and askedStall ~= stallEnds then
+		askedStall = stallEnds -- ST: the next block's stock comes with the next State (the panel open or not: FieldClient's restock toast)
 		requestStateEvent:FireServer()
 	end
 end)
