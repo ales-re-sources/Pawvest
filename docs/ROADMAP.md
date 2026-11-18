@@ -53,7 +53,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | HX0 | Hybrid plants: look prototype (Studio reviewer only) | ✔ | ✔ (look approved 2026-11-16) | – |
 | HX1 | Hybrid plants: breeding mechanic design ([HYBRIDS.md](HYBRIDS.md)) | main rules decided 2026-11-16; numbers and rules open | – | – |
 | TH | Store thumbnails ([THUMBNAILS.md](THUMBNAILS.md) §8–9) | logo; release candidates A1, A2, A3, C1, C2, C3; B1 parked until D1 | stud sign decision, grid tile test, kid test open | – |
-| ST | Rotating seed stall: slow UTC rotation, stock by mastery (1.0) | – | – | – |
+| ST | Rotating seed stall: slow UTC rotation, stock by mastery (1.0) | ✔ Studio-validated 2026-11-18 | – | – |
 | SH | Harvest Hall (weekly biggest crop per kind) and plot likes (1.0) | – | – | – |
 | FB | Player feedback: stage rating, feedback box (1.0) | – | – | – |
 | E5 | Garden MVP rest: request board, ledger on join, onboarding, garden telemetry (1.0) | – | – | – |
@@ -70,7 +70,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 - **Not in 1.0:** obby time calibration (M6b; the obby stays as built), the comfort shop (D2: 1.0 ships without monetization),
   Sunshine (EV2c), World 4, hybrids (HX1 build).
 
-**Start here:** ST, the build once the stall numbers are signed off (model and scope done 2026-11-17; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: OG validation and the M6a friends test (step 0).
+**Start here:** SH (ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: OG validation and the M6a friends test (step 0).
 *Update this line whenever a milestone finishes.*
 
 **Road to 1.0** (in order; one milestone at a time unless marked "alongside"):
@@ -81,7 +81,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 1. **EV3 — crop mastery** (section below; player-facing name "Mastery ★"): sign-off → EV3b (levels, unlocks, Renown out) → EV3c (crop
    upgrade points). *State:* done: EV3a numbers signed off 2026-11-17 (mastery by plants grown, 3 levels, price tiers, smaller Double
    Jump 2 / Dash bundles); EV3b and EV3c built and Studio-validated 2026-11-17.
-2. **ST — rotating seed stall** (section below): model, then build. *Needs* EV3b (★ decides which crops can appear).
+2. **ST — rotating seed stall:** done (Studio-validated 2026-11-18; Done).
 3. **SH — Harvest Hall and plot likes** (section below). *Needs* only the size records (built); EV3c's Size line (built) changes sizes.
 4. **FB — player feedback** (section below): small, alongside ST or SH.
 5. **E5 — the online loop** (scope when it starts; EXPANSION §14): request board (rules: ECONOMY.md → EV "Requests": tracked "grow 6 Tomatoes",
@@ -212,45 +212,10 @@ one line (changed the same day); no free reset (later a paid comfort in D2 or an
 **Not in EV3:** repeat-run Coins → Sunshine (EV2c); requests and trees (the online loop, E5); a flatter price curve (ECONOMY.md → open
 decision 5).
 
-### ST — Rotating seed stall (decided 2026-11-17; modelled and scoped 2026-11-17, waits for the numbers' sign-off)
-*Why (the user):* planting is too linear; a stall that does not offer everything makes the player plant what is there and gives online
-news. EXPANSION §1.1 holds: a slow UTC rotation (hours), never a restock every few minutes. ECONOMY.md → Findings "Rotating stall and
-trees" probed a 10-minute stall (15 / 18 checks; the top crop became luck, talent-bundle crops waited on stock).
-1. **Model:** done 2026-11-17 (`CAND` `st_*`, ECONOMY.md → Findings "ST"): with the stall the chain passes 16 / 16 / 16 / 17 of 18
-   on seeds 1–4 (alone 13 each); the rest are the known R, B2, G8, G11. The scope's "18 / 18" is out of reach without retuning those.
-2. **Numbers (the candidate; the user signs off, ECONOMY.md → open decision 8):** `CropConfig.Stall = { Seconds = 3600, Staples = 3,
-   Chance = 0.5, Pity = 3, Count = 12 }`. A restock block = `floor(os.time() / Seconds)` (UTC hours). **Always in stock** (no count,
-   like today): the staples (the first `Staples` crops of the ladder: Potato, Lettuce, Onion), the newest unlocked crop, the crops of the
-   next level of every talent (`TalentConfig` bundles) and of the open quest. **Rotating:** every other unlocked common crop is in stock in
-   a block when `Random.new(block · 7919 + index · 104729):NextNumber() < Chance` or `(block + index) % Pity == 0` (index = its ladder
-   position): about 2 in 3 blocks, never missing more than 2 in a row, the same on every server and for every player who has it; `Count`
-   seeds per player per block.
-3. **Server (GardenField, CropConfig):** `CropConfig.StallBlock(now)`, `CropConfig.StallStock(block, index)` (the draw) and
-   `CropConfig.StallOffers(block, unlocked, always)` beside `CartOffers`; the always set from the profile (talents, quest). Profile
-   `Garden.Stall = { Block, [cropId] = bought }`, reset when the block changes (as `cartToday`; no `Version` step, missing = empty).
-   `BuySeeds` refuses `stock` (a rotating crop not in this block) and `soldOut` (over `Count` − bought: nothing is taken, Coins and seeds
-   unchanged); the state sends `stall = { block, endsAt, offers = { [cropId] = left } }` (always-stocked crops absent = unlimited). The
-   market cart stays as it is (daily bargains and the taste of the next locked crop: news of its own, not merged). Telemetry: none new
-   (`BuySeeds` as today).
-4. **Client (SeedStallClient, GardenUi):** a header line "New seeds in 42:10" (`TimeFormat.Clock`, ticking); a rotating row shows "12 left"
-   with its +1 / +10 (the +10 brick takes what is left when fewer); out of stock or sold out the row stays, greyed, with "Back soon" in
-   place of the buy bricks and the ★ brick kept; always-stocked rows unchanged. The unlock bar's crop (the newest) is never out of stock.
-   When a block starts while the player is in the garden: a HUD note "New seeds at the stall" (`HudPopup`, once per block, only if a
-   rotating crop they have is in stock).
-5. **Docs and text:** GDD §7.9 (the stall), PROTOCOL (`Garden.Stall`, state `stall`, the `stock` / `soldOut` reasons), ECONOMY.md
-   (EV0 compares `CropConfig.Stall` with `st_*`: `economy.py` reads it, `pin`), LAYOUT, strings EN + CS.
-- **Acceptance:**
-  - `economy.py check`: EV0 equal with the stall numbers, no drift; `evcheck` on seeds 1–4 no worse than 16 / 16 / 16 / 17 apart from
-    noise in R, B, B2, G8, G11; `loc.py build / check / lint`; a playtest boot without errors.
-  - Same offers everywhere: `StallOffers` for one block gives the same rotating set in the Edit context, a playtest Server and a second
-    playtest (a pure function of the block); a rotating crop is out of stock in at most 2 blocks in a row over 200 blocks (printed).
-  - Through the real stall UI on a fixture (snapshot first, restore after): a rotating crop in stock buys +1 and +10 (count 12 → 1 left);
-    the next +10 buys the last 1; then the row is greyed "Back soon" and a fired `BuySeeds` returns `soldOut` with Coins and seeds unchanged;
-    a crop not in this block returns `stock`; Potato, the newest crop, a next-talent bundle crop and the open quest's crop buy without a
-    count.
-  - The next block resets the counts: a fixture with `Garden.Stall.Block` = the previous block and its counts used up buys again.
-  - The countdown reaches 0:00 and the rows change without a rejoin; the HUD note shows once.
-  - Czech and the pseudo-language on the stall rows ("12 left", "Back soon", the header) fit; the cart's rows unchanged.
+### ST — Rotating seed stall
+Done 2026-11-18 (Done; the scope: `git show df15e8f:docs/ROADMAP.md`). Decided with it: the numbers (hourly, staples Potato–Onion,
+chance 0.5, pity 3, 12 seeds, the newest crop always; the user, 2026-11-18); the market cart stays apart; the restock note is a garden
+toast, not a HudPopup.
 
 ### SH — Harvest Hall and plot likes (decided 2026-11-17; scope when it starts)
 *Why (the user):* players should feel competition, not play alone. Size records per crop exist (`Garden.BestSize`, GDD §7.9 size roll).
@@ -348,6 +313,18 @@ Tagged **[1.0]** (needed before 1.0 goes public) or **[later]**.
 
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
+
+**ST — rotating seed stall** (2026-11-18; Studio-validated on Lekzdrh's live profile and a fixture, restored). *Why:* planting was too
+linear; a stall that does not offer everything makes the player plant what is there, gives online news and slows the mid game (model:
+16 / 16 / 16 / 17 of 18 on seeds 1–4, the chain alone 13; ECONOMY.md → Findings "ST"). *What:* GDD §7.9 (rotating stock);
+`CropConfig.Stall` / `StallStock` / `StallAlways` / `StallRotating`, profile `Garden.Stall`, state `stall`, BuySeeds `stock` / `soldOut`
+(PROTOCOL); the stall rows ("N left this hour", "Back soon", "New seeds in"), the restock toast; `economy.py` reads `Stall`, EV0 compares
+it with `st_*`. Checked: server and client draw the same stock for the block; over 200 hours every crop is out at most 2 hours in a row
+(in stock 67 %); through the stall's buttons Tomato +1, +10 → "1 left" and +10 became +1 → bought out, "Back soon"; `soldOut` and `stock`
+take nothing (Coins and seeds unchanged); Potato and the newest crop (Sweet potato) buy without a count; on a fixture (Sweet potato's quest
+open, Jump Height 1, last hour's counts) Cucumber (the talent's next level) 22, Eggplant and Blueberry (the quest) 13 each, Pepper reset
+to 12 and bought out; the real restock at 19:00 UTC (block 498619) arrived without a rejoin: the countdown restarted at 59:23, Garlic came back with 12 and the sold-out Pepper reset to 12; the restock toast (blocks sent to the client by hand) shows at the stall, not at the hub and not when nothing rotated in (the first cut tested the area by the character's ancestry, which never is Workspace.Garden: now the distance from the garden centre); Czech and the pseudo-language fit (no literals); no errors. Not checked: two live servers side by side
+(the draw is a pure function of the block, checked in two contexts).
 
 **EV3c stacking — any line, up to 3** (2026-11-17; the user's change after EV3c). *Why:* the player chooses a build (all Speed on a quick
 crop, all Price on an overnight one) instead of only an order. *What:* `Mastery.Points.PerLine` 3, `Pts[line]` = 0–3, additive

@@ -16,7 +16,7 @@ local player = Players.LocalPlayer
 
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
-local StageConfig = require(ReplicatedStorage:WaitForChild("StageConfig"))
+local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
@@ -188,6 +188,18 @@ end
 -- ST: once per restock block, while the player is in the garden, "New seeds at the stall" when a rotating crop of theirs is in stock
 -- (not on join: the first State only sets the block).
 local stallBlock = nil
+-- Whether the character stands on the garden island: within the outer plot ring and two plot depths (a field lies behind its plot) of
+-- the garden centre, measured flat.
+local function inGarden(): boolean
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	if not (root and root:IsA("BasePart")) then
+		return false
+	end
+	local offset = root.Position - GardenConfig.PlotCentre
+	local reach = GardenConfig.PlotRings[#GardenConfig.PlotRings].radius + 2 * GardenConfig.PlotSize
+	return Vector3.new(offset.X, 0, offset.Z).Magnitude <= reach
+end
+
 local function stallRestock(field)
 	local stall = field and field.stall
 	if type(stall) ~= "table" or stall.block == stallBlock then
@@ -199,8 +211,7 @@ local function stallRestock(field)
 	for _, left in stall.left do
 		any = any or left > 0
 	end
-	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-	if not first and any and root and StageConfig.AreaOf(root).Name == "Garden" then
+	if not first and any and inGarden() then
 		showToast(Locale.T("seedStall.toast.restock"), COLOR_OK)
 	end
 end
