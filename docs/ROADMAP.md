@@ -70,7 +70,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 - **Not in 1.0:** obby time calibration (M6b; the obby stays as built), the comfort shop (D2: 1.0 ships without monetization),
   Sunshine (EV2c), World 4, hybrids (HX1 build).
 
-**Start here:** FB (scope it). (SH Studio-validated 2026-11-18, likes in a two-client test; ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: OG validation and the M6a friends test (step 0).
+**Start here:** E5 (scope it). (FB Studio-validated 2026-11-18, the live filter check open; SH Studio-validated 2026-11-18, likes in a two-client test; ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: OG validation and the M6a friends test (step 0).
 *Update this line whenever a milestone finishes.*
 
 **Road to 1.0** (in order; one milestone at a time unless marked "alongside"):
@@ -83,7 +83,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
    Jump 2 / Dash bundles); EV3b and EV3c built and Studio-validated 2026-11-17.
 2. **ST — rotating seed stall:** done (Studio-validated 2026-11-18; Done).
 3. **SH — Harvest Hall and plot likes:** done (Studio-validated 2026-11-18; Done).
-4. **FB — player feedback** (section below): small, alongside ST or SH.
+4. **FB — player feedback:** done (Studio-validated 2026-11-18; Done).
 5. **E5 — the online loop** (scope when it starts; EXPANSION §14): request board (rules: ECONOMY.md → EV "Requests": tracked "grow 6 Tomatoes",
    no hand-in and no accept step, an unfinished request stays, the board opens on day 0; decided 2026-11-17; shown as the Goals panel's
    *Today's requests* and the second tracker line, no board stand: UI_GARDEN_PETS §13), the ledger on join
@@ -223,59 +223,10 @@ it: two plain DataStore keys with `UpdateAsync` merges instead of ordered stores
 #1 that is Big or Giant (one per server per 60 s); a ribbon for each week's #1; the Hall on the hub plaza's west half; a like gives the
 owner a live toast (no join-notice line); the own record shelf left SH (Open items → Not built).
 
-### FB — Player feedback (decided 2026-11-17; small, alongside ST or SH)
-*Why (the user):* we need to hear the players; kids rarely write reviews. Three channels, all to us.
-1. **Stage rating:** 👍 / 👎 on the stage results popup after a finish (optional, one per stage and player, changeable); not at the gate
-   (before a run there is nothing to rate). A `Telemetry` event (stage, medal, rating) and per-stage counts; input for M6b.
-2. **Plot likes** (SH) double as a signal of which gardens interest people.
-3. **"Send feedback"** in Settings: one box (≤ 300 characters), a category (bug / idea / other), the area / stage attached
-   automatically; filtered with `TextService:FilterStringAsync` before storing; 3 a day per player (`RateLimit`); a line "don't write your
-   name or contacts". Stored in a DataStore `PlayerFeedback` (key = time + UserId), read by us through the MCP or Open Cloud, never shown
-   to players. An admin-panel list is optional.
-4. **Docs and text:** PROTOCOL, TELEMETRY, strings EN + CS.
-
-**Scope (2026-11-18).** One server module `FeedbackService` with the remotes folder `FeedbackRemotes` (`Rate`, `Send`, `Result`).
-- **Rating:** the results popup gets a row "Did you like it?" with 👍 / 👎 (taps on it do not close the popup; a tap marks the choice,
-  shows "Thanks!" and restarts the popup's timer). `StageResults` puts the stored rating into the result. Server `Rate(stageKey, ±1)`:
-  only a stage with a stored best time, RateLimit 1 s, the same value again = nothing. Stored in the profile `StageRatings[stageKey]`;
-  the per-stage counts in the DataStore `StageRatings` key `counts` (`{ [stageKey] = { up, down } }`): deltas queued and written with one
-  `UpdateAsync` every 60 s (+ jitter) and in `BindToClose` (the HarvestHall pattern). Telemetry `StageRating` (value ±1; stage, best medal,
-  new / change).
-- **Feedback:** a Settings row "Send feedback" (LayoutOrder 3) opens a Feedback panel (`GardenUi.Panel`, PanelFocus `Feedback`): category
-  bricks Bug / Idea / Other (one must be picked), a multi-line box cut at 300 characters with a counter, the line "Don't write your name or
-  contacts.", Send and a status line. Server `Send(category, text)`: a known category, trimmed text of 1–300 characters (valid UTF-8),
-  3 a day per player (profile `FeedbackToday = { Day, Count }`, UTC day), RateLimit 5 s; filtered (`PublicChat`,
-  `GetNonChatStringForBroadcastAsync`; a failed filter refuses, nothing unfiltered is stored); stored in the DataStore `PlayerFeedback`
-  key `<os.time()>_<UserId>` = `{ u, t, cat, area, text, lang, ver }` (area: `Telemetry.AreaOf`: the run's stage, "garden", "hub" or the
-  score panel's place). Telemetry `Feedback` (category, area). In Studio both stores use keys prefixed `studio_` (the live data stays clean).
-- **Not in FB:** an admin list (we read the stores through the MCP / Open Cloud); counts shown anywhere in the game.
-- **Acceptance:**
-  1. A 👍 through the real popup after a finish: Telemetry debug line, `StageRatings` in the profile, after the flush `studio_counts` up 1;
-     then 👎 on the next finish: up −1, down +1; the same rating again changes nothing; a tap on the row does not close the popup.
-  2. `Rate` for a stage never finished, or with a value other than ±1: refused, nothing stored.
-  3. Feedback through the real Settings row and panel is stored filtered with category, area, language and place version; the box clears
-     and says thanks.
-  4. The 4th of a day, an empty text, 301 characters and an unknown category are refused (the last three by firing the remote); the box
-     cannot hold more than 300 characters.
-  5. Czech and the pseudo-language: the popup row, the Settings row and the panel fit.
-  6. Live test (the user, later): the stored text is filtered (Studio does not filter text) → Live-validated.
-
-**Validation (2026-11-18, MCP playtest, Lekzdrh, Czech; snapshot `profile_9892673032_FB_1`, restored after).** Finishes driven through
-Stage 1's `TimerStart` and portal; every click through the real UI (`user_mouse_input` / `user_keyboard_input`).
-1. 👍 on the popup: it stayed open, "Díky!", the thumb green; `[Telemetry] StageRating 1 {Stage1, 3, new}`, profile `StageRatings.Stage1 = 1`.
-   Next finish: 👎 → `StageRating -1 {…, change}`; 👎 again 1.3 s later sent nothing. After the flush `studio_counts` =
-   `{ Stage1 = { up = 0, down = 1 } }` (up +1, then up −1 / down +1). The stored rating shows on the next popup (👎 red).
-2. `Rate("Stage99", 1)` → `stage`; `Rate("Stage1", 2)` and `("Stage1", "1")` → `value`. (A never-finished stage: Lekzdrh has finished
-   every stage; the same `BestTimes` check, reviewed in code.)
-3. Settings → "✉ Napiš nám" opened the panel and closed Settings; Idea + typed text + Send: the box cleared, "Díky, zprávu máme!";
-   stored `{ cat = idea, area = Stage1, lang = cs, ver = 0, text, u, t }`; `[Telemetry] Feedback {idea, Stage1}`.
-4. `Send("bug", "   ")` → `empty`, 301 characters → `long`, `"spam"` → `category`; messages 2 and 3 → ok (left 1, 0), the 4th →
-   `daily` (the panel shows "Na dnešek už to stačí…"); 350 "č" put into the box are cut to 300, the counter "300 / 300".
-5. Czech and the pseudo-language: every panel text, the category / Send glyphs, the Settings row and the popup prompt `TextFits`; the
-   panel no longer scrolls (470 px). Found and fixed: a refusal reverted the popup's shown rating even for another request (now only the
-   tap it answers); the counter touched the scroll bar.
-- No errors or warnings on server and client. Cleanup: `studio_counts` and the three `studio_…` feedback keys removed; the Stage 1 Top-10
-  entry the 1 s teleport runs wrote put back to 37.9 s; the profile restored from the snapshot (coins 7 410 088, best 37.9, no ratings).
+### FB — Player feedback
+Done 2026-11-18 (Done; the scope, acceptance checks and validation log: `git show 3d247a8:docs/ROADMAP.md`; as built: GDD §10). Decided
+with it: one feedback panel from a Settings row; per-stage counts as one `UpdateAsync`-merged key; `studio_` keys in Studio; no admin
+list (we read the stores through the MCP / Open Cloud).
 
 ### HX1 — Hybrid plants: the breeding mechanic (design only; added 2026-11-16; the build comes after 1.0)
 Settle the game mechanic before any game code. Notes, decisions and open points: [HYBRIDS.md](HYBRIDS.md); the HX0 prototype: "Done".
@@ -336,6 +287,8 @@ Tagged **[1.0]** (needed before 1.0 goes public) or **[later]**.
   pseudo-language), the Stage 9 exit-door label, the food stand's prompt ("Buy food" is a Studio literal: set its texts from
   `FoodShopClient` as `SeedStallClient` does); the pseudo-language pass on SH's texts (Hall plaque, label, record board, toast, like
   prompt, sign line).
+- **[1.0] FB live check:** a feedback message with a name or a phone number is stored filtered (`PlayerFeedback`; Studio does not
+  filter text); `StageRating` / `Feedback` on the Creator Dashboard.
 - **[1.0] Not built:** the own shelf of record crops in their grown art (moved out of SH 2026-11-18: phone performance; revisit after MU).
 - **[later] Not built:** the pet page's "hatched on … from a Basic egg" line (`Born` / `Egg`); "Show on field" on the pet page (U3b); a
   "barn full" cue in the world.
@@ -343,6 +296,12 @@ Tagged **[1.0]** (needed before 1.0 goes public) or **[later]**.
 
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
+
+**FB — player feedback** (2026-11-18; Studio-validated through the real UI with Lekzdrh's profile snapshot, restored). *Why:* we need to
+hear the players; kids rarely write reviews. *What:* GDD §10 (Player feedback); `FeedbackConfig`, `FeedbackService` (`FeedbackRemotes`
+`Rate` / `Send` / `Result`; DataStores `StageRatings` key `counts`, `PlayerFeedback` keys `<time>_<UserId>`), profile `StageRatings` /
+`FeedbackToday`, the popup's 👍 / 👎 row, `FeedbackClient` (Settings row + panel), `Telemetry.AreaOf`, telemetry `StageRating` /
+`Feedback`.
 
 **SH — Harvest Hall and plot likes** (2026-11-18; Studio-validated on test keys with Lekzdrh's profile snapshot, restored, and in a
 two-client F7 test). *Why:* players should feel competition, not play alone. *What:* GDD §7.9 (Harvest Hall, plot likes); `HallConfig`,
