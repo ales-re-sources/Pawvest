@@ -6,6 +6,7 @@ common.on,State of a setting that is on (Sound row),On,Zapnuto,ok,h88870f51
 common.off,State of a setting that is off (Sound row),Off,Vypnuto,ok,h23ccb8cc
 settings.language,"Settings panel, Language row; {name} = a language name in its own language (English, Čeština) or settings.language.auto",Language: {name},Jazyk: {name},ok,hd53397e5
 settings.language.auto,Language row while the language follows the player's Roblox locale; {name} = that language,Automatic ({name}),Automaticky ({name}),ok,h5f0769cc
+settings.feedback,"Settings panel, the row that opens the Feedback panel (FB: players write to us); ✉ = envelope",✉ Send feedback,✉ Napiš nám,new,h112d6a0d
 "# Names: hub, worlds, stages",,,,,
 hub.name,The central hub island (score panel title),Central Island,Centrální ostrov,ok,h7b457675
 stage.name.Tutorial,"Name of the tutorial stage (score panel, results title, gate prompt). Feminine in Czech, like Úroveň",Tutorial,Výuka,ok,h9863aa84
@@ -96,6 +97,26 @@ results.firstSeeds[other],Form for 0 and 5+,{icon} {crop}: +{count} seeds for th
 results.meterScout,"Results popup (E2c): results.meter when equipped scouts helped; {icon} = the world's rare crop emoji, {pct} = 0-99 how full, {bonus} = the scouts' extra points in whole percent (10-50)",{icon} Rare seed: {pct}% (scouting gives +{bonus}%),{icon} Vzácné semínko: {pct} % (průzkum dává +{bonus} %),ok,hefc0a237
 results.next,"Next goal; {medal} = medal tier (medal.name.*), {time} = its time limit",Next: {medal} under {time},Další cíl: {medal} pod {time},ok,hfa6bbb41
 results.allMedals,Last line when every medal of the stage is earned,All medals earned!,Všechny medaile získány!,ok,h91b54d74
+results.rate.prompt,"Results popup (FB): before the 👍 / 👎 buttons that rate the stage just finished; short, one line with two buttons",Did you like it?,Bavilo tě to?,new,heb60ca59
+results.rate.thanks,Results popup (FB): replaces results.rate.prompt after the player tapped 👍 or 👎,Thanks!,Díky!,new,h9e91bace
+# Feedback panel (FB; opened from the Settings panel),,,,,
+feedback.title,Title of the Feedback panel (players send us a bug report or an idea),Send feedback,Napiš nám,new,hd8f7fe77
+feedback.intro,"Feedback panel, first line (kids are the main audience: simple words; Czech: avoid a gendered past tense)",Found a bug or have an idea? Tell us! We read every message.,"Je tu chyba, nebo máš nápad? Napiš nám! Čteme každou zprávu.",new,h694eb3d9
+feedback.category.bug,"Feedback panel, category button (one of three must be picked); {icon} = 🐞",{icon} Bug,{icon} Chyba,new,h33e07e0d
+feedback.category.idea,"Feedback panel, category button; {icon} = 💡",{icon} Idea,{icon} Nápad,new,h9deda127
+feedback.category.other,"Feedback panel, category button; {icon} = 💬",{icon} Other,{icon} Jiné,new,hd8baec76
+feedback.placeholder,"Feedback panel, grey text in the empty message box",Write here…,Piš sem…,new,h6f3368da
+feedback.counter,"Feedback panel, under the box; {count} = characters written, {max} = the limit (300)",{count} / {max},{count} / {max},new,h4ad587e3
+feedback.warning,"Feedback panel, warning under the box (child safety: no personal data)","Don't write your name, address or any contacts.","Nepiš své jméno, adresu ani žádné kontakty.",new,h1b10e303
+feedback.send,"Feedback panel, the send button",Send,Odeslat,new,h6f13f1c5
+feedback.sending,"Feedback panel, the send button while waiting for the server",Sending…,Odesílám…,new,h26de6de6
+feedback.thanks,"Feedback panel, status line after the message was stored","Thanks, we got your message!","Díky, zprávu máme!",new,h8a8a9414
+feedback.reject.category,"Feedback panel, status line: Send without a category picked","Pick one first: bug, idea or other.","Nejdřív vyber: chyba, nápad, nebo jiné.",new,he880bb9a
+feedback.reject.empty,"Feedback panel, status line: Send with an empty box",Write something first.,Nejdřív něco napiš.,new,h5517cc2c
+feedback.reject.long,"Feedback panel, status line: the message is over the limit (the box normally prevents it)",That's too long.,To je moc dlouhé.,new,h5197ede5
+feedback.reject.daily,"Feedback panel, status line: the player already sent the most messages allowed today (3)",That's enough for today. Try again tomorrow!,Na dnešek už to stačí. Zkus to zase zítra!,new,hacf1dde5
+feedback.reject.filter,"Feedback panel, status line: Roblox's text check failed (a service hiccup)",Couldn't check the text. Try again later.,Text se nepodařilo zkontrolovat. Zkus to později.,new,hecf312e5
+feedback.reject.wait,"Feedback panel, status line: sent again too quickly",Wait a moment and try again.,Chvilku počkej a zkus to znovu.,new,hb9cb3223
 # Gates (unlock prompt and messages),,,,,
 gate.prompt.unlock[one],Hold-E prompt on a shut gate the player can afford; {count} = price. Form for 1,Unlock · {count} Coin,Odemknout · {count} mince,ok,h412a8913
 gate.prompt.unlock[few],Form for 2-4 (Czech only),,Odemknout · {count} mince,ok,h412a8913

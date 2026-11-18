@@ -55,7 +55,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | TH | Store thumbnails ([THUMBNAILS.md](THUMBNAILS.md) §8–9) | logo; release candidates A1, A2, A3, C1, C2, C3; B1 parked until D1 | stud sign decision, grid tile test, kid test open | – |
 | ST | Rotating seed stall: slow UTC rotation, stock by mastery (1.0) | ✔ Studio-validated 2026-11-18 | – | – |
 | SH | Harvest Hall (weekly biggest crop per kind) and plot likes (1.0) | ✔ | ✔ 2026-11-18 | – |
-| FB | Player feedback: stage rating, feedback box (1.0) | – | – | – |
+| FB | Player feedback: stage rating, feedback box (1.0) | ✔ | ✔ 2026-11-18 | filter check open |
 | E5 | Garden MVP rest: request board, ledger on join, onboarding, garden telemetry (1.0) | – | – | – |
 | M6a | Soft launch + World 1 balancing (balanced by feel 2026-10-30; live test open) | – | – | – |
 | MU | Mobile UX check | – | – | – |
@@ -233,9 +233,49 @@ owner a live toast (no join-notice line); the own record shelf left SH (Open ite
    name or contacts". Stored in a DataStore `PlayerFeedback` (key = time + UserId), read by us through the MCP or Open Cloud, never shown
    to players. An admin-panel list is optional.
 4. **Docs and text:** PROTOCOL, TELEMETRY, strings EN + CS.
-- **Acceptance (draft):** a rating through the real popup reaches the telemetry log and the counts, a second rating replaces the first;
-  feedback through the real Settings box is stored filtered with its area; the 4th in a day, an empty and an over-long text are refused;
-  filtering is checked in the live test (Studio does not filter text).
+
+**Scope (2026-11-18).** One server module `FeedbackService` with the remotes folder `FeedbackRemotes` (`Rate`, `Send`, `Result`).
+- **Rating:** the results popup gets a row "Did you like it?" with 👍 / 👎 (taps on it do not close the popup; a tap marks the choice,
+  shows "Thanks!" and restarts the popup's timer). `StageResults` puts the stored rating into the result. Server `Rate(stageKey, ±1)`:
+  only a stage with a stored best time, RateLimit 1 s, the same value again = nothing. Stored in the profile `StageRatings[stageKey]`;
+  the per-stage counts in the DataStore `StageRatings` key `counts` (`{ [stageKey] = { up, down } }`): deltas queued and written with one
+  `UpdateAsync` every 60 s (+ jitter) and in `BindToClose` (the HarvestHall pattern). Telemetry `StageRating` (value ±1; stage, best medal,
+  new / change).
+- **Feedback:** a Settings row "Send feedback" (LayoutOrder 3) opens a Feedback panel (`GardenUi.Panel`, PanelFocus `Feedback`): category
+  bricks Bug / Idea / Other (one must be picked), a multi-line box cut at 300 characters with a counter, the line "Don't write your name or
+  contacts.", Send and a status line. Server `Send(category, text)`: a known category, trimmed text of 1–300 characters (valid UTF-8),
+  3 a day per player (profile `FeedbackToday = { Day, Count }`, UTC day), RateLimit 5 s; filtered (`PublicChat`,
+  `GetNonChatStringForBroadcastAsync`; a failed filter refuses, nothing unfiltered is stored); stored in the DataStore `PlayerFeedback`
+  key `<os.time()>_<UserId>` = `{ u, t, cat, area, text, lang, ver }` (area: `Telemetry.AreaOf`: the run's stage, "garden", "hub" or the
+  score panel's place). Telemetry `Feedback` (category, area). In Studio both stores use keys prefixed `studio_` (the live data stays clean).
+- **Not in FB:** an admin list (we read the stores through the MCP / Open Cloud); counts shown anywhere in the game.
+- **Acceptance:**
+  1. A 👍 through the real popup after a finish: Telemetry debug line, `StageRatings` in the profile, after the flush `studio_counts` up 1;
+     then 👎 on the next finish: up −1, down +1; the same rating again changes nothing; a tap on the row does not close the popup.
+  2. `Rate` for a stage never finished, or with a value other than ±1: refused, nothing stored.
+  3. Feedback through the real Settings row and panel is stored filtered with category, area, language and place version; the box clears
+     and says thanks.
+  4. The 4th of a day, an empty text, 301 characters and an unknown category are refused (the last three by firing the remote); the box
+     cannot hold more than 300 characters.
+  5. Czech and the pseudo-language: the popup row, the Settings row and the panel fit.
+  6. Live test (the user, later): the stored text is filtered (Studio does not filter text) → Live-validated.
+
+**Validation (2026-11-18, MCP playtest, Lekzdrh, Czech; snapshot `profile_9892673032_FB_1`, restored after).** Finishes driven through
+Stage 1's `TimerStart` and portal; every click through the real UI (`user_mouse_input` / `user_keyboard_input`).
+1. 👍 on the popup: it stayed open, "Díky!", the thumb green; `[Telemetry] StageRating 1 {Stage1, 3, new}`, profile `StageRatings.Stage1 = 1`.
+   Next finish: 👎 → `StageRating -1 {…, change}`; 👎 again 1.3 s later sent nothing. After the flush `studio_counts` =
+   `{ Stage1 = { up = 0, down = 1 } }` (up +1, then up −1 / down +1). The stored rating shows on the next popup (👎 red).
+2. `Rate("Stage99", 1)` → `stage`; `Rate("Stage1", 2)` and `("Stage1", "1")` → `value`. (A never-finished stage: Lekzdrh has finished
+   every stage; the same `BestTimes` check, reviewed in code.)
+3. Settings → "✉ Napiš nám" opened the panel and closed Settings; Idea + typed text + Send: the box cleared, "Díky, zprávu máme!";
+   stored `{ cat = idea, area = Stage1, lang = cs, ver = 0, text, u, t }`; `[Telemetry] Feedback {idea, Stage1}`.
+4. `Send("bug", "   ")` → `empty`, 301 characters → `long`, `"spam"` → `category`; messages 2 and 3 → ok (left 1, 0), the 4th →
+   `daily` (the panel shows "Na dnešek už to stačí…"); 350 "č" put into the box are cut to 300, the counter "300 / 300".
+5. Czech and the pseudo-language: every panel text, the category / Send glyphs, the Settings row and the popup prompt `TextFits`; the
+   panel no longer scrolls (470 px). Found and fixed: a refusal reverted the popup's shown rating even for another request (now only the
+   tap it answers); the counter touched the scroll bar.
+- No errors or warnings on server and client. Cleanup: `studio_counts` and the three `studio_…` feedback keys removed; the Stage 1 Top-10
+  entry the 1 s teleport runs wrote put back to 37.9 s; the profile restored from the snapshot (coins 7 410 088, best 37.9, no ratings).
 
 ### HX1 — Hybrid plants: the breeding mechanic (design only; added 2026-11-16; the build comes after 1.0)
 Settle the game mechanic before any game code. Notes, decisions and open points: [HYBRIDS.md](HYBRIDS.md); the HX0 prototype: "Done".

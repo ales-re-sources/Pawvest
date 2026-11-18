@@ -401,6 +401,16 @@ function Telemetry.PlotLike(player: Player, total: number)
 	send("LogCustomEvent", player, "PlotLike", total)
 end
 
+-- FB: a stage rating (value 1 = 👍, -1 = 👎); `medal` = the player's best medal there, `change` = "new" or "change"
+function Telemetry.StageRating(player: Player, stageKey: string, rating: number, medal: number, change: string)
+	send("LogCustomEvent", player, "StageRating", rating, fields(stageKey, medal, change))
+end
+
+-- FB: a feedback message was stored (the text itself goes only to the PlayerFeedback DataStore)
+function Telemetry.Feedback(player: Player, category: string, area: string)
+	send("LogCustomEvent", player, "Feedback", 1, fields(category, area))
+end
+
 -- PlayerTimerHandler: the player arrived on stage `stageKey` without the talents in `missing` ({ { id, level }, … })
 function Telemetry.ArrivalWithoutTalent(player: Player, stageKey: string, missing)
 	local names = {}
@@ -533,6 +543,12 @@ local function idleArea(player: Player): string
 	end
 	local key = states[player] and states[player].area
 	return if key == nil or key == StageConfig.HubName then "hub" else key
+end
+
+-- Where the player is now (FB feedback): the stage key of a run going on, else idleArea's answer
+function Telemetry.AreaOf(player: Player): string
+	local run = states[player] and states[player].run
+	return if run then run.stage.key else idleArea(player)
 end
 
 local function onJoin(player: Player)

@@ -86,6 +86,8 @@ run). Times and counts never go into custom fields (cardinality); they are event
 | `CropPoint` (EV3c) | `LogCustomEvent`, value = the line's points after this one (1-3; the stacking rule, before it the mastery level) | CF01 crop id · CF02 line (`Value`, `Size`, `Speed`) |
 | `HallEntry` (SH) | `LogCustomEvent`, value = the place on the week's board (1-3) | CF01 crop id — sent when a harvest gets onto the week's Harvest Hall board as this server knows it (before the write) |
 | `PlotLike` (SH) | `LogCustomEvent`, value = the liked owner's likes after it | — (sent for the liker) |
+| `StageRating` (FB) | `LogCustomEvent`, value = 1 (👍) or -1 (👎) | CF01 stage key, CF02 the player's best medal there (0-3), CF03 `new` / `change` — a tap on the results popup that changed the stored rating (the same value again sends nothing); the running totals per stage are the `StageRatings` DataStore (PROTOCOL) |
+| `Feedback` (FB) | `LogCustomEvent`, value = 1 | CF01 category (bug / idea / other), CF02 area (`Telemetry.AreaOf`) — a message stored in `PlayerFeedback`; the text never goes to telemetry |
 
 Read: time to each unlock = `CropUnlock` per CF01 against `Session` `new`; where the first hour stalls = the share of players reaching
 order n; which lines players pick = `CropPoint` by CF02, how far they stack one = its value (3 = a full line). Combinations: 16 crops × 2 = 32, 16 crops and 16 crops × 3 lines = 48.

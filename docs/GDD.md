@@ -813,6 +813,15 @@ Decided 2026-10-25. The product list and offer rules are in [EXPANSION.md](EXPAN
   to a DataStore / AnalyticsService funnel.
 - **Re-tune when:** Gold rate < 10 % among players with the designed talent set, or > 60 % of finishers stop at Bronze,
   or a stage's unlock is bought more often than earned, or garden income exceeds the obby first-hour income (pillar 2).
+- **Player feedback (FB, 2026-11-18; shared numbers in `FeedbackConfig`).** Only for us, never shown to players.
+  - *Stage rating:* the results popup ends with "Did you like it?" 👍 / 👎 (optional; one rating per stage and player, changeable on any
+    later finish; a tap marks it, says thanks and keeps the popup up another 7 s; taps on the thumbs do not close it). The per-stage
+    up / down counts sit in the `StageRatings` DataStore, every rating change also goes to telemetry (`StageRating`); input for M6b.
+  - *Feedback box:* Settings → "✉ Send feedback" opens a panel: category Bug / Idea / Other (one must be picked), a box of at most 300
+    characters with a counter, "Don't write your name, address or any contacts.", Send. 3 messages a player per UTC day. The text is
+    filtered by Roblox before it is stored (`PlayerFeedback`, with category, area, language and place version); a failed filter call
+    stores nothing. We read the store through the MCP / Open Cloud; no admin list in the game.
+  - Plot likes (SH, §7.9) double as a signal of which gardens interest people.
 
 ## 11. Player guidance (hints)
 **HUD navigation (MU1).** The desktop uses the top-left row: Home (own farm, including ripe-crop / ready-egg badge), Gateway,
