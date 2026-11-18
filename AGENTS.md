@@ -199,7 +199,8 @@ No automated tests. Validate by risk; scope acceptance checks to the tier a chan
   playtest you did not start before stopping anything (ask the user). A character may not be loaded right after start (wait for
   `HumanoidRootPart`).
 - Bots: a `MoveTo` bot cannot walk on a kit mover (use `Humanoid:Move`); a jump-reach bot holds forward with `Humanoid:Move` every frame
-  through the landing; teleporting into a coin or trigger is flaky (walk onto it). A stage finish can be driven by moving the character
+  through the landing; teleporting into a coin or trigger is flaky (walk onto it). A ProximityPrompt shows (and its key works) only
+  on screen: after teleporting the character, set the camera behind it before pressing the prompt's key. A stage finish can be driven by moving the character
   through the gate's `TimerStart` and then the finish portal. Scroll a list row into view before clicking it (an off-screen row's click
   lands on what lies under it).
 - Never `require` a client module that starts itself (GardenView, PetClient …), even indirectly through GardenSummary, from the MCP `Client` context: it runs a second copy

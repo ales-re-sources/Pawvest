@@ -1,18 +1,22 @@
--- FeedbackService (FB, docs/GDD.md → Player feedback): stage ratings and the feedback box, both only for us. Server-only.
+-- FeedbackService (FB / FB2, docs/GDD.md §10 → Player feedback): stage ratings and the feedback box, both only for us. Server-only.
 -- Remotes (ReplicatedStorage.FeedbackRemotes, FeedbackConfig.Folder):
---   Rate(stageKey, rating)    client → server: 1 = 👍, -1 = 👎 on the stage results popup; only a stage the player has finished
---                             (a stored best time). Kept in profile StageRatings[stageKey]; the per-stage counts (DataStore
---                             StageRatings, key "counts" = { [stageKey] = { up, down } }) take the change as a delta, queued and
---                             written with one UpdateAsync every FLUSH_SECONDS (+ jitter) and in BindToClose. Answer: ("rate", ok, …).
+--   Rate(stageKey, rating)    client → server: 1 = 👍, -1 = 👎 at a world stage's rating sign (FB2, RatingSigns); the character within
+--                             RateDistance of that sign; finished or not. Kept in profile StageRatings[stageKey] = { R = ±1, F = finished
+--                             when rated }, mirrored to the player attribute StageRatings (JSON { [stageKey] = ±1 }); the per-stage counts
+--                             (DataStore StageRatings, key "counts" = { [stageKey] = { up, down, upUnfinished, downUnfinished } }) take
+--                             the change as a delta in the pair F picks, queued and written with one UpdateAsync every FLUSH_SECONDS
+--                             (+ jitter) and in BindToClose. Telemetry StageRating carries Telemetry.StageProgress. Answer: ("rate", ok, …).
 --   Send(category, text)      client → server: a feedback message from the Settings box; a known category, 1..MaxLength characters,
 --                             PerDay a UTC day (profile FeedbackToday = { Day, Count }); filtered before it is stored in the
 --                             DataStore PlayerFeedback (key "<os.time()>_<UserId>" = { u, t, cat, area, text, lang, ver }).
 --                             Answer: ("send", true, left today) or ("send", false, reason).
 --   Result                    server → client: (key, ok, detail / reason), Remotes.Results
--- Reasons: loading, stage (not finished / unknown), value, wait (cooldown), category, empty, long, daily, filter, failed.
+-- Reasons: loading, stage (unknown / the Tutorial), far, value, wait (cooldown), category, empty, long, daily, filter, failed.
 -- In Studio the keys get FeedbackConfig.StudioPrefix (tests never touch the live data). Studio does not filter text.
 
+local CollectionService = game:GetService("CollectionService")
 local DataStoreService = game:GetService("DataStoreService")
+local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -45,7 +49,9 @@ local reject, succeed = Remotes.Results(events.Result)
 local allowRate = RateLimit.new(RATE_COOLDOWN)
 local allowSend = RateLimit.new(SEND_COOLDOWN)
 
-local pending = {} -- [stageKey] = { up = delta, down = delta } not written yet
+local FIELDS = { "up", "down", "upUnfinished", "downUnfinished" }
+
+local pending = {} -- [stageKey] = { [field] = delta } not written yet
 
 -- The stored counts with `deltas` added (never below 0); an old or hand-edited value keeps only usable entries.
 local function merge(old, deltas)
@@ -53,18 +59,26 @@ local function merge(old, deltas)
 	if type(old) == "table" then
 		for key, entry in old do
 			if StageConfig.ByKey[key] and type(entry) == "table" then
-				counts[key] = {
-					up = if Num.Finite(entry.up) then math.max(0, math.floor(entry.up)) else 0,
-					down = if Num.Finite(entry.down) then math.max(0, math.floor(entry.down)) else 0,
-				}
+				local clean = {}
+				for _, field in FIELDS do
+					clean[field] = if Num.Finite(entry[field]) then math.max(0, math.floor(entry[field])) else 0
+				end
+				counts[key] = clean
 			end
 		end
 	end
 	for key, delta in deltas do
-		local entry = counts[key] or { up = 0, down = 0 }
-		entry.up = math.max(0, entry.up + delta.up)
-		entry.down = math.max(0, entry.down + delta.down)
-		counts[key] = entry
+		local entry = counts[key]
+		if not entry then
+			entry = {}
+			for _, field in FIELDS do
+				entry[field] = 0
+			end
+			counts[key] = entry
+		end
+		for field, change in delta do
+			entry[field] = math.max(0, entry[field] + change)
+		end
 	end
 	return counts
 end
@@ -83,22 +97,62 @@ local function flush()
 	if not ok then
 		warn("FeedbackService: writing the rating counts failed: " .. tostring(err))
 		for key, delta in deltas do -- back into the queue for the next flush
-			local entry = pending[key] or { up = 0, down = 0 }
-			entry.up += delta.up
-			entry.down += delta.down
+			local entry = pending[key] or {}
+			for field, change in delta do
+				entry[field] = (entry[field] or 0) + change
+			end
 			pending[key] = entry
 		end
 	end
 end
 
-local function addDelta(stageKey: string, rating: number, sign: number)
-	local entry = pending[stageKey] or { up = 0, down = 0 }
-	if rating == 1 then
-		entry.up += sign
-	else
-		entry.down += sign
-	end
+-- Queues `sign` (+1 / -1) for the vote `vote` ({ R = ±1, F = finished when rated }) of `stageKey`.
+local function addDelta(stageKey: string, vote, sign: number)
+	local field = (if vote.R == 1 then "up" else "down") .. (if vote.F then "" else "Unfinished")
+	local entry = pending[stageKey] or {}
+	entry[field] = (entry[field] or 0) + sign
 	pending[stageKey] = entry
+end
+
+-- The profile's ratings made usable (an old or hand-edited record keeps only { R = ±1, F = bool } of world stages).
+local function ratingsOf(profile)
+	if type(profile.StageRatings) ~= "table" then
+		profile.StageRatings = {}
+	end
+	for key, vote in profile.StageRatings do
+		if not (FeedbackConfig.Rated(StageConfig.ByKey[key]) and type(vote) == "table" and (vote.R == 1 or vote.R == -1)) then
+			profile.StageRatings[key] = nil
+		else
+			vote.F = vote.F == true
+		end
+	end
+	return profile.StageRatings
+end
+
+local function mirror(player: Player, ratings)
+	local shown = {}
+	for key, vote in ratings do
+		shown[key] = vote.R
+	end
+	player:SetAttribute(FeedbackConfig.RatingsAttribute, HttpService:JSONEncode(shown))
+end
+
+-- Whether the character of `player` stands within RateDistance of `stage`'s rating sign.
+local function nearSign(player: Player, stage): boolean
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if not (root and root:IsA("BasePart")) then
+		return false
+	end
+	for _, sign in CollectionService:GetTagged(FeedbackConfig.SignTag) do
+		if StageConfig.TryForInstance(sign) == stage then
+			local pivot = if sign:IsA("Model") then sign:GetPivot() else (sign :: BasePart).CFrame
+			if (pivot.Position - root.Position).Magnitude <= FeedbackConfig.RateDistance then
+				return true
+			end
+		end
+	end
+	return false
 end
 
 events.Rate.OnServerEvent:Connect(function(player: Player, stageKey: any, rating: any)
@@ -106,30 +160,38 @@ events.Rate.OnServerEvent:Connect(function(player: Player, stageKey: any, rating
 	if not (profile and PlayerProfile.CanSave(player)) then
 		return reject(player, "rate", "loading")
 	end
-	if type(stageKey) ~= "string" or not StageConfig.ByKey[stageKey] or profile.BestTimes[stageKey] == nil then
+	local stage = type(stageKey) == "string" and StageConfig.ByKey[stageKey]
+	if not FeedbackConfig.Rated(stage) then
 		return reject(player, "rate", "stage")
 	end
 	if rating ~= 1 and rating ~= -1 then
 		return reject(player, "rate", "value")
 	end
+	if not nearSign(player, stage) then
+		return reject(player, "rate", "far")
+	end
 	if not allowRate(player) then
 		return reject(player, "rate", "wait")
 	end
-	if type(profile.StageRatings) ~= "table" then
-		profile.StageRatings = {}
-	end
-	local previous = profile.StageRatings[stageKey]
-	if previous == rating then
+	local ratings = ratingsOf(profile)
+	local previous = ratings[stageKey]
+	if previous and previous.R == rating then
 		return succeed(player, "rate", rating)
 	end
-	if previous == 1 or previous == -1 then
+	if previous then
 		addDelta(stageKey, previous, -1)
 	end
-	addDelta(stageKey, rating, 1)
-	profile.StageRatings[stageKey] = rating
+	local vote = { R = rating, F = profile.BestTimes[stageKey] ~= nil }
+	addDelta(stageKey, vote, 1)
+	ratings[stageKey] = vote
+	mirror(player, ratings)
 	PlayerProfile.Save(player)
-	Telemetry.StageRating(player, stageKey, rating, profile.Medals[stageKey] or 0, if previous then "change" else "new")
+	Telemetry.StageRating(player, stageKey, rating, Telemetry.StageProgress(player, stageKey), if previous then "change" else "new")
 	succeed(player, "rate", rating)
+end)
+
+PlayerProfile.OnReady(function(player, profile)
+	mirror(player, ratingsOf(profile))
 end)
 
 -- The broadcast-filtered `text`, or nil when the filter call fails.

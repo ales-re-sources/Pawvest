@@ -1,9 +1,7 @@
 -- Results popup after a finished run (docs/GDD.md §4–5): time, record, medal of the run, medal payout, first-finish
 -- payout, repeat reward,
--- pet XP (§7.4), free egg of the first Gold (§7.2), rare seeds and the stage's rare-seed meter (E2a, players with the field), next goal,
--- and the stage rating row 👍 / 👎 (FB: FeedbackRemotes.Rate; a tap restarts the popup's timer, the panel's tap-to-close skips it).
+-- pet XP (§7.4), free egg of the first Gold (§7.2), rare seeds and the stage's rare-seed meter (E2a, players with the field), next goal.
 -- Driven by the finish message StageTimerUpdate(-1, final, result); the GUI is built here, not in Studio.
--- Paths: PlayerGui.StageResults.Panel.Rate.Up / .Down (the thumbs), .Rate.Prompt.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StageTimerUpdate = ReplicatedStorage:WaitForChild("StageTimerUpdate")
@@ -14,15 +12,10 @@ local MedalText = require(ReplicatedStorage:WaitForChild("MedalText"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
-local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
-local FeedbackConfig = require(ReplicatedStorage:WaitForChild("FeedbackConfig"))
 local HudPopup = require(script.Parent:WaitForChild("HudPopup"))
 
 local SHOW_SECONDS = 7
 local DIM = "#5A5A5A"
-local COLOR_THUMB = Color3.fromRGB(70, 70, 70)
-local COLOR_UP = StudStyle.Colors.Green
-local COLOR_DOWN = StudStyle.Colors.Red
 
 local popup = HudPopup.new("StageResults", {
 	displayOrder = 5,
@@ -46,53 +39,6 @@ local eggLabel = addLine("FreeEgg", 10, 16)
 local seedsLabel = addLine("RareSeeds", 11, 16)
 local meterLabel = addLine("Meter", 12, 14)
 local nextLabel = addLine("Next", 13, 16)
-
--- FB: "Did you like it?" 👍 / 👎 (FeedbackRemotes.Rate); buttons on the panel take the tap, so it does not close the popup
-local rateRow = UiKit.Create("Frame", {
-	Name = "Rate",
-	LayoutOrder = 14,
-	Size = UDim2.new(1, -24, 0, 40),
-	BackgroundTransparency = 1,
-	Parent = popup.panel,
-}, {
-	UiKit.Create("UIListLayout", {
-		FillDirection = Enum.FillDirection.Horizontal,
-		HorizontalAlignment = Enum.HorizontalAlignment.Center,
-		VerticalAlignment = Enum.VerticalAlignment.Center,
-		SortOrder = Enum.SortOrder.LayoutOrder,
-		Padding = UDim.new(0, 8),
-	}),
-})
-local rateLabel = UiKit.Create("TextLabel", {
-	Name = "Prompt",
-	LayoutOrder = 1,
-	Size = UDim2.fromOffset(0, 36),
-	AutomaticSize = Enum.AutomaticSize.X,
-	BackgroundTransparency = 1,
-	Font = Enum.Font.GothamBold,
-	TextSize = 16,
-	TextColor3 = StudStyle.Text.Grey,
-	Text = "",
-	Parent = rateRow,
-})
-local function thumb(name: string, order: number, icon: string): TextButton
-	return UiKit.Create("TextButton", {
-		Name = name,
-		LayoutOrder = order,
-		Size = UDim2.fromOffset(56, 36),
-		AutoButtonColor = true,
-		BackgroundColor3 = COLOR_THUMB,
-		Font = Enum.Font.GothamBold,
-		TextSize = 22,
-		Text = icon,
-		Parent = rateRow,
-	}, { UiKit.Create("UICorner", { CornerRadius = UDim.new(0, 8) }) })
-end
-local upButton = thumb("Up", 2, "👍")
-local downButton = thumb("Down", 3, "👎")
-
-local shown = nil -- the result on screen (its rating follows the taps)
-local thanked = false -- a tap on this popup: the prompt says thanks
 coinsLabel.TextColor3 = StudStyle.Text.Ok
 finishLabel.TextColor3 = StudStyle.Text.Ok
 runLabel.TextColor3 = StudStyle.Text.Ok
@@ -176,69 +122,15 @@ local function render(result)
 	else
 		nextLabel.Text = Locale.T("results.allMedals")
 	end
-	rateLabel.Text = Locale.T(if thanked then "results.rate.thanks" else "results.rate.prompt")
-	upButton.BackgroundColor3 = if result.rating == 1 then COLOR_UP else COLOR_THUMB
-	downButton.BackgroundColor3 = if result.rating == -1 then COLOR_DOWN else COLOR_THUMB
-end
-
-local function show(result)
-	shown = result
-	popup.Show(function()
-		render(result)
-		return true
-	end, SHOW_SECONDS)
 end
 
 StageTimerUpdate.OnClientEvent:Connect(function(elapsed, _final, result)
 	if elapsed >= 0 then
 		popup.Hide() -- a new run started
-		shown = nil
 	elseif result then
-		thanked = false
-		show(result)
-	end
-end)
-
--- A tap marks the choice at once (the server's refusal puts the stored one back) and keeps the popup up for another SHOW_SECONDS.
-local remotes = ReplicatedStorage:WaitForChild(FeedbackConfig.Folder)
-local rateEvent = remotes:WaitForChild("Rate")
-local waiting = nil -- { result, previous } of the tap the server has not answered yet (previous comes back on a refusal)
-local RATE_GAP = 1.1 -- seconds between two changes (the server's cooldown is 1 s)
-local lastRate = -math.huge
-
-local function rate(value: number)
-	local result = shown
-	if not result then
-		return
-	end
-	thanked = true
-	if result.rating ~= value and os.clock() - lastRate >= RATE_GAP then
-		lastRate = os.clock()
-		waiting = { result = result, previous = result.rating }
-		result.rating = value
-		rateEvent:FireServer(result.stageKey, value)
-	end
-	show(result)
-end
-upButton.Activated:Connect(function()
-	rate(1)
-end)
-downButton.Activated:Connect(function()
-	rate(-1)
-end)
-remotes:WaitForChild("Result").OnClientEvent:Connect(function(key, ok, detail)
-	if key ~= "rate" then
-		return
-	end
-	local tap = waiting
-	waiting = nil
-	if ok or not tap then
-		return
-	end
-	warn("[StageResults] rating refused: " .. tostring(detail))
-	tap.result.rating = tap.previous
-	if shown == tap.result then
-		thanked = false
-		render(tap.result)
+		popup.Show(function()
+			render(result)
+			return true
+		end, SHOW_SECONDS)
 	end
 end)

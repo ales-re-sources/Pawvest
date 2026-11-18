@@ -42,8 +42,7 @@ end
 --   freeEgg? (egg id granted for the first Gold), petXp (XP each equipped pet received: medal or finish + movement),
 --   moveXp, petsLeveled (pets that
 --   gained it; 0 = none equipped or all maxed), nextMedal?, nextThreshold?, obbySeeds? (E2a: GardenField.ObbyFinish, the rare seeds
---   and the stage's meter; only with the field), firstSeeds? (EV3b: { crop, count } of the first clear's seed pack), rating? (FB: the
---   player's stored 👍 1 / 👎 -1 of this stage) }
+--   and the stage's meter; only with the field), firstSeeds? (EV3b: { crop, count } of the first clear's seed pack) }
 function StageResults.RecordFinish(player: Player, stageKey: string, elapsed: number, studs: number?)
 	local profile = PlayerProfile.Get(player)
 	local stage = StageConfig.ByKey[stageKey]
@@ -124,7 +123,6 @@ function StageResults.RecordFinish(player: Player, stageKey: string, elapsed: nu
 		nextMedal = nextMedal,
 		nextThreshold = nextMedal and StageConfig.Threshold(stage, nextMedal),
 		obbySeeds = obbySeeds,
-		rating = type(profile.StageRatings) == "table" and profile.StageRatings[stageKey] or nil,
 	}
 end
 

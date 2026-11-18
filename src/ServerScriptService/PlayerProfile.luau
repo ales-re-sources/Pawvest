@@ -65,7 +65,7 @@ local function newProfile()
 		Garden = { Incubators = {}, IncubatorCount = 1 },
 		LastQuit = {}, -- { Stage, Segment, At = os.time() } of the last leave, cleared on the next join (Telemetry, T1a)
 		Language = "", -- chosen language code ("en", "cs"), "" = automatic from the player's locale (LanguageService, L1)
-		StageRatings = {}, -- [stageKey] = 1 (👍) or -1 (👎) from the results popup (FeedbackService, FB)
+		StageRatings = {}, -- [stageKey] = { R = 1 (👍) or -1 (👎), F = finished when rated } from the stage's rating sign (FeedbackService, FB2)
 		FeedbackToday = {}, -- { Day = UTC day number, Count = feedback messages sent that day } (FeedbackService, FB)
 	}
 end

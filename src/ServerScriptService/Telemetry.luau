@@ -51,7 +51,8 @@ local Telemetry = {}
 --   run = { id, stage, startClock, cp (position of the current checkpoint, 0 before the first), maxStep, deaths, loadout,
 --     queue (events held back while the run is younger than GHOST_TIME) } or nil, lastStage (key of the last run's stage),
 --   lastActivity (os.clock of the last checkpoint / run start / run end / join), lastReport, clientKill = { part, at },
---   platform, area (score panel key, SetArea), fails = { [key] = { stage, segment, cause, count } }
+--   platform, area (score panel key, SetArea), fails = { [key] = { stage, segment, cause, count } },
+--   reached = { [stage key] = furthest checkpoint position this session (0 = a run started, none reached) } (FB2 progress)
 -- }
 local states = {}
 local marks = {} -- [character] = { part = the server kill part that killed it (first mark wins), at = os.clock() }
@@ -132,7 +133,7 @@ end
 local function state(player: Player)
 	local s = states[player]
 	if not s then
-		s = { lastActivity = os.clock(), lastReport = 0, fails = {} }
+		s = { lastActivity = os.clock(), lastReport = 0, fails = {}, reached = {} }
 		states[player] = s
 	end
 	return s
@@ -310,6 +311,7 @@ function Telemetry.RunStarted(player: Player, stageKey: string)
 	}
 	s.run = run
 	s.lastStage = stage.key
+	s.reached[stage.key] = s.reached[stage.key] or 0
 	s.lastActivity = os.clock()
 	runSend(player, run, "LogFunnelStepEvent", FUNNEL, run.id, 1, "start", fields(stage.key))
 	local path, level = progression(stage)
@@ -401,9 +403,24 @@ function Telemetry.PlotLike(player: Player, total: number)
 	send("LogCustomEvent", player, "PlotLike", total)
 end
 
--- FB: a stage rating (value 1 = 👍, -1 = 👎); `medal` = the player's best medal there, `change` = "new" or "change"
-function Telemetry.StageRating(player: Player, stageKey: string, rating: number, medal: number, change: string)
-	send("LogCustomEvent", player, "StageRating", rating, fields(stageKey, medal, change))
+-- FB2: how far the player got on `stageKey`: the best medal ("gold" / "silver" / "bronze"), "finished" (a best time without one),
+-- "cp<k>" (the furthest checkpoint this session; "cp0" = a run started, none reached) or "none"
+function Telemetry.StageProgress(player: Player, stageKey: string): string
+	local profile = PlayerProfile.Get(player)
+	local medal = profile and type(profile.Medals) == "table" and profile.Medals[stageKey] or 0
+	if StageConfig.Medals[medal] then
+		return string.lower(StageConfig.Medals[medal].name)
+	end
+	if profile and type(profile.BestTimes) == "table" and profile.BestTimes[stageKey] ~= nil then
+		return "finished"
+	end
+	local reached = states[player] and states[player].reached[stageKey]
+	return if reached then "cp" .. reached else "none"
+end
+
+-- FB2: a stage rating (value 1 = 👍, -1 = 👎); `progress` = StageProgress, `change` = "new" or "change"
+function Telemetry.StageRating(player: Player, stageKey: string, rating: number, progress: string, change: string)
+	send("LogCustomEvent", player, "StageRating", rating, fields(stageKey, progress, change))
 end
 
 -- FB: a feedback message was stored (the text itself goes only to the PlayerFeedback DataStore)
@@ -444,6 +461,7 @@ function Telemetry.Checkpoint(player: Player, part: BasePart)
 		return
 	end
 	run.cp = k
+	s.reached[stage.key] = math.max(s.reached[stage.key] or 0, k)
 	local step = math.min(k, MAX_CP) + 1
 	if step > run.maxStep then
 		run.maxStep = step

@@ -56,6 +56,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | ST | Rotating seed stall: slow UTC rotation, stock by mastery (1.0) | ✔ Studio-validated 2026-11-18 | – | – |
 | SH | Harvest Hall (weekly biggest crop per kind) and plot likes (1.0) | ✔ | ✔ 2026-11-18 | – |
 | FB | Player feedback: stage rating, feedback box (1.0) | ✔ | ✔ 2026-11-18 | filter check open |
+| FB2 | Stage rating on a signboard in each stage's courtyard instead of the popup (1.0) | ✔ | ✔ 2026-11-18 | – |
 | E5 | Garden MVP rest: request board, ledger on join, onboarding, garden telemetry (1.0) | – | – | – |
 | M6a | Soft launch + World 1 balancing (balanced by feel 2026-10-30; live test open) | – | – | – |
 | MU | Mobile UX check | – | – | – |
@@ -70,7 +71,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 - **Not in 1.0:** obby time calibration (M6b; the obby stays as built), the comfort shop (D2: 1.0 ships without monetization),
   Sunshine (EV2c), World 4, hybrids (HX1 build).
 
-**Start here:** E5 (scope it). (FB Studio-validated 2026-11-18, the live filter check open; SH Studio-validated 2026-11-18, likes in a two-client test; ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: OG validation and the M6a friends test (step 0).
+**Start here:** FB2 (the rating sign, in progress), then E5 (scope it). (FB Studio-validated 2026-11-18, the live filter check open; SH Studio-validated 2026-11-18, likes in a two-client test; ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: OG validation and the M6a friends test (step 0).
 *Update this line whenever a milestone finishes.*
 
 **Road to 1.0** (in order; one milestone at a time unless marked "alongside"):
@@ -227,6 +228,47 @@ owner a live toast (no join-notice line); the own record shelf left SH (Open ite
 Done 2026-11-18 (Done; the scope, acceptance checks and validation log: `git show 3d247a8:docs/ROADMAP.md`; as built: GDD §10). Decided
 with it: one feedback panel from a Settings row; per-stage counts as one `UpdateAsync`-merged key; `studio_` keys in Studio; no admin
 list (we read the stores through the MCP / Open Cloud).
+
+### FB2 — Rating signboard (decided 2026-11-18, the user)
+*Why (the user):* the 👍 / 👎 row on the results popup is gone after 7 s and reaches only finishers; players who gave up should rate too.
+Who did not even try can be filtered out afterwards by the progress sent with each rating.
+- **Decided:** a small post sign per **world stage** (not the Tutorial) in the courtyard, a few studs in front of `Arrival` and facing it
+  (in view on landing after a finish, passed on the way to the gate): "Did you like Stage 3?" and two thumb plates 👍 / 👎, each with a
+  ProximityPrompt; the own choice lit; changeable any time. Anyone may rate, finished or not. The popup row goes. Players never see a
+  score (the counts stay ours).
+- **Server (`FeedbackService.Rate`):** a world stage only; the character within `RateDistance` (16 studs) of that stage's sign; no
+  finish needed. Profile `StageRatings[stageKey] = { R = ±1, F = finished when rated }` (the ±1 form of FB was never published).
+  Counts per stage `{ up, down, upUnfinished, downUnfinished }` (`F` picks the pair; a change takes the vote out of the pair it was
+  counted in; a later finish does not move an old vote). Mirror: player attribute `StageRatings` (JSON `{ [stageKey] = ±1 }`).
+  Telemetry `StageRating` CF02 = progress: `gold` / `silver` / `bronze` (best medal), `finished` (a best time, no medal), `cp<k>` (furthest
+  checkpoint this session; `cp0` = a run started, none reached), `none`.
+- **Scene (Studio-only):** template `ServerStorage.StageKit.RatingSign` (built from the hub sign's stud style: board with SurfaceGui
+  `Gui` > `Title`, `Sub`; parts `Up`, `Down` with an emoji SurfaceGui), tag `RatingSign`; a clone `RatingSign` in each of the 15 stage
+  folders. **Client `RatingSigns`:** finds tagged signs (streaming-safe), adds the two prompts, sets the texts (Locale) and the lit
+  thumb from the attribute.
+- **Acceptance:**
+  1. Through a real prompt on a stage the player never finished (a stashed best time, fixture) → `StageRating … {stage, cp…/none, new}`,
+     profile `{ R, F = false }`, after the flush `upUnfinished` +1; the sign lights 👍 and says thanks.
+  2. 👎 on a finished stage, then 👍: `down` +1, then `down` −1 / `up` +1; the same thumb again sends nothing.
+  3. `Rate` from far away → `far`; for the Tutorial / an unknown stage → `stage`; a value other than ±1 → `value`.
+  4. All 15 signs stand on the courtyard floor in view from `Arrival`, readable, not inside decor; the prompts show; Czech and the
+     pseudo-language fit the board.
+  5. The results popup has no rating row; no errors.
+
+**Validation (2026-11-18, MCP playtest, Lekzdrh, Czech; snapshot `profile_9892673032_FB2_1`, restored after).** Stage 15 had never
+been finished on this account, so it served as the unfinished case without a fixture. Votes through the real prompts (E / R keys).
+1. Landing on Stage 15 (`ArrivalCFrame`): the sign straight ahead, "Líbila se ti Úroveň 15?" / "Dojdi k palci a hlasuj!", 9.7 studs to
+   the 👍 plate; walked up, E → `StageRating 1 {Stage15, none, new}`, attribute `{"Stage15":1}`, 👍 green, its prompt off, "Díky! Hlas
+   můžeš kdykoli změnit."
+2. R → `-1 {Stage15, none, change}`; R again sent nothing. Stage 14 (Gold): R → `-1 {gold, new}`, E → `1 {gold, change}`; Stage 13: E →
+   `1 {gold, new}`; after starting a Stage 15 run, E → `1 {Stage15, cp1, change}`. After the flush `studio_counts` = Stage13 / Stage14
+   `up 1`, Stage15 `upUnfinished 1`, every other field 0; the profile `{ R = 1, F = true }` for 13 / 14, `{ R = 1, F = false }` for 15.
+3. `Rate("Stage1", 1)` from Stage 14 → `far`; `"Tutorial"` and `"Nope"` → `stage`; `("Stage14", 0)` → `value`.
+4. 15 signs placed 10 studs in front of each `Arrival` on the plaza (floor and a 9 × 9.5 × 3 box checked clear for every stage); the
+   texts fit in Czech and the pseudo-language (`TextFits`, scaled); all 15 got their prompts.
+5. `StageResults.Panel.Rate` is gone; no server or client errors. Found: the Dash talent holds ButtonX, so the gamepad keys are d-pad
+   left / right. Cleanup: `studio_counts` removed, the profile restored (no ratings). The signs and the template are scene changes in the
+   place file.
 
 ### HX1 — Hybrid plants: the breeding mechanic (design only; added 2026-11-16; the build comes after 1.0)
 Settle the game mechanic before any game code. Notes, decisions and open points: [HYBRIDS.md](HYBRIDS.md); the HX0 prototype: "Done".
