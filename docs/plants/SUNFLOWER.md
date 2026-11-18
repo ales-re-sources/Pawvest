@@ -33,9 +33,10 @@ the studded crown surface. The comparison faces existing daylight; place lightin
 production proxy or field performance claims. The display was removed, GUI visibility and camera restored, and a playtest boot
 reported zero server/client warnings or errors; it was stopped. No gameplay strings changed.
 
-## Growth art approved — field integration pending
+## Growth art and field registration
 
-[`SunflowerPlant`](../../src/ReplicatedStorage/SunflowerPlant.luau) uses `PlantKit.recipe` with **`Draft = true`** (reviewer only).
+[`SunflowerPlant`](../../src/ReplicatedStorage/SunflowerPlant.luau) uses `PlantKit.recipe` and is **registered in `PlantGrowth`**
+(no `Draft` flag since CG20c, 2026-11-18).
 The approved A1/H2 mature geometry and colours are preserved at seed 1, standard mass. Five successive stem segments carry
 staggered petioles; leaf blades unfold at their attached hinges. A seed shell and two cotyledons appear early and fade away.
 The green bud emerges around 43–53%, the ray layers open over 58–84%, the disk darkens over 72–98%, seeds appear over 80–99%,
@@ -58,9 +59,16 @@ Studio checks (`tools/sunflower_growth_checks.luau`) pass: six seeds × three ma
 attachment checks, 54 exact visible backward seeks, deterministic rebuilds, finite poses and fixed instance counts. Maximum
 corner radius 2.275 studs; standard mature top 7.580 studs, maximum top 8.406. The mature comparison checked all 189 study Parts:
 colours identical, position error below 0.001 studs. Real Play/Pause, scrubber, rings/selection with the field pet and Close were
-exercised. Final server/client boot logs were clean; reviewer and playtest closed. Field registration, production PlotView
-integration and full-field/24-plot/phone performance remain later gates. Ales approved these five growth poses on 2026-11-12;
-the recipe stays `Draft = true` until the separate field-integration milestone.
+exercised. Final server/client boot logs were clean; reviewer and playtest closed. Ales approved these five growth poses on 2026-11-12.
+
+Field integration (CG20c, 2026-11-18): the geometry check re-ran on the registered recipe (1,818 poses, radius 2.275, maximum top
+8.444 under the fixed 8.9 ring). [`sunflower_integration_checks.luau`](../../tools/sunflower_integration_checks.luau) passed through
+the production `PlotView` with disposable public-feed fixtures and no remotes or profile writes: three recipes build 576 Parts; a
+server-time correction keeps the same plant, soil and pet; the exact ripe moment is not missed and a backward correction clears the
+ripe state; the soil selection ray is not blocked; full → mid (12 / 45 / 45) → low → full keeps the seed's identity; harvest clears
+the square and a replant starts young; the 18 h crop is sampled every 30 s (the cap). No harvest effect. Playtest boot clean
+(server and client). Open: performance (full field and the 24-plot route; the heaviest crop at 6,912 Parts + 5,076 meshes per
+full field), real phone, second client.
 
 ## Earlier natural refinements of A
 
@@ -114,4 +122,4 @@ The temporary revised display was removed after capture and the camera restored.
 errors; the playtest was stopped. Localization build/check/lint pass with no changed strings. These checks describe the earlier static studies.
 
 Stored ID `Sunflower`, existing **18-hour** duration, prices/rewards and whole-square harvest stay as built. No profile edits or
-custom harvest feedback are part of this milestone. Growth art is approved; field integration and performance remain later gates.
+custom harvest feedback are part of this milestone. Growth art is approved and registered in the field (CG20c); performance remains open.

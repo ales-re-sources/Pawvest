@@ -274,8 +274,8 @@ that needs no explaining. The set stands on the plot whose field faces the sun (
 with the Owl on the outer row's square 32: its reach (Lv 16: 3 × 3) is clipped to six squares (23-25, 31-33) and tinted by
 `PlotView:ShowReach`, the game's own reach tint, and outlined in the Owl's rarity blue by `PlotView:ShowBorders` (U3b;
 a thin line along the front edge). Beside it in square 31 a ripe **Pumpkin at the size bound** (factor 3.03), as
-tall as the Owl. No other pumpkin in `CROPS`, and **no Sunflower**: its art is still a draft, so the plot draws it as a
-yellow block (drafts G-I had two behind the Owl). Late-afternoon light (preset B1, ClockTime 17.4, the sun behind the camera);
+tall as the Owl. No other pumpkin in `CROPS`, and **no Sunflower**: its art was still a draft then (registered in CG20c,
+2026-11-18), so the plot drew it as a yellow block (drafts G-I had two behind the Owl). Late-afternoon light (preset B1, ClockTime 17.4, the sun behind the camera);
 a warmer `ColorShift_Top` turned the brown Owl as orange as the Pumpkin. The Owl model faces the camera at `PET_YAW` 0 (turned
 30° toward the Pumpkin). Camera FOV 50, low on the field's outer side; the Pumpkin left, the Owl right of centre, sky top-left
 for the logo (30 % width).
@@ -439,7 +439,7 @@ the island; thin haze so the island stays clear, a warm decay so the horizon rea
   the island shows above the lava's far edge only while the camera stands well above the lava (a low camera loses it).
 - **The garden copy (the user, 2026-11-15):** Workspace.Garden cloned (scripts, labels and prompts removed), the 12 ring-1
   plots drawn by PlotView at `mid` detail with ripe crops (corn, pumpkin, pineapple, giant melon, sweet potato, a golden
-  carrot now and then; no Sunflower: draft art), cut at the sea (y 0), then scaled by k and moved to camera + k x (island -
+  carrot now and then; no Sunflower: draft art then), cut at the sea (y 0), then scaled by k and moved to camera + k x (island -
   camera), k = 420 / distance: from the camera it is the real island, now in front of the Laser Lab. Drawn 1.8x bigger
   (`GARDEN_SIZE`, about its centre at the waterline). Its waterline is a plane far above the real sea, so without water the
   island floated: a sea disc (DebugBaseplate's material and colour, radius 2000) sits at the copy's waterline.

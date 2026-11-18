@@ -29,7 +29,7 @@ a real phone; *2nd* = a second client. Live validation is open for all.
 | Blueberry | [Round highbush with ten berry bunches over the whole bush](plants/BLUEBERRY.md) | 134 | CG17, approved 2026-11-12 | perf (4 824), phone, 2nd |
 | Sweet potato | [Trained fan with broad heart leaves and reddish root shoulders](plants/SWEET_POTATO.md) | 169 | CG18, approved 2026-11-12 | perf (6 084), phone, 2nd |
 | Giant melon | [Arching vine, lobed leaves, big striped green melon](plants/GIANT_MELON.md) | 97 | CG19, approved 2026-11-12 | perf (3 492), phone, 2nd |
-| Sunflower | [A1 spiral foliage + H2 layered head; growth draft](plants/SUNFLOWER.md) | 192 (draft) | CG20b draft, art approved 2026-11-12; reviewer checks pass | CG20c field registration, then CG20d perf / phone |
+| Sunflower | [A1 spiral foliage + H2 layered head](plants/SUNFLOWER.md) | 192 (+141 meshes) | CG20c registered 2026-11-18; art approved 2026-11-12 | perf (6 912 + 5 076 meshes), phone, 2nd |
 | Pineapple | [Tall stalk lifting a diamond-eyed fruit over a leaf rosette](plants/PINEAPPLE.md) | 155 | CG21, approved 2026-11-12 | perf (5 580), phone, 2nd |
 
 ## Studio growth player

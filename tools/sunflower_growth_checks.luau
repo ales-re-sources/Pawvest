@@ -7,7 +7,7 @@ source.Name="SunflowerPlantCheck"
 source.Parent=game.ReplicatedStorage
 local Plant=require(source)
 source:Destroy()
-assert(Plant.Draft==true,"Growth review must stay out of the field")
+assert(not Plant.Draft,"CG20c: Sunflower is registered in the field")
 local V=Vector3.new
 local minimumMass,maximumMass=require(game.ReplicatedStorage.CropConfig).SizeBounds()
 local folder=Instance.new("Folder")

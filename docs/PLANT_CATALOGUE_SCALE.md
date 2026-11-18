@@ -70,7 +70,8 @@ from catalogue order.
 ## Rendering risk is complexity, not species count
 
 Current production recipes range from 54 Parts (Garlic) to 169 (Sweet Potato): a homogeneous 36-square field would contain
-1,944–6,084 plant Parts, before soil, pets, UI, meshes or effects. The 192-Part Sunflower is still a draft. A new, complex recipe
+1,944–6,084 plant Parts, before soil, pets, UI, meshes or effects. The 192-Part Sunflower (registered in CG20c, 2026-11-18,
+after this review) raises the top to 6,912 Parts plus 5,076 sphere meshes. A new, complex recipe
 can exceed the frame budget even with a small catalogue. `PlotView:Step` checks its deadline between pieces, and posing checks
 between plants; construction or posing of one expensive plant is not preempted at 6 ms.
 

@@ -1,7 +1,8 @@
--- CG20b: approved A1 spiral foliage + H2 layered golden head, staged for art review only.
+-- CG20: approved A1 spiral foliage + H2 layered golden head. Growth art approved by Ales 2026-11-12; registered in
+-- PlantGrowth (no Draft flag) in CG20c.
 -- 192 Parts: 5 stems + 63 foliage + neck + 120 head + seed + 2 cotyledons; 141 built-in sphere meshes.
 -- One fixed topology, reversible parent-attached growth; no saved data or crop-specific scheduler.
-local SunflowerPlant = {Draft = true, RingHeight = 8.9, FixedRingHeight = true, ReviewHeight = 8.2}
+local SunflowerPlant = {RingHeight = 8.9, FixedRingHeight = true, ReviewHeight = 8.2}
 local Kit = require(script.Parent.PlantKit)
 local phase, V, C = Kit.phase, Vector3.new, Color3.fromRGB
 local STEM, LEAF, LIGHT, YOUNG = C(91,137,57), C(59,121,56), C(89,148,64), C(145,188,88)

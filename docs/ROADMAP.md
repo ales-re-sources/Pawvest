@@ -49,7 +49,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | FA | The field for everyone, pens removed | ✔ | ✔ | – |
 | U1–U5 | Garden / pet UI: pets panel rows, garden badge + bubble, field rings / square card / hand bar, panel split (Skills Garden tab, Barn, seed stall), plot layout + hatchery panel | ✔ | ✔ (physical touch and multi-client open) | – |
 | MU1 | Responsive HUD navigation and panels | ✔ | ✔ (phone emulation) | – |
-| CG1–CG21 | Plant growth art, 19 crops ([status per crop](PLANT_GROWTH.md#crops-and-status)) | 18 in the field; Sunflower a draft (CG20c next) | geometry + PlotView checks pass; stills of Tomato, Pepper, Pumpkin await review; performance, real phone and second client open for most | – |
+| CG1–CG21 | Plant growth art, 19 crops ([status per crop](PLANT_GROWTH.md#crops-and-status)) | all 19 in the field (Sunflower registered in CG20c, 2026-11-18) | geometry + PlotView checks pass; stills of Tomato, Pepper, Pumpkin await review; performance, real phone and second client open for most | – |
 | HX0 | Hybrid plants: look prototype (Studio reviewer only) | ✔ | ✔ (look approved 2026-11-16) | – |
 | HX1 | Hybrid plants: breeding mechanic design ([HYBRIDS.md](HYBRIDS.md)) | main rules decided 2026-11-16; numbers and rules open | – | – |
 | TH | Store thumbnails ([THUMBNAILS.md](THUMBNAILS.md) §8–9) | logo; release candidates A1, A2, A3, C1, C2, C3; B1 parked until D1 | stud sign decision, grid tile test, kid test open | – |
@@ -476,7 +476,7 @@ scroll/dismissal, cleanup and HUD/camera restoration; Czech names fit and refres
 
 **CG1–CG21 — Plant growth art** (2026-11-08 → 11-14; [PLANT_GROWTH.md](PLANT_GROWTH.md), `docs/plants/`). Shared recipe dispatch and
 timing (CG2), seeded individuality and harvested size (CG4), and per-crop growth art designed with Ales from references (static studies →
-a choice → five stills → recipe → field registration). 18 of 19 crops grow in the field; Sunflower is a draft (CG20c next). Decisions,
+a choice → five stills → recipe → field registration). All 19 crops grow in the field (Sunflower registered last, CG20c 2026-11-18). Decisions,
 budgets and open checks per crop: PLANT_GROWTH.md → Crops and status. Tomato became the tall staked classic (CG1e, 2026-11-09; variants
 after GA); fruit-only perennial gameplay is separate future work (HX1).
 
