@@ -220,4 +220,5 @@ No automated tests. Validate by risk; scope acceptance checks to the tier a chan
 
 **Multi-client:** the user starts Test → **Server and Clients** (F7), then **Add Clients**. `list_roblox_studios` shows one instance per client
 plus the server; `get_studio_state` tells them apart. Test users have UserIds −1, −2… and create `PlayerProfiles` records `user_-1`, `user_-2`:
-remove them afterwards. Studio does not filter text (`TextService`): filter results need a live test.
+remove them afterwards from a later one-player playtest's `Server` context (a removal in the F7 server's `BindToClose` was overwritten
+by the test players' leave saves). Studio does not filter text (`TextService`): filter results need a live test.
