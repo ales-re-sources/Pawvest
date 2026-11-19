@@ -109,7 +109,9 @@ Bands are provisional, for the user to confirm with the proposal. Archetypes: Ob
   (nothing handed in, the crops are sold as usual) and pays a bonus of 0.6 × the sale of the count; an unfinished request stays, only
   finished slots refill on the next UTC day; the board opens on the first visit with two eligible crops (day 0 included). Crops of the
   unlocked set (grow ≤ 4 h), sized to 30 % of a day's income; on half of the days slot 3 is a timed run; one in three also drops
-  Sunshine, a rare seed or an egg. (Until 2026-11-17: handed in from the barn, 1.75 × the sale, a new board every day.) **Streak:** Sunshine 10–30
+  Sunshine, a rare seed or an egg. (Until 2026-11-17: handed in from the barn, 1.75 × the sale, a new board every day.) **1.0 (E5, the
+  user, 2026-11-19):** no timed run and no Sunshine until EV2c: three crop requests, the drop a rare seed or a free Basic egg (half
+  and half); a day's income = crop sales + request bonuses of the previous UTC day or today, whichever is more, at least 2 000. **Streak:** Sunshine 10–30
   min on days 1–6, day 7 a pet (Epic 95 %, Legendary 5 %); a missed day pauses it.
 - **Crows and guards:** in a crow block a ripe crop may be eaten, up to one per 12 unguarded squares per absence; guarded squares are safe; a
   guard covers 18 / 30 / 42 squares by level band. **Tending** (growth mode): a tended square grows 50 % × strength faster.

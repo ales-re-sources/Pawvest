@@ -155,7 +155,7 @@ purpose outside a run (the user).
 - **On a stage** the run view stays (stage name, record or "First try!", medal limits: the run's target line).
 - **Goals panel** (player-facing title "Quests" / "Úkoly", 2026-11-17: "Cíle" read as the finish portal's "Cíl"; built in code, `UiKit`, re-renders on `Locale.Changed`): *Next crop* (the count, or the quest with a **Bring** button
   per crop: it works from the panel anywhere, the server takes from the barn) and *Today's requests* (three tracked requests with bars,
-  the timed-run line) and *Upgrades* (EV3c, built: only while a crop has a free upgrade point, a row per such crop with a button to its
+  the timed-run line with EV2c, not in 1.0) and *Upgrades* (EV3c, built: only while a crop has a free upgrade point, a row per such crop with a button to its
   crop page). It replaces a separate request board (no stand in the garden). The seed stall keeps the bar on the locked crop's
   row and the skills panel keeps the talent bundles: hints where they are used, not extra panels.
 - **After 1.0 the panel grows into the quest book:** sections for talent and world unlocks (the stars earned move there), the mastery
