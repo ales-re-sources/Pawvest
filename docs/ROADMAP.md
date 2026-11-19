@@ -72,7 +72,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 - **Not in 1.0:** obby time calibration (M6b; the obby stays as built), the comfort shop (D2: 1.0 ships without monetization),
   Sunshine (EV2c), World 4, hybrids (HX1 build).
 
-**Start here:** E5 (scope it). (FB + FB2 Studio-validated 2026-11-18, the live filter check open; SH Studio-validated 2026-11-18, likes in a two-client test; ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: OG validation and the M6a friends test (step 0).
+**Start here:** E5 (scope it). (FB + FB2 Studio-validated 2026-11-18, FB3 2026-11-19, the live filter check open; SH Studio-validated 2026-11-18, likes in a two-client test; ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: OG validation and the M6a friends test (step 0).
 *Update this line whenever a milestone finishes.*
 
 **Road to 1.0** (in order; one milestone at a time unless marked "alongside"):
@@ -236,17 +236,7 @@ Stage anatomy `RatingSign`). Decided with it (the user): a post sign in view on 
 Tutorial; anyone may rate, the progress sent along filters out who never tried.
 
 ### FB3 — Rating on the results popup too
-*Why (the user, 2026-11-19):* finishers should be asked right away; the signs stay for everyone else. *Scope:* the FB popup row
-comes back on world-stage finishes, showing and changing the same vote as the sign (attribute `StageRatings`); the server takes a
-`Rate` within `FeedbackConfig.PopupSeconds` (120 s) of finishing that stage, also away from the sign (`StageResults.FinishedWithin`).
-*Acceptance checks:* (1) a world finish shows the row, the Tutorial's does not; (2) 👍 on the popup lights the sign's 👍 and the
-popup follows a sign vote; (3) a popup vote after walking > 20 studs from the sign is taken; (4) a `Rate` with no finish far from
-the sign is still refused `far`; (5) a playtest boot with no errors; loc check / lint clean.
-*Validation (Studio, 2026-11-19, snapshot `profile_9892673032_FB3_1`):* a Stage 1 finish showed the row ("Bavilo tě to?"); 👍
-clicked on the popup 40 studs from the sign → attribute `{"Stage1":1}`, popup and sign plate green, sign "Díky!…", its 👍 prompt
-off (1, 2, 3); a sign-path `Rate(-1)` turned the popup's 👎 red; `Rate("Stage2")` far with no finish → `far` (4); no server /
-client errors or warnings; loc 0 errors, lint 0 (5). The Tutorial's hidden row checked in code only (`Rated` false). Restored:
-profile and MostStars from the snapshot, the Stage 1 Top-10 entry back to 37.9, `studio_counts` removed.
+Done 2026-11-19 (Done; the scope, acceptance checks and validation log: `git show 02e767e:docs/ROADMAP.md`; as built: GDD §10).
 
 ### HX1 — Hybrid plants: the breeding mechanic (design only; added 2026-11-16; the build comes after 1.0)
 Settle the game mechanic before any game code. Notes, decisions and open points: [HYBRIDS.md](HYBRIDS.md); the HX0 prototype: "Done".
@@ -316,6 +306,11 @@ Tagged **[1.0]** (needed before 1.0 goes public) or **[later]**.
 
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
+
+**FB3 — rating on the popup too** (2026-11-19; Studio-validated through the real popup button, profile snapshot restored). *Why:*
+the user wants finishers asked right away; the signs stay for the rest. *What:* GDD §10; the popup's 👍 / 👎 row back on world
+stages, showing the sign's vote (attribute `StageRatings`); `Rate` also within `FeedbackConfig.PopupSeconds` (120 s) of a finish
+(`StageResults.FinishedWithin`).
 
 **FB2 — rating signboard** (2026-11-18; Studio-validated through the real prompts, profile snapshot restored). *Why:* the popup
 row was gone after 7 s and reached only finishers. *What:* GDD §10 (Stage rating); a `RatingSign` in each world stage's courtyard
