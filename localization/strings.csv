@@ -97,6 +97,8 @@ results.firstSeeds[other],Form for 0 and 5+,{icon} {crop}: +{count} seeds for th
 results.meterScout,"Results popup (E2c): results.meter when equipped scouts helped; {icon} = the world's rare crop emoji, {pct} = 0-99 how full, {bonus} = the scouts' extra points in whole percent (10-50)",{icon} Rare seed: {pct}% (scouting gives +{bonus}%),{icon} Vzácné semínko: {pct} % (průzkum dává +{bonus} %),ok,hefc0a237
 results.next,"Next goal; {medal} = medal tier (medal.name.*), {time} = its time limit",Next: {medal} under {time},Další cíl: {medal} pod {time},ok,hfa6bbb41
 results.allMedals,Last line when every medal of the stage is earned,All medals earned!,Všechny medaile získány!,ok,h91b54d74
+results.rate.prompt,"Results popup (FB2; the same vote as the stage's rating sign): before the 👍 / 👎 buttons that rate the stage just finished; short, one line with two buttons",Did you like it?,Bavilo tě to?,new,heb60ca59
+results.rate.thanks,Results popup (FB2; the same vote as the stage's rating sign): replaces results.rate.prompt after the player tapped 👍 or 👎,Thanks!,Díky!,new,h9e91bace
 # Stage rating sign (FB2; in every world stage's courtyard),,,,,
 rating.sign.title,"Rating sign board, big title; {stage} = stage name (Czech: feminine, like Úroveň)",Did you like {stage}?,Líbila se ti {stage}?,new,hd48374c2
 rating.sign.hint,"Rating sign board, under the title before the player voted: walk up to the 👍 or 👎 plate below to vote",Walk up to a thumb to vote!,Dojdi k palci a hlasuj!,new,hed35f35a

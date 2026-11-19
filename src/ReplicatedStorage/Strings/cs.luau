@@ -82,6 +82,8 @@ return {
 	["results.meterScout"] = "{icon} Vzácné semínko: {pct} % (průzkum dává +{bonus} %)",
 	["results.next"] = "Další cíl: {medal} pod {time}",
 	["results.allMedals"] = "Všechny medaile získány!",
+	["results.rate.prompt"] = "Bavilo tě to?",
+	["results.rate.thanks"] = "Díky!",
 	["rating.sign.title"] = "Líbila se ti {stage}?",
 	["rating.sign.hint"] = "Dojdi k palci a hlasuj!",
 	["rating.sign.thanks"] = "Díky! Hlas můžeš kdykoli změnit.",

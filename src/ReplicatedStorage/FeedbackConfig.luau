@@ -9,6 +9,7 @@ FeedbackConfig.Folder = "FeedbackRemotes" -- ReplicatedStorage folder: Rate, Sen
 FeedbackConfig.SignTag = "RatingSign"
 FeedbackConfig.PromptDistance = 10 -- studs: the thumb prompts' MaxActivationDistance
 FeedbackConfig.RateDistance = 20 -- studs from the sign's pivot within which the server accepts a rating
+FeedbackConfig.PopupSeconds = 120 -- after a finish the server accepts that stage's rating anywhere (the results popup's 👍 / 👎, FB2)
 FeedbackConfig.RatingsAttribute = "StageRatings" -- player attribute: JSON { [stageKey] = 1 | -1 } of the own ratings
 FeedbackConfig.Categories = { "bug", "idea", "other" } -- stored ids, never renamed (shown in this order)
 FeedbackConfig.CategoryIcons = { bug = "🐞", idea = "💡", other = "💬" }

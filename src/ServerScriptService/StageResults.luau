@@ -3,6 +3,7 @@
 -- through CoinRewards.
 -- Server-only. Medals are mirrored to player attributes (StageConfig.MedalAttribute) for client displays.
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
@@ -19,6 +20,8 @@ local GOLD = StageConfig.MedalIndex.Gold
 local GOLD_EGG = "Basic" -- free egg for the first Gold on each stage (GDD §7.2)
 
 local StageResults = {}
+
+local finishedAt = {} -- [player] = { [stageKey] = os.clock() of the last finish } (FinishedWithin)
 
 local function publishMedals(player: Player, profile)
 	for _, stage in StageConfig.Stages do
@@ -49,6 +52,9 @@ function StageResults.RecordFinish(player: Player, stageKey: string, elapsed: nu
 	if not (profile and stage) then
 		return nil
 	end
+
+	finishedAt[player] = finishedAt[player] or {}
+	finishedAt[player][stageKey] = os.clock()
 
 	local previousBest = profile.BestTimes[stageKey]
 	local firstFinish = previousBest == nil
@@ -125,6 +131,16 @@ function StageResults.RecordFinish(player: Player, stageKey: string, elapsed: nu
 		obbySeeds = obbySeeds,
 	}
 end
+
+-- Whether `player` finished `stageKey` within the last `seconds` (FeedbackService: the results popup's rating, FB2).
+function StageResults.FinishedWithin(player: Player, stageKey: string, seconds: number): boolean
+	local at = finishedAt[player] and finishedAt[player][stageKey]
+	return at ~= nil and os.clock() - at <= seconds
+end
+
+Players.PlayerRemoving:Connect(function(player)
+	finishedAt[player] = nil
+end)
 
 -- the medal attributes on join and after an admin reset
 PlayerProfile.OnReady(publishMedals)

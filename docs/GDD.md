@@ -820,6 +820,8 @@ Decided 2026-10-25. The product list and offer rules are in [EXPANSION.md](EXPAN
     per-stage counts (`StageRatings` DataStore) keep finishers and non-finishers apart; telemetry `StageRating` carries how far the
     player got (medal / finished / furthest checkpoint this session / none), so ratings by players who never tried can be left out.
     Input for M6b. The Tutorial has no sign.
+  - *Rating on the results popup (FB3):* after a world-stage finish the results popup asks "Did you like it?" with 👍 / 👎 too: the
+    same vote as the sign (either one changes it, both show it), taken from anywhere for `PopupSeconds` (120 s) after that finish.
   - *Feedback box:* Settings → "✉ Send feedback" opens a panel: category Bug / Idea / Other (one must be picked), a box of at most 300
     characters with a counter, "Don't write your name, address or any contacts.", Send. 3 messages a player per UTC day. The text is
     filtered by Roblox before it is stored (`PlayerFeedback`, with category, area, language and place version); a failed filter call

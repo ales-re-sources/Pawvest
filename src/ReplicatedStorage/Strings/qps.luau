@@ -82,6 +82,8 @@ return {
 	["results.meterScout"] = "[!! {icon} Řářě šěěď: {pct}% (ščöůťíňg gívěš +{bonus}%) ~~~~~~~~~~~~~ !!]",
 	["results.next"] = "[!! Ňěxť: {medal} ůňďěř {time} ~~~~~ !!]",
 	["results.allMedals"] = "[!! Áll měďálš ěářňěď! ~~~~~~~ !!]",
+	["results.rate.prompt"] = "[!! Ďíď ýöů líkě íť? ~~~~~~ !!]",
+	["results.rate.thanks"] = "[!! Ťháňkš! ~~~ !!]",
 	["rating.sign.title"] = "[!! Ďíď ýöů líkě {stage}? ~~~~~~ !!]",
 	["rating.sign.hint"] = "[!! Wálk ůp ťö á ťhůmb ťö vöťě! ~~~~~~~~~~~ !!]",
 	["rating.sign.thanks"] = "[!! Ťháňkš! Ýöů čáň čháňgě ýöůř vöťě áňý ťímě. ~~~~~~~~~~~~~~~~~ !!]",

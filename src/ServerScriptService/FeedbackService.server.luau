@@ -1,7 +1,8 @@
 -- FeedbackService (FB / FB2, docs/GDD.md §10 → Player feedback): stage ratings and the feedback box, both only for us. Server-only.
 -- Remotes (ReplicatedStorage.FeedbackRemotes, FeedbackConfig.Folder):
---   Rate(stageKey, rating)    client → server: 1 = 👍, -1 = 👎 at a world stage's rating sign (FB2, RatingSigns); the character within
---                             RateDistance of that sign; finished or not. Kept in profile StageRatings[stageKey] = { R = ±1, F = finished
+--   Rate(stageKey, rating)    client → server: 1 = 👍, -1 = 👎 at a world stage's rating sign (FB2, RatingSigns; the character within
+--                             RateDistance of that sign; finished or not) or on the results popup (StageResultsPopup; within
+--                             PopupSeconds of finishing that stage, anywhere). Kept in profile StageRatings[stageKey] = { R = ±1, F = finished
 --                             when rated }, mirrored to the player attribute StageRatings (JSON { [stageKey] = ±1 }); the per-stage counts
 --                             (DataStore StageRatings, key "counts" = { [stageKey] = { up, down, upUnfinished, downUnfinished } }) take
 --                             the change as a delta in the pair F picks, queued and written with one UpdateAsync every FLUSH_SECONDS
@@ -32,6 +33,7 @@ local DataStoreUtil = require(ServerScriptService.DataStoreUtil)
 local RateLimit = require(ServerScriptService.RateLimit)
 local Remotes = require(ServerScriptService.Remotes)
 local Telemetry = require(ServerScriptService.Telemetry)
+local StageResults = require(ServerScriptService.StageResults)
 
 local FLUSH_SECONDS = 60
 local FLUSH_JITTER = 15
@@ -167,7 +169,7 @@ events.Rate.OnServerEvent:Connect(function(player: Player, stageKey: any, rating
 	if rating ~= 1 and rating ~= -1 then
 		return reject(player, "rate", "value")
 	end
-	if not nearSign(player, stage) then
+	if not (nearSign(player, stage) or StageResults.FinishedWithin(player, stageKey, FeedbackConfig.PopupSeconds)) then
 		return reject(player, "rate", "far")
 	end
 	if not allowRate(player) then

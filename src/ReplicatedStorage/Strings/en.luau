@@ -82,6 +82,8 @@ return {
 	["results.meterScout"] = "{icon} Rare seed: {pct}% (scouting gives +{bonus}%)",
 	["results.next"] = "Next: {medal} under {time}",
 	["results.allMedals"] = "All medals earned!",
+	["results.rate.prompt"] = "Did you like it?",
+	["results.rate.thanks"] = "Thanks!",
 	["rating.sign.title"] = "Did you like {stage}?",
 	["rating.sign.hint"] = "Walk up to a thumb to vote!",
 	["rating.sign.thanks"] = "Thanks! You can change your vote any time.",

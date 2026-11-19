@@ -57,6 +57,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | SH | Harvest Hall (weekly biggest crop per kind) and plot likes (1.0) | ✔ | ✔ 2026-11-18 | – |
 | FB | Player feedback: stage rating, feedback box (1.0) | ✔ | ✔ 2026-11-18 | filter check open |
 | FB2 | Stage rating on a signboard in each stage's courtyard instead of the popup (1.0) | ✔ | ✔ 2026-11-18 | – |
+| FB3 | The popup's 👍 / 👎 row back, alongside the signs (1.0) | ✔ | ✔ 2026-11-19 | – |
 | E5 | Garden MVP rest: request board, ledger on join, onboarding, garden telemetry (1.0) | – | – | – |
 | M6a | Soft launch + World 1 balancing (balanced by feel 2026-10-30; live test open) | – | – | – |
 | MU | Mobile UX check | – | – | – |
@@ -233,6 +234,19 @@ list (we read the stores through the MCP / Open Cloud).
 Done 2026-11-18 (Done; the scope, acceptance checks and validation log: `git show 0b9c8bd:docs/ROADMAP.md`; as built: GDD §10, LAYOUT →
 Stage anatomy `RatingSign`). Decided with it (the user): a post sign in view on landing, no score shown to players, no sign for the
 Tutorial; anyone may rate, the progress sent along filters out who never tried.
+
+### FB3 — Rating on the results popup too
+*Why (the user, 2026-11-19):* finishers should be asked right away; the signs stay for everyone else. *Scope:* the FB popup row
+comes back on world-stage finishes, showing and changing the same vote as the sign (attribute `StageRatings`); the server takes a
+`Rate` within `FeedbackConfig.PopupSeconds` (120 s) of finishing that stage, also away from the sign (`StageResults.FinishedWithin`).
+*Acceptance checks:* (1) a world finish shows the row, the Tutorial's does not; (2) 👍 on the popup lights the sign's 👍 and the
+popup follows a sign vote; (3) a popup vote after walking > 20 studs from the sign is taken; (4) a `Rate` with no finish far from
+the sign is still refused `far`; (5) a playtest boot with no errors; loc check / lint clean.
+*Validation (Studio, 2026-11-19, snapshot `profile_9892673032_FB3_1`):* a Stage 1 finish showed the row ("Bavilo tě to?"); 👍
+clicked on the popup 40 studs from the sign → attribute `{"Stage1":1}`, popup and sign plate green, sign "Díky!…", its 👍 prompt
+off (1, 2, 3); a sign-path `Rate(-1)` turned the popup's 👎 red; `Rate("Stage2")` far with no finish → `far` (4); no server /
+client errors or warnings; loc 0 errors, lint 0 (5). The Tutorial's hidden row checked in code only (`Rated` false). Restored:
+profile and MostStars from the snapshot, the Stage 1 Top-10 entry back to 37.9, `studio_counts` removed.
 
 ### HX1 — Hybrid plants: the breeding mechanic (design only; added 2026-11-16; the build comes after 1.0)
 Settle the game mechanic before any game code. Notes, decisions and open points: [HYBRIDS.md](HYBRIDS.md); the HX0 prototype: "Done".
