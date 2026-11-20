@@ -59,6 +59,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | FB2 | Stage rating on a signboard in each stage's courtyard instead of the popup (1.0) | ✔ | ✔ 2026-11-18 | – |
 | FB3 | The popup's 👍 / 👎 row back, alongside the signs (1.0) | ✔ | ✔ 2026-11-19 | – |
 | E5 | Garden MVP rest: request board, ledger on join, onboarding, garden telemetry (1.0) | ✔ | E5a ✔ 2026-11-19, E5b + E5c ✔ 2026-11-20 | – |
+| EG | Egg ladder: gem-named eggs (Pearl, Topaz, Ruby, Diamond), the two new ones opened by crops; pets shown per egg (1.0) | signed off 2026-11-20 | – | – |
+| FD | Food trains a pet to half its max (priced by level), time with you and the pet's work do the rest (1.0) | design signed off 2026-11-20 | – | – |
 | M6a | Soft launch + World 1 balancing (balanced by feel 2026-10-30; live test open) | – | – | – |
 | MU | Mobile UX check | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
@@ -72,7 +74,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 - **Not in 1.0:** obby time calibration (M6b; the obby stays as built), the comfort shop (D2: 1.0 ships without monetization),
   Sunshine (EV2c), World 4, hybrids (HX1 build).
 
-**Start here:** release gates (Road to 1.0 step 6), MU first (E5 done 2026-11-20: E5a Studio-validated 2026-11-19, E5b + E5c 2026-11-20). (FB + FB2 Studio-validated 2026-11-18, FB3 2026-11-19, the live filter check open; SH Studio-validated 2026-11-18, likes in a two-client test; ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: the M6a friends test (step 0).
+**Start here:** FD and EG (Road to 1.0 step 5b; both signed off 2026-11-20), then release gates (step 6), MU first (E5 done 2026-11-20: E5a Studio-validated 2026-11-19, E5b + E5c 2026-11-20). (FB + FB2 Studio-validated 2026-11-18, FB3 2026-11-19, the live filter check open; SH Studio-validated 2026-11-18, likes in a two-client test; ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: the M6a friends test (step 0).
 *Update this line whenever a milestone finishes.*
 
 **Road to 1.0** (in order; one milestone at a time unless marked "alongside"):
@@ -86,6 +88,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 3. **SH — Harvest Hall and plot likes:** done (Studio-validated 2026-11-18; Done).
 4. **FB — player feedback:** done (Studio-validated 2026-11-18; Done).
 5. **E5 — the online loop:** done (Studio-validated 2026-11-20; Done).
+5b. **EG — egg ladder** and **FD — food bootstraps, activity maxes** (sections below; added 2026-11-20 by the user as needed for 1.0): sign-off of
+   the design and numbers, then one at a time (either order), each with a model pass before code.
 6. **Release gates, then public:** MU (section below; adds the Hall and a full field on a real phone), TH1 + THU, the Czech review of
    every new text, the M6a live checks, "Before Max Players 24" under "Open items", then Max Players → 24 (a place setting).
 
@@ -209,6 +213,96 @@ one line (changed the same day); no free reset (later a paid comfort in D2 or an
 **Not in EV3:** repeat-run Coins → Sunshine (EV2c); requests and trees (the online loop, E5); a flatter price curve (ECONOMY.md → open
 decision 5).
 
+### EG — Egg ladder (1.0; scoped 2026-11-20; signed off by the user 2026-11-20 with the decisions and the gem names below)
+*Why (the user, 2026-11-20):* egg prices are laughable once dearer crops open. Measured (`economy_ev`, the game's two eggs, seed 1): a
+Golden egg (4 000) is a third of one Corn sale and 0.1 % of a day's income on day 7 (Casual 3.7 M, Garden main 11.9 M); the egg spend is
+capped by the 3 incubators, not by Coins; Garden main's expected first Legendary (G9) comes on day 7. The model already assumes two dearer
+eggs above Golden (FutureEgg1 / 2); the game has none.
+*Design (recommended):*
+- **Gem names (the user, 2026-11-20: one consistent scheme, rare gems, "smart and unique pets"):** every egg is a gem, its shell in the
+  gem's colour; no shell colour matches a rarity colour (grey / green / blue / purple / orange), so a shell never reads as a promised
+  rarity:
+
+  | Egg | Id (stored, unchanged for the old two) | Opens | Shell | Czech |
+  |---|---|---|---|---|
+  | **Pearl egg** | `Basic` | from the start | pearly cream (today's) | Perlové vejce |
+  | **Topaz egg** | `Golden` | from the start | gold-yellow, glow (today's) | Topazové vejce |
+  | **Ruby egg** | `Ruby` (new) | with Pumpkin (model: Garden main day 1.9, Casual 3.8) | deep red, glow | Rubínové vejce |
+  | **Diamond egg** | `Diamond` (new) | with Giant melon (day 5.7–8.8) | ice-white, sparkle glow | Diamantové vejce |
+
+  Only the `pet.egg.Basic` / `pet.egg.Golden` texts change (English + Czech, `cs_status` new). A locked egg's card shows 🔒 and the
+  icon of the crop that opens it, as the seed stall shows mastery. Prices of Pearl 120 and Topaz 4 000 stay (the first hour and the first
+  days); hatch timers by rarity stay. New eggs that come later take the next gems (Emerald / Sapphire / Amethyst only with a non-rarity
+  shade, or Opal, Onyx).
+- Candidate numbers (the model fits them): Ruby egg ~150 000, Rare 600 / Epic 396 / Legendary 4 ‰; Diamond egg ~3 500 000, Rare 400 /
+  Epic 580 / Legendary 20 ‰. Rule: a new egg costs 2–4 h of the archetypes' median income on the day it opens.
+- Shells through `EggLook`; the hatch reveal and egg cards take the new ids.
+- Free eggs (first join, first Gold) stay Pearl. **Decided (the user, 2026-11-20):** the request drop's free egg becomes a Topaz egg once
+  Pumpkin is open (a Pearl egg is worth nothing by then).
+- **Decided (the user, 2026-11-20; a small step towards the post-1.0 catalog):** the egg's odds panel ("?") shows under each rarity row the pets it
+  can hatch as small portraits (`PetPortrait`); kinds the player has never hatched show as dark silhouettes. Needs a `SeenKinds` id set in
+  the profile (backfilled from the pets owned on join), which the catalog / field guide (EXPANSION §11) reuses. *Why:* the player cannot
+  see which pets exist (the user, 2026-11-20). Kind-pool eggs ("this egg hatches only these 5 pets") wait until there are more kinds than
+  8 (Ideas).
+*Boundary:* `PetConfig.Eggs` / `EggOrder` + an `opensWith` crop id; `GardenIncubators` refuses a locked egg (`Locale.Reject`);
+`IncubatorClient` locked card and the odds panel's pet portraits; `SeenKinds` in `PlayerProfile` (PROTOCOL); `CropConfig.Requests` drop;
+Strings (egg names); `economy_ev` CAND (FutureEgg1 / 2 → the real eggs),
+`economy.py check` + `pin`; GDD §7.2, ECONOMY → EV, PROTOCOL if a field changes. No profile migration (new ids only). **Not in EG:** new
+pet kinds, born levels, pet sell values, more incubators.
+*Acceptance (hard):*
+1. Pumpkin not opened: a Ruby egg purchase (fired remote) is refused, Coins unchanged, the nest stays empty; the card shows 🔒 + 🎃.
+2. Pumpkin opened: buying through the real UI takes exactly the config price, the nest shows the ruby shell, the hatch gives Rare or
+   better.
+3. `PetConfig.Roll` over 100 000 rolls per new egg: no Common / Uncommon, each rarity within ±10 % of its weight (Legendary ±25 %).
+4. Model, seeds 1–4: Casual's expected first Legendary (`leg_half`) ≥ day 14; each new egg ≥ 2 h of the buying archetype's income on its
+   opening day; `economy.py check` has no failure beyond today's (17/18 on seed 1, G11).
+5. A request drop after Pumpkin is open puts a Topaz egg in a nest; before, a Pearl one.
+6. The odds panel of a Pearl egg shows 8 portraits under their rarity rows; on a profile that never hatched a Dragon, the Dragon is a
+   silhouette, and it shows in colour right after one hatches. An old profile's owned kinds show in colour on its first join (backfill).
+7. Egg names and the lock line fit the card in Czech (`TextFits`); no egg is shown under its old name anywhere (grep the strings and the
+   hatch reveal / request / results texts).
+
+### FD — Food bootstraps, activity maxes (1.0; scoped 2026-11-20; design signed off by the user 2026-11-20, the rates and prices are fitted by the model pass)
+*Why (the user, 2026-11-20):* a new pet can be fed to the max for almost nothing; Coins should bootstrap a new pet, never replace the
+pet's own activity on the way to its max level. Measured: Cuteness 1 → 20 = 11 100 care XP = ~17 000 Coins in Feasts (0.5 % of Casual's
+day-7 income, 3.4 Corn sales); a work trait's care cap (level 10, 88 field hours) costs 13 000; a fed crop gives half its sale as XP, so
+one Eggplant (35 000 XP) fills any pet's Cuteness. Pet levels, look tiers and the 20-level curve stop being a goal on day 2. (Was M6b's
+"food prices against field income".)
+*Design (recommended):*
+- **Food limit = half the max.** Food and fed crops train any trait only up to half its rarity cap: Common 6, Uncommon 7, Rare 8, Epic 9,
+  Legendary 10. One rule for every trait (work traits today stop at 10 for every rarity, so Commons–Epics drop to 6–9). A pet whose traits
+  are all at the food limit is refused food with "grows with you now"; the chip shows the limit (🍖 up to Lv 10).
+- **Above the limit only activity counts** (the work-trait rule today, extended to Cuteness): Cuteness, the with-you trait, grows from
+  **time with you** (each equipped pet, per online minute) and from obby runs (medal / move / coin XP as now) up to the rarity cap; Tending
+  and Pest control from field hours, Scouting from medal finishes, as now. Candidate rate ~7.5 XP per online minute (the model fits it):
+  Cuteness 10 → 20 of a Legendary (9 403 XP) ~21 h online (about 3 weeks of Casual), 6 → 12 of a Common (2 438 XP) ~5.5 h. Roblox's
+  20-minute idle kick bounds AFK time.
+- **"Bigger pets eat more"** (liked by the user): the three foods keep their XP; the price scales with the level of the trait the food
+  trains: today's price × 2.65^(b − 1), b = that trait's base level (`PetConfig.BaseLevel`, fractional, so it rises on every level),
+  nice-rounded, read at feeding. Feasts to the food limit: Common ~1 300, Rare ~6 800, Legendary ~29 000 (was ~2 500); a work trait from 1
+  to 10 ~140 k (was 13 k). With the limit in place this keeps the bootstrap from being free; the limit, not the price, stops buying the max.
+- **Fed crops** shrink by the same factor (XP = ½ × sale × size ÷ 2.65^(b − 1); at level 1 as now): never better than selling and buying
+  (E1a3 kept). A feed worth < 1 XP is refused, no crop taken.
+- The food stand's buttons show the price for the chosen pet; the pet page's Feed card shows the XP a crop gives that pet.
+- Pets already above their food limit keep their levels (no migration); they just cannot be fed further.
+*Boundary:* `PetConfig` (`CareLimit` = half the cap; activity XP routed past it to the cap; the time-with-you rate), the server's
+online-time XP for equipped pets (`PetService`, saved through `PlayerProfile`), `GardenConfig` (shared food price), `GardenFood` (prices
+from the config and the pet, never from the client), `GardenField` crop feed, `FoodShopClient`, `PetDetail` (Feed card, chip limit
+marker), Strings; `economy_ev` (food limit, price by level, time-with-you XP; the E1a3 check on the new rate), `economy.py check` + `pin`;
+GDD §7.4 / §7.6 / §7.9, ECONOMY, PROTOCOL. **Not in FD:** the aptitude curves, the rarity caps, a fullness timer (fits the Kitchen, D5).
+*Acceptance (hard):*
+1. Through the real UI: a Feast for a Cuteness-1 pet costs 1 500; for a Cuteness-8 Legendary the config's level-8 price; Coins drop by
+   exactly the shown price.
+2. A Legendary at Cuteness 10 with every work trait at 10: Feed is refused (Coins, crops and XP unchanged) and the row says it grows with
+   you; a Common at Cuteness 6 likewise.
+3. That Legendary, equipped, gains Cuteness XP over 5 online minutes (≈ 5 × the rate) and from a Gold run; past level 10.
+4. A player with fewer Coins than the price is refused; Coins and XP unchanged.
+5. A Corn fed to a Cuteness-1 pet gives 2 500 XP (as now); fed to a Cuteness-8 pet it gives 2 500 ÷ 2.65^3 ≈ 134 XP; a Potato fed to a
+   level-8 pet is refused and stays in the barn.
+6. Model: Casual's day-7 Legendary reaches Cuteness 10 on its first day, and 20 no sooner than day 14 after it; E1a3 passes; `economy.py
+   check` has no failure beyond today's.
+7. The limit line and prices fit the stand and pet page in Czech (`TextFits`, `Locale.Compact`).
+
 ### ST — Rotating seed stall
 Done 2026-11-18 (Done; the scope: `git show df15e8f:docs/ROADMAP.md`). Decided with it: the numbers (hourly, staples Potato–Onion,
 chance 0.5, pity 3, 12 seeds, the newest crop always; the user, 2026-11-18); the market cart stays apart; the restock note is a garden
@@ -268,7 +362,7 @@ and dialogs on a physical phone.
 ### Later milestones (scope when they start)
 - **M6b — Final balancing:** measured `T_base` per stage from telemetry, tuned numbers in GDD and the configs; GDD §6 table still all ✔. Known
   items: the repeat-reward floor (a Tutorial loop pays ~1 400 Coins / h, until EV2c), pet bonus values, slot prices, rarity-based hatch
-  time, food prices against field income. Shared hatch tiers flag EV forecast G7 / G9 (ECONOMY → EV2e); review at balancing.
+  time (food prices against field income moved to FD). Shared hatch tiers flag EV forecast G7 / G9 (ECONOMY → EV2e); review at balancing.
 - **S9 / S10 — Wall Jump + Glide, World 4** (STAGES §8), drop D8; re-check World 4's star bar (World 3's tighter Silver / Gold make 10 of 15
   stars harder).
 - **S11 — Bonus stages** (STAGES §5.3); the farm stages (EXPANSION §8.2) may use this slot.
@@ -722,6 +816,8 @@ amounts ×10 (profile `Version = 3` migrates once). *Why:* one place for payouts
 saves) migrating the legacy stores. *Why:* one data model and one copy of every stage script.
 
 ## Ideas (unscheduled)
+- **Kind-pool eggs** (the user, 2026-11-20): an egg that hatches only a set of ~5 kinds, dearer eggs with rarer kinds. Needs many more
+  than today's 8 kinds (2 / 2 / 2 / 1 / 1 by rarity) and fits with the pet catalog / field guide (EXPANSION §11, D7).
 - **More UI sounds:** click, tab, field hover and toast notify are in (`UiSounds`, AmbientSorcery `ui-simple-*`). Same creator also has
   `-menu-open` / `-menu-close`, `-inventory-open` / `-close`, `-positive-confirmation`, `-negative-error`, `-reward-collect`, `-equip` /
   `-unequip` (search `ui-simple`, Audio, Creator Store): candidates for panel open / close, buy result, error toasts, pet equip.
