@@ -445,7 +445,8 @@ What was built and why, newest first. Details: the design docs and git history.
 **OG2 — dependable crop timers** (2026-11-20; Studio-validated). Catalogue / countdown time is the away-time baseline;
 crops grow offline ×1 / online ×2 (Cloches extra), cap 24 h. Saved progress stays, field-job XP keeps its 1 / 0.5 clock.
 As built: GDD §7.9. Scope / checks / validation: `git show 0137d07:docs/ROADMAP.md`. Open: EV balance checks fell from 16/18
-to 10/18; see ECONOMY → Crop timing update. Live validation / publishing remains open.
+to 10/18 on default seed 1 (confirmed with a matching work-clock model); see ECONOMY → Crop timing update. Live validation /
+publishing remains open.
 
 **FB3 — rating on the popup too** (2026-11-19; Studio-validated through the real popup button, profile snapshot restored). *Why:*
 the user wants finishers asked right away; the signs stay for the rest. *What:* GDD §10; the popup's 👍 / 👎 row back on world

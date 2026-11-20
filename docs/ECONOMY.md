@@ -35,6 +35,13 @@ G9, B2, C, G11 fail. Faster growth shortens the progression horizon and reduces 
 model-only proposal and now has the same rate as free play. Balance / comfort-shop redesign remains open; no targets relaxed or
 unrelated prices retuned. The older EV scores below describe their dated configurations, before OG2.
 
+Follow-up isolation (2026-11-20, default seed 1): with the same corrected work-clock model, old crop rates 1 / 0.5 pass 16/18
+(G8, G11 fail), new rates 2 / 1 pass 10/18. Casual's top crop moves from day 14.3 to 9.8, last purchase from day 93 to 49;
+Obby main spends 95% of earnings by day 60 at old rates versus 61% at new rates. The original before / after comparison also
+changed the simulator's work XP: it had wrongly included crop upgrades in field-job training (`growth`); `work_rates` corrects
+that mismatch with the game. Old simulator with new crop rates alone passes 12/18. These are balance targets on simulated
+trajectories, including unbuilt paid comforts; the 15 core checks and crop timing / UI validation pass.
+
 ## EV — why and the pillars (the user, 2026-11-07)
 The E0 targets kept field income near obby income (parity). That produced a 5-minute Potato worth 4 Coins, then a 6 h jump to Corn, talents
 bought before World 2 ends without farming, and repeat runs paying tens of Coins next to a farm paying 100 k+. New direction: **engagement,
