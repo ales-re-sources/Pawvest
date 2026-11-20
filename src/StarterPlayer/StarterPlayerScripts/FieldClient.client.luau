@@ -4,7 +4,7 @@
 -- slots → the Pets panel.
 --   * toasts for the answers of the field actions on GardenRemotes.Result (eggs and food share that remote: ignored here): plant,
 --     harvest (size, record, Shears, mastery level-up, crop unlocked), seeds / cart bought, sale, square bought, quest pieces, upgrades and
---     tools, crop upgrade points (EV3c), field pets;
+--     tools, crop upgrade points (EV3c), field pets; a finished request (E5a, "Request": joins the harvest toast that finished it);
 --   * once per session the notices of State.field.notice (an old profile's pen conversion, what the pets harvested while away, what
 --     the crows ate and which guards chased them off).
 -- The GUI is built here (ScreenGui FieldGui with the toast only), stud-brick wood look (StudStyle).
@@ -128,7 +128,41 @@ local screenGui = create("ScreenGui", {
 
 -- Toast -------------------------------------------------------------------------------------------------------------------
 
-local showToast = UiKit.Toast(toast, 3)
+local rawToast = UiKit.Toast(toast, 3)
+local REQUEST_WAIT = 0.3 -- a finished request (E5a) is answered just before the harvest that finished it: they share one toast
+local pendingRequest: string? = nil
+
+-- Shows `text`; a finished request's lines that arrived just before join a success toast.
+local function showToast(text: string, color: Color3?, seconds: number?)
+	if pendingRequest and color == COLOR_OK then
+		text ..= "\n" .. pendingRequest
+		pendingRequest = nil
+		seconds = math.max(seconds or 3, 4)
+	end
+	rawToast(text, color, seconds)
+end
+
+-- E5a: "📜 Request done! +1 200 Coins" and the drop; shown with the next success toast within REQUEST_WAIT, else alone.
+local function requestToast(detail)
+	local lines = { Locale.T("field.toast.request", { count = tonumber(detail.coins) or 0 }) }
+	local drop = type(detail.drop) == "table" and detail.drop
+	local seed = drop and type(drop.seed) == "string" and CropConfig.ById[drop.seed]
+	local egg = drop and type(drop.egg) == "string" and PetConfig.Eggs[drop.egg]
+	if seed then
+		table.insert(lines, Locale.T("field.toast.requestSeed", { crop = GardenUi.CropTitle(seed) }))
+	elseif egg then
+		table.insert(lines, Locale.T("field.toast.requestEgg", { egg = Locale.EggName(egg) }))
+	end
+	local text = table.concat(lines, "\n")
+	pendingRequest = if pendingRequest then pendingRequest .. "\n" .. text else text
+	local mine = pendingRequest
+	task.delay(REQUEST_WAIT, function()
+		if pendingRequest == mine then
+			pendingRequest = nil
+			rawToast(mine, COLOR_OK, 4)
+		end
+	end)
+end
 
 
 -- "Cat Lv 4" for a uid in the pet state ("" when unknown)
@@ -251,6 +285,12 @@ end
 remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail)
 	if PET_ACTIONS[action] then
 		return petResult(action, ok, detail)
+	end
+	if action == "Request" then -- E5a: a request finished
+		if ok and type(detail) == "table" then
+			requestToast(detail)
+		end
+		return
 	end
 	if action == "Like" then -- SH
 		if not ok then

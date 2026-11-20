@@ -145,6 +145,37 @@ CropConfig.Cart = {
 }
 CropConfig.DaySeconds = TimeFormat.DAY
 
+-- Daily requests (E5a, docs/GDD.md §7.9 → Requests; model economy_ev `req_*`, ECONOMY.md → EV "Requests"): `Slots` tracked requests
+-- "grow `need` of crop X" per player; harvests of the crop count (nothing handed in). Eligible crops: unlocked common crops with
+-- `order` ≥ MinOrder and growSeconds ≤ MaxGrow; the board opens with 2 of them. need = Share × a day's income ÷ (the crop's sale ×
+-- pet multiplier), at least MinNeed, at most half the barn; a day's income = crop sales + request bonuses of the previous UTC day or
+-- so far today, whichever is more, at least MinIncome. A finished request pays Bonus × need × the crop's sale (+ pet multiplier) and
+-- with DropChance a drop: a rare seed of the highest world with a finished stage or a free `DropEgg`, half and half. An unfinished
+-- request stays; finished slots refill on the next UTC day. No timed run and no Sunshine until EV2c (the user, 2026-11-19).
+CropConfig.Requests = {
+	Slots = 3,
+	MinOrder = 3,
+	MaxGrow = 4 * 3600,
+	Share = 0.3,
+	MinNeed = 3,
+	MinIncome = 2000,
+	Bonus = 0.6,
+	DropChance = 1 / 3,
+	DropEgg = "Basic",
+}
+
+-- The crops that requests may ask for with the unlocked set `unlocked`, in ladder order.
+function CropConfig.RequestCrops(unlocked)
+	local rules = CropConfig.Requests
+	local list = {}
+	for _, crop in CropConfig.Ladder do
+		if crop.order >= rules.MinOrder and crop.growSeconds <= rules.MaxGrow and CropConfig.IsUnlocked(unlocked, crop.id) then
+			table.insert(list, crop)
+		end
+	end
+	return list
+end
+
 -- The rotating seed stall (ST, docs/GDD.md §7.9; model economy_ev `st_*`, ECONOMY.md → Findings "ST"). A restock block is
 -- floor(os.time() / Seconds) (UTC hours). Always in stock, without a count: the first `Staples` crops of the ladder, the newest unlocked
 -- crop and the crops a next talent level or the open quest asks for (CropConfig.StallAlways). Every other unlocked common crop is in

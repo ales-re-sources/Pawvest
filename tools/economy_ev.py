@@ -176,7 +176,10 @@ CAND = {
     # pouch and Sunshine
     "scout_first_h": 0.75, "scout_ratio": 2.0, "scout_per": 0.5, "scout_cap": 0.5,
     # request board: 3 a day; slot 3 is a timed run with run_share (if a stage is cleared); crop requests pay req_mult x the sale
-    "req_per_day": 3, "req_run_share": 0.5, "req_mult": 1.75, "req_drop": 1 / 3, "req_size": 0.3, "req_max_h": 4.0,
+    # 1.0 (E5, the user 2026-11-19): no timed run and no Sunshine drop until EV2c (req_run_share 0, req_drop_sun False); the drop is a
+    # rare seed or a free egg, half and half (CropConfig.Requests)
+    "req_per_day": 3, "req_run_share": 0.0, "req_mult": 1.75, "req_drop": 1 / 3, "req_size": 0.3, "req_max_h": 4.0,
+    "req_drop_sun": False,
     "req_sun": 20 * 60,  # Sunshine of a run request / a request drop
     # streak: days 1-6 Sunshine minutes, day 7 an Epic+ pet
     "streak_sun": [10, 10, 15, 15, 20, 30], "streak_pet": {"Epic": 95, "Legendary": 5},
@@ -1516,7 +1519,7 @@ class Sim:
 
     def request_drop(self, t):
         if self.qrng.random() < self.c["req_drop"]:
-            k = self.qrng.randrange(3)
+            k = self.qrng.randrange(3) if self.c.get("req_drop_sun", True) else 1 + self.qrng.randrange(2)
             if k == 0:
                 self.sun = min(self.c["sun_cap"], self.sun + self.c["req_sun"])
             elif k == 1:

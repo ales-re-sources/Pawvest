@@ -340,7 +340,7 @@ local function cardWidth(): number
 		local hud = player.PlayerGui:FindFirstChild("ScreenGui")
 		local goals = player.PlayerGui:FindFirstChild("GoalsLineGui")
 		-- keep the close button clear of the stage HUD (the score panel on a stage, the tracker line elsewhere: EV3b2)
-		for _, plate in { hud and hud:FindFirstChild("ScorePanel"), goals and goals:FindFirstChild("Line") } do
+		for _, plate in { hud and hud:FindFirstChild("ScorePanel"), goals and goals:FindFirstChild("Line"), goals and goals:FindFirstChild("Request") } do
 			if plate and plate:IsA("GuiObject") and plate.Visible and plate.AbsoluteSize.X > 0 then
 				side = math.max(side, viewport - plate.AbsolutePosition.X + GAP)
 			end

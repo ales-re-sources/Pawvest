@@ -63,6 +63,15 @@ goals.next.allOpen,"Goals panel, next-crop section when every crop is already un
 goals.next.loading,"Goals panel, next-crop section before the garden state has arrived (a moment after joining)",Loading your garden…,Načítám tvou zahradu…,new,h259ac1c4
 goals.upgrades.heading,"Goals panel, section heading (EV3c): crops with an upgrade point to spend",Upgrades,Vylepšení,new,ha26b87eb
 goals.upgrades.open,"Goals panel, Upgrades row: button that opens the crop's upgrade page (short, a 110 px brick)",Upgrade,Vylepšit,new,h21c92d74
+goals.requests.line,"Tracker line 2 on the HUD (top right, under the next-crop line, shrinks to fit about 230 px) outside a stage: the day's request nearest to done; {icon} = emoji of the requested crop, {have} / {need} = crops harvested / asked for; 💰 = it pays Coins",{icon} {have} / {need} → 💰,{icon} {have} / {need} → 💰,new,h0775c583
+goals.requests.heading,"Quests panel, section heading (E5a): the three daily tracked requests (Czech: farm orders, 'zakázky')",Today's requests,Dnešní zakázky,new,h12188c6b
+goals.requests.grow,"Quests panel, request row title: what to grow; {need} = how many, {crop} = emoji + crop name (Czech: nominative after ×)",Grow {need} × {crop},Vypěstuj {need} × {crop},new,hbd4dd159
+goals.requests.reward[one],"Quests panel, request row under the title: what finishing it pays; {count} = Coins (pet bonus included). Form for 1",Reward: {count} Coin,Odměna: {count} mince,new,h55e2fb30
+goals.requests.reward[few],Form for 2-4 (Czech only),,Odměna: {count} mince,new,h55e2fb30
+goals.requests.reward[other],Form for 0 and 5+,Reward: {count} Coins,Odměna: {count} mincí,new,h55e2fb30
+goals.requests.done,"Quests panel, text on a finished request's full bar (short, about 300 px)",Done! ✔,Hotovo! ✔,new,h9f1cb638
+goals.requests.next,"Quests panel, finished request row under the title: when its slot gets a new request (next midnight UTC); {time} = countdown h:mm:ss",New request in {time},Nová zakázka za {time},new,h59a41b3a
+goals.requests.locked,"Quests panel, requests section before requests open (a new player); {crop} = emoji + name of the crop whose unlock opens them (Garlic; Czech: accusative, same as nominative for česnek)",Requests open when you unlock {crop},"Zakázky se otevřou, až odemkneš {crop}",new,h4a82c218
 # Stage timer and requirements,,,,,
 hud.timer.noMedal,"After the timer when no medal is reachable any more (lower case, follows the time)",no medal,bez medaile,ok,h66387c41
 hud.needs,Talents a stage needs; {list} = coloured talent names separated by commas,Needs: {list},Vyžaduje: {list},ok,h1d4c40fc
@@ -409,7 +418,7 @@ field.seed.info,"Seed row, second and third line (\n = line break); {time} = gro
 field.seed.rareInfo,"Seed row of a rare crop (E2: seeds only from obby medals), second and third line (
  = line break); {time} = grow time, {sale} = Coins one crop sells for, {stock} = seeds the player has","Grows in {time}
 Sells for {sale} · You have {stock}","Zraje {time}
-Prodej {sale} · Máš {stock}",new,hf8f7e61e
+Prodej {sale} · Máš {stock}",new,h7f8b071a
 field.seed.fromWorld,"Seed row of a rare crop, replaces the buy buttons (narrow, wraps): its seeds are earned with medals on the stages of {world} (world.name.*, Czech: nominative ""1. svět"")",⭐ Medals in {world},⭐ Za medaile: {world},new,h52450e9e
 field.barn,"Line under the seed list; {total} = seeds held, {capacity} = what the barn holds",Barn: {total} / {capacity} seeds,Stodola: {total} / {capacity} semínek,new,hdfd10ae1
 field.seed.note,Small note under the seed list,Prices are in Coins.,Ceny jsou v mincích.,new,hd2ae55c1
@@ -457,6 +466,11 @@ field.picker.none,Seed picker on the field when the player has no seeds that can
 field.toast.sell[one],Toast after selling crops; {count} = Coins paid (pet bonus included). Form for 1,\+{count} Coin,\+{count} mince,new,h1befc8cc
 field.toast.sell[few],Form for 2-4 (Czech only),,\+{count} mince,new,h1befc8cc
 field.toast.sell[other],Form for 0 and 5+,\+{count} Coins,\+{count} mincí,new,h1befc8cc
+field.toast.request[one],Toast line when a daily request is finished (E5a; often joined to the harvest toast that finished it); {count} = Coins paid (pet bonus included). Form for 1,📜 Request done! +{count} Coin,📜 Zakázka splněna! +{count} mince,new,h2747afff
+field.toast.request[few],Form for 2-4 (Czech only),,📜 Zakázka splněna! +{count} mince,new,h2747afff
+field.toast.request[other],Form for 0 and 5+,📜 Request done! +{count} Coins,📜 Zakázka splněna! +{count} mincí,new,h2747afff
+field.toast.requestSeed,"Toast line under 'Request done!': the bonus drop was one rare seed; {crop} = emoji + rare crop name (Czech: after a dash, nominative)",🎁 Bonus: a seed of {crop},🎁 Bonus: semínko – {crop},new,h7b6c5161
+field.toast.requestEgg,Toast line under 'Request done!': the bonus drop was a free egg (it starts in an empty incubator by itself); {egg} = egg name,🎁 Bonus: a free {egg},🎁 Bonus: {egg} zdarma,new,hfcaf6c49
 field.toast.seeds,"Toast after buying seeds (catalogue or market cart); {crop} = crop name, {count} = how many seeds",Seeds: {crop} +{count},Semínka: {crop} +{count},new,h2341f01e
 field.toast.square,Toast after buying a square; {n} = its number,Square {n} bought!,Políčko {n} je tvoje!,new,h3dcc928c
 field.toast.plant,Toast after planting; {crop} = crop name,Planted: {crop},Zasazeno: {crop},new,h16c26af5
@@ -518,7 +532,7 @@ field.reason.items,Refused: the player has fewer crops than asked to sell,You do
 field.reason.maxed,Refused: all squares are bought,Your field is complete,Tvoje pole je kompletní,new,hda4eabde
 field.pet.label,"Label over a pet working on a field square, only for a pet with a given name (rich text, green second line). {name} = the pet's name (user text), {jobs} = its job icons and levels, ""🌱4 🛡2"" (field.job.*). Never the pet's level (U3a)","{name}
 <font color='#a8e6a0'>{jobs}</font>","{name}
-<font color='#a8e6a0'>{jobs}</font>",new,h385549f1
+<font color='#a8e6a0'>{jobs}</font>",new,hceea6416
 field.section.pets,"Heading of the field panel's pet section; {used} = pets on the field, {slots} = field pet slots owned",Field pets {used} / {slots},Mazlíčci na poli {used} / {slots},new,ha5e701a6
 field.slot.done,Field panel: every field pet slot is bought,All field pet slots bought.,Máš všechna místa pro mazlíčky na poli.,new,hadffe186
 field.petPicker.title,Pet picker for the selected soil; no square number,Choose a pet for this spot,Vyber mazlíčka pro tohle místo,new,h330fe518

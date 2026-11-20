@@ -3,20 +3,26 @@
 --     (player attribute HudStage, PlayerTimerHandler; there ScorePanelClient shows the run view): the next crop's goal,
 --     "🥔 8 / 12 → 🥬 Lettuce" and a bar (the previous crop's plants toward the unlock, or the milestone quest's least-done piece,
 --     GardenUi.NextGoal). When the goal changes (an unlock: FieldClient toasts it) the line pulses briefly. Hidden until the
---     first field state and once every crop is open. A tap opens / closes the panel. Line 2 (the day's requests) comes with E5.
+--     first field state and once every crop is open. A tap opens / closes the panel. Line 2 (E5a, plate "Request", under line 1 or
+--     in its place): the open request nearest to done, "🍅 4 / 6 → 💰" and a bar; it pulses when it moves on to another request.
 --   * Goals panel (GardenUi.Panel, PanelFocus "Goals"): *Next crop*: the crop, how it opens and the count bar, or the quest's
 --     pieces with Bring buttons (GardenRemotes.Quest, accepted anywhere: the server takes from the barn; FieldClient toasts the
 --     answer); *Upgrades* (EV3c, only while a crop has a point to spend): a row per such crop with a button to its crop page
---     (GardenUi.OpenCropPage; its close comes back here). Re-renders on every State, a language change and a resize.
+--     (GardenUi.OpenCropPage; its close comes back here); *Today's requests* (E5a, State.field.requests): a row per request (the
+--     crop and count, the reward in Coins or, once done, the time to the next UTC day; a bar), or before the board opens the crop that
+--     opens it. Re-renders on every State, a language change and a resize.
 -- Display only: the field state comes from GardenRemotes.State (GardenView keeps the last one).
 -- Hook (ScreenGui GoalsGui attribute, cleared after use): Open = true opens the panel. Paths: PlayerGui.GoalsLineGui.Line (.Goal its text)
--- (the line's button), PlayerGui.GoalsGui.Panel.Content.Next.Quest<CropId>.Bring, PlayerGui.GoalsGui.Panel.Content.Upgrades.<CropId>.Upgrade.
+-- (the line's button), PlayerGui.GoalsLineGui.Request (line 2), PlayerGui.GoalsGui.Panel.Content.Requests.Slot<n>,
+-- PlayerGui.GoalsGui.Panel.Content.Next.Quest<CropId>.Bring, PlayerGui.GoalsGui.Panel.Content.Upgrades.<CropId>.Upgrade.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
+local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
+local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
 local PanelFocus = require(ReplicatedStorage:WaitForChild("PanelFocus"))
 local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
 local GardenView = require(script.Parent:WaitForChild("GardenView"))
@@ -52,61 +58,105 @@ local lineGui = create("ScreenGui", {
 	ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 	AutoLocalize = false,
 })
-local lineScale = create("UIScale", {})
-local line = create("TextButton", {
-	Name = "Line",
-	AnchorPoint = Vector2.new(1, 0), -- the scale shrinks it towards the top right corner
-	Position = UDim2.new(1, -12, 0, 12),
-	Size = UDim2.fromOffset(LINE_WIDTH, LINE_HEIGHT),
-	AutoButtonColor = false,
-	Text = "",
-	Visible = false,
-	Parent = lineGui,
-}, { lineScale })
-StudStyle.Plate(line, COLOR)
-local lineText = UiKit.Label("Goal", {
-	Position = UDim2.fromOffset(10, 5),
-	Size = UDim2.new(1, -20, 0, 24),
-	TextScaled = true, -- a long (Czech) crop name shrinks instead of running off the plate
-	TextXAlignment = Enum.TextXAlignment.Center,
-	Parent = line,
-})
-create("UITextSizeConstraint", { MaxTextSize = 20, Parent = lineText })
-StudStyle.Title(lineText, COLOR)
-local lineBar, lineFill = UiKit.Bar("Bar", { height = 10, track = COLOR_TRACK, fill = COLOR_FILL, corner = 5, parent = line })
-lineBar.Position = UDim2.fromOffset(12, 33)
-lineBar.Size = UDim2.new(1, -24, 0, 10)
-local pulse = UiKit.Pulse(lineText, 1.12, 0.5) -- on the text: the plate has its own UIScale
-local pulseTimer = UiKit.Latest()
+-- A wooden plate with one line of text and a bar (line 1: the next crop, line 2: the day's request nearest to done).
+local function newPlate(name: string)
+	local scale = create("UIScale", {})
+	local plate = create("TextButton", {
+		Name = name,
+		AnchorPoint = Vector2.new(1, 0), -- the scale shrinks it towards the top right corner
+		Position = UDim2.new(1, -12, 0, 12),
+		Size = UDim2.fromOffset(LINE_WIDTH, LINE_HEIGHT),
+		AutoButtonColor = false,
+		Text = "",
+		Visible = false,
+		Parent = lineGui,
+	}, { scale })
+	StudStyle.Plate(plate, COLOR)
+	local text = UiKit.Label("Goal", {
+		Position = UDim2.fromOffset(10, 5),
+		Size = UDim2.new(1, -20, 0, 24),
+		TextScaled = true, -- a long (Czech) crop name shrinks instead of running off the plate
+		TextXAlignment = Enum.TextXAlignment.Center,
+		Parent = plate,
+	})
+	create("UITextSizeConstraint", { MaxTextSize = 20, Parent = text })
+	StudStyle.Title(text, COLOR)
+	local bar, fill = UiKit.Bar("Bar", { height = 10, track = COLOR_TRACK, fill = COLOR_FILL, corner = 5, parent = plate })
+	bar.Position = UDim2.fromOffset(12, 33)
+	bar.Size = UDim2.new(1, -24, 0, 10)
+	local pulse = UiKit.Pulse(text, 1.12, 0.5) -- on the text: the plate has its own UIScale
+	local timer = UiKit.Latest()
+	return {
+		plate = plate,
+		scale = scale,
+		text = text,
+		fill = fill,
+		shown = nil :: string?, -- what the plate shows now: a change pulses it
+		pulse = function()
+			pulse(true)
+			timer.After(PULSE_SECONDS, function()
+				pulse(false)
+			end)
+		end,
+	}
+end
 
-local shownTarget: string? = nil -- the goal's crop now on the line: a change pulses it
+local goalPlate = newPlate("Line")
+local requestPlate = newPlate("Request") -- E5a
+local line = goalPlate.plate
 
 local function layoutLine()
-	lineScale.Scale = math.clamp(camera.ViewportSize.Y / 600, 0.7, 1)
+	local scale = math.clamp(camera.ViewportSize.Y / 600, 0.7, 1)
+	goalPlate.scale.Scale = scale
+	requestPlate.scale.Scale = scale
+	local below = if line.Visible then (LINE_HEIGHT + 6) * scale else 0 -- line 2 moves up when line 1 is hidden
+	requestPlate.plate.Position = UDim2.new(1, -12, 0, 12 + below)
+end
+
+-- E5a: the open request nearest to done (the highest share; ties: the first slot), or nil.
+local function nearestRequest(field)
+	local board = field and field.requests
+	local best, bestShare = nil, -1
+	for _, slot in if type(board) == "table" and type(board.slots) == "table" then board.slots else {} do
+		local share = slot.have / math.max(1, slot.need)
+		if not slot.done and CropConfig.ById[slot.crop] and share > bestShare then
+			best, bestShare = slot, share
+		end
+	end
+	return best
 end
 
 local function renderLine()
 	local field = GardenView.OwnField()
+	local onStage = player:GetAttribute("HudStage") ~= nil
 	local goal = field and GardenUi.NextGoal(field)
-	line.Visible = goal ~= nil and player:GetAttribute("HudStage") == nil
-	if not goal then
-		shownTarget = nil
-		return
+	line.Visible = goal ~= nil and not onStage
+	if goal then
+		goalPlate.text.Text = Locale.T("goals.line", {
+			icon = goal.from.icon,
+			have = goal.have,
+			need = goal.need,
+			crop = GardenUi.CropTitle(goal.crop),
+		})
+		UiKit.SetShare(goalPlate.fill, goal.have / goal.need)
+		if goalPlate.shown and goalPlate.shown ~= goal.crop.id then -- the line moves on to the next crop
+			goalPlate.pulse()
+		end
 	end
-	lineText.Text = Locale.T("goals.line", {
-		icon = goal.from.icon,
-		have = goal.have,
-		need = goal.need,
-		crop = GardenUi.CropTitle(goal.crop),
-	})
-	UiKit.SetShare(lineFill, goal.have / goal.need)
-	if shownTarget and shownTarget ~= goal.crop.id then -- the line moves on to the next crop
-		pulse(true)
-		pulseTimer.After(PULSE_SECONDS, function()
-			pulse(false)
-		end)
+	goalPlate.shown = if goal then goal.crop.id else nil
+	local request = nearestRequest(field)
+	requestPlate.plate.Visible = request ~= nil and not onStage
+	if request then
+		local crop = CropConfig.ById[request.crop]
+		requestPlate.text.Text = Locale.T("goals.requests.line", { icon = crop.icon, have = request.have, need = request.need })
+		UiKit.SetShare(requestPlate.fill, request.have / request.need)
+		local key = request.crop .. ":" .. request.need
+		if requestPlate.shown and requestPlate.shown ~= key then -- a request was done: the line moves on
+			requestPlate.pulse()
+		end
+		requestPlate.shown = key -- kept while no request is open: the next day's first one pulses
 	end
-	shownTarget = goal.crop.id
+	layoutLine()
 end
 
 -- Goals panel -------------------------------------------------------------------------------------------------------------
@@ -114,9 +164,80 @@ end
 local ui = GardenUi.Panel("GoalsGui", COLOR, PANEL_WIDTH, PANEL_HEIGHT)
 local nextSection = GardenUi.Section("Next", 1)
 nextSection.Parent = ui.content
-local upgradesSection = GardenUi.Section("Upgrades", 2)
+local requestsSection = GardenUi.Section("Requests", 2) -- E5a
+requestsSection.Parent = ui.content
+local upgradesSection = GardenUi.Section("Upgrades", 3)
 upgradesSection.Parent = ui.content
 local isOpen = false
+local countdowns = {} -- [TextLabel] = true: done rows' "New request in 5:12:00" (ticked while the panel is open)
+local requestsEndAt = 0
+
+-- The crop whose unlock opens the requests (the second crop they may ask for), for the row shown before they open.
+local function requestsOpenWith()
+	local found = 0
+	for _, crop in CropConfig.Ladder do
+		if crop.order >= CropConfig.Requests.MinOrder and crop.growSeconds <= CropConfig.Requests.MaxGrow then
+			found += 1
+			if found == 2 then
+				return crop
+			end
+		end
+	end
+	return nil
+end
+
+local function countdownText(): string
+	local left = math.max(0, requestsEndAt - workspace:GetServerTimeNow())
+	return Locale.T("goals.requests.next", { time = TimeFormat.Clock(left) })
+end
+
+-- E5a: today's three requests, a row each (crop, reward or "done" with the time to the next day, bar).
+local function renderRequests(field)
+	GardenUi.Clear(requestsSection)
+	table.clear(countdowns)
+	GardenUi.Heading(requestsSection, 1, Locale.T("goals.requests.heading"), COLOR)
+	local board = field and field.requests
+	local slots = if type(board) == "table" and type(board.slots) == "table" then board.slots else {}
+	requestsEndAt = if type(board) == "table" and type(board.endsAt) == "number" then board.endsAt else 0
+	if #slots == 0 then
+		local opener = requestsOpenWith()
+		GardenUi.Paragraph("Locked", {
+			LayoutOrder = 2,
+			TextSize = 15,
+			TextColor3 = GardenUi.COLOR_INFO,
+			Text = if field and opener
+				then Locale.T("goals.requests.locked", { crop = GardenUi.CropTitle(opener) })
+				else Locale.T("goals.next.loading"),
+		}).Parent = requestsSection
+		return
+	end
+	for index, slot in slots do
+		local crop = CropConfig.ById[slot.crop]
+		if crop then
+			local row = GardenUi.Row(requestsSection, "Slot" .. index, index + 1, COLOR_ROW)
+			local info = if slot.done then countdownText() else Locale.T("goals.requests.reward", { count = slot.bonus })
+			local column = GardenUi.TextColumn(row, 0, Locale.T("goals.requests.grow", { need = slot.need, crop = GardenUi.CropTitle(crop) }), info)
+			if slot.done then
+				local label = column:FindFirstChild("Info", true)
+				if label and label:IsA("TextLabel") then
+					countdowns[label] = true
+				end
+			end
+			UiKit.Bar("Bar", {
+				order = 3,
+				height = 22,
+				track = COLOR_TRACK,
+				fill = COLOR_FILL,
+				share = slot.have / math.max(1, slot.need),
+				text = if slot.done
+					then Locale.T("goals.requests.done")
+					else Locale.T("goals.next.bar", { icon = crop.icon, have = slot.have, need = slot.need }),
+				textSize = 15,
+				parent = column,
+			})
+		end
+	end
+end
 
 -- EV3c: the crops with a point to spend, a row each with a button to its crop page (shown only while there is one).
 local function renderUpgrades(field)
@@ -155,6 +276,7 @@ local function renderPanel()
 	if not isOpen then
 		return
 	end
+	renderRequests(GardenView.OwnField())
 	renderUpgrades(GardenView.OwnField())
 	GardenUi.Clear(nextSection)
 	GardenUi.Heading(nextSection, 1, Locale.T("goals.next.heading"), COLOR)
@@ -208,13 +330,15 @@ local function openPanel()
 end
 
 ui.close.Activated:Connect(closePanel)
-line.Activated:Connect(function()
+local function togglePanel()
 	if isOpen then
 		closePanel()
 	else
 		openPanel()
 	end
-end)
+end
+line.Activated:Connect(togglePanel)
+requestPlate.plate.Activated:Connect(togglePanel)
 ui.gui:GetAttributeChangedSignal("Open"):Connect(function()
 	if ui.gui:GetAttribute("Open") == true then
 		ui.gui:SetAttribute("Open", nil)
@@ -236,6 +360,19 @@ Locale.Changed:Connect(renderAll)
 player:GetAttributeChangedSignal("HudStage"):Connect(renderLine)
 camera:GetPropertyChangedSignal("ViewportSize"):Connect(layoutLine)
 ui.OnResize(renderPanel)
+
+-- the done rows' countdowns tick while the panel is open (a new UTC day brings the State with the refilled board)
+task.spawn(function()
+	while true do
+		task.wait(1)
+		if isOpen and next(countdowns) then
+			local text = countdownText()
+			for label in countdowns do
+				label.Text = text
+			end
+		end
+	end
+end)
 
 layoutLine()
 renderAll()

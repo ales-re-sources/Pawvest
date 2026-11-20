@@ -388,6 +388,22 @@ function Telemetry.CropLevel(player: Player, cropId: string, level: number)
 	send("LogCustomEvent", player, "CropLevel", level, fields(cropId))
 end
 
+-- GardenRequests (E5a): request slot `slot` (1-3) for crop `cropId` finished `minutes` after it was filled (capped at a day); it paid
+-- `coins`, leaving `balance` (an economy source event, transaction type Gameplay, SKU "request")
+function Telemetry.RequestDone(player: Player, cropId: string, slot: number, minutes: number, coins: number, balance: number)
+	send(
+		"LogEconomyEvent",
+		player,
+		Enum.AnalyticsEconomyFlowType.Source,
+		"Coins",
+		coins,
+		balance,
+		Enum.AnalyticsEconomyTransactionType.Gameplay.Name,
+		"request"
+	)
+	send("LogCustomEvent", player, "RequestDone", math.clamp(math.floor(minutes), 0, 1440), fields(cropId, tostring(slot)))
+end
+
 -- GardenField (EV3c): a point of crop `cropId` spent on `line` (Value, Size, Speed), which now has `points` (1-3)
 function Telemetry.CropPoint(player: Player, cropId: string, line: string, points: number)
 	send("LogCustomEvent", player, "CropPoint", points, fields(cropId, line))

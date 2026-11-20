@@ -58,7 +58,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | FB | Player feedback: stage rating, feedback box (1.0) | ✔ | ✔ 2026-11-18 | filter check open |
 | FB2 | Stage rating on a signboard in each stage's courtyard instead of the popup (1.0) | ✔ | ✔ 2026-11-18 | – |
 | FB3 | The popup's 👍 / 👎 row back, alongside the signs (1.0) | ✔ | ✔ 2026-11-19 | – |
-| E5 | Garden MVP rest: request board, ledger on join, onboarding, garden telemetry (1.0) | – | – | – |
+| E5 | Garden MVP rest: request board, ledger on join, onboarding, garden telemetry (1.0) | E5a ✔ | E5a ✔ 2026-11-19 | – |
 | M6a | Soft launch + World 1 balancing (balanced by feel 2026-10-30; live test open) | – | – | – |
 | MU | Mobile UX check | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
@@ -72,7 +72,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 - **Not in 1.0:** obby time calibration (M6b; the obby stays as built), the comfort shop (D2: 1.0 ships without monetization),
   Sunshine (EV2c), World 4, hybrids (HX1 build).
 
-**Start here:** E5a (E5 scoped 2026-11-19, D1–D5 decided; section below). (FB + FB2 Studio-validated 2026-11-18, FB3 2026-11-19, the live filter check open; SH Studio-validated 2026-11-18, likes in a two-client test; ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: OG validation and the M6a friends test (step 0).
+**Start here:** E5b (E5 scoped 2026-11-19, D1–D5 decided; E5a Studio-validated 2026-11-19; section below). (FB + FB2 Studio-validated 2026-11-18, FB3 2026-11-19, the live filter check open; SH Studio-validated 2026-11-18, likes in a two-client test; ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: OG validation and the M6a friends test (step 0).
 *Update this line whenever a milestone finishes.*
 
 **Road to 1.0** (in order; one milestone at a time unless marked "alongside"):
@@ -279,13 +279,13 @@ one is done. *Boundary:* no hand-in, no accept step, no board stand, no timed ru
   `Done`, pays `Bonus × Need × CropConfig.SaleValue(crop, 1)` through `CoinRewards.Grant` (the pet multiplier), rolls the drop and
   tells the client (`GardenRemotes.Result ("Request", true, { crop, coins, drop? })`). Crops are kept (sold as usual).
 - **State:** `GardenRemotes.State` → `field.requests = { day, endsAt (next UTC midnight), slots = { { crop, need, have, done } } }`.
-- **Client:** GoalsClient line 2 = the open request nearest to done (`have / need` highest; "🍅 4 / 6 → 🪙"), hidden with no open
+- **Client:** GoalsClient line 2 = the open request nearest to done (`have / need` highest; "🍅 4 / 6 → 💰"), hidden with no open
   request; the panel's *Today's requests*: three rows (icon, name, bar, the bonus in Coins), a done row shows a tick and "New request
   in 5:12:00" (`TimeFormat.Clock`); before the board opens, one row "Requests open with Garlic" (the unlock that opens them). A finished
-  request: FieldClient toast "Request done! +1 200 🪙" (+ the drop), the line pulses and moves on.
+  request: FieldClient toast "Request done! +1 200 💰" (+ the drop), the line pulses and moves on.
 - **Telemetry:** `RequestDone` (CF01 crop id, CF02 slot 1-3, value = minutes from fill to done, capped 1 440) and an economy source
   event (`Gameplay`, SKU `request`).
-- **Strings:** `garden.request.*` rows (en + cs, `new`).
+- **Strings:** `goals.requests.*`, `field.toast.request*` (en + cs, `new`).
 
 *Acceptance checks (E5a):*
 1. A profile with Potato … Onion unlocked has no requests after a settle (`field.requests.slots` empty); unlocking Garlic fills 3
@@ -301,6 +301,18 @@ one is done. *Boundary:* no hand-in, no accept step, no board stand, no timed ru
 7. Through the real UI: line 2 shows the right request and bar; the panel shows three rows; a done row shows its countdown; Czech fits
    (`TextFits`), the pseudo-language shows no literal.
 8. `economy.py check` passes with the synced model; `loc.py check` 0 errors, `lint` within baseline; one playtest boot, no new errors.
+
+*E5a validation (2026-11-19, Lekzdrh's live profile, snapshot `TestSnapshots` `profile_9892673032_E5a_1`, restored and checked after;
+driven through the Studio-only hook `ServerStorage.RequestsTest`).* 1: Onion only → empty board; + Garlic → Garlic 3, Onion 7, Onion 7.
+2: a refill on the same day gives the same crops; the next day kept Tomato 4/10 and Onion 0/5 and replaced the done Garlic. 3: Income
+Prev 50 000 → Onion 50 (the cap, barn 100), Garlic 36 (= by hand); Prev 1e8 → max 50; a 5-day-old Income reads as 0 (floor 2 000).
+4: Garlic 4 with 3 harvested pays 0, the 4th pays 1 013 (= 0.6 × 4 × 290 × 1.455), income +1 013; more harvests pay nothing. 5: not
+run; Tending, the Shears and hand harvests share `store`, which calls `Track` (code review). 6: 30 finishes → 11 drops (4 rare seeds,
+7 Basic eggs), no Sunshine path. 7: line 2 shows the nearest request (Tomato 4/6 over Onion 1/7), a tap on it opens the panel (a missed
+`Activated` found and fixed), Czech rows fit, the done row's countdown ticks, a real Potato harvest that finished a request showed one
+toast "+1 Brambora · 0,3 kg / 📜 Zakázka splněna! +16 mincí" and line 2 moved on; `RequestDone` + the economy event in the debug log.
+Found and fixed: `GardenService.Remote("Result")` made a second Result remote (now `GardenService.Succeed`); 🪙 does not render on
+Roblox (💰 instead). 8: `economy.py check` (seeds 1–4: ECONOMY → Findings "1.0 requests"), `loc.py` 0 errors / lint 0; boot clean.
 
 #### E5b — Ledger on join
 *Inputs:* the join settle (`settle(..., absence = true)`) and what it already reports (`notice.tended`, `notice.crows`), eggs that

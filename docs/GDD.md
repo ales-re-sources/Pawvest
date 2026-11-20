@@ -746,7 +746,17 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   goal with a bar: "🥔 8 / 12 → 🥬 Lettuce" (the previous crop's plants), or for a quest crop its least-done piece (brought / needed);
   hidden once every crop is open. It pulses when the goal moves on (the unlock toast comes from the field toasts). A tap opens the
   **Goals panel** (player-facing name "Quests" / "Úkoly"; "Cíl" is the finish portal): *Next crop* with how it opens and the count bar, or the quest's pieces with Bring buttons that work anywhere (the
-  server takes from the barn). Line 2 (the day's requests) and the panel's *Today's requests* come with E5.
+  server takes from the barn). **Line 2** (E5a) shows the day's request nearest to done ("🍅 4 / 6 → 💰" and a bar), under line 1 or
+  in its place; the panel's *Today's requests* lists the three: "Grow 6 × 🍅 Tomato", the reward in Coins (pet bonus included) and a bar;
+  a done one shows "Done! ✔" and the time to the next UTC day; before they open: "Requests open when you unlock 🧄 Garlic".
+- **Requests (E5a, 2026-11-19; rules in `CropConfig.Requests`, server `GardenRequests`).** Three tracked requests, "grow 6 Tomatoes":
+  every crop of that kind that goes into the barn counts (by hand, a Tending pet, the Shears' extra); nothing is handed in and the crops
+  are kept. Crops: unlocked common crops from Onion on that grow in ≤ 4 h (Onion … Eggplant); the board opens when two qualify (the
+  Garlic unlock, day 0) and picks different crops (seeded by player, UTC day and slot). Size: 0.3 × a day's income (crop sales +
+  request bonuses of the previous UTC day or today, the higher, at least 2 000) ÷ the crop's sale with the pet bonus, 3 to half the
+  barn. A finished request pays 0.6 × the count's sale (+ pet bonus) at once with a toast, and one in three also drops a rare seed of
+  the highest world with a finished stage or a free Basic egg (half and half). An unfinished request stays; finished slots refill on
+  the next UTC day. No timed run and no Sunshine until EV2c (the user, 2026-11-19).
 - **Upgrades and tools.** Growth (4 levels, -5 % grow time each) and Barn (5 levels, +20 each). Tools: Seed sorter
   (sizes x 1.05 / 1.10 / 1.15), Cloches (online growth +7 / 14 / 20 %), Pruning shears (5 / 10 / 15 % chance of a second crop of the same size,
   rolled per planting).

@@ -326,6 +326,11 @@ Speed point or the top crops' `step`.
   15 / 12 on seeds 1–4 (was 14 / 14 / 13 / 12). B (Tending pays) now fails on seeds 1, 3, 4 with one archetype at 0.94–0.97×: a
   two-run comparison that flips with purchase timing (it flipped in most probe variants), so read as noise. G8 on seed 2: Spender's
   Dash 2 headroom 1.08× (cheaper Dash 2).
+- **1.0 requests (E5a, 2026-11-19; `req_run_share` 0, `req_drop_sun` False):** EV passes per seed 1–4, old → new: 16 / 16 / 16 / 17 →
+  16 / 13 / 17 / 17. Seed 1: G8 now passes, G2 fails on Casual (54 %; 91–95 % on seeds 2–4, so read as that seed's noise). Seed 2 loses
+  three near-misses: G1 (Binge day 1 4.6 min, limit 4), G4 (Obby main Double Jump 2 2.0 d after Stage 11, was 0.5; the timed run's
+  Sunshine had sped this archetype up) and G5 (Casual last purchase day 84, was 91). Accepted for 1.0 with the other near-misses;
+  revisit with EV2c, which brings the timed run back.
 - **Rested mastery works (2026-11-17 re-run):** the weekly player (Binge) gets Sweet potato on day 14.7–21.4 with it, 21.4–28.4 without, and
   Pineapple on day 42.5–49.5, never within 60 days without. The earlier "14.5" was seed 3's number. Daily players are unchanged.
 

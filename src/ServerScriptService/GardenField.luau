@@ -84,6 +84,7 @@ local PetService = require(ServerScriptService.PetService)
 local Telemetry = require(ServerScriptService.Telemetry)
 local TalentConfig = require(ReplicatedStorage.TalentConfig)
 local HarvestHall = require(ServerScriptService.HarvestHall)
+local GardenRequests = require(ServerScriptService.GardenRequests)
 
 local plantEvent = GardenService.Remote("Plant") -- client → server: (square: number, crop: string)
 local harvestEvent = GardenService.Remote("Harvest") -- client → server: (square: number)
@@ -366,6 +367,9 @@ local function fieldOf(player: Player, profile)
 		end
 	end
 	garden.FieldPets = pets
+	-- E5a: the daily requests (cleaned, and filled on a new UTC day or once 2 crops qualify)
+	GardenRequests.Clean(garden)
+	GardenRequests.Fill(player, garden)
 	return field, open
 end
 GardenField.FieldOf = fieldOf
@@ -513,6 +517,7 @@ local function store(player: Player, garden, crop, planting: number, extra: bool
 		garden.BestSize[crop.id] = factor
 	end
 	HarvestHall.Harvested(player, crop, factor, pointsOf(garden, crop)) -- SH: the week's best and the Hall's boards
+	GardenRequests.Track(player, garden, crop, n) -- E5a: harvests count toward the open requests of the crop
 	return factor, record
 end
 
@@ -811,6 +816,7 @@ GardenService.AddStateField("field", function(profile)
 		tools = table.clone(garden.Tools),
 		cart = cartState(garden),
 		stall = stallState(profile),
+		requests = GardenRequests.State(owner, garden), -- E5a
 		notice = notices[owner],
 		crows = {
 			from = crowsFrom,
@@ -1033,6 +1039,7 @@ sellEvent.OnServerEvent:Connect(function(player, cropId, amount)
 
 	local part = removeItems(garden, crop.id, amount) -- the average size of what is stored
 	local paid = CoinRewards.Grant(player, CropConfig.SaleValue(crop, part, pointsOf(garden, crop)), "crop") or 0 -- the pet bonus at sale time
+	GardenRequests.Earned(garden, paid) -- E5a: a day's income sizes new requests
 	done(player, "Sell", { crop = crop.id, count = amount, paid = paid })
 end)
 

@@ -149,7 +149,7 @@ requests, E5; later upgrade points, EV3c, and the ledger). A panel or stand for 
 (K1). The brown score panel (`ScreenGui.ScorePanel`: the place, "Enter portal!" / "Choose a stage!", stars earned) no longer serves its
 purpose outside a run (the user).
 - **Tracker lines** take the score panel's place on the HUD everywhere except during a stage: one or two short lines, each an icon, a
-  few words and a bar ("🥔 8 / 12 → 🥬", "🍅 4 / 6 → 🪙"). Line 1: the next crop (its unlock count, or the milestone quest); line 2: the
+  few words and a bar ("🥔 8 / 12 → 🥬", "🍅 4 / 6 → 💰"). Line 1: the next crop (its unlock count, or the milestone quest); line 2: the
   open request nearest to done. A finished goal shows a short toast and the line moves to the next one. A tap opens the Goals panel; the
   panel's minimise button stays.
 - **On a stage** the run view stays (stage name, record or "First try!", medal limits: the run's target line).

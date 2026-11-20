@@ -87,6 +87,7 @@ run). Times and counts never go into custom fields (cardinality); they are event
 | `HallEntry` (SH) | `LogCustomEvent`, value = the place on the week's board (1-3) | CF01 crop id — sent when a harvest gets onto the week's Harvest Hall board as this server knows it (before the write) |
 | `PlotLike` (SH) | `LogCustomEvent`, value = the liked owner's likes after it | — (sent for the liker) |
 | `StageRating` (FB2) | `LogCustomEvent`, value = 1 (👍) or -1 (👎) | CF01 stage key, CF02 progress (`Telemetry.StageProgress`): `gold` / `silver` / `bronze` (best medal), `finished` (a best time, no medal), `cp<k>` (furthest checkpoint this session; `cp0` = a run started, none reached), `none` (no finish, no run this session) — filter out `none` to drop players who never tried; CF03 `new` / `change` — a prompt at the stage's rating sign that changed the stored rating (the same value again sends nothing); the running totals per stage are the `StageRatings` DataStore (PROTOCOL) |
+| `RequestDone` (E5a) | `LogCustomEvent`, value = minutes from the slot's fill to done (capped 1 440), plus a `LogEconomyEvent` source (Coins, transaction type `Gameplay`, SKU `request`, amount = the bonus paid) | CF01 crop id · CF02 slot (`1`-`3`) |
 | `Feedback` (FB) | `LogCustomEvent`, value = 1 | CF01 category (bug / idea / other), CF02 area (`Telemetry.AreaOf`) — a message stored in `PlayerFeedback`; the text never goes to telemetry |
 
 Read: time to each unlock = `CropUnlock` per CF01 against `Session` `new`; where the first hour stalls = the share of players reaching
