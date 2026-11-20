@@ -10,6 +10,7 @@
 -- server (at most one per ToastGap).
 -- Ribbons: a week in which the player harvested (WeekBest.Week) goes into Garden.RibbonPending when the week changes; once that week
 -- is over (+ SettleSeconds) its board is read and every crop the player leads adds Garden.Ribbons[cropId] += 1 (each week once).
+-- The session's first check is kept for the "While you were away" ledger (JoinRibbons, E5b; GardenField's notice).
 -- Studio tests (ServerStorage attributes, ignored outside Studio): HallTest = true uses the keys "test_…" (never the live Hall),
 -- HallWeekShift = n moves the week number; HallWrites counts the UpdateAsync calls of this server.
 
@@ -192,6 +193,7 @@ local function oldWeek(week: number)
 end
 
 local checking = {} -- [Player] = true while checkRibbons runs
+local joinRibbons = {} -- [Player] = { [cropId] = n } the ribbons the session's first finished check found (E5b ledger)
 
 -- Ribbons of the finished weeks in Garden.RibbonPending (each read once it is settled).
 local function checkRibbons(player: Player)
@@ -202,6 +204,7 @@ local function checkRibbons(player: Player)
 	local profile = PlayerProfile.Get(player)
 	local garden = profile and profile.Garden
 	local gained = 0
+	local won = {}
 	if type(garden) == "table" and type(garden.RibbonPending) == "table" then
 		local now = os.time()
 		for i = #garden.RibbonPending, 1, -1 do
@@ -216,6 +219,7 @@ local function checkRibbons(player: Player)
 					for cropId, list in board.crops do
 						if list[1] and list[1].u == player.UserId and CropConfig.ById[cropId] then
 							garden.Ribbons[cropId] = (garden.Ribbons[cropId] or 0) + 1
+							won[cropId] = (won[cropId] or 0) + 1
 							gained += 1
 						end
 					end
@@ -224,9 +228,15 @@ local function checkRibbons(player: Player)
 		end
 	end
 	checking[player] = nil
+	local first = joinRibbons[player] == nil and player.Parent ~= nil
+	if first then
+		joinRibbons[player] = won
+	end
 	if gained > 0 and player.Parent then
 		PlayerProfile.Save(player)
-		GardenService.PublishAll(player) -- the plot sign shows the ribbons (GardenPlotFeed)
+	end
+	if (gained > 0 or first) and player.Parent then
+		GardenService.PublishAll(player) -- the plot sign shows the ribbons (GardenPlotFeed); a waiting ledger gets them
 	end
 end
 
@@ -302,6 +312,11 @@ function HarvestHall.Harvested(player: Player, crop, factor: number, pts: any?)
 	publish()
 end
 
+-- The ribbons ({ [cropId] = n }) the session's first ribbon check found (the E5b ledger), or nil while it runs.
+function HarvestHall.JoinRibbons(player: Player)
+	return joinRibbons[player]
+end
+
 -- The player's ribbons in all (the plot sign).
 function HarvestHall.RibbonCount(garden): number
 	local total = 0
@@ -326,6 +341,7 @@ end)
 
 Players.PlayerRemoving:Connect(function(player)
 	checking[player] = nil
+	joinRibbons[player] = nil
 end)
 
 -- The week, the reads and the writes.

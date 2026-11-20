@@ -58,7 +58,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | FB | Player feedback: stage rating, feedback box (1.0) | ✔ | ✔ 2026-11-18 | filter check open |
 | FB2 | Stage rating on a signboard in each stage's courtyard instead of the popup (1.0) | ✔ | ✔ 2026-11-18 | – |
 | FB3 | The popup's 👍 / 👎 row back, alongside the signs (1.0) | ✔ | ✔ 2026-11-19 | – |
-| E5 | Garden MVP rest: request board, ledger on join, onboarding, garden telemetry (1.0) | E5a ✔ | E5a ✔ 2026-11-19 | – |
+| E5 | Garden MVP rest: request board, ledger on join, onboarding, garden telemetry (1.0) | E5a, E5b ✔ | E5a ✔ 2026-11-19, E5b ✔ 2026-11-20 | – |
 | M6a | Soft launch + World 1 balancing (balanced by feel 2026-10-30; live test open) | – | – | – |
 | MU | Mobile UX check | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
@@ -72,7 +72,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 - **Not in 1.0:** obby time calibration (M6b; the obby stays as built), the comfort shop (D2: 1.0 ships without monetization),
   Sunshine (EV2c), World 4, hybrids (HX1 build).
 
-**Start here:** E5b (E5 scoped 2026-11-19, D1–D5 decided; E5a Studio-validated 2026-11-19; section below). (FB + FB2 Studio-validated 2026-11-18, FB3 2026-11-19, the live filter check open; SH Studio-validated 2026-11-18, likes in a two-client test; ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: OG validation and the M6a friends test (step 0).
+**Start here:** E5c (E5 scoped 2026-11-19, D1–D5 decided; E5a Studio-validated 2026-11-19, E5b 2026-11-20; section below). (FB + FB2 Studio-validated 2026-11-18, FB3 2026-11-19, the live filter check open; SH Studio-validated 2026-11-18, likes in a two-client test; ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: OG validation and the M6a friends test (step 0).
 *Update this line whenever a milestone finishes.*
 
 **Road to 1.0** (in order; one milestone at a time unless marked "alongside"):
@@ -334,6 +334,16 @@ guilt, no ads); no likes line; stations and strays wait for their drops.
 3. Joining into a stage area or starting a run before the State arrives: the panel waits until the run ends.
 4. Real UI: closes with its button and with a tap outside; Czech fits; no panel again after a respawn.
 5. `loc.py` checks, a playtest boot, no new errors.
+
+*E5b validation (2026-11-20, Lekzdrh's live profile, snapshot `TestSnapshots` `profile_9892673032_E5b_1` (+ MostStars), restored and
+checked after; fixtures written after the shutdown save).* 1: `SettledAt` 10 h back (8 h had no crow block), a ready Basic egg, yesterday's
+board with Garlic done: the panel opened once, "Mimo hru: 10 h 0 min", crows 1× Rajče, 7 ripe (4 Tomatoes − 1 eaten + 2 Potatoes + 2
+Sunflowers ripened), 1 egg, 1 new request; no 🧺 line, right: no ripe square was in a Tending pet's reach. Second fixture with ripe-soon
+Tomatoes in reach: "Mazlíčci sklidili: 14× Rajče. Největší: obří kus – 🍅 Rajče, 0,4 kg" = barn Tomatoes 6 → 20 (12 plantings + 2
+Shears extras). 2: 10 min back: no panel. 3: not run (a run can't be started before the first State through the MCP); code review:
+`tryLedger` re-checks `Hints.Running` every 0.5 s. 4: closes with a tap outside and with its button, every Czech line `TextFits`, the
+emoji icons render, no reopen after a respawn. Ribbons: not run (needs a finished Hall week led by the player); the join check publishes
+once and the ledger waits ≤ 10 s for it. 5: `loc.py` 0 errors / lint 0; no errors or warnings in the three playtests.
 
 #### E5c — Onboarding (first ten minutes) and the garden funnel
 *Inputs:* server events that already exist (seed bought, planted, harvested, sold, pet placed, run finished, request done).

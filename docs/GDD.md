@@ -661,7 +661,7 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   - **Skills panel, Garden tab** (the Obby tab holds the talents): the Growth / Barn upgrades and the tools, buyable anywhere (Coins only).
   - **Pets panel:** the field pet slot line (pets on the field / slots) with "+1 slot" (buyable anywhere).
   - The crow forecast also shows in the summary bubble over the own sign ("🐦 0:45" within an hour of crows, "🐦 now!" while they are on).
-    The join notice stays a toast.
+    The join notice stays a toast (after 30+ min away: the ledger, below).
   - **Confirm and focus (all panels).** A spend over 1 000 Coins and every Sell take two taps: the first turns the button orange ("Tap
     again") for 3 s. Garden dialogs consume blank-area input and refit / reflow when the safe area changes (2026-11-15). Opening the Pets, Skills, Barn, Seed stall or Food panel closes the one open before; Pets, Skills and Barn close when
     the player walks 32 studs from where they were opened, the two stalls beyond 20 studs from their counter.
@@ -781,6 +781,12 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   for the crow speciality). At most 1 crop is eaten per absence; crops ripe while the owner plays are safe. A pet with Tending and Pest control
   does both jobs.
 - **Join notice.** What the pets harvested (and the shears' extras), what the crows ate and who chased them off, an old profile's pen conversion.
+  After an absence of 30 min or more it is the **"While you were away" ledger (E5b)**: a centred panel, once per session, with the time
+  away ("7 h 20 min", "2 d 3 h") and the lines that apply, in order: 🧺 the pets' harvests (3 crops, then "+ n more") and the
+  biggest of them ("a giant 🍅 Tomato, 2.4 kg"), 🐦 crows ate / a guard chased them off, 🌱 ripe crops waiting, 🥚 eggs ready, 🎀 Harvest
+  Hall ribbons won at this join, 📜 new requests. With nothing to say it does not open. It waits for the end of a stage run, closes with
+  its button or a tap outside, and is information only (no likes line: plots exist only for present players). Under 30 min the toast
+  stays; the pen conversion is always a toast.
 - **Harvest Hall (SH, 2026-11-18; rules in `HallConfig`).** On the west half of the hub plaza: a pedestal per crop (two staggered arcs,
   the ladder in order, the rare crops last) and, on the grass behind them, the all-time record board beside the star board. Every crop
   that goes into a barn (by hand, a Tending pet, the Shears' extra) counts: the **week's biggest** of each crop (top 3, Monday 00:00 UTC to

@@ -275,6 +275,7 @@ pets.reject.maxed,Refused: every slot is bought,All slots unlocked,Všechny slot
 common.duration.hm,"A time span of hours and minutes, e.g. ""7 h 59 min""",{h} h {m} min,{h} h {m} min,new,hdc897d78
 common.duration.m,"A time span in minutes, e.g. ""12 min""",{m} min,{m} min,new,hd1bd0c46
 common.duration.s,"A time span in seconds, e.g. ""45 s""",{s} s,{s} s,new,h130ff2da
+common.duration.dh,"A time span of days and hours, e.g. ""2 d 3 h"" (the ledger's time away); {d} = days, {h} = hours",{d} d {h} h,{d} d {h} h,new,h8a0dd0a2
 common.hours[one],"A whole number of hours, e.g. an egg's hatch time ""1 hour""; {count} = hours. Form for 1",{count} hour,{count} hodina,new,h8c6097ee
 common.hours[few],Form for 2-4 (Czech only),,{count} hodiny,new,h8c6097ee
 common.hours[other],Form for 0 and 5+,{count} hours,{count} hodin,new,h8c6097ee
@@ -560,6 +561,27 @@ field.notice.crowsAte,"Toast once after a join: what crows ate during the absenc
 field.notice.chased[one],"Toast once after a join: a guard pet chased crows off; {pet} = ""Dog Lv 4"" (Czech: put ""Mazlíček"" first so the verb stays masculine), {count} = how many times. Form for 1",{pet} chased the crows off.,Mazlíček {pet} odehnal vrány.,new,h19f20e62
 field.notice.chased[few],Form for 2-4 (Czech only),,Mazlíček {pet} odehnal vrány {count}×.,new,h19f20e62
 field.notice.chased[other],Form for 0 and 5+,{pet} chased the crows off {count} times.,Mazlíček {pet} odehnal vrány {count}×.,new,h19f20e62
+field.ledger.title,"""While you were away"" panel on join after 30+ min away (E5b ledger), its title (Czech: avoid a gendered past tense)",While you were away,Mezitím na tvé farmě,new,hbff01c0a
+field.ledger.away,"""While you were away"" panel on join after 30+ min away (E5b ledger), line under the title; {time} = how long, e.g. ""7 h 20 min"" or ""2 d 3 h""",Away {time},Mimo hru: {time},new,h71854e7a
+field.ledger.tended,"""While you were away"" panel on join after 30+ min away (E5b ledger), 🧺 line: what the Tending pets harvested; {items} = list like ""5× Potato, 2× Corn + 2 more""",Your pets harvested {items}.,Mazlíčci sklidili: {items}.,new,h90974f6e
+field.ledger.more[one],"""While you were away"" panel on join after 30+ min away (E5b ledger), end of the harvested list when more than 3 crops; {count} = crops not listed. Form for 1",+ {count} more,+ {count} další,new,h8655e3ad
+field.ledger.more[few],Form for 2-4 (Czech only),,+ {count} další,new,h8655e3ad
+field.ledger.more[other],Form for 0 and 5+,+ {count} more,+ {count} dalších,new,h8655e3ad
+field.ledger.biggest,"""While you were away"" panel on join after 30+ min away (E5b ledger), after the harvested list: the biggest crop the pets harvested; {crop} = emoji + crop name, {kg} = weight (""2.4"", Czech ""2,4"")","Biggest: {crop}, {kg} kg","Největší: {crop}, {kg} kg",new,hc037e7b7
+field.ledger.biggestBig,"The same, when that crop rolled big (top 20 %); any crop, so keep it gender-neutral in Czech","Biggest: a big {crop}, {kg} kg","Největší: pořádný kus – {crop}, {kg} kg",new,hb75d3e1e
+field.ledger.biggestGiant,"The same, when that crop rolled giant (top 3 %); any crop, gender-neutral in Czech","Biggest: a giant {crop}, {kg} kg","Největší: obří kus – {crop}, {kg} kg",new,ha2d116e4
+field.ledger.crowsAte,"""While you were away"" panel on join after 30+ min away (E5b ledger), 🐦 line: what crows ate; {items} = list like ""1× Giant melon"" (a guard's ""chased off"" sentence may follow)",Crows ate {items}.,Vrány sežraly: {items}.,new,h80a03209
+field.ledger.ripe[one],"""While you were away"" panel on join after 30+ min away (E5b ledger), 🌱 line: squares with a ripe crop waiting for the harvest; {count} = squares. Form for 1",{count} ripe crop is waiting for you.,Na sklizeň čeká {count} zralá rostlina.,new,hb41fd351
+field.ledger.ripe[few],Form for 2-4 (Czech only),,Na sklizeň čekají {count} zralé rostliny.,new,hb41fd351
+field.ledger.ripe[other],Form for 0 and 5+,{count} ripe crops are waiting for you.,Na sklizeň čeká {count} zralých rostlin.,new,hb41fd351
+field.ledger.eggs[one],"""While you were away"" panel on join after 30+ min away (E5b ledger), 🥚 line: incubator eggs ready to hatch; {count} = eggs. Form for 1",{count} egg is ready to hatch.,{count} vajíčko je připravené k vylíhnutí.,new,ha32675bd
+field.ledger.eggs[few],Form for 2-4 (Czech only),,{count} vajíčka jsou připravená k vylíhnutí.,new,ha32675bd
+field.ledger.eggs[other],Form for 0 and 5+,{count} eggs are ready to hatch.,{count} vajíček je připravených k vylíhnutí.,new,ha32675bd
+field.ledger.ribbons,"""While you were away"" panel on join after 30+ min away (E5b ledger), 🎀 line: ribbons won as a finished week's biggest crop in the Harvest Hall (Síň sklizně); {items} = crop names, ""2× Tomato"" when more than one",Harvest Hall ribbons won: {items}!,Stuhy ze Síně sklizně: {items}!,new,h0e3fb4df
+field.ledger.requests[one],"""While you were away"" panel on join after 30+ min away (E5b ledger), 📜 line: daily requests that are new since the last visit; {count} = requests (1-3). Form for 1",{count} new request today.,Dnes máš {count} novou zakázku.,new,h12e7808c
+field.ledger.requests[few],Form for 2-4 (Czech only),,Dnes máš {count} nové zakázky.,new,h12e7808c
+field.ledger.requests[other],Form for 0 and 5+,{count} new requests today.,Dnes máš {count} nových zakázek.,new,h12e7808c
+field.ledger.ok,"""While you were away"" panel on join after 30+ min away (E5b ledger), the button that closes it (about 270 px)",Let's farm!,Jdeme na to!,new,he680f99e
 field.toast.petPlaced,Pet placement toast; {pet} = localized name and level; no square number,{pet} is working here now,{pet}: teď pracuje tady,new,h02d538a6
 field.toast.petMoved,Pet move toast; {pet} = localized name and level; no square number,{pet} moved to this spot,{pet}: přesun na tohle místo,new,hc387a48e
 field.toast.petLifted,"Toast: a pet was taken off the field; {pet} = ""Cat Lv 12""",{pet} is back with your pets,{pet}: zpátky mezi mazlíčky,new,hcdce9ef8

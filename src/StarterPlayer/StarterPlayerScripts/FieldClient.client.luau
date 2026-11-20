@@ -6,8 +6,9 @@
 --     harvest (size, record, Shears, mastery level-up, crop unlocked), seeds / cart bought, sale, square bought, quest pieces, upgrades and
 --     tools, crop upgrade points (EV3c), field pets; a finished request (E5a, "Request": joins the harvest toast that finished it);
 --   * once per session the notices of State.field.notice (an old profile's pen conversion, what the pets harvested while away, what
---     the crows ate and which guards chased them off).
--- The GUI is built here (ScreenGui FieldGui with the toast only), stud-brick wood look (StudStyle).
+--     the crows ate and which guards chased them off);
+--   * after an absence of 30 min or more (notice.away, E5b) the "While you were away" ledger instead of the harvest / crow toasts.
+-- The GUI is built here (ScreenGui FieldGui with the toast; the ledger is a HudPopup), stud-brick wood look (StudStyle).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -23,6 +24,8 @@ local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local GardenUi = require(script.Parent:WaitForChild("GardenUi"))
 local GardenView = require(script.Parent:WaitForChild("GardenView"))
+local HudPopup = require(script.Parent:WaitForChild("HudPopup"))
+local Hints = require(script.Parent:WaitForChild("Hints"))
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
 local requestStateEvent = remotes:WaitForChild("RequestState")
@@ -190,7 +193,8 @@ local function showNotices(field)
 			table.insert(lines, Locale.T("field.notice.returned", { count = c.returned }))
 		end
 	end
-	if notice.tended and not noticesShown.tended then
+	local ledger = notice.away ~= nil -- E5b: the ledger shows the harvests and the crows
+	if notice.tended and not ledger and not noticesShown.tended then
 		noticesShown.tended = true
 		local items = {}
 		for _, crop in CropConfig.Crops do
@@ -204,7 +208,7 @@ local function showNotices(field)
 	local crows = notice.crows -- E4b: { ate = { [crop] = n }, chased = { [uid] = n } }
 	local chased = type(crows) == "table" and type(crows.chased) == "table" and crows.chased or {}
 	-- the guards' names need the pet state: wait for it (PetClient.Changed calls this again)
-	if type(crows) == "table" and not noticesShown.crows and (next(chased) == nil or PetClient.State ~= nil) then
+	if type(crows) == "table" and not ledger and not noticesShown.crows and (next(chased) == nil or PetClient.State ~= nil) then
 		noticesShown.crows = true
 		local items = {}
 		for _, crop in CropConfig.Crops do
@@ -223,6 +227,178 @@ local function showNotices(field)
 	if #lines > 0 then
 		showToast(table.concat(lines, "\n"), COLOR_OK, NOTICE_SECONDS)
 	end
+end
+
+-- Ledger (E5b, D4) ----------------------------------------------------------------------------------------------------------
+-- Once per session after an absence of 30 min or more (notice.away, set by GardenField): "While you were away" with the lines
+-- that apply, in this order: what the pets harvested (≤ LEDGER_CROPS crops, then "+ n more") and the biggest of them, the crows,
+-- ripe squares, ready eggs, ribbons won, new requests. It waits for the join's ribbon check (at most RIBBON_WAIT s), the guards'
+-- names (the pet state) and the end of a stage run; it closes with its button or a tap outside it. Information only.
+local LEDGER_ORDER = { "tended", "crows", "ripe", "eggs", "ribbons", "requests" }
+local LEDGER_ICONS = { tended = "🧺", crows = "🐦", ripe = "🌱", eggs = "🥚", ribbons = "🎀", requests = "📜" }
+local LEDGER_CROPS = 3
+local RIBBON_WAIT = 10 -- seconds the ledger waits for the join's ribbon check
+local LEDGER_CLOSE = 600 -- seconds: closes by itself only if left alone this long
+local COLOR_LEDGER = Color3.fromRGB(255, 214, 102)
+local COLOR_LEDGER_BUTTON = Color3.fromRGB(70, 170, 80)
+
+local ledgerPopup = HudPopup.new("AwayLedger", {
+	displayOrder = 8, -- above the field toast and the HUD popups
+	width = 340,
+	position = UDim2.fromScale(0.5, 0.5),
+	anchor = Vector2.new(0.5, 0.5),
+	padding = { top = 14, bottom = 14 },
+	gap = 8,
+	stroke = { color = COLOR_LEDGER, thickness = 3 },
+	pop = true,
+})
+ledgerPopup.gui.IgnoreGuiInset = true
+create("TextButton", { -- a tap outside the panel closes it
+	Name = "Shade",
+	Size = UDim2.fromScale(1, 1),
+	BackgroundColor3 = Color3.new(0, 0, 0),
+	BackgroundTransparency = 0.55,
+	AutoButtonColor = false,
+	Text = "",
+	ZIndex = 0,
+	Parent = ledgerPopup.gui,
+}).Activated:Connect(ledgerPopup.Hide)
+local ledgerTitle = ledgerPopup.Line("Title", 1, 24, { TextColor3 = COLOR_LEDGER, RichText = false })
+local ledgerAway = ledgerPopup.Line("Away", 2, 15, { TextColor3 = Color3.fromRGB(200, 200, 200), RichText = false })
+local ledgerRows = {}
+for i, kind in LEDGER_ORDER do
+	ledgerRows[kind] = ledgerPopup.Line("Row_" .. kind, 2 + i, 17, { TextXAlignment = Enum.TextXAlignment.Left, RichText = false })
+end
+local ledgerButton = ledgerPopup.Button("Ok", 10, COLOR_LEDGER_BUTTON, 40, 18)
+ledgerButton.Activated:Connect(ledgerPopup.Hide)
+
+-- "5× Potato, 2× Corn + 2 more": crops of `counts` ({ [cropId] = n }), most first (ties in crop order), at most `limit`.
+local function cropList(counts, limit: number?): string
+	local list = {}
+	for index, crop in CropConfig.Crops do
+		local n = type(counts) == "table" and tonumber(counts[crop.id])
+		if n and n > 0 then
+			table.insert(list, { crop = crop, n = n, index = index })
+		end
+	end
+	table.sort(list, function(a, b)
+		return if a.n ~= b.n then a.n > b.n else a.index < b.index
+	end)
+	local items = {}
+	for i, entry in list do
+		if limit and i > limit then
+			break
+		end
+		table.insert(items, Locale.T("field.notice.item", { count = entry.n, crop = Locale.CropName(entry.crop) }))
+	end
+	local text = table.concat(items, ", ")
+	if limit and #list > limit then
+		text ..= " " .. Locale.T("field.ledger.more", { count = #list - limit })
+	end
+	return text
+end
+
+-- "7 h 20 min", "2 d 3 h"
+local function awayText(seconds: number): string
+	seconds = math.max(0, math.floor(seconds))
+	if seconds >= 86400 then
+		return Locale.T("common.duration.dh", { d = seconds // 86400, h = (seconds % 86400) // 3600 })
+	end
+	return Locale.Duration(seconds)
+end
+
+-- [kind] = the ledger's line for `notice` (nil when it has nothing to say)
+local function ledgerTexts(notice)
+	local texts = {}
+	if type(notice.tended) == "table" and next(notice.tended) then
+		local parts = { Locale.T("field.ledger.tended", { items = cropList(notice.tended, LEDGER_CROPS) }) }
+		local big = type(notice.biggest) == "table" and notice.biggest
+		local crop = big and CropConfig.ById[big.crop]
+		if crop and type(big.factor) == "number" then
+			local tag = CropConfig.SizeLabel(big.factor, GardenUi.PointsOf(GardenView.OwnField(), crop))
+			local key = if tag == "Giant" then "field.ledger.biggestGiant" elseif tag then "field.ledger.biggestBig" else "field.ledger.biggest"
+			table.insert(parts, Locale.T(key, { crop = GardenUi.CropTitle(crop), kg = GardenUi.KgText(crop, big.factor) }))
+		end
+		texts.tended = table.concat(parts, " ")
+	end
+	local crows = type(notice.crows) == "table" and notice.crows
+	if crows then
+		local parts = {}
+		local ate = cropList(crows.ate, LEDGER_CROPS)
+		if ate ~= "" then
+			table.insert(parts, Locale.T("field.ledger.crowsAte", { items = ate }))
+		end
+		for uid, n in (if type(crows.chased) == "table" then crows.chased else {}) do
+			table.insert(parts, Locale.T("field.notice.chased", { pet = petNameOf(tostring(uid)), count = n }))
+		end
+		texts.crows = if #parts > 0 then table.concat(parts, " ") else nil
+	end
+	for _, kind in { "ripe", "eggs", "requests" } do
+		local n = tonumber(notice[kind])
+		if n and n > 0 then
+			texts[kind] = Locale.T("field.ledger." .. kind, { count = n })
+		end
+	end
+	if type(notice.ribbons) == "table" then
+		local items = {}
+		for _, crop in CropConfig.Crops do
+			local n = tonumber(notice.ribbons[crop.id])
+			if n and n > 1 then
+				table.insert(items, Locale.T("field.notice.item", { count = n, crop = Locale.CropName(crop) }))
+			elseif n == 1 then
+				table.insert(items, Locale.CropName(crop))
+			end
+		end
+		if #items > 0 then
+			texts.ribbons = Locale.T("field.ledger.ribbons", { items = table.concat(items, ", ") })
+		end
+	end
+	return texts
+end
+
+local ledgerDone = false -- shown (or found empty) this session
+local ledgerSince = nil -- os.clock() the ledger notice first arrived (the ribbon wait)
+local ledgerRetry = false
+
+local function tryLedger()
+	local notice = fieldState and fieldState.notice
+	if ledgerDone or type(notice) ~= "table" or type(notice.away) ~= "number" then
+		return
+	end
+	ledgerSince = ledgerSince or os.clock()
+	local crows = type(notice.crows) == "table" and notice.crows
+	local chased = crows and type(crows.chased) == "table" and next(crows.chased) ~= nil
+	if chased and PetClient.State == nil then
+		return -- the guards' names: PetClient.Changed calls again
+	end
+	if Hints.Running or (notice.ribbonsReady == false and os.clock() - ledgerSince < RIBBON_WAIT) then
+		if not ledgerRetry then -- a stage run ends / the ribbon check answers: look again shortly
+			ledgerRetry = true
+			task.delay(0.5, function()
+				ledgerRetry = false
+				tryLedger()
+			end)
+		end
+		return
+	end
+	ledgerDone = true
+	ledgerPopup.Show(function()
+		local texts = ledgerTexts(notice)
+		local any = false
+		for _, kind in LEDGER_ORDER do
+			local label = ledgerRows[kind]
+			label.Visible = texts[kind] ~= nil
+			label.Text = if texts[kind] then LEDGER_ICONS[kind] .. "  " .. texts[kind] else ""
+			any = any or texts[kind] ~= nil
+		end
+		if not any then
+			return false
+		end
+		ledgerTitle.Text = Locale.T("field.ledger.title")
+		ledgerAway.Text = Locale.T("field.ledger.away", { time = awayText(notice.away) })
+		ledgerButton.Text = Locale.T("field.ledger.ok")
+		return true
+	end, LEDGER_CLOSE)
 end
 
 -- ST: once per restock block, while the player is in the garden, "New seeds at the stall" when a rotating crop of theirs is in stock
@@ -259,11 +435,13 @@ end
 remotes:WaitForChild("State").OnClientEvent:Connect(function(state)
 	fieldState = if type(state) == "table" then state.field else nil
 	showNotices(fieldState)
+	tryLedger()
 	stallRestock(fieldState)
 end)
 
 PetClient.Changed:Connect(function()
 	showNotices(fieldState) -- a crow notice waits for the guards' names (E4b)
+	tryLedger()
 end)
 
 -- Answers of the field pet actions (E1b): toasts.

@@ -104,7 +104,7 @@ local cropPointEvent = GardenService.Remote("CropPoint") -- client → server: (
 local reject = GardenService.Reject
 
 local settledOnline = {} -- [Player] = true once the join settle ran (later settles count as online time)
-local notices = {} -- [Player] = { converted?, tended? } for this session's panel (the conversion and what the pets did while away)
+local notices = {} -- [Player] = { converted?, tended?, crows?, away?, … } for this session (settleFor; the conversion, the absence)
 
 local GardenField = {}
 
@@ -569,8 +569,9 @@ end
 -- Adds the growth since SettledAt to every planted square and moves SettledAt to now: an absence (the join) at the offline
 -- rate, anything else at the online rate. In an absence Tending pets harvest and replant the ripe crops in their reach.
 -- Placed pets gain aptitude XP by the same weighted seconds. In an absence crows raid afterwards (E4-thin). Returns whether a
--- square's look, a crop or a pet's aptitude level changed, { [cropId] = harvests by pets } (nil when none) and the raid
--- ({ ate = { [cropId] = n }, chased = { [uid] = n } }, nil when nothing happened).
+-- square's look, a crop or a pet's aptitude level changed, { [cropId] = harvests by pets } (nil when none), the raid
+-- ({ ate = { [cropId] = n }, chased = { [uid] = n } }, nil when nothing happened) and the pets' biggest harvest ({ crop, factor }
+-- or nil; E5b ledger).
 local RIPEN_EPSILON = 1e-7 -- fractional speed boosts can leave a mathematically ripe crop just below its boundary
 local function settle(player: Player, profile, field, open, absence: boolean): (boolean, { [string]: number }?, any)
 	local now = os.time()
@@ -589,7 +590,7 @@ local function settle(player: Player, profile, field, open, absence: boolean): (
 	local cropGrowth = growth * cloches * CropConfig.GrowthSpeed(CropConfig.UpgradeLevel(field.Upgrades, "Growth"))
 	local barn = CropConfig.BarnFor(CropConfig.UpgradeLevel(field.Upgrades, "Barn"))
 	local strength = if absence then tendingStrength(profile, open) else {}
-	local changed, tended = false, nil
+	local changed, tended, biggest = false, nil, nil
 	local keys = {}
 	for key in field.Squares do
 		table.insert(keys, key)
@@ -620,10 +621,13 @@ local function settle(player: Player, profile, field, open, absence: boolean): (
 				break
 			end
 			local extra = shearsExtra(player, garden, entry.N) and CropConfig.SeedTotal(garden.Items) + 1 < barn
-			store(player, garden, crop, entry.N, extra)
+			local factor = store(player, garden, crop, entry.N, extra)
 			addPlant(player, garden, crop)
 			tended = tended or {}
 			tended[crop.id] = (tended[crop.id] or 0) + (if extra then 2 else 1)
+			if not biggest or factor > biggest.factor then
+				biggest = { crop = crop.id, factor = factor }
+			end
 			local leftover = math.min(entry.Grown - crop.growSeconds, growthOf) -- growth from before this absence does not carry over
 			if (garden.Seeds[crop.id] or 0) > 0 then
 				garden.Seeds[crop.id] -= 1
@@ -682,9 +686,74 @@ local function settle(player: Player, profile, field, open, absence: boolean): (
 			end
 		end
 	end
-	return changed, tended, raid
+	return changed, tended, raid, biggest
 end
 GardenField.Settle = settle
+
+-- E5b: an absence at least this long gets the "While you were away" panel (D4); a shorter one keeps the toasts.
+local LEDGER_SECONDS = 30 * 60
+
+-- Settles `player`'s field; the session's first settle counts the time since SettledAt as an absence. What the absence did goes into
+-- the session's notice: tended (E1b), crows (E4b) and, after LEDGER_SECONDS or more, the ledger (E5b): away (seconds), ripe (squares
+-- with a ripe crop), eggs (incubator eggs ready), requests (request slots filled since the last settle), biggest ({ crop, factor } of
+-- the pets' harvests). Ribbons are added when the State is built (noticeOf).
+local function settleFor(player: Player, profile, field, open)
+	local absence = not settledOnline[player]
+	local start = field.SettledAt
+	local _, tended, raid, biggest = settle(player, profile, field, open, absence)
+	settledOnline[player] = true
+	if tended or raid then
+		notices[player] = notices[player] or {}
+		notices[player].tended = tended or notices[player].tended
+		notices[player].crows = raid or notices[player].crows
+	end
+	local now = os.time()
+	if not (absence and finite(start) and now - start >= LEDGER_SECONDS) then
+		return
+	end
+	local garden = profile.Garden
+	local ripe = 0
+	for _, square in field.Squares do
+		local crop = CropConfig.ById[square.Crop]
+		if crop and square.Grown >= crop.growSeconds then
+			ripe += 1
+		end
+	end
+	local eggs = 0
+	if type(garden.Incubators) == "table" then
+		for _, entry in garden.Incubators do
+			if type(entry) == "table" and finite(entry.ReadyAt) and entry.ReadyAt <= now then
+				eggs += 1
+			end
+		end
+	end
+	local requests = 0
+	if type(garden.Requests) == "table" then
+		for _, slot in garden.Requests.Slots do
+			if slot.At >= start then
+				requests += 1
+			end
+		end
+	end
+	notices[player] = notices[player] or {}
+	local notice = notices[player]
+	notice.away = now - start
+	notice.ripe = ripe
+	notice.eggs = eggs
+	notice.requests = requests
+	notice.biggest = biggest
+end
+
+-- The session's notice for the State; a ledger gets the ribbons the join's Harvest Hall check found (ribbonsReady = false while it
+-- runs: the client waits for it).
+local function noticeOf(player: Player)
+	local notice = notices[player]
+	if notice and notice.away then
+		notice.ribbons = HarvestHall.JoinRibbons(player)
+		notice.ribbonsReady = notice.ribbons ~= nil
+	end
+	return notice
+end
 
 -- Today's market cart for the panel: { nextAt = server time of the next offers, offers = { { slot, crop, count, left, price, base,
 -- discount?, taste? } } }.
@@ -817,7 +886,7 @@ GardenService.AddStateField("field", function(profile)
 		cart = cartState(garden),
 		stall = stallState(profile),
 		requests = GardenRequests.State(owner, garden), -- E5a
-		notice = notices[owner],
+		notice = noticeOf(owner),
 		crows = {
 			from = crowsFrom,
 			to = crowsTo,
@@ -885,13 +954,7 @@ local function usableField(player: Player, action: string, anywhere: boolean?)
 	if not field then
 		return nil, nil, nil
 	end
-	local _, tended, raid = settle(player, profile, field, open, not settledOnline[player])
-	if tended or raid then
-		notices[player] = notices[player] or {}
-		notices[player].tended = tended or notices[player].tended
-		notices[player].crows = raid or notices[player].crows
-	end
-	settledOnline[player] = true
+	settleFor(player, profile, field, open)
 	return profile, field, open
 end
 
@@ -1411,13 +1474,10 @@ GardenService.AddSetupHook(function(player)
 		return
 	end
 	local converted = convert(player, profile)
-	local _, tended, raid = settle(player, profile, field, open, not settledOnline[player])
-	settledOnline[player] = true
-	if converted or tended or raid then
+	settleFor(player, profile, field, open)
+	if converted then
 		notices[player] = notices[player] or {}
-		notices[player].converted = converted or notices[player].converted
-		notices[player].tended = tended or notices[player].tended
-		notices[player].crows = raid or notices[player].crows
+		notices[player].converted = converted
 	end
 	GardenService.PublishAll(player)
 	if converted then
