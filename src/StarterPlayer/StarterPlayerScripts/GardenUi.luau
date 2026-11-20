@@ -307,12 +307,16 @@ function GardenUi.CropTitle(crop): string
 	return crop.icon .. " " .. Locale.CropName(crop)
 end
 
--- The crop's grow time on `field` (shortened by the Growth upgrade and the crop's Speed point, EV3c), whole seconds. `pts` replaces the
+-- The crop's away-time duration on `field` (Growth and crop Speed included), whole seconds. `pts` replaces the
 -- crop's points (the crop page's preview).
 function GardenUi.GrowSecondsOn(field, crop, pts: any?): number
-	local level = CropConfig.UpgradeLevel(field and field.upgrades, "Growth")
-	local speed = CropConfig.GrowthSpeed(level) * CropConfig.SpeedMult(if pts ~= nil then pts else GardenUi.PointsOf(field, crop))
+	local speed = CropConfig.GrowthRates(field and field.upgrades, nil, if pts ~= nil then pts else GardenUi.PointsOf(field, crop))
 	return math.ceil(crop.growSeconds / speed - 1e-6)
+end
+
+function GardenUi.GrowthHint(field): string
+	local rate = string.format("%.2f", CropConfig.CountdownRate(field and field.tools)):gsub("0+$", ""):gsub("%.$", "")
+	return Locale.T("field.growth.hint", { rate = Locale.Decimal(rate) })
 end
 
 -- "7.4" (Czech "7,4"): the weight of a crop of size `factor`, to 0.1 kg (E1c2).

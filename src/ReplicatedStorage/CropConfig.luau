@@ -213,10 +213,13 @@ CropConfig.SizeZCap = 4
 CropConfig.SizeBigZ = 0.8416
 CropConfig.SizeGiantZ = 1.8808
 
--- Passive rates (ECONOMY open decision 5: placeholders).
-CropConfig.OnlineRate = 1.0
-CropConfig.OfflineRate = 0.5 -- 2026-11-04: was 0.33 (a day away was worth only ~4 h of growth)
+-- Catalogue / displayed time is the away-time baseline; playing counts it down faster (OG2, 2026-11-20).
+CropConfig.OnlineRate = 2.0
+CropConfig.OfflineRate = 1.0
 CropConfig.OfflineCapSeconds = 24 * 3600 -- was 12 h
+-- Field-job training has its own clock, preserving the pace from before OG2.
+CropConfig.WorkOnlineRate = 1.0
+CropConfig.WorkOfflineRate = 0.5
 CropConfig.SettleSeconds = 60 -- online growth is settled at least this often (and before every field action, on join and leave)
 
 -- Crop mastery (EV3b, docs/GDD.md §7.9; numbers signed off 2026-11-17, docs/ECONOMY.md → EV3): a crop's level (★) comes from the plants
@@ -402,6 +405,11 @@ function CropConfig.Growth(online: number, offline: number): number
 	return math.max(0, online) * CropConfig.OnlineRate + math.min(math.max(0, offline), CropConfig.OfflineCapSeconds) * CropConfig.OfflineRate
 end
 
+function CropConfig.WorkSeconds(online: number, offline: number): number
+	return math.max(0, online) * CropConfig.WorkOnlineRate
+		+ math.min(math.max(0, offline), CropConfig.OfflineCapSeconds) * CropConfig.WorkOfflineRate
+end
+
 -- Level 0..max of upgrade `id` in `upgrades` (Garden.Field.Upgrades or the panel state's field.upgrades).
 function CropConfig.UpgradeLevel(upgrades, id: string): number
 	local upgrade = CropConfig.UpgradeById[id]
@@ -423,6 +431,33 @@ end
 -- How much faster crops grow at Growth level `level` (earned growth seconds are multiplied by this).
 function CropConfig.GrowthSpeed(level: number): number
 	return 1 / (1 - CropConfig.UpgradeById.Growth.step * level)
+end
+
+-- Growth seconds per real second, away / online. Upgrade and point tables accept stored or client-state values.
+function CropConfig.GrowthRates(upgrades, tools, points): (number, number)
+	local speed = CropConfig.GrowthSpeed(CropConfig.UpgradeLevel(upgrades, "Growth")) * CropConfig.SpeedMult(points)
+	return CropConfig.OfflineRate * speed, CropConfig.OnlineRate * (1 + CropConfig.ToolEffect(tools, "Cloches")) * speed
+end
+
+-- Baseline seconds removed from a visible crop timer per real second online; upgrades affect both clocks equally.
+function CropConfig.CountdownRate(tools): number
+	return CropConfig.OnlineRate * (1 + CropConfig.ToolEffect(tools, "Cloches")) / CropConfig.OfflineRate
+end
+
+-- readyAt remains the actual online harvest boundary for art, badges and server authority.
+function CropConfig.TimeLeft(readyAt: number, now: number, tools): number
+	return math.max(0, readyAt - now) * CropConfig.CountdownRate(tools)
+end
+
+-- Shared card / ring interpolation: actual progress and ripeness, plus away-time seconds left to display.
+function CropConfig.Progress(entry, crop, receivedAt: number, now: number, tools): (number, boolean, number)
+	local grown, readyAt = entry.grown or 0, entry.readyAt or 0
+	if grown >= crop.growSeconds or readyAt <= now then
+		return 1, true, 0
+	end
+	local rate = (crop.growSeconds - grown) / math.max(readyAt - receivedAt, 1)
+	return math.clamp((grown + rate * math.max(now - receivedAt, 0)) / crop.growSeconds, 0, 1), false,
+		CropConfig.TimeLeft(readyAt, now, tools)
 end
 
 -- Seeds the stock holds (and crops a Tending pet may store) at Barn level `level`.

@@ -12,7 +12,7 @@
 -- that was not tried yet is harvested by the pet with the chance PetConfig.Strength(level) (Items, mastery; only while the barn
 -- has room) and replanted from Seeds with the leftover growth; a failed roll marks the planting Tried (it waits for the owner).
 -- The roll is deterministic per owner and planting number (Squares[n].N from Field.Plantings), so a re-join never rerolls.
--- Placed pets earn aptitude XP in their job by the weighted field time (the same seconds as growth).
+-- Placed pets earn aptitude XP on their own clock (WorkSeconds), independent of crop growth speed.
 -- Crows (E4-thin, CropConfig.Crows): after Tending in the join settle, every common crop that was ripe during the absence while a crow
 -- block overlapped it is rolled once per planting (Squares[n].Crow); one that loses the roll is eaten (the square is emptied) unless a
 -- guard reaching the square wins its own roll (PetConfig.GuardChance; the strongest guard counts). At most Cap eaten per absence, only
@@ -568,7 +568,7 @@ end
 
 -- Adds the growth since SettledAt to every planted square and moves SettledAt to now: an absence (the join) at the offline
 -- rate, anything else at the online rate. In an absence Tending pets harvest and replant the ripe crops in their reach.
--- Placed pets gain aptitude XP by the same weighted seconds. In an absence crows raid afterwards (E4-thin). Returns whether a
+-- Placed pets gain aptitude XP by WorkSeconds, preserving their training pace. In an absence crows raid afterwards (E4-thin). Returns whether a
 -- square's look, a crop or a pet's aptitude level changed, { [cropId] = harvests by pets } (nil when none), the raid
 -- ({ ate = { [cropId] = n }, chased = { [uid] = n } }, nil when nothing happened) and the pets' biggest harvest ({ crop, factor }
 -- or nil; E5b ledger).
@@ -578,6 +578,7 @@ local function settle(player: Player, profile, field, open, absence: boolean): (
 	local start = field.SettledAt
 	local elapsed = if field.SettledAt <= now then now - field.SettledAt else 0
 	local growth = if absence then CropConfig.Growth(0, elapsed) else CropConfig.Growth(elapsed, 0)
+	local work = if absence then CropConfig.WorkSeconds(0, elapsed) else CropConfig.WorkSeconds(elapsed, 0)
 	field.SettledAt = now
 	if absence then
 		addRest(profile.Garden, elapsed)
@@ -646,7 +647,7 @@ local function settle(player: Player, profile, field, open, absence: boolean): (
 	for uid in garden.FieldPets do
 		local pet = profile.Pets[uid]
 		if pet then -- both field jobs learn (E4-thin); GainAptitudeXp ignores an aptitude the pet lacks
-			local levels = PetConfig.GainAptitudeXp(pet, "Tending", growth) + PetConfig.GainAptitudeXp(pet, "PestControl", growth)
+			local levels = PetConfig.GainAptitudeXp(pet, "Tending", work) + PetConfig.GainAptitudeXp(pet, "PestControl", work)
 			changed = changed or levels > 0
 		end
 	end
@@ -777,8 +778,8 @@ end
 
 -- Growth seconds per second of `crop` while the owner is online (Cloches, Growth, the crop's Speed point).
 local function onlineSpeed(garden, field, crop): number
-	return CropConfig.OnlineRate * (1 + CropConfig.ToolEffect(garden.Tools, "Cloches"))
-		* CropConfig.GrowthSpeed(CropConfig.UpgradeLevel(field.Upgrades, "Growth")) * CropConfig.SpeedMult(pointsOf(garden, crop))
+	local _, speed = CropConfig.GrowthRates(field.Upgrades, garden.Tools, pointsOf(garden, crop))
+	return speed
 end
 
 -- Grown was earned through SettledAt, even if a visitor requests this plot much later.

@@ -183,14 +183,9 @@ local function petName(uid: string, kind: string): string
 	return if type(name) == "string" and name ~= "" then name else Locale.PetKindName(kind)
 end
 
--- share grown 0..1, ripe, seconds left of a planted square at server time `now` (as FieldRings: towards readyAt)
+-- Actual share / ripeness and baseline seconds left, shared with rings.
 local function progress(entry, crop, now: number): (number, boolean, number)
-	local grown, readyAt = entry.grown or 0, entry.readyAt or 0
-	if grown >= crop.growSeconds or readyAt <= now then
-		return 1, true, 0
-	end
-	local rate = (crop.growSeconds - grown) / math.max(readyAt - receivedAt, 1)
-	return math.clamp((grown + rate * math.max(now - receivedAt, 0)) / crop.growSeconds, 0, 1), false, readyAt - now
+	return CropConfig.Progress(entry, crop, receivedAt, now, fieldState and fieldState.tools)
 end
 
 local function reachOf(square: number, level: number): { number }
@@ -559,6 +554,9 @@ local function renderCard()
 		local _, isRipe = progress(entry, crop, workspace:GetServerTimeNow())
 		ripe = isRipe
 		cardRipe = ripe
+		if not ripe then
+			paragraph("GrowthHint", 4, { TextSize = 13, Text = GardenUi.GrowthHint(fieldState) }).Parent = cropGroup
+		end
 		local boosts = boostLine()
 		if boosts and not ripe then
 			paragraph("Boosts", 3, { TextSize = 14, Text = boosts }).Parent = cropGroup
@@ -684,7 +682,8 @@ end
 -- picks the seed of the hand's Seeds mode.
 local function renderSeeds(square: number?)
 	header(if square then Locale.T("field.picker.title") else Locale.T("field.hand.pickSeed"), if square then back else closeCard)
-	local list = pickerList(2)
+	paragraph("GrowthHint", 2, { TextSize = 13, Text = GardenUi.GrowthHint(fieldState) }).Parent = body
+	local list = pickerList(3)
 	local rows = 0
 	for _, crop in CropConfig.Crops do
 		local stock = (fieldState.seeds or {})[crop.id] or 0

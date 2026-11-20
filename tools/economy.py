@@ -300,6 +300,7 @@ def apply_crop_config(P):
         "obby_seeds": obby_cfg(luau(f, "CropConfig.ObbySeeds")),  # E2a: [first Gold from world, seeds per first Gold, daily seeds, meter size, points by medal, first-of-day factor, E2b pouch seeds by medal]  # E1c4: [[count, discount] per bargain, [taste count, price, fromLevel]]
         "size": [luau(f, "CropConfig.SizeSigma"), luau(f, "CropConfig.SizeZCap"), luau(f, "CropConfig.SizeBigZ"), luau(f, "CropConfig.SizeGiantZ")],  # E1c2
         "rates": [luau(f, "CropConfig.OnlineRate"), luau(f, "CropConfig.OfflineRate"), luau(f, "CropConfig.OfflineCapSeconds") / 3600],  # hours
+        "work_rates": [luau(f, "CropConfig.WorkOnlineRate"), luau(f, "CropConfig.WorkOfflineRate")],
         # field pets (E1b): slot prices, slots from pens; PetConfig's aptitude numbers
         "pet_slots": luau(f, "CropConfig.PetSlotPrices"),
         "pets_from_pens": luau(f, "CropConfig.PetSlotsFromPens"),
@@ -341,6 +342,7 @@ def apply_crop_config(P):
     bargains, (t_count, t_price, t_from) = cfg["cart"]
     F["cart"] = {"bargains": [list(b) for b in bargains], "taste": {"count": t_count, "price": t_price, "from_level": t_from}}
     F["online_rate"], F["offline_rate"], F["offline_cap_h"] = cfg["rates"]
+    F["work_online_rate"], F["work_offline_rate"] = cfg["work_rates"]
     fg_world, fg_seeds, daily, size, pts, first_mult, pouch = cfg["obby_seeds"]
     # E2a: rare seeds as CropConfig.ObbySeeds gives them; the daily seed is of the best world reached (the player picks the stage); rare harvests
     # are sold in full until something else uses them (landmarks)
@@ -473,6 +475,7 @@ def pin_values(P):
         "crop_field_obby_seeds": P["crop_cfg"]["obby_seeds"],  # [first Gold from world, per first Gold, daily, meter size, points, first-of-day x, pouch by medal] (E2a, E2b)  # [[count, discount] per bargain, [taste count, price, from level]] (E1c4)
         "crop_field_size": P["crop_cfg"]["size"],  # [sigma, z cap, Big z, Giant z] of the size roll (E1c2)
         "crop_field_rates": P["crop_cfg"]["rates"],  # [online rate, offline rate, offline cap in hours]
+        "crop_field_work_rates": P["crop_cfg"]["work_rates"],  # field-job XP has its own clock (OG2)
         "field_pet_slots": P["crop_cfg"]["pet_slots"],  # CropConfig.PetSlotPrices
         "field_pets_from_pens": P["crop_cfg"]["pets_from_pens"],  # CropConfig.PetSlotsFromPens
         "field_pet_aptitudes": [P["crop_cfg"]["tending"], P["crop_cfg"]["apt_caps"], P["crop_cfg"]["apt_strength"], P["crop_cfg"]["apt_xp"]],  # PetConfig
@@ -682,7 +685,7 @@ FIELD = {
     "targets": {"parity_days": 3, "parity": 1.0, "parity_by": {"Garden main": 1.8}, "lead": {7: 3.0, 30: 10.0}, "lead_archetypes": ("Casual", "Garden main"), "obby_main": (14, 1.0)},
     "garden_share_max_obby": 0.5,  # the garden must not be a majority of Obby main's income
     # Online vs offline (user rule 2026-10-24): everything passive (crop growth, Gardener replanting) runs at `online_rate` while the player is
-    # in the experience and at `offline_rate` while away, for at most `offline_cap_h` hours after a session. Provisional: the user gave no number (open decision).
+    # in the experience and at `offline_rate` while away, for at most `offline_cap_h` hours after a session. OG2: 2 / 1, cap 24 h.
     "online_rate": None, "offline_rate": None, "offline_cap_h": None,  # (CropConfig.OnlineRate / OfflineRate / OfflineCapSeconds)
 }
 
@@ -811,6 +814,11 @@ def crow_overlap(a, b):
 def eff_time(gap, length, cloche=1.0):
     """Growth hours a passive process gets between two visits: full speed (x the Cloches) while online, offline_rate for the capped time away."""
     return min(length, gap) * FIELD["online_rate"] * cloche + min(max(gap - length, 0.0), FIELD["offline_cap_h"]) * FIELD["offline_rate"]
+
+
+def work_time(gap, length):
+    """Field-job training hours, independent of crop rates and crop upgrades."""
+    return min(length, gap) * FIELD["work_online_rate"] + min(max(gap - length, 0.0), FIELD["offline_cap_h"]) * FIELD["work_offline_rate"]
 
 
 _cover_cache = {}
@@ -1053,7 +1061,7 @@ class Player:
                           "sc": self.srng.random() < FIELD["obby"]["scout"]["chance"][r], "slv": 1, "sxp": 0.0})
 
     def tending_xp(self, hours):
-        """Placed Tending pets gain aptitude XP from field time (hours already weighted by the online / offline rate), up to their rarity's cap."""
+        """Placed Tending pets gain aptitude XP from work hours (separate from crop rates), up to their rarity's cap."""
         for p in self.pets:
             if p["where"] != "pen" or not p["g"]:
                 continue
@@ -1519,7 +1527,7 @@ class Player:
             self.cart_open(d)
             for idx, (start, _gap, _length) in enumerate(self.sched):
                 self.visit(d * 24.0 + start, idx, row)
-            self.tending_xp(sum(eff_time(gap, length) for _, gap, length in self.sched))  # the period's field time (online + capped offline)
+            self.tending_xp(sum(work_time(gap, length) for _, gap, length in self.sched))
             self.manage()
         if active:
             self.shop(d + 1, row)
@@ -1897,7 +1905,7 @@ def field_checks(P, days=60, seeds=6):
                     s30 >= FIELD["sink_share"][30] and s60 >= FIELD["sink_share"][60],
                     f"day 30 {s30:.0%}, day 60 {s60:.0%} (worst policy); without the reserved sinks {r30:.0%} / {r60:.0%}; "
                     f"reserved sinks bought {n(resv)}, needed for {FIELD['sink_share'][60]:.0%} by day 60: {n(max(m['res_need60'] for m in ms))}"))
-    need = 1 / FIELD["offline_rate"] if FIELD["offline_rate"] > 0 else math.inf
+    need = FIELD["online_rate"] / FIELD["offline_rate"] if FIELD["offline_rate"] > 0 else math.inf
     for arch in ARCHETYPES:
         nm = arch["name"]
         ms = [G[(nm, pol)] for pol in POLICIES]
@@ -2113,12 +2121,12 @@ def cmd_pets(P, days, seeds):
     FP["slots"], FP["tend_max"] = saved
     build_field(P, P["field"]["catalogue"], P["field"]["scale"])
     print(table(["Slots", "s at L10", "A worst", "A day 60 best", "B ok", "O min", "Covered d60", "Best apt d60", "Net/d (Obby)", "Net/d no pet"], rows))
-    print(f"   B ok = archetype x policy cells where pets pay strictly more; O min = lowest online / offline income per hour (rule: >= {1 / FIELD['offline_rate']:.2f}x).\n")
+    print(f"   B ok = archetype x policy cells where pets pay strictly more; O min = lowest online / offline income per hour (rule: >= {FIELD['online_rate'] / FIELD['offline_rate']:.2f}x).\n")
 
-    print("3. Aptitude pacing: days to reach a level with the pet on the field every day (weighted field hours: online + capped offline x offline_rate):")
+    print("3. Aptitude pacing: days to reach a level with the pet on the field every day (separate work rates, independent of crop speed):")
     rows = []
     for arch in ARCHETYPES:
-        per_day = sum(eff_time(gap, length) for _, gap, length in visit_schedule(arch)) / arch["period_days"]
+        per_day = sum(work_time(gap, length) for _, gap, length in visit_schedule(arch)) / arch["period_days"]
         cum, line = 0.0, [arch["name"], f"{per_day:.1f}"]
         for lvl in range(1, 10):
             cum += apt_xp_next(lvl)

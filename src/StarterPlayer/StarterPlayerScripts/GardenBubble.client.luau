@@ -100,7 +100,9 @@ local function textOf(now: number): string?
 		table.insert(parts, Locale.T("garden.bubble.ripe", { count = summary.ripe }))
 	end
 	if summary.nextAt then
-		table.insert(parts, Locale.T("garden.bubble.time", { time = TimeFormat.Clock(math.max(summary.nextAt - now, 1)) }))
+		local field = GardenView.OwnField()
+		local left = CropConfig.TimeLeft(summary.nextAt, now, field and field.tools)
+		table.insert(parts, Locale.T("garden.bubble.time", { time = TimeFormat.Clock(math.max(left, 1)) }))
 	end
 	if summary.eggs > 0 then
 		table.insert(parts, Locale.T("garden.bubble.egg"))

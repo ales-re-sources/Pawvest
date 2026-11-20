@@ -65,7 +65,7 @@ rules out. Rules (reviewed 2026-10-25), **checked for every drop before it ships
 | Decoration | Free placement **outside only**, per-tier limit, validated on the server; the cottage is fixed |
 | Field | One field of squares planted freely; **36 squares**, any square opened by choice at a price by the number open (2026-11-03, F2; built) |
 | Garden vs obby | **Farming first** (2026-11-02): the 24-hour rule of 2026-10-24 is only reported now; the targets are in ECONOMY.md |
-| Online vs offline | Offline income exists, online is higher: every passive gain runs at 1.0 online and **0.5 offline, capped at 24 h** per absence (2026-11-04). Never pure AFK (Roblox no longer pays for uptime) |
+| Online vs offline | Crop growth runs at **2 online / 1 offline, capped at 24 h** per absence (OG2, 2026-11-20). Displayed crop time is the away-time baseline and ticks faster while playing. Field-job XP keeps its separate 1 / 0.5 clock. Never pure AFK (Roblox no longer pays for uptime) |
 | Prices | E0 re-prices every sink; applied after the user's approval (E0b) |
 | Seed shop | *1.0 (2026-11-17):* crops open by **crop mastery** (EV3, replacing Renown), priced in **tiers of 2–3 crops** that earn alike per hour (EV3 revision), and the stall offers a **rotating subset** restocked every 1–3 h on a UTC schedule (ST, ROADMAP). As built: a fixed **catalogue** gated by Renown (and obby unlocks, §8.1) plus a daily **market cart** (same on every server, per-player counts; built); a weekly visitor later. Rare seeds are never sold |
 | Harvest rolls | Every harvest rolls a **size** (built). **Variants** are **earned**: fertilisers from rare crops and pet aptitudes / quirks give the chance, weather only adds a bonus (§5.3) |
@@ -360,7 +360,7 @@ Decided 2026-10-25 (GDD §9 follows it):
 
 | Motive | Product | Kind |
 |---|---|---|
-| Idle comfort | **Night shift**: offline rate and cap above the free 0.5 / 24 h (say 0.75 / 36 h; through E0); never changes online income | game pass |
+| Idle comfort | **Night shift**: offline rate and cap above the free 1 / 24 h; numbers need a new economy review after OG2 (2026-11-20); never changes online income | game pass |
 | Impatience | Instant grow (one square, price by remaining time, daily cap); finish an incubator | developer product |
 | Capacity | +1 field pet slot, +1 incubator, the next field squares before their Renown / Coin gate (never beyond the earnable maximum) | game pass / product |
 | Status | Pet dyes and outfits, decor packs, plot themes, fair-stand decorations, trails, a VIP tag | game pass / product |

@@ -709,10 +709,14 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   grey must not look like the white select outline): the squares it counts for under the field's rules, i.e. per square the strongest Tending
   pet and the strongest guard (ties to the lower uid). Regions that share an edge draw side by side (three lanes inset 0.45 / 0.8 / 1.15
   studs); strips meet at outer and inner corners.
-- **Crops.** Potato (5 min, so the first harvest comes in the first session), Corn, Pumpkin and Giant melon from the seed stall behind
+- **Crops.** Potato (10 s, so the first harvest comes in the first session), Corn, Pumpkin and Giant melon from the seed stall behind
   mastery unlocks; three rare crops, one per world (Golden carrot 50 000, Frost grape 150 000, Glow mushroom 300 000 Coins; priced for the days a world is reached, ECONOMY.md), only from the obby (below), never sold as seeds, never
-  eaten by crows. Growth runs on server time only: online x 1.0, offline x 0.5 for at most 24 h per absence, settled on join, on leave, every
-  60 s and before every action; ripe crops wait. The barn holds 40 seeds and 40 stored crops (+20 per Barn level). Seeds held can always be
+  eaten by crows. Growth runs on server time only: online ×2, offline ×1 for at most 24 h per absence (OG2, 2026-11-20), settled on join,
+  on leave, every 60 s and before every action; ripe crops wait. All listed durations and crop countdowns show away-time seconds,
+  shortened by Growth and crop Speed; the countdown ticks ×2 faster while playing, additionally multiplied by Cloches (×2.4 at the top).
+  The seed stall, Barn seeds, seed picker, growing-square card and crop page explain this. Card / rings / sign bubble share the countdown
+  rule; actual online `readyAt` still drives art, ripe badges and Harvest. Existing `Grown` stays; the next join credits its pending absence
+  at the new rate, without a profile migration. The barn holds 40 seeds and 40 stored crops (+20 per Barn level). Seeds held can always be
   planted; the stall sells only unlocked crops (`locked`).
 - **Selling and feeding.** A crop is sold from anywhere (playtest 2026-11-08: the Barn button shows outside runs while crops are held, the seed stall has a Sell tab; a young field gets a toast and a pulsing button) (sale x its size, through `CoinRewards.Grant`) or fed to any pet (from its page or the barn's Feed) for XP = half the
   sale, so feeding is never better than selling and buying food (the Kitchen, D5, stays the better route later).
@@ -767,7 +771,8 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   rerolled; a hatch while the owner has no Tending pet gets Tending. Food and obby XP also train the work traits up to level 5 (§7.4). A pet with Tending or Pest control can stand on a square (one per square, not equipped; 1 free field pet slot + 4 bought). Reach
   by the job's level: its square (1-3), plus its 4 neighbours (4-6), the 3 x 3 block (7-10); on overlaps the strongest pet of a job counts.
   **Tending** works only during absences: a crop that ripens in reach is harvested with the pet's strength (20 % at level 1 to 100 % at 10)
-  while the barn has room, then replanted from the seeds held (rolled once per planting). Placed pets gain aptitude XP per weighted field hour
+  while the barn has room, then replanted from the seeds held (rolled once per planting). Placed pets gain aptitude XP on a separate work
+  clock: online ×1, offline ×0.5 (24 h cap), unaffected by crop rates, Growth, crop Speed or Cloches. Aptitude XP per weighted work hour
   (level L -> L + 1 takes 10 x 1.56^(L-1) h). A profile from before the field converts once on join (`Garden.Converted`): the P2 pens become
   field pet slots (1 pen = 1, 2-3 = 2, 4-6 = 3; pen prices beyond the slots' value refunded), penned pets go back to the inventory.
 - **Obby seeds (E2, world stages only).** The first Gold on a World 2 or 3 stage gives 1 rare seed of that world; the day's first medal finish

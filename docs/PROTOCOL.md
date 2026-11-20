@@ -83,6 +83,10 @@ Player attribute `GardenPlot` = slot of the borrowed plot (`GardenConfig.PlotCFr
 CG2 supplies `field.plants` for every planted crop, keyed by the square number as a string. Each entry carries `n` (the existing
 planting number), `startAt` (effective start at the current online rate), `readyAt` (first whole server second when ripe), and
 `size` (CG4: deterministic harvested mass factor, including the current Seed sorter bonus). Private `field.squares` also supplies `size`.
+OG2 (2026-11-20): these anchors still describe the actual online harvest boundary. Visible crop countdowns convert `readyAt - now`
+to away-time seconds with `CropConfig.CountdownRate(field.tools)` (×2, up to ×2.4 with Cloches); readiness and art use the original
+anchors. Seed durations divide required growth by the offline rate with Growth / crop Speed included. No payload or profile field added.
+Field-job XP uses `WorkSeconds` (online ×1 / offline ×0.5, capped at 24 h), independently of crop growth and tools.
 This is the same calculation used at harvest; upgrading the Sorter updates both the preview and the eventual harvest factor.
 It adds no stored profile field. Older entries without `size` render at factor 1.
 The two times are zero once settled ripe. Clients clamp progress between the anchors using server time and derive appearance from

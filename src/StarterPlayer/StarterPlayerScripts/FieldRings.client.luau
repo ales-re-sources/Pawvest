@@ -3,7 +3,7 @@
 -- crop icon in the middle. Ripe = full green pie, a ✓ badge and a small bounce. The NEAREST growing squares closest to the
 -- character also print the time left under their ring. Own plot only, at most CropConfig.MaxSquares billboards.
 -- Data: GardenRemotes.State field.squares ({ crop, grown, readyAt }; readyAt = server time when ripe if the owner stays online)
--- and the server time (workspace:GetServerTimeNow()). The pie moves from `grown` at the State's arrival towards readyAt.
+-- and server time. The pie uses actual progress; the countdown shows away-time seconds, ticking faster online.
 -- A ring is built once per planted crop and only re-filled each second (no new instances while nothing is planted / harvested).
 -- Positions: GardenView.SquareCFrame. The billboards sit on Attachments of one invisible client part (Workspace.FieldRings),
 -- not AlwaysOnTop (screen captures show them); drawn TOWARD the camera from the square so its crop does not hide it. In Studio the part carries the attributes
@@ -377,17 +377,11 @@ local function update(now: number)
 			local crop = ring.crop
 			local offset = Vector3.new(0, PlantGrowth.RingHeight(crop.id, entry.size), TOWARD)
 			if ring.gui.StudsOffset ~= offset then ring.gui.StudsOffset = offset end
-			local grown = entry.grown or 0
-			local readyAt = entry.readyAt or 0
-			local ripe = grown >= crop.growSeconds or readyAt <= now
+			local share, ripe, left = CropConfig.Progress(entry, crop, receivedAt, now, field and field.tools)
 			setRipe(ring, ripe)
-			local share = 1
 			if not ripe then
-				-- growth since the State arrived, at the rate that reaches growSeconds at readyAt
-				local rate = (crop.growSeconds - grown) / math.max(readyAt - receivedAt, 1)
-				share = math.clamp((grown + rate * math.max(now - receivedAt, 0)) / crop.growSeconds, 0, 1)
 				if at then
-					table.insert(growing, { ring = ring, distance = (ring.position - at).Magnitude, left = readyAt - now })
+					table.insert(growing, { ring = ring, distance = (ring.position - at).Magnitude, left = left })
 				end
 			end
 			ring.right.Rotation = math.clamp(share, 0, 0.5) * 360

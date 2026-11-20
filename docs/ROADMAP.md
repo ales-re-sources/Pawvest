@@ -45,7 +45,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | EV3 | Crop mastery: crop levels replace Renown, milestone quests, crop upgrades, first-hour obby payouts (1.0) | ✔ (EV3a signed off; EV3b1, EV3b2, EV3c Studio-validated 2026-11-17) | – | – |
 | E1.0, E1a–E1d | Client-drawn plots; crop field (every player's since FA), field pets, crops as pet food, size roll, upgrades, tools, market cart, 36 squares | ✔ | ✔ | – |
 | E2, E4-thin | Obby seeds (rare crops, meters, pouch, Scouting); crows and Pest-control guards | ✔ | ✔ | – |
-| OG | Offline crop growth 0.5 / 24 h | ✔ | pending | – |
+| OG / OG2 | Crop timing: offline ×1, online ×2, 24 h cap; away-time countdown | ✔ | ✔ OG2 2026-11-20 | – |
 | FA | The field for everyone, pens removed | ✔ | ✔ | – |
 | U1–U5 | Garden / pet UI: pets panel rows, garden badge + bubble, field rings / square card / hand bar, panel split (Skills Garden tab, Barn, seed stall), plot layout + hatchery panel | ✔ | ✔ (physical touch and multi-client open) | – |
 | MU1 | Responsive HUD navigation and panels | ✔ | ✔ (phone emulation) | – |
@@ -65,6 +65,22 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading (after 1.0) | – | – | – |
 
 ## Next
+**OG2 — dependable crop timers (approved / Studio-validated 2026-11-20).** Catalogue times are the away-time baseline: offline ×1,
+online ×2, Cloches additionally multiply online speed; Growth / crop Speed shorten both modes. Keep the 24 h cap and saved `Grown`;
+the first join uses the new rate for its pending absence. Field-job XP stays at online ×1 / offline ×0.5. No profile migration.
+Acceptance: Sunflower ripe after 18 h away, Pineapple after 24 h (cap also checked at 48 h); mixed-mode growth and old saved progress;
+Tending / crows use the new growth clock, work XP the old clock; all seed durations, card / rings / bubble countdowns, art and ripe badge
+agree, with baseline seconds ticking at ×2 (×2.4 with top Cloches). Check English / Czech real UI, localization, economy before / after,
+one clean playtest boot; snapshot before any live-profile write and restore fixture data afterwards. Existing economy baseline:
+15/15 core, 16/18 EV (G2, G11 fail). Validation: `tools/crop_timing_checks.luau` passes 498 isolated Edit fixtures, including all
+Growth × Speed × Cloches combinations, mixed sessions, cap, saved progress, Tending cycles, crows / guards and separate XP clocks.
+Real UI: Barn, Seeds hand button / picker, Sunflower world click / card, seed-stall E prompt, real ★ to crop page; new Czech TextFits
+pass on all five screens, English crop page wraps and fits. Sunflower card / rings / bubble agree; Cloches 2 countdown loses 7 s in
+3.013 real s (expected ×2.28). Seed rows used a display-only State fixture; no live-profile fixture writes. Language, real State and
+camera restored; playtest stopped. Server has no warnings / errors; client only the MCP camera-reset warning. Localization: build,
+check (638 keys, 0 errors), lint (0 literals / baseline 0). Economy after: core 15/15, EV 10/18; failures and balance debt in ECONOMY.
+Scope / validation details shrink to a Done entry when finished.
+
 **1.0 (decided 2026-11-17, the user).** 1.0 = a long engagement loop + basic social competition; then the game goes public.
 - **Long loop:** crop mastery (EV3), a slowly rotating seed stall (ST), the request board and the ledger (E5).
 - **Social:** the Harvest Hall (weekly biggest crop of every kind) and likes on plots (SH).
@@ -72,12 +88,11 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 - **Not in 1.0:** obby time calibration (M6b; the obby stays as built), the comfort shop (D2: 1.0 ships without monetization),
   Sunshine (EV2c), World 4, hybrids (HX1 build).
 
-**Start here:** E5c (E5 scoped 2026-11-19, D1–D5 decided; E5a Studio-validated 2026-11-19, E5b 2026-11-20; section below). (FB + FB2 Studio-validated 2026-11-18, FB3 2026-11-19, the live filter check open; SH Studio-validated 2026-11-18, likes in a two-client test; ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: OG validation and the M6a friends test (step 0).
+**Start here:** E5c (E5 scoped 2026-11-19, D1–D5 decided; E5a Studio-validated 2026-11-19, E5b 2026-11-20; section below). (FB + FB2 Studio-validated 2026-11-18, FB3 2026-11-19, the live filter check open; SH Studio-validated 2026-11-18, likes in a two-client test; ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: the M6a friends test (step 0).
 *Update this line whenever a milestone finishes.*
 
 **Road to 1.0** (in order; one milestone at a time unless marked "alongside"):
-0. **Alongside, now.** **OG validation:** a 24 h-back `SettledAt` must give `Grown` = 43 200 for a pumpkin (ripe at 28 800); the same
-   test explains the user's pumpkin that still had 5 h 47 min left after 24 h away. **M6a soft launch** (friends, then unlisted) on the
+0. **Alongside, now.** **M6a soft launch** (friends, then unlisted) on the
    current build: real finish times, T1a / T1b on the Creator Dashboard, a first retention baseline and the live checks under "Open items"
    tagged [1.0]. Unlisted needs no TH.
 1. **EV3 — crop mastery** (section below; player-facing name "Mastery ★"): sign-off → EV3b (levels, unlocks, Renown out) → EV3c (crop

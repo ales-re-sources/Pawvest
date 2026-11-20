@@ -24,6 +24,17 @@ python tools/economy.py sim | report | pets | tools   # E0 tables of the built g
 Run `check` after changing any price, rate or reward in a config; `pin` only after the user has reviewed the values. To try an EV number,
 edit `CAND` in `economy_ev.py` (or pass overrides to a scratch probe that copies `CAND` and calls `build(c)`).
 
+## Crop timing update (OG2, 2026-11-20)
+
+Approved rates: online 2, offline 1, offline cap 24 h. Catalogue / visible durations are away-time seconds; Cloches multiply the
+online countdown. Field-job XP has separate pinned rates 1 / 0.5, independent of crop upgrades. Crop prices, rewards and gates stay.
+The next join applies the new rate to its pending absence and retains saved `Grown`; no profile migration.
+
+`economy.py check` before: core 15/15, EV 16/18 (G2, G11 fail). After: core 15/15 including reviewed pins, EV 10/18: G2, G3, G5, G8,
+G9, B2, C, G11 fail. Faster growth shortens the progression horizon and reduces sink coverage; paid offline 1 / 48 h is still a
+model-only proposal and now has the same rate as free play. Balance / comfort-shop redesign remains open; no targets relaxed or
+unrelated prices retuned. The older EV scores below describe their dated configurations, before OG2.
+
 ## EV — why and the pillars (the user, 2026-11-07)
 The E0 targets kept field income near obby income (parity). That produced a 5-minute Potato worth 4 Coins, then a 6 h jump to Corn, talents
 bought before World 2 ends without farming, and repeat runs paying tens of Coins next to a farm paying 100 k+. New direction: **engagement,
@@ -32,7 +43,7 @@ drops. Something is always growing, hatching or nearly affordable ("one more thi
 
 1. **A timer for every gap:** one ladder of grow / hatch times from 10 s to 24 h, each step ≤ ×3, so every session and absence has a crop.
 2. **Online is busy, offline is a hook:** something to collect every few minutes online; a long crop / egg ripens near the return (offline
-   rate 0.5, 24 h cap stay).
+   rate 1, online 2, 24 h cap since OG2, 2026-11-20; displayed times are the away-time baseline).
 3. **The next goal is close, never already bought:** time-to-afford stays in a band; the player never holds enough to buy everything.
 4. **Each new crop is worth unlocking:** net Coins per square-hour rises ×1.2 per step; the per-harvest number fits the prices of its time.
 5. **The obby is the expedition:** one-time medal / first-clear Coins stay as starter capital; repeat runs pay **Sunshine**, rare seeds and
@@ -382,5 +393,5 @@ of the game's instant first pet.
 | 5 B, 6 C, O | Tending beats no Tending; sinks ≥ 60 % / 78 % by day 30 / 60; online income per hour ≥ 2× offline |
 | 12, 13 | size roll mean 1 ± 0.005; crop XP ≤ sale × Berry's XP per Coin |
 
-Still-valid E0 decisions: online beats offline (2026-10-24; offline 0.5, 24 h cap since 2026-11-04); the field for everyone (FA, 2026-11-06);
+Still-valid E0 decisions: online beats offline (2026-10-24; offline 1 / online 2 since OG2, 2026-11-20, 24 h cap); the field for everyone (FA, 2026-11-06);
 P4 pet traits (Cuteness bonus, saturating at 1.49; pinned 2026-11-05); crows from Renown 3, rare crops safe (2026-11-04).

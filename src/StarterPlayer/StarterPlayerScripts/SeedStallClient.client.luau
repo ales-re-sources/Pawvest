@@ -150,6 +150,7 @@ end
 local function renderSeeds(field, tap: number)
 	GardenUi.Clear(seedsSection)
 	GardenUi.Heading(seedsSection, 1, Locale.T("field.section.seeds"), COLOR_PANEL)
+	GardenUi.Paragraph("GrowthHint", { LayoutOrder = 2, TextSize = 13, TextColor3 = GardenUi.COLOR_DIM, Text = GardenUi.GrowthHint(field) }).Parent = seedsSection
 	stallTimer = nil
 	local stall = field.stall
 	if stall then -- ST: the restock countdown

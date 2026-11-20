@@ -134,6 +134,7 @@ end
 
 local function renderSeeds(field)
 	GardenUi.Clear(seedsSection)
+	GardenUi.Paragraph("GrowthHint", { LayoutOrder = 1, TextSize = 13, TextColor3 = GardenUi.COLOR_DIM, Text = GardenUi.GrowthHint(field) }).Parent = seedsSection
 	local any = false
 	for index, crop in CropConfig.Crops do
 		local stock = field.seeds[crop.id] or 0

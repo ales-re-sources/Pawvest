@@ -123,6 +123,7 @@ local function renderHead(field, crop)
 		headSection
 	GardenUi.Paragraph("Hint", { LayoutOrder = 4, TextSize = 13, TextColor3 = GardenUi.COLOR_DIM, Text = Locale.T("field.cropPage.hint") }).Parent =
 		headSection
+	GardenUi.Paragraph("GrowthHint", { LayoutOrder = 5, TextSize = 13, TextColor3 = GardenUi.COLOR_DIM, Text = GardenUi.GrowthHint(field) }).Parent = headSection
 end
 
 local function renderLines(field, crop)

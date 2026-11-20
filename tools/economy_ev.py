@@ -295,6 +295,7 @@ def build(c=None):
     M["tool_effect"] = {t[0]: t[1] for t in cc["tools"]}
     M["barn"] = cc["barn_capacity"]
     M["rates"] = cc["rates"]  # online, offline, cap h
+    M["work_rates"] = cc["work_rates"]  # OG2: field-job XP is independent of crop speed
     share, chance, cap, block_h, _ = cc["crows"]  # the config's crow start is a crop (EV3b, `crows_from`); the Renown model keeps its level
     M["crows"] = [share, chance, cap, block_h, c["crop_gate"][M["by_id"][c["crows_from"]]["k"]]]  # share, chance, cap, block h, from level
     M["apt"] = {"cap": cc["apt_caps"], "str": cc["apt_strength"], "first": cc["apt_xp"][0], "ratio": cc["apt_xp"][1], "tending": cc["tending"]}
@@ -1604,7 +1605,7 @@ class Sim:
                 self.tend_extra += extra * crop["net"]
         if self.c["rest_per_day"] > 0 and b - a > DAY:  # rested mastery for the days away past the first
             self.rest = min(self.c["rest_cap"], self.rest + (b - a - DAY) / DAY * self.c["rest_per_day"])
-        hours = self.growth(a, b) / H
+        hours = self.growth(a, b, on=self.M["work_rates"][0], off=self.M["work_rates"][1]) / H
         for p in self.pets:
             if p["where"] == "field":
                 self.train(p, "T", hours)
