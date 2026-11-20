@@ -5,8 +5,9 @@
 -- Every pet part is anchored with CanCollide / CanTouch / CanQuery off (PetLook.Apply), so pets never push the owner, never
 -- fire touch parts (kill parts, coins, portals) and are ignored by raycasts and the camera.
 -- The pets of one player hang on one smoothed anchor behind the owner, so they keep their formation (never overlap, spacing
--- from the scaled widths: PetLook.Slots) while the anchor lags behind turns and jumps. Pets close to the camera fade out
--- (LocalTransparencyModifier, this client only) so a pet between the camera and its owner never blocks the view.
+-- from the scaled widths: PetLook.Slots) while the anchor lags behind turns and jumps. A pet the camera comes close to fades
+-- as a whole (LocalTransparencyModifier, this client only, FADE_ENTER / FADE_EXIT) so a pet between the camera and its owner
+-- never blocks the view.
 -- While the local player's stage timer runs (StageTimerUpdate), their pets drop further back and turn ghostly, so the
 -- course stays visible.
 -- A level-up (same uid, higher level than in the previous list) plays PetLook.LevelUp on that pet, for every viewer: the old
@@ -41,9 +42,10 @@ local LOD_HYSTERESIS = 5 -- studs: a far pet's effects come back this much insid
 local FX_FADE_LIMIT = 0.5 -- emitters and lights are off while the pet is at least this transparent (close camera, run mode)
 local LABEL_MAX_DISTANCE = 80
 local MAX_PETS = 3
-local FADE_FAR = 7 -- studs from the camera to the pet's surface where fading starts
-local FADE_NEAR = 2 -- ... and where it is complete
-local FADE_MAX = 0.85 -- LocalTransparencyModifier of a fully faded pet
+local FADE_ENTER = 5 -- studs from the camera to the pet's surface below which the pet is faded (all of it, not by distance)
+local FADE_EXIT = 6 -- ... and above which it is solid again (the margin keeps the bob from toggling it)
+local FADE_MAX = 0.8 -- LocalTransparencyModifier of a faded pet
+local FADE_SPEED = 6 -- how fast the pet switches between solid and faded (transparency per second)
 local RUN_BACK = 4 -- extra studs behind the owner while their stage timer runs
 local RUN_FADE = 0.6 -- minimum LocalTransparencyModifier of the owner's pets while their stage timer runs
 local RUN_BLEND_SPEED = 4 -- how fast the run mode fades in / out (1/s)
@@ -121,6 +123,8 @@ local function makePet(entry, name: string?): any?
 		bobHeight = bobHeight,
 		bobSpeed = bobSpeed,
 		fade = 0,
+		camFade = 0, -- the camera part of the fade, tweened between 0 and FADE_MAX
+		camFaded = false, -- the camera is close (FADE_ENTER / FADE_EXIT)
 		phase = math.random() * math.pi * 2,
 	}
 end
@@ -350,15 +354,20 @@ RunService.Heartbeat:Connect(function(dt)
 			end
 			pet.model:PivotTo(cframe)
 
-			-- camera fade: the closer the camera is to the pet's surface, the more transparent (client only)
-			local fade, far = 0, false
+			-- camera fade (client only): the whole pet is either solid or faded, never half of it; the camera has to come
+			-- FADE_ENTER close to fade it and go FADE_EXIT away to bring it back, and the switch is a short tween
+			local far = false
+			local camFaded = false
 			if cameraPosition then
 				local centerDistance = (cameraPosition - cframe:PointToWorldSpace(pet.metrics.center)).Magnitude
-				fade = FADE_MAX * math.clamp((FADE_FAR - (centerDistance - pet.metrics.size.X / 2)) / (FADE_FAR - FADE_NEAR), 0, 1)
+				camFaded = centerDistance - pet.metrics.size.X / 2 < (if pet.camFaded then FADE_EXIT else FADE_ENTER)
 				-- distance LOD with a little hysteresis so a pet at the border does not flicker
 				far = centerDistance > PetLook.LodDistance - (if pet.far then LOD_HYSTERESIS else 0)
 			end
-			fade = math.max(fade, RUN_FADE * blend, momentFade)
+			pet.camFaded = camFaded
+			local camTarget = if camFaded then FADE_MAX else 0
+			pet.camFade += math.clamp(camTarget - pet.camFade, -FADE_SPEED * dt, FADE_SPEED * dt)
+			local fade = math.max(pet.camFade, RUN_FADE * blend, momentFade)
 			pet.far = far
 			if pet.fx then
 				PetLook.UpdateFx(pet.fx, now, far, fade >= FX_FADE_LIMIT)

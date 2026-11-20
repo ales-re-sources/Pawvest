@@ -26,8 +26,9 @@ garden pets and the pet page always match. A pet without a uid (old `Kind:Level`
   is taken, so spacing, label and halo include them.
 - **Level-up moment:** `PetFollow` sees the same uid at a higher level (a rise of its best trait) → `PetLook.LevelUp` (spin, flash, sparks, ring, "Level N!"), for every
   viewer in range; sound from the Studio-only `ReplicatedStorage.PetLevelUpSound` if present.
-- **Formation and camera:** slot spacing from the largest scaled width; pet parts closer than ~7 studs to the camera fade
-  (`LocalTransparencyModifier`); during a run the pets drop back and turn ghostly.
+- **Formation and camera:** slot spacing from the largest scaled width; a pet whose surface the camera comes within 5 studs of fades
+  as a whole (`LocalTransparencyModifier` 0.8, back to solid beyond 6 studs, short tween: `FADE_ENTER` / `FADE_EXIT` in PetFollow, never a
+  distance gradient, so the bob cannot toggle it and no half of a pet looks faded); during a run the pets drop back and turn ghostly.
 - All created parts: Anchored, CanCollide / CanTouch / CanQuery off, Massless.
 
 ## Authoring a pet model (Studio-only, `ReplicatedStorage.PetModels`)
