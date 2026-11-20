@@ -25,6 +25,7 @@ local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
 local PanelFocus = require(ReplicatedStorage:WaitForChild("PanelFocus"))
 local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
+local Onboarding = require(script.Parent:WaitForChild("Onboarding"))
 local GardenView = require(script.Parent:WaitForChild("GardenView"))
 local GardenUi = require(script.Parent:WaitForChild("GardenUi"))
 
@@ -86,6 +87,7 @@ local function newPlate(name: string)
 	bar.Size = UDim2.new(1, -24, 0, 10)
 	local pulse = UiKit.Pulse(text, 1.12, 0.5) -- on the text: the plate has its own UIScale
 	local timer = UiKit.Latest()
+	local holding = false
 	return {
 		plate = plate,
 		scale = scale,
@@ -95,8 +97,15 @@ local function newPlate(name: string)
 		pulse = function()
 			pulse(true)
 			timer.After(PULSE_SECONDS, function()
-				pulse(false)
+				pulse(holding)
 			end)
+		end,
+		hold = function(on: boolean) -- E5c: a pulse that stays on while `on`
+			if on ~= holding then
+				holding = on
+				timer.Cancel()
+				pulse(on)
+			end
 		end,
 	}
 end
@@ -126,6 +135,8 @@ local function nearestRequest(field)
 	return best
 end
 
+local isOpen = false -- the Goals panel (below)
+
 local function renderLine()
 	local field = GardenView.OwnField()
 	local onStage = player:GetAttribute("HudStage") ~= nil
@@ -144,6 +155,7 @@ local function renderLine()
 		end
 	end
 	goalPlate.shown = if goal then goal.crop.id else nil
+	goalPlate.hold(line.Visible and not isOpen and Onboarding.Is("quests")) -- E5c step 7: open the Goals panel
 	local request = nearestRequest(field)
 	requestPlate.plate.Visible = request ~= nil and not onStage
 	if request then
@@ -168,7 +180,6 @@ local requestsSection = GardenUi.Section("Requests", 2) -- E5a
 requestsSection.Parent = ui.content
 local upgradesSection = GardenUi.Section("Upgrades", 3)
 upgradesSection.Parent = ui.content
-local isOpen = false
 local countdowns = {} -- [TextLabel] = true: done rows' "New request in 5:12:00" (ticked while the panel is open)
 local requestsEndAt = 0
 
@@ -319,11 +330,14 @@ local function closePanel()
 	PanelFocus.Closed("Goals")
 	isOpen = false
 	ui.panel.Visible = false
+	renderLine()
 end
 
 local function openPanel()
 	PanelFocus.Open("Goals", closePanel) -- walking away closes it, as the HUD panels do
 	isOpen = true
+	Onboarding.Seen("quests") -- E5c step 7
+	renderLine()
 	ui.Fit()
 	ui.panel.Visible = true
 	renderPanel()
@@ -358,6 +372,7 @@ remotes:WaitForChild("State").OnClientEvent:Connect(function()
 end)
 Locale.Changed:Connect(renderAll)
 player:GetAttributeChangedSignal("HudStage"):Connect(renderLine)
+Onboarding.Changed:Connect(renderLine) -- E5c
 camera:GetPropertyChangedSignal("ViewportSize"):Connect(layoutLine)
 ui.OnResize(renderPanel)
 

@@ -127,6 +127,7 @@ return {
 	["hints.ready"] = "[!! Řěáďý! ~~ !!]",
 	["hints.eggReady"] = "[!! Ýöůř ěgg íš řěáďý! Háťčh íť íň ýöůř gářďěň. ~~~~~~~~~~~~~~~~~ !!]",
 	["hints.sellCrops"] = "[!! Šěll ýöůř hářvěšť íň ťhě 🧺 Bářň! ~~~~~~~~~~~~~ !!]",
+	["hints.buySeeds"] = "[!! Bůý šěěďš ~~~~ !!]",
 	["hints.raiseMedal"] = "[!! {stage}: {medal} ~~ !!]",
 	["common.loading"] = "[!! Löáďíňg... ~~~~ !!]",
 	["common.reject.coins"] = "[!! Ňöť ěňöůgh Čöíňš ~~~~~~ !!]",

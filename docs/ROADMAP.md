@@ -58,7 +58,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | FB | Player feedback: stage rating, feedback box (1.0) | ✔ | ✔ 2026-11-18 | filter check open |
 | FB2 | Stage rating on a signboard in each stage's courtyard instead of the popup (1.0) | ✔ | ✔ 2026-11-18 | – |
 | FB3 | The popup's 👍 / 👎 row back, alongside the signs (1.0) | ✔ | ✔ 2026-11-19 | – |
-| E5 | Garden MVP rest: request board, ledger on join, onboarding, garden telemetry (1.0) | E5a, E5b ✔ | E5a ✔ 2026-11-19, E5b ✔ 2026-11-20 | – |
+| E5 | Garden MVP rest: request board, ledger on join, onboarding, garden telemetry (1.0) | ✔ | E5a ✔ 2026-11-19, E5b + E5c ✔ 2026-11-20 | – |
 | M6a | Soft launch + World 1 balancing (balanced by feel 2026-10-30; live test open) | – | – | – |
 | MU | Mobile UX check | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
@@ -72,7 +72,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 - **Not in 1.0:** obby time calibration (M6b; the obby stays as built), the comfort shop (D2: 1.0 ships without monetization),
   Sunshine (EV2c), World 4, hybrids (HX1 build).
 
-**Start here:** E5c (E5 scoped 2026-11-19, D1–D5 decided; E5a Studio-validated 2026-11-19, E5b 2026-11-20; section below). (FB + FB2 Studio-validated 2026-11-18, FB3 2026-11-19, the live filter check open; SH Studio-validated 2026-11-18, likes in a two-client test; ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: the M6a friends test (step 0).
+**Start here:** release gates (Road to 1.0 step 6), MU first (E5 done 2026-11-20: E5a Studio-validated 2026-11-19, E5b + E5c 2026-11-20). (FB + FB2 Studio-validated 2026-11-18, FB3 2026-11-19, the live filter check open; SH Studio-validated 2026-11-18, likes in a two-client test; ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: the M6a friends test (step 0).
 *Update this line whenever a milestone finishes.*
 
 **Road to 1.0** (in order; one milestone at a time unless marked "alongside"):
@@ -350,13 +350,17 @@ once and the ledger waits ≤ 10 s for it. 5: `loc.py` 0 errors / lint 0; no err
 pointing, never by text boxes or locked controls (D5); a player can do anything off the path and the step still counts when done.
 - **Step 0 (design check):** a fresh-profile playtest (fixture: empty profile under a test key, never a real account's) recording
   where a new player lands and what they see in the first ten minutes; the step list below is adjusted to it before coding.
-- **Steps (proposal):** 1 go to the garden (Home dot + marker) → 2 plant the 4 start Potatoes (`CropConfig.StartSeeds`; U3b Seeds
-  pulse) → 3 harvest (Basket pulse) → 4 sell (Barn dot) → 5 buy seeds (stall marker) → 6 put the first pet on the field (Pets dot,
-  field slot marker) → 7 open Quests (line pulse) → 8 run a stage (the next-stage marker, already built) → done. The mastery ★, the stall rotation and the Hall are shown by a one-time
+- **Step 0 result (2026-11-20, fresh profile under the Studio test key):** every join already starts at the own plot (RespawnService),
+  the starter egg is ready on arrival (Hatchery badge + "Ready!" marker), the Seeds button pulses, Potatoes ripen in 10 s, the first
+  hatch is a Tending pet (PetConfig decision 3). So "go to the garden" is dropped and hatching comes first (the user, 2026-11-20).
+- **Steps:** 1 hatch the starter egg (Hatchery pulse) → 2 plant the 4 start Potatoes (`CropConfig.StartSeeds`; U3b Seeds pulse) →
+  3 harvest (Basket pulse) → 4 sell (Barn pulse) → 5 buy seeds (stall marker) → 6 put the first pet on the field (Pets pulse) →
+  7 open Quests (line pulse) → 8 finish a stage (the next-stage marker, already built) → done. The mastery ★, the stall rotation and the Hall are shown by a one-time
   marker the first time each becomes relevant (first level, first restock toast, first visit of the hub plaza with a Big crop), not
   as steps.
 - **Profile:** `Onboard` = the finished steps as a bit mask (steps done off the path are kept; the hint shows the lowest unfinished
-  step; all 8 bits = done); missing on an existing profile with any `Garden.Crops` entry = done on load, else 0. Mirrored as the player
+  step; all 8 bits = done); missing on an existing profile with any `Garden.Crops` or `Garden.BestSize` entry = done on load (AhojRupert's
+  pre-EV3b profile has size records but no `Crops`), else 0. Mirrored as the player
   attribute `Onboard`.
 - **Telemetry:** funnel `GardenStart` (2nd of 10), `funnelSessionId` = `"u" .. UserId`, steps 1-8 = the `Onboard` steps (logged
   in step order: a step done early is logged when the ones before it are), 9 `request` (first finished request), 10 `return` (first
@@ -372,6 +376,17 @@ pointing, never by text boxes or locked controls (D5); a player can do anything 
 5. `loc.py` checks, a playtest boot, no new errors; the test profile key removed afterwards.
 
 *Studio-only changes:* none planned (every GUI built in code); the step 0 check may add one.
+
+*E5c validation (2026-11-20, a fresh profile under the Studio test key `test_e5c_1` (ServerStorage attribute `TestProfileKey`, new
+in PlayerProfile: no live record touched, the star board and Top-10s skip it); Telemetry debug log).* 1 + 2: through the real UI: hatch
+(Hatchery pulse) → `Onboard` 1; 4 Potatoes planted → 3; harvest → 7; the pet placed early → 39; sell → 47 (the stall marker showed);
+buy seeds → 63, the hint went straight past the done pet step to the Goals line pulse; panel opened → 127; Tutorial finish → 255, no
+pulse left. Funnel 1-8 logged once each, `placePet` (6) right after `buySeeds` (5). 4: a rejoin at 63 resumed at the Goals step.
+`return`: `OnboardDay` − 1 → 767 (bit set, logged only after `request`). 3: Lekzdrh loads as 1023 (snapshot
+`profile_9892673032_E5c_1`); AhojRupert's record (no `Garden.Crops`, 4 `BestSize` entries, read-only) is done by the widened rule.
+Found and fixed: a test-profile finish wrote Lekzdrh's global Top-10 (restored to 15.1 s; boards now skip test profiles). 5: `loc.py`
+0 errors / lint 0; no errors or warnings. Not built: the one-time markers for the mastery ★, the stall rotation and the Hall (moved to
+Open items). Funnel step 9 `request`: code review only (`GardenRequests.finish`). Test keys and attributes removed.
 
 ### HX1 — Hybrid plants: the breeding mechanic (design only; added 2026-11-16; the build comes after 1.0)
 Settle the game mechanic before any game code. Notes, decisions and open points: [HYBRIDS.md](HYBRIDS.md); the HX0 prototype: "Done".
@@ -437,6 +452,9 @@ Tagged **[1.0]** (needed before 1.0 goes public) or **[later]**.
 - **[1.0] Not built:** the own shelf of record crops in their grown art (moved out of SH 2026-11-18: phone performance; revisit after MU).
 - **[later] Not built:** the pet page's "hatched on … from a Basic egg" line (`Born` / `Egg`); "Show on field" on the pet page (U3b); a
   "barn full" cue in the world.
+- **[1.0] E5 leftovers:** not built: E5c's one-time markers for the mastery ★, the stall rotation and the Hall; checked in code only
+  (check in M6a): the `request` funnel step (E5c), the ledger waiting for a run to end and its ribbons line (E5b), a Tending pet's
+  join-settle harvests counting for a request (E5a).
 - **[1.0] Housekeeping (Studio):** delete `ReplicatedStorage.StageTimerStopped` (unused).
 
 ## Done

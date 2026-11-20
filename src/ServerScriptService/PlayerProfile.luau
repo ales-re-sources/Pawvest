@@ -20,12 +20,15 @@ local SHUTDOWN_TIMEOUT = 25
 local MIN_WRITE_GAP = 7 -- seconds between loop writes of one key; the limit is 6 s, closer writes sit in the request queue
 
 local profileStore = DataStoreService:GetDataStore("PlayerProfiles")
+local studio = game:GetService("RunService"):IsStudio()
+local ServerStorage = game:GetService("ServerStorage")
 local legacyCoinStore = DataStoreService:GetDataStore("PlayerCoins")
 local legacyScoreStore = DataStoreService:GetDataStore("PlayerScoresStore")
 
 local profiles = {} -- [Player] = profile
 local saveBlocked = {} -- [Player] = true when the load failed
 local fresh = {} -- [Player] = true when neither a stored record nor legacy data existed (a new player)
+local testKeys = {} -- [Player] = the Studio test key the profile was loaded under (testKey), kept for its saves
 local left = {} -- [Player] = true once the OnLeaving callbacks ran
 local leavingCallbacks = {}
 local activeSaves = 0
@@ -129,8 +132,16 @@ end
 
 local withRetries = DataStoreUtil.WithRetries
 
-local function profileKey(userId)
-	return "user_" .. userId
+-- Studio only: the ServerStorage attribute TestProfileKey (a string, e.g. "test_e5c") loads and saves the profiles of the players who
+-- join while it is set under that key instead of user_<UserId>; a missing record starts as a new player's (no legacy import).
+-- Fresh-profile playtests (E5c) without touching a real account's record. Ignored outside Studio.
+local function testKey(): string?
+	local key = if studio then ServerStorage:GetAttribute("TestProfileKey") else nil
+	return if type(key) == "string" and key ~= "" then key else nil
+end
+
+local function profileKey(player: Player): string
+	return testKeys[player] or "user_" .. player.UserId
 end
 
 -- Returns a profile built from the pre-M0 stores, or nil + error if either read fails.
@@ -174,7 +185,7 @@ local function write(player)
 	lastWrite[player] = os.clock()
 	activeSaves += 1
 	local ok, err = withRetries(function()
-		profileStore:SetAsync(profileKey(player.UserId), profile, { player.UserId })
+		profileStore:SetAsync(profileKey(player), profile, { player.UserId })
 	end)
 	activeSaves -= 1
 	if not ok then
@@ -192,12 +203,19 @@ local function save(player)
 end
 
 local function load(player)
+	testKeys[player] = testKey()
+	if testKeys[player] then
+		warn("PlayerProfile: Studio test profile " .. testKeys[player] .. " for " .. player.Name) -- loc: ignore (log message)
+	end
 	local ok, data = withRetries(function()
-		return profileStore:GetAsync(profileKey(player.UserId))
+		return profileStore:GetAsync(profileKey(player))
 	end)
 
 	local profile, migrated = nil, false
-	if ok and data == nil then
+	if ok and data == nil and testKeys[player] then
+		profile, migrated = newProfile(), true -- a Studio test key: a new player, no legacy import
+		fresh[player] = true
+	elseif ok and data == nil then
 		profile, data = migrateLegacy(player.UserId)
 		ok = profile ~= nil
 		migrated = ok
@@ -220,6 +238,11 @@ local function load(player)
 	if migrated then
 		write(player)
 	end
+end
+
+-- True while the player plays on a Studio test profile (TestProfileKey): global boards keyed by UserId leave them out.
+function PlayerProfile.IsTest(player: Player): boolean
+	return testKeys[player] ~= nil
 end
 
 -- True for a player who had neither a stored profile nor legacy data when they joined (telemetry Session).
@@ -339,6 +362,7 @@ Players.PlayerRemoving:Connect(function(player)
 	lastWrite[player] = nil
 	closing[player] = nil
 	fresh[player] = nil
+	testKeys[player] = nil
 	left[player] = nil
 end)
 

@@ -145,8 +145,8 @@ local function newBoard(storeName: string, starsOf)
 		repeat
 			dirty[userId] = nil
 			local profile = PlayerProfile.Get(player)
-			if not (profile and PlayerProfile.CanSave(player)) then
-				break -- a failed load plays on a default profile: never let it overwrite the real entry
+			if not (profile and PlayerProfile.CanSave(player)) or PlayerProfile.IsTest(player) then
+				break -- a failed load plays on a default profile, a Studio test profile is not the account's: never overwrite the real entry
 			end
 			local stars = starsOf(profile)
 			if written[userId] ~= stars then

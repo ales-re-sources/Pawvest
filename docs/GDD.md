@@ -874,6 +874,15 @@ without reading anything. One client-side system (milestone G1) draws every such
 language. Hints are local to the player and display only: they read state the client already has (attributes, leaderstats,
 incubator models) and never ask the server for anything.
 
+**Onboarding (E5c, 2026-11-20; D5).** A new player is walked through the first ten minutes by the same signals, never by text
+boxes or locked controls: 1 hatch the starter egg (the Hatchery button pulses) → 2 plant the 4 start Potatoes (Seeds pulses) →
+3 harvest (Basket) → 4 sell (Barn button) → 5 buy seeds (an orange marker "Buy seeds" over the seed stall) → 6 put the pet on the
+field (Pets) → 7 open the Goals panel (its line pulses) → 8 finish a stage (the next-stage marker). The server keeps the finished steps
+(`Onboard`, a bit mask; `OnboardConfig`) from the actions themselves; the hint is always the lowest unfinished step, a step done off
+the path is kept and skipped. Every join already starts at the own plot, so there is no "go to the garden" step. Players who had
+harvested before E5c start as done. The `GardenStart` funnel (TELEMETRY) logs the steps plus the first finished request and the first
+return on a later day.
+
 **Three kinds of signal, each with one job:**
 
 | Signal | Answers | Look |

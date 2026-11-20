@@ -127,6 +127,7 @@ return {
 	["hints.ready"] = "Hotovo!",
 	["hints.eggReady"] = "Tvoje vejce je připravené! Vylíhni si ho na své zahradě.",
 	["hints.sellCrops"] = "Úrodu prodáš ve 🧺 stodole!",
+	["hints.buySeeds"] = "Kup semínka",
 	["hints.raiseMedal"] = "{stage}: {medal}",
 	["common.loading"] = "Načítám…",
 	["common.reject.coins"] = "Nemáš dost mincí",

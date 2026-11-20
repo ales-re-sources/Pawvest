@@ -390,6 +390,12 @@ end
 
 -- GardenRequests (E5a): request slot `slot` (1-3) for crop `cropId` finished `minutes` after it was filled (capped at a day); it paid
 -- `coins`, leaving `balance` (an economy source event, transaction type Gameplay, SKU "request")
+-- E5c: step `step` of the GardenStart funnel (OnboardConfig.Funnel; OnboardService logs them in order, once each). One funnel
+-- session per player ("u" .. UserId): the funnel spans sessions.
+function Telemetry.GardenStep(player: Player, step: number, name: string)
+	send("LogFunnelStepEvent", player, "GardenStart", "u" .. player.UserId, step, name)
+end
+
 function Telemetry.RequestDone(player: Player, cropId: string, slot: number, minutes: number, coins: number, balance: number)
 	send(
 		"LogEconomyEvent",

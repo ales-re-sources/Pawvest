@@ -32,6 +32,7 @@ local HatchReveal = require(script.Parent:WaitForChild("HatchReveal"))
 local GardenView = require(script.Parent:WaitForChild("GardenView"))
 local GardenUi = require(script.Parent:WaitForChild("GardenUi"))
 local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
+local Onboarding = require(script.Parent:WaitForChild("Onboarding"))
 
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
 -- looked up by name (never `remotes.X`: a name like Remove would resolve to an Instance method)
@@ -537,6 +538,7 @@ local function updatePodHover()
 		if hover then hover.Enabled = hit ~= nil and hit.Instance:IsDescendantOf(piece) end
 	end
 end
+local setOpenPulse = GardenUi.Pulse(openButton)
 local elapsed = 0
 RunService.Heartbeat:Connect(function(dt)
 	updatePodHover()
@@ -556,6 +558,7 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 	readyBadge.Text = Locale.Number(ready)
 	readyBadge.Visible = ready > 0
+	setOpenPulse(Onboarding.Is("hatch") and openButton.Visible) -- E5c step 1: the starter egg
 	if not isOpen then return end
 	for _, entry in countdowns do
 		local remaining = entry.readyAt - now

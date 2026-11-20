@@ -127,6 +127,7 @@ return {
 	["hints.ready"] = "Ready!",
 	["hints.eggReady"] = "Your egg is ready! Hatch it in your garden.",
 	["hints.sellCrops"] = "Sell your harvest in the 🧺 Barn!",
+	["hints.buySeeds"] = "Buy seeds",
 	["hints.raiseMedal"] = "{stage}: {medal}",
 	["common.loading"] = "Loading...",
 	["common.reject.coins"] = "Not enough Coins",

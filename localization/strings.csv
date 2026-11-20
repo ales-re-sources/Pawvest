@@ -153,6 +153,7 @@ hud.arrival.continue,Popup button: closes it,Continue,Pokračovat,ok,hae7250da
 hints.ready,Label under the orange bobbing arrow marker above an incubator whose egg can hatch now (the player's own garden); one short word,Ready!,Hotovo!,ok,h92676a43
 hints.eggReady,"Toast at the bottom of the screen, shown once when an egg in the player's incubator becomes ready to hatch (wherever the player is)",Your egg is ready! Hatch it in your garden.,Tvoje vejce je připravené! Vylíhni si ho na své zahradě.,ok,hda8587b9
 hints.sellCrops,"Toast at the bottom of the screen, once at the first harvest of a session on a young field: harvested crops are sold for Coins in the Barn (the 🧺 Barn button on the screen)",Sell your harvest in the 🧺 Barn!,Úrodu prodáš ve 🧺 stodole!,new,h73b83d16
+hints.buySeeds,"Label under the orange bobbing arrow marker over the seed stall on the garden plaza, while a new player's next onboarding step is buying seeds (E5c); two or three short words",Buy seeds,Kup semínka,new,h7a9eff42
 hints.raiseMedal,"Label under the orange arrow marker above a stage gate when the next world is shut by its star requirement and every open stage already has a medal: the player should replay {stage} (stage name, e.g. ""Stage 2"") for a better medal; {medal} = the medal tier to reach (Bronze / Silver / Gold, nominative as in medal.name.*). Keep it short (shown on screen over the 3D view)",{stage}: {medal},{stage}: {medal},ok,h195788f1
 # Shared (L2),,,,,
 common.loading,A panel whose data has not arrived yet,Loading...,Načítám…,ok,h75bf472a

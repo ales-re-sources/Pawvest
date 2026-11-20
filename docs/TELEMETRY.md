@@ -88,6 +88,7 @@ run). Times and counts never go into custom fields (cardinality); they are event
 | `PlotLike` (SH) | `LogCustomEvent`, value = the liked owner's likes after it | — (sent for the liker) |
 | `StageRating` (FB2) | `LogCustomEvent`, value = 1 (👍) or -1 (👎) | CF01 stage key, CF02 progress (`Telemetry.StageProgress`): `gold` / `silver` / `bronze` (best medal), `finished` (a best time, no medal), `cp<k>` (furthest checkpoint this session; `cp0` = a run started, none reached), `none` (no finish, no run this session) — filter out `none` to drop players who never tried; CF03 `new` / `change` — a prompt at the stage's rating sign that changed the stored rating (the same value again sends nothing); the running totals per stage are the `StageRatings` DataStore (PROTOCOL) |
 | `RequestDone` (E5a) | `LogCustomEvent`, value = minutes from the slot's fill to done (capped 1 440), plus a `LogEconomyEvent` source (Coins, transaction type `Gameplay`, SKU `request`, amount = the bonus paid) | CF01 crop id · CF02 slot (`1`-`3`) |
+| `GardenStart` funnel (E5c) | `LogFunnelStepEvent(player, "GardenStart", "u" .. UserId, step, stepName)` — the 2nd of the 10 funnels; one funnel session per player, spanning sessions | steps 1-8 the onboarding path (`hatch`, `plant`, `harvest`, `sell`, `buySeeds`, `placePet`, `quests`, `stage`), 9 `request` (first finished request), 10 `return` (first join on a later UTC day); each once, in step order (a step done early is logged when the ones before it are, `OnboardService`); profiles that started as done (existing players) log nothing |
 | `Feedback` (FB) | `LogCustomEvent`, value = 1 | CF01 category (bug / idea / other), CF02 area (`Telemetry.AreaOf`) — a message stored in `PlayerFeedback`; the text never goes to telemetry |
 
 Read: time to each unlock = `CropUnlock` per CF01 against `Session` `new`; where the first hour stalls = the share of players reaching
@@ -96,6 +97,7 @@ order n; which lines players pick = `CropPoint` by CF02, how far they stack one 
 ## Reading the questions on the dashboard
 | Question | Where |
 |---|---|
+| Where does a new player's first garden hour stop? | Funnels → `GardenStart`: drop-off between steps (E5c) |
 | Where are runs abandoned? | Funnels → `StageRun`, broken down by CF01 (stage): drop-off between steps |
 | Hardest segment of a stage | Custom events → `Fail`, filter CF01 = stage, break down by CF02 |
 | Deadliest obstacle | `Fail`, filter CF01 / CF02, break down by CF03 |

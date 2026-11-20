@@ -208,6 +208,9 @@ No automated tests. Validate by risk; scope acceptance checks to the tier a chan
 - `require` in the **Edit** context caches a ModuleScript across calls (may return the old version after a disk change): check `.Source`, or
   test in a playtest.
 
+- **Fresh-profile tests:** set the ServerStorage attribute `TestProfileKey` (a string) before the playtest: joining players load / save
+  under that key (a new player when missing; boards skip them). Clear the attribute and remove the key's record afterwards.
+
 **Live DataStore snapshot / restore:**
 - Right before **every** fixture write, copy the profile as it is now (`PlayerProfiles` `user_<id>`, plus its `MostStars` value) into
   `TestSnapshots` under a new key (`profile_<id>_<milestone>_<n>`); never restore an older snapshot (the user plays between tests). Restore

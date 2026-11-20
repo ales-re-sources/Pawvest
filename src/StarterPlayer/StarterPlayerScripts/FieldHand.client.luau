@@ -51,6 +51,7 @@ local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
 local UiSounds = require(ReplicatedStorage:WaitForChild("UiSounds"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
+local Onboarding = require(script.Parent:WaitForChild("Onboarding"))
 local GardenView = require(script.Parent:WaitForChild("GardenView"))
 local PlotView = require(script.Parent:WaitForChild("PlotView"))
 local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
@@ -1081,9 +1082,12 @@ local function updatePulse()
 			seeds = seeds or count > 0
 		end
 	end
-	setPulse("seeds", not used.seeds and mode ~= "seeds" and not planted and seeds)
-	setPulse("basket", not used.basket and mode ~= "basket" and ripe)
+	-- E5c: the onboarding steps planting, harvesting and placing the first pet pulse their button until done
+	setPulse("seeds", mode ~= "seeds" and seeds and ((not used.seeds and not planted) or Onboarding.Is("plant")))
+	setPulse("basket", mode ~= "basket" and ripe and (not used.basket or Onboarding.Is("harvest")))
+	setPulse("pets", mode ~= "pets" and held == nil and handBar.Visible and Onboarding.Is("placePet"))
 end
+Onboarding.Changed:Connect(updatePulse)
 
 function renderBar()
 	for _, name in MODES do

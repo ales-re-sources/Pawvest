@@ -17,6 +17,7 @@ local Remotes = require(ServerScriptService.Remotes)
 local StageResults = require(ServerScriptService.StageResults)
 local RunDistance = require(ServerScriptService.RunDistance)
 local Telemetry = require(ServerScriptService.Telemetry)
+local OnboardService = require(ServerScriptService.OnboardService)
 
 local StageTimerUpdate = ReplicatedStorage:WaitForChild("StageTimerUpdate")
 local TalentConfig = require(ReplicatedStorage.TalentConfig)
@@ -283,10 +284,11 @@ local function stopTimer(player)
 	local elapsed = TimeFormat.Tenths(os.clock() - timer.StartClock)
 	local result = StageResults.RecordFinish(player, timer.StageKey, elapsed, RunDistance.Stop(player))
 	Telemetry.RunEnded(player, "finish", result)
+	OnboardService.Done(player, "stage") -- E5c: the path's last step
 	StageTimerUpdate:FireClient(player, -1, elapsed, result)
 
 	updateScorePanel(player, nil) -- record and earned medals may have changed
-	if result and result.newBest then
+	if result and result.newBest and not PlayerProfile.IsTest(player) then -- a Studio test profile is not the account's
 		updateGlobalLeaderboard(timer.StageKey, player.Name, elapsed, player.UserId)
 	end
 	return elapsed

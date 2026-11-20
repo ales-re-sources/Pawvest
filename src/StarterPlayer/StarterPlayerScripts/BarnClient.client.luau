@@ -26,6 +26,7 @@ local GardenView = require(script.Parent:WaitForChild("GardenView"))
 local GardenUi = require(script.Parent:WaitForChild("GardenUi"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local Hints = require(script.Parent:WaitForChild("Hints"))
+local Onboarding = require(script.Parent:WaitForChild("Onboarding"))
 
 local player = Players.LocalPlayer
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
@@ -396,7 +397,7 @@ RunService.Heartbeat:Connect(function(dt)
 		end
 		shownCrops = crops
 	end
-	setPulse(young and crops > 0 and not barnOpened and openButton.Visible)
+	setPulse(openButton.Visible and ((young and crops > 0 and not barnOpened) or (Onboarding.Is("sell") and crops > 0))) -- E5c step 4
 	if isOpen and crowLabel then
 		local text, color = GardenUi.CrowLine(GardenView.OwnField(), workspace:GetServerTimeNow())
 		crowLabel.Text = text

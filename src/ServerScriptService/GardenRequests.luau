@@ -28,6 +28,7 @@ local CoinRewards = require(ServerScriptService.CoinRewards)
 local PetService = require(ServerScriptService.PetService)
 local GardenService = require(ServerScriptService.GardenService)
 local Telemetry = require(ServerScriptService.Telemetry)
+local OnboardService = require(ServerScriptService.OnboardService)
 
 local rules = CropConfig.Requests
 
@@ -191,6 +192,7 @@ local function finish(player: Player, garden, slot, index: number)
 	end
 	Telemetry.RequestDone(player, crop.id, index, (os.time() - slot.At) / 60, coins, if profile then profile.Coins else 0)
 	GardenService.Succeed(player, "Request", { crop = crop.id, need = slot.Need, coins = coins, drop = drop }) -- GardenRemotes.Result
+	OnboardService.Done(player, "request") -- E5c funnel step 9
 	task.spawn(PlayerProfile.Save, player)
 end
 

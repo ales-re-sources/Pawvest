@@ -17,6 +17,7 @@ local PetService = require(ServerScriptService.PetService)
 local GardenPlots = require(ServerScriptService.GardenPlots)
 local Remotes = require(ServerScriptService.Remotes)
 local RateLimit = require(ServerScriptService.RateLimit)
+local OnboardService = require(ServerScriptService.OnboardService)
 
 local MAX_DISTANCE = 45 -- studs from the middle of the caller's own plot
 
@@ -113,6 +114,7 @@ GardenService.PublishAll = publishAll
 -- A garden action went through: everything it touched is re-published, the caller gets the success answer and the profile
 -- is saved (the Coins spent and what they bought go together).
 function GardenService.Done(player: Player, action: string, detail: any)
+	OnboardService.Action(player, action) -- E5c: a garden action may finish an onboarding step (before the publish: the attribute)
 	publishAll(player)
 	succeed(player, action, detail)
 	task.spawn(PlayerProfile.Save, player)
