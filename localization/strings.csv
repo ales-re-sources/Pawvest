@@ -392,7 +392,7 @@ barn.title,Title strip of the barn panel (seeds and harvested crops the player h
 barn.button,"HUD button at the bottom of the screen that opens the barn panel: near the own garden plot, and anywhere outside a run while the player holds crops to sell (112 px brick; icon first)",🧺 Barn,🧺 Stodola,new,h3949e950
 barn.prompt.action,"Action text of the prompt at the open front of the barn building on the own garden plot (opens the barn panel); imperative, short",Open barn,Otevřít stodolu,new,hcd8a906b
 barn.prompt.object,"Object text of that prompt: the barn building (nominative, no emoji)",Barn,Stodola,new,h737b3f38
-barn.seed.grow,"Barn panel, seed row, second line; {time} = how long the crop grows (""3 hours"", ""45 min"") OG2: time is the away-time baseline, with Growth and crop Speed; the countdown runs faster while playing.",Ready in {time} while away,Dozraje za {time} i mimo hru,new,he0e3e3f9
+barn.seed.grow,"Barn panel, seed row, second line; {time} = how long the crop grows (""3 hours"", ""45 min"") OG2: time is the away-time baseline, with Growth and crop Speed; the countdown runs faster while playing. OG2b: required growth time, not a guaranteed uninterrupted absence; away growth pauses at the 24 h cap shown in the timing hint.",Growth time: {time},Doba růstu: {time},new,h8fcef1fb
 barn.seeds.empty,"Barn panel, seeds section when the player holds no seeds",No seeds. Buy some at the seed stall on the plaza.,Žádná semínka. Kup si je ve stánku se semínky na náměstí.,new,he76c2e61
 barn.crops.empty,"Barn panel, harvest section when the player holds no crops (the 🧺 basket is the hand bar's harvest mode on the field)",Nothing harvested yet. Pick ripe crops with the 🧺 basket.,Zatím nic sklizeno. Zralé plodiny sbírej košíkem 🧺.,new,hc78335df
 barn.feed,"Barn panel, crop row: button that picks a pet to feed this crop to (84 px; short)",Feed,Nakrmit,new,h1fd087e4
@@ -416,11 +416,11 @@ field.crows.calm,"Field panel header, crow forecast: no crow time within the nex
 field.crows.later,Field panel header: crows do not come to a young field yet; {crop} = the crop whose unlock brings them (Garlic; Czech: nominative after a colon),Crows come once you grow {crop},"Vrány přijdou, až budeš pěstovat: {crop}",new,hb2fca392
 field.crows.hint,"Field panel header, small line under the crow forecast: what crows do","If you are away in a crow time, crows may eat 1 ripe crop. Rare crops are safe, and a pet with Pest control chases them off.","Když jsi pryč v čase vran, můžou sežrat 1 zralou úrodu. Vzácné plodiny jsou v bezpečí a mazlíček s hlídáním je odežene.",new,h6b0bdad1
 field.section.seeds,Heading of the seed list (shop at the own plot),Seeds,Semínka,new,h8fa20aac
-field.seed.info,"Seed row, second and third line (\n = line break); {time} = grow time (""3 hours""), {sale} = Coins one harvested crop sells for, {seed} = Coins one seed costs, {stock} = seeds the player has OG2: time is the away-time baseline, with Growth and crop Speed; the countdown runs faster while playing.",Ready in {time} while away\nSells for {sale} · Seed {seed} · You have {stock},Dozraje za {time} i mimo hru\nProdej {sale} · Semínko {seed} · Máš {stock},new,h331a7c33
+field.seed.info,"Seed row, second and third line (\n = line break); {time} = grow time (""3 hours""), {sale} = Coins one harvested crop sells for, {seed} = Coins one seed costs, {stock} = seeds the player has OG2: time is the away-time baseline, with Growth and crop Speed; the countdown runs faster while playing. OG2b: required growth time, not a guaranteed uninterrupted absence; away growth pauses at the 24 h cap shown in the timing hint.",Growth time: {time}\nSells for {sale} · Seed {seed} · You have {stock},Doba růstu: {time}\nProdej {sale} · Semínko {seed} · Máš {stock},new,h7b1259e4
 field.seed.rareInfo,"Seed row of a rare crop (E2: seeds only from obby medals), second and third line (
- = line break); {time} = grow time, {sale} = Coins one crop sells for, {stock} = seeds the player has OG2: time is the away-time baseline, with Growth and crop Speed; the countdown runs faster while playing.","Ready in {time} while away
-Sells for {sale} · You have {stock}","Dozraje za {time} i mimo hru
-Prodej {sale} · Máš {stock}",new,h94496b1d
+ = line break); {time} = grow time, {sale} = Coins one crop sells for, {stock} = seeds the player has OG2: time is the away-time baseline, with Growth and crop Speed; the countdown runs faster while playing. OG2b: required growth time, not a guaranteed uninterrupted absence; away growth pauses at the 24 h cap shown in the timing hint.","Growth time: {time}
+Sells for {sale} · You have {stock}","Doba růstu: {time}
+Prodej {sale} · Máš {stock}",new,hdba3cd07
 field.seed.fromWorld,"Seed row of a rare crop, replaces the buy buttons (narrow, wraps): its seeds are earned with medals on the stages of {world} (world.name.*, Czech: nominative ""1. svět"")",⭐ Medals in {world},⭐ Za medaile: {world},new,h52450e9e
 field.barn,"Line under the seed list; {total} = seeds held, {capacity} = what the barn holds",Barn: {total} / {capacity} seeds,Stodola: {total} / {capacity} semínek,new,hdfd10ae1
 field.seed.note,Small note under the seed list,Prices are in Coins.,Ceny jsou v mincích.,new,hd2ae55c1
@@ -514,13 +514,13 @@ crop.name.Onion,"Crop name (singular, shown with its icon; EV2a ladder crop, gro
 crop.name.Garlic,"Crop name (singular, shown with its icon; EV2a ladder crop, grows 3 min)",Garlic,Česnek,new,h98f4cba6
 crop.name.Tomato,"Crop name (singular, shown with its icon; EV2a ladder crop, grows 8 min)",Tomato,Rajče,new,had8d0e52
 crop.name.Cucumber,"Crop name (singular, shown with its icon; EV2a ladder crop, grows 15 min)",Cucumber,Okurka,new,h964e56d8
-crop.name.Pepper,"Crop name (singular, shown with its icon; EV2a ladder crop, grows 1 h)",Pepper,Paprika,new,h41affd07
-crop.name.Broccoli,"Crop name (singular, shown with its icon; EV2a ladder crop, grows 2 h)",Broccoli,Brokolice,new,h7ae58e35
-crop.name.Eggplant,"Crop name (singular, shown with its icon; EV2a ladder crop, grows 4 h)",Eggplant,Lilek,new,hb1290bf9
-crop.name.Blueberry,"Crop name (singular, shown with its icon; EV2a ladder crop, grows 6 h; one punnet)",Blueberry,Borůvka,new,h078192f7
-crop.name.SweetPotato,"Crop name (singular, shown with its icon; EV2a ladder crop, grows 8 h)",Sweet potato,Batát,new,h36f69a6d
-crop.name.Sunflower,"Crop name (singular, shown with its icon; EV2a ladder crop, grows 18 h)",Sunflower,Slunečnice,new,h9edbb3da
-crop.name.Pineapple,"Crop name (singular, shown with its icon; EV2a ladder crop, grows 24 h)",Pineapple,Ananas,new,h0bbbc1b9
+crop.name.Pepper,"Crop name (singular, shown with its icon; EV2a ladder crop, 2 h baseline / 1 h online)",Pepper,Paprika,new,h41affd07
+crop.name.Broccoli,"Crop name (singular, shown with its icon; EV2a ladder crop, 4 h baseline / 2 h online)",Broccoli,Brokolice,new,h7ae58e35
+crop.name.Eggplant,"Crop name (singular, shown with its icon; EV2a ladder crop, 8 h baseline / 4 h online)",Eggplant,Lilek,new,hb1290bf9
+crop.name.Blueberry,"Crop name (singular, shown with its icon; EV2a ladder crop, 12 h baseline / 6 h online; one punnet)",Blueberry,Borůvka,new,h078192f7
+crop.name.SweetPotato,"Crop name (singular, shown with its icon; EV2a ladder crop, 16 h baseline / 8 h online)",Sweet potato,Batát,new,h36f69a6d
+crop.name.Sunflower,"Crop name (singular, shown with its icon; EV2a ladder crop, 36 h baseline / 18 h online)",Sunflower,Slunečnice,new,h9edbb3da
+crop.name.Pineapple,"Crop name (singular, shown with its icon; EV2a ladder crop, 48 h baseline / 24 h online)",Pineapple,Ananas,new,h0bbbc1b9
 number.million,"A number from a million on in short form (prices, sales); {n} = ""1.23"", ""12.3"", ""123"" (decimal mark per language). Czech: mil. = milionů",{n} M,{n} mil.,new,h365c6914
 number.billion,"A number from a billion on in short form; {n} = ""1.23"" etc. Czech: mld. = miliard",{n} B,{n} mld.,new,h7c54d8bc
 field.reason.far,Refused: the player is not at their own plot,Walk to your plot first,Nejdřív dojdi ke své zahrádce,new,h876a55dc
@@ -742,4 +742,4 @@ hall.toast,"Popup for everyone on the server when a harvest becomes the week's b
 admin.fieldtest.off,"Admin panel button (admins only, also on a live server): fills nearby plots with a full test field of one crop to check the frame rate on a phone; each tap switches crop, this state is off. No placeholders. Czech short label.",🧪 Field test: off,🧪 Test pole: vypnuto,new,h5a82e27c
 admin.fieldtest.on,"Admin panel button while the field test is on: {crop} = localized crop name drawn in every square, {plots} = number of plots filled (12). Next tap switches to the next crop or off. Avoid a plural noun after {plots}.","🧪 Field test: {crop}, plots: {plots}","🧪 Test pole: {crop}, pozemky: {plots}",new,h72f3d75a
 admin.fieldtest.stats,"Admin-only readout at the top of the screen during the field test: {fps} = frames in the last second, {ms} = slowest frame of the last 5 s in milliseconds, {objects} = drawn garden instances (thousands). Technical, short.",{fps} FPS · slowest frame {ms} ms · {objects} objects,{fps} FPS · nejpomalejší snímek {ms} ms · objektů: {objects},new,hb137f10a
-field.growth.hint,"Crop timing explanation on seed stall, Barn seeds, seed picker, growing-square card and crop upgrade page. {rate} = localized online countdown multiplier including Cloches (2, 2.14, 2.28 or 2.4). Away-time durations include Growth and crop Speed. Wrap and grow vertically.",Times apply while away. The countdown runs {rate}× faster while you play.,"Časy platí i mimo hru. Když hraješ, odpočet běží {rate}× rychleji.",new,hd2d131d9
+field.growth.hint,"Crop timing explanation on seed stall, Barn seeds, seed picker, growing-square card and crop upgrade page. {rate} = localized online countdown multiplier including Cloches (2, 2.14, 2.28 or 2.4). Away-time durations include Growth and crop Speed. Wrap and grow vertically. OG2b: {cap} = localized number of hours in the offline growth cap (24); h is the hour abbreviation. Long crops may require multiple visits; never promise uninterrupted offline completion.",Times apply while away. Growth pauses after {cap} h away. The countdown runs {rate}× faster while you play.,"Časy platí i mimo hru. Po {cap} h mimo hru se růst zastaví. Když hraješ, odpočet běží {rate}× rychleji.",new,h230f752b

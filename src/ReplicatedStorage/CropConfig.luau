@@ -10,7 +10,7 @@ local Num = require(script.Parent:WaitForChild("Num"))
 
 local CropConfig = {}
 
--- Crops in catalogue order (EV2a, docs/ECONOMY.md → "EV": one ladder of grow times from 10 s to 24 h, net Coins per square-hour x 1.2
+-- Crops in catalogue order (EV2a, docs/ECONOMY.md → "EV": one ladder of away-time durations from 20 s to 48 h (OG2b), net Coins per square-hour x 1.2
 -- per step; since EV3b six price tiers of 2-3 crops). letter: one character in the plot message (GardenRemotes.Plot field.crops);
 -- sale / seed in Coins (seed = 25 % of the sale); step (EV3b, crop mastery): plants of this crop grown that open the next common crop in
 -- list order (also the unit of rested mastery); quest: a milestone crop opens by handing in these crops instead (CropConfig.Mastery);
@@ -19,25 +19,25 @@ local CropConfig = {}
 -- Rare crops (E2, `rare = true`, sale and points set by hand for the days a world is reached, economy_ev.py check R): one per obby world (`world`), seeds only from the obby (CropConfig.ObbySeeds), never sold as seeds
 -- (seed = 0: BuySeeds and the market cart skip them), never locked, no mastery.
 CropConfig.Crops = {
-	{ id = "Potato", name = "Potato", icon = "🥔", letter = "a", growSeconds = 10, sale = 9, seed = 2, step = 12, kg = 0.25, xp = 4 }, -- loc: ignore
-	{ id = "Lettuce", name = "Lettuce", icon = "🥬", letter = "h", growSeconds = 30, sale = 28, seed = 7, step = 13, kg = 0.4, xp = 14 }, -- loc: ignore
-	{ id = "Onion", name = "Onion", icon = "🧅", letter = "i", growSeconds = 1 * 60, sale = 55, seed = 14, step = 13, kg = 0.2, xp = 27 }, -- loc: ignore
-	{ id = "Garlic", name = "Garlic", icon = "🧄", letter = "j", growSeconds = 3 * 60, sale = 290, seed = 70, step = 14, kg = 0.1, xp = 145 }, -- loc: ignore
-	{ id = "Tomato", name = "Tomato", icon = "🍅", letter = "k", growSeconds = 8 * 60, sale = 750, seed = 190, step = 15, kg = 0.2, xp = 375 }, -- loc: ignore
-	{ id = "Cucumber", name = "Cucumber", icon = "🥒", letter = "l", growSeconds = 15 * 60, sale = 1400, seed = 350, step = 15, kg = 0.3, xp = 700 }, -- loc: ignore
-	{ id = "Corn", name = "Corn", icon = "🌽", letter = "b", growSeconds = 30 * 60, sale = 5000, seed = 1200, step = 16, quest = { Cucumber = 6, Garlic = 10 }, kg = 0.5, xp = 2500 }, -- loc: ignore
-	{ id = "Pepper", name = "Pepper", icon = "🌶️", letter = "m", growSeconds = 1 * 3600, sale = 10000, seed = 2500, step = 17, kg = 0.2, xp = 5000 }, -- loc: ignore
-	{ id = "Broccoli", name = "Broccoli", icon = "🥦", letter = "n", growSeconds = 2 * 3600, sale = 20000, seed = 5000, step = 18, kg = 0.5, xp = 10000 }, -- loc: ignore
-	{ id = "Pumpkin", name = "Pumpkin", icon = "🎃", letter = "c", growSeconds = 3 * 3600, sale = 50000, seed = 12000, step = 19, quest = { Pepper = 5, Corn = 8 }, kg = 6, xp = 25000 }, -- loc: ignore
-	{ id = "Eggplant", name = "Eggplant", icon = "🍆", letter = "o", growSeconds = 4 * 3600, sale = 70000, seed = 18000, step = 20, kg = 0.4, xp = 35000 }, -- loc: ignore
-	{ id = "Blueberry", name = "Blueberry", icon = "🫐", letter = "p", growSeconds = 6 * 3600, sale = 100000, seed = 25000, step = 21, kg = 0.2, xp = 50000 }, -- loc: ignore
-	{ id = "SweetPotato", name = "Sweet potato", icon = "🍠", letter = "q", growSeconds = 8 * 3600, sale = 240000, seed = 60000, step = 22, quest = { Blueberry = 5, Eggplant = 4 }, kg = 0.4, xp = 120000 }, -- loc: ignore
-	{ id = "GiantMelon", name = "Giant melon", icon = "🍉", letter = "d", growSeconds = 12 * 3600, sale = 350000, seed = 90000, step = 23, kg = 15, xp = 175000 }, -- loc: ignore
-	{ id = "Sunflower", name = "Sunflower", icon = "🌻", letter = "r", growSeconds = 18 * 3600, sale = 900000, seed = 220000, step = 24, kg = 1.5, xp = 450000 }, -- loc: ignore
-	{ id = "Pineapple", name = "Pineapple", icon = "🍍", letter = "s", growSeconds = 24 * 3600, sale = 1200000, seed = 300000, step = 25, kg = 1.5, xp = 600000 }, -- loc: ignore
-	{ id = "GoldenCarrot", name = "Golden carrot", icon = "🥕", letter = "e", growSeconds = 6 * 3600, sale = 50000, seed = 0, kg = 0.3, xp = 25000, rare = true, world = 1 }, -- loc: ignore
-	{ id = "FrostGrape", name = "Frost grape", icon = "🍇", letter = "f", growSeconds = 8 * 3600, sale = 150000, seed = 0, kg = 0.5, xp = 75000, rare = true, world = 2 }, -- loc: ignore
-	{ id = "GlowMushroom", name = "Glow mushroom", icon = "🍄", letter = "g", growSeconds = 10 * 3600, sale = 300000, seed = 0, kg = 0.2, xp = 150000, rare = true, world = 3 }, -- loc: ignore
+	{ id = "Potato", name = "Potato", icon = "🥔", letter = "a", growSeconds = 20, sale = 9, seed = 2, step = 12, kg = 0.25, xp = 4 }, -- loc: ignore
+	{ id = "Lettuce", name = "Lettuce", icon = "🥬", letter = "h", growSeconds = 60, sale = 28, seed = 7, step = 13, kg = 0.4, xp = 14 }, -- loc: ignore
+	{ id = "Onion", name = "Onion", icon = "🧅", letter = "i", growSeconds = 120, sale = 55, seed = 14, step = 13, kg = 0.2, xp = 27 }, -- loc: ignore
+	{ id = "Garlic", name = "Garlic", icon = "🧄", letter = "j", growSeconds = 360, sale = 290, seed = 70, step = 14, kg = 0.1, xp = 145 }, -- loc: ignore
+	{ id = "Tomato", name = "Tomato", icon = "🍅", letter = "k", growSeconds = 960, sale = 750, seed = 190, step = 15, kg = 0.2, xp = 375 }, -- loc: ignore
+	{ id = "Cucumber", name = "Cucumber", icon = "🥒", letter = "l", growSeconds = 1800, sale = 1400, seed = 350, step = 15, kg = 0.3, xp = 700 }, -- loc: ignore
+	{ id = "Corn", name = "Corn", icon = "🌽", letter = "b", growSeconds = 3600, sale = 5000, seed = 1200, step = 16, quest = { Cucumber = 6, Garlic = 10 }, kg = 0.5, xp = 2500 }, -- loc: ignore
+	{ id = "Pepper", name = "Pepper", icon = "🌶️", letter = "m", growSeconds = 7200, sale = 10000, seed = 2500, step = 17, kg = 0.2, xp = 5000 }, -- loc: ignore
+	{ id = "Broccoli", name = "Broccoli", icon = "🥦", letter = "n", growSeconds = 14400, sale = 20000, seed = 5000, step = 18, kg = 0.5, xp = 10000 }, -- loc: ignore
+	{ id = "Pumpkin", name = "Pumpkin", icon = "🎃", letter = "c", growSeconds = 21600, sale = 50000, seed = 12000, step = 19, quest = { Pepper = 5, Corn = 8 }, kg = 6, xp = 25000 }, -- loc: ignore
+	{ id = "Eggplant", name = "Eggplant", icon = "🍆", letter = "o", growSeconds = 28800, sale = 70000, seed = 18000, step = 20, kg = 0.4, xp = 35000 }, -- loc: ignore
+	{ id = "Blueberry", name = "Blueberry", icon = "🫐", letter = "p", growSeconds = 43200, sale = 100000, seed = 25000, step = 21, kg = 0.2, xp = 50000 }, -- loc: ignore
+	{ id = "SweetPotato", name = "Sweet potato", icon = "🍠", letter = "q", growSeconds = 57600, sale = 240000, seed = 60000, step = 22, quest = { Blueberry = 5, Eggplant = 4 }, kg = 0.4, xp = 120000 }, -- loc: ignore
+	{ id = "GiantMelon", name = "Giant melon", icon = "🍉", letter = "d", growSeconds = 86400, sale = 350000, seed = 90000, step = 23, kg = 15, xp = 175000 }, -- loc: ignore
+	{ id = "Sunflower", name = "Sunflower", icon = "🌻", letter = "r", growSeconds = 129600, sale = 900000, seed = 220000, step = 24, kg = 1.5, xp = 450000 }, -- loc: ignore
+	{ id = "Pineapple", name = "Pineapple", icon = "🍍", letter = "s", growSeconds = 172800, sale = 1200000, seed = 300000, step = 25, kg = 1.5, xp = 600000 }, -- loc: ignore
+	{ id = "GoldenCarrot", name = "Golden carrot", icon = "🥕", letter = "e", growSeconds = 43200, sale = 50000, seed = 0, kg = 0.3, xp = 25000, rare = true, world = 1 }, -- loc: ignore
+	{ id = "FrostGrape", name = "Frost grape", icon = "🍇", letter = "f", growSeconds = 57600, sale = 150000, seed = 0, kg = 0.5, xp = 75000, rare = true, world = 2 }, -- loc: ignore
+	{ id = "GlowMushroom", name = "Glow mushroom", icon = "🍄", letter = "g", growSeconds = 72000, sale = 300000, seed = 0, kg = 0.2, xp = 150000, rare = true, world = 3 }, -- loc: ignore
 }
 CropConfig.ById = {}
 CropConfig.ByLetter = {}
@@ -155,7 +155,7 @@ CropConfig.DaySeconds = TimeFormat.DAY
 CropConfig.Requests = {
 	Slots = 3,
 	MinOrder = 3,
-	MaxGrow = 4 * 3600,
+	MaxGrow = 8 * 3600, -- OG2b: same eligible crops / 4 h online at the base ×2 rate
 	Share = 0.3,
 	MinNeed = 3,
 	MinIncome = 2000,

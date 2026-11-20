@@ -4,7 +4,7 @@ Run through `python tools/economy.py ev | proposal | evcheck` (or `python tools/
 
 What it is: an event-by-event simulation of one player per archetype (sessions, garden attention, obby runs inside a session, absences),
 built on the EV rules the user decided on 2026-11-07:
-  * one crop ladder from ~10 s to 24 h (the 4 CropConfig crops + "Future plant 1..12", model-only), net Coins per square-hour rising per step;
+  * one crop ladder from 20 s to 48 h baseline (10 s to 24 h online, OG2b), net Coins per square-hour rising per step;
   * perennials ("Future tree 1..4", model-only): fruit every f, at most c fruits held;
   * repeat obby runs pay Sunshine (growth for the whole field and the incubators) and rare seeds instead of Coins;
   * talents cost Coins + a crop bundle;
@@ -36,10 +36,11 @@ RARITIES = ("Common", "Uncommon", "Rare", "Epic", "Legendary")
 # --------------------------------------------------------------------------------------------------------------------
 CAND = {
     # crop ladder: (id, grow seconds); the CropConfig ids keep their names, "FP<n>" = Future plant n (model-only)
-    "ladder": [("Potato", 10), ("FP1", 30), ("FP2", 60), ("FP3", 180), ("FP4", 480), ("FP5", 900), ("Corn", 1800), ("FP6", 3600),
-               ("FP7", 7200), ("Pumpkin", 10800), ("FP8", 14400), ("FP9", 21600), ("FP10", 28800), ("GiantMelon", 43200),
-               ("FP11", 64800), ("FP12", 86400)],
-    "v1": 2500.0,  # net Coins per square-hour of growth of the first crop
+    # OG2b: doubled growth-second durations cancel the ×2 / ×1 rates; v1 halves to keep every sale / seed price unchanged.
+    "ladder": [("Potato", 20), ("FP1", 60), ("FP2", 120), ("FP3", 360), ("FP4", 960), ("FP5", 1800), ("Corn", 3600), ("FP6", 7200),
+               ("FP7", 14400), ("Pumpkin", 21600), ("FP8", 28800), ("FP9", 43200), ("FP10", 57600), ("GiantMelon", 86400),
+               ("FP11", 129600), ("FP12", 172800)],
+    "v1": 1250.0,  # net Coins per square-hour of growth of the first crop (real-hour income unchanged)
     "r": 1.20,  # each next crop: x r net per square-hour
     "seed_frac": 0.25,
     # EV3 (draft 2026-11-14): "stars" = crop levels replace Renown; "renown" = the game as built until EV3b (kept for the old -> new table
@@ -113,8 +114,8 @@ CAND = {
     # stall_staples: ST's staples; the 2026-11-15 probe ("stall" unlock rule) ran with 4
     "stall_every": 600, "stall_staples": 3, "stall_p0": 0.7, "stall_pd": 0.7, "stall_n0": 4.0, "stall_nd": 0.85, "stall_bag": 2.0,
     # the stall rule's trees (replace "trees"): timers from a session to a day, the overnight hook the stall's random bag cannot give
-    "stall_trees": [("Tree1", 6, 3, 1800, 300, 4, 6), ("Tree2", 10, 3, 7200, 1800, 4, 8), ("Tree3", 14, 3, 21600, 5400, 4, 10),
-                    ("Tree4", 18, 3, 43200, 10800, 4, 12), ("Tree5", 22, 3, 86400, 21600, 4, 14), ("Tree6", 26, 3, 86400, 21600, 4, 16)],
+    "stall_trees": [("Tree1", 6, 3, 3600, 600, 4, 6), ("Tree2", 10, 3, 14400, 3600, 4, 8), ("Tree3", 14, 3, 43200, 10800, 4, 10),
+                    ("Tree4", 18, 3, 86400, 21600, 4, 12), ("Tree5", 22, 3, 172800, 43200, 4, 14), ("Tree6", 26, 3, 172800, 43200, 4, 16)],
     "unlock": "chain", "total_k": 0.8, "hybrid_k": 5, "total_rare": True,  # total_rare: rare crops' growing time counts toward the total
     "crows_from": "FP3",  # crows and the market cart's taste start with the Garlic unlock (were Renown 3)
     # first clears of the Tutorial and World 1 (EV3 rule 6): stage key -> (finish + medal Coins, seed pack size, up to crop): the pack holds
@@ -130,7 +131,7 @@ CAND = {
     "crop_gate": [0, 1, 2, 3, 4, 5, 6, 8, 11, 15, 20, 26, 33, 42, 54, 68],
     # rare crops (CropConfig ids, world, grow seconds, sale, Renown points): set by hand against the income of the days a world is reached (playtest
     # 2026-11-08: 2.5x a ladder crop of the same grow time made the first Golden carrot, day 1, worth 350 000 and 7 Renown levels; check R)
-    "rare": [("GoldenCarrot", 1, 21600, 50000, 22), ("FrostGrape", 2, 28800, 150000, 44), ("GlowMushroom", 3, 36000, 300000, 76)],
+    "rare": [("GoldenCarrot", 1, 43200, 50000, 22), ("FrostGrape", 2, 57600, 150000, 44), ("GlowMushroom", 3, 72000, 300000, 76)],
     # squares: 32 bought, price p1 x q^(i-1), Renown gate round(sq_gate_a x i^sq_gate_b)
     "sq_p1": 290.0, "sq_q": 1.33, "sq_q2": 1.45, "sq_k2": 16, "sq_gate_a": 0.8, "sq_gate_b": 1.08,
     # sinks anchored to squares: (family, level, anchor square j, factor); price = factor x sq(j), Renown gate = the gate of square j
@@ -145,8 +146,8 @@ CAND = {
         ("Incubator", 2, 3, 1.0), ("Incubator", 3, 9, 1.0),
     ],
     # perennials (model-only): (id, anchor square j of the first sapling, saplings, first growth s, fruit every s, fruits held, ladder index of value)
-    "trees": [("Tree1", 10, 3, 2 * 3600, 300, 4, 8), ("Tree2", 16, 3, 6 * 3600, 900, 4, 10),
-              ("Tree3", 22, 3, 12 * 3600, 1800, 5, 12), ("Tree4", 28, 3, 24 * 3600, 3600, 6, 14)],
+    "trees": [("Tree1", 10, 3, 4 * 3600, 600, 4, 8), ("Tree2", 16, 3, 12 * 3600, 1800, 4, 10),
+              ("Tree3", 22, 3, 24 * 3600, 3600, 5, 12), ("Tree4", 28, 3, 48 * 3600, 7200, 6, 14)],
     "tree_mult": 1.0,  # fruit value per square-hour against the ladder crop of its index
     "sapling_step": 1.4,  # each next sapling of a kind costs x this
     # talents: id -> list of levels (anchor square j, factor, {ladder index: count}, {rare world: count}); a world reward level is ("reward",)
@@ -178,7 +179,7 @@ CAND = {
     # request board: 3 a day; slot 3 is a timed run with run_share (if a stage is cleared); crop requests pay req_mult x the sale
     # 1.0 (E5, the user 2026-11-19): no timed run and no Sunshine drop until EV2c (req_run_share 0, req_drop_sun False); the drop is a
     # rare seed or a free egg, half and half (CropConfig.Requests)
-    "req_per_day": 3, "req_run_share": 0.0, "req_mult": 1.75, "req_drop": 1 / 3, "req_size": 0.3, "req_max_h": 4.0,
+    "req_per_day": 3, "req_run_share": 0.0, "req_mult": 1.75, "req_drop": 1 / 3, "req_size": 0.3, "req_max_h": 8.0,
     "req_drop_sun": False,
     "req_sun": 20 * 60,  # Sunshine of a run request / a request drop
     # streak: days 1-6 Sunshine minutes, day 7 an Epic+ pet
@@ -203,7 +204,7 @@ ARCH = [
     {"name": "Binge", "sessions": [(10.0, 6.0)], "period": 7, "obby_min": 300, "check": 10},
     {"name": "Spender", "sessions": [(8.0, 0.25), (19.0, 0.75)], "period": 1, "obby_min": 45, "check": 10, "spender": True},
 ]
-SPENDER = {"offline_rate": 1.0, "offline_cap_h": 48, "from_day": 1, "instant_per_day": 3}  # Night shift, +1 field slot / incubator early
+SPENDER = {"offline_rate": 2.0, "offline_cap_h": 48, "from_day": 1, "instant_per_day": 3}  # OG2b clock conversion preserves the old paid speed (model-only)
 POLICY_BIAS = {"talent-first": {"talent": 0.5, "field": 1.0, "pets": 1.5}, "pets-first": {"talent": 1.0, "field": 1.0, "pets": 0.6}}
 SHARES = {"talent-first": (0.08, 0.02), "pets-first": (0.25, 0.08)}  # (egg share, food share) of income
 

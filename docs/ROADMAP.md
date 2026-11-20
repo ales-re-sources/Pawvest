@@ -45,7 +45,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | EV3 | Crop mastery: crop levels replace Renown, milestone quests, crop upgrades, first-hour obby payouts (1.0) | ✔ (EV3a signed off; EV3b1, EV3b2, EV3c Studio-validated 2026-11-17) | – | – |
 | E1.0, E1a–E1d | Client-drawn plots; crop field (every player's since FA), field pets, crops as pet food, size roll, upgrades, tools, market cart, 36 squares | ✔ | ✔ | – |
 | E2, E4-thin | Obby seeds (rare crops, meters, pouch, Scouting); crows and Pest-control guards | ✔ | ✔ | – |
-| OG / OG2 | Crop timing: offline ×1, online ×2, 24 h cap; away-time countdown | ✔ | ✔ OG2 2026-11-20 | – |
+| OG / OG2 / OG2b | Crop timing: doubled base durations, offline ×1, online ×2, 24 h cap; away-time countdown | ✔ | ✔ 2026-11-20 | – |
 | FA | The field for everyone, pens removed | ✔ | ✔ | – |
 | U1–U5 | Garden / pet UI: pets panel rows, garden badge + bubble, field rings / square card / hand bar, panel split (Skills Garden tab, Barn, seed stall), plot layout + hatchery panel | ✔ | ✔ (physical touch and multi-client open) | – |
 | MU1 | Responsive HUD navigation and panels | ✔ | ✔ (phone emulation) | – |
@@ -305,6 +305,11 @@ Tagged **[1.0]** (needed before 1.0 goes public) or **[later]**.
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
 
+**OG2b — restore crop pacing** (2026-11-20; Studio-validated). All 19 base durations doubled, preserving pre-OG2 real growth pace;
+rates ×2 / ×1, 24 h cap and field-job XP kept. Request cutoff / simulator units converted; prices and rewards unchanged.
+501 isolated timing checks, real UI cap text / durations, localization clean; economy core 15/15, EV 17/18 (G11 still fails).
+GDD §7.9 / ECONOMY → Crop timing update. Live validation / publishing remains open.
+
 **E5 — the online loop** (2026-11-20; E5a Studio-validated 2026-11-19, E5b + E5c 2026-11-20). *Why:* the first hour ran out
 of news after the 6th crop and a returning player saw a toast instead of a ledger. *What:* three tracked daily crop requests in the Goals
 panel (E5a), the "While you were away" ledger after ≥ 30 min away (E5b), onboarding for the first ten minutes by pulses and markers plus
@@ -313,9 +318,8 @@ the `GardenStart` funnel (E5c); decisions D1–D5 (timed runs and Sunshine wait 
 
 **OG2 — dependable crop timers** (2026-11-20; Studio-validated). Catalogue / countdown time is the away-time baseline;
 crops grow offline ×1 / online ×2 (Cloches extra), cap 24 h. Saved progress stays, field-job XP keeps its 1 / 0.5 clock.
-As built: GDD §7.9. Scope / checks / validation: `git show 0137d07:docs/ROADMAP.md`. Open: EV balance checks fell from 16/18
-to 10/18 on default seed 1 (confirmed with a matching work-clock model); see ECONOMY → Crop timing update. Live validation /
-publishing remains open.
+As built: GDD §7.9. Scope / checks / validation: `git show 0137d07:docs/ROADMAP.md`. The initial faster pacing was superseded by
+OG2b above; see ECONOMY → Crop timing update. Live validation / publishing remains open.
 
 **FB3 — rating on the popup too** (2026-11-19; Studio-validated through the real popup button, profile snapshot restored). *Why:*
 the user wants finishers asked right away; the signs stay for the rest. *What:* GDD §10; the popup's 👍 / 👎 row back on world

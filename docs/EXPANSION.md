@@ -65,7 +65,7 @@ rules out. Rules (reviewed 2026-10-25), **checked for every drop before it ships
 | Decoration | Free placement **outside only**, per-tier limit, validated on the server; the cottage is fixed |
 | Field | One field of squares planted freely; **36 squares**, any square opened by choice at a price by the number open (2026-11-03, F2; built) |
 | Garden vs obby | **Farming first** (2026-11-02): the 24-hour rule of 2026-10-24 is only reported now; the targets are in ECONOMY.md |
-| Online vs offline | Crop growth runs at **2 online / 1 offline, capped at 24 h** per absence (OG2, 2026-11-20). Displayed crop time is the away-time baseline and ticks faster while playing. Field-job XP keeps its separate 1 / 0.5 clock. Never pure AFK (Roblox no longer pays for uptime) |
+| Online vs offline | Crop growth runs at **2 online / 1 offline, capped at 24 h** per absence (OG2, 2026-11-20). Base crop durations doubled in OG2b to preserve the prior real growth pace. Displayed crop time is the away-time baseline and ticks faster while playing; it pauses after the cap. Field-job XP keeps its separate 1 / 0.5 clock. Never pure AFK (Roblox no longer pays for uptime) |
 | Prices | E0 re-prices every sink; applied after the user's approval (E0b) |
 | Seed shop | *1.0 (2026-11-17):* crops open by **crop mastery** (EV3, replacing Renown), priced in **tiers of 2–3 crops** that earn alike per hour (EV3 revision), and the stall offers a **rotating subset** restocked every 1–3 h on a UTC schedule (ST, ROADMAP). As built: a fixed **catalogue** gated by Renown (and obby unlocks, §8.1) plus a daily **market cart** (same on every server, per-player counts; built); a weekly visitor later. Rare seeds are never sold |
 | Harvest rolls | Every harvest rolls a **size** (built). **Variants** are **earned**: fertilisers from rare crops and pet aptitudes / quirks give the chance, weather only adds a bonus (§5.3) |
@@ -132,7 +132,7 @@ flexible, not stronger at a job. New aptitudes get new ids (stored ids never cha
 - Personal spending: dyes, outfits and a den furnished to the pet's preferences (a fox wants a burrow). Names are built (P3b).
 
 ## 5. Crop economy
-*Decided, not built (EV, the user, 2026-11-07; numbers in [ECONOMY.md](ECONOMY.md) → EV, applied in EV2a–e):* one crop ladder from 10 s to 24 h (16 annual crops, the 4 built ones re-timed, "Future plant 1…12"
+*Decided, not built (EV, the user, 2026-11-07; numbers in [ECONOMY.md](ECONOMY.md) → EV, applied in EV2a–e):* one crop ladder from 20 s to 48 h of baseline growth (OG2b; 10 s … 24 h online; 16 annual crops, the 4 built ones re-timed, "Future plant 1…12"
 named later) and perennial fruit trees (a sapling, first growth 2–24 h, then a fruit every 5–60 min up to a cap of 4–6, forever).
 
 *Built (GDD §7.9): the field loop (one crop per square, ripe crops wait, Tending replants during absences), the catalogue gated by Renown, the

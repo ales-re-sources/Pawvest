@@ -621,7 +621,7 @@ and Studio-checked; [fuller-foliage growth art](plants/SWEET_POTATO.md) approved
 Performance, phone and second-client checks remain open.
 
 *Decided, not built (EV, the user, 2026-11-07; numbers in [ECONOMY.md](ECONOMY.md) → EV, applied in EV2a–e):* the parity goal below is replaced by engagement: the four crops move onto one ladder
-of 10 s … 24 h (Potato 10 s, Corn 30 m, Pumpkin 3 h, Giant melon 12 h; 12 more crops later), crop mastery (EV3b, replaced Renown), every sink priced on the
+of 20 s … 48 h away-time durations (Potato 20 s, Corn 1 h, Pumpkin 6 h, Giant melon 24 h; online time is half), crop mastery (EV3b, replaced Renown), every sink priced on the
 square ladder (290 → 750 M), Tending as growth speed, guards make their squares safe from crows, Scouting XP from timer seconds.
 
 *Built and Studio-validated 2026-10-30 – 11-04; every player has it since FA (2026-11-06; until then admins only); tap-and-card controls since U3a, the hand bar since U3b, the Garden panel split up since U4 (all 2026-11-07). Exact numbers live in `CropConfig` / `PetConfig` and are pinned by
@@ -709,12 +709,14 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   grey must not look like the white select outline): the squares it counts for under the field's rules, i.e. per square the strongest Tending
   pet and the strongest guard (ties to the lower uid). Regions that share an edge draw side by side (three lanes inset 0.45 / 0.8 / 1.15
   studs); strips meet at outer and inner corners.
-- **Crops.** Potato (10 s, so the first harvest comes in the first session), Corn, Pumpkin and Giant melon from the seed stall behind
+- **Crops.** Potato (20 s away / 10 s online, so the first harvest comes in the first session), Corn, Pumpkin and Giant melon from the seed stall behind
   mastery unlocks; three rare crops, one per world (Golden carrot 50 000, Frost grape 150 000, Glow mushroom 300 000 Coins; priced for the days a world is reached, ECONOMY.md), only from the obby (below), never sold as seeds, never
   eaten by crows. Growth runs on server time only: online ×2, offline ×1 for at most 24 h per absence (OG2, 2026-11-20), settled on join,
   on leave, every 60 s and before every action; ripe crops wait. All listed durations and crop countdowns show away-time seconds,
   shortened by Growth and crop Speed; the countdown ticks ×2 faster while playing, additionally multiplied by Cloches (×2.4 at the top).
-  The seed stall, Barn seeds, seed picker, growing-square card and crop page explain this. Card / rings / sign bubble share the countdown
+  OG2b doubles all 19 base durations to restore pre-OG2 real growth pace (Sunflower 36 h away / 18 h online, Pineapple 48 / 24 h).
+  Growth pauses after 24 h away; long crops may need another visit. The seed stall, Barn seeds, seed picker, growing-square card
+  and crop page explain the clock and its cap. Card / rings / sign bubble share the countdown
   rule; actual online `readyAt` still drives art, ripe badges and Harvest. Existing `Grown` stays; the next join credits its pending absence
   at the new rate, without a profile migration. The barn holds 40 seeds and 40 stored crops (+20 per Barn level). Seeds held can always be
   planted; the stall sells only unlocked crops (`locked`).
@@ -755,7 +757,7 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   a done one shows "Done! ✔" and the time to the next UTC day; before they open: "Requests open when you unlock 🧄 Garlic".
 - **Requests (E5a, 2026-11-19; rules in `CropConfig.Requests`, server `GardenRequests`).** Three tracked requests, "grow 6 Tomatoes":
   every crop of that kind that goes into the barn counts (by hand, a Tending pet, the Shears' extra); nothing is handed in and the crops
-  are kept. Crops: unlocked common crops from Onion on that grow in ≤ 4 h (Onion … Eggplant); the board opens when two qualify (the
+  are kept. Crops: unlocked common crops from Onion on that need ≤ 8 h baseline growth (≤ 4 h online; Onion … Eggplant); the board opens when two qualify (the
   Garlic unlock, day 0) and picks different crops (seeded by player, UTC day and slot). Size: 0.3 × a day's income (crop sales +
   request bonuses of the previous UTC day or today, the higher, at least 2 000) ÷ the crop's sale with the pet bonus, 3 to half the
   barn. A finished request pays 0.6 × the count's sale (+ pet bonus) at once with a toast, and one in three also drops a rare seed of

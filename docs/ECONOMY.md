@@ -24,23 +24,20 @@ python tools/economy.py sim | report | pets | tools   # E0 tables of the built g
 Run `check` after changing any price, rate or reward in a config; `pin` only after the user has reviewed the values. To try an EV number,
 edit `CAND` in `economy_ev.py` (or pass overrides to a scratch probe that copies `CAND` and calls `build(c)`).
 
-## Crop timing update (OG2, 2026-11-20)
+## Crop timing update (OG2 and OG2b, 2026-11-20)
 
-Approved rates: online 2, offline 1, offline cap 24 h. Catalogue / visible durations are away-time seconds; Cloches multiply the
-online countdown. Field-job XP has separate pinned rates 1 / 0.5, independent of crop upgrades. Crop prices, rewards and gates stay.
-The next join applies the new rate to its pending absence and retains saved `Grown`; no profile migration.
+All 19 crop base durations are doubled (Potato 20 s, Sunflower 36 h, Pineapple 48 h). Rates stay online 2 / offline 1, so the
+actual online and offline crop pace returns to pre-OG2. Visible durations / countdowns use the away-time baseline and tick faster
+while playing (Cloches extra). The offline cap stays 24 h; long crops need multiple absences or online time. The shared timing
+hint states the pause and seed rows say "Growth time" rather than promise completion in one uninterrupted absence.
 
-`economy.py check` before: core 15/15, EV 16/18 (G2, G11 fail). After: core 15/15 including reviewed pins, EV 10/18: G2, G3, G5, G8,
-G9, B2, C, G11 fail. Faster growth shortens the progression horizon and reduces sink coverage; paid offline 1 / 48 h is still a
-model-only proposal and now has the same rate as free play. Balance / comfort-shop redesign remains open; no targets relaxed or
-unrelated prices retuned. The older EV scores below describe their dated configurations, before OG2.
+Field-job XP keeps separate pinned rates 1 / 0.5. Request MaxGrow doubles from 4 to 8 growth hours to retain Onion … Eggplant.
+The model doubles ladder / rare / future-tree growth durations, halves `v1` and doubles its request cutoff; all generated sale,
+seed and purchase prices stay unchanged. Model-only paid offline rate 2 represents the old rate 1 in the new growth-second units,
+with its existing 48 h cap. No profile migration or saved `Grown` rewrite; existing plantings retain earned growth seconds.
 
-Follow-up isolation (2026-11-20, default seed 1): with the same corrected work-clock model, old crop rates 1 / 0.5 pass 16/18
-(G8, G11 fail), new rates 2 / 1 pass 10/18. Casual's top crop moves from day 14.3 to 9.8, last purchase from day 93 to 49;
-Obby main spends 95% of earnings by day 60 at old rates versus 61% at new rates. The original before / after comparison also
-changed the simulator's work XP: it had wrongly included crop upgrades in field-job training (`growth`); `work_rates` corrects
-that mismatch with the game. Old simulator with new crop rates alone passes 12/18. These are balance targets on simulated
-trajectories, including unbuilt paid comforts; the 15 core checks and crop timing / UI validation pass.
+`economy.py check`: core 15/15, EV 17/18 on default seed 1; only G11 (old crops levelled) fails, as before OG2. The 10/18 result
+was the intermediate faster-growth configuration; its controlled diagnosis is in `git show 573310e:docs/ECONOMY.md`.
 
 ## EV — why and the pillars (the user, 2026-11-07)
 The E0 targets kept field income near obby income (parity). That produced a 5-minute Potato worth 4 Coins, then a 6 h jump to Corn, talents
@@ -85,7 +82,7 @@ Bands are provisional, for the user to confirm with the proposal. Archetypes: Ob
 
 ## EV — the rules as simulated
 - **Player:** sessions per archetype, the obby block in the middle of each session with garden checks every 5–10 min; between sessions the
-  field grows at the offline rate (Spender: 1.0 for 48 h). In garden time the player reacts to every ripe batch, fruit and egg. Crop choice:
+  field grows at the offline rate (Spender: 2.0 for 48 h in OG2b growth-second units). In garden time the player reacts to every ripe batch, fruit and egg. Crop choice:
   best net Coins per wall-clock second until the next chance to harvest; bundle and request crops planted only when they ripen in time.
 - **Shop:** one queue sorted by price × policy bias (talent-first: talents ×0.5, pets ×1.5; pets-first: pets ×0.6); unbuyable items are
   skipped, saving goes to a blocking required talent first; seed reserve kept; eggs and food from 8 / 2 % of income (pets-first 25 / 8 %).
