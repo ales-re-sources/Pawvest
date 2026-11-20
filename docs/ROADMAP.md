@@ -85,11 +85,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 2. **ST — rotating seed stall:** done (Studio-validated 2026-11-18; Done).
 3. **SH — Harvest Hall and plot likes:** done (Studio-validated 2026-11-18; Done).
 4. **FB — player feedback:** done (Studio-validated 2026-11-18; Done).
-5. **E5 — the online loop** (scope when it starts; EXPANSION §14): request board (rules: ECONOMY.md → EV "Requests": tracked "grow 6 Tomatoes",
-   no hand-in and no accept step, an unfinished request stays, the board opens on day 0; decided 2026-11-17; shown as the Goals panel's
-   *Today's requests* and the second tracker line, no board stand: UI_GARDEN_PETS §13), the ledger on join
-   (the join notice grows into it), onboarding for the first ten minutes (teaches the U1–U5 controls, mastery, the stall, the Hall),
-   garden funnel telemetry.
+5. **E5 — the online loop:** done (Studio-validated 2026-11-20; Done).
 6. **Release gates, then public:** MU (section below; adds the Hall and a full field on a real phone), TH1 + THU, the Czech review of
    every new text, the M6a live checks, "Before Max Players 24" under "Open items", then Max Players → 24 (a place setting).
 
@@ -237,157 +233,6 @@ Tutorial; anyone may rate, the progress sent along filters out who never tried.
 ### FB3 — Rating on the results popup too
 Done 2026-11-19 (Done; the scope, acceptance checks and validation log: `git show 02e767e:docs/ROADMAP.md`; as built: GDD §10).
 
-### E5 — The online loop (scoped 2026-11-19; D1–D5 decided the same day)
-*Why:* the first hour runs out of news after the 6th crop (ECONOMY → Findings EV3 revision: 27 min with nothing happening), and a
-returning player sees a toast where the design promises a ledger. E5 adds the daily requests (news every few minutes, a reason to plant
-something other than the best crop), the ledger, a guided first ten minutes and the garden funnel that measures whether it works.
-Three parts, each ships alone, in this order: **E5a** requests → **E5b** ledger → **E5c** onboarding + garden funnel.
-
-**Design check (2026-11-19).** The decided rules (EXPANSION §5.6, ECONOMY → EV "Requests", UI_GARDEN_PETS §13) hold, with two clashes
-against "Not in 1.0": (1) the request drop includes **Sunshine** (EV2c, after 1.0); (2) the **timed run** slot pays Sunshine in the
-model (`req_sun`) and needs a time limit per stage. The model's eligible set is `k ≥ 2` with grow ≤ 4 h, i.e. Onion … Eggplant (ladder
-order ≥ 3), so the board opens with the Garlic unlock, not the second crop. Likes cannot reach a player who is away (plots exist only
-for present players, SH), so the ledger has no likes line.
-
-**Decisions (the user, 2026-11-19, all as proposed):**
-- **D1 Timed runs:** out of 1.0; they come with EV2c, which gives them their Sunshine reward. 1.0 has three crop requests.
-- **D2 Request drop** (one in three finished requests): a rare seed of the highest world with a cleared stage, or a free Basic egg,
-  half and half; no Sunshine until EV2c. The model's drop changes to match and `economy.py check` re-runs.
-- **D3 Request size:** the model's rule as is: need = 0.3 × a day's income ÷ (the crop's sale × pet multiplier), at least 3, at most
-  half the barn. A day's income = Coins from crop sales and request bonuses on the previous UTC day or so far today, whichever is
-  more, at least 2 000 (new profile field `Garden.Income`).
-- **D4 Ledger form:** a panel ("While you were away") on join after ≥ 30 min away when it has at least one line, closed by a tap,
-  never during a stage; under 30 min, or with nothing to say, today's toast stays.
-- **D5 Onboarding form:** no forced tutorial and no text boxes: the G1 marker, dots and the U3b pulses walk a fresh profile through
-  fixed steps, the server keeping the step. Existing players start as done.
-
-#### E5a — Request board (tracked requests)
-*Inputs:* harvests (by hand, Tending pets online and on the join settle, the Shears' extra), the UTC day, `Garden.Unlocked`, the
-player's income. *Outputs:* three requests in the Goals panel and on the tracker's line 2, a bonus in Coins and maybe a drop when
-one is done. *Boundary:* no hand-in, no accept step, no board stand, no timed run (D1), no Sunshine.
-- **Config** (`CropConfig.Requests`, `-- loc: ignore` where English): `Slots = 3`, `MinOrder = 3`, `MaxGrow = 4 h`, `Share = 0.3`,
-  `Bonus = 0.6`, `MinIncome = 2000`, `DropChance = 1/3`, drop table (D2). `economy.py check` passes after the model sync; `pin` once
-  reviewed.
-- **Profile** (`Garden.Requests = { Day, Slots = { { Crop, Need, Have, Done } × ≤ 3 } }`, `Garden.Income = { Day, Today, Prev }`;
-  missing = none, no `Version` step; load drops a slot with an unknown or locked crop, clamps `Have` to `0..Need`). PROTOCOL updated.
-- **Fill** (server, on every settle): when `Day ≠` today's UTC day (or never filled) and ≥ 2 eligible crops (unlocked, common,
-  `order ≥ MinOrder`, grow ≤ `MaxGrow`): unfinished slots stay, finished ones are replaced; the new crops come from
-  `Random.new(hash(UserId, day, slot))` among eligible crops not on the board (all eligible when none is left); `Day` = today. With
-  fewer than 2 eligible crops nothing fills and `Day` stays (the first board opens mid-day the moment Garlic unlocks).
-- **Track:** every crop stored in the barn adds to the first open slot of that crop (`Have += 1` per crop); reaching `Need` sets
-  `Done`, pays `Bonus × Need × CropConfig.SaleValue(crop, 1)` through `CoinRewards.Grant` (the pet multiplier), rolls the drop and
-  tells the client (`GardenRemotes.Result ("Request", true, { crop, coins, drop? })`). Crops are kept (sold as usual).
-- **State:** `GardenRemotes.State` → `field.requests = { day, endsAt (next UTC midnight), slots = { { crop, need, have, done } } }`.
-- **Client:** GoalsClient line 2 = the open request nearest to done (`have / need` highest; "🍅 4 / 6 → 💰"), hidden with no open
-  request; the panel's *Today's requests*: three rows (icon, name, bar, the bonus in Coins), a done row shows a tick and "New request
-  in 5:12:00" (`TimeFormat.Clock`); before the board opens, one row "Requests open with Garlic" (the unlock that opens them). A finished
-  request: FieldClient toast "Request done! +1 200 💰" (+ the drop), the line pulses and moves on.
-- **Telemetry:** `RequestDone` (CF01 crop id, CF02 slot 1-3, value = minutes from fill to done, capped 1 440) and an economy source
-  event (`Gameplay`, SKU `request`).
-- **Strings:** `goals.requests.*`, `field.toast.request*` (en + cs, `new`).
-
-*Acceptance checks (E5a):*
-1. A profile with Potato … Onion unlocked has no requests after a settle (`field.requests.slots` empty); unlocking Garlic fills 3
-   slots at once, each crop in {Onion, Garlic}, no crop twice unless only 2 are eligible (then slot 3 repeats one), `need ≥ 3`.
-2. The same profile and day gives the same three requests after a rejoin (deterministic); the next UTC day (fixture: `Day` − 1) keeps
-   an unfinished slot unchanged (`have` too) and replaces a done one.
-3. `need` matches D3 for a fixture with `Income.Prev` = 50 000 and Tomato (computed by hand in the log); with `Income` empty the floor
-   2 000 applies; `need` never exceeds half the barn.
-4. Harvesting the last needed crop by hand: Coins rise by exactly the bonus × multiplier on top of the sale, a toast shows, the slot is
-   `done`, the crops are in the barn; a second harvest of that crop changes nothing in requests.
-5. A Tending pet's harvests on the join settle count (fixture: a ripe square of the request crop with a pet, `SettledAt` 2 h back).
-6. Over 30 finished requests (Studio command loop), drops ≈ one in three (8–14) and never Sunshine.
-7. Through the real UI: line 2 shows the right request and bar; the panel shows three rows; a done row shows its countdown; Czech fits
-   (`TextFits`), the pseudo-language shows no literal.
-8. `economy.py check` passes with the synced model; `loc.py check` 0 errors, `lint` within baseline; one playtest boot, no new errors.
-
-*E5a validation (2026-11-19, Lekzdrh's live profile, snapshot `TestSnapshots` `profile_9892673032_E5a_1`, restored and checked after;
-driven through the Studio-only hook `ServerStorage.RequestsTest`).* 1: Onion only → empty board; + Garlic → Garlic 3, Onion 7, Onion 7.
-2: a refill on the same day gives the same crops; the next day kept Tomato 4/10 and Onion 0/5 and replaced the done Garlic. 3: Income
-Prev 50 000 → Onion 50 (the cap, barn 100), Garlic 36 (= by hand); Prev 1e8 → max 50; a 5-day-old Income reads as 0 (floor 2 000).
-4: Garlic 4 with 3 harvested pays 0, the 4th pays 1 013 (= 0.6 × 4 × 290 × 1.455), income +1 013; more harvests pay nothing. 5: not
-run; Tending, the Shears and hand harvests share `store`, which calls `Track` (code review). 6: 30 finishes → 11 drops (4 rare seeds,
-7 Basic eggs), no Sunshine path. 7: line 2 shows the nearest request (Tomato 4/6 over Onion 1/7), a tap on it opens the panel (a missed
-`Activated` found and fixed), Czech rows fit, the done row's countdown ticks, a real Potato harvest that finished a request showed one
-toast "+1 Brambora · 0,3 kg / 📜 Zakázka splněna! +16 mincí" and line 2 moved on; `RequestDone` + the economy event in the debug log.
-Found and fixed: `GardenService.Remote("Result")` made a second Result remote (now `GardenService.Succeed`); 🪙 does not render on
-Roblox (💰 instead). 8: `economy.py check` (seeds 1–4: ECONOMY → Findings "1.0 requests"), `loc.py` 0 errors / lint 0; boot clean.
-
-#### E5b — Ledger on join
-*Inputs:* the join settle (`settle(..., absence = true)`) and what it already reports (`notice.tended`, `notice.crows`), eggs that
-became ready while away, ribbons resolved on join, the request board's refill, crops left ripe. *Output:* a "While you were away"
-panel (D4) with up to six lines, each an icon and a short text, plus "Away 7 h 20 min". *Boundary:* information only (EXPANSION §13: no
-guilt, no ads); no likes line; stations and strays wait for their drops.
-- **Lines (in order, each only when non-zero):** 🧺 the pets harvested (per crop, ≤ 3 crops then "+ 2 more") and the biggest size of
-  them ("Biggest: Giant 🍅 2.4 kg"); 🐦 crows ate / guards chased off (as today's notice); 🌱 crops ripe and waiting (squares); 🥚 eggs
-  ready; 🎀 ribbons won last week (crop); 📜 new requests today.
-- **Server:** `notice` gains `away` (seconds, from `SettledAt` or `LastQuit`), `ripe`, `eggs`, `ribbons`, `requests` (count of new
-  slots), `biggest = { crop, factor }`; the conversion line stays as it is.
-- **Client:** a panel built in code (`UiKit`, `ZIndexBehavior = Sibling`, `Locale.Changed`), opened by FieldClient after the first
-  State that carries the notice, once per session; never on a stage (waits until the run ends); under 30 min away the toast as today.
-
-*Acceptance checks (E5b):*
-1. Fixture `SettledAt` 8 h back with two Tending pets, a crow block in between, a ready egg and a refilled board: the panel opens
-   once, lists exactly the lines that apply with the right counts (checked against the settle's log), "Away 8 h" ± 1 min.
-2. Fixture 10 min back: no panel, the toast as before (or nothing when nothing happened).
-3. Joining into a stage area or starting a run before the State arrives: the panel waits until the run ends.
-4. Real UI: closes with its button and with a tap outside; Czech fits; no panel again after a respawn.
-5. `loc.py` checks, a playtest boot, no new errors.
-
-*E5b validation (2026-11-20, Lekzdrh's live profile, snapshot `TestSnapshots` `profile_9892673032_E5b_1` (+ MostStars), restored and
-checked after; fixtures written after the shutdown save).* 1: `SettledAt` 10 h back (8 h had no crow block), a ready Basic egg, yesterday's
-board with Garlic done: the panel opened once, "Mimo hru: 10 h 0 min", crows 1× Rajče, 7 ripe (4 Tomatoes − 1 eaten + 2 Potatoes + 2
-Sunflowers ripened), 1 egg, 1 new request; no 🧺 line, right: no ripe square was in a Tending pet's reach. Second fixture with ripe-soon
-Tomatoes in reach: "Mazlíčci sklidili: 14× Rajče. Největší: obří kus – 🍅 Rajče, 0,4 kg" = barn Tomatoes 6 → 20 (12 plantings + 2
-Shears extras). 2: 10 min back: no panel. 3: not run (a run can't be started before the first State through the MCP); code review:
-`tryLedger` re-checks `Hints.Running` every 0.5 s. 4: closes with a tap outside and with its button, every Czech line `TextFits`, the
-emoji icons render, no reopen after a respawn. Ribbons: not run (needs a finished Hall week led by the player); the join check publishes
-once and the ledger waits ≤ 10 s for it. 5: `loc.py` 0 errors / lint 0; no errors or warnings in the three playtests.
-
-#### E5c — Onboarding (first ten minutes) and the garden funnel
-*Inputs:* server events that already exist (seed bought, planted, harvested, sold, pet placed, run finished, request done).
-*Outputs:* `Onboard` step in the profile, hints that point at the step's target, the `GardenStart` funnel. *Boundary:* teaches by
-pointing, never by text boxes or locked controls (D5); a player can do anything off the path and the step still counts when done.
-- **Step 0 (design check):** a fresh-profile playtest (fixture: empty profile under a test key, never a real account's) recording
-  where a new player lands and what they see in the first ten minutes; the step list below is adjusted to it before coding.
-- **Step 0 result (2026-11-20, fresh profile under the Studio test key):** every join already starts at the own plot (RespawnService),
-  the starter egg is ready on arrival (Hatchery badge + "Ready!" marker), the Seeds button pulses, Potatoes ripen in 10 s, the first
-  hatch is a Tending pet (PetConfig decision 3). So "go to the garden" is dropped and hatching comes first (the user, 2026-11-20).
-- **Steps:** 1 hatch the starter egg (Hatchery pulse) → 2 plant the 4 start Potatoes (`CropConfig.StartSeeds`; U3b Seeds pulse) →
-  3 harvest (Basket pulse) → 4 sell (Barn pulse) → 5 buy seeds (stall marker) → 6 put the first pet on the field (Pets pulse) →
-  7 open Quests (line pulse) → 8 finish a stage (the next-stage marker, already built) → done. The mastery ★, the stall rotation and the Hall are shown by a one-time
-  marker the first time each becomes relevant (first level, first restock toast, first visit of the hub plaza with a Big crop), not
-  as steps.
-- **Profile:** `Onboard` = the finished steps as a bit mask (steps done off the path are kept; the hint shows the lowest unfinished
-  step; all 8 bits = done); missing on an existing profile with any `Garden.Crops` or `Garden.BestSize` entry = done on load (AhojRupert's
-  pre-EV3b profile has size records but no `Crops`), else 0. Mirrored as the player
-  attribute `Onboard`.
-- **Telemetry:** funnel `GardenStart` (2nd of 10), `funnelSessionId` = `"u" .. UserId`, steps 1-8 = the `Onboard` steps (logged
-  in step order: a step done early is logged when the ones before it are), 9 `request` (first finished request), 10 `return` (first
-  join on a later UTC day); `Session` CF03 unchanged.
-
-*Acceptance checks (E5c):*
-1. A fresh fixture profile is walked through steps 1-8 through the real UI: each step's hint shows, disappears when done, and the next
-   one appears within 2 s; `Onboard` ends as done and the funnel logged steps 1-8 once each (Telemetry debug log).
-2. Out of order (buying seeds, step 5, before selling, step 4): step 5 is kept, the hint goes from step 4 straight to step 6, no
-   step is shown twice; the funnel logs step 5 right after step 4.
-3. Lekzdrh's and AhojRupert's live profiles (read-only) load as done: no onboarding hint shows.
-4. A rejoin halfway resumes at the stored step.
-5. `loc.py` checks, a playtest boot, no new errors; the test profile key removed afterwards.
-
-*Studio-only changes:* none planned (every GUI built in code); the step 0 check may add one.
-
-*E5c validation (2026-11-20, a fresh profile under the Studio test key `test_e5c_1` (ServerStorage attribute `TestProfileKey`, new
-in PlayerProfile: no live record touched, the star board and Top-10s skip it); Telemetry debug log).* 1 + 2: through the real UI: hatch
-(Hatchery pulse) → `Onboard` 1; 4 Potatoes planted → 3; harvest → 7; the pet placed early → 39; sell → 47 (the stall marker showed);
-buy seeds → 63, the hint went straight past the done pet step to the Goals line pulse; panel opened → 127; Tutorial finish → 255, no
-pulse left. Funnel 1-8 logged once each, `placePet` (6) right after `buySeeds` (5). 4: a rejoin at 63 resumed at the Goals step.
-`return`: `OnboardDay` − 1 → 767 (bit set, logged only after `request`). 3: Lekzdrh loads as 1023 (snapshot
-`profile_9892673032_E5c_1`); AhojRupert's record (no `Garden.Crops`, 4 `BestSize` entries, read-only) is done by the widened rule.
-Found and fixed: a test-profile finish wrote Lekzdrh's global Top-10 (restored to 15.1 s; boards now skip test profiles). 5: `loc.py`
-0 errors / lint 0; no errors or warnings. Not built: the one-time markers for the mastery ★, the stall rotation and the Hall (moved to
-Open items). Funnel step 9 `request`: code review only (`GardenRequests.finish`). Test keys and attributes removed.
-
 ### HX1 — Hybrid plants: the breeding mechanic (design only; added 2026-11-16; the build comes after 1.0)
 Settle the game mechanic before any game code. Notes, decisions and open points: [HYBRIDS.md](HYBRIDS.md); the HX0 prototype: "Done".
 **Decided (Ales, 2026-11-16):** price = measured kg × inherited value per kg; grow time from plant mass; strains (not single
@@ -459,6 +304,12 @@ Tagged **[1.0]** (needed before 1.0 goes public) or **[later]**.
 
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
+
+**E5 — the online loop** (2026-11-20; E5a Studio-validated 2026-11-19, E5b + E5c 2026-11-20). *Why:* the first hour ran out
+of news after the 6th crop and a returning player saw a toast instead of a ledger. *What:* three tracked daily crop requests in the Goals
+panel (E5a), the "While you were away" ledger after ≥ 30 min away (E5b), onboarding for the first ten minutes by pulses and markers plus
+the `GardenStart` funnel (E5c); decisions D1–D5 (timed runs and Sunshine wait for EV2c). As built: GDD §7.9 (requests, ledger), §11
+(onboarding); TELEMETRY. Scope / checks / validation: `git show c2fb139:docs/ROADMAP.md`. Open: "E5 leftovers" under Open items.
 
 **OG2 — dependable crop timers** (2026-11-20; Studio-validated). Catalogue / countdown time is the away-time baseline;
 crops grow offline ×1 / online ×2 (Cloches extra), cap 24 h. Saved progress stays, field-job XP keeps its 1 / 0.5 clock.
