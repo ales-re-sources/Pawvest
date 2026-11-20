@@ -65,22 +65,6 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | M6b, S11, M7, trading | Final balancing, bonus stages, monetization (drop D2), trading (after 1.0) | – | – | – |
 
 ## Next
-**OG2 — dependable crop timers (approved / Studio-validated 2026-11-20).** Catalogue times are the away-time baseline: offline ×1,
-online ×2, Cloches additionally multiply online speed; Growth / crop Speed shorten both modes. Keep the 24 h cap and saved `Grown`;
-the first join uses the new rate for its pending absence. Field-job XP stays at online ×1 / offline ×0.5. No profile migration.
-Acceptance: Sunflower ripe after 18 h away, Pineapple after 24 h (cap also checked at 48 h); mixed-mode growth and old saved progress;
-Tending / crows use the new growth clock, work XP the old clock; all seed durations, card / rings / bubble countdowns, art and ripe badge
-agree, with baseline seconds ticking at ×2 (×2.4 with top Cloches). Check English / Czech real UI, localization, economy before / after,
-one clean playtest boot; snapshot before any live-profile write and restore fixture data afterwards. Existing economy baseline:
-15/15 core, 16/18 EV (G2, G11 fail). Validation: `tools/crop_timing_checks.luau` passes 498 isolated Edit fixtures, including all
-Growth × Speed × Cloches combinations, mixed sessions, cap, saved progress, Tending cycles, crows / guards and separate XP clocks.
-Real UI: Barn, Seeds hand button / picker, Sunflower world click / card, seed-stall E prompt, real ★ to crop page; new Czech TextFits
-pass on all five screens, English crop page wraps and fits. Sunflower card / rings / bubble agree; Cloches 2 countdown loses 7 s in
-3.013 real s (expected ×2.28). Seed rows used a display-only State fixture; no live-profile fixture writes. Language, real State and
-camera restored; playtest stopped. Server has no warnings / errors; client only the MCP camera-reset warning. Localization: build,
-check (638 keys, 0 errors), lint (0 literals / baseline 0). Economy after: core 15/15, EV 10/18; failures and balance debt in ECONOMY.
-Scope / validation details shrink to a Done entry when finished.
-
 **1.0 (decided 2026-11-17, the user).** 1.0 = a long engagement loop + basic social competition; then the game goes public.
 - **Long loop:** crop mastery (EV3), a slowly rotating seed stall (ST), the request board and the ledger (E5).
 - **Social:** the Harvest Hall (weekly biggest crop of every kind) and likes on plots (SH).
@@ -457,6 +441,11 @@ Tagged **[1.0]** (needed before 1.0 goes public) or **[later]**.
 
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
+
+**OG2 — dependable crop timers** (2026-11-20; Studio-validated). Catalogue / countdown time is the away-time baseline;
+crops grow offline ×1 / online ×2 (Cloches extra), cap 24 h. Saved progress stays, field-job XP keeps its 1 / 0.5 clock.
+As built: GDD §7.9. Scope / checks / validation: `git show 0137d07:docs/ROADMAP.md`. Open: EV balance checks fell from 16/18
+to 10/18; see ECONOMY → Crop timing update. Live validation / publishing remains open.
 
 **FB3 — rating on the popup too** (2026-11-19; Studio-validated through the real popup button, profile snapshot restored). *Why:*
 the user wants finishers asked right away; the signs stay for the rest. *What:* GDD §10; the popup's 👍 / 👎 row back on world
