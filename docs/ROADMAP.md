@@ -90,8 +90,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 4. **FB — player feedback:** done (Studio-validated 2026-11-18; Done).
 5. **E5 — the online loop:** done (Studio-validated 2026-11-20; Done).
 5b. **EG — egg ladder** (done, Studio-validated 2026-11-21; Done), **FL — flatter crop ladder** (done, Studio-validated
-   2026-11-21; Done; before FD, whose fed-crop XP and food prices follow the crop sales) and **FD — food bootstraps, activity maxes** (section
-   below; added 2026-11-20 by the user as needed for 1.0): a model pass before code.
+   2026-11-21; Done) and **FD — food bootstraps, activity maxes** (done, Studio-validated 2026-11-21; Done).
 6. **Release gates, then public:** MU (section below; adds the Hall and a full field on a real phone), TH1 + THU, the Czech review of
    every new text, the M6a live checks, "Before Max Players 24" under "Open items", then Max Players → 24 (a place setting).
 
@@ -214,71 +213,6 @@ one line (changed the same day); no free reset (later a paid comfort in D2 or an
 
 **Not in EV3:** repeat-run Coins → Sunshine (EV2c); requests and trees (the online loop, E5); a flatter price curve (FL).
 
-### FD — Food bootstraps, activity maxes (1.0; scoped 2026-11-20; design signed off by the user 2026-11-20, the rates and prices are fitted by the model pass)
-*Why (the user, 2026-11-20):* a new pet can be fed to the max for almost nothing; Coins should bootstrap a new pet, never replace the
-pet's own activity on the way to its max level. Measured: Cuteness 1 → 20 = 11 100 care XP = ~17 000 Coins in Feasts (0.5 % of Casual's
-day-7 income, 3.4 Corn sales); a work trait's care cap (level 10, 88 field hours) costs 13 000; a fed crop gives half its sale as XP, so
-one Eggplant (35 000 XP) fills any pet's Cuteness. Pet levels, look tiers and the 20-level curve stop being a goal on day 2. (Was M6b's
-"food prices against field income".)
-*Design (recommended):*
-- **Food limit = half the max.** Food and fed crops train any trait only up to half its rarity cap: Common 6, Uncommon 7, Rare 8, Epic 9,
-  Legendary 10. One rule for every trait (work traits today stop at 10 for every rarity, so Commons–Epics drop to 6–9). A pet whose traits
-  are all at the food limit is refused food with "grows with you now"; the chip shows the limit (🍖 up to Lv 10).
-- **Above the limit only activity counts** (the work-trait rule today, extended to Cuteness): Cuteness grows from **obby runs** (medal /
-  move / coin XP **× 0.04** past the food limit) and from **time with you** (each equipped pet, **0.75 XP per online minute**) up to
-  the rarity cap; Tending and Pest control from field hours, Scouting from medal finishes, as now. *Changed by the model pass (the
-  user, 2026-11-21):* a pet levels quickly to ~10, where it contributes (food), and the max is not easy: ~90 days for a daily player
-  (Casual); obby time counts more than time with you (an obby minute ~2.1 XP, an idle minute 0.75; time with you 10× slower than the
-  designed ~7.5). Roblox's 20-minute idle kick bounds AFK time.
-- **"Bigger pets eat more"** (liked by the user): the three foods keep their XP; the price scales with the level of the trait the food
-  trains: today's price × 2.65^(b − 1), b = that trait's base level (`PetConfig.BaseLevel`, fractional, so it rises on every level),
-  nice-rounded, read at feeding; **× 10 for a Legendary** (Common–Epic × 1; *decided, the user 2026-11-21: "scale by rarity"*, fitted
-  to each rarity's first pet, ECONOMY.md → Findings (FD)). Food to the limit (cheapest mix): Common–Rare 1 500 (one Feast), Epic
-  7 370, Legendary 200 100 (was 2 700 to Cuteness 10 for any pet); a work trait to its limit: Common 5 870, Legendary 1 183 000 (was
-  13 000). With the limit in place this keeps the bootstrap from being free; the limit, not the price, stops buying the max.
-- **Fed crops** shrink with the Berry's price (XP = level-1 XP × size × the Berry's level-1 price ÷ its price for that pet: the trait's
-  level and the rarity factor; a Common at level 1 as now): never better than selling and buying (E1a3 kept, at every level). A feed worth < 1 XP is refused, no crop taken.
-  *Decided (the user, 2026-11-21):* the Berry's price ratio, not ÷ 2.65^(b − 1) (which broke E1a3 by up to 3 % where nice() rounds
-  the Berry's price up).
-- The food stand's buttons show the price for the chosen pet; the pet page's Feed card shows the XP a crop gives that pet.
-- Pets already above their food limit keep their levels (no migration); they just cannot be fed further.
-*Model pass (2026-11-21, [ECONOMY.md](ECONOMY.md) → Findings (FD), open decision 9):* done, `economy_ev` carries the FD rules (`fd`,
-check FD). Obby care XP (~1 500 XP a day for Casual) is ~3× the designed time with you, so whole obby XP gave the max in ~9 days.
-With the rule above Casual's day-7 Legendary reaches 10 within 0.5–1.5 days (the sim's 2 % food share saves its 200 100) and 20 in
-88.5 days (Obby main 29.5, Garden main 85); check 6's band is 75–110 days (was ≥ 14).
-*Boundary:* `PetConfig` (`CareLimit` = half the cap for food; activity care XP routed past it to the cap for Cuteness, work traits stop
-at the food limit; the time-with-you rate), `GardenConfig` (shared food price), `GardenFood` (prices from the config and the pet, never
-from the client), `GardenField` crop feed (the Berry's price for that pet), `PetService` (care XP routing; online-time XP for equipped pets, saved through
-`PlayerProfile`), `FoodShopClient`, `PetDetail` (Feed card, chip limit marker), Strings;
-`economy_ev` (done: food limit, price by level, crop XP, check FD; the build adds the FD values to EV0), `economy.py check` + `pin`;
-GDD §7.4 / §7.6 / §7.9, ECONOMY, PROTOCOL. **Not in FD:** the aptitude curves, the rarity caps, a fullness timer (fits the Kitchen, D5).
-*Acceptance (hard):*
-1. Through the real UI: a Feast for a Cuteness-1 Common costs 1 500, for a Cuteness-1 Legendary 15 000; for a Cuteness-8 Legendary
-   the config's level-8 price (× 10); Coins drop by exactly the shown price.
-2. A Legendary at Cuteness 10 with every work trait at 10: Feed is refused (Coins, crops and XP unchanged) and the row says how it grows
-   now; a Common at Cuteness 6 likewise.
-3. That Legendary, equipped, gains 0.04 × a Gold run's care XP past level 10 (~2 XP), and ~4 XP (5 × 0.75) over 5 online minutes
-   without a run.
-4. A player with fewer Coins than the price is refused; Coins and XP unchanged.
-5. A Corn fed to a Cuteness-1 Common gives 600 XP (as now, since FL); fed to a Cuteness-8 Epic 31 XP (600 × 50 ÷ 950, the Berry's
-   price ratio), to a Cuteness-8 Legendary 3 (÷ 9 500); a Potato fed to a level-8 pet or to any Legendary is refused and stays in the
-   barn.
-6. Model: Casual's day-7 Legendary reaches Cuteness 10 within 2 days, and 20 in 75–110 days after it (~90; was ≥ 14); E1a3 passes
-   at every level and rarity; `economy.py check` has no failure beyond today's. *Met by the model pass 2026-11-21.*
-7. The limit line and prices fit the stand and pet page in Czech (`TextFits`, `Locale.Compact`).
-
-*Validation (2026-11-21, Studio, fixture on the test profile `test_fd` via `TestProfileKey`, removed afterwards; no live profile
-written):* every acceptance check passed. 1: the stand's buttons showed 50 / 400 / 1 500 (Cuteness-1 Cat), 500 / 4 000 / 15 000
-(Cuteness-1 Phoenix), 9 500 / 75 000 / 280 000 (Cuteness-8 Phoenix); a real Feast click for the last took Coins 300 000 → 20 000 and
-Cuteness 8 → 10 (its food limit, the rest wasted). The Luau prices equal `economy_ev`'s on every rarity × level × food (checksum
-387 146 580 over Common / Epic / Legendary, levels 1–20). 2: the Cuteness-10 Phoenix with work traits at 10 and the Cuteness-6 Cat show
-"🏃 Grows with you now" and `Feed` answers `maxed`. 3: the equipped Phoenix gained 1.49 XP over two 60 s ticks (0.75 / min) and exactly
-0.8 from a Gold Tutorial finish ("Pets +20 XP", × 0.04). 4: a click on a 28 000 Feast with 20 000 Coins showed "Not enough Coins", the
-remote answered `coins`, Coins unchanged. 5: the Cuteness-8 Dragon's Feed card showed "+31 XP each" for Corn and no Potato row; a real
-Feed click gave "+31 XP"; Potato to it and to the Cuteness-1 Phoenix answered `small`, the barn kept 5 Potatoes. 7: stand and pet page in
-Czech, every changed label `TextFits`. No errors or warnings on server or client; a normal boot afterwards clean.
-*Open:* the results popup still says "Pets +20 XP" for a pet past its food limit (it gains 0.8); physical touch and a phone not checked.
-
 ### ST — Rotating seed stall
 Done 2026-11-18 (Done; the scope: `git show df15e8f:docs/ROADMAP.md`). Decided with it: the numbers (hourly, staples Potato–Onion,
 chance 0.5, pity 3, 12 seeds, the newest crop always; the user, 2026-11-18); the market cart stays apart; the restock note is a garden
@@ -374,6 +308,15 @@ Tagged **[1.0]** (needed before 1.0 goes public) or **[later]**.
 
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
+
+**FD — food bootstraps, activity maxes** (2026-11-21; Studio-validated). *Why (the user):* a new pet could be fed to the max for
+almost nothing; Coins should bootstrap a pet, never replace its own activity. Food and fed crops train every trait only to the food limit
+(half the rarity cap: Common 6 … Legendary 10); past it Cuteness grows from obby XP × 0.04 and time with you (0.75 XP per online minute),
+work traits from their jobs; food costs × 2.65^(b − 1) by the trained trait's level and × 10 for a Legendary; a fed crop follows the
+Berry's price for that pet (< 1 XP refused). Casual's day-7 Legendary: Cuteness 10 within 2 days, 20 in ~90. Validated on a test profile
+(every acceptance check; the Luau prices equal the model's on every rarity and level). Open: the results popup's "Pets +N XP" shows the
+run's XP, not the × 0.04 a pet past its limit gets. As built: GDD §7.4 / §7.6 / §7.9, ECONOMY → Findings (FD). Scope, acceptance and
+validation: `git show c5305a9:docs/ROADMAP.md`.
 
 **FL — flatter crop ladder** (2026-11-21; Studio-validated). A price tier sets Coins per square-hour (tiers 0–2 as built, then × 1.5),
 grow time is a choice inside a tier, longest crop 14 h (Sunflower 36 h → 10 h, Pineapple 48 h → 30 m); rare sales halved; quick crops
