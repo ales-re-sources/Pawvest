@@ -89,6 +89,11 @@ function EggLook.Make(eggId: string, baseCFrame: CFrame, detail: string?): Model
 		light.Brightness = 1.5
 		light.Parent = root
 	end
+	if look and look.sparkle and (detail == nil or detail == "full") then -- EG: the Diamond egg (no particles in a ViewportFrame)
+		local sparkles = Instance.new("Sparkles")
+		sparkles.SparkleColor = Color3.fromRGB(190, 230, 255)
+		sparkles.Parent = root
+	end
 	return model
 end
 

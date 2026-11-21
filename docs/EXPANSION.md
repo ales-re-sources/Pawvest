@@ -193,7 +193,7 @@ comfort purchases (§13) speed progress up by a bounded factor and never change 
   for handed-in crops). An unfinished request stays; only finished slots refill on the next UTC day; the board opens as soon as two
   crops qualify (day 0). A quest book that also lists milestone quests and unlocks: later.
   *Decided for 1.0 (the user, 2026-11-19, ROADMAP → E5):* crop requests only (the timed run comes with Sunshine, EV2c); the drop is a
-  rare seed or a free Basic egg, half and half.
+  rare seed or a free egg (Pearl, Topaz once Pumpkin is open), half and half.
 - **Stations** (queues with timers; Crafting pets run them faster): Compost (fertilisers, the first station, with the variants, D4), Mill
   (grain → flour), Kitchen (crops → pet food, a cheaper route to levels than Berry / Cake / Feast; raw crops can already be fed), Workshop
   (decor, plot upgrades), Apothecary (tonics, mastery items).

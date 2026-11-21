@@ -186,8 +186,11 @@ local function finish(player: Player, garden, slot, index: number)
 				garden.Seeds[seed.id] = (garden.Seeds[seed.id] or 0) + 1 -- an earned seed goes past the barn's limit
 				drop = { seed = seed.id }
 			end
-		elseif PetService.GrantFreeEgg(player, rules.DropEgg) then
-			drop = { egg = rules.DropEgg }
+		else
+			local eggId = CropConfig.DropEggFor(garden.Unlocked)
+			if PetService.GrantFreeEgg(player, eggId) then
+				drop = { egg = eggId }
+			end
 		end
 	end
 	Telemetry.RequestDone(player, crop.id, index, (os.time() - slot.At) / 60, coins, if profile then profile.Coins else 0)

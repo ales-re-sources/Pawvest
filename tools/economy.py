@@ -248,11 +248,12 @@ def crow_cfg(o):
 
 def mastery_cfg(o):
     pts = o["Points"]  # EV3c: the size of one upgrade point per line, then the points one line takes
-    return [list(o["Levels"]), o["RestPerDay"], o["RestCap"], o["QuestSeeds"], [pts["Value"], pts["Size"], pts["Speed"], pts["PerLine"]]]
+    bands = [[b["UpTo"], list(b["Levels"])] for b in o.get("LevelsBy", [])]  # FL: level counts by base grow seconds
+    return [list(o["Levels"]), o["RestPerDay"], o["RestCap"], o["QuestSeeds"], [pts["Value"], pts["Size"], pts["Speed"], pts["PerLine"]], bands]
 
 
 def stall_cfg(o):
-    return [o["Seconds"], o["Staples"], o["Chance"], o["Pity"], o["Count"]]
+    return [o["Seconds"], o["Staples"], o["Chance"], o["Pity"], o["Count"], o.get("LongSeconds")]  # FL: the overnight staple
 
 
 def scout_cfg(o):
@@ -405,7 +406,7 @@ def load():
     P["rarities"] = {r["id"]: {"order": r["order"], "bonus": r["bonus"], "sell": r["sellValue"]}
                      for r in luau("PetConfig.luau", "PetConfig.Rarities")}
     P["hatch_by_rarity"] = luau("PetConfig.luau", "PetConfig.HatchSeconds")
-    P["eggs"] = {k: {"price": e["price"], "weights": e["weights"],
+    P["eggs"] = {k: {"price": e["price"], "weights": e["weights"], "opens": e.get("opensWith"),
                      "hatch_s": sum(P["hatch_by_rarity"][r] * w for r, w in e["weights"].items()) / sum(e["weights"].values())}
                  for k, e in luau("PetConfig.luau", "PetConfig.Eggs").items()}
     P["slot_prices"] = luau("PetConfig.luau", "PetConfig.SlotPrices")
@@ -1688,7 +1689,7 @@ def reproduction(P):
          sum(stage_medal_total(P, s) for s in six)),
         ("Medals, all 21 stages", 83790, sum(stage_medal_total(P, s) for s in S)),
         ("First-finish payouts, all 21 stages", 5985, sum(first_finish(P, s) for s in S)),
-        ("Planned talent tree", 3374900, full_tree),  # Coins only; 3 394 900 until EV3b1; 44 300 until EV2b, 47 300 until Double Jump became a world reward (K1)
+        ("Planned talent tree", 3373400, full_tree),  # Coins only; 3 374 900 until FL (Triple Jump 8 500); 3 394 900 until EV3b1; 44 300 until EV2b, 47 300 until Double Jump became a world reward (K1)
         ("Gold runs, first 10 of a day, factor 1.5", 668, gold_day(by_factor[1.5])),
         ("Gold runs, first 10 of a day, factor 1.0", 446, gold_day(by_factor[1.0])),
         ("Gold runs, first 10 of a day, factor 0.5 (Tutorial)", 227, gold_day(by_factor[0.5])),

@@ -351,7 +351,7 @@ function GardenUi.Stars(field, crop): string
 	if crop.rare then
 		return ""
 	end
-	local level = CropConfig.MasteryLevel(GardenUi.PlantsOf(field, crop))
+	local level = CropConfig.MasteryLevel(crop, GardenUi.PlantsOf(field, crop), GardenUi.PointsOf(field, crop))
 	return if level > 0 then " ★" .. level else ""
 end
 
@@ -361,8 +361,8 @@ function GardenUi.MasteryLine(field, crop): string?
 		return nil
 	end
 	local n = GardenUi.PlantsOf(field, crop)
-	local level = CropConfig.MasteryLevel(n)
-	local need = CropConfig.Mastery.Levels[level + 1]
+	local level = CropConfig.MasteryLevel(crop, n, GardenUi.PointsOf(field, crop))
+	local need = CropConfig.LevelsOf(crop)[level + 1]
 	if not need then
 		return Locale.T("field.mastery.max", { level = level })
 	end
@@ -378,7 +378,7 @@ end
 
 -- Points of `crop` still to spend (0 for a rare crop).
 function GardenUi.FreePoints(field, crop): number
-	return if crop.rare then 0 else CropConfig.FreePoints(GardenUi.PlantsOf(field, crop), GardenUi.PointsOf(field, crop))
+	return if crop.rare then 0 else CropConfig.FreePoints(crop, GardenUi.PlantsOf(field, crop), GardenUi.PointsOf(field, crop))
 end
 
 -- The common crops with a point to spend, in list order.

@@ -89,7 +89,8 @@ end
 
 local function renderHead(field, crop)
 	local n = GardenUi.PlantsOf(field, crop)
-	local level = CropConfig.MasteryLevel(n)
+	local level = CropConfig.MasteryLevel(crop, n, GardenUi.PointsOf(field, crop))
+	local levels = CropConfig.LevelsOf(crop)
 	local free = GardenUi.FreePoints(field, crop)
 	local spent = CropConfig.SpentPoints(GardenUi.PointsOf(field, crop))
 	GardenUi.Paragraph("Mastery", {
@@ -99,22 +100,22 @@ local function renderHead(field, crop)
 		TextColor3 = Color3.new(1, 1, 1),
 		Text = GardenUi.MasteryLine(field, crop) or "",
 	}).Parent = headSection
-	local need = CropConfig.Mastery.Levels[level + 1]
+	local need = levels[level + 1]
 	if need then
-		local from = CropConfig.Mastery.Levels[level] or 0
+		local from = levels[level] or 0
 		UiKit.Bar("Bar", {
 			order = 2,
 			height = 18,
 			track = COLOR_TRACK,
 			fill = COLOR_FILL,
-			share = (n - from) / (need - from),
+			share = math.clamp((n - from) / (need - from), 0, 1), -- a level kept by its points may sit below its count (FL)
 			parent = headSection,
 		})
 	end
 	local text, color
 	if free > 0 then
 		text, color = Locale.T("field.cropPage.points", { count = free }), GardenUi.COLOR_OK
-	elseif spent >= #CropConfig.Mastery.Levels then
+	elseif spent >= #levels then
 		text, color = Locale.T("field.cropPage.allDone"), GardenUi.COLOR_OK
 	else
 		text, color = Locale.T("field.cropPage.noPoints", { left = (need or n) - n }), GardenUi.COLOR_INFO
@@ -129,7 +130,7 @@ end
 local function renderLines(field, crop)
 	local pts = GardenUi.PointsOf(field, crop)
 	local free = GardenUi.FreePoints(field, crop)
-	local final = CropConfig.SpentPoints(pts) >= #CropConfig.Mastery.Levels -- every point of the top level spent: no + any more
+	local final = CropConfig.SpentPoints(pts) >= #CropConfig.LevelsOf(crop) -- every point of the top level spent: no + any more
 	local tap = ui.TapHeight()
 	for index, line in CropConfig.PointLines do
 		local keys = LINE_KEYS[line]

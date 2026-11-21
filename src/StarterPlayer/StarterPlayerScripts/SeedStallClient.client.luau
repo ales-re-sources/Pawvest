@@ -168,10 +168,15 @@ local function renderSeeds(field, tap: number)
 		local stock = field.seeds[crop.id] or 0
 		local reserved = if locked or crop.rare then LOCK_WIDTH + GAP else BUY1_WIDTH + BUY10_WIDTH + STAR_WIDTH + GAP * 3
 		local row = GardenUi.Row(seedsSection, crop.id, order, COLOR_ROW)
-		local grow = GardenUi.GrowTime(GardenUi.GrowSecondsOn(field, crop))
+		local seconds = GardenUi.GrowSecondsOn(field, crop)
+		local grow = GardenUi.GrowTime(seconds)
 		local info = if crop.rare
 			then Locale.T("field.seed.rareInfo", { time = grow, sale = crop.sale, stock = stock })
 			else Locale.T("field.seed.info", { time = grow, sale = GardenUi.SalePrice(field, crop), seed = crop.seed, stock = stock })
+		if not crop.rare then -- FL: net Coins per hour of one square, so a quick crop of a higher tier does not read as worse
+			local rate = (GardenUi.SalePrice(field, crop) - crop.seed) * 3600 / math.max(1, seconds)
+			info ..= "\n" .. Locale.T("field.seed.rate", { coins = math.floor(rate + 0.5) })
+		end
 		local left = if stall and not locked then stall.left[crop.id] else nil -- ST: nil = always in stock
 		if left and left > 0 then
 			info ..= "\n" .. Locale.T("seedStall.left", { count = left })

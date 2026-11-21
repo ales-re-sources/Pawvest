@@ -63,6 +63,7 @@ local function newProfile()
 		NextPetUid = 1, -- next uid to hand out, never reused (P1a)
 		FreeEggs = {}, -- [eggId] = free eggs waiting to be opened (P1a)
 		LaunchEgg = false, -- true once the pets-launch free egg was granted (P1a)
+		SeenKinds = {}, -- [kind] = true for every pet kind the player has owned (EG; PetService backfills it from Pets on join)
 		-- Pet garden (P2b1 / EV2e): Incubators["1".."3"] = { Id, Egg, Kind, StartedAt, ReadyAt } (server os.time()), IncubatorCount = incubators
 		-- owned; the field and field pets are added by GardenField on the first join (the P2 pens are gone since FA)
 		Garden = { Incubators = {}, IncubatorCount = 1 },

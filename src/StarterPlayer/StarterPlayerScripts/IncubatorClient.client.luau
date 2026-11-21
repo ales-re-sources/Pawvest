@@ -3,8 +3,9 @@
 --   * one row per incubator: egg + countdown, small trash brick → orange OK? → discard (ConfirmTap), Hatch when ready;
 --     empty; the next one to buy
 --     (Unlock brick with the price, two taps over ConfirmTap.THRESHOLD); later ones "unlock incubator n first";
---   * egg cards (K1) while an owned incubator is empty: the egg drawn in its colour, name, hatch time, a buy brick with the price
---     (two taps over the threshold) that starts it in the first empty incubator, and "?" for odds, rarity times and rules;
+--   * egg cards (K1), two a row, while an owned incubator is empty: the egg drawn in its colour, name, hatch time, a buy brick with
+--     the price (two taps over the threshold) that starts it in the first empty incubator, and "?" for odds (with the kinds under
+--     each rarity, a silhouette until owned, EG), rarity times and rules; an egg whose crop is not open shows 🔒 + the crop's icon;
 --   * on a Hatch answer, HatchReveal over the content: the egg wobbles and bursts, the pet pops in, then a summary (rarity and the
 --     egg's chance of it, where it went, every trait it was born with and what it does) with View pet / Great!;
 --   * waiting free eggs (the server starts them on its own); answers and refusals in a status line at the top;
@@ -22,12 +23,14 @@ local UserInputService = game:GetService("UserInputService")
 
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
+local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local EggLook = require(ReplicatedStorage:WaitForChild("EggLook"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PanelFocus = require(ReplicatedStorage:WaitForChild("PanelFocus"))
 local ConfirmTap = require(ReplicatedStorage:WaitForChild("ConfirmTap"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
+local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
 local HatchReveal = require(script.Parent:WaitForChild("HatchReveal"))
 local GardenView = require(script.Parent:WaitForChild("GardenView"))
 local GardenUi = require(script.Parent:WaitForChild("GardenUi"))
@@ -58,7 +61,10 @@ local REJECT_KEYS = { -- the rest: Locale.Reject's common.reject.*
 	full = "incubator.reject.full",
 	empty = "incubator.reject.empty",
 	notready = "incubator.reject.notready",
+	eggLocked = "incubator.reject.eggLocked",
 }
+local KIND_SIZE = 44 -- the odds panel's pet portraits (EG)
+local COLOR_UNSEEN = Color3.fromRGB(25, 22, 30) -- a kind never owned: a dark silhouette
 
 local function eggName(eggId: string): string
 	local egg = PetConfig.Eggs[eggId]
@@ -93,7 +99,40 @@ local function drawTrash(button: TextButton)
 	end
 end
 
--- Odds as separate rows: rarity and aligned chance. Hatch duration stays out of this table.
+-- One portrait per pet kind, built once and reparented on every render (PetPortrait.Release before the section is cleared).
+local kindPortraits = {} -- [kind] = ViewportFrame | false (no model)
+local function kindPortrait(kind: string): ViewportFrame?
+	if kindPortraits[kind] == nil then
+		kindPortraits[kind] = PetPortrait.Make(kind, 1) or false
+	end
+	return kindPortraits[kind] or nil
+end
+
+-- EG: the kinds an egg can hatch under each rarity row, in colour once owned (PetsChanged seenKinds), else a dark silhouette.
+local function renderKinds(rarityId: string, order: number, parent: Instance)
+	local seen = PetClient.State and type(PetClient.State.seenKinds) == "table" and PetClient.State.seenKinds or {}
+	local row = GardenUi.Create("Frame", {
+		Name = rarityId .. "Kinds", LayoutOrder = order, Size = UDim2.new(1, 0, 0, KIND_SIZE), BackgroundTransparency = 1, Parent = parent,
+	}, {
+		GardenUi.Create("UIListLayout", {
+			FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, GAP),
+		}),
+	})
+	for index, kind in PetConfig.KindsByRarity[rarityId] do
+		local portrait = kindPortrait(kind)
+		local known = seen[kind] == true
+		if portrait then
+			portrait.ImageColor3 = if known then Color3.new(1, 1, 1) else COLOR_UNSEEN
+		end
+		local holder = PetPortrait.Holder({
+			Name = kind, LayoutOrder = index, Size = UDim2.fromOffset(KIND_SIZE, KIND_SIZE),
+			BackgroundColor3 = StudStyle.Shade(COLOR_ROW, if known then 0.8 else 0.6), Parent = row,
+		}, portrait)
+		holder:SetAttribute("Seen", known) -- tests read it
+	end
+end
+
+-- Odds as separate rows: rarity and aligned chance, then the kinds of that rarity. Hatch duration stays out of this table.
 local function renderOdds(eggId: string, parent: Instance)
 	local section = GardenUi.Section("Odds", 4)
 	section.Parent = parent
@@ -101,8 +140,9 @@ local function renderOdds(eggId: string, parent: Instance)
 	for _, rarity in PetConfig.Rarities do
 		local weight = PetConfig.Eggs[eggId].weights[rarity.id]
 		if weight and weight > 0 then
+			renderKinds(rarity.id, rarity.order * 2 + 1, section)
 			local row = GardenUi.Create("Frame", {
-				Name = rarity.id, LayoutOrder = rarity.order, Size = UDim2.new(1, 0, 0, 0),
+				Name = rarity.id, LayoutOrder = rarity.order * 2, Size = UDim2.new(1, 0, 0, 0),
 				AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Parent = section,
 			}, {
 				GardenUi.Create("UIListLayout", {
@@ -297,6 +337,7 @@ local function eggPicture(eggId: string): ViewportFrame
 end
 
 local function renderEggs(state, tap: number)
+	PetPortrait.Release(eggsSection) -- the cached kind portraits survive the clear
 	GardenUi.Clear(eggsSection)
 	local target = firstEmpty(state)
 	if not target then
@@ -311,11 +352,16 @@ local function renderEggs(state, tap: number)
 		BackgroundTransparency = 1,
 		Parent = eggsSection,
 	}, {
-		GardenUi.Create("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, GAP) }),
+		-- EG: two cards a row (four eggs did not fit one row with a buy brick and "?")
+		GardenUi.Create("UIListLayout", {
+			FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, GAP), Wraps = true,
+		}),
 	})
-	local count = #PetConfig.EggOrder
+	local unlocked = GardenUi.Mastery(GardenView.OwnField()).unlocked
 	for order, eggId in PetConfig.EggOrder do
 		local egg = PetConfig.Eggs[eggId]
+		local open = PetConfig.EggOpen(egg, unlocked)
+		local opener = egg.opensWith and CropConfig.ById[egg.opensWith]
 		local shortest, longest = math.huge, 0
 		for rarity, weight in egg.weights do
 			if weight > 0 then
@@ -326,7 +372,7 @@ local function renderEggs(state, tap: number)
 		local card = GardenUi.Create("Frame", {
 			Name = eggId,
 			LayoutOrder = order,
-			Size = UDim2.new(1 / count, -GAP * (count - 1) / count, 0, 0),
+			Size = UDim2.new(0.5, -GAP / 2, 0, 0),
 			AutomaticSize = Enum.AutomaticSize.Y,
 			BackgroundColor3 = COLOR_ROW,
 			Parent = cards,
@@ -359,6 +405,15 @@ local function renderEggs(state, tap: number)
 			TextXAlignment = Enum.TextXAlignment.Center,
 			Text = Locale.T("hatchery.egg.time", { time = GardenUi.GrowTime(shortest), max = GardenUi.GrowTime(longest) }),
 		}).Parent = card
+		if not open and opener then
+			GardenUi.Paragraph("OpensWith", {
+				LayoutOrder = 3,
+				TextSize = 13,
+				TextColor3 = GardenUi.COLOR_INFO,
+				TextXAlignment = Enum.TextXAlignment.Center,
+				Text = Locale.T("hatchery.egg.opensWith", { crop = Locale.CropName(opener) }),
+			}).Parent = card
+		end
 		local bricks = GardenUi.Create("Frame", {
 			Name = "Bricks",
 			LayoutOrder = 4,
@@ -366,25 +421,40 @@ local function renderEggs(state, tap: number)
 			BackgroundTransparency = 1,
 			Parent = card,
 		}, {
-			GardenUi.Create("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, GAP) }),
+			GardenUi.Create("UIListLayout", {
+				FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, GAP),
+				VerticalAlignment = Enum.VerticalAlignment.Center,
+			}),
 		})
-		local buy = GardenUi.Button("Buy", {
-			LayoutOrder = 1,
-			Size = UDim2.new(1, -(tap + GAP), 0, tap),
-			BackgroundColor3 = if PetClient.Coins >= egg.price then GardenUi.COLOR_BUY else GardenUi.COLOR_LOCKED,
-			TextSize = 16,
-			TextWrapped = true,
-			Text = Locale.T("hatchery.egg.buy", { count = egg.price }),
-			Parent = bricks,
-		}, 2)
-		ConfirmTap.Wrap(buy, "Egg" .. eggId, function()
-			return ConfirmTap.Over(egg.price)
-		end, function()
-			local now = incubators and firstEmpty(incubators)
-			if now then
-				startEggEvent:FireServer(now, eggId)
-			end
-		end)
+		if open then
+			local buy = GardenUi.Button("Buy", {
+				LayoutOrder = 1,
+				Size = UDim2.new(1, -(tap + GAP), 0, tap),
+				BackgroundColor3 = if PetClient.Coins >= egg.price then GardenUi.COLOR_BUY else GardenUi.COLOR_LOCKED,
+				TextSize = 16,
+				TextWrapped = true,
+				Text = Locale.T("hatchery.egg.buy", { count = egg.price }),
+				Parent = bricks,
+			}, 2)
+			ConfirmTap.Wrap(buy, "Egg" .. eggId, function()
+				return ConfirmTap.Over(egg.price)
+			end, function()
+				local now = incubators and firstEmpty(incubators)
+				if now then
+					startEggEvent:FireServer(now, eggId)
+				end
+			end)
+		else -- EG: the crop that opens it, as the seed stall's lock bar
+			GardenUi.Paragraph("Locked", {
+				LayoutOrder = 1,
+				Size = UDim2.new(1, -(tap + GAP), 0, 0),
+				Font = StudStyle.Font,
+				TextSize = 18,
+				TextColor3 = GardenUi.COLOR_DIM,
+				TextXAlignment = Enum.TextXAlignment.Center,
+				Text = Locale.T("hatchery.egg.lockIcon", { icon = opener and opener.icon or "" }),
+			}).Parent = bricks
+		end
 		local oddsButton = GardenUi.Button("Odds", {
 			LayoutOrder = 2,
 			Size = UDim2.fromOffset(tap, tap),
@@ -419,6 +489,7 @@ render = function()
 	renderStatus()
 	if not state then
 		GardenUi.Clear(nestsSection)
+		PetPortrait.Release(eggsSection)
 		GardenUi.Clear(eggsSection)
 		GardenUi.Paragraph("Loading", { Text = Locale.T("common.loading") }).Parent = nestsSection
 		return
@@ -517,6 +588,7 @@ ui.gui:GetAttributeChangedSignal("Open"):Connect(function()
 end)
 
 -- Own-pod hover each frame; HUD / ready badge and open-panel countdowns every 0.25 s.
+local POD_CLICK_DISTANCE = 60 -- PlotView's OpenHatchery ClickDetector range while the world takes clicks
 local hoverParams = RaycastParams.new()
 hoverParams.FilterType = Enum.RaycastFilterType.Include
 local function updatePodHover()
@@ -526,8 +598,11 @@ local function updatePodHover()
 	local camera = workspace.CurrentCamera
 	local distance = GardenView.FlatDistanceToPlot()
 	local point = UserInputService:GetMouseLocation()
-	if camera and distance and distance <= 45 and PanelFocus.Current() == nil and UserInputService.MouseEnabled
-		and UserInputService:GetLastInputType() ~= Enum.UserInputType.Touch and not UiKit.BlocksWorld(Players.LocalPlayer.PlayerGui, UiKit.PointerPosition()) then
+	-- a panel is open or a GUI covers the pointer: the pods take no click, so their ClickDetector must not show its hand either
+	-- (a passive panel's InputSink does not hide a ClickDetector's cursor)
+	local worldFree = PanelFocus.Current() == nil and not UiKit.BlocksWorld(Players.LocalPlayer.PlayerGui, UiKit.PointerPosition())
+	if camera and distance and distance <= 45 and worldFree and UserInputService.MouseEnabled
+		and UserInputService:GetLastInputType() ~= Enum.UserInputType.Touch then
 		hoverParams.FilterDescendantsInstances = { root }
 		local ray = camera:ViewportPointToRay(point.X, point.Y)
 		hit = workspace:Raycast(ray.Origin, ray.Direction * 300, hoverParams)
@@ -536,6 +611,8 @@ local function updatePodHover()
 		local piece = GardenView.OwnPiece("inc" .. n)
 		local hover = piece and piece:FindFirstChild("Hover")
 		if hover then hover.Enabled = hit ~= nil and hit.Instance:IsDescendantOf(piece) end
+		local click = piece and piece:FindFirstChild("OpenHatchery", true) :: ClickDetector?
+		if click then click.MaxActivationDistance = if worldFree then POD_CLICK_DISTANCE else 0 end
 	end
 end
 local setOpenPulse = GardenUi.Pulse(openButton)

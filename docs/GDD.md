@@ -292,13 +292,13 @@ and Jump Height stay soft, never required). Only talents that are hard gates can
 | Talent | Id | Effect | Levels | Cost (prov.) | Total | First required at |
 |---|---|---|---|---|---|---|
 | Quick Respawn (S2) | `QuickRespawn` | utility, **never required**: level 1 respawns after 1 s instead of 3 s, level 2 instantly and adds a fall reset to the checkpoint; the timer keeps running | 2 | 1 100 + 12 Tomato / 10 000 + 15 Broccoli | 11 100 | – |
-| Triple Jump (S7, built 2026-10-24) | `DoubleJump` level 2 | 2 air jumps (reach about 19 studs) | +1 level | 10 000 + 12 Cucumber + 1 Frost grape (EV3b; 5 000 Coins until EV2b) | 10 000 | stage 11 |
+| Triple Jump (S7, built 2026-10-24) | `DoubleJump` level 2 | 2 air jumps (reach about 19 studs) | +1 level | 8 500 + 10 Cucumber + 1 Frost grape (FL; 10 000 + 12 Cucumber since EV3b; 5 000 Coins until EV2b) | 8 500 | stage 11 |
 | Dash (S7, built 2026-10-24) | `Dash` | in the air, a short horizontal burst (about 10 studs in 0.2 s), once per air time; key + mobile button | 1 | 8 000 + 12 Corn (EV3b; 5 000 until EV2b) | 8 000 | – |
 | Long Dash (S8.2, 2026-10-26) | `Dash` level 2 | the burst lasts 0.32 s: about 16 studs (STAGES §1.0, §7.12) | +1 level | 19 000 + 12 Pepper + 1 Glow mushroom (EV3b; 3 000 until EV2b) | 19 000 | stage 13 |
 | Wall Jump (P, S9) | `WallJump` | against a wall in the air, jump kicks up and away; does not refill air jumps | 1 | 700 000 + 20 Blueberry + 3 Glow mushrooms | 700 000 | stage 16 |
 | Glide (P, S9) | `Glide` | hold jump while falling: fall speed capped at about 8 studs/s | 1 | 2 600 000 + 25 Blueberry + 4 Glow mushrooms | 2 600 000 | stage 17 |
 
-**Full planned tree: 3 374 900 Coins** plus the crops (44 300 Coins only until EV2b). Talents compete with squares, upgrades, pets and
+**Full planned tree: 3 373 400 Coins** plus the crops (44 300 Coins only until EV2b). Talents compete with squares, upgrades, pets and
 incubators (§7.9) for the same Coins.
 
 ### Economy constraints (must hold after every rebalance)
@@ -349,22 +349,34 @@ Every pet from before P4 got Cuteness once, on top of its traits (profile `Versi
 
 ### 7.2 Eggs
 *Implemented (EV2e, 2026-11-17; numbers in [ECONOMY.md](ECONOMY.md) → EV):* the pet (kind and rarity) is **rolled at purchase**; its rarity sets the hatch time
-(Common / Uncommon 5 m, Rare 1 h, Epic / Legendary 4 h); aptitudes still roll at hatch. Basic 120, Golden 4 000.
+(Common / Uncommon 5 m, Rare 1 h, Epic / Legendary 4 h); aptitudes still roll at hatch.
+
+*Implemented (EG, 2026-11-21): the egg ladder.* Every egg is a **gem** (one scheme: rare gems, "smart and unique pets"), its shell in
+the gem's colour; no shell colour matches a rarity colour, so a shell never reads as a promised rarity. The stored ids `Basic` /
+`Golden` stay (Pearl / Topaz). The two dear eggs **open with a crop** (`PetConfig.Eggs[id].opensWith`, `PetConfig.EggOpen`): until
+that crop is open the card shows 🔒 + the crop's icon and "Opens with …", and the server refuses the purchase. Later eggs take the
+next gems (Emerald / Sapphire / Amethyst only in a non-rarity shade, or Opal, Onyx); kind-pool eggs wait until there are more than
+8 kinds.
 
 Every egg hatches in an **incubator** of the player's garden plot (§7.6) in real time, also while the player is offline.
-There is no egg stand on the central island (removed 2026-10-18). The odds are always shown before buying.
+There is no egg stand on the central island (removed 2026-10-18). The odds are always shown before buying: the "?" panel lists
+each rarity's chance and, under it, the kinds that rarity can hatch as small portraits; a kind the player has never owned is a dark
+silhouette (`SeenKinds`, filled from the pets owned on join and by every new pet; the catalog / field guide, EXPANSION §11, reuses it).
 
-| Egg | Price | Common | Uncommon | Rare | Epic | Legendary | Where |
-|---|---|---|---|---|---|---|---|
-| Basic egg | 120 | 60 % | 26.2 % | 11 % | 2.7 % | 0.1 % | garden incubator, 5 minutes–4 hours by pet rarity |
-| Golden egg | 4 000 | – | 50 % | 37 % | 12.7 % | 0.3 % | garden incubator, 5 minutes–4 hours by pet rarity |
+| Egg (id) | Price | Opens | Shell | Common | Uncommon | Rare | Epic | Legendary |
+|---|---|---|---|---|---|---|---|---|
+| Pearl egg (`Basic`) | 120 | from the start | pearly cream | 60 % | 26.2 % | 11 % | 2.7 % | 0.1 % |
+| Topaz egg (`Golden`) | 4 000 | from the start | gold-yellow, glow | – | 50 % | 37 % | 12.7 % | 0.3 % |
+| Ruby egg (`Ruby`) | 450 000 | with Pumpkin | deep red, glow | – | – | 60 % | 39.6 % | 0.4 % |
+| Diamond egg (`Diamond`) | 3 000 000 | with Giant melon | ice-white, glow + sparkles | – | – | 40 % | 58 % | 2 % |
 
 Free eggs:
-- one Basic egg on the first join after pets launch (also for existing players, and again after an admin reset); a free
+- one Pearl egg on the first join after pets launch (also for existing players, and again after an admin reset); a free
   egg that starts while the player has never hatched a pet (and nothing incubates) is **ready to hatch at once** (no
   rarity-based wait), so a new player gets the first pet right away,
-- one Basic egg for the **first Gold on each stage**, the Tutorial included (`StageResults`: any stage's first Gold; 21 over the planned
-  game, plus the launch egg; corrected 2026-10-24, the text said 4).
+- one Pearl egg for the **first Gold on each stage**, the Tutorial included (`StageResults`: any stage's first Gold; 21 over the planned
+  game, plus the launch egg; corrected 2026-10-24, the text said 4),
+- a request drop's egg (§7.9): Pearl, a Topaz egg once Pumpkin is open (`CropConfig.DropEggFor`).
 
 A free egg starts by itself (no Coins) in the lowest empty incubator as soon as one is empty: on join, when the egg is
 earned, after a hatch or cancellation and after an incubator is bought. While every incubator is busy (or the inventory cap is reached) it
@@ -495,12 +507,13 @@ collecting and caring over obby runs.
   **up to 3 incubators**, unlocked in order for 0 / 500 / 2 800 Coins (incubator 1 free; 3 300 in total; EV2a).
   Only owned incubators appear in the world, at every detail level; unclaimed plots have none. Unlock the next one in the
   hatchery panel; its pod appears as soon as the purchase succeeds. An egg is
-  bought for an empty incubator of the player's own plot (Basic 120 Coins; Golden 4 000 Coins). Its kind is rolled and stored
+  bought for an empty incubator of the player's own plot (prices and the crops that open the dear eggs: §7.2; the hatchery shows
+  the egg cards two a row). Its kind is rolled and stored
   at purchase, and its rarity sets the wait (§7.2); free eggs start there by themselves. A ready
   egg waits until the owner taps **Hatch**; the stored pet is granted and equipped automatically
   when a slot is free (§7.3).
-  - **Egg art (2026-11-16).** Basic and Golden share a portal-style cross-lapped brick shell, with nine tapered courses and
-    StudsSmall faces (cream / gold; Golden keeps its light). EggLook supplies both the world nests and passive 3D shop
+  - **Egg art (2026-11-16; EG 2026-11-21).** Every egg shares a portal-style cross-lapped brick shell, with nine tapered courses and
+    StudsSmall faces in the gem's colour (Topaz, Ruby and Diamond carry a light, Diamond also sparkles in the world). EggLook supplies both the world nests and passive 3D shop
     previews. Full / mid / low world detail uses 27 / 9 / 5 bricks; the full shell is 3.15 studs high and rests on the nest.
     The 6 × 6 foundation and yellow pad also use Plastic with Studs / StudsSmall.
   - **Incubator body (arch, 2026-11-17).** Steel stud-brick side walls with cream caps step up from the front to a steel
@@ -542,7 +555,7 @@ collecting and caring over obby runs.
     skips to the summary): the bought egg wobbles and hops, harder each time (Epic / Legendary once more), the last wobble glowing in
     the rarity colour; a white flash and the shell's upper bricks fly off; the pet's portrait pops in with rays in the rarity colour,
     the rarity name stamps in, confetti from Rare up (sounds: wobble, crack, reward). The **summary** then shows the portrait in the
-    corner, the kind in the rarity colour, the rarity with the egg's chance of it ("Epic · Golden egg: 12.7 % chance"), where it went
+    corner, the kind in the rarity colour, the rarity with the egg's chance of it ("Epic · Topaz egg: 12.7 % chance"), where it went
     (with you / the Pets panel), the pet count (n / 50), and one row per trait it was born with: level / rarity cap and what it does
     (Cuteness: this pet's Coin bonus; Tending / Pest control: works when placed on the crop field), a line on how traits grow, and
     **View pet** (the Pets panel at its page) / **Great!**. Opening it closes the other panels; walking 32 studs away closes it. An egg can only be started while the pets plus the eggs already incubating stay below the
@@ -651,7 +664,8 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
     closes beyond that.
   - **Rotating stock (ST, 2026-11-18; numbers `CropConfig.Stall`, model `economy_ev` `st_*`, ECONOMY.md → Findings "ST").** The stall
     restocks every UTC hour, the same on every server. Always in stock, without a count: Potato, Lettuce, Onion, the newest unlocked crop
-    (the one whose bar opens the next) and every crop a talent's next level or the open quest asks for. Every other unlocked crop rotates:
+    (the one whose bar opens the next), the newest unlocked crop of at least 6 h (FL, `Stall.LongSeconds`: an overnight staple, so
+    every night has a long crop) and every crop a talent's next level or the open quest asks for. Every other unlocked crop rotates:
     in stock in about 2 of 3 hours (a draw from the hour and the crop, and at least every 3rd hour), then 12 seeds per player for that
     hour ("12 left this hour"; +10 takes what is left). Out of stock or sold out, its row stays with a grey "Back soon" in place of the
     buy bricks. Under the Seeds heading "New seeds in 42:10"; when the hour turns the panel changes without a rejoin, and a player in the
@@ -710,11 +724,18 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   pet and the strongest guard (ties to the lower uid). Regions that share an edge draw side by side (three lanes inset 0.45 / 0.8 / 1.15
   studs); strips meet at outer and inner corners.
 - **Crops.** Potato (20 s away / 10 s online, so the first harvest comes in the first session), Corn, Pumpkin and Giant melon from the seed stall behind
-  mastery unlocks; three rare crops, one per world (Golden carrot 50 000, Frost grape 150 000, Glow mushroom 300 000 Coins; priced for the days a world is reached, ECONOMY.md), only from the obby (below), never sold as seeds, never
+  mastery unlocks; three rare crops, one per world (Golden carrot 25 000, Frost grape 75 000, Glow mushroom 150 000 Coins; priced for the days a world is reached, ECONOMY.md; halved by FL, 2026-11-21), only from the obby (below), never sold as seeds, never
   eaten by crows. Growth runs on server time only: online ×2, offline ×1 for at most 24 h per absence (OG2, 2026-11-20), settled on join,
   on leave, every 60 s and before every action; ripe crops wait. All listed durations and crop countdowns show away-time seconds,
   shortened by Growth and crop Speed; the countdown ticks ×2 faster while playing, additionally multiplied by Cloches (×2.4 at the top).
-  OG2b doubles all 19 base durations to restore pre-OG2 real growth pace (Sunflower 36 h away / 18 h online, Pineapple 48 / 24 h).
+  OG2b doubled all 19 base durations to restore pre-OG2 real growth pace (2026-11-20).
+- **Ladder (FL, 2026-11-21; why: ECONOMY.md → Findings (FL)).** Six price tiers set net Coins per square-hour (tiers 0–2 × 1.727 a
+  step, then × 1.5; the top tier × 10.1 of Potato's); grow time is a choice inside a tier (away-time): Potato 20 s, Lettuce 1 m, Onion
+  2 m | Garlic 6 m, Tomato 16 m, Cucumber 30 m | Corn 15 m, Pepper 2 h, Broccoli 8 h | Pumpkin 12 h, Eggplant 5 h, Blueberry 20 m |
+  Sweet potato 6 h, Giant melon 14 h | Sunflower 10 h, Pineapple 30 m. Until FL the times rose with every crop (20 s … 48 h), so each
+  crop sold for ~2.2× the last and the top crops needed several absences. A later crop can now sell for less per harvest than an
+  earlier one (Pineapple 8 500 after Pumpkin 90 000), so every common seed row on the stall shows "≈ 12 800 an hour per square" under
+  its grow time: (sale with Value points − seed) per grow hour on this field (Growth and Speed included).
   Growth pauses after 24 h away; long crops may need another visit. The seed stall, Barn seeds, seed picker, growing-square card
   and crop page explain the clock and its cap. Card / rings / sign bubble share the countdown
   rule; actual online `readyAt` still drives art, ripe badges and Harvest. Existing `Grown` stays; the next join credits its pending absence
@@ -727,7 +748,10 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   per crop; selling k of n pays the average size.
 - **Crop mastery (EV3b1, replaced Renown; numbers in `CropConfig`, why in ECONOMY.md → EV3).** Every harvest of a common crop (by hand or
   a Tending pet; not the Shears' extra, not a rare crop) counts one plant of it (`Garden.Crops[id].N`); ★1 / ★2 / ★3 at 25 / 75 / 200
-  plants, shown as "Mastery ★" on the stall, barn and square card, a toast at each star. The common crops open in list order: the next crop
+  plants, shown as "Mastery ★" on the stall, barn and square card, a toast at each star. Quick crops need more for ★2 / ★3 (FL,
+  `Mastery.LevelsBy` by base grow time): ≤ 10 min (Potato, Lettuce, Onion, Garlic) 25 / 225 / 600, ≤ 1 h (Tomato, Cucumber, Corn,
+  Blueberry, Pineapple) 25 / 110 / 300. A level never drops: it is at least the points spent on the crop (`MasteryLevel(crop, n, pts)`;
+  a count raised by FL keeps the upgrades already earned). The common crops open in list order: the next crop
   at the previous one's `step` plants (12 for Lettuce … 25), except Corn, Pumpkin and Sweet potato, which open by a **milestone quest**
   (crops handed in piece by piece with Bring, from anywhere, no expiry; the last piece gives 4 seeds of the new crop, past the barn limit).
   Seeds bought only for unlocked crops; seeds held (cart taste, obby) can always be planted and count toward that crop's ★, not its unlock.
@@ -761,7 +785,7 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   Garlic unlock, day 0) and picks different crops (seeded by player, UTC day and slot). Size: 0.3 × a day's income (crop sales +
   request bonuses of the previous UTC day or today, the higher, at least 2 000) ÷ the crop's sale with the pet bonus, 3 to half the
   barn. A finished request pays 0.6 × the count's sale (+ pet bonus) at once with a toast, and one in three also drops a rare seed of
-  the highest world with a finished stage or a free Basic egg (half and half). An unfinished request stays; finished slots refill on
+  the highest world with a finished stage or a free egg (half and half; Pearl, Topaz once Pumpkin is open, §7.2). An unfinished request stays; finished slots refill on
   the next UTC day. No timed run and no Sunshine until EV2c (the user, 2026-11-19).
 - **Upgrades and tools.** Growth (4 levels, -5 % grow time each) and Barn (5 levels, +20 each). Tools: Seed sorter
   (sizes x 1.05 / 1.10 / 1.15), Cloches (online growth +7 / 14 / 20 %), Pruning shears (5 / 10 / 15 % chance of a second crop of the same size,

@@ -116,6 +116,7 @@ local function publish(player: Player)
 		equipped = profile.EquippedPets,
 		slots = profile.PetSlots,
 		freeEggs = profile.FreeEggs,
+		seenKinds = profile.SeenKinds, -- EG: { [kind] = true }
 		multiplier = PetConfig.Multiplier(equippedPets(profile)),
 		field = field,
 	})
@@ -157,6 +158,7 @@ function PetService.AddPet(player: Player, kind: string): (string?, boolean?)
 	end
 	local apt, spec = PetConfig.RollAptitudes(player.UserId .. "/" .. uid, kind, not hasTender)
 	profile.Pets[uid] = { Kind = kind, Apt = apt, Spec = spec }
+	profile.SeenKinds[kind] = true -- EG: the egg odds panel shows it in colour from now on
 	local equipped = #profile.EquippedPets < profile.PetSlots
 	if equipped then
 		table.insert(profile.EquippedPets, uid)
@@ -213,6 +215,19 @@ local function sanitize(profile, player: Player): boolean
 		end
 	end
 	profile.EquippedPets = kept
+	-- EG: every kind owned now counts as seen (backfills profiles from before SeenKinds; drops junk entries)
+	local seen = {}
+	for kind in (if type(profile.SeenKinds) == "table" then profile.SeenKinds else {}) do
+		if PetConfig.Kinds[kind] then
+			seen[kind] = true
+		end
+	end
+	for _, pet in profile.Pets do
+		if PetConfig.Kinds[pet.Kind] then
+			seen[pet.Kind] = true
+		end
+	end
+	profile.SeenKinds = seen
 	return rolled
 end
 

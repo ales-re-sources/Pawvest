@@ -26,7 +26,7 @@ edit `CAND` in `economy_ev.py` (or pass overrides to a scratch probe that copies
 
 ## Crop timing update (OG2 and OG2b, 2026-11-20)
 
-All 19 crop base durations are doubled (Potato 20 s, Sunflower 36 h, Pineapple 48 h). Rates stay online 2 / offline 1, so the
+All 19 crop base durations are doubled (Potato 20 s, Sunflower 36 h, Pineapple 48 h; FL then reshaped the ladder, longest crop 14 h). Rates stay online 2 / offline 1, so the
 actual online and offline crop pace returns to pre-OG2. Visible durations / countdowns use the away-time baseline and tick faster
 while playing (Cloches extra). The offline cap stays 24 h; long crops need multiple absences or online time. The shared timing
 hint states the pause and seed rows say "Growth time" rather than promise completion in one uninterrupted absence.
@@ -36,7 +36,8 @@ The model doubles ladder / rare / future-tree growth durations, halves `v1` and 
 seed and purchase prices stay unchanged. Model-only paid offline rate 2 represents the old rate 1 in the new growth-second units,
 with its existing 48 h cap. No profile migration or saved `Grown` rewrite; existing plantings retain earned growth seconds.
 
-`economy.py check`: core 15/15, EV 17/18 on default seed 1; only G11 (old crops levelled) fails, as before OG2. The 10/18 result
+`economy.py check`: since FL (2026-11-21) EV 17/19 on default seed 1 (G8, G11; core 15/15 once pinned). Since EG (2026-11-21), before FL: EV 16/19: G11 (old crops levelled) fails as before OG2, G5 and
+B2 flip on the RNG path (Findings (EG)). The 10/18 result
 was the intermediate faster-growth configuration; its controlled diagnosis is in `git show 573310e:docs/ECONOMY.md`.
 
 ## EV — why and the pillars (the user, 2026-11-07)
@@ -71,7 +72,8 @@ Bands are provisional, for the user to confirm with the proposal. Archetypes: Ob
 | G6 expedition | obby Coins ≤ 25 % of income after day 3; Sunshine ≤ 40 min of growth per obby hour (30 until the user raised it, 2026-11-07) |
 | G7 first hour | first harvest ≤ 30 s, ≥ 6 crops in hour 1, longest wait for something new (level, crop, first harvest of a kind, purchase, hatch, a finished request) ≤ 10 min, first square ≤ 15 min, first hatch ≤ 5 min |
 | G8 Spender | headroom on Dash 2, Squares 20 / 28 / 36, Growth 4, Sorter 3: median 1.2–1.5×, max ≤ 1.6× |
-| G9 scarcity | Casual: the expected Legendary count reaches 0.5 not before day 14; top crop day 14–28 (talent-first), ≥ 14 (pets-first); last tool ≥ day 14 |
+| G9 scarcity | Casual: the expected Legendary count reaches 0.5 not before day 14; top crop day 10–28 (talent-first), ≥ 10 (pets-first; both were 14 until the user's FL decision, 2026-11-21); last tool ≥ day 14 |
+| EG (2026-11-21) | each egg with an opening crop costs ≥ 2 h of every archetype's income in the 24 h after that crop opens, if it buys one (target: 2–4 h of the median) |
 | B | Tending pets earn more (guards and crows off in both runs) |
 | B2 | one field slot as a guard instead of a tender earns at least as much (Casual) |
 | C | sinks ≥ 60 % of the faucet by day 30, ≥ 78 % by day 60 |
@@ -112,8 +114,9 @@ Bands are provisional, for the user to confirm with the proposal. Archetypes: Ob
   arrives when that square does. Reserved sinks (landmarks, estate, decor; not designed): 70 steps × 1.15 from square 12's price.
 - **Trees (model-only):** a sapling, first growth 2–24 h, then a fruit every 5–60 min up to a cap of 4–6 held, forever.
 - **Eggs:** the pet is rolled at purchase; the hatch time is set by its rarity (Common / Uncommon 5 m, Rare 1 h, Epic / Legendary
-  4 h). The player buys the dearest egg the egg fund covers. Two placeholder eggs (FutureEgg1 / 2) above Golden keep Legendaries scarce while
-  income grows ~1000×.
+  4 h). The player buys the dearest open egg the egg fund covers. Above Pearl (`Basic`) and Topaz (`Golden`) the Ruby and Diamond eggs
+  (EG, were the placeholders FutureEgg1 / 2) keep Legendaries scarce while income grows ~1000×; each opens with a crop (`egg_opens`:
+  Pumpkin, Giant melon) and costs at least 2 h of every buying archetype's income in the 24 h after it opens (check EG).
 - **Obby:** first clears and medals pay their one-time Coins; repeat medal finishes pay Sunshine (16 / 24 / 32 s per Bronze / Silver /
   Gold, × 0.8^n per stage and day, floor 6 s) into a store of up to 3 h; spending it is a **time skip**: the whole store at once, each growing
   square, tree and incubator advances by the full amount (not split; a square that needs less ripens and the rest is lost for it); rare-seed meter, daily
@@ -125,7 +128,7 @@ Bands are provisional, for the user to confirm with the proposal. Archetypes: Ob
   finished slots refill on the next UTC day; the board opens on the first visit with two eligible crops (day 0 included). Crops of the
   unlocked set (grow ≤ 4 h), sized to 30 % of a day's income; on half of the days slot 3 is a timed run; one in three also drops
   Sunshine, a rare seed or an egg. (Until 2026-11-17: handed in from the barn, 1.75 × the sale, a new board every day.) **1.0 (E5, the
-  user, 2026-11-19):** no timed run and no Sunshine until EV2c: three crop requests, the drop a rare seed or a free Basic egg (half
+  user, 2026-11-19):** no timed run and no Sunshine until EV2c: three crop requests, the drop a rare seed or a free egg (Pearl, Topaz once Pumpkin is open, EG; half
   and half); a day's income = crop sales + request bonuses of the previous UTC day or today, whichever is more, at least 2 000. **Streak:** Sunshine 10–30
   min on days 1–6, day 7 a pet (Epic 95 %, Legendary 5 %); a missed day pauses it.
 - **Crows and guards:** in a crow block a ripe crop may be eaten, up to one per 12 unguarded squares per absence; guarded squares are safe; a
@@ -143,7 +146,7 @@ in steps of 5 (120, 2 900, 35 000, 750 M). The checks run on the rounded prices;
 | Talents | 22 300 in all, Coins only | 3.4 M in all + crop bundles: Run Speed L1: 800; Double Jump L2: 16 000 + 20 FP5 + 2 Frost grapes; Dash L2: 29 000 + 20 FP6 + 1 Glow mushroom; Wall Jump L1: 700 000 + 20 FP9 + 3 Glow mushrooms; Glide L1: 2.6 M + 25 FP9 + 4 Glow mushrooms |
 | Upgrades / tools | Growth 28 000 …, Barn 14 000 …, Sorter / Cloches / Shears 37 300–420 000 | Growth 3 000 → 22 M, Barn 1 200 → 15 M, Sorter 10 000 → 45 M, Cloches 4 000 → 6 M, Shears 18 000 → 160 M |
 | Slots | field pet 23 300 …, equip 2 000 / 5 000, incubators 5 000 / 12 000 | field pet 2 400 → 11 M, equip 700 / 4 000, incubators 500 / 2 800 |
-| Eggs | Basic 120, Golden 4 000, rolled at purchase; rarity hatch timers (EV2e, 2026-11-17) | Basic 120, Golden 4 000 (weights U500 R370 E127 L3; FutureEgg1 L 4 ‰ since Sunshine also speeds incubators), rolled at purchase, hatch by rarity |
+| Eggs | Pearl 120, Topaz 4 000, rolled at purchase; rarity hatch timers (EV2e, 2026-11-17); EG (2026-11-21): Ruby 450 000 (opens with Pumpkin), Diamond 3 000 000 (with Giant melon) | Pearl 120, Topaz 4 000 (weights U500 R370 E127 L3), Ruby (R600 E396 L4), Diamond (R400 E580 L20), rolled at purchase, hatch by rarity |
 | Obby repeat runs | 50 × factor × medal × 0.8^n Coins | 0 Coins; Sunshine 16 / 24 / 32 s × 0.8^n (Casual: ~31 min of skip per obby hour, ~24 min a day) |
 | Scouting | 15 min XP per medal finish (frozen: ~40 finishes for level 2) | XP = timer seconds; level 2 after 45 min of runs |
 
@@ -220,7 +223,7 @@ obby first clears outpay the farm they should feed (findings above).
   Rule 1's spam worry does not apply: the count is per crop, so quick Potatoes level only Potato.
 - **Three levels per crop** (like the stage medals), never infinite. Each level gives one upgrade point, a step a player notices
   (+11 %). EV3c shipped one point per line; then (the user, 2026-11-17) **any line, up to 3 in one**, no free reset (stacking, below).
-  The same counts for every crop: **25 / 75 / 200 plants** (the user, 2026-11-17). The next crop opens at a smaller, rising count of
+  The same counts for every crop: **25 / 75 / 200 plants** (the user, 2026-11-17; since FL quick crops need more, Findings (FL)). The next crop opens at a smaller, rising count of
   the previous one (12 Potatoes … 25 Sunflowers), apart from the levels.
 - **Price tiers:** the 16 crops form 6 tiers of 2–3 with one net Coins per square-hour each; inside a tier the crops differ in grow time
   (and look), so a rotating stall (ST) can offer any of them fairly. Tier 1 Potato–Onion, 2 Garlic–Cucumber, 3 Corn–Broccoli, 4 Pumpkin–
@@ -359,6 +362,59 @@ forecast passes 16/18: G7's longest first-hour news gap is 15.9 m (target ≤ 10
 accepted values and check thresholds are unchanged. The forecast's timed common/uncommon starter is still an approximation
 of the game's instant first pet.
 
+## Findings (EG, 2026-11-21; seeds 1–4, Ruby / Diamond swept 300 000–500 000 / 1.5–3.5 M)
+- **Ruby 450 000:** the lowest nice price that keeps Obby main ≥ 2 h on every seed (400 000: 1.9 h on seed 1; nice() has no step
+  between them). Obby main earns ~5× a Casual's hour the day Pumpkin opens, so the 2 h floor puts the median at 4.3–6 h, above the
+  2–4 h target; the floor wins. Binge opens Pumpkin on day 0.6 with little income (Ruby = 70–84 h) and still buys 10–14.
+- **Diamond 3 000 000:** Casual's Legendary odds reach 50 % on day 15.8–20.3 (G9 ≥ 14); 2 000 000 gave day 14.3 on seed 4 and
+  Obby main 2.4 h. Median 6–10 h of the opening day (Casual 12–19 h: Giant melon opens on a short-session day).
+- **Noise:** with these prices seed 1 also fails G5 (Casual's last purchase day 82 < 90) and B2 (guard 0.87×); both flip on the
+  RNG path, not the price (over seeds 1–8 G5 fails 3× for Ruby 400 000 and 450 000 alike; B2 ranges 0.87–1.06× for both). The
+  committed model already failed G5 on seed 2 and B2 on seed 3.
+
+## Findings (FL, flatter ladder, 2026-11-21; seeds 1–8; built as FL, `CAND` = the configs since; the probe script with variants A–P is in git history only)
+The user's question: fewer "inflating" steps (~1.5× per crop instead of the felt 4×), and no 36–48 h crops. As built, a crop's sale
+rises 2.2× per crop on average, of which 1.83× is grow time; Coins per square-hour are flat inside a tier and jump ×1.73 at each of 5
+tier steps (15× in all). So the per-plant step only falls if grow time stops rising with the unlock. The probe keeps the ids, unlock
+order, quests and sinks, and makes grow time a choice inside a tier (short / medium / long). **Built: variant O.**
+**As built (`python tools/economy_ev.py --seed N`):** 17 / 17 / 17 / 16 / 16 / 17 / 17 / 16 of 19 on seeds 1–8; G8 fails on every
+seed, G11 on several, G1, G3, G4 or R on single seeds; G2 95–100 %; Casual's top crop day 10.3–12.3. Numbers below are the probe's.
+
+| Tier (× net / sq-h) | Crops (away-time; changed in bold) |
+|---|---|
+| 0 (1) / 1 (1.73) / 2 (2.98), as built | Potato 20 s, Lettuce 1 m, Onion 2 m / Garlic 6 m, Tomato 16 m, Cucumber 30 m / **Corn 15 m**, Pepper 2 h, **Broccoli 8 h** |
+| 3 (× 1.5 = 4.47) | **Pumpkin 12 h, Eggplant 5 h, Blueberry 20 m** |
+| 4 (6.7) | **Sweet potato 6 h, Giant melon 14 h** |
+| 5 (10.1, was 15.4) | **Sunflower 10 h, Pineapple 30 m** |
+
+- **O passes 15 / 15 / 15 / 15 / 14 / 15 / 15 / 14 of the 18 checks besides EV0 on seeds 1–8** (as built: 15 / 16 / 17 / 17 / 13 / 15 / 17 /
+  11); with G9 from day 10: 16 / 16 / 16 / 16 / 15 / 16 / 16 / 15. Fewer swings between seeds; G8 fails on every seed, G9 failed before its bound moved (below). Income per day (seed 1, day 7 / 14 / 30 / 60): Casual 2.2 / 29 /
+  41 / 53 M → 3.5 / 14 / 18 / 20 M, Garden main 7.5 / 40 / 51 / 52 M → 12 / 16 / 21 / 23 M. With every sink unchanged G3, G5, C, G7,
+  G12 hold: the shop lasts longer, the next goal stays near.
+- **G11 (old crops levelled)** passes on 3 of 8 seeds (fails on all 8 as built; misses are Obby main / Casual at 12–15 %, limit 15).
+- **Needed alongside:**
+  - tiers 0–2 keep their rates and durations (a lower step from tier 1, × 1.5–1.6, broke G7, G4 and G10);
+  - rare sales × 0.5 (at × 0.7–0.8 Casual's day 0–3 rare share is 63–82 %, check R);
+  - mastery levels 2–3 need × 3 plants for crops ≤ 10 min and × 1.5 up to 1 h (without it Onion was maxed on day 2.7, G12); built
+    as `Mastery.LevelsBy` 25 / 225 / 600 and 25 / 110 / 300 (model `m_bands`); a level never drops below the points spent;
+  - Double Jump 2 at 10 Cucumber + 1 Frost grape and 8 500 Coins, factor 0.8 (was 12 + 1 and 10 000; G4 at 1.0–2.5 d without it);
+  - **the stall always stocks the best unlocked crop of ≥ 6 h** (an overnight staple; `Stall.LongSeconds`, model `st_long`). G2 (Casual 50–87 %) was the stall, not the
+    ladder: with one long crop per tier, an hour whose restock had none left nothing for the night. With it Casual is 96–99 %;
+  - long crops spread so every schedule has one: Eggplant 5 h and Sweet potato 6 h for players who return every ~5 h.
+- **Model rule (`chase_stuck_days`): a stuck player chases the bar.** The `chase` floor (plant the newest crop only while it earns ≥ 0.5 × the
+  best) left a 5 h Eggplant unplanted for 55 days by Casual (two visits a day: 2–6 h crops fit neither a session nor the night). In
+  the model, a crop open for more than a day is planted for its bar whatever it earns. The game must make that choice obvious (the bar
+  on the seed, the Coins per hour shown): an unlock that hinges on a crop that does not fit the player's day is the ladder's one trap.
+- **G9's top crop:** Casual opens Pineapple on day 10.3–12.3 (as built ~15); 1.5× the unlock counts from Sweet potato on (variant P)
+  moved it by under a day, so the schedule, not the count, sets it. *Decided (the user, 2026-11-21): keep day 10–12*; G9's top-crop
+  bound is now day 10 (was 14).
+- **G8 fails on every seed:** paid offline speed is worth 1.0–1.2× (target 1.2–1.5): crops ≤ 16 h already fit one free absence. The
+  comfort product (D2) needs another form (e.g. a replant while away), not double speed.
+- **UI:** the sale per harvest no longer rises with the unlock (Pineapple 8 500 after Pumpkin 90 000): the seed stall shows each
+  common crop's net Coins per hour of one square (`field.seed.rate`), or a new crop looks worse.
+- Tried and dropped: × 1.5 from tier 1 (A, C–E), a short-crop premium (B: short × 1.15, long × 0.9), Cucumber 1–3 h (F–I: slower Corn
+  quest, G4), Eggplant 2 h / Sweet potato 3 h (L: dead time for Casual).
+
 ## Open decisions for the user
 1. The EV bands (table above) and the proposal itself: approved; EV2a (numbers) and EV2b (talent bundles) are built (2026-11-07); EV2e
    (eggs at purchase + rarity timers + no-refund cancellation) is implemented (2026-11-17); EV2c (Sunshine), EV2d (Scouting)
@@ -376,7 +432,9 @@ of the game's instant first pet.
    extra day, cap 3), the obby payouts (rule 6, unchanged), and the near-misses listed in the findings (accept, or tune in the ST model,
    which re-runs the chain): the near-misses are accepted for now, to revisit in the ST model.
 5. **A flatter curve** (shorter grow-time span, value steps ~1.5–2× per crop, a slower square ladder): probe in the model after EV3a,
-   before M7 (after it prices never go down).
+   before M7 (after it prices never go down). *Probed 2026-11-21* (Findings (FL), candidate O): tiers drive the rate, grow time is a choice
+   inside a tier, longest crop 14 h, an overnight staple in the stall; works with sinks unchanged. Top crop day 10–12 accepted (the user,
+   2026-11-21; G9 from day 10). Open: G8 (paid offline speed). Built as FL (2026-11-21).
 6. **Going public with a ~5-day horizon:** *resolved (the user, 2026-11-17):* the horizon is not a gate. 1.0 is gated by crop mastery
    (EV3), the rotating stall (ST), the online loop (requests, E5), the Harvest Hall (SH) and player feedback (FB); ROADMAP → Next.
    The comfort shop (D2) and Sunshine (EV2c) come after 1.0.

@@ -16,7 +16,7 @@ local resultEvent = Instance.new("BindableEvent")
 
 local PetClient = {
 	Remotes = remotes,
-	State = nil, -- last PetsChanged payload: { pets, equipped, slots, freeEggs, multiplier, field }
+	State = nil, -- last PetsChanged payload: { pets, equipped, slots, freeEggs, seenKinds, multiplier, field }
 	Coins = 0,
 	Changed = changedEvent.Event, -- fires (state?) after the pet state or the Coins changed
 	Result = resultEvent.Event, -- fires (action, ok, detailOrReason) for each answer from the server

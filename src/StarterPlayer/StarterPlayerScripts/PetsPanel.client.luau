@@ -521,7 +521,7 @@ local function refreshField()
 	fieldBuy = buy
 	local slots = field.slots or 1
 	ConfirmTap.Wrap(buy, "FieldSlot", function()
-		return PetClient.Coins >= price and ConfirmTap.Over(price)
+		return ConfirmTap.Over(price)
 	end, function()
 		if PetClient.Coins < price then
 			flash(rejectText("coins"), COLOR_ERROR)

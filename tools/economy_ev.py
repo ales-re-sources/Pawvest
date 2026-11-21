@@ -37,9 +37,12 @@ RARITIES = ("Common", "Uncommon", "Rare", "Epic", "Legendary")
 CAND = {
     # crop ladder: (id, grow seconds); the CropConfig ids keep their names, "FP<n>" = Future plant n (model-only)
     # OG2b: doubled growth-second durations cancel the ×2 / ×1 rates; v1 halves to keep every sale / seed price unchanged.
-    "ladder": [("Potato", 20), ("FP1", 60), ("FP2", 120), ("FP3", 360), ("FP4", 960), ("FP5", 1800), ("Corn", 3600), ("FP6", 7200),
-               ("FP7", 14400), ("Pumpkin", 21600), ("FP8", 28800), ("FP9", 43200), ("FP10", 57600), ("GiantMelon", 86400),
-               ("FP11", 129600), ("FP12", 172800)],
+    # FL (2026-11-21, ECONOMY.md → Findings (FL)): grow time is a choice inside a price tier (short / medium / long), the longest crop
+    # 14 h; until FL the ladder rose with every crop (20 s … 48 h: Corn 1 h, Broccoli 4 h, Pumpkin 6 h, Eggplant 8 h, Blueberry 12 h,
+    # Sweet potato 16 h, Giant melon 24 h, Sunflower 36 h, Pineapple 48 h).
+    "ladder": [("Potato", 20), ("FP1", 60), ("FP2", 120), ("FP3", 360), ("FP4", 960), ("FP5", 1800), ("Corn", 900), ("FP6", 7200),
+               ("FP7", 28800), ("Pumpkin", 43200), ("FP8", 18000), ("FP9", 1200), ("FP10", 21600), ("GiantMelon", 50400),
+               ("FP11", 36000), ("FP12", 1800)],
     "v1": 1250.0,  # net Coins per square-hour of growth of the first crop (real-hour income unchanged)
     "r": 1.20,  # each next crop: x r net per square-hour
     "seed_frac": 0.25,
@@ -64,17 +67,25 @@ CAND = {
     # replanted as soon as it is ripe), in Value for one that grows overnight (a faster one only waits longer for the player)
     "pt_order": "auto", "pt_fast": 3600,
     "chase": 0.5,  # policy: just enough squares of the newest crop to fill its star 1, while it earns >= chase x the best crop's rate
+    # FL: a crop open for more than chase_stuck_days is planted for its bar whatever it earns (the chase floor alone left a 5 h crop
+    # unplanted for 55 days by a twice-a-day player: 2-6 h crops fit neither a session nor the night). None = the floor only.
+    "chase_stuck_days": 1.0,
     # EV3 revision (the user, 2026-11-17; the 2026-11-14 draft = tier_of None, mastery "time", quest_partial / req_auto False,
     # rest_per_day 0, pt_cap 5 at +2 / +2 / -2.5 %, the Giant melon quest; probe it with --set):
     # tier_of: price tiers of 2-3 crops (ladder index -> tier); a tier shares one net Coins per square-hour (v1 x r_tier^tier), its crops
     # differ in grow time, so the rotating stall (ST) can offer any of them. None = the smooth ladder (v1 x r^k).
     "tier_of": [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 5, 5], "r_tier": 1.727,
+    # tier_mult (FL): the tiers' net per square-hour as multiples of v1 (None = r_tier ** tier): tiers 0-2 as built, then x1.5 a tier
+    "tier_mult": [1.0, 1.727, 1.727 ** 2, 1.727 ** 2 * 1.5, 1.727 ** 2 * 1.5 ** 2, 1.727 ** 2 * 1.5 ** 3],
     # mastery "count": a level needs plants of that crop (star 1 = round(star_n0 x star_g^k) plants, level L = star 1 x m_mult[L - 1]);
     # "time": XP = grow minutes (the draft). pt_total 3: 3 levels, a level-3 crop is fully upgraded.
     "mastery": "count", "m_mult": (1, 4, 25),
     # m_levels (count mode): the same plant counts for every crop's levels (e.g. (50, 100, 200)); the next crop then opens at the old
     # level-1 count (star_n0 x star_g^k plants of the previous crop), not at a level. None = levels from m_mult, unlock at level 1.
     "m_levels": (25, 75, 200),  # the user, 2026-11-17
+    # m_bands (FL): level counts of quick crops by base grow seconds ((up to, levels), first match); the rest take m_levels. A short crop
+    # stays worth planting on a flat ladder and reached 200 plants by day 2.7 (G12)
+    "m_bands": ((600, (25, 225, 600)), (3600, (25, 110, 300))),
     # quest_partial: crops are handed in as they come and the progress is kept (no barn space held, no expiry)
     "quest_partial": True,
     # req_auto: requests track crops grown ("grow 6 Tomatoes"), nothing is handed in, the bonus is req_bonus x the sale of the count;
@@ -111,6 +122,9 @@ CAND = {
     # The ST candidate (2026-11-17, ECONOMY.md → Findings "ST"): hourly restocks, staples Potato-Onion (stall_staples 3), 12 seeds.
     # Without st_newest the first hour loses its news (G7 failed on every seed).
     "st": True, "st_every": 3600, "st_p": 0.5, "st_pity": 3, "st_n": 12, "st_newest": True,
+    # st_long (FL): the newest unlocked crop of >= st_long seconds is always in stock too (an overnight staple; with one long crop per
+    # tier, an hour whose restock had none left nothing for the night, G2). None = off.
+    "st_long": 21600,
     # stall_staples: ST's staples; the 2026-11-15 probe ("stall" unlock rule) ran with 4
     "stall_every": 600, "stall_staples": 3, "stall_p0": 0.7, "stall_pd": 0.7, "stall_n0": 4.0, "stall_nd": 0.85, "stall_bag": 2.0,
     # the stall rule's trees (replace "trees"): timers from a session to a day, the overnight hook the stall's random bag cannot give
@@ -131,7 +145,8 @@ CAND = {
     "crop_gate": [0, 1, 2, 3, 4, 5, 6, 8, 11, 15, 20, 26, 33, 42, 54, 68],
     # rare crops (CropConfig ids, world, grow seconds, sale, Renown points): set by hand against the income of the days a world is reached (playtest
     # 2026-11-08: 2.5x a ladder crop of the same grow time made the first Golden carrot, day 1, worth 350 000 and 7 Renown levels; check R)
-    "rare": [("GoldenCarrot", 1, 43200, 50000, 22), ("FrostGrape", 2, 57600, 150000, 44), ("GlowMushroom", 3, 72000, 300000, 76)],
+    # FL: sales halved with the flatter ladder (50 000 / 150 000 / 300 000 until FL; check R)
+    "rare": [("GoldenCarrot", 1, 43200, 25000, 22), ("FrostGrape", 2, 57600, 75000, 44), ("GlowMushroom", 3, 72000, 150000, 76)],
     # squares: 32 bought, price p1 x q^(i-1), Renown gate round(sq_gate_a x i^sq_gate_b)
     "sq_p1": 290.0, "sq_q": 1.33, "sq_q2": 1.45, "sq_k2": 16, "sq_gate_a": 0.8, "sq_gate_b": 1.08,
     # sinks anchored to squares: (family, level, anchor square j, factor); price = factor x sq(j), Renown gate = the gate of square j
@@ -156,18 +171,24 @@ CAND = {
         "JumpHeight": [(4, 1.0, {}, {}), (6, 1.0, {6: 12}, {}), (10, 1.0, {8: 15}, {})],
         "QuickRespawn": [(4, 1.0, {5: 12}, {}), (12, 1.0, {9: 15}, {})],
         # EV3a (the user, 2026-11-17: G4, make them easier): 20 -> 12 crops and factor 1.5 -> 1.0 (the configs follow in EV3b)
-        "DoubleJump": [("reward",), (12, 1.0, {6: 12}, {2: 1})],
+        # FL: 10 Cucumber and factor 0.8 (12 and 1.0 until FL; G4 on the flatter ladder)
+        "DoubleJump": [("reward",), (12, 0.8, {6: 10}, {2: 1})],
         "Dash": [(11, 1.0, {7: 12}, {}), (14, 1.0, {8: 12}, {3: 1})],
         "WallJump": [(20, 1.5, {12: 20}, {3: 3})],
         "Glide": [(22, 1.5, {12: 25}, {3: 4})],
     },
     "talent_mult": 1.6,
-    # eggs: kind -> (price anchor square j, factor, rarity weights); hatch seconds by rarity (rolled at purchase)
-    # (FutureEgg1 / 2 are model-only placeholders: a price ladder of eggs keeps Legendaries scarce while income grows ~1000x)
+    # eggs: kind -> (price anchor square j, factor, rarity weights) or (0, price, weights); hatch seconds by rarity (rolled at purchase)
+    # EG (2026-11-21): Basic = Pearl, Golden = Topaz; Ruby and Diamond (were the model-only FutureEgg1 / 2) open with a crop (egg_opens) and
+    # cost 2-4 h of the archetypes' median income on the day they open (check EG)
     "eggs": {"Basic": (1, 0.4, {"Common": 600, "Uncommon": 262, "Rare": 110, "Epic": 27, "Legendary": 1}),
              "Golden": (10, 1.0, {"Uncommon": 500, "Rare": 370, "Epic": 127, "Legendary": 3}),
-             "FutureEgg1": (18, 1.0, {"Rare": 600, "Epic": 396, "Legendary": 4}),
-             "FutureEgg2": (26, 1.0, {"Rare": 400, "Epic": 580, "Legendary": 20})},
+             # EG fit (seeds 1-4): Ruby 450 000 is the lowest nice price that keeps Obby main >= 2 h (400 000: 1.9 h on seed 1);
+             # Diamond 3 000 000 keeps Casual's Legendary odds at 50 % on day >= 15.8 (2 000 000: day 14.3 on seed 4)
+             "Ruby": (0, 450000, {"Rare": 600, "Epic": 396, "Legendary": 4}),
+             "Diamond": (0, 3000000, {"Rare": 400, "Epic": 580, "Legendary": 20})},
+    "egg_opens": {"Ruby": "Pumpkin", "Diamond": "GiantMelon"},  # egg -> the crop (config id) that opens it
+    "req_egg_late": "Golden", "req_egg_late_after": "Ruby",  # the request drop's free egg: Topaz once Ruby's crop is open
     "hatch": {"Common": 300, "Uncommon": 300, "Rare": 3600, "Epic": 4 * 3600, "Legendary": 4 * 3600},
     "starter_egg": {"Common": 70, "Uncommon": 30},  # the launch egg: hatches within 5 min (G7)
     "food_mult": 1.0,  # food prices x this (GardenConfig.Foods)
@@ -231,7 +252,10 @@ def build(c=None):
     seed = c["seed_frac"]
     crops = []
     for k, (cid, secs) in enumerate(c["ladder"]):
-        v = c["v1"] * (c["r"] ** k if c["tier_of"] is None else c["r_tier"] ** c["tier_of"][k])
+        if c["tier_of"] is None:
+            v = c["v1"] * c["r"] ** k
+        else:
+            v = c["v1"] * (c["tier_mult"][c["tier_of"][k]] if c.get("tier_mult") else c["r_tier"] ** c["tier_of"][k])
         sale = max(2, nice(v * secs / H / (1 - seed)))
         sd = max(1, nice(sale * seed))
         pts = max(1, round(c["pts_a"] * (secs / 60.0) ** c["pts_b"]))
@@ -263,7 +287,8 @@ def build(c=None):
         items.append({"name": f"Square {5 + i}", "fam": "Square", "lvl": i + 1, "price": sq[i], "gate": M["sq_gate"][i], "group": "field"})
     trees = []
     for tid, j, n, t0, f, cap, at in (c["stall_trees"] if c["mode"] == "stars" and c["unlock"] == "stall" else c["trees"]):
-        v = c["tree_mult"] * c["v1"] * c["r"] ** (at - 1)
+        # the ladder crop it points at (FL: its tier's rate; the smooth x r ladder before tier_mult)
+        v = c["tree_mult"] * (crops[at - 1]["v"] if c.get("tier_mult") else c["v1"] * c["r"] ** (at - 1))
         fruit = round(v * f / H)
         trees.append({"id": tid, "t0": float(t0), "f": float(f), "cap": cap, "fruit": fruit, "pts": crops[at - 1]["pts"]})
         for s in range(n):
@@ -289,7 +314,9 @@ def build(c=None):
         items.append({"name": f"Reserved {k + 1}", "fam": "Reserved", "lvl": k + 1, "price": nice(res0 * c["res_ratio"] ** k),
                       "gate": 0, "group": "reserved"})
     M["items"] = items
-    M["eggs"] = {k: {"price": anchor(j, f), "w": w} for k, (j, f, w) in c["eggs"].items()}
+    M["eggs"] = {k: {"price": anchor(j, f) if j else nice(f), "w": w} for k, (j, f, w) in c["eggs"].items()}
+    ladder_k = {cfg_id(cr["id"]): cr["k"] for cr in crops}
+    M["egg_opens"] = {egg: ladder_k[crop] for egg, crop in c["egg_opens"].items()}
     M["foods"] = [{"id": f["id"], "price": nice(f["price"] * c["food_mult"]), "xp": f["xp"]} for f in P["foods"]]
     cc = P["crop_cfg"]
     M["upg_step"] = {u[0]: u[1] for u in cc["upgrades"]}  # Growth 0.05, Barn 20
@@ -310,11 +337,19 @@ def renown_level(M, pts):
     return int((max(pts, 0.0) / c["renown_k"]) ** (1 / c["renown_p"]) + 1e-9)
 
 
+def m_levels_of(crop, c):
+    """The plant counts of `crop`'s levels: its grow-time band (FL `m_bands`), else `m_levels`."""
+    for up_to, levels in c.get("m_bands") or ():
+        if crop["t"] <= up_to:
+            return levels
+    return c["m_levels"]
+
+
 def star_need(crop, L, c):
     """XP a crop needs in all for star L. "time": grow minutes, star1 (the unlock pace), then star_u x minutes^star_b x (L - 1)^star_p;
     "count": plants, star1 x m_mult[L - 1]."""
     if c["mastery"] == "count":
-        return c["m_levels"][L - 1] if c["m_levels"] else crop["star1"] * c["m_mult"][L - 1]
+        return m_levels_of(crop, c)[L - 1] if c["m_levels"] else crop["star1"] * c["m_mult"][L - 1]
     if L <= 1:
         return crop["star1"] * L
     return crop["star1"] + c["star_u"] * (crop["t"] / 60.0) ** c["star_b"] * (L - 1) ** c["star_p"]
@@ -466,7 +501,8 @@ class Sim:
         self.rare_sales = []  # (t, Coins of one sale, the Coins earned before it)
         self.earned_total = 0.0
         self.after3 = self.obby_after3 = 0.0
-        self.free_eggs = 0
+        self.free_eggs = []  # egg kinds waiting for an incubator (request drops)
+        self.egg_bought = {}  # egg kind -> eggs bought
         self.income_log = []  # (time, coins)
         self.spent = 0.0
         self.spent_by_day = [0.0] * (days + 8)
@@ -888,7 +924,8 @@ class Sim:
         if n <= 0:
             return
         best = self.choose(t, n)
-        if best is not new and best is not None and self.rate(t, new, n) < self.c["chase"] * self.rate(t, best, n):
+        stuck = self.c.get("chase_stuck_days") is not None and t - self.unlock_t.get(new["k"], t) > self.c["chase_stuck_days"] * DAY
+        if not stuck and best is not new and best is not None and self.rate(t, new, n) < self.c["chase"] * self.rate(t, best, n):
             return
         self.take_seeds(t, new, n)
         at = t + n * self.c["act_s"]
@@ -917,6 +954,9 @@ class Sim:
             return False
         k = crop["k"]
         if self.c["st_newest"] and k == max(self.unl):
+            return True
+        if self.c.get("st_long") and crop["t"] >= self.c["st_long"] and k == max(
+                (u for u in self.unl if self.M["crops"][u]["t"] >= self.c["st_long"]), default=-1):
             return True
         nt = self.next_talent()
         if nt and k + 1 in nt["crops"]:
@@ -1267,11 +1307,10 @@ class Sim:
             if self.starter_egg:
                 self.starter_egg = False
                 r = self.roll_rarity(self.c["starter_egg"])
-            elif self.free_eggs > 0:
-                self.free_eggs -= 1
-                r = self.roll_rarity(self.M["eggs"]["Basic"]["w"])
+            elif self.free_eggs:
+                r = self.roll_rarity(self.M["eggs"][self.free_eggs.pop(0)]["w"])
             else:
-                eggs = sorted(self.M["eggs"].items(), key=lambda kv: kv[1]["price"])
+                eggs = sorted(((k, e) for k, e in self.M["eggs"].items() if self.egg_open(k)), key=lambda kv: kv[1]["price"])
                 kind = None
                 for k, e in eggs:  # the dearest egg the fund buys, unless a day of the egg budget buys a dearer one
                     if e["price"] <= self.egg_fund:
@@ -1281,12 +1320,18 @@ class Sim:
                 if kind is None:
                     return
                 self.egg_fund -= self.M["eggs"][kind]["price"]
+                self.egg_bought[kind] = self.egg_bought.get(kind, 0) + 1
                 self.spent += self.M["eggs"][kind]["price"]
                 self.spent_by_day[self.day(t)] += self.M["eggs"][kind]["price"]
                 r = self.roll_rarity(self.M["eggs"][kind]["w"])
                 w = self.M["eggs"][kind]["w"]
                 self.leg_mass(t, w.get("Legendary", 0) / sum(w.values()))
             self.incs.append({"r": r, "end": t + self.c["hatch"][r]})
+
+    def egg_open(self, kind):
+        """EG: an egg with an opening crop (PetConfig opensWith) is sold once that crop is open."""
+        k = self.M["egg_opens"].get(kind)
+        return k is None or k in self.unl
 
     def leg_mass(self, t, p):
         """Expected Legendaries so far (G9 reads the day this passes 0.5, not one lucky roll)."""
@@ -1527,8 +1572,8 @@ class Sim:
             elif k == 1:
                 w = max([s["world"] for s in self.cleared if s["world"] >= 1] or [1])
                 self.rare_seeds[w] = self.rare_seeds.get(w, 0) + 1
-            else:
-                self.free_eggs += 1
+            else:  # EG: a Topaz egg once Pumpkin is open (CropConfig.Requests), a Pearl one before
+                self.free_eggs.append(self.c["req_egg_late"] if self.egg_open(self.c["req_egg_late_after"]) else "Basic")
 
     def mark(self, t):
         i = self.idx(t)
@@ -2005,12 +2050,32 @@ def checks(M, days=60, verbose=True):
         top = s.unlock_t.get(len(M["crops"]) - 1)
         top = top / DAY if top else None
         tool = s.buy_day.get("Shears 3")
-        top_ok = top is None or (14 <= top <= 28 if p == "talent-first" else top >= 14)
+        # top crop from day 10 (the user, 2026-11-21: the quicker pace of the flatter ladder, ECONOMY.md → Findings (FL); was 14)
+        top_ok = top is None or (10 <= top <= 28 if p == "talent-first" else top >= 10)
         ok = (leg is None or leg >= 14) and top_ok and (tool is None or tool >= 14)
         ok9 &= ok
         rows.append(f"{p}: Legendary odds reach 50 % {fmt_d(leg)} (first rolled {fmt_d(s.legendary_t and s.legendary_t / DAY)}), top crop {fmt_d(top)}, "
                     f"last tool {fmt_d(tool)}")
     add("G9 scarcity (Casual)", ok9, "; ".join(rows))
+    # EG a new egg costs >= 2 h (target 2-4 h median) of the buying archetype's income in the 24 h after its crop opens
+    rows, okeg = [], True
+    for egg, k in M["egg_opens"].items():
+        price, hours, cells = M["eggs"][egg]["price"], [], []
+        for n in names:
+            s = sims[(n, "talent-first")]
+            t0 = s.unlock_t.get(k)
+            if t0 is None:
+                cells.append(f"{n} -")
+                continue
+            inc = sum(c for tt, c in s.income_log if t0 <= tt < t0 + DAY)
+            h = price / (inc / 24.0) if inc > 0 else float("inf")
+            hours.append(h)
+            bought = s.egg_bought.get(egg, 0)
+            okeg &= h >= 2 or not bought
+            cells.append(f"{n} day {t0 / DAY:.1f} {h:.1f} h ({bought} bought)")
+        med = statistics.median(hours) if hours else None
+        rows.append(f"{egg} {E.n(price)}: median {med and round(med, 1)} h; " + ", ".join(cells))
+    add("EG new eggs cost >= 2 h of the opening day's income", okeg, "; ".join(rows))
     # B Tending pays
     rows, okb = [], True
     for n in ("Casual", "Garden main", "Obby main"):
@@ -2147,17 +2212,20 @@ def config_match(M):
         have = None if o is None else [o[1], o[2], o[3], o[4], o[5]]
         if have is None or any(a != b if not isinstance(a, float) else abs(a - b) > 1e-6 for a, b in zip(want, have)):
             out.append(f"crop {cfg_id(c['id'])}: config {have} vs proposal {want}")
-    levels, rest_day, rest_cap, _, pts = cc["mastery"]
+    levels, rest_day, rest_cap, _, pts, bands = cc["mastery"]
     if [list(levels), rest_day, rest_cap] != [list(C["m_levels"]), C["rest_per_day"], C["rest_cap"]]:
         out.append(f"mastery: config {[levels, rest_day, rest_cap]} vs proposal {[list(C['m_levels']), C['rest_per_day'], C['rest_cap']]}")
+    want_bands = [[u, list(lv)] for u, lv in C.get("m_bands") or ()]  # FL: level counts by grow time
+    if bands != want_bands:
+        out.append(f"mastery bands (UpTo, Levels): config {bands} vs proposal {want_bands}")
     want_pts = [C["pt_value"], C["pt_size"], C["pt_speed"], C["pt_cap"]]  # EV3c: the size of a point per line, then the points per line
     total = C["pt_total"] or 3 * C["pt_cap"]
     if list(pts) != want_pts or total != len(levels):
         out.append(f"crop points (Value, Size, Speed, PerLine): config {list(pts)} vs proposal {want_pts} (proposal {total} points per "
                    f"crop, the game {len(levels)} levels)")
-    want_stall = [C["st_every"], C["stall_staples"], C["st_p"], C["st_pity"], C["st_n"]]  # ST: the rotating stall (the game always has it)
+    want_stall = [C["st_every"], C["stall_staples"], C["st_p"], C["st_pity"], C["st_n"], C.get("st_long")]  # FL: + LongSeconds  # ST: the rotating stall (the game always has it)
     if not C["st"] or list(cc["stall"]) != want_stall or not C["st_newest"]:
-        out.append(f"stall (Seconds, Staples, Chance, Pity, Count): config {list(cc['stall'])} vs proposal {want_stall} (st {C['st']}, "
+        out.append(f"stall (Seconds, Staples, Chance, Pity, Count, LongSeconds): config {list(cc['stall'])} vs proposal {want_stall} (st {C['st']}, "
                    f"st_newest {C['st_newest']}: the game has both)")
     if cc["crows"][4] != cfg_id(C["crows_from"]) or cc["cart"][1][2] != cfg_id(C["crows_from"]):
         out.append(f"crows / cart taste from: config {cc['crows'][4]} / {cc['cart'][1][2]} vs proposal {cfg_id(C['crows_from'])}")
@@ -2198,10 +2266,12 @@ def config_match(M):
             have = [o["costs"][n - 1] if n <= len(o["costs"]) else None, o["crops"].get(n, {})]
             if have != [lv["price"], want_crops]:
                 out.append(f"{tid} {n}: config {have} vs proposal {[lv['price'], want_crops]}")
-    for k in ("Basic", "Golden"):
-        e, o = M["eggs"][k], P["eggs"].get(k)
+    for k, e in M["eggs"].items():
+        o = P["eggs"].get(k)
         if o is None or round(e["price"]) != o["price"] or {r: w for r, w in e["w"].items() if w} != {r: w for r, w in o["weights"].items() if w}:
             out.append(f"egg {k}: config {o and [o['price'], o['weights']]} vs proposal {[e['price'], e['w']]}")
+        elif o.get("opens") != M["c"]["egg_opens"].get(k):
+            out.append(f"egg {k}: config opensWith {o.get('opens')} vs proposal {M['c']['egg_opens'].get(k)}")
     if P["hatch_by_rarity"] != M["c"]["hatch"]:
         out.append(f"hatch times: config {P['hatch_by_rarity']} vs proposal {M['c']['hatch']}")
     return out

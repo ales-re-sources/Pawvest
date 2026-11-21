@@ -10,13 +10,14 @@ local Num = require(script.Parent:WaitForChild("Num"))
 
 local CropConfig = {}
 
--- Crops in catalogue order (EV2a, docs/ECONOMY.md → "EV": one ladder of away-time durations from 20 s to 48 h (OG2b), net Coins per square-hour x 1.2
--- per step; since EV3b six price tiers of 2-3 crops). letter: one character in the plot message (GardenRemotes.Plot field.crops);
+-- Crops in catalogue order (EV2a, docs/ECONOMY.md → "EV"; since EV3b six price tiers of 2-3 crops; since FL, 2026-11-21, ECONOMY.md →
+-- Findings (FL): a tier sets net Coins per square-hour (tiers 0-2 x1.727 a tier, then x1.5) and grow time is a choice inside it, short /
+-- medium / long, away-time 20 s … 14 h; until FL the times rose with every crop, 20 s … 48 h). letter: one character in the plot message (GardenRemotes.Plot field.crops);
 -- sale / seed in Coins (seed = 25 % of the sale); step (EV3b, crop mastery): plants of this crop grown that open the next common crop in
 -- list order (also the unit of rested mastery); quest: a milestone crop opens by handing in these crops instead (CropConfig.Mastery);
 -- kg: the weight shown at size factor 1 (E1c2); xp: pet XP of one crop fed to a pet (E1a3, half the sale, at least 1: no more than
 -- its Coins would buy as Berries; economy.py checks it).
--- Rare crops (E2, `rare = true`, sale and points set by hand for the days a world is reached, economy_ev.py check R): one per obby world (`world`), seeds only from the obby (CropConfig.ObbySeeds), never sold as seeds
+-- Rare crops (E2, `rare = true`, sale and points set by hand for the days a world is reached, economy_ev.py check R; FL halved the sales): one per obby world (`world`), seeds only from the obby (CropConfig.ObbySeeds), never sold as seeds
 -- (seed = 0: BuySeeds and the market cart skip them), never locked, no mastery.
 CropConfig.Crops = {
 	{ id = "Potato", name = "Potato", icon = "🥔", letter = "a", growSeconds = 20, sale = 9, seed = 2, step = 12, kg = 0.25, xp = 4 }, -- loc: ignore
@@ -25,19 +26,19 @@ CropConfig.Crops = {
 	{ id = "Garlic", name = "Garlic", icon = "🧄", letter = "j", growSeconds = 360, sale = 290, seed = 70, step = 14, kg = 0.1, xp = 145 }, -- loc: ignore
 	{ id = "Tomato", name = "Tomato", icon = "🍅", letter = "k", growSeconds = 960, sale = 750, seed = 190, step = 15, kg = 0.2, xp = 375 }, -- loc: ignore
 	{ id = "Cucumber", name = "Cucumber", icon = "🥒", letter = "l", growSeconds = 1800, sale = 1400, seed = 350, step = 15, kg = 0.3, xp = 700 }, -- loc: ignore
-	{ id = "Corn", name = "Corn", icon = "🌽", letter = "b", growSeconds = 3600, sale = 5000, seed = 1200, step = 16, quest = { Cucumber = 6, Garlic = 10 }, kg = 0.5, xp = 2500 }, -- loc: ignore
+	{ id = "Corn", name = "Corn", icon = "🌽", letter = "b", growSeconds = 900, sale = 1200, seed = 300, step = 16, quest = { Cucumber = 6, Garlic = 10 }, kg = 0.5, xp = 600 }, -- loc: ignore
 	{ id = "Pepper", name = "Pepper", icon = "🌶️", letter = "m", growSeconds = 7200, sale = 10000, seed = 2500, step = 17, kg = 0.2, xp = 5000 }, -- loc: ignore
-	{ id = "Broccoli", name = "Broccoli", icon = "🥦", letter = "n", growSeconds = 14400, sale = 20000, seed = 5000, step = 18, kg = 0.5, xp = 10000 }, -- loc: ignore
-	{ id = "Pumpkin", name = "Pumpkin", icon = "🎃", letter = "c", growSeconds = 21600, sale = 50000, seed = 12000, step = 19, quest = { Pepper = 5, Corn = 8 }, kg = 6, xp = 25000 }, -- loc: ignore
-	{ id = "Eggplant", name = "Eggplant", icon = "🍆", letter = "o", growSeconds = 28800, sale = 70000, seed = 18000, step = 20, kg = 0.4, xp = 35000 }, -- loc: ignore
-	{ id = "Blueberry", name = "Blueberry", icon = "🫐", letter = "p", growSeconds = 43200, sale = 100000, seed = 25000, step = 21, kg = 0.2, xp = 50000 }, -- loc: ignore
-	{ id = "SweetPotato", name = "Sweet potato", icon = "🍠", letter = "q", growSeconds = 57600, sale = 240000, seed = 60000, step = 22, quest = { Blueberry = 5, Eggplant = 4 }, kg = 0.4, xp = 120000 }, -- loc: ignore
-	{ id = "GiantMelon", name = "Giant melon", icon = "🍉", letter = "d", growSeconds = 86400, sale = 350000, seed = 90000, step = 23, kg = 15, xp = 175000 }, -- loc: ignore
-	{ id = "Sunflower", name = "Sunflower", icon = "🌻", letter = "r", growSeconds = 129600, sale = 900000, seed = 220000, step = 24, kg = 1.5, xp = 450000 }, -- loc: ignore
-	{ id = "Pineapple", name = "Pineapple", icon = "🍍", letter = "s", growSeconds = 172800, sale = 1200000, seed = 300000, step = 25, kg = 1.5, xp = 600000 }, -- loc: ignore
-	{ id = "GoldenCarrot", name = "Golden carrot", icon = "🥕", letter = "e", growSeconds = 43200, sale = 50000, seed = 0, kg = 0.3, xp = 25000, rare = true, world = 1 }, -- loc: ignore
-	{ id = "FrostGrape", name = "Frost grape", icon = "🍇", letter = "f", growSeconds = 57600, sale = 150000, seed = 0, kg = 0.5, xp = 75000, rare = true, world = 2 }, -- loc: ignore
-	{ id = "GlowMushroom", name = "Glow mushroom", icon = "🍄", letter = "g", growSeconds = 72000, sale = 300000, seed = 0, kg = 0.2, xp = 150000, rare = true, world = 3 }, -- loc: ignore
+	{ id = "Broccoli", name = "Broccoli", icon = "🥦", letter = "n", growSeconds = 28800, sale = 40000, seed = 10000, step = 18, kg = 0.5, xp = 20000 }, -- loc: ignore
+	{ id = "Pumpkin", name = "Pumpkin", icon = "🎃", letter = "c", growSeconds = 43200, sale = 90000, seed = 22000, step = 19, quest = { Pepper = 5, Corn = 8 }, kg = 6, xp = 45000 }, -- loc: ignore
+	{ id = "Eggplant", name = "Eggplant", icon = "🍆", letter = "o", growSeconds = 18000, sale = 35000, seed = 9000, step = 20, kg = 0.4, xp = 17500 }, -- loc: ignore
+	{ id = "Blueberry", name = "Blueberry", icon = "🫐", letter = "p", growSeconds = 1200, sale = 2500, seed = 600, step = 21, kg = 0.2, xp = 1250 }, -- loc: ignore
+	{ id = "SweetPotato", name = "Sweet potato", icon = "🍠", letter = "q", growSeconds = 21600, sale = 65000, seed = 16000, step = 22, quest = { Blueberry = 5, Eggplant = 4 }, kg = 0.4, xp = 32500 }, -- loc: ignore
+	{ id = "GiantMelon", name = "Giant melon", icon = "🍉", letter = "d", growSeconds = 50400, sale = 160000, seed = 40000, step = 23, kg = 15, xp = 80000 }, -- loc: ignore
+	{ id = "Sunflower", name = "Sunflower", icon = "🌻", letter = "r", growSeconds = 36000, sale = 170000, seed = 40000, step = 24, kg = 1.5, xp = 85000 }, -- loc: ignore
+	{ id = "Pineapple", name = "Pineapple", icon = "🍍", letter = "s", growSeconds = 1800, sale = 8500, seed = 2100, step = 25, kg = 1.5, xp = 4250 }, -- loc: ignore
+	{ id = "GoldenCarrot", name = "Golden carrot", icon = "🥕", letter = "e", growSeconds = 43200, sale = 25000, seed = 0, kg = 0.3, xp = 12500, rare = true, world = 1 }, -- loc: ignore
+	{ id = "FrostGrape", name = "Frost grape", icon = "🍇", letter = "f", growSeconds = 57600, sale = 75000, seed = 0, kg = 0.5, xp = 37500, rare = true, world = 2 }, -- loc: ignore
+	{ id = "GlowMushroom", name = "Glow mushroom", icon = "🍄", letter = "g", growSeconds = 72000, sale = 150000, seed = 0, kg = 0.2, xp = 75000, rare = true, world = 3 }, -- loc: ignore
 }
 CropConfig.ById = {}
 CropConfig.ByLetter = {}
@@ -150,7 +151,7 @@ CropConfig.DaySeconds = TimeFormat.DAY
 -- `order` ≥ MinOrder and growSeconds ≤ MaxGrow; the board opens with 2 of them. need = Share × a day's income ÷ (the crop's sale ×
 -- pet multiplier), at least MinNeed, at most half the barn; a day's income = crop sales + request bonuses of the previous UTC day or
 -- so far today, whichever is more, at least MinIncome. A finished request pays Bonus × need × the crop's sale (+ pet multiplier) and
--- with DropChance a drop: a rare seed of the highest world with a finished stage or a free `DropEgg`, half and half. An unfinished
+-- with DropChance a drop: a rare seed of the highest world with a finished stage or a free egg (`DropEggFor`), half and half. An unfinished
 -- request stays; finished slots refill on the next UTC day. No timed run and no Sunshine until EV2c (the user, 2026-11-19).
 CropConfig.Requests = {
 	Slots = 3,
@@ -162,7 +163,16 @@ CropConfig.Requests = {
 	Bonus = 0.6,
 	DropChance = 1 / 3,
 	DropEgg = "Basic",
+	-- EG (the user, 2026-11-20): from LateDropAfter's crop on (Pumpkin) the drop is a Topaz egg; a Pearl egg is worth nothing by then
+	LateDropEgg = "Golden",
+	LateDropAfter = "Pumpkin",
 }
+
+-- The free egg (PetConfig.Eggs id) a request drop gives a player with the open-crop set `unlocked`.
+function CropConfig.DropEggFor(unlocked): string
+	local rules = CropConfig.Requests
+	return if type(unlocked) == "table" and unlocked[rules.LateDropAfter] == true then rules.LateDropEgg else rules.DropEgg
+end
 
 -- The crops that requests may ask for with the unlocked set `unlocked`, in ladder order.
 function CropConfig.RequestCrops(unlocked)
@@ -178,10 +188,10 @@ end
 
 -- The rotating seed stall (ST, docs/GDD.md §7.9; model economy_ev `st_*`, ECONOMY.md → Findings "ST"). A restock block is
 -- floor(os.time() / Seconds) (UTC hours). Always in stock, without a count: the first `Staples` crops of the ladder, the newest unlocked
--- crop and the crops a next talent level or the open quest asks for (CropConfig.StallAlways). Every other unlocked common crop is in
--- stock in a block when its draw (StallStock) says so: chance `Chance`, and at least every `Pity` blocks; then `Count` seeds per player
--- per block (Garden.Stall).
-CropConfig.Stall = { Seconds = 3600, Staples = 3, Chance = 0.5, Pity = 3, Count = 12 }
+-- crop, the newest unlocked crop of at least `LongSeconds` (FL: an overnight staple, so every night has a long crop) and the crops a next
+-- talent level or the open quest asks for (CropConfig.StallAlways). Every other unlocked common crop is in stock in a block when its
+-- draw (StallStock) says so: chance `Chance`, and at least every `Pity` blocks; then `Count` seeds per player per block (Garden.Stall).
+CropConfig.Stall = { Seconds = 3600, Staples = 3, Chance = 0.5, Pity = 3, Count = 12, LongSeconds = 21600 }
 
 -- Garden tools (E1c3, docs/EXPANSION.md §6; numbers approved 2026-11-03, docs/ECONOMY.md → "Garden tools at F2"): levels bought with
 -- Coins; Garden.Tools[id] = level. effect[n] at level n: Sorter = a harvest's size factor x (1 + effect)
@@ -223,7 +233,9 @@ CropConfig.WorkOfflineRate = 0.5
 CropConfig.SettleSeconds = 60 -- online growth is settled at least this often (and before every field action, on join and leave)
 
 -- Crop mastery (EV3b, docs/GDD.md §7.9; numbers signed off 2026-11-17, docs/ECONOMY.md → EV3): a crop's level (★) comes from the plants
--- of it grown (Garden.Crops[id].N): Levels[L] plants for level L, the same for every crop. A harvest of a common crop (by hand or a Tending
+-- of it grown (Garden.Crops[id].N): Levels[L] plants for level L; FL: a quick crop takes the first `LevelsBy` band whose UpTo ≥ its base
+-- growSeconds (it stays worth planting on the flatter ladder). A level never drops: it is at least the points spent on the crop (counts
+-- raised by FL keep earned upgrades). A harvest of a common crop (by hand or a Tending
 -- pet; not the Shears' extra crop) adds one plant. The next common crop in list order opens when the previous one reaches its `step`
 -- plants, a crop with `quest` when the quest's crops are handed in (piece by piece, no expiry); the quest gives QuestSeeds seeds of the new
 -- crop. Rested mastery (silent: never shown): each day away past the first adds RestPerDay to Garden.Rested (cap RestCap); while it lasts
@@ -233,6 +245,10 @@ CropConfig.SettleSeconds = 60 -- online growth is settled at least this often (a
 -- grow time × (1 - n · Points.Speed): the crop's growth rate × 1 / (1 - n · Points.Speed).
 CropConfig.Mastery = {
 	Levels = { 25, 75, 200 },
+	LevelsBy = { -- FL (2026-11-21): Potato, Lettuce, Onion, Garlic / Tomato, Cucumber, Corn, Blueberry, Pineapple
+		{ UpTo = 600, Levels = { 25, 225, 600 } },
+		{ UpTo = 3600, Levels = { 25, 110, 300 } },
+	},
 	RestPerDay = 0.5,
 	RestCap = 3,
 	QuestSeeds = 4,
@@ -251,15 +267,27 @@ for index, crop in CropConfig.Ladder do
 	crop.order = index
 end
 
--- Mastery level (0..#Levels) for `n` plants grown.
-function CropConfig.MasteryLevel(n: number?): number
+-- The plant counts of `crop`'s mastery levels (FL: its grow-time band, else Mastery.Levels).
+function CropConfig.LevelsOf(crop): { number }
+	local seconds = crop and crop.growSeconds or math.huge
+	for _, band in CropConfig.Mastery.LevelsBy do
+		if seconds <= band.UpTo then
+			return band.Levels
+		end
+	end
+	return CropConfig.Mastery.Levels
+end
+
+-- Mastery level (0..#Levels) of `crop` with `n` plants grown and the points `pts` spent on it: the count's level, never below the
+-- points spent (FL raised the counts of quick crops; an earned level stays).
+function CropConfig.MasteryLevel(crop, n: number?, pts): number
 	local level = 0
-	for L, need in CropConfig.Mastery.Levels do
+	for L, need in CropConfig.LevelsOf(crop) do
 		if (n or 0) >= need then
 			level = L
 		end
 	end
-	return level
+	return math.max(level, CropConfig.SpentPoints(pts))
 end
 
 -- EV3c: the points in line `line` of the points table `pts` ({ Value = 2, … }, nil = none): a whole number 0..Points.PerLine (anything
@@ -280,8 +308,8 @@ function CropConfig.SpentPoints(pts): number
 	end
 	return spent
 end
-function CropConfig.FreePoints(n: number?, pts): number
-	return math.max(0, CropConfig.MasteryLevel(n) - CropConfig.SpentPoints(pts))
+function CropConfig.FreePoints(crop, n: number?, pts): number
+	return math.max(0, CropConfig.MasteryLevel(crop, n, pts) - CropConfig.SpentPoints(pts))
 end
 
 -- The sale multiplier (Value), the size factor multiplier (Size) and the growth rate multiplier (Speed) of the points `pts`.
@@ -659,20 +687,27 @@ function CropConfig.StallStock(block: number, crop): boolean
 end
 
 -- The crops always in stock for a player with the unlocked set `unlocked`: the staples, the newest unlocked crop (the last one in ladder
--- order) and the ids in `extra` (the next talent levels' and the open quest's crops) -> { [cropId] = true }.
+-- order), the newest unlocked crop of at least Stall.LongSeconds (FL) and the ids in `extra` (the next talent levels' and the open
+-- quest's crops) -> { [cropId] = true }.
 function CropConfig.StallAlways(unlocked, extra: { string }?)
 	local always = {}
-	local newest = nil
+	local newest, newestLong = nil, nil
 	for _, crop in CropConfig.Ladder do
 		if crop.order <= CropConfig.Stall.Staples then
 			always[crop.id] = true
 		end
 		if CropConfig.IsUnlocked(unlocked, crop.id) then
 			newest = crop
+			if crop.growSeconds >= CropConfig.Stall.LongSeconds then
+				newestLong = crop
+			end
 		end
 	end
 	if newest then
 		always[newest.id] = true
+	end
+	if newestLong then
+		always[newestLong.id] = true
 	end
 	for _, id in extra or {} do
 		always[id] = true

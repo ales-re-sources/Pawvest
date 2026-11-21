@@ -1,4 +1,4 @@
--- GardenIncubators: every egg (Basic, Golden) hatches in an incubator of the player's plot (docs/GDD.md §7.2, §7.6;
+-- GardenIncubators: every egg (PetConfig.EggOrder; an egg with `opensWith` only once that crop is open, EG) hatches in an incubator of the player's plot (docs/GDD.md §7.2, §7.6;
 -- P2b1, P2b3). Server-only.
 -- State lives in PlayerProfile.Garden: Incubators["1".."3"] = { Id, Egg, Kind, StartedAt, ReadyAt } and IncubatorCount (owned
 -- incubators, unlocked in order). StartedAt / ReadyAt are the server's os.time() when the egg was started / is due. The
@@ -163,6 +163,9 @@ startEggEvent.OnServerEvent:Connect(function(player, index, eggId)
 	end
 	if index < 1 or index > garden.IncubatorCount then
 		return reject(player, "StartEgg", "locked")
+	end
+	if not PetConfig.EggOpen(egg, garden.Unlocked) then
+		return reject(player, "StartEgg", "eggLocked") -- EG: its crop is not open yet
 	end
 	if garden.Incubators[tostring(index)] then
 		return reject(player, "StartEgg", "occupied")

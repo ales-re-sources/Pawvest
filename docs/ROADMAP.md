@@ -59,7 +59,8 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | FB2 | Stage rating on a signboard in each stage's courtyard instead of the popup (1.0) | ✔ | ✔ 2026-11-18 | – |
 | FB3 | The popup's 👍 / 👎 row back, alongside the signs (1.0) | ✔ | ✔ 2026-11-19 | – |
 | E5 | Garden MVP rest: request board, ledger on join, onboarding, garden telemetry (1.0) | ✔ | E5a ✔ 2026-11-19, E5b + E5c ✔ 2026-11-20 | – |
-| EG | Egg ladder: gem-named eggs (Pearl, Topaz, Ruby, Diamond), the two new ones opened by crops; pets shown per egg (1.0) | signed off 2026-11-20 | – | – |
+| EG | Egg ladder: gem-named eggs (Pearl, Topaz, Ruby, Diamond), the two new ones opened by crops; pets shown per egg (1.0) | ✔ | ✔ 2026-11-21 | – |
+| FL | Flatter crop ladder: tiers set Coins per hour, grow time a choice inside a tier, longest crop 14 h (1.0) | ✔ | ✔ 2026-11-21 | – |
 | FD | Food trains a pet to half its max (priced by level), time with you and the pet's work do the rest (1.0) | design signed off 2026-11-20 | – | – |
 | M6a | Soft launch + World 1 balancing (balanced by feel 2026-10-30; live test open) | – | – | – |
 | MU | Mobile UX check | – | – | – |
@@ -74,7 +75,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 - **Not in 1.0:** obby time calibration (M6b; the obby stays as built), the comfort shop (D2: 1.0 ships without monetization),
   Sunshine (EV2c), World 4, hybrids (HX1 build).
 
-**Start here:** FD and EG (Road to 1.0 step 5b; both signed off 2026-11-20), then release gates (step 6), MU first (E5 done 2026-11-20: E5a Studio-validated 2026-11-19, E5b + E5c 2026-11-20). (FB + FB2 Studio-validated 2026-11-18, FB3 2026-11-19, the live filter check open; SH Studio-validated 2026-11-18, likes in a two-client test; ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: the M6a friends test (step 0).
+**Start here:** FD (Road to 1.0 step 5b; FD signed off 2026-11-20; EG and FL done 2026-11-21), then release gates (step 6), MU first (E5 done 2026-11-20: E5a Studio-validated 2026-11-19, E5b + E5c 2026-11-20). (FB + FB2 Studio-validated 2026-11-18, FB3 2026-11-19, the live filter check open; SH Studio-validated 2026-11-18, likes in a two-client test; ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: the M6a friends test (step 0).
 *Update this line whenever a milestone finishes.*
 
 **Road to 1.0** (in order; one milestone at a time unless marked "alongside"):
@@ -88,8 +89,9 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 3. **SH — Harvest Hall and plot likes:** done (Studio-validated 2026-11-18; Done).
 4. **FB — player feedback:** done (Studio-validated 2026-11-18; Done).
 5. **E5 — the online loop:** done (Studio-validated 2026-11-20; Done).
-5b. **EG — egg ladder** and **FD — food bootstraps, activity maxes** (sections below; added 2026-11-20 by the user as needed for 1.0): sign-off of
-   the design and numbers, then one at a time (either order), each with a model pass before code.
+5b. **EG — egg ladder** (done, Studio-validated 2026-11-21; Done), **FL — flatter crop ladder** (done, Studio-validated
+   2026-11-21; Done; before FD, whose fed-crop XP and food prices follow the crop sales) and **FD — food bootstraps, activity maxes** (section
+   below; added 2026-11-20 by the user as needed for 1.0): a model pass before code.
 6. **Release gates, then public:** MU (section below; adds the Hall and a full field on a real phone), TH1 + THU, the Czech review of
    every new text, the M6a live checks, "Before Max Players 24" under "Open items", then Max Players → 24 (a place setting).
 
@@ -210,57 +212,61 @@ cart taste), AhojRupert level 5 (Potato … Cucumber), test records `user_-1` / 
 one line (changed the same day); no free reset (later a paid comfort in D2 or an event item: EXPANSION §13); no collection total (with a
 "farm book" review of crops / barn / quests: proposed 2026-11-17, timing open).
 
-**Not in EV3:** repeat-run Coins → Sunshine (EV2c); requests and trees (the online loop, E5); a flatter price curve (ECONOMY.md → open
-decision 5).
+**Not in EV3:** repeat-run Coins → Sunshine (EV2c); requests and trees (the online loop, E5); a flatter price curve (FL).
 
-### EG — Egg ladder (1.0; scoped 2026-11-20; signed off by the user 2026-11-20 with the decisions and the gem names below)
-*Why (the user, 2026-11-20):* egg prices are laughable once dearer crops open. Measured (`economy_ev`, the game's two eggs, seed 1): a
-Golden egg (4 000) is a third of one Corn sale and 0.1 % of a day's income on day 7 (Casual 3.7 M, Garden main 11.9 M); the egg spend is
-capped by the 3 incubators, not by Coins; Garden main's expected first Legendary (G9) comes on day 7. The model already assumes two dearer
-eggs above Golden (FutureEgg1 / 2); the game has none.
-*Design (recommended):*
-- **Gem names (the user, 2026-11-20: one consistent scheme, rare gems, "smart and unique pets"):** every egg is a gem, its shell in the
-  gem's colour; no shell colour matches a rarity colour (grey / green / blue / purple / orange), so a shell never reads as a promised
-  rarity:
+### FL — Flatter crop ladder (1.0, before FD; scoped 2026-11-21; numbers: ECONOMY.md → Findings (FL), candidate O; the user chose the direction and asked for this scope 2026-11-21, the numbers await review; implemented and Studio-validated 2026-11-21: Done. This section moves to git history with the next commit.)
+*Why (the user, 2026-11-21):* every new crop felt ~4× the last and Sunflower took 36 h. As built, grow time rises with every unlock
+(20 s … 48 h), so the sale per plant rises 2.2× per crop, the top crops need several absences, and once Sunflower is open a short crop
+online earns 1/15 of it per hour (G11 fails on every seed). *Design:* the tier sets Coins per square-hour (tiers 0–2 as built, then
+× 1.5 per tier: top 10.1× instead of 15.4×); grow time is a choice inside a tier (short / medium / long); the longest crop is 14 h.
+Decided with it: the top crop on day 10–12 for Casual (G9 from day 10).
+*Numbers* (`CropConfig.Crops`; away-time; sale / seed; `xp` = half the sale; ids, order, `step`, `quest`, `kg` unchanged):
 
-  | Egg | Id (stored, unchanged for the old two) | Opens | Shell | Czech |
-  |---|---|---|---|---|
-  | **Pearl egg** | `Basic` | from the start | pearly cream (today's) | Perlové vejce |
-  | **Topaz egg** | `Golden` | from the start | gold-yellow, glow (today's) | Topazové vejce |
-  | **Ruby egg** | `Ruby` (new) | with Pumpkin (model: Garden main day 1.9, Casual 3.8) | deep red, glow | Rubínové vejce |
-  | **Diamond egg** | `Diamond` (new) | with Giant melon (day 5.7–8.8) | ice-white, sparkle glow | Diamantové vejce |
+| Crop | Grow | Sale / seed | Crop | Grow | Sale / seed |
+|---|---|---|---|---|---|
+| Potato … Cucumber | as built | as built | Eggplant | 5 h | 35 000 / 9 000 |
+| Corn | 15 m | 1 200 / 300 | Blueberry | 20 m | 2 500 / 600 |
+| Pepper | 2 h | 10 000 / 2 500 | Sweet potato | 6 h | 65 000 / 16 000 |
+| Broccoli | 8 h | 40 000 / 10 000 | Giant melon | 14 h | 160 000 / 40 000 |
+| Pumpkin | 12 h | 90 000 / 22 000 | Sunflower | 10 h | 170 000 / 40 000 |
+| | | | Pineapple | 30 m | 8 500 / 2 100 |
 
-  Only the `pet.egg.Basic` / `pet.egg.Golden` texts change (English + Czech, `cs_status` new). A locked egg's card shows 🔒 and the
-  icon of the crop that opens it, as the seed stall shows mastery. Prices of Pearl 120 and Topaz 4 000 stay (the first hour and the first
-  days); hatch timers by rarity stay. New eggs that come later take the next gems (Emerald / Sapphire / Amethyst only with a non-rarity
-  shade, or Opal, Onyx).
-- Candidate numbers (the model fits them): Ruby egg ~150 000, Rare 600 / Epic 396 / Legendary 4 ‰; Diamond egg ~3 500 000, Rare 400 /
-  Epic 580 / Legendary 20 ‰. Rule: a new egg costs 2–4 h of the archetypes' median income on the day it opens.
-- Shells through `EggLook`; the hatch reveal and egg cards take the new ids.
-- Free eggs (first join, first Gold) stay Pearl. **Decided (the user, 2026-11-20):** the request drop's free egg becomes a Topaz egg once
-  Pumpkin is open (a Pearl egg is worth nothing by then).
-- **Decided (the user, 2026-11-20; a small step towards the post-1.0 catalog):** the egg's odds panel ("?") shows under each rarity row the pets it
-  can hatch as small portraits (`PetPortrait`); kinds the player has never hatched show as dark silhouettes. Needs a `SeenKinds` id set in
-  the profile (backfilled from the pets owned on join), which the catalog / field guide (EXPANSION §11) reuses. *Why:* the player cannot
-  see which pets exist (the user, 2026-11-20). Kind-pool eggs ("this egg hatches only these 5 pets") wait until there are more kinds than
-  8 (Ideas).
-*Boundary:* `PetConfig.Eggs` / `EggOrder` + an `opensWith` crop id; `GardenIncubators` refuses a locked egg (`Locale.Reject`);
-`IncubatorClient` locked card and the odds panel's pet portraits; `SeenKinds` in `PlayerProfile` (PROTOCOL); `CropConfig.Requests` drop;
-Strings (egg names); `economy_ev` CAND (FutureEgg1 / 2 → the real eggs),
-`economy.py check` + `pin`; GDD §7.2, ECONOMY → EV, PROTOCOL if a field changes. No profile migration (new ids only). **Not in EG:** new
-pet kinds, born levels, pet sell values, more incubators.
+- **Rare crops** sell for half: Golden carrot 25 000, Frost grape 75 000, Glow mushroom 150 000 (`xp` half of that; check R).
+- **Mastery levels by grow time** (`CropConfig.Mastery`): crops ≤ 10 min (Potato, Lettuce, Onion, Garlic) 25 / 225 / 600 plants,
+  ≤ 1 h (Tomato, Cucumber, Corn, Blueberry, Pineapple) 25 / 110 / 300, the rest 25 / 75 / 200 (G12: Onion was maxed on day 2.7).
+  `MasteryLevel` takes the crop; **a level never drops**: level = max(the count's level, the points spent on the crop).
+- **Overnight staple** (`CropConfig.Stall.LongSeconds = 6 h`): `StallAlways` also stocks the newest unlocked crop of ≥ 6 h (G2: the
+  hourly rotation left nights with no long crop).
+- **Double Jump 2:** 8 500 Coins + 10 Cucumber + 1 Frost grape (was 10 000 + 12 + 1; G4).
+- **Seed stall rows show Coins per hour** next to the grow time: (sale × Value − seed) ÷ grow hours on this field, so a short top-tier
+  crop (Pineapple 8 500) does not read as worse than Pumpkin (90 000). New string; Czech in the summary.
+- Unchanged: squares and every other sink, egg prices (EG passes on the new ladder), requests (`MaxGrow` 8 h: Pumpkin leaves the
+  pool, Sweet potato joins; an open request stays), quests, crows, the cart taste, rates and the 24 h cap.
+- **Model:** `CAND` becomes candidate O (ladder, `tier_of`, a tier-rate list, rare sales, Double Jump 2, mastery bands, the overnight
+  staple, the stuck-player chase from `tools/economy_flat_probe.py`); EV0 also compares the mastery bands and `LongSeconds`; the probe
+  file is removed once `CAND` carries it. `economy.py check`, then `pin` after the user's review.
+*Profiles:* no migration. Plantings keep their `Grown`: a crop whose time fell (Sunflower, Pineapple, Giant melon, Sweet potato,
+Blueberry, Eggplant, Corn) ripens sooner, Broccoli and Pumpkin later. Before code: read the live profiles (read-only) for crops whose
+level would fall under the new counts and list them.
+*Boundary:* `CropConfig` (crops, rare crops, `Mastery`, `Stall`, `MasteryLevel` / `FreePoints` and their callers in `GardenField`,
+`GardenUi`, `CropPageClient`), `TalentConfig` (Double Jump 2), `SeedStallClient` (rate line), Strings; `economy_ev.py`, `economy.py`
+(mastery bands), pins; GDD §7.9, ECONOMY (FL → as built), PLANT_GROWTH (the OG2b line), PROTOCOL only if a field changes (none
+planned). **Not in FL:** the comfort product (G8: paid offline speed is worth ~1.1× now; D2 redesigns it), per-crop profit variety
+(when there are more crops), new crops, the square ladder.
 *Acceptance (hard):*
-1. Pumpkin not opened: a Ruby egg purchase (fired remote) is refused, Coins unchanged, the nest stays empty; the card shows 🔒 + 🎃.
-2. Pumpkin opened: buying through the real UI takes exactly the config price, the nest shows the ruby shell, the hatch gives Rare or
-   better.
-3. `PetConfig.Roll` over 100 000 rolls per new egg: no Common / Uncommon, each rarity within ±10 % of its weight (Legendary ±25 %).
-4. Model, seeds 1–4: Casual's expected first Legendary (`leg_half`) ≥ day 14; each new egg ≥ 2 h of the buying archetype's income on its
-   opening day; `economy.py check` has no failure beyond today's (17/18 on seed 1, G11).
-5. A request drop after Pumpkin is open puts a Topaz egg in a nest; before, a Pearl one.
-6. The odds panel of a Pearl egg shows 8 portraits under their rarity rows; on a profile that never hatched a Dragon, the Dragon is a
-   silhouette, and it shows in colour right after one hatches. An old profile's owned kinds show in colour on its first join (backfill).
-7. Egg names and the lock line fit the card in Czech (`TextFits`); no egg is shown under its old name anywhere (grep the strings and the
-   hatch reveal / request / results texts).
+1. Model: EV0 passes (configs = `CAND`); on seeds 1–8 at least 16 of the 19 EV checks pass on every seed (the probe: 15–16 of the 18
+   besides EV0); G2 ≥ 90 % for every archetype on every seed; Casual's top crop day 10–28; `economy.py check`'s core checks all pass.
+2. Through the real seed stall: Sunflower shows 10 h and Pineapple 30 m (no Growth / Speed); each row's Coins per hour equals
+   (sale − seed) ÷ hours to the Coin (Sunflower 13 000, Pineapple 12 800); the line fits in Czech (`TextFits`).
+3. A Pineapple planted through the UI is ripe after 15 online minutes and sells for 8 500 (no Value points).
+4. A player whose newest crop is Blueberry and who has Pumpkin open finds Pumpkin in stock in 6 consecutive restock blocks (server
+   answer); with only Corn open (no crop ≥ 6 h) the always-set is the staples + Corn as today.
+5. Mastery on a fixture: Potato 224 plants = level 1, 225 = level 2; Tomato 110 = level 2; Pumpkin 75 = level 2; a Potato with 100
+   plants and 2 points spent shows level 2 and keeps its points (no drop).
+6. Skills panel: Triple Jump costs 8 500 + 10 Cucumber + 1 Frost grape; with 9 Cucumbers it is refused, Coins and crops unchanged.
+7. Selling a Golden carrot pays 25 000 (no Value points).
+8. A fixture square with Sunflower `Grown` 11 h is ripe on join; one with Pumpkin `Grown` 7 h shows 5 h left.
+9. One playtest boot without new errors; live profile snapshotted before each fixture and restored.
 
 ### FD — Food bootstraps, activity maxes (1.0; scoped 2026-11-20; design signed off by the user 2026-11-20, the rates and prices are fitted by the model pass)
 *Why (the user, 2026-11-20):* a new pet can be fed to the max for almost nothing; Coins should bootstrap a new pet, never replace the
@@ -398,6 +404,23 @@ Tagged **[1.0]** (needed before 1.0 goes public) or **[later]**.
 
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
+
+**FL — flatter crop ladder** (2026-11-21; Studio-validated). A price tier sets Coins per square-hour (tiers 0–2 as built, then × 1.5),
+grow time is a choice inside a tier, longest crop 14 h (Sunflower 36 h → 10 h, Pineapple 48 h → 30 m); rare sales halved; quick crops
+need more plants for ★2 / ★3 and a level never drops below its spent points; the stall always stocks the newest crop of ≥ 6 h; Double
+Jump 2 8 500 + 10 Cucumber + 1 Frost grape; seed rows show net Coins per hour. G9 from day 10 (the user). Model: EV0 passes, 16–17 of
+19 on seeds 1–8 (G8 on every seed, G11 on several), core checks pass after `pin`. Validated on a test profile: stall rows (10 hours /
+≈ 13 000, 30 min / ≈ 12 800; Czech TextFits), overnight staple and always-set, mastery counts and the no-drop rule, a UI harvest star,
+Golden carrot 25 000, Triple Jump refused at 9 Cucumbers, ripening of old `Grown`, a Pineapple planted through the UI (30:00, online ×2).
+Not driven: a Pineapple sold after ripening (sale = config, `GardenUi.SalePrice` shown on the row).
+
+**EG — egg ladder** (2026-11-21; Studio-validated). Eggs are gems: Pearl (`Basic`) 120, Topaz (`Golden`) 4 000, Ruby 450 000 (opens
+with Pumpkin), Diamond 3 000 000 (with Giant melon); a locked card shows 🔒 + the crop, the server refuses it (`eggLocked`); cards two a
+row; the odds panel shows each rarity's kinds, a silhouette until owned (`SeenKinds`, backfilled on join); the request drop gives Topaz
+once Pumpkin is open. Model pass: check EG (≥ 2 h of the opening day's income), G9 day ≥ 15.8; core 15/15, EV 16/19 on seed 1 (G11 as
+before, G5 / B2 RNG flips: ECONOMY → Findings (EG)). Validated: 100 000 rolls per egg, refusal with Coins in hand, a Ruby bought through
+the UI (exactly 450 000, ruby shell, hatched an Epic), Dragon silhouette → colour after its hatch, the live profile's backfill, Czech
+TextFits. Request drop: `DropEggFor` checked, a real drop not driven (RNG). Scope and acceptance: `git show 91cd48f:docs/ROADMAP.md`.
 
 **OG2b — restore crop pacing** (2026-11-20; Studio-validated). All 19 base durations doubled, preserving pre-OG2 real growth pace;
 rates ×2 / ×1, 24 h cap and field-job XP kept. Request cutoff / simulator units converted; prices and rewards unchanged.

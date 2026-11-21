@@ -48,8 +48,10 @@ talent.name.QuickRespawn,"Talent (skill) name: Skills panel, ""Needs:"" lines of
 talent.name.DoubleJump.2,"Name of Double Jump level 2 (two jumps in the air): the Skills row once Double Jump is owned, ""Needs:"" lines",Triple Jump,Trojitý skok,ok,hd4bc2346
 talent.name.Dash,"Talent (skill) name: Skills panel, ""Needs:"" lines of the arrival popup",Dash,Výpad,ok,h76f645c2
 talent.name.Dash.2,"Name of Dash level 2 (a longer burst in the air): the Skills row once Dash is owned, ""Needs:"" lines",Long Dash,Dlouhý výpad,ok,h3fb79f5f
-pet.egg.Basic,Egg name (cheap egg; hatch duration depends on chosen pet rarity),Basic egg,Obyčejné vejce,ok,h34aaec11
-pet.egg.Golden,Egg name (expensive egg; hatch duration depends on chosen pet rarity),Golden egg,Zlaté vejce,ok,hf543d666
+pet.egg.Basic,"Egg name, gem scheme (cheapest egg, sold from the start; pearly cream shell). Nominative; used alone and as {egg} in other texts",Pearl egg,Perlové vejce,new,he223c97f
+pet.egg.Golden,"Egg name, gem scheme (second egg, sold from the start; gold-yellow shell). Nominative; used alone and as {egg} in other texts",Topaz egg,Topazové vejce,new,hb25f170e
+pet.egg.Ruby,"Egg name, gem scheme (third egg, opens with the Pumpkin crop; deep red shell). Nominative; used alone and as {egg} in other texts",Ruby egg,Rubínové vejce,new,h9ffc1d7d
+pet.egg.Diamond,"Egg name, gem scheme (dearest egg, opens with the Giant melon crop; ice-white shell). Nominative; used alone and as {egg} in other texts",Diamond egg,Diamantové vejce,new,h1e5355b8
 # Score panel (top right),,,,,
 hud.score.record,"Second line on a stage; {time} = personal best, e.g. 1:23.4",Your record: {time},Tvůj rekord: {time},ok,h843f7a81
 hud.score.firstTry,Second line on a stage the player has never finished,First try!,První pokus!,ok,h37b1e26c
@@ -289,6 +291,8 @@ hatchery.eggs,"Hatchery group-box legend: egg catalogue and Buy actions, separat
 hatchery.busy,Hatchery catalogue when all nests are occupied,Every incubator holds an egg. Hatch one or cancel a hatch to make room.,Ve všech inkubátorech je vejce. Vylíhni jedno nebo zruš líhnutí a uvolni místo.,new,he734fad8
 hatchery.egg.time,"Egg card before purchase; {time} = shortest possible wait, {max} = longest. Both localized durations.",⏱ {time}–{max},⏱ {time}–{max},new,h1ddd4321
 hatchery.egg.buy,"Hatchery panel, egg card: the buy button (half the panel minus the ? button); {count} = price in Coins",💰 {count},💰 {count},new,h5b33c8c5
+hatchery.egg.lockIcon,"Hatchery panel, a locked egg's card: in place of the buy button; {icon} = emoji of the crop that opens the egg (e.g. 🎃). No words",🔒 {icon},🔒 {icon},new,h6b3355fd
+hatchery.egg.opensWith,"Hatchery panel, a locked egg's card, under the hatch times (narrow card, wraps); {crop} = crop name (crop.name.*, nominative, e.g. Pumpkin / Dýně)",Opens with {crop},Odemkne se s plodinou {crop},new,hf201bd7a
 hatchery.odds.button,"Hatchery panel, egg card: square button that shows the egg's chances (one character)",?,?,new,h9f64d1d4
 hatchery.reveal.title,"Hatchery panel, hatch reveal: the big title over the new pet's picture",New pet!,Nový mazlíček!,new,h40c24a23
 hatchery.reveal.follows,"Hatchery panel, hatch reveal: line under the pet's name when it was equipped at once",It follows you now.,Teď půjde všude s tebou.,new,h3c4bd076
@@ -319,6 +323,7 @@ incubator.reject.occupied,Refused: the incubator holds an egg,This incubator alr
 incubator.reject.full,Refused: the pet inventory is full; {max} = 50,Your inventory is full ({max} pets). Sell a pet first.,Máš plný inventář ({max} mazlíčků). Nejdřív nějakého prodej.,ok,hb427b029
 incubator.reject.empty,Refused: nothing to hatch,There is no egg in this incubator,V tomhle inkubátoru nemáš žádné vejce,ok,h20ff33bb
 incubator.reject.notready,Refused: the egg needs more time,Not ready yet,Ještě není připravené,ok,h16f18a63
+incubator.reject.eggLocked,Refused: the egg's crop is not open yet (the card shows which crop opens it),This egg is still locked,Tohle vejce je ještě zamčené,new,hbd0fd2ef
 # Food stand panel,,,,,
 food.title,Food stand panel title,🍓 Pet food,🍓 Krmení pro mazlíčky,ok,h10d5bce0
 food.status,Default status line of the food stand (P4: food trains Cuteness first),Feed a pet to train it. Treats improve Cuteness first. Only the fed pet gets the XP.,Nakrm mazlíčka a vytrénuj ho. Jídlem zlepšuješ hlavně Roztomilost.,new,h7473af7f
@@ -417,10 +422,11 @@ field.crows.later,Field panel header: crows do not come to a young field yet; {c
 field.crows.hint,"Field panel header, small line under the crow forecast: what crows do","If you are away in a crow time, crows may eat 1 ripe crop. Rare crops are safe, and a pet with Pest control chases them off.","Když jsi pryč v čase vran, můžou sežrat 1 zralou úrodu. Vzácné plodiny jsou v bezpečí a mazlíček s hlídáním je odežene.",new,h6b0bdad1
 field.section.seeds,Heading of the seed list (shop at the own plot),Seeds,Semínka,new,h8fa20aac
 field.seed.info,"Seed row, second and third line (\n = line break); {time} = grow time (""3 hours""), {sale} = Coins one harvested crop sells for, {seed} = Coins one seed costs, {stock} = seeds the player has OG2: time is the away-time baseline, with Growth and crop Speed; the countdown runs faster while playing. OG2b: required growth time, not a guaranteed uninterrupted absence; away growth pauses at the 24 h cap shown in the timing hint.",Growth time: {time}\nSells for {sale} · Seed {seed} · You have {stock},Doba růstu: {time}\nProdej {sale} · Semínko {seed} · Máš {stock},new,h7b1259e4
+field.seed.rate,"Seed stall row of a common crop, its own line under the price line (FL): net Coins one field square earns per hour with this crop, (sale − seed) ÷ the growth time shown above; {coins} = that number. Lets a quick crop of a higher tier (small sale) compare with a slow one.",≈ {coins} an hour per square,≈ {coins} za hodinu na políčko,new,h9c523f79
 field.seed.rareInfo,"Seed row of a rare crop (E2: seeds only from obby medals), second and third line (
  = line break); {time} = grow time, {sale} = Coins one crop sells for, {stock} = seeds the player has OG2: time is the away-time baseline, with Growth and crop Speed; the countdown runs faster while playing. OG2b: required growth time, not a guaranteed uninterrupted absence; away growth pauses at the 24 h cap shown in the timing hint.","Growth time: {time}
 Sells for {sale} · You have {stock}","Doba růstu: {time}
-Prodej {sale} · Máš {stock}",new,hdba3cd07
+Prodej {sale} · Máš {stock}",new,hd2a03782
 field.seed.fromWorld,"Seed row of a rare crop, replaces the buy buttons (narrow, wraps): its seeds are earned with medals on the stages of {world} (world.name.*, Czech: nominative ""1. svět"")",⭐ Medals in {world},⭐ Za medaile: {world},new,h52450e9e
 field.barn,"Line under the seed list; {total} = seeds held, {capacity} = what the barn holds",Barn: {total} / {capacity} seeds,Stodola: {total} / {capacity} semínek,new,hdfd10ae1
 field.seed.note,Small note under the seed list,Prices are in Coins.,Ceny jsou v mincích.,new,hd2ae55c1
@@ -534,7 +540,7 @@ field.reason.items,Refused: the player has fewer crops than asked to sell,You do
 field.reason.maxed,Refused: all squares are bought,Your field is complete,Tvoje pole je kompletní,new,hda4eabde
 field.pet.label,"Label over a pet working on a field square, only for a pet with a given name (rich text, green second line). {name} = the pet's name (user text), {jobs} = its job icons and levels, ""🌱4 🛡2"" (field.job.*). Never the pet's level (U3a)","{name}
 <font color='#a8e6a0'>{jobs}</font>","{name}
-<font color='#a8e6a0'>{jobs}</font>",new,hceea6416
+<font color='#a8e6a0'>{jobs}</font>",new,h385549f1
 field.section.pets,"Heading of the field panel's pet section; {used} = pets on the field, {slots} = field pet slots owned",Field pets {used} / {slots},Mazlíčci na poli {used} / {slots},new,ha5e701a6
 field.slot.done,Field panel: every field pet slot is bought,All field pet slots bought.,Máš všechna místa pro mazlíčky na poli.,new,hadffe186
 field.petPicker.title,Pet picker for the selected soil; no square number,Choose a pet for this spot,Vyber mazlíčka pro tohle místo,new,h330fe518

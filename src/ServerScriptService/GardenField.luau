@@ -458,7 +458,7 @@ local function addPlant(player: Player, garden, crop)
 		entry = { N = 0 }
 		garden.Crops[crop.id] = entry
 	end
-	local before = CropConfig.MasteryLevel(entry.N)
+	local before = CropConfig.MasteryLevel(crop, entry.N, entry.Pts)
 	local plants = 1
 	if garden.Rested > 1e-9 then -- rested mastery (silent): the plant counts double and uses 1 / step of the pool
 		plants = 2
@@ -468,7 +468,7 @@ local function addPlant(player: Player, garden, crop)
 		end
 	end
 	entry.N += plants
-	local level = CropConfig.MasteryLevel(entry.N)
+	local level = CropConfig.MasteryLevel(crop, entry.N, entry.Pts)
 	if level > before then
 		Telemetry.CropLevel(player, crop.id, level)
 	end
@@ -1333,7 +1333,7 @@ cropPointEvent.OnServerEvent:Connect(function(player, cropId, line)
 	if had >= CropConfig.Mastery.Points.PerLine then
 		return reject(player, "CropPoint", "maxed")
 	end
-	if not entry or CropConfig.FreePoints(entry.N, pts) < 1 then
+	if not entry or CropConfig.FreePoints(crop, entry.N, pts) < 1 then
 		return reject(player, "CropPoint", "points")
 	end
 	entry.Pts = pts or {}

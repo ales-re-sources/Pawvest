@@ -5,7 +5,9 @@
 --
 --   ConfirmTap.Wrap(button, key, needsConfirm, onConfirm, armedText?)   wires `button` (a StudStyle brick: colour and text are set
 --                                                                        on the button itself); `needsConfirm()` is asked on every tap
---   ConfirmTap.Over(price) -> boolean                                     price > THRESHOLD
+--   ConfirmTap.Over(price) -> boolean                                     price > THRESHOLD and the player has the Coins: a
+--                                                                        spend they cannot pay (a grey brick) fires at once and
+--                                                                        the server's "not enough Coins" answer shows, no confirm
 --   ConfirmTap.Tap(key, onLapse?) -> boolean                              for a button that draws itself: true = confirmed, else
 --                                                                        armed (IsArmed(key) while it waits; Disarm(key))
 --   ConfirmTap.Reset()                                                    disarms everything (a panel closed)
@@ -22,8 +24,17 @@ ConfirmTap.COLOR = Color3.fromRGB(240, 140, 40)
 
 local armedUntil: { [string]: number } = {}
 
+-- The local player's Coins (leaderstats), nil while they are not there yet.
+local function coins(): number?
+	local player = game:GetService("Players").LocalPlayer
+	local stats = player and player:FindFirstChild("leaderstats")
+	local value = stats and stats:FindFirstChild("Coins")
+	return if value and value:IsA("ValueBase") then (value :: any).Value else nil
+end
+
 function ConfirmTap.Over(price: number): boolean
-	return price > ConfirmTap.THRESHOLD
+	local have = coins()
+	return price > ConfirmTap.THRESHOLD and (have == nil or have >= price)
 end
 
 function ConfirmTap.Reset()
