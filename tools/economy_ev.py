@@ -204,6 +204,11 @@ CAND = {
     # (FD_DAYS), Obby main ~30, Garden main ~85.
     # A fed crop gives its sale x the weakest food's XP per Coin at the pet's level (crop_xp).
     "fd": True, "food_limit": 0.5, "food_growth": 2.65, "with_you_xp": 0.75, "obby_above": 0.04,
+    # FD rarity factor (the user, 2026-11-21: "scale by rarity"): food prices x this by the pet's rarity, fitted to the first pet of
+    # each rarity: its bootstrap to the food limit costs ~1-20 % of the 24 h income before it arrives (ECONOMY.md → Findings (FD)).
+    # Common-Epic arrive in the first two days, when Casual is poorest (x1 already 12-17 %); a Legendary arrives on day 3-41 (x1: ~1 %).
+    # Fed crops follow (the Berry's price for that pet).
+    "food_rarity": {"Common": 1, "Uncommon": 1, "Rare": 1, "Epic": 1, "Legendary": 10},
     # Sunshine: seconds per repeat medal finish (Bronze, Silver, Gold) x decay^n (n = earlier medal finishes of that stage today), floor, cap
     "sun": [16, 24, 32], "sun_decay": 0.8, "sun_floor": 6, "sun_cap": 3 * 3600,
     # Scouting: XP = timer seconds while equipped; level L -> L+1 in first x ratio^(L-1) hours; bonus = min(cap, per x strength) on meter,
@@ -278,16 +283,17 @@ def cute_xp_next(P, n):
     return math.floor(base * k / parts + 0.5) - math.floor(base * (k - 1) / parts + 0.5)
 
 
-def food_price(c, food, b):
-    """FD: a food's price for a trait at base level b."""
-    return nice(food["price"] * c["food_growth"] ** (b - 1)) if c["fd"] else food["price"]
+def food_price(c, food, b, rarity="Common"):
+    """FD: a food's price for a trait at base level b of a pet of `rarity`."""
+    return nice(food["price"] * c["food_rarity"][rarity] * c["food_growth"] ** (b - 1)) if c["fd"] else food["price"]
 
 
-def crop_xp(M, xp, b):
-    """FD: care XP of a fed crop (CropConfig xp = its XP at level 1) for a trait at base level b: scaled by the weakest food's XP per
-    Coin at b against level 1, so it never beats selling the crop and buying food (E1a3 at every level). < 1 is refused."""
-    per = lambda b: min(f["xp"] / food_price(M["c"], f, b) for f in M["foods"])
-    return xp * per(b) / per(1)
+def crop_xp(M, xp, b, rarity="Common"):
+    """FD: care XP of a fed crop (CropConfig xp = its XP at level 1) for a trait at base level b of a `rarity` pet: scaled by the
+    weakest food's (the Berry's) XP per Coin for that pet against a level-1 Common, so it never beats selling the crop and buying food
+    (E1a3 at every level and rarity). < 1 is refused."""
+    per = lambda b, r: min(f["xp"] / food_price(M["c"], f, b, r) for f in M["foods"])
+    return xp * per(b, rarity) / per(1, "Common")
 
 
 def build(c=None):
@@ -1484,7 +1490,7 @@ class Sim:
                     if k is None or (only_c and k != "C"):
                         break
                     b = base_level(p["tr"]["C"]) if k == "C" else p["tr"][k]
-                    f, price = max(((f, food_price(self.c, f, b)) for f in self.M["foods"]), key=lambda fp: fp[0]["xp"] / fp[1])
+                    f, price = max(((f, food_price(self.c, f, b, p["r"])) for f in self.M["foods"]), key=lambda fp: fp[0]["xp"] / fp[1])
                     if price > self.food_fund:
                         break
                     self.food_fund -= price
@@ -2248,28 +2254,45 @@ def checks(M, days=60, verbose=True):
 
 
 def food_cost(M, rarity, key="C", start=1):
-    """FD: Coins in the best food (per XP, at each level's price) to take trait `key` of a `rarity` pet from `start` to its food limit
-    (Cuteness in levels, work traits in base levels), and the Feasts bought."""
+    """FD: the cheapest Coins in food (any mix, each priced at the level the pet is at when it eats it) to take trait `key` of a
+    `rarity` pet from `start` to its food limit (Cuteness in levels, work traits in base levels), and the buys."""
     c, P, A = M["c"], M["P"], M["apt"]
     cap = A["cap"][rarity]
     lim = to_level(cap * c["food_limit"]) if key == "C" else math.floor(cap * c["food_limit"])
-    lvl, xp, coins, n = start, 0.0, 0, 0
-    while lvl < lim:
-        b = base_level(lvl) if key == "C" else lvl
-        f, price = max(((f, food_price(c, f, b)) for f in M["foods"]), key=lambda fp: fp[0]["xp"] / fp[1])
-        coins += price
-        n += 1
-        if key == "C":
-            xp += f["xp"]
-            while lvl < lim and xp >= cute_xp_next(P, lvl):
-                xp -= cute_xp_next(P, lvl)
-                lvl += 1
-        else:
-            xp += f["xp"] * P["care"][1] / H
-            while lvl < lim and xp >= A["first"] * A["ratio"] ** (lvl - 1):
-                xp -= A["first"] * A["ratio"] ** (lvl - 1)
-                lvl += 1
-    return coins, n
+    if key == "C":
+        steps = [cute_xp_next(P, n) for n in range(start, lim)]
+        unit = lambda f: f["xp"]
+    else:  # work traits: care XP as weighted field hours
+        steps = [A["first"] * A["ratio"] ** (n - 1) * H / P["care"][1] for n in range(start, lim)]  # in care XP
+        unit = lambda f: f["xp"]
+    need = math.ceil(sum(steps))
+    q = 25  # XP grid (every food's XP is a multiple of 25)
+
+    def level_at(x):
+        n = start
+        for st in steps:
+            if x < st:
+                break
+            x -= st
+            n += 1
+        return n
+
+    INF = float("inf")
+    size = need // q + 2
+    cost, buys = [INF] * size, [0] * size
+    cost[0] = 0
+    for i in range(size):
+        if cost[i] == INF or i * q >= need:
+            continue
+        b = base_level(level_at(i * q)) if key == "C" else level_at(i * q)
+        for f in M["foods"]:
+            j = min(size - 1, i + unit(f) // q)
+            if (i + unit(f) // q) * q >= need:
+                j = size - 1
+            v = cost[i] + food_price(c, f, b, rarity)
+            if v < cost[j]:
+                cost[j], buys[j] = v, buys[i] + 1
+    return cost[-1], buys[-1]
 
 
 # Check 6's band for Casual's Cuteness 10 -> 20: ~90 days (the user, 2026-11-21: "maximum level should not be easy ... 90 for a player
@@ -2279,8 +2302,8 @@ FD_RUN_DAYS = 130
 
 
 def fd_checks(M, sims, days):
-    """FD (ROADMAP → FD, acceptance 6): Casual's day-7 Legendary (the streak pet, forced Legendary with Cuteness) reaches Cuteness 10 on
-    its first day and 20 within FD_DAYS days after it; E1a3 at every level (a fed crop's XP <= its sale x the weakest food's XP per
+    """FD (ROADMAP → FD, acceptance 6): Casual's day-7 Legendary (the streak pet, forced Legendary with Cuteness) reaches Cuteness 10 within
+    2 days and 20 within FD_DAYS days after it; E1a3 at every level (a fed crop's XP <= its sale x the weakest food's XP per
     Coin at that level's prices); the food prices to the limit (info)."""
     c, P = M["c"], M["P"]
     out = []
@@ -2294,32 +2317,34 @@ def fd_checks(M, sims, days):
             continue
         t0 = pet["t0"]
         d = {L: (pet["lvl_t"][L] - t0) / DAY if L in pet["lvl_t"] else None for L in (10, 16, 20)}
-        # Lv 10 by the next session (1.1 d): the model's fixed food share (2 %) can defer the second Feast to the next morning
+        # Lv 10 within 2 days: the model's fixed food share (2 %) saves a Legendary's 200 000 (x10) over a day or so; a player pays it
         if n == "Casual":
-            ok6 &= d[10] is not None and d[10] <= 1.1 and d[20] is not None and FD_DAYS[0] <= d[20] <= FD_DAYS[1]
+            ok6 &= d[10] is not None and d[10] <= 2.0 and d[20] is not None and FD_DAYS[0] <= d[20] <= FD_DAYS[1]
         inc = sum(cc for tt, cc in s.income_log if t0 <= tt < t0 + DAY)
         share = food_cost(M, "Legendary")[0] / inc if inc > 0 else float("inf")
         rows.append(f"{n} (day {t0 / DAY:.1f}): Lv 10 +{fmt_d(d[10])} (food = {share:.1%} of that day's income), 16 +{fmt_d(d[16])}, "
                     f"20 +{fmt_d(d[20])} (now Lv {pet['tr']['C']}, {pet['where']})")
-    out.append((f"FD day-7 Legendary: Cuteness 10 by the next session, 20 in {FD_DAYS[0]}-{FD_DAYS[1]} days (Casual)", ok6, "; ".join(rows)))
-    # E1a3 at every level (crop_xp), and from which level each crop is refused (< 1 XP)
-    weak = lambda b: min(f["xp"] / food_price(c, f, b) for f in M["foods"])
+    out.append((f"FD day-7 Legendary: Cuteness 10 within 2 days, 20 in {FD_DAYS[0]}-{FD_DAYS[1]} days (Casual)", ok6, "; ".join(rows)))
+    # E1a3 at every level and rarity (crop_xp), and from which level each crop is refused (< 1 XP) for a Common / a Legendary
+    weak = lambda b, r: min(f["xp"] / food_price(c, f, b, r) for f in M["foods"])
     sale = {cc[0]: cc[2] for cc in P["crop_cfg"]["crops"]}
-    worst, okx, refused = (0.0, None), True, {}
-    for lvl in range(1, 20):
-        b = base_level(lvl)
-        for cid, xp in P["crop_cfg"]["xp"]:
-            got = crop_xp(M, xp, b)
-            if got < 1:
-                refused.setdefault(cid, lvl)
-                continue
-            r = got / (sale[cid] * weak(b))
-            if r > worst[0]:
-                worst = (r, f"{cid} at Lv {lvl}")
-            okx &= r <= 1 + 1e-9
-    out.append(("FD E1a3 at every level (fed crop XP <= sale x the weakest food's XP per Coin)", okx,
+    worst, okx, refused = (0.0, None), True, {"Common": {}, "Legendary": {}}
+    for rar in RARITIES:
+        for lvl in range(1, 20):
+            b = base_level(lvl)
+            for cid, xp in P["crop_cfg"]["xp"]:
+                got = crop_xp(M, xp, b, rar)
+                if got < 1:
+                    if rar in refused:
+                        refused[rar].setdefault(cid, lvl)
+                    continue
+                r = got / (sale[cid] * weak(b, rar))
+                if r > worst[0]:
+                    worst = (r, f"{cid}, {rar} Lv {lvl}")
+                okx &= r <= 1 + 1e-9
+    out.append(("FD E1a3 at every level and rarity (fed crop XP <= sale x the weakest food's XP per Coin)", okx,
                 f"worst {worst[0]:.3f}x of the bound ({worst[1]}); refused (< 1 XP) from: "
-                + ", ".join(f"{k} Lv {v}" for k, v in refused.items())))
+                + "; ".join(f"{rar} " + ", ".join(f"{k} Lv {v}" for k, v in d.items()) for rar, d in refused.items())))
     cells = []
     for r in RARITIES:
         coins, nf = food_cost(M, r)

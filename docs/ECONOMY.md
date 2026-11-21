@@ -81,7 +81,7 @@ Bands are provisional, for the user to confirm with the proposal. Archetypes: Ob
 | G11 (EV3a, revised 2026-11-17) | days 3–30: ≥ 15 % of the crop levels earned are on crops ≥ 3 steps below the newest unlocked one (every archetype; the old harvest share passed the Renown model too and is printed for reference) |
 | G12 (EV3a) | the first crop at its top level not before day 7 (Garden main); Casual has ≥ 25 % of all levels (16 × 3) still to earn on day 60 |
 | U (EV3a) | a maxed crop earns net per square-hour what a fresh crop 2–3 steps up the old × 1.2 ladder earns (× 1.44–1.73) |
-| FD (2026-11-21) | Casual's day-7 Legendary (the streak pet, forced Legendary with Cuteness, always equipped) reaches Cuteness 10 by the next session (≤ 1.1 days; the model's fixed 2 % food share can defer the second Feast) and 20 in 75–110 days (~90 for a daily player, the user 2026-11-21; the signed design had ≥ 14; the probe runs 130 days); a fed crop's XP ≤ its sale × the weakest food's XP per Coin at every level (E1a3); food prices to the limit (info) |
+| FD (2026-11-21) | Casual's day-7 Legendary (the streak pet, forced Legendary with Cuteness, always equipped) reaches Cuteness 10 within 2 days (the model's fixed 2 % food share saves a Legendary's bootstrap over a day or so) and 20 in 75–110 days (~90 for a daily player, the user 2026-11-21; the signed design had ≥ 14; the probe runs 130 days); a fed crop's XP ≤ its sale × the weakest food's XP per Coin at every level and rarity (E1a3); food prices to the limit (info) |
 
 ## EV — the rules as simulated
 - **Player:** sessions per archetype, the obby block in the middle of each session with garden checks every 5–10 min; between sessions the
@@ -119,7 +119,7 @@ Bands are provisional, for the user to confirm with the proposal. Archetypes: Ob
   (EG, were the placeholders FutureEgg1 / 2) keep Legendaries scarce while income grows ~1000×; each opens with a crop (`egg_opens`:
   Pumpkin, Giant melon) and costs at least 2 h of every buying archetype's income in the 24 h after it opens (check EG).
 - **Pet care (FD, `fd`):** Cuteness on the 20-level scale. The food fund feeds each equipped pet, best bonus first, one food at a time,
-  priced × 2.65^(b − 1) by the base level of the trait it trains, up to half the rarity cap (`food_limit`); Cuteness first, then work
+  priced × 2.65^(b − 1) by the base level of the trait it trains and × `food_rarity` (Legendary 10), up to half the rarity cap (`food_limit`); Cuteness first, then work
   traits. Past the food limit Cuteness grows to the cap from obby care XP × `obby_above` (0.04) and time with you (`with_you_xp` 0.75
   per online minute, every equipped pet). Work traits take care XP only up to the food limit. The model equips by current bonus; only
   the FD check's probe pet is always equipped.
@@ -429,8 +429,9 @@ the max is not easy, ~90 days for a player who comes every day (Casual, our arch
 past the limit (62 obby, 45 time). Days from Cuteness 10 to the max at that pace (linear, for scale): Common (12) ~23, Uncommon (14)
 ~34, Rare (16) ~49, Epic (18) ~66, Legendary (20) 88.5 (simulated). Simulated Legendary (seeds 1–4, all equal): Casual 88.5 days,
 Obby main 29.5, Garden main 85.2 (more online time, little obby); Binge's pet arrives on day 42 and does not reach 20 in the 130-day
-probe. Cuteness 10 by the next session for all. Check 6's band: 75–110 days. Seeds 1–4 fail G8 everywhere plus near-misses of the
-committed model's kinds: G11 (1, 3), G4 (2, 3), G1 (2: Binge 4.2 min, bound 4), G9 (2: Casual's top crop day 9.8, bound 10);
+probe. Cuteness 10 within 0.5–1.5 days for Casual (the ×10 Legendary price, below), at once for the others. Check 6's band: 75–110
+days. Seeds 1–4 (with the rarity factor) fail G8 everywhere plus near-misses of the committed model's kinds: G11 (1, 2, 3), G4 (2, 3),
+G1 (2: Binge 4.2 min, bound 4), G9 (2: Casual's top crop day 9.8, bound 10), B2 (2: 1.000×), B (3: Casual 0.976×);
 `economy.py check` E0 15 / 15, drift 0, exit 1 from G8 and G11 as before. The analysis that led there:
 - **Obby care XP dominates.** In the game as built, repeat Gold runs give every equipped pet ~50 care XP (20 medal + up to 30 move) per
   ~1.5 min run: Casual's pets get ~1 500 XP a day from 45 min of obby, Obby main ~3 950. The design's 7.5 XP per online minute is 450
@@ -453,17 +454,28 @@ committed model's kinds: G11 (1, 3), G4 (2, 3), G1 (2: Binge 4.2 min, bound 4), 
 
   With whole obby XP no time-with-you rate gets near 90 days: ~1 500 obby XP a day alone gives Casual 9.5 days. The 90-day target
   needs obby XP scaled to a few % past the limit; time with you then matters (Garden main's 120 min online keep it close to Casual).
-- **Food prices to the limit** (best XP per Coin at each level's price, nice-rounded): one Feast (1 500) takes a Common, Uncommon or Rare
-  from Cuteness 1 to its limit (its extra XP flows on to work traits); Epic and Legendary need 2 buys, 29 500. A Legendary work trait
-  from base 1 to 5: 143 500 (was ~13 000). Casual buys ~31 000 XP of food in 60 days. The bootstrap to Cuteness 10 costs 0.2–3 % of
-  the day's income when the day-7 Legendary arrives.
+- **Food prices to the limit** (the cheapest mix, each food priced at the level the pet has when it eats it; `food_cost`): one Feast
+  (1 500) takes a Common, Uncommon or Rare from Cuteness 1 to its limit (its extra XP flows on to work traits); Epic 7 370 (to 9),
+  Legendary 200 100 with its ×10 (to 10: a Feast at level 1, then Cakes and Berries; 20 010 at ×1, Feasts alone 29 500). Today (flat
+  prices) Cuteness 1 → 10 costs 2 700 and 1 → 20 16 750. A work trait to its limit: Common 5 870, Legendary 1 183 000 (×10; was
+  ~13 000). The sim's feeding buys the best XP per Coin (Feasts), a little above the cheapest.
+- **Rarity factor** (the user, 2026-11-21: "scale by rarity"; `food_rarity`, fitted to each rarity's first pet, seeds 1–2; the share
+  is the bootstrap's cost ÷ the 24 h of income before the pet arrives, Casual / Obby main / Garden main). Pets of a rarity arrive by the
+  hundreds late (Ruby / Diamond eggs, Rares and Epics at a median day ~30, ~20 M a day), when no price matters; the first one counts.
+  Common / Uncommon arrive on day 0.3 (1 500: ~1 %), Rare on day 0.5–1.3 (1 500: 12 % / 1 % / 1 %), Epic on day 1.3–1.8 (7 370:
+  17 % / 5 % / 2 %): Casual is poorest in its first two days, so ×1 there. A Legendary arrives on day 3–41 (day-7 streak pet, the egg
+  odds ~day 20; 1–3 in 60 days): at ×1 20 010 is 0.06–1 %, at **×10** 200 100 is 7 % / 1 % / 11 %. Tried: ×2 per rarity (Epic 56 800:
+  133 % of Casual's day 1.8), 1 / 1.5 / 2 / 3 / 20 (Epic 51 %), 1 / 1 / 1.5 / 2 / 10 (Epic 34 %). Fed crops follow the Berry's price for
+  that pet, so a Legendary cannot eat Potatoes at all and Corn only below Lv 11. With ×10 the sim's 2 % food share needs up to 1.5
+  days for the day-7 Legendary's bootstrap (6–9 % of Casual's day; a player pays it at once): check 6 allows 2 days.
 - **Fed crops (E1a3 at every level):** "÷ 2.65^(b − 1)" breaks E1a3 by up to 3 % where nice() rounds the Berry's price up (Lettuce at
   Lv 13: 1.034×). Rule in the model: a crop gives its level-1 XP × the weakest food's XP per Coin at the pet's level ÷ the same at level 1,
   so feeding never beats selling and buying, at any level. Refused (< 1 XP) from: Potato Lv 5, Lettuce 8, Onion 9, Garlic 13, Tomato 15,
   Cucumber and Corn 16, Blueberry 17.
 - **A fresh Legendary is weaker than grown Epics:** at its food limit (Cuteness 10, +22.6 %) it is below an Epic at 18 (+25.2 %), which the
   activity rules reach for a daily player. A player who equips by the bonus shown never takes it along to grow it. The model equips by
-  current bonus (only the probe is forced); the game could show the pet's potential (its cap) on the pets panel.
+  current bonus (only the probe is forced). *Decided (the user, 2026-11-21):* the game does not show a pet's potential (its cap): a
+  hidden mechanic, players find out by growing pets.
 - **Other checks:** no new kind of failure (decided rule: above). The committed model fails G8 on every seed plus G11 (seeds 1, 4),
   B2 (2), G3 (3) and G4 (4); G11 is FL's known near-miss (passes on 3 of 8 seeds).
 - **Model changes:** Cuteness is simulated on the 20-level scale (it was whole base levels); care XP left over at a limit flows on to the
@@ -502,8 +514,9 @@ committed model's kinds: G11 (1, 3), G4 (2, 3), G1 (2: Binge 4.2 min, bound 4), 
 
 9. **FD (model pass 2026-11-21, Findings (FD)):** *decided (the user, 2026-11-21):* Cuteness to ~10 quick (food), the max in ~90 days for
    Casual: past the food limit obby care XP × 0.04 and time with you 0.75 XP per online minute (10× slower than designed); check 6's
-   band 75–110 days. Open: the fed-crop rule (the weakest food's price ratio instead of
-   ÷ 2.65^(b − 1), in the model); whether the pets panel shows a pet's potential.
+   band 75–110 days; a pet's potential (its cap) is not shown to players; a fed crop's XP follows the Berry's
+   price ratio (its level-1 XP × the Berry's level-1 price ÷ its price for that pet), not ÷ 2.65^(b − 1); food prices scale by
+   rarity (Common–Epic × 1, Legendary × 10).
 
 ## E0 — checks of the game as built (until EV2a)
 | Check | Rule |
