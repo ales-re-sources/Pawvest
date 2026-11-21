@@ -1,10 +1,11 @@
 -- Food shop client (docs/GDD.md §7.6, P2b2): the prompt on the garden plaza's food stand opens the food panel: every owned
 -- pet as the Pets panel shows it (U1: PetRow: portrait with level badge and status icon, name, trait chips with fills; the chip
--- the food will train, PetConfig.CareTarget, is outlined) and one feed button per food. Order: pets with you, then the others
--- that can still grow, then the ones with nothing left to train (greyed). Display only: a click just names a pet and a food;
+-- the food will train, PetConfig.CareTarget "food", is outlined) and one feed button per food. Order: pets with you, then the others
+-- that food can still train, then the ones at their food limit (greyed). Display only: a click just names a pet and a food;
 -- GardenFood validates the distance, the price and that something can train. The GUI is built here (no Studio GUI).
--- Stud-brick look (StudStyle, red): title strip, pet rows, the foods as brick buttons that say what they give and cost
--- ("🍓 +25 XP" over "50 Coins"; a pet with nothing left to train shows a "Max level" / "Trained" tag instead). On a small
+-- Stud-brick look (StudStyle, red): title strip, pet rows, the foods as brick buttons that say what they give and cost for that pet
+-- ("🍓 +25 XP" over "50 Coins"; FD: GardenConfig.FoodPrice, by the trait's level and the pet's rarity); a pet at its food limit
+-- shows "Grows with you now" (or "Max level") instead. On a small
 -- screen the panel is scaled down to fit (UIScale) and the food buttons grow so they stay at least 36 px tall on screen.
 -- Tooltip above a food button: food and price, what it does to that pet ("Owl Lv 6 · Cuteness → Lv 8", XP wasted) and
 -- the Coins still missing. With a mouse it shows on hover and one click feeds; after a touch the first tap selects the
@@ -184,8 +185,9 @@ end
 -- "… · 600 XP wasted"
 local function outcome(entry, food): string
 	local pet = PetClient.State.pets[entry.uid]
+	local _, fromXp, nextXp = PetConfig.CareProgress(pet, "food")
 	local copy = PetConfig.CopyForCare(pet)
-	local trained, wasted = PetConfig.GainCareXp(copy, food.xp)
+	local trained, wasted = PetConfig.GainCareXp(copy, food.xp, "food")
 	local kind = string.format("<font color='%s'>%s</font>", hex(entry.rarity.color), Locale.PetKindName(entry.kind))
 	local name = Locale.T("pet.nameLevel", { kind = kind, level = entry.level })
 	local leveled = nil -- the last trait that gains a level
@@ -198,13 +200,13 @@ local function outcome(entry, food): string
 	if leveled then
 		text = Locale.T("food.outcome.levelUp", { name = name, trait = Locale.T("pet.apt." .. leveled.id), level = leveled.level })
 	else
-		local _, to = PetConfig.CareProgress(copy)
+		local _, to = PetConfig.CareProgress(copy, "food")
 		text = Locale.T("food.outcome.xp", {
 			name = name,
-			trait = Locale.T("pet.apt." .. (entry.care or "Cuteness")),
-			from = entry.xp,
+			trait = Locale.T("pet.apt." .. (entry.food or "Cuteness")),
+			from = fromXp,
 			to = to,
-			next = entry.xpNext,
+			next = nextXp,
 		})
 	end
 	if wasted > 0 then
@@ -237,13 +239,13 @@ local function updateTooltip()
 		foodTooltip.Hide()
 		return
 	end
-	local food = info.food
+	local food, price = info.food, info.price
 	local lines = {
-		Locale.T("food.tooltip.head", { icon = food.icon, food = Locale.FoodName(food), count = food.price }),
+		Locale.T("food.tooltip.head", { icon = food.icon, food = Locale.FoodName(food), count = price }),
 		outcome(info.entry, food),
 	}
-	if PetClient.Coins < food.price then
-		table.insert(lines, Locale.T("common.needMoreCoins", { count = food.price - PetClient.Coins }))
+	if PetClient.Coins < price then
+		table.insert(lines, Locale.T("common.needMoreCoins", { count = price - PetClient.Coins }))
 	elseif armed == key then
 		table.insert(lines, Locale.T("food.tapAgain"))
 	end
@@ -272,7 +274,8 @@ local function lastInputWasTouch(): boolean
 end
 
 local function petRow(order: number, entry)
-	local maxed = entry.care == nil -- P4: nothing left that food can train
+	local maxed = entry.food == nil -- FD: every trait at its food limit (it grows with you now)
+	local pet = PetClient.State.pets[entry.uid]
 	local foodsWidth = #GardenConfig.Foods * (FOOD_BUTTON_WIDTH + 4)
 	local row = create("Frame", {
 		Name = "Pet_" .. entry.uid,
@@ -287,7 +290,7 @@ local function petRow(order: number, entry)
 		portrait = rowPortrait,
 		panelColor = COLOR_PANEL,
 		right = foodsWidth + 6,
-		highlight = entry.care, -- U1: the chip this food trains
+		highlight = entry.food, -- U1: the chip this food trains
 		trainedTag = false, -- the tag stands where the food buttons would
 		dim = maxed,
 		tooltip = chipTooltip,
@@ -300,24 +303,25 @@ local function petRow(order: number, entry)
 			TextSize = 16,
 			TextColor3 = Color3.fromRGB(255, 205, 60),
 			TextXAlignment = Enum.TextXAlignment.Center,
-			Text = Locale.T(if entry.level >= PetConfig.MaxLevel then "food.maxTag" else "food.doneTag"),
+			Text = Locale.T(if entry.level >= PetConfig.MaxLevel then "food.maxTag" else "food.limitTag"),
 			Parent = row,
 		})
 		return row
 	end
 	for index, food in GardenConfig.Foods do
 		local key = entry.uid .. ":" .. food.id
+		local price = GardenConfig.FoodPrice(food, pet) or food.price
 		local feedButton = button("Feed_" .. food.id, {
 			AnchorPoint = Vector2.new(1, 0.5),
 			Position = UDim2.new(1, -6 - (#GardenConfig.Foods - index) * (FOOD_BUTTON_WIDTH + 4), 0.5, 2),
 			Size = UDim2.fromOffset(FOOD_BUTTON_WIDTH, buttonHeight),
-			BackgroundColor3 = if PetClient.Coins >= food.price then COLOR_BUY else COLOR_LOCKED,
+			BackgroundColor3 = if PetClient.Coins >= price then COLOR_BUY else COLOR_LOCKED,
 			TextSize = 14,
 			RichText = true,
-			Text = Locale.T("food.button", { icon = food.icon, xp = food.xp, count = food.price }),
+			Text = Locale.T("food.button", { icon = food.icon, xp = food.xp, count = price }),
 		}, 2)
 		feedButton.Parent = row
-		buttons[key] = { button = feedButton, entry = entry, food = food }
+		buttons[key] = { button = feedButton, entry = entry, food = food, price = price }
 
 		feedButton.MouseEnter:Connect(function()
 			if not lastInputWasTouch() then
@@ -332,7 +336,7 @@ local function petRow(order: number, entry)
 			end
 		end)
 		feedButton.Activated:Connect(function()
-			if PetClient.Coins < food.price then
+			if PetClient.Coins < price then
 				-- nothing to confirm: show why (tooltip) and say so
 				if lastInputWasTouch() then
 					arm(key)
@@ -372,7 +376,7 @@ refresh = function()
 		if not grouped then
 			return 1
 		end
-		return if entry.care == nil then 3 elseif entry.equipped then 1 else 2
+		return if entry.food == nil then 3 elseif entry.equipped then 1 else 2
 	end
 	local count = 0
 	for pass = 1, 3 do

@@ -1,8 +1,9 @@
 -- GardenFood: the food stand on the garden plaza (docs/GDD.md §7.4, §7.6; P2b2). Server-only.
 -- Food is bought and fed at once to one owned pet (equipped, resting or on the field; no food inventory). The client only names
--- the pet uid and the food id; price and XP come from GardenConfig.Foods. Only the fed pet gains the XP, as care XP
--- (PetConfig.GainCareXp, P4: Cuteness first, else the lowest working trait below the care cap); a pet with nothing left to train
--- is rejected ("maxed") before any Coins are taken.
+-- the pet uid and the food id; XP comes from GardenConfig.Foods, the price from GardenConfig.FoodPrice (FD: by the level of the trait
+-- the food trains and the pet's rarity). Only the fed pet gains the XP, as care XP (PetConfig.GainCareXp "food": Cuteness first, else
+-- the lowest working trait, each up to its food limit); a pet at its food limit is rejected ("maxed": it grows with you now) before
+-- any Coins are taken.
 -- Remote (in GardenRemotes): Feed(uid, foodId) (client → server); answers through GardenRemotes.Result ("Feed").
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -36,17 +37,19 @@ feedEvent.OnServerEvent:Connect(function(player, uid, foodId)
 	if not GardenService.NearModel(player, GardenConfig.FoodStandName, GardenConfig.FoodStandDistance) then
 		return reject(player, "Feed", "far")
 	end
-	if not PetConfig.CareTarget(pet) then
+	local price = GardenConfig.FoodPrice(food, pet)
+	if not price then
 		return reject(player, "Feed", "maxed")
 	end
-	if not PlayerProfile.TrySpend(player, food.price) then
+	if not PlayerProfile.TrySpend(player, price) then
 		return reject(player, "Feed", "coins")
 	end
-	local trained, wasted = PetConfig.GainCareXp(pet, food.xp)
+	local trained, wasted = PetConfig.GainCareXp(pet, food.xp, "food")
 	-- re-publishes the Pets panel, Coin bonus, EquippedPets labels, field pet labels
 	GardenService.Done(player, "Feed", {
 		uid = uid,
 		food = food.id,
+		price = price,
 		xp = food.xp - wasted,
 		level = PetConfig.PetLevel(pet),
 		trained = trained, -- { { id, levels, level } } in order (P4)

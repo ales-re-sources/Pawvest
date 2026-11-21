@@ -1108,7 +1108,8 @@ sellEvent.OnServerEvent:Connect(function(player, cropId, amount)
 end)
 
 -- E1a3: feeds `amount` held crops to one owned pet (equipped, resting or on the field), clamped to the care XP it can still use
--- (P4: PetConfig.GainCareXp, Cuteness first, else the lowest working trait below the care cap).
+-- (PetConfig.GainCareXp "food": Cuteness first, else the lowest working trait, each up to its food limit). FD: a crop gives
+-- GardenConfig.CropFeedXp (shrinks with the Berry's price for that pet); worth < 1 XP is refused, no crop taken.
 feedCropEvent.OnServerEvent:Connect(function(player, uid, cropId, amount)
 	local crop = type(cropId) == "string" and CropConfig.ById[cropId]
 	if not (type(uid) == "string" and crop and GardenService.WholeNumber(amount) and amount >= 1) or not GardenService.Allow(player) then
@@ -1131,15 +1132,19 @@ feedCropEvent.OnServerEvent:Connect(function(player, uid, cropId, amount)
 	if toMax <= 0 then
 		return reject(player, "FeedCrop", "maxed")
 	end
+	local each = GardenConfig.CropFeedXp(crop, pet)
+	if each < 1 then
+		return reject(player, "FeedCrop", "small")
+	end
 
-	local used = math.min(amount, math.ceil(toMax / crop.xp)) -- the last crop may go past what the pet can use (that XP is lost)
+	local used = math.min(amount, math.ceil(toMax / each)) -- the last crop may go past what the pet can use (that XP is lost)
 	removeItems(garden, crop.id, used) -- the average size leaves, as in a sale
-	local trained, wasted = PetConfig.GainCareXp(pet, crop.xp * used)
+	local trained, wasted = PetConfig.GainCareXp(pet, each * used, "food")
 	done(player, "FeedCrop", {
 		uid = uid,
 		crop = crop.id,
 		used = used,
-		xp = crop.xp * used - wasted,
+		xp = each * used - wasted,
 		level = PetConfig.PetLevel(pet),
 		trained = trained, -- { { id, levels, level } } in order (P4)
 	})

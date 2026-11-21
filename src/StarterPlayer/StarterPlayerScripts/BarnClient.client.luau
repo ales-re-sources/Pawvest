@@ -233,7 +233,7 @@ function renderChooser()
 	chooserList.Size = UDim2.new(1, 0, 1, -(tap + 10))
 	local pets = {}
 	for _, pet in PetClient.Inventory() do
-		if pet.care then -- something left to train (P4: PetConfig.CareTarget)
+		if pet.food then -- food can still train it (FD: below its food limit)
 			table.insert(pets, pet)
 		end
 	end

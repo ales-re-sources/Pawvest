@@ -7,7 +7,8 @@
 -- BuySlot(expectedSlot), SellPet(uid), RequestState() (client → server); PetsChanged(state) and
 -- Result(action, ok, detailOrReason) (server → client). The equipped pets are mirrored to the EquippedPets player
 -- attribute ("Kind:Level:uid,…", level = PetConfig.PetLevel). AddXP gives care XP to the equipped pets (stage finishes, coins,
--- movement during a run; P4: PetConfig.GainCareXp, Cuteness first, else the lowest working trait). AddPet is the
+-- movement during a run: "obby"; P4: PetConfig.GainCareXp, Cuteness first, else the lowest working trait); FD time with you: every
+-- WITH_YOU_TICK seconds online each equipped pet gains PetConfig.WithYouXp care XP per minute ("time"). AddPet is the
 -- "new pet" step of every hatched egg; free eggs wait in FreeEggs until GardenIncubators places them (FreeEggsChanged).
 -- A pet is either equipped, on a field square (E1b) or resting, never two of them: Equip and SellPet reject a field pet, and
 -- GardenField rejects an equipped one; PetsChanged.field maps each field pet's uid to its square (the P2 pens are gone since FA). Every pet has aptitudes (Apt, Spec; PetConfig):
@@ -166,26 +167,43 @@ function PetService.AddPet(player: Player, kind: string): (string?, boolean?)
 	return uid, equipped
 end
 
--- Gives `amount` care XP to every equipped pet (GDD §7.4: each gets the full amount, PetConfig.GainCareXp; a pet with nothing left
--- to train gains nothing). Saved by the autosave and on leave. Returns how many pets gained XP (0 while the profile is not loaded or
--- nothing is equipped).
-function PetService.AddXP(player: Player, amount: number): number
+-- Gives `amount` care XP from `source` ("obby" or "time", PetConfig.GainCareXp) to every equipped pet (GDD §7.4: each gets the
+-- full amount; a pet with nothing left to train gains nothing). Saved by the autosave and on leave. Returns how many pets gained XP
+-- (0 while the profile is not loaded or nothing is equipped). Time with you re-publishes only on a level-up (its XP is tiny).
+function PetService.AddXP(player: Player, amount: number, source: string): number
 	local profile = PlayerProfile.Get(player)
-	if not profile or type(amount) ~= "number" or amount < 1 then
+	if not profile or type(amount) ~= "number" or not (amount > 0) then
 		return 0
 	end
-	amount = math.floor(amount)
-	local gaining = 0
+	local gaining, leveled = 0, false
 	for _, pet in equippedPets(profile) do
-		if #PetConfig.GainCareXp(pet, amount) > 0 then
+		local trained = PetConfig.GainCareXp(pet, amount, source)
+		if #trained > 0 then
 			gaining += 1
 		end
+		if PetConfig.LastLevelUp(trained) then
+			leveled = true
+		end
 	end
-	if gaining > 0 then
+	if leveled or (gaining > 0 and source ~= "time") then
 		publish(player) -- levels feed the Coin bonus, the EquippedPets labels and the Pets panel
 	end
 	return gaining
 end
+
+-- FD time with you: [Player] = os.clock() of the last tick (from the moment the profile is ready).
+local WITH_YOU_TICK = 60
+local withYouSince = {}
+task.spawn(function()
+	while true do
+		task.wait(WITH_YOU_TICK)
+		local now = os.clock()
+		for player, since in withYouSince do
+			withYouSince[player] = now
+			PetService.AddXP(player, PetConfig.WithYouXp * (now - since) / 60, "time")
+		end
+	end
+end)
 
 -- Drops equipped uids that no longer exist or exceed the slots (corrupt or hand-edited records). A pet whose aptitudes are missing or
 -- corrupt (the profile migration rolls them for pets from before E1b) gets a fresh set rolled from the owner and uid.
@@ -271,6 +289,7 @@ end
 
 -- Join and admin reset: grants the launch egg once and publishes the state.
 local function setup(player: Player, profile)
+	withYouSince[player] = os.clock()
 	if sanitize(profile, player) then
 		task.spawn(PlayerProfile.Save, player)
 	end
@@ -432,6 +451,7 @@ end)
 PlayerProfile.OnReady(setup)
 
 Players.PlayerRemoving:Connect(function(player)
+	withYouSince[player] = nil
 	lastRename[player] = nil
 	filtered[player] = nil
 end)

@@ -97,7 +97,7 @@ levels 1–10 with diminishing effect (20 % at 1 to 100 % at 10), counts and cap
 draw, XP per weighted field hour. Only Tending, Pest control and Scouting do something yet; Fertilising arrives with D4, Weeding with D1,
 Crafting with the stations. P4 (2026-11-05) added **Cuteness** (the Coin bonus as a trait, rolled by rarity chance), rolls new pets only from
 the working traits (Fertilising / Weeding / Crafting rejoin the hatch pool when built), and made the pet level the highest trait level (1–10,
-size and look follow it); food and obby XP train Cuteness, else work traits up to level 5 (GDD §7.4).*
+size and look follow it); food and obby XP train Cuteness, else work traits; food only up to half the rarity cap (FD, GDD §7.4).*
 
 **Rule: rarity gives breadth and a higher cap, time gives height.** A maxed Uncommon (level 7) equals an Epic at level 7; the rarer pet is more
 flexible, not stronger at a job. New aptitudes get new ids (stored ids never change).

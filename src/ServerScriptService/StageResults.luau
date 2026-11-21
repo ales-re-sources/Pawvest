@@ -97,7 +97,7 @@ function StageResults.RecordFinish(player: Player, stageKey: string, elapsed: nu
 	-- pet XP: the run's medal (not only a new one; FinishXp without one) plus movement during the run
 	local moveXp = PetConfig.MoveXp(studs or 0)
 	local petXp = (PetConfig.MedalXp[medal] or PetConfig.FinishXp) + moveXp
-	local petsLeveled = PetService.AddXP(player, petXp)
+	local petsLeveled = PetService.AddXP(player, petXp, "obby")
 
 	if medal > previousMedal or firstFinish then
 		-- a new medal (and its free egg) or the first-finish payout is saved at once; run counts follow later

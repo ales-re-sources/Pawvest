@@ -407,10 +407,15 @@ A Cuteness-10 Legendary gives +32.1 %, a capped Common (6) +11.5 %; two strong c
 Cuteness raises nothing, so the slots are a choice between income and Scouting.
 
 ### 7.4 Levels and XP
-**Pet level (P4)** = the highest level of its working traits, 1–**20** (max level and max look, §7.5; 20 levels since 2026-11-12: every curve is the old 10-level one with its steps split, level 1 stays 1 and old level L is level 2L, so XP totals, caps ×2 = 12 / 14 / 16 / 18 / 20, strengths, reach (levels 8 and 14) and the bonus at every even level are unchanged; `PetConfig.BaseLevel`); traits cap by rarity (§7.1). Food and
-obby XP are **care XP**: they train **Cuteness** while it is below its cap, otherwise the pet's lowest working trait below **level 5**, as
-36 s of field time per XP (so Coins never buy the top work levels); with nothing left to train the XP is lost and food is refused.
-Tending / Pest control also level from field hours, Scouting from medal finishes (§7.9). Cuteness XP from level L to L+1:
+**Pet level (P4)** = the highest level of its working traits, 1–**20** (max level and max look, §7.5; 20 levels since 2026-11-12: every curve is the old 10-level one with its steps split, level 1 stays 1 and old level L is level 2L, so XP totals, caps ×2 = 12 / 14 / 16 / 18 / 20, strengths, reach (levels 8 and 14) and the bonus at every even level are unchanged; `PetConfig.BaseLevel`); traits cap by rarity (§7.1). Food, fed
+crops, obby XP and time with you are **care XP**: they train **Cuteness** first, otherwise the pet's lowest working trait, a work trait as
+36 s of field time per XP; XP nothing can use is lost. **Food bootstraps, activity maxes (FD, 2026-11-21):** food and fed crops train
+every trait only up to the **food limit**, half the rarity cap (Common 6, Uncommon 7, Rare 8, Epic 9, Legendary 10); a pet whose traits
+are all there is refused food ("grows with you now"). Past it only activity counts: Cuteness grows on to the cap from obby XP (counted
+**× 0.04** once Cuteness is at its food limit: a Gold run ~2 XP) and from **time with you** (each equipped pet 0.75 XP per online minute;
+Roblox's 20-minute idle kick bounds AFK time); work traits take care XP only up to the food limit and grow on from their jobs: Tending /
+Pest control from field hours, Scouting from medal finishes (§7.9). Pets already past their food limit keep their levels. A daily player
+takes a fresh Legendary to Cuteness 10 within two days and to 20 in ~90 (ECONOMY → Findings (FD)). Cuteness XP from level L to L+1:
 `round(100 × L^1.5)` (L1→2: 100, L5→6: 1 118, L9→10: 2 700; 11 100 XP from 1 to 10). Every **equipped** pet receives the full XP of
 each event:
 
@@ -420,7 +425,8 @@ each event:
 | Finish without a medal | 2 |
 | Challenge coin collected | +1 |
 | Movement while a stage timer runs | 1 XP per 20 studs, max 30 per run |
-| Feeding in the pet garden (§7.6) | per food item |
+| Feeding in the pet garden (§7.6) | per food item, up to the food limit |
+| Time with you (FD) | 0.75 per online minute |
 
 Movement is measured on the server (horizontal distance of the character); jumps faster than walking speed allows
 (teleports, respawns) do not count, and nothing is earned outside a running timer, so AFK walking earns nothing.
@@ -567,18 +573,22 @@ collecting and caring over obby runs.
     text and cannot use them. The separate ready-egg hint and Home badge keep their existing rules.
 - **Feeding.** Food bought for Coins gives a pet XP: an alternative to leveling by playing the obby, and a Coin sink.
   Food is sold at the **food stand** in the middle of the plaza (a four-sided stud kiosk, readable from every plot, a big strawberry on top) and fed at once to one chosen pet (equipped, on the field or resting in the
-  inventory); there is no food inventory. Only the fed pet gains the XP, as care XP (§7.4: Cuteness first). A pet with nothing left
-  to train cannot be fed (no Coins taken; the row shows "Trained" or "Max level"); XP it cannot use is lost, which the food button's
-  tooltip says. The panel (U1) shows the Pets panel's row with the chip the food will train outlined; pets with you first, then those
-  that can still grow, the trained ones greyed at the bottom; it is scaled down to fit a phone screen.
+  inventory); there is no food inventory. Only the fed pet gains the XP, as care XP (§7.4: Cuteness first, up to the food limit). A pet
+  at its food limit cannot be fed (no Coins taken; the row shows "🏃 Grows with you now" or "Max level"); XP it cannot use is lost, which
+  the food button's tooltip says. The panel (U1) shows the Pets panel's row with the chip the food will train outlined; pets with you
+  first, then those food can still train, those at the limit greyed at the bottom; it is scaled down to fit a phone screen. A trait
+  chip's tooltip says up to which level treats train it.
 
-  | Food | Price | XP | Coins per XP |
+  **"Bigger pets eat more" (FD):** the XP stays, the price below is for a level-1 trait of a Common-Epic pet; it is × 2.65^(b − 1), b =
+  the base level (`PetConfig.BaseLevel`) of the trait the food trains, and × 10 for a Legendary, nice-rounded (`GardenConfig.FoodPrice`),
+  read at feeding; the buttons show the price for that pet. A Feast for a Cuteness-8 Epic costs 28 000, for a Cuteness-8 Legendary
+  280 000. Food to the limit (cheapest mix): Common-Rare 1 500, Epic 7 370, Legendary 200 100; a Legendary work trait 1 183 000.
+
+  | Food | Price (level 1) | XP | Coins per XP |
   |---|---|---|---|
   | Berry | 50 | 25 | 2.0 |
   | Cake | 400 | 250 | 1.6 |
   | Feast | 1 500 | 1 000 | 1.5 |
-
-  Cuteness 1 → 10 (11 100 XP) costs about 17 000 Coins in Feasts.
 
 ### 7.7 Trading (P3)
 Players on the same server can trade pets and Coins. Both players confirm the final offer; the server swaps
@@ -591,7 +601,8 @@ otherwise items could be duplicated across servers.
   one card per working trait (no growth card since 2026-11-12: the level is in the title and the stars under the name)
   (`PetConfig.Shown`), titled in the trait's colour and icon, the one food trains now outlined with a ▲ like the row's chip: Cuteness
   (level / cap, Coin bonus, XP), Tending, Scouting, Pest control (level / rarity cap, effect, field hours to the next level, reach, the
-  care cap); the Feed card below them (crops, §7.9; its first line says what food and runs train now or "✔ Trained"); Equip / Unequip; Rename; at the bottom under "More" a small grey **Sell** brick (first tap:
+  food limit); the Feed card below them (crops, §7.9; its first line says what food trains now and up to which level, or that the pet
+  grows with you now); Equip / Unequip; Rename; at the bottom under "More" a small grey **Sell** brick (first tap:
   orange "Sure? +N", a second tap within 3 s sells). Built for 8-10 year olds on a phone: bars, stars and icons over text.
 - **Names.** 1-20 letters, digits and spaces; clearing is free, the first name is free and every later one costs 250 Coins
   (`PetConfig.RenamePrice`); 10 s cooldown. Filtering is a Roblox rule: the server filters with `TextService` (owner, `PublicChat`), stores
@@ -741,8 +752,11 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   rule; actual online `readyAt` still drives art, ripe badges and Harvest. Existing `Grown` stays; the next join credits its pending absence
   at the new rate, without a profile migration. The barn holds 40 seeds and 40 stored crops (+20 per Barn level). Seeds held can always be
   planted; the stall sells only unlocked crops (`locked`).
-- **Selling and feeding.** A crop is sold from anywhere (playtest 2026-11-08: the Barn button shows outside runs while crops are held, the seed stall has a Sell tab; a young field gets a toast and a pulsing button) (sale x its size, through `CoinRewards.Grant`) or fed to any pet (from its page or the barn's Feed) for XP = half the
-  sale, so feeding is never better than selling and buying food (the Kitchen, D5, stays the better route later).
+- **Selling and feeding.** A crop is sold from anywhere (playtest 2026-11-08: the Barn button shows outside runs while crops are held, the seed stall has a Sell tab; a young field gets a toast and a pulsing button) (sale x its size, through `CoinRewards.Grant`) or fed to any pet (from its page or the barn's Feed) for its
+  crop XP (half the sale) × the Berry's level-1 price ÷ the Berry's price for that pet (FD, `GardenConfig.CropFeedXp`: Corn gives a
+  Cuteness-1 Common 600, a Cuteness-8 Epic 31, a Cuteness-8 Legendary 3), up to the food limit, so feeding is never better than selling
+  and buying food at any level or rarity; a crop worth < 1 XP to that pet is refused and left out of its Feed card (the Kitchen, D5,
+  stays the better route later).
 - **Size roll.** Every planting rolls a size factor (lognormal, mean exactly 1, 0.36-2.64), fixed by owner and planting number so a re-join
   cannot reroll it; Big = top 20 %, Giant = top 3 %, a record per crop, weight shown as kg x factor. The barn keeps a count and the summed size
   per crop; selling k of n pays the average size.
@@ -794,7 +808,7 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   and from the Garlic unlock a taste of 2 seeds of the next locked crop at the catalogue price.
 - **Field pets.** Every pet has aptitudes (traits, §7.1: Cuteness, Tending, Pest control, Scouting; stored but not yet rolled: Fertilising,
   Weeding, Crafting; levels 1-20 up to its rarity's cap (12-20)), rolled once from its uid (the count by rarity, the kind leans the draw) and never
-  rerolled; a hatch while the owner has no Tending pet gets Tending. Food and obby XP also train the work traits up to level 5 (§7.4). A pet with Tending or Pest control can stand on a square (one per square, not equipped; 1 free field pet slot + 4 bought). Reach
+  rerolled; a hatch while the owner has no Tending pet gets Tending. Food and obby XP also train the work traits up to the food limit (§7.4). A pet with Tending or Pest control can stand on a square (one per square, not equipped; 1 free field pet slot + 4 bought). Reach
   by the job's level: its square (1-3), plus its 4 neighbours (4-6), the 3 x 3 block (7-10); on overlaps the strongest pet of a job counts.
   **Tending** works only during absences: a crop that ripens in reach is harvested with the pet's strength (20 % at level 1 to 100 % at 10)
   while the barn has room, then replanted from the seeds held (rolled once per planting). Placed pets gain aptitude XP on a separate work

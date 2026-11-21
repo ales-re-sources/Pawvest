@@ -421,7 +421,10 @@ seed, G11 on several, G1, G3, G4 or R on single seeds; G2 95–100 %; Casual's t
 - Tried and dropped: × 1.5 from tier 1 (A, C–E), a short-crop premium (B: short × 1.15, long × 0.9), Cucumber 1–3 h (F–I: slower Corn
   quest, G4), Eggplant 2 h / Sweet potato 3 h (L: dead time for Casual).
 
-## Findings (FD model pass, 2026-11-21; seeds 1–4; the configs unchanged until the FD build)
+## Findings (FD model pass, 2026-11-21; seeds 1–4; in the configs since the FD build, 2026-11-21)
+*Build:* `PetConfig` `FoodLimitShare` / `ObbyAboveLimit` / `WithYouXp`, `GardenConfig` `FoodGrowth` / `FoodRarity` (prices `FoodPrice`,
+the same `nice()` rounding, half to even; fed crops `CropFeedXp`, floored to whole XP); EV0 compares them with `CAND` (`economy.py` loads
+them as `P["fd"]`). The game floors a fed crop's XP; the model keeps the fraction (the E1a3 bound holds either way).
 **Decided (the user, 2026-11-21), in three steps:** "Obby time is hard working. Staying with me is not." → time with you stays, 10×
 slower than designed (0.75 XP per online minute) → the target: a pet levels quickly to ~10, where it contributes (food does that), and
 the max is not easy, ~90 days for a player who comes every day (Casual, our archetypes). In `CAND`: `with_you_xp` 0.75, `obby_above`

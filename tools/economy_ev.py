@@ -2468,6 +2468,9 @@ def config_match(M):
     if list(pts) != want_pts or total != len(levels):
         out.append(f"crop points (Value, Size, Speed, PerLine): config {list(pts)} vs proposal {want_pts} (proposal {total} points per "
                    f"crop, the game {len(levels)} levels)")
+    want_fd = {k: C[k] for k in ("food_limit", "obby_above", "with_you_xp", "food_growth", "food_rarity")}  # FD: the game has it
+    if not C["fd"] or P["fd"] != want_fd:
+        out.append(f"FD: config {P['fd']} vs proposal {want_fd} (fd {C['fd']}: the game has it)")
     want_stall = [C["st_every"], C["stall_staples"], C["st_p"], C["st_pity"], C["st_n"], C.get("st_long")]  # FL: + LongSeconds  # ST: the rotating stall (the game always has it)
     if not C["st"] or list(cc["stall"]) != want_stall or not C["st_newest"]:
         out.append(f"stall (Seconds, Staples, Chance, Pity, Count, LongSeconds): config {list(cc['stall'])} vs proposal {want_stall} (st {C['st']}, "

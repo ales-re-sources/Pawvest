@@ -26,7 +26,9 @@ export type OwnedPet = {
 	uid: string,
 	kind: string,
 	level: number, -- P4: PetConfig.PetLevel, the highest working trait
-	care: string?, -- P4: the trait food and obby XP train now (PetConfig.CareTarget), nil when nothing trains
+	care: string?, -- P4: the trait obby XP and time with you train now (PetConfig.CareTarget), nil when nothing trains
+	food: string?, -- FD: the trait food and fed crops train now (PetConfig.CareTarget "food"), nil at the food limit
+	foodLimit: number, -- FD: the level food trains every trait up to (PetConfig.FoodLimit)
 	xp: number, -- that trait's progress in care XP (0 when nothing trains)
 	xpNext: number?, -- care XP for that trait's next level; nil when nothing trains
 	cute: number, -- Cuteness level (P4), 0 without it
@@ -59,6 +61,8 @@ function PetClient.Inventory(): { OwnedPet }
 				kind = pet.Kind,
 				level = PetConfig.PetLevel(pet),
 				care = care,
+				food = PetConfig.CareTarget(pet, "food"),
+				foodLimit = PetConfig.FoodLimit(pet.Kind),
 				xp = careXp,
 				xpNext = if care then careNext else nil,
 				cute = PetConfig.AptitudeLevel(pet, "Cuteness"),

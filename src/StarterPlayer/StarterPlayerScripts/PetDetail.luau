@@ -4,8 +4,8 @@
 --   Mount(panel, color, onClose)  builds the page as a child of `panel` (covers it, same size and UIScale) and returns
 --                                 { Open(uid), Close(), IsOpen() }; onClose() closes the whole Pets panel (the X)
 -- Sections: header (turning portrait, kind, rarity + tier stars, where the pet is; the level is in the title), one card per working trait
--- (the pet's level = the best of them, 1..20, PetConfig.MaxLevel; PetConfig.Shown; the one food
--- and obby XP train now marked ▲ like the row's chip, U1; title in the trait's colour (PetRow.Traits); Cuteness: the Coin bonus and its
+-- (the pet's level = the best of them, 1..20, PetConfig.MaxLevel; PetConfig.Shown; the one obby XP
+-- and time with you train now marked ▲ like the row's chip, U1; title in the trait's colour (PetRow.Traits); Cuteness: the Coin bonus and its
 -- XP; the work traits: level / rarity cap, effect bar, field hours to the next level, reach; E2c Scouting: meter bonus, medal finishes
 -- to the next level, the equipped scouts' total; E4b Pest control: the chance to chase crows off, the speciality, the squares it
 -- guards), Equip / Unequip, and at the bottom under "More" a small grey Sell brick (U1: two taps, orange "Sure? +N") and, while the
@@ -15,9 +15,9 @@
 -- (P3b): a text box and a button that names (free the first time), renames (PetConfig.RenamePrice) or removes the name; the server
 -- cleans, filters and prices it (PetRemotes.Rename), the page shows only the filtered name it sends back. The page re-renders on
 -- PetsChanged and Locale.Changed and closes itself when the pet is gone (sold).
--- Feed card (E1a3, under the trait cards while the player holds crops and the pet can still train; its first line says which trait food
--- and obby XP train now, or "✔ Trained"): one row per held
--- crop with its XP, Feed (one) and All (as many as the pet can take); GardenRemotes.FeedCrop, the server clamps and answers on
+-- Feed card (E1a3, under the trait cards while the player holds crops and food can still train the pet; its first line says which
+-- trait food trains now and up to which level (FD: the food limit), or that it grows with you now): one row per held
+-- crop with its XP for this pet (FD: GardenConfig.CropFeedXp; crops worth < 1 XP are left out), Feed (one) and All (as many as the pet can take); GardenRemotes.FeedCrop, the server clamps and answers on
 -- GardenRemotes.Result ("FeedCrop"). The held crops come from GardenRemotes.State.field.items.
 
 local Players = game:GetService("Players")
@@ -71,6 +71,7 @@ local REJECT_KEYS = { -- the rest: Locale.Reject's common.reject.*
 local FEED_REJECT_KEYS = {
 	items = "field.reason.items",
 	maxed = "petDetail.feed.maxed",
+	small = "petDetail.feed.small",
 }
 -- answers to PetRemotes.Rename (P3b)
 local RENAME_REJECT_KEYS = {
@@ -412,7 +413,7 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 				local need = PetConfig.CuteXpToNext(level) or 1
 				local xp = math.floor(stored.Apt.Cuteness.XP or 0)
 				bar("Xp", 4, xp / need, COLOR_XP, Locale.T("pet.xp", { xp = xp, next = need })).Parent = apt
-				line("Grow", 5, { Text = Locale.T("petDetail.cuteGrow") }).Parent = apt
+				line("Grow", 5, { Text = Locale.T("petDetail.cuteGrow", { level = owned.foodLimit }) }).Parent = apt
 			end
 			return apt
 		end
@@ -473,17 +474,19 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		return apt
 	end
 
-	-- Crops the pet can still take: as many as reach the max level (the last one may go past it).
-	local function canTake(owned, crop): number
+	-- Care XP one crop gives the pet (FD: GardenConfig.CropFeedXp, 0 when it is worth < 1 XP) and how many it can still take: as many
+	-- as reach the food limit (the last one may go past it).
+	local function cropFeed(owned, crop): (number, number)
 		local stored = PetClient.State and PetClient.State.pets[owned.uid]
-		return if stored then math.ceil(GardenConfig.XpToMax(stored) / crop.xp) else 0
+		local each = if stored then GardenConfig.CropFeedXp(crop, stored) else 0
+		return each, if each >= 1 then math.ceil(GardenConfig.XpToMax(stored) / each) else 0
 	end
 
 	local function feedCard(owned)
 		local rows = {}
-		if owned.xpNext then -- no rows at the max level
+		if owned.food then -- no rows at the food limit; crops worth < 1 XP to this pet are left out
 			for _, crop in CropConfig.Crops do
-				if (heldCrops[crop.id] or 0) > 0 then
+				if (heldCrops[crop.id] or 0) > 0 and cropFeed(owned, crop) >= 1 then
 					table.insert(rows, crop)
 				end
 			end
@@ -498,16 +501,17 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 			TextSize = 18,
 			Text = Locale.T("petDetail.feed.title"),
 		}).Parent = feed
-		-- P4: food and obby XP train owned.care (its bar is on that trait's card, marked ▲)
+		-- FD: crops train owned.food up to the food limit; past it the pet grows with you
 		line("Care", 2, {
-			Text = if owned.care
-				then Locale.T("petDetail.care", { trait = Locale.T("pet.apt." .. owned.care) })
-				else Locale.T("petDetail.careDone"),
-			TextColor3 = if owned.care then COLOR_INFO else COLOR_OK,
+			Text = if owned.food
+				then Locale.T("petDetail.care", { trait = Locale.T("pet.apt." .. owned.food), level = owned.foodLimit })
+				else Locale.T("petDetail.careDone", { level = owned.foodLimit }),
+			TextColor3 = if owned.food then COLOR_INFO else COLOR_OK,
 		}).Parent = feed
 		for index, crop in rows do
 			local held = heldCrops[crop.id]
-			local all = math.min(held, canTake(owned, crop))
+			local each, take = cropFeed(owned, crop)
+			local all = math.min(held, take)
 			local oneButton = button("One", {
 				AnchorPoint = Vector2.new(1, 0.5),
 				Position = UDim2.new(1, if all > 1 then -76 else 0, 0.5, 0),
@@ -538,7 +542,7 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 					Font = StudStyle.Font,
 					Text = Locale.T("petDetail.feed.crop", { icon = crop.icon, crop = Locale.CropName(crop), count = held }),
 				}),
-				line("Xp", 2, { TextSize = 12, TextColor3 = COLOR_XP, Text = Locale.T("petDetail.feed.xp", { xp = crop.xp }) }),
+				line("Xp", 2, { TextSize = 12, TextColor3 = COLOR_XP, Text = Locale.T("petDetail.feed.xp", { xp = each }) }),
 			})
 			create("Frame", {
 				Name = "Row_" .. crop.id,

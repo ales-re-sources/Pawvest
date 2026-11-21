@@ -115,9 +115,59 @@ GardenConfig.FoodStandDistance = 20 -- studs from the stand's PrimaryPart within
 GardenConfig.SeedStallName = "SeedStall" -- Workspace.Garden.SeedStall (U4: Studio-only model beside the food stand, PrimaryPart "Counter")
 GardenConfig.SeedStallDistance = 20 -- studs from the stall's PrimaryPart within which BuySeeds / BuyCart are accepted
 
--- Care XP (food, crops) a pet can still use before the rest is wasted (0: nothing left to train; PetConfig.CareXpLeft, P4).
+-- FD "bigger pets eat more" (docs/GDD.md §7.6): a food's price for a pet is its `price` × FoodRarity[the pet's rarity] ×
+-- FoodGrowth^(b − 1), b = the base level (PetConfig.BaseLevel) of the trait the food trains, nice-rounded; read at feeding.
+GardenConfig.FoodGrowth = 2.65
+GardenConfig.FoodRarity = { Common = 1, Uncommon = 1, Rare = 1, Epic = 1, Legendary = 10 }
+
+-- Half to even (tools/economy_ev.py rounds with Python's round(): the prices must match it).
+local function roundEven(x: number): number
+	local whole = math.floor(x)
+	local rest = x - whole
+	return if rest > 0.5 or (rest == 0.5 and whole % 2 == 1) then whole + 1 else whole
+end
+
+-- "Nice" price (tools/economy_ev.py nice()): below 10 exact; then two digits, 10-30 every integer, 30-100 in steps of 5.
+function GardenConfig.Nice(x: number): number
+	if x < 10 then
+		return math.max(1, roundEven(x))
+	end
+	local m = 10 ^ (math.floor(math.log10(x)) - 1)
+	local a = x / m
+	a = if a < 30 then roundEven(a) else 5 * roundEven(a / 5)
+	return math.floor(a * m + 0.5)
+end
+
+-- FD: the price of `food` for `pet` (nil when food cannot train it any more: every trait at its food limit).
+function GardenConfig.FoodPrice(food, pet): number?
+	local id = PetConfig.CareTarget(pet, "food")
+	if not id then
+		return nil
+	end
+	local factor = GardenConfig.FoodRarity[PetConfig.Kinds[pet.Kind] or "Common"] or 1
+	local b = PetConfig.BaseLevel(PetConfig.AptitudeLevel(pet, id))
+	return GardenConfig.Nice(food.price * factor * GardenConfig.FoodGrowth ^ (b - 1))
+end
+
+-- FD: care XP one `crop` gives `pet` when fed: its level-1 XP scaled by the weakest food's (the Berry's) XP per Coin for that pet
+-- against a level-1 Common, so feeding never beats selling the crop and buying food (E1a3 at every level and rarity). Whole XP;
+-- 0 = refused (worth < 1 XP, or nothing left to train).
+function GardenConfig.CropFeedXp(crop, pet): number
+	local base, now = math.huge, math.huge
+	for _, food in GardenConfig.Foods do
+		local price = GardenConfig.FoodPrice(food, pet)
+		if not price then
+			return 0
+		end
+		base = math.min(base, food.xp / food.price)
+		now = math.min(now, food.xp / price)
+	end
+	return math.floor(crop.xp * now / base + 1e-9)
+end
+
+-- Care XP food and fed crops can still give the pet before the rest is wasted (0: every trait at its food limit; FD).
 function GardenConfig.XpToMax(pet): number
-	return PetConfig.CareXpLeft(pet)
+	return PetConfig.CareXpLeft(pet, "food")
 end
 
 export type Assigner = {

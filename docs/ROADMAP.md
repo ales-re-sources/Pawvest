@@ -61,7 +61,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E5 | Garden MVP rest: request board, ledger on join, onboarding, garden telemetry (1.0) | ✔ | E5a ✔ 2026-11-19, E5b + E5c ✔ 2026-11-20 | – |
 | EG | Egg ladder: gem-named eggs (Pearl, Topaz, Ruby, Diamond), the two new ones opened by crops; pets shown per egg (1.0) | ✔ | ✔ 2026-11-21 | – |
 | FL | Flatter crop ladder: tiers set Coins per hour, grow time a choice inside a tier, longest crop 14 h (1.0) | ✔ | ✔ 2026-11-21 | – |
-| FD | Food trains a pet to half its max (priced by level), obby runs, time with you and the pet's work do the rest, the max in ~90 days (1.0) | design signed off 2026-11-20; model pass 2026-11-21 (max ~90 days for Casual) | – | – |
+| FD | Food trains a pet to half its max (priced by level), obby runs, time with you and the pet's work do the rest, the max in ~90 days (1.0) | ✔ | ✔ 2026-11-21 | – |
 | M6a | Soft launch + World 1 balancing (balanced by feel 2026-10-30; live test open) | – | – | – |
 | MU | Mobile UX check | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
@@ -75,7 +75,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 - **Not in 1.0:** obby time calibration (M6b; the obby stays as built), the comfort shop (D2: 1.0 ships without monetization),
   Sunshine (EV2c), World 4, hybrids (HX1 build).
 
-**Start here:** FD (Road to 1.0 step 5b; FD signed off 2026-11-20; model pass done 2026-11-21 (Cuteness 10 quick by food, the max ~90 days for Casual); next the build; EG and FL done 2026-11-21), then release gates (step 6), MU first (E5 done 2026-11-20: E5a Studio-validated 2026-11-19, E5b + E5c 2026-11-20). (FB + FB2 Studio-validated 2026-11-18, FB3 2026-11-19, the live filter check open; SH Studio-validated 2026-11-18, likes in a two-client test; ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: the M6a friends test (step 0).
+**Start here:** release gates (Road to 1.0 step 6), MU first (FD, EG and FL done 2026-11-21, step 5b complete) (E5 done 2026-11-20: E5a Studio-validated 2026-11-19, E5b + E5c 2026-11-20). (FB + FB2 Studio-validated 2026-11-18, FB3 2026-11-19, the live filter check open; SH Studio-validated 2026-11-18, likes in a two-client test; ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: the M6a friends test (step 0).
 *Update this line whenever a milestone finishes.*
 
 **Road to 1.0** (in order; one milestone at a time unless marked "alongside"):
@@ -266,6 +266,18 @@ GDD §7.4 / §7.6 / §7.9, ECONOMY, PROTOCOL. **Not in FD:** the aptitude curves
 6. Model: Casual's day-7 Legendary reaches Cuteness 10 within 2 days, and 20 in 75–110 days after it (~90; was ≥ 14); E1a3 passes
    at every level and rarity; `economy.py check` has no failure beyond today's. *Met by the model pass 2026-11-21.*
 7. The limit line and prices fit the stand and pet page in Czech (`TextFits`, `Locale.Compact`).
+
+*Validation (2026-11-21, Studio, fixture on the test profile `test_fd` via `TestProfileKey`, removed afterwards; no live profile
+written):* every acceptance check passed. 1: the stand's buttons showed 50 / 400 / 1 500 (Cuteness-1 Cat), 500 / 4 000 / 15 000
+(Cuteness-1 Phoenix), 9 500 / 75 000 / 280 000 (Cuteness-8 Phoenix); a real Feast click for the last took Coins 300 000 → 20 000 and
+Cuteness 8 → 10 (its food limit, the rest wasted). The Luau prices equal `economy_ev`'s on every rarity × level × food (checksum
+387 146 580 over Common / Epic / Legendary, levels 1–20). 2: the Cuteness-10 Phoenix with work traits at 10 and the Cuteness-6 Cat show
+"🏃 Grows with you now" and `Feed` answers `maxed`. 3: the equipped Phoenix gained 1.49 XP over two 60 s ticks (0.75 / min) and exactly
+0.8 from a Gold Tutorial finish ("Pets +20 XP", × 0.04). 4: a click on a 28 000 Feast with 20 000 Coins showed "Not enough Coins", the
+remote answered `coins`, Coins unchanged. 5: the Cuteness-8 Dragon's Feed card showed "+31 XP each" for Corn and no Potato row; a real
+Feed click gave "+31 XP"; Potato to it and to the Cuteness-1 Phoenix answered `small`, the barn kept 5 Potatoes. 7: stand and pet page in
+Czech, every changed label `TextFits`. No errors or warnings on server or client; a normal boot afterwards clean.
+*Open:* the results popup still says "Pets +20 XP" for a pet past its food limit (it gains 0.8); physical touch and a phone not checked.
 
 ### ST — Rotating seed stall
 Done 2026-11-18 (Done; the scope: `git show df15e8f:docs/ROADMAP.md`). Decided with it: the numbers (hourly, staples Potato–Onion,

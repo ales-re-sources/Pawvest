@@ -303,9 +303,15 @@ PetConfig.Shown = { Cuteness = true, Tending = true, Scouting = true, PestContro
 PetConfig.HatchPool = { "Cuteness", "Tending", "PestControl", "Scouting" }
 -- P4: chance of Cuteness by rarity when a trait slot is left after Tending (so the field model's Tending rates hold)
 PetConfig.CuteChance = { Common = 0.35, Uncommon = 0.4, Rare = 0.5, Epic = 0.6, Legendary = 0.7 }
--- P4 care XP (obby XP, food, crops): goes to Cuteness while it is below its cap, otherwise to the lowest working trait below
--- CareLevelCap, as CareSecondsPerXp weighted field seconds per XP (so Coins cannot buy the top work levels)
-PetConfig.CareLevelCap = 5
+-- P4 care XP (obby XP, time with you, food, crops): goes to Cuteness while it is below its care limit, otherwise to the lowest working
+-- trait below its care limit, as CareSecondsPerXp weighted field seconds per XP. FD (docs/GDD.md §7.4): food and fed crops ("food")
+-- train every trait only up to the food limit, FoodLimitShare of the rarity cap (Common 6 … Legendary 10); activity ("obby", "time")
+-- takes Cuteness on to the cap, work traits stop at the food limit (they grow on from their jobs). Past the food limit obby care XP
+-- counts × ObbyAboveLimit; each equipped pet gains WithYouXp care XP per online minute (time with you).
+PetConfig.FoodLimitShare = 0.5
+PetConfig.ObbyAboveLimit = 0.04
+PetConfig.WithYouXp = 0.75
+PetConfig.CareLevelCap = 5 -- before FD the work traits' care cap (base level); only tools/economy.py's E0 model still reads it
 PetConfig.CareSecondsPerXp = 36
 -- Scouting (E2c, a with-you aptitude): every medal finish on a world stage gives each equipped pet with Scouting XpPerFinish seconds of
 -- aptitude XP (same curve as Tending); the equipped scouts together add min(Cap, sum of PerStrength x Strength) to the stage's rare-seed
@@ -511,24 +517,29 @@ function PetConfig.PetLevel(pet): number
 	return math.clamp(math.floor(best), 1, PetConfig.MaxLevel)
 end
 
--- Level up to which care XP raises trait `id` of a pet of `kind`: the rarity cap for Cuteness, CareLevelCap (at most the cap) otherwise.
-function PetConfig.CareLimit(kind: string, id: string): number
-	local cap = PetConfig.AptitudeCap(kind)
-	return if id == "Cuteness" then cap else math.min(cap, PetConfig.ToLevel(PetConfig.CareLevelCap))
+-- FD: the food limit of a pet of `kind` as a level, half its rarity cap (6 / 7 / 8 / 9 / 10).
+function PetConfig.FoodLimit(kind: string): number
+	return math.floor(PetConfig.AptitudeCap(kind) * PetConfig.FoodLimitShare)
 end
 
--- The trait care XP trains now: Cuteness while below its cap, otherwise the lowest working trait below its care limit (ties in list
--- order); nil when nothing can train.
-function PetConfig.CareTarget(pet): string?
+-- Level up to which care XP from `source` raises trait `id` of a pet of `kind` (FD): the food limit for food ("food") and for work
+-- traits; the rarity cap for Cuteness from activity ("obby", "time" or nil).
+function PetConfig.CareLimit(kind: string, id: string, source: string?): number
+	return if id == "Cuteness" and source ~= "food" then PetConfig.AptitudeCap(kind) else PetConfig.FoodLimit(kind)
+end
+
+-- The trait care XP from `source` trains now: Cuteness while below its care limit, otherwise the lowest working trait below its care
+-- limit (ties in list order); nil when nothing can train (for "food": the pet is at its food limit, it grows with you now).
+function PetConfig.CareTarget(pet, source: string?): string?
 	local cute = PetConfig.AptitudeLevel(pet, "Cuteness")
-	if cute >= 1 and cute < PetConfig.CareLimit(pet.Kind, "Cuteness") then
+	if cute >= 1 and cute < PetConfig.CareLimit(pet.Kind, "Cuteness", source) then
 		return "Cuteness"
 	end
 	local best, bestLevel = nil, math.huge
 	for _, id in PetConfig.Aptitudes do
 		if PetConfig.Shown[id] and id ~= "Cuteness" then
 			local level = PetConfig.AptitudeLevel(pet, id)
-			if level >= 1 and level < PetConfig.CareLimit(pet.Kind, id) and level < bestLevel then
+			if level >= 1 and level < PetConfig.CareLimit(pet.Kind, id, source) and level < bestLevel then
 				best, bestLevel = id, level
 			end
 		end
@@ -536,14 +547,15 @@ function PetConfig.CareTarget(pet): string?
 	return best
 end
 
--- Care XP trait `id` still takes to reach its care limit (Cuteness XP points; a work trait's field seconds / CareSecondsPerXp, rounded up).
-function PetConfig.CareNeed(pet, id: string): number
+-- Care XP trait `id` still takes from `source` to reach its care limit (Cuteness XP points; a work trait's field seconds /
+-- CareSecondsPerXp, rounded up).
+function PetConfig.CareNeed(pet, id: string, source: string?): number
 	local level = PetConfig.AptitudeLevel(pet, id)
 	if level < 1 then
 		return 0
 	end
 	local entry = pet.Apt[id]
-	local limit = PetConfig.CareLimit(pet.Kind, id)
+	local limit = PetConfig.CareLimit(pet.Kind, id, source)
 	local need = 0
 	for current = level, limit - 1 do
 		need += if id == "Cuteness" then PetConfig.CuteXpToNext(current) or 0 else PetConfig.AptitudeXpToNext(current)
@@ -553,9 +565,9 @@ function PetConfig.CareNeed(pet, id: string): number
 end
 
 -- The trait care XP trains now and its progress in care XP (Cuteness XP points; a work trait's field seconds / CareSecondsPerXp):
--- id, xp, next; nil, 0, 0 when nothing can train (the UI's XP bars and the food stand).
-function PetConfig.CareProgress(pet): (string?, number, number)
-	local id = PetConfig.CareTarget(pet)
+-- id, xp, next; nil, 0, 0 when nothing can train from `source` (the UI's XP bars: activity; the food stand: "food").
+function PetConfig.CareProgress(pet, source: string?): (string?, number, number)
+	local id = PetConfig.CareTarget(pet, source)
 	if not id then
 		return nil, 0, 0
 	end
@@ -579,11 +591,11 @@ function PetConfig.CopyForCare(pet)
 	return copy
 end
 
--- Care XP the pet can still take in total (what GainCareXp would use before wasting the rest).
-function PetConfig.CareXpLeft(pet): number
+-- Care XP the pet can still take from `source` in total (what GainCareXp would use before wasting the rest).
+function PetConfig.CareXpLeft(pet, source: string?): number
 	local total = 0
 	for id in PetConfig.Shown do
-		total += PetConfig.CareNeed(pet, id)
+		total += PetConfig.CareNeed(pet, id, source)
 	end
 	return total
 end
@@ -600,21 +612,26 @@ function PetConfig.LastLevelUp(trained: any)
 	return leveled
 end
 
--- Adds `amount` care XP (obby XP, food, crops) to the pet (mutates its Apt): CareTarget gets it up to its care limit, the rest goes on
--- to the next target. Returns the traits trained in order { { id, levels, level } } (empty when nothing could train) and the XP wasted.
-function PetConfig.GainCareXp(pet, amount: number): ({ { id: string, levels: number, level: number } }, number)
+-- Adds `amount` care XP from `source` ("food" for food and fed crops, "obby", "time" for time with you) to the pet (mutates its
+-- Apt): CareTarget gets it up to its care limit, the rest goes on to the next target. FD: obby XP counts × ObbyAboveLimit once
+-- Cuteness is at its food limit; activity XP may be fractional (stored as is). Returns the traits trained in order
+-- { { id, levels, level } } (empty when nothing could train) and the XP wasted.
+function PetConfig.GainCareXp(pet, amount: number, source: string): ({ { id: string, levels: number, level: number } }, number)
 	local trained = {}
-	local left = math.max(0, math.floor(amount))
+	local left = math.max(0, amount)
+	if source == "obby" and PetConfig.AptitudeLevel(pet, "Cuteness") >= PetConfig.FoodLimit(pet.Kind) then
+		left *= PetConfig.ObbyAboveLimit
+	end
 	while left > 0 do
-		local id = PetConfig.CareTarget(pet)
+		local id = PetConfig.CareTarget(pet, source)
 		if not id then
 			break
 		end
 		local entry = pet.Apt[id]
 		local before = entry.L
-		local need = PetConfig.CareNeed(pet, id)
+		local need = PetConfig.CareNeed(pet, id, source)
 		if left >= need then
-			entry.L, entry.XP = PetConfig.CareLimit(pet.Kind, id), 0
+			entry.L, entry.XP = PetConfig.CareLimit(pet.Kind, id, source), 0
 			left -= need
 		else
 			if id == "Cuteness" then

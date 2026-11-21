@@ -76,7 +76,7 @@ function PetRow.Progress(stored, id: string, kind: string): number
 end
 
 -- The chip's exact numbers: "💗 Cuteness · Lv 3 / 8", then the progress as the pet page words it, the Coin bonus for Cuteness, and
--- "▲ …" when food and obby XP train this trait now.
+-- "▲ …" when obby XP (and food) train this trait now, and the level food trains it up to (FD).
 function PetRow.ChipText(entry, stored, id: string): string
 	local trait = PetRow.ByTrait[id]
 	local level = PetConfig.AptitudeLevel(stored, id)
@@ -109,8 +109,12 @@ function PetRow.ChipText(entry, stored, id: string): string
 		local bonus = Locale.T("common.percentBonus", { pct = Locale.Decimal(PetClient.Percent(entry.bonus)) })
 		table.insert(lines, Locale.T("petDetail.bonus", { bonus = bonus }))
 	end
+	if level < cap then
+		table.insert(lines, Locale.T("petRow.chip.food", { level = PetConfig.FoodLimit(entry.kind) }))
+	end
 	if entry.care == id then
-		table.insert(lines, string.format("<font color='#%s'>%s</font>", COLOR_CARE:ToHex(), Locale.T("petRow.chip.care")))
+		local key = if entry.food == id then "petRow.chip.care" else "petRow.chip.adventure"
+		table.insert(lines, string.format("<font color='#%s'>%s</font>", COLOR_CARE:ToHex(), Locale.T(key)))
 	end
 	return table.concat(lines, "\n")
 end

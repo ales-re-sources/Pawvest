@@ -39,7 +39,7 @@ local function tryCollect(coin, part: BasePart, otherPart: BasePart)
 
 	profile.CollectedCoins[coin.id] = true -- marked before anything yields: a coin pays once
 	CoinRewards.Grant(player, coin.value, "challenge")
-	PetService.AddXP(player, PetConfig.CoinXp)
+	PetService.AddXP(player, PetConfig.CoinXp, "obby")
 	publish(player)
 end
 

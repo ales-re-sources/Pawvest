@@ -243,6 +243,8 @@ pets.filter.coins,"In the ""Best for"" list: Cuteness, named by what it does (ra
 pets.filter.none,Shown instead of the pet list when the chosen filter matches no pet,No pet here yet.,Tady zatím žádný mazlíček není.,new,h8a134888
 petRow.chip.head,"Tooltip of a trait chip in a pet row (hover / hold), first line; {icon} = trait emoji, {trait} = trait name (pet.apt.*), {level} = its level, {cap} = the rarity's highest level. Czech keeps ""Lv""",<b>{icon} {trait} · Lv {level} / {cap}</b>,<b>{icon} {trait} · Lv {level} / {cap}</b>,new,h732a5920
 petRow.chip.care,"Tooltip of a trait chip, last line (yellow): food and stage runs with the player train this trait now (the ▲ on the chip)",▲ Treats and adventures train this now,▲ Jídlo a dobrodružství teď trénují tohle,new,h296d5c6c
+petRow.chip.food,"Tooltip of a trait chip in a pet row (FD): food and fed crops train this trait only up to level {level} (the pet's food limit, half its rarity's top level); past it the pet grows with the player. Czech keeps ""Lv""",🍖 Treats train it up to Lv {level},🍖 Jídlo ho vytrénuje až na Lv {level},new,h1db8d38a
+petRow.chip.adventure,"Tooltip of a trait chip, last line (yellow, FD): stage runs and time with the player train this trait now; food no longer does (it is past its food limit)",▲ Adventures with you train this now,▲ Teď ho trénují dobrodružství s tebou,new,hb6a163db
 petDetail.more,"Pet detail page: small grey heading at the bottom, over the Sell button (U1)",More,Další,new,hf2ad7075
 petDetail.placeOnField,"Pet page button under More (next to Sell), shown while the field's hand bar shows: closes the panel and puts this pet in hand to place it on the field",Place on field,Dát na pole,new,h094723df
 pets.freeEggs[one],Info line while free eggs wait for an empty garden incubator; {count} = eggs. Form for 1,🎁 {count} free egg waiting for an empty incubator,🎁 {count} vejce zdarma čeká na volný inkubátor,new,h92639edf
@@ -326,10 +328,10 @@ incubator.reject.notready,Refused: the egg needs more time,Not ready yet,Ještě
 incubator.reject.eggLocked,Refused: the egg's crop is not open yet (the card shows which crop opens it),This egg is still locked,Tohle vejce je ještě zamčené,new,hbd0fd2ef
 # Food stand panel,,,,,
 food.title,Food stand panel title,🍓 Pet food,🍓 Krmení pro mazlíčky,ok,h10d5bce0
-food.status,Default status line of the food stand (P4: food trains Cuteness first),Feed a pet to train it. Treats improve Cuteness first. Only the fed pet gets the XP.,Nakrm mazlíčka a vytrénuj ho. Jídlem zlepšuješ hlavně Roztomilost.,new,h7473af7f
+food.status,"Default status line of the food stand (FD: food trains up to half the top level, Cuteness first; past it the pet grows with the player)","Feed a pet to train it, Cuteness first. Treats train a pet up to half its top level; after that it grows with you.","Nakrm mazlíčka a vytrénuj ho, nejdřív Roztomilost. Jídlo ho vytrénuje do poloviny nejvyšší úrovně, pak roste s tebou.",new,h37cd897e
 food.empty,Shown instead of the list while the player has no pet,You have no pets yet. Hatch one in your incubator.,Zatím nemáš žádného mazlíčka. Vylíhni si ho v inkubátoru.,ok,h4301e9df
 food.maxTag,Shown instead of the food buttons for a pet at the top level (20),★ Max level,★ Max. Lv,ok,h5a7b36ca
-food.doneTag,Shown instead of the food buttons for a pet food can no longer train (below the top level),✔ Trained,✔ Vytrénovaný,ok,hf0b4053c
+food.limitTag,Food stand: shown instead of the food buttons for a pet at its food limit (FD: food trains every trait only to half its top level; past it the pet grows on stage runs and while it is with the player). Short,🏃 Grows with you now,🏃 Teď roste s tebou,new,h3ab32bf4
 food.button[one],"Food button: XP it gives over its price; {icon} = food emoji, {xp} = XP, {count} = price. Form for 1",{icon} +{xp} XP\n<font size='12'>{count} Coin</font>,{icon} +{xp} XP\n<font size='12'>{count} mince</font>,ok,hdfb0e729
 food.button[few],Form for 2-4 (Czech only),,{icon} +{xp} XP\n<font size='12'>{count} mince</font>,ok,hdfb0e729
 food.button[other],Form for 0 and 5+,{icon} +{xp} XP\n<font size='12'>{count} Coins</font>,{icon} +{xp} XP\n<font size='12'>{count} mincí</font>,ok,hdfb0e729
@@ -343,7 +345,7 @@ food.tapAgain,Tooltip on a touch screen after the first tap (green),<font color=
 food.fed,"Message after feeding; {icon} = food emoji, {kind} = pet kind, {xp} = XP gained",{icon} {kind} +{xp} XP,{icon} {kind} +{xp} XP,ok,ha04507b3
 food.fedLevelUp,"Message after feeding when a trait levelled up; {trait} = trait name (pet.apt.*), {level} = its new level",{icon} {kind} +{xp} XP · Level up! {trait} Lv {level},{icon} {kind} +{xp} XP · Zlepšil se! {trait} Lv {level},ok,he76ef343
 food.yourPet,Stand-in for the pet kind in food.fed when the pet is unknown,Your pet,Tvůj mazlíček,ok,h1b3953dd
-food.reject.maxed,Refused: food can no longer train any of the pet's traits (P4),Food can't get this pet better anymore,Tenhle mazlíček se už z jídla nezlepší,new,hd998023e
+food.reject.maxed,Refused (FD): the pet is at its food limit; it grows on stage runs and while it is with the player now,"This pet grows with you now, not from treats","Tenhle mazlíček teď roste s tebou, ne z jídla",new,h12acf42b
 food.reject.far,Refused: the player walked away from the food stand,Too far from the food stand,Jsi moc daleko od stánku s krmením,new,hf190d1fe
 # Server-written signs and boards (L3),,,,,
 board.top10,"Title of a stage's Top-10 board (SurfaceGui, server-written, tagged Loc); {stage} = stage name (feminine in Czech), {rows} = 10",{stage} - top {rows}!,{stage} – top {rows}!,new,h813379d2
@@ -603,8 +605,8 @@ pets.guard,"Pet row and field pet labels, after "" · "": the pet's Pest-control
 petDetail.where.equipped,"Pet detail page, header: the pet is equipped (follows the player)",✔ With you,✔ Je s tebou,new,hc67d5235
 petDetail.where.field,"Pet detail location: assigned to own field, no square number",🌱 Working on your field,🌱 Pracuje na tvém poli,new,h8b9ef07b
 petDetail.where.resting,"Pet detail page, header: the pet is neither equipped nor working",💤 Resting,💤 Odpočívá,new,hf1d011c8
-petDetail.care,"Pet detail page, under the level bar: what food and stage runs with you train now; {trait} = trait name (pet.apt.*, nominative)",🏃🍓 Adventures with you and treats train: {trait},🏃🍓 Dobrodružství s tebou a jídlo trénují: {trait},new,hc19d84e4
-petDetail.careDone,"Pet detail page, under the level bar: food and stage runs can no longer train the pet (its traits are at their limits)","✔ Trained: treats can't teach it more, it grows by working","✔ Vytrénovaný: jídlo ho už nic nenaučí, roste prací",new,h3caf463a
+petDetail.care,"Pet detail page, feed card, first line: the trait food and crops train now; {trait} = trait name (pet.apt.*, nominative), {level} = the level food trains it up to (FD food limit). Czech keeps ""Lv""",🍓 Treats train: {trait} (up to Lv {level}),🍓 Jídlo trénuje: {trait} (až na Lv {level}),new,h2f943691
+petDetail.careDone,"Pet detail page, feed card, first line: food has trained the pet to its food limit {level}; now it grows on stage runs with the player and by working (FD). Czech keeps ""Lv""",✔ Treats trained it to Lv {level}: now it grows with you and by working,✔ Jídlo ho vytrénovalo na Lv {level}: teď roste s tebou a prací,new,h66394304
 petDetail.bonus,"Pet detail page, Cuteness card, text on the effect bar: the pet's Coin bonus; {bonus} = ""+4.5%""",💰 {bonus} Coins while it is with you,"💰 {bonus} mincí, když je s tebou",new,hdb7b1faf
 pet.apt.Tending,Aptitude name (a pet's field job: harvests and replants while the owner is away),Tending,Péče,new,h4e5b0ea1
 pet.apt.Cuteness,Trait name (P4): the pet is so cute that everyone pays the owner more; it carries the Coin bonus. Czech: feminine noun,Cuteness,Roztomilost,new,ha5c40880
@@ -633,7 +635,7 @@ petDetail.scoutPouch,"Pet detail page, Scouting card, last line; {pct} = the sco
 petDetail.effect,"Pet detail page, text on the effect bar; {pct} = whole percent 20-100 (Tending: chance a ripe crop is harvested at once)",Effect {pct}%,Účinek {pct} %,new,h0f2c4827
 petDetail.aptXp,"Pet detail page, text on the aptitude XP bar; {xp} / {next} = hours of field time (decimal, ""3.5"")",{xp} / {next} h on the field,{xp} / {next} h na poli,new,habc95980
 petDetail.aptGrow,"Pet detail page, under the aptitude XP bar: how the aptitude levels up",Grows while it works on the field (a third as fast while you are away),"Roste, když pracuje na poli (když jsi pryč, třikrát pomaleji)",ok,hddb15404
-petDetail.cuteGrow,"Pet detail page, Cuteness card, under the XP bar: how Cuteness levels up","Grows on your stage runs while it is with you, and with treats","Roste z jídla, nebo když s tebou běhá po úrovních",ok,h2c847b46
+petDetail.cuteGrow,"Pet detail page, Cuteness card, under the XP bar: how Cuteness levels up (FD): food up to {level} (the food limit), then stage runs and time with the player. Czech keeps ""Lv""","Treats train it up to Lv {level}, then it grows on your stage runs and while it is with you","Jídlo ho vytrénuje až na Lv {level}, pak roste, když s tebou běhá po úrovních a je s tebou",new,haa74735c
 petDetail.careNote,"Pet detail page, card of a work trait: food and stage runs train it too, but only up to level {cap} (10)",Treats and adventures train it up to level {cap},Jídlo a dobrodružství ho vytrénují až na úroveň {cap},ok,ha9be6fd5
 petDetail.aptMax,Pet detail page: the aptitude is at the highest level of the pet's rarity; {rarity} = rarity name (nominative),Max for its rarity ({rarity}),Maximum pro jeho vzácnost ({rarity}),ok,h0e014f9d
 petDetail.reach[one],"Pet detail page, Tending card: squares the pet works from its square; {count} = 1, 5 or 9. Form for 1",Works {count} square,Stará se o {count} políčko,new,h91c58953
@@ -668,7 +670,8 @@ petDetail.feed.one,"Pet detail page, feed card: button that feeds one crop (narr
 petDetail.feed.all,"Pet detail page, feed card: button that feeds as many crops as the pet can take; {count} = how many (narrow button)",All · {count},Vše · {count},new,h98a7e6f5
 petDetail.feed.done,"Pet detail page, feed card: after feeding; {icon} = crop emoji, {count} = crops eaten, {xp} = XP gained",{icon} × {count} eaten: +{xp} XP,{icon} × {count} snězeno: +{xp} XP,new,ha0352ce6
 petDetail.feed.doneLevel,"Pet detail page, feed card: after feeding when a trait levelled up; {icon}, {count}, {xp} as in petDetail.feed.done, {trait} = trait name (pet.apt.*, nominative), {level} = its new level",{icon} × {count} eaten: +{xp} XP · Level up! {trait} Lv {level},{icon} × {count} snězeno: +{xp} XP · Postup! {trait} Lv {level},new,h37d7e098
-petDetail.feed.maxed,"Pet detail page, feed card: refused, food can no longer train any of the pet's traits (P4)",Food can't teach this pet anything more,Tenhle mazlíček se už z jídla nic nenaučí,new,h904b7ccb
+petDetail.feed.maxed,"Pet detail page, feed card: refused (FD), the pet is at its food limit; it grows with the player now","It grows with you now, crops can't teach it more","Teď roste s tebou, úroda ho už nic nenaučí",new,hb9f41d0d
+petDetail.feed.small,"Pet detail page, feed card: refused (FD), one crop of this kind is worth less than 1 XP to this pet (bigger pets need bigger crops); nothing was eaten",Too small a meal for this pet,Na tohohle mazlíčka je to moc malé sousto,new,hbdf9c8c2
 field.upgrade.level,"Garden panel, upgrade and tool row title; {name} = icon + name (""🌱 Growth"", ""✂️ Pruning shears""), {level} = level bought, {max} = top level",{name} · {level} / {max},{name} · {level} / {max},new,h59780255
 field.upgrade.growth,"Name of the field upgrade that makes crops grow faster (row title, toast)",Growth,Růst,new,h6f82fbe9
 field.upgrade.growth.effect,"Growth upgrade row, second line; {now} = % shorter grow times now, {next} = % at the next level (0-20)",Grow times −{now} % → −{next} %,Doba růstu −{now} % → −{next} %,new,hf1c5a382

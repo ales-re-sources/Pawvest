@@ -417,6 +417,10 @@ def load():
     P["cute_chance"] = luau("PetConfig.luau", "PetConfig.CuteChance")
     P["apt_count"] = luau("PetConfig.luau", "PetConfig.AptitudeCount")
     P["care"] = [luau("PetConfig.luau", "PetConfig.CareLevelCap"), luau("PetConfig.luau", "PetConfig.CareSecondsPerXp")]
+    # FD (food bootstraps, activity maxes): economy_ev's EV0 compares these with its proposal
+    P["fd"] = {"food_limit": luau("PetConfig.luau", "PetConfig.FoodLimitShare"), "obby_above": luau("PetConfig.luau", "PetConfig.ObbyAboveLimit"),
+               "with_you_xp": luau("PetConfig.luau", "PetConfig.WithYouXp"), "food_growth": luau("GardenConfig.luau", "GardenConfig.FoodGrowth"),
+               "food_rarity": luau("GardenConfig.luau", "GardenConfig.FoodRarity")}
     P["max_bonus"] = luau("PetConfig.luau", "PetConfig.MaxBonus")
     P["medal_xp"] = luau("PetConfig.luau", "PetConfig.MedalXp")
     P["finish_xp"] = luau("PetConfig.luau", "PetConfig.FinishXp")
