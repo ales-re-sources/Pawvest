@@ -192,6 +192,18 @@ CAND = {
     "hatch": {"Common": 300, "Uncommon": 300, "Rare": 3600, "Epic": 4 * 3600, "Legendary": 4 * 3600},
     "starter_egg": {"Common": 70, "Uncommon": 30},  # the launch egg: hatches within 5 min (G7)
     "food_mult": 1.0,  # food prices x this (GardenConfig.Foods)
+    # FD (design signed off 2026-11-20, ROADMAP → FD): food (and fed crops) train a trait only up to food_limit x its rarity cap; a food's
+    # price is x food_growth^(b - 1), b = the base level of the trait it trains (nice-rounded, read at feeding). Above the limit Cuteness
+    # grows only from activity, up to the cap: time with you (with_you_xp care XP per online minute, every equipped pet) and obby runs
+    # (their care XP x obby_above once Cuteness is at or past the limit); work traits take care XP only up to the limit (their jobs as
+    # now). fd False = the game before FD (Cuteness care to the cap, work traits to PetConfig.CareLevelCap, flat food prices).
+    # Model pass (2026-11-21, ECONOMY.md → Findings (FD)): obby care XP is ~3x the designed time with you of a Casual (1 500 vs 450 XP a
+    # day). Decided (the user, 2026-11-21): Cuteness to ~10 (where a pet contributes) quick, by food; the max not easy: ~90 days for a
+    # daily player (Casual). Obby time counts more than time with you: time with you 10x slower than designed (0.75 XP per online
+    # minute), obby care XP x 0.04 past the food limit (~1.4 XP per obby minute). Casual's day-7 Legendary 10 -> 20 in ~88 days
+    # (FD_DAYS), Obby main ~30, Garden main ~85.
+    # A fed crop gives its sale x the weakest food's XP per Coin at the pet's level (crop_xp).
+    "fd": True, "food_limit": 0.5, "food_growth": 2.65, "with_you_xp": 0.75, "obby_above": 0.04,
     # Sunshine: seconds per repeat medal finish (Bronze, Silver, Gold) x decay^n (n = earlier medal finishes of that stage today), floor, cap
     "sun": [16, 24, 32], "sun_decay": 0.8, "sun_floor": 6, "sun_cap": 3 * 3600,
     # Scouting: XP = timer seconds while equipped; level L -> L+1 in first x ratio^(L-1) hours; bonus = min(cap, per x strength) on meter,
@@ -243,6 +255,39 @@ def nice(x):
     a = x / m
     a = round(a) if a < 30 else 5 * round(a / 5)
     return int(a * m)
+
+
+# PetConfig's 20-level scale (2026-11-12): levels 1..20 over the base 10-level curves. Cuteness is simulated in levels (FD's limits fall on
+# half base levels: Uncommon 7 = base 3.5); work traits stay in whole base levels (their care limit is floored).
+def base_level(n):
+    """PetConfig.BaseLevel: 1 at level 1, 2 at level 4, then half the level."""
+    n = max(1, min(20, n))
+    return 1 + (n - 1) / 3 if n <= 4 else n / 2
+
+
+def to_level(b):
+    """PetConfig.ToLevel."""
+    return 1 if b <= 1 else round(2 * b)
+
+
+def cute_xp_next(P, n):
+    """PetConfig.CuteXpToNext: level n's share of the base step (3 shares for base 1, 2 for the others)."""
+    n = max(1, min(20, int(n)))
+    b, k, parts = (1, n, 3) if n <= 3 else (n // 2, 1 if n % 2 == 0 else 2, 2)
+    base = E.xp_next(P, b)
+    return math.floor(base * k / parts + 0.5) - math.floor(base * (k - 1) / parts + 0.5)
+
+
+def food_price(c, food, b):
+    """FD: a food's price for a trait at base level b."""
+    return nice(food["price"] * c["food_growth"] ** (b - 1)) if c["fd"] else food["price"]
+
+
+def crop_xp(M, xp, b):
+    """FD: care XP of a fed crop (CropConfig xp = its XP at level 1) for a trait at base level b: scaled by the weakest food's XP per
+    Coin at b against level 1, so it never beats selling the crop and buying food (E1a3 at every level). < 1 is refused."""
+    per = lambda b: min(f["xp"] / food_price(M["c"], f, b) for f in M["foods"])
+    return xp * per(b) / per(1)
 
 
 def build(c=None):
@@ -411,7 +456,11 @@ def first_clear_coins(M, s):
 # One player.
 # --------------------------------------------------------------------------------------------------------------------
 class Sim:
-    def __init__(self, M, arch, policy="talent-first", days=60, tending=True, guards=True, seed=1, free=False, guard_first=False, crows=True):
+    def __init__(self, M, arch, policy="talent-first", days=60, tending=True, guards=True, seed=1, free=False, guard_first=False, crows=True,
+                 probe=None):
+        self.probe = probe  # FD check: the streak's day-7 pet is this rarity, with Cuteness (its Cuteness level times are logged)
+        self.probe_pet = None
+        self.with_you_from = None  # FD: online since (time with you)
         self.guard_first = guard_first
         self.crows_on = crows
         self.now = 0.0
@@ -517,6 +566,8 @@ class Sim:
         self.crow_loss = 0.0
         self.tend_extra = 0.0
         self.legendary_t = None
+        self.food_xp = 0.0  # FD: care XP bought as food
+        self.with_you_xp = 0.0  # FD: care XP from time with you
         self.leg_exp, self.leg_half = 0.0, None
         self.first_harvest_t = None
         self.first_crop_t = {}
@@ -1182,11 +1233,11 @@ class Sim:
         ks = list(weights)
         return self.prng.choices(ks, weights=[weights[k] for k in ks])[0]
 
-    def new_pet(self, t, r):
+    def new_pet(self, t, r, cute=False):
         P, A = self.P, self.M["apt"]
         base, extra = P["apt_count"][r]
         n = base + (1 if self.prng.random() < extra else 0)
-        traits = {}
+        traits = {"C": 1} if cute else {}
         if self.prng.random() < A["tending"][r]:
             traits["T"] = 1
         if len(traits) < n and self.prng.random() < P["cute_chance"][r]:
@@ -1198,14 +1249,16 @@ class Sim:
         for k in ("C", "T"):
             if len(traits) < n and k not in traits:
                 traits[k] = 1
-        pet = {"r": r, "tr": traits, "xp": {k: 0.0 for k in traits}, "where": "spare"}
+        pet = {"r": r, "tr": traits, "xp": {k: 0.0 for k in traits}, "where": "spare", "lvl_t": {}}
         self.pets.append(pet)
         if r == "Legendary" and self.legendary_t is None:
             self.legendary_t = t
         self.manage()
+        return pet
 
     def bonus(self, p):
-        return E.pet_bonus(self.P, p["r"], p["tr"].get("C", 0))
+        c = p["tr"].get("C", 0)  # Cuteness in levels (1..20), the bonus on the base scale (PetConfig.PetBonus)
+        return E.lua_round(E.pet_bonus(self.P, p["r"], base_level(c))) if c >= 1 else 0
 
     def strength(self, lvl):
         return self.M["apt"]["str"][max(0, min(lvl, len(self.M["apt"]["str"])) - 1)] if lvl else 0.0
@@ -1224,6 +1277,8 @@ class Sim:
         eq = []
         if slots >= 2 and scouts:
             eq.append(scouts[0])
+        if self.probe_pet is not None and self.probe_pet not in eq:  # FD check: the probe pet is always taken along (fresh, it is weaker
+            eq.append(self.probe_pet)  # than grown Epics)
         for p in sorted([p for p in pets if p not in eq], key=lambda p: -self.bonus(p)):
             if len(eq) >= slots:
                 break
@@ -1263,24 +1318,73 @@ class Sim:
             p["xp"][key] -= first * ratio ** (p["tr"][key] - 1)
             p["tr"][key] += 1
 
-    def care(self, xp):
-        """Care XP to each equipped pet: Cuteness to its cap, then the lowest work trait up to the care cap (PetConfig.GainCareXp)."""
-        cap_care, secs = self.P["care"]
-        for p in self.pets:
-            if p["where"] != "eq":
-                continue
-            x = xp
-            if "C" in p["tr"] and p["tr"]["C"] < self.M["apt"]["cap"][p["r"]]:
+    def care_limit(self, p, key, food):
+        """Level up to which care XP trains trait `key` (Cuteness in levels, work traits in base levels). FD: food trains every trait to
+        food_limit x the rarity cap; activity takes Cuteness to the cap and work traits to the food limit. Before FD: Cuteness to the
+        cap, work traits to CareLevelCap (food or not)."""
+        cap = self.M["apt"]["cap"][p["r"]]
+        if not self.c["fd"]:
+            return to_level(cap) if key == "C" else min(self.P["care"][0], cap)
+        lim = cap * self.c["food_limit"]
+        if key == "C":
+            return to_level(lim if food else cap)
+        return math.floor(lim)
+
+    def care_target(self, p, food):
+        """PetConfig.CareTarget: Cuteness below its limit, else the lowest work trait below its limit."""
+        if "C" in p["tr"] and p["tr"]["C"] < self.care_limit(p, "C", food):
+            return "C"
+        work = [k for k in ("T", "G", "S") if k in p["tr"] and p["tr"][k] < self.care_limit(p, k, food)]
+        return min(work, key=lambda k: p["tr"][k]) if work else None
+
+    def care_pet(self, p, x, kind):
+        """PetConfig.GainCareXp on one pet: the target takes XP up to its limit, the rest goes on to the next target. kind: "food",
+        "obby" (x obby_above on Cuteness at or past the food limit) or "time" (time with you)."""
+        food = kind == "food"
+        if kind == "obby" and self.c["fd"] and "C" in p["tr"] and p["tr"]["C"] >= self.care_limit(p, "C", True):
+            x *= self.c["obby_above"]
+        secs = self.P["care"][1]
+        while x > 1e-9:
+            k = self.care_target(p, food)
+            if k is None:
+                return
+            lim = self.care_limit(p, k, food)
+            if k == "C":
                 p["xp"]["C"] += x
-                while p["tr"]["C"] < self.M["apt"]["cap"][p["r"]] and p["xp"]["C"] >= E.xp_next(self.P, p["tr"]["C"]):
-                    p["xp"]["C"] -= E.xp_next(self.P, p["tr"]["C"])
+                x = 0.0
+                while p["tr"]["C"] < lim and p["xp"]["C"] >= cute_xp_next(self.P, p["tr"]["C"]):
+                    p["xp"]["C"] -= cute_xp_next(self.P, p["tr"]["C"])
                     p["tr"]["C"] += 1
-                continue
-            work = [k for k in ("T", "G", "S") if k in p["tr"] and p["tr"][k] < cap_care]
-            if work:
-                k = min(work, key=lambda k: p["tr"][k])
-                self.train(p, k, x * secs / H, cap_lvl=min(cap_care, self.M["apt"]["cap"][p["r"]]))
+                    p["lvl_t"].setdefault(p["tr"]["C"], self.now)
+                if p["tr"]["C"] >= lim:
+                    x, p["xp"]["C"] = p["xp"]["C"], 0.0
+            else:
+                A = self.M["apt"]
+                first, ratio = (self.c["scout_first_h"], self.c["scout_ratio"]) if k == "S" else (A["first"], A["ratio"])
+                need = sum(first * ratio ** (lv - 1) for lv in range(p["tr"][k], lim)) - p["xp"][k]
+                h = x * secs / H
+                if h < need:
+                    self.train(p, k, h, cap_lvl=lim)
+                    x = 0.0
+                else:
+                    self.train(p, k, need, cap_lvl=lim)
+                    p["xp"][k] = 0.0
+                    x = (h - need) * H / secs
+
+    def care(self, xp, kind="obby"):
+        """Care XP to each equipped pet (each gets the full amount, PetConfig.GainCareXp)."""
+        for p in self.pets:
+            if p["where"] == "eq":
+                self.care_pet(p, xp, kind)
         self.mult = 1 + min(self.P["max_bonus"], sum(self.bonus(p) for p in self.pets if p["where"] == "eq")) / 1000
+
+    def with_you(self, t):
+        """FD: time with you since the last call while online (every equipped pet)."""
+        if self.with_you_from is not None and t > self.with_you_from and self.c["fd"] and self.c["with_you_xp"] > 0:
+            xp = self.c["with_you_xp"] * (t - self.with_you_from) / 60.0
+            self.with_you_xp += xp * len([p for p in self.pets if p["where"] == "eq"])
+            self.care(xp, "time")
+        self.with_you_from = t if self.with_you_from is not None else None
 
     def scout_bonus(self):
         return min(self.c["scout_cap"], sum(self.c["scout_per"] * self.strength(p["tr"]["S"]) for p in self.pets if p["where"] == "eq" and "S" in p["tr"]))
@@ -1358,16 +1462,36 @@ class Sim:
     def feed(self):
         if self.food_fund <= 0:
             return
-        best = max(self.M["foods"], key=lambda f: f["xp"] / f["price"])
-        n = int(self.food_fund // best["price"])
-        if n <= 0:
+        if not self.c["fd"]:  # before FD: the best food in bulk, split over the equipped pets (Cuteness only)
+            best = max(self.M["foods"], key=lambda f: f["xp"] / f["price"])
+            n = int(self.food_fund // best["price"])
+            if n <= 0:
+                return
+            trainable = [p for p in self.pets if p["where"] == "eq" and ("C" in p["tr"] and p["tr"]["C"] < self.care_limit(p, "C", True))]
+            if not trainable:
+                return
+            self.food_fund -= n * best["price"]
+            self.spent += n * best["price"]
+            self.food_xp += n * best["xp"]
+            self.care(n * best["xp"] / max(1, len([p for p in self.pets if p["where"] == "eq"])), "food")
             return
-        trainable = [p for p in self.pets if p["where"] == "eq" and ("C" in p["tr"] and p["tr"]["C"] < self.M["apt"]["cap"][p["r"]])]
-        if not trainable:
-            return
-        self.food_fund -= n * best["price"]
-        self.spent += n * best["price"]
-        self.care(n * best["xp"] / max(1, len([p for p in self.pets if p["where"] == "eq"])))
+        # FD: one food at a time, priced by the level of the trait it trains; Cuteness first (the Coin bonus), then work traits; each
+        # pass best bonus first
+        for only_c in (True, False):
+            for p in sorted([p for p in self.pets if p["where"] == "eq"], key=lambda p: -self.bonus(p)):
+                while True:
+                    k = self.care_target(p, True)
+                    if k is None or (only_c and k != "C"):
+                        break
+                    b = base_level(p["tr"]["C"]) if k == "C" else p["tr"][k]
+                    f, price = max(((f, food_price(self.c, f, b)) for f in self.M["foods"]), key=lambda fp: fp[0]["xp"] / fp[1])
+                    if price > self.food_fund:
+                        break
+                    self.food_fund -= price
+                    self.spent += price  # (food is not in spent_by_day, as before FD)
+                    self.food_xp += f["xp"]
+                    self.care_pet(p, f["xp"], "food")
+        self.mult = 1 + min(self.P["max_bonus"], sum(self.bonus(p) for p in self.pets if p["where"] == "eq")) / 1000
 
     # ---- purchases ---------------------------------------------------------------------------------------------
     def can_buy(self, it):
@@ -1531,7 +1655,12 @@ class Sim:
             else:
                 w = self.c["streak_pet"]
                 self.leg_mass(t, w.get("Legendary", 0) / sum(w.values()))
-                self.new_pet(t, self.roll_rarity(w))
+                if self.probe and self.probe_pet is None:
+                    self.probe_pet = self.new_pet(t, self.probe, cute=True)  # (manage() re-sorts the list when it sells)
+                    self.probe_pet["t0"] = t
+                    self.manage()
+                else:
+                    self.new_pet(t, self.roll_rarity(w))
 
     def check_requests(self, t):
         for rq in self.requests:
@@ -1584,6 +1713,8 @@ class Sim:
     # ---- garden visit ------------------------------------------------------------------------------------------
     def attend(self, t, online=True, leaving=False):
         self.now = t
+        if online:
+            self.with_you(t)
         self.settle(t)
         self.apply_sun(t)
         got = self.collect(t, online)
@@ -1782,7 +1913,7 @@ class Sim:
                     self.pouch[cid] = self.pouch.get(cid, 0) + n
                     drop = True
         studs = E.SIM["move_speed"] * s["t_base"] * E.MODEL["gold_run_factor"] * E.SIM["move_share"]
-        self.care(P["medal_xp"][medal - 1] + min(P["max_move_xp"], int(studs // P["studs_per_xp"])))
+        self.care(P["medal_xp"][medal - 1] + min(P["max_move_xp"], int(studs // P["studs_per_xp"])), "obby")
         secs = s["t_base"] * E.MODEL["gold_run_factor"]
         for p in self.pets:
             if p["where"] == "eq" and "S" in p["tr"]:
@@ -1815,6 +1946,7 @@ class Sim:
                 self.instant_day = self.day(s)  # instant grow on a few squares a day: crops of the longest batch now
                 b = max(self.batches, key=lambda b: b["need"])
                 self.harvest(s, b["crop"], min(b["n"], SPENDER["instant_per_day"]))
+            self.with_you_from = s  # FD: time with you runs while online
             self.attend(s)
             t = s
             # garden time before the obby block
@@ -1825,6 +1957,7 @@ class Sim:
                 self.attend(min(t, e))
             self.garden(min(t, e), e)
             self.attend(e, leaving=True)
+            self.with_you_from = None
             self.goal_line(e)
             d = self.day(s)
             self.online_by_day[d] += (e - s) / 60.0
@@ -2104,11 +2237,98 @@ def checks(M, days=60, verbose=True):
     if M["mode"] == "stars":
         for r in ev3_checks(M, sims, names, days):
             add(*r)
+    if M["c"]["fd"]:
+        for r in fd_checks(M, sims, days):
+            add(*r)
     if verbose:
         for name, ok, text in res:
             print(f"{'PASS' if ok else 'FAIL'}  {name}: {text}")
         print(f"{sum(ok for _, ok, _ in res)} / {len(res)} EV checks pass")
     return res
+
+
+def food_cost(M, rarity, key="C", start=1):
+    """FD: Coins in the best food (per XP, at each level's price) to take trait `key` of a `rarity` pet from `start` to its food limit
+    (Cuteness in levels, work traits in base levels), and the Feasts bought."""
+    c, P, A = M["c"], M["P"], M["apt"]
+    cap = A["cap"][rarity]
+    lim = to_level(cap * c["food_limit"]) if key == "C" else math.floor(cap * c["food_limit"])
+    lvl, xp, coins, n = start, 0.0, 0, 0
+    while lvl < lim:
+        b = base_level(lvl) if key == "C" else lvl
+        f, price = max(((f, food_price(c, f, b)) for f in M["foods"]), key=lambda fp: fp[0]["xp"] / fp[1])
+        coins += price
+        n += 1
+        if key == "C":
+            xp += f["xp"]
+            while lvl < lim and xp >= cute_xp_next(P, lvl):
+                xp -= cute_xp_next(P, lvl)
+                lvl += 1
+        else:
+            xp += f["xp"] * P["care"][1] / H
+            while lvl < lim and xp >= A["first"] * A["ratio"] ** (lvl - 1):
+                xp -= A["first"] * A["ratio"] ** (lvl - 1)
+                lvl += 1
+    return coins, n
+
+
+# Check 6's band for Casual's Cuteness 10 -> 20: ~90 days (the user, 2026-11-21: "maximum level should not be easy ... 90 for a player
+# which is coming every day"; the signed design had >= 14). The probe runs FD_RUN_DAYS (the pet arrives on day ~6.3).
+FD_DAYS = (75, 110)
+FD_RUN_DAYS = 130
+
+
+def fd_checks(M, sims, days):
+    """FD (ROADMAP → FD, acceptance 6): Casual's day-7 Legendary (the streak pet, forced Legendary with Cuteness) reaches Cuteness 10 on
+    its first day and 20 within FD_DAYS days after it; E1a3 at every level (a fed crop's XP <= its sale x the weakest food's XP per
+    Coin at that level's prices); the food prices to the limit (info)."""
+    c, P = M["c"], M["P"]
+    out = []
+    rows, ok6 = [], True
+    for n in ("Casual", "Obby main", "Garden main"):
+        s = run(M, arch_by(n), "talent-first", FD_RUN_DAYS, probe="Legendary")
+        pet = s.probe_pet
+        if pet is None:
+            rows.append(f"{n}: no day-7 pet")
+            ok6 &= n != "Casual"
+            continue
+        t0 = pet["t0"]
+        d = {L: (pet["lvl_t"][L] - t0) / DAY if L in pet["lvl_t"] else None for L in (10, 16, 20)}
+        # Lv 10 by the next session (1.1 d): the model's fixed food share (2 %) can defer the second Feast to the next morning
+        if n == "Casual":
+            ok6 &= d[10] is not None and d[10] <= 1.1 and d[20] is not None and FD_DAYS[0] <= d[20] <= FD_DAYS[1]
+        inc = sum(cc for tt, cc in s.income_log if t0 <= tt < t0 + DAY)
+        share = food_cost(M, "Legendary")[0] / inc if inc > 0 else float("inf")
+        rows.append(f"{n} (day {t0 / DAY:.1f}): Lv 10 +{fmt_d(d[10])} (food = {share:.1%} of that day's income), 16 +{fmt_d(d[16])}, "
+                    f"20 +{fmt_d(d[20])} (now Lv {pet['tr']['C']}, {pet['where']})")
+    out.append((f"FD day-7 Legendary: Cuteness 10 by the next session, 20 in {FD_DAYS[0]}-{FD_DAYS[1]} days (Casual)", ok6, "; ".join(rows)))
+    # E1a3 at every level (crop_xp), and from which level each crop is refused (< 1 XP)
+    weak = lambda b: min(f["xp"] / food_price(c, f, b) for f in M["foods"])
+    sale = {cc[0]: cc[2] for cc in P["crop_cfg"]["crops"]}
+    worst, okx, refused = (0.0, None), True, {}
+    for lvl in range(1, 20):
+        b = base_level(lvl)
+        for cid, xp in P["crop_cfg"]["xp"]:
+            got = crop_xp(M, xp, b)
+            if got < 1:
+                refused.setdefault(cid, lvl)
+                continue
+            r = got / (sale[cid] * weak(b))
+            if r > worst[0]:
+                worst = (r, f"{cid} at Lv {lvl}")
+            okx &= r <= 1 + 1e-9
+    out.append(("FD E1a3 at every level (fed crop XP <= sale x the weakest food's XP per Coin)", okx,
+                f"worst {worst[0]:.3f}x of the bound ({worst[1]}); refused (< 1 XP) from: "
+                + ", ".join(f"{k} Lv {v}" for k, v in refused.items())))
+    cells = []
+    for r in RARITIES:
+        coins, nf = food_cost(M, r)
+        cells.append(f"{r} Lv 1 -> {to_level(M['apt']['cap'][r] * c['food_limit'])}: {E.n(coins)} ({nf} buys)")
+    wc, wn = food_cost(M, "Legendary", "T")
+    cas = sims[("Casual", "talent-first")]
+    out.append(("FD food prices (info)", True, "; ".join(cells) + f"; a Legendary work trait 1 -> {math.floor(10 * c['food_limit'])} (base): "
+                f"{E.n(wc)}; Casual's food: {E.n(cas.food_xp)} XP, time with you {E.n(cas.with_you_xp)} XP in {days} days"))
+    return out
 
 
 POLICIES = ("talent-first", "pets-first")

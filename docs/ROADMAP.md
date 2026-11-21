@@ -61,7 +61,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E5 | Garden MVP rest: request board, ledger on join, onboarding, garden telemetry (1.0) | ✔ | E5a ✔ 2026-11-19, E5b + E5c ✔ 2026-11-20 | – |
 | EG | Egg ladder: gem-named eggs (Pearl, Topaz, Ruby, Diamond), the two new ones opened by crops; pets shown per egg (1.0) | ✔ | ✔ 2026-11-21 | – |
 | FL | Flatter crop ladder: tiers set Coins per hour, grow time a choice inside a tier, longest crop 14 h (1.0) | ✔ | ✔ 2026-11-21 | – |
-| FD | Food trains a pet to half its max (priced by level), time with you and the pet's work do the rest (1.0) | design signed off 2026-11-20 | – | – |
+| FD | Food trains a pet to half its max (priced by level), obby runs, time with you and the pet's work do the rest, the max in ~90 days (1.0) | design signed off 2026-11-20; model pass 2026-11-21 (max ~90 days for Casual) | – | – |
 | M6a | Soft launch + World 1 balancing (balanced by feel 2026-10-30; live test open) | – | – | – |
 | MU | Mobile UX check | – | – | – |
 | S9, S10 | Wall Jump + Glide, World 4 (drop D8) | – | – | – |
@@ -75,7 +75,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 - **Not in 1.0:** obby time calibration (M6b; the obby stays as built), the comfort shop (D2: 1.0 ships without monetization),
   Sunshine (EV2c), World 4, hybrids (HX1 build).
 
-**Start here:** FD (Road to 1.0 step 5b; FD signed off 2026-11-20; EG and FL done 2026-11-21), then release gates (step 6), MU first (E5 done 2026-11-20: E5a Studio-validated 2026-11-19, E5b + E5c 2026-11-20). (FB + FB2 Studio-validated 2026-11-18, FB3 2026-11-19, the live filter check open; SH Studio-validated 2026-11-18, likes in a two-client test; ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: the M6a friends test (step 0).
+**Start here:** FD (Road to 1.0 step 5b; FD signed off 2026-11-20; model pass done 2026-11-21 (Cuteness 10 quick by food, the max ~90 days for Casual); next the build; EG and FL done 2026-11-21), then release gates (step 6), MU first (E5 done 2026-11-20: E5a Studio-validated 2026-11-19, E5b + E5c 2026-11-20). (FB + FB2 Studio-validated 2026-11-18, FB3 2026-11-19, the live filter check open; SH Studio-validated 2026-11-18, likes in a two-client test; ST Studio-validated 2026-11-18; EV3 done 2026-11-17; open: the square card and the barn's crop rows in Czech, the Goals line on a real phone). Alongside: the M6a friends test (step 0).
 *Update this line whenever a milestone finishes.*
 
 **Road to 1.0** (in order; one milestone at a time unless marked "alongside"):
@@ -224,35 +224,43 @@ one Eggplant (35 000 XP) fills any pet's Cuteness. Pet levels, look tiers and th
 - **Food limit = half the max.** Food and fed crops train any trait only up to half its rarity cap: Common 6, Uncommon 7, Rare 8, Epic 9,
   Legendary 10. One rule for every trait (work traits today stop at 10 for every rarity, so Commons–Epics drop to 6–9). A pet whose traits
   are all at the food limit is refused food with "grows with you now"; the chip shows the limit (🍖 up to Lv 10).
-- **Above the limit only activity counts** (the work-trait rule today, extended to Cuteness): Cuteness, the with-you trait, grows from
-  **time with you** (each equipped pet, per online minute) and from obby runs (medal / move / coin XP as now) up to the rarity cap; Tending
-  and Pest control from field hours, Scouting from medal finishes, as now. Candidate rate ~7.5 XP per online minute (the model fits it):
-  Cuteness 10 → 20 of a Legendary (9 403 XP) ~21 h online (about 3 weeks of Casual), 6 → 12 of a Common (2 438 XP) ~5.5 h. Roblox's
-  20-minute idle kick bounds AFK time.
+- **Above the limit only activity counts** (the work-trait rule today, extended to Cuteness): Cuteness grows from **obby runs** (medal /
+  move / coin XP **× 0.04** past the food limit) and from **time with you** (each equipped pet, **0.75 XP per online minute**) up to
+  the rarity cap; Tending and Pest control from field hours, Scouting from medal finishes, as now. *Changed by the model pass (the
+  user, 2026-11-21):* a pet levels quickly to ~10, where it contributes (food), and the max is not easy: ~90 days for a daily player
+  (Casual); obby time counts more than time with you (an obby minute ~2.1 XP, an idle minute 0.75; time with you 10× slower than the
+  designed ~7.5). Roblox's 20-minute idle kick bounds AFK time.
 - **"Bigger pets eat more"** (liked by the user): the three foods keep their XP; the price scales with the level of the trait the food
   trains: today's price × 2.65^(b − 1), b = that trait's base level (`PetConfig.BaseLevel`, fractional, so it rises on every level),
   nice-rounded, read at feeding. Feasts to the food limit: Common ~1 300, Rare ~6 800, Legendary ~29 000 (was ~2 500); a work trait from 1
   to 10 ~140 k (was 13 k). With the limit in place this keeps the bootstrap from being free; the limit, not the price, stops buying the max.
 - **Fed crops** shrink by the same factor (XP = ½ × sale × size ÷ 2.65^(b − 1); at level 1 as now): never better than selling and buying
-  (E1a3 kept). A feed worth < 1 XP is refused, no crop taken.
+  (E1a3 kept). A feed worth < 1 XP is refused, no crop taken. *Model pass:* ÷ 2.65^(b − 1) breaks E1a3 by up to 3 % where the Berry's
+  price rounds up; the model scales by the weakest food's XP per Coin at the level ÷ the same at level 1 instead (the user to confirm).
 - The food stand's buttons show the price for the chosen pet; the pet page's Feed card shows the XP a crop gives that pet.
 - Pets already above their food limit keep their levels (no migration); they just cannot be fed further.
-*Boundary:* `PetConfig` (`CareLimit` = half the cap; activity XP routed past it to the cap; the time-with-you rate), the server's
-online-time XP for equipped pets (`PetService`, saved through `PlayerProfile`), `GardenConfig` (shared food price), `GardenFood` (prices
-from the config and the pet, never from the client), `GardenField` crop feed, `FoodShopClient`, `PetDetail` (Feed card, chip limit
-marker), Strings; `economy_ev` (food limit, price by level, time-with-you XP; the E1a3 check on the new rate), `economy.py check` + `pin`;
+*Model pass (2026-11-21, [ECONOMY.md](ECONOMY.md) → Findings (FD), open decision 9):* done, `economy_ev` carries the FD rules (`fd`,
+check FD). Obby care XP (~1 500 XP a day for Casual) is ~3× the designed time with you, so whole obby XP gave the max in ~9 days.
+With the rule above Casual's day-7 Legendary reaches 10 by the next session and 20 in 88.5 days (Obby main 29.5, Garden main 85);
+check 6's band is 75–110 days (was ≥ 14). Feasts to the limit: Common–Rare 1 500 (one Feast), Epic / Legendary 29 500; a Legendary work trait to base 5 143 500.
+*Boundary:* `PetConfig` (`CareLimit` = half the cap for food; activity care XP routed past it to the cap for Cuteness, work traits stop
+at the food limit; the time-with-you rate), `GardenConfig` (shared food price), `GardenFood` (prices from the config and the pet, never
+from the client), `GardenField` crop feed, `PetService` (care XP routing; online-time XP for equipped pets, saved through
+`PlayerProfile`), `FoodShopClient`, `PetDetail` (Feed card, chip limit marker), Strings;
+`economy_ev` (done: food limit, price by level, crop XP, check FD; the build adds the FD values to EV0), `economy.py check` + `pin`;
 GDD §7.4 / §7.6 / §7.9, ECONOMY, PROTOCOL. **Not in FD:** the aptitude curves, the rarity caps, a fullness timer (fits the Kitchen, D5).
 *Acceptance (hard):*
 1. Through the real UI: a Feast for a Cuteness-1 pet costs 1 500; for a Cuteness-8 Legendary the config's level-8 price; Coins drop by
    exactly the shown price.
-2. A Legendary at Cuteness 10 with every work trait at 10: Feed is refused (Coins, crops and XP unchanged) and the row says it grows with
-   you; a Common at Cuteness 6 likewise.
-3. That Legendary, equipped, gains Cuteness XP over 5 online minutes (≈ 5 × the rate) and from a Gold run; past level 10.
+2. A Legendary at Cuteness 10 with every work trait at 10: Feed is refused (Coins, crops and XP unchanged) and the row says how it grows
+   now; a Common at Cuteness 6 likewise.
+3. That Legendary, equipped, gains 0.04 × a Gold run's care XP past level 10 (~2 XP), and ~4 XP (5 × 0.75) over 5 online minutes
+   without a run.
 4. A player with fewer Coins than the price is refused; Coins and XP unchanged.
-5. A Corn fed to a Cuteness-1 pet gives 2 500 XP (as now); fed to a Cuteness-8 pet it gives 2 500 ÷ 2.65^3 ≈ 134 XP; a Potato fed to a
-   level-8 pet is refused and stays in the barn.
-6. Model: Casual's day-7 Legendary reaches Cuteness 10 on its first day, and 20 no sooner than day 14 after it; E1a3 passes; `economy.py
-   check` has no failure beyond today's.
+5. A Corn fed to a Cuteness-1 pet gives 2 500 XP (as now); fed to a Cuteness-8 pet the rule's value (÷ 2.65^3 ≈ 134 XP; by the
+   weakest food's price ratio 131); a Potato fed to a level-8 pet is refused and stays in the barn.
+6. Model: Casual's day-7 Legendary reaches Cuteness 10 by the next session, and 20 in 75–110 days after it (~90; was ≥ 14); E1a3
+   passes; `economy.py check` has no failure beyond today's. *Met by the model pass 2026-11-21.*
 7. The limit line and prices fit the stand and pet page in Czech (`TextFits`, `Locale.Compact`).
 
 ### ST — Rotating seed stall
