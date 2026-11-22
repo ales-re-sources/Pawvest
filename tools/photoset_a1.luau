@@ -22,7 +22,7 @@ local STAGE = P.STAGE or "World3.Stage15"
 -- view space: origin in the gap's middle at the pillars' top level (D1 142.5, D2 144.5), -Z toward the garden island
 -- (horizontal), +X screen right, +Y up; the jump runs world +z = screen left (view {-0.89, 0, 0.46})
 local ORIGIN = P.ORIGIN or Vector3.new(-150, 143.5, -269)
-local GARDEN = P.GARDEN or Vector3.new(-1223, 16, -834) -- Workspace.Garden.Island
+local GARDEN = P.GARDEN or Vector3.new(-1206, 16, -772) -- Workspace.Garden.Island (FX)
 local LAVA_Y = P.LAVA_Y or 137.5 -- world top of the tide copy
 local LOOK_NAME = P.LOOK_NAME -- nil: the rig's default look (Rig.LOOK)
 local POSE: any = P.POSE or "dash" -- a Rig.POSES name or a pose table

@@ -64,7 +64,7 @@ local PARK_X = (CropConfig.GridColumns / 2) * FIELD_PITCH + PARK_MARGIN
 local PARK_BACK_Z = FIELD_FRONT + #CropConfig.RowWidths * FIELD_PITCH + PARK_MARGIN
 local PARK_MAX_Y = 25 -- plot-space height beyond which the owner counts as off the field (flying, another level)
 local PARK_Z = -3.5 -- the parked formation's anchor: at the path's end; the pets stand behind it (towards the plaza), facing the field
--- (the hatchery's back post is at z = -4.7, x = 5.6: a wide pet (Dragon) in the side slot must stay in front of it)
+-- (the hatchery's back post is at z = -10.2 since FX, x = 5.6: a wide pet (Dragon) in the side slot stays clear of it)
 local PARK_HEIGHT = 2.75 -- anchor height above the floor's middle (the floor top is 0.25; same as the following anchor on flat ground)
 local GLIDE_SPEED = 3 -- anchor smoothing rate (1/s) while pets travel between the owner and the parking spot
 local GLIDE_DONE = 2.5 -- studs from the target at which the glide ends and normal following resumes

@@ -483,13 +483,14 @@ pets) were removed in FA (2026-11-06): a profile from before the field converts 
 
 A free area reached on foot from the central island, where pets are raised. Aimed at players who prefer
 collecting and caring over obby runs.
-- **Where.** A separate island in the same place (not a separate place), joined to the central island by a wooden
-  bridge (no portals since H1). Both islands share one look (part-built grass islands on a rock base, cobblestone
+- **Where.** A separate island in the same place (not a separate place), joined to the central island by a short wooden
+  bridge (no portals since H1; ~33 studs since FX, 2026-11-22: the garden moved 64 studs towards the hub). Both islands share one look (part-built grass islands on a rock base, cobblestone
   plazas, hedge rings, blocky trees and flowers) and stand in one sea that is also the world's kill floor.
 - **Layout (FX, 2026-11-22).** A central plaza (food shop) surrounded by a ring of **8 plots** 45° apart (radius 112; the bridge path runs through
   the middle of one gap), on an island 390 studs across with its hedge ring at radius 190 (12 + 18 plots on a 470-stud island before FX), about
   40 × 40 studs each, with an owner name sign (stud look, raised on two posts so players walk under it and see the plot past it) over a
-  40 × 16 front strip, the field behind it. The strip (U5a) holds, as seen from the plaza, the **hatchery** on the left (the 3 incubators
+  40 × 21.5 front strip (40 × 16 until FX, which moved the sign, hatchery and barn one field square, 5.5 studs, towards the plaza), the field
+  behind it. The strip (U5a) holds, as seen from the plaza, the **hatchery** on the left (the 3 incubators
   as open hatch pods in a triangle under one stud roof on four posts; tall pavilion since 2026-11-16: 12-stud underside, three 0.4-stud roof courses,
   click/tap access on each own pod, with no hatchery E prompt), the **barn** on the right (a red stud barn, 2026-11-13: a stepped gable under slate caps, white X-brace door leaves swung open towards the plaza, a hayloft window, a weathervane with a pet, hay bales, milk cans and a pitchfork in front;
   it shows no stock since 2026-11-12, the barn panel lists it) and a gravel **path** between them from the sign to the field, so the field shows from the plaza. Servers hold **8 players** (one plot per slot). Each player's
@@ -656,7 +657,7 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
 
 - **Goal (2026-11-02, the user).** Farming is the main game: over days 1-3 the field earns about what the obby earns, then 3x by day 7 and
   10x by day 30 (Casual, Garden main), checked by `economy.py check`.
-- **Field.** Behind each plot (a 40 x 16 strip in front holds the sign, the hatchery, the barn and the path): 78 squares in rows 6-6-8-8-8-8-8-8-6-6-6 (FX,
+- **Field.** Behind each plot (a 40 x 21.5 strip in front holds the sign, the hatchery, the barn and the path): 78 squares in rows 6-6-8-8-8-8-8-8-6-6-6 (FX,
   2026-11-22: rows 6-11 doubled the 36-square field) centred on an 8-column grid, numbered row by row from the plot (the numbers are stored:
   never reorder the rows). A new field opens the 2 x 2 block at the
   front centre (squares 3, 4, 9, 10) with 4 free Potato seeds. Any locked square (overgrown: grass tufts, no price in the world) can be

@@ -13,7 +13,7 @@ local assigner = GardenConfig.NewAssigner(GardenConfig.PlotSlots)
 local GardenPlots = {}
 
 -- In front of the plot sign, looking towards the field; shared by join spawns and the Home shortcut.
-local ARRIVAL_OFFSET = Vector3.new(8, 0, -30)
+local ARRIVAL_OFFSET = Vector3.new(8, 0, -35.5) -- FX: 8 studs in front of the sign (PlotView z -27.5; was -30 / -22)
 
 -- Plot slot borrowed by `player`, or nil (none free, or not assigned yet).
 function GardenPlots.PlotOf(player: Player): number?

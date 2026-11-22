@@ -12,7 +12,7 @@
 | 4 | Garden upgrades and tools are buried in the Garden panel | `BuyUpgrade` / `BuyTool` need the own plot (`usableField`) |
 | 5 | "Go to my garden" hides in the Pets panel | `PetsPanel` `gardenButton` → `GoGarden` |
 | 6 | No place that shows the crops held | barn = a section of the Garden panel |
-| 7 | Incubators take the front of the plot | `INCUBATOR_SPOTS` across the 40 × 16 strip in front of the field |
+| 7 | Incubators take the front of the plot | `INCUBATOR_SPOTS` across the 40 × 21.5 strip in front of the field (40 × 16 until FX) |
 | 8 | Pets list: XP as numbers, aptitudes as small grey text, Sell too prominent, "i" badge unclear, panel narrow | `PetsPanel` rows: `pet.xp` text, `pets.tending` suffix, Sell brick on every row, `WIDTH = 340` |
 
 ## 2. Principles

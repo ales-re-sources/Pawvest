@@ -41,17 +41,19 @@ local PetModels = ReplicatedStorage:WaitForChild("PetModels")
 
 -- Floor-space layout (U5a, docs/UI_GARDEN_PETS.md §7): −Z is the sign side (towards the plaza), so the plaza's left is +X. The
 -- strip holds the hatchery on +X (three nests in a triangle under one roof), the barn on −X and a path between them (x ±PATH_HALF).
-local INCUBATOR_SPOTS = { Vector3.new(8.5, 0, -15), Vector3.new(16.2, 0, -15), Vector3.new(12.35, 0, -8) }
+-- FX (2026-11-22, the user): the sign, hatchery and barn stand one field square (5.5 studs) further towards the plaza; the strip grew
+-- by that much at its front, so the path still runs from the sign to the field.
+local INCUBATOR_SPOTS = { Vector3.new(8.5, 0, -20.5), Vector3.new(16.2, 0, -20.5), Vector3.new(12.35, 0, -13.5) }
 local PATH_HALF = 4.8 -- the gravel path: half its width (the strip's front and back edges leave a gap of EDGE_GAP each side of x = 0)
 local EDGE_GAP = 5
-local HATCH_X0, HATCH_X1, HATCH_Z0, HATCH_Z1 = 5.6, 19.3, -19.3, -4.7 -- hatchery: centres of its corner posts
+local HATCH_X0, HATCH_X1, HATCH_Z0, HATCH_Z1 = 5.6, 19.3, -24.8, -10.2 -- hatchery: centres of its corner posts
 local HATCH_ROOF = 12 -- tall pavilion: roof underside, clear of the eggs and approach camera
-local BARN_X0, BARN_X1, BARN_Z0, BARN_Z1 = -19, -6, -15, -5 -- barn: outer faces of its walls (the door faces −Z, the plaza)
+local BARN_X0, BARN_X1, BARN_Z0, BARN_Z1 = -19, -6, -20.5, -10.5 -- barn: outer faces of its walls (the door faces −Z, the plaza)
 local BARN_WALL, BARN_HEIGHT = 0.6, 8 -- barn: wall thickness, wall height over the floor
 local BARN_DOOR_HALF, BARN_DOOR_HEIGHT = 3.5, 7 -- barn: half the door opening's width, its height over the floor (a character fits with room)
 local BARN_STEPS = { 10, 6.8, 3.6 } -- barn: widths of the stepped gable's red steps over the walls (the ridge ends ~12.2 over the floor)
 local BARN_STEP, BARN_CAP = 0.9, 0.3 -- barn: height of each red step, of the slate cap on the walls and on each step
-local STRIP_FRONT, STRIP_BACK = -20, -4 -- a plot's floor: the strip that holds the sign side, the hatchery and the barn
+local STRIP_FRONT, STRIP_BACK = GardenConfig.StripFront, -4 -- a plot's floor (FX: front -25.5, was -20): the strip that holds the sign side, the hatchery and the barn
 local FIELD_FRONT = GardenConfig.FieldFront -- the field lies behind the strip (floor +Z), from this far behind the centre
 local FIELD_PITCH = GardenConfig.FieldPitch -- studs per square
 local INFO_DISTANCE = 60 -- studs: pad / incubator billboards and pet labels
@@ -429,7 +431,7 @@ end
 -- walk between and under (the board's lowest edge is SIGN_CLEAR above the floor) and a board with tan frame bars and steel
 -- collars. No two parts share a face plane (z-fighting).
 function PlotView:buildSign(model: Model)
-	local z = -22
+	local z = -27.5 -- FX: was -22
 	local function stud(name: string, size: Vector3, offset: Vector3, color: Color3, solid: boolean)
 		local p = part({
 			Name = name,

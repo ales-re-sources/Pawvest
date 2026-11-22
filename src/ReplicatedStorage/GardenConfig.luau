@@ -14,7 +14,8 @@ GardenConfig.ShownFreeSlots = 8 -- every slot (Max Players = 8, FX) is drawn as 
 -- 8 plots at radius 112 (slot 1 at 7.5° from +X, counted towards +Z), so the path from the bridge (75°) runs through the middle
 -- of the gap between slots 2 and 3. (E1a1 had 12 plots on ring 1 and 18 on a ring 2 at radius 185.) A plot's field lies behind it
 -- (away from the centre).
-GardenConfig.PlotCentre = Vector3.new(-1222.517, 16.25, -834.035) -- garden centre at the height of the plot floors' centre
+-- FX: the island moved 64 studs along the bridge (75°) towards the hub (was -1222.517, 16.25, -834.035); the bridge is ~33 studs
+GardenConfig.PlotCentre = Vector3.new(-1205.953, 16.25, -772.216) -- garden centre at the height of the plot floors' centre
 GardenConfig.PlotRings = {
 	{ count = 8, radius = 112, offset = 7.5 },
 }
@@ -67,6 +68,9 @@ local CropConfig = require(script.Parent:WaitForChild("CropConfig"))
 GardenConfig.FieldFront = -2
 GardenConfig.FieldPitch = 5.5
 GardenConfig.FieldBack = GardenConfig.FieldFront + #CropConfig.RowWidths * GardenConfig.FieldPitch -- 58.5 since FX
+-- The plot floor's front edge (the strip with the sign, hatchery and barn reaches from here to z = -4); FX moved it one square
+-- towards the plaza (was -PlotSize / 2).
+GardenConfig.StripFront = -GardenConfig.PlotSize / 2 - GardenConfig.FieldPitch
 
 -- FX: horizontal distance (studs) from `position` to the footprint of the plot with floor `floor`: the floor plus its field
 -- (0 inside). Range checks measure from here, since the field reaches ~60 studs behind the floor centre.
@@ -74,7 +78,7 @@ function GardenConfig.FootprintDistance(floor: CFrame, position: Vector3): numbe
 	local p = floor:PointToObjectSpace(position)
 	local halfX = math.max(GardenConfig.PlotSize, CropConfig.GridColumns * GardenConfig.FieldPitch) / 2
 	local dx = math.max(math.abs(p.X) - halfX, 0)
-	local dz = math.max(-GardenConfig.PlotSize / 2 - p.Z, p.Z - GardenConfig.FieldBack, 0)
+	local dz = math.max(GardenConfig.StripFront - p.Z, p.Z - GardenConfig.FieldBack, 0)
 	return math.sqrt(dx * dx + dz * dz)
 end
 

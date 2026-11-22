@@ -318,7 +318,10 @@ and barrier ring at 190, bridge 40 studs longer, trees and bushes moved into the
 squares re-priced on the post-FL income: ×1.33 a square after the 28th (5.5 M … 40 M at the 36th, was ×1.93 to 750 M); other sinks unchanged
 (ECONOMY → Findings (FXP)). Range checks measure from the plot + field footprint
 (client 20, server 25). Validated in a playtest: 8 synthetic full fields drawn without errors, the hand bar and a row-11 square card from
-the back of the field, server range (stale inside / far outside). As built: GDD §7.6 / §7.9.
+the back of the field, server range (stale inside / far outside). Then (the user, same day): the garden island moved 64 studs along the
+bridge towards the hub (`PlotCentre`; the bridge is ~33 studs) and each plot's sign, hatchery and barn one field square (5.5 studs) towards
+the plaza (`GardenConfig.StripFront`); Studio-validated: arrival in front of the sign, a hatchery pod click opens the panel, a walk from the
+hub across the bridge. As built: GDD §7.6 / §7.9.
 
 **FD — food bootstraps, activity maxes** (2026-11-21; Studio-validated). *Why (the user):* a new pet could be fed to the max for
 almost nothing; Coins should bootstrap a pet, never replace its own activity. Food and fed crops train every trait only to the food limit
