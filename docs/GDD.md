@@ -661,7 +661,8 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   never reorder the rows). A new field opens the 2 x 2 block at the
   front centre (squares 3, 4, 9, 10) with 4 free Potato seeds. Any locked square (overgrown: grass tufts, no price in the world) can be
   bought from its square card; its price depends on how many are open (Coins only since EV3b): the ladder up to the 36th square
-  (750 M), then a flat 750 M for each square up to the 78th, whichever square is picked.
+  (40 M; FXP, 2026-11-22, re-priced on the flatter income: ×1.33 a square after the 28th, was up to 750 M), then a flat 40 M for each square
+  up to the 78th, whichever square is picked.
 - **Where the field's panels are (U4, 2026-11-07).** There is no Garden panel; each piece sits where it is used:
   - **Barn** (own plot): the barn building on the front strip (U5a). It does not show the stock (the seed sacks and crop crates it
     drew on the own plot until 2026-11-12 only repeated the panel, less exactly, and nobody else saw them). Its "Open barn" prompt

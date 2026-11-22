@@ -111,8 +111,9 @@ Bands are provisional, for the user to confirm with the proposal. Archetypes: Ob
   Trees count for G2 (a tree full of fruit at the return is a timer). **Unlock bar policy:** the player plants just enough squares of the newest crop
   to fill its star 1 while it earns ≥ 0.5 × the best crop's rate, before bundles and requests; quest crops are planted at once. Sinks on Coins
   alone; crows from the Garlic unlock; rare crops give no XP.
-- **Squares:** 36, price 290 × 1.33^(j−5) up to square 16, then × 1.93 (1.33 × 1.45); every other sink is anchored on a square's price × a factor, so it
-  arrives when that square does. Reserved sinks (landmarks, estate, decor; not designed): 70 steps × 1.15 from square 12's price.
+- **Squares:** 78 since FX (2026-11-22), price 290 × 1.33^(j−5) up to square 20, × 1.93 (1.33 × 1.45) for squares 21–28, then × 1.33 again
+  up to 40 M at square 36 and a flat 40 M for squares 37–78 (FXP, 2026-11-22; × 1.93 up to 750 M before). Every other sink is anchored on the
+  EV2a ladder (× 1.93 on to square 36: `sq`, not the squares' own `sq_own`) × a factor, so it arrives when that ladder's square would. Reserved sinks (landmarks, estate, decor; not designed): 70 steps × 1.15 from square 12's price.
 - **Trees (model-only):** a sapling, first growth 2–24 h, then a fruit every 5–60 min up to a cap of 4–6 held, forever.
 - **Eggs:** the pet is rolled at purchase; the hatch time is set by its rarity (Common / Uncommon 5 m, Rare 1 h, Epic / Legendary
   4 h). The player buys the dearest open egg the egg fund covers. Above Pearl (`Basic`) and Topaz (`Golden`) the Ruby and Diamond eggs
@@ -420,6 +421,27 @@ seed, G11 on several, G1, G3, G4 or R on single seeds; G2 95–100 %; Casual's t
   common crop's net Coins per hour of one square (`field.seed.rate`), or a new crop looks worse.
 - Tried and dropped: × 1.5 from tier 1 (A, C–E), a short-crop premium (B: short × 1.15, long × 0.9), Cucumber 1–3 h (F–I: slower Corn
   quest, G4), Eggplant 2 h / Sweet potato 3 h (L: dead time for Casual).
+
+## Findings (FXP, square prices on the flatter income, 2026-11-22; built, `CAND` `sq_k3` = the configs since)
+*Why (the user):* FL cut late income by half or more (Casual day 30 / 60: 41 / 53 M → 18 / 20 M a day) but kept every sink, so the squares'
+× 1.93 top (square 32: 110 M … 36: 750 M) ran away from income: on 120 days Casual bought square 32 on day 53 and never 36; the 42 FX squares at
+750 M each were out of reach. *Probe* (scratch script, squares only, every other sink unchanged; 120 days, seed 1): squares 5–28 as built, then
+× q3 per square to 36, flat from 37.
+
+| q3 (36 = late price) | Casual #36 / #78 | Garden main #36 / #78 | Obby main #36 / #78 | Casual income d30 / d90 |
+|---|---|---|---|---|
+| as built (750 M) | – / – (#32 day 53) | – / – (#32 day 45) | 110 / – | 18 / 21 M |
+| × 1.2 (17 M) | 27 / 51 | 23 / 45 | 19 / 37 | 24 / 67 M |
+| **× 1.33 (40 M), built** | **41 / 96** | **35 / 85** | **28 / 63** | **21 / 55 M** |
+| × 1.5 (100 M) | 83 / – (43 open on day 120) | 70 / – (49) | 54 / – (67) | 20 / 26 M |
+
+- **Built: × 1.33 (40 M).** Squares 29–36: 5.5 / 7 / 9.5 / 13 / 17 / 22 / 29 / 40 M (were 7.5 M … 750 M); the doubled field is a ~3-month goal
+  for Casual, ~2 for Obby main, and a late square costs ~1–2 days of the late income. All 32 + 42 squares: 1.83 B (was 33 B).
+- **Checks (seed 1):** as before FXP: 20 / 22, the same two known misses (G8 Spender headroom, G11 old crops levelled); G5 Casual's last
+  purchase day 99 (4 left at day 100), C 92–97 %. Seeds 2 / 3 / 4: 18 / 18 / 20 of 22 (were 16 / 18 / 21: seed 2 now passes B2 and G11,
+  seed 4 misses G11 by a hair, Casual 14 %); every seed's Spender now buys square 36 (days 39–42).
+- **Open:** the other late sinks keep the EV2a ladder (Growth 4 22 M, Sorter 3 45 M, Shears 3 160 M; anchored on squares 26–29); Sorter 3 is
+  no longer bought within 60 days in the Spender run (G8).
 
 ## Findings (FD model pass, 2026-11-21; seeds 1–4; in the configs since the FD build, 2026-11-21)
 *Build:* `PetConfig` `FoodLimitShare` / `ObbyAboveLimit` / `WithYouXp`, `GardenConfig` `FoodGrowth` / `FoodRarity` (prices `FoodPrice`,

@@ -151,6 +151,9 @@ CAND = {
     "sq_p1": 290.0, "sq_q": 1.33, "sq_q2": 1.45, "sq_k2": 16, "sq_gate_a": 0.8, "sq_gate_b": 1.08,
     # FX (2026-11-22, the user): the field grew to 78 squares; squares 37-78 cost the ladder's last price each
     "sq_late": 42,
+    # FXP (2026-11-22, the user: re-price the squares on the flatter post-FL income): the squares' own prices take the x sq_q2 step for
+    # sq_k3 squares only (squares 21-28), then x sq_q again (36: 40 M, was 750 M); the anchored sinks below keep the unclipped ladder
+    "sq_k3": 8,
     # sinks anchored to squares: (family, level, anchor square j, factor); price = factor x sq(j), Renown gate = the gate of square j
     "anchored": [
         ("Growth", 1, 8, 1.5), ("Growth", 2, 14, 1.5), ("Growth", 3, 20, 1.5), ("Growth", 4, 26, 1.5),
@@ -326,8 +329,11 @@ def build(c=None):
                         "gate": 0, "v": sale * H / secs, "rare": True, "world": world}
     M["rares"] = rares
     raw = [c["sq_p1"] * c["sq_q"] ** i * c["sq_q2"] ** max(0, i + 1 - c["sq_k2"]) for i in range(32)]
-    sq = [nice(x) for x in raw]
+    sq = [nice(x) for x in raw]  # the anchor ladder (every anchored sink, talent and egg below)
     M["sq"] = sq
+    k3 = c.get("sq_k3", 99)
+    sq_own = [nice(c["sq_p1"] * c["sq_q"] ** i * c["sq_q2"] ** min(max(0, i + 1 - c["sq_k2"]), k3)) for i in range(32)]
+    M["sq_own"] = sq_own  # FXP: the squares' own prices
     M["sq_gate"] = [round(c["sq_gate_a"] * (i + 1) ** c["sq_gate_b"]) for i in range(32)]
     sq_late = c.get("sq_late", 0)
     def anchor(j, f):
@@ -338,9 +344,9 @@ def build(c=None):
         group = "pets" if fam in ("FieldSlot", "EquipSlot", "Incubator") else "field"
         items.append({"name": f"{fam} {lvl}", "fam": fam, "lvl": lvl, "price": anchor(j, f), "gate": M["sq_gate"][j - 1], "group": group})
     for i in range(32):
-        items.append({"name": f"Square {5 + i}", "fam": "Square", "lvl": i + 1, "price": sq[i], "gate": M["sq_gate"][i], "group": "field"})
+        items.append({"name": f"Square {5 + i}", "fam": "Square", "lvl": i + 1, "price": sq_own[i], "gate": M["sq_gate"][i], "group": "field"})
     for i in range(32, 32 + sq_late):
-        items.append({"name": f"Square {5 + i}", "fam": "Square", "lvl": i + 1, "price": sq[31], "gate": M["sq_gate"][31], "group": "field"})
+        items.append({"name": f"Square {5 + i}", "fam": "Square", "lvl": i + 1, "price": sq_own[31], "gate": M["sq_gate"][31], "group": "field"})
     trees = []
     for tid, j, n, t0, f, cap, at in (c["stall_trees"] if c["mode"] == "stars" and c["unlock"] == "stall" else c["trees"]):
         # the ladder crop it points at (FL: its tier's rate; the smooth x r ladder before tier_mult)

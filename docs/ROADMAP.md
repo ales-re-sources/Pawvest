@@ -314,7 +314,9 @@ What was built and why, newest first. Details: the design docs and git history.
 **FX — 8-player garden, double field** (2026-11-22; Studio-validated). *Why (the user):* servers of 8 players, and a field twice the size.
 One ring of 8 plots (radius 112, 45° apart, the bridge path through a gap); ring 2 removed; the island shrank from 470 to 390 studs (hedge
 and barrier ring at 190, bridge 40 studs longer, trees and bushes moved into the gaps). The field gained rows 6-11 (3 × 8, then 3 × 6):
-78 squares; purchases 37-78 cost a flat 750 M (the ladder's last price), any square. Range checks measure from the plot + field footprint
+78 squares; purchases 37-78 cost a flat 40 M (the ladder's last price after FXP; 750 M at first), any square. **FXP** (the same day): the
+squares re-priced on the post-FL income: ×1.33 a square after the 28th (5.5 M … 40 M at the 36th, was ×1.93 to 750 M); other sinks unchanged
+(ECONOMY → Findings (FXP)). Range checks measure from the plot + field footprint
 (client 20, server 25). Validated in a playtest: 8 synthetic full fields drawn without errors, the hand bar and a row-11 square card from
 the back of the field, server range (stale inside / far outside). As built: GDD §7.6 / §7.9.
 

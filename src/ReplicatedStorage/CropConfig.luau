@@ -58,7 +58,8 @@ CropConfig.StartSquares = 4 -- a new field (E1a2 decision 3: with StartSeeds, so
 CropConfig.StartOpen = { 3, 4, 9, 10 } -- the 2 x 2 block at the front centre
 CropConfig.StartSeeds = { Potato = 4 }
 -- Expansions[n] = the square bought when StartSquares + n - 1 are open (any locked square the player picks): Coins and the
--- (EV2a: x 1.33 per square up to the 16th, then x 1.93; 1.6 B in all; every field sink is priced on this ladder; Coins only since EV3b).
+-- (EV2a: x 1.33 per square up to the 16th, then x 1.93; since FXP x 1.93 only for the 17th-24th, then x 1.33 again; the other field
+-- sinks stay priced on the EV2a ladder (economy_ev anchor); Coins only since EV3b).
 CropConfig.Expansions = {
 	{ price = 290 },
 	{ price = 400 },
@@ -84,18 +85,20 @@ CropConfig.Expansions = {
 	{ price = 1100000 },
 	{ price = 2100000 },
 	{ price = 4000000 },
-	{ price = 7500000 },
-	{ price = 15000000 },
+	-- FXP (2026-11-22, the user: re-priced on the flatter post-FL income; docs/ECONOMY.md → Findings (FXP)): x 1.33 again from the
+	-- 29th square (was x 1.93 up to 750 M)
+	{ price = 5500000 },
+	{ price = 7000000 },
+	{ price = 9500000 },
+	{ price = 13000000 },
+	{ price = 17000000 },
+	{ price = 22000000 },
 	{ price = 29000000 },
-	{ price = 55000000 },
-	{ price = 110000000 },
-	{ price = 210000000 },
-	{ price = 400000000 },
-	{ price = 750000000 },
+	{ price = 40000000 },
 }
 -- FX: every square bought past the ladder (the 37th open square on) costs this flat price, the ladder's last one (any locked
 -- square the player picks, as above).
-CropConfig.LateSquarePrice = 750000000
+CropConfig.LateSquarePrice = 40000000
 
 -- Rare seeds from the obby (E2a, docs/ROADMAP.md → E2; numbers from docs/ECONOMY.md → "Obby seeds run"), for players with the field:
 -- * the first Gold on a stage of world FirstGoldWorld or later: FirstGold seeds of that world's rare crop (World 1's would put the field
