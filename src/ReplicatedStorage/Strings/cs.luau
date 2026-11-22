@@ -649,5 +649,6 @@ return {
 	["admin.fieldtest.on"] = "🧪 Test pole: {crop}, pozemky: {plots}",
 	["admin.fieldtest.stats"] = "{fps} FPS · p95 {p95} ms · nejpomalejší {ms} ms · objektů: {objects} · plný detail {studs} studů",
 	["admin.fieldtest.distance"] = "🧪 Plný detail: {studs} studů",
+	["admin.fieldtest.distanceAuto"] = "🧪 Plný detail: automaticky",
 	["field.growth.hint"] = "Časy platí i mimo hru. Po {cap} h mimo hru se růst zastaví. Když hraješ, odpočet běží {rate}× rychleji.",
 }

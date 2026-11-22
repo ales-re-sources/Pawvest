@@ -7,9 +7,13 @@
 --     stand-in field to every plot, the own one included (budget checks, ROADMAP E1a1 check 5). GardenViewCrop = a registered
 --     crop id fills those squares with that crop, ripe, with growth art (CG perf / phone checks); unset: a random mix of the
 --     first six crops at random stages. GardenViewFullDistance = studs replaces the full-detail distance (desktop / phone
---     comparisons; mid then starts at least there). Drawing only: no remotes, the real field stays as it is.
--- Detail by horizontal distance from the character to the plot centre: full ≤ 60 studs, mid ≤ 120 (pets as blocks), low ≤ 300,
--- nothing beyond (10 studs of hysteresis). Builds run on Heartbeat within BUDGET seconds per frame, the own plot first, then the
+--     comparisons; turns the step-down off). Drawing only: no remotes, the real field stays as it is.
+-- Detail by horizontal distance from the character to the plot centre: full ≤ the full-detail distance, mid ≤ 120 or the
+-- full-detail distance (pets as blocks), low ≤ 300, nothing beyond (10 studs of hysteresis). Full-detail distance: 60 on
+-- touch-only devices and with Graphics Quality set by hand to LOW_QUALITY or below (the phone check passed with 60); otherwise
+-- (desktops) 230 (all of ring 1 from the own plot), stepped down 170 → 120 → 60 for the session while the p95 frame time of
+-- a SLOW_WINDOW stays above SLOW_FRAME; only frames that draw a plot beyond 60 studs in full, with no build pending, count.
+-- The folder carries the distance in use as the attribute FullDistance. Builds run on Heartbeat within BUDGET seconds per frame, the own plot first, then the
 -- nearest. The own plot's pods click/tap to call OnHatchery; its barn prompt calls OnBarn (U5a;
 -- the barn shows no stock since 2026-11-12: the barn panel lists it); the field has none since
 -- U3a: SquareAt / SquareCFrame / ShowSelect / OwnRoot serve FieldHand's tap and FieldRings; U3b: ShowBorders, ShowHover). OwnState / OwnField return the own
@@ -19,6 +23,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
@@ -29,7 +34,12 @@ local IdSet = require(ReplicatedStorage:WaitForChild("IdSet"))
 local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
 local PlotView = require(script.Parent:WaitForChild("PlotView"))
 
-local FULL_DISTANCE = 60
+local FULL_DISTANCE = 60 -- phones / tablets and low graphics quality; also the line beyond which full detail is "extra"
+local DESKTOP_STEPS = { 230, 170, 120, 60 } -- desktop full-detail distances, the next one after a slow window
+local SLOW_FRAME = 0.020 -- seconds: a window whose p95 frame time is above this steps the desktop distance down
+local SLOW_WINDOW = 5 -- seconds per step-down decision
+local SLOW_MIN_FRAMES = 60 -- measured frames a window needs for a decision
+local LOW_QUALITY = 3 -- Graphics Quality set by hand at or below this level keeps FULL_DISTANCE
 local MID_DISTANCE = 120
 local LOW_DISTANCE = 300
 local HYSTERESIS = 10
@@ -347,11 +357,35 @@ local function focus(): Vector3?
 	return workspace.CurrentCamera and workspace.CurrentCamera.CFrame.Position
 end
 
--- The full-detail distance and the mid one (never below it); the test hook GardenViewFullDistance overrides the first.
-local function detailDistances(): (number, number)
+local gameSettings = UserSettings():GetService("UserGameSettings")
+local desktopStep = 1 -- index into DESKTOP_STEPS; only goes up (shorter) during a session
+local measuring = false -- whether this frame's time counts for the step-down (set by updateDetail)
+local slowSample, slowClock = {}, 0
+
+-- True for touch-only devices (phones, tablets) and a Graphics Quality set by hand to LOW_QUALITY or below.
+local function lowEnd(): boolean
+	if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
+		return true
+	end
+	local ok, quality = pcall(function()
+		return gameSettings.SavedQualityLevel
+	end)
+	return ok and quality ~= Enum.SavedQualitySetting.Automatic and quality.Value <= LOW_QUALITY
+end
+
+-- The full-detail distance, the mid one (never below it) and whether the desktop step-down applies; the test hook
+-- GardenViewFullDistance overrides the first and turns the step-down off.
+local function detailDistances(): (number, number, boolean)
 	local override = tester and workspace:GetAttribute("GardenViewFullDistance")
-	local full = if type(override) == "number" and override > 0 then override else FULL_DISTANCE
-	return full, math.max(MID_DISTANCE, full)
+	local full, auto
+	if type(override) == "number" and override > 0 then
+		full, auto = override, false
+	elseif lowEnd() then
+		full, auto = FULL_DISTANCE, false
+	else
+		full, auto = DESKTOP_STEPS[desktopStep], desktopStep < #DESKTOP_STEPS
+	end
+	return full, math.max(MID_DISTANCE, full), auto
 end
 
 local function wantedDetail(current: string, distance: number, fullDistance: number, midDistance: number): string
@@ -367,16 +401,21 @@ local function updateDetail()
 		return
 	end
 	local own = ownSlot()
-	local fullDistance, midDistance = detailDistances()
+	local fullDistance, midDistance, auto = detailDistances()
+	folder:SetAttribute("FullDistance", fullDistance)
 	local distances = {}
+	local extra, pending = false, false
 	order = {}
 	for slot, view in views do
 		local centre = view.floor.Position
 		local distance = Vector3.new(centre.X - at.X, 0, centre.Z - at.Z).Magnitude
 		distances[slot] = if slot == own then -1 else distance
 		view:SetDetail(wantedDetail(view.detail, distance, fullDistance, midDistance))
+		extra = extra or (view.detail == "full" and distance > FULL_DISTANCE + HYSTERESIS)
+		pending = pending or view:Pending() > 0
 		table.insert(order, slot)
 	end
+	measuring = auto and extra and not pending
 	table.sort(order, function(a, b)
 		return distances[a] < distances[b]
 	end)
@@ -479,6 +518,22 @@ RunService.Heartbeat:Connect(function(dt)
 	if detailClock >= DETAIL_INTERVAL then
 		detailClock = 0
 		updateDetail()
+	end
+	-- desktop step-down: a window of frames that draw extra plots in full, with no build pending
+	if measuring then
+		table.insert(slowSample, dt)
+	end
+	slowClock += dt
+	if slowClock >= SLOW_WINDOW then
+		slowClock = 0
+		if #slowSample >= SLOW_MIN_FRAMES then
+			table.sort(slowSample)
+			if slowSample[math.ceil(#slowSample * 0.95)] > SLOW_FRAME and desktopStep < #DESKTOP_STEPS then
+				desktopStep += 1
+				updateDetail()
+			end
+		end
+		slowSample = {}
 	end
 	step()
 	local animationNow = workspace:GetServerTimeNow()

@@ -3,9 +3,10 @@
 -- GardenViewField / GardenViewCrop), and shows a frame-rate readout. Works in a live game, so it runs on a real phone.
 -- Drawing on this client only: no remotes, no saved data; the real field stays as it is (tapping it still acts on it).
 -- Each tap moves to the next mode: off → Sunflower (heaviest art) → Garlic (lightest, for comparison) → off.
--- A second button cycles GardenView's full-detail distance (Workspace attribute GardenViewFullDistance: 60 = the default, unset;
--- 120 / 170 / 230: from the own plot of ring 1 each step adds the next two plots, at 111 / 158 / 216 studs) to measure
--- how far desktops can draw full plants. It also applies to the real plots without the test field.
+-- A second button cycles GardenView's full-detail distance (Workspace attribute GardenViewFullDistance: auto = unset, the
+-- game's per-device distance with the desktop step-down; 60 / 120 / 170 / 230: from the own plot of ring 1 each step adds the
+-- next two plots, at 57 / 111 / 158 / 216 studs). It also applies to the real plots without the test field. The readout shows
+-- the distance in use (the GardenView folder's FullDistance attribute), so in auto it shows where the step-down landed.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -22,9 +23,9 @@ local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local MODES = { false, "Sunflower", "Garlic" }
 local PLOTS = math.min(GardenConfig.ShownFreeSlots, GardenConfig.PlotSlots)
 local WORST_WINDOW = 5 -- seconds of frames the slowest-frame and p95 figures look back over
-local DISTANCES = { 60, 120, 170, 230 } -- full-detail distances in studs; the first is GardenView's default (attribute unset)
+local DISTANCES = { false, 60, 120, 170, 230 } -- full-detail distances in studs; false = auto (attribute unset)
 local mode = 1
-local distanceIndex = table.find(DISTANCES, workspace:GetAttribute("GardenViewFullDistance")) or 1
+local distanceIndex = table.find(DISTANCES, workspace:GetAttribute("GardenViewFullDistance") or false) or 1
 
 local panel = script.Parent
 local resetButton = panel:WaitForChild("ScoreResetButton")
@@ -80,10 +81,11 @@ padding.Parent = label
 label.Parent = hud
 hud.Parent = playerGui
 
+local garden = nil -- Workspace.GardenView once it exists
 -- instances drawn by GardenView, counted by signals (a GetDescendants walk would itself show as a slow frame)
 local drawn = 0
 task.spawn(function()
-	local garden = workspace:WaitForChild("GardenView")
+	garden = workspace:WaitForChild("GardenView")
 	drawn = #garden:GetDescendants()
 	garden.DescendantAdded:Connect(function() drawn += 1 end)
 	garden.DescendantRemoving:Connect(function() drawn -= 1 end)
@@ -111,7 +113,7 @@ local function readout()
 		p95 = math.round(p95 * 1000),
 		ms = math.round(worst * 1000),
 		objects = drawn,
-		studs = DISTANCES[distanceIndex],
+		studs = garden and garden:GetAttribute("FullDistance") or 0,
 	})
 end
 RunService.Heartbeat:Connect(function(dt)
@@ -131,7 +133,10 @@ local function render()
 	else
 		button.Text = Locale.T("admin.fieldtest.off")
 	end
-	distanceButton.Text = Locale.T("admin.fieldtest.distance", { studs = DISTANCES[distanceIndex] })
+	local studs = DISTANCES[distanceIndex]
+	distanceButton.Text = if studs
+		then Locale.T("admin.fieldtest.distance", { studs = studs })
+		else Locale.T("admin.fieldtest.distanceAuto")
 	if hud.Enabled then readout() end
 end
 
@@ -140,7 +145,7 @@ local function apply()
 	workspace:SetAttribute("GardenViewCrop", cropId or nil)
 	workspace:SetAttribute("GardenViewField", if cropId then CropConfig.MaxSquares else nil)
 	workspace:SetAttribute("GardenViewFake", if cropId then PLOTS else nil)
-	workspace:SetAttribute("GardenViewFullDistance", if distanceIndex == 1 then nil else DISTANCES[distanceIndex])
+	workspace:SetAttribute("GardenViewFullDistance", DISTANCES[distanceIndex] or nil)
 	frames = {}
 	hud.Enabled = wanted()
 	render()

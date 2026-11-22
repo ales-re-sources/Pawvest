@@ -614,7 +614,9 @@ otherwise items could be duplicated across servers.
 **Crop growth art (CG1–CG18).** Tomato, Potato, Corn, Lettuce, Onion, Garlic, Cucumber, Broccoli, Pumpkin, Eggplant, Blueberry, Sweet potato, Pepper, Glow Mushroom, Golden Carrot and
 Frost Grape grow continuously with stable variation tied to each planting and visible
 harvest-size differences. Fruit and foliage develop from attached stems; ripeness is readable from shape and color. Nearby and
-mid-distance art preserve crop identity while distant art is hidden. These crops still clear at harvest. Frost Grape is a tall
+mid-distance art preserve crop identity while distant art is hidden. Full art reaches 60 studs on phones and tablets and 230 on
+desktops (every ring-1 plot from the own plot), stepping down to 170 / 120 / 60 on a desktop whose frames are slow; a Graphics
+Quality set low by hand gets 60. These crops still clear at harvest. Frost Grape is a tall
 vineyard trellis whose ripe bunches shed frost flecks (a frost burst on harvest); its future perennial regrowth is separate work.
 [Plant art and individual crop designs](PLANT_GROWTH.md) · [Current status](ROADMAP.md).
 
