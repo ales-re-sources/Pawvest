@@ -647,6 +647,7 @@ return {
 	["hall.toast"] = "🏆 {name} grew the week's biggest {crop}: {kg} kg!",
 	["admin.fieldtest.off"] = "🧪 Field test: off",
 	["admin.fieldtest.on"] = "🧪 Field test: {crop}, plots: {plots}",
-	["admin.fieldtest.stats"] = "{fps} FPS · slowest frame {ms} ms · {objects} objects",
+	["admin.fieldtest.stats"] = "{fps} FPS · p95 {p95} ms · slowest {ms} ms · {objects} objects · full detail {studs} studs",
+	["admin.fieldtest.distance"] = "🧪 Full detail: {studs} studs",
 	["field.growth.hint"] = "Times apply while away. Growth pauses after {cap} h away. The countdown runs {rate}× faster while you play.",
 }

@@ -647,6 +647,7 @@ return {
 	["hall.toast"] = "[!! 🏆 {name} gřěw ťhě wěěk'š bíggěšť {crop}: {kg} kg! ~~~~~~~~~~~~~ !!]",
 	["admin.fieldtest.off"] = "[!! 🧪 Fíělď ťěšť: öff ~~~~~~~ !!]",
 	["admin.fieldtest.on"] = "[!! 🧪 Fíělď ťěšť: {crop}, plöťš: {plots} ~~~~~~~~~ !!]",
-	["admin.fieldtest.stats"] = "[!! {fps} FPŠ · šlöwěšť fřámě {ms} mš · {objects} öbjěčťš ~~~~~~~~~~~~~~ !!]",
+	["admin.fieldtest.stats"] = "[!! {fps} FPŠ · p95 {p95} mš · šlöwěšť {ms} mš · {objects} öbjěčťš · fůll ďěťáíl {studs} šťůďš ~~~~~~~~~~~~~~~~~~~~~~~~ !!]",
+	["admin.fieldtest.distance"] = "[!! 🧪 Fůll ďěťáíl: {studs} šťůďš ~~~~~~~~ !!]",
 	["field.growth.hint"] = "[!! Ťíměš ápplý whílě áwáý. Gřöwťh páůšěš áfťěř {cap} h áwáý. Ťhě čöůňťďöwň řůňš {rate}× fášťěř whílě ýöů pláý. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!]",
 }

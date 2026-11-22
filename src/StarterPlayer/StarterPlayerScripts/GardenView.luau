@@ -6,7 +6,8 @@
 --     nobody holds with synthetic full plots, and GardenViewField = open squares (0 = none, at most CropConfig.MaxSquares) adds a
 --     stand-in field to every plot, the own one included (budget checks, ROADMAP E1a1 check 5). GardenViewCrop = a registered
 --     crop id fills those squares with that crop, ripe, with growth art (CG perf / phone checks); unset: a random mix of the
---     first six crops at random stages. Drawing only: no remotes, the real field stays as it is.
+--     first six crops at random stages. GardenViewFullDistance = studs replaces the full-detail distance (desktop / phone
+--     comparisons; mid then starts at least there). Drawing only: no remotes, the real field stays as it is.
 -- Detail by horizontal distance from the character to the plot centre: full ≤ 60 studs, mid ≤ 120 (pets as blocks), low ≤ 300,
 -- nothing beyond (10 studs of hysteresis). Builds run on Heartbeat within BUDGET seconds per frame, the own plot first, then the
 -- nearest. The own plot's pods click/tap to call OnHatchery; its barn prompt calls OnBarn (U5a;
@@ -346,9 +347,16 @@ local function focus(): Vector3?
 	return workspace.CurrentCamera and workspace.CurrentCamera.CFrame.Position
 end
 
-local function wantedDetail(current: string, distance: number): string
-	local full = if current == "full" then FULL_DISTANCE + HYSTERESIS else FULL_DISTANCE
-	local mid = if current == "full" or current == "mid" then MID_DISTANCE + HYSTERESIS else MID_DISTANCE
+-- The full-detail distance and the mid one (never below it); the test hook GardenViewFullDistance overrides the first.
+local function detailDistances(): (number, number)
+	local override = tester and workspace:GetAttribute("GardenViewFullDistance")
+	local full = if type(override) == "number" and override > 0 then override else FULL_DISTANCE
+	return full, math.max(MID_DISTANCE, full)
+end
+
+local function wantedDetail(current: string, distance: number, fullDistance: number, midDistance: number): string
+	local full = if current == "full" then fullDistance + HYSTERESIS else fullDistance
+	local mid = if current == "full" or current == "mid" then midDistance + HYSTERESIS else midDistance
 	local low = if current == "none" then LOW_DISTANCE else LOW_DISTANCE + HYSTERESIS
 	return if distance <= full then "full" elseif distance <= mid then "mid" elseif distance <= low then "low" else "none"
 end
@@ -359,13 +367,14 @@ local function updateDetail()
 		return
 	end
 	local own = ownSlot()
+	local fullDistance, midDistance = detailDistances()
 	local distances = {}
 	order = {}
 	for slot, view in views do
 		local centre = view.floor.Position
 		local distance = Vector3.new(centre.X - at.X, 0, centre.Z - at.Z).Magnitude
 		distances[slot] = if slot == own then -1 else distance
-		view:SetDetail(wantedDetail(view.detail, distance))
+		view:SetDetail(wantedDetail(view.detail, distance, fullDistance, midDistance))
 		table.insert(order, slot)
 	end
 	table.sort(order, function(a, b)

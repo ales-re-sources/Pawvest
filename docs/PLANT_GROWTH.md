@@ -36,14 +36,20 @@ a real phone; *2nd* = a second client. Live validation is open for all.
 
 **Admin → 🧪 Field test** (`AdminFieldTest`, admins only, works in a published game) fills the own plot and every free plot of
 ring 1 (12, a full server) with 36 ripe plants of one crop with growth art. Each tap moves on: off → Sunflower (heaviest, 192
-Parts + 141 meshes) → Garlic (lightest, 54 Parts) → off. A readout at the top shows frames in the last second, the slowest frame
-of the last 5 s and the objects GardenView draws. Drawing only: no remotes, no saved data; the real field's rings and taps keep
-working on the real crops underneath.
+Parts + 141 meshes) → Garlic (lightest, 54 Parts) → off. A second button cycles the full-detail distance
+(`GardenViewFullDistance`) 60 (the game's) → 120 → 170 → 230 studs: from the own plot each step adds the next two ring-1 plots
+(at 111 / 158 / 216 studs); it also applies to the real plots without the test field. A readout at the top shows frames in the
+last second, the 95th-percentile and slowest frame of the last 5 s, the objects GardenView draws and the distance. Drawing only:
+no remotes, no saved data; the real field's rings and taps keep working on the real crops underneath.
 
 Phone check: publish, join on the phone with an admin account, stand on the own plot, then compare Sunflower with Garlic (and
 off) at the same spot: standing still, turning the camera across the field, and walking in from the hub (the full-detail build
 hitch shows as the slowest frame). Desktop Studio reference (2026-11-18, own plot 1): Sunflower 61 FPS, slowest 19-24 ms, 45 943
 objects (three fields at full detail, the rest proxies); Garlic 60 FPS, 20 ms, 12 067 objects.
+
+Desktop distance check (whether desktops can draw full detail farther than phones): the published client, not Studio, with
+Roblox's maximum frame rate raised above 60 (compare frame times, not FPS). For each distance, Sunflower and Garlic: stand on
+the own plot, then run round the ring; note p95, slowest frame and objects. Phones keep 60 (passed 2026-11-18).
 
 ## Studio growth player
 

@@ -3,6 +3,9 @@
 -- GardenViewField / GardenViewCrop), and shows a frame-rate readout. Works in a live game, so it runs on a real phone.
 -- Drawing on this client only: no remotes, no saved data; the real field stays as it is (tapping it still acts on it).
 -- Each tap moves to the next mode: off → Sunflower (heaviest art) → Garlic (lightest, for comparison) → off.
+-- A second button cycles GardenView's full-detail distance (Workspace attribute GardenViewFullDistance: 60 = the default, unset;
+-- 120 / 170 / 230: from the own plot of ring 1 each step adds the next two plots, at 111 / 158 / 216 studs) to measure
+-- how far desktops can draw full plants. It also applies to the real plots without the test field.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -18,8 +21,10 @@ local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 
 local MODES = { false, "Sunflower", "Garlic" }
 local PLOTS = math.min(GardenConfig.ShownFreeSlots, GardenConfig.PlotSlots)
-local WORST_WINDOW = 5 -- seconds of frames the slowest-frame figure looks back over
+local WORST_WINDOW = 5 -- seconds of frames the slowest-frame and p95 figures look back over
+local DISTANCES = { 60, 120, 170, 230 } -- full-detail distances in studs; the first is GardenView's default (attribute unset)
 local mode = 1
+local distanceIndex = table.find(DISTANCES, workspace:GetAttribute("GardenViewFullDistance")) or 1
 
 local panel = script.Parent
 local resetButton = panel:WaitForChild("ScoreResetButton")
@@ -33,6 +38,11 @@ button.Size = UDim2.new(resetButton.Size.X.Scale, resetButton.Size.X.Offset, 0, 
 button.AutoLocalize = false
 button.TextSize, button.TextScaled, button.TextWrapped = 18, false, true
 button.BackgroundColor3 = StudStyle.Colors.Green
+
+local distanceButton = button:Clone()
+distanceButton.Name = "FieldDistanceButton"
+distanceButton.LayoutOrder = button.LayoutOrder + 1
+distanceButton.Size = UDim2.new(button.Size.X.Scale, button.Size.X.Offset, 0, 40)
 
 -- the panel's ScreenGui may be rebuilt on respawn: keep the mode the attributes hold, replace the old readout
 for i, cropId in MODES do
@@ -49,7 +59,10 @@ hud.ResetOnSpawn = false
 hud.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 hud.AutoLocalize = false
 hud.DisplayOrder = 50
-hud.Enabled = MODES[mode] ~= false
+local function wanted(): boolean
+	return MODES[mode] ~= false or distanceIndex ~= 1
+end
+hud.Enabled = wanted()
 local label = Instance.new("TextLabel")
 label.AnchorPoint = Vector2.new(0.5, 0)
 label.Position = UDim2.new(0.5, 0, 0, 4)
@@ -80,17 +93,26 @@ local frames = {} -- { at, dt } of recent frames
 local shownAt = 0
 local function readout()
 	local now = os.clock()
-	local count, worst = 0, 0
-	local keep = {}
+	local count = 0
+	local keep, times = {}, {}
 	for _, frame in frames do
 		if now - frame.at <= WORST_WINDOW then
 			table.insert(keep, frame)
-			worst = math.max(worst, frame.dt)
+			table.insert(times, frame.dt)
 			if now - frame.at <= 1 then count += 1 end
 		end
 	end
 	frames = keep
-	label.Text = Locale.T("admin.fieldtest.stats", { fps = count, ms = math.round(worst * 1000), objects = drawn })
+	table.sort(times)
+	local worst = times[#times] or 0
+	local p95 = times[math.max(math.ceil(#times * 0.95), 1)] or 0
+	label.Text = Locale.T("admin.fieldtest.stats", {
+		fps = count,
+		p95 = math.round(p95 * 1000),
+		ms = math.round(worst * 1000),
+		objects = drawn,
+		studs = DISTANCES[distanceIndex],
+	})
 end
 RunService.Heartbeat:Connect(function(dt)
 	if not hud.Enabled then return end
@@ -109,6 +131,7 @@ local function render()
 	else
 		button.Text = Locale.T("admin.fieldtest.off")
 	end
+	distanceButton.Text = Locale.T("admin.fieldtest.distance", { studs = DISTANCES[distanceIndex] })
 	if hud.Enabled then readout() end
 end
 
@@ -117,18 +140,25 @@ local function apply()
 	workspace:SetAttribute("GardenViewCrop", cropId or nil)
 	workspace:SetAttribute("GardenViewField", if cropId then CropConfig.MaxSquares else nil)
 	workspace:SetAttribute("GardenViewFake", if cropId then PLOTS else nil)
+	workspace:SetAttribute("GardenViewFullDistance", if distanceIndex == 1 then nil else DISTANCES[distanceIndex])
 	frames = {}
-	hud.Enabled = cropId ~= false
+	hud.Enabled = wanted()
 	render()
 end
 
 render()
 StudStyle.Brick(button, { studs = 4 })
+StudStyle.Brick(distanceButton, { studs = 4 })
 button.Parent = panel
-panel.Size += UDim2.fromOffset(0, button.Size.Y.Offset + 10)
+distanceButton.Parent = panel
+panel.Size += UDim2.fromOffset(0, button.Size.Y.Offset + distanceButton.Size.Y.Offset + 20)
 
 button.Activated:Connect(function()
 	mode = mode % #MODES + 1
+	apply()
+end)
+distanceButton.Activated:Connect(function()
+	distanceIndex = distanceIndex % #DISTANCES + 1
 	apply()
 end)
 Locale.Changed:Connect(render)
