@@ -41,8 +41,8 @@ local PetModels = ReplicatedStorage:WaitForChild("PetModels")
 
 -- Floor-space layout (U5a, docs/UI_GARDEN_PETS.md §7): −Z is the sign side (towards the plaza), so the plaza's left is +X. The
 -- strip holds the hatchery on +X (three nests in a triangle under one roof), the barn on −X and a path between them (x ±PATH_HALF).
--- FX (2026-11-22, the user): the sign, hatchery and barn stand one field square (5.5 studs) further towards the plaza; the strip grew
--- by that much at its front, so the path still runs from the sign to the field.
+-- FX (2026-11-22, the user): the hatchery and barn stand one field square (5.5 studs) further towards the plaza, the sign two
+-- (GardenConfig.SignZ); the strip grew by one square at its front, so the path still runs from the front edge to the field.
 local INCUBATOR_SPOTS = { Vector3.new(8.5, 0, -20.5), Vector3.new(16.2, 0, -20.5), Vector3.new(12.35, 0, -13.5) }
 local PATH_HALF = 4.8 -- the gravel path: half its width (the strip's front and back edges leave a gap of EDGE_GAP each side of x = 0)
 local EDGE_GAP = 5
@@ -431,7 +431,7 @@ end
 -- walk between and under (the board's lowest edge is SIGN_CLEAR above the floor) and a board with tan frame bars and steel
 -- collars. No two parts share a face plane (z-fighting).
 function PlotView:buildSign(model: Model)
-	local z = -27.5 -- FX: was -22
+	local z = GardenConfig.SignZ -- FX: -33, was -22
 	local function stud(name: string, size: Vector3, offset: Vector3, color: Color3, solid: boolean)
 		local p = part({
 			Name = name,

@@ -71,6 +71,9 @@ GardenConfig.FieldBack = GardenConfig.FieldFront + #CropConfig.RowWidths * Garde
 -- The plot floor's front edge (the strip with the sign, hatchery and barn reaches from here to z = -4); FX moved it one square
 -- towards the plaza (was -PlotSize / 2).
 GardenConfig.StripFront = -GardenConfig.PlotSize / 2 - GardenConfig.FieldPitch
+-- The name sign's z (PlotView; GardenBubble and the arrival spot stand relative to it): FX moved it two squares towards the plaza
+-- (was -22), one more than the buildings, so it stands clear of the barn on the lawn in front of the strip.
+GardenConfig.SignZ = -22 - 2 * GardenConfig.FieldPitch
 
 -- FX: horizontal distance (studs) from `position` to the footprint of the plot with floor `floor`: the floor plus its field
 -- (0 inside). Range checks measure from here, since the field reaches ~60 studs behind the floor centre.

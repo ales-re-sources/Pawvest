@@ -25,7 +25,7 @@ local player = Players.LocalPlayer
 
 local SHOW_DISTANCE = 120 -- studs (horizontal) from the sign
 local PLAZA_RADIUS = GardenConfig.PlotRings[1].radius + GardenConfig.StripFront -- the plaza: inside the plots' fronts
-local SIGN_SPOT = Vector3.new(0, 16, -27.5) -- plot floor space: above the name sign's top bar (PlotView: z -27.5, top bar 12.4)
+local SIGN_SPOT = Vector3.new(0, 16, GardenConfig.SignZ) -- plot floor space: above the name sign's top bar (PlotView; top bar 12.4)
 local TEXT_SIZE = 24 -- pixels
 local CROW_SOON = 3600 -- seconds: the crow part shows from this long before the crows come
 local COLOR_BACK = Color3.fromRGB(70, 46, 28) -- the sign's wood, darker

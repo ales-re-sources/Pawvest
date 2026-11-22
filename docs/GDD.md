@@ -489,8 +489,8 @@ collecting and caring over obby runs.
 - **Layout (FX, 2026-11-22).** A central plaza (food shop) surrounded by a ring of **8 plots** 45° apart (radius 112; the bridge path runs through
   the middle of one gap), on an island 390 studs across with its hedge ring at radius 190 (12 + 18 plots on a 470-stud island before FX), about
   40 × 40 studs each, with an owner name sign (stud look, raised on two posts so players walk under it and see the plot past it) over a
-  40 × 21.5 front strip (40 × 16 until FX, which moved the sign, hatchery and barn one field square, 5.5 studs, towards the plaza), the field
-  behind it. The strip (U5a) holds, as seen from the plaza, the **hatchery** on the left (the 3 incubators
+  40 × 21.5 front strip (40 × 16 until FX, which moved the hatchery and barn one field square, 5.5 studs, towards the plaza and the sign
+  two, so it stands clear of the barn on the lawn in front of the strip), the field behind it. The strip (U5a) holds, as seen from the plaza, the **hatchery** on the left (the 3 incubators
   as open hatch pods in a triangle under one stud roof on four posts; tall pavilion since 2026-11-16: 12-stud underside, three 0.4-stud roof courses,
   click/tap access on each own pod, with no hatchery E prompt), the **barn** on the right (a red stud barn, 2026-11-13: a stepped gable under slate caps, white X-brace door leaves swung open towards the plaza, a hayloft window, a weathervane with a pet, hay bales, milk cans and a pitchfork in front;
   it shows no stock since 2026-11-12, the barn panel lists it) and a gravel **path** between them from the sign to the field, so the field shows from the plaza. Servers hold **8 players** (one plot per slot). Each player's
