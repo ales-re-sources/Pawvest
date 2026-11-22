@@ -149,6 +149,8 @@ CAND = {
     "rare": [("GoldenCarrot", 1, 43200, 25000, 22), ("FrostGrape", 2, 57600, 75000, 44), ("GlowMushroom", 3, 72000, 150000, 76)],
     # squares: 32 bought, price p1 x q^(i-1), Renown gate round(sq_gate_a x i^sq_gate_b)
     "sq_p1": 290.0, "sq_q": 1.33, "sq_q2": 1.45, "sq_k2": 16, "sq_gate_a": 0.8, "sq_gate_b": 1.08,
+    # FX (2026-11-22, the user): the field grew to 78 squares; squares 37-78 cost the ladder's last price each
+    "sq_late": 42,
     # sinks anchored to squares: (family, level, anchor square j, factor); price = factor x sq(j), Renown gate = the gate of square j
     "anchored": [
         ("Growth", 1, 8, 1.5), ("Growth", 2, 14, 1.5), ("Growth", 3, 20, 1.5), ("Growth", 4, 26, 1.5),
@@ -327,6 +329,7 @@ def build(c=None):
     sq = [nice(x) for x in raw]
     M["sq"] = sq
     M["sq_gate"] = [round(c["sq_gate_a"] * (i + 1) ** c["sq_gate_b"]) for i in range(32)]
+    sq_late = c.get("sq_late", 0)
     def anchor(j, f):
         return nice(sq[j - 1] * f)
     M["anchor"] = anchor
@@ -336,6 +339,8 @@ def build(c=None):
         items.append({"name": f"{fam} {lvl}", "fam": fam, "lvl": lvl, "price": anchor(j, f), "gate": M["sq_gate"][j - 1], "group": group})
     for i in range(32):
         items.append({"name": f"Square {5 + i}", "fam": "Square", "lvl": i + 1, "price": sq[i], "gate": M["sq_gate"][i], "group": "field"})
+    for i in range(32, 32 + sq_late):
+        items.append({"name": f"Square {5 + i}", "fam": "Square", "lvl": i + 1, "price": sq[31], "gate": M["sq_gate"][31], "group": "field"})
     trees = []
     for tid, j, n, t0, f, cap, at in (c["stall_trees"] if c["mode"] == "stars" and c["unlock"] == "stall" else c["trees"]):
         # the ladder crop it points at (FL: its tier's rate; the smooth x r ladder before tier_mult)

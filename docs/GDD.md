@@ -486,13 +486,14 @@ collecting and caring over obby runs.
 - **Where.** A separate island in the same place (not a separate place), joined to the central island by a wooden
   bridge (no portals since H1). Both islands share one look (part-built grass islands on a rock base, cobblestone
   plazas, hedge rings, blocky trees and flowers) and stand in one sea that is also the world's kill floor.
-- **Layout.** A central plaza (food shop) surrounded by a ring of **12 plots** (a second ring of 18 is ready for bigger servers), about
+- **Layout (FX, 2026-11-22).** A central plaza (food shop) surrounded by a ring of **8 plots** 45° apart (radius 112; the bridge path runs through
+  the middle of one gap), on an island 390 studs across with its hedge ring at radius 190 (12 + 18 plots on a 470-stud island before FX), about
   40 × 40 studs each, with an owner name sign (stud look, raised on two posts so players walk under it and see the plot past it) over a
   40 × 16 front strip, the field behind it. The strip (U5a) holds, as seen from the plaza, the **hatchery** on the left (the 3 incubators
   as open hatch pods in a triangle under one stud roof on four posts; tall pavilion since 2026-11-16: 12-stud underside, three 0.4-stud roof courses,
   click/tap access on each own pod, with no hatchery E prompt), the **barn** on the right (a red stud barn, 2026-11-13: a stepped gable under slate caps, white X-brace door leaves swung open towards the plaza, a hayloft window, a weathervane with a pet, hay bales, milk cans and a pitchfork in front;
-  it shows no stock since 2026-11-12, the barn panel lists it) and a gravel **path** between them from the sign to the field, so the field shows from the plaza. Servers hold **12 players** (one plot per slot). Each player's
-  client draws the plots from the server's data (E1a1); free plots of the inner ring show "Free plot".
+  it shows no stock since 2026-11-12, the barn panel lists it) and a gravel **path** between them from the sign to the field, so the field shows from the plaza. Servers hold **8 players** (one plot per slot). Each player's
+  client draws the plots from the server's data (E1a1); free plots show "Free plot".
 - **Getting there and seeing what waits (U2; Home since 2026-11-13).** The leftmost **🏠 Home** icon (red brick) puts the player
   on the grass in front of their plot from anywhere (a running timer is cancelled); without a plot yet
   (just joined) a toast says so. A red **badge** on it counts what waits: ripe crops + eggs ready to hatch (none at 0; a pulse
@@ -615,7 +616,7 @@ otherwise items could be duplicated across servers.
 Frost Grape grow continuously with stable variation tied to each planting and visible
 harvest-size differences. Fruit and foliage develop from attached stems; ripeness is readable from shape and color. Nearby and
 mid-distance art preserve crop identity while distant art is hidden. Full art reaches 60 studs on phones and tablets and 230 on
-desktops (every ring-1 plot from the own plot), stepping down to 170 / 120 / 60 on a desktop whose frames are slow; a Graphics
+desktops (every other plot from the own plot), stepping down to 170 / 120 / 60 on a desktop whose frames are slow; a Graphics
 Quality set low by hand gets 60. These crops still clear at harvest. Frost Grape is a tall
 vineyard trellis whose ripe bunches shed frost flecks (a frost burst on harvest); its future perennial regrowth is separate work.
 [Plant art and individual crop designs](PLANT_GROWTH.md) · [Current status](ROADMAP.md).
@@ -655,10 +656,12 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
 
 - **Goal (2026-11-02, the user).** Farming is the main game: over days 1-3 the field earns about what the obby earns, then 3x by day 7 and
   10x by day 30 (Casual, Garden main), checked by `economy.py check`.
-- **Field.** Behind each plot (a 40 x 16 strip in front holds the sign, the hatchery, the barn and the path): 36 squares in rows 6-6-8-8-8 centred on an
-  8-column grid, numbered row by row from the plot (the numbers are stored: never reorder the rows). A new field opens the 2 x 2 block at the
+- **Field.** Behind each plot (a 40 x 16 strip in front holds the sign, the hatchery, the barn and the path): 78 squares in rows 6-6-8-8-8-8-8-8-6-6-6 (FX,
+  2026-11-22: rows 6-11 doubled the 36-square field) centred on an 8-column grid, numbered row by row from the plot (the numbers are stored:
+  never reorder the rows). A new field opens the 2 x 2 block at the
   front centre (squares 3, 4, 9, 10) with 4 free Potato seeds. Any locked square (overgrown: grass tufts, no price in the world) can be
-  bought from its square card; its price depends on how many are open (Coins only since EV3b).
+  bought from its square card; its price depends on how many are open (Coins only since EV3b): the ladder up to the 36th square
+  (750 M), then a flat 750 M for each square up to the 78th, whichever square is picked.
 - **Where the field's panels are (U4, 2026-11-07).** There is no Garden panel; each piece sits where it is used:
   - **Barn** (own plot): the barn building on the front strip (U5a). It does not show the stock (the seed sacks and crop crates it
     drew on the own plot until 2026-11-12 only repeated the panel, less exactly, and nobody else saw them). Its "Open barn" prompt
@@ -692,14 +695,15 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   - **Confirm and focus (all panels).** A spend over 1 000 Coins and every Sell take two taps: the first turns the button orange ("Tap
     again") for 3 s. Garden dialogs consume blank-area input and refit / reflow when the safe area changes (2026-11-15). Opening the Pets, Skills, Barn, Seed stall or Food panel closes the one open before; Pets, Skills and Barn close when
     the player walks 32 studs from where they were opened, the two stalls beyond 20 studs from their counter.
-- **Seeing the field (U3a, 2026-11-07).** Within 30 studs of the own field every planted square shows a ring (own plot only, ≤ 36): a dark
+- **Seeing the field (U3a, 2026-11-07).** Within 30 studs of the own field every planted square shows a ring (own plot only, ≤ 78): a dark
   disc whose pie fills as the crop grows, the crop icon inside; a ripe crop gets a full green pie, a ✓ badge and a small bounce; the 4 growing
   squares nearest the player also print the time left. The rings sit at crop height, drawn 3 studs toward the camera so the crop does not
   hide them (higher rings looked a row further back from the default camera). Other plots show only their crops and pets. A field pet's
   label is its given name (if any) over its job icons `🌱4 🛡2` (Tending, Pest control), never its level (with P4 the level can come
   from Cuteness).
-- **Acting on a square (U3a).** No prompts on the field (the incubators keep theirs). A tap / click on a square of the own field (within 40
-  studs of the plot centre; the server allows 45) outlines it in white and slides the **square card** up from the bottom: crop icon and
+- **Acting on a square (U3a).** No prompts on the field (the incubators keep theirs). A tap / click on a square of the own field (within 20
+  studs of the plot and its field, `GardenConfig.FootprintDistance`; the server allows 25, since FX: the field reaches ~60 studs behind the
+  plot centre) outlines it in white and slides the **square card** up from the bottom: crop icon and
   name, growth progress / boosts and Plant / Harvest. The Crop and Pets group boxes enclose their respective controls (2026-11-15).
   A fixed colored header names it **Field square**; its close button stays above the scrolling content. Content heights round up to
   whole pixels, so the scrollbar appears only when the content exceeds the safe area (2026-11-16).

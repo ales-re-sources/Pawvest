@@ -61,7 +61,7 @@ local GARDEN_LIFT = P.GARDEN_LIFT or 0
 local GARDEN_TURN = P.GARDEN_TURN or 0
 local SEA_Y = 0 -- the sea's top (Workspace.DebugBaseplate)
 local GARDEN_SEA = P.GARDEN_SEA or 2000 -- radius of the copy's own sea disc (0: none); its far edge near the horizon
-local GARDEN_SLOTS = P.GARDEN_SLOTS or 12 -- ring 1: a full server (Max Players 12)
+local GARDEN_SLOTS = P.GARDEN_SLOTS or 8 -- a full server (Max Players 8, FX)
 local GARDEN_DETAIL = P.GARDEN_DETAIL or "mid"
 -- ripe crops, a letter per square cycled over the plots (CropConfig letters; no Sunflower: its art is a draft): corn,
 -- pumpkin, pineapple, giant melon, sweet potato, a golden carrot now and then

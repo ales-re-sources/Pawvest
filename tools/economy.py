@@ -279,8 +279,10 @@ def apply_crop_config(P):
     crops = luau(f, "CropConfig.Crops")
     start, top = luau(f, "CropConfig.StartSquares"), luau(f, "CropConfig.MaxSquares")
     exps = luau(f, "CropConfig.Expansions")
-    if start + len(exps) != top:
-        raise ValueError(f"CropConfig: StartSquares {start} + {len(exps)} Expansions != MaxSquares {top}")
+    if start + len(exps) > top:
+        raise ValueError(f"CropConfig: StartSquares {start} + {len(exps)} Expansions > MaxSquares {top}")
+    # FX: every square past the ladder costs LateSquarePrice (CropConfig.NextExpansion)
+    exps = list(exps) + [{"price": luau(f, "CropConfig.LateSquarePrice")}] * (top - start - len(exps))
     rows, grid, start_open = luau(f, "CropConfig.RowWidths"), luau(f, "CropConfig.GridColumns"), luau(f, "CropConfig.StartOpen")
     if sum(rows) != top or max(rows) > grid:
         raise ValueError(f"CropConfig: RowWidths {rows} must add up to MaxSquares {top} and fit GridColumns {grid}")

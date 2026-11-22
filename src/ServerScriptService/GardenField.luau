@@ -49,14 +49,14 @@
 -- last (Garden.LastCrop, set by Plant), only up to the barn's limit.
 -- E2c Scouting: the equipped scouts' bonus (PetConfig.ScoutBonus) multiplies the meter points and adds a pouch seed at PouchExtraAt; each
 -- medal finish gives every equipped pet with Scouting PetConfig.Scouting.XpPerFinish of aptitude XP (after the bonus is taken).
--- The field's shape is CropConfig.RowWidths (E1d2: 36 squares on a grid); the player opens any locked square (BuySquare), the price
+-- The field's shape is CropConfig.RowWidths (E1d2: 36 squares on a grid; 78 since FX); the player opens any locked square (BuySquare), the price
 -- comes from the number already open (CropConfig.NextExpansion). Fields from before E1d2 (Count = the first squares
 -- of a 4 x 3 field) move onto rows 1-3 (CropConfig.FromOldSquare), with their crops and field pets.
 -- Remotes (in GardenRemotes): Plant(square, crop), Harvest(square), BuySeeds(crop, count), Sell(crop, count),
 -- BuySquare(square, expectedOpen), PlacePet(square, uid) (also moves a placed pet), LiftPet(uid), BuyPetSlot(expectedSlots),
 -- BuyUpgrade(id, expectedLevel), BuyTool(id, expectedLevel), BuyCart(slot, crop, count), FeedCrop(uid, crop, count), Quest(crop, count),
 -- CropPoint(crop, line) (client → server); answers on GardenRemotes.Result; GardenRemotes.State.field (the owner's panel).
--- Where they are accepted: at the own plot (GardenService.Usable, 45 studs) for the field actions and Sell (the barn is on the plot);
+-- Where they are accepted: at the own plot (GardenService.Usable: within 25 studs of the plot and its field) for the field actions and Sell (the barn is on the plot);
 -- within GardenConfig.SeedStallDistance of the plaza's seed stall for BuySeeds and BuyCart (U4); anywhere for BuyUpgrade, BuyTool,
 -- BuyPetSlot (U4: pure Coin buys from the Skills / Pets panels), FeedCrop, Quest and CropPoint.
 -- Crop mastery (EV3b, CropConfig.Mastery): Garden.Crops[crop] = { N = plants grown } (common crops; a harvest by hand or a Tending pet adds

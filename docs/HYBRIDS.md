@@ -102,7 +102,7 @@ What must exist before hybrid breeding can be built. The first four are worth bu
 | Item | What is missing today | Why hybrids need it |
 |---|---|---|
 | **Perennial lifecycle** | One `Grown` clock per square; Harvest removes the planting. No body / fruit split, no regrowth, no dig-up. | Trees and bushes keep their body. Build and prove it on catalogue crops first (Blueberry, Frost Grape, a first tree). |
-| **Bigger field and 2×2 blocks** | 36 squares, one planting per square. Storage, planting, rings, square card, pet reach and PlotView all assume one square. | Big plants. A 400-Part plant also needs its own place in GardenView's detail budget. |
+| **Bigger field and 2×2 blocks** | 78 squares (36 before FX), one planting per square. Storage, planting, rings, square card, pet reach and PlotView all assume one square. | Big plants. A 400-Part plant also needs its own place in GardenView's detail budget. |
 | **Plot-feed codec** | One letter per crop in the public feed ([PLANT_CATALOGUE_SCALE.md](PLANT_CATALOGUE_SCALE.md)). | Visitors must receive a strain's genome, not a catalogue letter. |
 | **EV3 signed off and built** | Crop levels are a draft; the model has a fixed crop ladder. | Derived price and grow time must be modelled against the final economy; how a strain earns crop levels and where it sits in the unlock order depends on EV3. |
 | **Phone performance of plant art** | Phone and second-client checks are still open for most crops (ROADMAP). | Generated plants add 140 / 400-Part recipes that nobody hand-tuned. |

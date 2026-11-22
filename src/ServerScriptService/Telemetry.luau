@@ -33,7 +33,6 @@ local REPORT_COOLDOWN = 1 -- seconds; a second kill / fall report within it is d
 -- cancelled the run, which starts a ghost run that GateExit ends a moment later; such a run ending by "exit" sends nothing
 local GHOST_TIME = 2
 local SESSION_WAIT = 15 -- seconds to wait for the client's platform before Session logs "unknown"
-local GARDEN_RADIUS = 145 -- studs from the garden island's centre (the island is 290 across)
 local RATE_BASE, RATE_PER_PLAYER = 100, 15 -- events per minute and server (the API allows 120 + 20 × CCU per experience)
 local PLATFORMS = { touch = true, gamepad = true, keyboard = true }
 local DEATH_BUCKETS = { { 0, "0" }, { 2, "1-2" }, { 5, "3-5" }, { 10, "6-10" } } -- above the last: "11+"
@@ -577,7 +576,8 @@ local function idleArea(player: Player): string
 	local island = garden and garden:FindFirstChild("Island")
 	if root and island and island:IsA("BasePart") then
 		local offset = root.Position - island.Position
-		if Vector3.new(offset.X, 0, offset.Z).Magnitude < GARDEN_RADIUS then
+		-- inside the island's disc (a cylinder along X: its diameter is Size.Y)
+		if Vector3.new(offset.X, 0, offset.Z).Magnitude < island.Size.Y / 2 then
 			return "garden"
 		end
 	end

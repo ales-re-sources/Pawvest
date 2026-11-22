@@ -63,7 +63,7 @@ rules out. Rules (reviewed 2026-10-25), **checked for every drop before it ships
 | Unifying rule | One pet, one place: pets stand on field squares (no pens, no posts), reach by aptitude level (§3) |
 | Long goals | Island restoration bundles, estate tiers + cottage, pet mastery, garden score — all four (§12) |
 | Decoration | Free placement **outside only**, per-tier limit, validated on the server; the cottage is fixed |
-| Field | One field of squares planted freely; **36 squares**, any square opened by choice at a price by the number open (2026-11-03, F2; built) |
+| Field | One field of squares planted freely; **78 squares** (36 until FX, 2026-11-22), any square opened by choice at a price by the number open (2026-11-03, F2; built; a flat 750 M from the 37th) |
 | Garden vs obby | **Farming first** (2026-11-02): the 24-hour rule of 2026-10-24 is only reported now; the targets are in ECONOMY.md |
 | Online vs offline | Crop growth runs at **2 online / 1 offline, capped at 24 h** per absence (OG2, 2026-11-20). Base crop durations doubled in OG2b to preserve the prior real growth pace. Displayed crop time is the away-time baseline and ticks faster while playing; it pauses after the cap. Field-job XP keeps its separate 1 / 0.5 clock. Never pure AFK (Roblox no longer pays for uptime) |
 | Prices | E0 re-prices every sink; applied after the user's approval (E0b) |
@@ -398,7 +398,7 @@ likes) + player feedback; the order and state live in ROADMAP → Next. After it
 time calibration (M6b), tonics and the other stations, landmarks, estate / decor / cottage, strays, seasons, trading, World 4.
 
 **Gates before going public:** the first live test (M6a), the Czech text review, the mobile check (MU), the store thumbnails (TH1 + THU),
-the Max Players 24 test. 1.0 launches without the comfort shop (decided 2026-11-17; D2 is the first drop). A **soft launch** (friends, then unlisted) first; the garden funnel telemetry decides whether the loop works.
+the Max Players 8 test (8 since FX, 2026-11-22; was planned at 24). 1.0 launches without the comfort shop (decided 2026-11-17; D2 is the first drop). A **soft launch** (friends, then unlisted) first; the garden funnel telemetry decides whether the loop works.
 
 **Drops after the MVP** (order provisional; each about 1–2 weeks; D1–D10 is about 3–5 months)
 

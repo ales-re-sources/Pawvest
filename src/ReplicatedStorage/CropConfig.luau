@@ -50,9 +50,10 @@ end
 -- The field's shape (E1d2): rows of RowWidths squares from the plot outwards, each row centred on a grid of GridColumns
 -- columns (the widest row). Squares are numbered row by row from the plot, left to right as seen from the plot (1..MaxSquares);
 -- the numbers are stored (Field.Open, Field.Squares, FieldPets[uid].Square): never reorder the rows.
-CropConfig.RowWidths = { 6, 6, 8, 8, 8 }
+-- FX (2026-11-22, the user): rows 6-11 (3 x 8, then 3 x 6) doubled the field from 36 to 78 squares.
+CropConfig.RowWidths = { 6, 6, 8, 8, 8, 8, 8, 8, 6, 6, 6 }
 CropConfig.GridColumns = 8
-CropConfig.MaxSquares = 36
+CropConfig.MaxSquares = 78
 CropConfig.StartSquares = 4 -- a new field (E1a2 decision 3: with StartSeeds, so the first plant needs no shop)
 CropConfig.StartOpen = { 3, 4, 9, 10 } -- the 2 x 2 block at the front centre
 CropConfig.StartSeeds = { Potato = 4 }
@@ -92,6 +93,9 @@ CropConfig.Expansions = {
 	{ price = 400000000 },
 	{ price = 750000000 },
 }
+-- FX: every square bought past the ladder (the 37th open square on) costs this flat price, the ladder's last one (any locked
+-- square the player picks, as above).
+CropConfig.LateSquarePrice = 750000000
 
 -- Rare seeds from the obby (E2a, docs/ROADMAP.md → E2; numbers from docs/ECONOMY.md → "Obby seeds run"), for players with the field:
 -- * the first Gold on a stage of world FirstGoldWorld or later: FirstGold seeds of that world's rare crop (World 1's would put the field
@@ -547,8 +551,12 @@ function CropConfig.Stage(crop, grown: number): number
 end
 
 -- Expansion that buys the next square of a field with `open` squares open, or nil at MaxSquares.
+local lateExpansion = table.freeze({ price = CropConfig.LateSquarePrice })
 function CropConfig.NextExpansion(open: number)
-	return CropConfig.Expansions[open - CropConfig.StartSquares + 1]
+	if open < CropConfig.StartSquares or open >= CropConfig.MaxSquares then
+		return CropConfig.Expansions[open - CropConfig.StartSquares + 1]
+	end
+	return CropConfig.Expansions[open - CropConfig.StartSquares + 1] or lateExpansion
 end
 
 -- Field grid (E1d2): cells[n] = { row, col } of square n (col 1..GridColumns), at[row][col] = square.

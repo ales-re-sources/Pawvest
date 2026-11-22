@@ -6,19 +6,19 @@ local GardenConfig = {}
 
 GardenConfig.PlotSize = 40 -- studs, square
 GardenConfig.PlotAttribute = "GardenPlot" -- player attribute: slot of the borrowed plot (absent when none)
-GardenConfig.ShownFreeSlots = 12 -- slots 1..12 (ring 1, Max Players = 12) are drawn as "Free plot" while nobody holds them
+GardenConfig.ShownFreeSlots = 8 -- every slot (Max Players = 8, FX) is drawn as "Free plot" while nobody holds it
 
 -- Plot positions (E1.0, docs/EXPANSION.md §16): a pure formula slot → floor CFrame, shared by server and client, so no
 -- system needs a plot model to know where a plot is. Slots fill rings round the garden centre, ring by ring; each plot's
--- front (LookVector, the sign side) faces the centre. Ring 1 has 12 plots at radius 112 (slot 1 on +X, counted towards
--- +Z; 9 studs between neighbours), ring 2 18 plots at radius 185, turned by 5° so the path from the bridge (75°) runs
--- between plots on both rings (E1a1, docs/ROADMAP.md). A plot's field lies behind it (away from the centre).
+-- front (LookVector, the sign side) faces the centre. FX (2026-11-22, the user: 8 players, a field twice as deep): one ring of
+-- 8 plots at radius 112 (slot 1 at 7.5° from +X, counted towards +Z), so the path from the bridge (75°) runs through the middle
+-- of the gap between slots 2 and 3. (E1a1 had 12 plots on ring 1 and 18 on a ring 2 at radius 185.) A plot's field lies behind it
+-- (away from the centre).
 GardenConfig.PlotCentre = Vector3.new(-1222.517, 16.25, -834.035) -- garden centre at the height of the plot floors' centre
 GardenConfig.PlotRings = {
-	{ count = 12, radius = 112 },
-	{ count = 18, radius = 185, offset = 5 },
+	{ count = 8, radius = 112, offset = 7.5 },
 }
-GardenConfig.PlotSlots = 0 -- every slot the rings hold (30)
+GardenConfig.PlotSlots = 0 -- every slot the rings hold (8)
 for _, ring in GardenConfig.PlotRings do
 	GardenConfig.PlotSlots += ring.count
 end
@@ -61,9 +61,26 @@ function GardenConfig.PlotOf(player: Player): CFrame?
 	return if type(slot) == "number" then GardenConfig.PlotCFrame(slot) else nil
 end
 
+-- The field's place in plot space (floor centre; +Z = from the plaza towards the field; PlotView draws it): the first row
+-- starts FieldFront behind the floor centre, squares are FieldPitch studs, CropConfig.RowWidths rows of GridColumns columns.
+local CropConfig = require(script.Parent:WaitForChild("CropConfig"))
+GardenConfig.FieldFront = -2
+GardenConfig.FieldPitch = 5.5
+GardenConfig.FieldBack = GardenConfig.FieldFront + #CropConfig.RowWidths * GardenConfig.FieldPitch -- 58.5 since FX
+
+-- FX: horizontal distance (studs) from `position` to the footprint of the plot with floor `floor`: the floor plus its field
+-- (0 inside). Range checks measure from here, since the field reaches ~60 studs behind the floor centre.
+function GardenConfig.FootprintDistance(floor: CFrame, position: Vector3): number
+	local p = floor:PointToObjectSpace(position)
+	local halfX = math.max(GardenConfig.PlotSize, CropConfig.GridColumns * GardenConfig.FieldPitch) / 2
+	local dx = math.max(math.abs(p.X) - halfX, 0)
+	local dz = math.max(-GardenConfig.PlotSize / 2 - p.Z, p.Z - GardenConfig.FieldBack, 0)
+	return math.sqrt(dx * dx + dz * dz)
+end
+
 local PetConfig = require(script.Parent:WaitForChild("PetConfig"))
 
--- Square (1..12) of the crop field where pet `uid` works (E1b: Garden.FieldPets[uid] = { Square, Job }), or nil.
+-- Square (1..MaxSquares) of the crop field where pet `uid` works (E1b: Garden.FieldPets[uid] = { Square, Job }), or nil.
 function GardenConfig.FieldSquare(profile, uid: string): number?
 	local garden = profile.Garden
 	local entry = type(garden) == "table" and type(garden.FieldPets) == "table" and garden.FieldPets[uid]

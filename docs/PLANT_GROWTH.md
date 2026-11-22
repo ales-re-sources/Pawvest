@@ -7,7 +7,7 @@ the relevant crop page for its anatomy, selected silhouette, growth poses and ge
 ## Crops and status
 Every registered crop passed the Studio geometry checks (six seeds × three masses × 101 ages, radius, seeks, proxies) and the production
 `PlotView` lifecycle (corrections, exact ripeness, selection, detail transitions, harvest / replant), boot clean. **Open** lists what is
-left: *stills* = five stills await Ales's review; *perf* = full-field / 24-plot CPU (Parts per full field of 36 in brackets); *phone* =
+left: *stills* = five stills await Ales's review; *perf* = full-field / 8-plot CPU (Parts per full field of 36 in brackets); *phone* =
 a real phone; *2nd* = a second client. Live validation is open for all.
 
 | Crop | Design | Parts | Status (milestone) | Open |
@@ -35,10 +35,10 @@ a real phone; *2nd* = a second client. Live validation is open for all.
 ## Phone and performance test
 
 **Admin → 🧪 Field test** (`AdminFieldTest`, admins only, works in a published game) fills the own plot and every free plot of
-ring 1 (12, a full server) with 36 ripe plants of one crop with growth art. Each tap moves on: off → Sunflower (heaviest, 192
+the ring (8, a full server since FX) with 78 ripe plants of one crop with growth art. Each tap moves on: off → Sunflower (heaviest, 192
 Parts + 141 meshes) → Garlic (lightest, 54 Parts) → off. A second button cycles the full-detail distance
 (`GardenViewFullDistance`): auto (the game's: 60 on phones, 230 on desktops with the step-down) → 60 → 120 → 170 → 230 studs;
-from the own plot each step adds the next two ring-1 plots (at 57 / 111 / 158 / 216 studs). It also applies to the real plots
+from the own plot each step adds more of the other plots (at 86 / 158 / 207 / 224 studs since FX). It also applies to the real plots
 without the test field. A readout at the top shows frames in the last second, the 95th-percentile and slowest frame of the last
 5 s, the objects GardenView draws and the distance in use (in auto: where the step-down landed). Drawing only: no remotes, no
 saved data; the real field's rings and taps keep working on the real crops underneath.

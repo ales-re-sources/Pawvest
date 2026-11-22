@@ -11,7 +11,7 @@ local CropConfig = require(game.ReplicatedStorage.CropConfig)
 local garden = assert(workspace:FindFirstChild("GardenView"), "Wait for GardenView")
 assert(not workspace:FindFirstChild("GoldenCarrotStudy"), "Destroy previous study first")
 local slot
-for n = 13, GardenConfig.PlotSlots do
+for n = GardenConfig.PlotSlots, 1, -1 do -- the highest free slot (FX: no outer ring any more)
 	if not garden:FindFirstChild(string.format("Slot_%02d", n)) then slot = n; break end
 end
 assert(slot, "No free study plot")

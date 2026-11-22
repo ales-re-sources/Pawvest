@@ -43,7 +43,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 | E0 | Economy model (its repricing replaced by EV) | ✔ | – | – |
 | EV | Engagement-first economy: EV1 model, EV2a numbers, EV2b talent bundles | EV1–EV2b, EV2e ✔; EV2c, EV2d, EV2f after 1.0 | EV2a, EV2b ✔ | – |
 | EV3 | Crop mastery: crop levels replace Renown, milestone quests, crop upgrades, first-hour obby payouts (1.0) | ✔ (EV3a signed off; EV3b1, EV3b2, EV3c Studio-validated 2026-11-17) | – | – |
-| E1.0, E1a–E1d | Client-drawn plots; crop field (every player's since FA), field pets, crops as pet food, size roll, upgrades, tools, market cart, 36 squares | ✔ | ✔ | – |
+| E1.0, E1a–E1d | Client-drawn plots; crop field (every player's since FA), field pets, crops as pet food, size roll, upgrades, tools, market cart, 36 squares (78 since FX) | ✔ | ✔ | – |
 | E2, E4-thin | Obby seeds (rare crops, meters, pouch, Scouting); crows and Pest-control guards | ✔ | ✔ | – |
 | OG / OG2 / OG2b | Crop timing: doubled base durations, offline ×1, online ×2, 24 h cap; away-time countdown | ✔ | ✔ 2026-11-20 | – |
 | FA | The field for everyone, pens removed | ✔ | ✔ | – |
@@ -92,7 +92,7 @@ A design change found while building goes docs → ROADMAP → code, in that ord
 5b. **EG — egg ladder** (done, Studio-validated 2026-11-21; Done), **FL — flatter crop ladder** (done, Studio-validated
    2026-11-21; Done) and **FD — food bootstraps, activity maxes** (done, Studio-validated 2026-11-21; Done).
 6. **Release gates, then public:** MU (section below; adds the Hall and a full field on a real phone), TH1 + THU, the Czech review of
-   every new text, the M6a live checks, "Before Max Players 24" under "Open items", then Max Players → 24 (a place setting).
+   every new text, the M6a live checks, "Before Max Players 8" under "Open items", then Max Players → 8 (a place setting; FX).
 
 **After 1.0** (a drop every 1–2 weeks, EXPANSION §14; order provisional): D2 Comfort shop (M7) together with EV2c Sunshine, then M6b
 obby time calibration, D1 Critters, D3 Weekly, D4 Variants, D5 Kitchen, D6 Neighbours, D7 Pet depth, D8 World 4 (S9 / S10), D9 Estate,
@@ -286,8 +286,10 @@ Tagged **[1.0]** (needed before 1.0 goes public) or **[later]**.
   at once (boards, `MostStars` and, once built, the Harvest Hall); gate prompts on a locked stage; a real 1-hour Golden egg and the inventory cap with free eggs waiting; every
   telemetry event type on the Creator Dashboard (only then T1 is live-validated); a pet name the filter changes shows as `####` (Studio does
   not filter text); the checkpoint respawn fix (2026-11-14) and garden arrival on the published game.
-- **[1.0] Before Max Players 24 (going public):** 24 plots with fields at once (the budget was checked with synthetic plots only; the plant art
-  adds up to 6 084 Parts per full field); a second client watching a square purchase.
+- **[1.0] Before Max Players 8 (going public; FX):** 8 plots with full 78-square fields at once (the budget was checked with synthetic plots
+  only; the plant art adds up to ~13 200 Parts per full field since FX); a second client watching a square purchase.
+- **FX (open):** Max Players → 8 in Game Settings (a place setting) and publish the reshaped island; the Field test's step distances
+  (PLANT_GROWTH) re-measured on the 8-plot ring.
 - **[1.0] The user's checks:** G1 hints in play; a multi-client test (F7): each client sees the other's pets with their level look (P4 / U1), rings
   only over the own field and no selection on a neighbour's (U3); the stills of Tomato (CG1e), Pepper and Pumpkin.
 - **[1.0] Checked in code only** (check in the M6a playtests): the crow part of the summary bubble (`🐦 now` / `🐦 0:45`, U4); the first-harvest toast and the young-field pulse
@@ -308,6 +310,13 @@ Tagged **[1.0]** (needed before 1.0 goes public) or **[later]**.
 
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
+
+**FX — 8-player garden, double field** (2026-11-22; Studio-validated). *Why (the user):* servers of 8 players, and a field twice the size.
+One ring of 8 plots (radius 112, 45° apart, the bridge path through a gap); ring 2 removed; the island shrank from 470 to 390 studs (hedge
+and barrier ring at 190, bridge 40 studs longer, trees and bushes moved into the gaps). The field gained rows 6-11 (3 × 8, then 3 × 6):
+78 squares; purchases 37-78 cost a flat 750 M (the ladder's last price), any square. Range checks measure from the plot + field footprint
+(client 20, server 25). Validated in a playtest: 8 synthetic full fields drawn without errors, the hand bar and a row-11 square card from
+the back of the field, server range (stale inside / far outside). As built: GDD §7.6 / §7.9.
 
 **FD — food bootstraps, activity maxes** (2026-11-21; Studio-validated). *Why (the user):* a new pet could be fed to the max for
 almost nothing; Coins should bootstrap a pet, never replace its own activity. Food and fed crops train every trait only to the food limit

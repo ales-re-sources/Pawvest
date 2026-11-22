@@ -44,13 +44,13 @@ local function open(cropId: string?, seconds: number?, extra)
 	assert(not workspace:FindFirstChild(name), "Close the existing plant review first")
 	local drawn = workspace:WaitForChild("GardenView")
 	local slot
-	for n = 13, GardenConfig.PlotSlots do
+	for n = GardenConfig.PlotSlots, 1, -1 do -- the highest free slot (FX: no outer ring any more)
 		if not drawn:FindFirstChild(string.format("Slot_%02d", n)) then
 			slot = n
 			break
 		end
 	end
-	assert(slot, "The review needs a free outer plot slot")
+	assert(slot, "The review needs a free plot slot")
 	local root = Instance.new("Folder")
 	root.Name = name
 	local view = PlotView.new(slot, root)

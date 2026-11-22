@@ -65,7 +65,7 @@ local buySquareEvent = remotes:WaitForChild("BuySquare")
 local placePetEvent = remotes:WaitForChild("PlacePet")
 local liftPetEvent = remotes:WaitForChild("LiftPet")
 
-local TAP_DISTANCE = 40 -- studs (horizontal) from the own plot centre; the server accepts 45 (3D)
+local TAP_DISTANCE = 20 -- studs (horizontal) from the own plot and field (GardenConfig.FootprintDistance); the server accepts 25 (3D)
 local TAP_SECONDS = 0.3
 local TAP_PIXELS = 8
 local RAY_LENGTH = 300
@@ -135,8 +135,8 @@ local function rootPosition(): Vector3?
 end
 
 local function inRange(): boolean
-	local distance = GardenView.FlatDistanceToPlot()
-	return distance ~= nil and distance <= TAP_DISTANCE
+	local plot, at = GardenConfig.PlotOf(player), rootPosition()
+	return plot ~= nil and at ~= nil and GardenConfig.FootprintDistance(plot, at) <= TAP_DISTANCE
 end
 
 -- State ------------------------------------------------------------------------------------------------------------------------

@@ -19,7 +19,7 @@ local Remotes = require(ServerScriptService.Remotes)
 local RateLimit = require(ServerScriptService.RateLimit)
 local OnboardService = require(ServerScriptService.OnboardService)
 
-local MAX_DISTANCE = 45 -- studs from the middle of the caller's own plot
+local MAX_DISTANCE = 25 -- studs from the caller's own plot and field (GardenConfig.FootprintDistance; FX: was 45 from the plot centre)
 
 -- RequestState: client → server, no arguments; State: server → client (state); Result: server → client (action, ok, detailOrReason)
 local remoteFolder, remotes = Remotes.Folder("GardenRemotes", { "RequestState", "State", "Result" })
@@ -97,7 +97,8 @@ local function usable(player: Player, action: string)
 		return nil
 	end
 	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-	if not (root and (root.Position - floor.Position).Magnitude <= MAX_DISTANCE) then
+	local flat = root and GardenConfig.FootprintDistance(floor, root.Position)
+	if not (flat and math.sqrt(flat * flat + (root.Position.Y - floor.Position.Y) ^ 2) <= MAX_DISTANCE) then
 		reject(player, action, "far")
 		return nil
 	end

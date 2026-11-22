@@ -54,9 +54,9 @@ local CULL_DISTANCE = 150 -- studs from the camera to another player's character
 local CULL_HYSTERESIS = 15 -- ... and they come back this much inside it, so a player at the border does not flicker
 
 -- Parking, in the owner's plot space (floor centre; +Z = from the plaza towards the field). The field geometry is PlotView's
--- (FIELD_FRONT / FIELD_PITCH): the first row starts at z = -2, squares are 5.5 studs, RowWidths rows of GridColumns columns.
-local FIELD_FRONT = -2
-local FIELD_PITCH = 5.5
+-- (GardenConfig.FieldFront / FieldPitch): the first row starts at z = -2, squares are 5.5 studs, RowWidths rows of GridColumns columns.
+local FIELD_FRONT = GardenConfig.FieldFront
+local FIELD_PITCH = GardenConfig.FieldPitch
 local PARK_MARGIN = 3 -- studs around the field that still count as on it
 local PARK_ENTER_Z = FIELD_FRONT + 1 -- the owner parks their pets from here on (inside the field)
 local PARK_LEAVE_Z = FIELD_FRONT - 3 -- ... and takes them back when they walk out past here (hysteresis, no flicker at the edge)
