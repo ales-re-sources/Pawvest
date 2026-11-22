@@ -56,7 +56,8 @@ Radeon Chill held it at 60). Ales's desktop (2026-11-22), all 12 ring-1 fields i
 ## Studio growth player
 
 During a Studio playtest, admins can open **Admin → 🌱 Plant growth** (**🌱 Růst rostlin** in Czech). This opens the reviewer
-with its crop list expanded. Close returns to the Admin panel and restores the camera/HUD. The shortcut is Studio-only and
+with its crop list expanded. The preview draws its own plot above the garden, so it works even when all eight plots are occupied.
+Close returns to the Admin panel and restores the camera/HUD. The shortcut is Studio-only and
 does not send remotes or change saved data.
 
 The **Client command bar** remains available:

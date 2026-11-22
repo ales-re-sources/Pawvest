@@ -42,18 +42,11 @@ local function open(cropId: string?, seconds: number?, extra)
 	assert(duration > 0, "Review duration must be positive")
 	local name = "PlantGrowthReview"
 	assert(not workspace:FindFirstChild(name), "Close the existing plant review first")
-	local drawn = workspace:WaitForChild("GardenView")
-	local slot
-	for n = GardenConfig.PlotSlots, 1, -1 do -- the highest free slot (FX: no outer ring any more)
-		if not drawn:FindFirstChild(string.format("Slot_%02d", n)) then
-			slot = n
-			break
-		end
-	end
-	assert(slot, "The review needs a free plot slot")
 	local root = Instance.new("Folder")
 	root.Name = name
-	local view = PlotView.new(slot, root)
+	-- Stage the disposable plot above the garden, clear of every player's field and the free-plot models.
+	local reviewFloor = CFrame.new(GardenConfig.PlotCentre + Vector3.new(0, 256, 0))
+	local view = PlotView.new(1, root, { floor = reviewFloor })
 	-- A big generated plant (recipe.Footprint == 2, HX) stands on a 2 x 2 block: the whole field opens, without a neighbour.
 	local function wide()
 		return recipe.Footprint == 2

@@ -228,11 +228,11 @@ local function squareSpot(square: number): (number, number)
 end
 
 -- New view of plot slot `slot` under `parent`. options: { own = boolean, onHatchery = fn(), onBarn = fn() } (interactions on the own
--- plot only), onLike = fn(slot) (SH: the Like prompt on another player's sign).
+-- plot only), onLike = fn(slot) (SH: the Like prompt on another player's sign), floor = CFrame for a staged preview.
 function PlotView.new(slot: number, parent: Instance, options)
 	local self = setmetatable({}, PlotView)
 	self.slot = slot
-	self.floor = GardenConfig.PlotCFrame(slot) :: CFrame
+	self.floor = (options and options.floor) or GardenConfig.PlotCFrame(slot) :: CFrame
 	self.own = options and options.own or false
 	self.onHatchery = options and options.onHatchery
 	self.onBarn = options and options.onBarn
