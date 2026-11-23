@@ -64,6 +64,7 @@ local harvestEvent = remotes:WaitForChild("Harvest")
 local buySquareEvent = remotes:WaitForChild("BuySquare")
 local placePetEvent = remotes:WaitForChild("PlacePet")
 local liftPetEvent = remotes:WaitForChild("LiftPet")
+local uprootEvent = remotes:WaitForChild("Uproot")
 
 local TAP_DISTANCE = 20 -- studs (horizontal) from the own plot and field (GardenConfig.FootprintDistance); the server accepts 25 (3D)
 local TAP_SECONDS = 0.3
@@ -80,6 +81,8 @@ local CARD_BOTTOM = 76 -- px from the bottom: above the Field button (48 px at 2
 local BUTTON_HEIGHT = 48
 local ROW_HEIGHT = 54
 local GAP = 8
+local PET_ROW_HEIGHT = 52 -- px: the square card's resident pet row
+local TRASH_SIZE = 44 -- px: the square card's dig-up brick (a tap target)
 local REACH_SECONDS = 3
 local TICK_SECONDS = 0.25
 local FIRE_GAP = 0.25 -- s between two field remotes (the server's limit is 0.2)
@@ -103,7 +106,6 @@ local COLOR_OFF = StudStyle.Colors.Grey
 local COLOR_CLOSE = StudStyle.Colors.Red
 local COLOR_INFO = StudStyle.Text.Info
 local COLOR_DIM = StudStyle.Text.Dim
-local COLOR_OK = StudStyle.Text.Ok
 local COLOR_BAR = Color3.fromRGB(245, 200, 70)
 local COLOR_TRACK = Color3.fromRGB(45, 38, 30)
 
@@ -372,11 +374,11 @@ local function header(title: string, onClose: () -> ())
 	closeHeader = onClose
 end
 
--- the progress bar with the time left inside
-local function bar(order: number, parent: Instance?)
-	local _, fill, text = UiKit.Bar("Bar", {
+-- the progress bar with the share and the time left inside
+local function bar(order: number, parent: Instance?, height: number?)
+	local track, fill, text = UiKit.Bar("Bar", {
 		order = order,
-		height = 30,
+		height = height or 30,
 		corner = 8,
 		track = COLOR_TRACK,
 		fill = COLOR_BAR,
@@ -386,6 +388,12 @@ local function bar(order: number, parent: Instance?)
 		parent = parent or body,
 	})
 	barFill, barText = fill, text
+	return track
+end
+
+-- "42% · 3 h 40 min": the growing crop's share (never 100 % before it is ripe) and its away-time left in words
+local function growingText(share: number, left: number): string
+	return Locale.T("field.card.growing", { pct = Locale.Number(math.min(99, math.floor(share * 100))), time = Locale.Duration(left) })
 end
 
 local function buttonRow(order: number, specs, parent: Instance?)
@@ -454,53 +462,51 @@ local function closeCard()
 	end
 end
 
--- Coverage is information, separate from the pet physically sitting here. Only the strongest effect per job applies.
-local function petRows(square: number, order: number, parent: Instance)
-	local holder = UiKit.Section("Helping", order)
-	holder.Parent = parent
-	paragraph("Heading", 1, { Font = StudStyle.Font, TextSize = 17, Text = Locale.T("field.card.helping") }).Parent = holder
+-- The strongest Tending (offline harvest chance) and Pest control (crow protection chance) reaching `square`, from the pet
+-- sitting here or one nearby (only the strongest per job applies); 0 when none.
+local function helpOf(square: number): (number, number)
 	local open = openSet()
 	local statePets = (fieldState and fieldState.pets) or {}
-	local best = {}
+	local tend, guardChance = 0, 0
 	for at, pet in plotPets() do
-		local function consider(job: string, strength: number)
-			local previous = best[job]
-			if not previous or strength > previous.strength or (strength == previous.strength and (tonumber(pet.uid) or 0) < (tonumber(previous.pet.uid) or 0)) then
-				best[job] = { pet = pet, at = at, strength = strength }
-			end
-		end
 		if pet.apt > 0 and contains(CropConfig.Reach(at, PetConfig.ReachShape(pet.apt), open), square) then
-			consider("Tending", PetConfig.Strength(pet.apt))
+			tend = math.max(tend, PetConfig.Strength(pet.apt))
 		end
 		local guard = statePets[tostring(at)] and statePets[tostring(at)].guard
 		if pet.guard > 0 and type(guard) == "table" and contains(CropConfig.Reach(at, PetConfig.ReachShape(pet.guard), open), square) then
-			consider("Guard", guard.chance or 0)
+			guardChance = math.max(guardChance, guard.chance or 0)
 		end
 	end
-	for index, job in { "Guard", "Tending" } do
-		local effect = best[job]
-		if effect then
-			local location = Locale.T(if effect.at == square then "field.card.here" else "field.card.nearby")
-			local text = Locale.T(if job == "Guard" then "field.card.petGuard" else "field.card.petTend", { pct = pct(effect.strength) })
-			paragraph(job, index + 1, { TextSize = 14, Text = text .. "\n" .. petName(effect.pet.uid, effect.pet.kind) .. " · " .. location }).Parent = holder
-		end
-	end
-	if not next(best) then
-		paragraph("None", 2, { Text = Locale.T("field.card.noHelp") }).Parent = holder
+	return tend, guardChance
+end
+
+-- Two permanent indicators on every open square's card: "🌱 Tending 68%" and "🛡 Pest control 84%" (the job names) (dim at 0 %).
+local function helpIndicators(square: number, order: number, parent: Instance)
+	local row = create("Frame", {
+		Name = "Help", LayoutOrder = order, Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1, Parent = parent,
+	}, {
+		create("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, GAP) }),
+	})
+	local tend, guardChance = helpOf(square)
+	for index, item in { { "Tend", "field.card.helpTend", tend }, { "Guard", "field.card.helpGuard", guardChance } } do
+		local on = item[3] > 1e-6
+		local chip = label(item[1], {
+			LayoutOrder = index, Size = UDim2.new(0.5, -GAP / 2, 1, 0), BackgroundTransparency = 0, BackgroundColor3 = COLOR_ROW,
+			TextSize = 15, TextXAlignment = Enum.TextXAlignment.Center, TextTruncate = Enum.TextTruncate.AtEnd,
+			TextColor3 = if on then Color3.new(1, 1, 1) else COLOR_DIM, TextTransparency = if on then 0 else 0.3,
+			Text = Locale.T(item[2], { pct = pct(item[3]) }), Parent = row,
+		})
+		create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = chip })
 	end
 end
 
-local function boostLine(): string?
-	local parts = {}
-	local growth = CropConfig.GrowthSpeed(CropConfig.UpgradeLevel(fieldState.upgrades, "Growth")) - 1
-	if growth > 1e-6 then
-		table.insert(parts, Locale.T("field.card.boost", { icon = "🌱", name = Locale.T("field.upgrade.growth"), pct = pct(growth) }))
+-- Opens the Pets panel at `uid`'s page (details, feeding: PetsPanel's OpenPet attribute); the card closes.
+local function openPetPage(uid: string)
+	local petsGui = player.PlayerGui:FindFirstChild("PetsGui")
+	if petsGui then
+		closeCard()
+		petsGui:SetAttribute("OpenPet", uid)
 	end
-	local cloches = CropConfig.ToolEffect(fieldState.tools, "Cloches")
-	if cloches > 1e-6 then
-		table.insert(parts, Locale.T("field.card.boost", { icon = "🔔", name = Locale.T("field.tool.cloches"), pct = pct(cloches) }))
-	end
-	return if #parts > 0 then table.concat(parts, " · ") else nil
 end
 
 -- the next square's price and the button (grey with the reason when it cannot be bought; Coins only since EV3b)
@@ -553,78 +559,110 @@ local function renderCard()
 	local crop = entry and CropConfig.ById[entry.crop]
 	local pet = (fieldState.pets or {})[tostring(square)]
 	header(Locale.T("field.card.title"), closeCard)
+	-- Crop group: empty → only Plant; growing → bar (share · time left) + dig-up trash, one hint; ripe → only Harvest.
 	local cropGroup = groupBox("CropGroup", 2, "field.card.cropGroup")
-	paragraph("Title", 1, {
-		Font = StudStyle.Font, TextSize = 18, TextColor3 = Color3.new(1, 1, 1),
-		Text = if crop then GardenUi.CropTitle(crop) .. GardenUi.Stars(fieldState, crop) else Locale.T("field.card.empty"),
-	}).Parent = cropGroup
-	local ripe = false
-	if crop then
-		bar(2, cropGroup)
-		local _, isRipe = progress(entry, crop, workspace:GetServerTimeNow())
-		ripe = isRipe
-		cardRipe = ripe
-		if not ripe then
-			paragraph("GrowthHint", 4, { TextSize = 13, Text = GardenUi.GrowthHint(fieldState) }).Parent = cropGroup
-		end
-		local boosts = boostLine()
-		if boosts and not ripe then
-			paragraph("Boosts", 3, { TextSize = 14, Text = boosts }).Parent = cropGroup
-		end
-	else
-		paragraph("Hint", 3, { TextSize = 15, Text = Locale.T("field.card.emptyHint") }).Parent = cropGroup
-	end
-	local specs = {}
+	cardRipe = false
 	if not crop then
-		table.insert(specs, { name = "Plant", color = COLOR_GO, text = Locale.T("field.card.plant"), action = function()
+		buttonRow(1, { { name = "Plant", color = COLOR_GO, text = Locale.T("field.card.plant"), action = function()
 			page = "seeds"
 			render()
-		end })
-	elseif ripe then
-		table.insert(specs, { name = "Harvest", color = COLOR_GO, text = Locale.T("field.card.harvest"), action = function()
-			fire(harvestEvent, square)
-		end })
-	end
-	if #specs > 0 then
-		buttonRow(4, specs, cropGroup)
-	end
-	local petsGroup = groupBox("PetsGroup", 3, "field.card.petsGroup")
-	petRows(square, 1, petsGroup)
-	create("Frame", {
-		Name = "Divider", LayoutOrder = 2, Size = UDim2.new(1, 0, 0, 1),
-		BackgroundColor3 = COLOR_GROUP_BORDER, BorderSizePixel = 0, Parent = petsGroup,
-	})
-	paragraph("ResidentHeading", 3, { Font = StudStyle.Font, TextSize = 17, Text = Locale.T("field.card.resident") }).Parent = petsGroup
-	local resident = UiKit.Section("Resident", 4)
-	resident.BackgroundTransparency = 0
-	resident.BackgroundColor3 = COLOR_ROW
-	resident.BorderSizePixel = 0
-	resident.Parent = petsGroup
-	create("UICorner", { CornerRadius = UDim.new(0, 8), Parent = resident })
-	create("UIPadding", {
-		PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8),
-		PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), Parent = resident,
-	})
-	specs = {}
-	if pet then
-		local row = GardenUi.Row(resident, "Pet", 2, COLOR_ROW)
-		PetPortrait.Holder({ LayoutOrder = 1, Size = UDim2.fromOffset(44, 44), BackgroundColor3 = StudStyle.Shade(COLOR_ROW, 0.6) }, portraits(pet)).Parent = row
-		local name = paragraph("Name", 2, { Size = UDim2.new(1, -58, 0, 0), Font = StudStyle.Font, TextSize = 17, Text = petName(pet.uid, pet.kind) .. "  " .. PlotView.JobIcons(pet.apt, pet.guard and pet.guard.level or 0) })
-		name.Parent = row
-		table.insert(specs, { name = "MovePet", color = COLOR_PET, text = Locale.T("field.card.movePet"), action = function()
-			hold(pet.uid, square)
-		end })
-		table.insert(specs, { name = "TakeBack", color = COLOR_OFF, text = Locale.T("field.card.takeBack"), action = function()
-			fire(liftPetEvent, pet.uid)
-		end })
+		end } }, cropGroup)
 	else
-		paragraph("None", 2, { Text = Locale.T("field.card.noResident") }).Parent = resident
-		table.insert(specs, { name = "PlacePet", color = COLOR_PET, text = Locale.T("field.card.placePet"), action = function()
+		paragraph("Title", 1, {
+			Font = StudStyle.Font, TextSize = 18, TextColor3 = Color3.new(1, 1, 1),
+			Text = GardenUi.CropTitle(crop) .. GardenUi.Stars(fieldState, crop),
+		}).Parent = cropGroup
+		local _, ripe = progress(entry, crop, workspace:GetServerTimeNow())
+		cardRipe = ripe
+		if ripe then
+			buttonRow(2, { { name = "Harvest", color = COLOR_GO, text = Locale.T("field.card.harvest"), action = function()
+				fire(harvestEvent, square)
+			end } }, cropGroup)
+		else
+			local row = create("Frame", {
+				Name = "Growing", LayoutOrder = 2, Size = UDim2.new(1, 0, 0, TRASH_SIZE), BackgroundTransparency = 1, Parent = cropGroup,
+			}, {
+				create("UIListLayout", {
+					FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder,
+					VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, GAP),
+				}),
+			})
+			bar(1, row, 36).Size = UDim2.new(1, -(TRASH_SIZE + GAP), 0, 36)
+			-- dig up: a red trash brick, orange "OK?" on the first tap, gone on the second (ConfirmTap, as an egg's discard)
+			local key = "Uproot" .. square .. entry.crop
+			local armed = ConfirmTap.IsArmed(key)
+			local trash = brick("Uproot", {
+				LayoutOrder = 2, Size = UDim2.fromOffset(TRASH_SIZE, TRASH_SIZE), TextSize = 15,
+				BackgroundColor3 = if armed then ConfirmTap.COLOR else COLOR_CLOSE,
+				Text = if armed then Locale.T("field.card.uprootConfirm") else "",
+				Parent = row,
+			}, { compact = true })
+			if not armed then
+				GardenUi.TrashIcon(trash)
+			end
+			trash.Activated:Connect(function()
+				if ConfirmTap.Tap(key, function()
+					if cardOpen and selected == square and page == "card" then
+						render()
+					end
+				end) then
+					fire(uprootEvent, square)
+				end
+				render()
+			end)
+			paragraph("GrowthHint", 3, { TextSize = 14, Text = Locale.T("field.card.fasterOnline") }).Parent = cropGroup
+		end
+	end
+	-- Pets group: the pet sitting here as one row (tap → its page) with a grey X brick (take it off the field), or Place pet;
+	-- under it the two help indicators of this soil (always shown).
+	local petsGroup = groupBox("PetsGroup", 3, "field.card.petsGroup")
+	if pet then
+		local row = create("Frame", {
+			Name = "Resident", LayoutOrder = 1, Size = UDim2.new(1, 0, 0, PET_ROW_HEIGHT), BackgroundTransparency = 1, Parent = petsGroup,
+		}, {
+			create("UIListLayout", {
+				FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder,
+				VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, GAP),
+			}),
+		})
+		local open = create("TextButton", {
+			Name = "Open", LayoutOrder = 1, Size = UDim2.new(1, -(TRASH_SIZE + GAP), 1, 0), Text = "", AutoButtonColor = true,
+			BackgroundColor3 = COLOR_ROW, BorderSizePixel = 0, Parent = row,
+		}, {
+			create("UICorner", { CornerRadius = UDim.new(0, 8) }),
+		})
+		local portrait = PetPortrait.Holder({
+			Position = UDim2.fromOffset(4, 4), Size = UDim2.fromOffset(PET_ROW_HEIGHT - 8, PET_ROW_HEIGHT - 8),
+			BackgroundColor3 = StudStyle.Shade(COLOR_ROW, 0.6),
+		}, portraits(pet))
+		portrait.Parent = open
+		label("Name", {
+			Position = UDim2.fromOffset(PET_ROW_HEIGHT + 4, 0), Size = UDim2.new(1, -(PET_ROW_HEIGHT + 30), 1, 0),
+			Font = StudStyle.Font, TextSize = 17, TextTruncate = Enum.TextTruncate.AtEnd,
+			Text = petName(pet.uid, pet.kind) .. "  " .. PlotView.JobIcons(pet.apt, pet.guard and pet.guard.level or 0),
+			Parent = open,
+		})
+		label("Chevron", {
+			AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -8, 0, 0), Size = UDim2.new(0, 16, 1, 0),
+			Font = StudStyle.Font, TextSize = 24, TextColor3 = COLOR_DIM, Text = "›", TextXAlignment = Enum.TextXAlignment.Right,
+			Parent = open,
+		})
+		open.Activated:Connect(function()
+			openPetPage(pet.uid)
+		end)
+		local takeBack = brick("TakeBack", {
+			LayoutOrder = 2, Size = UDim2.fromOffset(TRASH_SIZE, TRASH_SIZE), TextSize = 20, BackgroundColor3 = COLOR_OFF, Text = "X", Parent = row,
+		}, { compact = true })
+		takeBack.Activated:Connect(function()
+			fire(liftPetEvent, pet.uid)
+		end)
+	else
+		buttonRow(1, { { name = "PlacePet", color = COLOR_PET, text = Locale.T("field.card.placePet"), action = function()
 			page = "pets"
 			render()
-		end })
+		end } }, petsGroup)
 	end
-	buttonRow(3, specs, resident)
+	helpIndicators(square, 2, petsGroup)
 end
 
 -- the scrolling list of a picker (rows of ROW_HEIGHT)
@@ -841,8 +879,7 @@ function render()
 		if crop and barFill and barText then
 			local share, ripe, left = progress(entry, crop, workspace:GetServerTimeNow())
 			UiKit.SetShare(barFill, share)
-			barFill.BackgroundColor3 = if ripe then COLOR_OK else COLOR_BAR
-			barText.Text = if ripe then Locale.T("field.card.ripe") else TimeFormat.Clock(left)
+			barText.Text = growingText(share, left)
 		end
 	end
 	fitCard()
@@ -1636,8 +1673,7 @@ RunService.Heartbeat:Connect(function(dt)
 			return
 		end
 		UiKit.SetShare(barFill, share)
-		barFill.BackgroundColor3 = if ripe then COLOR_OK else COLOR_BAR
-		barText.Text = if ripe then Locale.T("field.card.ripe") else TimeFormat.Clock(left)
+		barText.Text = growingText(share, left)
 	end
 end)
 

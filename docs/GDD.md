@@ -705,13 +705,16 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   from Cuteness).
 - **Acting on a square (U3a).** No prompts on the field (the incubators keep theirs). A tap / click on a square of the own field (within 20
   studs of the plot and its field, `GardenConfig.FootprintDistance`; the server allows 25, since FX: the field reaches ~60 studs behind the
-  plot centre) outlines it in white and slides the **square card** up from the bottom: crop icon and
-  name, growth progress / boosts and Plant / Harvest. The Crop and Pets group boxes enclose their respective controls (2026-11-15).
+  plot centre) outlines it in white and slides the **square card** up from the bottom. The Crop and Pets group boxes enclose their
+  respective controls (2026-11-15). Crop group (2026-11-23): an empty square shows only **Plant**; a growing crop its icon and name,
+  a bar with "42% · 3 h 40 min" (share, never 100 % before ripe; away-time left in words), a red trash brick that digs the crop up
+  (ConfirmTap, seed lost) and the one line "Grows faster while you play"; a ripe crop only **Harvest** (no bar).
   A fixed colored header names it **Field square**; its close button stays above the scrolling content. Content heights round up to
   whole pixels, so the scrollbar appears only when the content exceeds the safe area (2026-11-16).
-  **Helping this soil** shows plain text for the strongest effect per job and its
-  pet (sitting here / nearby); **Pet sitting here** has the resident portrait/name and Move / Take off field. Coverage and assignment
-  are separate so those controls have an unambiguous target (2026-11-14). With no resident, Place pet opens **Choose a pet for this spot**:
+  Pets group (2026-11-23): the resident pet is one row (portrait, name, job icons, ›) that opens its page in the Pets panel (details,
+  feeding) and a grey X brick that takes it off the field; with no resident only **Place pet**. Under it two permanent indicators on
+  every open square, "🌱 Tending 68%" and "🛡 Pest control 84%" (Czech Péče / Hlídání, the job names) (the strongest Tending / Pest control reaching the soil from any pet,
+  dimmed at 0 %). No Move button: the destination square's picker moves a placed pet. Place pet opens **Choose a pet for this spot**:
   field slots used, job/reach and origin; every eligible row uses **Place pet**, including followers. Capacity blocks before
   the following explanation; field pets reuse their slot. The server validates first, then unequips and assigns together. No square
   numbers in the picker, location or placement toasts. Buy square retains its price and two-tap spend confirmation.
@@ -761,7 +764,7 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   crop sold for ~2.2× the last and the top crops needed several absences. A later crop can now sell for less per harvest than an
   earlier one (Pineapple 8 500 after Pumpkin 90 000), so every common seed row on the stall shows "≈ 12 800 an hour per square" under
   its grow time: (sale with Value points − seed) per grow hour on this field (Growth and Speed included).
-  Growth pauses after 24 h away; long crops may need another visit. The seed stall, Barn seeds, seed picker, growing-square card
+  Growth pauses after 24 h away; long crops may need another visit. The seed stall, Barn seeds, seed picker
   and crop page explain the clock and its cap. Card / rings / sign bubble share the countdown
   rule; actual online `readyAt` still drives art, ripe badges and Harvest. Existing `Grown` stays; the next join credits its pending absence
   at the new rate, without a profile migration. The barn holds 40 seeds and 40 stored crops (+20 per Barn level). Seeds held can always be

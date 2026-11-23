@@ -45,6 +45,7 @@ local REJECT_KEYS = { -- coins, stale, loading, noplot: Locale.Reject's common.r
 	seeds = "field.reason.seeds",
 	empty = "field.reason.empty",
 	notripe = "field.reason.notripe",
+	ripe = "field.reason.ripe", -- Uproot of a ripe crop
 	barn = "field.reason.barn",
 	items = "field.reason.items",
 	maxed = "field.reason.maxed",
@@ -490,6 +491,7 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 	if
 		action ~= "Plant"
 		and action ~= "Harvest"
+		and action ~= "Uproot"
 		and action ~= "BuySeeds"
 		and action ~= "BuyCart"
 		and action ~= "Sell"
@@ -550,6 +552,8 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 		local have = math.clamp(tonumber(detail.points) or 0, 0, CropConfig.Mastery.Points.PerLine)
 		local level = string.rep("●", have) .. string.rep("○", CropConfig.Mastery.Points.PerLine - have)
 		showToast(Locale.T("field.toast.point", { crop = name, line = if line then Locale.T(line) .. " " .. level else "" }), COLOR_OK)
+	elseif action == "Uproot" then
+		showToast(Locale.T("field.toast.uprooted", { crop = name }), COLOR_OK)
 	elseif action == "Sell" then
 		showToast(Locale.T("field.toast.sell", { count = detail.paid }), COLOR_OK)
 	elseif action == "BuySeeds" or action == "BuyCart" then

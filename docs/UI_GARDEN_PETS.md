@@ -53,8 +53,8 @@ hint until the first tap, are built; whether rings / pulses need more is to be d
 
 ### 5.1 Soil card and pet placement — decided 2026-11-14
 
-- Separate non-clickable **Helping this soil** (strongest effect per job, pet name + sitting here / nearby) from **Pet sitting here**
-  (resident portrait/name, Move and Take off field). This distinguishes coverage from the pet those controls affect.
+- Coverage is two permanent indicator chips (🌱 Tending / 🛡 Pest control %, the job names; every open square), apart from the resident row
+  (tap → pet page; X brick = take off field; no Move: the destination's picker moves a pet) (2026-11-23).
   **Group boxes** (2026-11-15): Crop encloses crop status/actions; Pets encloses help and resident controls, so their scope is visible.
 - Picker: **Choose a pet for this spot**, field slots used, job/reach, current location and **Place pet** for every eligible pet.
   Consequence text explains resting / moving from another spot / stopping following; capacity blocks first. Existing field pets reuse

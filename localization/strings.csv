@@ -425,7 +425,7 @@ field.seed.rate,"Seed stall row of a common crop, its own line under the price l
 field.seed.rareInfo,"Seed row of a rare crop (E2: seeds only from obby medals), second and third line (
  = line break); {time} = grow time, {sale} = Coins one crop sells for, {stock} = seeds the player has OG2: time is the away-time baseline, with Growth and crop Speed; the countdown runs faster while playing. OG2b: required growth time, not a guaranteed uninterrupted absence; away growth pauses at the 24 h cap shown in the timing hint.","Growth time: {time}
 Sells for {sale} · You have {stock}","Doba růstu: {time}
-Prodej {sale} · Máš {stock}",new,hd2a03782
+Prodej {sale} · Máš {stock}",new,hdba3cd07
 field.seed.fromWorld,"Seed row of a rare crop, replaces the buy buttons (narrow, wraps): its seeds are earned with medals on the stages of {world} (world.name.*, Czech: nominative ""1. svět"")",⭐ Medals in {world},⭐ Za medaile: {world},new,h52450e9e
 field.barn,"Line under the seed list; {total} = seeds held, {capacity} = what the barn holds",Barn: {total} / {capacity} seeds,Stodola: {total} / {capacity} semínek,new,hdfd10ae1
 field.seed.note,Small note under the seed list,Prices are in Coins.,Ceny jsou v mincích.,new,hd2ae55c1
@@ -481,20 +481,18 @@ field.toast.requestEgg,Toast line under 'Request done!': the bonus drop was a fr
 field.toast.seeds,"Toast after buying seeds (catalogue or market cart); {crop} = crop name, {count} = how many seeds",Seeds: {crop} +{count},Semínka: {crop} +{count},new,h2341f01e
 field.toast.square,Toast after buying a square; {n} = its number,Square {n} bought!,Políčko {n} je tvoje!,new,h3dcc928c
 field.toast.plant,Toast after planting; {crop} = crop name,Planted: {crop},Zasazeno: {crop},new,h16c26af5
+field.toast.uprooted,"Toast after digging up a growing crop from the square card (the seed is lost, the square is empty); {crop} = crop name",Dug up: {crop},Vykopáno: {crop},new,h268be954
 field.job.tending,"Job icon over a field pet and in the square card: Tending (looks after crops) with its level; {level} = 1-10. Keep the emoji, no space",🌱{level},🌱{level},new,h3daa5dad
 field.job.guard,"Job icon over a field pet and in the square card: Pest control (chases crows) with its level; {level} = 1-10. Keep the emoji, no space",🛡{level},🛡{level},new,h04454625
-field.card.empty,"Square card title (U3a, tap a square of your field): an open square with nothing planted",Empty soil,Prázdné políčko,new,ha098ccac
 field.card.locked,Square card title: a square not bought yet (overgrown with grass),Overgrown square,Zarostlé políčko,new,h45e20944
-field.card.emptyHint,"Square card of an empty square, under the title",Plant a seed here.,Zasaď sem semínko.,new,h59806b88
-field.card.ripe,Square card: text inside the full progress bar when the crop is ready to harvest (short),Ripe!,Zralé!,new,hb1a0fa6a
-field.card.boost,"Square card, a line of growth boosts; {icon} = emoji, {name} = field.upgrade.growth or field.tool.cloches, {pct} = whole percent faster. Several are joined with ' · '",{icon} {name} +{pct}%,{icon} {name} +{pct} %,new,h9789ad74
-field.card.petTend,"Soil card, strongest Tending coverage; {pct} = whole-percent offline harvest chance",Harvest while away: {pct}%,Sklizeň v nepřítomnosti: {pct} %,new,hcd8420e1
-field.card.petGuard,"Soil card, strongest guard coverage; {pct} = whole-percent crow protection chance",Crow protection: {pct}%,Ochrana před vránami: {pct} %,new,h524e4590
 field.card.plant,"Square card button (brick, about 180 px): opens the seed picker for this square",Plant,Zasadit,new,h56269bbe
 field.card.harvest,Square card button: harvest the ripe crop,Harvest,Sklidit,new,h2c69834b
+field.card.growing,"Square card, text inside the progress bar of a growing crop; {pct} = whole percent grown (0-99), {time} = away-time left in words (common.duration.*, e.g. ""3 h 40 min"")",{pct}% · {time},{pct} % · {time},new,h9dd2b07d
+field.card.fasterOnline,"Square card of a growing crop, one short line under the progress bar (the only growth rule shown there; details are on the seed stall / crop page)",Grows faster while you play.,"Když hraješ, roste rychleji.",new,h59995efd
+field.card.uprootConfirm,"Square card: the red trash brick next to the progress bar after the first tap (orange); a second tap within 3 s digs the growing crop up, seed lost. Must fit a 44 px square",OK?,OK?,new,h6d41df1b
 field.card.placePet,Square card button: opens the pet picker to put a pet with Tending / Pest control on this square,Place pet,Umístit mazlíčka,new,haa61e2b4
-field.card.movePet,Square card button on a square with a pet: the next tap on a free square moves the pet there,Move pet,Přesunout,new,h93f87859
-field.card.takeBack,Resident pet button: remove only this resident from the field to rest in inventory,Take off field,Vzít z pole,new,h5354c27f
+field.card.helpTend,"Square card, Pets group: a permanent indicator chip (half the card width, one line) shown on every open square: the strongest Tending reaching this soil = chance a pet harvests its ripe crop while the player is away; {pct} = whole percent, 0 when none (shown dimmed). Same job name as pet.apt.Tending (pet page: its Effect bar). Keep the emoji",🌱 Tending {pct}%,🌱 Péče {pct} %,new,h0e7c1243
+field.card.helpGuard,"Square card, Pets group: the second indicator chip next to field.card.helpTend: the strongest Pest control reaching this soil = chance crows are chased off it; {pct} = whole percent, 0 when none (dimmed). Same job name as pet.apt.PestControl (pet page: Chases crows off). Keep the emoji",🛡 Pest control {pct}%,🛡 Hlídání {pct} %,new,h98191934
 field.card.buy,Square card button on an overgrown square: buy it,Buy square,Koupit políčko,new,h712d511b
 field.card.moving,"Placement strip above the hand bar, real field remains visible; {pet} = pet name/kind, nominative after colon in Czech",Moving {pet} · Choose a spot,Přesun: {pet} · Vyber místo,new,h0150f5a2
 field.hand.pickSeed,Title of the square card when it picks the seed for the hand bar's Seeds mode (not for one square),Choose a seed,Vyber semínko,new,h96e894c2
@@ -534,12 +532,13 @@ field.reason.occupied,Refused: something already grows on the square,Something i
 field.reason.seeds,Refused: no seeds of that crop,You have no seeds of that crop,Nemáš semínka téhle plodiny,new,h2fa0eaea
 field.reason.empty,Refused: nothing is planted on the square,Nothing is growing there,Tady nic neroste,new,hc2718b15
 field.reason.notripe,Refused: the crop is not ripe yet,It is not ripe yet,Ještě to není zralé,new,h63d6b782
+field.reason.ripe,Refused: digging up a crop that is already ripe (harvest it instead),It is ripe – harvest it instead,Už je zralé – radši sklízej,new,h6167d0c7
 field.reason.barn,Refused: the barn would hold too many seeds,The barn is full,Stodola je plná,new,h2e5c9c0a
 field.reason.items,Refused: the player has fewer crops than asked to sell,You do not have that many,Tolik jich nemáš,new,h7ce6df01
 field.reason.maxed,Refused: all squares are bought,Your field is complete,Tvoje pole je kompletní,new,hda4eabde
 field.pet.label,"Label over a pet working on a field square, only for a pet with a given name (rich text, green second line). {name} = the pet's name (user text), {jobs} = its job icons and levels, ""🌱4 🛡2"" (field.job.*). Never the pet's level (U3a)","{name}
 <font color='#a8e6a0'>{jobs}</font>","{name}
-<font color='#a8e6a0'>{jobs}</font>",new,h385549f1
+<font color='#a8e6a0'>{jobs}</font>",new,hceea6416
 field.petPicker.title,Pet picker for the selected soil; no square number,Choose a pet for this spot,Vyber mazlíčka pro tohle místo,new,h330fe518
 field.petPicker.equipped,Pet placement consequence when a field slot is available; equipped pets can transfer directly,Will stop following you and work here.,Přestane tě následovat a bude pracovat tady.,new,h565171e8
 field.petPicker.noSlot,Pet placement blocker shown before equipped explanation; field pets can still reuse their slot,No free field pet slot. Manage slots in Pets.,Na poli není volné místo pro mazlíčka. Místa spravuješ v panelu Mazlíčci.,new,h76abca1a
@@ -704,12 +703,6 @@ field.size.record,"Harvest toast, after Big / Giant or alone: the heaviest crop 
 field.crop.best,"Harvested crop row, second line; {kg} = weight of the heaviest crop of this kind harvested so far (""8.1"")",Record {kg} kg,Rekord {kg} kg,new,h9ad902fe
 field.reason.open,Refused: the square the player tried to buy is already open,That square is already yours,Tohle políčko už je tvoje,ok,h02853080
 admin.plants.open,Studio-only Admin panel button: opens the disposable plant growth art reviewer and crop picker; no saved-state changes. No placeholders. Czech short noun label.,🌱 Plant growth,🌱 Růst rostlin,new,hedaae587
-field.card.helping,"Soil card heading for non-clickable effective coverage, separate from resident",Helping this soil,Pomoc pro tohle políčko,new,h7277f337
-field.card.here,Location after helper name; pet physically sits on selected soil,sitting here,sedí tady,new,h5fb6bd7b
-field.card.nearby,Location after helper name; reaches selected soil from elsewhere on own field,nearby,poblíž,new,hba901575
-field.card.noHelp,Soil card: no Tending or Pest control reaches selected soil,No pet is helping this soil yet.,Tomuhle políčku zatím žádný mazlíček nepomáhá.,new,h8081abc3
-field.card.resident,Soil card heading; Move and Take off field apply only to this resident,Pet sitting here,Mazlíček na tomhle políčku,new,haa8a7e49
-field.card.noResident,Selected soil can have help from neighbours without a resident,No pet is sitting here.,Tady žádný mazlíček nesedí.,new,h6053921f
 field.petPicker.fromField,"Pet picker: after the pet name and job icons, in brackets, for a pet already working on another square of the field (no square number). Keep the brackets",(elsewhere on the field),(jinde na poli),new,h776e1746
 field.petPicker.fromEquipped,"Pet picker: after the pet name and job icons, in brackets, for a pet following the player. Keep the brackets",(with you),(s tebou),new,h03282e79
 field.petPicker.slots,"Field pet slots line (the field pet picker's top, the Pets panel's bottom), before a box with one small square per field pet slot (🌾 = a pet works there, outline = free, faint = still to buy); short",Field pets,Mazlíčci na poli,new,h23d37317
@@ -747,4 +740,4 @@ admin.fieldtest.on,"Admin panel button while the field test is on: {crop} = loca
 admin.fieldtest.stats,"Admin-only readout at the top of the screen during the field test: {fps} = frames in the last second, {p95} = 95th-percentile frame time of the last 5 s in milliseconds, {ms} = slowest frame of the last 5 s in milliseconds, {objects} = drawn garden instances (thousands), {studs} = the full-detail distance in use, in studs (the automatic one or the one the button set). Technical, short.",{fps} FPS · p95 {p95} ms · slowest {ms} ms · {objects} objects · full detail {studs} studs,{fps} FPS · p95 {p95} ms · nejpomalejší {ms} ms · objektů: {objects} · plný detail {studs} studů,new,hdf824559
 admin.fieldtest.distance,"Admin panel button (admins only, also live), under the field test button: each tap switches the distance (studs) within which garden plots draw full plant detail; {studs} = 60, 120, 170 or 230 (the next tap after 230 shows admin.fieldtest.distanceAuto). Used to measure desktop performance. Czech short label.",🧪 Full detail: {studs} studs,🧪 Plný detail: {studs} studů,new,h712c80ae
 admin.fieldtest.distanceAuto,"The same admin button as admin.fieldtest.distance in its first state: the game picks the full-detail distance itself (60 on phones, up to 230 on desktops, lowered when frames are slow). No placeholders. Czech short label.",🧪 Full detail: auto,🧪 Plný detail: automaticky,new,h00228188
-field.growth.hint,"Crop timing explanation on seed stall, Barn seeds, seed picker, growing-square card and crop upgrade page. {rate} = localized online countdown multiplier including Cloches (2, 2.14, 2.28 or 2.4). Away-time durations include Growth and crop Speed. Wrap and grow vertically. OG2b: {cap} = localized number of hours in the offline growth cap (24); h is the hour abbreviation. Long crops may require multiple visits; never promise uninterrupted offline completion.",Times apply while away. Growth pauses after {cap} h away. The countdown runs {rate}× faster while you play.,"Časy platí i mimo hru. Po {cap} h mimo hru se růst zastaví. Když hraješ, odpočet běží {rate}× rychleji.",new,h230f752b
+field.growth.hint,"Crop timing explanation on seed stall, Barn seeds, seed picker and crop upgrade page. {rate} = localized online countdown multiplier including Cloches (2, 2.14, 2.28 or 2.4). Away-time durations include Growth and crop Speed. Wrap and grow vertically. OG2b: {cap} = localized number of hours in the offline growth cap (24); h is the hour abbreviation. Long crops may require multiple visits; never promise uninterrupted offline completion.",Times apply while away. Growth pauses after {cap} h away. The countdown runs {rate}× faster while you play.,"Časy platí i mimo hru. Po {cap} h mimo hru se růst zastaví. Když hraješ, odpočet běží {rate}× rychleji.",new,h230f752b

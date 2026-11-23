@@ -52,7 +52,7 @@
 -- The field's shape is CropConfig.RowWidths (E1d2: 36 squares on a grid; 78 since FX); the player opens any locked square (BuySquare), the price
 -- comes from the number already open (CropConfig.NextExpansion). Fields from before E1d2 (Count = the first squares
 -- of a 4 x 3 field) move onto rows 1-3 (CropConfig.FromOldSquare), with their crops and field pets.
--- Remotes (in GardenRemotes): Plant(square, crop), Harvest(square), BuySeeds(crop, count), Sell(crop, count),
+-- Remotes (in GardenRemotes): Plant(square, crop), Harvest(square), Uproot(square), BuySeeds(crop, count), Sell(crop, count),
 -- BuySquare(square, expectedOpen), PlacePet(square, uid) (also moves a placed pet), LiftPet(uid), BuyPetSlot(expectedSlots),
 -- BuyUpgrade(id, expectedLevel), BuyTool(id, expectedLevel), BuyCart(slot, crop, count), FeedCrop(uid, crop, count), Quest(crop, count),
 -- CropPoint(crop, line) (client → server); answers on GardenRemotes.Result; GardenRemotes.State.field (the owner's panel).
@@ -88,6 +88,7 @@ local GardenRequests = require(ServerScriptService.GardenRequests)
 
 local plantEvent = GardenService.Remote("Plant") -- client → server: (square: number, crop: string)
 local harvestEvent = GardenService.Remote("Harvest") -- client → server: (square: number)
+local uprootEvent = GardenService.Remote("Uproot") -- client → server: (square: number) (dig up a growing crop, no refund)
 local buySeedsEvent = GardenService.Remote("BuySeeds") -- client → server: (crop: string, count: number)
 local sellEvent = GardenService.Remote("Sell") -- client → server: (crop: string, count: number)
 local buySquareEvent = GardenService.Remote("BuySquare") -- client → server: (square: number, expectedOpen: number)
@@ -1044,6 +1045,28 @@ harvestEvent.OnServerEvent:Connect(function(player, square)
 		best = record or nil,
 		extra = extra or nil,
 	})
+end)
+
+-- Digs up a crop that is still growing: the square is empty again, the seed is lost (no refund, no harvest, no mastery).
+-- A ripe crop is refused (`ripe`): harvesting it is always better.
+uprootEvent.OnServerEvent:Connect(function(player, square)
+	if not GardenService.WholeNumber(square) or not GardenService.Allow(player) then
+		return
+	end
+	local _, field = usableField(player, "Uproot")
+	if not field then
+		return
+	end
+	local entry = field.Squares[tostring(square)]
+	if not entry then
+		return reject(player, "Uproot", "empty")
+	end
+	local crop = CropConfig.ById[entry.Crop]
+	if crop and entry.Grown >= crop.growSeconds then
+		return reject(player, "Uproot", "ripe")
+	end
+	field.Squares[tostring(square)] = nil
+	done(player, "Uproot", { square = square, crop = entry.Crop })
 end)
 
 buySeedsEvent.OnServerEvent:Connect(function(player, cropId, amount)
