@@ -165,7 +165,7 @@ end
 
 -- Panel ----------------------------------------------------------------------------------------------------------------------
 
-local ui = GardenUi.Panel("HatcheryGui", COLOR_PANEL, WIDTH, HEIGHT, { passiveCursor = true })
+local ui = GardenUi.Panel("HatcheryGui", COLOR_PANEL, WIDTH, HEIGHT)
 local openButton = GardenUi.Button("Open", {
 	Size = UDim2.fromOffset(132, StudStyle.Sizes.HudButton), BackgroundColor3 = COLOR_PANEL,
 	TextSize = 18, Visible = false, Parent = ui.gui,

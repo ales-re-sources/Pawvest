@@ -712,12 +712,18 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   **Helping this soil** shows plain text for the strongest effect per job and its
   pet (sitting here / nearby); **Pet sitting here** has the resident portrait/name and Move / Take off field. Coverage and assignment
   are separate so those controls have an unambiguous target (2026-11-14). With no resident, Place pet opens **Choose a pet for this spot**:
-  field slots used, job/reach, origin and consequence; every eligible row uses **Place pet**, including followers. Capacity blocks before
+  field slots used, job/reach and origin; every eligible row uses **Place pet**, including followers. Capacity blocks before
   the following explanation; field pets reuse their slot. The server validates first, then unequips and assigns together. No square
   numbers in the picker, location or placement toasts. Buy square retains its price and two-tap spend confirmation.
   **Compact picker rows (2026-11-16):** the pet picker widens to 600 px (at most 450 px tall); one bordered inset encloses the portrait,
   description and Place pet action. At widths ≥ 440 px the action sits on the right; narrower layouts stack it below. The complete picker
   scrolls beneath the fixed header, with no nested pet-list scrollbar. Job effects share a line where they fit; all descriptions wrap.
+  **Compact rows (2026-11-23):** rarity by colour only (portrait frame, name and job icons); where the pet is now follows in brackets
+  ("(with you)", "(elsewhere on the field)"; nothing for a resting pet); one job line "🌱 Tending Lv 7 (works one square) · 🛡 …"; no
+  consequence line; a compact 34 px Place pet brick. Order: placeable first, then rarest, then Tending, Pest control.
+  Top line: "Field pets" and one rounded box with a pip per field pet slot there is (🌾 on wood = taken, as the Pets list's field badge; wood outline = owned and free; faint grey = still to buy) and the Pets panel's "+1 slot" brick (two taps over
+  ConfirmTap's limit; gone at the last slot); no capacity paragraph (full pips and grey Place pet bricks say it). The Pets panel's field slot line is the same
+  helper (GardenUi.FieldSlots).
   The selected square again, a tap off-field or walking away closes the card. Other pages stay at most 400 px wide; on touch it clears the controls,
   and its contents scroll when taller than the safe area. The client sends only square / crop / pet ids; the server validates everything.
 - **Hand bar (U3b, 2026-11-07).** While the tap range applies, four bricks: 🌱 Seeds, 🧺 Basket, 🐾 Pets, ✋ Look (default); a row at the

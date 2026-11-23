@@ -167,6 +167,69 @@ function GardenUi.TextColumn(row: Instance, reserved: number, title: string, inf
 	return column
 end
 
+-- Field pet slots, the same line in the field's pet picker and the Pets panel: "Field pets", one rounded box with a pip per field
+-- pet slot there is (CropConfig.PetSlotPrices) and the next slot's "+1 slot" brick (two taps over ConfirmTap's limit; none at the
+-- last slot). A taken pip is the Pets list's "on the field" badge (🌾 on wood), an owned free one its outline, one still to buy
+-- faint grey. `field` = GardenRemotes.State.field; `onBuy(slot)` asks the server (it checks the price, answers on Result).
+GardenUi.SLOT_PIP = 20
+GardenUi.SLOT_BUY_WIDTH = 150
+function GardenUi.FieldSlots(field, coins: number, height: number, onBuy: (number) -> ()): Frame
+	local used = 0
+	for _ in field.pets or {} do
+		used += 1
+	end
+	local slots = field.slots or 1
+	local price = field.slotPrice
+	local line = create("Frame", { Name = "FieldSlots", Size = UDim2.new(1, 0, 0, height), BackgroundTransparency = 1 })
+	local left = create("Frame", {
+		Name = "Count", Size = UDim2.new(1, if price then -(GardenUi.SLOT_BUY_WIDTH + GardenUi.GAP) else 0, 1, 0),
+		BackgroundTransparency = 1, Parent = line,
+	}, { create("UIListLayout", {
+		FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder,
+		Padding = UDim.new(0, GardenUi.GAP), VerticalAlignment = Enum.VerticalAlignment.Center,
+	}) })
+	UiKit.Label("Text", {
+		LayoutOrder = 1, Size = UDim2.fromScale(0, 1), AutomaticSize = Enum.AutomaticSize.X, Font = Enum.Font.Gotham, TextSize = 15,
+		TextColor3 = GardenUi.COLOR_INFO, Text = Locale.T("field.petPicker.slots"), Parent = left,
+	})
+	local box = create("Frame", {
+		Name = "Pips", LayoutOrder = 2, AutomaticSize = Enum.AutomaticSize.XY, BackgroundColor3 = StudStyle.Shade(StudStyle.Colors.Wood, 0.2),
+		BackgroundTransparency = 0.2, Parent = left,
+	}, {
+		create("UICorner", { CornerRadius = UDim.new(0, 6) }),
+		create("UIStroke", { ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = StudStyle.Colors.Wood, Thickness = 1 }),
+		create("UIPadding", { PaddingTop = UDim.new(0, 4), PaddingBottom = UDim.new(0, 4), PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6) }),
+		create("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 6) }), -- strokes draw outside the pips
+	})
+	for index = 1, #CropConfig.PetSlotPrices do
+		local owned = index <= slots
+		local taken = index <= used
+		local pip = UiKit.Label("Pip" .. index, {
+			LayoutOrder = index, Size = UDim2.fromOffset(GardenUi.SLOT_PIP, GardenUi.SLOT_PIP),
+			BackgroundColor3 = StudStyle.Colors.Wood, BackgroundTransparency = if taken then 0 else 1,
+			TextSize = 13, TextXAlignment = Enum.TextXAlignment.Center, Text = if taken then "🌾" else "", Parent = box,
+		})
+		create("UICorner", { CornerRadius = UDim.new(0, 5), Parent = pip })
+		create("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = if owned then StudStyle.Shade(StudStyle.Colors.Wood, 1.3) else StudStyle.Colors.Grey,
+			Transparency = if owned then 0 else 0.45, Thickness = if owned then 2 else 1.5, Parent = pip,
+		})
+	end
+	if price then
+		local buy = UiKit.Button("Buy", {
+			AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.fromScale(1, 0.5), Size = UDim2.fromOffset(GardenUi.SLOT_BUY_WIDTH, height),
+			BackgroundColor3 = if coins >= price then StudStyle.Colors.Yellow else StudStyle.Colors.Grey, TextSize = 15, TextWrapped = true,
+			Text = Locale.T("pets.fieldSlot.buy", { count = price }), Parent = line,
+		}, { compact = true })
+		ConfirmTap.Wrap(buy, "FieldSlot", function()
+			return coins >= price and ConfirmTap.Over(price)
+		end, function()
+			onBuy(slots + 1)
+		end)
+	end
+	return line
+end
+
 -- The Sell brick of a crop row (Barn, the seed stall's Sell tab): sells everything held of `crop` in two taps (ConfirmTap, §10), the text
 -- says what the sale pays: SaleValue (sale × summed sizes), then × the pet multiplier (`petState` = PetClient.State), rounded as
 -- CoinRewards.Grant does. `fire(cropId, count)` asks the server.
@@ -195,9 +258,10 @@ end
 -- A centred panel in its own ScreenGui. Returns a table: gui, panel, content (ScrollingFrame with a list), title, close,
 -- Fit() (live safe area), TapHeight(), HeaderHeight(), TabHeight(), OnResize(callback) (reflow after a safe-area change).
 -- opts.content = false: no Content list (the caller lays out its own children; FoodShop)
--- opts.passiveCursor = true: passive containers sink input without Active's clickable cursor.
+-- The panel and its Content are passive (not Active, InputSink = All): they sink world input but keep the arrow cursor off the
+-- buttons (Active showed the hand over the whole panel). opts.passiveCursor = false: the old Active containers.
 function GardenUi.Panel(name: string, color: Color3, width: number, height: number, opts: { content: boolean?, passiveCursor: boolean? }?)
-	local passiveCursor = opts and opts.passiveCursor == true
+	local passiveCursor = not (opts and opts.passiveCursor == false)
 	local title = GardenUi.Label("TitleLabel", {
 		Size = UDim2.new(1, 0, 0, 34),
 		TextSize = 20,

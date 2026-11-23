@@ -226,7 +226,7 @@ arena.gateOpened.Green,"Arena toast when this key opens its gate (Czech: feminin
 pets.title,Panel title,🐶 Pets,🐶 Mazlíčci,ok,h92496bfc
 pets.empty,Shown instead of the list while the player has no pet,No pets yet. Hatch one in an incubator in the pet garden!,Zatím nemáš žádného mazlíčka. Vylíhni si ho v inkubátoru v zahradě mazlíčků!,ok,h2f4ed2fb
 pets.slotsTitle,"Heading above the three equip slots at the bottom (""equip"" = take a pet with you; it follows you and raises Coin rewards)",Equipped pets,Nasazení mazlíčci,new,h502b0f88
-pets.fieldSlot.buy,"Pets panel, the line under the equip slots: button (150 px) that buys one more field pet slot (a place for a pet that works on the crop field); {count} = price in Coins",\+1 slot 💰 {count},\+1 místo 💰 {count},new,h29b70add
+pets.fieldSlot.buy,"Button (150 px) that buys one more field pet slot (a place for a pet that works on the crop field), in the Pets panel under the equip slots and at the top of the field pet picker; {count} = price in Coins",\+1 slot 💰 {count},\+1 místo 💰 {count},new,h29b70add
 pets.summaryCute[one],"Line under the Pets panel title (U1); {bonus} = total Coin bonus ('+12%'), {count} = equipped pets with Cuteness (only they raise the Coins). Form for 1",Coin bonus <font color='#78e678'>{bonus}</font>  ·  {count} cute pet with you,Bonus mincí <font color='#78e678'>{bonus}</font>  ·  {count} roztomilý mazlíček s tebou,new,hced7925b
 pets.summaryCute[few],Form for 2-4 (Czech only),,Bonus mincí <font color='#78e678'>{bonus}</font>  ·  {count} roztomilí mazlíčci s tebou,new,hced7925b
 pets.summaryCute[other],Form for 0 and 5+,Coin bonus <font color='#78e678'>{bonus}</font>  ·  {count} cute pets with you,Bonus mincí <font color='#78e678'>{bonus}</font>  ·  {count} roztomilých mazlíčků s tebou,new,hced7925b
@@ -541,17 +541,15 @@ field.reason.maxed,Refused: all squares are bought,Your field is complete,Tvoje 
 field.pet.label,"Label over a pet working on a field square, only for a pet with a given name (rich text, green second line). {name} = the pet's name (user text), {jobs} = its job icons and levels, ""🌱4 🛡2"" (field.job.*). Never the pet's level (U3a)","{name}
 <font color='#a8e6a0'>{jobs}</font>","{name}
 <font color='#a8e6a0'>{jobs}</font>",new,h385549f1
-field.section.pets,"Heading of the field panel's pet section; {used} = pets on the field, {slots} = field pet slots owned",Field pets {used} / {slots},Mazlíčci na poli {used} / {slots},new,ha5e701a6
-field.slot.done,Field panel: every field pet slot is bought,All field pet slots bought.,Máš všechna místa pro mazlíčky na poli.,new,hadffe186
 field.petPicker.title,Pet picker for the selected soil; no square number,Choose a pet for this spot,Vyber mazlíčka pro tohle místo,new,h330fe518
 field.petPicker.equipped,Pet placement consequence when a field slot is available; equipped pets can transfer directly,Will stop following you and work here.,Přestane tě následovat a bude pracovat tady.,new,h565171e8
 field.petPicker.noSlot,Pet placement blocker shown before equipped explanation; field pets can still reuse their slot,No free field pet slot. Manage slots in Pets.,Na poli není volné místo pro mazlíčka. Místa spravuješ v panelu Mazlíčci.,new,h76abca1a
-field.petPicker.info[one],"Pet picker row, second line; {level} = Tending level, {count} = squares it would work here. Form for 1",Tending {level} · works {count} square,Péče {level} · stará se o {count} políčko,new,h17c4074f
-field.petPicker.info[few],Form for 2-4 (Czech only),,Péče {level} · stará se o {count} políčka,new,h17c4074f
-field.petPicker.info[other],Form for 0 and 5+,Tending {level} · works {count} squares,Péče {level} · stará se o {count} políček,new,h17c4074f
-field.petPicker.guard[one],"Pet picker row, second line of a pet with Pest control only; {level} = Pest-control level, {count} = squares it would guard here. Form for 1",Pest control {level} · guards {count} square,Hlídání {level} · hlídá {count} políčko,new,h024696bb
-field.petPicker.guard[few],Form for 2-4 (Czech only),,Hlídání {level} · hlídá {count} políčka,new,h024696bb
-field.petPicker.guard[other],Form for 0 and 5+,Pest control {level} · guards {count} squares,Hlídání {level} · hlídá {count} políček,new,h024696bb
+field.petPicker.info[one],"Pet picker row, the job line; {level} = Tending level, {count} = squares it would work from this spot. Keep the emoji. Form for 1 (says ""one"", no number)",🌱 Tending Lv {level} (works one square),🌱 Péče Lv {level} (stará se o jedno políčko),new,he167eb31
+field.petPicker.info[few],Form for 2-4 (Czech only),,🌱 Péče Lv {level} (stará se o {count} políčka),new,he167eb31
+field.petPicker.info[other],Form for 0 and 5+,🌱 Tending Lv {level} (works {count} squares),🌱 Péče Lv {level} (stará se o {count} políček),new,he167eb31
+field.petPicker.guard[one],"Pet picker row, the job line (after Tending, joined by "" · ""); {level} = Pest-control level, {count} = squares it would guard from this spot. Keep the emoji. Form for 1 (says ""one"", no number)",🛡 Pest control Lv {level} (guards one square),🛡 Hlídání Lv {level} (hlídá jedno políčko),new,hae7945c1
+field.petPicker.guard[few],Form for 2-4 (Czech only),,🛡 Hlídání Lv {level} (hlídá {count} políčka),new,hae7945c1
+field.petPicker.guard[other],Form for 0 and 5+,🛡 Pest control Lv {level} (guards {count} squares),🛡 Hlídání Lv {level} (hlídá {count} políček),new,hae7945c1
 field.petPicker.none,Pet picker when no pet has Tending (the next hatched pet is sure to get it),None of your pets has Tending yet. The next pet you hatch will have it.,"Žádný tvůj mazlíček zatím neumí péči. Další mazlíček, kterého vylíhneš, ji mít bude.",new,h489b8ce4
 field.notice.converted[one],Toast once after the pens were converted into field pet slots; {count} = slots now owned. Form for 1,Pens are gone: pets now work on the field. You have {count} field pet slot.,Ohrady skončily: mazlíčci teď pracují na poli. Máš {count} místo pro mazlíčky.,new,h0d9b36b4
 field.notice.converted[few],Form for 2-4 (Czech only),,Ohrady skončily: mazlíčci teď pracují na poli. Máš {count} místa pro mazlíčky.,new,h0d9b36b4
@@ -713,10 +711,9 @@ field.card.nearby,Location after helper name; reaches selected soil from elsewhe
 field.card.noHelp,Soil card: no Tending or Pest control reaches selected soil,No pet is helping this soil yet.,Tomuhle políčku zatím žádný mazlíček nepomáhá.,new,h8081abc3
 field.card.resident,Soil card heading; Move and Take off field apply only to this resident,Pet sitting here,Mazlíček na tomhle políčku,new,haa8a7e49
 field.card.noResident,Selected soil can have help from neighbours without a resident,No pet is sitting here.,Tady žádný mazlíček nesedí.,new,h6053921f
-field.petPicker.full,Capacity banner; existing field pets remain movable when full,All field slots are in use. You can still move a pet already on your field. Manage slots in Pets.,"Všechna místa pro mazlíčky na poli jsou obsazená. Mazlíčka, který už na poli je, můžeš přesunout. Místa spravuješ v panelu Mazlíčci.",new,h655165ed
-field.petPicker.fromField,"Pet picker current location, no numbered square",Working elsewhere on your field,Pracuje jinde na tvém poli,new,h009adef9
-field.petPicker.fromEquipped,Pet picker current location for follower,With you,S tebou,new,he758eb50
-field.petPicker.fromRest,Pet picker current location for unassigned pet,Resting,Odpočívá,new,h820dfa42
+field.petPicker.fromField,"Pet picker: after the pet name and job icons, in brackets, for a pet already working on another square of the field (no square number). Keep the brackets",(elsewhere on the field),(jinde na poli),new,h776e1746
+field.petPicker.fromEquipped,"Pet picker: after the pet name and job icons, in brackets, for a pet following the player. Keep the brackets",(with you),(s tebou),new,h03282e79
+field.petPicker.slots,"Field pet slots line (the field pet picker's top, the Pets panel's bottom), before a box with one small square per field pet slot (🌾 = a pet works there, outline = free, faint = still to buy); short",Field pets,Mazlíčci na poli,new,h23d37317
 field.petPicker.move,Consequence for an existing field pet; slot is reused,Will move from its current spot. Uses its current field slot.,Přesune se ze svého místa. Využije svoje stávající místo pro mazlíčka na poli.,new,h7c63c73d
 field.petPicker.rest,Consequence for resting pet when capacity is available,Will work here.,Bude pracovat tady.,new,h3626a5b8
 field.hand.cancel,"Always visible while holding a pet, cancels preview without moving or unequipping",Cancel,Zrušit,new,ha96c5cb1

@@ -73,6 +73,7 @@ local CARD_WIDTH = 400
 local PET_PICKER_WIDTH = 600
 local PET_PICKER_HEIGHT = 450
 local PET_ACTION_WIDTH = 112
+local PET_ACTION_HEIGHT = 34 -- the pet picker's Place pet bricks (compact rows) and its top line
 local HEADER_HEIGHT = StudStyle.Sizes.Header
 local TOUCH_SIDE = 110 -- px kept free on each side on a touch screen (thumbstick, jump button)
 local CARD_BOTTOM = 76 -- px from the bottom: above the Field button (48 px at 20 px)
@@ -179,6 +180,11 @@ local function plotPets()
 	return PlotView.FieldPets(own and own.field)
 end
 
+-- `text` safe inside a RichText label (a player-given pet name)
+local function richEscape(text: string): string
+	return (text:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;"))
+end
+
 local function petName(uid: string, kind: string): string
 	local name = PetClient.NameOf(uid)
 	return if type(name) == "string" and name ~= "" then name else Locale.PetKindName(kind)
@@ -250,7 +256,9 @@ local card = create("Frame", {
 	Position = UDim2.new(0.5, 0, 1, 400),
 	Size = UDim2.fromOffset(CARD_WIDTH, 0),
 	AutomaticSize = Enum.AutomaticSize.None,
-	Active = true, -- blank areas must consume world input too
+	-- blank areas must consume world input too; passive (not Active) so the cursor stays an arrow off its buttons
+	Active = false,
+	InputSink = Enum.InputSink.All,
 	Visible = false,
 	Parent = screenGui,
 })
@@ -290,7 +298,8 @@ local body = create("ScrollingFrame", {
 	CanvasSize = UDim2.new(),
 	AutomaticCanvasSize = Enum.AutomaticSize.None,
 	ScrollingDirection = Enum.ScrollingDirection.Y,
-	Active = true,
+	Active = false, -- passive like the card: an arrow cursor, world input still sunk
+	InputSink = Enum.InputSink.All,
 	ScrollBarThickness = 4,
 	BorderSizePixel = 0,
 	BackgroundTransparency = 1,
@@ -721,10 +730,12 @@ local function renderPets()
 	for _ in (fieldState.pets or {}) do
 		used += 1
 	end
-	paragraph("Slots", 2, { Text = Locale.T("field.section.pets", { used = used, slots = fieldState.slots or 1 }) }).Parent = body
-	if used >= (fieldState.slots or 1) then
-		paragraph("Capacity", 3, { Text = Locale.T("field.petPicker.full") }).Parent = body
-	end
+	local slotLine = GardenUi.FieldSlots(fieldState, PetClient.Coins or 0, PET_ACTION_HEIGHT, function(slot)
+		fire(remotes:WaitForChild("BuyPetSlot") :: RemoteEvent, slot)
+	end)
+	slotLine.LayoutOrder = 2
+	slotLine.Size = UDim2.new(1, -8, 0, PET_ACTION_HEIGHT)
+	slotLine.Parent = body
 	local candidates = {}
 	for _, pet in PetClient.Inventory() do
 		if pet.tending > 0 or pet.guard > 0 then
@@ -736,6 +747,10 @@ local function renderPets()
 		local bCan = b.field ~= nil or used < (fieldState.slots or 1)
 		if aCan ~= bCan then
 			return aCan
+		end
+		-- rarest first (the Pets list's order): a rare pet that is still low is easy to find
+		if a.rarity.order ~= b.rarity.order then
+			return a.rarity.order > b.rarity.order
 		end
 		if a.tending ~= b.tending then
 			return a.tending > b.tending
@@ -757,8 +772,6 @@ local function renderPets()
 		local reach = reachOf(square, math.max(pet.tending, pet.guard))
 		local hasSlot = pet.field ~= nil or used < (fieldState.slots or 1)
 		local enabled = hasSlot and not placing
-		local location = Locale.T(if pet.field then "field.petPicker.fromField" elseif pet.equipped then "field.petPicker.fromEquipped" else "field.petPicker.fromRest")
-		local info = if not hasSlot then Locale.T("field.petPicker.noSlot") else Locale.T(if pet.field then "field.petPicker.move" elseif pet.equipped then "field.petPicker.equipped" else "field.petPicker.rest")
 		local effects = {}
 		if pet.tending > 0 then
 			table.insert(effects, Locale.T("field.petPicker.info", { level = pet.tending, count = #reachOf(square, pet.tending) }))
@@ -766,7 +779,13 @@ local function renderPets()
 		if pet.guard > 0 then
 			table.insert(effects, Locale.T("field.petPicker.guard", { level = pet.guard, count = #reachOf(square, pet.guard) }))
 		end
-		local title = petName(pet.uid, pet.kind) .. "  " .. PlotView.JobIcons(pet.tending, pet.guard)
+		-- name and job icons in the rarity colour (rarity is told by colour only), then where the pet is now in brackets; a resting
+		-- pet (the default) says nothing. The name is the player's: escaped for RichText.
+		local title = richEscape(petName(pet.uid, pet.kind)) .. "  " .. PlotView.JobIcons(pet.tending, pet.guard)
+		local where = if pet.field then "field.petPicker.fromField" elseif pet.equipped then "field.petPicker.fromEquipped" else nil
+		if where then
+			title ..= string.format("  <font color='#%s'>%s</font>", COLOR_INFO:ToHex(), Locale.T(where))
+		end
 		-- One inset contains the entire pet and its action, so the button cannot read as the next pet's heading.
 		local row = GardenUi.Row(list, "Pet_" .. pet.uid, index, COLOR_ROW)
 		row.Size = UDim2.new(1, -8, 0, 0)
@@ -780,13 +799,17 @@ local function renderPets()
 			FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder,
 			Padding = UDim.new(0, GardenUi.GAP), VerticalAlignment = Enum.VerticalAlignment.Top,
 		}) })
-		PetPortrait.Holder({ LayoutOrder = 1, Size = UDim2.fromOffset(44, 44), BackgroundColor3 = StudStyle.Shade(COLOR_ROW, 0.6) }, portraits(pet)).Parent = identity
-		local description = GardenUi.TextColumn(identity, 44 + GardenUi.GAP, title, location)
+		local holder = PetPortrait.Holder({ LayoutOrder = 1, Size = UDim2.fromOffset(44, 44), BackgroundColor3 = StudStyle.Shade(COLOR_ROW, 0.6) }, portraits(pet))
+		create("UIStroke", { ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = pet.rarity.color, Thickness = 2, Parent = holder })
+		holder.Parent = identity
+		local description = GardenUi.TextColumn(identity, 44 + GardenUi.GAP, title)
 		description.LayoutOrder = 2
-		paragraph("Effects", 3, { TextSize = 13, Text = table.concat(effects, " · ") }).Parent = description
-		paragraph("Consequence", 4, { TextSize = 13, Text = info }).Parent = description
-		local action = brick("PlacePet", { LayoutOrder = 2, Size = if wide then UDim2.fromOffset(PET_ACTION_WIDTH, BUTTON_HEIGHT) else UDim2.new(1, 0, 0, BUTTON_HEIGHT), BackgroundColor3 = if enabled then COLOR_PET else COLOR_OFF, TextSize = 17,
-			Text = Locale.T(if placing and placing.uid == pet.uid then "field.hand.placing" else "field.card.placePet"), Active = enabled, AutoButtonColor = enabled, Parent = row }, 2)
+		local nameLabel = description:FindFirstChild("Name") :: TextLabel
+		nameLabel.TextColor3 = pet.rarity.color
+		nameLabel.RichText = true
+		paragraph("Effects", 2, { TextSize = 13, Text = table.concat(effects, " · ") }).Parent = description
+		local action = brick("PlacePet", { LayoutOrder = 2, Size = if wide then UDim2.fromOffset(PET_ACTION_WIDTH, PET_ACTION_HEIGHT) else UDim2.new(1, 0, 0, PET_ACTION_HEIGHT), BackgroundColor3 = if enabled then COLOR_PET else COLOR_OFF, TextSize = 15,
+			Text = Locale.T(if placing and placing.uid == pet.uid then "field.hand.placing" else "field.card.placePet"), Active = enabled, AutoButtonColor = enabled, Parent = row }, { compact = true })
 		row.MouseEnter:Connect(function()
 			GardenView.ShowReach(reach)
 		end)

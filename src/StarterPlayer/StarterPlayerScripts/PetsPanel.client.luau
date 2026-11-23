@@ -34,6 +34,7 @@ local HudLayout = require(ReplicatedStorage:WaitForChild("HudLayout"))
 local PanelFocus = require(ReplicatedStorage:WaitForChild("PanelFocus"))
 local ConfirmTap = require(ReplicatedStorage:WaitForChild("ConfirmTap"))
 local GardenView = require(script.Parent:WaitForChild("GardenView"))
+local GardenUi = require(script.Parent:WaitForChild("GardenUi"))
 
 local remotes = PetClient.Remotes
 local player = Players.LocalPlayer
@@ -468,67 +469,33 @@ local function refreshSlots(inventory)
 	updateTooltip()
 end
 
--- Field pet slots (U4, from the Garden panel): "🌱 Field pets 2 / 3" and the next slot's Buy brick (two taps over 1 000 Coins);
--- bought anywhere (GardenField BuyPetSlot, answered on GardenRemotes.Result, toasted by FieldClient). From GardenRemotes.State.field.
-local FIELD_BUY_WIDTH = 150
+-- Field pet slots (U4): the field pet picker's line (GardenUi.FieldSlots: the slots box and the next slot's Buy brick); bought
+-- anywhere (GardenField BuyPetSlot, answered on GardenRemotes.Result, toasted by FieldClient). From GardenRemotes.State.field.
 local fieldLine = create("Frame", {
 	Name = "FieldSlots",
 	Position = UDim2.fromOffset(10, FIELD_TOP),
 	Size = UDim2.new(1, -20, 0, BRICK),
 	BackgroundTransparency = 1,
 })
-local fieldLabel = label("Text", {
-	Size = UDim2.new(1, -(FIELD_BUY_WIDTH + 8), 1, 0),
-	TextSize = 15,
-	TextWrapped = true,
-})
-fieldLabel.Parent = fieldLine
 fieldLine.Parent = panel
-local fieldBuy: GuiButton? = nil
 
 local function refreshField()
+	for _, child in fieldLine:GetChildren() do
+		child:Destroy()
+	end
 	local field = GardenView.OwnField()
-	if fieldBuy then
-		fieldBuy:Destroy()
-		fieldBuy = nil
-	end
 	if not field then
-		fieldLabel.Text = ""
 		return
 	end
-	local used = 0
-	for _ in field.pets or {} do
-		used += 1
-	end
-	local price = field.slotPrice
-	fieldLabel.Text = if price
-		then "🌱 " .. Locale.T("field.section.pets", { used = used, slots = field.slots or 1 })
-		else "🌱 " .. Locale.T("field.slot.done")
-	if not price then
-		return
-	end
-	local affordable = PetClient.Coins >= price
-	local buy = button("Buy", {
-		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, 0, 0, 0),
-		Size = UDim2.fromOffset(FIELD_BUY_WIDTH, BRICK),
-		BackgroundColor3 = if affordable then COLOR_BUY else COLOR_LOCKED,
-		TextSize = 15,
-		TextWrapped = true,
-		Text = Locale.T("pets.fieldSlot.buy", { count = price }),
-	}, 2)
-	buy.Parent = fieldLine
-	fieldBuy = buy
-	local slots = field.slots or 1
-	ConfirmTap.Wrap(buy, "FieldSlot", function()
-		return ConfirmTap.Over(price)
-	end, function()
-		if PetClient.Coins < price then
+	local line = GardenUi.FieldSlots(field, PetClient.Coins, BRICK, function(slot)
+		if PetClient.Coins < (field.slotPrice or 0) then
 			flash(rejectText("coins"), COLOR_ERROR)
 			return
 		end
-		ReplicatedStorage:WaitForChild("GardenRemotes"):WaitForChild("BuyPetSlot"):FireServer(slots + 1)
+		ReplicatedStorage:WaitForChild("GardenRemotes"):WaitForChild("BuyPetSlot"):FireServer(slot)
 	end)
+	line.Size = UDim2.fromScale(1, 1)
+	line.Parent = fieldLine
 end
 
 -- Pet list ------------------------------------------------------------------------------------------------------------
@@ -764,6 +731,7 @@ HudLayout.Watch(screenGui, function(nextLayout)
 		end
 		fieldLine.Position = UDim2.fromOffset(10, FIELD_TOP)
 		fieldLine.Size = UDim2.new(1, -20, 0, BRICK)
+		refreshField() -- its Buy brick is BRICK tall
 		filterBar.HideMenu()
 		filterBar.SetLayout(FILTER_TOP, FILTER_HEIGHT, WIDTH)
 		chipTooltip.Hide()
