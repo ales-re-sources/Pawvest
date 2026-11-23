@@ -58,7 +58,6 @@ return {
 	["goals.next.heading"] = "Next crop",
 	["goals.next.countHint"] = "Grow {need} × {crop} to unlock it",
 	["goals.next.bar"] = "{icon} {have} / {need}",
-	["goals.next.allOpen"] = "Every crop is unlocked!",
 	["goals.next.loading"] = "Loading your garden…",
 	["goals.upgrades.heading"] = "Upgrades",
 	["goals.upgrades.open"] = "Upgrade",

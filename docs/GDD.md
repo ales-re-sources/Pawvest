@@ -804,8 +804,10 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   goal with a bar: "🥔 8 / 12 → 🥬 Lettuce" (the previous crop's plants), or for a quest crop its least-done piece (brought / needed);
   hidden once every crop is open. It pulses when the goal moves on (the unlock toast comes from the field toasts). A tap opens the
   **Goals panel** (player-facing name "Quests" / "Úkoly"; "Cíl" is the finish portal): *Next crop* with how it opens and the count bar, or the quest's pieces with Bring buttons that work anywhere (the
-  server takes from the barn). **Line 2** (E5a) shows the day's request nearest to done ("🍅 4 / 6 → 💰" and a bar), under line 1 or
-  in its place; the panel's *Today's requests* lists the three: "Grow 6 × 🍅 Tomato", the reward in Coins (pet bonus included) and a bar;
+  server takes from the barn); the section is left out once every crop is open. **Line 2** (E5a) shows the day's request nearest to done
+  ("🍅 4 / 6 → 💰" and a bar), under line 1 or in its place, unless the player ticked another one: each open request row has an eye button
+  (👁, while 2+ are open) that picks the request shown there (client-only, kept for the session, dropped when the UTC day's board changes; a
+  done request falls back to the nearest); the panel's *Today's requests* lists the three: "Grow 6 × 🍅 Tomato", the reward in Coins (pet bonus included) and a bar;
   a done one shows "Done! ✔" and the time to the next UTC day; before they open: "Requests open when you unlock 🧄 Garlic".
 - **Requests (E5a, 2026-11-19; rules in `CropConfig.Requests`, server `GardenRequests`).** Three tracked requests, "grow 6 Tomatoes":
   every crop of that kind that goes into the barn counts (by hand, a Tending pet, the Shears' extra); nothing is handed in and the crops

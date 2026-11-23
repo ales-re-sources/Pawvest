@@ -58,7 +58,6 @@ return {
 	["goals.next.heading"] = "[!! Ňěxť čřöp ~~~~ !!]",
 	["goals.next.countHint"] = "[!! Gřöw {need} × {crop} ťö ůňlöčk íť ~~~~~~~~ !!]",
 	["goals.next.bar"] = "[!! {icon} {have} / {need} ~~ !!]",
-	["goals.next.allOpen"] = "[!! Ěvěřý čřöp íš ůňlöčkěď! ~~~~~~~~~ !!]",
 	["goals.next.loading"] = "[!! Löáďíňg ýöůř gářďěň… ~~~~~~~~ !!]",
 	["goals.upgrades.heading"] = "[!! Ůpgřáďěš ~~~ !!]",
 	["goals.upgrades.open"] = "[!! Ůpgřáďě ~~~ !!]",

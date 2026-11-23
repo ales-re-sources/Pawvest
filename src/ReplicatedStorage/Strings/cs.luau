@@ -58,7 +58,6 @@ return {
 	["goals.next.heading"] = "Další plodina",
 	["goals.next.countHint"] = "Odemkneš, až vypěstuješ {need} × {crop}",
 	["goals.next.bar"] = "{icon} {have} / {need}",
-	["goals.next.allOpen"] = "Všechny plodiny jsou odemčené!",
 	["goals.next.loading"] = "Načítám tvou zahradu…",
 	["goals.upgrades.heading"] = "Vylepšení",
 	["goals.upgrades.open"] = "Vylepšit",

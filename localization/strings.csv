@@ -61,7 +61,6 @@ goals.title,"Title of the quests panel (opened by tapping the tracker line; late
 goals.next.heading,"Goals panel, section heading: the next crop to unlock",Next crop,Další plodina,new,h63363d96
 goals.next.countHint,"Goals panel, row of the next crop, under its name: how it unlocks; {need} = plants needed, {crop} = the previous crop's name (Czech: nominative after ×)",Grow {need} × {crop} to unlock it,"Odemkneš, až vypěstuješ {need} × {crop}",new,h8b58c1e7
 goals.next.bar,"Goals panel, progress bar text under the next crop: {icon} = emoji of the crop being counted, {have} / {need} = plants grown / needed",{icon} {have} / {need},{icon} {have} / {need},new,hd92e621c
-goals.next.allOpen,"Goals panel, next-crop section when every crop is already unlocked",Every crop is unlocked!,Všechny plodiny jsou odemčené!,new,hf0213ba3
 goals.next.loading,"Goals panel, next-crop section before the garden state has arrived (a moment after joining)",Loading your garden…,Načítám tvou zahradu…,new,h259ac1c4
 goals.upgrades.heading,"Goals panel, section heading (EV3c): crops with an upgrade point to spend",Upgrades,Vylepšení,new,ha26b87eb
 goals.upgrades.open,"Goals panel, Upgrades row: button that opens the crop's upgrade page (short, a 110 px brick)",Upgrade,Vylepšit,new,h21c92d74
