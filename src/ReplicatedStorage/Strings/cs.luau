@@ -96,8 +96,6 @@ return {
 	["rating.sign.title"] = "Líbila se ti {stage}?",
 	["rating.sign.hint"] = "Dojdi k palci a hlasuj!",
 	["rating.sign.thanks"] = "Díky! Hlas můžeš kdykoli změnit.",
-	["rating.prompt.up"] = "Líbí se mi",
-	["rating.prompt.down"] = "Nelíbí se mi",
 	["feedback.title"] = "Napiš nám",
 	["feedback.intro"] = "Je tu chyba, nebo máš nápad? Napiš nám! Čteme každou zprávu.",
 	["feedback.category.bug"] = "{icon} Chyba",

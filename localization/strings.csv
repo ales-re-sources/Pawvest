@@ -114,8 +114,6 @@ results.rate.thanks,Results popup (FB2; the same vote as the stage's rating sign
 rating.sign.title,"Rating sign board, big title; {stage} = stage name (Czech: feminine, like Úroveň)",Did you like {stage}?,Líbila se ti {stage}?,new,hd48374c2
 rating.sign.hint,"Rating sign board, under the title before the player voted: walk up to the 👍 or 👎 plate below to vote",Walk up to a thumb to vote!,Dojdi k palci a hlasuj!,new,hed35f35a
 rating.sign.thanks,"Rating sign board, under the title once the player voted on this stage",Thanks! You can change your vote any time.,Díky! Hlas můžeš kdykoli změnit.,new,he942f954
-rating.prompt.up,Prompt on the 👍 plate of the rating sign (the action; the stage name is shown above it),I like it,Líbí se mi,new,hb503dff3
-rating.prompt.down,Prompt on the 👎 plate of the rating sign,I don't like it,Nelíbí se mi,new,hd23eb5da
 # Feedback panel (FB; opened from the Settings panel),,,,,
 feedback.title,Title of the Feedback panel (players send us a bug report or an idea),Send feedback,Napiš nám,new,hd8f7fe77
 feedback.intro,"Feedback panel, first line (kids are the main audience: simple words; Czech: avoid a gendered past tense)",Found a bug or have an idea? Tell us! We read every message.,"Je tu chyba, nebo máš nápad? Napiš nám! Čteme každou zprávu.",new,h694eb3d9

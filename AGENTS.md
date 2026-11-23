@@ -157,6 +157,8 @@ src/Workspace/                StartLocation (hub), Tutorial, World1 (Stage1-5), 
 - Debounces in timer, portal and checkpoint code are per player; a kill part kills a living character once (no debounce). The timer uses
   `os.clock()`; times are floored to tenths (`TimeFormat.Tenths`) before storing.
 - A ScreenGui built in code gets `ZIndexBehavior = Sibling` (with Global its children drew under later pages / pickers).
+- A BillboardGui with buttons lives in PlayerGui (`Adornee` = the part) with `Active = true` and `ResetOnSpawn = false`; without
+  `Active` its buttons get no clicks / taps.
 - Passive GUI panels can use `Active = false` + `InputSink = All` to keep an arrow cursor while blocking world input (legacy panels use `Active = true`); custom world tap / hover handlers use `UiKit.BlocksWorld`, which honours both, including blank frames. Native world clicks use `UiKit.PointerPosition()` (GUI-inset coordinates; raw `GetMouseLocation()` does not match GUI hit-testing).
 - **Shared helpers before local copies:** countdowns `TimeFormat.Clock`, client / stored number checks `Num`, id-set
   attributes `IdSet`, status colours `StudStyle.Text`, refusal texts `Locale.Reject(reason, specific)` (falls back to
@@ -202,7 +204,8 @@ No automated tests. Validate by risk; scope acceptance checks to the tier a chan
   through the landing; teleporting into a coin or trigger is flaky (walk onto it). A ProximityPrompt shows (and its key works) only
   on screen: after teleporting the character, set the camera behind it before pressing the prompt's key. A stage finish can be driven by moving the character
   through the gate's `TimerStart` and then the finish portal. Scroll a list row into view before clicking it (an off-screen row's click
-  lands on what lies under it).
+  lands on what lies under it). `user_mouse_input` x / y are GUI-inset coordinates (viewport y − `GuiService:GetGuiInset().Y`); its
+  `instance_path` cannot aim at a BillboardGui button (reads it at 0, 0 and clicks the top-left HUD: the Home button teleports).
 - Never `require` a client module that starts itself (GardenView, PetClient …), even indirectly through GardenSummary, from the MCP `Client` context: it runs a second copy
   (a second Workspace.GardenView with every plot drawn twice). Read their drawn instances or GUIs instead.
 - `require` in the **Edit** context caches a ModuleScript across calls (may return the old version after a disk change): check `.Source`, or

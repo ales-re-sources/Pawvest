@@ -884,7 +884,9 @@ Decided 2026-10-25. The product list and offer rules are in [EXPANSION.md](EXPAN
   or a stage's unlock is bought more often than earned, or garden income exceeds the obby first-hour income (pillar 2).
 - **Player feedback (FB, 2026-11-18; shared numbers in `FeedbackConfig`).** Only for us, never shown to players.
   - *Stage rating (FB2):* a post sign in every world stage's courtyard, between its gate and Top-10 leaderboard, set back behind the
-    leaderboard's front plane and angled 30° toward the gate, leaving both clear: "Did you like Stage 3?" with two thumb plates 👍 / 👎 (ProximityPrompts). Anyone near the sign
+    leaderboard's front plane and angled 30° toward the gate, leaving both clear: "Did you like Stage 3?" with two thumb plates 👍 / 👎
+    (ProximityPrompts drawn as a small key badge under each thumb: E / R, the d-pad button's picture, or a larger thumb to tap on
+    touch; a click / tap on the badge votes too; the default prompt cards overlapped the board). Anyone near the sign
     may rate, finished or not; one rating per stage and player, changeable any time, the own choice lit. No score is shown. The
     per-stage counts (`StageRatings` DataStore) keep finishers and non-finishers apart; telemetry `StageRating` carries how far the
     player got (medal / finished / furthest checkpoint this session / none), so ratings by players who never tried can be left out.

@@ -96,8 +96,6 @@ return {
 	["rating.sign.title"] = "Did you like {stage}?",
 	["rating.sign.hint"] = "Walk up to a thumb to vote!",
 	["rating.sign.thanks"] = "Thanks! You can change your vote any time.",
-	["rating.prompt.up"] = "I like it",
-	["rating.prompt.down"] = "I don't like it",
 	["feedback.title"] = "Send feedback",
 	["feedback.intro"] = "Found a bug or have an idea? Tell us! We read every message.",
 	["feedback.category.bug"] = "{icon} Bug",
