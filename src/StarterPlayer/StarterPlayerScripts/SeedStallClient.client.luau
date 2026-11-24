@@ -112,13 +112,25 @@ end
 local function renderCart(field, tap: number)
 	GardenUi.Clear(cartSection)
 	cartTimer = nil
-	GardenUi.Heading(cartSection, 1, Locale.T("field.section.cart"), COLOR_PANEL)
+	local heading = GardenUi.Heading(cartSection, 1, Locale.T("field.section.cart"), COLOR_PANEL)
 	local cart = field.cart
 	if not cart then
 		return
 	end
-	local nextLine = GardenUi.Paragraph("Next", { LayoutOrder = 2, TextSize = TEXT_SIZE, TextColor3 = GardenUi.COLOR_DIM, Text = "" })
-	nextLine.Parent = cartSection
+	-- the countdown shares the heading's line, right-aligned; it shrinks (never above TEXT_SIZE) instead of wrapping
+	local nextLine = GardenUi.Label("Next", {
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.fromScale(1, 0.5),
+		Size = UDim2.new(0.62, 0, 1, 0),
+		Font = Enum.Font.Gotham,
+		TextSize = TEXT_SIZE,
+		TextScaled = true,
+		TextColor3 = GardenUi.COLOR_DIM,
+		TextXAlignment = Enum.TextXAlignment.Right,
+		Text = "",
+	})
+	GardenUi.Create("UITextSizeConstraint", { MaxTextSize = TEXT_SIZE, MinTextSize = 10, Parent = nextLine })
+	nextLine.Parent = heading
 	cartTimer = { label = nextLine, at = cart.nextAt }
 	nextLine.Text = Locale.T("field.cart.next", { time = GardenUi.Countdown(cart.nextAt - workspace:GetServerTimeNow()) })
 	local total, capacity = CropConfig.SeedTotal(field.seeds), GardenUi.BarnOf(field)

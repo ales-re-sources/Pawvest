@@ -675,7 +675,7 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
     point included; two taps over 1 000 Coins). No Feed:
     feeding is on the pet's page. Sell is accepted at the own plot only.
   - **Seed stall** (`Workspace.Garden.SeedStall`, Studio-only, on the plaza beside the food stand, facing it): a green-and-white striped
-    market stall with sacks and crates; its counter prompt "Buy seeds" (E, 10 studs) opens the stall panel: the market cart's offers (one
+    market stall with sacks and crates; its counter prompt "Buy seeds" (E, 10 studs) opens the stall panel: the market cart's offers (its "New offers in" countdown shares the heading's line; one
     buy takes all that is left at the offer price; a row shows the crop, the discount % and one brick with the total price) and the seed
     catalogue (2026-11-23 declutter: one info line "Growth: 16 s · Sells 💰 9", "You have n" only when seeds are held; **+1 / +10 bricks carry
     their price under the label**; no mastery line, no hourly-rate line, no growth-pause hint, no "prices are in Coins" notes: the ★ brick
