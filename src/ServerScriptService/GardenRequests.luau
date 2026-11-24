@@ -149,10 +149,15 @@ function GardenRequests.Fill(player: Player, garden): boolean
 	return changed
 end
 
-function GardenRequests.Earned(garden, coins: number)
+-- Coins a crop paid (its sale or a request bonus): the day's income (E5a) and the crop's total (Garden.Earned, the crop page's stats).
+function GardenRequests.Earned(garden, coins: number, cropId: string)
 	if Num.Finite(coins) and coins > 0 then
 		local income = incomeOf(garden)
 		income.Today += math.floor(coins)
+		if type(garden.Earned) ~= "table" then
+			garden.Earned = {}
+		end
+		garden.Earned[cropId] = (garden.Earned[cropId] or 0) + math.floor(coins)
 	end
 end
 
@@ -175,7 +180,7 @@ local function finish(player: Player, garden, slot, index: number)
 	local crop = CropConfig.ById[slot.Crop]
 	local base = rules.Bonus * slot.Need * CropConfig.SaleValue(crop, 1, pointsOf(garden, crop))
 	local coins = CoinRewards.Grant(player, base, "request") or 0
-	GardenRequests.Earned(garden, coins)
+	GardenRequests.Earned(garden, coins, crop.id)
 	local profile = PlayerProfile.Get(player)
 	local rng = Random.new(player.UserId * 31 + garden.Requests.Day * 977 + index * 7 + slot.At)
 	local drop = nil

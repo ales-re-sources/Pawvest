@@ -551,7 +551,8 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 		local line = POINT_LINE_KEYS[detail.line]
 		local have = math.clamp(tonumber(detail.points) or 0, 0, CropConfig.Mastery.Points.PerLine)
 		local level = string.rep("●", have) .. string.rep("○", CropConfig.Mastery.Points.PerLine - have)
-		showToast(Locale.T("field.toast.point", { crop = name, line = if line then Locale.T(line) .. " " .. level else "" }), COLOR_OK)
+		local icon = CropConfig.PointIcons[detail.line]
+		showToast(Locale.T("field.toast.point", { crop = name, line = if line then icon .. " " .. Locale.T(line) .. " " .. level else "" }), COLOR_OK)
 	elseif action == "Uproot" then
 		showToast(Locale.T("field.toast.uprooted", { crop = name }), COLOR_OK)
 	elseif action == "Sell" then

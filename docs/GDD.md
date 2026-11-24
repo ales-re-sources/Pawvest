@@ -773,8 +773,8 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   crop sold for ~2.2× the last and the top crops needed several absences. A later crop can now sell for less per harvest than an
   earlier one (Pineapple 8 500 after Pumpkin 90 000), so every common seed row on the stall shows "≈ 12 800 an hour per square" under
   its grow time: (sale with Value points − seed) per grow hour on this field (Growth and Speed included).
-  Growth pauses after 24 h away; long crops may need another visit. The seed stall, Barn seeds, seed picker
-  and crop page explain the clock and its cap. Card / rings / sign bubble share the countdown
+  Growth pauses after 24 h away; long crops may need another visit. The seed stall, Barn seeds and seed picker
+  explain the clock and its cap. Card / rings / sign bubble share the countdown
   rule; actual online `readyAt` still drives art, ripe badges and Harvest. Existing `Grown` stays; the next join credits its pending absence
   at the new rate, without a profile migration. The barn holds 40 seeds and 40 stored crops (+20 per Barn level). Seeds held can always be
   planted; the stall sells only unlocked crops (`locked`).
@@ -806,9 +806,18 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   points, else nearly every harvest would be Big) and **Speed** (grow time × (1 − 0.11 n): that crop's growth rate × 1 / (1 − 0.11 n) from
   the moment the point is spent, growing crops included). A maxed crop earns × 1.44 (3 Price or 3 Size) to × 1.49 (3 Speed) per
   square-hour, one point each × 1.47: 2.0–2.2 steps of the old ladder. The **crop page** (a ★ brick on the seed stall's and the barn's crop
-  rows, "★+" on green while a point is free; the Goals panel's *Upgrades* section lists such crops) shows the ★ line with a bar, the points
-  and each line with its points as dots (●●○) and its effect as numbers ("Sells for 1 400 → 1 554", "Ready in 12:45 → 11:21" with the
-  Growth upgrade); + takes two taps, a full line shows ✓. Prices on the stall rows, the barn's Sell and grow times follow the points. The
+  rows, "★+" on green while a point is free; the Goals panel's *Upgrades* section lists such crops; redesigned 2026-11-24) shows a star
+  track: the crop's icon and the three ★ evenly spaced on one bar, each star one point (gold = earned, a green "+1" while its point is
+  unspent, faint = still to grow), the segment toward the next star is the progress bar ("30 / 225" inside it) and each star's plant
+  count sits under it; then one fixed line: "1 point to spend: pick an upgrade", "Fully upgraded!" or, with no point free, the dim rule
+  "Each ★ gives 1 point. A spent point stays.". Three cards (icon tile, name, the effect as numbers with
+  the new value in green: "Sells for 9 → 10", "Average 0.28 → 0.31 kg", "Grows in 0:16 → 0:15 away", then a column of square pips, one
+  per point in the line, aligned across the cards) carry a green Upgrade brick (two taps) only while a point is free; a full line shows ✓,
+  else the slot stays empty. Every state keeps the same parts and sizes (effect in a two-line box), so spending a point moves nothing
+  under the pointer; the panel is as tall as its content on every screen (no scrollbar, no gap). Four stat tiles close it (the crop's history only, not what the barn
+  holds): grown, biggest harvest, Coins earned (sales and request bonuses,
+  `Garden.Earned`, counted from 2026-11-24) and crop-of-the-week wins (`Garden.Ribbons`). Prices on the stall rows, the barn's Sell and
+  grow times follow the points. The
   star toast adds "A point to spend: tap ★ in the barn"; the upgrade toast shows the line's dots.
   **Reset (decided 2026-11-17, not built):** none for free. Later a paid comfort (the D2 comfort shop, after 1.0) or a special item from
   events; by EXPANSION §13 rule 4 a paid reset needs that earnable path too. A reset only moves points, never adds any.

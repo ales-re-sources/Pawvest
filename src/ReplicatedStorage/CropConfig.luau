@@ -262,6 +262,7 @@ CropConfig.Mastery = {
 	Points = { Value = 0.11, Size = 0.11, Speed = 0.11, PerLine = 3 },
 }
 CropConfig.PointLines = { "Value", "Size", "Speed" } -- the crop page's order
+CropConfig.PointIcons = { Value = "💰", Size = "📏", Speed = "⚡" } -- the crop page's icon tiles and the upgrade toast
 
 -- The common crops in unlock order (Potato first, always open).
 CropConfig.Ladder = {}

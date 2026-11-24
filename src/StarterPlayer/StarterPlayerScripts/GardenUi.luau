@@ -286,7 +286,8 @@ function GardenUi.SellBricks(row: Instance, crop, field, petState, height: numbe
 end
 
 -- A centred panel in its own ScreenGui. Returns a table: gui, panel, content (ScrollingFrame with a list), title, close,
--- Fit() (live safe area), TapHeight(), HeaderHeight(), TabHeight(), OnResize(callback) (reflow after a safe-area change).
+-- Fit() (live safe area), SetHeight(h) (a new unscaled height, refitted), TapHeight(), HeaderHeight(), TabHeight(),
+-- OnResize(callback) (reflow after a safe-area change).
 -- opts.content = false: no Content list (the caller lays out its own children; FoodShop)
 -- The panel and its Content are passive (not Active, InputSink = All): they sink world input but keep the arrow cursor off the
 -- buttons (Active showed the hand over the whole panel). opts.passiveCursor = false: the old Active containers.
@@ -362,6 +363,12 @@ function GardenUi.Panel(name: string, color: Color3, width: number, height: numb
 		title.Position = UDim2.fromOffset(0, 0)
 		titlePadding.PaddingLeft = UDim.new(0, header + 8)
 		titlePadding.PaddingRight = UDim.new(0, header + 8)
+	end
+	-- A new unscaled panel height (a panel that fits its content: CropPage), refitted to the safe area.
+	function self.SetHeight(newHeight: number)
+		height = newHeight
+		panel.Size = UDim2.fromOffset(width, newHeight)
+		self.Fit()
 	end
 	function self.OnResize(callback: () -> ())
 		table.insert(resizeCallbacks, callback)

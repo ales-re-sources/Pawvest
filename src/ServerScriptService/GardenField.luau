@@ -255,6 +255,15 @@ local function fieldOf(player: Player, profile)
 	end
 	garden.ItemSize = sizes
 	garden.BestSize = best
+	local earned = {} -- Coins each crop paid in sales and request bonuses (crop page stats; missing = 0)
+	if type(garden.Earned) == "table" then
+		for id, coins in garden.Earned do
+			if CropConfig.ById[id] and finite(coins) and coins > 0 then
+				earned[id] = math.floor(coins)
+			end
+		end
+	end
+	garden.Earned = earned
 	-- crop mastery (EV3b): counts of common crops, the unlocked set, the open quest (for the next locked crop only), the rested pool
 	local crops = {}
 	if type(garden.Crops) == "table" then
@@ -878,6 +887,8 @@ GardenService.AddStateField("field", function(profile)
 		items = garden.Items,
 		sizes = garden.ItemSize,
 		best = garden.BestSize,
+		earned = garden.Earned, -- Coins per crop (crop page stats)
+		ribbons = if type(garden.Ribbons) == "table" then table.clone(garden.Ribbons) else {}, -- weeks won per crop (Harvest Hall)
 		mastery = masteryState(garden),
 		pets = pets,
 		slots = garden.FieldPetSlots,
@@ -1126,7 +1137,7 @@ sellEvent.OnServerEvent:Connect(function(player, cropId, amount)
 
 	local part = removeItems(garden, crop.id, amount) -- the average size of what is stored
 	local paid = CoinRewards.Grant(player, CropConfig.SaleValue(crop, part, pointsOf(garden, crop)), "crop") or 0 -- the pet bonus at sale time
-	GardenRequests.Earned(garden, paid) -- E5a: a day's income sizes new requests
+	GardenRequests.Earned(garden, paid, crop.id) -- E5a: a day's income sizes new requests; the crop page's Coins earned
 	done(player, "Sell", { crop = crop.id, count = amount, paid = paid })
 end)
 

@@ -311,6 +311,11 @@ Tagged **[1.0]** (needed before 1.0 goes public) or **[later]**.
 ## Done
 What was built and why, newest first. Details: the design docs and git history.
 
+**CP — Crop page redesign** (2026-11-24; Studio-validated). *Why (the user):* the mastery page was text-heavy and plain. A star track
+(three evenly spaced ★ = the crop's three points, the bar toward the next star with "have / need" inside), cards with icon tiles, the new
+value in green and square pips in one column, an Upgrade brick only while a point is free, one rule line, and stat tiles (grown, biggest,
+Coins earned (new `Garden.Earned`, from now on), crop-of-the-week wins). GDD §7.9.
+
 **FX — 8-player garden, double field** (2026-11-22; Studio-validated). *Why (the user):* servers of 8 players, and a field twice the size.
 One ring of 8 plots (radius 112, 45° apart, the bridge path through a gap); ring 2 removed; the island shrank from 470 to 390 studs (hedge
 and barrier ring at 190, bridge 40 studs longer, trees and bushes moved into the gaps). The field gained rows 6-11 (3 × 8, then 3 × 6):
