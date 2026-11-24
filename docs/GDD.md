@@ -669,7 +669,8 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   - **Barn** (own plot): the barn building on the front strip (U5a). It does not show the stock (the seed sacks and crop crates it
     drew on the own plot until 2026-11-12 only repeated the panel, less exactly, and nobody else saw them). Its "Open barn" prompt
     and the bottom-centre HUD brick "🧺 Barn" (shown
-    within 45 studs of the own plot) both open the barn panel (simplified 2026-11-23, 480 px wide): one ticking crow forecast line on top (no box,
+    within 45 studs of the own plot, and anywhere outside a run while crops are held; a badge on its corner counts the crops held,
+    green, red when the barn is full, and pops when the number rises, 2026-11-24) both open the barn panel (simplified 2026-11-23, 480 px wide): one ticking crow forecast line on top (no box,
     no rules text), **Seeds** with the barn's fill in the legend ("Seeds · 18 / 40", red when full) and one line per seed with its grow
     time (Growth upgrade included), **Harvest** with one row per crop: the ★ brick (crop page), count and record, and the sell bricks
     **1 / 10 / All** as on the seed stall's Sell tab (2026-11-24), each with what that sale pays under it ("💰 69", pet bonus and Value

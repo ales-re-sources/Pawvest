@@ -17,6 +17,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
@@ -65,6 +66,16 @@ local openButton = GardenUi.Button("Open", {
 }, { compact = true })
 openButton.Parent = ui.gui
 GardenUi.FarmButton(openButton, 1)
+-- the crops held, as a badge on the button's corner (like the hatchery's ready eggs): green, red when the barn is full; it pops when
+-- the number rises, so a harvest visibly lands in the barn
+local cropBadge = GardenUi.Label("CropBadge", {
+	AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(1, -2, 0, 0), Size = UDim2.fromOffset(22, 22),
+	AutomaticSize = Enum.AutomaticSize.X, BackgroundTransparency = 0, BackgroundColor3 = StudStyle.Colors.Green, TextSize = 15,
+	TextXAlignment = Enum.TextXAlignment.Center, Text = "", Visible = false, ZIndex = 5, Parent = openButton,
+})
+GardenUi.Create("UICorner", { CornerRadius = UDim.new(1, 0), Parent = cropBadge })
+GardenUi.Create("UIPadding", { PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6), Parent = cropBadge })
+local cropBadgeScale = GardenUi.Create("UIScale", { Parent = cropBadge })
 
 local closePanel -- defined below
 local isOpen = false
@@ -223,6 +234,7 @@ local setPulse = GardenUi.Pulse(openButton)
 
 local shownCrops: number? = nil -- crops held at the last check (nil before the first field state)
 local sellHintShown = false
+local badgeShown: number? = nil -- crops shown on the button's badge (nil before the first check)
 
 -- Every 0.25 s: the button (near the own plot, or crops to sell outside a run), the sell hint, the crow countdown
 local elapsed = 0
@@ -238,6 +250,16 @@ RunService.Heartbeat:Connect(function(dt)
 	local crops = cropsHeld(field)
 	local focus = PanelFocus.Current()
 	openButton.Visible = not isOpen and (focus == nil or focus == "Barn") and (near or (crops > 0 and not Hints.Running))
+	if field and crops ~= badgeShown then -- no field state yet: no badge, no pop for the crops already held at the join
+		cropBadge.Visible = crops > 0
+		cropBadge.Text = Locale.Number(crops)
+		cropBadge.BackgroundColor3 = if crops >= GardenUi.BarnOf(field) then StudStyle.Colors.Red else StudStyle.Colors.Green
+		if badgeShown and crops > badgeShown then
+			cropBadgeScale.Scale = 1.6
+			TweenService:Create(cropBadgeScale, TweenInfo.new(0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+		end
+		badgeShown = crops
+	end
 	local young = type(field) == "table" and not GardenUi.IsUnlocked(field, CropConfig.ById[SELL_HINT_UNTIL])
 	if field then
 		if shownCrops and crops > shownCrops and young and not sellHintShown then
