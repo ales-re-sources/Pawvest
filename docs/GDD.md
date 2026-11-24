@@ -684,7 +684,7 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
     ("🔒 Opens later: 🍅 🌽 …"); the rare crops say from which world's medals); the barn's fill sits beside the restock countdown under the heading.
     The **Sell tab** sells part of a harvest: per crop a **1 / 10 / All** brick (10 only above 10 held, 1 only above 1) with the Coins it pays
     under the label (sizes pro rata, pet bonus included); a sale worth more than 1,000 Coins takes two taps (ConfirmTap), smaller ones one.
-    The panel is 480 x 520, UIScale shrinks it on small screens. The board above the counter (both faces) lists the day's cart offers
+    The panel is 480 x 520, UIScale shrinks it on small screens (about 0.6 on a landscape phone), so the stall uses 15 px for info lines and 14 px for the price line under a brick (the Barn keeps 13). The board above the counter (both faces) lists the day's cart offers
     ("−30 % · 💰 1", "sold out") and the time to new ones. BuySeeds / BuyCart are accepted within 20 studs of the counter only; the panel
     closes beyond that.
   - **Rotating stock (ST, 2026-11-18; numbers `CropConfig.Stall`, model `economy_ev` `st_*`, ECONOMY.md → Findings "ST").** The stall
