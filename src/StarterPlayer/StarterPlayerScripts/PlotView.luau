@@ -463,31 +463,23 @@ function PlotView:buildSign(model: Model)
 	gui.AutoLocalize = false
 	gui.PixelsPerStud = 25
 	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	textLabel(gui, {
-		Name = "Number",
-		Position = UDim2.new(0, 10, 0, 6),
-		Size = UDim2.new(1, -20, 0, 30),
-		TextScaled = false,
-		TextSize = 28,
-		Font = StudStyle.Font,
-		TextColor3 = COLORS.signNumber,
-		TextStrokeColor3 = Color3.new(0, 0, 0),
-		TextStrokeTransparency = 0.6,
-		Text = Locale.T("sign.plot", { n = self.slot }),
-	})
-	local social = {} -- SH: "❤ 12   🎀 3" under the name (only what is above zero)
-	local likes = if self.state.free then 0 else self.state.likes
-	local ribbons = if self.state.free then 0 else self.state.ribbons
-	if type(likes) == "number" and likes > 0 then
+	-- SH: "❤ 12 likes   🎀 3 ribbons" under the name (only what is above zero, in words: the symbols alone were not
+	-- understood); the own plot without likes shows how they come instead (the owner never sees the Like prompt)
+	local social = {}
+	local likes = if not self.state.free and type(self.state.likes) == "number" then self.state.likes else 0
+	local ribbons = if not self.state.free and type(self.state.ribbons) == "number" then self.state.ribbons else 0
+	if likes > 0 then
 		table.insert(social, Locale.T("garden.sign.likes", { count = likes }))
+	elseif self.own and not self.state.free then
+		table.insert(social, Locale.T("garden.sign.likesHint"))
 	end
-	if type(ribbons) == "number" and ribbons > 0 then
+	if ribbons > 0 then
 		table.insert(social, Locale.T("garden.sign.ribbons", { count = ribbons }))
 	end
-	textLabel(gui, {
+	local name = textLabel(gui, {
 		Name = "Name",
-		Position = UDim2.new(0, 14, 0, 36),
-		Size = UDim2.new(1, -28, 1, if #social > 0 then -70 else -44),
+		Position = UDim2.new(0, 14, 0, 6),
+		Size = UDim2.new(1, -28, 1, if #social > 0 then -40 else -12),
 		Font = StudStyle.Font,
 		TextColor3 = COLORS.signText,
 		TextStrokeColor3 = Color3.new(0, 0, 0),
@@ -495,19 +487,23 @@ function PlotView:buildSign(model: Model)
 		-- a player name (no translation)
 		Text = if self.state.free then Locale.T("garden.sign.plotFree") else tostring(self.state.name),
 	})
+	local cap = Instance.new("UITextSizeConstraint") -- a short name on the whole board would read as a shout
+	cap.MaxTextSize = 56
+	cap.Parent = name
 	if #social > 0 then
-		textLabel(gui, {
+		local line = textLabel(gui, {
 			Name = "Social",
 			Position = UDim2.new(0, 14, 1, -32),
 			Size = UDim2.new(1, -28, 0, 26),
-			TextScaled = false,
-			TextSize = 22,
 			Font = StudStyle.Font,
 			TextColor3 = COLORS.signNumber,
 			TextStrokeColor3 = Color3.new(0, 0, 0),
 			TextStrokeTransparency = 0.6,
 			Text = table.concat(social, "   "),
 		})
+		local lineCap = Instance.new("UITextSizeConstraint") -- 22 like before; a longer (Czech) line shrinks to fit
+		lineCap.MaxTextSize = 22
+		lineCap.Parent = line
 	end
 	gui.Parent = sign
 	-- SH: another player's plot gets a Like prompt at the board's lower edge (once a day per plot; "Liked" after that)

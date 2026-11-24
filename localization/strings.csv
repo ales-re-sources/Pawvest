@@ -350,8 +350,13 @@ board.hubStars,Title of the hub's most-stars board; {rows} = 10,Most stars - top
 garden.sign.plotFree,Sign of a garden plot nobody owns right now (an owned plot shows the owner's name),Free plot,Volný pozemek,new,h456835a7
 garden.sign.incubator.locked,Status above an incubator not bought yet; the number is on its physical plate,🔒 Locked,🔒 Zamčeno,new,h5dfd31c3
 garden.sign.incubator.empty,Status above a bought incubator without an egg; the number is on its physical plate,Empty,Prázdný,new,hc1e47bd8
-garden.sign.likes,"Plot sign, bottom line (SH): likes the plot got from other players in all; {count} = the number; may stand beside the ribbons",❤ {count},❤ {count},new,h47f37a89
-garden.sign.ribbons,"Plot sign, bottom line (SH): ribbons won as a week's biggest crop in the Harvest Hall; {count} = the number",🎀 {count},🎀 {count},new,haefdeaa5
+garden.sign.likes[one],"Plot sign, bottom line under the owner's name (SH): likes the plot got from other players in all; {count} = the number; may stand beside the ribbons, keep it short. Czech: colloquial ""lajk"" (kids' game). Form for 1",❤ {count} like,❤ {count} lajk,new,h7a8e4baf
+garden.sign.likes[few],Form for 2-4 (Czech only),,❤ {count} lajky,new,h7a8e4baf
+garden.sign.likes[other],Form for 0 and 5+,❤ {count} likes,❤ {count} lajků,new,h7a8e4baf
+garden.sign.likesHint,"Plot sign, bottom line on the player's own plot while it has no likes yet: other players can like the garden with a prompt on this sign (the owner never sees that prompt); short, one line",Other players can give you a ❤,Ostatní hráči ti můžou dát ❤,new,h12b7ba7b
+garden.sign.ribbons[one],"Plot sign, bottom line under the owner's name (SH): ribbons won as a week's biggest crop in the Harvest Hall (Síň sklizně); {count} = the number; keep it short. Form for 1",🎀 {count} ribbon,🎀 {count} stuha,new,h5ca75ac2
+garden.sign.ribbons[few],Form for 2-4 (Czech only),,🎀 {count} stuhy,new,h5ca75ac2
+garden.sign.ribbons[other],Form for 0 and 5+,🎀 {count} ribbons,🎀 {count} stuh,new,h5ca75ac2
 garden.like.action,Prompt on another player's plot sign (SH): the button text to like that garden (once a day),Like ❤,Líbí se mi ❤,new,h26baffe1
 garden.like.done,Prompt on another player's plot sign after the player liked it today (tapping it again only says it was liked),Liked today ❤,Dnes už se ti líbí ❤,new,h343546ea
 garden.like.object,"Prompt on another player's plot sign, the line above the button; {name} = the plot owner's Roblox name (never translated)",{name}'s garden,Zahrada hráče {name},new,h4b0ffbbe
@@ -372,7 +377,6 @@ garden.bubble.egg,"Summary bubble: an egg in the player's incubator can hatch no
 garden.bubble.crows,Summary bubble over the own plot sign: crows come in less than an hour (they may eat a ripe crop while the player is away); {time} = m:ss (no words),🐦 {time},🐦 {time},new,h252a31d9
 garden.bubble.crowsNow,Summary bubble: crows are here now (one short word after the bird),🐦 now!,🐦 teď!,new,h647e255f
 # Studio-authored signs (L3; tagged Loc with LocKey in the place file),,,,,
-sign.plot,Number on a garden plot's sign (drawn by the client); {n} = plot slot number 1-30,Plot {n},Pozemek {n},new,h1927be07
 sign.foodStand,"Sign over the pet food stand in the garden (capitals, big letters; keep it short)",🍓 PET FOOD,🍓 KRMENÍ,new,hfe6570f5
 sign.seedStall,"Sign over the seed stall on the garden plaza, beside the pet food stand (capitals, big letters; keep it short)",🌱 SEEDS,🌱 SEMÍNKA,new,hd2b0f5b5
 seedStall.title,Title strip of the seed stall panel (the plaza's seed shop: daily market cart offers and the seed catalogue),🌱 Seed stall,🌱 Stánek se semínky,new,hcd4bfe0a
@@ -529,7 +533,7 @@ field.reason.items,Refused: the player has fewer crops than asked to sell,You do
 field.reason.maxed,Refused: all squares are bought,Your field is complete,Tvoje pole je kompletní,new,hda4eabde
 field.pet.label,"Label over a pet working on a field square, only for a pet with a given name (rich text, green second line). {name} = the pet's name (user text), {jobs} = its job icons and levels, ""🌱4 🛡2"" (field.job.*). Never the pet's level (U3a)","{name}
 <font color='#a8e6a0'>{jobs}</font>","{name}
-<font color='#a8e6a0'>{jobs}</font>",new,hceea6416
+<font color='#a8e6a0'>{jobs}</font>",new,h385549f1
 field.petPicker.title,Pet picker for the selected soil; no square number,Choose a pet for this spot,Vyber mazlíčka pro tohle místo,new,h330fe518
 field.petPicker.equipped,Pet placement consequence when a field slot is available; equipped pets can transfer directly,Will stop following you and work here.,Přestane tě následovat a bude pracovat tady.,new,h565171e8
 field.petPicker.noSlot,Pet placement blocker shown before equipped explanation; field pets can still reuse their slot,No free field pet slot. Manage slots in Pets.,Na poli není volné místo pro mazlíčka. Místa spravuješ v panelu Mazlíčci.,new,h76abca1a

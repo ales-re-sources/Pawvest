@@ -488,7 +488,8 @@ collecting and caring over obby runs.
   plazas, hedge rings, blocky trees and flowers) and stand in one sea that is also the world's kill floor.
 - **Layout (FX, 2026-11-22).** A central plaza (food shop) surrounded by a ring of **8 plots** 45° apart (radius 112; the bridge path runs through
   the middle of one gap), on an island 390 studs across with its hedge ring at radius 190 (12 + 18 plots on a 470-stud island before FX), about
-  40 × 40 studs each, with an owner name sign (stud look, raised on two posts so players walk under it and see the plot past it) over a
+  40 × 40 studs each, with an owner name sign (stud look, raised on two posts so players walk under it and see the plot past it; the
+  owner's name, or "Free plot", with no plot number since 2026-11-24, and under it the likes and ribbons in words, §7.9) over a
   40 × 21.5 front strip (40 × 16 until FX, which moved the hatchery and barn one field square, 5.5 studs, towards the plaza and the sign
   two, so it stands clear of the barn on the lawn in front of the strip), the field behind it. The strip (U5a) holds, as seen from the plaza, the **hatchery** on the left (the 3 incubators
   as open hatch pods in a triangle under one stud roof on four posts; tall pavilion since 2026-11-16: 12-stud underside, three 0.4-stud roof courses,
@@ -866,11 +867,12 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   its icon) with a label: avatar, name, kg, #2 and #3 and the viewer's own best of the week when it is not on the list; an empty pedestal
   has no label, its plaque says "Grow the biggest!". The board shows the title, the week's countdown and every crop's all-time record. A
   harvest that takes a week's #1 and is Big or Giant pops a toast for everyone on the server (at most one a minute). A week's #1 earns a
-  **ribbon** (`Garden.Ribbons[crop]`) once that week is over, shown on the plot sign as "🎀 3"; no Coins. Size comes only from the roll,
+  **ribbon** (`Garden.Ribbons[crop]`) once that week is over, shown on the plot sign as "🎀 3 ribbons"; no Coins. Size comes only from the roll,
   the Seed sorter and the Size line (EXPANSION §13: nothing sold touches size).
 - **Plot likes (SH).** Another player's plot sign has a "Like ❤" prompt: once per plot per UTC day per player, never the own plot. The
   owner (always on the same server: plots exist only for present players) gets a toast "{name} likes your garden ❤", and the count shows on
-  the sign ("❤ 12"); `Garden.Likes` is the total (the garden score uses it later, D9).
+  the sign ("❤ 12 likes"; ribbons "🎀 3 ribbons" beside it); `Garden.Likes` is the total (the garden score uses it later, D9). The own
+  plot without likes says "Other players can give you a ❤" there instead (the owner never sees the prompt).
 
 ## 8. Leaderboards
 - **Per stage:** Top-10 fastest times (exists for Stage 1 and 2; add Stage 3 and Tutorial).
