@@ -463,8 +463,8 @@ function PlotView:buildSign(model: Model)
 	gui.AutoLocalize = false
 	gui.PixelsPerStud = 25
 	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	-- SH: "❤ 12 likes   🏆 3× crop of the week" under the name (only what is above zero, in words: the symbols alone were not
-	-- understood)
+	-- SH: "12❤      🏆 3× crop of the week" centred under the name (only what is above zero; the crop of the week in words:
+	-- a bare ribbon symbol was not understood)
 	local social = {}
 	local likes = if not self.state.free and type(self.state.likes) == "number" then self.state.likes else 0
 	local ribbons = if not self.state.free and type(self.state.ribbons) == "number" then self.state.ribbons else 0
@@ -497,7 +497,7 @@ function PlotView:buildSign(model: Model)
 			TextColor3 = COLORS.signNumber,
 			TextStrokeColor3 = Color3.new(0, 0, 0),
 			TextStrokeTransparency = 0.6,
-			Text = table.concat(social, "   "),
+			Text = table.concat(social, string.rep(" ", 8)), -- a clear gap: two separate counts, not one phrase
 		})
 		local lineCap = Instance.new("UITextSizeConstraint") -- 22 like before; a longer (Czech) line shrinks to fit
 		lineCap.MaxTextSize = 22

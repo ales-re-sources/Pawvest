@@ -350,9 +350,7 @@ board.hubStars,Title of the hub's most-stars board; {rows} = 10,Most stars - top
 garden.sign.plotFree,Sign of a garden plot nobody owns right now (an owned plot shows the owner's name),Free plot,Volný pozemek,new,h456835a7
 garden.sign.incubator.locked,Status above an incubator not bought yet; the number is on its physical plate,🔒 Locked,🔒 Zamčeno,new,h5dfd31c3
 garden.sign.incubator.empty,Status above a bought incubator without an egg; the number is on its physical plate,Empty,Prázdný,new,hc1e47bd8
-garden.sign.likes[one],"Plot sign, bottom line under the owner's name (SH): likes the plot got from other players in all; {count} = the number; may stand beside the ribbons, keep it short. Czech: colloquial ""lajk"" (kids' game). Form for 1",❤ {count} like,❤ {count} lajk,new,h7a8e4baf
-garden.sign.likes[few],Form for 2-4 (Czech only),,❤ {count} lajky,new,h7a8e4baf
-garden.sign.likes[other],Form for 0 and 5+,❤ {count} likes,❤ {count} lajků,new,h7a8e4baf
+garden.sign.likes,"Plot sign, bottom line under the owner's name (SH), centred with a gap before the crop-of-the-week count: likes the plot got from other players in all, the number first and a heart, no word (the user's pick 2026-11-24); {count} = the number",{count}❤,{count}❤,new,hefe8aad1
 garden.sign.ribbons,"Plot sign, bottom line under the owner's name (SH): how many times the owner grew a week's biggest crop of some kind in the Harvest Hall (Síň sklizně; 🏆 like the Hall's title); {count} = the number, ""3×"" = three times; keep it short, the same for boys and girls",🏆 {count}× crop of the week,🏆 {count}× největší úroda týdne,new,h33922b51
 garden.like.action,Prompt on another player's plot sign (SH): the button text to like that garden (once a day),Like ❤,Líbí se mi ❤,new,h26baffe1
 garden.like.done,Prompt on another player's plot sign after the player liked it today (tapping it again only says it was liked),Liked today ❤,Dnes už se ti líbí ❤,new,h343546ea

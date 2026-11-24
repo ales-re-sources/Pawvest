@@ -294,7 +294,7 @@ return {
 	["garden.sign.plotFree"] = "[!! Fřěě plöť ~~~~ !!]",
 	["garden.sign.incubator.locked"] = "[!! 🔒 Löčkěď ~~~ !!]",
 	["garden.sign.incubator.empty"] = "[!! Ěmpťý ~~ !!]",
-	["garden.sign.likes"] = { "[!! ❤ {count} líkě ~~~ !!]", "[!! ❤ {count} líkěš ~~~ !!]" },
+	["garden.sign.likes"] = "[!! {count}❤ ~~ !!]",
 	["garden.sign.ribbons"] = "[!! 🏆 {count}× čřöp öf ťhě wěěk ~~~~~~~~ !!]",
 	["garden.like.action"] = "[!! Líkě ❤ ~~ !!]",
 	["garden.like.done"] = "[!! Líkěď ťöďáý ❤ ~~~~~ !!]",

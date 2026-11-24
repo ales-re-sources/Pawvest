@@ -294,7 +294,7 @@ return {
 	["garden.sign.plotFree"] = "Free plot",
 	["garden.sign.incubator.locked"] = "🔒 Locked",
 	["garden.sign.incubator.empty"] = "Empty",
-	["garden.sign.likes"] = { "❤ {count} like", "❤ {count} likes" },
+	["garden.sign.likes"] = "{count}❤",
 	["garden.sign.ribbons"] = "🏆 {count}× crop of the week",
 	["garden.like.action"] = "Like ❤",
 	["garden.like.done"] = "Liked today ❤",
