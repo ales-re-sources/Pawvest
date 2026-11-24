@@ -49,6 +49,7 @@ local BUY10_WIDTH = 92
 local SELL_WIDTH = 82 -- one brick of the Sell tab (1 / 10 / All): room for "💰 596 993"
 local TEXT_SIZE = 15 -- the small lines of a row (a phone shrinks the panel to ~0.6)
 local PRICE_SIZE = 14 -- the price line under a brick label
+local EDGE_PAD = 8 -- right gap of the countdown texts: they end where the rows' contents end, clear of the scrollbar
 local LOCK_WIDTH = 120
 local STAR_WIDTH = 44 -- EV3c: the ★ brick that opens the crop page
 local BRING_WIDTH = 110
@@ -130,6 +131,7 @@ local function renderCart(field, tap: number)
 		Text = "",
 	})
 	GardenUi.Create("UITextSizeConstraint", { MaxTextSize = TEXT_SIZE, MinTextSize = 10, Parent = nextLine })
+	GardenUi.Create("UIPadding", { PaddingRight = UDim.new(0, EDGE_PAD), Parent = nextLine })
 	nextLine.Parent = heading
 	cartTimer = { label = nextLine, at = cart.nextAt }
 	nextLine.Text = Locale.T("field.cart.next", { time = GardenUi.Countdown(cart.nextAt - workspace:GetServerTimeNow()) })
@@ -203,6 +205,7 @@ local function renderSeeds(field, tap: number)
 			TextXAlignment = Enum.TextXAlignment.Right,
 			Text = Locale.T("seedStall.restock", { time = GardenUi.Countdown(stall.endsAt - workspace:GetServerTimeNow()) }),
 		})
+		GardenUi.Create("UIPadding", { PaddingRight = UDim.new(0, EDGE_PAD), Parent = line })
 		line.Parent = head
 		stallTimer = { label = line, at = stall.endsAt }
 	end
