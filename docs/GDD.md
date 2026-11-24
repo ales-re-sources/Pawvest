@@ -871,8 +871,7 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   the Seed sorter and the Size line (EXPANSION §13: nothing sold touches size).
 - **Plot likes (SH).** Another player's plot sign has a "Like ❤" prompt: once per plot per UTC day per player, never the own plot. The
   owner (always on the same server: plots exist only for present players) gets a toast "{name} likes your garden ❤", and the count shows on
-  the sign ("❤ 12 likes"; ribbons "🎀 3 ribbons" beside it); `Garden.Likes` is the total (the garden score uses it later, D9). The own
-  plot without likes says "Other players can give you a ❤" there instead (the owner never sees the prompt).
+  the sign ("❤ 12 likes"; ribbons "🎀 3 ribbons" beside it); `Garden.Likes` is the total (the garden score uses it later, D9).
 
 ## 8. Leaderboards
 - **Per stage:** Top-10 fastest times (exists for Stage 1 and 2; add Stage 3 and Tutorial).

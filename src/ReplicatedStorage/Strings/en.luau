@@ -295,7 +295,6 @@ return {
 	["garden.sign.incubator.locked"] = "🔒 Locked",
 	["garden.sign.incubator.empty"] = "Empty",
 	["garden.sign.likes"] = { "❤ {count} like", "❤ {count} likes" },
-	["garden.sign.likesHint"] = "Other players can give you a ❤",
 	["garden.sign.ribbons"] = { "🎀 {count} ribbon", "🎀 {count} ribbons" },
 	["garden.like.action"] = "Like ❤",
 	["garden.like.done"] = "Liked today ❤",

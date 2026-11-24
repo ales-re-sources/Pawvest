@@ -353,7 +353,6 @@ garden.sign.incubator.empty,Status above a bought incubator without an egg; the 
 garden.sign.likes[one],"Plot sign, bottom line under the owner's name (SH): likes the plot got from other players in all; {count} = the number; may stand beside the ribbons, keep it short. Czech: colloquial ""lajk"" (kids' game). Form for 1",❤ {count} like,❤ {count} lajk,new,h7a8e4baf
 garden.sign.likes[few],Form for 2-4 (Czech only),,❤ {count} lajky,new,h7a8e4baf
 garden.sign.likes[other],Form for 0 and 5+,❤ {count} likes,❤ {count} lajků,new,h7a8e4baf
-garden.sign.likesHint,"Plot sign, bottom line on the player's own plot while it has no likes yet: other players can like the garden with a prompt on this sign (the owner never sees that prompt); short, one line",Other players can give you a ❤,Ostatní hráči ti můžou dát ❤,new,h12b7ba7b
 garden.sign.ribbons[one],"Plot sign, bottom line under the owner's name (SH): ribbons won as a week's biggest crop in the Harvest Hall (Síň sklizně); {count} = the number; keep it short. Form for 1",🎀 {count} ribbon,🎀 {count} stuha,new,h5ca75ac2
 garden.sign.ribbons[few],Form for 2-4 (Czech only),,🎀 {count} stuhy,new,h5ca75ac2
 garden.sign.ribbons[other],Form for 0 and 5+,🎀 {count} ribbons,🎀 {count} stuh,new,h5ca75ac2

@@ -295,7 +295,6 @@ return {
 	["garden.sign.incubator.locked"] = "🔒 Zamčeno",
 	["garden.sign.incubator.empty"] = "Prázdný",
 	["garden.sign.likes"] = { "❤ {count} lajk", "❤ {count} lajky", "❤ {count} lajků" },
-	["garden.sign.likesHint"] = "Ostatní hráči ti můžou dát ❤",
 	["garden.sign.ribbons"] = { "🎀 {count} stuha", "🎀 {count} stuhy", "🎀 {count} stuh" },
 	["garden.like.action"] = "Líbí se mi ❤",
 	["garden.like.done"] = "Dnes už se ti líbí ❤",

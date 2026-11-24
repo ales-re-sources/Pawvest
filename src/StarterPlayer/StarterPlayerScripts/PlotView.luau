@@ -464,14 +464,12 @@ function PlotView:buildSign(model: Model)
 	gui.PixelsPerStud = 25
 	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
 	-- SH: "❤ 12 likes   🎀 3 ribbons" under the name (only what is above zero, in words: the symbols alone were not
-	-- understood); the own plot without likes shows how they come instead (the owner never sees the Like prompt)
+	-- understood)
 	local social = {}
 	local likes = if not self.state.free and type(self.state.likes) == "number" then self.state.likes else 0
 	local ribbons = if not self.state.free and type(self.state.ribbons) == "number" then self.state.ribbons else 0
 	if likes > 0 then
 		table.insert(social, Locale.T("garden.sign.likes", { count = likes }))
-	elseif self.own and not self.state.free then
-		table.insert(social, Locale.T("garden.sign.likesHint"))
 	end
 	if ribbons > 0 then
 		table.insert(social, Locale.T("garden.sign.ribbons", { count = ribbons }))

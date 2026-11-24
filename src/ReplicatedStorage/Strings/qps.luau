@@ -295,7 +295,6 @@ return {
 	["garden.sign.incubator.locked"] = "[!! 🔒 Löčkěď ~~~ !!]",
 	["garden.sign.incubator.empty"] = "[!! Ěmpťý ~~ !!]",
 	["garden.sign.likes"] = { "[!! ❤ {count} líkě ~~~ !!]", "[!! ❤ {count} líkěš ~~~ !!]" },
-	["garden.sign.likesHint"] = "[!! Öťhěř pláýěřš čáň gívě ýöů á ❤ ~~~~~~~~~~~~ !!]",
 	["garden.sign.ribbons"] = { "[!! 🎀 {count} říbböň ~~~~ !!]", "[!! 🎀 {count} říbböňš ~~~~ !!]" },
 	["garden.like.action"] = "[!! Líkě ❤ ~~ !!]",
 	["garden.like.done"] = "[!! Líkěď ťöďáý ❤ ~~~~~ !!]",
