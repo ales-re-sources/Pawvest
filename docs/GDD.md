@@ -668,11 +668,12 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   - **Barn** (own plot): the barn building on the front strip (U5a). It does not show the stock (the seed sacks and crop crates it
     drew on the own plot until 2026-11-12 only repeated the panel, less exactly, and nobody else saw them). Its "Open barn" prompt
     and the bottom-centre HUD brick "🧺 Barn" (shown
-    within 45 studs of the own plot) both open the barn panel, grouped as **Field forecast / Seeds / Harvest** (2026-11-15): the crow
-    forecast line (ticking), the seeds held with their grow time (Growth upgrade included) and the barn's fill ("18 / 40 seeds"), the crops
-    held with count, average size and record, **Feed** (a page of the player's pets that can still learn from food, equipped first; a tap
-    opens that pet's page at its harvest-feeding section) and **Sell** (all of that crop, always two taps; since 2026-11-08 the button
-    shows the count and what the sale pays with the pet bonus, "Sell 2 · 3 787"). Sell is accepted at the own plot only.
+    within 45 studs of the own plot) both open the barn panel (simplified 2026-11-23, 480 px wide): one ticking crow forecast line on top (no box,
+    no rules text), **Seeds** with the barn's fill in the legend ("Seeds · 18 / 40", red when full) and one line per seed with its grow
+    time (Growth upgrade included), **Harvest** with one row per crop: the ★ brick (crop page), count and record, and the sell bricks
+    **1 / 10 / All** as on the seed stall's Sell tab (2026-11-24), each with what that sale pays under it ("💰 69", pet bonus and Value
+    point included; two taps over 1 000 Coins). No Feed:
+    feeding is on the pet's page. Sell is accepted at the own plot only.
   - **Seed stall** (`Workspace.Garden.SeedStall`, Studio-only, on the plaza beside the food stand, facing it): a green-and-white striped
     market stall with sacks and crates; its counter prompt "Buy seeds" (E, 10 studs) opens the stall panel: the market cart's offers (one
     buy takes all that is left at the offer price) and the seed catalogue (+1 / +10 per unlocked crop with its ★ and mastery line; the next

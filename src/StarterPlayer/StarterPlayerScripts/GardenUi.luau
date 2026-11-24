@@ -1,6 +1,6 @@
 -- GardenUi (U4): what the garden's panels share (Seed stall: SeedStallClient, Barn: BarnClient). Client only.
 --   * builders: Create, Label, Button, Paragraph, Section, Clear, Latest, Pulse (re-exported from UiKit), Heading, GroupBox (content + legend), Row + TextColumn (a text column
---     that wraps, then the buttons), SellButton (a crop row's Sell);
+--     that wraps, then the buttons), SellAmounts / PriceBrick / SellBricks (a crop row's 1 / 10 / All sell bricks with 💰 prices);
 --   * Panel(name, color, width, height): a ScreenGui (Sibling ZIndex, AutoLocalize off) with a centred stud panel (title strip,
 --     X button, a scrolling Content list unless opts.content is false) that Fit() scales down to the screen (UIScale, Scale();
 --     never below 0.5); TapHeight() = a brick
@@ -230,29 +230,54 @@ function GardenUi.FieldSlots(field, coins: number, height: number, onBuy: (numbe
 	return line
 end
 
--- The Sell brick of a crop row (Barn, the seed stall's Sell tab): sells everything held of `crop` in two taps (ConfirmTap, §10), the text
--- says what the sale pays: SaleValue (sale × summed sizes), then × the pet multiplier (`petState` = PetClient.State), rounded as
--- CoinRewards.Grant does. `fire(cropId, count)` asks the server.
-function GardenUi.SellButton(row: Instance, crop, field, petState, width: number, height: number, order: number, fire: (string, number) -> ())
-	local owned = field.items[crop.id] or 0
-	local base = CropConfig.SaleValue(crop, field.sizes and field.sizes[crop.id] or owned, GardenUi.PointsOf(field, crop)) -- EV3c Value
-	local multiplier = type(petState) == "table" and tonumber(petState.multiplier) or 1
-	local sell = GardenUi.Button("Sell", {
+-- Selling a crop (the barn and the seed stall's Sell tab): bricks "1", "10" (more than 10 held) and "All" (just "Sell" when one is
+-- held), each with the Coins it pays under the label ("💰 69": the share of the summed size with the crop's Value point, times the
+-- equipped pets' bonus, rounded as CoinRewards.Grant rounds). A sale over ConfirmTap.THRESHOLD takes two taps.
+GardenUi.SELL_BRICK_WIDTH = 74
+GardenUi.PRICE_SIZE = 13 -- the price line under a brick's label
+
+-- { { name, count, label } } for `owned` crops held: the bricks SellBricks draws (callers reserve their width first).
+function GardenUi.SellAmounts(owned: number)
+	local amounts = {}
+	if owned > 1 then
+		table.insert(amounts, { name = "Sell1", count = 1, label = "1" })
+	end
+	if owned > 10 then
+		table.insert(amounts, { name = "Sell10", count = 10, label = "10" })
+	end
+	table.insert(amounts, { name = "Sell", count = owned, label = Locale.T(if owned > 1 then "seedStall.sell.all" else "seedStall.sell.one") })
+	return amounts
+end
+
+-- A brick with a big label and the Coins it costs / pays under it (its Glyph is RichText: a smaller second line).
+function GardenUi.PriceBrick(parent: Instance, name: string, order: number, width: number, height: number, label: string, coins: number, color: Color3)
+	return GardenUi.Button(name, {
 		LayoutOrder = order,
-		Size = UDim2.fromOffset(width, height),
-		BackgroundColor3 = GardenUi.COLOR_SELL,
-		TextSize = 14,
-		TextWrapped = true,
-		Text = Locale.T("field.crop.sellCount", { count = owned, coins = math.floor(base * multiplier + 0.5 + 1e-9) }),
-		Parent = row,
+		Size = UDim2.fromOffset(width, math.max(height, 50)),
+		BackgroundColor3 = color,
+		TextSize = 17,
+		RichText = true,
+		Text = string.format('%s\n<font size="%d">💰 %s</font>', label, GardenUi.PRICE_SIZE, Locale.Number(coins)),
+		Parent = parent,
 	}, 2)
-	local cropId = crop.id
-	ConfirmTap.Wrap(sell, "Sell" .. cropId .. owned, function()
-		return true -- Sell always takes two taps
-	end, function()
-		fire(cropId, owned)
-	end)
-	return sell
+end
+
+-- The sell bricks of `crop` in `row` from LayoutOrder `order` on; `fire(cropId, count)` asks the server (it checks the count, pays).
+function GardenUi.SellBricks(row: Instance, crop, field, petState, height: number, order: number, fire: (string, number) -> ())
+	local owned = field.items[crop.id] or 0
+	local sizes = field.sizes and field.sizes[crop.id] or owned
+	local points = GardenUi.PointsOf(field, crop) -- EV3c Value
+	local multiplier = type(petState) == "table" and tonumber(petState.multiplier) or 1
+	for slot, amount in GardenUi.SellAmounts(owned) do
+		local paid = math.floor(CropConfig.SaleValue(crop, sizes * amount.count / owned, points) * multiplier + 0.5 + 1e-9)
+		local sell = GardenUi.PriceBrick(row, amount.name, order + slot - 1, GardenUi.SELL_BRICK_WIDTH, height, amount.label, paid, GardenUi.COLOR_SELL)
+		local cropId, count = crop.id, amount.count
+		ConfirmTap.Wrap(sell, "Sell" .. cropId .. count .. "of" .. owned, function()
+			return paid > ConfirmTap.THRESHOLD
+		end, function()
+			fire(cropId, count)
+		end)
+	end
 end
 
 -- A centred panel in its own ScreenGui. Returns a table: gui, panel, content (ScrollingFrame with a list), title, close,

@@ -71,7 +71,7 @@ hint until the first tap, are built; whether rings / pulses need more is to be d
 
 **Built in U4 (2026-11-07)**: the Garden panel is gone. Upgrades / tools / Renown are in the Skills panel's Garden tab (buyable anywhere),
 field pet slots are a line in the Pets panel, the barn is a panel behind the bottom-centre "🧺 Barn" HUD button at the own plot (seeds, crops
-with size / record, Feed / Sell, crow forecast), and seeds and the market cart are bought at the seed stall on the plaza (its board shows the
+with record, ★ crop page / sell 1 / 10 / All, crow forecast line; no Feed since 2026-11-23), and seeds and the market cart are bought at the seed stall on the plaza (its board shows the
 cart); the crow forecast is also in the summary bubble when crows are near. As built: GDD §7.9; the table of where each piece went is in
 `git show c06d477:docs/UI_GARDEN_PETS.md`. **Built in U5a (2026-11-07):** the barn as a building on the plot (its prompt opens the panel, the
 HUD button stays). The seed sacks and crop crates that showed the own stock were removed on 2026-11-12: they repeated the panel and

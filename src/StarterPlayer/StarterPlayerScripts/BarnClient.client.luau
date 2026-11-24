@@ -2,17 +2,17 @@
 -- the own plot (U5a, PlotView via GardenView.OnBarn) and the bottom-centre HUD button "🧺 Barn" (shown within 45 studs of the own plot
 -- and, while the player holds crops, anywhere outside a stage run; a young field gets a toast at the first harvest of the session and
 -- the button pulses until the barn was opened: playtest 2026-11-08).
---   * header: the crow forecast (E4b, from CropConfig.NextCrows and the server time; "crows come once you grow Garlic" on a young field) and
---     the barn's seed capacity;
---   * Seeds: every seed held (icon, name × count, grow time with the Growth upgrade); nothing → a hint to the plaza's seed stall;
---   * Harvest: every crop held (name × count, record kg) with Feed (a chooser of the pets that can still eat → that pet's page, which
---     feeds crops: PetsGui attribute OpenPet) and Sell (two taps, ConfirmTap; "Sell 2 · 3 787": the count and what the sale pays with the
---     pet bonus, PetClient.State.multiplier, rounded as CoinRewards.Grant rounds, with the crop's Value point); a common crop's row starts
---     with a ★ brick that opens its crop page (EV3c, CropPageClient; "★+" while a point is free; its close comes back here);
+--   * at the top one line of the crow forecast (E4b, GardenUi.CrowLine; "crows come once you grow Garlic" on a young field);
+--   * Seeds (legend "Seeds · 12 / 100": held / the barn's capacity, red when full): one line per seed held (icon, name × count,
+--     grow time with the Growth upgrade); nothing → a hint to the plaza's seed stall;
+--   * Harvest: every crop held (name × count, record kg) with a ★ brick that opens its crop page (EV3c, CropPageClient; "★+" while a
+--     point is free; its close comes back here) on a common crop and the sell bricks 1 / 10 / All with "💰 69" under each (what that
+--     sale pays: GardenUi.SellBricks, as on the seed stall's Sell tab; two taps over ConfirmTap's limit). Feeding is on the pet's
+--     page (2026-11-23: the barn's Feed chooser is gone);
 --   * PanelFocus "Barn": opening it closes the other panels, walking 32 studs away closes it.
 -- Display only: Sell names a crop and a count; GardenField checks the count and pays (answer toasted by FieldClient).
 -- Hook (ScreenGui BarnGui attribute, cleared after use): Open = true opens the panel. Buttons by path (under PlayerGui.BarnGui):
--- Open (the HUD button), Panel.Content.Crops.Content.<CropId>.Sell / .Feed / .Star, Panel.Chooser.List.<uid>; Panel.Close.
+-- Open (the HUD button), Panel.Content.Crops.Content.<CropId>.Sell1 / .Sell10 / .Sell (all) / .Star; Panel.Close.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -32,12 +32,10 @@ local player = Players.LocalPlayer
 local remotes = ReplicatedStorage:WaitForChild("GardenRemotes")
 local sellEvent = remotes:WaitForChild("Sell")
 
-local WIDTH = 420
+local WIDTH = 480 -- room for the name next to the ★ and three sell bricks (1 / 10 / All)
 local HEIGHT = 470
 local GAP = GardenUi.GAP
 local SHOW_DISTANCE = 45 -- studs from the plot centre: the Barn button is visible within this
-local SELL_WIDTH = 116
-local FEED_WIDTH = 84
 local STAR_WIDTH = 44 -- EV3c: the ★ brick that opens the crop page
 local SELL_HINT_UNTIL = "Corn" -- the sell toast and the pulse are for a young field: until this crop is unlocked (EV3b; was Renown 5)
 
@@ -45,49 +43,16 @@ local COLOR_PANEL = StudStyle.Colors.Wood
 local COLOR_ROW = StudStyle.PetRowColor(COLOR_PANEL)
 
 local ui = GardenUi.Panel("BarnGui", COLOR_PANEL, WIDTH, HEIGHT)
-local headerSection, forecastLegend = GardenUi.GroupBox(ui.content, "Header", 1, COLOR_PANEL)
+-- the crow forecast: one line above the groups (no box)
+local headerSection = GardenUi.Create("Frame", {
+	Name = "Header", LayoutOrder = 1, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
+	BackgroundTransparency = 1, Parent = ui.content,
+}, {
+	GardenUi.Create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder }),
+	GardenUi.Create("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10) }),
+})
 local seedsSection, seedsLegend = GardenUi.GroupBox(ui.content, "Seeds", 2, COLOR_PANEL)
 local cropsSection, harvestLegend = GardenUi.GroupBox(ui.content, "Crops", 3, COLOR_PANEL)
-
--- the pet chooser for Feed: a page over the panel's content
-local chooser = GardenUi.Create("Frame", {
-	Name = "Chooser",
-	Position = UDim2.new(0, 8, 0, 46),
-	Size = UDim2.new(1, -16, 1, -54),
-	BackgroundTransparency = 1,
-	Visible = false,
-	Parent = ui.panel,
-})
-local chooserTitle = GardenUi.Paragraph("Title", {
-	Position = UDim2.new(0, 0, 0, 0),
-	Size = UDim2.new(1, -110, 0, 0),
-	Font = StudStyle.Font,
-	TextSize = 17,
-	TextColor3 = Color3.new(1, 1, 1),
-	Parent = chooser,
-})
-local chooserBack = GardenUi.Button("Back", {
-	AnchorPoint = Vector2.new(1, 0),
-	Position = UDim2.new(1, 0, 0, 0),
-	Size = UDim2.fromOffset(100, 44),
-	BackgroundColor3 = GardenUi.COLOR_LOCKED,
-	TextSize = 16,
-	Parent = chooser,
-}, 2)
-local chooserList = GardenUi.Create("ScrollingFrame", {
-	Name = "List",
-	Position = UDim2.new(0, 0, 0, 54),
-	Size = UDim2.new(1, 0, 1, -54),
-	BackgroundTransparency = 1,
-	BorderSizePixel = 0,
-	ScrollBarThickness = 5,
-	CanvasSize = UDim2.new(),
-	AutomaticCanvasSize = Enum.AutomaticSize.Y,
-	Parent = chooser,
-}, {
-	GardenUi.Create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, GAP) }),
-	GardenUi.Create("UIPadding", { PaddingRight = UDim.new(0, 6) }),
-})
 
 -- HUD button (where the Garden panel's "Field" button was)
 local openButton = GardenUi.Button("Open", {
@@ -101,9 +66,8 @@ local openButton = GardenUi.Button("Open", {
 openButton.Parent = ui.gui
 GardenUi.FarmButton(openButton, 1)
 
-local renderChooser, closePanel -- defined below (rows and the chooser call them)
+local closePanel -- defined below
 local isOpen = false
-local feeding: string? = nil -- crop id while the chooser is shown
 local crowLabel: TextLabel? = nil
 
 -- Rendering ---------------------------------------------------------------------------------------------------------------
@@ -114,53 +78,27 @@ local function renderHeader(field)
 	local crows = GardenUi.Paragraph("Crows", { LayoutOrder = 1, Font = StudStyle.Font, TextSize = 16, TextColor3 = color, Text = text })
 	crows.Parent = headerSection
 	crowLabel = crows
-	if type(field.crows) == "table" and field.crows.active then
-		GardenUi.Paragraph("CrowsHint", { LayoutOrder = 2, TextSize = 12, TextColor3 = GardenUi.COLOR_DIM, Text = Locale.T("field.crows.hint") }).Parent =
-			headerSection
-	end
-end
-
--- A barn crop row's second line: the best size and the crop's mastery (EV3b), each when there is one.
-local function infoOf(field, crop, best: number?): string?
-	local lines = {}
-	if best then
-		table.insert(lines, Locale.T("field.crop.best", { kg = GardenUi.KgText(crop, best) }))
-	end
-	local mastery = GardenUi.MasteryLine(field, crop)
-	if mastery then
-		table.insert(lines, mastery)
-	end
-	return if #lines > 0 then table.concat(lines, "\n") else nil
 end
 
 local function renderSeeds(field)
 	GardenUi.Clear(seedsSection)
-	GardenUi.Paragraph("GrowthHint", { LayoutOrder = 1, TextSize = 13, TextColor3 = GardenUi.COLOR_DIM, Text = GardenUi.GrowthHint(field) }).Parent = seedsSection
 	local any = false
 	for index, crop in CropConfig.Crops do
 		local stock = field.seeds[crop.id] or 0
 		if stock > 0 then
 			any = true
 			local row = GardenUi.Row(seedsSection, crop.id, index + 1, COLOR_ROW)
-			GardenUi.TextColumn(
-				row,
-				0,
-				string.format("%s × %s", GardenUi.CropTitle(crop), Locale.Number(stock)),
-				Locale.T("barn.seed.grow", { time = GardenUi.GrowTime(GardenUi.GrowSecondsOn(field, crop)) })
-			)
+			GardenUi.TextColumn(row, 0, string.format("%s × %s · %s", GardenUi.CropTitle(crop), Locale.Number(stock),
+				GardenUi.GrowTime(GardenUi.GrowSecondsOn(field, crop))))
 		end
 	end
 	if not any then
 		GardenUi.Paragraph("Empty", { LayoutOrder = 2, Text = Locale.T("barn.seeds.empty") }).Parent = seedsSection
 	end
+	-- the barn's capacity sits in the legend: "Seeds · 12 / 100", red when full
 	local total, capacity = CropConfig.SeedTotal(field.seeds), GardenUi.BarnOf(field)
-	GardenUi.Paragraph("Capacity", {
-		LayoutOrder = #CropConfig.Crops + 2,
-		Font = StudStyle.Font,
-		TextSize = 15,
-		TextColor3 = if total >= capacity then GardenUi.COLOR_ERROR else Color3.new(1, 1, 1),
-		Text = Locale.T("field.barn", { total = total, capacity = capacity }),
-	}).Parent = seedsSection
+	seedsLegend.Text = Locale.T("barn.seeds.legend", { total = total, capacity = capacity })
+	seedsLegend.TextColor3 = if total >= capacity then GardenUi.COLOR_ERROR else GardenUi.COLOR_INFO
 end
 
 -- 1 + the equipped pets' bonus (what CoinRewards.Grant multiplies a sale by); 1 before the first pet state.
@@ -183,27 +121,11 @@ local function renderCrops(field, tap: number)
 			end
 			GardenUi.TextColumn(
 				row,
-				SELL_WIDTH + FEED_WIDTH + GAP * 2 + (if crop.rare then 0 else STAR_WIDTH + GAP),
+				#GardenUi.SellAmounts(owned) * (GardenUi.SELL_BRICK_WIDTH + GAP) + (if crop.rare then 0 else STAR_WIDTH + GAP),
 				string.format("%s%s × %s", GardenUi.CropTitle(crop), GardenUi.Stars(field, crop), Locale.Number(owned)),
-				infoOf(field, crop, best)
+				if best then Locale.T("field.crop.best", { kg = GardenUi.KgText(crop, best) }) else nil
 			)
-			local feed = GardenUi.Button("Feed", {
-				LayoutOrder = 2,
-				Size = UDim2.fromOffset(FEED_WIDTH, tap),
-				BackgroundColor3 = GardenUi.COLOR_BUY,
-				TextSize = 15,
-				TextWrapped = true,
-				Text = Locale.T("barn.feed"),
-				Parent = row,
-			}, 2)
-			local cropId = crop.id
-			feed.Activated:Connect(function()
-				feeding = cropId
-				chooser.Visible = true
-				ui.content.Visible = false
-				renderChooser()
-			end)
-			GardenUi.SellButton(row, crop, field, PetClient.State, SELL_WIDTH, tap, 3, function(id, count)
+			GardenUi.SellBricks(row, crop, field, PetClient.State, tap, 3, function(id, count)
 				sellEvent:FireServer(id, count)
 			end)
 		end
@@ -213,65 +135,8 @@ local function renderCrops(field, tap: number)
 	end
 end
 
-function renderChooser()
-	for _, child in chooserList:GetChildren() do
-		if child:IsA("GuiObject") then
-			child:Destroy()
-		end
-	end
-	local crop = feeding and CropConfig.ById[feeding]
-	if not crop then
-		return
-	end
-	chooserTitle.Text = Locale.T("barn.feed.title", { crop = GardenUi.CropTitle(crop) })
-	chooserBack.Text = Locale.T("barn.feed.back")
-	local tap = ui.TapHeight()
-	chooser.Position = UDim2.fromOffset(8, ui.HeaderHeight() + 6)
-	chooser.Size = UDim2.new(1, -16, 1, -(ui.HeaderHeight() + 14))
-	chooserBack.Size = UDim2.fromOffset(100, tap)
-	chooserList.Position = UDim2.fromOffset(0, tap + 10)
-	chooserList.Size = UDim2.new(1, 0, 1, -(tap + 10))
-	local pets = {}
-	for _, pet in PetClient.Inventory() do
-		if pet.food then -- food can still train it (FD: below its food limit)
-			table.insert(pets, pet)
-		end
-	end
-	table.sort(pets, function(a, b)
-		if a.equipped ~= b.equipped then
-			return a.equipped
-		end
-		if a.level ~= b.level then
-			return a.level < b.level
-		end
-		return a.uid < b.uid
-	end)
-	for index, pet in pets do
-		local row = GardenUi.Button(pet.uid, {
-			LayoutOrder = index,
-			Size = UDim2.new(1, 0, 0, tap),
-			BackgroundColor3 = COLOR_ROW,
-			TextSize = 17,
-			Text = Locale.PetName(pet.kind, pet.level, pet.name),
-			Parent = chooserList,
-		}, 3)
-		local uid = pet.uid
-		row.Activated:Connect(function()
-			closePanel()
-			local petsGui = player.PlayerGui:FindFirstChild("PetsGui")
-			if petsGui then
-				petsGui:SetAttribute("OpenPet", uid) -- the pet page feeds crops (PetDetail)
-			end
-		end)
-	end
-	if #pets == 0 then
-		GardenUi.Paragraph("None", { LayoutOrder = 1, Text = Locale.T("barn.feed.none") }).Parent = chooserList
-	end
-end
-
 local function render()
 	ui.title.Text = Locale.T("barn.title")
-	forecastLegend.Text = Locale.T("barn.group.forecast")
 	seedsLegend.Text = Locale.T("field.section.seeds")
 	harvestLegend.Text = Locale.T("field.section.crops")
 	openButton.Text = Locale.T("barn.button")
@@ -290,21 +155,11 @@ local function render()
 	renderHeader(field)
 	renderSeeds(field)
 	renderCrops(field, ui.TapHeight())
-	if chooser.Visible then
-		renderChooser()
-	end
-end
-
-local function showContent()
-	feeding = nil
-	chooser.Visible = false
-	ui.content.Visible = true
 end
 
 function closePanel()
 	PanelFocus.Closed("Barn")
 	isOpen = false
-	showContent()
 	ui.panel.Visible = false
 end
 
@@ -314,16 +169,12 @@ local function openPanel()
 	PanelFocus.Open("Barn", closePanel) -- walking 32 studs away closes it
 	isOpen = true
 	barnOpened = true
-	showContent()
 	ui.Fit()
 	ui.panel.Visible = true
 	render()
 end
 
 ui.close.Activated:Connect(closePanel)
-chooserBack.Activated:Connect(function()
-	showContent()
-end)
 openButton.Activated:Connect(function()
 	if isOpen then
 		closePanel()
@@ -339,9 +190,7 @@ remotes:WaitForChild("State").OnClientEvent:Connect(function()
 end)
 local shownMultiplier = petMultiplier()
 PetClient.Changed:Connect(function()
-	if isOpen and chooser.Visible then
-		renderChooser()
-	elseif isOpen and petMultiplier() ~= shownMultiplier then
+	if isOpen and petMultiplier() ~= shownMultiplier then
 		render() -- an equipped pet changed: the sale values on the Sell buttons follow
 	end
 	shownMultiplier = petMultiplier()
