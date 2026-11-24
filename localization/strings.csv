@@ -353,9 +353,7 @@ garden.sign.incubator.empty,Status above a bought incubator without an egg; the 
 garden.sign.likes[one],"Plot sign, bottom line under the owner's name (SH): likes the plot got from other players in all; {count} = the number; may stand beside the ribbons, keep it short. Czech: colloquial ""lajk"" (kids' game). Form for 1",❤ {count} like,❤ {count} lajk,new,h7a8e4baf
 garden.sign.likes[few],Form for 2-4 (Czech only),,❤ {count} lajky,new,h7a8e4baf
 garden.sign.likes[other],Form for 0 and 5+,❤ {count} likes,❤ {count} lajků,new,h7a8e4baf
-garden.sign.ribbons[one],"Plot sign, bottom line under the owner's name (SH): ribbons won as a week's biggest crop in the Harvest Hall (Síň sklizně); {count} = the number; keep it short. Form for 1",🎀 {count} ribbon,🎀 {count} stuha,new,h5ca75ac2
-garden.sign.ribbons[few],Form for 2-4 (Czech only),,🎀 {count} stuhy,new,h5ca75ac2
-garden.sign.ribbons[other],Form for 0 and 5+,🎀 {count} ribbons,🎀 {count} stuh,new,h5ca75ac2
+garden.sign.ribbons,"Plot sign, bottom line under the owner's name (SH): how many times the owner grew a week's biggest crop of some kind in the Harvest Hall (Síň sklizně; 🏆 like the Hall's title); {count} = the number, ""3×"" = three times; keep it short, the same for boys and girls",🏆 {count}× crop of the week,🏆 {count}× největší úroda týdne,new,h33922b51
 garden.like.action,Prompt on another player's plot sign (SH): the button text to like that garden (once a day),Like ❤,Líbí se mi ❤,new,h26baffe1
 garden.like.done,Prompt on another player's plot sign after the player liked it today (tapping it again only says it was liked),Liked today ❤,Dnes už se ti líbí ❤,new,h343546ea
 garden.like.object,"Prompt on another player's plot sign, the line above the button; {name} = the plot owner's Roblox name (never translated)",{name}'s garden,Zahrada hráče {name},new,h4b0ffbbe
@@ -574,7 +572,7 @@ field.ledger.ripe[other],Form for 0 and 5+,{count} ripe crops are waiting for yo
 field.ledger.eggs[one],"""While you were away"" panel on join after 30+ min away (E5b ledger), 🥚 line: incubator eggs ready to hatch; {count} = eggs. Form for 1",{count} egg is ready to hatch.,{count} vajíčko je připravené k vylíhnutí.,new,ha32675bd
 field.ledger.eggs[few],Form for 2-4 (Czech only),,{count} vajíčka jsou připravená k vylíhnutí.,new,ha32675bd
 field.ledger.eggs[other],Form for 0 and 5+,{count} eggs are ready to hatch.,{count} vajíček je připravených k vylíhnutí.,new,ha32675bd
-field.ledger.ribbons,"""While you were away"" panel on join after 30+ min away (E5b ledger), 🎀 line: ribbons won as a finished week's biggest crop in the Harvest Hall (Síň sklizně); {items} = crop names, ""2× Tomato"" when more than one",Harvest Hall ribbons won: {items}!,Stuhy ze Síně sklizně: {items}!,new,h0e3fb4df
+field.ledger.ribbons,"""While you were away"" panel on join after 30+ min away (E5b ledger), 🏆 line: the player grew a finished week's biggest crop of these kinds in the Harvest Hall (Síň sklizně; the plot sign counts them as ""crop of the week""); {items} = crop names, ""2× Tomato"" when more than one",Crop of the week: {items}!,Největší úroda týdne: {items}!,new,h7c427260
 field.ledger.requests[one],"""While you were away"" panel on join after 30+ min away (E5b ledger), 📜 line: daily requests that are new since the last visit; {count} = requests (1-3). Form for 1",{count} new request today.,Dnes máš {count} novou zakázku.,new,h12e7808c
 field.ledger.requests[few],Form for 2-4 (Czech only),,Dnes máš {count} nové zakázky.,new,h12e7808c
 field.ledger.requests[other],Form for 0 and 5+,{count} new requests today.,Dnes máš {count} nových zakázek.,new,h12e7808c

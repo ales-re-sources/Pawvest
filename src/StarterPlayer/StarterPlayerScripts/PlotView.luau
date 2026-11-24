@@ -463,7 +463,7 @@ function PlotView:buildSign(model: Model)
 	gui.AutoLocalize = false
 	gui.PixelsPerStud = 25
 	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
-	-- SH: "❤ 12 likes   🎀 3 ribbons" under the name (only what is above zero, in words: the symbols alone were not
+	-- SH: "❤ 12 likes   🏆 3× crop of the week" under the name (only what is above zero, in words: the symbols alone were not
 	-- understood)
 	local social = {}
 	local likes = if not self.state.free and type(self.state.likes) == "number" then self.state.likes else 0

@@ -236,7 +236,7 @@ end
 -- ripe squares, ready eggs, ribbons won, new requests. It waits for the join's ribbon check (at most RIBBON_WAIT s), the guards'
 -- names (the pet state) and the end of a stage run; it closes with its button or a tap outside it. Information only.
 local LEDGER_ORDER = { "tended", "crows", "ripe", "eggs", "ribbons", "requests" }
-local LEDGER_ICONS = { tended = "🧺", crows = "🐦", ripe = "🌱", eggs = "🥚", ribbons = "🎀", requests = "📜" }
+local LEDGER_ICONS = { tended = "🧺", crows = "🐦", ripe = "🌱", eggs = "🥚", ribbons = "🏆", requests = "📜" }
 local LEDGER_CROPS = 3
 local RIBBON_WAIT = 10 -- seconds the ledger waits for the join's ribbon check
 local LEDGER_CLOSE = 600 -- seconds: closes by itself only if left alone this long
