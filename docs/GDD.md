@@ -732,7 +732,8 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
   ("(with you)", "(elsewhere on the field)"; nothing for a resting pet); one job line "🌱 Tending Lv 7 (works one square) · 🛡 …"; no
   consequence line; a compact 34 px Place pet brick. Order: placeable first, then rarest, then Tending, Pest control.
   Top line: "Field pets" and one rounded box with a pip per field pet slot there is (🌾 on wood = taken, as the Pets list's field badge; wood outline = owned and free; faint grey = still to buy) and the Pets panel's "+1 slot" brick (two taps over
-  ConfirmTap's limit; gone at the last slot); no capacity paragraph (full pips and grey Place pet bricks say it). The Pets panel's field slot line is the same
+  ConfirmTap's limit; gone at the last slot); no capacity paragraph. A slot still to buy shows 🔒; a pet that cannot be placed
+  (no free slot) has a dimmed row and a grey "🔒 Place pet" brick whose tap pulses the slot box and the "+1 slot" brick (no message). The Pets panel's field slot line is the same
   helper (GardenUi.FieldSlots).
   The selected square again, a tap off-field or walking away closes the card. Other pages stay at most 400 px wide; on touch it clears the controls,
   and its contents scroll when taller than the safe area. The client sends only square / crop / pet ids; the server validates everything.

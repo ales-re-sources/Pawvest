@@ -170,7 +170,8 @@ end
 -- Field pet slots, the same line in the field's pet picker and the Pets panel: "Field pets", one rounded box with a pip per field
 -- pet slot there is (CropConfig.PetSlotPrices) and the next slot's "+1 slot" brick (two taps over ConfirmTap's limit; none at the
 -- last slot). A taken pip is the Pets list's "on the field" badge (🌾 on wood), an owned free one its outline, one still to buy
--- faint grey. `field` = GardenRemotes.State.field; `onBuy(slot)` asks the server (it checks the price, answers on Result).
+-- faint grey with a 🔒. The box is child "Pips", the brick "Buy" (the picker pulses them when a blocked pet is tapped).
+-- `field` = GardenRemotes.State.field; `onBuy(slot)` asks the server (it checks the price, answers on Result).
 GardenUi.SLOT_PIP = 20
 GardenUi.SLOT_BUY_WIDTH = 150
 function GardenUi.FieldSlots(field, coins: number, height: number, onBuy: (number) -> ()): Frame
@@ -207,7 +208,9 @@ function GardenUi.FieldSlots(field, coins: number, height: number, onBuy: (numbe
 		local pip = UiKit.Label("Pip" .. index, {
 			LayoutOrder = index, Size = UDim2.fromOffset(GardenUi.SLOT_PIP, GardenUi.SLOT_PIP),
 			BackgroundColor3 = StudStyle.Colors.Wood, BackgroundTransparency = if taken then 0 else 1,
-			TextSize = 13, TextXAlignment = Enum.TextXAlignment.Center, Text = if taken then "🌾" else "", Parent = box,
+			-- 🔒: a slot still to buy (the "+1 slot" brick next to the box unlocks it)
+			TextSize = if taken then 13 else 11, TextTransparency = if owned then 0 else 0.3, TextXAlignment = Enum.TextXAlignment.Center,
+			Text = if taken then "🌾" elseif owned then "" else "🔒", Parent = box,
 		})
 		create("UICorner", { CornerRadius = UDim.new(0, 5), Parent = pip })
 		create("UIStroke", {

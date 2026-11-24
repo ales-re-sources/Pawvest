@@ -73,7 +73,8 @@ local RAY_LENGTH = 300
 local CARD_WIDTH = 400
 local PET_PICKER_WIDTH = 600
 local PET_PICKER_HEIGHT = 450
-local PET_ACTION_WIDTH = 112
+local PET_ACTION_WIDTH = 128 -- fits "🔒 Umístit mazlíčka" (a blocked pet) with some room
+local BLOCKED_FADE = 0.5 -- pet picker: a pet that cannot be placed (no free field slot)
 local PET_ACTION_HEIGHT = 34 -- the pet picker's Place pet bricks (compact rows) and its top line
 local HEADER_HEIGHT = StudStyle.Sizes.Header
 local TOUCH_SIDE = 110 -- px kept free on each side on a touch screen (thumbstick, jump button)
@@ -774,6 +775,29 @@ local function renderPets()
 	slotLine.LayoutOrder = 2
 	slotLine.Size = UDim2.new(1, -8, 0, PET_ACTION_HEIGHT)
 	slotLine.Parent = body
+	-- a tap on a blocked pet (no free slot) points at the cure: the slot box and the "+1 slot" brick pulse for a moment
+	local pulses = {}
+	for _, name in { "Pips", "Buy" } do
+		local target = slotLine:FindFirstChild(name, true)
+		if target then
+			table.insert(pulses, UiKit.Pulse(target :: GuiObject, 1.1, 0.25))
+		end
+	end
+	local pulseToken = 0
+	local function pointAtSlots()
+		pulseToken += 1
+		local token = pulseToken
+		for _, pulse in pulses do
+			pulse(true)
+		end
+		task.delay(1, function()
+			if token == pulseToken then
+				for _, pulse in pulses do
+					pulse(false)
+				end
+			end
+		end)
+	end
 	local candidates = {}
 	for _, pet in PetClient.Inventory() do
 		if pet.tending > 0 or pet.guard > 0 then
@@ -845,9 +869,22 @@ local function renderPets()
 		local nameLabel = description:FindFirstChild("Name") :: TextLabel
 		nameLabel.TextColor3 = pet.rarity.color
 		nameLabel.RichText = true
-		paragraph("Effects", 2, { TextSize = 13, Text = table.concat(effects, " · ") }).Parent = description
+		local effectsLabel = paragraph("Effects", 2, { TextSize = 13, Text = table.concat(effects, " · ") })
+		effectsLabel.Parent = description
+		-- no free slot: the row is dimmed and its brick carries the locked slot's 🔒 (no message; a tap pulses the slot box)
+		local buttonText = Locale.T(if placing and placing.uid == pet.uid then "field.hand.placing" else "field.card.placePet")
+		if not hasSlot then
+			local portrait = holder:FindFirstChild("Portrait")
+			if portrait then
+				(portrait :: ViewportFrame).ImageTransparency = BLOCKED_FADE
+			end
+			(holder:FindFirstChildOfClass("UIStroke") :: UIStroke).Transparency = BLOCKED_FADE
+			nameLabel.TextTransparency = BLOCKED_FADE
+			effectsLabel.TextTransparency = BLOCKED_FADE
+			buttonText = "🔒 " .. buttonText
+		end
 		local action = brick("PlacePet", { LayoutOrder = 2, Size = if wide then UDim2.fromOffset(PET_ACTION_WIDTH, PET_ACTION_HEIGHT) else UDim2.new(1, 0, 0, PET_ACTION_HEIGHT), BackgroundColor3 = if enabled then COLOR_PET else COLOR_OFF, TextSize = 15,
-			Text = Locale.T(if placing and placing.uid == pet.uid then "field.hand.placing" else "field.card.placePet"), Active = enabled, AutoButtonColor = enabled, Parent = row }, { compact = true })
+			Text = buttonText, Active = enabled or not hasSlot, AutoButtonColor = enabled, Parent = row }, { compact = true })
 		row.MouseEnter:Connect(function()
 			GardenView.ShowReach(reach)
 		end)
@@ -858,6 +895,8 @@ local function renderPets()
 			action.Activated:Connect(function()
 				submitPlacement(square, pet.uid, true)
 			end)
+		elseif not hasSlot then
+			action.Activated:Connect(pointAtSlots)
 		end
 	end
 end
