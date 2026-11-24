@@ -16,7 +16,7 @@
 -- (GardenView keeps the last one).
 -- Hook (ScreenGui SeedStallGui attribute, cleared after use): Open = true opens the panel (as the prompt does).
 -- Buttons by path (under PlayerGui.SeedStallGui.Panel): Tabs.Buy / .Sell, Content.Cart.Offer<slot>.Buy, Content.Seeds.<CropId>.Buy1 / .Buy10 / .Star,
--- Content.Seeds.Quest<CropId>.Bring (EV3b), Content.SellCrops.<CropId>.Sell; Close.
+-- Content.Seeds.Quest<CropId>.Bring (EV3b), Content.SellCrops.<CropId>.Sell1 / .Sell10 / .Sell (all); Close.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -50,8 +50,6 @@ local LOCK_WIDTH = 120
 local STAR_WIDTH = 44 -- EV3c: the ★ brick that opens the crop page
 local BRING_WIDTH = 110
 local CART_WIDTH = 100
-local SELL_WIDTH = 74 -- one brick of the Sell tab (1 / 10 / all)
-local PRICE_SIZE = 13 -- the price line under a brick's label
 local BOARD_PPS = 40 -- board pixels per stud (10 x 3.6 studs → 400 x 144)
 
 local COLOR_PANEL = StudStyle.Colors.Green
@@ -94,19 +92,6 @@ local askedStall = nil -- ST: the restock end for which a new State was asked on
 
 local function coinsNow(): number
 	return PetClient.Coins or 0
-end
-
--- A brick with a big label and the Coins it costs / pays under it (Glyph is RichText: a smaller second line).
-local function priceBrick(parent: Instance, name: string, order: number, width: number, height: number, label: string, coins: number, color: Color3)
-	return GardenUi.Button(name, {
-		LayoutOrder = order,
-		Size = UDim2.fromOffset(width, math.max(height, 50)),
-		BackgroundColor3 = color,
-		TextSize = 17,
-		RichText = true,
-		Text = string.format('%s\n<font size="%d">💰 %s</font>', label, PRICE_SIZE, Locale.Number(coins)),
-		Parent = parent,
-	}, 2)
 end
 
 -- Panel -------------------------------------------------------------------------------------------------------------------
@@ -286,7 +271,7 @@ local function renderSeeds(field, tap: number)
 			for slot, option in { { name = "Buy1", amount = 1, width = BUY1_WIDTH }, { name = "Buy10", amount = math.min(10, left or 10), width = BUY10_WIDTH } } do
 				local price = crop.seed * option.amount
 				local affordable = coinsNow() >= price and total + option.amount <= capacity
-				local buy = priceBrick(row, option.name, slot + 1, option.width, tap, "+" .. option.amount, price, if affordable then GardenUi.COLOR_BUY else GardenUi.COLOR_LOCKED)
+				local buy = GardenUi.PriceBrick(row, option.name, slot + 1, option.width, tap, "+" .. option.amount, price, if affordable then GardenUi.COLOR_BUY else GardenUi.COLOR_LOCKED)
 				ConfirmTap.Wrap(buy, "Seed" .. crop.id .. option.amount, function()
 					return ConfirmTap.Over(price)
 				end, function()
@@ -300,12 +285,10 @@ local function renderSeeds(field, tap: number)
 	end
 end
 
--- Sell tab: per harvested crop 1 / 10 / all bricks, each with the Coins it pays (SaleValue of that part of the stored sizes, then the
--- pet multiplier, rounded as CoinRewards.Grant does). A sale worth more than ConfirmTap.THRESHOLD takes two taps.
+-- Sell tab: per harvested crop the 1 / 10 / All bricks with the Coins each pays (GardenUi.SellBricks, shared with the Barn).
 local function renderSell(field, tap: number)
 	GardenUi.Clear(sellSection)
 	GardenUi.Heading(sellSection, 1, Locale.T("field.section.crops"), COLOR_PANEL)
-	local multiplier = tonumber(type(PetClient.State) == "table" and PetClient.State.multiplier) or 1
 	local any = false
 	for index, crop in CropConfig.Crops do
 		local owned = field.items[crop.id] or 0
@@ -313,32 +296,15 @@ local function renderSell(field, tap: number)
 			any = true
 			local row = GardenUi.Row(sellSection, crop.id, index + 1, COLOR_ROW)
 			local best = field.best and field.best[crop.id]
-			local sizes = field.sizes and field.sizes[crop.id] or owned
-			local points = GardenUi.PointsOf(field, crop)
-			local amounts = {}
-			if owned > 1 then
-				table.insert(amounts, { name = "Sell1", count = 1, label = "1" })
-			end
-			if owned > 10 then
-				table.insert(amounts, { name = "Sell10", count = 10, label = "10" })
-			end
-			table.insert(amounts, { name = "Sell", count = owned, label = Locale.T(if owned > 1 then "seedStall.sell.all" else "seedStall.sell.one") })
 			GardenUi.TextColumn(
 				row,
-				#amounts * (SELL_WIDTH + GAP),
+				#GardenUi.SellAmounts(owned) * (GardenUi.SELL_BRICK_WIDTH + GAP),
 				string.format("%s × %s", GardenUi.CropTitle(crop), Locale.Number(owned)),
 				if best then Locale.T("field.crop.best", { kg = GardenUi.KgText(crop, best) }) else nil
 			)
-			for slot, amount in amounts do
-				local paid = math.floor(CropConfig.SaleValue(crop, sizes * amount.count / owned, points) * multiplier + 0.5 + 1e-9)
-				local sell = priceBrick(row, amount.name, slot + 1, SELL_WIDTH, tap, amount.label, paid, GardenUi.COLOR_SELL)
-				local cropId, count = crop.id, amount.count
-				ConfirmTap.Wrap(sell, "Sell" .. cropId .. count .. "of" .. owned, function()
-					return paid > ConfirmTap.THRESHOLD
-				end, function()
-					sellEvent:FireServer(cropId, count)
-				end)
-			end
+			GardenUi.SellBricks(row, crop, field, PetClient.State, tap, 2, function(id, count)
+				sellEvent:FireServer(id, count)
+			end)
 		end
 	end
 	if not any then
