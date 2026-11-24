@@ -676,9 +676,15 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
     feeding is on the pet's page. Sell is accepted at the own plot only.
   - **Seed stall** (`Workspace.Garden.SeedStall`, Studio-only, on the plaza beside the food stand, facing it): a green-and-white striped
     market stall with sacks and crates; its counter prompt "Buy seeds" (E, 10 studs) opens the stall panel: the market cart's offers (one
-    buy takes all that is left at the offer price) and the seed catalogue (+1 / +10 per unlocked crop with its ★ and mastery line; the next
-    locked crop shows the previous crop's count toward it ("🔒 🥔 8 / 12") or, for a quest crop, one row per quest crop with brought / needed /
-    held and a **Bring** button; later crops a plain "🔒 Later"; the rare crops say from which world's medals) with the barn's fill. The board above the counter (both faces) lists the day's cart offers
+    buy takes all that is left at the offer price; a row shows the crop, the discount % and one brick with the total price) and the seed
+    catalogue (2026-11-23 declutter: one info line "Growth: 16 s · Sells 💰 9", "You have n" only when seeds are held; **+1 / +10 bricks carry
+    their price under the label**; no mastery line, no hourly-rate line, no growth-pause hint, no "prices are in Coins" notes: the ★ brick
+    opens the crop page that holds mastery; the next locked crop shows the previous crop's count toward it ("🔒 🥔 8 / 12") or, for a quest crop,
+    one row per quest crop with brought / needed / held and a **Bring** button; the later locked crops collapse into one grey line of their icons
+    ("🔒 Opens later: 🍅 🌽 …"); the rare crops say from which world's medals); the barn's fill sits beside the restock countdown under the heading.
+    The **Sell tab** sells part of a harvest: per crop a **1 / 10 / All** brick (10 only above 10 held, 1 only above 1) with the Coins it pays
+    under the label (sizes pro rata, pet bonus included); a sale worth more than 1,000 Coins takes two taps (ConfirmTap), smaller ones one.
+    The panel is 480 x 520, UIScale shrinks it on small screens. The board above the counter (both faces) lists the day's cart offers
     ("−30 % · 💰 1", "sold out") and the time to new ones. BuySeeds / BuyCart are accepted within 20 studs of the counter only; the panel
     closes beyond that.
   - **Rotating stock (ST, 2026-11-18; numbers `CropConfig.Stall`, model `economy_ev` `st_*`, ECONOMY.md → Findings "ST").** The stall
@@ -686,7 +692,7 @@ square ladder (290 → 750 M), Tending as growth speed, guards make their square
     (the one whose bar opens the next), the newest unlocked crop of at least 6 h (FL, `Stall.LongSeconds`: an overnight staple, so
     every night has a long crop) and every crop a talent's next level or the open quest asks for. Every other unlocked crop rotates:
     in stock in about 2 of 3 hours (a draw from the hour and the crop, and at least every 3rd hour), then 12 seeds per player for that
-    hour ("12 left this hour"; +10 takes what is left). Out of stock or sold out, its row stays with a grey "Back soon" in place of the
+    hour ("Zbývá 12" as a bold gold line right under the crop name, red at 3 or fewer; +10 takes what is left). Out of stock or sold out, its row stays with a grey "Back soon" ("Již brzy") in place of the
     buy bricks. Under the Seeds heading "New seeds in 42:10"; when the hour turns the panel changes without a rejoin, and a player in the
     garden gets the toast "New seeds at the seed stall!" if a crop of theirs rotated in. Seeds already bought keep (the barn holds them).
     Why: planting was too linear; a stall that does not offer everything makes the player plant what is there and gives online news, and

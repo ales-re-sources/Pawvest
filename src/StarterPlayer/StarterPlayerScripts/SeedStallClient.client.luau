@@ -41,16 +41,17 @@ local sellEvent = remotes:WaitForChild("Sell")
 local questEvent = remotes:WaitForChild("Quest")
 local requestStateEvent = remotes:WaitForChild("RequestState")
 
-local WIDTH = 420
-local HEIGHT = 470
+local WIDTH = 480 -- Fit() scales the panel down on a small screen
+local HEIGHT = 520
 local GAP = GardenUi.GAP
-local BUY1_WIDTH = 56
-local BUY10_WIDTH = 64
+local BUY1_WIDTH = 76
+local BUY10_WIDTH = 88
 local LOCK_WIDTH = 120
 local STAR_WIDTH = 44 -- EV3c: the ★ brick that opens the crop page
 local BRING_WIDTH = 110
-local CART_WIDTH = 110
-local SELL_WIDTH = 150
+local CART_WIDTH = 100
+local SELL_WIDTH = 74 -- one brick of the Sell tab (1 / 10 / all)
+local PRICE_SIZE = 13 -- the price line under a brick's label
 local BOARD_PPS = 40 -- board pixels per stud (10 x 3.6 studs → 400 x 144)
 
 local COLOR_PANEL = StudStyle.Colors.Green
@@ -95,6 +96,19 @@ local function coinsNow(): number
 	return PetClient.Coins or 0
 end
 
+-- A brick with a big label and the Coins it costs / pays under it (Glyph is RichText: a smaller second line).
+local function priceBrick(parent: Instance, name: string, order: number, width: number, height: number, label: string, coins: number, color: Color3)
+	return GardenUi.Button(name, {
+		LayoutOrder = order,
+		Size = UDim2.fromOffset(width, math.max(height, 50)),
+		BackgroundColor3 = color,
+		TextSize = 17,
+		RichText = true,
+		Text = string.format('%s\n<font size="%d">💰 %s</font>', label, PRICE_SIZE, Locale.Number(coins)),
+		Parent = parent,
+	}, 2)
+end
+
 -- Panel -------------------------------------------------------------------------------------------------------------------
 
 local function renderCart(field, tap: number)
@@ -115,20 +129,20 @@ local function renderCart(field, tap: number)
 		if crop then
 			local row = GardenUi.Row(cartSection, "Offer" .. offer.slot, offer.slot + 2, COLOR_ROW)
 			local info = if offer.taste
-				then Locale.T("field.cart.taste", { price = offer.price })
-				else Locale.T("field.cart.bargain", {
-					percent = math.floor((offer.discount or 0) * 100 + 0.5),
-					price = offer.price,
-					base = offer.base,
-				})
-			GardenUi.TextColumn(row, CART_WIDTH + GAP, Locale.T("field.cart.row", { crop = GardenUi.CropTitle(crop), left = offer.left, count = offer.count }), info)
+				then Locale.T("field.cart.taste")
+				else Locale.T("field.cart.bargain", { percent = math.floor((offer.discount or 0) * 100 + 0.5) })
+			local title = if offer.left > 0 then Locale.T("field.cart.row", { crop = GardenUi.CropTitle(crop), left = offer.left }) else GardenUi.CropTitle(crop)
+			local column = GardenUi.TextColumn(row, CART_WIDTH + GAP, title, info)
+			local infoLabel = column:FindFirstChild("Info") :: TextLabel
+			infoLabel.TextSize = 15
+			infoLabel.TextColor3 = GardenUi.COLOR_RARE
 			local cost = offer.price * offer.left
 			local affordable = offer.left > 0 and coinsNow() >= cost and total + offer.left <= capacity
 			local buy = GardenUi.Button("Buy", {
 				LayoutOrder = 2,
-				Size = UDim2.fromOffset(CART_WIDTH, tap),
+				Size = UDim2.fromOffset(CART_WIDTH, math.max(tap, 50)),
 				BackgroundColor3 = if affordable then GardenUi.COLOR_BUY else GardenUi.COLOR_LOCKED,
-				TextSize = 15,
+				TextSize = 18,
 				TextWrapped = true,
 				Text = if offer.left > 0 then Locale.T("field.upgrade.price", { count = cost }) else Locale.T("field.cart.soldOut"),
 				Parent = row,
@@ -143,71 +157,106 @@ local function renderCart(field, tap: number)
 			end
 		end
 	end
-	GardenUi.Paragraph("Note", { LayoutOrder = 50, TextSize = 12, TextColor3 = GardenUi.COLOR_DIM, Text = Locale.T("field.cart.note") }).Parent =
-		cartSection
 end
 
 local function renderSeeds(field, tap: number)
 	GardenUi.Clear(seedsSection)
 	GardenUi.Heading(seedsSection, 1, Locale.T("field.section.seeds"), COLOR_PANEL)
-	GardenUi.Paragraph("GrowthHint", { LayoutOrder = 2, TextSize = 13, TextColor3 = GardenUi.COLOR_DIM, Text = GardenUi.GrowthHint(field) }).Parent = seedsSection
-	stallTimer = nil
-	local stall = field.stall
-	if stall then -- ST: the restock countdown
-		local line = GardenUi.Paragraph("Restock", { LayoutOrder = 2, TextSize = 13, TextColor3 = GardenUi.COLOR_DIM, Text = "" })
-		line.Parent = seedsSection
-		stallTimer = { label = line, at = stall.endsAt }
-		line.Text = Locale.T("seedStall.restock", { time = GardenUi.Countdown(stall.endsAt - workspace:GetServerTimeNow()) })
-	end
 	local total = CropConfig.SeedTotal(field.seeds)
 	local capacity = GardenUi.BarnOf(field)
+	-- one line under the heading: the barn on the left, the restock countdown on the right (ST)
+	local head = GardenUi.Create("Frame", {
+		Name = "Head",
+		LayoutOrder = 2,
+		Size = UDim2.new(1, 0, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		BackgroundTransparency = 1,
+		Parent = seedsSection,
+	}, {
+		GardenUi.Create("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, GAP) }),
+	})
+	GardenUi.Paragraph("Barn", {
+		LayoutOrder = 1,
+		Size = UDim2.new(0.5, -GAP / 2, 0, 0),
+		TextSize = 14,
+		TextColor3 = if total >= capacity then GardenUi.COLOR_ERROR else GardenUi.COLOR_INFO,
+		Text = Locale.T("field.barn", { total = total, capacity = capacity }),
+	}).Parent = head
+	stallTimer = nil
+	local stall = field.stall
+	if stall then
+		local line = GardenUi.Paragraph("Restock", {
+			LayoutOrder = 2,
+			Size = UDim2.new(0.5, -GAP / 2, 0, 0),
+			TextSize = 14,
+			TextColor3 = GardenUi.COLOR_DIM,
+			TextXAlignment = Enum.TextXAlignment.Right,
+			Text = Locale.T("seedStall.restock", { time = GardenUi.Countdown(stall.endsAt - workspace:GetServerTimeNow()) }),
+		})
+		line.Parent = head
+		stallTimer = { label = line, at = stall.endsAt }
+	end
 	local nextCrop = CropConfig.NextLocked(GardenUi.Mastery(field).unlocked)
+	local later = nil -- the one line that lists the crops opening later (icons only)
+	local laterIcons = {}
 	for index, crop in CropConfig.Crops do
 		local order = index * 10
 		local locked = not GardenUi.IsUnlocked(field, crop)
+		if locked and not crop.rare and crop ~= nextCrop then
+			table.insert(laterIcons, crop.icon)
+			if not later then
+				later = GardenUi.Paragraph("Later", { LayoutOrder = order, TextSize = 14, TextColor3 = GardenUi.COLOR_DIM, Text = "" })
+				later.Parent = seedsSection
+			end
+			continue
+		end
 		local stock = field.seeds[crop.id] or 0
 		local reserved = if locked or crop.rare then LOCK_WIDTH + GAP else BUY1_WIDTH + BUY10_WIDTH + STAR_WIDTH + GAP * 3
 		local row = GardenUi.Row(seedsSection, crop.id, order, COLOR_ROW)
-		local seconds = GardenUi.GrowSecondsOn(field, crop)
-		local grow = GardenUi.GrowTime(seconds)
-		local info = if crop.rare
-			then Locale.T("field.seed.rareInfo", { time = grow, sale = crop.sale, stock = stock })
-			else Locale.T("field.seed.info", { time = grow, sale = GardenUi.SalePrice(field, crop), seed = crop.seed, stock = stock })
-		if not crop.rare then -- FL: net Coins per hour of one square, so a quick crop of a higher tier does not read as worse
-			local rate = (GardenUi.SalePrice(field, crop) - crop.seed) * 3600 / math.max(1, seconds)
-			info ..= "\n" .. Locale.T("field.seed.rate", { coins = math.floor(rate + 0.5) })
-		end
 		local left = if stall and not locked then stall.left[crop.id] else nil -- ST: nil = always in stock
-		if left and left > 0 then
-			info ..= "\n" .. Locale.T("seedStall.left", { count = left })
-		end
+		local info = nil
 		local lockText = nil
-		local previous, need = nil, nil
-		if crop.rare then -- rare seeds come only from the obby (E2a): the row says from which world
-			lockText = Locale.T("field.seed.fromWorld", { world = Locale.WorldName(StageConfig.Worlds[crop.world]) })
-		elseif locked and crop == nextCrop and crop.quest then
+		if locked and crop == nextCrop and crop.quest then
 			lockText = Locale.T("field.seed.questLock")
-			info ..= "\n" .. Locale.T("field.seed.questHint")
-		elseif locked and crop == nextCrop then
-			previous, need = CropConfig.UnlockNeed(crop)
+			info = Locale.T("field.seed.questHint")
+		elseif locked then -- the next crop: how it opens, nothing else
+			local previous, need = CropConfig.UnlockNeed(crop)
 			lockText = Locale.T("field.seed.lockBar", {
 				icon = previous.icon,
 				have = math.min(GardenUi.PlantsOf(field, previous), need),
 				need = need,
 			})
-			info ..= "\n" .. Locale.T("field.seed.unlockHint", { crop = Locale.CropName(previous) })
-		elseif locked then
-			lockText = Locale.T("field.seed.lockedLater")
+			info = Locale.T("field.seed.unlockHint", { crop = Locale.CropName(previous) })
 		else
-			local mastery = GardenUi.MasteryLine(field, crop)
-			if mastery then
-				info ..= "\n" .. mastery
+			info = Locale.T("field.seed.info", { time = GardenUi.GrowTime(GardenUi.GrowSecondsOn(field, crop)), sale = Locale.Number(GardenUi.SalePrice(field, crop)) })
+			local extra = {}
+			if stock > 0 then
+				table.insert(extra, Locale.T("field.seed.have", { stock = stock }))
+			end
+			if #extra > 0 then
+				info ..= "\n" .. table.concat(extra, " · ")
+			end
+			if crop.rare then -- rare seeds come only from the obby (E2a): the row says from which world
+				lockText = Locale.T("field.seed.fromWorld", { world = Locale.WorldName(StageConfig.Worlds[crop.world]) })
 			end
 		end
 		if not (locked or crop.rare) then
-			GardenUi.StarButton(row, field, crop, STAR_WIDTH, tap, 0, "SeedStallGui") -- EV3c: the crop page
+			GardenUi.StarButton(row, field, crop, STAR_WIDTH, math.max(tap, 50), 0, "SeedStallGui") -- EV3c: the crop page
 		end
-		GardenUi.TextColumn(row, reserved, GardenUi.CropTitle(crop) .. GardenUi.Stars(field, crop), info)
+		local column = GardenUi.TextColumn(row, reserved, GardenUi.CropTitle(crop) .. GardenUi.Stars(field, crop), info)
+		if left and left > 0 and not locked then -- ST: what is left of a rotating crop, a bold line right under the name (red at 3 or fewer)
+			local info = column:FindFirstChild("Info")
+			if info then
+				info.LayoutOrder = 3
+			end
+			GardenUi.Paragraph("Left", {
+				LayoutOrder = 2,
+				Font = StudStyle.Font,
+				TextSize = 16,
+				TextColor3 = if left <= 3 then GardenUi.COLOR_ERROR else GardenUi.COLOR_RARE,
+				Text = Locale.T("seedStall.left", { count = left }),
+			}).Parent = column
+		end
 		if lockText then
 			GardenUi.Paragraph("Locked", {
 				LayoutOrder = 2,
@@ -228,7 +277,7 @@ local function renderSeeds(field, tap: number)
 				LayoutOrder = 2,
 				Size = UDim2.new(0, BUY1_WIDTH + BUY10_WIDTH + GAP, 0, 0),
 				Font = StudStyle.Font,
-				TextSize = 15,
+				TextSize = 16,
 				TextColor3 = GardenUi.COLOR_DIM,
 				TextXAlignment = Enum.TextXAlignment.Center,
 				Text = Locale.T("seedStall.backSoon"),
@@ -237,14 +286,7 @@ local function renderSeeds(field, tap: number)
 			for slot, option in { { name = "Buy1", amount = 1, width = BUY1_WIDTH }, { name = "Buy10", amount = math.min(10, left or 10), width = BUY10_WIDTH } } do
 				local price = crop.seed * option.amount
 				local affordable = coinsNow() >= price and total + option.amount <= capacity
-				local buy = GardenUi.Button(option.name, {
-					LayoutOrder = slot + 1,
-					Size = UDim2.fromOffset(option.width, tap),
-					BackgroundColor3 = if affordable then GardenUi.COLOR_BUY else GardenUi.COLOR_LOCKED,
-					TextSize = 16,
-					Text = "+" .. option.amount,
-					Parent = row,
-				}, 2)
+				local buy = priceBrick(row, option.name, slot + 1, option.width, tap, "+" .. option.amount, price, if affordable then GardenUi.COLOR_BUY else GardenUi.COLOR_LOCKED)
 				ConfirmTap.Wrap(buy, "Seed" .. crop.id .. option.amount, function()
 					return ConfirmTap.Over(price)
 				end, function()
@@ -253,21 +295,17 @@ local function renderSeeds(field, tap: number)
 			end
 		end
 	end
-	local after = (#CropConfig.Crops + 1) * 10
-	GardenUi.Paragraph("Barn", {
-		LayoutOrder = after,
-		Font = StudStyle.Font,
-		TextSize = 15,
-		TextColor3 = if total >= capacity then GardenUi.COLOR_ERROR else Color3.new(1, 1, 1),
-		Text = Locale.T("field.barn", { total = total, capacity = capacity }),
-	}).Parent = seedsSection
-	GardenUi.Paragraph("Note", { LayoutOrder = after + 1, TextSize = 12, TextColor3 = GardenUi.COLOR_DIM, Text = Locale.T("field.seed.note") }).Parent =
-		seedsSection
+	if later then
+		later.Text = Locale.T("seedStall.later", { icons = table.concat(laterIcons, " ") })
+	end
 end
 
+-- Sell tab: per harvested crop 1 / 10 / all bricks, each with the Coins it pays (SaleValue of that part of the stored sizes, then the
+-- pet multiplier, rounded as CoinRewards.Grant does). A sale worth more than ConfirmTap.THRESHOLD takes two taps.
 local function renderSell(field, tap: number)
 	GardenUi.Clear(sellSection)
 	GardenUi.Heading(sellSection, 1, Locale.T("field.section.crops"), COLOR_PANEL)
+	local multiplier = tonumber(type(PetClient.State) == "table" and PetClient.State.multiplier) or 1
 	local any = false
 	for index, crop in CropConfig.Crops do
 		local owned = field.items[crop.id] or 0
@@ -275,15 +313,32 @@ local function renderSell(field, tap: number)
 			any = true
 			local row = GardenUi.Row(sellSection, crop.id, index + 1, COLOR_ROW)
 			local best = field.best and field.best[crop.id]
+			local sizes = field.sizes and field.sizes[crop.id] or owned
+			local points = GardenUi.PointsOf(field, crop)
+			local amounts = {}
+			if owned > 1 then
+				table.insert(amounts, { name = "Sell1", count = 1, label = "1" })
+			end
+			if owned > 10 then
+				table.insert(amounts, { name = "Sell10", count = 10, label = "10" })
+			end
+			table.insert(amounts, { name = "Sell", count = owned, label = Locale.T(if owned > 1 then "seedStall.sell.all" else "seedStall.sell.one") })
 			GardenUi.TextColumn(
 				row,
-				SELL_WIDTH + GAP,
+				#amounts * (SELL_WIDTH + GAP),
 				string.format("%s × %s", GardenUi.CropTitle(crop), Locale.Number(owned)),
 				if best then Locale.T("field.crop.best", { kg = GardenUi.KgText(crop, best) }) else nil
 			)
-			GardenUi.SellButton(row, crop, field, PetClient.State, SELL_WIDTH, tap, 2, function(id, count)
-				sellEvent:FireServer(id, count)
-			end)
+			for slot, amount in amounts do
+				local paid = math.floor(CropConfig.SaleValue(crop, sizes * amount.count / owned, points) * multiplier + 0.5 + 1e-9)
+				local sell = priceBrick(row, amount.name, slot + 1, SELL_WIDTH, tap, amount.label, paid, GardenUi.COLOR_SELL)
+				local cropId, count = crop.id, amount.count
+				ConfirmTap.Wrap(sell, "Sell" .. cropId .. count .. "of" .. owned, function()
+					return paid > ConfirmTap.THRESHOLD
+				end, function()
+					sellEvent:FireServer(cropId, count)
+				end)
+			end
 		end
 	end
 	if not any then
