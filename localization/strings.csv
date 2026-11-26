@@ -435,6 +435,11 @@ field.cropPage.points[one],Crop page (EV3c) and the Goals panel's Upgrades row: 
 field.cropPage.points[few],Form for 2-4 (Czech only),,{count} body k utracení,new,hfbc4a926
 field.cropPage.points[other],Form for 0 and 5+,{count} points to spend,{count} bodů k utracení,new,hfbc4a926
 field.cropPage.allDone,Crop page: all three points of this crop are spent (mastery ★3),Fully upgraded!,Vylepšeno naplno!,new,hf97b53b4
+field.cropPage.title,"Crop page title next to the crop icon: the crop and the player's rank in it, e.g. ""Cucumber Expert""; {crop} = crop name (nominative singular), {rank} = field.cropPage.rank.* (by mastery stars 0-3). ~300 px at 20 px, one line",{crop} {rank},{crop} · {rank},new,h9fe2b75d
+field.cropPage.rank.0,Crop page title: the player's rank in a crop with no mastery star yet (in {rank} of field.cropPage.title). Czech uses the generic masculine (the game does not know the player's gender),Rookie,Nováček,new,hd92cba86
+field.cropPage.rank.1,Crop page title: rank in a crop with mastery ★1 (see field.cropPage.rank.0),Apprentice,Pěstitel,new,h17167a84
+field.cropPage.rank.2,Crop page title: rank in a crop with mastery ★2 (see field.cropPage.rank.0),Expert,Odborník,new,hf81b815f
+field.cropPage.rank.3,Crop page title: rank in a crop with all three mastery stars (see field.cropPage.rank.0),Master,Mistr,new,h1cdaacd5
 field.cropPage.free[one],"Crop page, green line under the star track: upgrade points of this crop to spend now; {count} = points (1-3). Form for 1",{count} point to spend: pick an upgrade,Máš {count} bod: vyber vylepšení,new,h84142f70
 field.cropPage.free[few],Form for 2-4 (Czech only),,Máš {count} body: vyber vylepšení,new,h84142f70
 field.cropPage.free[other],Form for 0 and 5+,{count} points to spend: pick an upgrade,Máš {count} bodů: vyber vylepšení,new,h84142f70

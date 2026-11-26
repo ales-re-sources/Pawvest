@@ -617,7 +617,8 @@ There is no Garden panel; each piece sits where it is used.
   barn". **No reset** (decided, not built): later a paid comfort (D2) or an event item; by EXPANSION §13 rule 4 a paid reset needs that
   earnable path too; a reset only moves points, never adds any.
   - **Crop page** (a ★ brick on the stall's and the barn's crop rows, "★+" on green while a point is free; the Goals panel's *Upgrades*
-    section lists such crops). A star track: the crop's icon and the three ★ evenly spaced on one bar, each star
+    section lists such crops). Titled with the crop and the player's rank in it, one per star count: Rookie / Apprentice / Expert / Master
+    ("🥒 Cucumber Expert"; Czech "Okurka · Odborník"). A star track: the crop's icon and the three ★ evenly spaced on one bar, each star
     one point (gold = earned, a green "+1" while its point is unspent, faint = still to grow), the segment toward the next star is the
     progress bar ("30 / 225") with each star's plant count under it; one fixed line: "1 point to spend: pick an upgrade", "Fully
     upgraded!" or, with no point free, "Each ★ gives 1 point. A spent point stays.". Three cards (icon tile, name, the effect as numbers

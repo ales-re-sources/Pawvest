@@ -323,9 +323,17 @@ local function renderStats(field, crop)
 	end
 end
 
+-- "🥒 Cucumber Expert": the crop and the player's rank in it, one rank per mastery star (field.cropPage.rank.0-3).
+local function rankTitle(field, crop): string
+	local level = CropConfig.MasteryLevel(crop, GardenUi.PlantsOf(field, crop), GardenUi.PointsOf(field, crop))
+	return crop.icon .. " " .. Locale.T("field.cropPage.title", {
+		crop = Locale.CropName(crop), rank = Locale.T("field.cropPage.rank." .. level),
+	})
+end
+
 local function render()
 	local crop = shown and CropConfig.ById[shown]
-	ui.title.Text = if crop then GardenUi.CropTitle(crop) .. GardenUi.Stars(GardenView.OwnField(), crop) else ""
+	ui.title.Text = if crop then rankTitle(GardenView.OwnField(), crop) else ""
 	if not (crop and ui.panel.Visible) then
 		return
 	end
