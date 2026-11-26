@@ -1,4 +1,4 @@
--- Seed stall (U4, docs/UI_GARDEN_PETS.md §6, §9.1): the plaza's seed shop beside the food stand, one shop for everyone.
+-- Seed stall (U4, docs/GDD.md §7.9, §7.6): the plaza's seed shop beside the food stand, one shop for everyone.
 --   * the prompt on Workspace.Garden.SeedStall's Counter opens the panel (texts set here through Locale);
 --   * panel: the market cart's offers on top (E1c4: a row per offer, "New offers in 3:20:00", buys what is left of it), then the
 --     seed catalogue (+1 / +10 per unlocked crop with its mastery ★ and line, EV3b, a ★ brick that opens its crop page and the sale

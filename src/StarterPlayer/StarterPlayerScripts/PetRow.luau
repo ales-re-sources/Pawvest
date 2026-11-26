@@ -1,4 +1,4 @@
--- PetRow (U1, docs/UI_GARDEN_PETS.md §9): the left part of a pet row, shared by the Pets panel and the food stand. Display only:
+-- PetRow (U1, docs/GDD.md §7.5): the left part of a pet row, shared by the Pets panel and the food stand. Display only:
 -- the numbers come from PetClient (OwnedPet) and the stored pet (PetClient.State.pets[uid]).
 --   Traits                        the working traits in chip order: { id, icon, color }; ByTrait[id] = the same entry
 --   Fill(row, entry, opts)        adds to `row` (a Frame ROW px high): portrait with a level badge (PetConfig.PetLevel) and a status

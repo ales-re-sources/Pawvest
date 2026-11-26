@@ -1,4 +1,4 @@
--- Goals (EV3b2, docs/UI_GARDEN_PETS.md §13): the tracker line and the Goals panel.
+-- Goals (EV3b2, docs/GDD.md §7.9 (Goals)): the tracker line and the Goals panel.
 --   * tracker line: a wooden plate in the score panel's place (top right, under the coin plate) everywhere except on a stage
 --     (player attribute HudStage, PlayerTimerHandler; there ScorePanelClient shows the run view): the next crop's goal,
 --     "🥔 8 / 12 → 🥬 Lettuce" and a bar (the previous crop's plants toward the unlock, or the milestone quest's least-done piece,

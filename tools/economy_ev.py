@@ -37,7 +37,7 @@ RARITIES = ("Common", "Uncommon", "Rare", "Epic", "Legendary")
 CAND = {
     # crop ladder: (id, grow seconds); the CropConfig ids keep their names, "FP<n>" = Future plant n (model-only)
     # OG2b: doubled growth-second durations cancel the ×2 / ×1 rates; v1 halves to keep every sale / seed price unchanged.
-    # FL (2026-11-21, ECONOMY.md → Findings (FL)): grow time is a choice inside a price tier (short / medium / long), the longest crop
+    # FL (2026-11-21, ECONOMY.md → Decisions (FL)): grow time is a choice inside a price tier (short / medium / long), the longest crop
     # 14 h; until FL the ladder rose with every crop (20 s … 48 h: Corn 1 h, Broccoli 4 h, Pumpkin 6 h, Eggplant 8 h, Blueberry 12 h,
     # Sweet potato 16 h, Giant melon 24 h, Sunflower 36 h, Pineapple 48 h).
     "ladder": [("Potato", 20), ("FP1", 60), ("FP2", 120), ("FP3", 360), ("FP4", 960), ("FP5", 1800), ("Corn", 900), ("FP6", 7200),
@@ -119,7 +119,7 @@ CAND = {
     # UTC schedule (the same draw on every server, counts per player). Always in stock (bought on planting, like the staples): the
     # staples (ladder index < stall_staples), the next talent's bundle crops, the open quest's crops and (st_newest) the newest unlocked
     # crop. Every other unlocked crop shows with chance st_p, and at least every st_pity restocks (staggered by crop), with st_n seeds.
-    # The ST candidate (2026-11-17, ECONOMY.md → Findings "ST"): hourly restocks, staples Potato-Onion (stall_staples 3), 12 seeds.
+    # The ST candidate (2026-11-17, ECONOMY.md → Decisions "ST"): hourly restocks, staples Potato-Onion (stall_staples 3), 12 seeds.
     # Without st_newest the first hour loses its news (G7 failed on every seed).
     "st": True, "st_every": 3600, "st_p": 0.5, "st_pity": 3, "st_n": 12, "st_newest": True,
     # st_long (FL): the newest unlocked crop of >= st_long seconds is always in stock too (an overnight staple; with one long crop per
@@ -202,7 +202,7 @@ CAND = {
     # grows only from activity, up to the cap: time with you (with_you_xp care XP per online minute, every equipped pet) and obby runs
     # (their care XP x obby_above once Cuteness is at or past the limit); work traits take care XP only up to the limit (their jobs as
     # now). fd False = the game before FD (Cuteness care to the cap, work traits to PetConfig.CareLevelCap, flat food prices).
-    # Model pass (2026-11-21, ECONOMY.md → Findings (FD)): obby care XP is ~3x the designed time with you of a Casual (1 500 vs 450 XP a
+    # Model pass (2026-11-21, ECONOMY.md → Decisions (FD)): obby care XP is ~3x the designed time with you of a Casual (1 500 vs 450 XP a
     # day). Decided (the user, 2026-11-21): Cuteness to ~10 (where a pet contributes) quick, by food; the max not easy: ~90 days for a
     # daily player (Casual). Obby time counts more than time with you: time with you 10x slower than designed (0.75 XP per online
     # minute), obby care XP x 0.04 past the food limit (~1.4 XP per obby minute). Casual's day-7 Legendary 10 -> 20 in ~88 days
@@ -210,7 +210,7 @@ CAND = {
     # A fed crop gives its sale x the weakest food's XP per Coin at the pet's level (crop_xp).
     "fd": True, "food_limit": 0.5, "food_growth": 2.65, "with_you_xp": 0.75, "obby_above": 0.04,
     # FD rarity factor (the user, 2026-11-21: "scale by rarity"): food prices x this by the pet's rarity, fitted to the first pet of
-    # each rarity: its bootstrap to the food limit costs ~1-20 % of the 24 h income before it arrives (ECONOMY.md → Findings (FD)).
+    # each rarity: its bootstrap to the food limit costs ~1-20 % of the 24 h income before it arrives (ECONOMY.md → Decisions (FD)).
     # Common-Epic arrive in the first two days, when Casual is poorest (x1 already 12-17 %); a Legendary arrives on day 3-41 (x1: ~1 %).
     # Fed crops follow (the Berry's price for that pet).
     "food_rarity": {"Common": 1, "Uncommon": 1, "Rare": 1, "Epic": 1, "Legendary": 10},
@@ -2200,7 +2200,7 @@ def checks(M, days=60, verbose=True):
         top = s.unlock_t.get(len(M["crops"]) - 1)
         top = top / DAY if top else None
         tool = s.buy_day.get("Shears 3")
-        # top crop from day 10 (the user, 2026-11-21: the quicker pace of the flatter ladder, ECONOMY.md → Findings (FL); was 14)
+        # top crop from day 10 (the user, 2026-11-21: the quicker pace of the flatter ladder, ECONOMY.md → Decisions (FL); was 14)
         top_ok = top is None or (10 <= top <= 28 if p == "talent-first" else top >= 10)
         ok = (leg is None or leg >= 14) and top_ok and (tool is None or tool >= 14)
         ok9 &= ok

@@ -1,5 +1,5 @@
 --!strict
--- ConfirmTap (U4, docs/UI_GARDEN_PETS.md §10): the one confirm pattern for every spend over THRESHOLD Coins and for Sell. Client only.
+-- ConfirmTap (U4, docs/GDD.md §7.10): the one confirm pattern for every spend over THRESHOLD Coins and for Sell. Client only.
 -- The first tap turns the button orange with "Tap again" for SECONDS; a second tap within that time fires. Spends at or under the
 -- threshold fire on the first tap. The armed state is kept by `key`, so a panel that rebuilds its rows between the two taps keeps it.
 --

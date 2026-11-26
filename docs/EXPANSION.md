@@ -1,23 +1,19 @@
 # Pawvest — pet-garden expansion design (E1–E11, drops D1–D10)
 
-**Status (2026-11-05).** The direction was decided 2026-10-24 / 25 and reworked 2026-10-30 (pets on field squares, aptitudes, seed pouch and
-rare-seed meter) and 2026-11-02 (farming is the main game). **Built and open to every player since FA** (2026-11-06; the P2 pens are gone): the
-field, crops, size roll, Renown, upgrades and tier-1 tools, the market cart, field pets with aptitudes and Tending, obby seeds, crows and
-Pest-control guards. The as-built rules are in **GDD §7.9** and the numbers in `CropConfig` / `PetConfig` (pinned by `tools/economy.py`). This
-document keeps the **design not built yet** plus the rules every drop must follow (§1.1, §13); each section says what of it is built.
-Compacted 2026-11-05; the full brainstorm text (superseded variants, the E1 migration list, the plot spike numbers) is in
-`git show 87b1d3c:docs/EXPANSION.md`.
+**Status.** Built and open to every player: the crop field, crops, size roll, crop mastery, upgrades and tier-1 tools, the market cart and
+rotating seed stall, field pets with aptitudes and Tending, obby seeds, crows and Pest-control guards, the request board, the Harvest Hall and
+plot likes (rules in **GDD §7.6–7.9**; numbers in `CropConfig` / `PetConfig`, pinned by `tools/economy.py`; state in the ROADMAP status
+table). This document keeps the **design not built yet** plus the rules every drop must follow (§1.1, §13); each section says what of it is built.
 
-**Name: Pawvest** (decided 2026-10-24). Store subtitle "Pets · Garden · Obby", tagline "Grow. Guard. Run.". Availability on Roblox and the
-trademark are still to be checked. Avoid leading with "Grow" / "Garden" (the market leader "Grow a Garden" has pets with abilities). Numbers
-below are placeholders until the economy model takes them ([ECONOMY.md](ECONOMY.md)); milestones become ROADMAP entries when they start.
+**Name: Pawvest.** Store subtitle "Pets · Garden · Obby", tagline "Grow. Guard. Run.". Availability on Roblox and the trademark are still
+to be checked. Avoid leading with "Grow" / "Garden" (the market leader "Grow a Garden" has pets with abilities). Numbers below are
+placeholders until the economy model takes them ([ECONOMY.md](ECONOMY.md)); milestones become ROADMAP entries when they start.
 
 ## 1. Vision and pillars
 **Pitch:** *grow things, put your pets on guard, run obbies for rare seeds.*
 
-The obby is finite content (players finish stages faster than they can be built); **systems** (crops growing, critters at the fence, the
-forecast, weekly events) give a reason to come back, pets differ in *what they can do*, not in how big their number is, and the obby and
-mini-games supply the garden with what it cannot make.
+The obby is finite content; **systems** (crops growing, critters at the fence, the forecast, weekly events) give a reason to come back, pets
+differ in *what they can do*, not in how big their number is, and the obby and mini-games supply the garden with what it cannot make.
 
 | Pillar | Meaning |
 |---|---|
@@ -25,32 +21,25 @@ mini-games supply the garden with what it cannot make.
 | One pet, one place | A pet is in one place at a time (a field square or with you); allocation is the game |
 | The garden is a place | It grows while you are away, is attacked while you are away, and visibly evolves |
 | The obby is the expedition | A skilful run brings back things the garden cannot make |
-| Earned, not rolled | Rare results (variants, rare crops, pets' best forms) come from what the player did: obby runs, crafting, pet aptitudes; never from a slot machine |
+| Earned, not rolled | Rare results (variants, rare crops, pets' best forms) come from what the player did; never from a slot machine |
 | Coins buy verbs and looks | Coins unlock tools, abilities and a visible estate, never just a bigger number |
 | Robux buys comfort | Time, capacity reached sooner, convenience and cosmetics; never luck, never a random item, never weather (§13) |
 
-**GDD pillars:** since 2026-11-02 farming is the main income (the field earns about the obby's Coins over days 1–3, then far more; targets in
-ECONOMY.md), and the best crops are reachable only through the obby. Pillar 3 (fair leaderboards) is unchanged: pets, tools and anything bought
-never touch movement or stage times. GDD §9 follows §13: no Coin packs, no Robux eggs.
+**GDD pillars:** farming is the main income (targets in ECONOMY.md), and the best crops are reachable only through the obby. Fair
+leaderboards are unchanged: pets, tools and anything bought never touch movement or stage times. GDD §9 follows §13: no Coin packs, no Robux eggs.
 
 ### 1.1 Not another Grow a Garden
 Pawvest shares a proven genre loop (plant, wait, harvest, sell, upgrade) with the market leader. Sharing *only* the loop is the danger: next to
 a much bigger game we lose on every shared axis, a "ripoff" reputation sticks, and the leader's excitement comes from gambling that Pawvest
-rules out. Rules (reviewed 2026-10-25), **checked for every drop before it ships**:
+rules out. Rules, **checked for every drop before it ships**:
 - **Lead with what is ours.** The first ten minutes, the store page and the thumbnail show the obby, pets on guard and critters at the fence;
   planting and selling are the frame, not the hook.
-- **Avoid the leader's signature mechanics:** no seed shop restocking every few minutes (a daily market cart and a stall rotating every few hours instead, ST), no random weather
-  mutations (variants are earned, §5.3), no buying weather for a server (§13), no gear named like theirs (sprinklers, trowels; §6).
-- **Our weather serves the defence:** it drives the forecast of critter visits (§7, §9.1), not a mutation lottery.
-- **Size is social:** the size roll feeds a weekly Harvest Fair (§9.3), not only a number.
-
-| Ours, nowhere else in the genre | Shared with the genre, kept as the frame |
-|---|---|
-| The obby as the expedition (skill earns rare seeds), farm stages | Plant, wait, harvest, sell |
-| Pets as characters with aptitudes, a place on the field and quirks | Crop tiers and a seed catalogue |
-| Critter defence with a forecast | Crop size |
-| Earned variants (crafted fertilisers, pet aptitudes) | Growth upgrades |
-| Island restoration bundles, no gambling at all | Visiting other plots |
+- **Avoid the leader's signature mechanics:** no seed shop restocking every few minutes (a daily market cart and a stall rotating every few
+  hours instead), no random weather mutations (variants are earned, §5.3), no buying weather for a server (§13), no gear named like theirs
+  (sprinklers, trowels; §6).
+- **Our weather serves the defence:** it drives the forecast of critter visits (§7, §9.1), not a mutation lottery. (HYBRIDS.md: hybrids are
+  bred, not a weather lottery; the term is still open.)
+- **Size is social:** the size roll feeds the Harvest Hall and a weekly Harvest Fair (§9.3), not only a number.
 
 ## 2. Decided
 | Topic | Decision |
@@ -63,41 +52,30 @@ rules out. Rules (reviewed 2026-10-25), **checked for every drop before it ships
 | Unifying rule | One pet, one place: pets stand on field squares (no pens, no posts), reach by aptitude level (§3) |
 | Long goals | Island restoration bundles, estate tiers + cottage, pet mastery, garden score — all four (§12) |
 | Decoration | Free placement **outside only**, per-tier limit, validated on the server; the cottage is fixed |
-| Field | One field of squares planted freely; **78 squares** (36 until FX, 2026-11-22), any square opened by choice at a price by the number open (2026-11-03, F2; built; a flat 40 M from the 37th since FXP) |
-| Garden vs obby | **Farming first** (2026-11-02): the 24-hour rule of 2026-10-24 is only reported now; the targets are in ECONOMY.md |
-| Online vs offline | Crop growth runs at **2 online / 1 offline, capped at 24 h** per absence (OG2, 2026-11-20). Base crop durations doubled in OG2b to preserve the prior real growth pace. Displayed crop time is the away-time baseline and ticks faster while playing; it pauses after the cap. Field-job XP keeps its separate 1 / 0.5 clock. Never pure AFK (Roblox no longer pays for uptime) |
-| Prices | E0 re-prices every sink; applied after the user's approval (E0b) |
-| Seed shop | *1.0 (2026-11-17):* crops open by **crop mastery** (EV3, replacing Renown), priced in **tiers of 2–3 crops** that earn alike per hour (EV3 revision), and the stall offers a **rotating subset** restocked every 1–3 h on a UTC schedule (ST, ROADMAP). As built: a fixed **catalogue** gated by Renown (and obby unlocks, §8.1) plus a daily **market cart** (same on every server, per-player counts; built); a weekly visitor later. Rare seeds are never sold |
+| Online vs offline | Crop growth runs 2 online / 1 offline, capped at 24 h per absence (GDD §7.9); never pure AFK (Roblox no longer pays for uptime) |
+| Seed shop | Mastery-gated catalogue, a rotating stall and a daily market cart (built); rare seeds are never sold |
 | Harvest rolls | Every harvest rolls a **size** (built). **Variants** are **earned**: fertilisers from rare crops and pet aptitudes / quirks give the chance, weather only adds a bonus (§5.3) |
-| Garden tools | A Coin tree gated by Renown beside the obby skills; **no tool raises variant chance** (§6) |
-| Critters first | A thin critter loop is in the MVP (crows: built); the full set is the first drop (§7, §14) |
 | Farm stages | Obby stages themed on the farm; each owns one unique rare crop (§8.2) |
 | Mini-game gates | Mini-games may gate content only by **completion**, never by time or skill ceiling (§8.3) |
-| Monetization | No paid random items, luck and weather are never sold; Robux buys comfort (§13) |
 | Live ops | A drop every **1–2 weeks**; systemic content (forecast, market cart, weekly challenge, fair) before authored seasons (§9, §14) |
-| Field pets | A pet on a square works the squares in its reach; 1 free + 4 bought field pet slots; a pre-field profile's pens converted into slots without a refund (built; pens removed in FA) |
-| Aptitudes | Born with jobs, each with its own level 1–10 raised by doing it; rarity gives more aptitudes and a higher cap (6–10); the same level does the same on every pet (built: data, Tending, Pest control, Scouting) |
-| Stage seed rewards | Seed pouch + per-stage rare-seed meter (no drop chance); Scouting adds packets and meter speed, capped; pets never touch times (built) |
+| Monetization | No paid random items, luck and weather are never sold; Robux buys comfort (§13) |
 
 ## 3. One pet, one place
-*Built for Tending and Pest control (GDD §7.9): squares, slots, reach 1 / 5 / 9 squares at levels 1–3 / 4–6 / 7–10, the strongest pet of a job
-counts on overlaps, a pet with both jobs does both, "with you" = the 3 equipped slots (Scouting, Coin multiplier).*
+*Built for Tending and Pest control (GDD §7.9): squares, slots, reach by aptitude level, the strongest pet of a job counts on overlaps, a pet
+with both jobs does both, "with you" = the 3 equipped slots (Scouting, Coin multiplier).*
 
 Not built / open:
 - **Fertilising and Weeding** on the field arrive with their drops (D4, D1). Open: whether a pet with several field aptitudes does all of them
-  (as Tending + Pest control do since 2026-11-04) or picks one job when placed.
-- **Placement highlight:** placing a pet shows the squares it would cover.
+  (as Tending + Pest control do) or picks one job when placed.
 - **Placement is the end-of-session decision:** guards to the side the forecast names (§7), tenders to the long crops; the middle covers more
   than a corner.
 - **Moving field pets from far away** (from the Pets panel during an obby session; today garden actions need the own plot): open, §16.
 
 ## 4. Pet aptitudes, quirks and bond
-*Built (GDD §7.9, `PetConfig`): the six aptitude ids (Tending, Fertilising, Pest control with a speciality, Weeding, Scouting, Crafting),
-levels 1–10 with diminishing effect (20 % at 1 to 100 % at 10), counts and caps by rarity, rolled once from the uid with the kind leaning the
-draw, XP per weighted field hour. Only Tending, Pest control and Scouting do something yet; Fertilising arrives with D4, Weeding with D1,
-Crafting with the stations. P4 (2026-11-05) added **Cuteness** (the Coin bonus as a trait, rolled by rarity chance), rolls new pets only from
-the working traits (Fertilising / Weeding / Crafting rejoin the hatch pool when built), and made the pet level the highest trait level (1–10,
-size and look follow it); food and obby XP train Cuteness, else work traits; food only up to half the rarity cap (FD, GDD §7.4).*
+*Built (GDD §7.9, `PetConfig`): the aptitude ids (Cuteness, Tending, Fertilising, Pest control with a speciality, Weeding, Scouting,
+Crafting), levels 1–10 with diminishing effect, counts and caps by rarity, rolled once from the uid with the kind leaning the draw, XP per
+weighted field hour. Cuteness carries the Coin bonus; the pet level is the highest trait level (size and look follow it); new pets roll only
+working traits (Fertilising / Weeding / Crafting rejoin the hatch pool when built). Only Tending, Pest control and Scouting do something yet.*
 
 **Rule: rarity gives breadth and a higher cap, time gives height.** A maxed Uncommon (level 7) equals an Epic at level 7; the rarer pet is more
 flexible, not stronger at a job. New aptitudes get new ids (stored ids never change).
@@ -110,53 +88,34 @@ flexible, not stronger at a job. New aptitudes get new ids (stored ids never cha
 | **Crafting** | Runs station queues faster (§5.6) |
 
 - **Tonics (provisional):** every aptitude level from 7 up also needs a tonic brewed from a rare crop (Apothecary, §5.6), tying the best pets to
-  the obby. (P4 settled the old question of a pet level next to the aptitudes: there is none, the pet level is the best aptitude.)
-- **Quirks** are qualitative and carry a cost; target about 30, rolled from the uid (`Pets[uid].Quirks`). Examples:
-
-| Quirk | Effect | Cost |
-|---|---|---|
-| Light sleeper | Guards at night | Weak by day |
-| Digger | Finds a seed when idle | Scatters the square it works |
-| Glutton | Food gives extra XP | Nibbles crops |
-| Hoarder | Stores overflow harvest | Slower to react to raids |
-| Skittish | Spots threats early | Flees a fight |
-| Lucky | Small variant chance on the squares it works, even without fertiliser (§5.3) | Lower base yield |
-| Greedy | Extra yield | Some crops lost |
-| Sleepy | Works well at night only | Idle by day |
-| Brave | Holds the line alone | Ignores forecasts |
-| Friendly | Bond grows fast | Distracted from work |
-
-- **Looks follow the work:** size and tier effects follow the pet's highest aptitude (built, P4); still to build: the accessories pick by
-  that aptitude (a veteran guard gets the scarf, a tender the straw hat).
+  the obby.
+- **Quirks** are qualitative and carry a cost; target about 30, rolled from the uid (`Pets[uid].Quirks`). Examples (effect / cost): Light
+  sleeper (guards at night / weak by day), Digger (finds a seed when idle / scatters the square), Glutton (food gives extra XP / nibbles crops),
+  Lucky (small variant chance, no fertiliser needed, §5.3 / lower base yield), Greedy (extra yield / some crops lost), Brave (holds the line
+  alone / ignores forecasts), Friendly (bond grows fast / distracted from work).
+- **Looks follow the work:** size and tier effects follow the pet's highest aptitude (built); still to build: accessories pick by that
+  aptitude (a veteran guard gets the scarf, a tender the straw hat).
 - **Bond:** favourite food, mood and affection. Mood gives only bonuses, never penalties (no guilt-driven check-ins).
-- Personal spending: dyes, outfits and a den furnished to the pet's preferences (a fox wants a burrow). Names are built (P3b).
+- Personal spending: dyes, outfits and a den furnished to the pet's preferences (a fox wants a burrow).
 
 ## 5. Crop economy
-*Decided, not built (EV, the user, 2026-11-07; numbers in [ECONOMY.md](ECONOMY.md) → EV, applied in EV2a–e):* one crop ladder from 20 s to 48 h of baseline growth (OG2b; 10 s … 24 h online; 16 annual crops, the 4 built ones re-timed, "Future plant 1…12"
-named later) and perennial fruit trees (a sapling, first growth 2–24 h, then a fruit every 5–60 min up to a cap of 4–6, forever).
+*Built (GDD §7.9, ECONOMY.md): the field loop (one crop per square, ripe crops wait, Tending replants during absences), one crop ladder with
+tiers that set Coins per hour (`CropConfig`), crop mastery, the market cart and seed stall, the size roll with records, selling with pet
+bonuses, crops as pet food.* **Not built:** perennial fruit trees (a sapling, first growth 2–24 h, then a fruit every 5–60 min up to a cap of
+4–6, forever; model-only in ECONOMY.md; also HYBRIDS.md).
 
-*Built (GDD §7.9): the field loop (one crop per square, ripe crops wait, Tending replants during absences), the catalogue gated by Renown, the
-daily market cart, the size roll with records, Renown as a derived level, selling with pet bonuses, crops as pet food. The value
-ladder and prices are in `CropConfig` (ECONOMY.md).*
-
-Harvests are items with four uses: sell, process at a station (about 1.5–2× the raw value), turn in on the request board or in a restoration
-bundle, replant. **Grow times match real-life gaps** (a quick crop for a short session, 1 h for lunch, 8–12 h for the night): "what do I plant
+Harvests are items with four uses: sell, process at a station (about 1.5–2× the raw value), turn in on a request or in a restoration bundle,
+replant. **Grow times match real-life gaps** (a quick crop for a short session, 1 h for lunch, the longest for the night): "what do I plant
 before I leave, and who guards it?" is the end-of-session decision.
 
 ### 5.1 Plant growth art
-
-Planted crops grow continuously as recognizable individuals in Pawvest's colored stud-block style. Stable variation and visible
-harvest size distinguish plantings; silhouettes and ripeness must read from the gameplay camera at phone size. Review a new crop
-with five snapshots of the same plant at 0/20/50/75/100% before field integration.
-
-Annual harvest clears the plant. Future perennials retain their seeded structure and regrow fruit at persistent attachment points;
-rigid supports remain separate from growing organs. Art authoring must preserve that distinction without changing harvest rules.
-
-The [plant growth art guide](PLANT_GROWTH.md) owns Studio commands, recipe contracts, authoring rules and links to individual crop
-designs. [ROADMAP](ROADMAP.md) owns implementation status and the next CG milestone.
+Crops grow continuously as recognizable individuals in the stud-block style; stable variation and visible harvest size distinguish
+plantings, and silhouettes and ripeness must read at phone size. Annual harvest clears the plant; future perennials keep their seeded
+structure and regrow fruit at persistent attachment points (rigid supports separate from growing organs). Authoring commands, recipe
+contracts and the five-snapshot review (0/20/50/75/100 %) live in [PLANT_GROWTH.md](PLANT_GROWTH.md); status in ROADMAP.
 
 ### 5.2 Seed catalogue and market cart (not built parts)
-- **Species unlocks from the obby:** first finishes / first Golds and challenge-coin milestones unlock catalogue species (§8.1), on top of Renown.
+- **Species unlocks from the obby:** first finishes / first Golds and challenge-coin milestones unlock catalogue species (§8.1), on top of mastery.
 - The cart may also offer a fertiliser ingredient or a decor piece; its offers are never sold or re-rolled for Robux (§13).
 - **Weekly visitor** (E8): a travelling merchant with an exotic or seasonal species for the week.
 
@@ -173,33 +132,24 @@ Variants roll on the server per planting (like the size roll: re-joining cannot 
 
 - **Fertilisers** are crafted at the Compost station (§5.6) from rare crops plus common ones and applied to one square for its next crop: a
   sink for rare crops and a reason to run the stage that supplies the ingredient.
-- Size and variant stack; the expected value with tools, fertilisers and pets maxed goes through E0 before D4. A variant or record item is
-  stored apart from the plain per-crop counts and summed sizes the barn keeps today.
-- Giants can enter the weekly Harvest Fair (§9.3) or stay as a yard trophy (E7) instead of being sold.
+- Size and variant stack; the expected value with tools, fertilisers and pets maxed goes through the economy model (E0) before D4. A variant
+  or record item is stored apart from the plain per-crop counts and summed sizes the barn keeps today.
+- Giants can enter the Harvest Fair (§9.3) or stay as a yard trophy (E7) instead of being sold.
 
 ### 5.5 Guardrails
 Checked by `tools/economy.py check` after every rebalance (targets: ECONOMY.md): rare crops pay the most and only the obby gives them; seeds,
-squares, tools, fertilisers, stations, barn, decor and bundles absorb a fixed share of the faucet (no inflation beyond the accepted F2 scale);
-comfort purchases (§13) speed progress up by a bounded factor and never change online income.
+squares, tools, fertilisers, stations, barn, decor and bundles absorb a fixed share of the faucet; comfort purchases (§13) speed progress up
+by a bounded factor and never change online income.
 
 ### 5.6 Requests and stations
-- **Request board** (E5, MVP): three requests a day ("grow 6 Tomatoes"; later "a Big pumpkin" or "a Frosted carrot"), paying Coins and
-  sometimes a rare item.
-  *Decided (EV, 2026-11-07):* semi-random per UTC day + user (crops of the unlocked set, never the same crop twice a day, sized to ~30 % of a
-  day's income; on some days a **timed run** — a cleared obby stage under a time limit between the best time and Bronze, later
-  mini-games); one in three also drops Sunshine, a rare seed or an egg.
-  *Decided (the user, 2026-11-17):* requests are **tracked, not handed in**: no visit and no accept step; harvests of the crop count and
-  the player keeps (sells) the crops; a finished request pays a bonus at once with a toast (model: 0.6 × the sale of the count; was 1.75×
-  for handed-in crops). An unfinished request stays; only finished slots refill on the next UTC day; the board opens as soon as two
-  crops qualify (day 0). A quest book that also lists milestone quests and unlocks: later.
-  *Decided for 1.0 (the user, 2026-11-19, ROADMAP → E5):* crop requests only (the timed run comes with Sunshine, EV2c); the drop is a
-  rare seed or a free egg (Pearl, Topaz once Pumpkin is open), half and half.
+- **Request board:** built (GDD §7.9: three tracked crop requests a day, a bonus on completion, a rare seed or a free egg as the drop). Not
+  built: "a Big pumpkin" / "a Frosted carrot" requests, the timed-run requests (with Sunshine, EV2c), a quest book.
 - **Stations** (queues with timers; Crafting pets run them faster): Compost (fertilisers, the first station, with the variants, D4), Mill
-  (grain → flour), Kitchen (crops → pet food, a cheaper route to levels than Berry / Cake / Feast; raw crops can already be fed), Workshop
+  (grain → flour), Kitchen (crops → pet food, a cheaper route to levels than shop food; raw crops can already be fed), Workshop
   (decor, plot upgrades), Apothecary (tonics, mastery items).
 
 ## 6. Garden tools
-A Coin tree gated by Renown, never touching the obby, never sold for Robux (§13). Names are our own (§1.1). Data: `Garden.Tools[id] = level`.
+A Coin tree gated by crop mastery, never touching the obby, never sold for Robux (§13). Names are our own (§1.1). Data: `Garden.Tools[id] = level`.
 *Built (GDD §7.9): Seed sorter (size), Cloches (online growth), Pruning shears (a second crop), plus the Growth and Barn upgrades.*
 
 | Tool | Raises | Axis | Ships |
@@ -207,40 +157,33 @@ A Coin tree gated by Renown, never touching the obby, never sold for Robux (§13
 | Seed chest | seed stock and storage (Tending pets replant longer; may fold into the Barn upgrade) | Comfort | D1 |
 | Wheelbarrow | harvest every ripe square with one prompt | Comfort | D2 |
 | Scarecrow | raid defence on a few squares (§7), weaker than a Pest-control pet, takes no field pet slot | Defence | D1 |
-| Clearing tools (parked, user 2026-11-03) | locked squares lie under rubble or weeds; clearing a kind needs a tool level or a bought tool, on top of the square's price | Reach | later |
+| Clearing tools (parked) | locked squares lie under rubble or weeds; clearing a kind needs a tool level or a bought tool, on top of the square's price | Reach | later |
 
 **No tool raises variant chance:** variants come from fertilisers and pets (§5.3).
 
 ## 7. Critters and raids
 The defence loop is Pawvest's strongest hook (§1.1). Critters raid the garden while the player is away; never other players.
-*Built (E4-thin, GDD §7.9): crows on a fixed UTC block schedule, the forecast line in the barn panel (U4; before it the Garden panel), Pest-control guards with the crow
-speciality, deterministic resolution on join, at most 1 crop lost per absence, rare crops safe, losses in the join notice.*
+*Built (GDD §7.9): crows on a fixed UTC block schedule, the forecast line in the barn panel, Pest-control guards with the crow speciality,
+deterministic resolution on join, at most 1 crop lost per absence, rare crops safe, losses in the join notice.*
 
 Still to build (drop D1 unless noted):
 - **Weather drives critters** (§9.1): rain brings slugs and moles, a dry spell brings crows, frost keeps most away, a clear night brings raccoons.
 - **Forecast board** with the coming weather and visitors together ("rain tonight: slugs likely; crows at dawn").
-- **Counters** (composition matters, not strength); a speciality works double against its critter:
-
-| Critter | Targets | Counter |
-|---|---|---|
-| Moles | growing crops (roots) | Pest control, mole speciality |
-| Slugs | leaves, many small bites | wide reach, several guards |
-| Raccoons | stored goods, at night | Pest control, raccoon speciality (how a guard covers the barn: open) |
-| Locust swarm (weekly) | everything | wide coverage |
-
+- **Counters** (composition matters, not strength); a speciality works double against its critter: moles (growing crops) → mole
+  speciality; slugs (many small bites on leaves) → wide reach, several guards; raccoons (stored goods, at night) → raccoon speciality (how a
+  guard covers the barn: open); a weekly locust swarm (everything) → wide coverage.
 - **Weeds** (provisional): grow while the owner is away on squares no Weeding pet covers, slow growth and lower the size roll; the harvest
   clears them. Never a chore: no manual weeding.
 - **Raids from a side** the forecast names (provisional, "crows from the north tonight"): guards on that side cover the squares hit first.
-- **Losses stay soft:** some crops or Coins, never pets, never a variant or a trophy. The join notice grows into the **ledger** of the absence
-  (E5): raids, harvests and their rolls, finished station queues, strays at the gate.
+- **Losses stay soft:** some crops or Coins, never pets, never a variant or a trophy. The join notice grows into the **ledger** of the absence:
+  raids, harvests and their rolls, finished station queues, strays at the gate (the E5 ledger on join is built for the garden basics).
 - Open: loss caps per raid for the full set and what a perfect defence earns (§16).
 
 ## 8. Obby, farm stages and mini-games
 ### 8.1 Obby links
-*Decided, not built (EV, the user, 2026-11-07; numbers in [ECONOMY.md](ECONOMY.md) → EV, applied in EV2a–e):* repeat runs pay Sunshine instead of Coins; Scouting XP = seconds of a running stage timer.
-
-*Built (E2, GDD §7.9): the seed pouch, a rare-seed meter per stage (no drop chance), one rare crop per world (first Gold of a World 2 / 3
-stage, the day's first finish, the meter), Scouting from equipped pets (meter speed and a pouch seed, capped at +50 %).*
+*Built (E2, GDD §7.9): the seed pouch, a rare-seed meter per stage (no drop chance), one rare crop per world, Scouting from equipped pets
+(meter speed and a pouch seed, capped at +50 %). Decided, after 1.0 (EV2c / ECONOMY.md → EV): repeat runs pay Sunshine instead of Coins;
+Scouting XP = seconds of a running stage timer.*
 
 Not built:
 - **Species unlocks:** first finish / first Gold of a stage and challenge-coin milestones unlock catalogue species (§5.2).
@@ -258,15 +201,9 @@ from the garden island; recommended) or numbered world stages. Times and medals 
 ### 8.3 Mini-games as gates
 Mini-games (puzzle rooms like the Laser Lab prototype `Workspace.KeyArena`, garden-side games) may unlock content under one rule: **a gate tests
 completion, never speed or skill ceiling**, so a garden-first player cannot get stuck. A gate shows a hint, is retryable without cost, and stays
-replayable afterwards for a small daily reward.
-
-| Use | Example |
-|---|---|
-| Restoration bundle input (§12) | Old mill: Coins + wheat + a Crafting pet + clear the Gear Puzzle |
-| One-time unlock | A puzzle room opens a seed tier or a station |
-| Repeatable source | Fishing at the Pond (after its restoration), a harvest rush; short, counts as online time |
-
-Each mini-game is 1–3 minutes (GDD pillar 1) and passes the mobile check (ROADMAP → MU).
+replayable afterwards for a small daily reward. Uses: a restoration bundle input (§12; old mill: Coins + wheat + a Crafting pet + clear the
+Gear Puzzle), a one-time unlock (a puzzle room opens a seed tier or a station), a repeatable source (fishing at the Pond after its
+restoration, a harvest rush; short, counts as online time). Each mini-game is 1–3 minutes (GDD pillar 1) and passes the mobile check (ROADMAP → MU).
 
 ## 9. Weather and live events
 ### 9.1 Weather
@@ -280,32 +217,30 @@ Each mini-game is 1–3 minutes (GDD pillar 1) and passes the mobile check (ROAD
 - One existing stage per week with a kit **modifier** (low gravity and wind from `KitZones`, no checkpoints, a ghost of last week's #1), by a
   fixed rotation.
 - A **weekly Top-10** reset every Monday 00:00 UTC (new `GlobalLeaderboardsStore` keys per week), so new players can top a board.
-- Rewards: a finish gives a rare seed; the weekly Top-10 gets a cosmetic yard trophy. Same talent and pet rules (pillar 3).
+- Rewards: a finish gives a rare seed; the weekly Top-10 gets a cosmetic yard trophy. Same talent and pet rules (fair leaderboards).
 
 ### 9.3 Harvest Fair
-- *First form in 1.0:* the **Harvest Hall** (built in SH, GDD §7.9): the week's biggest crop of every kind, global, on pedestals at the hub.
-- A weekly prize-vegetable fair at the hub: one crop per player per category (rotating: pumpkin, melon, a farm-stage crop…).
-- Ranked by size factor (every tier can compete); the top entries get a ribbon trophy, every entrant Renown; the entered crop is kept.
+- *First form, built:* the **Harvest Hall** (GDD §7.9): the week's biggest crop of every kind, global, on pedestals at the hub.
+- The fair: a weekly prize-vegetable contest at the hub, one crop per player per category (rotating: pumpkin, melon, a farm-stage crop…).
+- Ranked by size factor (every tier can compete); the top entries get a ribbon trophy, every entrant Mastery XP or a similar reward; the
+  entered crop is kept. A small store per week, like the weekly challenge board.
 - Size gets a social stage without a gamble: the roll is free, the Seed sorter and the choice of entry are the skill.
 
 ### 9.4 Seasons
-- 4–6 weeks each: a theme, 3–4 seasonal crops, one seasonal pet kind (adopted, not hatched from a paid egg), a decor set, a seasonal farm stage or
-  challenge, a seasonal critter.
-- A **season pass** with a free and a premium track (§13), fed by season XP from everything.
-- Starts only after the forecast, the market cart, the weekly challenge and the fair run without attention.
+4–6 weeks each: a theme, 3–4 seasonal crops, one seasonal pet kind (adopted, not hatched from a paid egg), a decor set, a seasonal farm stage or
+challenge and critter; a **season pass** with a free and a premium track (§13), fed by season XP. Starts only after the forecast, market cart,
+weekly challenge and fair run without attention.
 
 ### 9.5 Streak calendar
-*Decided, not built (EV, the user, 2026-11-07; numbers in [ECONOMY.md](ECONOMY.md) → EV, applied in EV2a–e):* days 1–6 Sunshine (10–30 min), **day 7 an Epic-or-better pet** (Epic 95 %, Legendary 5 %).
-
-A 7-day loop of small rewards; a missed day **pauses** the streak instead of resetting it (no guilt).
+A 7-day loop of small rewards (days 1–6 Sunshine 10–30 min, **day 7 an Epic-or-better pet**: Epic 95 %, Legendary 5 %; numbers in ECONOMY.md →
+EV, after 1.0); a missed day **pauses** the streak instead of resetting it (no guilt).
 
 ## 10. Social
-*1.0 (the user, 2026-11-17):* the Harvest Hall (§9.3) and likes on plots (built in SH, GDD §7.9); the rest of this section is D6.
+*Built (GDD §7.9): the Harvest Hall (§9.3) and likes on plots (once per plot per day). The rest of this section is D6.*
+*Later: gifts / buying something for a friend, a pet auction (needs trading's session locking).*
 
-*Later (the user, 2026-11-07): gifts / buying something for a friend, a pet auction (needs trading's session locking).*
-
-- **Friend bonus:** a small bonus on harvest sales while a friend is on the same server (provisional +10 %, outside the pet multiplier cap; E0).
-- **Visits and likes:** the plot ring is walkable; a like feeds the other plot's garden score (once per plot per day).
+- **Friend bonus:** a small bonus on harvest sales while a friend is on the same server (provisional +10 %, outside the pet multiplier cap).
+- **Visits and likes:** the plot ring is walkable; a like feeds the other plot's garden score.
 - **Help a neighbour:** one optional tap on another plot gives both a small growth boost (once per plot per day). Later: lend a guard pet to a
   friend's field for one night.
 - **Gifts:** seeds and common crops to a friend, capped per day (no pets, no variants; alt accounts must not become a faucet).
@@ -313,30 +248,23 @@ A 7-day loop of small rewards; a missed day **pauses** the streak instead of res
 - Trading stays open (§16).
 
 ## 11. Collector layer
-A **field guide** over trait and harvest data: kinds, aptitudes, coats, quirks, crops × variants, size records, fair ribbons, critters.
-**Wandering strays** arrive at the gate for a limited time with their traits visible: adopt on sight instead of rolling blind; the main
-non-random route to pets (whether eggs stay is open, §16). Breeding is deferred; keep the trait set breeding-ready (inherit a main aptitude,
-mutate a quirk).
+A **field guide** over trait and harvest data: kinds, aptitudes, coats, quirks, crops × variants, size records, fair ribbons, critters (the
+pet catalog reuses `SeenKinds`, GDD §7). **Wandering strays** arrive at the gate for a limited time with their traits visible: adopt on sight
+instead of rolling blind; the main non-random route to pets (whether eggs stay is open, §16). Breeding is deferred (hybrid plants:
+HYBRIDS.md); keep the trait set breeding-ready (inherit a main aptitude, mutate a quirk).
 
 ## 12. Long-term goals: what money and rare seeds are for
-*Decided, not built (EV, the user, 2026-11-07; numbers in [ECONOMY.md](ECONOMY.md) → EV, applied in EV2a–e):* until the landmarks / estate are designed, the model keeps a reserved sink ladder (×1.15 steps) so
-the late game never runs dry; rebirth is not planned for launch (a soft "Replant" only if the queue empties, ECONOMY.md → Findings).
+Until the landmarks / estate are designed, the economy model keeps a reserved sink ladder (×1.15 steps) so the late game never runs dry; rebirth
+is not planned for launch (a soft "Replant" only if the queue empties, ECONOMY.md → Decisions).
 
 **Island restoration (the spine).** Overgrown landmarks on the garden island, restored by **bundles** of five kinds of input: Coins, common
 crops, one rare crop, a pet-skill requirement (e.g. a Weeding pet of level 4+), and for some an obby achievement or a mini-game (§8.3). Money is
-one input of five, so every play style feeds the goal. First sketch (finite; fix the first 6–8 before E6):
-
-| Landmark | Unlocks | Bundle sketch |
-|---|---|---|
-| Kitchen | Kitchen station (takes over the food stand's role) | Coins, tier-1 crops, a Big crop |
-| Old mill | Mill station | Coins, wheat, a Crafting pet, the Gear Puzzle |
-| Greenhouse | growing in any season | Coins, tier-2 crops, a rare crop of world 1 |
-| Pond | water crops, fishing mini-game | Coins, a Fertilising pet |
-| Orchard | perennial trees | Coins, saplings (tier 3), a rare crop of world 2 |
-| Watchtower | longer forecast, +1 field pet slot | Coins, a Pest-control pet of level 4+, Gold on a world-2 stage |
-| Training grounds | faster aptitude XP (provisional +25 %) | Coins, a pet with 2 aptitudes at level 3+ |
-| Nursery | choose between hatched strays | Coins, rare crop, 5 pets in the field guide |
-| Observatory | forecast for the whole day, seasonal event access | Coins, rare crops of three worlds, a Starlit crop |
+one input of five, so every play style feeds the goal. First sketch (finite; fix the first 6–8 before E6; landmark → what it unlocks, bundle
+sketch): Kitchen (Kitchen station; Coins, tier-1 crops, a Big crop) · Old mill (Mill; Coins, wheat, a Crafting pet, the Gear Puzzle) ·
+Greenhouse (growing in any season; tier-2 crops, a world-1 rare crop) · Pond (water crops, fishing; a Fertilising pet) · Orchard (perennial
+trees; saplings, a world-2 rare crop) · Watchtower (longer forecast, +1 field pet slot; a Pest-control pet of level 4+, Gold on a world-2
+stage) · Training grounds (aptitude XP +25 % provisional; a pet with 2 aptitudes at level 3+) · Nursery (choose between hatched strays; 5
+pets in the field guide) · Observatory (whole-day forecast, seasonal events; rare crops of three worlds, a Starlit crop).
 
 **Estate tiers:** Patch → Homestead → Estate → Grand Garden, each a visible overhaul others see on the plot ring. A **cottage** with fixed rooms
 whose shelves fill by themselves (medals, field-guide book, pet portraits, ribbons, giant-crop trophies). **Outdoor decor** placed freely
@@ -349,88 +277,66 @@ masteries, likes), visible to visitors, **never ranked** (bought cosmetics would
 challenge, fair, next bundle, an aptitude level, the next farm stage) · month+ (season, estate tier, field guide, whole island restored).
 
 ## 13. Monetization: sell comfort
-Decided 2026-10-25 (GDD §9 follows it):
+GDD §9 follows these rules:
 1. **No paid random items.** No eggs for Robux; Coins, seeds, crops and the market cart's offers are never sold or re-rolled for Robux; no Coin packs.
 2. **Luck is never sold.** Size and variant chances come only from Coin-bought tools, crafted fertilisers, pets and weather.
 3. **Weather is never sold**, for one player or for a server.
 4. **Everything that changes the economy is earnable through play and capped** (GDD §9): Robux only reaches it sooner.
-5. **The obby stays clean** (pillar 3): nothing bought affects a time; a skip gives no time, no medal, no payout and no challenge coin.
+5. **The obby stays clean** (fair leaderboards): nothing bought affects a time; a skip gives no time, no medal, no payout and no challenge coin.
 6. **Offers appear at a pain point, never on join**, and nothing in the first session: a full field, a long crop still growing, "growth paused
    after 24 h" in the ledger (information, not guilt).
 
 | Motive | Product | Kind |
 |---|---|---|
-| Idle comfort | **Night shift**: offline rate and cap above the free 1 / 24 h; numbers need a new economy review after OG2 (2026-11-20); never changes online income | game pass |
+| Idle comfort | **Night shift**: offline rate and cap above the free 1 / 24 h; numbers need a new economy review; never changes online income | game pass |
 | Impatience | Instant grow (one square, price by remaining time, daily cap); finish an incubator | developer product |
-| Capacity | +1 field pet slot, +1 incubator, the next field squares before their Renown / Coin gate (never beyond the earnable maximum) | game pass / product |
+| Capacity | +1 field pet slot, +1 incubator, the next field squares before their gate (never beyond the earnable maximum) | game pass / product |
 | Status | Pet dyes and outfits, decor packs, plot themes, fair-stand decorations, trails, a VIP tag | game pass / product |
 | Generosity | A cosmetic gift to a friend (decor, a pet outfit) | developer product |
 | Completion | Season pass premium track (§9.4) | product per season |
-| Second thoughts | Reset of a crop's upgrade points (EV3c; decided 2026-11-17, after 1.0): moves points, never adds any; also a special event item (rule 4) | developer product |
+| Second thoughts | Reset of a crop's upgrade points (after 1.0): moves points, never adds any; also a special event item (rule 4) | developer product |
 | First purchase | Starter pack, one time: a decor set, +1 field pet slot, 3 days of Night shift | developer product |
 | Obby | Skip a stage / a checkpoint (rule 5) | developer product |
 
-- Prices are placeholders (Robux price points at M7 / D2).
-- E0 gets a **Spender archetype** (Night shift, capacity early, a daily instant grow): paying speeds progress up by a bounded factor
-  (provisional ≤ 1.5× per day) and never changes online income.
+- Prices are placeholders (Robux price points at M7 / D2). 1.0 launches without the comfort shop; D2 is the first drop.
+- The economy model gets a **Spender archetype** (Night shift, capacity early, a daily instant grow): paying speeds progress up by a bounded
+  factor (provisional ≤ 1.5× per day) and never changes online income.
 - Telemetry (TELEMETRY.md) gets purchase and offer events: where an offer was shown, whether it converted.
 
 ## 14. MVP and drop plan
-The MVP is the smallest build that shows the whole loop (buy seeds, plant, put one pet on the field to tend and one to guard, run an obby for a
-rare seed, come back to a ledger of harvests and chased-off crows, upgrade a tool) and is worth opening to the public. **1.0 (the user,
-2026-11-17)** = the MVP + a long engagement loop (crop mastery, a rotating stall, requests) + basic social competition (Harvest Hall, plot
-likes) + player feedback; the order and state live in ROADMAP → Next. After it, **a drop every 1–2 weeks**; obby drops alternate with garden drops; a drop too big for two weeks (World 4, estate) is split.
+**1.0** = the MVP loop (buy seeds, plant, put one pet on the field to tend and one to guard, run an obby for a rare seed, come back to a ledger
+of harvests and chased-off crows, upgrade a tool) + a long engagement loop (crop mastery, rotating stall, requests) + basic social competition
+(Harvest Hall, plot likes) + player feedback. All of it is built; the state and the release gates live in ROADMAP → Next. After it, **a drop
+every 1–2 weeks**; obby drops alternate with garden drops; a drop too big for two weeks (World 4, estate) is split.
 
-| MVP piece | State |
-|---|---|
-| Obby Worlds 1–3, pets, incubators, food, talents, telemetry, English / Czech | built (holding World 3 back as a first content drop is an option) |
-| E1 field and crops, catalogue, market cart, size roll, Renown, field pets with Tending, tier-1 tools | built, every player (FA) |
-| E4-thin crows, Pest-control guards, the forecast line | built, every player (FA) |
-| E2 seed pouch, rare-seed meters, rare crops per world, Scouting | built |
-| Aptitude data for every pet, only working aptitudes shown | built |
-| EV3 crop mastery: crop levels (★) replace Renown, milestone quests, crop upgrade points | **to build** (ROADMAP → EV3) |
-| ST rotating seed stall: a subset of the unlocked crops, restocked every 1–3 h on a UTC schedule | **to build** (ROADMAP → ST) |
-| SH Harvest Hall (the week's biggest crop of every kind, all-time board) and likes on plots | built 2026-11-18 (GDD §7.9); the likes' multi-client test open (ROADMAP → SH) |
-| FB player feedback: stage rating, feedback box | **to build** (ROADMAP → FB) |
-| E5 request board, ledger on join (the join notice grows into it), onboarding for the first ten minutes, garden funnel telemetry | **to build** (ROADMAP → Next) |
+**Not in 1.0:** the full critter set, weeds and the forecast board, variants and fertilisers, the comfort shop, Sunshine (EV2c), obby time
+calibration (M6b), tonics and the other stations, landmarks, estate / decor / cottage, strays, seasons, trading, World 4.
 
-**Not in the MVP:** the full critter set, weeds and the forecast board, variants and fertilisers, the comfort shop, Sunshine (EV2c), obby
-time calibration (M6b), tonics and the other stations, landmarks, estate / decor / cottage, strays, seasons, trading, World 4.
+**Gates before going public** (ROADMAP → Road to 1.0): the first live test (M6a), the Czech text review, the mobile check (MU), the store
+thumbnails (TH1 + THU), the Max Players 8 test. A **soft launch** (friends, then unlisted) first; the garden funnel telemetry decides whether
+the loop works.
 
-**Gates before going public:** the first live test (M6a), the Czech text review, the mobile check (MU), the store thumbnails (TH1 + THU),
-the Max Players 8 test (8 since FX, 2026-11-22; was planned at 24). 1.0 launches without the comfort shop (decided 2026-11-17; D2 is the first drop). A **soft launch** (friends, then unlisted) first; the garden funnel telemetry decides whether the loop works.
+**Drops after 1.0** (order provisional; each about 1–2 weeks; D1–D10 is about 3–5 months)
 
-**Drops after the MVP** (order provisional; each about 1–2 weeks; D1–D10 is about 3–5 months)
-
-| Drop | Content | Build stages | Why here |
-|---|---|---|---|
-| D1 "The Critters" | Moles, slugs, raccoons, weeds and Weeding, Pest-control specialities, the forecast board with weather, Scarecrow, Seed chest, full ledger | E4, E9 (weather), E1 | The hook that is ours (§1.1), right away |
-| D2 "Comfort" | Comfort shop: Night shift, instant grow, starter pack, first cosmetics; Wheelbarrow | M7 | Monetization once the loop is proven |
-| D3 "Weekly" | Weekly obby challenge, first farm stage and its crop, Harvest Fair (grows from the Harvest Hall), streak calendar | E10, E2 | Obby drop; renewable obby content; size gets its stage |
-| D4 "Variants" | Compost station, Frost and Gold-leaf fertilisers, Frosted / Golden variants, Fertilising and Crafting working, Lucky quirk, field-guide records | E9, E5 | Earned variants tie the obby to the garden |
-| D5 "The Kitchen" | First landmark (Kitchen), first mini-game gate (puzzle room) | E6, E5 | The first long goal |
-| D6 "Neighbours" | Friend bonus, help a neighbour, gifts, invites (likes moved to 1.0, SH) | E11 | Growth through friends |
-| D7 "Pet depth" | Pet mastery: quirks shown, field guide in full, tonics for aptitude levels 7+, other stations | E3, E5 | Pets get depth |
-| D8 "World 4" | Obby World 4 (S9–S10), second farm stage, night fertiliser and Starlit, more landmarks (split) | S, E2, E6, E9 | Obby players and goal-chasers |
-| D9 "The Estate" | Estate tiers, outdoor decor, cottage, garden score (split) | E7 | Visible personalization |
-| D10 "Season 1" | First season and pass, strays, weekly visitor at the market cart | E10, E8 | Calendar-driven return |
+| Drop | Content | Build stages |
+|---|---|---|
+| D1 "The Critters" | Moles, slugs, raccoons, weeds and Weeding, Pest-control specialities, the forecast board with weather, Scarecrow, Seed chest, full ledger | E4, E9 (weather), E1 |
+| D2 "Comfort" | Comfort shop: Night shift, instant grow, starter pack, first cosmetics; Wheelbarrow | M7 |
+| D3 "Weekly" | Weekly obby challenge, first farm stage and its crop, Harvest Fair (grows from the Harvest Hall), streak calendar | E10, E2 |
+| D4 "Variants" | Compost station, Frost and Gold-leaf fertilisers, Frosted / Golden variants, Fertilising and Crafting working, Lucky quirk, field-guide records | E9, E5 |
+| D5 "The Kitchen" | First landmark (Kitchen), first mini-game gate (puzzle room) | E6, E5 |
+| D6 "Neighbours" | Friend bonus, help a neighbour, gifts, invites | E11 |
+| D7 "Pet depth" | Pet mastery: quirks shown, field guide in full, tonics for aptitude levels 7+, other stations | E3, E5 |
+| D8 "World 4" | Obby World 4 (S9–S10), second farm stage, night fertiliser and Starlit, more landmarks (split) | S, E2, E6, E9 |
+| D9 "The Estate" | Estate tiers, outdoor decor, cottage, garden score (split) | E7 |
+| D10 "Season 1" | First season and pass, strays, weekly visitor at the market cart | E10, E8 |
 
 ## 15. Build stages (progressive reveal; each stage ships alone)
-| Stage | Content | Ships in | State |
-|---|---|---|---|
-| E0 | Economy model (`tools/economy.py`); later harvest variants, fertilisers, the Spender archetype | before the MVP, per drop | partial |
-| E1 | Field, crops, catalogue + market cart, size roll, Renown, tools, field pets, Tending | MVP / D1 / D2 | MVP part built |
-| E2 | Obby seed links, species unlocks, farm stages and their crops | MVP / D3 / D8 | MVP part built |
-| E3 | Quirks, field guide, aptitude UI in full | D7 | aptitude data built |
-| E4 | Critters, weeds, forecast board, ledger, Scarecrow | MVP / D1 | crows built |
-| E5 | Request board (MVP), stations (Compost first), tonics | MVP / D4 / D5 / D7 | – |
-| E6 | Restoration bundles and landmark abilities, mini-game gates | D5 / D8 | – |
-| E7 | Estate tiers, outdoor decor, cottage shelves, garden score | D9 | – |
-| E8 | Strays, weekly visitor | D10 | – |
-| E9 | Weather schedule (with the forecast), fertilisers and earned variants | D1 / D4 / D7 / D8 | – |
-| E10 | Weekly obby challenge, Harvest Fair, streak calendar, seasons and the pass | D3 / D10 | – |
-| E11 | Social | D6 | – |
-| M7 | Comfort shop (§13) | D2 | – |
+E0 economy model (per drop; partial) · E1 field, crops, market cart, tools, field pets (built for 1.0) · E2 obby seed links (built), species
+unlocks, farm stages (D3 / D8) · E3 quirks, field guide, aptitude UI (D7) · E4 critters, weeds, forecast board, Scarecrow (crows built; D1) ·
+E5 request board and join ledger (built), stations, tonics (D4 / D5 / D7) · E6 restoration bundles, mini-game gates (D5 / D8) · E7 estate, decor,
+cottage, garden score (D9) · E8 strays, weekly visitor (D10) · E9 weather, fertilisers, variants (D1 / D4 / D7 / D8) · E10 weekly challenge,
+Harvest Fair, streak, seasons (D3 / D10) · E11 social (D6) · M7 comfort shop (D2).
 
 ## 16. Risks and open questions
 **Open decisions for the user**
@@ -438,31 +344,26 @@ the Max Players 8 test (8 since FX, 2026-11-22; was planned at 24). 1.0 launches
    that becomes Coins: check the current Roblox paid-random-items rules before D2.
 2. **Farm stages:** bonus stages outside the unlock chain (recommended) or numbered world stages (§8.2).
 3. **Trading:** the strongest retention driver in pet games, but dupes, scams and moderation; plan for it or rule it out.
-4. **Numbers:** variant chances and fertiliser recipes, Night shift values, weather cadence, friend bonus; all go through E0.
+4. **Numbers:** variant chances and fertiliser recipes, Night shift values, weather cadence, friend bonus; all go through the economy model.
 5. **Field pets from far away:** place / move field pets from the Pets panel anywhere (recommended; the "who guards tonight" choice often comes
    during an obby session), planting and harvesting stay on the plot.
-6. **Aptitudes:** whether levels 7+ need tonics; several field jobs at once (§3). (The pet level question was settled by P4: pet level = best aptitude.)
+6. **Aptitudes:** whether levels 7+ need tonics; several field jobs at once (§3).
 
-**Plot architecture (decided, built in E1a).** Clients draw nearby plots from server data, so player capacity is not tied to
-prebuilt scene plots. Soft-launch capacity targets 24 players; increasing it requires a fresh field budget test. Real-phone
-performance and a 12-client join remain open. The current feed is documented in [PROTOCOL](PROTOCOL.md).
+**Plot architecture (built).** Clients draw nearby plots from server data, so player capacity is not tied to prebuilt scene plots
+(`GardenPlotFeed`, [PROTOCOL](PROTOCOL.md)). Capacity targets 24 players at the planning stage; increasing it requires a fresh field budget
+test. Real-phone performance and a 12-client join remain open.
 - **Offline visits (designed, not built):** show a lightweight saved garden, up to five minutes old, including when its owner is on
   another server. [Storage proposal](PROTOCOL.md#planned-offline-garden-visits).
 
 **Risks**
-- **Genre overlap with Grow a Garden** (§1.1): check every drop against it; the store page and the first ten minutes lead with the obby, pets on
-  guard and critters. Without gambling the excitement comes from skill (obby), defence outcomes (the ledger) and earned rarities; the garden
-  funnel telemetry shows whether it does.
-- **Onboarding.** The first ten minutes show one loop: buy seeds, plant, put a guard on the field, run a stage, come back to a ledger; field
+- **Genre overlap with Grow a Garden** (§1.1): check every drop against it; without gambling the excitement comes from skill (obby), defence
+  outcomes (the ledger) and earned rarities.
+- **Onboarding:** the first ten minutes show one loop (buy seeds, plant, put a guard on the field, run a stage, come back to a ledger); field
   pets, aptitudes and tools are revealed gradually.
-- **Content volume and the 1–2 week pace:** every crop, variant, quirk, critter and landmark needs English and Czech and Studio-only art;
-  systemic content keeps weeks without a drop alive, seasons wait until it does.
-- **Luck inflation:** size × variant × tools × fertilisers × pets × weather multiply; the expected value must stay inside the targets (E0, §5.5).
-- **Forecast fairness:** a raid the forecast did not announce feels unfair; the weather schedule must give every time zone its rare kinds.
-- **Profile size and save cost** (items, variants, records, fertilisers, quirks, decor, fair entries): keep compact encodings, watch the
-  DataStore limit per key.
+- **Content volume and the 1–2 week pace:** every crop, variant, quirk, critter and landmark needs English and Czech and Studio-only art.
+- **Luck inflation:** size × variant × tools × fertilisers × pets × weather multiply; the expected value must stay inside the targets (§5.5).
+- **Forecast fairness:** an unannounced raid feels unfair; the weather schedule must give every time zone its rare kinds.
+- **Profile size and save cost** (items, variants, records, fertilisers, quirks, decor, fair entries): compact encodings, watch the DataStore key limit.
 - **Free outdoor decor:** placement exploits, per-item save size, collisions with paths and neighbouring plots, mobile controls.
-- **Mini-game gates** must stay passable for every player (completion only, mobile check).
-- **Gifts and alt accounts:** daily caps, no variant or pet gifts; the friend bonus must not reward a second account parked on the server.
-- **Harvest Fair storage:** one entry per player per week and a weekly ranking: a small store per week, like the weekly challenge board.
-- **Raids:** loss caps and the reward for perfect defence for the full critter set.
+- **Mini-game gates** must stay passable for every player; **gifts and alt accounts:** daily caps, no variant or pet gifts, a friend bonus
+  must not reward a parked second account.

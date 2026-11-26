@@ -1,4 +1,4 @@
--- Barn (U4, docs/UI_GARDEN_PETS.md §6): what the player holds from the field. Two entries: the barn building's "Open barn" prompt on
+-- Barn (U4, docs/GDD.md §7.9): what the player holds from the field. Two entries: the barn building's "Open barn" prompt on
 -- the own plot (U5a, PlotView via GardenView.OnBarn) and the bottom-centre HUD button "🧺 Barn" (shown within 45 studs of the own plot
 -- and, while the player holds crops, anywhere outside a stage run; a young field gets a toast at the first harvest of the session and
 -- the button pulses until the barn was opened: playtest 2026-11-08).

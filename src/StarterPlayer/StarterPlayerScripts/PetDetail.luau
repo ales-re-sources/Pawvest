@@ -672,7 +672,7 @@ function PetDetail.Mount(panel: GuiObject, color: Color3, onClose: () -> ())
 		equipButton.Text = Locale.T(if owned.equipped then "petDetail.unequip" else "petDetail.equip")
 		equipButton.BackgroundColor3 = if busy then COLOR_LOCKED elseif owned.equipped then COLOR_SELL_IDLE else COLOR_EQUIP
 		moreLabel.Text = Locale.T("petDetail.more")
-		local sellArmed = ConfirmTap.IsArmed(sellKey()) -- the one confirm pattern (UI_GARDEN_PETS §10): orange on the first tap
+		local sellArmed = ConfirmTap.IsArmed(sellKey()) -- the one confirm pattern (docs/GDD.md §7.10): orange on the first tap
 		sellButton.Text = Locale.T(if sellArmed then "pets.sellSure" else "pets.sell", { price = owned.sellValue })
 		sellButton.BackgroundColor3 = if sellArmed then ConfirmTap.COLOR else COLOR_LOCKED
 		local hand = fieldHandGui()

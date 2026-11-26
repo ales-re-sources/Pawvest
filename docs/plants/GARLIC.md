@@ -2,127 +2,51 @@
 
 [Shared authoring and Studio player](../PLANT_GROWTH.md) · [Status](../PLANT_GROWTH.md#crops-and-status)
 
-## Selected mature silhouette
+## Design
 
-Ales selected **A, hardneck with a curled scape**, on 2026-11-10 (CG12a): one half-buried ivory garlic head, a slim pale neck,
-tall flat strap leaves, a side curl and a rising tail with a pointed closed spathe. The continuous recipe is built and
-Studio-checked (CG12b). Ales approved the growth art on 2026-11-10, explicitly keeping the half-exposed bulb as a readability
-shortcut. The recipe is registered in `PlantGrowth`; CG12c production lifecycle checks and desktop CPU samples pass.
+**Hardneck with a curled scape** (chosen from three studies; B no scape and C taller scape with a bent bud were rejected): one
+half-buried ivory head, slim pale neck, tall flat strap leaves, a side curl and a rising tail with a pointed closed spathe. The
+half-exposed bulb is a deliberate readability shortcut (approved).
 
-[Five-pose sheet](../art/garlic/growth-review.png) · [0%](../art/garlic/growth-0.jpg) ·
-[20%](../art/garlic/growth-20.jpg) · [50%](../art/garlic/growth-50.jpg) ·
-[75%](../art/garlic/growth-75.jpg) · [100%](../art/garlic/growth-100.jpg).
+[Five-pose sheet](../art/garlic/growth-review.png) · [0%](../art/garlic/growth-0.jpg) · [20%](../art/garlic/growth-20.jpg) ·
+[50%](../art/garlic/growth-50.jpg) · [75%](../art/garlic/growth-75.jpg) · [100%](../art/garlic/growth-100.jpg).
+References: [bulb and clove development](../art/garlic/reference-growth-stages.png), [leaf arrangement, curled scape and pointed
+spathe](../art/garlic/reference-life-cycle.png) (they expose roots to show anatomy; the in-field plant hides roots and keeps the head
+mostly buried). Keeping the curled scape through game ripeness is a readability shortcut, not a literal life-cycle stage.
 
-Studio playtest Client command: `require(game.Players.LocalPlayer.PlayerScripts.PlantGrowthReview).Open("Garlic", 10)`.
-The ten seconds affect review playback only; production duration remains three minutes.
+- **Bulb:** single wrapped ivory head, ~1.7 studs wide, 1.3 high at standard mass; the lower half stays underground. Broad vertical
+  lobes suggest cloves under a shared wrapper, crown gathered into one neck (no pile of peeled cloves). Lavender-grey recesses and
+  cream shoulders give depth.
+- **Foliage:** seven unequal blue-green flat strap leaves, alternating at separated heights up a slender pseudostem; blades bend outward
+  at joined sections and taper; the centre stays taller. ~4 studs above soil. Flat leaves distinguish it from Onion's round quills.
+- **Scape:** one green scape with a clear side curl (keep the loop's negative space) and a rising tail with a tapered pale spathe;
+  total height ~4.8 studs, below the avatar.
+- Matte stud-block Parts; no glow or particles. Ivory bulb, pale straw neck, cool green leaves and a few straw lower tips separate it
+  from brown Onion and its lilac-white flower globe. Roots omitted.
 
-Ales supplied two life-cycle references on 2026-11-10: [bulb and clove development](../art/garlic/reference-growth-stages.png)
-and [leaf arrangement, curled scape and pointed spathe](../art/garlic/reference-life-cycle.png). Use the first for sprout →
-leaf establishment → bulb swelling → clove definition → drying outer leaves, and the second for a longer pseudostem with
-alternating leaves at separated heights and a scape curl below its pointed terminal sheath. The diagrams expose roots and
-bulbs to explain anatomy; the in-field plant keeps its roots hidden and its head mostly buried.
+## Growth
 
-Garlic grows from a planted clove. Its flat leaves distinguish it from Onion's round hollow quills; hardneck garlic produces
-a scape that curls before straightening. Real bulb-harvest readiness includes yellowing lower leaves, and growers often
-remove scapes to favour the bulb. References: [Iowa State Extension](https://yardandgarden.extension.iastate.edu/how-to/growing-garlic-home-garden),
-[University of New Hampshire Extension](https://extension.unh.edu/resource/growing-garlic-new-hampshire-fact-sheet).
-Keeping a curled scape through game ripeness would be an intentional readability shortcut, not a literal simultaneous life-cycle stage.
-
-- **Bulb:** a single wrapped ivory head, roughly 1.7 studs wide and 1.3 studs high at standard mass; about the lower half stays
-  underground. Broad vertical lobes suggest cloves under a shared paper wrapper. Keep the crown gathered into one neck;
-  do not draw a pile of peeled cloves. Small lavender-grey recesses and cream shoulders give depth under field lighting.
-- **Foliage:** seven unequal blue-green strap leaves, emerging alternately at separated heights up a slender pseudostem. Flat, narrow blades bend
-  outward at joined sections and taper at their tips; the centre remains taller. Target about 4 studs above soil.
-- **Selected A:** one green scape with a clear side curl and a rising tail carrying a tapered pale spathe above the leaves.
-  Target total height about 4.8 studs, below the normal avatar. Preserve the loop's negative space at gameplay distance.
-- The unselected studies were B (no scape) and C (taller scape with a bent pointed bud).
-
-Use ordinary matte coloured stud-block Parts. No glow or ripe particles are proposed. Ivory bulb, pale straw neck, cool green
-leaves and a few straw lower tips separate Garlic from brown Onion and its lilac-white flower globe. Hidden fine roots are omitted.
-
-## Continuous growth
-
-| Growth | Review pose |
+| Growth | Pose |
 |---|---|
-| 0% | One short pointed green shoot from a buried clove. No black seed coat or paired seed leaves. Unplanted soil stays bare. |
-| 20% | Two or three flat leaves extend from overlapping pale sheaths; the clove and future head stay concealed. |
-| 50% | Four or five unequal blades form an upright fan; the head begins swelling and its pale shoulders first show at soil level. |
-| 75% | Nearly full leaf height and widening lobed shoulders; clove ribs become distinct beneath the wrapper. The scape rises and begins curling; its spathe stays closed. |
-| 100% | Full wrapped ivory head, tall open fan and two lowered, straw-tipped outer leaves. The scape completes its side curl and rising tail with a pointed pale closed spathe. |
+| 0% | One short pointed green shoot from a buried clove. No seed coat or paired seed leaves. Unplanted soil stays bare. |
+| 20% | Two or three flat leaves from overlapping pale sheaths; head concealed. |
+| 50% | Four or five unequal blades form an upright fan; head begins swelling, pale shoulders first show at soil level. |
+| 75% | Nearly full leaf height, widening lobed shoulders, clove ribs distinct under the wrapper. Scape rises and begins curling; spathe closed. |
+| 100% | Full wrapped ivory head, tall open fan, two lowered straw-tipped outer leaves. Scape completes its curl and rising tail with a pointed closed spathe. |
 
-Leaves extend successively from their bases; their joints and scape segments remain attached as they grow. Head swelling follows
-foliage establishment, growing downward and widening the shoulder. Scape growth extends a connected path base-first; its bud
-follows the current endpoint, including during the curl. All poses are reversible, including 43→44→43% and ripe→young.
+Leaves extend from their bases; joints and scape segments stay attached. Head swelling follows foliage establishment, growing downward
+and widening. The scape extends base-first and its bud follows the current endpoint, also during the curl. All poses reversible.
+Seeds vary alternating leaf lengths, fan openness, lean, lobe proportions, scape orientation and curl (keeping an open loop); whole-plant
+yaw may vary. Cube-root harvested-mass scaling; every age, yaw and supported mass stays inside the 2.4-stud ground radius.
 
-Seed variation should change alternating leaf lengths, fan openness, lean, bulb-lobe proportions and the scape's orientation
-and curl, while preserving an open loop for A. Seed 1 is the authored baseline. Use existing planting identity and cube-root
-harvested-mass scaling, with restrained canopy spread and leaf height. Whole-plant yaw may vary. Every age, yaw and supported
-mass must stay within the shared 2.4-stud ground radius on the existing 5.5-stud square.
+Grow time: `CropConfig` (updates every 1/480 of it, shared cadence). Harvest clears the whole plant; scapes and cloves are not collectibles. No fruit
+slots; `PlantRole` groups are `Bulb`, `Foliage`, `Scape`.
 
-Garlic keeps its current **three-minute** production duration. Harvest clears the entire plant; scapes and cloves are not separate
-collectibles. No economy, profile, remote or reward change is part of this art design. No fruit slots are needed;
-`PlantRole` groups are `Bulb`, `Foliage` and `Scape`.
+## Recipe and field integration
 
-## Recipe and Studio validation
-
-[`GarlicPlant.luau`](../../src/ReplicatedStorage/GarlicPlant.luau) builds once through `PlantKit`: **54 Parts** (21 head/neck/stem,
-21 blade, 10 scape and 2 spathe). A 36-square field would use **1,944 plant Parts**, excluding soil, pets and UI. Direct-built
-mid proxies use **9 / 14 / 26 Parts** for young / growing / ripe, retaining alternating blades and the full mature curl.
-Ring height is fixed at **5.5 studs**; review framing is **5.0**. No harvest effect is added.
-
-[`garlic_growth_checks.luau`](../../tools/garlic_growth_checks.luau) passed on 2026-11-10 for **six seeds × three harvested mass
-factors (0.35656 / 1 / 3.02985) × 101 ages**. Maximum full-model ground radius was **1.89 studs**; proxies also stayed inside
-2.4 studs. Checks cover blade hinges and joints, scape segments and moving bud attachment, exact visible backward seeks,
-restored initial pose, seed individuality, a single initial sprout, hidden early head, half-buried ripe head and physics/query flags.
-Standard seed 1 is **4.78 studs tall**, with a **1.70-stud-wide, 1.30-stud-high head, 50.1% exposed**. Ripe height across the checked
-seeds and masses ranges **4.14–5.61 studs**. The three-minute production interval remains **0.375 seconds** through shared timing.
-
-The shared reviewer exercised five poses, six seeds, seed and size changes, rings, play/pause and Close through real clicks.
-The five stills use seed 1, standard mass, the same camera and soil square, with the real comparison plant and field pet. The
-sheet crops the same rectangle from each still. Ring and selection composition were checked together before capture.
-Close removed the reviewer and the playtest was stopped. No recipe/gameplay errors were logged; Studio Assistant emitted its
-plugin-version warning, and one capture command encountered a reviewer that had already been closed. Capture completed after
-coordinating Studio use with Ales. No field actions or profile fixture writes were performed.
-
-**Current status:** growth art approved, including the half-exposed bulb (Ales, 2026-11-10); registered and Studio-checked
-through production `PlotView`. Desktop CPU samples complete; real phone, second client and live validation remain open.
-
-## Field integration and desktop samples
-
-[`garlic_integration_checks.luau`](../../tools/garlic_integration_checks.luau) passed on 2026-11-10 with disposable public-feed
-fixtures. Three age/mass samples use **162 full-detail Parts** and **9 / 14 / 26-Part mid proxies**. Corrections retain plant,
-soil and pet instances. The exact ripe boundary completes the scape and stops sampling; a backward correction hides the ripe
-scape again. Full→mid→low→full retains planting identity; low detail removes crop art. Art does not intercept the soil ray,
-and the selection outline is present. A cleared harvest feed removes the old plant; replanting with a new planting number
-starts a fresh sprout without replacing its neighbour. No harvest effect is added. Duration remains **180 seconds**, sampled
-every **0.375 seconds**, with corrections and the exact ripe boundary handled immediately.
-
-`tools/plant_perf_probe.luau`, configured for Garlic, sampled one 36-square field and 24 distance-tiered plots (**3 full,
-4 mid, 17 low**) on the same route with a one-block Broccoli baseline. Four-second growing samples measured plot-work p95
-**0.681 / 1.943 ms** and peaks **6.16 / 6.21 ms** for one/24 plots. Frame p95 stayed around **18 ms**, similar to the baseline.
-Three-second ripe samples made **zero pose calls**, with plot-work p95 **0.003 / 0.020 ms** and peaks **0.026 / 0.423 ms**.
-The ripe fixtures contained **2,893 / 13,437 total instances**, including soil, scenery and pets. These are desktop CPU samples;
-they do not establish real-phone rendering performance. No optimisation or broad performance improvement is claimed.
-
-Integration and performance fixtures were removed; the playtest was stopped and Edit mode verified. No gameplay errors or
-warnings were logged; Studio Assistant reported its own plugin-version-change warning. No field actions, remotes or profile
-fixture writes were used. Production harvest authority and persistence are unchanged.
-
-## Static study evidence
-
-[Mature comparison](../art/garlic/ripe-studies.jpg) · [Studio client study](../../tools/garlic_ripe_studies.luau).
-Left to right: existing brown Onion, A curled scape (white selection outline), B leaf fan, C pointed spathe, then the avatar.
-The real field pet occupies a neighbouring square; the avatar's following pets also appear at the right.
-
-Studio playtest, 2026-11-10: A / B / C use **54 / 42 / 47 Parts**; measured heights are **4.79 / 4.05 / 4.67 studs**.
-All have a **1.62-stud ground radius**, below the 2.4-stud limit. Their head's lower surface is 0.65 studs below soil;
-its upper shoulder reaches roughly 0.65 above it. All art is anchored, non-colliding, non-touching and non-queryable.
-One full 36-square field at these static budgets would use **1,944 / 1,512 / 1,692 plant Parts**, excluding soil, pets and UI.
-Those are static study counts, not a measured production field or performance approval.
-
-The study ran through real `PlotView` soil, neighbouring Onion and a field pet, with an actual selection outline and avatar
-comparison. The playtest was stopped afterward. Server/client logs had no gameplay errors or warnings; Studio Assistant
-reported its own plugin-version-change warning. No field action, remote or profile fixture write was used.
-
-The selected recipe retains A's angular wrapped head, alternating blades and pointed closed spathe. Static studies remain
-historical comparison evidence; the five continuous-growth stills above are the current review deliverable.
+[`GarlicPlant.luau`](../../src/ReplicatedStorage/GarlicPlant.luau), `PlantKit`: **54 Parts** (21 head/neck/stem, 21 blade, 10 scape,
+2 spathe); 36-square field 1 944. Mid proxies **9 / 14 / 26 Parts** (young / growing / ripe) keep alternating blades and the full
+mature curl. Ring height fixed **5.5 studs**, review framing 5.0. No harvest effect. Seed 1: 4.78 studs tall, head 1.70 × 1.30,
+50.1% exposed; ripe height 4.14–5.61 across seeds / masses; max full-model radius 1.89. Checks: `garlic_growth_checks.luau` (six seeds
+× masses 0.35656 / 1 / 3.02985 × 101 ages), `garlic_integration_checks.luau`. Exact ripe boundary completes the scape and stops
+sampling; a backward correction hides it again. Open: real phone, second client (status table).

@@ -1,118 +1,43 @@
-# Crop catalogue scaling assessment
+# Crop catalogue scaling (100-500 crops)
 
-Analysis, 2026-11-16; code at `4095d3f`. Recommendations below are proposals, not an approved milestone or implementation.
+Analysis of what blocks growing the catalogue from 19 crops to 100-500 types. Proposals, not an approved milestone. Assumes the field
+stays bounded (`CropConfig.MaxSquares`, 78 squares per player); catalogue size, planted instances, plant complexity and player count are
+separate scaling dimensions, and nothing here certifies 100 or 500 types on a phone.
 
-## Verdict and scope
+## What already scales
+- **Server simulation follows planted squares, not types.** `GardenField` resolves crops through `CropConfig.ById`, settles growth at
+  actions / join / leave and on a 60 s interval, and derives readiness from time: no timer per type.
+- **Persistence is compact and keyed by stable ids**: a planting stores crop id, accumulated growth and planting identity (not geometry);
+  seeds, harvested counts, summed sizes and records are maps. But `fieldOf` / `cleanStock` **discard unknown ids**, plantings and records
+  included: a retired crop must keep a definition or get an explicit conversion, never be deleted.
+- **Rendering** (`GardenView` full / mid / low / none at 60 / 120 / 300 studs, hysteresis, shared 6 ms build / pose budget, own plot
+  first; `PlotView` keeps plant identity and stops posing ripe plants) and **recipes** (`PlantKit`, `PlantGrowth` discovering recipes by
+  crop id, localization resolving crop-name keys by id) are the right base.
 
-The existing simulation and client-drawn plot architecture are a sound base for 100–500 crop types. The game is not ready to
-reach that size simply by appending recipes. The first necessary changes are the public crop encoding, catalogue UI and a
-shared content-validation workflow. Recipe loading, lifecycle diversity and economy modelling also need deliberate treatment.
-
-This assumes the field remains bounded at 36 squares per player. Catalogue size, concurrent planted instances, plant geometry
-complexity and player count are separate scaling dimensions. Increasing all four would require a broader performance review.
-This assessment does not certify 100 or 500 types on a phone.
-
-## Evidence checked
-
-- Inspected the catalogue, plant registry and kit, field service, profile storage, public plot feed, plot renderer and scheduler,
-  seed stall, barn, seed picker, localization and economy tools.
-- Read-only Studio inspection confirmed the intended place `73033440513091`, in Edit mode, with 19 recipe ModuleScripts and
-  208,740 bytes / 4,606 newline characters of recipe source. The disk recipe byte total matches. There are 19 catalogue entries;
-  Sunflower is a draft, so 18 recipes are production-enabled. Ten recipe files use the shared `Kit.recipe` factory.
-- Current crop letters are unique and one byte wide. A pure parser example demonstrated that a two-byte identifier changes
-  `aa1a2` into cells `aa` and `1a`, rather than two crop/stage pairs.
-- A Python serialization calculation used synthetic `Crop0000`-style IDs, four stock/record maps and 36 planted-square records:
-  100 types = 7,371 JSON bytes; 500 types = 30,171 bytes. These are illustrative crop-section sizes, not measured player profiles
-  or Roblox remote payload sizes. All four maps deliberately contained every type; present stock capacity makes some of those
-  combinations unattainable through normal play.
-- No gameplay code, scene content or saved profiles were changed. No playtest, phone benchmark or 500-type load test was run.
-
-## What already scales well
-
-**Server simulation follows planted squares.** [GardenField](../src/ServerScriptService/GardenField.luau) resolves crops through
-`CropConfig.ById`, settles stored growth at actions/join/leave and on a 60-second interval, and derives readiness from time.
-It does not start a timer or simulation loop for every catalogue type. Twelve full fields contain at most 432 plantings; 24
-contain 864, whether the catalogue offers 19 or 500 types. Offline tending can also perform bounded harvest/replant work;
-its cost depends on available stock, capacity and crop duration.
-
-**Persistence is compact and uses stable IDs.** A planting stores crop ID, accumulated growth and planting identity, not its
-geometry. Seeds, harvested counts, summed sizes and best records are maps. Additional definitions do not preallocate 500
-plants in every save. Keep shipped IDs permanently resolvable: `fieldOf` / `cleanStock` currently discard unknown IDs, including
-plantings and records. Retiring a crop must retain a definition or use an explicit conversion, rather than deleting its entry.
-
-**Rendering already has the right separation.** [GardenView](../src/StarterPlayer/StarterPlayerScripts/GardenView.luau) selects
-full/mid/low/none detail at 60/120/300 studs, with hysteresis and a shared nominal 6 ms build/pose budget. The own plot gets
-priority. [PlotView](../src/StarterPlayer/StarterPlayerScripts/PlotView.luau) preserves plant identity, spreads updates between
-squares and stops posing ripe plants. Mid detail uses direct-built proxies; low detail removes crop art.
-
-**A shared recipe contract exists.** [PlantKit](../src/ReplicatedStorage/PlantKit.luau) provides deterministic variation, cached
-Part writes, geometry construction and proxies. [PlantGrowth](../src/ReplicatedStorage/PlantGrowth.luau) discovers recipes by
-crop ID. Localization already resolves crop-name keys by ID. These are useful foundations to extend.
-
-## Constraints and changes
-
-| Area | Current behaviour | Implication and proposed change |
+## Constraints and recommended changes
+| Area | Constraint | Recommendation |
 |---|---|---|
-| Public plot format | `GardenField.PlotField` sends two bytes per square: one crop letter and one stage. GardenView and PlotView slice fixed byte offsets. | A hard limit below 500 unique crop codes; multibyte Unicode or `aa` breaks decoding. Replace with an explicit schema using crop IDs, or stable numeric codes with an appropriate codec. Keep stored crop IDs unchanged. |
-| Catalogue UI | SeedStall clears and recreates every crop row on render, including locked crops. State and pet/coin changes trigger renders while open. Both buy and sell sections render even when one is hidden. | At 500 unlocked common crops, the buy list alone creates 1,000 purchase buttons plus labels/layout/stud decoration. Add search, useful grouping and sorting; paginate or recycle visible rows; update stock/prices in place. Barn and seed picker already filter to owned stock, but need the same navigation approach as holdings expand. |
-| Recipe initialization | PlantGrowth immediately requires every available recipe, including drafts before checking `Draft`. One require failure can prevent registry initialization. | Use cheap availability metadata and cached on-demand recipe resolution, warming recipes needed for nearby plots. Validate all recipes before release and contain a failed visual recipe with a controlled fallback and diagnostics. Lazy require reduces initialization work, not replication of modules in ReplicatedStorage. |
-| Content ownership | Economics, crop names, fallback colors, special seed sources and model mapping live in several places. Ten recipes use the shared factory; nine have older implementations. | Keep one authoritative crop definition with display metadata, source/category and lifecycle references, linked to art. Generate or derive secondary indexes and tool inputs. Do not rewrite all unique geometry into an overly general template. |
-| Content verification | Golden-master checking is shared; many geometry/integration scripts are copied per crop. Registry construction silently overwrites duplicate IDs/codes. | Add one catalogue validator and reusable parameterized geometry/lifecycle checks; keep crop-specific bounds and exceptional checks as data/hooks. Check uniqueness, localization, valid economics, recipe interfaces, draft status, full/proxy budgets and deterministic backward seeks. |
-| Lifecycle diversity | One `Grown` clock; Harvest removes `Field.Squares[square]`. Visual fruit slots do not implement persistent gameplay. | Hundreds of annual crops fit this model. Trees, regrowing berries and independently ripe fruit need reusable lifecycle behaviours with separate structure and fruit state, server authority and persistence. Add those behaviours when required, without per-species branches in GardenField. |
-| Profile/publication work | `fieldOf` repeatedly cleans and reallocates stock/record tables. Owner state sends complete maps after publishes. PlotFeed JSON-compares state and broadcasts changes to all clients. | Not a 500-definition hard blocker, but work grows with actual holdings/records, and public broadcasts grow with player count. Measure normalization and payload costs; move full cleanup to load/migration and use targeted validation if warranted. Consider state revisions/deltas or interest filtering when measured traffic requires them. |
-| Economy/content progression | Current catalogue is a 16-common-crop ladder plus three world rares. The EV model has its own fixed ladder, gates and ID mapping. `config_match` iterates model crops, without rejecting extra configured crops. | A new config entry can escape model coverage. Add coverage equality and authoritative model inputs. Choose how families, seasons and alternatives share progression; extending the same vertical ladder to hundreds of steps is not a sustainable content plan. |
-
-The codec change concerns runtime messages, not a required profile migration. Update all consumers, reviewer/fixture builders
-and [PROTOCOL](PROTOCOL.md) together. A simple explicit per-square table is a reasonable first design for only 36 squares;
-measure it before deciding a binary format is necessary. Numeric codes, if chosen, must be assigned permanently, never inferred
-from catalogue order.
+| **Public plot format** | `GardenField.PlotField` sends **two bytes per square: one crop letter + one stage** (`#0` locked, `.0` empty); `GardenView` / `PlotView` slice fixed byte offsets (`CropConfig.ByLetter`). A two-byte id breaks parsing (`aa1a2` decodes as cells `aa`, `1a`). | Hard limit far below 500 codes. Replace with an explicit schema (crop ids, or permanently assigned numeric codes, never inferred from catalogue order); a per-square table is fine for 78 squares, measure before going binary. Runtime message change only, no profile migration; update all consumers, reviewer / fixture builders and PROTOCOL together. Stored crop ids stay. |
+| **Catalogue UI** | SeedStall clears and recreates every crop row on each render (locked crops too; buy and sell sections both render even when one is hidden): 500 crops = 1 000+ buttons. Barn and seed picker filter to owned stock but have no navigation at scale. | Search, grouping, sorting; paginate / recycle visible rows; update stock and prices in place. |
+| **Recipe initialization** | `PlantGrowth` requires every available recipe up front, drafts included, before checking `Draft`; one require failure can break the registry. | Cheap availability metadata and cached on-demand resolution (warm for nearby plots); validate all recipes before release; controlled fallback and diagnostics for a failed recipe. Lazy require does not remove the replicated modules from the client. |
+| **Content ownership** | Economics, names, fallback colours, special seed sources and model mapping live in several places; 11 of 20 recipe modules use `PlantKit.recipe`, the rest older implementations. | One authoritative crop definition (display metadata, category, lifecycle, art link) with derived indexes. Do not force all unique geometry into a general template. |
+| **Content verification** | Golden-master check is shared; geometry / integration scripts are copied per crop; registry construction silently overwrites duplicate ids / letters. | One catalogue validator (uniqueness, localization, economics, recipe interface, draft status, full / proxy budgets, deterministic backward seeks) plus parameterized geometry / lifecycle checks; crop-specific bounds as data / hooks. |
+| **Lifecycle** | One `Grown` clock per square; Harvest removes the planting. Fruit slots are visual only. | Hundreds of annual crops fit. Trees, regrowing berries and independently ripe fruit need reusable lifecycle behaviours (separate structure and fruit state, server authority, persistence), not per-species branches in `GardenField`. |
+| **Profile / feed traffic** | `fieldOf` re-cleans and reallocates stock / record tables; owner state sends whole maps after publishes; `PlotFeed` JSON-compares and broadcasts to all clients. | Not a hard blocker; cost grows with holdings and player count. Move full cleanup to load / migration; consider state revisions / deltas or interest filtering once measured. |
+| **Economy / progression** | The EV model has its own fixed crop ladder and ID mapping; `config_match` iterates model crops and does not reject extra configured crops, so a new config entry can escape coverage. A 1.2× net-rate step per crop would make crop 100 about 7e7× and crop 500 about 3e39× the first. | Add coverage equality and authoritative model inputs; design catalogue breadth (families, seasons, alternatives) separately from the length of the main ladder. |
 
 ## Rendering risk is complexity, not species count
+Recipes run from 54 Parts (Garlic) to 192 + 141 meshes (Sunflower); one expensive recipe can exceed the frame budget with a small
+catalogue (`PlotView:Step` checks its deadline between pieces and posing between plants, so one plant's build is not preempted at 6 ms).
+Adopt per-recipe and whole-scene budgets (Parts, proxy geometry, effects, construction, posing), benchmark mixed fields and simultaneous
+transitions, optimise the measured bottleneck; a selective mesh approach may suit expensive forms. Desktop CPU samples exist for single
+recipes only ([Golden Carrot](plants/GOLDEN_CARROT.md#field-integration-and-desktop-samples)). Recipe source averages ~11 kB per type
+(~1.1 MB at 100, 5.5 MB at 500, all replicated). `StreamingEnabled` is off and would exempt client-created instances anyway.
 
-Current production recipes range from 54 Parts (Garlic) to 169 (Sweet Potato): a homogeneous 36-square field would contain
-1,944–6,084 plant Parts, before soil, pets, UI, meshes or effects. The 192-Part Sunflower (registered in CG20c, 2026-11-18,
-after this review) raises the top to 6,912 Parts plus 5,076 sphere meshes. A new, complex recipe
-can exceed the frame budget even with a small catalogue. `PlotView:Step` checks its deadline between pieces, and posing checks
-between plants; construction or posing of one expensive plant is not preempted at 6 ms.
-
-The existing [Golden Carrot desktop sample](plants/GOLDEN_CARROT.md#field-integration-and-desktop-samples) exercised 24 distance-tiered
-plots (3 full, 4 mid, 17 low). It is evidence for that recipe, route and desktop, not all recipes or phones. Many crop performance,
-phone and second-client checks remain open in [ROADMAP](ROADMAP.md).
-
-Adopt per-recipe and whole-scene budgets for Parts, proxy geometry, effects, construction and posing; benchmark mixed fields
-and simultaneous transitions as well as homogeneous fields. Optimize the measured bottleneck. Current small stud Parts may
-remain suitable for some crops; a selective mesh/hybrid approach should be evaluated for expensive forms, rather than mandated
-for every crop.
-
-Measured recipe source averages about 11 kB/type. Straight-line projections are 1.10 MB for 100 and 5.49 MB for 500 at today's
-average, approximately 24,242 / 121,211 source lines. These are source-maintenance estimates, not compressed downloads, compiled
-memory or load-time predictions. On-demand execution does not make all those replicated modules disappear from the client.
-Roblox documents [ModuleScript execution/caching](https://create.roblox.com/docs/reference/engine/classes/ModuleScript) and
-[ReplicatedStorage](https://create.roblox.com/docs/reference/engine/classes/ReplicatedStorage) separately.
-
-The place currently has StreamingEnabled off. Enabling it alone is not a replacement for GardenView's own detail management:
-Roblox's [streaming documentation](https://create.roblox.com/docs/workspace/streaming) exempts client-created instances from
-streaming out unless they are parented under a server-created instance.
-
-## Suggested order and acceptance evidence
-
-1. **Before expanding into dozens more crops:** replace the letter codec; add catalogue validation and model coverage checking;
-   centralize secondary metadata; make the shop browse a bounded page/window of rows. A 500-entry fixture must round-trip
-   arbitrary IDs, highest codes, mixed occupied/empty/locked squares, corrections and detail changes without touching live saves.
-2. **Before committing to 100 types:** add a reusable crop-check runner; profile registry initialization and use cached on-demand
-   recipe resolution if its cost is material. Measure cold join,
-   first plot appearance, shop open/update, serialized owner/public state, cleanup and memory against today's catalogue using
-   identical visible plants. Separately exercise the most expensive real recipes, effects and frequent-growth cases.
-3. **Before introducing new lifecycle families:** define annual and perennial contracts, saved-state transitions and harvest
-   semantics. Existing deterministic art and fruit-slot work should support this, but do not already implement it.
-4. **Before claiming 500-type readiness:** run 500-definition fixtures plus real complex mixed fields on the target phone and
-   desktop, at actual and intended server populations (the current config describes 12 players; 24 is a separate expansion
-   scenario). Exercise UI search/sort and buy/plant/harvest/sell/feed through real controls, Czech layouts, second-client views,
-   distance transitions and cleanup. Agree device-specific frame/load/memory targets before measuring; record p95 and spikes,
-   not just averages.
-
-For economy design, the current 1.2x net-rate increase per common-crop step illustrates why definitions cannot all be successive
-upgrades: extending that rule would make the last crop's rate about 69 million times the first at 100 steps, and 3.25e39 times
-at 500. Those are mathematical extrapolations, not proposed prices. Catalogue breadth should be designed separately from the
-length of the main progression ladder. The pending EV3 proposal remains unimplemented and should not be treated as current
-runtime architecture.
+## Suggested order
+1. **Before dozens more crops:** replace the letter codec; catalogue validation and economy-model coverage; central metadata; bounded
+   shop rows. A 500-entry fixture must round-trip arbitrary ids, highest codes, mixed squares, corrections and detail changes.
+2. **Before 100 types:** reusable crop-check runner; measure registry init, cold join, shop open / update, serialized state, memory.
+3. **Before new lifecycle families:** define annual and perennial contracts, saved-state transitions, harvest semantics.
+4. **Before claiming 500 types:** 500-definition fixtures plus real complex mixed fields on the target phone and desktop at real server
+   populations (12 players; 24 is a separate scenario), real controls, Czech layouts, second-client views; agree device targets first.

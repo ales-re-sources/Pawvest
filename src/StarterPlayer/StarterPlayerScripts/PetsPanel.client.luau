@@ -1,4 +1,4 @@
--- Pets panel (docs/GDD.md §7.3, §7.5; U1: docs/UI_GARDEN_PETS.md §9): inventory, equip / unequip, buy slot, total Coin bonus.
+-- Pets panel (docs/GDD.md §7.3, §7.5): inventory, equip / unequip, buy slot, total Coin bonus.
 -- Display only: the list comes from PetClient (PetRemotes.PetsChanged), so a hatch or a sale shows up while the panel
 -- is open. A click just names a pet or the next slot; the server validates, prices and pays. The GUI is built here.
 -- The 🐶 button (ButtonHandler) opens it through the SetOpen BindableEvent and reads the Open attribute; the ScreenGui attribute

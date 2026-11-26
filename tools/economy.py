@@ -34,11 +34,11 @@ CFG = ROOT / "src" / "ReplicatedStorage"
 PINS = Path(__file__).with_name("economy_pins.json")
 
 # --------------------------------------------------------------------------------------------------------------------
-# Planned content that no config holds yet (GDD §5-§6, STAGES §3). Provisional: every entry is a model assumption.
+# Planned content that no config holds yet (GDD §5-§6, STAGES §4). Provisional: every entry is a model assumption.
 # --------------------------------------------------------------------------------------------------------------------
 PLANNED = {
     "stage_count": 20,  # display numbers 1..20 plus the Tutorial = 21 stages (GDD §5)
-    "t_base": {13: 120, 14: 135, 15: 145, 16: 120, 17: 110, 18: 135, 19: 150, 20: 180},  # midpoints of STAGES §3
+    "t_base": {13: 120, 14: 135, 15: 145, 16: 120, 17: 110, 18: 135, 19: 150, 20: 180},  # midpoints of STAGES §4
     # extrapolated from the built prices (+500 every second stage); World 4 opener = StageConfig.Worlds[4].unlockPrice
     "unlock_price": {13: 5000, 14: 5000, 15: 5500, 16: 6000, 17: 6000, 18: 6500, 19: 6500, 20: 7000},
     "talents": {"WallJump": [700000], "Glide": [2600000]},  # GDD §6 planned talents (EV2b; 10 000 / 12 000 before, Coins only)

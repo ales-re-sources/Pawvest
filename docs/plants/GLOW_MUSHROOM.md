@@ -4,65 +4,50 @@
 
 ## Selected design
 
-Ales chose a **glowing chestnut bolete pair** (CG9, 2026-11-09), after a first trio of gilled mushrooms: his porcini photo showed that
-the epic crop should be a bolete, and he picked option 3 of three bolete studies (chestnut trio, indigo trio, chestnut pair).
-Rejected: the gilled trio, tall lanterns and a giant single cap ([first studies](../art/glow-mushroom/ripe-studies.jpg)), and the
-bolete trio variants ([wide](../art/glow-mushroom/bolete-studies.jpg) · [trios](../art/glow-mushroom/bolete-closeup-trios.jpg) ·
+**Glowing chestnut bolete pair.** The epic crop must be a bolete (the user's porcini photo), not a gilled mushroom. Rejected: the gilled
+trio, tall lanterns and a giant single cap ([first studies](../art/glow-mushroom/ripe-studies.jpg)); bolete chestnut trio and indigo trio
+([wide](../art/glow-mushroom/bolete-studies.jpg) · [trios](../art/glow-mushroom/bolete-closeup-trios.jpg) ·
 [pair](../art/glow-mushroom/bolete-closeup-pair.jpg); left to right chestnut trio, indigo trio, chestnut pair).
 
-The rare World 3 crop (stored ID `GlowMushroom`, 10 h, teal `g` in `PlotView.CROP_COLORS`). It is an annual: harvest clears the
-whole square. A big bolete (about **4.3 studs** tall at standard mass, below the 5.46-stud avatar), a smaller one beside it, and two
-small buttons. The group stays inside the shared **2.4-stud ground radius** at every age, seed and size.
+Rare World 3 crop (stored id `GlowMushroom`, teal `g` in `PlotView.CROP_COLORS`); annual: harvest clears the whole square. A big bolete
+(about **4.3 studs** at standard mass, avatar 5.46), a smaller one beside it and two small buttons, inside the 2.4-stud radius at every
+age, seed and size.
 
-Bolete cues: a fat **barrel stem**, widest in the lower third, pale grey-cream; a thick convex **chestnut cushion cap** with a thin
-pale rim line; a pale **pore layer** (not gills) under the cap, wider than the stem. No spots on the cap.
+Bolete cues: a fat **barrel stem**, widest in the lower third, pale grey-cream; a thick convex **chestnut cushion cap** with a thin pale
+rim line; a pale **pore layer** (not gills) under the cap, wider than the stem. No spots on the cap.
 
-**Ripeness cue:** the pore layer is ordinary pale plastic while growing and switches to a bright **Neon** teal glow in the last fifth
-of growth (82–98 %). No light instances: the glow is the material only, so a 36-square field adds no light cost.
+**Ripeness cue:** the pore layer is ordinary pale plastic while growing and switches to bright **Neon** teal in the last fifth of growth
+(82-98%). Material only, no light instances (a 36-square field adds no light cost); no other Part uses Neon.
 
-## Growth and harvest
-
-Ales approved the five stills on 2026-11-09.
+## Growth
 
 [0%](../art/glow-mushroom/growth-0.jpg) · [20%](../art/glow-mushroom/growth-20.jpg) · [50%](../art/glow-mushroom/growth-50.jpg) ·
 [75%](../art/glow-mushroom/growth-75.jpg) · [100%](../art/glow-mushroom/growth-100.jpg)
 
-| Growth | Review pose |
+| Growth | Pose |
 |---|---|
-| 0% | Two squat pale buns on short stubs and a smaller button. An unplanted square stays bare. |
-| 20% | The stems start to swell and lengthen; the caps are pale, rounded buttons that begin to widen. |
-| 50% | Pale barrel stems and chestnut convex caps, the cap darkening; the pore layer shows as a pale band under each rim. |
-| 75% | Big cap spread and nearly flat on its tall stem, the small one beside and below it; pores still pale, no glow. |
-| 100% | Full chestnut cushions at two heights; the pore layers and buttons glow bright teal. |
+| 0% | Two squat pale buns on short stubs and a smaller button. Unplanted square stays bare. |
+| 20% | Stems start to swell and lengthen; caps are pale rounded buttons beginning to widen. |
+| 50% | Pale barrel stems and chestnut convex caps, cap darkening; pore layer shows as a pale band under each rim. |
+| 75% | Big cap spread, nearly flat on its tall stem, the small one beside and below it; pores still pale, no glow. |
+| 100% | Full chestnut cushions at two heights; pore layers and buttons glow bright teal. |
 
-Boletes grow as a **button**, not as a stalk that opens an umbrella: the cap is there from the start and widens, rises and flattens
-(its layers go from a rounded to a flatter profile) while the stem swells and lengthens, wider as it grows. The big one finishes
-last. Caps darken from pale tan to chestnut as they open. The pore layer thickens as the cap spreads. Growth is continuous and
-reversible; a 43→44→43% seek restores the identical pose.
+Boletes grow as a **button**, not a stalk that opens an umbrella: the cap is there from the start and widens, rises and flattens while the
+stem swells and lengthens. The big one finishes last. Caps darken from pale tan to chestnut; the pore layer thickens as the cap spreads.
+Continuous and reversible (43→44→43% restores the pose, pore material included).
 
-Seeded variation changes the height ratio (six tendencies: bigger / smaller pair), stem positions and lean, cap radii, tilt and
-yaw, and the growth timings (small delays). Seed 1 is the authored baseline; the plant can rotate through a full circle. New random
-draws go **last**. The small cap stays clear of the big cap's underside, with a tilt allowance.
+Seeds vary the height ratio (six tendencies, bigger / smaller pair), stem positions and lean, cap radii, tilt, yaw and small timing
+delays; full-circle rotation. New random draws go **last**. The small cap stays clear of the big cap's underside (tilt allowance; at least
+0.08 studs).
 
-Harvest mass (cube root `ds`): **light** harvests scale the whole plant evenly (down to 0.71 at the smallest); **heavy** harvests
-grow **taller and thicker** (height and cap thickness up to ×1.3, stems up to ×1.15) but **never wider** than the square; the
-tallest cap top is capped at 4.8 studs. Production duration remains **ten hours**; harvest clears the whole square.
+Harvest mass (cube root `ds`): **light** harvests scale the whole plant evenly (down to 0.71); **heavy** ones grow **taller and thicker**
+(height and cap thickness up to ×1.3, stems up to ×1.15) but **never wider** than the square; tallest cap top capped at 4.8 studs.
 
 ## Recipe and fruit identity
 
-[`GlowMushroomPlant.luau`](../../src/ReplicatedStorage/GlowMushroomPlant.luau) uses `PlantKit` and is registered in `PlantGrowth`.
-The full plant reuses **60 Parts**: two boletes of 25 (barrel stem 10, pores 2, rim 2, cap 11) and two 5-Part buttons. A 36-square
-field uses **2,160 plant Parts** before soil, pets or UI. Direct-built mid proxies use **4 / 8 / 12 Parts** for young / growing /
-ripe plants (one stem block, one or two cap blocks and the pore layer per bolete; the buttons only when ripe); low detail hides crop
-art. Nominal ring height is **5.0 studs**, scaled by harvested mass's cube root; `ReviewHeight` is 4.8.
-
-The pore parts are `Plastic` (stud variant) until the glow starts and `Neon` after; the recipe switches them, no other Part uses Neon.
-`fruitSlots[1..2]` hold a stable ID, the mature world-space stem-top attachment and all 25 Parts of that bolete (`PlantRole` `Fruit`,
-`FruitSlot` = the slot). The two buttons are `Structure` (the mycelium bed a future perennial would keep). Visual slots do not
-define reward quantity or implement collection.
-
-Studio checks (2026-11-09): six seeds × harvest factors **0.3566 / 1 / 3.0298** × 101 ages fit within **2.33 studs** ground radius,
-and the ripe pose is always the widest. Ripe height is **2.76–4.85 studs** (4.33 at seed 1, standard size). The small cap clears
-the big cap's pore layer by at least 0.08 studs. The 43→44→43 seek restores the same pose, and the pore material, in every case.
-Through the real `PlotView` path three plants build 180 Parts at full detail, 24 as mid proxies and none at low detail. A playtest
-boot logged no errors or warnings. Real-phone, full-field / 24-plot performance and second-client checks remain open.
+[`GlowMushroomPlant.luau`](../../src/ReplicatedStorage/GlowMushroomPlant.luau), `PlantKit`: **60 Parts**: two boletes of 25 (barrel stem 10,
+pores 2, rim 2, cap 11) and two 5-Part buttons; 36-square field 2 160. Mid proxies **4 / 8 / 12 Parts** (one stem block, one or two cap
+blocks and the pore layer per bolete; buttons only when ripe); low detail hides crop art. Ring **5.0 studs** (cube-root scaled),
+`ReviewHeight` 4.8. `fruitSlots[1..2]`: stable id, mature world-space stem-top attachment and all 25 Parts of that bolete (`PlantRole`
+`Fruit`, `FruitSlot` = slot); the buttons are `Structure` (the mycelium bed a future perennial would keep). Visual slots do not define
+reward quantity or collection. Max radius 2.33, ripe height 2.76-4.85 (4.33 seed 1 standard). Open: performance, real phone, second client.

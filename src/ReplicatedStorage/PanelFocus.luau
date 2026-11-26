@@ -1,5 +1,5 @@
 --!strict
--- PanelFocus (U4, docs/UI_GARDEN_PETS.md §10): one panel open at a time, and panels close when the player walks away. Client only.
+-- PanelFocus (U4, docs/GDD.md §7.10): one panel open at a time, and panels close when the player walks away. Client only.
 --
 --   PanelFocus.Open(name, close, maxDistance?, anchor?)
 --                                               a panel opened: the one open before closes (its `close` is called), and this one

@@ -39,7 +39,7 @@ local PlantGrowth = require(ReplicatedStorage:WaitForChild("PlantGrowth"))
 
 local PetModels = ReplicatedStorage:WaitForChild("PetModels")
 
--- Floor-space layout (U5a, docs/UI_GARDEN_PETS.md §7): −Z is the sign side (towards the plaza), so the plaza's left is +X. The
+-- Floor-space layout (U5a, docs/GDD.md §7.6): −Z is the sign side (towards the plaza), so the plaza's left is +X. The
 -- strip holds the hatchery on +X (three nests in a triangle under one roof), the barn on −X and a path between them (x ±PATH_HALF).
 -- FX (2026-11-22, the user): the hatchery and barn stand one field square (5.5 studs) further towards the plaza, the sign two
 -- (GardenConfig.SignZ); the strip grew by one square at its front, so the path still runs from the front edge to the field.

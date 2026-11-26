@@ -85,7 +85,7 @@ CropConfig.Expansions = {
 	{ price = 1100000 },
 	{ price = 2100000 },
 	{ price = 4000000 },
-	-- FXP (2026-11-22, the user: re-priced on the flatter post-FL income; docs/ECONOMY.md → Findings (FXP)): x 1.33 again from the
+	-- FXP (2026-11-22, the user: re-priced on the flatter post-FL income; docs/ECONOMY.md → Decisions (FXP)): x 1.33 again from the
 	-- 29th square (was x 1.93 up to 750 M)
 	{ price = 5500000 },
 	{ price = 7000000 },
@@ -193,7 +193,7 @@ function CropConfig.RequestCrops(unlocked)
 	return list
 end
 
--- The rotating seed stall (ST, docs/GDD.md §7.9; model economy_ev `st_*`, ECONOMY.md → Findings "ST"). A restock block is
+-- The rotating seed stall (ST, docs/GDD.md §7.9; model economy_ev `st_*`, ECONOMY.md → Decisions "ST"). A restock block is
 -- floor(os.time() / Seconds) (UTC hours). Always in stock, without a count: the first `Staples` crops of the ladder, the newest unlocked
 -- crop, the newest unlocked crop of at least `LongSeconds` (FL: an overnight staple, so every night has a long crop) and the crops a next
 -- talent level or the open quest asks for (CropConfig.StallAlways). Every other unlocked common crop is in stock in a block when its

@@ -1,4 +1,4 @@
--- GardenField: the crop field behind the player's plot (E1a2, docs/ROADMAP.md → E1a2, docs/EXPANSION.md §5). Server-only.
+-- GardenField: the crop field behind the player's plot (E1a2, docs/EXPANSION.md §5). Server-only.
 -- Every player has a field (FA, 2026-11-06: the field access gate and the P2 pens are gone).
 -- State lives in PlayerProfile.Garden: Field = { Open = { ["n"] = true }, Squares["n"] = { Crop, Grown }, SettledAt }, Seeds[crop],
 -- Items[crop], crop mastery (EV3b: Crops[crop] = { N }, Unlocked, Quest, Rested; below). Grown = growth seconds earned, SettledAt = the

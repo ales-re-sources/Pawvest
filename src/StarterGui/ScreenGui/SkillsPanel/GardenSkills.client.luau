@@ -1,4 +1,4 @@
--- Skills panel, tabs "Obby" / "Garden" (U4, docs/UI_GARDEN_PETS.md §6): the Obby tab is TalentRows' list ("Rows"); the Garden
+-- Skills panel, tabs "Obby" / "Garden" (U4, docs/GDD.md §7.9): the Obby tab is TalentRows' list ("Rows"); the Garden
 -- tab is built here: one row per field upgrade (Growth, Barn) and garden tool (Seed sorter, Cloches, Pruning shears): icon, name,
 -- level / max, effect now → next and a Buy brick with the price (Coins only since EV3b: the Renown header and gates are gone). Buyable
 -- anywhere (the server dropped the plot check in U4); every buy is over ConfirmTap.THRESHOLD, so it takes two taps. Display only: a

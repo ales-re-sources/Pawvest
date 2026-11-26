@@ -1,7 +1,7 @@
 # Pawvest — agent guide
 
-Roblox obby growing into a pet-garden game: a central hub island with portals to 15 timed stages in 3 worlds (checkpoints, medals, Top-10
-boards, challenge coins, talents), pets, and a garden island with plots, incubators and, behind admin access, a crop field with field pets.
+Roblox obby + pet-garden game: a central hub island with portals to 15 timed stages in 3 worlds (checkpoints, medals, Top-10 boards,
+challenge coins, talents), pets, and a garden island of 8 plots (incubators, every player's crop field with field pets, barn, seed stall).
 
 - Place **"Pawvest"**, placeId `73033440513091` (pinned in `Pawvest.project.json` → `placeIds`; the old place `83181838162651` is dead and its
   DataStores did not move).
@@ -12,34 +12,33 @@ boards, challenge coins, talents), pets, and a garden island with plots, incubat
 | Doc | Holds |
 |---|---|
 | [docs/ROADMAP.md](docs/ROADMAP.md) | status, what next, open items, done log. Answer "what next?" from here |
-| [docs/GDD.md](docs/GDD.md) | the game as built: loop, stages, time tiers, rewards, talents, pets, garden, crop field (§7.9), hints |
-| [docs/EXPANSION.md](docs/EXPANSION.md) | high-level pet-garden direction: MVP and drop plan (E5–E11, D1–D10), monetization rules |
-| [docs/UI_GARDEN_PETS.md](docs/UI_GARDEN_PETS.md) | garden / pet UI redesign U1–U5 (decided, not built): field rings, square card, hand bar, panel split, pets list |
-| [docs/ECONOMY.md](docs/ECONOMY.md) | economy parameters and decisions, how to run `tools/economy.py` |
-| [docs/STAGES.md](docs/STAGES.md) | stage building: components, build rules, reach table, difficulty curve, per-stage as-built notes |
-| [docs/LAYOUT.md](docs/LAYOUT.md) | every script and scene folder, stage anatomy, **adding a world stage**, copied-script table |
+| [docs/GDD.md](docs/GDD.md) | the game as built: loop, stages, time tiers, rewards, talents, pets, garden, crop field (§7.9), UI rules, hints |
+| [docs/EXPANSION.md](docs/EXPANSION.md) | pet-garden direction: not-built drops, monetization rules |
+| [docs/ECONOMY.md](docs/ECONOMY.md) | economy targets, parameters and decisions, how to run `tools/economy.py` |
+| [docs/STAGES.md](docs/STAGES.md) | stage building: components, build rules and gotchas, reach table, difficulty curve, per-stage notes |
+| [docs/LAYOUT.md](docs/LAYOUT.md) | every script and scene folder, stage anatomy, **adding a world stage**, script stubs |
 | [docs/PROTOCOL.md](docs/PROTOCOL.md) | every RemoteEvent, DataStore key and profile field, mirrored player attributes |
-| [docs/LOCALIZATION.md](docs/LOCALIZATION.md) | localization design and the strings workflow |
+| [docs/TESTING.md](docs/TESTING.md) | Studio MCP habits, bots, live DataStore snapshot / restore, fresh-profile and multi-client tests |
+| [docs/LOCALIZATION.md](docs/LOCALIZATION.md) | localization design, full rules and the strings workflow |
 | [docs/TELEMETRY.md](docs/TELEMETRY.md) | telemetry events and how to read them on the Creator Dashboard |
 | [docs/PET_GROWTH.md](docs/PET_GROWTH.md) | how PetLook derives a pet's look, how pet models are authored |
-| [docs/THUMBNAILS.md](docs/THUMBNAILS.md) | store thumbnails (TH): themes and variants, Roblox thumbnail testing, Studio-only photo sets |
-| [docs/PLANT_GROWTH.md](docs/PLANT_GROWTH.md) | plant art authoring, Studio player commands and recipe contracts; per-crop status table; links to crop designs in `docs/plants/` |
-| [docs/HYBRIDS.md](docs/HYBRIDS.md) | hybrid plants / breeding: decisions, proposals and open points (design only, HX1); the HX0 prototype as built is in `docs/HYBRID_PROTOTYPE.md` |
+| [docs/PLANT_GROWTH.md](docs/PLANT_GROWTH.md) | plant art authoring, Studio commands, recipe contracts, per-crop status; crop designs in `docs/plants/` |
+| [docs/HYBRIDS.md](docs/HYBRIDS.md) | hybrid plants / breeding design (after 1.0); prototype: `docs/HYBRID_PROTOTYPE.md` |
+| [docs/THUMBNAILS.md](docs/THUMBNAILS.md) | store thumbnails: themes, variants, test plan, how they are built |
 
-**Before designing a crop:** read `docs/PLANT_GROWTH.md`. The standard art review is five snapshots (0/20/50/75/100%); historical GIF links do not require new animation captures.
+**Before designing a crop:** read `docs/PLANT_GROWTH.md`. The standard art review is five snapshots (0/20/50/75/100%).
 
-Tools: `tools/economy.py` (economy model: run `check` after changing any price, rate or reward in a config, `pin` to accept reviewed values; `tools/economy_ev.py`: the engagement-first EV proposal, `economy.py proposal`),
-`tools/loc.py` (strings, below), `tools/vault_reach.py` + `tools/vault_right_checks.sh` (Stage 14's Key Vault reachability; re-run after moving
-a vault part), `tools/kit_coplanar_audit.luau` (z-fighting audit, Gotchas).
+Tools: `tools/economy.py` (run `check` after changing any price, rate or reward in a config, `pin` to accept reviewed values),
+`tools/loc.py` (strings), `tools/vault_reach.py` + `tools/vault_right_checks.sh` (Stage 14's Key Vault reachability; re-run after moving
+a vault part), `tools/kit_coplanar_audit.luau` (z-fighting audit, STAGES.md → Build gotchas).
 
 **Workflow:** milestone by milestone per ROADMAP (design check → scope with hard acceptance checks → implement → Studio validation → status +
 commit). Status levels (Implemented / Studio-validated / Live-validated) change only after validation.
 
-**Keeping docs small** (this file loads into every thread): AGENTS.md holds only rules that apply to most tasks; tables, procedures and
-per-stage facts go to `docs/`. A finished milestone shrinks to a short "Done" entry in ROADMAP and its as-built design goes to GDD (or STAGES
-for a stage); scopes, acceptance checks and validation logs stay in git only (point to them with `git show <hash>:<path>`).
-EXPANSION stays high-level; plant commands/contracts go to PLANT_GROWTH and crop detail to `docs/plants/`. Durable lessons from a
-validation go here (Gotchas / Testing) as one-line rules, not as stories.
+**Keeping docs small** (this file loads into every session): AGENTS.md holds only rules that apply to most tasks. Docs hold the design as
+built and the *why* of decisions, not history: no dated change logs, validation logs or iteration stories (git keeps those). A finished
+milestone becomes one line in ROADMAP → Done and its as-built design goes to GDD (or STAGES for a stage). Durable lessons from a validation
+become one-line rules here or in TESTING / STAGES.
 
 ## How code gets here (read before editing)
 Argon runs in **Only Code Mode**: `src/` contains every script **plus the instances that contain scripts** (as folders with `init.meta.json`
@@ -50,7 +49,7 @@ holding only `className`; no properties). Parts, GUI layout, RemoteEvents, Sound
 - Safety nets that must stay on: `$keepUnknowns: true` on every service in `Pawvest.project.json` and the plugin's **Keep Unknowns**
   setting. Without them a Server-priority sync deletes the scene.
 - Sibling names must be unique (Argon drops duplicates on syncback): new scripted parts need unique names (`Part_11`, `KillPart_3`).
-  Exception: ChoiceStage `Step` parts (Gotchas).
+  Exception: ChoiceStage `Step` parts (STAGES.md → Build gotchas).
 - **Argon does not write the script files of instances created through the Studio MCP** (clones, `execute_luau`; a `Source` changed that way
   does not reach the disk either). New scripted instances start as files on disk (LAYOUT.md → Adding a world stage).
 - `sourcemap.json` and `*.rbxl` are git-ignored.
@@ -62,7 +61,7 @@ playtests). Studio must be in **Edit** mode for `datamodel_type: "Edit"`.
 Per-file and per-scene-folder descriptions live in [docs/LAYOUT.md](docs/LAYOUT.md): grep it (or the file itself) when you need one.
 ```
 src/ReplicatedStorage/        shared modules: configs (Stage / Pet / Garden / Crop / Talent / ChallengeCoin / Arena / Admin),
-                              Locale + generated Strings/, KitMath, StudStyle, PetLook, TimeFormat, MedalText
+                              Locale + generated Strings/, KitMath, StudStyle, PetLook, TimeFormat, MedalText, plant recipes
 src/ServerScriptService/      services: PlayerProfile (DataStore), CoinRewards, StageResults, StageUnlocks, PetService,
                               Garden* (plots, incubators, food, field, plot feed), RespawnService, TalentService, Telemetry,
                               LanguageService, admin remotes
@@ -76,12 +75,11 @@ src/Workspace/                StartLocation (hub), Tutorial, World1 (Stage1-5), 
 ```
 
 ### Stages
-- World stages live in `Workspace.World<n>.Stage<k>` (`Gate`, `Top10Leaderboard`, `Arrival`, checkpoints `<number>/C`, finish
-  `TeleportBackToStageStart/Portal`, obstacles); a new stage takes the next free block of 100 checkpoint numbers. Anatomy and the procedure
-  for a new stage: LAYOUT.md.
+- World stages live in `Workspace.World<n>.Stage<k>`; a new stage takes the next free block of 100 checkpoint numbers. Anatomy and the
+  procedure for a new stage: LAYOUT.md; build rules and gotchas: STAGES.md.
 - Stage scene scripts are byte-identical one-line stubs `require(workspace.Handlers.StageScripts).<Fn>(script)`: change behaviour in
   `StageScripts`, never in a copy. It never hard-codes a stage: `StageConfig.ForInstance(script)` (stage = the Workspace folder the stub
-  lives in) or `StageConfig.ByHubPortal[...]` (LAYOUT.md → Reusable script variants, incl. the `ServerStorage.StageKit` templates).
+  lives in) or `StageConfig.ByHubPortal[...]`.
 - Stage keys (`"Stage1"`…`"Stage15"`, `"Tutorial"`; equal to the stage's `folder` and position) are DataStore keys and **never change**. Hub
   label: `StageConfig.HubName` (`"Central Island"`).
 
@@ -90,34 +88,26 @@ src/Workspace/                StartLocation (hub), Tutorial, World1 (Stage1-5), 
   exist in Studio). The server never takes a price, time, reward or position from a client: prices come from the configs, times from server
   `os.time()`, plot actions are derived from the caller; answers come back on the service's `Result` remote.
 - Every admin remote checks `AdminConfig.IsAdmin` on the server (the client check only hides the panel).
-- The profile (`PlayerProfiles`, `user_<UserId>`) is read and written only through `PlayerProfile` (never `SetAsync` on it directly).
+- The profile (`PlayerProfiles`, `user_<UserId>`) is read and written only through `PlayerProfile` (never `SetAsync` on it directly). It is
+  saved on leave, every 60 s and in `BindToClose`; a failed load blocks saving for that session; writes to one key are spaced
+  `MIN_WRITE_GAP` (7 s): `Save` only marks the profile dirty.
 - Gameplay Coins go through `CoinRewards.Grant` (pet multiplier); purchases, deductions and sales call `PlayerProfile.AddCoins`. Stored Coins
   were scaled ×10 once by the `Version = 3` migration: never multiply stored Coins by hand.
 - Stored ids are never renamed or reused: stage keys, challenge coin ids (`<stage folder>_<n>`), aptitude ids, upgrade / tool ids, crop ids,
   field square numbers.
-- Every player has the crop field (FA, 2026-11-06; there is no no-field path). A profile from before it converts once on join
-  (`GardenField` `convert`: pens → field pet slots, legacy pen fields cleared).
+- Every player has the crop field (there is no no-field path). A profile from before it converts once on join (`GardenField` `convert`).
+- Studio playtests with API access read / write the **live** DataStores: snapshot before any write (docs/TESTING.md).
 
-## Localization rules (docs/LOCALIZATION.md → Strings workflow)
-- Never set player-visible text as a literal: use `Locale.T(key)` on the client or `Locale.SetKey(label, key, args)` from the server
-  (`Locale.SetText` only for texts without words: times, star lines). Names of stages, worlds, medals, talents, eggs, pets, crops go through
-  the `Locale` helpers (`Locale.StageName` etc.), never `displayName` / `name` directly; the configs' English fields carry `-- loc: ignore`.
-  A Studio-authored label gets the tag `Loc` + attribute `LocKey` (+ `LocArgs` JSON); its script must not write that label's `Text`.
-- Strings live only in `localization/strings.csv` (key, context hint, `en`, `cs`, `cs_status`, `cs_en_hash`): a new or changed string gets its
-  row with a useful context (where it shows, each `{placeholder}`, Czech grammar notes), English and Czech, `cs_status` = `new`. Never edit
-  `src/ReplicatedStorage/Strings/*.luau` (generated).
-- Before every commit that touches text: `python tools/loc.py build`, `python tools/loc.py check` (0 errors) and `python tools/loc.py lint`
-  (within `tools/loc_lint_baseline.txt`; after converting a file lower its number with `--update-baseline`, never raise it). List the new /
-  changed Czech texts in the summary for the user's review.
-- Keys are `area.thing.detail`, never renamed once shipped (a rename = new key, old one removed).
-- The CSV opens in Excel: UTF-8 with BOM, no `sep=` line; `build` rewrites whatever Excel saved in the canonical form. A text starting with
-  `+`, `-`, `=` or `@` is written `\+…`.
-- Numbers in texts go through placeholders (`Locale.Number` formats per language); never build "1,500" in code.
-- A GUI that stays on screen re-renders on `Locale.Changed`; GUIs built in code set `AutoLocalize = false`. Pet names are user data, never
-  localized.
-- Czech texts are longer: let lines wrap and grow (`TextWrapped` + `AutomaticSize`) and check `TextFits` in Czech. Stud-brick buttons
-  (`StudStyle.Brick`) show their text in an inner `Glyph` label: measure that one. The pseudo-language (Settings row, Studio / admins) finds
-  literals (no `[!!`) and cut-off texts.
+## Localization (full rules: [docs/LOCALIZATION.md](docs/LOCALIZATION.md) → Strings workflow)
+- Never set player-visible text as a literal: `Locale.T(key)` on the client, `Locale.SetKey(label, key, args)` from the server
+  (`Locale.SetText` only for texts without words). Names of stages, worlds, medals, talents, eggs, pets, crops go through the `Locale`
+  helpers (`Locale.StageName` etc.). Numbers go through placeholders. Pet names are user data, never localized.
+- Strings live only in `localization/strings.csv` (new / changed row: context hint, `en`, `cs`, `cs_status` = `new`); never edit the generated
+  `src/ReplicatedStorage/Strings/*.luau`. Keys are `area.thing.detail`, never renamed once shipped.
+- Before every commit that touches text: `python tools/loc.py build`, `check` (0 errors) and `lint` (within the baseline; never raise it).
+  List the new / changed Czech texts in the summary for the user's review.
+- Czech is longer: let text wrap and grow (`TextWrapped` + `AutomaticSize`); GUIs built in code set `AutoLocalize = false` and re-render on
+  `Locale.Changed`.
 
 ## Gotchas
 - **Argon / sync**
@@ -127,7 +117,7 @@ src/Workspace/                StartLocation (hub), Tutorial, World1 (Stage1-5), 
     Studio-side duplicates only while Argon is disconnected.
   - Initial sync priority is **Client** (Studio overwrites files on connect): commit before connecting and check `git status` right after;
     files edited while disconnected are overwritten by Studio's copy.
-  - If a file edit does not show in Studio although Argon is connected, reconnect the plugin (seen in P3b: Studio's copy missed the last edit).
+  - If a file edit does not show in Studio although Argon is connected, reconnect the plugin.
   - **Disconnect Argon before any git command that changes the working tree** (switch, checkout, merge, pull, reset, stash): Argon applies the
     change to Studio and deletes the Studio-only children of every script container that disappears, even for a moment.
   - **Moving or renaming a script container on disk recreates its Studio instance**: its Studio-only children are lost, a stashed copy of the
@@ -135,31 +125,15 @@ src/Workspace/                StartLocation (hub), Tutorial, World1 (Stage1-5), 
     origin. Reparent in Studio instead, or note the scripted parts' properties first and rebuild after the move.
   - Adding a script file under a plain Studio instance does not convert it: Argon creates a second empty one. After adding / renaming script
     containers, check Studio for duplicates and lost children.
-- **ChoiceStage:** the scripts pick a random child named exactly `Step`; the three `Step` parts per ChoiceStage keep that duplicate name and
-  are not synced. Code that moves scene children by name match overwrites the first one with the second: move them without matching.
-- **PlayerProfile:** saved on leave, every 60 s and in `BindToClose`; a failed load blocks saving for that session. Writes to one key are
-  spaced `MIN_WRITE_GAP` (7 s): `Save` only marks the profile dirty. Don't `require` it from the MCP command context during a playtest (a
-  second copy that also saves).
-- Studio playtests with API access read / write the **live** DataStores — snapshot and restore anything a test changes (Testing).
-- **Fall reset depth:** a stage whose course has a catch or bounce surface, or continues on a platform, far below its last checkpoint needs
-  the Studio attribute `FallResetDepth` on its stage folder (QuickRespawnClient's default is 30; the stages that have one: LAYOUT.md → Stage
-  anatomy).
-- **Moving kit parts must not share a face plane with their frame** (z-fighting): doors / lifts thinner than their frame, doors swing
-  (`OpenTurn` + `OpenHinge`) instead of sliding into a lintel, frame walls reach the ground / sea. After building or changing a `KitDoor` run
-  `tools/kit_coplanar_audit.luau` via MCP `execute_luau` (Edit) until "clean"; after building a stage, run it with `STATIC_ROOT` set to its
-  folder (rules: STAGES.md §2.3.1).
-- A finish portal's label is on its Back face: its `LookVector` must point along the approach (last checkpoint → portal); after cloning or
-  rotating a course check `portal.CFrame.LookVector:Dot(approach) > 0`.
-- Decorations are clones from the Studio-only `ServerStorage.DecorKit` (stud textures are MaterialVariants in `MaterialService.StudPack`,
-  looked up by name: keep that folder); placed decor is Anchored with CanTouch / CanQuery off (flowers / grass also CanCollide off).
-- Challenge coins pay once per player and are hidden only on that player's client; a new coin needs a new id in `ChallengeCoinConfig` **and**
-  the Studio part (tag + `CoinId`) in its stage folder. No Highlights on coins (Roblox renders at most 31 at once).
+- Stage building (ChoiceStage `Step` parts, `FallResetDepth`, kit z-fighting audit, finish portal orientation, decorations, challenge coins):
+  STAGES.md → Build gotchas.
 - Debounces in timer, portal and checkpoint code are per player; a kill part kills a living character once (no debounce). The timer uses
   `os.clock()`; times are floored to tenths (`TimeFormat.Tenths`) before storing.
-- A ScreenGui built in code gets `ZIndexBehavior = Sibling` (with Global its children drew under later pages / pickers).
-- A BillboardGui with buttons lives in PlayerGui (`Adornee` = the part) with `Active = true` and `ResetOnSpawn = false`; without
-  `Active` its buttons get no clicks / taps.
-- Passive GUI panels can use `Active = false` + `InputSink = All` to keep an arrow cursor while blocking world input (legacy panels use `Active = true`); custom world tap / hover handlers use `UiKit.BlocksWorld`, which honours both, including blank frames. Native world clicks use `UiKit.PointerPosition()` (GUI-inset coordinates; raw `GetMouseLocation()` does not match GUI hit-testing).
+- **GUI:** a ScreenGui built in code gets `ZIndexBehavior = Sibling`. A BillboardGui with buttons lives in PlayerGui (`Adornee` = the part)
+  with `Active = true` and `ResetOnSpawn = false` (without `Active` its buttons get no clicks / taps). Passive panels can use
+  `Active = false` + `InputSink = All` to block world input with an arrow cursor; custom world tap / hover handlers use `UiKit.BlocksWorld`;
+  native world clicks use `UiKit.PointerPosition()` (raw `GetMouseLocation()` does not match GUI hit-testing). A click never makes panel
+  content jump: same parts and sizes in every state.
 - **Shared helpers before local copies:** countdowns `TimeFormat.Clock`, client / stored number checks `Num`, id-set
   attributes `IdSet`, status colours `StudStyle.Text`, refusal texts `Locale.Reject(reason, specific)` (falls back to
   `common.reject.*`), stage lookups `StageConfig.TryForInstance` / `AreaOf` / `MedalsFromAttributes` / `AnyUnlocked`.
@@ -173,59 +147,16 @@ src/Workspace/                StartLocation (hub), Tutorial, World1 (Stage1-5), 
   but don't mass-rewrite without asking.
 
 ## Testing
-No automated tests. Validate by risk; scope acceptance checks to the tier a change needs, not more:
+No automated tests. Validate by risk; scope acceptance checks to the tier a change needs, not more. Playtests, bots and DataStore
+fixtures: **read [docs/TESTING.md](docs/TESTING.md) first**.
 - **Always:** grep for leftovers of what changed; the tool checks that apply (`economy.py check`, `loc.py check` / `lint`, a smoke run of
   any tool command a change touches); one playtest boot (MCP `start_stop_play`) reading server and client errors / warnings.
 - **UI or input changed:** each changed control through the real UI at least once (firing remotes alone once missed a broken button).
   A pure removal only needs a look at the affected screens.
-- **Stored data migrated or rewritten:** first read the live profiles (one playtest, read-only). Test the path with a fixture
-  (snapshot / restore below) only if a live profile actually needs it; otherwise review the path in code and say so.
-- **Never skipped:** a snapshot right before any write to a live profile.
+- **Stored data migrated or rewritten:** first read the live profiles (one playtest, read-only). Test the path with a fixture only if a
+  live profile actually needs it; otherwise review the path in code and say so.
+- **Never skipped:** a snapshot right before any write to a live profile (TESTING.md → Live DataStore snapshot / restore).
 
-**Keep tool output small** (it all stays in the context):
-- Console: not `get_console_output` (it returns the whole log). Use `execute_luau` (`Server` / `Client` during a playtest, `Edit` otherwise):
-  `game:GetService("LogService"):GetLogHistory()`, keep entries matching a pattern (`"%[Telemetry%]"`, `"error"`, your own prefix) or after the
-  test's start, last ~30, each cut to ~200 chars.
-- Big files (PetLook, ObstacleKit, PetsPanel, PetDetail, Telemetry, FoodShopClient, FieldClient, GardenField,
-  StageConfig, IncubatorClient: 17-50 kB): Grep for the function / text, then Read with `offset` / `limit`.
-- `python tools/loc.py check` prints errors and a summary; `loc.py review` lists the waiting texts.
-
-**Studio MCP habits:**
-- A **minimized Studio window renders no 3D**: check `IsIconic` on the `RobloxStudioBeta` window and restore it with `ShowWindow(handle, 4)`
-  from PowerShell before capturing.
-- `screen_capture` **one call at a time**, ~1.5 s apart (parallel captures time out, then captures come back white until Studio restarts and
-  the instance id changes). A capture with a camera position leaves the Edit camera `Scriptable`: set
-  `workspace.CurrentCamera.CameraType = Enum.CameraType.Fixed` afterwards. `BillboardGui`s with `AlwaysOnTop` don't show in captures (check
-  them by properties).
-- Never leave a playtest running (`start_stop_play` false at the end; `Edit` calls fail in Play mode). Check `get_studio_state` for a
-  playtest you did not start before stopping anything (ask the user). A character may not be loaded right after start (wait for
-  `HumanoidRootPart`).
-- Bots: a `MoveTo` bot cannot walk on a kit mover (use `Humanoid:Move`); a jump-reach bot holds forward with `Humanoid:Move` every frame
-  through the landing; teleporting into a coin or trigger is flaky (walk onto it). A ProximityPrompt shows (and its key works) only
-  on screen: after teleporting the character, set the camera behind it before pressing the prompt's key. A stage finish can be driven by moving the character
-  through the gate's `TimerStart` and then the finish portal. Scroll a list row into view before clicking it (an off-screen row's click
-  lands on what lies under it). `user_mouse_input` x / y are GUI-inset coordinates (viewport y − `GuiService:GetGuiInset().Y`); its
-  `instance_path` cannot aim at a BillboardGui button (reads it at 0, 0 and clicks the top-left HUD: the Home button teleports).
-- Never `require` a client module that starts itself (GardenView, PetClient …), even indirectly through GardenSummary, from the MCP `Client` context: it runs a second copy
-  (a second Workspace.GardenView with every plot drawn twice). Read their drawn instances or GUIs instead.
-- `require` in the **Edit** context caches a ModuleScript across calls (may return the old version after a disk change): check `.Source`, or
-  test in a playtest.
-
-- **Fresh-profile tests:** set the ServerStorage attribute `TestProfileKey` (a string) before the playtest: joining players load / save
-  under that key (a new player when missing; boards skip them). Clear the attribute and remove the key's record afterwards.
-
-**Live DataStore snapshot / restore:**
-- Right before **every** fixture write, copy the profile as it is now (`PlayerProfiles` `user_<id>`, plus its `MostStars` value) into
-  `TestSnapshots` under a new key (`profile_<id>_<milestone>_<n>`); never restore an older snapshot (the user plays between tests). Restore
-  after the playtest has stopped and remove the test's entries from `GlobalLeaderboardsStore`.
-- If Edit-mode DataStore calls fail ("Access forbidden"), write from the playtest `Server` context after PlayerProfile's shutdown save:
-  `game:BindToClose(function() task.wait(9); store:SetAsync(key, value) end)` (value built beforehand), stop the playtest, wait ~15 s before
-  the next one, and check the write there before the profile is saved again. Don't kick the player (it ends the playtest and its dialog
-  blocks the MCP).
-- `GetAsync` returns two values: assign to a local before passing to `SetAsync` (else "Unable to cast Instance to Array").
-- Accounts: `Lekzdrh` (9892673032, the developer in Studio), `AhojRupert` (769364524, another admin).
-
-**Multi-client:** the user starts Test → **Server and Clients** (F7), then **Add Clients**. `list_roblox_studios` shows one instance per client
-plus the server; `get_studio_state` tells them apart. Test users have UserIds −1, −2… and create `PlayerProfiles` records `user_-1`, `user_-2`:
-remove them afterwards from a later one-player playtest's `Server` context (a removal in the F7 server's `BindToClose` was overwritten
-by the test players' leave saves). Studio does not filter text (`TextService`): filter results need a live test.
+**Keep tool output small** (it all stays in the context): read the console through `LogService:GetLogHistory()` filtered and cut
+(TESTING.md), never `get_console_output`. Big files (PetLook, ObstacleKit, PetsPanel, PetDetail, Telemetry, FoodShopClient, FieldClient,
+GardenField, StageConfig, IncubatorClient: 17-50 kB): Grep for the function / text, then Read with `offset` / `limit`.
