@@ -1,13 +1,16 @@
 -- FieldRings (U3a, docs/GDD.md §7.9): the Near tier of the own field. A ring over every planted square of the own field while
 -- the character is within SHOW_DISTANCE (horizontal) of the nearest square: a dark disc whose pie fills as the crop grows, the
--- crop icon in the middle. Ripe = full green pie, a ✓ badge and a small bounce. The NEAREST growing squares closest to the
+-- crop icon in the middle. Ripe = full green pie, a ✓ badge, a small bounce and a bigger disc (SCALE_RIPE); growing rings are
+-- smaller and dimmer (SCALE_GROWING), so ripe ones stand out at a glance. The NEAREST growing squares closest to the
 -- character also print the time left under their ring. Own plot only, at most CropConfig.MaxSquares billboards.
 -- Data: GardenRemotes.State field.squares ({ crop, grown, readyAt }; readyAt = server time when ripe if the owner stays online)
 -- and server time. The pie uses actual progress; the countdown shows away-time seconds, ticking faster online.
 -- A ring is built once per planted crop and only re-filled each second (no new instances while nothing is planted / harvested).
 -- Positions: GardenView.SquareCFrame. The billboards sit on Attachments of one invisible client part (Workspace.FieldRings),
--- not AlwaysOnTop (screen captures show them); drawn TOWARD the camera from the square so its crop does not hide it. In Studio the part carries the attributes
--- Rings (rings drawn) and UpdateMs (the last update's cost).
+-- not AlwaysOnTop (screen captures show them); drawn TOWARD the camera from the square so its crop does not hide it. Every ring
+-- sits at one height straight up (StudsOffsetWorldSpace): the tallest planted crop's PlantGrowth.RingHeight, so the rings form a
+-- grid over the field. Not StudsOffset's Y: that is the camera's up, which on a steep view slides a ring over another row.
+-- In Studio the part carries the attributes Rings (rings drawn) and UpdateMs (the last update's cost).
 -- U3b: in the same tier, every placed field pet's reach region as a thin border in its rarity colour (GardenView.ShowBorders). The
 -- region = the squares this pet counts for under GardenField's rules: per square the strongest Tending pet that reaches it and the
 -- strongest guard (the guard chance from the State); ties go to the lower uid (the effect is the same). Redrawn only when a region
@@ -40,6 +43,8 @@ local COLOR_TRACK = Color3.fromRGB(35, 35, 40)
 local COLOR_GROWING = Color3.fromRGB(245, 200, 70)
 local COLOR_RIPE = Color3.fromRGB(90, 225, 90)
 local COLOR_CHECK = Color3.fromRGB(40, 160, 60)
+local SCALE_RIPE, SCALE_GROWING = 1.2, 0.75 -- disc scale: ripe rings stand out, growing ones step back
+local DIM_GROWING = 0.3 -- transparency of a growing ring's icon and fill
 
 local anchor = Instance.new("Part")
 anchor.Name = "FieldRings"
@@ -107,7 +112,8 @@ local function newRing(square: number, crop)
 	gui.AutoLocalize = false
 	gui.LightInfluence = 0
 	gui.Size = UDim2.new(WIDTH, 0, TALL, 0) -- scale = studs
-	gui.StudsOffset = Vector3.new(0, PlantGrowth.RingHeight(crop.id), TOWARD)
+	gui.StudsOffset = Vector3.new(0, 0, TOWARD)
+	gui.StudsOffsetWorldSpace = Vector3.new(0, PlantGrowth.RingHeight(crop.id), 0)
 	gui.MaxDistance = 90
 	gui.Enabled = false
 	local disc = circle("Disc", {
@@ -118,6 +124,8 @@ local function newRing(square: number, crop)
 		BackgroundTransparency = 0.25,
 	})
 	disc.Parent = gui
+	local scale = Instance.new("UIScale")
+	scale.Parent = disc
 	local pie = Instance.new("Frame")
 	pie.Name = "Pie"
 	pie.BackgroundTransparency = 1
@@ -181,6 +189,8 @@ local function newRing(square: number, crop)
 	return {
 		crop = crop,
 		attachment = attachment,
+		scale = scale,
+		icon = icon,
 		gui = gui,
 		disc = disc,
 		fills = { right.Parent :: Frame, left.Parent :: Frame }, -- the two fill circles (the gradients' parents)
@@ -239,8 +249,11 @@ local function setRipe(ring, ripe: boolean)
 	end
 	ring.ripe = ripe
 	ring.check.Visible = ripe
+	ring.scale.Scale = if ripe then SCALE_RIPE else SCALE_GROWING
+	ring.icon.TextTransparency = if ripe then 0 else DIM_GROWING
 	for _, fill in ring.fills do
 		fill.BackgroundColor3 = if ripe then COLOR_RIPE else COLOR_GROWING
+		fill.BackgroundTransparency = if ripe then 0 else DIM_GROWING
 	end
 	if ring.bounce then
 		ring.bounce:Cancel()
@@ -369,14 +382,21 @@ local function update(now: number)
 		end
 	end
 	local squares = if type(field) == "table" and type(field.squares) == "table" then field.squares else {}
+	local height = 0 -- one height for every ring: the tallest planted crop's
+	for square, ring in rings do
+		local entry = squares[tostring(square)]
+		if entry then
+			height = math.max(height, PlantGrowth.RingHeight(ring.crop.id, entry.size))
+		end
+	end
+	local world = Vector3.new(0, height, 0)
 	local growing = {}
 	for square, ring in rings do
 		ring.gui.Enabled = near
 		local entry = squares[tostring(square)]
 		if entry then
 			local crop = ring.crop
-			local offset = Vector3.new(0, PlantGrowth.RingHeight(crop.id, entry.size), TOWARD)
-			if ring.gui.StudsOffset ~= offset then ring.gui.StudsOffset = offset end
+			if ring.gui.StudsOffsetWorldSpace ~= world then ring.gui.StudsOffsetWorldSpace = world end
 			local share, ripe, left = CropConfig.Progress(entry, crop, receivedAt, now, field and field.tools)
 			setRipe(ring, ripe)
 			if not ripe then

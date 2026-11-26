@@ -15,7 +15,7 @@
 -- plants? = { [square string] = { n = planting identity, startAt, readyAt } } } } or { free = true } (a slot
 -- nobody holds: floor, sign "Free plot", grey incubators, an empty barn). Every plot's floor is the front strip; the field lies behind it
 -- (the P2 pens are gone since FA).
--- The field (E1d2) has the shape CropConfig.RowWidths: every row is a plate of overgrown grass, open squares are soil on it,
+-- The field (E1d2) has the shape CropConfig.RowWidths: every row is a plate of overgrown grass, open squares are soil on it (pale dry soil while empty),
 -- locked squares carry grass tufts (U3a; full detail). Field pets stand on their squares (full: the PetLook model with a label of
 -- its name and job icons, never its level; mid: a block). The field has no prompts (U3a): the own plot's field parts are
 -- CanQuery so FieldHand's tap ray hits them, SquareAt maps a world point to a square, ShowSelect outlines the selected square
@@ -87,6 +87,7 @@ local COLORS = {
 	lantern = Color3.fromRGB(255, 214, 120),
 	leaf = Color3.fromRGB(97, 149, 0),
 	soil = Color3.fromRGB(105, 70, 45),
+	drySoil = Color3.fromRGB(176, 140, 100), -- an open square without a crop: empty squares read apart from planted ones at any angle
 	overgrown = Color3.fromRGB(78, 120, 52), -- the field's row plates: locked squares and the paths between squares
 }
 local SPROUT = Color3.fromRGB(110, 190, 80) -- unripe crops (stage 1-2)
@@ -908,7 +909,8 @@ function PlotView:buildSquare(model: Model, square: number)
 	if letter == "#" then
 		return self:buildOvergrown(model, square)
 	end
-	local soil = part({ Name = "Soil" .. square, Size = Vector3.new(size, 0.4, size), CFrame = self:at(Vector3.new(x, 0.05, z)), Color = COLORS.soil, Material = Enum.Material.Ground, CanQuery = self.own })
+	local soil = part({ Name = "Soil" .. square, Size = Vector3.new(size, 0.4, size), CFrame = self:at(Vector3.new(x, 0.05, z)),
+		Color = if letter == "." then COLORS.drySoil else COLORS.soil, Material = Enum.Material.Ground, CanQuery = self.own })
 	soil.Parent = model
 	if CROP_COLORS[letter] and stage > 0 and not growthCrop(field, square) then
 		local height = 0.6 + stage * 0.7

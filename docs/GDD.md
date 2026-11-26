@@ -530,10 +530,14 @@ There is no Garden panel; each piece sits where it is used.
 
 #### Seeing and acting on the field
 - **Rings (Near tier).** Within 30 studs of the own field every planted square shows a ring (own plot only): a dark disc whose pie fills
-  as the crop grows, the crop icon inside; a ripe crop gets a full green pie, a ✓ badge and a small bounce; the 4 growing squares nearest
-  the player also print the time left. The rings sit at crop height, drawn 3 studs toward the camera so the crop does not hide them.
+  as the crop grows, the crop icon inside; a ripe crop gets a full green pie, a ✓ badge, a small bounce and a bigger disc, while growing
+  rings are smaller and dimmer; the 4 growing squares nearest the player also print the time left. All rings sit at one height straight
+  up (the tallest planted crop's ring height), drawn 3 studs toward the camera so the crop does not hide them. *Why:* rings at their own
+  crop heights, offset along the camera's up, slid over other rows on a steep view; one height keeps them a grid over the field.
   Other plots show only their crops and pets. A field pet's label is its given name (if any) over its job icons `🌱4 🛡2`, never its
   level.
+- **Empty soil.** An open square without a crop has pale dry soil (every plot), so empty squares read apart from planted ones at any
+  angle without an extra marker.
 - **Tap a square.** No prompts on the field (the incubators keep theirs). A tap / click on a square of the own field (within 20 studs of
   the plot and its field, `GardenConfig.FootprintDistance`; the server allows 25) outlines it in white and slides the **square card** up
   from the bottom (header "Field square", close button above the scrolling content; the scrollbar appears only when the content exceeds
@@ -554,7 +558,8 @@ There is no Garden panel; each piece sits where it is used.
   dimmed row and a grey "🔒 Place pet" whose tap pulses the slot box and the "+1 slot" brick (no message). Field pets reuse their slot;
   the server validates, then unequips and assigns together. No square numbers in any picker, location or placement toast.
 - **Hand bar.** While the tap range applies, four bricks: 🌱 Seeds, 🧺 Basket, 🐾 Pets, ✋ Look (default); a row at the bottom right with
-  a mouse, a 2 × 2 block above the jump button on touch. The active one is raised and framed; a line above says what a tap does. White
+  a mouse, a 2 × 2 block above the jump button on touch. Keys 1–4 act as a click on the brick in that order (ignored while typing or
+  with a panel open). The active one is raised and framed; a line above says what a tap does. White
   corner brackets mark the own square under the mouse (the cursor turns into a pointing hand), else the square the character stands on
   (always so on touch), never the selected one (brackets, not an outline, so they never look like a reach border). *Seeds:* the card
   picks a seed, then every tap on an empty open square plants it. *Basket:* every tap on a ripe square harvests that one (never all:
@@ -710,7 +715,7 @@ There is no Garden panel; each piece sits where it is used.
   rows); every new piece is checked on a phone, Czech widths included.
 - **Comfort planned for sale stays for sale:** no harvest-all (Wheelbarrow, D2), no instant grow.
 - **Feedback where it happened:** a pop over the thing (the harvest pop over the square), not only a toast. Locked squares look different
-  from empty soil (grass tufts; the price only in the square card).
+  from empty soil (grass tufts vs pale dry soil; the price only in the square card).
 - **Stable layout:** a click never makes panel content jump: the same parts and sizes in every state (crop page, square card).
 - **Two-tap confirm** (`ConfirmTap`): every spend over 1 000 Coins (`THRESHOLD`) and every Sell takes two taps: the first turns the
   button orange ("Tap again" / "OK?") for 3 s (`SECONDS`), a second tap in that time fires; waiting, or closing the panel, disarms it.

@@ -13,6 +13,7 @@
 --     (a tap on a placed pet takes it in hand, its reach follows the mouse / the last tapped square, a tap on a free open square
 --     puts it there: one click with a mouse, two taps on the same square on touch; a tap on the pet's square or on Pets cancels;
 --     a free square with nothing in hand opens the pet picker), Look (default: select + card). The other taps select as in Look.
+--     Keys 1-4 do what a click on the bar's brick does, in the bar's order (not while typing or with a panel open).
 --     Leaving the range resets to Look. A hint line above the bar says what a tap does (in Look: "Tap a square" until the first
 --     tap on a square this session). Seeds pulses while nothing is planted and seeds are held, Basket while something is ripe, each
 --     until its mode was used once this session;
@@ -1003,6 +1004,7 @@ end
 -- Hand bar (U3b) -----------------------------------------------------------------------------------------------------------------
 
 local MODES = { "seeds", "basket", "pets", "look" }
+local MODE_KEYS = { Enum.KeyCode.One, Enum.KeyCode.Two, Enum.KeyCode.Three, Enum.KeyCode.Four } -- in MODES order
 local MODE_NAMES = { seeds = "Seeds", basket = "Basket", pets = "Pets", look = "Look" }
 local MODE_ICONS = { seeds = "🌱", basket = "🧺", pets = "🐾", look = "✋" }
 local MODE_COLORS = { seeds = COLOR_GO, basket = Color3.fromRGB(205, 140, 60), pets = COLOR_PET, look = COLOR_OFF }
@@ -1300,23 +1302,29 @@ local function drop(square: number)
 	submitPlacement(square, held)
 end
 
-handButtons.seeds.Activated:Connect(function()
-	setMode("seeds")
-	openSeedPicker()
-end)
-handButtons.basket.Activated:Connect(function()
-	setMode(if mode == "basket" then "look" else "basket")
-end)
-handButtons.pets.Activated:Connect(function()
-	if held then
-		cancelHold(true)
-	else
-		setMode(if mode == "pets" then "look" else "pets")
-	end
-end)
-handButtons.look.Activated:Connect(function()
-	setMode("look")
-end)
+-- what a hand bar brick does, on a click / tap or on its number key
+local handActions: { [string]: () -> () } = {
+	seeds = function()
+		setMode("seeds")
+		openSeedPicker()
+	end,
+	basket = function()
+		setMode(if mode == "basket" then "look" else "basket")
+	end,
+	pets = function()
+		if held then
+			cancelHold(true)
+		else
+			setMode(if mode == "pets" then "look" else "pets")
+		end
+	end,
+	look = function()
+		setMode("look")
+	end,
+}
+for name, action in handActions do
+	handButtons[name].Activated:Connect(action)
+end
 
 -- Taps -------------------------------------------------------------------------------------------------------------------------
 
@@ -1402,6 +1410,11 @@ local mouseAt: Vector2? = nil -- the mouse (InputObject coordinates) for the hel
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
 	if input.KeyCode == Enum.KeyCode.Escape and held and not UserInputService:GetFocusedTextBox() and not PanelFocus.Current() then
 		cancelHold(true)
+	end
+	local brickName = MODES[table.find(MODE_KEYS, input.KeyCode) or 0]
+	if brickName and handBar.Visible and not gameProcessed and not UserInputService:GetFocusedTextBox() and not PanelFocus.Current() then
+		UiSounds.Play("Tab") -- as the brick's own click
+		handActions[brickName]()
 	end
 	if input.UserInputType == Enum.UserInputType.Touch then
 		mouseAt = nil -- a touch screen: no hover, the brackets follow the character
