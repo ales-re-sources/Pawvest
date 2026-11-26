@@ -8,8 +8,9 @@
 --     the pet picker shows capacity, origin/consequence and a Place pet button for resting, field and equipped pets;
 --   * a placed pet's reach is tinted for REACH_SECONDS (GardenView.ShowReach), as is the reach of a row hovered in the pet picker;
 --   * hand bar (U3b, shown while the tap range applies; a 2 x 2 block above the jump button on a touch screen without a keyboard,
---     else a row at the bottom right): Seeds (picks a seed in the card, then every tap on an empty square plants it; the button
---     shows the seed and the count left), Basket (every tap on a ripe square harvests it: one Harvest per tap, never all), Pets
+--     else a row at the bottom right): Seeds (a seed is selected at once, the last picked while any is left, else the first, and
+--     the next as soon as it runs out; the card picks another; every tap on an empty square plants it; the button shows the seed
+--     and the count left), Basket (every tap on a ripe square harvests it: one Harvest per tap, never all), Pets
 --     (a tap on a placed pet takes it in hand, its reach follows the mouse / the last tapped square, a tap on a free open square
 --     puts it there: one click with a mouse, two taps on the same square on touch; a tap on the pet's square or on Pets cancels;
 --     a free square with nothing in hand opens the pet picker), Look (default: select + card). The other taps select as in Look.
@@ -728,8 +729,21 @@ local function back()
 	render()
 end
 
+-- Seeds mode always has a seed selected: the one picked before while any is left, else the picker's first (renderBar)
+local function preselectSeed()
+	if not fieldState or (handSeed and seedsLeft(handSeed) > 0) then
+		return
+	end
+	for _, crop in CropConfig.Crops do
+		if seedsLeft(crop.id) > 0 then
+			handSeed = crop.id
+			return
+		end
+	end
+end
+
 -- the seed picker: the seeds held (count, grow time); without seeds a hint to the plaza's seed stall. With `square` nil it
--- picks the seed of the hand's Seeds mode.
+-- picks the seed of the hand's Seeds mode and outlines the selected one in white.
 local function renderSeeds(square: number?)
 	header(if square then Locale.T("field.picker.title") else Locale.T("field.hand.pickSeed"), if square then back else closeCard)
 	paragraph("GrowthHint", 2, { TextSize = 13, Text = GardenUi.GrowthHint(fieldState) }).Parent = body
@@ -741,6 +755,10 @@ local function renderSeeds(square: number?)
 			rows += 1
 			local seconds = GardenUi.GrowSecondsOn(fieldState, crop)
 			local row = pickerRow(list, crop.id, rows, GardenUi.CropTitle(crop) .. GardenUi.Stars(fieldState, crop), Locale.T("field.picker.info", { stock = stock, time = TimeFormat.GrowTime(seconds) }), true, COLOR_GO)
+			if not square and crop.id == handSeed then
+				local outline = row:FindFirstChildOfClass("UIStroke") :: UIStroke
+				outline.Color, outline.Thickness = Color3.new(1, 1, 1), 3
+			end
 			row.Activated:Connect(function()
 				if square then
 					fire(plantEvent, square, crop.id)
@@ -1195,6 +1213,9 @@ function renderBar()
 		(handButtons[name]:FindFirstChild("Active") :: Frame).Visible = name == mode
 	end
 	layoutBar()
+	if mode == "seeds" then
+		preselectSeed() -- on entering the mode, and as soon as the selected one runs out
+	end
 	local crop = handSeed and CropConfig.ById[handSeed]
 	handButtons.seeds.Text = if crop then crop.icon else MODE_ICONS.seeds
 	seedCount.Text = if crop then Locale.Number(seedsLeft(crop.id)) else ""

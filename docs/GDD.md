@@ -561,8 +561,9 @@ There is no Garden panel; each piece sits where it is used.
   a mouse, a 2 × 2 block above the jump button on touch. Keys 1–4 act as a click on the brick in that order (ignored while typing or
   with a panel open). The active one is raised and framed; a line above says what a tap does. White
   corner brackets mark the own square under the mouse (the cursor turns into a pointing hand), else the square the character stands on
-  (always so on touch), never the selected one (brackets, not an outline, so they never look like a reach border). *Seeds:* the card
-  picks a seed, then every tap on an empty open square plants it. *Basket:* every tap on a ripe square harvests that one (never all:
+  (always so on touch), never the selected one (brackets, not an outline, so they never look like a reach border). *Seeds:* a seed is
+  selected at once (the last picked while any is left, else the first held; when it runs out, the next at once), outlined in the
+  card, which picks another; every tap on an empty open square plants it. *Basket:* every tap on a ripe square harvests that one (never all:
   harvest-all is a planned paid Wheelbarrow, D2). *Pets:* a tap on a placed pet takes it in hand (its reach tinted; on touch a first tap
   on a free square shows the reach, a second drops); an occupied destination keeps the held pet; a free square with nothing in hand opens
   the picker; the pet's own square or 🐾 again cancels. Any other tap selects as in Look. Every field action is queued and sent at most
