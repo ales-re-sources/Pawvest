@@ -188,7 +188,7 @@ the pet bonus, which have no fixed cap.
 Each bought level costs **Coins + a crop bundle** from the barn (`Garden.Items`): from level 2 common crops of the player's tier, and the
 levels a stage requires also a rare crop of the world before. The server takes the Coins and the crops together or not at all
 (`TalentService`, `GardenField.TakeCrops`; the average size leaves, as in a sale). The Skills panel's buy button shows the whole price
-(💰 Coins over the crops as icons with have / need, what is short highlighted; a refused tap names the crops) and is green only when
+(💰 Coins over the crops as icons with have / need, what is short highlighted; a refused tap names what is missing, §7.10) and is green only when
 everything is there. The built tree costs 73 400 Coins plus crops, so talents need the farm.
 
 Bought in the skills panel (top-left), except **world rewards**: a level a world requires that the server grants when that world opens
@@ -717,6 +717,10 @@ There is no Garden panel; each piece sits where it is used.
 - **Feedback where it happened:** a pop over the thing (the harvest pop over the square), not only a toast. Locked squares look different
   from empty soil (grass tufts vs pale dry soil; the price only in the square card).
 - **Stable layout:** a click never makes panel content jump: the same parts and sizes in every state (crop page, square card).
+- **Refused buy in a row** (Skills panel, both tabs): what is short is already highlighted on the brick; a tap on it is answered on the
+  client at once (no request): the brick shakes (`UiKit.Shake`) and a red plate over the row's name and effect says what is missing for
+  2.5 s ("Needs: 💰 1 200 more, Cucumber 5/20", `UiKit.Notice`). A refusal from the server shows the same way on that row, never as a
+  toast.
 - **Two-tap confirm** (`ConfirmTap`): every spend over 1 000 Coins (`THRESHOLD`) and every Sell takes two taps: the first turns the
   button orange ("Tap again" / "OK?") for 3 s (`SECONDS`), a second tap in that time fires; waiting, or closing the panel, disarms it.
   Spends at or under the threshold fire on the first tap; a spend the player cannot pay fires at once so the server's "not enough Coins"

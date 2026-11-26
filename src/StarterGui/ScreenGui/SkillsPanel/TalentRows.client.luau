@@ -2,7 +2,8 @@
 -- (line 1: 💰 Coins, line 2: the crops it takes, EV2b, have/need; what is short is highlighted; playtest 2026-11-08).
 -- Display only: levels come from the Talent_<id> attributes the server maintains, Coins from leaderstats, the barn's crops from
 -- the own field state (GardenView.OwnField, refreshed on GardenRemotes.State), and a click just asks the server (talentId,
--- expected next level). The server decides and prices everything.
+-- expected next level). The server decides and prices everything. A tap on a level the player cannot pay is answered here
+-- (the brick shakes, UiKit.Notice says "Needs: 💰 1,200 more, Cucumber 5/20"), and a refusal from the server the same way.
 -- Rows are built in code; this script is re-created with the ScreenGui on every respawn.
 
 local Players = game:GetService("Players")
@@ -36,7 +37,7 @@ local COLOR_SHORT = Color3.fromRGB(255, 214, 64) -- on the button: what the play
 local HEX_SHORT = "#FFD640" -- COLOR_SHORT in the crops line's rich text
 local REWARD_GLYPH = "🔒" -- button of a level that comes with a world (no words: not localized)
 
-local REJECT_KEYS = { -- the rest: Locale.Reject's common.reject.*
+local REJECT_KEYS = { -- the rest: Locale.Reject's common.reject.* (coins / crops: the Needs line when it can be said)
 	crops = "skills.reject.crops",
 	maxed = "skills.reject.maxed",
 }
@@ -48,6 +49,7 @@ local function levelOf(id: string): number
 end
 
 local coins = 0
+local coinsKnown = false -- leaderstats seen: until then a tap goes to the server unchecked
 local rows = {}
 
 -- How many of a crop the own barn holds (0 before the first field state).
@@ -57,11 +59,10 @@ local function held(cropId: string): number
 	return type(items) == "table" and tonumber(items[cropId]) or 0
 end
 
--- The crops the next level takes: the button's line ("🥒5/20  🍇0/2", a short crop highlighted), whether every crop is held, and the
--- same with names ("Needs: Cucumber 5/20, Frost grape 0/2", shown when a purchase is refused for crops). Nil texts when it takes none.
--- Crops in catalogue order.
-local function cropCost(bundle): (string?, boolean, string?)
-	local chips, names, enough = {}, {}, true
+-- The crops the next level takes: the button's line ("🥒5/20  🍇0/2", a short crop highlighted; nil when it takes none), whether
+-- every crop is held, and the short ones by name for the refusal notice ({ "Cucumber 5/20" }). Crops in catalogue order.
+local function cropCost(bundle): (string?, boolean, { string })
+	local chips, short, enough = {}, {}, true
 	for _, crop in CropConfig.Crops do
 		local need = bundle[crop.id]
 		if need then
@@ -70,15 +71,26 @@ local function cropCost(bundle): (string?, boolean, string?)
 			if have < need then
 				enough = false
 				chip = '<font color="' .. HEX_SHORT .. '">' .. chip .. "</font>" -- loc: ignore (rich-text markup, no words)
+				table.insert(short, Locale.T("skills.needs.item", { crop = Locale.CropName(crop), have = have, need = need }))
 			end
 			table.insert(chips, chip)
-			table.insert(names, Locale.T("skills.needs.item", { crop = Locale.CropName(crop), have = have, need = need }))
 		end
 	end
-	if #chips == 0 then
-		return nil, true, nil
+	return if #chips > 0 then table.concat(chips, "  ") else nil, enough, short
+end
+
+-- What the next level still lacks, as the refusal notice says it ("Needs: 💰 1,200 more, Cucumber 5/20"); nil when the player has
+-- everything, or while the Coins or the barn are not known yet (the server decides then).
+local function needsText(talent, level: number): string?
+	local cost = TalentConfig.NextCost(talent.id, level)
+	if not cost or not coinsKnown or not GardenView.OwnField() then
+		return nil
 	end
-	return table.concat(chips, "  "), enough, Locale.T("skills.needs", { list = table.concat(names, ", ") })
+	local _, _, short = cropCost(TalentConfig.NextCrops(talent.id, level))
+	if coins < cost then
+		table.insert(short, 1, Locale.T("skills.needs.coins", { count = cost - coins }))
+	end
+	return if #short > 0 then Locale.T("skills.needs", { list = table.concat(short, ", ") }) else nil
 end
 
 -- "Free when World 2 opens" for a level that is a world reward (K1), else nil
@@ -93,8 +105,7 @@ local function refreshRow(row)
 	local max = #talent.costs
 	local cost = TalentConfig.NextCost(talent.id, level)
 	local reward = rewardText(talent, level + 1)
-	local cropsLine, enough, needsText = cropCost(if cost then TalentConfig.NextCrops(talent.id, level) else {})
-	row.needsText = needsText
+	local cropsLine, enough = cropCost(if cost then TalentConfig.NextCrops(talent.id, level) else {})
 	row.cost.Visible = cost ~= nil and not reward
 
 	-- a talent with per-level names shows the level it sells ("Triple Jump 1/2"), maxed the level it has
@@ -136,6 +147,14 @@ local function flash(row, text: string, color: Color3?)
 			refreshRow(row)
 		end
 	end)
+end
+
+-- A refused purchase: the brick shakes, the notice over the row's text says why (the same as the Garden tab's rows).
+local function refuse(row, text: string)
+	local size = row.noticeLabel.Size -- the row's base height (HudLayout may have raised it), less the inset at both edges
+	row.noticeLabel.Size = UDim2.new(size.X.Scale, size.X.Offset, 0, row.frame.Size.Y.Offset - 2 * UiKit.NOTICE_INSET)
+	row.notice(text)
+	UiKit.Shake(row.button)
 end
 
 -- The old mock-up row is replaced by the generated ones.
@@ -242,7 +261,14 @@ for index, talent in TalentConfig.List do
 	StudStyle.Row(rowFrame, panel.Name)
 	rowFrame.Parent = rowList
 
-	local row = { talent = talent, frame = rowFrame, title = title, info = info, button = button, cost = cost, costCoins = costCoins, costCrops = costCrops, flash = 0 }
+	-- the refusal notice lies over the title and info lines, NOTICE_INSET from the row's edges and the brick (the row pads 3 at
+	-- the top); its height is set in offsets when it shows (refuse), so AutomaticSize never grows the row for it
+	local inset = UiKit.NOTICE_INSET
+	local notice, noticeLabel = UiKit.Notice(rowFrame, {
+		Position = UDim2.fromOffset(inset, inset - 3),
+		Size = UDim2.new(1, -(BUTTON_WIDTH + 8 + 2 * inset), 0, ROW_HEIGHT - 2 * inset), -- the brick sits 8 from the right
+	})
+	local row = { talent = talent, frame = rowFrame, title = title, info = info, button = button, cost = cost, costCoins = costCoins, costCrops = costCrops, notice = notice, noticeLabel = noticeLabel, flash = 0 }
 	rows[talent.id] = row
 
 	button.Activated:Connect(function()
@@ -253,6 +279,11 @@ for index, talent in TalentConfig.List do
 		local reward = rewardText(talent, level + 1)
 		if reward then
 			flash(row, reward, COLOR_REWARD) -- never sold: the server would refuse it
+			return
+		end
+		local needs = needsText(talent, level)
+		if needs then -- a grey brick answers at once, no request
+			refuse(row, needs)
 			return
 		end
 		buyEvent:FireServer(talent.id, level + 1)
@@ -279,10 +310,10 @@ resultEvent.OnClientEvent:Connect(function(id, ok, detail)
 		local reward = if detail == "reward" then rewardText(row.talent, level + 1) else nil
 		if reward then
 			flash(row, reward, COLOR_REWARD)
-		elseif detail == "crops" and row.needsText then
-			flash(row, row.needsText, COLOR_REWARD) -- the crops by name (the button only has their icons)
 		else
-			flash(row, Locale.Reject(detail, REJECT_KEYS, nil, "skills.reject.failed"))
+			-- the server saw less than this panel did (a sale or a spend in between): say what is missing when we can
+			local needs = if detail == "coins" or detail == "crops" then needsText(row.talent, level) else nil
+			refuse(row, needs or Locale.Reject(detail, REJECT_KEYS, nil, "skills.reject.failed"))
 		end
 	end
 end)
@@ -310,6 +341,7 @@ task.spawn(function()
 	local leaderstats = player:WaitForChild("leaderstats")
 	local coinValue = leaderstats:WaitForChild("Coins") :: IntValue
 	coins = coinValue.Value
+	coinsKnown = true
 	refreshAll()
 	coinValue:GetPropertyChangedSignal("Value"):Connect(function()
 		coins = coinValue.Value

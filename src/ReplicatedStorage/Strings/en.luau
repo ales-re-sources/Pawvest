@@ -174,6 +174,7 @@ return {
 	["skills.reject.failed"] = "Purchase failed",
 	["skills.needs"] = "Needs: {list}",
 	["skills.needs.item"] = "{crop} {have}/{need}",
+	["skills.needs.coins"] = "💰 {count} more",
 	["skills.reject.crops"] = "Not enough crops",
 	["skills.reward"] = "Free when {world} opens",
 	["talent.granted.title"] = "New skill: {talent}!",

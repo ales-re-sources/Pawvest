@@ -139,7 +139,7 @@ src/Workspace/                StartLocation (hub), Tutorial, World1 (Stage1-5), 
   `common.reject.*`), stage lookups `StageConfig.TryForInstance` / `AreaOf` / `MedalsFromAttributes` / `AnyUnlocked`.
   Server: remotes through `Remotes` (Folder / Add / Results / Admin), cooldowns `RateLimit.new`, profile mirrors through
   `PlayerProfile.OnReady` (join + reset), purchases `PlayerProfile.TrySpend`, garden successes `GardenService.Done`.
-  Client GUI: builders, bars, self-clearing messages, toasts, pulses `UiKit`; HUD popups `HudPopup`; two-tap confirms
+  Client GUI: builders, bars, self-clearing messages, toasts, pulses, refused-buy shake / notice `UiKit`; HUD popups `HudPopup`; two-tap confirms
   `ConfirmTap`; stand prompts `GardenUi.BindStand` + `PanelFocus.Open(..., anchor)`; a player's plot `GardenConfig.PlotOf`.
   Obstacle kit client: tags, cached attributes, kills, run start `KitClient`. Plant recipes: `PlantKit.recipe`, `proxyGrowth`,
   `proxyRod`; a `<CropId>Plant` module is in the field unless `Draft = true`.

@@ -11,7 +11,9 @@
 --   * Latest(): "only the latest call acts" → { After(seconds, fn), Cancel() }: a new After (or Cancel) drops the pending one
 --     (message and status lines that clear themselves);
 --   * Toast(label, seconds, fadeSeconds?): a one-message label → show(text, color?, seconds?);
---   * Pulse(target, scale?, seconds?): a UIScale "Pulse" on target that breathes while on → setter(on: boolean).
+--   * Pulse(target, scale?, seconds?): a UIScale "Pulse" on target that breathes while on → setter(on: boolean);
+--   * Shake(target): a short sideways shake (a refused tap on a buy brick);
+--   * Notice(parent, props?): a plate over a row's text saying why a tap was refused, without moving the row → show(text?, seconds?).
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
@@ -226,6 +228,79 @@ function UiKit.Pulse(target: GuiObject, scale: number?, seconds: number?): (bool
 		)
 		;(tween :: Tween):Play()
 	end
+end
+
+-- A short sideways shake of `target` (a refused tap on a buy brick); a shake already running is not restarted.
+local shaking: { [GuiObject]: boolean } = setmetatable({}, { __mode = "k" }) :: any
+function UiKit.Shake(target: GuiObject)
+	if shaking[target] then
+		return
+	end
+	shaking[target] = true
+	local home = target.Position
+	task.spawn(function()
+		for _, dx in { -6, 6, -4, 4, -2, 2 } do
+			target.Position = home + UDim2.fromOffset(dx, 0)
+			task.wait(0.035)
+		end
+		target.Position = home
+		shaking[target] = nil
+	end)
+end
+
+UiKit.NOTICE_SECONDS = 2.5
+
+-- A red StudStyle plate over a row's text that says why a tap was refused ("Needs: 💰 1,200 more, Cucumber 5/20"). It lies
+-- over the title and info lines (`props` place it; default: fills `parent`), so nothing in the row moves or grows. Its 2 px
+-- outline is drawn outside the frame: place the frame NOTICE_INSET from the row's edges and the brick for an even 4 px margin.
+-- → show(text?, seconds?): nil text hides it; it hides itself after `seconds` (NOTICE_SECONDS); and the label (to resize it).
+-- The parent must not have a UIListLayout. In an AutomaticSize parent a Y scale counts against the parent's base Size plus its
+-- UIPadding: keep position + offset + padding ≤ 0, or size it in offsets.
+UiKit.NOTICE_INSET = 6
+function UiKit.Notice(parent: GuiObject, props: { [string]: any }?): ((string?, number?) -> (), TextLabel)
+	local color = StudStyle.Colors.Red
+	local label = create("TextLabel", {
+		Name = "Notice",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundColor3 = color,
+		BackgroundTransparency = 0, -- opaque: the row's name must not show through
+		TextSize = 15,
+		TextWrapped = true,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		AutoLocalize = false,
+		ZIndex = 6,
+		Visible = false,
+	}, {
+		create("UICorner", { CornerRadius = UDim.new(0, 6) }),
+		create("UIStroke", {
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+			Color = StudStyle.Shade(color, 0.62), -- StudStyle's edge shade
+			Thickness = 2,
+		}),
+		create("UIGradient", { Rotation = 90, Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(215, 215, 215)) }),
+		create("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8) }),
+		create("UITextSizeConstraint", { MaxTextSize = 15, MinTextSize = 10 }),
+	})
+	StudStyle.Title(label, color) -- white with an outline in the red's shade
+	for key, value in props or {} do
+		(label :: any)[key] = value
+	end
+	label.TextScaled = true -- a long list shrinks inside the plate instead of growing the row
+	label.Parent = parent
+	local timer = UiKit.Latest()
+	local function show(text: string?, seconds: number?)
+		if not text then
+			timer.Cancel()
+			label.Visible = false
+			return
+		end
+		label.Text = text
+		label.Visible = true
+		timer.After(seconds or UiKit.NOTICE_SECONDS, function()
+			label.Visible = false
+		end)
+	end
+	return show, label
 end
 
 return UiKit

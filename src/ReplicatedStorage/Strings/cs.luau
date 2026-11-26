@@ -174,6 +174,7 @@ return {
 	["skills.reject.failed"] = "Nákup se nepovedl",
 	["skills.needs"] = "Potřebuješ: {list}",
 	["skills.needs.item"] = "{crop} {have}/{need}",
+	["skills.needs.coins"] = "💰 o {count} víc",
 	["skills.reject.crops"] = "Nemáš dost plodin",
 	["skills.reward"] = "Zdarma, až otevřeš {world}",
 	["talent.granted.title"] = "Nová dovednost: {talent}!",

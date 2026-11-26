@@ -60,7 +60,6 @@ local PET_REJECT_KEYS = setmetatable({
 	slots = "field.reason.slots",
 	maxed = "field.reason.slotsMaxed",
 }, { __index = REJECT_KEYS })
-local UPGRADE_REJECT_KEYS = setmetatable({ maxed = "field.reason.upgradeMaxed" }, { __index = REJECT_KEYS })
 local STALL_REJECT_KEYS = setmetatable({
 	far = "seedStall.reason.far",
 	stock = "seedStall.reason.stock", -- ST: a rotating crop not in this restock
@@ -481,9 +480,8 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 	end
 	if action == "BuyUpgrade" or action == "BuyTool" then
 		local names = if action == "BuyTool" then TOOL_KEYS else UPGRADE_KEYS
-		if not ok then
-			showToast(Locale.Reject(detail, UPGRADE_REJECT_KEYS), COLOR_ERROR)
-		elseif type(detail) == "table" and names[detail.id] then
+		-- a refusal shows on the Skills panel's row (GardenSkills), next to the brick that was tapped
+		if ok and type(detail) == "table" and names[detail.id] then
 			showToast(Locale.T("field.toast.upgrade", { name = Locale.T(names[detail.id].name), level = detail.level }), COLOR_OK)
 		end
 		return

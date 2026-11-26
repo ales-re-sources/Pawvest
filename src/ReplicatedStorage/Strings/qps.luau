@@ -174,6 +174,7 @@ return {
 	["skills.reject.failed"] = "[!! Půřčhášě fáílěď ~~~~~~ !!]",
 	["skills.needs"] = "[!! Ňěěďš: {list} ~~~ !!]",
 	["skills.needs.item"] = "[!! {crop} {have}/{need} ~~ !!]",
+	["skills.needs.coins"] = "[!! 💰 {count} möřě ~~~ !!]",
 	["skills.reject.crops"] = "[!! Ňöť ěňöůgh čřöpš ~~~~~~ !!]",
 	["skills.reward"] = "[!! Fřěě whěň {world} öpěňš ~~~~~~ !!]",
 	["talent.granted.title"] = "[!! Ňěw škíll: {talent}! ~~~~~ !!]",

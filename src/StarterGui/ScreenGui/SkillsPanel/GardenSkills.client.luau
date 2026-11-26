@@ -3,7 +3,8 @@
 -- level / max, effect now → next and a Buy brick with the price (Coins only since EV3b: the Renown header and gates are gone). Buyable
 -- anywhere (the server dropped the plot check in U4); every buy is over ConfirmTap.THRESHOLD, so it takes two taps. Display only: a
 -- tap names the id and the level it expects; GardenField checks price and level and answers on GardenRemotes.Result (FieldClient
--- toasts it).
+-- toasts a success; a refusal shows here). A price the player cannot pay is refused here at once: the brick shakes and
+-- UiKit.Notice says "Needs: 💰 1,200 more" over the row's text, as on the Obby tab.
 -- The field state comes from GardenRemotes.State (GardenView keeps the last one: this script is re-created on every respawn).
 -- The chosen tab lives in the player attribute SkillsTab ("Obby" / "Garden") so it survives a respawn.
 -- Buttons by path (under PlayerGui.ScreenGui.SkillsPanel): Tabs.Obby / Tabs.Garden, GardenRows.<UpgradeId|ToolId>.Buy.
@@ -29,6 +30,7 @@ local PANEL_WIDTH = 300 -- the Studio frame is 250 wide; the Garden rows need th
 local TAB_ATTRIBUTE = "SkillsTab"
 local GAP = 8
 local BUY_WIDTH = 92
+local PAD_LEFT, PAD_RIGHT, PAD_Y = 10, 8, 6 -- a row's UIPadding
 
 local COLOR_BUY = StudStyle.Colors.Green
 local COLOR_LOCKED = StudStyle.Colors.Grey
@@ -44,6 +46,8 @@ local TOOL_KEYS = {
 	Cloches = { name = "field.tool.cloches", effect = "field.tool.cloches.effect", max = "field.tool.cloches.max" },
 	Shears = { name = "field.tool.shears", effect = "field.tool.shears.effect", max = "field.tool.shears.max" },
 }
+
+local REJECT_KEYS = { maxed = "field.reason.upgradeMaxed" } -- the rest: Locale.Reject's common.reject.*
 
 local create = UiKit.Create
 
@@ -124,8 +128,34 @@ gardenList.Parent = panel
 -- Rendering -----------------------------------------------------------------------------------------------------------------
 
 local coins = 0
+local coinsKnown = false -- leaderstats seen: until then a tap goes to the server unchecked
+local COLOR_SHORT_HEX = "#FFD640" -- TalentRows' COLOR_SHORT: a price the player cannot pay
+
+-- The refusal notice outlives a re-render (Coins or the field state changing while it shows).
+local notices: { [string]: (string?, number?) -> () } = {} -- [row id] = the shown row's UiKit.Notice
+local shown = { id = "", text = "", untilTime = 0 }
+local pending = { id = "", price = 0 } -- the last buy sent: the server's refusal names no row
+
+-- A refused purchase: the brick shakes, the notice over the row's text says why (the same as the Obby tab's rows).
+local function refuse(id: string, text: string)
+	shown.id, shown.text, shown.untilTime = id, text, os.clock() + UiKit.NOTICE_SECONDS
+	local show = notices[id]
+	if show then
+		show(text)
+	end
+	local row = gardenList:FindFirstChild(id)
+	local button = row and row:FindFirstChild("Buy")
+	if button then
+		UiKit.Shake(button)
+	end
+end
+
+local function coinsShort(price: number): string
+	return Locale.T("skills.needs", { list = Locale.T("skills.needs.coins", { count = price - coins }) })
+end
 
 local function clear()
+	table.clear(notices)
 	for _, child in gardenList:GetChildren() do
 		if child:IsA("GuiObject") then
 			child:Destroy()
@@ -142,10 +172,10 @@ local function renderRow(order: number, id: string, title: string, info: string,
 		AutomaticSize = Enum.AutomaticSize.Y,
 	}, {
 		create("UIPadding", {
-			PaddingLeft = UDim.new(0, 10),
-			PaddingRight = UDim.new(0, 8),
-			PaddingTop = UDim.new(0, 6),
-			PaddingBottom = UDim.new(0, 6),
+			PaddingLeft = UDim.new(0, PAD_LEFT),
+			PaddingRight = UDim.new(0, PAD_RIGHT),
+			PaddingTop = UDim.new(0, PAD_Y),
+			PaddingBottom = UDim.new(0, PAD_Y),
 		}),
 	})
 	StudStyle.Row(row, panel.Name)
@@ -161,6 +191,19 @@ local function renderRow(order: number, id: string, title: string, info: string,
 	text("Title", { LayoutOrder = 1, Font = StudStyle.Font, TextSize = 16, TextColor3 = Color3.new(1, 1, 1), Text = title }).Parent = column
 	text("Info", { LayoutOrder = 2, Text = info }).Parent = column
 	column.Parent = row
+	-- over the text column, NOTICE_INSET from the row's edges and the brick (the row's base height is 0, so the Y scale never
+	-- grows it)
+	local inset = UiKit.NOTICE_INSET
+	local notice = UiKit.Notice(row, {
+		Position = UDim2.fromOffset(inset - PAD_LEFT, inset - PAD_Y),
+		Size = UDim2.new(1, PAD_LEFT - BUY_WIDTH - 2 * inset, 1, 2 * (PAD_Y - inset)), -- the brick sits in the right padding
+	})
+	notices[id] = notice
+	local left = shown.untilTime - os.clock()
+	if shown.id == id and left > 0 then
+		notice(shown.text, left)
+	end
+	local priceText = if price then Locale.T("field.upgrade.price", { count = price }) else Locale.T("field.upgrade.maxed")
 	local button = create("TextButton", {
 		Name = "Buy",
 		AnchorPoint = Vector2.new(1, 0.5),
@@ -169,16 +212,25 @@ local function renderRow(order: number, id: string, title: string, info: string,
 		Font = Enum.Font.SourceSansBold,
 		TextSize = 15,
 		TextWrapped = true,
+		RichText = true, -- a price the player cannot pay is in the short colour, as on the Obby tab
 		TextColor3 = Color3.new(1, 1, 1),
 		BackgroundColor3 = if price and canBuy then COLOR_BUY else COLOR_LOCKED,
-		Text = if price then Locale.T("field.upgrade.price", { count = price }) else Locale.T("field.upgrade.maxed"),
+		Text = if price and not canBuy
+			then '<font color="' .. COLOR_SHORT_HEX .. '">' .. priceText .. "</font>" -- loc: ignore (rich-text markup, no words)
+			else priceText,
 	})
 	StudStyle.Brick(button, { compact = true })
 	button.Parent = row
 	if price then
 		ConfirmTap.Wrap(button, "Skill" .. id, function()
 			return ConfirmTap.Over(price)
-		end, buy)
+		end, function()
+			if coinsKnown and coins < price then -- a grey brick answers at once, no request
+				return refuse(id, coinsShort(price))
+			end
+			pending.id, pending.price = id, price
+			buy()
+		end)
 	end
 	row.Parent = gardenList
 end
@@ -286,6 +338,18 @@ local function renderIfShown()
 	end
 end
 
+-- The server's refusal of a buy (FieldClient toasts only the successes): on the row that sent it.
+remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail)
+	if ok or (action ~= "BuyUpgrade" and action ~= "BuyTool") or pending.id == "" then
+		return
+	end
+	if detail == "coins" and coinsKnown and coins < pending.price then
+		refuse(pending.id, coinsShort(pending.price))
+	else
+		refuse(pending.id, Locale.Reject(detail, REJECT_KEYS))
+	end
+end)
+
 remotes:WaitForChild("State").OnClientEvent:Connect(function()
 	task.defer(renderIfShown) -- after GardenView took the new state
 end)
@@ -296,6 +360,7 @@ end)
 task.spawn(function()
 	local coinValue = player:WaitForChild("leaderstats"):WaitForChild("Coins") :: IntValue
 	coins = coinValue.Value
+	coinsKnown = true
 	renderIfShown()
 	coinValue:GetPropertyChangedSignal("Value"):Connect(function()
 		coins = coinValue.Value
