@@ -937,8 +937,17 @@ function PlotView:buildSquare(model: Model, square: number)
 			local petModel = standingPet(pet.kind, pet.level, pet.uid, self:at(spot), soil.Position.Y + soil.Size.Y / 2, fieldPetLabel(pet.apt, pet.guard, nameOf(self.state, pet.uid)))
 			if petModel then
 				petModel.Name = "Pet" .. square
+				if self.own then
+					-- the tap ray (PL3a cheer); the templates' parts are not queryable
+					for _, child in petModel:GetDescendants() do
+						if child:IsA("BasePart") then
+							child.CanQuery = true
+						end
+					end
+				end
 				petModel.Parent = model
-				FieldPetIdle.Attach(petModel, pet.uid, pet.level, self:at(Vector3.new(x, 0, z)).Position) -- PL1 idle motion
+				-- PL1 idle motion, PL3a greets of the plot's owner
+				FieldPetIdle.Attach(petModel, pet.uid, pet.level, self:at(Vector3.new(x, 0, z)).Position, self.state.ownerId)
 			end
 		end
 	end

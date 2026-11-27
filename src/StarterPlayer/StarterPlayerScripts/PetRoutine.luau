@@ -4,7 +4,7 @@
 -- onto the spot it stands on and applies with PivotTo.
 -- A small state machine seeded by the uid: breathe (always), look, hop, sit, shuffle (field pets only: along its square's edges
 -- towards the square's middle and back, a sniff at the far end), nap (lies low under a floating 💤, eyes shut). Higher look tiers
--- wait less and hop more.
+-- wait less and hop more. Reactions (PL3a, React): greet / cheer turn to a target and hop under a rising ❤️.
 -- Eyes (PL2): a shut eye hides the open-eye parts (LocalTransparencyModifier, this client) and shows a "‿" line of three thin
 -- parts in front of it, light on a dark patch or coat, dark otherwise. Which `Eye = true` parts hide: the names in HIDE_PREFIXES
 -- plus Eye<n> (eye discs, irises, rims, pupils, shines); brows, patches, lids, lashes, the Owl's facial disc and the Phoenix's
@@ -40,7 +40,12 @@ local SHUFFLE_SHARE = { 0.4, 0.75 } -- of the way from the rest spot towards the
 local NAP_SINK = 0.1 -- share of the pet's height it lies lower (into the soil), capped at NAP_SINK_MAX studs
 local NAP_SINK_MAX = 0.3
 local NAP_PITCH = math.rad(3)
-local ZZZ_DISTANCE = 90 -- studs: the 💤's MaxDistance
+local ZZZ_DISTANCE = 90 -- studs: the 💤's MaxDistance (and the ❤️'s)
+local REACT_HOLD = 0.6 -- seconds a reaction (PL3a) keeps facing its target after the hops
+local REACT_BLEND = 0.25 -- seconds a reaction blends from the pose it interrupted
+local GREET_HOPS, CHEER_HOPS = 2, 3
+local CHEER_LIFT = 1.3 -- a cheer's hops are this much higher (still capped at HOP_MAX)
+local HEART_TIME = 1.6 -- seconds the ❤️ takes to rise and fade
 
 local HIDE_PREFIXES = { "Pupil", "EyeShine", "EyeInner", "EyeGreen", "EyeRim", "EyeRing" }
 local BLINK_TIME = 0.12 -- seconds an eye stays shut in a blink
@@ -51,7 +56,14 @@ local LINE_DARK = Color3.fromRGB(42, 31, 26)
 local LINE_LIGHT = Color3.fromRGB(230, 220, 210)
 local DARK_BEHIND = 0.35 -- luminance below which the closed-eye line is light
 
-export type Action = { name: string, duration: number, pose: (t: number) -> CFrame, closed: ((t: number) -> boolean)? }
+export type Action = {
+	name: string,
+	duration: number,
+	pose: (t: number) -> CFrame,
+	closed: ((t: number) -> boolean)?,
+	heart: boolean?, -- a ❤️ floats up at its start (reactions)
+	from: CFrame?, -- the interrupted pose it blends from over REACT_BLEND
+}
 type Eyes = { hide: { BasePart }, lines: { BasePart } }
 
 local function smooth(u: number): number
@@ -98,23 +110,46 @@ local function look(pet): Action
 	end }
 end
 
+local HOP_EACH = HOP_CROUCH + HOP_TIME + HOP_GAP
+
+-- The pose `u` seconds into one hop (crouch, flight, gap) of `height` studs
+local function hopPose(pet, u: number, height: number): CFrame
+	if u < HOP_CROUCH then
+		return CFrame.new(0, -pet.height * 0.04 * math.sin(math.pi * u / HOP_CROUCH), 0)
+	end
+	u -= HOP_CROUCH
+	if u < HOP_TIME then
+		local k = u / HOP_TIME
+		-- nose up while rising, down while falling, around the box centre's bottom
+		return CFrame.new(0, 4 * height * k * (1 - k), 0) * pitch(pet, math.rad(6) * (1 - 2 * k), pet.cz)
+	end
+	return CFrame.identity
+end
+
 local function hop(pet): Action
 	local count = pet.rng:NextInteger(1, 3)
 	local height = math.min(pet.height * HOP_HEIGHT, HOP_MAX)
-	local each = HOP_CROUCH + HOP_TIME + HOP_GAP
-	local dip = pet.height * 0.04
-	return { name = "hop", duration = each * count, pose = function(t)
-		local u = t % each
-		if u < HOP_CROUCH then
-			return CFrame.new(0, -dip * math.sin(math.pi * u / HOP_CROUCH), 0)
+	return { name = "hop", duration = HOP_EACH * count, pose = function(t)
+		return hopPose(pet, t % HOP_EACH, height)
+	end }
+end
+
+-- PL3a: a turn to `angle` (towards the owner or the camera), `count` hops of `height` studs, a short hold, a turn back
+local function react(pet, name: string, angle: number, count: number, height: number): Action
+	local turn = TURN_TIME * (0.6 + math.abs(angle) / math.pi)
+	local t1 = turn
+	local t2 = t1 + HOP_EACH * count
+	local t3 = t2 + REACT_HOLD
+	local t4 = t3 + turn
+	return { name = name, duration = t4, heart = true, pose = function(t)
+		if t < t1 then
+			return yaw(pet, turnBetween(0, angle, t / t1))
+		elseif t < t2 then
+			return yaw(pet, angle) * hopPose(pet, (t - t1) % HOP_EACH, height)
+		elseif t < t3 then
+			return yaw(pet, angle)
 		end
-		u -= HOP_CROUCH
-		if u < HOP_TIME then
-			local k = u / HOP_TIME
-			-- nose up while rising, down while falling, around the box centre's bottom
-			return CFrame.new(0, 4 * height * k * (1 - k), 0) * pitch(pet, math.rad(6) * (1 - 2 * k), pet.cz)
-		end
-		return CFrame.identity
+		return yaw(pet, turnBetween(angle, 0, (t - t3) / (t4 - t3)))
 	end }
 end
 
@@ -337,6 +372,9 @@ function PetRoutine.new(model: Model, uid: string?, level: number, options: { to
 		lastNap = -math.huge,
 		breathPhase = (seed % 1000) / 1000 * 2 * math.pi,
 		zzz = nil :: BillboardGui?,
+		heart = nil :: BillboardGui?,
+		last = CFrame.identity, -- the last action pose (without the breath): where a reaction blends from
+		queued = nil :: { name: string, target: Vector3 }?, -- a reaction waiting for a shuffle to walk back
 		eyes = if root then buildEyes(model, root) else nil,
 		closed = false,
 		fade = 0,
@@ -374,17 +412,85 @@ function PetRoutine:showZzz(on: boolean)
 	end
 end
 
+-- The ❤️ of a reaction (PL3a): `k` = 0..1 of its rise; nil removes it
+function PetRoutine:showHeart(k: number?)
+	if k and k < 1 and not self.heart and self.zzzAt then
+		local gui = Instance.new("BillboardGui")
+		gui.Name = "Heart"
+		gui.Adornee = self.zzzAt
+		gui.Size = UDim2.new(1.2, 0, 1.2, 0)
+		gui.LightInfluence = 0
+		gui.MaxDistance = ZZZ_DISTANCE
+		local text = Instance.new("TextLabel")
+		text.Size = UDim2.fromScale(1, 1)
+		text.BackgroundTransparency = 1
+		text.TextScaled = true
+		text.AutoLocalize = false
+		Locale.SetText(text, "❤️")
+		text.Parent = gui
+		gui.Parent = self.zzzAt
+		self.heart = gui
+	end
+	local gui = self.heart
+	if not gui then
+		return
+	end
+	if not k or k >= 1 then
+		gui:Destroy()
+		self.heart = nil
+		return
+	end
+	gui.StudsOffset = Vector3.new(0, self.bottom + self.height + 0.2 + smooth(k) * 1.8, 0)
+	local label = gui:FindFirstChildOfClass("TextLabel")
+	if label then
+		label.TextTransparency = math.max(0, k * 2 - 1)
+	end
+end
+
 -- Starts the routine (the pet just came to rest): a first quiet wait before its first action.
 function PetRoutine:Start(now: number)
 	self.action = nil
+	self.queued = nil
+	self.last = CFrame.identity
 	self.nextAt = now + self:waitTime()
 end
 
--- Ends the current action at once (the pet leaves its rest: out of range, its owner moves); the 💤 goes. The eyes stay as they
--- are until the caller's next SetEyes.
+-- Ends the current action at once (the pet leaves its rest: out of range, its owner moves); the 💤 and the ❤️ go. The eyes stay
+-- as they are until the caller's next SetEyes.
 function PetRoutine:Stop()
 	self.action = nil
+	self.queued = nil
+	self.last = CFrame.identity
 	self:showZzz(false)
+	self:showHeart(nil)
+end
+
+function PetRoutine:startReaction(now: number, name: string, target: Vector3)
+	local flat = Vector3.new(target.X - self.cx, 0, target.Z - self.cz)
+	local angle = if flat.Magnitude > 0.1 then facing(flat) else 0
+	local height = math.min(self.height * HOP_HEIGHT, HOP_MAX)
+	local action = if name == "cheer"
+		then react(self, name, angle, CHEER_HOPS, math.min(height * CHEER_LIFT, HOP_MAX))
+		else react(self, name, angle, GREET_HOPS, height)
+	if self.action and self.action.name == "nap" then
+		self.lastNap = now -- woken: the next nap waits its full gap
+	end
+	action.from = self.last
+	self:showZzz(false)
+	self:showHeart(nil)
+	self.action = action
+	self.started = now
+	self.queued = nil
+end
+
+-- PL3a: a reaction, "greet" (the owner came near) or "cheer" (a tap on the pet), towards `target` (a rest-frame point: the owner,
+-- the camera). It interrupts the current action (a nap wakes), except a shuffle, which first walks back.
+function PetRoutine:React(now: number, name: string, target: Vector3)
+	if self.action and self.action.name == "shuffle" then
+		self.queued = { name = name, target = target }
+		return
+	end
+	self:startReaction(now, name, target)
 end
 
 function PetRoutine:pick(now: number, allowNap: boolean): Action
@@ -433,12 +539,28 @@ function PetRoutine:Pose(now: number, allowNap: boolean?): (CFrame, boolean)
 				self.lastNap = now
 			end
 			self:showZzz(false)
+			self:showHeart(nil)
 			self.action = nil
+			self.last = CFrame.identity
 			self.nextAt = now + self:waitTime()
-		else
+			local queued = self.queued
+			if queued then
+				-- a reaction that waited for the shuffle to walk back starts now
+				self:startReaction(now, queued.name, queued.target)
+				action, t = self.action, 0
+			end
+		end
+		if self.action then
 			pose = action.pose(t)
+			if action.from and t < REACT_BLEND then
+				pose = action.from:Lerp(pose, smooth(t / REACT_BLEND))
+			end
+			self.last = pose
 			napping = action.name == "nap"
 			shut = action.closed ~= nil and action.closed(t)
+			if action.heart then
+				self:showHeart(t / HEART_TIME)
+			end
 		end
 	end
 	local period = if napping then BREATH_PERIOD * 1.6 else BREATH_PERIOD

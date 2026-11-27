@@ -54,6 +54,7 @@ local UiSounds = require(ReplicatedStorage:WaitForChild("UiSounds"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local Onboarding = require(script.Parent:WaitForChild("Onboarding"))
 local GardenView = require(script.Parent:WaitForChild("GardenView"))
+local FieldPetIdle = require(script.Parent:WaitForChild("FieldPetIdle"))
 local PlotView = require(script.Parent:WaitForChild("PlotView"))
 local PetPortrait = require(script.Parent:WaitForChild("PetPortrait"))
 local GardenUi = require(script.Parent:WaitForChild("GardenUi"))
@@ -1020,8 +1021,9 @@ local function overUi(point: Vector2): boolean
 	return UiKit.BlocksWorld(player.PlayerGui, point)
 end
 
--- The own square under screen point `point` (InputObject / TouchTapInWorld coordinates), or nil.
-local function squareUnder(point: Vector2): number?
+-- The own square under screen point `point` (InputObject / TouchTapInWorld coordinates), or nil; and the field pet model the ray
+-- hit, if it hit one (PL3a cheer).
+local function squareUnder(point: Vector2): (number?, Model?)
 	if overUi(point) then
 		return nil
 	end
@@ -1038,10 +1040,16 @@ local function squareUnder(point: Vector2): number?
 		if hit then
 			-- a part of a square's piece (soil, crop, pet, tufts) names its square; anything else maps by position
 			local node: Instance? = hit.Instance
+			local pet: Model? = nil
 			while node and node ~= root do
-				local number = string.match(node.Name, "^sq(%d+)$")
-				if number and node:IsA("Model") then
-					return tonumber(number)
+				if node:IsA("Model") then
+					if string.match(node.Name, "^Pet%d+$") then
+						pet = node
+					end
+					local number = string.match(node.Name, "^sq(%d+)$")
+					if number then
+						return tonumber(number), pet
+					end
 				end
 				node = node.Parent
 			end
@@ -1445,7 +1453,10 @@ local function onTap(point: Vector2, touch: boolean)
 	if overUi(point) or placing or not (fieldState and inRange()) then
 		return
 	end
-	local square = squareUnder(point)
+	local square, pet = squareUnder(point)
+	if pet then
+		FieldPetIdle.Cheer(pet) -- PL3a: besides what the tap does
+	end
 	if square and not tappedSquare then
 		tappedSquare = true
 		renderBar()

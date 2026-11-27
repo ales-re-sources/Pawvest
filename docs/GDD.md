@@ -694,6 +694,10 @@ There is no Garden panel; each piece sits where it is used.
   higher look tiers), looks around, hops, sits up, shuffles along its square's edges to sniff towards the crop and back, or naps
   under a floating 💤 (at most once per 90 s) with its eyes shut; near the camera it blinks (PL2). It never leaves its square, and
   its label stays still. Not in step between clients.
+  **Owner reactions (PL3a):** when the plot's owner comes within 8 studs, the pet turns to them and hops twice under a rising ❤️
+  (once per approach: the owner must go beyond 14 studs again, and at most every 30 s; every viewer sees it). Tapping the own pet
+  itself gives three higher hops towards the camera under a ❤️ (only the tapper sees it), besides what the tap does. A reaction wakes
+  a napping pet; a shuffling one walks back first.
 - **Obby seeds (world stages only).** The first Gold on a World 2 or 3 stage gives 1 rare seed of that world; the day's first medal
   finish gives 1 (once per UTC day); a rare-seed meter per stage (Bronze 1 / Silver 2 / Gold 3 points, doubled for the day's first finish
   there; 300 points = a seed). The **seed pouch**: the day's first medal finish on each stage gives 1 / 2 / 3 seeds of the common crop

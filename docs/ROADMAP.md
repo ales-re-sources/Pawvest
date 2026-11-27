@@ -34,7 +34,7 @@ Status levels: **Implemented** (code in `src/`, committed), **Studio-validated**
 | CP | Crop page redesign | ✔ | ✔ | – |
 | HX0 | Hybrid plants: look prototype (Studio reviewer only) | ✔ | ✔ | – |
 | TR | Fruit trees: perennials on one square, a stall tree and a rare obby tree ([EXPANSION §5.4](EXPANSION.md)); the first update after 1.0 | TR0–TR3 | TR1 (server), TR2 (art), TR3 (UI) | – |
-| PL | Field pet life: idle motion (PL1), eyes: blink + shut in a nap (PL2), job and owner reactions (PL3), followers (PL4) | PL1–PL2, PL4 | PL1 (2 pets; full field and phone open), PL2, PL4 partly (second client open) | – |
+| PL | Field pet life: idle motion (PL1), eyes: blink + shut in a nap (PL2), owner reactions (PL3a), jobs (PL3b), followers (PL4) | PL1–PL3a, PL4 | PL1 (2 pets; full field and phone open), PL2, PL3a and PL4 partly (second client open) | – |
 | HX1 | Hybrid breeding mechanic ([HYBRIDS.md](HYBRIDS.md)): main rules decided, numbers open | design only | – | – |
 | K1 | First-hour fixes (kid playtest 2026-11-01): Stage 5, G1 fallback, Double Jump world reward, hatch panel done; the rest is measured in M6a | partial | partial | – |
 | TH | Store thumbnails ([THUMBNAILS.md](THUMBNAILS.md) §8–9): logo, release candidates A1–A3, C1–C3; stud sign decision, grid tile test, kid test open | partial | – | – |
@@ -104,7 +104,22 @@ own (not in sync between clients, which is fine for a cosmetic). Cut into:
   viewport would not render during this check).
 - **Later, unscoped:** tail wag (`Tail*` around the first segment's base); head turn and ear twitch (need `Head*` / `Ear` attributes on
   every model).
-- **PL3 Behaviour:** the owner coming near (turns to the player, hops, a heart), a tap on the own pet (happy hop); a Tending pet turns to
+- **PL3a Owner reactions** (scoped by the user, 2026-11-27; field pets only). **Greet:** a field pet whose plot owner's character comes
+  within 8 studs (flat, from its rest spot) turns to face them, hops twice under a ❤️ that floats up and fades, and turns back; once per
+  approach (re-armed beyond 14 studs) and at most every 30 s per pet (kept across piece rebuilds); every viewer sees it. **Cheer:** a tap
+  on the own pet itself (the tap ray hits its parts) gives three higher hops towards the camera under a ❤️, in any hand mode and besides
+  what the tap does; this client only, 2 s apart. A reaction wakes a napping pet (eyes open, 💤 gone) and blends from the interrupted
+  pose (no snap); a shuffle first walks back. Checks: no errors; walking up to the own pet greets (turns to the player, hops ≤ 0.8,
+  heart), not again before walking away and 30 s; a napping pet wakes for it; a tap on the pet cheers, a tap on its soil does not;
+  picking it up in Pets mode and dropping it leaves no heart, stuck pose or anchor; a second client sees the owner greeted.
+  **Partly Studio-validated** (2026-11-28, the own 2 pets): no errors; walking up greets at 7.3 studs (hops ≤ 0.75 + breath, the ❤️
+  gone after), no second greet when back within 30 s, greets again later; a greet during a nap (PetRoutine on a clock-stepped clone)
+  drops the 💤, opens the eyes and blends in (first frame 0.12 studs, the breath change); a reaction during a shuffle waits for the
+  walk back; a click on the pet cheers (3 of 3 on the pet's current spot), a click on its soil does not; Pets-mode pick-up and Cancel
+  leave no ❤️, 💤, extra anchor or faded part. The pet templates' parts are not queryable: PlotView turns `CanQuery` on for the own
+  plot's pets (the tap ray). Not done: a drop on another square (a live profile write; the piece rebuild path is PL1's), a real nap
+  woken in play (none came in 4 min). **Open:** a second client, the user's look in play.
+- **PL3b Jobs (not scoped):** a Tending pet turns to
   and sniffs ripe crops in its reach (must not look like an online harvest: Tending works only during absences); a guard pet is alert in a
   crow block (sits up, watches the sky, walks its reach) and dozes outside one; how lively by aptitudes (needs the feed to carry them).
 - **Checks per step:** one playtest boot without client errors; a look at 1, 3 and 5 pets on the own field at Lv 1 / 10 / 20 (sizes, no
