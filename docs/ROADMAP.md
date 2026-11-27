@@ -34,7 +34,7 @@ Status levels: **Implemented** (code in `src/`, committed), **Studio-validated**
 | CP | Crop page redesign | ✔ | ✔ | – |
 | HX0 | Hybrid plants: look prototype (Studio reviewer only) | ✔ | ✔ | – |
 | TR | Fruit trees: perennials on one square, a stall tree and a rare obby tree ([EXPANSION §5.4](EXPANSION.md)); the first update after 1.0 | TR0–TR3 | TR1 (server), TR2 (art), TR3 (UI) | – |
-| PL | Field pet life: idle motion (PL1), tail wag + blink (PL2), job and owner reactions (PL3) | PL1 | PL1 (2 pets; full field and phone open) | – |
+| PL | Field pet life: idle motion (PL1), eyes: blink + shut in a nap (PL2), job and owner reactions (PL3) | PL1–PL2 | PL1 (2 pets; full field and phone open), PL2 | – |
 | HX1 | Hybrid breeding mechanic ([HYBRIDS.md](HYBRIDS.md)): main rules decided, numbers open | design only | – | – |
 | K1 | First-hour fixes (kid playtest 2026-11-01): Stage 5, G1 fallback, Double Jump world reward, hatch panel done; the rest is measured in M6a | partial | partial | – |
 | TH | Store thumbnails ([THUMBNAILS.md](THUMBNAILS.md) §8–9): logo, release candidates A1–A3, C1–C3; stud sign decision, grid tile test, kid test open | partial | – | – |
@@ -80,9 +80,15 @@ own (not in sync between clients, which is fine for a cosmetic). Cut into:
   leaves nothing behind. Cost: a 54-part pet's `PivotTo` ≈ 0.07 ms on the dev desktop (40 pets ≈ 2.7 ms/frame), so only pets within
   50 studs move every frame, the rest at 15 Hz. **Open:** the user's look in play (feel, nap share), a full own field of 5 pets at
   Lv 20 (clipping into big plants while shuffling), frame time on a phone (MU).
-- **PL2 Parts (needs tags):** tail wag (`Tail*` around the first segment's base) and blink (squash the eyes; eye patches are also `Eye`, so
-  a `Blink` attribute on the pupil / iris parts if the squashed patches look wrong). Head turn and ear twitch need new `Head*` / `Ear`
-  attributes on every model: decide after PL2's look review.
+- **PL2 Eyes** (scoped by the user, 2026-11-27: eyes only): eyes shut while the pet naps, and it blinks (every 2.5–6 s, sometimes
+  twice; only within 45 studs of the camera). A shut eye hides the open-eye parts on this client and shows a "‿" line built from the
+  model's own eye size, light on a dark patch or coat, dark otherwise (no squash: patches, brows and lids are also `Eye`). Rule of which
+  parts hide: PET_GROWTH → Attributes. Checks: each of the 8 kinds shut and open at Lv 1 and Lv 20 (line on the eye, nothing left
+  open, Panda / Dog patch and Owl disc right), a blink seen in play, no errors. **Studio-validated** (2026-11-27): 18 test pets
+  (8 kinds + a dark Bunny, Lv 1 / 20) shut and open through `FieldPetIdle.Hold`, both eyes' lines alike, every hidden part back on
+  open; in motion blinks every ~3–4 s of 0.13 s, eyes shut through each nap; no errors. Open: the user's look in play.
+- **Later, unscoped:** tail wag (`Tail*` around the first segment's base); head turn and ear twitch (need `Head*` / `Ear` attributes on
+  every model).
 - **PL3 Behaviour:** the owner coming near (turns to the player, hops, a heart), a tap on the own pet (happy hop); a Tending pet turns to
   and sniffs ripe crops in its reach (must not look like an online harvest: Tending works only during absences); a guard pet is alert in a
   crow block (sits up, watches the sky, walks its reach) and dozes outside one; how lively by aptitudes (needs the feed to carry them).
