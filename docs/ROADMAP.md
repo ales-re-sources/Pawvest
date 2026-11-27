@@ -86,10 +86,8 @@ point reset (a paid comfort in D2 or an event item, EXPANSION §13).
 Target: a player plants a tree once and comes back to pick its fruit for good; the perennial lifecycle that hybrids build on later
 (HYBRIDS §8). Decided (the user, 2026-11-27): one square per tree, digging up loses it, saplings from the stall (max 3 per kind) and the
 obby (rare tree per world), two kinds in the first update: one stall tree and one rare obby tree. Cut into:
-- **TR0 Numbers and rules:** for both kinds (proposed: the stall tree with quick fruit, the obby tree for the night) first growth,
-  fruit interval, cap and fruit value re-anchored on the current ladder in `economy_ev.py` (its `stall_trees` predate FL); sapling prices,
-  unlock gate and stall rule (always in stock once unlocked, or in the rotation); how the obby gives its sapling; confirm EXPANSION §5.4's
-  proposed rules. Done when `economy.py check` passes with the trees in and EXPANSION §5.4 has no "Proposed".
+- **TR0 Numbers and rules: done** (2026-11-27; EXPANSION §5.4, ECONOMY → TR0). Left for TR1 as proposals: "3 per kind" counts held +
+  planted with the price by that count; the stall tree's star counts in the quick class.
 - **TR1 Lifecycle (server):** a tree square keeps its planting and stores its fruit growth; planting a sapling, growth to first fruit,
   bearing up to the cap and stopping there, online / offline / 24 h cap; Harvest picks all ripe fruit that fits in the barn, one size roll
   per fruit; Tending picks during absences; crows take at most one fruit; Uproot works on a bearing tree; mastery, requests, Hall count

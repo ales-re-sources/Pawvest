@@ -140,16 +140,22 @@ A tree is a perennial on the crop field: planted from a sapling, it is never cle
 user, 2026-11-27):* trees are the first update after 1.0; a tree takes **one square** (1×1; big 2×2 trees come with the Orchard landmark
 or hybrids); **digging one up loses it** (two-tap confirm, as for a crop); saplings come from the **seed stall** (Coins, mastery-gated,
 at most 3 per kind, each next one dearer) **and the obby** (a rare tree per world, never sold, like the rare crops); the first update
-ships **two kinds: one stall tree and one rare obby tree**.
+ships **two kinds: one stall tree and one rare obby tree**. Numbers: ECONOMY.md → TR0.
 
-Proposed rules (confirm in TR0):
-- **Lifecycle:** sapling → first growth → one fruit at a time up to a cap (4–6); ripe fruit waits and never rots; at the cap the tree stops
+*Decided in TR0 (the user, 2026-11-27):*
+- **Stall tree:** its saplings open with the Pepper unlock and follow the stall's hourly rotation like a crop. First fruit after 2 h, then
+  a fruit every 10 min (away-time), 4 held; it earns what Pepper earns per square-hour. Proposed for TR1: "3 per kind" counts trees held
+  and planted, and the price follows that count, so a tree dug up can be replaced.
+- **Rare tree (World 1):** every 3rd rare seed from a World 1 stage meter is a sapling instead, while the player has fewer than 3 (held +
+  planted). A late treat by choice: in the model the first one comes on day 13–60. First growth 8 h, then a fruit every hour, 6 held (full
+  after 6 h away: a night's timer).
+- **Lifecycle:** sapling → first growth → one fruit at a time up to the cap; ripe fruit waits and never rots; at the cap the tree stops
   bearing. Growth as for crops (online ×2, offline ×1, 24 h cap; Growth upgrade and Cloches apply).
 - **Picking:** a Basket tap on a bearing tree picks every ripe fruit that fits in the barn; each fruit rolls its own size (Hall records,
   ribbons and requests work unchanged). A Tending pet picks during absences (nothing to replant); crows eat at most one fruit, never the
   tree; a rare tree is never raided.
-- **Mastery:** each picked fruit of a stall tree counts one plant toward that tree's ★ and points; Speed shortens the time between fruits.
-  Rare trees give no mastery (as rare crops).
+- **Mastery:** each picked fruit of a stall tree counts one plant toward that tree's ★ and points (star counts of the quick class by its
+  fruit time); Speed shortens the time between fruits. Rare trees give no mastery (as rare crops).
 - **On the field:** a bearing tree's ring shows its fruit ("🍎 3/4") instead of the pie; trees stay out of the shared ring height (the
   tallest plant), or one tree lifts every ring. Fruit regrows at the recipe's fixed fruit slots (PLANT_GROWTH → Identify fruit).
 

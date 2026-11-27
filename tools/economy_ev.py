@@ -5,7 +5,7 @@ Run through `python tools/economy.py ev | proposal | evcheck` (or `python tools/
 What it is: an event-by-event simulation of one player per archetype (sessions, garden attention, obby runs inside a session, absences),
 built on the EV rules the user decided on 2026-11-07:
   * one crop ladder from 20 s to 48 h baseline (10 s to 24 h online, OG2b), net Coins per square-hour rising per step;
-  * perennials ("Future tree 1..4", model-only): fruit every f, at most c fruits held;
+  * fruit trees (TR, EXPANSION 5.4): a stall tree and an obby tree, fruit every f, at most c fruits held;
   * repeat obby runs pay Sunshine (growth for the whole field and the incubators) and rare seeds instead of Coins;
   * talents cost Coins + a crop bundle;
   * eggs are rolled at purchase and the rarity sets the hatch time;
@@ -165,9 +165,14 @@ CAND = {
         ("EquipSlot", 2, 4, 1.0), ("EquipSlot", 3, 10, 1.0),
         ("Incubator", 2, 3, 1.0), ("Incubator", 3, 9, 1.0),
     ],
-    # perennials (model-only): (id, anchor square j of the first sapling, saplings, first growth s, fruit every s, fruits held, ladder index of value)
-    "trees": [("Tree1", 10, 3, 4 * 3600, 600, 4, 8), ("Tree2", 16, 3, 12 * 3600, 1800, 4, 10),
-              ("Tree3", 22, 3, 24 * 3600, 3600, 5, 12), ("Tree4", 28, 3, 48 * 3600, 7200, 6, 14)],
+    # fruit trees (TR; EXPANSION 5.4), bought at the stall: (id, anchor square j of the first sapling, saplings, first growth s, fruit every s,
+    # fruits held, ladder index of value). Until TR0 the model ran four placeholder trees (Tree1-4, 3 saplings each).
+    "trees": [("StallTree", 10, 3, 2 * 3600, 600, 4, 8)],
+    "tree_unlock": {"StallTree": 8},  # TR: a stall tree's saplings are sold from this ladder crop's unlock (8 = Pepper), in the ST rotation
+    # fruit trees from the obby (TR): (id, world, saplings, first growth s, fruit every s, fruits held, ladder index of value, every): every
+    # `every`-th rare seed from that world's stage meters is a sapling instead while fewer than `saplings` are held + planted; never sold,
+    # no mastery
+    "obby_trees": [("ObbyTree", 1, 3, 8 * 3600, 3600, 6, 12, 3)],
     "tree_mult": 1.0,  # fruit value per square-hour against the ladder crop of its index
     "sapling_step": 1.4,  # each next sapling of a kind costs x this
     # talents: id -> list of levels (anchor square j, factor, {ladder index: count}, {rare world: count}); a world reward level is ("reward",)
@@ -356,6 +361,11 @@ def build(c=None):
         for s in range(n):
             items.append({"name": f"{tid} sapling {s + 1}", "fam": "Sapling", "tree": tid, "lvl": s + 1,
                           "price": anchor(j, c["sapling_step"] ** s), "gate": M["sq_gate"][j - 1], "group": "field"})
+    M["obby_trees"] = {}  # world -> [(tree id, saplings, every)]: every `every`-th meter seed of the world is a sapling instead
+    for tid, w, n, t0, f, cap, at, every in c.get("obby_trees", []):
+        v = c["tree_mult"] * (crops[at - 1]["v"] if c.get("tier_mult") else c["v1"] * c["r"] ** (at - 1))
+        trees.append({"id": tid, "t0": float(t0), "f": float(f), "cap": cap, "fruit": round(v * f / H), "pts": 0, "obby": w})
+        M["obby_trees"].setdefault(w, []).append((tid, n, every))
     M["trees"] = {t["id"]: t for t in trees}
     talents = {}
     for tid, levels in c["talents"].items():
@@ -534,6 +544,9 @@ class Sim:
         self.free_sq = 4
         self.start_seeds = 4
         self.trees = []  # {"id", "grown", "at", "fruits", "bearing"}
+        self.saplings = []  # obby tree ids held, planted on the next free square
+        self.sapling_t = []  # (t, tree id) of each obby sapling
+        self.meter_n = {}  # world -> rare seeds its stage meters gave (TR: every n-th is a sapling)
         self.kept = {}  # crop id -> crops kept in the barn (bundles, requests)
         self.rare_seeds = {}
         self.pets = []
@@ -1032,6 +1045,18 @@ class Sim:
         q = self.open_quest()
         return bool(q) and crop["id"] in q["quest"]
 
+    def sapling_on_stall(self, tid):
+        """TR: the stall sells `tid`'s saplings now: its crop is unlocked and (ST) the tree is in this hour's rotation like a crop."""
+        u = self.c.get("tree_unlock", {}).get(tid)
+        if u is not None and self.M["crops"][u - 1]["k"] not in self.unl:
+            return False
+        if not self.st:
+            return True
+        slot = int(self.now // self.c["st_every"])
+        i = list(self.M["trees"]).index(tid)
+        rng = random.Random(self.seed * 1299709 + slot * 7919 + 101 + i)
+        return rng.random() < self.c["st_p"] or (slot + 100 + i) % max(1, self.c["st_pity"]) == 0
+
     def avail(self, crop):
         """Seeds of `crop` the player can plant now without the Coins check (math.inf = a staple, bought on planting)."""
         if not self.stall_on or crop["k"] < self.c["stall_staples"] or self.st_always(crop):
@@ -1106,7 +1131,11 @@ class Sim:
             self.last_crop = crop
 
     def plant(self, t):
-        # rare seeds first (the best value on a square, kept apart from the ladder)
+        # obby saplings first (a tree for good), then rare seeds (the best value on a square, kept apart from the ladder)
+        while self.saplings and self.free_sq > 0 and self.open_sq - len(self.trees) > 8:  # held in the barn until the field has room (8+ crop squares)
+            tid = self.saplings.pop(0)
+            self.free_sq -= 1
+            self.trees.append({"id": tid, "grown": 0.0, "at": t, "picked": self.M["trees"][tid]["t0"]})
         for w in sorted(self.rare_seeds):
             while self.rare_seeds[w] > 0 and self.free_sq > 0:
                 crop = self.M["rares"][w]
@@ -1531,6 +1560,8 @@ class Sim:
             return False
         if it["fam"] == "Sapling" and (self.free_sq + self.planted_sq() < 1 or self.open_sq - len(self.trees) <= 4):
             return False
+        if it["fam"] == "Sapling" and not self.sapling_on_stall(it["tree"]):
+            return False
         return True
 
     def planted_sq(self):
@@ -1915,8 +1946,15 @@ class Sim:
             self.meter[s["key"]] = self.meter.get(s["key"], 0.0) + pts[medal - 1] * (fmult if first else 1) * (1 + bonus)
             while self.meter[s["key"]] >= size:
                 self.meter[s["key"]] -= size
-                self.rare_seeds[w] = self.rare_seeds.get(w, 0) + 1
+                self.meter_n[w] = self.meter_n.get(w, 0) + 1
                 drop = True
+                tree = next((tid for tid, n, every in self.M["obby_trees"].get(w, []) if self.meter_n[w] % every == 0
+                             and self.saplings.count(tid) + sum(1 for tr in self.trees if tr["id"] == tid) < n), None)
+                if tree:  # TR: this meter seed is the world's tree sapling
+                    self.saplings.append(tree)
+                    self.sapling_t.append((t, tree))
+                else:
+                    self.rare_seeds[w] = self.rare_seeds.get(w, 0) + 1
             if self.daily_seed_day != self.day(t):
                 self.daily_seed_day = self.day(t)
                 best = max(x["world"] for x in self.cleared)
@@ -2548,9 +2586,10 @@ def proposal(M, days=60):
         rows.append([cfg_id(c["id"]), fmt_t(c["t"]), E.n(c["sale"]), E.n(c["seed"]), E.n(c["v"]), str(c["pts"]), f"R{c['gate']}", old])
     print(E.table(["crop", "grow", "sale", "seed", "net/sq-h", "Renown pts", "old gate", "config: grow / sale / seed / step"], rows))
     print(f"\nRenown (the old model only, EV3b took it out of the game): level L needs {M['c']['renown_k']} x L^{M['c']['renown_p']} points.")
-    print("\n## Perennials (model-only)")
-    print(E.table(["tree", "first growth", "fruit every", "held", "fruit sale"],
-                  [[t["id"], fmt_t(t["t0"]), fmt_t(t["f"]), str(t["cap"]), E.n(t["fruit"])] for t in M["trees"].values()]))
+    print("\n## Fruit trees (TR, model-only until built)")
+    print(E.table(["tree", "source", "first growth", "fruit every", "held", "fills in", "fruit sale", "net / sq-h"],
+                  [[t["id"], f"World {t['obby']} meter" if t.get("obby") else "stall", fmt_t(t["t0"]), fmt_t(t["f"]), str(t["cap"]),
+                    fmt_t(t["f"] * t["cap"]), E.n(t["fruit"]), E.n(round(t["fruit"] * H / t["f"]))] for t in M["trees"].values()]))
     sims = {n: run(M, arch_by(n), "talent-first", days) for n in ("Casual", "Garden main", "Obby main", "Binge", "Spender")}
     old_prices = old_price_map(P)
     print("\n## Sinks and talents (day bought, talent-first policy; - = not within the run)")
