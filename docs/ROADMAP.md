@@ -34,7 +34,7 @@ Status levels: **Implemented** (code in `src/`, committed), **Studio-validated**
 | CP | Crop page redesign | ✔ | ✔ | – |
 | HX0 | Hybrid plants: look prototype (Studio reviewer only) | ✔ | ✔ | – |
 | TR | Fruit trees: perennials on one square, a stall tree and a rare obby tree ([EXPANSION §5.4](EXPANSION.md)); the first update after 1.0 | TR0–TR3 | TR1 (server), TR2 (art), TR3 (UI) | – |
-| PL | Field pet life: idle motion (PL1), eyes: blink + shut in a nap (PL2), job and owner reactions (PL3) | PL1–PL2 | PL1 (2 pets; full field and phone open), PL2 | – |
+| PL | Field pet life: idle motion (PL1), eyes: blink + shut in a nap (PL2), job and owner reactions (PL3), followers (PL4) | PL1–PL2, PL4 | PL1 (2 pets; full field and phone open), PL2, PL4 partly (second client open) | – |
 | HX1 | Hybrid breeding mechanic ([HYBRIDS.md](HYBRIDS.md)): main rules decided, numbers open | design only | – | – |
 | K1 | First-hour fixes (kid playtest 2026-11-01): Stage 5, G1 fallback, Double Jump world reward, hatch panel done; the rest is measured in M6a | partial | partial | – |
 | TH | Store thumbnails ([THUMBNAILS.md](THUMBNAILS.md) §8–9): logo, release candidates A1–A3, C1–C3; stud sign decision, grid tile test, kid test open | partial | – | – |
@@ -87,6 +87,21 @@ own (not in sync between clients, which is fine for a cosmetic). Cut into:
   open, Panda / Dog patch and Owl disc right), a blink seen in play, no errors. **Studio-validated** (2026-11-27): 18 test pets
   (8 kinds + a dark Bunny, Lv 1 / 20) shut and open through `FieldPetIdle.Hold`, both eyes' lines alike, every hidden part back on
   open; in motion blinks every ~3–4 s of 0.13 s, eyes shut through each nap; no errors. Open: the user's look in play.
+- **PL4 Followers** (the user, 2026-11-27): the pets with a player get the field pets' life. The routine and the eyes move from
+  `FieldPetIdle` into a shared client module `PetRoutine` (FieldPetIdle keeps the field registry, label anchor and LOD); PetFollow uses
+  it per pet. Followers blink everywhere (near the camera, every player's pets). When the owner stands still ~3 s, or their pets are
+  parked at the field entrance, each pet settles onto the ground under its formation spot (no ground within reach: it keeps floating)
+  and runs the routine without the shuffle; naps only after the owner has been still ~20 s. The owner moving again wakes the pets (eyes
+  open, 💤 gone) and they float and follow as before. Eyes and PetFollow's camera / run / level-up fade share the parts'
+  `LocalTransparencyModifier`: a shut eye's parts stay hidden at any fade. Checks: no errors; blink on own and (second client) other
+  players' followers; settle, routine, nap and wake on the hub and parked at the field; jumping, running a stage, a level-up and
+  re-equipping while settled leave no stuck pose, 💤 or shut eyes; field pets unchanged. **Partly Studio-validated** (2026-11-27,
+  the own 3 followers on the garden island): no errors; blinks (4–5 per 20 s, 0.13 s); settled 3 s after stopping (gap to the ground
+  ≈ 0), floating while walking, settled again after stopping; parked at the path's end on the path's top (the ground is re-checked
+  while sinking and every 0.5 s: a check only at the start left them 0.3 studs in the path) and still resting while the owner walks on
+  the field; naps with the eyes shut; field pets still move and blink. Checked in code only: stage run, level-up and re-equip while
+  resting (they wake / build a fresh routine). **Open:** a second client (others' followers), the user's look in play (the Studio
+  viewport would not render during this check).
 - **Later, unscoped:** tail wag (`Tail*` around the first segment's base); head turn and ear twitch (need `Head*` / `Ear` attributes on
   every model).
 - **PL3 Behaviour:** the owner coming near (turns to the player, hops, a heart), a tap on the own pet (happy hop); a Tending pet turns to

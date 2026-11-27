@@ -344,7 +344,9 @@ Legendary Lv 10 → Lv 20; the Coin bonus is the same at every even level and in
 dropped. Its old `Level` / `XP` stay stored, unused.
 
 ### 7.5 Display
-Equipped pets float behind their owner and are visible to all players, with rarity colour and level on a small label. **Parking:** while
+Equipped pets float behind their owner and are visible to all players, with rarity colour and level on a small label. They blink near
+the camera; when the owner has stood still 3 s, or while they are parked, each settles onto the ground under its spot and lives like a
+field pet (§7.9 → Field pet idle; no shuffle, naps only after 20 s of rest) until the owner moves on (PL4). **Parking:** while
 a player stands on the field of their own garden plot, their followers wait in a row at the field entrance (the path's end, facing the
 field) so they never hang between the camera and the squares, and glide back when the owner walks out (hysteresis: park from 1 stud
 inside the field's front edge, return 3 studs before it). Display only, per client, for every player's own plot; numbers are the `PARK_*`

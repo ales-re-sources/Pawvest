@@ -34,8 +34,8 @@ garden pets and the pet page always match. A pet without a uid (old `Kind:Level`
 - **Names PetLook relies on:** `Root` (invisible PrimaryPart, front = −Z), `Head`, `Body`, `Tail*`; parts flat under the Model, anchored, no
   welds. Eyes sit on the front of the head.
 - **Attributes:** `Accent = true` on the level-tinted parts (stripes, ear insides, tips, belly); `Eye = true` on eyes, rims, pupils, shines and
-  eye patches. **Never mark eyes Accent:** a Neon iris at the max level looks startled. A shut eye (field pets' blink and nap,
-  FieldPetIdle) hides the `Eye` parts named `Eye<n>`, `Pupil*`, `EyeShine*`, `EyeInner*`, `EyeGreen*`, `EyeRim*`, `EyeRing*`; other `Eye`
+  eye patches. **Never mark eyes Accent:** a Neon iris at the max level looks startled. A shut eye (blink and nap of field pets and
+  followers, PetRoutine) hides the `Eye` parts named `Eye<n>`, `Pupil*`, `EyeShine*`, `EyeInner*`, `EyeGreen*`, `EyeRim*`, `EyeRing*`; other `Eye`
   parts (brows, patches, lids, lashes, facial discs) stay. `Blink = true / false` on a part overrides the name; a new eye part with
   another name needs one.
 - **Stud look:** stud texture (Material `Plastic` + MaterialVariant `StudsSmall` from `MaterialService.StudPack`) only on the big

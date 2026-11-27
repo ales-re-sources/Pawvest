@@ -20,6 +20,11 @@
 -- Tier effects (trail / aura / orbiting motes / halo, accent tint) are built by PetLook.Apply; here every frame PetLook.UpdateFx
 -- moves the motes and switches emitters and lights off for pets farther than PetLook.LodDistance from the camera or too faded
 -- to see (camera close, run mode, level-up moment). The float animation gets livelier with the tier (PetLook.Bob).
+-- Idle life (PL4, PetRoutine as on the field): every pet blinks near the camera. When its owner has stood still STILL_AFTER
+-- seconds, or the pets wait parked at the field entrance, each pet settles onto the ground under its formation spot (a ray down;
+-- no ground within GROUND_REACH: it keeps floating) and runs the routine (no shuffle; naps only after NAP_AFTER seconds of rest).
+-- The owner moving, a stage run or a level-up wakes it: the routine stops and the pet rises back into its floating pose.
+-- The camera fade and the eyes share LocalTransparencyModifier: the routine's SetEyes runs after the fade with the pet's fade.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -34,6 +39,7 @@ local PetLook = require(ReplicatedStorage:WaitForChild("PetLook"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local PetModels = ReplicatedStorage:WaitForChild("PetModels")
 local StageTimerUpdate = ReplicatedStorage:WaitForChild("StageTimerUpdate")
+local PetRoutine = require(script.Parent:WaitForChild("PetRoutine"))
 
 local FOLLOW_SPEED = 8 -- anchor smoothing rate (1/s); higher follows tighter
 local SNAP_DISTANCE = 40 -- studs; farther than this (teleport, respawn) the anchor jumps instead of gliding
@@ -69,6 +75,15 @@ local PARK_HEIGHT = 2.75 -- anchor height above the floor's middle (the floor to
 local GLIDE_SPEED = 3 -- anchor smoothing rate (1/s) while pets travel between the owner and the parking spot
 local GLIDE_DONE = 2.5 -- studs from the target at which the glide ends and normal following resumes
 
+-- Idle life (PL4)
+local STILL_SPEED = 0.5 -- studs/s of horizontal speed below which the owner counts as standing still
+local STILL_AFTER = 3 -- seconds the owner stands still before their pets settle
+local NAP_AFTER = 20 -- seconds of rest before a settled pet may nap
+local GROUND_REACH = 10 -- studs below a pet's floating spot within which it finds ground to settle on
+local GROUND_RECHECK = 0.5 -- seconds between ground checks of a resting pet
+local SETTLE_TIME = 0.6 -- seconds to sink onto the ground ...
+local WAKE_TIME = 0.3 -- ... and to rise back into the floating pose
+
 local running = false -- the local player's stage timer is running
 local runBlend = 0 -- 0 = normal formation, 1 = run mode
 StageTimerUpdate.OnClientEvent:Connect(function(elapsed)
@@ -103,6 +118,8 @@ local function makePet(entry, name: string?): any?
 		model:Destroy()
 		return nil
 	end
+	-- the routine first: its closed-eye lines are parts of the model and fade with it
+	local routine = PetRoutine.new(model, entry.uid, entry.level)
 	local parts = {}
 	for _, part in model:GetDescendants() do
 		if part:IsA("BasePart") then
@@ -126,7 +143,56 @@ local function makePet(entry, name: string?): any?
 		camFade = 0, -- the camera part of the fade, tweened between 0 and FADE_MAX
 		camFaded = false, -- the camera is close (FADE_ENTER / FADE_EXIT)
 		phase = math.random() * math.pi * 2,
+		routine = routine,
+		settle = 0, -- 0 = floating, 1 = resting on the ground (PL4)
+		settled = false, -- the routine runs
+		groundY = nil :: number?, -- ground height under the formation spot while it rests
+		groundAt = nil :: number?, -- when to check the ground again
+		noGround = false, -- the ray found nothing this rest: keep floating
 	}
+end
+
+local function smooth(u: number): number
+	u = math.clamp(u, 0, 1)
+	return u * u * (3 - 2 * u)
+end
+
+-- Wakes a pet out of its rest at once (hidden, culled, level-up ghost): no action, no 💤, eyes open, floating again.
+local function wake(pet)
+	pet.routine:Stop()
+	pet.routine:SetEyes(false, pet.fade)
+	pet.settled = false
+	pet.settle = 0
+	pet.groundY = nil
+	pet.groundAt = nil
+	pet.noGround = false
+end
+
+-- Ground height under `position` (pets and characters ignored), or nil within GROUND_REACH.
+local function groundBelow(position: Vector3): number?
+	local ignore: { Instance } = { folder }
+	for _, player in Players:GetPlayers() do
+		if player.Character then
+			table.insert(ignore, player.Character)
+		end
+	end
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = ignore
+	params.IgnoreWater = false
+	-- invisible parts (trigger zones, barriers) are no ground: skip them and cast again
+	for _ = 1, 4 do
+		local hit = workspace:Raycast(position + Vector3.new(0, 1, 0), Vector3.new(0, -(GROUND_REACH + 1), 0), params)
+		if not hit then
+			return nil
+		end
+		local part = hit.Instance
+		if not (part:IsA("BasePart") and part.Transparency >= 0.9) then
+			return hit.Position.Y
+		end
+		params:AddToFilter(part)
+	end
+	return nil
 end
 
 -- Removes a pet for good: a running level-up moment, its old-look ghost (not yet handed to a moment) and the model.
@@ -187,6 +253,7 @@ local function refresh(player: Player)
 					previous.ghost.model:Destroy()
 					previous.ghost = nil
 				end
+				wake(previous) -- the old look fades out with open eyes, without a 💤
 				pet.ghost = previous
 			end
 		end
@@ -279,7 +346,12 @@ RunService.Heartbeat:Connect(function(dt)
 		if not root or culled or #state.pets == 0 then
 			-- no character (dead, respawning, streamed out) or far away: hide the pets and jump back when they return
 			state.anchor = nil
+			state.stillSince = nil
+			state.restSince = nil
 			for _, pet in state.pets do
+				if pet.settled or pet.settle > 0 then
+					wake(pet)
+				end
 				if pet.model.Parent ~= nil then
 					pet.model.Parent = nil
 				end
@@ -327,9 +399,60 @@ RunService.Heartbeat:Connect(function(dt)
 		end
 		state.anchor = anchor
 		local blend = if player == LocalPlayer then runBlend else 0
+		-- rest (PL4): parked and arrived, or the owner stood still STILL_AFTER seconds; never during the local player's run
+		local velocity = root.AssemblyLinearVelocity
+		if Vector3.new(velocity.X, 0, velocity.Z).Magnitude > STILL_SPEED or math.abs(velocity.Y) > 2 then
+			state.stillSince = nil
+		elseif not state.stillSince then
+			state.stillSince = now
+		end
+		local resting = blend < 0.01
+			and ((parked and not state.glide) or (not parked and state.stillSince ~= nil and now - state.stillSince >= STILL_AFTER))
+		if not resting then
+			state.restSince = nil
+		elseif not state.restSince then
+			state.restSince = now
+		end
+		local napOk = state.restSince ~= nil and now - state.restSince >= NAP_AFTER
 		for _, pet in state.pets do
 			local bob = math.sin(now * pet.bobSpeed + pet.phase) * pet.bobHeight
 			local base = anchor * CFrame.new(pet.offset + Vector3.new(0, bob, RUN_BACK * blend))
+			local routine = pet.routine
+			local shut = false
+			local wantRest = resting and not pet.moment and not pet.levelUpUntil
+			-- the ground under the spot: every frame while sinking (the anchor may still glide onto a step or path), then
+			-- every GROUND_RECHECK seconds; none within reach keeps (or lifts) the pet floating
+			if wantRest and not pet.noGround and (pet.settle < 1 or now >= (pet.groundAt or 0)) then
+				local spot = anchor * CFrame.new(pet.offset)
+				pet.groundY = groundBelow(spot.Position)
+				pet.noGround = pet.groundY == nil
+				pet.groundAt = now + GROUND_RECHECK
+			end
+			local settleTo = if wantRest and pet.groundY then 1 else 0
+			pet.settle = math.clamp(pet.settle + (if settleTo > pet.settle then dt / SETTLE_TIME else -dt / WAKE_TIME), 0, 1)
+			if pet.settled and settleTo == 0 then
+				pet.settled = false
+				routine:Stop()
+			end
+			if not wantRest then
+				pet.noGround = false
+				if pet.settle == 0 then
+					pet.groundY = nil
+				end
+			end
+			if pet.settle > 0 and pet.groundY then
+				local spot = anchor * CFrame.new(pet.offset)
+				local rest = CFrame.new(spot.X, pet.groundY - routine.bottom, spot.Z) * spot.Rotation
+				if pet.settle >= 1 and not pet.settled then
+					pet.settled = true
+					routine:Start(now)
+				end
+				local pose = CFrame.identity
+				if pet.settled then
+					pose, shut = routine:Pose(now, napOk)
+				end
+				base = base:Lerp(rest * pose, smooth(pet.settle))
+			end
 			if pet.model.Parent ~= folder then
 				pet.model.Parent = folder
 			end
@@ -358,11 +481,13 @@ RunService.Heartbeat:Connect(function(dt)
 			-- FADE_ENTER close to fade it and go FADE_EXIT away to bring it back, and the switch is a short tween
 			local far = false
 			local camFaded = false
+			local near = false
 			if cameraPosition then
 				local centerDistance = (cameraPosition - cframe:PointToWorldSpace(pet.metrics.center)).Magnitude
 				camFaded = centerDistance - pet.metrics.size.X / 2 < (if pet.camFaded then FADE_EXIT else FADE_ENTER)
 				-- distance LOD with a little hysteresis so a pet at the border does not flicker
 				far = centerDistance > PetLook.LodDistance - (if pet.far then LOD_HYSTERESIS else 0)
+				near = centerDistance <= PetRoutine.BlinkDistance
 			end
 			pet.camFaded = camFaded
 			local camTarget = if camFaded then FADE_MAX else 0
@@ -378,6 +503,9 @@ RunService.Heartbeat:Connect(function(dt)
 					part.LocalTransparencyModifier = fade
 				end
 			end
+			-- eyes after the fade (it wrote every part's LocalTransparencyModifier); open during a level-up moment (PL4)
+			local eyesShut = if pet.moment then false else routine:EyesShut(now, shut, near)
+			routine:SetEyes(eyesShut, pet.fade)
 		end
 	end
 end)
