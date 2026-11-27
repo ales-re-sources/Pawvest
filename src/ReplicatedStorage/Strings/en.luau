@@ -398,7 +398,6 @@ return {
 	["field.reason.questCrop"] = "That crop is not needed any more",
 	["field.section.crops"] = "Harvest",
 	["field.picker.title"] = "Choose a seed",
-	["field.picker.info"] = "You have {stock} · {time} while away",
 	["field.picker.none"] = "You have no seeds. Buy some at the seed stall on the plaza.",
 	["field.toast.sell"] = { "+{count} Coin", "+{count} Coins" },
 	["field.toast.request"] = { "📜 Request done! +{count} Coin", "📜 Request done! +{count} Coins" },
@@ -632,5 +631,4 @@ return {
 	["admin.fieldtest.stats"] = "{fps} FPS · p95 {p95} ms · slowest {ms} ms · {objects} objects · full detail {studs} studs",
 	["admin.fieldtest.distance"] = "🧪 Full detail: {studs} studs",
 	["admin.fieldtest.distanceAuto"] = "🧪 Full detail: auto",
-	["field.growth.hint"] = "Times apply while away. Growth pauses after {cap} h away. The countdown runs {rate}× faster while you play.",
 }

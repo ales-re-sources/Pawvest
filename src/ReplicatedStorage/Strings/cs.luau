@@ -398,7 +398,6 @@ return {
 	["field.reason.questCrop"] = "Tahle úroda už není potřeba",
 	["field.section.crops"] = "Sklizeň",
 	["field.picker.title"] = "Vyber semínko",
-	["field.picker.info"] = "Máš {stock} · {time} mimo hru",
 	["field.picker.none"] = "Nemáš žádná semínka. Kup si je ve stánku se semínky na náměstí.",
 	["field.toast.sell"] = { "+{count} mince", "+{count} mince", "+{count} mincí" },
 	["field.toast.request"] = { "📜 Zakázka splněna! +{count} mince", "📜 Zakázka splněna! +{count} mince", "📜 Zakázka splněna! +{count} mincí" },
@@ -632,5 +631,4 @@ return {
 	["admin.fieldtest.stats"] = "{fps} FPS · p95 {p95} ms · nejpomalejší {ms} ms · objektů: {objects} · plný detail {studs} studů",
 	["admin.fieldtest.distance"] = "🧪 Plný detail: {studs} studů",
 	["admin.fieldtest.distanceAuto"] = "🧪 Plný detail: automaticky",
-	["field.growth.hint"] = "Časy platí i mimo hru. Po {cap} h mimo hru se růst zastaví. Když hraješ, odpočet běží {rate}× rychleji.",
 }

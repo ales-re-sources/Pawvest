@@ -398,7 +398,6 @@ return {
 	["field.reason.questCrop"] = "[!! Ťháť čřöp íš ňöť ňěěďěď áňý möřě ~~~~~~~~~~~~~ !!]",
 	["field.section.crops"] = "[!! Hářvěšť ~~~ !!]",
 	["field.picker.title"] = "[!! Čhööšě á šěěď ~~~~~ !!]",
-	["field.picker.info"] = "[!! Ýöů hávě {stock} · {time} whílě áwáý ~~~~~~~~~ !!]",
 	["field.picker.none"] = "[!! Ýöů hávě ňö šěěďš. Bůý šömě áť ťhě šěěď šťáll öň ťhě plážá. ~~~~~~~~~~~~~~~~~~~~~~~~ !!]",
 	["field.toast.sell"] = { "[!! +{count} Čöíň ~~ !!]", "[!! +{count} Čöíňš ~~~ !!]" },
 	["field.toast.request"] = { "[!! 📜 Řěqůěšť ďöňě! +{count} Čöíň ~~~~~~~~~ !!]", "[!! 📜 Řěqůěšť ďöňě! +{count} Čöíňš ~~~~~~~~~ !!]" },
@@ -632,5 +631,4 @@ return {
 	["admin.fieldtest.stats"] = "[!! {fps} FPŠ · p95 {p95} mš · šlöwěšť {ms} mš · {objects} öbjěčťš · fůll ďěťáíl {studs} šťůďš ~~~~~~~~~~~~~~~~~~~~~~~~ !!]",
 	["admin.fieldtest.distance"] = "[!! 🧪 Fůll ďěťáíl: {studs} šťůďš ~~~~~~~~ !!]",
 	["admin.fieldtest.distanceAuto"] = "[!! 🧪 Fůll ďěťáíl: áůťö ~~~~~~~~ !!]",
-	["field.growth.hint"] = "[!! Ťíměš ápplý whílě áwáý. Gřöwťh páůšěš áfťěř {cap} h áwáý. Ťhě čöůňťďöwň řůňš {rate}× fášťěř whílě ýöů pláý. ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ !!]",
 }

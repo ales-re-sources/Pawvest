@@ -587,9 +587,12 @@ There is no Garden panel; each piece sits where it is used.
   Coins), only from the obby (below), never sold as seeds, never eaten by crows. Growth runs on server time: online ×2, offline ×1 for
   at most 24 h per absence, settled on join, on leave, every 60 s and before every action; ripe crops wait. Listed durations and
   countdowns show away-time seconds, shortened by Growth and crop Speed; the countdown ticks ×2 faster while playing, additionally
-  multiplied by Cloches (×2.4 at the top). Growth pauses after 24 h away, so long crops may need another visit (the stall, Barn and
-  seed picker explain the clock and its cap). The actual online `readyAt` drives art, ripe badges and Harvest. The barn holds 40 seeds and
-  40 stored crops (+20 per Barn level). Seeds held can always be planted; the stall sells only unlocked crops.
+  multiplied by Cloches (×2.4 at the top). Growth pauses after 24 h away. User decision: the exact online rate is not shown (the square
+  card only says "Grows faster while you play"; Cloches states its own bonus), and the cap is not explained (every crop ripens within
+  one 24 h absence, so it only limits replanting by Tending pets). The actual online `readyAt` drives art, ripe badges and Harvest. The
+  barn holds 40 seeds and 40 stored crops (+20 per Barn level). Seeds held can always be planted; the stall sells only unlocked crops.
+- **Seed picker** (a square's Plant, or the card in Seeds mode): one row per held seed with the crop and ★, the stall's grow time and
+  sale line, and the count on the right; in Seeds mode only the selected row is green, with a ✓. Six rows before it scrolls.
 - **Price ladder.** Six price tiers set net Coins per square-hour (tiers 0–2 × 1.727 a step, then × 1.5; the top tier × 10.1 of Potato's);
   grow time is a choice inside a tier (away-time): Potato 20 s, Lettuce 1 m, Onion 2 m | Garlic 6 m, Tomato 16 m, Cucumber 30 m | Corn
   15 m, Pepper 2 h, Broccoli 8 h | Pumpkin 12 h, Eggplant 5 h, Blueberry 20 m | Sweet potato 6 h, Giant melon 14 h | Sunflower 10 h,

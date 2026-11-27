@@ -468,11 +468,6 @@ function GardenUi.GrowSecondsOn(field, crop, pts: any?): number
 	return math.ceil(crop.growSeconds / speed - 1e-6)
 end
 
-function GardenUi.GrowthHint(field): string
-	local rate = string.format("%.2f", CropConfig.CountdownRate(field and field.tools)):gsub("0+$", ""):gsub("%.$", "")
-	return Locale.T("field.growth.hint", { rate = Locale.Decimal(rate), cap = Locale.Number(CropConfig.OfflineCapSeconds / 3600) })
-end
-
 -- "7.4" (Czech "7,4"): the weight of a crop of size `factor`, to 0.1 kg (E1c2).
 function GardenUi.KgText(crop, factor: number): string
 	return Locale.Decimal(string.format("%.1f", crop.kg * factor))

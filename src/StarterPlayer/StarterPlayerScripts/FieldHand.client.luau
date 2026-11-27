@@ -50,7 +50,6 @@ local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
 local ConfirmTap = require(ReplicatedStorage:WaitForChild("ConfirmTap"))
 local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
-local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
 local UiSounds = require(ReplicatedStorage:WaitForChild("UiSounds"))
 local PetClient = require(script.Parent:WaitForChild("PetClient"))
 local Onboarding = require(script.Parent:WaitForChild("Onboarding"))
@@ -98,7 +97,8 @@ local HINT_GAP = 12 -- px between the hint line and the bar's top (the raised bu
 -- Roblox's own hover hand (ClickDetector / DragDetector), shipped with every client; "rbxasset://SystemCursors/PointingHand" was
 -- set but drawn as the arrow
 local POINTER = "rbxasset://textures/Cursors/DragDetector/HoverCursor.png"
-local LIST_MAX = 300 -- px: the pickers' list scrolls beyond this
+local LIST_MAX = 360 -- px: the seed picker's list scrolls beyond this (6 rows)
+local COUNT_WIDTH = 80 -- px: a seed row's count ("✓  ×140")
 
 local COLOR_PANEL = StudStyle.PanelColors.Field
 local COLOR_ROW = StudStyle.PetRowColor(COLOR_PANEL)
@@ -672,33 +672,43 @@ local function fitList(list: ScrollingFrame, rows: number)
 	list.Size = UDim2.new(1, 0, 0, math.max(ROW_HEIGHT, math.min(rows * (ROW_HEIGHT + 6), LIST_MAX, room)))
 end
 
-local function pickerRow(list: Instance, name: string, order: number, title: string, info: string, enabled: boolean, color: Color3): TextButton
+-- a seed row: title and info line on the left, the count held on the right; the selected one is green with a ✓
+local function pickerRow(list: Instance, name: string, order: number, title: string, info: string, count: number, selected: boolean): TextButton
+	-- shrinks rather than cuts off the sale price on a narrow card
+	local infoLabel = label("Info", {
+		Position = UDim2.fromOffset(12, 29),
+		Size = UDim2.new(1, -(24 + COUNT_WIDTH), 0, 18),
+		Font = Enum.Font.Gotham,
+		TextScaled = true,
+		TextColor3 = if selected then Color3.new(1, 1, 1) else COLOR_INFO,
+		Text = info,
+	})
+	create("UITextSizeConstraint", { MaxTextSize = 13, Parent = infoLabel })
 	return create("TextButton", {
 		Name = name,
 		LayoutOrder = order,
 		Size = UDim2.new(1, -8, 0, ROW_HEIGHT),
-		BackgroundColor3 = StudStyle.Shade(if enabled then color else COLOR_OFF, 0.75),
-		AutoButtonColor = enabled,
+		BackgroundColor3 = if selected then StudStyle.Shade(COLOR_GO, 0.75) else COLOR_ROW,
 		Text = "",
 		Parent = list,
 	}, {
 		create("UICorner", { CornerRadius = UDim.new(0, 8) }),
-		create("UIStroke", { ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = if enabled then color else COLOR_OFF, Thickness = 2 }),
+		create("UIStroke", { ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Color = if selected then COLOR_GO else COLOR_GROUP_BORDER, Thickness = 2 }),
 		label("Name", {
 			Position = UDim2.fromOffset(12, 5),
-			Size = UDim2.new(1, -24, 0, 24),
+			Size = UDim2.new(1, -(24 + COUNT_WIDTH), 0, 24),
 			TextSize = 18,
 			TextTruncate = Enum.TextTruncate.AtEnd,
 			Text = title,
 		}),
-		label("Info", {
-			Position = UDim2.fromOffset(12, 29),
-			Size = UDim2.new(1, -24, 0, 18),
-			Font = Enum.Font.Gotham,
-			TextSize = 13,
-			TextColor3 = COLOR_INFO,
-			TextTruncate = Enum.TextTruncate.AtEnd,
-			Text = info,
+		infoLabel,
+		label("Count", {
+			AnchorPoint = Vector2.new(1, 0),
+			Position = UDim2.new(1, -12, 0, 0),
+			Size = UDim2.new(0, COUNT_WIDTH, 1, 0),
+			TextSize = 22,
+			TextXAlignment = Enum.TextXAlignment.Right,
+			Text = (if selected then "✓  ×" else "×") .. Locale.Number(count),
 		}),
 	})
 end
@@ -725,23 +735,21 @@ local function preselectSeed()
 	end
 end
 
--- the seed picker: the seeds held (count, grow time); without seeds a hint to the plaza's seed stall. With `square` nil it
--- picks the seed of the hand's Seeds mode and outlines the selected one in white.
+-- the seed picker: the seeds held (the seed stall's grow time and sale line, the count); without seeds a hint to the plaza's
+-- seed stall. With `square` nil it picks the seed of the hand's Seeds mode and marks the selected one.
 local function renderSeeds(square: number?)
 	header(if square then Locale.T("field.picker.title") else Locale.T("field.hand.pickSeed"), if square then back else closeCard)
-	paragraph("GrowthHint", 2, { TextSize = 13, Text = GardenUi.GrowthHint(fieldState) }).Parent = body
-	local list = pickerList(3)
+	local list = pickerList(2)
 	local rows = 0
 	for _, crop in CropConfig.Crops do
 		local stock = (fieldState.seeds or {})[crop.id] or 0
 		if stock > 0 then
 			rows += 1
-			local seconds = GardenUi.GrowSecondsOn(fieldState, crop)
-			local row = pickerRow(list, crop.id, rows, GardenUi.CropTitle(crop) .. GardenUi.Stars(fieldState, crop), Locale.T("field.picker.info", { stock = stock, time = TimeFormat.GrowTime(seconds) }), true, COLOR_GO)
-			if not square and crop.id == handSeed then
-				local outline = row:FindFirstChildOfClass("UIStroke") :: UIStroke
-				outline.Color, outline.Thickness = Color3.new(1, 1, 1), 3
-			end
+			local info = Locale.T("field.seed.info", {
+				time = GardenUi.GrowTime(GardenUi.GrowSecondsOn(fieldState, crop)),
+				sale = Locale.Number(GardenUi.SalePrice(fieldState, crop)),
+			})
+			local row = pickerRow(list, crop.id, rows, GardenUi.CropTitle(crop) .. GardenUi.Stars(fieldState, crop), info, stock, not square and crop.id == handSeed)
 			row.Activated:Connect(function()
 				if square then
 					fire(plantEvent, square, crop.id)
