@@ -34,6 +34,7 @@ Status levels: **Implemented** (code in `src/`, committed), **Studio-validated**
 | CP | Crop page redesign | ✔ | ✔ | – |
 | HX0 | Hybrid plants: look prototype (Studio reviewer only) | ✔ | ✔ | – |
 | TR | Fruit trees: perennials on one square, a stall tree and a rare obby tree ([EXPANSION §5.4](EXPANSION.md)); the first update after 1.0 | TR0–TR1 | TR1 (server) | – |
+| PL | Field pet life: idle motion (PL1), tail wag + blink (PL2), job and owner reactions (PL3) | PL1 | PL1 (2 pets; full field and phone open) | – |
 | HX1 | Hybrid breeding mechanic ([HYBRIDS.md](HYBRIDS.md)): main rules decided, numbers open | design only | – | – |
 | K1 | First-hour fixes (kid playtest 2026-11-01): Stage 5, G1 fallback, Double Jump world reward, hatch panel done; the rest is measured in M6a | partial | partial | – |
 | TH | Store thumbnails ([THUMBNAILS.md](THUMBNAILS.md) §8–9): logo, release candidates A1–A3, C1–C3; stud sign decision, grid tile test, kid test open | partial | – | – |
@@ -61,7 +62,34 @@ EV2d, EV2f and the HX1 build when they fit. **Accepted risk until EV2c:** the Tu
 telemetry).
 
 **Alongside, any time:** plant growth art (open crops and checks: PLANT_GROWTH; review = five snapshots, no animation capture), HX1 (design
-only), TH.
+only), TH, PL (field pet life; client only, started 2026-11-27).
+
+### PL — Field pet life (client only; started 2026-11-27, the user)
+Target: a pet placed on the field looks alive instead of a static model, and later shows what its job is doing. Constraints: field pets
+are PetLook models of 40–65 anchored, unwelded parts with no rig (PET_GROWTH), so motion is client CFrame work: a pose of the whole model
+(`PivotTo`, as PetFollow does) or of named part groups. No server, profile, remote or economy change; every viewer animates on their
+own (not in sync between clients, which is fine for a cosmetic). Cut into:
+- **PL1 Idle (whole model):** a client module `FieldPetIdle` (StarterPlayerScripts) that PlotView hands each full-detail field pet to.
+  Per pet a small state machine seeded by its uid (pets never move in step): **breathe** (a slow rock, always), **look** (turn up to ±60°,
+  hold, turn back), **hop** (1–3 small hops), **sit** (tilt up on its back edge, hold), **shuffle** (a few steps inside its own square
+  and back; never onto another square or into the crop's middle), **nap** after a quiet while (lies low, a 💤 that floats up). Higher
+  look tiers are livelier (more hops, shorter waits). The label stays still (it moves to a fixed anchor, so it never bobs); tier-3
+  motes orbit (PetLook.UpdateFx, as for followers). LOD: animated only within a camera distance (rest pose beyond it, emitters off past
+  PetLook's LOD distance); mid-detail block pets stay static. **Studio-validated with the own 2 pets** (2026-11-27): no errors, the
+  pivot never leaves the soil, hops ≤ 0.4 studs, the nap sinks ≤ 0.25 into the soil, the label anchor never moves, a destroyed piece
+  leaves nothing behind. Cost: a 54-part pet's `PivotTo` ≈ 0.07 ms on the dev desktop (40 pets ≈ 2.7 ms/frame), so only pets within
+  50 studs move every frame, the rest at 15 Hz. **Open:** the user's look in play (feel, nap share), a full own field of 5 pets at
+  Lv 20 (clipping into big plants while shuffling), frame time on a phone (MU).
+- **PL2 Parts (needs tags):** tail wag (`Tail*` around the first segment's base) and blink (squash the eyes; eye patches are also `Eye`, so
+  a `Blink` attribute on the pupil / iris parts if the squashed patches look wrong). Head turn and ear twitch need new `Head*` / `Ear`
+  attributes on every model: decide after PL2's look review.
+- **PL3 Behaviour:** the owner coming near (turns to the player, hops, a heart), a tap on the own pet (happy hop); a Tending pet turns to
+  and sniffs ripe crops in its reach (must not look like an online harvest: Tending works only during absences); a guard pet is alert in a
+  crow block (sits up, watches the sky, walks its reach) and dozes outside one; how lively by aptitudes (needs the feed to carry them).
+- **Checks per step:** one playtest boot without client errors; a look at 1, 3 and 5 pets on the own field at Lv 1 / 10 / 20 (sizes, no
+  clipping into soil, plants or the neighbour square, label steady); a full own field plus visitor plots stays within the frame budget
+  (GardenView's slow-frame step-down must not trigger more often than before); the pet still drops / moves / leaves its square through
+  the real UI (FieldHand) with no leftover anchor, 💤 or model.
 
 ### K1 — First-hour fixes, open part (kid playtest 2026-11-01)
 Target: a new player who does not pay always has a next step for the first hour; World 1 and the garden are tuned for 8–10 year olds on a

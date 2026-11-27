@@ -17,7 +17,7 @@
 -- (the P2 pens are gone since FA).
 -- The field (E1d2) has the shape CropConfig.RowWidths: every row is a plate of overgrown grass, open squares are soil on it (pale dry soil while empty),
 -- locked squares carry grass tufts (U3a; full detail). Field pets stand on their squares (full: the PetLook model with a label of
--- its name and job icons, never its level; mid: a block). The field has no prompts (U3a): the own plot's field parts are
+-- its name and job icons, never its level, moved by FieldPetIdle (PL1); mid: a block). The field has no prompts (U3a): the own plot's field parts are
 -- CanQuery so FieldHand's tap ray hits them, SquareAt maps a world point to a square, ShowSelect outlines the selected square
 -- and ShowReach tints the squares a pet would work; ShowHover (U3b) marks the square the player stands on with corner brackets. ShowBorders (U3b) draws the placed pets' reach regions as thin borders in their
 -- rarity colours (FieldRings computes the regions).
@@ -36,6 +36,7 @@ local StudStyle = require(ReplicatedStorage:WaitForChild("StudStyle"))
 local PanelFocus = require(ReplicatedStorage:WaitForChild("PanelFocus"))
 local UiKit = require(ReplicatedStorage:WaitForChild("UiKit"))
 local PlantGrowth = require(ReplicatedStorage:WaitForChild("PlantGrowth"))
+local FieldPetIdle = require(script.Parent:WaitForChild("FieldPetIdle"))
 
 local PetModels = ReplicatedStorage:WaitForChild("PetModels")
 
@@ -932,6 +933,7 @@ function PlotView:buildSquare(model: Model, square: number)
 			if petModel then
 				petModel.Name = "Pet" .. square
 				petModel.Parent = model
+				FieldPetIdle.Attach(petModel, pet.uid, pet.level, self:at(Vector3.new(x, 0, z)).Position) -- PL1 idle motion
 			end
 		end
 	end

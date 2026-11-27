@@ -681,6 +681,9 @@ There is no Garden panel; each piece sits where it is used.
   weighted work hour (level L → L + 1 takes 10 × 1.56^(L−1) h). A profile from before the field converted once on join
   (`Garden.Converted`): the old pens became field pet slots (1 pen = 1, 2–3 = 2, 4–6 = 3; pen prices beyond the slots' value refunded),
   penned pets went back to the inventory.
+- **Field pet idle (PL1, client only).** A placed pet within 90 studs of the camera breathes and, every few seconds (sooner at
+  higher look tiers), looks around, hops, sits up, shuffles along its square's edges to sniff towards the crop and back, or naps
+  under a floating 💤 (at most once per 90 s); it never leaves its square, and its label stays still. Not in step between clients.
 - **Obby seeds (world stages only).** The first Gold on a World 2 or 3 stage gives 1 rare seed of that world; the day's first medal
   finish gives 1 (once per UTC day); a rare-seed meter per stage (Bronze 1 / Silver 2 / Gold 3 points, doubled for the day's first finish
   there; 300 points = a seed). The **seed pouch**: the day's first medal finish on each stage gives 1 / 2 / 3 seeds of the common crop
