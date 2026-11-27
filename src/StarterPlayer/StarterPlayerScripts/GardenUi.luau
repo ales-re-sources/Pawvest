@@ -461,6 +461,33 @@ function GardenUi.CropTitle(crop): string
 	return crop.icon .. " " .. Locale.CropName(crop)
 end
 
+-- TR3: what a seed of `crop` is called: the tree for a fruit tree's sapling ("🍎 Apple tree"), else the crop
+function GardenUi.SeedName(crop): string
+	return if crop.tree then Locale.TreeName(crop) else Locale.CropName(crop)
+end
+
+function GardenUi.SeedTitle(crop): string
+	return crop.icon .. " " .. GardenUi.SeedName(crop)
+end
+
+-- A fruit tree's (TR3) grow-up time on `field`, whole seconds (tree.First at the crop's GrowSecondsOn speed).
+function GardenUi.TreeFirstOn(field, crop): number
+	local speed = crop.growSeconds / math.max(GardenUi.GrowSecondsOn(field, crop), 1)
+	return math.ceil(crop.tree.First / speed - 1e-6)
+end
+
+-- The info line of a seed row (stall, seed picker): growth and sale; a fruit tree (TR3) its first growth, the time between fruits
+-- and what one fruit sells for (Growth and crop Speed included, as GrowSecondsOn).
+function GardenUi.SeedInfo(field, crop): string
+	local sale = Locale.Number(GardenUi.SalePrice(field, crop))
+	local time = GardenUi.GrowTime(GardenUi.GrowSecondsOn(field, crop))
+	if crop.tree then
+		local first = GardenUi.GrowTime(GardenUi.TreeFirstOn(field, crop))
+		return Locale.T("field.seed.treeInfo", { first = first, time = time, sale = sale })
+	end
+	return Locale.T("field.seed.info", { time = time, sale = sale })
+end
+
 -- The crop's away-time duration on `field` (Growth and crop Speed included), whole seconds. `pts` replaces the
 -- crop's points (the crop page's preview).
 function GardenUi.GrowSecondsOn(field, crop, pts: any?): number

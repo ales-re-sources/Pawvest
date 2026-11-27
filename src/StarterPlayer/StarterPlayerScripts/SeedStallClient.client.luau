@@ -171,6 +171,17 @@ local function renderCart(field, tap: number)
 	end
 end
 
+-- TR3: saplings of tree `crop` held plus its trees planted (the stall's "1 of 3"; the server counts the same for BuySeeds)
+local function treesOwned(field, crop): number
+	local owned = (field.seeds or {})[crop.id] or 0
+	for _, entry in field.squares or {} do
+		if entry.crop == crop.id then
+			owned += 1
+		end
+	end
+	return owned
+end
+
 local function renderSeeds(field, tap: number)
 	GardenUi.Clear(seedsSection)
 	GardenUi.Heading(seedsSection, 1, Locale.T("field.section.seeds"), COLOR_PANEL)
@@ -241,9 +252,11 @@ local function renderSeeds(field, tap: number)
 			})
 			info = Locale.T("field.seed.unlockHint", { crop = Locale.CropName(previous) })
 		else
-			info = Locale.T("field.seed.info", { time = GardenUi.GrowTime(GardenUi.GrowSecondsOn(field, crop)), sale = Locale.Number(GardenUi.SalePrice(field, crop)) })
+			info = GardenUi.SeedInfo(field, crop)
 			local extra = {}
-			if stock > 0 then
+			if crop.tree then -- TR3: saplings held + trees planted, of the most a player may have
+				table.insert(extra, Locale.T("field.seed.owned", { owned = treesOwned(field, crop), max = crop.tree.Max }))
+			elseif stock > 0 then
 				table.insert(extra, Locale.T("field.seed.have", { stock = stock }))
 			end
 			if #extra > 0 then
@@ -256,7 +269,7 @@ local function renderSeeds(field, tap: number)
 		if not (locked or crop.rare) then
 			GardenUi.StarButton(row, field, crop, STAR_WIDTH, math.max(tap, 50), 0, "SeedStallGui") -- EV3c: the crop page
 		end
-		local column = textColumn(row, reserved, GardenUi.CropTitle(crop) .. GardenUi.Stars(field, crop), info)
+		local column = textColumn(row, reserved, GardenUi.SeedTitle(crop) .. GardenUi.Stars(field, crop), info)
 		if left and left > 0 and not locked then -- ST: what is left of a rotating crop, a bold line right under the name (red at 3 or fewer)
 			local info = column:FindFirstChild("Info")
 			if info then
@@ -283,6 +296,29 @@ local function renderSeeds(field, tap: number)
 			if locked and crop == nextCrop and crop.quest then
 				GardenUi.QuestRows(seedsSection, crop, field, order, { width = BRING_WIDTH, tap = tap, color = StudStyle.Shade(COLOR_ROW, 0.85) }, function(id, amount)
 					questEvent:FireServer(id, amount)
+				end)
+			end
+		elseif crop.tree then -- TR3: one sapling at a time at the next sapling's price, or a grey "Max 3" when all are owned
+			local owned = treesOwned(field, crop)
+			local price = CropConfig.SaplingPrice(crop, owned)
+			if not price or (left and left <= 0) then
+				GardenUi.Paragraph("Out", {
+					LayoutOrder = 2,
+					Size = UDim2.new(0, BUY1_WIDTH + BUY10_WIDTH + GAP, 0, 0),
+					Font = StudStyle.Font,
+					TextSize = 16,
+					TextColor3 = GardenUi.COLOR_DIM,
+					TextXAlignment = Enum.TextXAlignment.Center,
+					Text = if price then Locale.T("seedStall.backSoon") else Locale.T("field.seed.treeMax", { max = crop.tree.Max }),
+				}).Parent = row
+			else
+				local affordable = coinsNow() >= price and total + 1 <= capacity
+				local buy = GardenUi.PriceBrick(row, "Buy1", 2, BUY1_WIDTH + BUY10_WIDTH + GAP, tap, "+1", price,
+					if affordable then GardenUi.COLOR_BUY else GardenUi.COLOR_LOCKED, PRICE_SIZE)
+				ConfirmTap.Wrap(buy, "Seed" .. crop.id .. "1", function()
+					return ConfirmTap.Over(price)
+				end, function()
+					buySeedsEvent:FireServer(crop.id, 1)
 				end)
 			end
 		elseif left and left <= 0 then -- ST: out of stock in this block, or sold out

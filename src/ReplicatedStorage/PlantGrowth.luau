@@ -1,7 +1,7 @@
 -- Shared plant-art entry point. A crop animates when ReplicatedStorage holds a recipe module named `<crop id>Plant`
 -- (the same convention as PlantGrowthReview) that is not marked `Draft = true` (a draft shows only in the reviewer).
 -- Recipes provide new(parent, soilCFrame, seed, sizeFactor?), BuildProxy, RingHeight, and a plant object with model,
--- SetGrowth(0..1) and Destroy() (emit-style recipes: PlantKit.recipe).
+-- SetGrowth(0..1) and Destroy() (emit-style recipes: PlantKit.recipe). A fruit tree's plant also has SetTree (FruitTree).
 local CropConfig = require(script.Parent.CropConfig)
 
 local recipes = {}
@@ -42,10 +42,11 @@ function PlantGrowth.new(parent: Instance, soilCFrame: CFrame, cropId: string, s
 	return recipe.new(parent, frame, seed, look(sizeFactor))
 end
 
-function PlantGrowth.BuildProxy(parent: Instance, soilCFrame: CFrame, cropId: string, stage: number, seed: number?, sizeFactor: number?)
+-- fruit: a fruit tree's ripe fruit (TR2; other recipes ignore it).
+function PlantGrowth.BuildProxy(parent: Instance, soilCFrame: CFrame, cropId: string, stage: number, seed: number?, sizeFactor: number?, fruit: number?)
 	local recipe = assert(recipes[cropId], "Missing growth recipe for " .. cropId)
 	local frame = PlantGrowth.PlantCFrame(soilCFrame, seed or 1, recipe)
-	recipe.BuildProxy(parent, frame, stage, seed, look(sizeFactor))
+	recipe.BuildProxy(parent, frame, stage, seed, look(sizeFactor), fruit)
 end
 
 -- Also accepts an unregistered recipe in the Studio reviewer.

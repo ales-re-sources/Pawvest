@@ -165,6 +165,8 @@ local standing: number? = nil -- the square outlined under the character
 local pendingPlant: { [number]: { crop: string, untilClock: number } } = {}
 local pendingHarvest: { [number]: number } = {} -- [square] = until os.clock()
 local reachTimer = UiKit.Latest()
+local fruitLabel: TextLabel? = nil -- TR3: a grown tree's "🍎 3 / 4 · next in 12 min" line (ticks like the bar)
+local pickButton: GuiButton? = nil -- TR3: its Pick all brick, grey while the tree is bare
 local barFill: Frame? = nil
 local barText: TextLabel? = nil
 local cardRipe = false -- whether the card was drawn for a ripe crop (it redraws when the crop ripens)
@@ -196,6 +198,26 @@ end
 -- Actual share / ripeness and baseline seconds left, shared with rings.
 local function progress(entry, crop, now: number): (number, boolean, number)
 	return CropConfig.Progress(entry, crop, receivedAt, now, fieldState and fieldState.tools)
+end
+
+-- TR3: a grown tree's fruit line: the ripe fruit of its cap and when the next one comes ("full" at the cap), and the fruit count.
+-- A next fruit that ripened since the State counts until the next State says so.
+local function fruitText(entry, crop, now: number): (string, number)
+	local cap = crop.tree.Cap
+	local count = math.min(entry.fruit or 0, cap)
+	local nextAt = entry.nextAt
+	if type(nextAt) == "number" and nextAt <= now and count < cap then
+		count += 1
+		nextAt = nil
+	end
+	local args = { icon = crop.icon, count = count, cap = cap }
+	if count >= cap then
+		return Locale.T("field.card.fruitFull", args), count
+	elseif type(nextAt) == "number" then
+		args.time = Locale.Duration(CropConfig.TimeLeft(nextAt, now, fieldState and fieldState.tools))
+		return Locale.T("field.card.fruitNext", args), count
+	end
+	return Locale.T("field.card.fruit", args), count
 end
 
 local function reachOf(square: number, level: number): { number }
@@ -365,7 +387,7 @@ local function clearBody()
 			child:Destroy()
 		end
 	end
-	barFill, barText = nil, nil
+	barFill, barText, fruitLabel, pickButton = nil, nil, nil, nil
 	body.CanvasPosition = Vector2.zero
 end
 
@@ -556,25 +578,10 @@ local function renderCard()
 	else
 		paragraph("Title", 1, {
 			Font = StudStyle.Font, TextSize = 18, TextColor3 = Color3.new(1, 1, 1),
-			Text = GardenUi.CropTitle(crop) .. GardenUi.Stars(fieldState, crop),
+			Text = GardenUi.SeedTitle(crop) .. GardenUi.Stars(fieldState, crop), -- a tree is named as the tree (TR3)
 		}).Parent = cropGroup
-		local _, ripe = progress(entry, crop, workspace:GetServerTimeNow())
-		cardRipe = ripe
-		if ripe then
-			buttonRow(2, { { name = "Harvest", color = COLOR_GO, text = Locale.T("field.card.harvest"), action = function()
-				fire(harvestEvent, square)
-			end } }, cropGroup)
-		else
-			local row = create("Frame", {
-				Name = "Growing", LayoutOrder = 2, Size = UDim2.new(1, 0, 0, TRASH_SIZE), BackgroundTransparency = 1, Parent = cropGroup,
-			}, {
-				create("UIListLayout", {
-					FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder,
-					VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, GAP),
-				}),
-			})
-			bar(1, row, 36).Size = UDim2.new(1, -(TRASH_SIZE + GAP), 0, 36)
-			-- dig up: a red trash brick, orange "OK?" on the first tap, gone on the second (ConfirmTap, as an egg's discard)
+		-- dig up: a red trash brick, orange "OK?" on the first tap, gone on the second (ConfirmTap, as an egg's discard)
+		local function uproot(row: Instance)
 			local key = "Uproot" .. square .. entry.crop
 			local armed = ConfirmTap.IsArmed(key)
 			local trash = brick("Uproot", {
@@ -596,7 +603,53 @@ local function renderCard()
 				end
 				render()
 			end)
-			paragraph("GrowthHint", 3, { TextSize = 14, Text = Locale.T("field.card.fasterOnline") }).Parent = cropGroup
+		end
+		local function lineRow(name: string, order: number): Frame
+			return create("Frame", {
+				Name = name, LayoutOrder = order, Size = UDim2.new(1, 0, 0, TRASH_SIZE), BackgroundTransparency = 1, Parent = cropGroup,
+			}, {
+				create("UIListLayout", {
+					FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder,
+					VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, GAP),
+				}),
+			})
+		end
+		local _, ripe = progress(entry, crop, workspace:GetServerTimeNow())
+		cardRipe = ripe
+		if crop.tree and not entry.young then
+			-- TR3: a grown tree, bare or bearing (the same parts, so a pick does not move the card): its fruit line beside the
+			-- trash (a tree can be dug up in any state), then Pick all, grey while no fruit hangs
+			local row = lineRow("Bearing", 2)
+			local text, count = fruitText(entry, crop, workspace:GetServerTimeNow())
+			local label = paragraph("Fruit", 1, {
+				Font = StudStyle.Font, TextSize = 17, TextColor3 = Color3.new(1, 1, 1),
+				Size = UDim2.new(1, -(TRASH_SIZE + GAP), 0, 0),
+				Text = text,
+			})
+			label.Parent = row
+			fruitLabel = label
+			uproot(row)
+			local buttons = buttonRow(3, { { name = "Harvest", color = if count > 0 then COLOR_GO else COLOR_OFF,
+				text = Locale.T("field.card.pickAll"), action = function()
+				local _, now = fruitText(entry, crop, workspace:GetServerTimeNow())
+				if now > 0 then
+					fire(harvestEvent, square)
+				end
+			end } }, cropGroup)
+			pickButton = buttons:FindFirstChild("Harvest") :: GuiButton?
+		elseif ripe then
+			buttonRow(2, { { name = "Harvest", color = COLOR_GO, text = Locale.T("field.card.harvest"), action = function()
+				fire(harvestEvent, square)
+			end } }, cropGroup)
+		else
+			local row = lineRow("Growing", 2)
+			bar(1, row, 36).Size = UDim2.new(1, -(TRASH_SIZE + GAP), 0, 36)
+			uproot(row)
+			-- a young tree says what comes after its first growth (TR3)
+			local hint = if crop.tree and entry.young
+				then Locale.T("field.card.treeYoung", { time = GardenUi.GrowTime(GardenUi.GrowSecondsOn(fieldState, crop)) })
+				else Locale.T("field.card.fasterOnline")
+			paragraph("GrowthHint", 3, { TextSize = 14, Text = hint }).Parent = cropGroup
 		end
 	end
 	-- Pets group: the pet sitting here as one row (tap → its page) with a grey X brick (take it off the field), or Place pet;
@@ -745,11 +798,8 @@ local function renderSeeds(square: number?)
 		local stock = (fieldState.seeds or {})[crop.id] or 0
 		if stock > 0 then
 			rows += 1
-			local info = Locale.T("field.seed.info", {
-				time = GardenUi.GrowTime(GardenUi.GrowSecondsOn(fieldState, crop)),
-				sale = Locale.Number(GardenUi.SalePrice(fieldState, crop)),
-			})
-			local row = pickerRow(list, crop.id, rows, GardenUi.CropTitle(crop) .. GardenUi.Stars(fieldState, crop), info, stock, not square and crop.id == handSeed)
+			local info = GardenUi.SeedInfo(fieldState, crop)
+			local row = pickerRow(list, crop.id, rows, GardenUi.SeedTitle(crop) .. GardenUi.Stars(fieldState, crop), info, stock, not square and crop.id == handSeed)
 			row.Activated:Connect(function()
 				if square then
 					fire(plantEvent, square, crop.id)
@@ -1219,7 +1269,7 @@ function renderBar()
 			text ..= "\n" .. Locale.T("field.petPicker.equipped")
 		end
 	elseif mode == "seeds" and crop then
-		text = Locale.T("field.hand.seeds", { crop = GardenUi.CropTitle(crop) })
+		text = Locale.T("field.hand.seeds", { crop = GardenUi.SeedTitle(crop) })
 	elseif mode == "basket" then
 		text = Locale.T("field.hand.basket")
 	elseif mode == "pets" then
@@ -1459,7 +1509,8 @@ end)
 
 -- Harvest pop ------------------------------------------------------------------------------------------------------------------
 
-local function pop(square: number, crop, size: number?)
+-- count: the fruit a tree pick took (TR3; 1 for a crop)
+local function pop(square: number, crop, size: number?, count: number?)
 	local cframe = GardenView.SquareCFrame(square)
 	if not cframe then
 		return
@@ -1475,7 +1526,7 @@ local function pop(square: number, crop, size: number?)
 		Size = Vector3.new(0.2, 0.2, 0.2),
 		CFrame = cframe + Vector3.new(0, 2, 0),
 	})
-	local text = Locale.T("field.hand.pop", { count = 1, icon = crop.icon })
+	local text = Locale.T("field.hand.pop", { count = count or 1, icon = crop.icon })
 	local field = GardenView.OwnField()
 	local tag = size and CropConfig.SizeLabel(size, field and GardenUi.PointsOf(field, crop))
 	if tag then
@@ -1533,7 +1584,7 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 	if action == "Harvest" and ok and type(detail) == "table" and type(detail.square) == "number" then
 		local crop = CropConfig.ById[detail.crop]
 		if crop then
-			pop(detail.square, crop, detail.size)
+			pop(detail.square, crop, detail.size, if type(detail.count) == "number" then detail.count else nil)
 		end
 	end
 	if action ~= "PlacePet" then
@@ -1730,6 +1781,13 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 	local entry = fieldState and fieldState.squares and fieldState.squares[tostring(selected)]
 	local crop = entry and CropConfig.ById[entry.crop]
+	if crop and crop.tree and fruitLabel then
+		local text, count = fruitText(entry, crop, workspace:GetServerTimeNow())
+		fruitLabel.Text = text
+		if pickButton then
+			pickButton.BackgroundColor3 = if count > 0 then COLOR_GO else COLOR_OFF
+		end
+	end
 	if crop and barFill and barText then
 		local share, ripe, left = progress(entry, crop, workspace:GetServerTimeNow())
 		if ripe ~= cardRipe and page == "card" then

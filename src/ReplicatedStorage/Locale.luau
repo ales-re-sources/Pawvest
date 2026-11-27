@@ -276,6 +276,11 @@ function Locale.CropName(crop): string -- an entry of CropConfig.Crops
 	return named("crop.name." .. crop.id, crop.name)
 end
 
+-- TR3: a fruit tree's name where its sapling or the tree itself is meant ("Apple tree"); CropName names its fruit
+function Locale.TreeName(crop): string
+	return named("crop.tree." .. crop.id, crop.treeName or crop.name)
+end
+
 -- What buying `level` of `talent` gives: the per-level text when the talent has one (talent.effect.<id>.<level>), else the
 -- talent's general effect (talent.effect.<id>); the config's English as the fallback
 function Locale.TalentEffect(talent, level: number): string

@@ -10,6 +10,7 @@
 -- not AlwaysOnTop (screen captures show them); drawn TOWARD the camera from the square so its crop does not hide it. Every ring
 -- sits at one height straight up (StudsOffsetWorldSpace): the tallest planted crop's PlantGrowth.RingHeight, so the rings form a
 -- grid over the field. Not StudsOffset's Y: that is the camera's up, which on a steep view slides a ring over another row.
+-- TR3: a fruit tree's ring keeps its own height (one tree would lift every ring) and, while fruit hangs, shows the count under it.
 -- In Studio the part carries the attributes Rings (rings drawn) and UpdateMs (the last update's cost).
 -- U3b: in the same tier, every placed field pet's reach region as a thin border in its rarity colour (GardenView.ShowBorders). The
 -- region = the squares this pet counts for under GardenField's rules: per square the strongest Tending pet that reaches it and the
@@ -24,6 +25,7 @@ local TweenService = game:GetService("TweenService")
 local CropConfig = require(ReplicatedStorage:WaitForChild("CropConfig"))
 local TimeFormat = require(ReplicatedStorage:WaitForChild("TimeFormat"))
 local PlantGrowth = require(ReplicatedStorage:WaitForChild("PlantGrowth"))
+local Locale = require(ReplicatedStorage:WaitForChild("Locale"))
 local GardenConfig = require(ReplicatedStorage:WaitForChild("GardenConfig"))
 local PetConfig = require(ReplicatedStorage:WaitForChild("PetConfig"))
 local GardenView = require(script.Parent:WaitForChild("GardenView"))
@@ -382,10 +384,10 @@ local function update(now: number)
 		end
 	end
 	local squares = if type(field) == "table" and type(field.squares) == "table" then field.squares else {}
-	local height = 0 -- one height for every ring: the tallest planted crop's
+	local height = 0 -- one height for every ring: the tallest planted crop's (a fruit tree's ring keeps its own, TR3)
 	for square, ring in rings do
 		local entry = squares[tostring(square)]
-		if entry then
+		if entry and not ring.crop.tree then
 			height = math.max(height, PlantGrowth.RingHeight(ring.crop.id, entry.size))
 		end
 	end
@@ -396,7 +398,8 @@ local function update(now: number)
 		local entry = squares[tostring(square)]
 		if entry then
 			local crop = ring.crop
-			if ring.gui.StudsOffsetWorldSpace ~= world then ring.gui.StudsOffsetWorldSpace = world end
+			local at = if crop.tree then Vector3.new(0, PlantGrowth.RingHeight(crop.id, entry.size), 0) else world
+			if ring.gui.StudsOffsetWorldSpace ~= at then ring.gui.StudsOffsetWorldSpace = at end
 			local share, ripe, left = CropConfig.Progress(entry, crop, receivedAt, now, field and field.tools)
 			setRipe(ring, ripe)
 			if not ripe then
@@ -407,6 +410,10 @@ local function update(now: number)
 			ring.right.Rotation = math.clamp(share, 0, 0.5) * 360
 			ring.left.Rotation = math.clamp(share - 0.5, 0, 0.5) * 360
 			ring.time.Visible = false
+			if crop.tree and ripe and (entry.fruit or 0) > 0 then -- TR3: a bearing tree's fruit under its ring ("3/4")
+				ring.time.Text = Locale.T("field.ring.fruit", { count = math.min(entry.fruit, crop.tree.Cap), cap = crop.tree.Cap })
+				ring.time.Visible = true
+			end
 		end
 	end
 	table.sort(growing, function(a, b)

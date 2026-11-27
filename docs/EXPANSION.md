@@ -151,12 +151,12 @@ ships **two kinds: one stall tree and one rare obby tree**. Numbers: ECONOMY.md 
   after 6 h away: a night's timer).
 - **Lifecycle:** sapling → first growth → one fruit at a time up to the cap; ripe fruit waits and never rots; at the cap the tree stops
   bearing. Growth as for crops (online ×2, offline ×1, 24 h cap; Growth upgrade and Cloches apply).
-- **Picking:** a Basket tap on a bearing tree picks every ripe fruit that fits in the barn; each fruit rolls its own size (Hall records,
+- **Picking:** a Basket tap (or the card's Pick all) on a bearing tree picks every ripe fruit (the barn limits only pets, as for crops); each fruit rolls its own size (Hall records,
   ribbons and requests work unchanged). A Tending pet picks during absences (nothing to replant); crows eat at most one fruit, never the
   tree; a rare tree is never raided.
 - **Mastery:** each picked fruit of a stall tree counts one plant toward that tree's ★ and points (star counts of the quick class by its
   fruit time); Speed shortens the time between fruits. Rare trees give no mastery (as rare crops).
-- **On the field:** a bearing tree's ring shows its fruit ("🍎 3/4") instead of the pie; trees stay out of the shared ring height (the
+- **On the field:** a bearing tree's ring is the ripe ring with "3/4" under it; trees stay out of the shared ring height (the
   tallest plant), or one tree lifts every ring. Fruit regrows at the recipe's fixed fruit slots (PLANT_GROWTH → Identify fruit).
 
 ### 5.5 Guardrails

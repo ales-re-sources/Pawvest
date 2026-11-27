@@ -511,7 +511,10 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 	local name = if crop then Locale.CropName(crop) else ""
 	if action == "Harvest" then
 		local size = if type(detail.size) == "number" then detail.size else 1
-		local lines = { Locale.T("field.toast.harvestSize", { crop = name, kg = GardenUi.KgText(crop, size) }) }
+		local count = tonumber(detail.count) or 1
+		local lines = { if crop and crop.tree -- TR3: a tree's pick takes every fruit: "+3 Apple · biggest 0.7 kg"
+			then Locale.T("field.toast.pick", { crop = name, count = count, kg = GardenUi.KgText(crop, size) })
+			else Locale.T("field.toast.harvestSize", { crop = name, kg = GardenUi.KgText(crop, size) }) }
 		if detail.extra then
 			table.insert(lines, Locale.T("field.toast.shears"))
 		end
@@ -552,15 +555,17 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 		local icon = CropConfig.PointIcons[detail.line]
 		showToast(Locale.T("field.toast.point", { crop = name, line = if line then icon .. " " .. Locale.T(line) .. " " .. level else "" }), COLOR_OK)
 	elseif action == "Uproot" then
-		showToast(Locale.T("field.toast.uprooted", { crop = name }), COLOR_OK)
+		showToast(Locale.T("field.toast.uprooted", { crop = if crop then GardenUi.SeedName(crop) else name }), COLOR_OK)
 	elseif action == "Sell" then
 		showToast(Locale.T("field.toast.sell", { count = detail.paid }), COLOR_OK)
 	elseif action == "BuySeeds" or action == "BuyCart" then
-		showToast(Locale.T("field.toast.seeds", { crop = name, count = detail.count }), COLOR_OK)
+		showToast(if crop and crop.tree -- TR3: saplings under the tree's name
+			then Locale.T("field.toast.saplings", { crop = Locale.TreeName(crop), count = detail.count })
+			else Locale.T("field.toast.seeds", { crop = name, count = detail.count }), COLOR_OK)
 	elseif action == "BuySquare" then
 		showToast(Locale.T("field.toast.square", { n = detail.square }), COLOR_OK)
 	else
-		showToast(Locale.T("field.toast.plant", { crop = name }), COLOR_OK)
+		showToast(Locale.T("field.toast.plant", { crop = if crop then GardenUi.SeedName(crop) else name }), COLOR_OK) -- a tree by its tree name (TR3)
 	end
 end)
 

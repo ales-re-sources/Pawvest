@@ -50,7 +50,7 @@ one is created at runtime by its service (`Remotes.Add` / `Remotes.Folder`). Gar
 | `OnboardRemotes.Seen` | client → server `(stepId)` | `OnboardService`; only the client-only steps (`quests`: the Goals panel opened) are accepted, anything else is ignored; no answer (the player attribute `Onboard` changes) |
 
 **`GardenRemotes.State.field`** (private, owner only; the rested mastery pool is never sent):
-- `open` (sorted open squares), `squares = { ["n"] = { crop, grown, readyAt, size, fruit?, young? } }` (a fruit tree: `fruit` hanging, `young` before its first growth; `readyAt` = the next fruit, 0 while it has fruit), `seeds`, `items`, `slots`, `slotPrice`, `upgrades = { Growth?, Barn? }`, `barn` (capacity), `tools = { Sorter?, Cloches?, Shears? }`.
+- `open` (sorted open squares), `squares = { ["n"] = { crop, grown, readyAt, size, fruit?, young?, nextAt? } }` (a fruit tree: `fruit` hanging, `young` before its first growth; `readyAt` = the next fruit, 0 while it has fruit; `nextAt` = server time of the next fruit if the owner stays online, for a grown tree below its cap), `seeds`, `items`, `slots`, `slotPrice`, `upgrades = { Growth?, Barn? }`, `barn` (capacity), `tools = { Sorter?, Cloches?, Shears? }`.
 - `pets = { ["square"] = { uid, kind, level, job, apt, xp, next, reach } }`, and the Pest-control pets' `guard = { level, xp, next, reach, chance, spec }`.
 - `mastery = { crops = { [cropId] = plants grown }, points = { [cropId] = { [line] = 1-3 } }, unlocked = { [cropId] = true }, quest? = { crop, got = { [cropId] = n } } }`.
 - `cart = { nextAt, offers = { { slot, crop, count, left, price, base, discount?, taste? } } }`.

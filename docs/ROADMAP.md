@@ -33,7 +33,7 @@ Status levels: **Implemented** (code in `src/`, committed), **Studio-validated**
 | CG1–CG21 | Plant growth art, 19 crops, all in the field ([per crop](PLANT_GROWTH.md#crops-and-status)) | ✔ | geometry + PlotView pass; stills of Tomato, Pepper, Pumpkin await review; phone performance and second client open | – |
 | CP | Crop page redesign | ✔ | ✔ | – |
 | HX0 | Hybrid plants: look prototype (Studio reviewer only) | ✔ | ✔ | – |
-| TR | Fruit trees: perennials on one square, a stall tree and a rare obby tree ([EXPANSION §5.4](EXPANSION.md)); the first update after 1.0 | TR0–TR1 | TR1 (server) | – |
+| TR | Fruit trees: perennials on one square, a stall tree and a rare obby tree ([EXPANSION §5.4](EXPANSION.md)); the first update after 1.0 | TR0–TR3 | TR1 (server), TR2 (art), TR3 (UI) | – |
 | PL | Field pet life: idle motion (PL1), tail wag + blink (PL2), job and owner reactions (PL3) | PL1 | PL1 (2 pets; full field and phone open) | – |
 | HX1 | Hybrid breeding mechanic ([HYBRIDS.md](HYBRIDS.md)): main rules decided, numbers open | design only | – | – |
 | K1 | First-hour fixes (kid playtest 2026-11-01): Stage 5, G1 fallback, Double Jump world reward, hatch panel done; the rest is measured in M6a | partial | partial | – |
@@ -122,11 +122,17 @@ obby (rare tree per world), two kinds in the first update: one stall tree and on
   A hand pick takes all fruit (the barn limits only pets, as for crops); saplings cost 4 000 / 5 500 / 8 000 by the number owned (held +
   planted, at most 3). Validated with a fixture profile: offline growth, Tending picks, a crow eating one fruit, Harvest / `notripe`,
   Uproot, BuySeeds `maxed` / `obby`, online fruit, a Stage 1 Gold finish turning the 3rd meter seed into a Golden apple sapling, reload
-  unchanged, no client or server errors. Until TR3 the trees show in the client's stall / barn lists as plain rows and have no art.
-- **TR2 Art:** two 1×1 tree recipes with fixed fruit slots (Frost Grape is the reference), fruit regrowth without resetting the tree; the
-  five-snapshot review plus a picked / regrown pair; a full field of trees within the phone budget.
-- **TR3 UI:** square card for a tree (growth bar, then "🍎 3 / 4 · next in 12 min"), ring with the fruit count and outside the shared ring
-  height, sapling rows in the stall, barn and seed picker, Czech strings.
+  unchanged, no client or server errors.
+- **TR2 Art: Studio-validated** (2026-11-27; [APPLE_TREE.md](plants/APPLE_TREE.md)). The A round crown (Ales's pick of three), the
+  Golden apple as the same tree in gold; one recipe `FruitTree` with a structure growth and one fruit slot per fruit (`SetTree`), a pick
+  keeps the tree; `PlotView:treePose` from the plot feed, proxies with their apples. 38 / 46 Parts (field of 78: 2 964 / 3 588). Studio
+  playtest: six fixture trees drawn with the right fruit, a pick kept the same tree with the next apple growing, proxies right, no
+  errors. Open: frame rate on a real phone (a background Studio window caps at 15 FPS for every crop), a second client.
+- **TR3 UI: Studio-validated** (2026-11-27; as built: GDD §7.9 → Fruit trees). The sapling is named as the tree (`crop.tree.<id>`,
+  `Locale.TreeName`, `GardenUi.SeedTitle`), the fruit keeps the crop name; a grown tree's state square adds `nextAt`. Studio playtest on a
+  fixture profile through the real UI: the card young / bare / bearing / full (a pick keeps the card in place), Pick all on both trees
+  (pop, toast, barn), the two-tap dig-up, rings with counts at the tree's height, picker and hand-bar planting, a stall buy to "Max 3",
+  barn rows; logs clean. Reviewed in code only: the Basket pick (same Harvest path), the results popup sapling line. Open: Czech review.
 - **Validation:** one playtest boot without errors; a tree aged by a fixture (snapshot first) shows the cap, a pick, regrowth, a Tending
   pick and a crow raid of one fruit; each new control through the real UI; a second client sees the tree and its fruit.
 

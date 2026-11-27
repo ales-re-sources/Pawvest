@@ -152,10 +152,10 @@ local function render(result)
 	end
 	for _, gain in (if type(obby) == "table" and type(obby.seeds) == "table" then obby.seeds else {}) do
 		local crop = CropConfig.ById[gain.crop]
-		if crop then
-			table.insert(lines, Locale.T("results.rareSeed", {
+		if crop then -- a fruit tree (TR) comes as a sapling under the tree's name
+			table.insert(lines, Locale.T(if crop.tree then "results.sapling" else "results.rareSeed", {
 				icon = crop.icon,
-				crop = Locale.CropName(crop),
+				crop = if crop.tree then Locale.TreeName(crop) else Locale.CropName(crop),
 				count = gain.count,
 				why = Locale.T("results.rareWhy." .. tostring(gain.why)),
 			}))

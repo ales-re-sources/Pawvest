@@ -99,8 +99,8 @@ local function renderSeeds(field)
 		if stock > 0 then
 			any = true
 			local row = GardenUi.Row(seedsSection, crop.id, index + 1, COLOR_ROW)
-			GardenUi.TextColumn(row, 0, string.format("%s × %s · %s", GardenUi.CropTitle(crop), Locale.Number(stock),
-				GardenUi.GrowTime(GardenUi.GrowSecondsOn(field, crop))))
+			GardenUi.TextColumn(row, 0, string.format("%s × %s · %s", GardenUi.SeedTitle(crop), Locale.Number(stock),
+				GardenUi.GrowTime(if crop.tree then GardenUi.TreeFirstOn(field, crop) else GardenUi.GrowSecondsOn(field, crop)))) -- a sapling: until it grows up
 		end
 	end
 	if not any then

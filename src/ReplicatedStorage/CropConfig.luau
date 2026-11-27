@@ -47,9 +47,9 @@ CropConfig.Crops = {
 -- (stall trees, sold from the `unlockWith` crop's unlock in the stall rotation at `stallOrder`), tree.MeterEvery = every n-th rare seed
 -- of the world's stage meters is a sapling instead (rare trees). Trees have no rested mastery (no `step`).
 CropConfig.Trees = {
-	{ id = "Apple", name = "Apple", icon = "🍎", letter = "t", growSeconds = 600, sale = 621, seed = 4000, kg = 0.2, xp = 310, -- loc: ignore
+	{ id = "Apple", name = "Apple", treeName = "Apple tree", icon = "🍎", letter = "t", growSeconds = 600, sale = 621, seed = 4000, kg = 0.2, xp = 310, -- loc: ignore
 		unlockWith = "Pepper", stallOrder = 101, tree = { First = 7200, Cap = 4, Max = 3, Prices = { 4000, 5500, 8000 } } },
-	{ id = "GoldenApple", name = "Golden apple", icon = "🍏", letter = "u", growSeconds = 3600, sale = 5592, seed = 0, kg = 0.25, xp = 2796, -- loc: ignore
+	{ id = "GoldenApple", name = "Golden apple", treeName = "Golden apple tree", icon = "🍏", letter = "u", growSeconds = 3600, sale = 5592, seed = 0, kg = 0.25, xp = 2796, -- loc: ignore
 		rare = true, world = 1, tree = { First = 28800, Cap = 6, Max = 3, MeterEvery = 3 } },
 }
 for _, tree in CropConfig.Trees do

@@ -591,6 +591,13 @@ There is no Garden panel; each piece sits where it is used.
   card only says "Grows faster while you play"; Cloches states its own bonus), and the cap is not explained (every crop ripens within
   one 24 h absence, so it only limits replanting by Tending pets). The actual online `readyAt` drives art, ripe badges and Harvest. The
   barn holds 40 seeds and 40 stored crops (+20 per Barn level). Seeds held can always be planted; the stall sells only unlocked crops.
+- **Fruit trees** (TR; rules EXPANSION §5.4): a sapling is a seed of the tree and is named as the tree everywhere it is meant (stall,
+  barn, seed picker, hand bar, results popup, toasts: "Apple tree" / "Jabloň"); the fruit keeps the crop name. Stall row: grow-up time,
+  time per fruit and sale, "You have 1 of 3", one +1 brick at the next sapling's price, a grey "Max 3" at the limit (the rare tree:
+  "Medals in World 1"). Square card: a young tree has the growth bar to its first fruit, the trash and "Once grown, it bears fruit for
+  good"; a grown tree, bare or bearing, has the same parts: "🍎 2 / 4 · next in 12 min" ("full" at the cap) beside the trash, then Pick
+  all (grey while bare). A pick pops "+3 🍎" and toasts "+3 Apple · biggest 0.7 kg". Rings: a bearing tree the ripe ring with "3/4";
+  tree rings sit at the tree's own height and stay out of the shared ring height.
 - **Seed picker** (a square's Plant, or the card in Seeds mode): one row per held seed with the crop and ★, the stall's grow time and
   sale line, and the count on the right; in Seeds mode only the selected row is green, with a ✓. Six rows before it scrolls.
 - **Price ladder.** Six price tiers set net Coins per square-hour (tiers 0–2 × 1.727 a step, then × 1.5; the top tier × 10.1 of Potato's);

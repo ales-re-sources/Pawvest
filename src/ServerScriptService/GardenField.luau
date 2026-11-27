@@ -978,14 +978,19 @@ GardenService.AddStateField("field", function(profile)
 	for key, square in field.Squares do
 		local crop = CropConfig.ById[square.Crop]
 		-- server time when the crop is ripe if the owner stays online (the panel's countdown); a tree (TR): its next fruit
-		local startAt, finish = windowOf(field, square, crop, onlineSpeed(profile.Garden, field, crop))
+		local speed = onlineSpeed(profile.Garden, field, crop)
+		local startAt, finish = windowOf(field, square, crop, speed)
 		local readyAt = if finish == 0 then now else finish
 		local grown = if finish == 0 then crop.growSeconds
 			else crop.growSeconds * math.clamp((now - startAt) / (finish - startAt), 0, 1)
+		-- TR3: a grown tree below its cap ripens its next fruit at nextAt (server time if the owner stays online); its window is
+		-- closed while fruit hangs, so the square card reads this one
+		local need = if crop.tree and square.Grown >= crop.tree.First then CropConfig.TreeNeed(crop, square) else nil
 		squares[key] = { crop = square.Crop, grown = math.floor(grown), readyAt = readyAt,
 			size = harvestSize(owner, profile.Garden, crop, square.N),
 			fruit = if crop.tree then square.Fruit else nil, -- TR: fruit hanging, of tree.Cap
-			young = if crop.tree and square.Grown < crop.tree.First then true else nil } -- TR: before its first growth
+			young = if crop.tree and square.Grown < crop.tree.First then true else nil, -- TR: before its first growth
+			nextAt = if need then field.SettledAt + math.ceil((need - RIPEN_EPSILON) / speed) else nil }
 	end
 	local garden = profile.Garden
 	local pets = {} -- [square] = the pet working there

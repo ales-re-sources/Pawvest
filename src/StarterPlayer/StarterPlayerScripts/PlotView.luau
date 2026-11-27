@@ -12,7 +12,7 @@
 -- field = { crops = two characters per square 1..CropConfig.MaxSquares: crop letter (CropConfig, a-s; a-f in synthetic plots) +
 -- stage 1-3 (3 = ripe), ".0" an empty open square, "#0" a locked one, pets = { "Kind:Level:uid:square:tending:guard" } (E1b field pets,
 -- tending / guard = Tending / Pest-control level, 0 without it; E4b; a feed without guard reads as 0),
--- plants? = { [square string] = { n = planting identity, startAt, readyAt } } } } or { free = true } (a slot
+-- plants? = { [square string] = { n = planting identity, startAt, readyAt, size?, fruit?, young? } } } } or { free = true } (a slot
 -- nobody holds: floor, sign "Free plot", grey incubators, an empty barn). Every plot's floor is the front strip; the field lies behind it
 -- (the P2 pens are gone since FA).
 -- The field (E1d2) has the shape CropConfig.RowWidths: every row is a plate of overgrown grass, open squares are soil on it (pale dry soil while empty),
@@ -21,6 +21,8 @@
 -- CanQuery so FieldHand's tap ray hits them, SquareAt maps a world point to a square, ShowSelect outlines the selected square
 -- and ShowReach tints the squares a pet would work; ShowHover (U3b) marks the square the player stands on with corner brackets. ShowBorders (U3b) draws the placed pets' reach regions as thin borders in their
 -- rarity colours (FieldRings computes the regions).
+-- TR2: a fruit tree (crop.tree) is posed by SetTree(structure, fruit, nextGrowth) from its plant entry (treePose): the window runs
+-- to the next fruit, `fruit` apples hang ripe; a pick changes only the fruit, never the tree.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -325,7 +327,10 @@ function PlotView:signature(key: string): string
 		if not crop or string.sub(cell, 2, 2) == "0" then return "none" end
 		local identity = crop.id .. "|" .. tostring(state.ownerId or self.slot) .. "|" .. tostring(plant and plant.n or n)
 			.. "|" .. tostring(plant and plant.size or 1)
-		return if detail == "full" then "grow|" .. identity else "proxy|" .. identity .. "|" .. self:plantStage(n)
+		if detail == "full" then
+			return "grow|" .. identity
+		end
+		return "proxy|" .. identity .. "|" .. self:plantStage(n) .. (if crop.tree then "|" .. self:proxyFruit(n) else "")
 	end
 	if crop then
 		-- Both plant details live separately; stage/time changes retain soil and pets.
@@ -962,7 +967,51 @@ function PlotView:plantStage(square: number): number
 	local growth = self:plantGrowth(square, workspace:GetServerTimeNow())
 	local crop = growthCrop(field, square)
 	if not crop then return 0 end
+	if crop.tree then
+		local structure, fruit, nextGrowth = self:treePose(square, crop, growth)
+		return if structure < 1 then 1 elseif fruit > 0 or nextGrowth >= 1 then 3 else 2
+	end
 	return CropConfig.Stage(crop, growth * crop.growSeconds)
+end
+
+-- TR2: a tree's pose from its plant entry and the window's growth: structure 0..1 (sapling -> mature), the ripe fruit and the
+-- next fruit's growth 0..1. While young the window runs from planting to the first fruit (tree.First + one fruit time); a bare
+-- tree's window is one fruit time; with fruit hanging the window is closed (0, 0) and the next fruit is not shown. A feed
+-- without `fruit` (synthetic plots) reads the stage digit: 1 young, 2 bare, 3 every slot ripe.
+function PlotView:treePose(square: number, crop, growth: number): (number, number, number)
+	local field = self.state.field
+	local anchor = type(field.plants) == "table" and field.plants[tostring(square)]
+	local fruit = type(anchor) == "table" and anchor.fruit
+	if type(fruit) ~= "number" then
+		local stage = tonumber(string.sub(field.crops, square * 2, square * 2)) or 0
+		return if stage <= 1 then 0.35 else 1, if stage >= 3 then crop.tree.Cap else 0, 0
+	end
+	if fruit > 0 then
+		return 1, fruit, 0
+	end
+	if anchor.young then
+		local first = crop.tree.First
+		local t = growth * (first + crop.growSeconds)
+		return math.min(1, t / first), 0, math.max(0, (t - first) / crop.growSeconds)
+	end
+	return 1, 0, growth
+end
+
+-- The apples a tree's mid-distance proxy shows: the ripe ones, or the first one once it has grown.
+function PlotView:proxyFruit(square: number): number
+	local crop = growthCrop(self.state.field, square)
+	local _, fruit, nextGrowth = self:treePose(square, crop, self:plantGrowth(square, workspace:GetServerTimeNow()))
+	return if fruit > 0 then fruit elseif nextGrowth >= 1 then 1 else 0
+end
+
+-- Poses a full-detail plant: a tree from treePose, any other crop from its growth (a plant of the square's previous crop can be
+-- posed once before its rebuild: the recipe decides).
+function PlotView:posePlant(plant, square: number, crop, growth: number)
+	if crop.tree and plant.SetTree then
+		plant:SetTree(self:treePose(square, crop, growth))
+	else
+		plant:SetGrowth(growth)
+	end
 end
 
 function PlotView:buildPlant(model: Model, square: number)
@@ -976,13 +1025,14 @@ function PlotView:buildPlant(model: Model, square: number)
 	-- plantings still cycle all six silhouettes (104729 is coprime with six).
 	local seed = (self.state.ownerId or self.slot) * 7919 + planting * 104729
 	if self.detail == "mid" then
-		PlantGrowth.BuildProxy(model, self:SquareCFrame(square), crop.id, self:plantStage(square), seed, sizeFactor)
+		PlantGrowth.BuildProxy(model, self:SquareCFrame(square), crop.id, self:plantStage(square), seed, sizeFactor,
+			if crop.tree then self:proxyFruit(square) else nil)
 		return
 	end
 	local plant = PlantGrowth.new(model, self:SquareCFrame(square), crop.id, seed, sizeFactor)
 	local now = workspace:GetServerTimeNow()
 	local growth = self:plantGrowth(square, now)
-	plant:SetGrowth(growth)
+	self:posePlant(plant, square, crop, growth)
 	local nextAt = self:plantDue(square, growth, now, os.clock())
 	self.plants[square] = { plant = plant, growth = growth, dirty = false, nextAt = nextAt, animated = self:plantTimed(square) }
 	self.plantNextAt = math.min(self.plantNextAt, nextAt)
@@ -1022,8 +1072,13 @@ function PlotView:StepPlants(deadline: number)
 		local entry = self.plants[self.plantCursor]
 		if entry and (entry.dirty or (entry.animated and entry.growth < 1)) and (entry.dirty or clock >= entry.nextAt) then
 			local growth = self:plantGrowth(self.plantCursor, now)
-			if growth ~= entry.growth then
-				entry.plant:SetGrowth(growth)
+			-- a correction re-poses even at the same growth: a tree's fruit can change while its window stays closed (the
+			-- recipes skip a pose they already show)
+			if growth ~= entry.growth or entry.dirty then
+				local crop = growthCrop(self.state.field, self.plantCursor)
+				if crop then
+					self:posePlant(entry.plant, self.plantCursor, crop, growth)
+				end
 				entry.growth = growth
 			end
 			entry.dirty = false
