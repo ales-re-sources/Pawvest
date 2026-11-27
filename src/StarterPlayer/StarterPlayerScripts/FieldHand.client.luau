@@ -109,8 +109,6 @@ local COLOR_OFF = StudStyle.Colors.Grey
 local COLOR_CLOSE = StudStyle.Colors.Red
 local COLOR_INFO = StudStyle.Text.Info
 local COLOR_DIM = StudStyle.Text.Dim
-local COLOR_BAR = Color3.fromRGB(245, 200, 70)
-local COLOR_TRACK = Color3.fromRGB(45, 38, 30)
 
 -- Helpers ---------------------------------------------------------------------------------------------------------------------
 
@@ -377,26 +375,11 @@ local function header(title: string, onClose: () -> ())
 	closeHeader = onClose
 end
 
--- the progress bar with the share and the time left inside
-local function bar(order: number, parent: Instance?, height: number?)
-	local track, fill, text = UiKit.Bar("Bar", {
-		order = order,
-		height = height or 30,
-		corner = 8,
-		track = COLOR_TRACK,
-		fill = COLOR_BAR,
-		text = "",
-		textSize = 18,
-		textStroke = 0.3,
-		parent = parent or body,
-	})
+-- the progress bar with the share and the time left inside (GardenUi.ProgressText)
+local function bar(order: number, parent: Instance, height: number)
+	local track, fill, text = GardenUi.ProgressBar(order, parent, height)
 	barFill, barText = fill, text
 	return track
-end
-
--- "42% · 3 h 40 min": the growing crop's share (never 100 % before it is ripe) and its away-time left in words
-local function growingText(share: number, left: number): string
-	return Locale.T("field.card.growing", { pct = Locale.Number(math.min(99, math.floor(share * 100))), time = Locale.Duration(left) })
 end
 
 local function buttonRow(order: number, specs, parent: Instance?)
@@ -937,7 +920,7 @@ function render()
 		if crop and barFill and barText then
 			local share, ripe, left = progress(entry, crop, workspace:GetServerTimeNow())
 			UiKit.SetShare(barFill, share)
-			barText.Text = growingText(share, left)
+			barText.Text = GardenUi.ProgressText(share, left)
 		end
 	end
 	fitCard()
@@ -1746,7 +1729,7 @@ RunService.Heartbeat:Connect(function(dt)
 			return
 		end
 		UiKit.SetShare(barFill, share)
-		barText.Text = growingText(share, left)
+		barText.Text = GardenUi.ProgressText(share, left)
 	end
 end)
 

@@ -8,6 +8,7 @@
 --   * FarmButton(button, order): center the visible farm HUD buttons together, preserving their ScreenGui parents;
 --   * texts: Countdown ("1:00:00"), GrowTime ("3 hours"), CropTitle (icon + name), GrowSecondsOn (with the Growth upgrade),
 --     KgText, BarnOf (seeds the barn holds), CrowLine (the crow forecast's text and colour, E4b);
+--   * ProgressBar + ProgressText: the growth bar with "42% · 3 h 40 min" inside (square card, hatchery rows);
 --   * mastery (EV3b): Mastery, PlantsOf, IsUnlocked, Stars, MasteryLine, NextGoal (the tracker line's goal), QuestGot, QuestRows
 --     (the quest's pieces with Bring buttons: seed stall and Goals panel);
 --   * crop upgrades (EV3c): PointsOf, FreePoints, CropsWithPoints, SalePrice, OpenCropPage (CropPageClient's hook), StarButton (a row's
@@ -403,6 +404,29 @@ end
 -- "1:00:00", "42:07", "0:05" / "3 hours", "30 min" (TimeFormat)
 GardenUi.Countdown = TimeFormat.Clock
 GardenUi.GrowTime = TimeFormat.GrowTime
+
+local COLOR_BAR = Color3.fromRGB(245, 200, 70)
+local COLOR_TRACK = Color3.fromRGB(45, 38, 30)
+
+-- The growth bar with its text inside: the square card's growing crop and the hatchery's incubator rows → (track, fill, text)
+function GardenUi.ProgressBar(order: number, parent: Instance, height: number)
+	return UiKit.Bar("Bar", {
+		order = order,
+		height = height,
+		corner = 8,
+		track = COLOR_TRACK,
+		fill = COLOR_BAR,
+		text = "",
+		textSize = 18,
+		textStroke = 0.3,
+		parent = parent,
+	})
+end
+
+-- "42% · 3 h 40 min": a growth bar's share (never 100 % before it is done) and the time left in words
+function GardenUi.ProgressText(share: number, left: number): string
+	return Locale.T("field.card.growing", { pct = Locale.Number(math.clamp(math.floor(share * 100), 0, 99)), time = Locale.Duration(left) })
+end
 
 -- A solid white trash-can silhouette on a brick's face (independent of emoji / font rendering; follows the brick's moving
 -- face): the incubator's egg discard and the square card's dig-up.

@@ -1,14 +1,14 @@
 -- Hatchery panel: the farm HUD button beside Barn (ready-egg badge) or a click/tap on any own pod opens this panel.
 -- World entry: PlotView → GardenView.OnHatchery; no hatchery E prompt. ScreenGui HatcheryGui, GardenUi.Panel:
---   * one row per incubator: egg + countdown, small trash brick → orange OK? → discard (ConfirmTap), Hatch when ready;
---     empty; the next one to buy
---     (Unlock brick with the price, two taps over ConfirmTap.THRESHOLD); later ones "unlock incubator n first";
---   * egg cards (K1), two a row, while an owned incubator is empty: the egg drawn in its colour, name, hatch time, a buy brick with
---     the price (two taps over the threshold) that starts it in the first empty incubator, and "?" for odds (with the kinds under
---     each rarity, a silhouette until owned, EG), rarity times and rules; an egg whose crop is not open shows 🔒 + the crop's icon;
+--   * one same-sized row per incubator (picture, title, one line): the growth bar "42% · 12 min" (Scanning… at first) with a
+--     small trash brick → orange OK? → discard (ConfirmTap); Hatch when ready; a dim "Empty" bar; the next one to buy (Unlock
+--     brick with the price, two taps over ConfirmTap.THRESHOLD); later ones a dim bar with the price;
+--   * egg cards (K1), two a row: the egg drawn in its colour, name, hatch time, a buy brick with the price (two taps over the
+--     threshold) that starts it in the first empty incubator (grey with none, the legend says so), and "?" for odds (with the
+--     kinds under each rarity, a silhouette until owned, EG) and rules; an egg whose crop is not open shows 🔒 + the crop;
 --   * on a Hatch answer, HatchReveal over the content: the egg wobbles and bursts, the pet pops in, then a summary (rarity and the
 --     egg's chance of it, where it went, every trait it was born with and what it does) with View pet / Great!;
---   * waiting free eggs (the server starts them on its own); answers and refusals in a status line at the top;
+--   * waiting free eggs (the server starts them on its own) and refusals in a status line at the top;
 --   * PanelFocus "Hatchery": opening it closes the other panels, walking 32 studs away closes it.
 -- GardenView draws the eggs and their countdowns above every plot's nests (E1a1). Display only: a click names an incubator and an
 -- egg; GardenIncubators validates ownership, price, the inventory cap and the hatch time against the server's os.time(). Countdowns use
@@ -47,8 +47,9 @@ local buyIncubatorEvent = remotes:WaitForChild("BuyIncubator")
 local WIDTH = 420
 local HEIGHT = 500
 local GAP = GardenUi.GAP
-local ACTION_WIDTH = 132 -- the row's brick (Hatch / Unlock)
 local EGG_W, EGG_H = 64, 76 -- the shared 3D egg on a card
+local NEST_EGG_W, NEST_EGG_H = 48, 60 -- and in an incubator row
+local BAR_HEIGHT = 36 -- as high as the square card's bar
 
 local COLOR_PANEL = StudStyle.PanelColors.Incubator
 local COLOR_ROW = StudStyle.PetRowColor(COLOR_PANEL)
@@ -169,10 +170,10 @@ local reveal = hatchReveal.frame
 
 local isOpen = false
 local incubators = nil -- private State: { count, eggs = { ["n"] = { id, egg, startedAt, readyAt } } }; kind stays server-only
-local status: { text: string, color: Color3 }? = nil -- the last answer, shown for STATUS_SECONDS
+local status: string? = nil -- the last refusal, shown for STATUS_SECONDS
 local statusTimer = GardenUi.Latest()
 local oddsShown: string? = nil -- egg id whose odds are shown
-local countdowns = {} -- { { label, readyAt } } of the drawn rows
+local countdowns = {} -- { { fill, text, readyAt, startedAt } } of the growing rows' bars
 local STATUS_SECONDS = 5
 
 
@@ -196,8 +197,8 @@ local function firstEmpty(state): number?
 	return nil
 end
 
-local function setStatus(text: string, color: Color3)
-	status = { text = text, color = color }
+local function setStatus(text: string)
+	status = text
 	render()
 	statusTimer.After(STATUS_SECONDS, function()
 		status = nil
@@ -211,12 +212,51 @@ local function renderStatus()
 	GardenUi.Clear(statusSection)
 	local waiting = waitingFreeEggs()
 	if status then
-		GardenUi.Paragraph("Message", { LayoutOrder = 1, Font = StudStyle.Font, TextSize = 16, TextColor3 = status.color, RichText = true, Text = status.text }).Parent =
+		GardenUi.Paragraph("Message", { LayoutOrder = 1, Font = StudStyle.Font, TextSize = 16, TextColor3 = GardenUi.COLOR_ERROR, RichText = true, Text = status }).Parent =
 			statusSection
 	end
 	if waiting > 0 then
 		GardenUi.Paragraph("FreeEggs", { LayoutOrder = 2, TextSize = 14, Text = Locale.T("incubator.freeEggs", { count = waiting }) }).Parent = statusSection
 	end
+end
+
+-- A growing egg's bar: no share and no time while scanning (the time would give the rarity away).
+local function drawProgress(item, now: number)
+	local scanning = GardenConfig.EggPhase(item.startedAt, item.readyAt, now) == "scanning"
+	local total = item.readyAt - (item.startedAt or item.readyAt)
+	local share = if scanning or total <= 0 then 0 else (now - item.startedAt) / total
+	UiKit.SetShare(item.fill, share)
+	item.text.Text = if scanning then Locale.T("incubator.scanning")
+		else GardenUi.ProgressText(share, math.ceil(item.readyAt - now))
+end
+
+-- Every nest row has the same parts and size in every state: a picture (the egg; dim when there is none, 🔒 when not owned),
+-- a title (the egg, else the incubator's number) and one line `tap` high with the state's bar and / or brick.
+local function nestRow(n: number, tap: number, title: string, color: Color3): (Frame, Frame, Frame)
+	local row = GardenUi.Row(nestsSection, "Nest" .. n, n, color)
+	local picture = GardenUi.Create("Frame", {
+		Name = "Picture", LayoutOrder = 1, Size = UDim2.fromOffset(NEST_EGG_W, NEST_EGG_H), BackgroundTransparency = 1,
+		Parent = row,
+	})
+	local column = GardenUi.Create("Frame", {
+		Name = "Body", LayoutOrder = 2, Size = UDim2.new(1, -(NEST_EGG_W + GAP), 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
+		BackgroundTransparency = 1, Parent = row,
+	}, {
+		GardenUi.Create("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 2) }),
+	})
+	GardenUi.Label("Title", {
+		LayoutOrder = 1, Size = UDim2.new(1, 0, 0, 22), TextSize = 17, TextTruncate = Enum.TextTruncate.AtEnd, Text = title,
+		Parent = column,
+	})
+	local line = GardenUi.Create("Frame", {
+		Name = "Line", LayoutOrder = 2, Size = UDim2.new(1, 0, 0, tap), BackgroundTransparency = 1, Parent = column,
+	}, {
+		GardenUi.Create("UIListLayout", {
+			FillDirection = Enum.FillDirection.Horizontal, SortOrder = Enum.SortOrder.LayoutOrder,
+			VerticalAlignment = Enum.VerticalAlignment.Center, Padding = UDim.new(0, GAP),
+		}),
+	})
+	return row, picture, line
 end
 
 local function renderNests(state, tap: number)
@@ -225,46 +265,41 @@ local function renderNests(state, tap: number)
 	local now = workspace:GetServerTimeNow()
 	for n = 1, GardenConfig.MaxIncubators do
 		local entry = state.eggs[tostring(n)]
-		local row = GardenUi.Row(nestsSection, "Nest" .. n, n, COLOR_ROW)
-		local function action(text: string, color: Color3): TextButton
+		local egg = entry and PetConfig.Eggs[entry.egg]
+		local owned = n <= state.count
+		local title = if owned and entry then eggName(entry.egg) else Locale.T("incubator.title", { n = n })
+		local color = if egg and egg.look then COLOR_ROW:Lerp(egg.look.color, 0.18) else COLOR_ROW
+		local row, picture, line = nestRow(n, tap, title, color)
+		local function brick(text: string, brickColor: Color3, width: UDim2): TextButton
 			return GardenUi.Button("Action", {
 				LayoutOrder = 2,
-				Size = UDim2.fromOffset(ACTION_WIDTH, tap),
-				BackgroundColor3 = color,
-				TextSize = 15,
+				Size = width,
+				BackgroundColor3 = brickColor,
+				TextSize = 17,
 				TextWrapped = true,
 				Text = text,
-				Parent = row,
+				Parent = line,
 			}, 2)
 		end
-		if n > state.count then
-			local nextIndex = state.count + 1
-			if n == nextIndex then
-				local price = GardenConfig.IncubatorPrices[n]
-				GardenUi.TextColumn(row, ACTION_WIDTH + GAP, "🔒 " .. Locale.T("incubator.title", { n = n }), Locale.T("incubator.body.locked"))
-				local unlock = action(Locale.T("hatchery.unlock", { count = price }), if PetClient.Coins >= price then GardenUi.COLOR_BUY else GardenUi.COLOR_LOCKED)
-				ConfirmTap.Wrap(unlock, "Unlock" .. n, function()
-					return ConfirmTap.Over(price)
-				end, function()
-					buyIncubatorEvent:FireServer(n)
-				end)
-			else
-				GardenUi.TextColumn(row, 0, "🔒 " .. Locale.T("incubator.title", { n = n }), Locale.T("incubator.unlockFirst", { n = nextIndex }))
-			end
-		elseif entry then
-			local remaining = entry.readyAt - now
-			local egg = PetConfig.Eggs[entry.egg]
-			local title = string.format("%s · %s", Locale.T("incubator.title", { n = n }), eggName(entry.egg))
-			if remaining > 0 then
-				local scanning = GardenConfig.EggPhase(entry.startedAt, entry.readyAt, now) == "scanning"
-				local column = GardenUi.TextColumn(row, tap + GAP, title, if scanning then Locale.T("incubator.scanning")
-					else Locale.T("incubator.hatchesIn", { time = GardenUi.Countdown(remaining) }))
-				table.insert(countdowns, { label = column:FindFirstChild("Info"), readyAt = entry.readyAt, startedAt = entry.startedAt })
+		-- a dim bar without a share: nothing is growing here
+		local function idle(text: string)
+			local _, _, label = GardenUi.ProgressBar(1, line, BAR_HEIGHT)
+			label.Text = text
+			label.TextColor3 = GardenUi.COLOR_DIM
+		end
+		if owned and entry then
+			EggLook.Portrait(entry.egg, UDim2.fromScale(1, 1)).Parent = picture
+			if entry.readyAt > now then
+				local track, fill, text = GardenUi.ProgressBar(1, line, BAR_HEIGHT)
+				track.Size = UDim2.new(1, -(tap + GAP), 0, BAR_HEIGHT)
+				local item = { fill = fill, text = text, readyAt = entry.readyAt, startedAt = entry.startedAt }
+				table.insert(countdowns, item)
+				drawProgress(item, now)
 				local key = "CancelEgg" .. entry.id
 				local armed = ConfirmTap.IsArmed(key)
-				local cancel = action(if armed then Locale.T("incubator.cancel.tapAgain") else "",
-					if armed then ConfirmTap.COLOR else StudStyle.Colors.Red)
-				cancel.Size = UDim2.fromOffset(tap, tap)
+				local cancel = brick(if armed then Locale.T("incubator.cancel.tapAgain") else "",
+					if armed then ConfirmTap.COLOR else StudStyle.Colors.Red, UDim2.fromOffset(tap, tap))
+				cancel.TextSize = 15
 				if not armed then
 					GardenUi.TrashIcon(cancel)
 				end
@@ -282,21 +317,30 @@ local function renderNests(state, tap: number)
 					render()
 				end)
 			else
-				local column = GardenUi.TextColumn(row, ACTION_WIDTH + GAP, title, Locale.T("incubator.ready"))
-				local info = column:FindFirstChild("Info") :: TextLabel?
-				if info then
-					info.TextColor3 = GardenUi.COLOR_OK
-				end
-				local hatch = action(Locale.T("incubator.hatch"), COLOR_HATCH)
+				local hatch = brick(Locale.T("incubator.hatch"), COLOR_HATCH, UDim2.fromScale(1, 1))
 				hatch.Activated:Connect(function()
 					hatchEvent:FireServer(n) -- the server checks the time itself
 				end)
 			end
-			if egg and egg.look then
-				row.BackgroundColor3 = COLOR_ROW:Lerp(egg.look.color, 0.18)
-			end
 		else
-			GardenUi.TextColumn(row, 0, Locale.T("incubator.title", { n = n }), Locale.T("hatchery.nest.empty"))
+			GardenUi.Label("Mark", {
+				Size = UDim2.fromScale(1, 1), TextSize = 26, TextXAlignment = Enum.TextXAlignment.Center,
+				TextTransparency = if owned then 0.7 else 0, Text = if owned then "🥚" else "🔒", Parent = picture,
+			})
+			if owned then
+				idle(Locale.T("hatchery.nest.empty"))
+			elseif n == state.count + 1 then
+				local price = GardenConfig.IncubatorPrices[n]
+				local unlock = brick(Locale.T("hatchery.unlock", { count = price }),
+					if PetClient.Coins >= price then GardenUi.COLOR_BUY else GardenUi.COLOR_LOCKED, UDim2.fromScale(1, 1))
+				ConfirmTap.Wrap(unlock, "Unlock" .. n, function()
+					return ConfirmTap.Over(price)
+				end, function()
+					buyIncubatorEvent:FireServer(n)
+				end)
+			else -- bought in order: its price only
+				idle(Locale.T("hatchery.egg.buy", { count = GardenConfig.IncubatorPrices[n] }))
+			end
 		end
 	end
 end
@@ -311,11 +355,8 @@ end
 local function renderEggs(state, tap: number)
 	PetPortrait.Release(eggsSection) -- the cached kind portraits survive the clear
 	GardenUi.Clear(eggsSection)
-	local target = firstEmpty(state)
-	if not target then
-		GardenUi.Paragraph("Busy", { LayoutOrder = 2, Text = Locale.T("hatchery.busy") }).Parent = eggsSection
-		return
-	end
+	-- the cards stay while every incubator is busy (grey bricks, the legend says why), so a purchase moves nothing
+	local free = firstEmpty(state) ~= nil
 	local cards = GardenUi.Create("Frame", {
 		Name = "Cards",
 		LayoutOrder = 3,
@@ -377,15 +418,6 @@ local function renderEggs(state, tap: number)
 			TextXAlignment = Enum.TextXAlignment.Center,
 			Text = Locale.T("hatchery.egg.time", { time = GardenUi.GrowTime(shortest), max = GardenUi.GrowTime(longest) }),
 		}).Parent = card
-		if not open and opener then
-			GardenUi.Paragraph("OpensWith", {
-				LayoutOrder = 3,
-				TextSize = 13,
-				TextColor3 = GardenUi.COLOR_INFO,
-				TextXAlignment = Enum.TextXAlignment.Center,
-				Text = Locale.T("hatchery.egg.opensWith", { crop = Locale.CropName(opener) }),
-			}).Parent = card
-		end
 		local bricks = GardenUi.Create("Frame", {
 			Name = "Bricks",
 			LayoutOrder = 4,
@@ -402,29 +434,32 @@ local function renderEggs(state, tap: number)
 			local buy = GardenUi.Button("Buy", {
 				LayoutOrder = 1,
 				Size = UDim2.new(1, -(tap + GAP), 0, tap),
-				BackgroundColor3 = if PetClient.Coins >= egg.price then GardenUi.COLOR_BUY else GardenUi.COLOR_LOCKED,
+				BackgroundColor3 = if free and PetClient.Coins >= egg.price then GardenUi.COLOR_BUY else GardenUi.COLOR_LOCKED,
 				TextSize = 16,
 				TextWrapped = true,
 				Text = Locale.T("hatchery.egg.buy", { count = egg.price }),
+				AutoButtonColor = free,
 				Parent = bricks,
 			}, 2)
-			ConfirmTap.Wrap(buy, "Egg" .. eggId, function()
-				return ConfirmTap.Over(egg.price)
-			end, function()
-				local now = incubators and firstEmpty(incubators)
-				if now then
-					startEggEvent:FireServer(now, eggId)
-				end
-			end)
+			if free then
+				ConfirmTap.Wrap(buy, "Egg" .. eggId, function()
+					return ConfirmTap.Over(egg.price)
+				end, function()
+					local now = incubators and firstEmpty(incubators)
+					if now then
+						startEggEvent:FireServer(now, eggId)
+					end
+				end)
+			end
 		else -- EG: the crop that opens it, as the seed stall's lock bar
 			GardenUi.Paragraph("Locked", {
 				LayoutOrder = 1,
 				Size = UDim2.new(1, -(tap + GAP), 0, 0),
 				Font = StudStyle.Font,
-				TextSize = 18,
+				TextSize = 15,
 				TextColor3 = GardenUi.COLOR_DIM,
 				TextXAlignment = Enum.TextXAlignment.Center,
-				Text = Locale.T("hatchery.egg.lockIcon", { icon = opener and opener.icon or "" }),
+				Text = Locale.T("hatchery.egg.lockCrop", { icon = opener and opener.icon or "", crop = opener and Locale.CropName(opener) or "" }),
 			}).Parent = bricks
 		end
 		local oddsButton = GardenUi.Button("Odds", {
@@ -450,7 +485,7 @@ render = function()
 	openButton.Text = Locale.T("hatchery.button")
 	ui.title.Text = Locale.T("hatchery.title")
 	nestsLegend.Text = Locale.T("hatchery.group.nests")
-	eggsLegend.Text = Locale.T("hatchery.eggs")
+	eggsLegend.Text = Locale.T(if incubators and not firstEmpty(incubators) then "hatchery.busy" else "hatchery.eggs")
 	hatchReveal.Layout(math.max(48, ui.TapHeight()))
 	reveal.Position = UDim2.fromOffset(8, ui.HeaderHeight() + 6)
 	reveal.Size = UDim2.new(1, -16, 1, -(ui.HeaderHeight() + 14))
@@ -532,14 +567,9 @@ remotes:WaitForChild("Result").OnClientEvent:Connect(function(action, ok, detail
 	if action ~= "StartEgg" and action ~= "Hatch" and action ~= "BuyIncubator" and action ~= "CancelEgg" then
 		return
 	end
+	-- a success shows in the rows themselves; only a refusal is said
 	if not ok then
-		setStatus(Locale.Reject(detail, REJECT_KEYS, { max = PetConfig.MaxPets }), GardenUi.COLOR_ERROR)
-	elseif action == "BuyIncubator" then
-		setStatus(Locale.T("incubator.unlocked", { n = detail }), GardenUi.COLOR_OK)
-	elseif action == "StartEgg" then
-		setStatus(Locale.T("incubator.started"), GardenUi.COLOR_OK)
-	elseif action == "CancelEgg" then
-		setStatus(Locale.T("incubator.cancelled"), GardenUi.COLOR_OK)
+		setStatus(Locale.Reject(detail, REJECT_KEYS, { max = PetConfig.MaxPets }))
 	elseif action == "Hatch" and type(detail) == "table" and isOpen then
 		showReveal(detail)
 	end
@@ -617,10 +647,7 @@ RunService.Heartbeat:Connect(function(dt)
 			end
 			return
 		end
-		if entry.label then
-			entry.label.Text = if GardenConfig.EggPhase(entry.startedAt, entry.readyAt, now) == "scanning" then Locale.T("incubator.scanning")
-				else Locale.T("incubator.hatchesIn", { time = GardenUi.Countdown(remaining) })
-		end
+		drawProgress(entry, now)
 	end
 end)
 

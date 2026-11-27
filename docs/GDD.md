@@ -428,12 +428,15 @@ caring over obby runs.
   - **Hatchery panel.** Opened from the **🥚 Hatchery** farm HUD button beside Barn within 45 horizontal studs of the own plot (its badge
     counts ready eggs), or by clicking / tapping any owned pod from either side (generous target, whole-pod hover outline; GUI and range
     checks block world clicks; no E prompt, other players' pods have no click target). Opening never hatches an egg, closes the other
-    panels, and walking 32 studs away closes it. Group boxes separate **Your nests** from **Eggs to buy**. Each incubator row: its egg, a
-    live countdown, a trash button while growing, **Hatch** when ready, the next one's Unlock brick with its price (two taps over 1 000
-    Coins), "unlock incubator n first" for the later one. While an owned incubator is empty, **egg cards** show each egg (in its colour,
-    name, possible hatch-time range, a price brick; Golden takes two taps) and a **?** brick with its odds (a rarity / percentage table
+    panels, and walking 32 studs away closes it. Group boxes separate **Your nests** from **Eggs to buy**. The three incubator rows
+    carry little text and keep one size in every state (picture, title, one line): a growing egg has the field card's progress bar
+    ("42% · 2 h 40 min"; empty with **Scanning…** at first, as the time would give the rarity away) and a trash button; a ready one a
+    **Hatch** brick; an empty one a dim "Empty" bar; the next incubator to buy an Unlock brick with its price (two taps over 1 000
+    Coins), a later one a dim bar with its price. **Egg cards** are always shown: each egg (in its colour, name, possible hatch-time
+    range, a price brick or the crop that opens it; Golden takes two taps) and a **?** brick with its odds (a rarity / percentage table
     and only the offline-hatching / no-refund tip; hidden roll mechanics stay out of the player-facing text); a card starts the egg in the
-    first empty incubator.
+    first empty incubator. With none empty the price bricks turn grey and the group is headed **No free incubator**. Successes show in
+    the rows; only a refusal (and waiting free eggs) gets a status line.
   - **Hatch reveal** (`HatchReveal`, about 4 s, a click / tap skips to the summary): the egg wobbles and hops, harder each time (Epic /
     Legendary once more), the last wobble glowing in the rarity colour; a flash, the shell's upper bricks fly off; the pet's portrait pops
     in with rays in the rarity colour, the rarity stamps in, confetti from Rare up. The **summary** shows the portrait, the kind in the
