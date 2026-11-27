@@ -292,6 +292,9 @@ def apply_crop_config(P):
         "crops": [[c["id"], c["growSeconds"] / 3600, c["sale"], c["seed"], c.get("step"), c.get("quest")] for c in crops],
         "mastery": mastery_cfg(luau(f, "CropConfig.Mastery")),  # EV3b: [levels, rested per day, rested cap, quest seeds, EV3c points [Value, Size, Speed]]
         "xp": [[c["id"], c["xp"]] for c in crops],  # E1a3: pet XP of one crop fed to a pet
+        # TR: fruit trees [id, first growth s, fruit every s, fruit held, fruit sale, sapling prices, unlockWith, world, meter every, max]
+        "trees": [[t["id"], t["tree"]["First"], t["growSeconds"], t["tree"]["Cap"], t["sale"], list(t["tree"].get("Prices") or []),
+                   t.get("unlockWith"), t.get("world"), t["tree"].get("MeterEvery"), t["tree"]["Max"]] for t in luau(f, "CropConfig.Trees")],
         "squares": [start, top],
         "rows": [list(rows), grid, list(start_open)],  # E1d2: the field's shape and the start block
         "expansions": [e["price"] for e in exps],  # EV3b: Coins only (the Renown gates are gone)

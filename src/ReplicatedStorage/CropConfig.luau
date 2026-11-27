@@ -40,6 +40,21 @@ CropConfig.Crops = {
 	{ id = "FrostGrape", name = "Frost grape", icon = "🍇", letter = "f", growSeconds = 57600, sale = 75000, seed = 0, kg = 0.5, xp = 37500, rare = true, world = 2 }, -- loc: ignore
 	{ id = "GlowMushroom", name = "Glow mushroom", icon = "🍄", letter = "g", growSeconds = 72000, sale = 150000, seed = 0, kg = 0.2, xp = 75000, rare = true, world = 3 }, -- loc: ignore
 }
+-- Fruit trees (TR, docs/EXPANSION.md §5.4; numbers ECONOMY.md → TR0, model economy_ev `trees` / `obby_trees`): perennials that join
+-- Crops / ById (a sapling is a seed of the tree, its fruit the crop in the barn) but not the Ladder (no unlock chain, cart, staples or
+-- requests). growSeconds = the time per fruit and sale = one fruit; tree.First = growth seconds before the first fruit, tree.Cap = fruit
+-- held (at the cap the tree stops bearing), tree.Max = trees a player may hold + plant, tree.Prices[k] = the k-th sapling held + planted
+-- (stall trees, sold from the `unlockWith` crop's unlock in the stall rotation at `stallOrder`), tree.MeterEvery = every n-th rare seed
+-- of the world's stage meters is a sapling instead (rare trees). Trees have no rested mastery (no `step`).
+CropConfig.Trees = {
+	{ id = "Apple", name = "Apple", icon = "🍎", letter = "t", growSeconds = 600, sale = 621, seed = 4000, kg = 0.2, xp = 310, -- loc: ignore
+		unlockWith = "Pepper", stallOrder = 101, tree = { First = 7200, Cap = 4, Max = 3, Prices = { 4000, 5500, 8000 } } },
+	{ id = "GoldenApple", name = "Golden apple", icon = "🍏", letter = "u", growSeconds = 3600, sale = 5592, seed = 0, kg = 0.25, xp = 2796, -- loc: ignore
+		rare = true, world = 1, tree = { First = 28800, Cap = 6, Max = 3, MeterEvery = 3 } },
+}
+for _, tree in CropConfig.Trees do
+	table.insert(CropConfig.Crops, tree)
+end
 CropConfig.ById = {}
 CropConfig.ByLetter = {}
 for _, crop in CropConfig.Crops do
@@ -123,8 +138,17 @@ CropConfig.ObbySeeds = {
 -- The rare crop of obby world `world` (nil for the Tutorial or a world without one).
 function CropConfig.RareOfWorld(world: number?)
 	for _, crop in CropConfig.Crops do
-		if crop.rare and crop.world == world then
+		if crop.rare and not crop.tree and crop.world == world then
 			return crop
+		end
+	end
+	return nil
+end
+-- TR: the rare tree of obby world `world` (its saplings come from the world's stage meters), or nil.
+function CropConfig.RareTreeOf(world: number?)
+	for _, tree in CropConfig.Trees do
+		if tree.rare and tree.world == world then
+			return tree
 		end
 	end
 	return nil
@@ -264,10 +288,10 @@ CropConfig.Mastery = {
 CropConfig.PointLines = { "Value", "Size", "Speed" } -- the crop page's order
 CropConfig.PointIcons = { Value = "💰", Size = "📏", Speed = "⚡" } -- the crop page's icon tiles and the upgrade toast
 
--- The common crops in unlock order (Potato first, always open).
+-- The common crops in unlock order (Potato first, always open); trees are not on it.
 CropConfig.Ladder = {}
 for _, crop in CropConfig.Crops do
-	if not crop.rare then
+	if not crop.rare and not crop.tree then
 		table.insert(CropConfig.Ladder, crop)
 	end
 end
@@ -331,9 +355,13 @@ function CropConfig.SpeedMult(pts): number
 	return 1 / (1 - CropConfig.PointsIn(pts, "Speed") * CropConfig.Mastery.Points.Speed)
 end
 
--- Whether crop id `id` is open for a player with the unlocked set `unlocked` ({ [id] = true }): rare crops and Potato always are.
+-- Whether crop id `id` is open for a player with the unlocked set `unlocked` ({ [id] = true }): rare crops and Potato always are; a
+-- stall tree with its `unlockWith` crop (TR).
 function CropConfig.IsUnlocked(unlocked, id: string): boolean
 	local crop = CropConfig.ById[id]
+	if crop and crop.tree and not crop.rare then
+		return crop.unlockWith ~= nil and CropConfig.IsUnlocked(unlocked, crop.unlockWith)
+	end
 	return crop ~= nil and (crop.rare == true or crop.order == 1 or (unlocked ~= nil and unlocked[id] == true))
 end
 
@@ -546,12 +574,67 @@ function CropConfig.SalePrice(crop, pts): number
 	return CropConfig.SaleValue(crop, 1, pts)
 end
 
--- Look stage 1..3 of a planted crop (3 = ripe), from its growth seconds.
-function CropConfig.Stage(crop, grown: number): number
+-- Look stage 1..3 of a planted crop (3 = ripe), from its growth seconds. A tree (TR): 1 / 2 while it grows to tree.First, then 2 while
+-- bare and 3 while fruit hangs on it (`fruit`).
+function CropConfig.Stage(crop, grown: number, fruit: number?): number
+	if crop.tree then
+		if grown >= crop.tree.First then
+			return if (fruit or 0) > 0 then 3 else 2
+		end
+		return if grown >= crop.tree.First / 2 then 2 else 1
+	end
 	if grown >= crop.growSeconds then
 		return 3
 	end
 	return if grown >= crop.growSeconds / 2 then 2 else 1
+end
+
+-- TR: adds `growth` growth seconds to the tree square `entry` ({ Grown, Fruit, Next }) of tree `crop`: first growth up to tree.First,
+-- then one fruit per crop.growSeconds up to tree.Cap; at the cap the tree stops bearing (Next = 0) and further growth is lost. A remainder
+-- within `epsilon` of a boundary counts as reached. Returns the fruit gained.
+function CropConfig.GrowTree(crop, entry, growth: number, epsilon: number?): number
+	local tree, eps = crop.tree, epsilon or 0
+	local grown = entry.Grown or 0
+	if grown < tree.First then
+		local use = math.min(growth, tree.First - grown)
+		grown += use
+		growth -= use
+		if tree.First - grown <= eps then
+			grown = tree.First
+		end
+		entry.Grown = grown
+	end
+	local fruit = entry.Fruit or 0
+	if grown < tree.First or fruit >= tree.Cap then
+		entry.Next = 0
+		return 0
+	end
+	local next = (entry.Next or 0) + math.max(0, growth)
+	local gained = math.min(tree.Cap - fruit, math.floor((next + eps) / crop.growSeconds))
+	entry.Fruit = fruit + gained
+	entry.Next = if entry.Fruit >= tree.Cap then 0 else math.max(0, next - gained * crop.growSeconds)
+	return gained
+end
+
+-- TR: growth seconds tree square `entry` still needs for its next fruit (the first fruit comes a fruit time after tree.First), or nil
+-- at the cap (it does not grow).
+function CropConfig.TreeNeed(crop, entry): number?
+	local tree = crop.tree
+	local grown, fruit = entry.Grown or 0, entry.Fruit or 0
+	if fruit >= tree.Cap then
+		return nil
+	end
+	if grown < tree.First then
+		return tree.First - grown + crop.growSeconds
+	end
+	return math.max(0, crop.growSeconds - (entry.Next or 0))
+end
+
+-- TR: the price of the next sapling of stall tree `crop` for a player who holds + has planted `owned` of it, or nil (none left to buy,
+-- or a tree the stall does not sell).
+function CropConfig.SaplingPrice(crop, owned: number): number?
+	local prices = crop.tree and crop.tree.Prices
+	return if prices then prices[owned + 1] else nil
 end
 
 -- Expansion that buys the next square of a field with `open` squares open, or nil at MaxSquares.
@@ -694,7 +777,7 @@ end
 -- server and for every player who has it), or the pity turn (block + position) % Pity == 0 (never out more than Pity - 1 blocks in a row).
 function CropConfig.StallStock(block: number, crop): boolean
 	local stall = CropConfig.Stall
-	local order = crop.order or 0
+	local order = crop.order or crop.stallOrder or 0
 	return Random.new(block * 7919 + order * 104729):NextNumber() < stall.Chance or (block + order) % stall.Pity == 0
 end
 
@@ -727,12 +810,18 @@ function CropConfig.StallAlways(unlocked, extra: { string }?)
 	return always
 end
 
--- The rotating crops of a player in block `block`: { [cropId] = in stock } for every unlocked common crop not in `always`.
+-- The rotating crops of a player in block `block`: { [cropId] = in stock } for every unlocked common crop not in `always` and every
+-- unlocked stall tree (TR: its saplings rotate like a crop).
 function CropConfig.StallRotating(block: number, unlocked, always): { [string]: boolean }
 	local rotating = {}
 	for _, crop in CropConfig.Ladder do
 		if CropConfig.IsUnlocked(unlocked, crop.id) and not always[crop.id] then
 			rotating[crop.id] = CropConfig.StallStock(block, crop)
+		end
+	end
+	for _, tree in CropConfig.Trees do
+		if tree.tree.Prices and CropConfig.IsUnlocked(unlocked, tree.id) then
+			rotating[tree.id] = CropConfig.StallStock(block, tree)
 		end
 	end
 	return rotating

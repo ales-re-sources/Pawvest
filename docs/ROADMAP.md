@@ -33,7 +33,7 @@ Status levels: **Implemented** (code in `src/`, committed), **Studio-validated**
 | CG1–CG21 | Plant growth art, 19 crops, all in the field ([per crop](PLANT_GROWTH.md#crops-and-status)) | ✔ | geometry + PlotView pass; stills of Tomato, Pepper, Pumpkin await review; phone performance and second client open | – |
 | CP | Crop page redesign | ✔ | ✔ | – |
 | HX0 | Hybrid plants: look prototype (Studio reviewer only) | ✔ | ✔ | – |
-| TR | Fruit trees: perennials on one square, a stall tree and a rare obby tree ([EXPANSION §5.4](EXPANSION.md)); the first update after 1.0 | – | – | – |
+| TR | Fruit trees: perennials on one square, a stall tree and a rare obby tree ([EXPANSION §5.4](EXPANSION.md)); the first update after 1.0 | TR0–TR1 | TR1 (server) | – |
 | HX1 | Hybrid breeding mechanic ([HYBRIDS.md](HYBRIDS.md)): main rules decided, numbers open | design only | – | – |
 | K1 | First-hour fixes (kid playtest 2026-11-01): Stage 5, G1 fallback, Double Jump world reward, hatch panel done; the rest is measured in M6a | partial | partial | – |
 | TH | Store thumbnails ([THUMBNAILS.md](THUMBNAILS.md) §8–9): logo, release candidates A1–A3, C1–C3; stud sign decision, grid tile test, kid test open | partial | – | – |
@@ -88,10 +88,13 @@ Target: a player plants a tree once and comes back to pick its fruit for good; t
 obby (rare tree per world), two kinds in the first update: one stall tree and one rare obby tree. Cut into:
 - **TR0 Numbers and rules: done** (2026-11-27; EXPANSION §5.4, ECONOMY → TR0). Left for TR1 as proposals: "3 per kind" counts held +
   planted with the price by that count; the stall tree's star counts in the quick class.
-- **TR1 Lifecycle (server):** a tree square keeps its planting and stores its fruit growth; planting a sapling, growth to first fruit,
-  bearing up to the cap and stopping there, online / offline / 24 h cap; Harvest picks all ripe fruit that fits in the barn, one size roll
-  per fruit; Tending picks during absences; crows take at most one fruit; Uproot works on a bearing tree; mastery, requests, Hall count
-  fruit; saplings in the stall and from the obby; plot feed carries a tree and its fruit; PROTOCOL updated. Stored ids never reused.
+- **TR1 Lifecycle (server): Studio-validated** (2026-11-27). Trees are `Apple` 🍎 (stall, with Pepper) and `GoldenApple` 🍏 (World 1),
+  the user's names (stored ids). `CropConfig.Trees` joins `Crops` / `ById`, not the `Ladder`; a sapling is a seed of the tree, fruit is its
+  crop; storage and remotes: PROTOCOL (Field squares, `MeterSeeds`, Harvest `count`, BuySeeds `maxed`, plot stage 1-3, `fruit` / `young`).
+  A hand pick takes all fruit (the barn limits only pets, as for crops); saplings cost 4 000 / 5 500 / 8 000 by the number owned (held +
+  planted, at most 3). Validated with a fixture profile: offline growth, Tending picks, a crow eating one fruit, Harvest / `notripe`,
+  Uproot, BuySeeds `maxed` / `obby`, online fruit, a Stage 1 Gold finish turning the 3rd meter seed into a Golden apple sapling, reload
+  unchanged, no client or server errors. Until TR3 the trees show in the client's stall / barn lists as plain rows and have no art.
 - **TR2 Art:** two 1×1 tree recipes with fixed fruit slots (Frost Grape is the reference), fruit regrowth without resetting the tree; the
   five-snapshot review plus a picked / regrown pair; a full field of trees within the phone budget.
 - **TR3 UI:** square card for a tree (growth bar, then "🍎 3 / 4 · next in 12 min"), ring with the fruit count and outside the shared ring

@@ -219,13 +219,28 @@ local function fieldOf(player: Player, profile)
 				and type(square) == "table"
 				and CropConfig.ById[square.Crop]
 			then
-				squares[tostring(index)] = {
-					Crop = square.Crop,
-					Grown = if finite(square.Grown) then math.max(0, square.Grown) else 0,
-					N = count(square.N),
-					Tried = if square.Tried == true then true else nil,
-					Crow = if square.Crow == true then true else nil,
-				}
+				local tree = CropConfig.ById[square.Crop].tree
+				if tree then -- TR: Grown up to First, Fruit up to Cap, Next below a fruit time; Tried / Crow = the pick count rolled at
+					local picks = count(square.Picks)
+					squares[tostring(index)] = {
+						Crop = square.Crop,
+						Grown = if finite(square.Grown) then math.clamp(square.Grown, 0, tree.First) else 0,
+						N = count(square.N),
+						Fruit = math.min(count(square.Fruit), tree.Cap),
+						Next = if finite(square.Next) then math.clamp(square.Next, 0, CropConfig.ById[square.Crop].growSeconds) else 0,
+						Picks = picks,
+						Tried = if square.Tried == picks then picks else nil,
+						Crow = if square.Crow == picks then picks else nil,
+					}
+				else
+					squares[tostring(index)] = {
+						Crop = square.Crop,
+						Grown = if finite(square.Grown) then math.max(0, square.Grown) else 0,
+						N = count(square.N),
+						Tried = if square.Tried == true then true else nil,
+						Crow = if square.Crow == true then true else nil,
+					}
+				end
 			end
 		end
 	end
@@ -339,9 +354,18 @@ local function fieldOf(player: Player, profile)
 		end
 	end
 	garden.Meters = meters
+	local meterSeeds = {} -- TR: rare seeds each world's stage meters gave ({ ["1"] = n }; every MeterEvery-th is a rare tree's sapling)
+	if type(garden.MeterSeeds) == "table" then
+		for world, n in garden.MeterSeeds do
+			if type(world) == "string" and count(n) > 0 then
+				meterSeeds[world] = count(n)
+			end
+		end
+	end
+	garden.MeterSeeds = meterSeeds
 	garden.RareDay = if finite(garden.RareDay) then garden.RareDay else nil
 	local last = type(garden.LastCrop) == "string" and CropConfig.ById[garden.LastCrop]
-	garden.LastCrop = if last and not last.rare then last.id else nil
+	garden.LastCrop = if last and not last.rare and not last.tree then last.id else nil
 
 	-- field pets: an owned pet with the job's aptitude, on an owned square of its own, within the slots (in uid order);
 	-- PetService unequips a field pet (equipped and on the field never both)
@@ -470,7 +494,7 @@ local function addPlant(player: Player, garden, crop)
 	end
 	local before = CropConfig.MasteryLevel(crop, entry.N, entry.Pts)
 	local plants = 1
-	if garden.Rested > 1e-9 then -- rested mastery (silent): the plant counts double and uses 1 / step of the pool
+	if garden.Rested > 1e-9 and crop.step then -- rested mastery (silent): the plant counts double and uses 1 / step of the pool (not trees)
 		plants = 2
 		garden.Rested -= 1 / crop.step
 		if garden.Rested < 1e-9 then
@@ -576,6 +600,51 @@ local function tendRoll(player: Player, n: number): number
 	return Random.new(player.UserId * 7919 + n * 104729):NextNumber()
 end
 
+-- TR: the Tending roll of tree planting `n` at its `picks`-th pick, and the crow / guard rolls likewise: a tree rolls once per pick.
+local function treeRoll(player: Player, n: number, picks: number, salt: number): number
+	return Random.new(player.UserId * 7907 + n * 104723 + picks * 7727 + salt):NextNumber()
+end
+
+-- TR: the trees of `id` a player has: saplings held + planted (tree.Max caps it).
+local function treesOwned(garden, field, id: string): number
+	local n = garden.Seeds[id] or 0
+	for _, square in field.Squares do
+		if square.Crop == id then
+			n += 1
+		end
+	end
+	return n
+end
+
+-- TR: whether square `square` of `crop` holds something to harvest: a crop at its grow time, a tree with fruit.
+local function isRipe(crop, square): boolean
+	if crop.tree then
+		return (square.Fruit or 0) > 0
+	end
+	return square.Grown >= crop.growSeconds
+end
+
+-- TR: picks `amount` fruit of tree square `entry` into the barn. Each fruit takes the next field planting number for its size roll (a
+-- re-join cannot reroll it) and counts one plant (mastery), for the Hall and the requests (store). Returns the biggest size factor,
+-- whether a fruit set a record, and the last plant answer ({ mastery, levelUp?, unlocked? } or nil).
+local function pickFruit(player: Player, garden, field, crop, entry, amount: number): (number, boolean, any)
+	local biggest, record, grown, levelUp = 0, false, nil, false
+	for _ = 1, amount do
+		field.Plantings += 1
+		local factor, best = store(player, garden, crop, field.Plantings)
+		biggest = math.max(biggest, factor)
+		record = record or best
+		grown = addPlant(player, garden, crop) or grown
+		levelUp = levelUp or (grown ~= nil and grown.levelUp == true)
+	end
+	if grown then
+		grown.levelUp = levelUp or nil
+	end
+	entry.Fruit -= amount
+	entry.Picks += 1
+	return biggest, record, grown
+end
+
 -- Adds the growth since SettledAt to every planted square and moves SettledAt to now: an absence (the join) at the offline
 -- rate, anything else at the online rate. In an absence Tending pets harvest and replant the ripe crops in their reach.
 -- Placed pets gain aptitude XP by WorkSeconds, preserving their training pace. In an absence crows raid afterwards (E4-thin). Returns whether a
@@ -602,6 +671,7 @@ local function settle(player: Player, profile, field, open, absence: boolean): (
 	local barn = CropConfig.BarnFor(CropConfig.UpgradeLevel(field.Upgrades, "Barn"))
 	local strength = if absence then tendingStrength(profile, open) else {}
 	local changed, tended, biggest = false, nil, nil
+	local hadFruit = {} -- TR: [square key] = true for a tree that had fruit before this settle
 	local keys = {}
 	for key in field.Squares do
 		table.insert(keys, key)
@@ -612,8 +682,32 @@ local function settle(player: Player, profile, field, open, absence: boolean): (
 	for _, key in keys do
 		local square = field.Squares[key]
 		local crop = CropConfig.ById[square.Crop]
-		local before = CropConfig.Stage(crop, square.Grown)
+		local before = CropConfig.Stage(crop, square.Grown, square.Fruit)
 		local growthOf = cropGrowth * CropConfig.SpeedMult(pointsOf(garden, crop)) -- EV3c Speed
+		if crop.tree then -- TR: the tree stays; a Tending pet picks its fruit once per pick count (into the barn's room)
+			local fruitBefore = square.Fruit
+			if fruitBefore > 0 then
+				hadFruit[key] = true -- for the crows: fruit hung from the start of this absence
+			end
+			CropConfig.GrowTree(crop, square, growthOf, RIPEN_EPSILON)
+			local chance = strength[tonumber(key)]
+			local room = barn - CropConfig.SeedTotal(garden.Items)
+			if chance and square.Fruit > 0 and square.Tried ~= square.Picks and room > 0 then
+				if treeRoll(player, square.N, square.Picks, 1) >= chance then
+					square.Tried = square.Picks -- the pet did not get to it: it waits for the owner (or the next pick)
+				else
+					local picked = math.min(square.Fruit, room)
+					local factor = pickFruit(player, garden, field, crop, square, picked)
+					tended = tended or {}
+					tended[crop.id] = (tended[crop.id] or 0) + picked
+					if not biggest or factor > biggest.factor then
+						biggest = { crop = crop.id, factor = factor }
+					end
+				end
+			end
+			changed = changed or square.Fruit ~= fruitBefore or CropConfig.Stage(crop, square.Grown, square.Fruit) ~= before
+			continue
+		end
 		square.Grown += growthOf
 		if square.Grown < crop.growSeconds and crop.growSeconds - square.Grown <= RIPEN_EPSILON then
 			square.Grown = crop.growSeconds
@@ -673,7 +767,33 @@ local function settle(player: Player, profile, field, open, absence: boolean): (
 		for _, key in keys do
 			local entry = field.Squares[key]
 			local crop = entry and CropConfig.ById[entry.Crop]
-			if crop and not crop.rare and not entry.Crow and entry.Grown >= crop.growSeconds then
+			if crop and crop.tree then -- TR: crows take one fruit of a common tree, never the tree; one roll per pick count
+				if not crop.rare and entry.Fruit > 0 and entry.Crow ~= entry.Picks then
+					local rate = baseRate * CropConfig.SpeedMult(pointsOf(garden, crop))
+					-- fruit from before the absence hung all of it; else the oldest fruit came at the latest this many growth seconds
+					-- before the growth ended
+					local ripeAt = if hadFruit[key] then start
+						else math.max(start, grownUntil - entry.Fruit * crop.growSeconds / rate)
+					if ripeAt < now and CropConfig.CrowsBetween(ripeAt, now) then
+						entry.Crow = entry.Picks
+						if treeRoll(player, entry.N, entry.Picks, 2) < rules.Chance then
+							raid = raid or { ate = {}, chased = {} }
+							local guard = guards[tonumber(key)]
+							if guard and treeRoll(player, entry.N, entry.Picks, 3) < guard.chance then
+								raid.chased[guard.uid] = (raid.chased[guard.uid] or 0) + 1
+							else
+								entry.Fruit -= 1
+								raid.ate[crop.id] = (raid.ate[crop.id] or 0) + 1
+								changed = true
+								eaten += 1
+								if eaten >= rules.Cap then
+									break
+								end
+							end
+						end
+					end
+				end
+			elseif crop and not crop.rare and not entry.Crow and entry.Grown >= crop.growSeconds then
 				local rate = baseRate * CropConfig.SpeedMult(pointsOf(garden, crop))
 				local ripeAt = math.max(start, grownUntil - (entry.Grown - crop.growSeconds) / rate)
 				if ripeAt < now and CropConfig.CrowsBetween(ripeAt, now) then
@@ -726,7 +846,7 @@ local function settleFor(player: Player, profile, field, open)
 	local ripe = 0
 	for _, square in field.Squares do
 		local crop = CropConfig.ById[square.Crop]
-		if crop and square.Grown >= crop.growSeconds then
+		if crop and isRipe(crop, square) then
 			ripe += 1
 		end
 	end
@@ -802,6 +922,21 @@ local function growthWindow(field, square, duration: number, speed: number): (nu
 	return startAt, field.SettledAt + math.ceil((duration - square.Grown - RIPEN_EPSILON) / speed)
 end
 
+-- The crop-like growth window of square `square` of `crop` (startAt, readyAt; both 0 when ripe). TR: a tree's window runs to its next
+-- fruit (from planting to its first fruit while young, then one fruit time) and is ripe while fruit hangs on it, so the clients' crop
+-- logic (rings, ripe badges, the Basket) reads a tree as a crop that is ripe when it has fruit.
+local function windowOf(field, square, crop, speed: number): (number, number)
+	if not crop.tree then
+		return growthWindow(field, square, crop.growSeconds, speed)
+	end
+	local need = CropConfig.TreeNeed(crop, square)
+	if square.Fruit > 0 or not need then
+		return 0, 0
+	end
+	local total = if square.Grown < crop.tree.First then crop.tree.First + crop.growSeconds else crop.growSeconds
+	return field.SettledAt - (total - need) / speed, field.SettledAt + math.ceil((need - RIPEN_EPSILON) / speed)
+end
+
 -- EV3b: the state's mastery part: { crops = { [crop] = plants grown }, points = { [crop] = { [line] = 1 } } (EV3c), unlocked =
 -- { [crop] = true }, quest = { crop, got }? } (Garden.Rested stays server-only: rested mastery is silent).
 local function masteryState(garden)
@@ -842,13 +977,15 @@ GardenService.AddStateField("field", function(profile)
 	local squares = {}
 	for key, square in field.Squares do
 		local crop = CropConfig.ById[square.Crop]
-		-- server time when the crop is ripe if the owner stays online (the panel's countdown)
-		local startAt, finish = growthWindow(field, square, crop.growSeconds, onlineSpeed(profile.Garden, field, crop))
+		-- server time when the crop is ripe if the owner stays online (the panel's countdown); a tree (TR): its next fruit
+		local startAt, finish = windowOf(field, square, crop, onlineSpeed(profile.Garden, field, crop))
 		local readyAt = if finish == 0 then now else finish
 		local grown = if finish == 0 then crop.growSeconds
 			else crop.growSeconds * math.clamp((now - startAt) / (finish - startAt), 0, 1)
 		squares[key] = { crop = square.Crop, grown = math.floor(grown), readyAt = readyAt,
-			size = harvestSize(owner, profile.Garden, crop, square.N) }
+			size = harvestSize(owner, profile.Garden, crop, square.N),
+			fruit = if crop.tree then square.Fruit else nil, -- TR: fruit hanging, of tree.Cap
+			young = if crop.tree and square.Grown < crop.tree.First then true else nil } -- TR: before its first growth
 	end
 	local garden = profile.Garden
 	local pets = {} -- [square] = the pet working there
@@ -927,12 +1064,16 @@ function GardenField.PlotField(player: Player)
 		local key = tostring(n)
 		local square = field.Squares[key]
 		local crop = square and CropConfig.ById[square.Crop]
-		cells[n] = if not open[n] then "#0" elseif crop then crop.letter .. CropConfig.Stage(crop, square.Grown) else ".0"
+		cells[n] = if not open[n] then "#0"
+			elseif crop then crop.letter .. CropConfig.Stage(crop, square.Grown, square.Fruit)
+			else ".0"
 		if open[n] and crop then
-			local startAt, readyAt = growthWindow(field, square, crop.growSeconds, onlineSpeed(profile.Garden, field, crop))
+			local startAt, readyAt = windowOf(field, square, crop, onlineSpeed(profile.Garden, field, crop))
 			plants = plants or {}
 			plants[key] = { n = square.N, startAt = startAt, readyAt = readyAt,
-				size = harvestSize(player, profile.Garden, crop, square.N) }
+				size = harvestSize(player, profile.Garden, crop, square.N),
+				fruit = if crop.tree then square.Fruit else nil, -- TR: fruit hanging (tree.Cap at most)
+				young = if crop.tree and square.Grown < crop.tree.First then true else nil }
 		end
 	end
 	local pets = {} -- "Kind:Level:uid:square:tending:guard" per field pet, by square
@@ -1017,8 +1158,10 @@ plantEvent.OnServerEvent:Connect(function(player, square, cropId)
 		garden.Seeds[crop.id] = nil
 	end
 	field.Plantings += 1
-	field.Squares[tostring(square)] = { Crop = crop.id, Grown = 0, N = field.Plantings }
-	if not crop.rare then
+	field.Squares[tostring(square)] = if crop.tree
+		then { Crop = crop.id, Grown = 0, N = field.Plantings, Fruit = 0, Next = 0, Picks = 0 } -- TR: a sapling
+		else { Crop = crop.id, Grown = 0, N = field.Plantings }
+	if not crop.rare and not crop.tree then
 		garden.LastCrop = crop.id -- E2b: the seed pouch drops this crop
 	end
 	done(player, "Plant", { square = square, crop = crop.id })
@@ -1037,11 +1180,26 @@ harvestEvent.OnServerEvent:Connect(function(player, square)
 		return reject(player, "Harvest", "empty")
 	end
 	local crop = CropConfig.ById[entry.Crop]
-	if entry.Grown < crop.growSeconds then
+	if not isRipe(crop, entry) then
 		return reject(player, "Harvest", "notripe")
 	end
 
 	local garden = profile.Garden
+	if crop.tree then -- TR: picks every fruit (the tree stays; below the cap its part-grown fruit carries on)
+		local picked = entry.Fruit
+		local size, record, grown = pickFruit(player, garden, field, crop, entry, picked)
+		grown = grown or {}
+		return done(player, "Harvest", {
+			square = square,
+			crop = crop.id,
+			count = picked,
+			mastery = grown.mastery,
+			levelUp = grown.levelUp,
+			unlocked = grown.unlocked,
+			size = size,
+			best = record or nil,
+		})
+	end
 	field.Squares[tostring(square)] = nil
 	local extra = shearsExtra(player, garden, entry.N)
 	local size, record = store(player, garden, crop, entry.N, extra)
@@ -1059,7 +1217,7 @@ harvestEvent.OnServerEvent:Connect(function(player, square)
 end)
 
 -- Digs up a crop that is still growing: the square is empty again, the seed is lost (no refund, no harvest, no mastery).
--- A ripe crop is refused (`ripe`): harvesting it is always better.
+-- A ripe crop is refused (`ripe`): harvesting it is always better. A tree (TR) goes in any state, with its sapling and fruit.
 uprootEvent.OnServerEvent:Connect(function(player, square)
 	if not GardenService.WholeNumber(square) or not GardenService.Allow(player) then
 		return
@@ -1073,7 +1231,7 @@ uprootEvent.OnServerEvent:Connect(function(player, square)
 		return reject(player, "Uproot", "empty")
 	end
 	local crop = CropConfig.ById[entry.Crop]
-	if crop and entry.Grown >= crop.growSeconds then
+	if crop and not crop.tree and entry.Grown >= crop.growSeconds then
 		return reject(player, "Uproot", "ripe")
 	end
 	field.Squares[tostring(square)] = nil
@@ -1111,6 +1269,16 @@ buySeedsEvent.OnServerEvent:Connect(function(player, cropId, amount)
 		return reject(player, "BuySeeds", "barn")
 	end
 	local price = crop.seed * amount
+	if crop.tree then -- TR: at most tree.Max held + planted; each sapling at the price of its place in that count
+		local owned = treesOwned(garden, field, crop.id)
+		if owned + amount > crop.tree.Max then
+			return reject(player, "BuySeeds", "maxed")
+		end
+		price = 0
+		for i = 1, amount do
+			price += CropConfig.SaplingPrice(crop, owned + i - 1) or math.huge
+		end
+	end
 	if not PlayerProfile.TrySpend(player, price) then
 		return reject(player, "BuySeeds", "coins")
 	end
@@ -1604,7 +1772,25 @@ function GardenField.ObbyFinish(player: Player, stage, medal: number, previousMe
 	points -= full * rules.MeterSize
 	garden.Meters[stage.key] = if points > 0 then points else nil
 	if full > 0 then
-		table.insert(seeds, { crop = crop.id, count = full, why = "meter" })
+		-- TR: every MeterEvery-th seed from this world's meters is its rare tree's sapling while the player has fewer than tree.Max
+		local tree = CropConfig.RareTreeOf(stage.world)
+		local worldKey = tostring(stage.world)
+		local plain, saplings = 0, 0
+		for _ = 1, full do
+			local n = (garden.MeterSeeds[worldKey] or 0) + 1
+			garden.MeterSeeds[worldKey] = n
+			if tree and n % tree.tree.MeterEvery == 0 and treesOwned(garden, field, tree.id) + saplings < tree.tree.Max then
+				saplings += 1
+			else
+				plain += 1
+			end
+		end
+		if plain > 0 then
+			table.insert(seeds, { crop = crop.id, count = plain, why = "meter" })
+		end
+		if saplings > 0 then
+			table.insert(seeds, { crop = tree.id, count = saplings, why = "meter" })
+		end
 	end
 	for _, gain in seeds do
 		garden.Seeds[gain.crop] = (garden.Seeds[gain.crop] or 0) + gain.count

@@ -167,12 +167,12 @@ CAND = {
     ],
     # fruit trees (TR; EXPANSION 5.4), bought at the stall: (id, anchor square j of the first sapling, saplings, first growth s, fruit every s,
     # fruits held, ladder index of value). Until TR0 the model ran four placeholder trees (Tree1-4, 3 saplings each).
-    "trees": [("StallTree", 10, 3, 2 * 3600, 600, 4, 8)],
-    "tree_unlock": {"StallTree": 8},  # TR: a stall tree's saplings are sold from this ladder crop's unlock (8 = Pepper), in the ST rotation
+    "trees": [("Apple", 10, 3, 2 * 3600, 600, 4, 8)],  # ids = CropConfig.Trees (TR1)
+    "tree_unlock": {"Apple": 8},  # TR: a stall tree's saplings are sold from this ladder crop's unlock (8 = Pepper), in the ST rotation
     # fruit trees from the obby (TR): (id, world, saplings, first growth s, fruit every s, fruits held, ladder index of value, every): every
     # `every`-th rare seed from that world's stage meters is a sapling instead while fewer than `saplings` are held + planted; never sold,
     # no mastery
-    "obby_trees": [("ObbyTree", 1, 3, 8 * 3600, 3600, 6, 12, 3)],
+    "obby_trees": [("GoldenApple", 1, 3, 8 * 3600, 3600, 6, 12, 3)],
     "tree_mult": 1.0,  # fruit value per square-hour against the ladder crop of its index
     "sapling_step": 1.4,  # each next sapling of a kind costs x this
     # talents: id -> list of levels (anchor square j, factor, {ladder index: count}, {rare world: count}); a world reward level is ("reward",)
@@ -357,14 +357,15 @@ def build(c=None):
         # the ladder crop it points at (FL: its tier's rate; the smooth x r ladder before tier_mult)
         v = c["tree_mult"] * (crops[at - 1]["v"] if c.get("tier_mult") else c["v1"] * c["r"] ** (at - 1))
         fruit = round(v * f / H)
-        trees.append({"id": tid, "t0": float(t0), "f": float(f), "cap": cap, "fruit": fruit, "pts": crops[at - 1]["pts"]})
+        trees.append({"id": tid, "t0": float(t0), "f": float(f), "cap": cap, "fruit": fruit, "pts": crops[at - 1]["pts"], "max": n})
         for s in range(n):
             items.append({"name": f"{tid} sapling {s + 1}", "fam": "Sapling", "tree": tid, "lvl": s + 1,
                           "price": anchor(j, c["sapling_step"] ** s), "gate": M["sq_gate"][j - 1], "group": "field"})
     M["obby_trees"] = {}  # world -> [(tree id, saplings, every)]: every `every`-th meter seed of the world is a sapling instead
     for tid, w, n, t0, f, cap, at, every in c.get("obby_trees", []):
         v = c["tree_mult"] * (crops[at - 1]["v"] if c.get("tier_mult") else c["v1"] * c["r"] ** (at - 1))
-        trees.append({"id": tid, "t0": float(t0), "f": float(f), "cap": cap, "fruit": round(v * f / H), "pts": 0, "obby": w})
+        trees.append({"id": tid, "t0": float(t0), "f": float(f), "cap": cap, "fruit": round(v * f / H), "pts": 0, "obby": w, "every": every,
+                      "max": n})
         M["obby_trees"].setdefault(w, []).append((tid, n, every))
     M["trees"] = {t["id"]: t for t in trees}
     talents = {}
@@ -2571,6 +2572,17 @@ def config_match(M):
             out.append(f"egg {k}: config opensWith {o.get('opens')} vs proposal {M['c']['egg_opens'].get(k)}")
     if P["hatch_by_rarity"] != M["c"]["hatch"]:
         out.append(f"hatch times: config {P['hatch_by_rarity']} vs proposal {M['c']['hatch']}")
+    cfg_trees = {t[0]: t[1:] for t in cc.get("trees", [])}  # TR: the fruit trees
+    if set(cfg_trees) != set(M["trees"]):
+        out.append(f"trees: config {sorted(cfg_trees)} vs proposal {sorted(M['trees'])}")
+    for tid, T in M["trees"].items():
+        u = C.get("tree_unlock", {}).get(tid)
+        prices = [] if T.get("obby") else [want(f"{tid} sapling {s + 1}") for s in range(T["max"])]
+        w = [T["t0"], T["f"], T["cap"], T["fruit"], prices, None if u is None else cfg_id(M["crops"][u - 1]["id"]), T.get("obby"),
+             T.get("every"), T["max"]]
+        have = cfg_trees.get(tid)
+        if have is None or [float(have[0]), float(have[1])] + list(have[2:]) != w:
+            out.append(f"tree {tid}: config {have} vs proposal {w}")
     return out
 
 
