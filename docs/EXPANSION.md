@@ -101,8 +101,7 @@ flexible, not stronger at a job. New aptitudes get new ids (stored ids never cha
 ## 5. Crop economy
 *Built (GDD §7.9, ECONOMY.md): the field loop (one crop per square, ripe crops wait, Tending replants during absences), one crop ladder with
 tiers that set Coins per hour (`CropConfig`), crop mastery, the market cart and seed stall, the size roll with records, selling with pet
-bonuses, crops as pet food.* **Not built:** perennial fruit trees (a sapling, first growth 2–24 h, then a fruit every 5–60 min up to a cap of
-4–6, forever; model-only in ECONOMY.md; also HYBRIDS.md).
+bonuses, crops as pet food.* **Not built:** fruit trees (§5.4).
 
 Harvests are items with four uses: sell, process at a station (about 1.5–2× the raw value), turn in on a request or in a restoration bundle,
 replant. **Grow times match real-life gaps** (a quick crop for a short session, 1 h for lunch, the longest for the night): "what do I plant
@@ -135,6 +134,24 @@ Variants roll on the server per planting (like the size roll: re-joining cannot 
 - Size and variant stack; the expected value with tools, fertilisers and pets maxed goes through the economy model (E0) before D4. A variant
   or record item is stored apart from the plain per-crop counts and summed sizes the barn keeps today.
 - Giants can enter the Harvest Fair (§9.3) or stay as a yard trophy (E7) instead of being sold.
+
+### 5.4 Fruit trees (perennials; ROADMAP → TR)
+A tree is a perennial on the crop field: planted from a sapling, it is never cleared by a harvest and bears fruit for good. *Decided (the
+user, 2026-11-27):* trees are the first update after 1.0; a tree takes **one square** (1×1; big 2×2 trees come with the Orchard landmark
+or hybrids); **digging one up loses it** (two-tap confirm, as for a crop); saplings come from the **seed stall** (Coins, mastery-gated,
+at most 3 per kind, each next one dearer) **and the obby** (a rare tree per world, never sold, like the rare crops); the first update
+ships **two kinds: one stall tree and one rare obby tree**.
+
+Proposed rules (confirm in TR0):
+- **Lifecycle:** sapling → first growth → one fruit at a time up to a cap (4–6); ripe fruit waits and never rots; at the cap the tree stops
+  bearing. Growth as for crops (online ×2, offline ×1, 24 h cap; Growth upgrade and Cloches apply).
+- **Picking:** a Basket tap on a bearing tree picks every ripe fruit that fits in the barn; each fruit rolls its own size (Hall records,
+  ribbons and requests work unchanged). A Tending pet picks during absences (nothing to replant); crows eat at most one fruit, never the
+  tree; a rare tree is never raided.
+- **Mastery:** each picked fruit of a stall tree counts one plant toward that tree's ★ and points; Speed shortens the time between fruits.
+  Rare trees give no mastery (as rare crops).
+- **On the field:** a bearing tree's ring shows its fruit ("🍎 3/4") instead of the pie; trees stay out of the shared ring height (the
+  tallest plant), or one tree lifts every ring. Fruit regrows at the recipe's fixed fruit slots (PLANT_GROWTH → Identify fruit).
 
 ### 5.5 Guardrails
 Checked by `tools/economy.py check` after every rebalance (targets: ECONOMY.md): rare crops pay the most and only the obby gives them; seeds,
@@ -261,7 +278,7 @@ is not planned for launch (a soft "Replant" only if the queue empties, ECONOMY.m
 crops, one rare crop, a pet-skill requirement (e.g. a Weeding pet of level 4+), and for some an obby achievement or a mini-game (§8.3). Money is
 one input of five, so every play style feeds the goal. First sketch (finite; fix the first 6–8 before E6; landmark → what it unlocks, bundle
 sketch): Kitchen (Kitchen station; Coins, tier-1 crops, a Big crop) · Old mill (Mill; Coins, wheat, a Crafting pet, the Gear Puzzle) ·
-Greenhouse (growing in any season; tier-2 crops, a world-1 rare crop) · Pond (water crops, fishing; a Fertilising pet) · Orchard (perennial
+Greenhouse (growing in any season; tier-2 crops, a world-1 rare crop) · Pond (water crops, fishing; a Fertilising pet) · Orchard (big 2×2
 trees; saplings, a world-2 rare crop) · Watchtower (longer forecast, +1 field pet slot; a Pest-control pet of level 4+, Gold on a world-2
 stage) · Training grounds (aptitude XP +25 % provisional; a pet with 2 aptitudes at level 3+) · Nursery (choose between hatched strays; 5
 pets in the field guide) · Observatory (whole-day forecast, seasonal events; rare crops of three worlds, a Starlit crop).
@@ -320,6 +337,7 @@ the loop works.
 
 | Drop | Content | Build stages |
 |---|---|---|
+| TR "Fruit trees" | Perennial fruit trees on one square: a stall tree and a rare obby tree (§5.4) | E1 |
 | D1 "The Critters" | Moles, slugs, raccoons, weeds and Weeding, Pest-control specialities, the forecast board with weather, Scarecrow, Seed chest, full ledger | E4, E9 (weather), E1 |
 | D2 "Comfort" | Comfort shop: Night shift, instant grow, starter pack, first cosmetics; Wheelbarrow | M7 |
 | D3 "Weekly" | Weekly obby challenge, first farm stage and its crop, Harvest Fair (grows from the Harvest Hall), streak calendar | E10, E2 |

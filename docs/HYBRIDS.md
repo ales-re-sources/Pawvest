@@ -80,8 +80,8 @@ of a discarded strain, mutagen sources and recipes.
 
 ## 7. Other open design work
 - **Perennials (decided: yes):** a tree is not removed by Harvest; the body stays and fruit regrows. Needs a lifecycle with separate body
-  and fruit state ([PLANT_CATALOGUE_SCALE.md](PLANT_CATALOGUE_SCALE.md) → Lifecycle). Open: which gene makes a plant perennial
-  (proposed: `wood`), regrow time, whether a perennial ever dies or is only dug up.
+  and fruit state ([PLANT_CATALOGUE_SCALE.md](PLANT_CATALOGUE_SCALE.md) → Lifecycle), built first for catalogue trees (EXPANSION §5.4,
+  ROADMAP → TR: never dies, digging up loses it). Open: which gene makes a plant perennial (proposed: `wood`), regrow time.
 - **2×2 on the field:** planting, pet reach, the square card and rings on a block; the field size increase.
 - **Storage and feed:** strain ids and genomes in the profile; genomes in the public plot feed (the one-letter crop codec must go first,
   PLANT_CATALOGUE_SCALE.md).

@@ -33,6 +33,7 @@ Status levels: **Implemented** (code in `src/`, committed), **Studio-validated**
 | CG1–CG21 | Plant growth art, 19 crops, all in the field ([per crop](PLANT_GROWTH.md#crops-and-status)) | ✔ | geometry + PlotView pass; stills of Tomato, Pepper, Pumpkin await review; phone performance and second client open | – |
 | CP | Crop page redesign | ✔ | ✔ | – |
 | HX0 | Hybrid plants: look prototype (Studio reviewer only) | ✔ | ✔ | – |
+| TR | Fruit trees: perennials on one square, a stall tree and a rare obby tree ([EXPANSION §5.4](EXPANSION.md)); the first update after 1.0 | – | – | – |
 | HX1 | Hybrid breeding mechanic ([HYBRIDS.md](HYBRIDS.md)): main rules decided, numbers open | design only | – | – |
 | K1 | First-hour fixes (kid playtest 2026-11-01): Stage 5, G1 fallback, Double Jump world reward, hatch panel done; the rest is measured in M6a | partial | partial | – |
 | TH | Store thumbnails ([THUMBNAILS.md](THUMBNAILS.md) §8–9): logo, release candidates A1–A3, C1–C3; stud sign decision, grid tile test, kid test open | partial | – | – |
@@ -54,7 +55,7 @@ without monetization), Sunshine (EV2c), World 4, the HX1 build.
 1. **Release gates, then public:** MU (adds the Hall and a full field on a real phone), TH1 + THU, the Czech review of every new text, the M6a
    live checks, "Before Max Players 8" under "Open items", then Max Players → 8 (a place setting).
 
-**After 1.0** (a drop every 1–2 weeks, EXPANSION §14; order provisional): D2 Comfort shop (M7) with EV2c Sunshine, then M6b obby time
+**After 1.0** (a drop every 1–2 weeks, EXPANSION §14; order provisional): **TR Fruit trees first** (the user, 2026-11-27), D2 Comfort shop (M7) with EV2c Sunshine, then M6b obby time
 calibration, D1 Critters, D3 Weekly, D4 Variants, D5 Kitchen, D6 Neighbours, D7 Pet depth, D8 World 4 (S9 / S10), D9 Estate, D10 Season 1;
 EV2d, EV2f and the HX1 build when they fit. **Accepted risk until EV2c:** the Tutorial repeat loop pays ~1 400 Coins / h (watch it in M6a
 telemetry).
@@ -80,6 +81,25 @@ After 1.0, each scoped when it starts: **EV2c** Sunshine (repeat-run Coins → 0
 change the model assumes). Open (the user, EV3): the quest's seed pack (4 seeds of the new crop, a first guess); the cart taste of a locked
 crop stays (tasted plants count toward its ★ but do not unlock it); a "farm book" review of crops / barn / quests (timing open); no free
 point reset (a paid comfort in D2 or an event item, EXPANSION §13).
+
+### TR — Fruit trees (the first update after 1.0; design: EXPANSION §5.4)
+Target: a player plants a tree once and comes back to pick its fruit for good; the perennial lifecycle that hybrids build on later
+(HYBRIDS §8). Decided (the user, 2026-11-27): one square per tree, digging up loses it, saplings from the stall (max 3 per kind) and the
+obby (rare tree per world), two kinds in the first update: one stall tree and one rare obby tree. Cut into:
+- **TR0 Numbers and rules:** for both kinds (proposed: the stall tree with quick fruit, the obby tree for the night) first growth,
+  fruit interval, cap and fruit value re-anchored on the current ladder in `economy_ev.py` (its `stall_trees` predate FL); sapling prices,
+  unlock gate and stall rule (always in stock once unlocked, or in the rotation); how the obby gives its sapling; confirm EXPANSION §5.4's
+  proposed rules. Done when `economy.py check` passes with the trees in and EXPANSION §5.4 has no "Proposed".
+- **TR1 Lifecycle (server):** a tree square keeps its planting and stores its fruit growth; planting a sapling, growth to first fruit,
+  bearing up to the cap and stopping there, online / offline / 24 h cap; Harvest picks all ripe fruit that fits in the barn, one size roll
+  per fruit; Tending picks during absences; crows take at most one fruit; Uproot works on a bearing tree; mastery, requests, Hall count
+  fruit; saplings in the stall and from the obby; plot feed carries a tree and its fruit; PROTOCOL updated. Stored ids never reused.
+- **TR2 Art:** two 1×1 tree recipes with fixed fruit slots (Frost Grape is the reference), fruit regrowth without resetting the tree; the
+  five-snapshot review plus a picked / regrown pair; a full field of trees within the phone budget.
+- **TR3 UI:** square card for a tree (growth bar, then "🍎 3 / 4 · next in 12 min"), ring with the fruit count and outside the shared ring
+  height, sapling rows in the stall, barn and seed picker, Czech strings.
+- **Validation:** one playtest boot without errors; a tree aged by a fixture (snapshot first) shows the cap, a pick, regrowth, a Tending
+  pick and a crow raid of one fruit; each new control through the real UI; a second client sees the tree and its fruit.
 
 ### HX1 — Hybrid plants: the breeding mechanic (design only; the build comes after 1.0)
 Notes, decisions and open points: HYBRIDS.md. **Decided (Ales, 2026-11-16):** price = measured kg × inherited value per kg; grow time from
