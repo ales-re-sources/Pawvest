@@ -167,14 +167,19 @@ CAND = {
     ],
     # fruit trees (TR; EXPANSION 5.4), bought at the stall: (id, anchor square j of the first sapling, saplings, first growth s, fruit every s,
     # fruits held, ladder index of value). Until TR0 the model ran four placeholder trees (Tree1-4, 3 saplings each).
-    "trees": [("Apple", 10, 3, 2 * 3600, 600, 4, 8)],  # ids = CropConfig.Trees (TR1)
-    "tree_unlock": {"Apple": 8},  # TR: a stall tree's saplings are sold from this ladder crop's unlock (8 = Pepper), in the ST rotation
+    # TR4: an Apple tree at Cucumber's tier on 4 squares (2 or 3 kept 8-12 squares at a tier-1 rate for good: -35 % income by day 60).
+    # TR5: the game has no cap (the player's choice): `saplings` is how many the modelled player buys, each at anchor(j, 1) (one price).
+    "trees": [("Apple", 13, 1, 2 * 3600, 300, 8, 6)],  # ids = CropConfig.Trees (TR1)
+    "tree_unlock": {"Apple": 6},  # TR: a stall tree's saplings are sold from this ladder crop's unlock (6 = Cucumber), in the ST rotation
+    # TR5: a stall tree is in a restock with chance tree_st[0], at least every tree_st[1] restocks, tree_st[2] saplings per player then
+    # (TR4 ran the crops' 0.5 / 3 / 12: a sapling in 2 of 3 hours)
+    "tree_st": [0.1, 24, 1],
     # fruit trees from the obby (TR): (id, world, saplings, first growth s, fruit every s, fruits held, ladder index of value, every): every
     # `every`-th rare seed from that world's stage meters is a sapling instead while fewer than `saplings` are held + planted; never sold,
     # no mastery
-    "obby_trees": [("GoldenApple", 1, 3, 8 * 3600, 3600, 6, 12, 3)],
+    "obby_trees": [("GoldenApple", 1, 3, 8 * 3600, 2700, 8, 12, 3)],
     "tree_mult": 1.0,  # fruit value per square-hour against the ladder crop of its index
-    "sapling_step": 1.4,  # each next sapling of a kind costs x this
+    "tree_squares": 4,  # TR4: a tree takes a 2 x 2 block of squares and earns that many squares' worth
     # talents: id -> list of levels (anchor square j, factor, {ladder index: count}, {rare world: count}); a world reward level is ("reward",)
     "talents": {
         "RunSpeed": [(3, 1.0, {}, {}), (5, 1.0, {4: 12}, {}), (7, 1.0, {6: 12}, {}), (9, 1.0, {7: 15}, {}), (11, 1.0, {8: 15}, {})],
@@ -356,15 +361,15 @@ def build(c=None):
     for tid, j, n, t0, f, cap, at in (c["stall_trees"] if c["mode"] == "stars" and c["unlock"] == "stall" else c["trees"]):
         # the ladder crop it points at (FL: its tier's rate; the smooth x r ladder before tier_mult)
         v = c["tree_mult"] * (crops[at - 1]["v"] if c.get("tier_mult") else c["v1"] * c["r"] ** (at - 1))
-        fruit = round(v * f / H)
+        fruit = round(v * c.get("tree_squares", 1) * f / H)
         trees.append({"id": tid, "t0": float(t0), "f": float(f), "cap": cap, "fruit": fruit, "pts": crops[at - 1]["pts"], "max": n})
         for s in range(n):
             items.append({"name": f"{tid} sapling {s + 1}", "fam": "Sapling", "tree": tid, "lvl": s + 1,
-                          "price": anchor(j, c["sapling_step"] ** s), "gate": M["sq_gate"][j - 1], "group": "field"})
+                          "price": anchor(j, 1.0), "gate": M["sq_gate"][j - 1], "group": "field"})
     M["obby_trees"] = {}  # world -> [(tree id, saplings, every)]: every `every`-th meter seed of the world is a sapling instead
     for tid, w, n, t0, f, cap, at, every in c.get("obby_trees", []):
         v = c["tree_mult"] * (crops[at - 1]["v"] if c.get("tier_mult") else c["v1"] * c["r"] ** (at - 1))
-        trees.append({"id": tid, "t0": float(t0), "f": float(f), "cap": cap, "fruit": round(v * f / H), "pts": 0, "obby": w, "every": every,
+        trees.append({"id": tid, "t0": float(t0), "f": float(f), "cap": cap, "fruit": round(v * c.get("tree_squares", 1) * f / H), "pts": 0, "obby": w, "every": every,
                       "max": n})
         M["obby_trees"].setdefault(w, []).append((tid, n, every))
     M["trees"] = {t["id"]: t for t in trees}
@@ -546,6 +551,7 @@ class Sim:
         self.start_seeds = 4
         self.trees = []  # {"id", "grown", "at", "fruits", "bearing"}
         self.saplings = []  # obby tree ids held, planted on the next free square
+        self.sap_slot = {}  # TR5: stall tree id -> (restock slot, saplings bought in it)
         self.sapling_t = []  # (t, tree id) of each obby sapling
         self.meter_n = {}  # world -> rare seeds its stage meters gave (TR: every n-th is a sapling)
         self.kept = {}  # crop id -> crops kept in the barn (bundles, requests)
@@ -1055,8 +1061,10 @@ class Sim:
             return True
         slot = int(self.now // self.c["st_every"])
         i = list(self.M["trees"]).index(tid)
+        if self.sap_slot.get(tid, (None, 0)) == (slot, self.c["tree_st"][2]):  # TR5: this restock's saplings are bought
+            return False
         rng = random.Random(self.seed * 1299709 + slot * 7919 + 101 + i)
-        return rng.random() < self.c["st_p"] or (slot + 100 + i) % max(1, self.c["st_pity"]) == 0
+        return rng.random() < self.c["tree_st"][0] or (slot + 100 + i) % max(1, self.c["tree_st"][1]) == 0
 
     def avail(self, crop):
         """Seeds of `crop` the player can plant now without the Coins check (math.inf = a staple, bought on planting)."""
@@ -1133,9 +1141,11 @@ class Sim:
 
     def plant(self, t):
         # obby saplings first (a tree for good), then rare seeds (the best value on a square, kept apart from the ladder)
-        while self.saplings and self.free_sq > 0 and self.open_sq - len(self.trees) > 8:  # held in the barn until the field has room (8+ crop squares)
+        S = self.c.get("tree_squares", 1)
+        # held in the barn until the field has room (8+ crop squares stay)
+        while self.saplings and self.free_sq >= S and self.open_sq - S * (len(self.trees) + 1) >= 8:
             tid = self.saplings.pop(0)
-            self.free_sq -= 1
+            self.free_sq -= S
             self.trees.append({"id": tid, "grown": 0.0, "at": t, "picked": self.M["trees"][tid]["t0"]})
         for w in sorted(self.rare_seeds):
             while self.rare_seeds[w] > 0 and self.free_sq > 0:
@@ -1559,7 +1569,8 @@ class Sim:
             return False
         if it["fam"] in ("FieldSlot", "EquipSlot", "Incubator") and self.lvl[it["fam"]] != it["lvl"] - 1:
             return False
-        if it["fam"] == "Sapling" and (self.free_sq + self.planted_sq() < 1 or self.open_sq - len(self.trees) <= 4):
+        S = self.c.get("tree_squares", 1)
+        if it["fam"] == "Sapling" and (self.free_sq + self.planted_sq() < S or self.open_sq - S * (len(self.trees) + 1) < 4):
             return False
         if it["fam"] == "Sapling" and not self.sapling_on_stall(it["tree"]):
             return False
@@ -1585,14 +1596,18 @@ class Sim:
             self.open_sq += 1
             self.free_sq += 1
         elif fam == "Sapling":
-            if self.free_sq < 1:  # take a square from the batch that ripens last
-                b = max((b for b in self.batches if not b["crop"]["rare"]), key=lambda b: b["ready"])
-                b["n"] -= 1
-                if b["n"] <= 0:
-                    self.batches.remove(b)
-            else:
-                self.free_sq -= 1
+            for _ in range(self.c.get("tree_squares", 1)):  # TR4: the tree's block
+                if self.free_sq < 1:  # take a square from the batch that ripens last
+                    b = max((b for b in self.batches if not b["crop"]["rare"]), key=lambda b: b["ready"])
+                    b["n"] -= 1
+                    if b["n"] <= 0:
+                        self.batches.remove(b)
+                else:
+                    self.free_sq -= 1
             self.trees.append({"id": it["tree"], "grown": 0.0, "at": t, "picked": self.M["trees"][it["tree"]]["t0"]})
+            slot = int(self.now // self.c["st_every"])
+            was = self.sap_slot.get(it["tree"], (None, 0))
+            self.sap_slot[it["tree"]] = (slot, was[1] + 1 if was[0] == slot else 1)
         elif fam in ("Growth", "Cloches"):
             self.settle(t)
             self.lvl[fam] += 1
@@ -2521,9 +2536,9 @@ def config_match(M):
     want_fd = {k: C[k] for k in ("food_limit", "obby_above", "with_you_xp", "food_growth", "food_rarity")}  # FD: the game has it
     if not C["fd"] or P["fd"] != want_fd:
         out.append(f"FD: config {P['fd']} vs proposal {want_fd} (fd {C['fd']}: the game has it)")
-    want_stall = [C["st_every"], C["stall_staples"], C["st_p"], C["st_pity"], C["st_n"], C.get("st_long")]  # FL: + LongSeconds  # ST: the rotating stall (the game always has it)
+    want_stall = [C["st_every"], C["stall_staples"], C["st_p"], C["st_pity"], C["st_n"], C.get("st_long")] + list(C["tree_st"])  # FL: + LongSeconds, TR5: + Tree*  # ST: the rotating stall (the game always has it)
     if not C["st"] or list(cc["stall"]) != want_stall or not C["st_newest"]:
-        out.append(f"stall (Seconds, Staples, Chance, Pity, Count, LongSeconds): config {list(cc['stall'])} vs proposal {want_stall} (st {C['st']}, "
+        out.append(f"stall (Seconds, Staples, Chance, Pity, Count, LongSeconds, TreeChance, TreePity, TreeCount): config {list(cc['stall'])} vs proposal {want_stall} (st {C['st']}, "
                    f"st_newest {C['st_newest']}: the game has both)")
     if cc["crows"][4] != cfg_id(C["crows_from"]) or cc["cart"][1][2] != cfg_id(C["crows_from"]):
         out.append(f"crows / cart taste from: config {cc['crows'][4]} / {cc['cart'][1][2]} vs proposal {cfg_id(C['crows_from'])}")
@@ -2577,9 +2592,9 @@ def config_match(M):
         out.append(f"trees: config {sorted(cfg_trees)} vs proposal {sorted(M['trees'])}")
     for tid, T in M["trees"].items():
         u = C.get("tree_unlock", {}).get(tid)
-        prices = [] if T.get("obby") else [want(f"{tid} sapling {s + 1}") for s in range(T["max"])]
-        w = [T["t0"], T["f"], T["cap"], T["fruit"], prices, None if u is None else cfg_id(M["crops"][u - 1]["id"]), T.get("obby"),
-             T.get("every"), T["max"]]
+        price = 0 if T.get("obby") else want(f"{tid} sapling 1")  # TR5: one price for every sapling
+        w = [T["t0"], T["f"], T["cap"], T["fruit"], price, None if u is None else cfg_id(M["crops"][u - 1]["id"]), T.get("obby"),
+             T.get("every"), T["max"] if T.get("obby") else None]
         have = cfg_trees.get(tid)
         if have is None or [float(have[0]), float(have[1])] + list(have[2:]) != w:
             out.append(f"tree {tid}: config {have} vs proposal {w}")
@@ -2601,7 +2616,8 @@ def proposal(M, days=60):
     print("\n## Fruit trees (TR, model-only until built)")
     print(E.table(["tree", "source", "first growth", "fruit every", "held", "fills in", "fruit sale", "net / sq-h"],
                   [[t["id"], f"World {t['obby']} meter" if t.get("obby") else "stall", fmt_t(t["t0"]), fmt_t(t["f"]), str(t["cap"]),
-                    fmt_t(t["f"] * t["cap"]), E.n(t["fruit"]), E.n(round(t["fruit"] * H / t["f"]))] for t in M["trees"].values()]))
+                    fmt_t(t["f"] * t["cap"]), E.n(t["fruit"]), E.n(round(t["fruit"] * H / t["f"] / M["c"].get("tree_squares", 1)))]
+                   for t in M["trees"].values()]))
     sims = {n: run(M, arch_by(n), "talent-first", days) for n in ("Casual", "Garden main", "Obby main", "Binge", "Spender")}
     old_prices = old_price_map(P)
     print("\n## Sinks and talents (day bought, talent-first policy; - = not within the run)")

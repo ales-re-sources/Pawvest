@@ -129,10 +129,11 @@ function GardenView.ShowSelect(square: number?)
 end
 
 -- U3b: corner brackets on the own field's square `square` (the one the player stands on, PlotView:ShowHover); nil clears.
-function GardenView.ShowHover(square: number?)
+-- block = true: on the 2 x 2 block anchored at `square` (TR4: where the sapling in hand would go).
+function GardenView.ShowHover(square: number?, block: boolean?)
 	local view = ownView()
 	if view then
-		view:ShowHover(square)
+		view:ShowHover(square, block)
 	end
 end
 

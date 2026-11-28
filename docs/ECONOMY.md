@@ -26,8 +26,8 @@ checks) fails when the configs differ from `CAND`: crops (grow time, sale, seed,
 cart-taste crop, the Tutorial / World 1 `firstClear`, sinks (Coins only), talent bundles, the FD food numbers. To try a number, edit `CAND`
 (or `--set`), then move the configs to match and `pin`.
 
-**Last full run (TR0, seed 1): 19 / 22 pass; misses G8 (known), B and FD** (so `check` exits 1). Seeds 2–4 pass 18–19 (G11 is the other
-known miss); the misses that move between seeds (B, B2, FD, R by Spender at 70 %, G1 by Binge's first day at 4–4.6 min, G2 by Garden main
+**Last full run (TR5, seed 1): 20 / 22 pass; misses G8 (known) and G1 (Binge p90 8.2 min vs 8)** (so `check` exits 1). Seeds 2–4 pass 18–19 (G11 is the other
+known miss); the misses that move between seeds (B, B2, FD, R by Spender at 70 %, G1 by Binge's first day at 4–4.6 min or its later p90 at 8.2, G2 by Garden main
 at 87 %) are RNG-path noise, not a price.
 
 ## Crop timing update (OG2 and OG2b)
@@ -102,11 +102,14 @@ paid comforts). Policies: talent-first, pets-first.
 - **Rotating seed stall (ST; `CropConfig.Stall`, model `st_*`):** hourly restocks on a UTC schedule (the same draw on every server, counts per
   player). Always in stock: the first 3 crops, the newest unlocked crop, the best unlocked crop of ≥ 6 h (an overnight staple), the next talent
   bundle's crops and the open quest's crops. Every other unlocked crop shows with chance 0.5, at least every 3rd restock, 12 seeds per player.
-- **Fruit trees (TR, model-only until built; CAND `trees`, `tree_unlock`, `obby_trees`):** a tree takes a square for good; fruit = the
-  ladder crop's net per square-hour × the fruit time, no seed. **Stall tree:** 3 saplings 4 000 / 5 500 / 8 000 (× 1.4), sold from the
-  Pepper unlock in the ST rotation, first growth 2 h, a fruit every 10 min, 4 held, 621 a fruit (Pepper's 3 726 / sq-h). **Rare tree:** every
-  3rd World 1 meter seed is a sapling while fewer than 3 are held + planted; first growth 8 h, a fruit every hour, 6 held, 5 592 a fruit
-  (Blueberry's tier). Saplings are planted while 4+ (bought) / 8+ (obby) crop squares stay; the player picks once half the cap hangs.
+  A stall tree's sapling rotates rarer and alone (TR5, model `tree_st`): chance 0.1, at least every 24th restock (in stock ~14 % of hours,
+  ~3 a day), 1 sapling per player.
+- **Fruit trees (TR; CAND `trees`, `tree_unlock`, `obby_trees`, `tree_squares`):** a tree takes `tree_squares` (4: a 2 × 2 block, TR4)
+  squares for good; fruit = the ladder crop's net per square-hour × 4 × the fruit time, no seed. **Stall tree (Apple):** saplings 9 000 each (TR5:
+  no cap, the player's choice; the model buys 1), sold from the Cucumber unlock in the ST rotation, first growth 2 h, a fruit every 5 min, 8 held, 720 a fruit (Cucumber's 2 159 / sq-h).
+  **Rare tree (Golden apple):** every 3rd World 1 meter seed is a sapling while fewer than 3 are held + planted; first growth 8 h, a fruit
+  every 45 min, 8 held, 16 777 a fruit (Blueberry's 5 592 / sq-h). Saplings are planted while 4+ (bought) / 8+ (obby) crop squares stay
+  besides the trees' blocks; the model never digs a tree up; the player picks once half the cap hangs.
 - **Squares:** 78 (FX). Price 290 × 1.33^(j−5) up to square 20, × 1.93 for squares 21–28, × 1.33 up to 40 M at square 36 (FXP), flat 40 M for
   37–78 (`CropConfig.Expansions`). Every other sink is anchored on the EV2a ladder (× 1.93 on to square 36: `sq`, not the squares' own `sq_own`)
   × a factor, so it arrives when that ladder's square would. Reserved sinks (landmarks, estate, decor; not designed): 70 steps × 1.15 from
@@ -244,6 +247,20 @@ E1a3 by up to 3 %); a crop is refused (< 1 XP) from Potato Lv 5 … Blueberry Lv
 Legendary 4 h) and shared time tiers hide the exact rarity; cancelling an egg refunds nothing (ConfirmTap, orange then second tap); old eggs
 keep their deadlines; the first free pet stays instant. The shared-tier forecast flags G7 (first-hour news gap) and G9 as approximations of
 the instant first pet.
+
+**TR4 — 2 × 2 trees** (the user, 2026-11-28: a tree takes 4 squares; the Apple is the cheapest tree, in the first third of the ladder).
+Three Apple trees at Cucumber's tier hold 12 squares at a tier-1 rate for good: day-60 income −35 to −55 % and G2 / G4 / G9 / G11 fail;
+two still cost ~30 % and fail G2 / G4 / G11. One Apple tree costs 10–25 % of the day-60 income (seeds 1–3, against no stall tree) and
+passes what the 1 × 1 run passed except the RNG-path checks (G8, B, FD, G11 on one seed); without a stall tree G1 fails (p90 5.8 min).
+A player can dig the tree up once better crops pay more (not modelled).
+
+**TR5 — rare, single, uncapped saplings** (the user, 2026-11-28: saplings much rarer in the stall, one at a time, an expensive first
+sapling is fine, no cap on trees). A sapling in ~14 % of hourly restocks, 1 per player, 9 000 each (Square 17's price; 2 800 in TR4).
+The price and the rarity move the purchase from day 1.3–2.8 to 2.3–28 and cost nothing measurable (the checks flip on G1 / G2 / G11 at
+the noise level across seeds 1–3, whatever the price from 2 800 to 21 000). The cap is the risk: the fruit stays at Cucumber's rate while
+crops climb to 12 583 / sq-h, so every further Apple tree kept costs ~20 % of the day-60 income (2 trees −21 %, 4 trees −54 %, Casual);
+the rarity and the price keep the count low, digging up frees the block. The user accepts that (2026-11-28): the Apple is the first,
+expensive and possibly inefficient tree, 9 000 is about right, and later tree kinds carry the long-term gain.
 
 **TR0 — fruit trees** (the rules above; EXPANSION §5.4). Until TR0 the model ran four placeholder trees (12 saplings) the game never had.
 Without any tree (the game as built) the model fails G1 later in the game (p90 6–12 min between collects online) and G2 wobbles: the trees

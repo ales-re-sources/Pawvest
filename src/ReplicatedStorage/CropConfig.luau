@@ -43,14 +43,15 @@ CropConfig.Crops = {
 -- Fruit trees (TR, docs/EXPANSION.md §5.4; numbers ECONOMY.md → TR0, model economy_ev `trees` / `obby_trees`): perennials that join
 -- Crops / ById (a sapling is a seed of the tree, its fruit the crop in the barn) but not the Ladder (no unlock chain, cart, staples or
 -- requests). growSeconds = the time per fruit and sale = one fruit; tree.First = growth seconds before the first fruit, tree.Cap = fruit
--- held (at the cap the tree stops bearing), tree.Max = trees a player may hold + plant, tree.Prices[k] = the k-th sapling held + planted
--- (stall trees, sold from the `unlockWith` crop's unlock in the stall rotation at `stallOrder`), tree.MeterEvery = every n-th rare seed
--- of the world's stage meters is a sapling instead (rare trees). Trees have no rested mastery (no `step`).
+-- held (at the cap the tree stops bearing). Stall trees (`stallOrder`): saplings at `seed` each, sold from the `unlockWith` crop's unlock
+-- in the stall rotation (Stall.Tree*), as many as the player wants (TR5: no cap). Rare trees: tree.MeterEvery = every n-th rare seed of
+-- the world's stage meters is a sapling instead while the player has fewer than tree.Max. Trees have no rested mastery (no `step`).
+-- TR4: a tree takes a 2 x 2 block of squares (CropConfig.TreeBlock) and earns what 4 squares of its tier earn.
 CropConfig.Trees = {
-	{ id = "Apple", name = "Apple", treeName = "Apple tree", icon = "🍎", letter = "t", growSeconds = 600, sale = 621, seed = 4000, kg = 0.2, xp = 310, -- loc: ignore
-		unlockWith = "Pepper", stallOrder = 101, tree = { First = 7200, Cap = 4, Max = 3, Prices = { 4000, 5500, 8000 } } },
-	{ id = "GoldenApple", name = "Golden apple", treeName = "Golden apple tree", icon = "🍏", letter = "u", growSeconds = 3600, sale = 5592, seed = 0, kg = 0.25, xp = 2796, -- loc: ignore
-		rare = true, world = 1, tree = { First = 28800, Cap = 6, Max = 3, MeterEvery = 3 } },
+	{ id = "Apple", name = "Apple", treeName = "Apple tree", icon = "🍎", letter = "t", growSeconds = 300, sale = 720, seed = 9000, kg = 0.2, xp = 360, -- loc: ignore
+		unlockWith = "Cucumber", stallOrder = 101, tree = { First = 7200, Cap = 8 } },
+	{ id = "GoldenApple", name = "Golden apple", treeName = "Golden apple tree", icon = "🍏", letter = "u", growSeconds = 2700, sale = 16777, seed = 0, kg = 0.25, xp = 8388, -- loc: ignore
+		rare = true, world = 1, tree = { First = 28800, Cap = 8, Max = 3, MeterEvery = 3 } },
 }
 for _, tree in CropConfig.Trees do
 	table.insert(CropConfig.Crops, tree)
@@ -222,7 +223,18 @@ end
 -- crop, the newest unlocked crop of at least `LongSeconds` (FL: an overnight staple, so every night has a long crop) and the crops a next
 -- talent level or the open quest asks for (CropConfig.StallAlways). Every other unlocked common crop is in stock in a block when its
 -- draw (StallStock) says so: chance `Chance`, and at least every `Pity` blocks; then `Count` seeds per player per block (Garden.Stall).
-CropConfig.Stall = { Seconds = 3600, Staples = 3, Chance = 0.5, Pity = 3, Count = 12, LongSeconds = 21600 }
+-- TR5: a stall tree's saplings rotate rarer and fewer: `TreeChance`, at least every `TreePity` blocks, `TreeCount` per player per block.
+CropConfig.Stall = {
+	Seconds = 3600,
+	Staples = 3,
+	Chance = 0.5,
+	Pity = 3,
+	Count = 12,
+	LongSeconds = 21600,
+	TreeChance = 0.1,
+	TreePity = 24,
+	TreeCount = 1,
+}
 
 -- Garden tools (E1c3, docs/EXPANSION.md §6; numbers approved 2026-11-03, docs/ECONOMY.md → "Garden tools at F2"): levels bought with
 -- Coins; Garden.Tools[id] = level. effect[n] at level n: Sorter = a harvest's size factor x (1 + effect)
@@ -630,13 +642,6 @@ function CropConfig.TreeNeed(crop, entry): number?
 	return math.max(0, crop.growSeconds - (entry.Next or 0))
 end
 
--- TR: the price of the next sapling of stall tree `crop` for a player who holds + has planted `owned` of it, or nil (none left to buy,
--- or a tree the stall does not sell).
-function CropConfig.SaplingPrice(crop, owned: number): number?
-	local prices = crop.tree and crop.tree.Prices
-	return if prices then prices[owned + 1] else nil
-end
-
 -- Expansion that buys the next square of a field with `open` squares open, or nil at MaxSquares.
 local lateExpansion = table.freeze({ price = CropConfig.LateSquarePrice })
 function CropConfig.NextExpansion(open: number)
@@ -675,6 +680,47 @@ end
 -- The square at `row` / grid column `col`, or nil.
 function CropConfig.SquareAt(row: number, col: number): number?
 	return at[row] and at[row][col]
+end
+
+-- TR4: the 2 x 2 block of a tree whose anchor is `anchor` (its front-left square, the lowest number; the tree is stored there):
+-- { anchor, right, behind, behind right }, or nil where the block leaves the field.
+function CropConfig.TreeBlock(anchor: number): { number }?
+	local row, col = CropConfig.Cell(anchor)
+	if not row then
+		return nil
+	end
+	local right, behind, corner = CropConfig.SquareAt(row, col + 1), CropConfig.SquareAt(row + 1, col), CropConfig.SquareAt(row + 1, col + 1)
+	return if right and behind and corner then { anchor, right, behind, corner } else nil
+end
+
+-- TR4: the anchors of the tree blocks that hold square `square` (up to 4).
+function CropConfig.TreeAnchors(square: number): { number }
+	local row, col = CropConfig.Cell(square)
+	local anchors = {}
+	if row then
+		for _, d in { { 0, 0 }, { 0, -1 }, { -1, 0 }, { -1, -1 } } do
+			local anchor = CropConfig.SquareAt(row + d[1], col + d[2])
+			if anchor and CropConfig.TreeBlock(anchor) then
+				table.insert(anchors, anchor)
+			end
+		end
+	end
+	return anchors
+end
+
+-- TR4: { [square] = anchor } for every square a tree takes (its anchor included); `cropOf(square)` = the crop planted there or nil.
+function CropConfig.TreeCover(cropOf: (number) -> any): { [number]: number }
+	local cover = {}
+	for square = 1, CropConfig.MaxSquares do
+		local crop = cropOf(square)
+		local block = crop and crop.tree and CropConfig.TreeBlock(square)
+		if block then
+			for _, n in block do
+				cover[n] = square
+			end
+		end
+	end
+	return cover
 end
 
 -- The square that old square `old` of the 4 x 3 field (before E1d2: 4 per row, row by row) becomes: rows 1-3, grid
@@ -775,10 +821,20 @@ end
 
 -- Whether a rotating crop is in stock in block `block`: a draw seeded by the block and the crop's ladder position only (the same on every
 -- server and for every player who has it), or the pity turn (block + position) % Pity == 0 (never out more than Pity - 1 blocks in a row).
+-- A stall tree draws with TreeChance / TreePity (TR5).
 function CropConfig.StallStock(block: number, crop): boolean
 	local stall = CropConfig.Stall
 	local order = crop.order or crop.stallOrder or 0
-	return Random.new(block * 7919 + order * 104729):NextNumber() < stall.Chance or (block + order) % stall.Pity == 0
+	local chance, pity = stall.Chance, stall.Pity
+	if crop.tree then
+		chance, pity = stall.TreeChance, stall.TreePity
+	end
+	return Random.new(block * 7919 + order * 104729):NextNumber() < chance or (block + order) % pity == 0
+end
+
+-- How many of rotating crop `crop` one player may buy in a block it is in stock (TR5: a stall tree's saplings are fewer).
+function CropConfig.StallCount(crop): number
+	return if crop.tree then CropConfig.Stall.TreeCount else CropConfig.Stall.Count
 end
 
 -- The crops always in stock for a player with the unlocked set `unlocked`: the staples, the newest unlocked crop (the last one in ladder
@@ -820,7 +876,7 @@ function CropConfig.StallRotating(block: number, unlocked, always): { [string]: 
 		end
 	end
 	for _, tree in CropConfig.Trees do
-		if tree.tree.Prices and CropConfig.IsUnlocked(unlocked, tree.id) then
+		if tree.stallOrder and CropConfig.IsUnlocked(unlocked, tree.id) then
 			rotating[tree.id] = CropConfig.StallStock(block, tree)
 		end
 	end

@@ -364,6 +364,13 @@ end
 function PlotView:SetState(state)
 	self.state = state
 	self.petMap = fieldPets(state.field)
+	-- TR4: [square] = anchor of the tree that takes it (a tree stands on the middle of its 2 x 2 block)
+	local field = state.field
+	self.cover = if field and type(field.crops) == "string"
+		then CropConfig.TreeCover(function(n)
+			return CropConfig.ByLetter[string.sub(field.crops, n * 2 - 1, n * 2 - 1)]
+		end)
+		else {}
 	for _, entry in self.plants do entry.dirty = true end
 	self.plantNextAt = 0 -- a correction can wake a previously ripe plant
 	self:mark()
@@ -1033,6 +1040,21 @@ function PlotView:buildPlant(model: Model, square: number)
 	-- Same owner/planting prime mix as the deterministic Tending roll. Consecutive
 	-- plantings still cycle all six silhouettes (104729 is coprime with six).
 	local seed = (self.state.ownerId or self.slot) * 7919 + planting * 104729
+	if crop.tree then
+		-- TR4: soil over the paths between the block's four squares, so the tree stands in one bed (only the gaps: no face shared
+		-- with the squares' soil; the z strips stop at the x strip)
+		local x, z = self:spot(square)
+		local long, gap = 2 * FIELD_PITCH - 0.4, 0.4
+		local side = (long - gap) / 2
+		for _, strip in {
+			{ Vector3.new(0, 0, 0), Vector3.new(long, 0.4, gap) },
+			{ Vector3.new(0, 0, (gap + side) / 2), Vector3.new(gap, 0.4, side) },
+			{ Vector3.new(0, 0, -(gap + side) / 2), Vector3.new(gap, 0.4, side) },
+		} do
+			part({ Name = "TreeBed", Size = strip[2], CFrame = self:at(Vector3.new(x, 0.05, z) + strip[1]), Color = COLORS.soil,
+				Material = Enum.Material.Ground, CanQuery = self.own }).Parent = model
+		end
+	end
 	if self.detail == "mid" then
 		PlantGrowth.BuildProxy(model, self:SquareCFrame(square), crop.id, self:plantStage(square), seed, sizeFactor,
 			if crop.tree then self:proxyFruit(square) else nil)
@@ -1298,13 +1320,25 @@ function PlotView:SquareAt(position: Vector3): number?
 	return CropConfig.SquareAt(row, col)
 end
 
--- World CFrame of the middle of field square `square` at the soil's top (rings, pops).
-function PlotView:SquareCFrame(square: number): CFrame
+-- Centre (local x, z) and side in squares of what stands on square `square`: the square itself, or (TR4) the 2 x 2 block of the tree
+-- that takes it; `block` = true reads `square` as the anchor of a block (a sapling's preview).
+function PlotView:spot(square: number, block: boolean?): (number, number, number)
+	local anchor = if block then square else self.cover and self.cover[square]
+	if anchor and CropConfig.TreeBlock(anchor) then
+		local x, z = squareSpot(anchor)
+		return x + FIELD_PITCH / 2, z + FIELD_PITCH / 2, 2
+	end
 	local x, z = squareSpot(square)
+	return x, z, 1
+end
+
+-- World CFrame of the middle of field square `square` at the soil's top (rings, pops, plants); a tree's square: its block's middle.
+function PlotView:SquareCFrame(square: number): CFrame
+	local x, z = self:spot(square)
 	return self:at(Vector3.new(x, 0.25, z))
 end
 
--- White outline around field square `square` (the selected square, U3a) until called again; nil clears.
+-- White outline around field square `square` (the selected square, U3a; a tree's whole block) until called again; nil clears.
 function PlotView:ShowSelect(square: number?)
 	if self.select then
 		self.select:Destroy()
@@ -1313,10 +1347,10 @@ function PlotView:ShowSelect(square: number?)
 	if not square or not CropConfig.Cell(square) then
 		return
 	end
-	local x, z = squareSpot(square)
+	local x, z, side = self:spot(square)
 	local outline = Instance.new("Model")
 	outline.Name = "Select"
-	local half, thick = (FIELD_PITCH - 0.4) / 2 + 0.05, 0.3
+	local half, thick = (side * FIELD_PITCH - 0.4) / 2 + 0.05, 0.3
 	for _, edge in {
 		{ Vector3.new(0, 0, -half), Vector3.new(2 * half + thick, 0.16, thick) },
 		{ Vector3.new(0, 0, half), Vector3.new(2 * half + thick, 0.16, thick) },
@@ -1340,8 +1374,9 @@ end
 -- Four white corner brackets on field square `square` (the square the player stands on, U3b: shows that squares are things to
 -- tap) until called again; nil clears. Brackets, not a full outline: a full thin line reads as a pet's reach border (Common grey).
 -- 0.33-0.41 over the floor centre: inside the select outline's height (0.30-0.46) and off the reach tint's faces (0.28-0.38), no
--- shared face; outside the borders' strips. The two strips of a corner do not overlap.
-function PlotView:ShowHover(square: number?)
+-- shared face; outside the borders' strips. The two strips of a corner do not overlap. A tree's square marks its whole block;
+-- `block` = true marks the 2 x 2 block anchored at `square` (TR4: where a sapling in hand would go).
+function PlotView:ShowHover(square: number?, block: boolean?)
 	if self.hover then
 		self.hover:Destroy()
 		self.hover = nil
@@ -1349,10 +1384,10 @@ function PlotView:ShowHover(square: number?)
 	if not square or not CropConfig.Cell(square) then
 		return
 	end
-	local x, z = squareSpot(square)
+	local x, z, side = self:spot(square, block)
 	local marks = Instance.new("Model")
 	marks.Name = "Hover"
-	local half, thick, arm = (FIELD_PITCH - 0.4) / 2 + 0.05, 0.18, 1.4
+	local half, thick, arm = (side * FIELD_PITCH - 0.4) / 2 + 0.05, 0.18, 1.4 * side
 	local function strip(center: Vector3, size: Vector3)
 		part({
 			Name = "Corner",

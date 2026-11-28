@@ -524,7 +524,8 @@ There is no Garden panel; each piece sits where it is used.
   Always in stock: Potato, Lettuce, Onion, the newest unlocked crop (the one whose bar opens the next), the newest unlocked crop of at
   least 6 h (`Stall.LongSeconds`: every night has a long crop) and every crop a talent's next level or the open quest asks for. Every
   other unlocked crop rotates: in stock about 2 hours of 3 (a draw from the hour and the crop, at least every 3rd hour), then 12 seeds
-  per player for that hour; out of stock or sold out the row stays with a grey "Back soon". The panel counts down to the next restock and
+  per player for that hour (a fruit tree's sapling, TR5: in about 1 hour of 7, at least every 24th hour, 1 sapling); out of stock or
+  sold out the row stays with a grey "Back soon". The panel counts down to the next restock and
   changes without a rejoin; a player in the garden gets a toast if a crop of theirs rotated in. Seeds already bought keep. *Why:*
   planting was too linear; a stall that does not offer everything makes the player plant what is there, gives online news, and slows the
   mid game (the model's Casual top crop ~day 18 instead of 13). The market cart stays apart (daily bargains, the taste).
@@ -593,13 +594,18 @@ There is no Garden panel; each piece sits where it is used.
   card only says "Grows faster while you play"; Cloches states its own bonus), and the cap is not explained (every crop ripens within
   one 24 h absence, so it only limits replanting by Tending pets). The actual online `readyAt` drives art, ripe badges and Harvest. The
   barn holds 40 seeds and 40 stored crops (+20 per Barn level). Seeds held can always be planted; the stall sells only unlocked crops.
-- **Fruit trees** (TR; rules EXPANSION §5.4): a sapling is a seed of the tree and is named as the tree everywhere it is meant (stall,
-  barn, seed picker, hand bar, results popup, toasts: "Apple tree" / "Jabloň"); the fruit keeps the crop name. Stall row: grow-up time,
-  time per fruit and sale, "You have 1 of 3", one +1 brick at the next sapling's price, a grey "Max 3" at the limit (the rare tree:
-  "Medals in World 1"). Square card: a young tree has the growth bar to its first fruit, the trash and "Once grown, it bears fruit for
-  good"; a grown tree, bare or bearing, has the same parts: "🍎 2 / 4 · next in 12 min" ("full" at the cap) beside the trash, then Pick
-  all (grey while bare). A pick pops "+3 🍎" and toasts "+3 Apple · biggest 0.7 kg". Rings: a bearing tree the ripe ring with "3/4";
-  tree rings sit at the tree's own height and stay out of the shared ring height.
+- **Fruit trees** (TR; rules EXPANSION §5.4): a tree takes a 2 × 2 block of squares (TR4), stored on its front-left square (the
+  anchor) and drawn on the block's middle over one soil bed. With a sapling in hand the corner brackets mark the free block a tap would
+  take (the one whose middle is nearest the pointer; a lone square when none is free, and the tap answers "A tree needs 2 × 2 free
+  squares"); the seed picker plants on the block of the chosen square. Any square of the block acts as the tree: a tap opens its card
+  (outlined as a block), the Basket picks it, the trash digs it up; pets keep their own square under the crown. A sapling is a seed of
+  the tree and is named as the tree everywhere it is meant (stall, barn, seed picker, hand bar, results popup, toasts: "Apple tree" /
+  "Jabloň"); the fruit keeps the crop name. Stall row: "Takes 2 × 2 squares", grow-up time, time per fruit and sale, "You have 2"
+  (saplings held + trees planted; no cap), one +1 brick at the sapling's price, "Back soon" out of stock (the rare tree: "Medals in World 1"). Square
+  card: a young tree has the growth bar to its first fruit, the trash and "Once grown, it bears fruit for good"; a grown tree, bare or
+  bearing, has the same parts: "🍎 2 / 8 · next in 4 min" ("full" at the cap) beside the trash, then Pick all (grey while bare). A pick
+  pops "+3 🍎" and toasts "+3 Apple · biggest 0.7 kg". Rings: a bearing tree the ripe ring with "3/8" over the block's middle; tree
+  rings sit at the tree's own height and stay out of the shared ring height.
 - **Seed picker** (a square's Plant, or the card in Seeds mode): one row per held seed with the crop and ★, the stall's grow time and
   sale line, and the count on the right; in Seeds mode only the selected row is green, with a ✓. Six rows before it scrolls.
 - **Price ladder.** Six price tiers set net Coins per square-hour (tiers 0–2 × 1.727 a step, then × 1.5; the top tier × 10.1 of Potato's);

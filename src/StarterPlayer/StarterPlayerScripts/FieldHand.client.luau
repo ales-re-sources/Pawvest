@@ -162,7 +162,7 @@ local preview: number? = nil -- touch: the square a first tap previewed the held
 local hoverSquare: number? = nil
 local used = {} -- [mode] = true once chosen this session (its pulse stops)
 local tappedSquare = false -- a tap hit a square this session (Look's hint stops)
-local standing: number? = nil -- the square outlined under the character
+local standing: string? = nil -- the square (or "<anchor>b", TR4: a sapling's block) outlined under the character
 local pendingPlant: { [number]: { crop: string, untilClock: number } } = {}
 local pendingHarvest: { [number]: number } = {} -- [square] = until os.clock()
 local reachTimer = UiKit.Latest()
@@ -178,6 +178,39 @@ local function openSet(): { [number]: boolean }
 		set[n] = true
 	end
 	return set
+end
+
+-- TR4: [square] = anchor of the own tree that takes it (a tree is stored on its anchor and takes the 2 x 2 block)
+local function treeCover(): { [number]: number }
+	local squares = (fieldState and fieldState.squares) or {}
+	return CropConfig.TreeCover(function(n)
+		local entry = squares[tostring(n)]
+		return entry and CropConfig.ById[entry.crop]
+	end)
+end
+
+-- TR4: the anchor of a free 2 x 2 block holding `square` for a sapling: the block whose middle is nearest world point `at` (or the
+-- block `square` anchors, then the others in TreeAnchors order); nil when no block around it is open and empty.
+local function treeSpot(square: number, at: Vector3?): number?
+	local open, cover = openSet(), treeCover()
+	local squares = (fieldState and fieldState.squares) or {}
+	local best, bestDistance = nil, math.huge
+	for i, anchor in CropConfig.TreeAnchors(square) do
+		local block = CropConfig.TreeBlock(anchor) :: { number }
+		local free = true
+		for _, n in block do
+			free = free and open[n] == true and not squares[tostring(n)] and not cover[n]
+		end
+		local a, b = GardenView.SquareCFrame(block[1]), GardenView.SquareCFrame(block[4])
+		if free and a and b then
+			local middle = (a.Position + b.Position) / 2
+			local distance = if at then Vector3.new(middle.X - at.X, 0, middle.Z - at.Z).Magnitude else i
+			if distance < bestDistance then
+				best, bestDistance = anchor, distance
+			end
+		end
+	end
+	return best
 end
 
 -- [square] = { kind, level, uid, apt (Tending level), guard (Pest-control level) } of the own field pets (the plot feed)
@@ -803,8 +836,10 @@ local function renderSeeds(square: number?)
 			local row = pickerRow(list, crop.id, rows, GardenUi.SeedTitle(crop) .. GardenUi.Stars(fieldState, crop), info, stock, not square and crop.id == handSeed)
 			row.Activated:Connect(function()
 				if square then
-					fire(plantEvent, square, crop.id)
-					page = "card"
+					local target = if crop.tree then treeSpot(square) or square else square -- TR4: the sapling's block
+					fire(plantEvent, target, crop.id)
+					selected, page = target, "card"
+					GardenView.ShowSelect(target)
 					render()
 				else
 					handSeed = crop.id
@@ -1021,9 +1056,9 @@ local function overUi(point: Vector2): boolean
 	return UiKit.BlocksWorld(player.PlayerGui, point)
 end
 
--- The own square under screen point `point` (InputObject / TouchTapInWorld coordinates), or nil; and the field pet model the ray
--- hit, if it hit one (PL3a cheer).
-local function squareUnder(point: Vector2): (number?, Model?)
+-- The own square under screen point `point` (InputObject / TouchTapInWorld coordinates), or nil; the field pet model the ray
+-- hit, if it hit one (PL3a cheer); and the world point under it (TR4: which block a sapling takes).
+local function squareUnder(point: Vector2): (number?, Model?, Vector3?)
 	if overUi(point) then
 		return nil
 	end
@@ -1048,12 +1083,12 @@ local function squareUnder(point: Vector2): (number?, Model?)
 					end
 					local number = string.match(node.Name, "^sq(%d+)$")
 					if number then
-						return tonumber(number), pet
+						return tonumber(number), pet, hit.Position
 					end
 				end
 				node = node.Parent
 			end
-			return GardenView.SquareAt(hit.Position)
+			return GardenView.SquareAt(hit.Position), nil, hit.Position
 		end
 	end
 	-- nothing drawn under the point: the field's plane (the soil's top)
@@ -1065,7 +1100,8 @@ local function squareUnder(point: Vector2): (number?, Model?)
 	if t <= 0 or t > RAY_LENGTH then
 		return nil
 	end
-	return GardenView.SquareAt(ray.Origin + ray.Direction * t)
+	local at = ray.Origin + ray.Direction * t
+	return GardenView.SquareAt(at), nil, at
 end
 
 -- Hand bar (U3b) -----------------------------------------------------------------------------------------------------------------
@@ -1399,9 +1435,10 @@ end
 -- Taps -------------------------------------------------------------------------------------------------------------------------
 
 -- a tap in a hand mode on an open square; true when the mode handled it (else the tap selects as in Look)
-local function handTap(square: number, touch: boolean): boolean
+local function handTap(square: number, touch: boolean, at: Vector3?): boolean
 	local key = tostring(square)
-	local entry = fieldState.squares and fieldState.squares[key]
+	local treeAt = treeCover()[square] -- TR4: a square a tree takes acts as the tree (pets keep their own square)
+	local entry = fieldState.squares and fieldState.squares[tostring(treeAt or square)]
 	local petAt = (fieldState.pets or {})[key]
 	if mode == "seeds" and not entry then
 		if pendingPlant[square] and pendingPlant[square].untilClock > os.clock() then
@@ -1412,15 +1449,18 @@ local function handTap(square: number, touch: boolean): boolean
 			return true
 		end
 		closeCard()
-		pendingPlant[square] = { crop = handSeed :: string, untilClock = os.clock() + PENDING_SECONDS }
-		fire(plantEvent, square, handSeed)
+		-- TR4: a sapling takes the free block nearest the tap (none free: the server answers treeRoom)
+		local target = if CropConfig.ById[handSeed :: string].tree then treeSpot(square, at) or square else square
+		pendingPlant[target] = { crop = handSeed :: string, untilClock = os.clock() + PENDING_SECONDS }
+		fire(plantEvent, target, handSeed)
 		renderBar()
 		return true
 	elseif mode == "basket" and entry and ripeEntry(entry) then
-		if (pendingHarvest[square] or 0) < os.clock() then
+		local target = treeAt or square
+		if (pendingHarvest[target] or 0) < os.clock() then
 			closeCard()
-			pendingHarvest[square] = os.clock() + PENDING_SECONDS
-			fire(harvestEvent, square)
+			pendingHarvest[target] = os.clock() + PENDING_SECONDS
+			fire(harvestEvent, target)
 		end
 		return true
 	elseif mode == "pets" then
@@ -1453,7 +1493,7 @@ local function onTap(point: Vector2, touch: boolean)
 	if overUi(point) or placing or not (fieldState and inRange()) then
 		return
 	end
-	local square, pet = squareUnder(point)
+	local square, pet, at = squareUnder(point)
 	if pet then
 		FieldPetIdle.Cheer(pet) -- PL3a: besides what the tap does
 	end
@@ -1461,9 +1501,10 @@ local function onTap(point: Vector2, touch: boolean)
 		tappedSquare = true
 		renderBar()
 	end
-	if square and openSet()[square] and handTap(square, touch) then
+	if square and openSet()[square] and handTap(square, touch, at) then
 		return
 	end
+	square = square and (treeCover()[square] or square) -- TR4: any square of a tree selects the tree
 	if not square or (square == selected and page == "card") then
 		closeCard()
 		return
@@ -1703,16 +1744,28 @@ watchCamera()
 -- square / preview); a pointing-hand cursor while the mouse is over an own square
 local pointing = false
 local function updateStanding()
-	local want = nil
+	local want, block = nil, false
 	local overSquare = false
 	local byMouse = false
 	if handBar.Visible then
-		local square = if mouseAt then squareUnder(mouseAt) else nil
+		local square, _, at = nil, nil, nil
+		if mouseAt then
+			square, _, at = squareUnder(mouseAt)
+		end
 		overSquare = square ~= nil
 		byMouse = overSquare
 		if not square then
-			local at = rootPosition()
+			at = rootPosition()
 			square = at and GardenView.SquareAt(at)
+		end
+		local seed = mode == "seeds" and handSeed and CropConfig.ById[handSeed]
+		local tree = square and treeCover()[square]
+		if square and seed and seed.tree and not tree and fieldState and not (fieldState.squares or {})[tostring(square)] then
+			-- TR4: a sapling in hand marks the block it would take (a lone square when no block around it is free)
+			local anchor = treeSpot(square, at)
+			square, block = anchor or square, anchor ~= nil
+		elseif tree then
+			square = tree -- the tree's square: its whole block
 		end
 		if square and square ~= selected and square ~= heldFrom and square ~= preview then
 			want = square
@@ -1722,9 +1775,10 @@ local function updateStanding()
 		pointing = overSquare
 		UserInputService.MouseIcon = if pointing then POINTER else ""
 	end
-	if want ~= standing then
-		standing = want
-		GardenView.ShowHover(want)
+	local wantKey = if want then want .. (if block then "b" else "") else nil
+	if wantKey ~= standing then
+		standing = wantKey
+		GardenView.ShowHover(want, block)
 		if want and byMouse then
 			UiSounds.Play("Hover") -- the mouse moved onto another square; not while walking over squares
 		end

@@ -34,7 +34,7 @@
 -- Tending (no mastery or seed for it; a Tending pet's second crop needs room in the barn).
 -- Seed stall stock (ST): CropConfig.StallRotating(the restock block, Garden.Unlocked, the always set) says which rotating crops are in
 -- stock; Garden.Stall = { Block, Bought = { [cropId] = n } } counts what the player bought of them in that block (reset when the block
--- changes); BuySeeds refuses `stock` (a rotating crop not in this block) and `soldOut` (more than CropConfig.Stall.Count - bought).
+-- changes); BuySeeds refuses `stock` (a rotating crop not in this block) and `soldOut` (more than CropConfig.StallCount - bought).
 -- Market cart (E1c4): CropConfig.CartOffers(today's UTC day, Garden.Unlocked) are today's offers; Garden.Cart = { Day, Bought = { [key] = n } }
 -- counts what the player bought of each (key = crop id, + "*" for the taste), reset when the day changes. BuyCart(slot, crop, count) sells
 -- at the offer's price; the seeds join Seeds (within the barn). Plant needs only the seeds: a taste crop can be planted while it is
@@ -244,6 +244,37 @@ local function fieldOf(player: Player, profile)
 			end
 		end
 	end
+	-- TR4: a tree takes its 2 x 2 block; a tree that does not fit (a 1 x 1 tree from before TR4 next to other plants or at the field's
+	-- edge) goes back to the barn as its sapling (after the stock is cleaned below)
+	local order = {}
+	for key in squares do
+		table.insert(order, tonumber(key))
+	end
+	table.sort(order)
+	local taken, saplings = {}, {}
+	for _, n in order do
+		if not CropConfig.ById[squares[tostring(n)].Crop].tree then
+			taken[n] = true
+		end
+	end
+	for _, n in order do
+		local id = squares[tostring(n)].Crop
+		if CropConfig.ById[id].tree then
+			local block = CropConfig.TreeBlock(n)
+			local fits = block ~= nil
+			for _, m in block or {} do
+				fits = fits and open[m] == true and not taken[m]
+			end
+			if fits then
+				for _, m in block :: { number } do
+					taken[m] = true
+				end
+			else
+				squares[tostring(n)] = nil
+				saplings[id] = (saplings[id] or 0) + 1
+			end
+		end
+	end
 	field.Squares = squares
 	field.Plantings = count(field.Plantings)
 	for _, square in squares do
@@ -253,6 +284,9 @@ local function fieldOf(player: Player, profile)
 		end
 	end
 	garden.Seeds = cleanStock(garden.Seeds)
+	for id, n in saplings do
+		garden.Seeds[id] = (garden.Seeds[id] or 0) + n
+	end
 	garden.Items = cleanStock(garden.Items)
 	-- sizes: one summed factor per stored crop, within what its count can hold (missing = factor 1 each, from before E1c2)
 	local low, high = CropConfig.SizeBounds()
@@ -454,7 +488,7 @@ local function stallState(profile)
 	local stall, block = stallNow(profile.Garden)
 	local left = {}
 	for id, inStock in CropConfig.StallRotating(block, profile.Garden.Unlocked, stallAlways(profile)) do
-		left[id] = if inStock then math.max(0, CropConfig.Stall.Count - (stall.Bought[id] or 0)) else 0
+		left[id] = if inStock then math.max(0, CropConfig.StallCount(CropConfig.ById[id]) - (stall.Bought[id] or 0)) else 0
 	end
 	return { block = block, endsAt = CropConfig.StallEnds(block), left = left }
 end
@@ -605,7 +639,7 @@ local function treeRoll(player: Player, n: number, picks: number, salt: number):
 	return Random.new(player.UserId * 7907 + n * 104723 + picks * 7727 + salt):NextNumber()
 end
 
--- TR: the trees of `id` a player has: saplings held + planted (tree.Max caps it).
+-- TR: the trees of `id` a player has: saplings held + planted (a rare tree's tree.Max caps its meter saplings).
 local function treesOwned(garden, field, id: string): number
 	local n = garden.Seeds[id] or 0
 	for _, square in field.Squares do
@@ -614,6 +648,27 @@ local function treesOwned(garden, field, id: string): number
 		end
 	end
 	return n
+end
+
+-- TR4: { [square] = anchor } of the squares the field's trees take (CropConfig.TreeCover).
+local function coverOf(field): { [number]: number }
+	return CropConfig.TreeCover(function(n)
+		local entry = field.Squares[tostring(n)]
+		return entry and CropConfig.ById[entry.Crop]
+	end)
+end
+
+-- TR4: the best of `map[n]` over the squares of tree `anchor` (a tree is in a pet's reach when any of its squares is); `score`
+-- ranks two values.
+local function blockBest(map, anchor: number, score: (any) -> number)
+	local best = nil
+	for _, n in CropConfig.TreeBlock(anchor) or { anchor } do
+		local value = map[n]
+		if value ~= nil and (best == nil or score(value) > score(best)) then
+			best = value
+		end
+	end
+	return best
 end
 
 -- TR: whether square `square` of `crop` holds something to harvest: a crop at its grow time, a tree with fruit.
@@ -690,7 +745,9 @@ local function settle(player: Player, profile, field, open, absence: boolean): (
 				hadFruit[key] = true -- for the crows: fruit hung from the start of this absence
 			end
 			CropConfig.GrowTree(crop, square, growthOf, RIPEN_EPSILON)
-			local chance = strength[tonumber(key)]
+			local chance = blockBest(strength, tonumber(key) :: number, function(value)
+				return value
+			end)
 			local room = barn - CropConfig.SeedTotal(garden.Items)
 			if chance and square.Fruit > 0 and square.Tried ~= square.Picks and room > 0 then
 				if treeRoll(player, square.N, square.Picks, 1) >= chance then
@@ -778,7 +835,9 @@ local function settle(player: Player, profile, field, open, absence: boolean): (
 						entry.Crow = entry.Picks
 						if treeRoll(player, entry.N, entry.Picks, 2) < rules.Chance then
 							raid = raid or { ate = {}, chased = {} }
-							local guard = guards[tonumber(key)]
+							local guard = blockBest(guards, tonumber(key) :: number, function(value)
+								return value.chance
+							end)
 							if guard and treeRoll(player, entry.N, entry.Picks, 3) < guard.chance then
 								raid.chased[guard.uid] = (raid.chased[guard.uid] or 0) + 1
 							else
@@ -1151,8 +1210,20 @@ plantEvent.OnServerEvent:Connect(function(player, square, cropId)
 	if not open[square] then
 		return reject(player, "Plant", "square")
 	end
-	if field.Squares[tostring(square)] then
+	local cover = coverOf(field)
+	if field.Squares[tostring(square)] or cover[square] then
 		return reject(player, "Plant", "occupied")
+	end
+	if crop.tree then -- TR4: `square` is the anchor of the tree's 2 x 2 block; every square of it open and empty
+		local block = CropConfig.TreeBlock(square)
+		for _, n in block or {} do
+			if not open[n] or field.Squares[tostring(n)] or cover[n] then
+				block = nil
+			end
+		end
+		if not block then
+			return reject(player, "Plant", "treeRoom")
+		end
 	end
 	if (garden.Seeds[crop.id] or 0) < 1 then -- no lock: seeds held (the market cart's taste) can always be planted
 		return reject(player, "Plant", "seeds")
@@ -1180,6 +1251,7 @@ harvestEvent.OnServerEvent:Connect(function(player, square)
 	if not field then
 		return
 	end
+	square = coverOf(field)[square] or square -- TR4: any square of a tree picks the tree
 	local entry = field.Squares[tostring(square)]
 	if not entry then
 		return reject(player, "Harvest", "empty")
@@ -1231,6 +1303,7 @@ uprootEvent.OnServerEvent:Connect(function(player, square)
 	if not field then
 		return
 	end
+	square = coverOf(field)[square] or square -- TR4: any square of a tree digs up the tree
 	local entry = field.Squares[tostring(square)]
 	if not entry then
 		return reject(player, "Uproot", "empty")
@@ -1263,27 +1336,17 @@ buySeedsEvent.OnServerEvent:Connect(function(player, cropId, amount)
 		return reject(player, "BuySeeds", "locked") -- EV3b: the crop opens by growing the previous one or by its quest
 	end
 	local stall, block = stallNow(garden)
-	local rotating = not stallAlways(profile)[crop.id] -- ST: a rotating crop is sold only in its blocks, Count per block
+	local rotating = not stallAlways(profile)[crop.id] -- ST: a rotating crop is sold only in its blocks, StallCount per block
 	if rotating and not CropConfig.StallStock(block, crop) then
 		return reject(player, "BuySeeds", "stock")
 	end
-	if rotating and amount > CropConfig.Stall.Count - (stall.Bought[crop.id] or 0) then
+	if rotating and amount > CropConfig.StallCount(crop) - (stall.Bought[crop.id] or 0) then
 		return reject(player, "BuySeeds", "soldOut")
 	end
 	if CropConfig.SeedTotal(garden.Seeds) + amount > CropConfig.BarnFor(CropConfig.UpgradeLevel(field.Upgrades, "Barn")) then
 		return reject(player, "BuySeeds", "barn")
 	end
-	local price = crop.seed * amount
-	if crop.tree then -- TR: at most tree.Max held + planted; each sapling at the price of its place in that count
-		local owned = treesOwned(garden, field, crop.id)
-		if owned + amount > crop.tree.Max then
-			return reject(player, "BuySeeds", "maxed")
-		end
-		price = 0
-		for i = 1, amount do
-			price += CropConfig.SaplingPrice(crop, owned + i - 1) or math.huge
-		end
-	end
+	local price = crop.seed * amount -- TR5: a sapling too (no cap; the stall's TreeCount per block limits it)
 	if not PlayerProfile.TrySpend(player, price) then
 		return reject(player, "BuySeeds", "coins")
 	end

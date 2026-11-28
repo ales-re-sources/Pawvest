@@ -33,7 +33,7 @@ Status levels: **Implemented** (code in `src/`, committed), **Studio-validated**
 | CG1–CG21 | Plant growth art, 19 crops, all in the field ([per crop](PLANT_GROWTH.md#crops-and-status)) | ✔ | geometry + PlotView pass, all stills approved; phone performance and second client open | – |
 | CP | Crop page redesign | ✔ | ✔ | – |
 | HX0 | Hybrid plants: look prototype (Studio reviewer only) | ✔ | ✔ | – |
-| TR | Fruit trees: perennials on one square, a stall tree and a rare obby tree ([EXPANSION §5.4](EXPANSION.md)); the first update after 1.0 | TR0–TR3 | ✔ (phone, Czech review open) | – |
+| TR | Fruit trees: perennials on a 2 × 2 block, a stall tree and a rare obby tree ([EXPANSION §5.4](EXPANSION.md)); the first update after 1.0 | TR0–TR4 | ✔ (phone, Czech review open) | – |
 | PL | Field pet life: idle motion (PL1), eyes: blink + shut in a nap (PL2), owner reactions (PL3a), jobs (PL3b), followers (PL4) | PL1–PL3a, PL4 | PL1 (2 pets; full field and phone open), PL2, PL3a, PL4 (the user's look in play open) | – |
 | HX1 | Hybrid breeding mechanic ([HYBRIDS.md](HYBRIDS.md)): main rules decided, numbers open | design only | – | – |
 | K1 | First-hour fixes (kid playtest 2026-11-01): Stage 5, G1 fallback, Double Jump world reward, hatch panel done; the rest is measured in M6a | partial | partial | – |
@@ -150,7 +150,7 @@ point reset (a paid comfort in D2 or an event item, EXPANSION §13).
 
 ### TR — Fruit trees (the first update after 1.0; design: EXPANSION §5.4)
 Target: a player plants a tree once and comes back to pick its fruit for good; the perennial lifecycle that hybrids build on later
-(HYBRIDS §8). Decided (the user, 2026-11-27): one square per tree, digging up loses it, saplings from the stall (max 3 per kind) and the
+(HYBRIDS §8). Decided (the user, 2026-11-27): one square per tree (2026-11-28: a 2 × 2 block, TR4), digging up loses it, saplings from the stall (max 3 per kind) and the
 obby (rare tree per world), two kinds in the first update: one stall tree and one rare obby tree. Cut into:
 - **TR0 Numbers and rules: done** (2026-11-27; EXPANSION §5.4, ECONOMY → TR0). Left for TR1 as proposals: "3 per kind" counts held +
   planted with the price by that count; the stall tree's star counts in the quick class.
@@ -172,6 +172,20 @@ obby (rare tree per world), two kinds in the first update: one stall tree and on
   fixture profile through the real UI: the card young / bare / bearing / full (a pick keeps the card in place), Pick all on both trees
   (pop, toast, barn), the two-tap dig-up, rings with counts at the tree's height, picker and hand-bar planting, a stall buy to "Max 3",
   barn rows; logs clean. Reviewed in code only: the Basket pick (same Harvest path), the results popup sapling line. Open: Czech review.
+- **TR4 2 × 2 trees: Studio-validated** (2026-11-28; the user: a tree takes 4 squares, the Apple is the cheapest tree in the ladder's
+  first third). A tree is stored on its block's anchor (`CropConfig.TreeBlock` / `TreeAnchors` / `TreeCover`); Plant `treeRoom`, any
+  square of the block acts as the tree, Tending / guards reach it through any square, a tree that does not fit on load goes back to the
+  barn. Art: the approved tree × 1.6 with 8 fruit slots (54 Parts), the leader always joins trunk and tuft, a soil bed under the block.
+  Economy (proposal, user review open): Apple from the Cucumber unlock, one per player, 2 800, a fruit every 5 min (720), 8 held; Golden
+  apple 8 held, a fruit every 45 min (16 777) (ECONOMY → TR4). Studio: geometry checks; a fixture on a test profile key: the old 1 × 1
+  tree went back to the barn, hover brackets on the free block, planting through the hand, `occupied` / `treeRoom` / Harvest and Uproot
+  through a covered square, the card and outline of the block, a Tending pick through a block square; logs clean. Open: Czech review
+  (`field.reason.treeRoom`, `field.seed.treeInfo`), a phone look at a full field of trees.
+- **TR5 rare, single, uncapped saplings: Studio-validated** (2026-11-28; the user: rarer in the stall, one at a time, expensive is fine, no
+  cap). `Stall.TreeChance` 0.1 / `TreePity` 24 / `TreeCount` 1, Apple sapling 9 000 (`seed`), no `tree.Max` / `Prices` on a stall tree
+  (the rare tree keeps `Max` for its meter drops), stall row "You have n" (ECONOMY → TR5). Studio (test profile key, the stall forced
+  in stock): the row "1 left" / "You have 0" / +1 at 9 000, a buy through the button (−9 000, "You have 1", "Back soon"); logs clean.
+  Open: the pin after the user's review, Czech review (`field.seed.owned`).
 - **Validation:** one playtest boot without errors; a tree aged by a fixture (snapshot first) shows the cap, a pick, regrowth, a Tending
   pick and a crow raid of one fruit; each new control through the real UI; a second client sees the tree and its fruit.
 

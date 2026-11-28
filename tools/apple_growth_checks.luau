@@ -1,7 +1,8 @@
 -- TR2: Apple / Golden apple tree geometry checks, Studio Edit context (no scripts, remotes or profile writes).
 -- Six seeds x three harvested masses x 101 ages of the reviewer's life (SetGrowth), then the field poses (SetTree): every
 -- fruit count with its next apple growing, a pick back to zero and regrowth, and backward seeks. Reports Part count, max radius,
--- height, the 78-square field total, and asserts the 2.4-stud radius and that a seek returns the same pose.
+-- height, and asserts the 5.2-stud radius (TR4: a tree takes a 2 x 2 block, 5.5 studs to its edge) and that a seek returns the
+-- same pose.
 -- Note: require caches in Edit; after a disk change check the module's Source or restart Studio's Edit session.
 assert(game:GetService("RunService"):IsStudio(), "Studio only")
 local RS = game:GetService("ReplicatedStorage")
@@ -63,8 +64,8 @@ for _, id in { "Apple", "GoldenApple" } do
 			plant:Destroy()
 		end
 	end
-	assert(worst <= 2.4, id .. " exceeds the field radius: " .. worst)
-	report[id] = string.format("parts %d, field of 78 = %d, max radius %.2f, ripe height %.2f-%.2f", parts, parts * 78, worst, lowest, tallest)
+	assert(worst <= 5.2, id .. " exceeds its block: " .. worst)
+	report[id] = string.format("parts %d, full field (19 trees) = %d, max radius %.2f, ripe height %.2f-%.2f", parts, parts * 19, worst, lowest, tallest)
 end
 holder:Destroy()
 return game.HttpService:JSONEncode(report)

@@ -171,7 +171,7 @@ local function renderCart(field, tap: number)
 	end
 end
 
--- TR3: saplings of tree `crop` held plus its trees planted (the stall's "1 of 3"; the server counts the same for BuySeeds)
+-- TR3: saplings of tree `crop` held plus its trees planted (the stall's "You have n")
 local function treesOwned(field, crop): number
 	local owned = (field.seeds or {})[crop.id] or 0
 	for _, entry in field.squares or {} do
@@ -254,8 +254,8 @@ local function renderSeeds(field, tap: number)
 		else
 			info = GardenUi.SeedInfo(field, crop)
 			local extra = {}
-			if crop.tree then -- TR3: saplings held + trees planted, of the most a player may have
-				table.insert(extra, Locale.T("field.seed.owned", { owned = treesOwned(field, crop), max = crop.tree.Max }))
+			if crop.tree then -- TR3: saplings held + trees planted (TR5: no cap)
+				table.insert(extra, Locale.T("field.seed.owned", { owned = treesOwned(field, crop) }))
 			elseif stock > 0 then
 				table.insert(extra, Locale.T("field.seed.have", { stock = stock }))
 			end
@@ -298,10 +298,9 @@ local function renderSeeds(field, tap: number)
 					questEvent:FireServer(id, amount)
 				end)
 			end
-		elseif crop.tree then -- TR3: one sapling at a time at the next sapling's price, or a grey "Max 3" when all are owned
-			local owned = treesOwned(field, crop)
-			local price = CropConfig.SaplingPrice(crop, owned)
-			if not price or (left and left <= 0) then
+		elseif crop.tree then -- TR3: one sapling at a time (TR5: Stall.TreeCount per restock, rarely in stock)
+			local price = crop.seed
+			if left and left <= 0 then
 				GardenUi.Paragraph("Out", {
 					LayoutOrder = 2,
 					Size = UDim2.new(0, BUY1_WIDTH + BUY10_WIDTH + GAP, 0, 0),
@@ -309,7 +308,7 @@ local function renderSeeds(field, tap: number)
 					TextSize = 16,
 					TextColor3 = GardenUi.COLOR_DIM,
 					TextXAlignment = Enum.TextXAlignment.Center,
-					Text = if price then Locale.T("seedStall.backSoon") else Locale.T("field.seed.treeMax", { max = crop.tree.Max }),
+					Text = Locale.T("seedStall.backSoon"),
 				}).Parent = row
 			else
 				local affordable = coinsNow() >= price and total + 1 <= capacity

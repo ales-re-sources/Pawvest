@@ -1,4 +1,4 @@
--- TR2: the Apple tree (FruitTree, the approved A round crown): red apples, 4 fruit slots (CropConfig tree.Cap).
+-- TR2: the Apple tree (FruitTree, the approved A round crown): red apples, 8 fruit slots (CropConfig tree.Cap); TR4: on a 2 x 2 block.
 local C = Color3.fromRGB
 local Plant = require(script.Parent.FruitTree).make("Apple", {
 	bark = C(112, 78, 54), limb = C(128, 92, 62), stalk = C(92, 66, 42), fruitLeaf = C(98, 168, 72),

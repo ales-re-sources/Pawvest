@@ -137,20 +137,26 @@ Variants roll on the server per planting (like the size roll: re-joining cannot 
 
 ### 5.4 Fruit trees (perennials; ROADMAP → TR)
 A tree is a perennial on the crop field: planted from a sapling, it is never cleared by a harvest and bears fruit for good. *Decided (the
-user, 2026-11-27):* trees are the first update after 1.0; a tree takes **one square** (1×1; big 2×2 trees come with the Orchard landmark
-or hybrids); **digging one up loses it** (two-tap confirm, as for a crop); saplings come from the **seed stall** (Coins, mastery-gated,
+user, 2026-11-27):* trees are the first update after 1.0; **digging one up loses it** (two-tap confirm, as for a crop); saplings come from the **seed stall** (Coins, mastery-gated,
 at most 3 per kind, each next one dearer) **and the obby** (a rare tree per world, never sold, like the rare crops); the first update
-ships **two kinds: one stall tree and one rare obby tree**. Numbers: ECONOMY.md → TR0.
+ships **two kinds: one stall tree and one rare obby tree**. Numbers: ECONOMY.md → TR0 / TR4.
+*Decided (the user, 2026-11-28, TR4):* a tree takes a **2 × 2 block** of squares (the 1 × 1 tree was a prototype) and earns what 4
+squares of its tier earn; the Apple tree is the cheapest tree and sits in the first third of the ladder.
 
 *Decided in TR0 (the user, 2026-11-27):*
-- **Stall tree:** its saplings open with the Pepper unlock and follow the stall's hourly rotation like a crop. First fruit after 2 h, then
-  a fruit every 10 min (away-time), 4 held; it earns what Pepper earns per square-hour. Proposed for TR1: "3 per kind" counts trees held
-  and planted, and the price follows that count, so a tree dug up can be replaced.
+- **Stall tree (Apple, TR4 proposal):** its sapling opens with the Cucumber unlock and follows the stall's hourly rotation like a crop.
+  First fruit after 2 h, then a fruit every 5 min (away-time), 8 held; its 4 squares earn what Cucumber's tier earns per square-hour.
+  *Decided (the user, 2026-11-28, TR5):* **no cap** (how many is the player's choice); the sapling is **rare in the stall** (about 3
+  restocks a day) and **one per restock**, 9 000 each. The Apple is the first, deliberately expensive and even inefficient tree: its
+  fruit stays at Cucumber's rate (in the model every further Apple tree kept costs ~20 % of the late income); the tree kinds that come
+  later carry the long-term value.
 - **Rare tree (World 1):** every 3rd rare seed from a World 1 stage meter is a sapling instead, while the player has fewer than 3 (held +
-  planted). A late treat by choice: in the model the first one comes on day 13–60. First growth 8 h, then a fruit every hour, 6 held (full
-  after 6 h away: a night's timer).
+  planted). A late treat by choice: in the model the first one comes on day 13–60. First growth 8 h, then a fruit every 45 min, 8 held
+  (full after 6 h away: a night's timer); 4 squares at Blueberry's tier.
 - **Lifecycle:** sapling → first growth → one fruit at a time up to the cap; ripe fruit waits and never rots; at the cap the tree stops
   bearing. Growth as for crops (online ×2, offline ×1, 24 h cap; Growth upgrade and Cloches apply).
+- **On the field (TR4):** a sapling takes the free 2 × 2 block nearest the tap; every square of the block acts as the tree (card, Basket,
+  dig-up); pets keep their own square under it, and a Tending pet or guard reaches the tree through any of its squares.
 - **Picking:** a Basket tap (or the card's Pick all) on a bearing tree picks every ripe fruit (the barn limits only pets, as for crops); each fruit rolls its own size (Hall records,
   ribbons and requests work unchanged). A Tending pet picks during absences (nothing to replant); crows eat at most one fruit, never the
   tree; a rare tree is never raided.
@@ -343,7 +349,7 @@ the loop works.
 
 | Drop | Content | Build stages |
 |---|---|---|
-| TR "Fruit trees" | Perennial fruit trees on one square: a stall tree and a rare obby tree (§5.4) | E1 |
+| TR "Fruit trees" | Perennial fruit trees on a 2 × 2 block: a stall tree and a rare obby tree (§5.4) | E1 |
 | D1 "The Critters" | Moles, slugs, raccoons, weeds and Weeding, Pest-control specialities, the forecast board with weather, Scarecrow, Seed chest, full ledger | E4, E9 (weather), E1 |
 | D2 "Comfort" | Comfort shop: Night shift, instant grow, starter pack, first cosmetics; Wheelbarrow | M7 |
 | D3 "Weekly" | Weekly obby challenge, first farm stage and its crop, Harvest Fair (grows from the Harvest Hall), streak calendar | E10, E2 |

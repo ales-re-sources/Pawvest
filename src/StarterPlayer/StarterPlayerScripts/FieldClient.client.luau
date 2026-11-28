@@ -41,6 +41,7 @@ local REJECT_KEYS = { -- coins, stale, loading, noplot: Locale.Reject's common.r
 	far = "field.reason.far",
 	square = "field.reason.square",
 	occupied = "field.reason.occupied",
+	treeRoom = "field.reason.treeRoom", -- TR4: no free 2 x 2 block for a sapling
 	locked = "field.reason.locked",
 	seeds = "field.reason.seeds",
 	empty = "field.reason.empty",

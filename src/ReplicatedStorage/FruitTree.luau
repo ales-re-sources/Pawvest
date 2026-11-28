@@ -4,6 +4,8 @@
 -- SetTree(structure, fruit, nextGrowth) poses both; SetGrowth(g) is the reviewer's whole life: the structure matures by
 -- STRUCTURE_END, then the slots fill one by one up to the cap at 1.
 -- Parts: 8 wood (trunk, 3 root flares, 3 limbs, leader) + 14 leaf clumps + 4 per fruit slot (stalk, apple, facet, leaf).
+-- TR4: a tree stands on the middle of its 2 x 2 block (CropConfig.TreeBlock): the layout below is authored at the 1 x 1 size and
+-- every Part is scaled by SCALE when it is emitted (positions and sizes; apples less, APPLE).
 local PlantKit = require(script.Parent.PlantKit)
 local CropConfig = require(script.Parent.CropConfig)
 local phase, axis = PlantKit.phase, PlantKit.axis
@@ -11,7 +13,10 @@ local V = Vector3.new
 
 local FruitTree = {}
 
-local LIMIT = 2.35 -- ground radius every Part corner keeps (the field's 2.4 less a margin)
+local SCALE = 1.6 -- TR4: the authored 1 x 1 tree drawn on a 2 x 2 block
+local APPLE = 1.3 -- the apples grow less than the tree
+local WIDE = 1.1 -- the crown spreads a little wider than the scaled 1 x 1 crown
+local LIMIT = 5.1 / SCALE -- ground radius every Part corner keeps, authored size (the block's 5.5 half-width less a margin)
 local STRUCTURE_END = 0.6
 local CROWN_BASE = 3.1 -- where the trunk ends and the crown starts (crown tendencies scale above it)
 
@@ -46,9 +51,10 @@ end
 table.insert(CLUMPS, { V(0.25, 6.6, 0.1), V(1.3, 1.0, 1.3), 0.5, 0.1, 0.5, 0.85 })
 table.insert(CLUMPS, { V(-0.3, 6.5, -0.2), V(1.2, 0.9, 1.2), 1.1, -0.1, 0.55, 0.9 })
 local LIMB_YAWS = { 0.4, 2.5, 4.6 }
--- Where the apples of slots 1..6 hang (apple centres of seed 1), under the crown's lower ring.
-local SPOTS = { pt(0.25, 1.75, 3.45), pt(1.75, 1.7, 3.55), pt(-0.95, 1.75, 3.5), pt(3.6, 1.7, 3.5), pt(-1.9, 1.8, 4.0),
-	pt(2.5, 1.8, 4.05) }
+-- Where the apples of slots 1..8 hang (apple centres of seed 1), under the crown's lower ring: slots 1-4 low and around,
+-- 5-8 between them and higher.
+local SPOTS = { pt(0.25, 1.75, 3.45), pt(3.4, 1.75, 3.5), pt(1.8, 1.7, 3.55), pt(-1.35, 1.7, 3.5), pt(-0.55, 1.6, 3.95),
+	pt(2.6, 1.6, 4.0), pt(1.0, 1.55, 4.05), pt(4.2, 1.55, 3.95) }
 local STALK = 0.28
 -- Crown tendencies (height, width) a planting cycles through.
 local CROWNS = { { 1, 1 }, { 1.08, 0.94 }, { 0.94, 1.05 } }
@@ -61,17 +67,18 @@ local function shape(seed: number?, sizeFactor: number?, palette, cap: number)
 	local yaw = vary(0.5)
 	local rot = CFrame.Angles(0, yaw, 0)
 	local function crownPoint(p: Vector3): Vector3
-		local r = rot * V(p.X * crown[2], 0, p.Z * crown[2])
+		local r = rot * V(p.X * crown[2] * WIDE, 0, p.Z * crown[2] * WIDE)
 		local y = if p.Y > CROWN_BASE then CROWN_BASE + (p.Y - CROWN_BASE) * crown[1] else p.Y
 		return V(r.X, y, r.Z) + lean * (y / 5.3)
 	end
-	local s = { palette = palette, cap = cap, d = palette.d * PlantKit.dimension(sizeFactor), clumps = {}, limbs = {}, nodes = {} }
+	local s = { palette = palette, cap = cap, d = palette.d * PlantKit.dimension(sizeFactor) * APPLE / SCALE, clumps = {}, limbs = {},
+		nodes = {} }
 	s.top = crownPoint(V(0.04, CROWN_BASE, 0))
 	s.limbBase = V(0.04, 2.9, 0) + lean * (2.9 / 5.3)
 	s.leaderBase = V(0.04, 3.0, 0) + lean * (3.0 / 5.3)
 	s.leaderTop = crownPoint(V(0, 5.0, 0))
 	for i, c in CLUMPS do
-		s.clumps[i] = { center = crownPoint(c[1]) + V(vary(0.12), vary(0.15), vary(0.12)), size = c[2] * (1 + vary(0.1)),
+		s.clumps[i] = { center = crownPoint(c[1]) + V(vary(0.12), vary(0.15), vary(0.12)), size = c[2] * V(1.06, 1, 1.06) * (1 + vary(0.1)),
 			yaw = c[3] + yaw, tip = c[4], first = c[5], last = c[6] }
 	end
 	for i, t in LIMB_YAWS do
@@ -111,9 +118,11 @@ local function geometry(s, structure: number, fruit: number, nextGrowth: number,
 		local a = s.limbBase * u
 		rod("Limb", a, a:Lerp(limb.tip * u, math.max(q, 0.05)), 0.26 * u, pal.limb, phase(q, 0, 0.08))
 	end
-	local lq = phase(structure, 0.05, 0.5)
-	rod("Leader", s.leaderBase * u, (s.leaderBase * u):Lerp(s.leaderTop * u, math.max(lq, 0.05)), 0.28 * u, pal.limb, phase(lq, 0, 0.08))
 	local core = s.clumps[1].center * u
+	-- the leader runs from the trunk into the core tuft at every age, so the tuft never floats above the trunk (TR4); the mature
+	-- crown's leader top lies inside the core clump
+	local leaderTop = (s.leaderBase * u):Lerp(s.leaderTop * u, phase(structure, 0.05, 0.5)):Lerp(core, 1 - phase(structure, 0.4, 0.8))
+	rod("Leader", s.leaderBase * u, leaderTop, 0.28 * math.max(u, 0.45), pal.limb, 1)
 	for i, c in s.clumps do
 		local q = if i == 1 then 0.35 + 0.65 * phase(structure, 0, 0.4) else phase(structure, c.first, c.last)
 		-- the sapling's tuft (the core clump) starts at more than the tree's scale, so a young tree reads at field distance
@@ -149,6 +158,13 @@ local function geometry(s, structure: number, fruit: number, nextGrowth: number,
 	end
 end
 
+-- TR4: `emit` with every Part scaled from the authored 1 x 1 size to the block (about the soil centre).
+local function scaled(emit)
+	return function(name, size, cf, ...)
+		return emit(name, size * SCALE, CFrame.new(cf.Position * SCALE) * cf.Rotation, ...)
+	end
+end
+
 -- The recipe module of tree crop `cropId` drawn with `palette`: { bark, limb, stalk, fruitLeaf, leaves = { 3 }, fruit, facet,
 -- unripe, unripeFacet, d (apple size at the standard mass) }.
 function FruitTree.make(cropId: string, palette)
@@ -159,9 +175,10 @@ function FruitTree.make(cropId: string, palette)
 
 	local Plant = {}
 	Plant.__index = Plant
-	Plant.RingHeight = 8.0
+	Plant.RingHeight = 8.0 * SCALE
 	Plant.FixedRingHeight = true
-	Plant.ReviewHeight = 7.4
+	Plant.ReviewHeight = 7.4 * SCALE
+	Plant.Block = 2 -- TR4: drawn on the middle of a 2 x 2 block
 	Plant.Tree = true
 
 	function Plant.new(parent: Instance, soilCFrame: CFrame, seed: number, sizeFactor: number?)
@@ -169,14 +186,14 @@ function FruitTree.make(cropId: string, palette)
 		local rig = PlantKit.newRig(cropId .. "Tree", soilCFrame)
 		self.rig, self.model, self.fruitSlots = rig, rig.model, {}
 		for i = 1, cap do
-			self.fruitSlots[i] = { id = i, attachment = soilCFrame * CFrame.new(self.nodes[i]), parts = {} }
+			self.fruitSlots[i] = { id = i, attachment = soilCFrame * CFrame.new(self.nodes[i] * SCALE), parts = {} }
 		end
-		geometry(self, 1, cap, 0, function(name, _, _, _, _, role, slot, variant)
+		geometry(self, 1, cap, 0, scaled(function(name, _, _, _, _, role, slot, variant)
 			local part = rig:add(name, variant, role, slot)
 			if slot then
 				table.insert(self.fruitSlots[slot].parts, part)
 			end
-		end, false)
+		end), false)
 		assert(#rig.parts == parts, cropId .. " tree topology changed")
 		self:SetTree(0, 0, 0)
 		self.model.Parent = parent
@@ -196,9 +213,9 @@ function FruitTree.make(cropId: string, palette)
 		end
 		self.pose = { s, count, grow }
 		rig.cursor = 0
-		geometry(self, s, count, grow, function(_, size, cf, color, opacity)
+		geometry(self, s, count, grow, scaled(function(_, size, cf, color, opacity)
 			rig:block(size, cf, color, opacity)
-		end, false)
+		end), false)
 		rig:finish()
 	end
 
@@ -218,13 +235,13 @@ function FruitTree.make(cropId: string, palette)
 	function Plant.BuildProxy(parent: Instance, soilCFrame: CFrame, stage: number, seed: number?, sizeFactor: number?, fruit: number?)
 		local s = shape(seed, sizeFactor, palette, cap)
 		local count = if stage >= 3 then math.clamp(fruit or cap, 1, cap) else 0
-		geometry(s, if stage <= 1 then 0.35 else 1, count, 0, function(name, size, cf, color, opacity, role, slot, variant)
+		geometry(s, if stage <= 1 then 0.35 else 1, count, 0, scaled(function(name, size, cf, color, opacity, role, slot, variant)
 			if opacity <= 0.01 then
 				return
 			end
 			local part = PlantKit.proxyPart(parent, name, size, soilCFrame * cf, color, variant, role, slot)
 			part.Transparency = 1 - opacity
-		end, true)
+		end), true)
 	end
 
 	return Plant
