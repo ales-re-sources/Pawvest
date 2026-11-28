@@ -30,7 +30,7 @@ Status levels: **Implemented** (code in `src/`, committed), **Studio-validated**
 | FB, FB2, FB3 | Stage rating (signboards + popup), feedback box | ✔ | ✔ | filter check open |
 | E5 | Request board, ledger on join, onboarding, garden telemetry | ✔ | ✔ | – |
 | EG, FL, FD | Egg ladder (gems), flatter crop ladder, food trains a pet to half its max | ✔ | ✔ | – |
-| CG1–CG21 | Plant growth art, 19 crops, all in the field ([per crop](PLANT_GROWTH.md#crops-and-status)) | ✔ | geometry + PlotView pass; stills of Tomato, Pepper, Pumpkin await review; phone performance and second client open | – |
+| CG1–CG21 | Plant growth art, 19 crops, all in the field ([per crop](PLANT_GROWTH.md#crops-and-status)) | ✔ | geometry + PlotView pass, all stills approved; phone performance and second client open | – |
 | CP | Crop page redesign | ✔ | ✔ | – |
 | HX0 | Hybrid plants: look prototype (Studio reviewer only) | ✔ | ✔ | – |
 | TR | Fruit trees: perennials on one square, a stall tree and a rare obby tree ([EXPANSION §5.4](EXPANSION.md)); the first update after 1.0 | TR0–TR3 | ✔ (phone, Czech review open) | – |
@@ -219,7 +219,7 @@ Tagged **[1.0]** (needed before going public) or **[later]**.
   78-square fields at once (the budget was checked with synthetic plots only; plant art adds up to ~13 200 Parts per full field); a second
   client watching a square purchase; the Field test's step distances (PLANT_GROWTH) re-measured on the 8-plot ring.
 - **[1.0] The user's checks:** G1 hints in play; a multi-client test (F7): each client sees the other's pets with their level look (P4 / U1),
-  rings only over the own field and no selection on a neighbour's (U3); plot likes with two clients; the stills of Tomato (CG1e), Pepper, Pumpkin.
+  rings only over the own field and no selection on a neighbour's (U3); plot likes with two clients.
 - **[1.0] Checked in code only** (check in the M6a playtests): the crow part of the summary bubble (`🐦 now` / `🐦 0:45`, U4); the first-harvest
   toast and the young-field pulse; the pet page's Feed card with held crops and its Czech width; E5's `request` funnel step, the ledger
   waiting for a run to end and its ribbons line, a Tending pet's join-settle harvests counting for a request; the level-up toast's point

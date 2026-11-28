@@ -6,24 +6,24 @@ silhouette, growth poses and geometry budget.
 
 ## Crops and status
 Every registered crop passed the Studio geometry checks (six seeds × three masses × 101 ages, radius, seeks, proxies) and the production
-`PlotView` lifecycle. **Open** lists what is left: *stills* = five stills await Ales's review; *perf* = full-field / 8-plot CPU (Parts per
+`PlotView` lifecycle. **Open** lists what is left: *perf* = full-field / 8-plot CPU (Parts per
 full field of 36 in brackets); *phone* = a real phone; *2nd* = a second client. Live validation is open for all.
 
 | Crop | Design | Parts | Status | Open |
 |---|---|---|---|---|
-| Tomato | [Classic staked tomato](plants/TOMATO.md) | 71 | tall staked classic; variants (two floors, cherry spiral) after GA | stills, perf (2 556), phone, 2nd |
+| Tomato | [Classic staked tomato](plants/TOMATO.md) | 71 | approved (tall staked classic); variants (two floors, cherry spiral) after GA | perf (2 556), phone, 2nd |
 | Potato | [Upright compound foliage](plants/POTATO.md) | 65 | approved, desktop CPU done | phone, 2nd |
 | Frost Grape | [Tall vineyard trellis](plants/FROST_GRAPE.md) | 115 | frost flecks on ripe bunches, harvest burst | perf (4 140 + particles), phone, 2nd |
 | Corn | [Tall two-ear stalk](plants/CORN.md) | 99 | complete | – |
 | Lettuce | [Crisp head](plants/LETTUCE.md) | 70 | approved | phone, 2nd |
-| Pepper | [Upright red chilli-pepper bush](plants/PEPPER.md) | 84 | slender pointed chillies (Ales's correction) | stills, perf, phone, 2nd |
+| Pepper | [Upright red chilli-pepper bush](plants/PEPPER.md) | 84 | approved (slender pointed chillies) | perf, phone, 2nd |
 | Glow Mushroom | [Glowing chestnut bolete pair](plants/GLOW_MUSHROOM.md) | 60 | approved | perf, phone, 2nd |
 | Golden Carrot | [Buried pointed root and tall feathery crown](plants/GOLDEN_CARROT.md) | 72 | approved; owner-harvest burst; desktop CPU done | phone, 2nd |
 | Onion | [Half-buried brown bulb, tall quills and flower umbel](plants/ONION.md) | 59 | approved | perf, phone, 2nd |
 | Cucumber | [Ladder-trellis vine with hanging dark cucumbers](plants/CUCUMBER.md) | 79 | approved | perf, phone, 2nd |
 | Garlic | [Half-buried ivory head, flat leaves and curled scape](plants/GARLIC.md) | 54 | approved; desktop CPU done (1 944) | phone, 2nd |
 | Broccoli | [Lobed blue-green foliage and a domed floret crown](plants/BROCCOLI.md) | 108 | approved (longer leaves) | perf, phone, 2nd |
-| Pumpkin | [Arching vine, broad leaves, big ribbed orange fruit](plants/PUMPKIN.md) | 96 | registered | stills, perf (3 456), phone, 2nd |
+| Pumpkin | [Arching vine, broad leaves, big ribbed orange fruit](plants/PUMPKIN.md) | 96 | approved | perf (3 456), phone, 2nd |
 | Eggplant | [Tall open plant with three long hanging purple fruit](plants/EGGPLANT.md) | 113 | approved (cross fork round the stem) | perf (4 068), phone, 2nd |
 | Blueberry | [Round highbush with ten berry bunches over the whole bush](plants/BLUEBERRY.md) | 134 | approved | perf (4 824), phone, 2nd |
 | Sweet potato | [Trained fan with broad heart leaves and reddish root shoulders](plants/SWEET_POTATO.md) | 169 | approved | perf (6 084), phone, 2nd |
