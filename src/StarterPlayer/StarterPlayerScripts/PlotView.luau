@@ -341,11 +341,13 @@ function PlotView:signature(key: string): string
 		return if detail == "full" then "lock|" .. tostring(self.own) else "none"
 	end
 	local pet = self.petMap[n]
+	local anchor = self.cover and self.cover[n] -- TR4: a tree's block redraws its soil when the tree comes or goes
 	return string.format(
-		"%s|%s|%s|%s|%s|%s",
+		"%s|%s|%s|%s|%s|%s|%s",
 		if self.own and detail == "full" then "own" else "full",
 		detail,
 		cell,
+		if anchor == n then "tree" elseif anchor then "under" else "",
 		if pet then pet.text else "",
 		if pet then nameOf(state, pet.uid) or "" else "",
 		self.lang
@@ -922,9 +924,18 @@ function PlotView:buildSquare(model: Model, square: number)
 	if letter == "#" then
 		return self:buildOvergrown(model, square)
 	end
-	local soil = part({ Name = "Soil" .. square, Size = Vector3.new(size, 0.4, size), CFrame = self:at(Vector3.new(x, 0.05, z)),
-		Color = if letter == "." then COLORS.drySoil else COLORS.soil, Material = Enum.Material.Ground, CanQuery = self.own })
-	soil.Parent = model
+	-- TR4: a tree's block is one patch of planted soil, drawn by its anchor; its other three squares draw none (no gaps, no dry soil)
+	local anchor = self.cover and self.cover[square]
+	if anchor == square then
+		local bx, bz, side = self:spot(square)
+		local edge = side * FIELD_PITCH - 0.4
+		part({ Name = "Soil" .. square, Size = Vector3.new(edge, 0.4, edge), CFrame = self:at(Vector3.new(bx, 0.05, bz)),
+			Color = COLORS.soil, Material = Enum.Material.Ground, CanQuery = self.own }).Parent = model
+	elseif not anchor then
+		part({ Name = "Soil" .. square, Size = Vector3.new(size, 0.4, size), CFrame = self:at(Vector3.new(x, 0.05, z)),
+			Color = if letter == "." then COLORS.drySoil else COLORS.soil, Material = Enum.Material.Ground, CanQuery = self.own }).Parent = model
+	end
+	local soilTop = self:at(Vector3.new(x, 0.25, z)).Position.Y
 	if CROP_COLORS[letter] and stage > 0 and not growthCrop(field, square) then
 		local height = 0.6 + stage * 0.7
 		local width = size * (0.3 + stage * 0.15)
@@ -941,7 +952,7 @@ function PlotView:buildSquare(model: Model, square: number)
 			part({ Name = "Pet" .. square, Size = Vector3.new(cube, cube, cube), CFrame = self:at(spot + Vector3.new(0, 0.25 + cube / 2, 0)), Color = rarity.color }).Parent =
 				model
 		else
-			local petModel = standingPet(pet.kind, pet.level, pet.uid, self:at(spot), soil.Position.Y + soil.Size.Y / 2, fieldPetLabel(pet.apt, pet.guard, nameOf(self.state, pet.uid)))
+			local petModel = standingPet(pet.kind, pet.level, pet.uid, self:at(spot), soilTop, fieldPetLabel(pet.apt, pet.guard, nameOf(self.state, pet.uid)))
 			if petModel then
 				petModel.Name = "Pet" .. square
 				if self.own then
@@ -1040,21 +1051,6 @@ function PlotView:buildPlant(model: Model, square: number)
 	-- Same owner/planting prime mix as the deterministic Tending roll. Consecutive
 	-- plantings still cycle all six silhouettes (104729 is coprime with six).
 	local seed = (self.state.ownerId or self.slot) * 7919 + planting * 104729
-	if crop.tree then
-		-- TR4: soil over the paths between the block's four squares, so the tree stands in one bed (only the gaps: no face shared
-		-- with the squares' soil; the z strips stop at the x strip)
-		local x, z = self:spot(square)
-		local long, gap = 2 * FIELD_PITCH - 0.4, 0.4
-		local side = (long - gap) / 2
-		for _, strip in {
-			{ Vector3.new(0, 0, 0), Vector3.new(long, 0.4, gap) },
-			{ Vector3.new(0, 0, (gap + side) / 2), Vector3.new(gap, 0.4, side) },
-			{ Vector3.new(0, 0, -(gap + side) / 2), Vector3.new(gap, 0.4, side) },
-		} do
-			part({ Name = "TreeBed", Size = strip[2], CFrame = self:at(Vector3.new(x, 0.05, z) + strip[1]), Color = COLORS.soil,
-				Material = Enum.Material.Ground, CanQuery = self.own }).Parent = model
-		end
-	end
 	if self.detail == "mid" then
 		PlantGrowth.BuildProxy(model, self:SquareCFrame(square), crop.id, self:plantStage(square), seed, sizeFactor,
 			if crop.tree then self:proxyFruit(square) else nil)
@@ -1333,8 +1329,9 @@ function PlotView:spot(square: number, block: boolean?): (number, number, number
 end
 
 -- World CFrame of the middle of field square `square` at the soil's top (rings, pops, plants); a tree's square: its block's middle.
-function PlotView:SquareCFrame(square: number): CFrame
-	local x, z = self:spot(square)
+-- `block` = true reads `square` as a tree's anchor (FieldRings: the State may reach it before this view's SetState).
+function PlotView:SquareCFrame(square: number, block: boolean?): CFrame
+	local x, z = self:spot(square, block)
 	return self:at(Vector3.new(x, 0.25, z))
 end
 

@@ -582,7 +582,8 @@ There is no Garden panel; each piece sits where it is used.
   refusal preserves the selection); following stops only after a successful placement.
 - **Reach borders.** Every placed pet's region is outlined by thin strips in its rarity colour (not glowing: Common grey must not look
   like the white select outline): the squares it counts for, i.e. per square the strongest Tending pet and the strongest guard (ties to
-  the lower uid). Regions that share an edge draw side by side (three lanes inset 0.45 / 0.8 / 1.15 studs).
+  the lower uid); a tree's whole 2 × 2 block goes to the best pet over any of its squares, as on the server. Regions that share
+  an edge draw side by side (three lanes inset 0.45 / 0.8 / 1.15 studs).
 
 #### Crops, growth and selling
 - **Crops.** Potato (20 s away / 10 s online, so the first harvest comes in the first session), Corn, Pumpkin and Giant melon from the
@@ -604,8 +605,8 @@ There is no Garden panel; each piece sits where it is used.
   (saplings held + trees planted; no cap), one +1 brick at the sapling's price, "Back soon" out of stock (the rare tree: "Medals in World 1"). Square
   card: a young tree has the growth bar to its first fruit, the trash and "Once grown, it bears fruit for good"; a grown tree, bare or
   bearing, has the same parts: "🍎 2 / 8 · next in 4 min" ("full" at the cap) beside the trash, then Pick all (grey while bare). A pick
-  pops "+3 🍎" and toasts "+3 Apple · biggest 0.7 kg". Rings: a bearing tree the ripe ring with "3/8" over the block's middle; tree
-  rings sit at the tree's own height and stay out of the shared ring height.
+  pops "+3 🍎" and toasts "+3 Apple · biggest 0.7 kg". Rings: a bearing tree the ripe ring with "3/8" over the block's middle; a
+  tree's ring sits at the shared ring height but does not raise it, drawn in front of the crown so the leaves do not hide it.
 - **Seed picker** (a square's Plant, or the card in Seeds mode): one row per held seed with the crop and ★, the stall's grow time and
   sale line, and the count on the right; in Seeds mode only the selected row is green, with a ✓. Six rows before it scrolls.
 - **Price ladder.** Six price tiers set net Coins per square-hour (tiers 0–2 × 1.727 a step, then × 1.5; the top tier × 10.1 of Potato's);

@@ -10,11 +10,14 @@
 -- not AlwaysOnTop (screen captures show them); drawn TOWARD the camera from the square so its crop does not hide it. Every ring
 -- sits at one height straight up (StudsOffsetWorldSpace): the tallest planted crop's PlantGrowth.RingHeight, so the rings form a
 -- grid over the field. Not StudsOffset's Y: that is the camera's up, which on a steep view slides a ring over another row.
--- TR3: a fruit tree's ring keeps its own height (one tree would lift every ring) and, while fruit hangs, shows the count under it.
+-- TR3: while fruit hangs, a fruit tree's ring shows the count under it. A tree's ring sits at the shared height too (a ring above the
+-- others did not read as part of the grid) but stays out of it (its 12.8 lifted every ring out of the default view), and is drawn
+-- TREE_TOWARD the camera: in front of the crown, which would hide it at the others' height.
 -- In Studio the part carries the attributes Rings (rings drawn) and UpdateMs (the last update's cost).
 -- U3b: in the same tier, every placed field pet's reach region as a thin border in its rarity colour (GardenView.ShowBorders). The
 -- region = the squares this pet counts for under GardenField's rules: per square the strongest Tending pet that reaches it and the
--- strongest guard (the guard chance from the State); ties go to the lower uid (the effect is the same). Redrawn only when a region
+-- strongest guard (the guard chance from the State); ties go to the lower uid (the effect is the same); a tree's whole 2 x 2 block
+-- goes to the best pet over any of its squares (TR4). Redrawn only when a region
 -- changes (State, PetsChanged) or the tier shows / hides. Studio attribute Borders = the regions drawn.
 
 local Players = game:GetService("Players")
@@ -37,6 +40,8 @@ local studio = RunService:IsStudio()
 local SHOW_DISTANCE = 30 -- studs (horizontal) from the character to the nearest field square
 local NEAREST = 4 -- growing squares that print their time
 local TOWARD = 3 -- studs toward the camera (StudsOffset Z): in front of the crop block (half width up to 1.9), so it does not hide the ring
+local TREE_TOWARD = 5.5 -- a fruit tree's ring: in front of its crown (radius up to 4.65, docs/plants/APPLE_TREE.md)
+local TREES_ONLY = 4 -- the shared ring height while only trees are planted (under the crown, in front of the trunk)
 local WIDTH, TALL = 4.2, 3.5 -- billboard size in studs: the DISC-stud disc over a 1.05-stud time line
 local DISC = 2.3
 local TICK_SECONDS = 1
@@ -102,7 +107,8 @@ local function half(parent: Instance, right: boolean): UIGradient
 end
 
 local function newRing(square: number, crop)
-	local cframe = GardenView.SquareCFrame(square)
+	-- TR4: a tree's ring over its block's middle (its square is the anchor), without waiting for the view's own State
+	local cframe = GardenView.SquareCFrame(square, crop.tree ~= nil)
 	if not cframe then
 		return nil
 	end
@@ -114,7 +120,7 @@ local function newRing(square: number, crop)
 	gui.AutoLocalize = false
 	gui.LightInfluence = 0
 	gui.Size = UDim2.new(WIDTH, 0, TALL, 0) -- scale = studs
-	gui.StudsOffset = Vector3.new(0, 0, TOWARD)
+	gui.StudsOffset = Vector3.new(0, 0, if crop.tree then TREE_TOWARD else TOWARD)
 	gui.StudsOffsetWorldSpace = Vector3.new(0, PlantGrowth.RingHeight(crop.id), 0)
 	gui.MaxDistance = 90
 	gui.Enabled = false
@@ -335,6 +341,30 @@ local function computeBorders()
 			end
 		end
 	end
+	-- TR4: a tree is one target: the best pet over its block's squares (GardenField blockBest) takes the whole block
+	local squares = type(field.squares) == "table" and field.squares or {}
+	local cover = CropConfig.TreeCover(function(n)
+		local entry = squares[tostring(n)]
+		return type(entry) == "table" and CropConfig.ById[entry.crop] or nil
+	end)
+	for square, anchor in cover do
+		if square == anchor then
+			local block = CropConfig.TreeBlock(anchor) :: { number }
+			for _, job in { tend, guard } do
+				local best = nil
+				for _, n in block do
+					local value = job[n]
+					if value and (not best or value.value > best.value
+						or (value.value == best.value and uidBefore(value.pet.uid, best.pet.uid))) then
+						best = value
+					end
+				end
+				for _, n in block do
+					job[n] = best
+				end
+			end
+		end
+	end
 	local keys = {}
 	for index, pet in placed do
 		local mine = {}
@@ -384,22 +414,21 @@ local function update(now: number)
 		end
 	end
 	local squares = if type(field) == "table" and type(field.squares) == "table" then field.squares else {}
-	local height = 0 -- one height for every ring: the tallest planted crop's (a fruit tree's ring keeps its own, TR3)
+	local height = 0 -- one height for every ring: the tallest planted crop's (not a tree's: its ring stands in front of it)
 	for square, ring in rings do
 		local entry = squares[tostring(square)]
 		if entry and not ring.crop.tree then
 			height = math.max(height, PlantGrowth.RingHeight(ring.crop.id, entry.size))
 		end
 	end
-	local world = Vector3.new(0, height, 0)
+	local world = Vector3.new(0, if height > 0 then height else TREES_ONLY, 0)
 	local growing = {}
 	for square, ring in rings do
 		ring.gui.Enabled = near
 		local entry = squares[tostring(square)]
 		if entry then
 			local crop = ring.crop
-			local at = if crop.tree then Vector3.new(0, PlantGrowth.RingHeight(crop.id, entry.size), 0) else world
-			if ring.gui.StudsOffsetWorldSpace ~= at then ring.gui.StudsOffsetWorldSpace = at end
+			if ring.gui.StudsOffsetWorldSpace ~= world then ring.gui.StudsOffsetWorldSpace = world end
 			local share, ripe, left = CropConfig.Progress(entry, crop, receivedAt, now, field and field.tools)
 			setRipe(ring, ripe)
 			if not ripe then

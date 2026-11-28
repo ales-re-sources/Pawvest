@@ -152,9 +152,9 @@ function GardenView.SquareAt(position: Vector3): number?
 end
 
 -- World CFrame of the middle of the own field's square `square` at the soil's top, or nil without a plot.
-function GardenView.SquareCFrame(square: number): CFrame?
+function GardenView.SquareCFrame(square: number, block: boolean?): CFrame?
 	local view = ownView()
-	return view and view:SquareCFrame(square)
+	return view and view:SquareCFrame(square, block)
 end
 
 -- The own plot's drawn model (the tap ray's include list), or nil.

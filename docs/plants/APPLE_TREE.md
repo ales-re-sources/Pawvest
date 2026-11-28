@@ -41,6 +41,6 @@ Parts: 8 wood + 14 clumps + 4 per slot (stalk, apple, 45°-turned facet, leaf) =
 trees: 1 026). Seeds vary lean, crown yaw, clump offsets and sizes, limb and apple yaws, and cycle three crown tendencies (round, taller,
 wider). The harvested mass scales the apples (cube root), not the tree. Max radius 4.65 over six seeds × three masses × 101 ages and
 every fruit pose; ripe height 11.0–11.8 studs. Fixed ring height 12.8, review framing 11.8, free-standing (seeded rotation). The field
-draws soil over the paths between the block's four squares (`TreeBed`). Checks: `apple_growth_checks.luau` (Edit; radius, seeks, pick and
+draws the block as one patch of planted soil (PlotView `buildSquare`, by the anchor). Checks: `apple_growth_checks.luau` (Edit; radius, seeks, pick and
 regrowth restore the same tree).
 [In the field](../art/apple/in-field.jpg): young, bare, picked and full Apples and a full Golden apple on one plot.
