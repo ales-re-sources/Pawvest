@@ -30,7 +30,7 @@ full field of 36 in brackets); *phone* = a real phone; *2nd* = a second client. 
 | Giant melon | [Arching vine, lobed leaves, big striped green melon](plants/GIANT_MELON.md) | 97 | approved | perf (3 492), phone, 2nd |
 | Sunflower | [A1 spiral foliage + H2 layered head](plants/SUNFLOWER.md) | 192 (+141 meshes) | approved; desktop CPU and phone done | 2nd |
 | Pineapple | [Tall stalk lifting a diamond-eyed fruit over a leaf rosette](plants/PINEAPPLE.md) | 155 | approved | perf (5 580), phone, 2nd |
-| Apple, Golden apple | [Round-crown fruit tree; picks keep the tree](plants/APPLE_TREE.md) | 38 / 46 | approved (TR2) | perf (2 964 / 3 588), phone, 2nd |
+| Apple, Golden apple | [Round-crown fruit tree; picks keep the tree](plants/APPLE_TREE.md) | 38 / 46 | approved (TR2) | perf (2 964 / 3 588), phone |
 
 ## Phone and performance test
 

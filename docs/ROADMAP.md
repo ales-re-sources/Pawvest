@@ -33,8 +33,8 @@ Status levels: **Implemented** (code in `src/`, committed), **Studio-validated**
 | CG1–CG21 | Plant growth art, 19 crops, all in the field ([per crop](PLANT_GROWTH.md#crops-and-status)) | ✔ | geometry + PlotView pass; stills of Tomato, Pepper, Pumpkin await review; phone performance and second client open | – |
 | CP | Crop page redesign | ✔ | ✔ | – |
 | HX0 | Hybrid plants: look prototype (Studio reviewer only) | ✔ | ✔ | – |
-| TR | Fruit trees: perennials on one square, a stall tree and a rare obby tree ([EXPANSION §5.4](EXPANSION.md)); the first update after 1.0 | TR0–TR3 | TR1 (server), TR2 (art), TR3 (UI) | – |
-| PL | Field pet life: idle motion (PL1), eyes: blink + shut in a nap (PL2), owner reactions (PL3a), jobs (PL3b), followers (PL4) | PL1–PL3a, PL4 | PL1 (2 pets; full field and phone open), PL2, PL3a and PL4 partly (second client open) | – |
+| TR | Fruit trees: perennials on one square, a stall tree and a rare obby tree ([EXPANSION §5.4](EXPANSION.md)); the first update after 1.0 | TR0–TR3 | ✔ (phone, Czech review open) | – |
+| PL | Field pet life: idle motion (PL1), eyes: blink + shut in a nap (PL2), owner reactions (PL3a), jobs (PL3b), followers (PL4) | PL1–PL3a, PL4 | PL1 (2 pets; full field and phone open), PL2, PL3a, PL4 (the user's look in play open) | – |
 | HX1 | Hybrid breeding mechanic ([HYBRIDS.md](HYBRIDS.md)): main rules decided, numbers open | design only | – | – |
 | K1 | First-hour fixes (kid playtest 2026-11-01): Stage 5, G1 fallback, Double Jump world reward, hatch panel done; the rest is measured in M6a | partial | partial | – |
 | TH | Store thumbnails ([THUMBNAILS.md](THUMBNAILS.md) §8–9): logo, release candidates A1–A3, C1–C3; stud sign decision, grid tile test, kid test open | partial | – | – |
@@ -100,8 +100,9 @@ own (not in sync between clients, which is fine for a cosmetic). Cut into:
   ≈ 0), floating while walking, settled again after stopping; parked at the path's end on the path's top (the ground is re-checked
   while sinking and every 0.5 s: a check only at the start left them 0.3 studs in the path) and still resting while the owner walks on
   the field; naps with the eyes shut; field pets still move and blink. Checked in code only: stage run, level-up and re-equip while
-  resting (they wake / build a fresh routine). **Open:** a second client (others' followers), the user's look in play (the Studio
-  viewport would not render during this check).
+  resting (they wake / build a fresh routine). **Second client** (F7, 2026-11-28): another player's 3 followers seen from a visitor
+  rest on the ground (gap −0.2…0.1) and nap after the owner stood still, wake (💤 gone, eyes open) when the owner walks, settle ~3 s
+  after the stop, blink 7–9 times in 30 s; no errors on the server or 3 clients. **Open:** the user's look in play.
 - **Later, unscoped:** tail wag (`Tail*` around the first segment's base); head turn and ear twitch (need `Head*` / `Ear` attributes on
   every model).
 - **PL3a Owner reactions** (scoped by the user, 2026-11-27; field pets only). **Greet:** a field pet whose plot owner's character comes
@@ -118,7 +119,8 @@ own (not in sync between clients, which is fine for a cosmetic). Cut into:
   walk back; a click on the pet cheers (3 of 3 on the pet's current spot), a click on its soil does not; Pets-mode pick-up and Cancel
   leave no ❤️, 💤, extra anchor or faded part. The pet templates' parts are not queryable: PlotView turns `CanQuery` on for the own
   plot's pets (the tap ray). Not done: a drop on another square (a live profile write; the piece rebuild path is PL1's), a real nap
-  woken in play (none came in 4 min). **Open:** a second client, the user's look in play.
+  woken in play (none came in 4 min). **Second client** (F7, 2026-11-28): a visitor 22 studs away saw another player's cat greet its
+  owner; the visitor walking up to that player's panda got no greet. **Open:** the user's look in play.
 - **PL3b Jobs (not scoped):** a Tending pet turns to
   and sniffs ripe crops in its reach (must not look like an online harvest: Tending works only during absences); a guard pet is alert in a
   crow block (sits up, watches the sky, walks its reach) and dozes outside one; how lively by aptitudes (needs the feed to carry them).
@@ -163,7 +165,8 @@ obby (rare tree per world), two kinds in the first update: one stall tree and on
   Golden apple as the same tree in gold; one recipe `FruitTree` with a structure growth and one fruit slot per fruit (`SetTree`), a pick
   keeps the tree; `PlotView:treePose` from the plot feed, proxies with their apples. 38 / 46 Parts (field of 78: 2 964 / 3 588). Studio
   playtest: six fixture trees drawn with the right fruit, a pick kept the same tree with the next apple growing, proxies right, no
-  errors. Open: frame rate on a real phone (a background Studio window caps at 15 FPS for every crop), a second client.
+  errors. Second client (F7, 2026-11-28): owner and visitor draw the same tree (`grow33`, 38 Parts) with the same visible fruit.
+  Open: frame rate on a real phone (a background Studio window caps at 15 FPS for every crop).
 - **TR3 UI: Studio-validated** (2026-11-27; as built: GDD §7.9 → Fruit trees). The sapling is named as the tree (`crop.tree.<id>`,
   `Locale.TreeName`, `GardenUi.SeedTitle`), the fruit keeps the crop name; a grown tree's state square adds `nextAt`. Studio playtest on a
   fixture profile through the real UI: the card young / bare / bearing / full (a pick keeps the card in place), Pick all on both trees

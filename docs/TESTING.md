@@ -53,3 +53,7 @@ The user starts Test → **Server and Clients** (F7), then **Add Clients**. `lis
 `get_studio_state` tells them apart. Test users have UserIds −1, −2… and create `PlayerProfiles` records `user_-1`, `user_-2`: remove them
 afterwards from a later one-player playtest's `Server` context (a removal in the F7 server's `BindToClose` was overwritten by the test
 players' leave saves). Studio does not filter text (`TextService`): filter results need a live test.
+- A test player with data: before **Add Clients**, write the next test id's record (`user_-3` after −1, −2) from the F7 `Server`
+  context, e.g. a read-only copy of a real profile; it loads on join (its absence ledger runs: Tending pets pick on the join settle).
+  A test player with medals writes a `MostStars` entry under its negative id: remove it with the profiles. An `OrderedDataStore`
+  `GetAsync` of a missing key returns nothing (wrap it in parentheses before `tostring`).
