@@ -47,5 +47,5 @@ fruit faces the player's side of the arch); ring fixed 4.9, review framing 4.2. 
   Parts**. Nothing at low detail. No harvest effect (`PlayHarvest` nil).
 
 Top 4.47 studs max. Checks: `pumpkin_integration_checks.luau` and the growth checks (six seeds × masses 0.357 / 1 / 3.03 × 101 ages).
-[Five stills](../art/pumpkin/growth-review.jpg) · [ripe and 75% detail](../art/pumpkin/growth-ripe-detail.jpg) await Ales's review.
+Five stills (2026-11-28, seed 1, ×1.00): [0%](../art/pumpkin/growth-0.jpg) · [20%](../art/pumpkin/growth-20.jpg) · [50%](../art/pumpkin/growth-50.jpg) · [75%](../art/pumpkin/growth-75.jpg) · [100%](../art/pumpkin/growth-100.jpg), await Ales's review.
 Open: performance (full field, 24-plot route), real phone, second client.

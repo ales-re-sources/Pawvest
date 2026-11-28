@@ -35,4 +35,5 @@ fitting preserves square clearance. Ring fixed at 6.8 studs, above the stake.
 28 leaf pieces (seven leaves of blade, tip, two leaflets), 33 pieces in three trusses (a rachis plus two fruit of pedicel, sepal,
 shoulder, body, base); 36-square field 2 556. Mid detail: the stake, one to three leaf plates and, when ripe, three fruit (2 / 3 / 7
 Parts); low detail hides crop art. Seeds 1-7 at masses 0.5 / 1 / 3: radius at most 2.39, leaf / fruit tops 5.1-6.07 studs, fruit bottoms
-at most 0.21 below soil (mass 3, compact seed). Open: real phone, second client, full-field performance.
+at most 0.21 below soil (mass 3, compact seed). Five stills (2026-11-28, seed 1, ×1.00): [0%](../art/tomato/growth-0.jpg) · [20%](../art/tomato/growth-20.jpg) · [50%](../art/tomato/growth-50.jpg) · [75%](../art/tomato/growth-75.jpg) · [100%](../art/tomato/growth-100.jpg).
+Open: Ales's review of the stills, real phone, second client, full-field performance.

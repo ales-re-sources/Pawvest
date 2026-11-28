@@ -43,4 +43,5 @@ fruit/blossom groups); 36-square field 3 024. Mid proxies **5 / 31 / 31 Parts** 
 intercept selection rays. Each `fruitSlots[1..3]`: stable id, mature world-space attachment CFrame, 14 Parts (two stalk pieces,
 centre/calyx, five petals/sepals, five body sections, one pointed wedge); `PlantRole` / `FruitSlot` attributes. Visual slots do not
 define reward quantity or perennial collection. Max radius 2.04 over seeds / masses (0.3566 / 1 / 3.0298), ripe height 2.91-4.73, fruit
-clearance at least 0.34. Open: revised art review (stills), performance, real phone, second client.
+clearance at least 0.34. The stills above were re-taken on 2026-11-28 (seed 1, ×1.00). Open: Ales's review of the stills, performance,
+real phone, second client.
